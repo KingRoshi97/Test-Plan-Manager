@@ -1,0 +1,37 @@
+{
+  "roshi_root": "docs/roshi_v2",
+  "domains_dir": "02_domains",
+  "templates_dir": "01_templates",
+  "domains": [
+    {
+      "name": "Platform",
+      "slug": "platform",
+      "prefix": "platform",
+      "type": "business"
+    },
+    {
+      "name": "API",
+      "slug": "api",
+      "prefix": "api",
+      "type": "business"
+    },
+    {
+      "name": "Web",
+      "slug": "web",
+      "prefix": "web",
+      "type": "business"
+    },
+    {
+      "name": "Infrastructure",
+      "slug": "infra",
+      "prefix": "infra",
+      "type": "crosscutting"
+    },
+    {
+      "name": "Security",
+      "slug": "security",
+      "prefix": "security",
+      "type": "crosscutting"
+    }
+  ]
+}
