@@ -1,0 +1,194 @@
+Below is a turn-key test plan you can run today.
+
+1) Replit setup (2 files + clean Node repo)
+A) Create a fresh Replit (Node.js)
+
+New Repl → Node.js
+
+Make sure you can run npm -v in the Shell.
+
+B) Upload your PDF into the repo
+
+Put it here (exact path):
+
+docs/inputs/Roshi system start up guide (1).pdf
+
+C) Add your “what we’re building” outline
+
+Create this file:
+
+docs/inputs/TARGET_OUTLINE.md
+
+Paste this content (edit the names if you want):
+
+# TARGET OUTLINE — Roshi Studio (API + Web App powered by NPM core)
+
+## Goal
+Build "Roshi Studio": a web app + API that runs the Roshi pipeline using an NPM package.
+User pastes an idea + minimal context, clicks Generate, and receives a downloadable "Agent Handoff Bundle" (zip)
+containing Roshi docs + manifests + exports that can be uploaded to a vibecoding agent.
+
+## Product Shape
+- NPM engine: @roshi/core (pure logic)
+- API service: runs @roshi/core, produces runs + artifacts + bundle zip
+- Web app: UI to create runs, view status, download zip, copy agent prompt
+
+## Platforms
+- Web (React/Next.js or similar)
+- API (Node/Express)
+- Storage (local filesystem for this test; later S3-compatible)
+
+## Key Flows
+1) Create Run: submit idea + preset -> returns runId
+2) Pipeline: init/gen/seed/draft/review/verify/lock (docs-first)
+3) Package: create bundle zip containing workspace + handoff manifest + agent prompt + exports
+4) Download: user downloads bundle zip
+5) Agent Execution: user uploads zip to vibecoding agent, runs commands in manifest
+
+## Core Objects (canonical)
+- User
+- Project
+- Run (pipeline run)
+- DomainPack (generated docs per domain)
+- Artifact (files created/modified)
+- VerifyResult (gates + failures)
+- ERC (execution readiness contract)
+- Bundle (zip handoff)
+- TemplatePack (versioned templates)
+- SourceRef (citations / known inputs)
+
+## Constraints (discipline)
+- No invention: missing info must become UNKNOWN + logged to Open Questions
+- No overwrite: scripts skip if file exists unless explicitly allowed by spec
+- Verify before lock
+- Always print ROSHI_REPORT after every script run
+
+2) The Replit Agent Prompt (copy/paste exactly)
+
+Paste this as your Replit Agent instruction:
+
+You are implementing and executing the Roshi v2 system based on the PDF in this repo:
+docs/inputs/Roshi system start up guide  (1).pdf
+
+GOAL OF THIS RUN (docs-only bootstrap test):
+- Implement the Roshi scripts exactly as described in the PDF quickstart.
+- Use the target outline at docs/inputs/TARGET_OUTLINE.md to populate the required Inputs Pack file:
+  docs/roshi_v2/00_product/PROJECT_OVERVIEW.md
+- Run the pipeline steps: roshi:init, roshi:gen, roshi:seed, roshi:draft (docs-only).
+- Do NOT build app code. This is a system validation run.
+
+HARD RULES (non-negotiable):
+1) No invention: If info is missing, write "UNKNOWN" and log it in Open Questions.
+2) No overwrite: If a file already exists, do not overwrite it. Skip and record it in ROSHI_REPORT skipped list.
+3) Every script run MUST print a ROSHI_REPORT summary including:
+   - files created
+   - files modified
+   - files skipped (no-overwrite)
+   - failures (if any)
+4) All scripts must support:
+   --domain <slug> (optional; if omitted operate on all domains)
+   --dry-run (optional; prints changes without writing)
+   If --domain is provided but not in roshi/domains.json -> FAIL.
+   If --dry-run is set -> no files may be modified.
+5) roshi:draft must FAIL if required input files are missing (Inputs Pack rule).
+
+IMPLEMENTATION TASKS (do in this order):
+A) Add npm scripts to package.json (exact names):
+- roshi:init -> node scripts/roshi-init.mjs
+- roshi:gen  -> node scripts/roshi-generate.mjs
+- roshi:seed -> node scripts/roshi-seed.mjs
+- roshi:draft -> node scripts/roshi-draft.mjs
+- roshi:review -> node scripts/roshi-review.mjs
+- roshi:verify -> node scripts/roshi-verify.mjs
+- roshi:lock -> node scripts/roshi-lock.mjs
+Optionally add: roshi:all -> gen && seed && draft
+
+B) Implement the scripts under /scripts/*.mjs with idempotent behavior.
+   Each script must:
+   - parse args: --domain, --dry-run
+   - enforce the rules above
+   - write outputs only when allowed
+   - print ROSHI_REPORT at the end
+
+C) Implement roshi:init so it creates (if missing) the Roshi folder tree and baseline files:
+- docs/roshi_v2/00_product/
+- docs/roshi_v2/00_registry/
+- docs/roshi_v2/01_templates/
+- docs/roshi_v2/02_domains/
+- docs/roshi_v2/03_workflows/
+- docs/roshi_v2/README.md
+- roshi/domains.json
+- roshi/sources.json
+
+D) Implement roshi:gen to generate per-domain doc packs (shape only) under:
+docs/roshi_v2/02_domains/<slug>/
+Use domains listed in roshi/domains.json.
+If no domains exist yet, create a minimal set suitable for Roshi Studio:
+- platform
+- api
+- web
+- infra
+- security
+(Keep it minimal but consistent.)
+
+E) Implement roshi:seed to seed baseline registry docs if missing:
+- docs/roshi_v2/00_product/RPBS_Product.md
+- docs/roshi_v2/00_product/REBS_Product.md
+- docs/roshi_v2/00_registry/domain-map.md
+- docs/roshi_v2/00_registry/action-vocabulary.md
+- docs/roshi_v2/00_registry/reason-codes.md
+- docs/roshi_v2/00_registry/glossary.md
+
+F) Create docs/roshi_v2/00_product/PROJECT_OVERVIEW.md (required structure).
+Use docs/inputs/TARGET_OUTLINE.md as the source.
+If TARGET_OUTLINE.md doesn’t specify something, write UNKNOWN.
+
+G) Implement roshi:draft (docs-only bootstrap):
+- Before doing anything, confirm all required input files exist:
+  1) docs/roshi_v2/00_product/RPBS_Product.md
+  2) docs/roshi_v2/00_product/REBS_Product.md
+  3) docs/roshi_v2/00_registry/domain-map.md
+  4) docs/roshi_v2/00_registry/action-vocabulary.md
+  5) docs/roshi_v2/00_registry/reason-codes.md
+  6) docs/roshi_v2/00_registry/glossary.md
+  7) docs/roshi_v2/00_product/PROJECT_OVERVIEW.md
+  If any are missing -> FAIL and print ROSHI_REPORT with failed=1 and list missing.
+- Draft should produce initial domain logic candidates docs (BELS-style) inside each domain pack,
+  but must not claim facts not grounded in inputs; use UNKNOWN and Open Questions.
+
+H) Execute the commands in the Shell and show the outputs:
+- npm run roshi:init
+- npm run roshi:gen
+- npm run roshi:seed
+- npm run roshi:draft
+
+DELIVERABLES (what I must be able to inspect after you finish):
+1) scripts/roshi-*.mjs exist and run
+2) docs/roshi_v2 folder tree exists
+3) Required input files exist including PROJECT_OVERVIEW.md
+4) Domain packs exist under docs/roshi_v2/02_domains/<slug>/
+5) Each run printed ROSHI_REPORT with created/modified/skipped/failed counts
+
+3) What you should expect to see after the test
+
+This is your verification checklist:
+
+✅ package.json contains the roshi:* scripts
+
+✅ scripts/roshi-init.mjs, scripts/roshi-generate.mjs, scripts/roshi-seed.mjs, scripts/roshi-draft.mjs exist (plus review/verify/lock stubs at least)
+
+✅ roshi/domains.json + roshi/sources.json exist
+
+✅ docs/roshi_v2/00_product/PROJECT_OVERVIEW.md exists and is filled from your TARGET_OUTLINE (UNKNOWN where needed)
+
+✅ docs/roshi_v2/02_domains/<slug>/... packs exist
+
+✅ Every command prints a ROSHI_REPORT summary showing created/modified/skipped/failed
+
+4) If you want the “zip handoff” in the test (optional)
+
+Don’t add this yet unless you want it, but the next validation step after draft is:
+
+add roshi:package to generate dist/roshi_bundle.zip from docs/roshi_v2/
+
+If you confirm the pipeline works first, we’ll add that as the next step.
