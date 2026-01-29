@@ -1,0 +1,172 @@
+Perfect — your theme system is already in good shape (background/surfaces/borders are premium). You mainly need to lock the Axiom brand accents to match your logo (amber→orange→red) and stop everything from defaulting to a generic orange.
+
+Below is a clean merged update that preserves your existing neutrals + sidebar variables, and only adjusts brand tokens + adds optional gradient helpers.
+
+Drop-in patch (recommended)
+
+Replace just these values in both :root and .dark:
+
+--primary, --ring, --sidebar-primary, --sidebar-ring, --chart-1
+
+(optional) align --destructive to your logo red
+
+And add the Axiom gradient tokens at the end.
+
+/* LIGHT MODE */
+:root {
+  --button-outline: rgba(0,0,0, .10);
+  --badge-outline: rgba(0,0,0, .05);
+
+  --opaque-button-border-intensity: -8;
+
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .08);
+
+  --background: 30 25% 98%;
+  --foreground: 222 47% 11%;
+  --border: 220 13% 91%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --card-border: 220 13% 91%;
+
+  --sidebar: 30 20% 96%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-border: 220 13% 91%;
+
+  /* ✅ Axiom brand accent (amber/gold) */
+  --sidebar-primary: 36 72% 56%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 30 20% 92%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-ring: 36 72% 56%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --popover-border: 220 13% 91%;
+
+  /* ✅ Axiom brand accent (amber/gold) */
+  --primary: 36 72% 56%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 222 47% 11%;
+
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
+
+  --accent: 30 20% 94%;
+  --accent-foreground: 222 47% 11%;
+
+  /* OPTIONAL: align destructive to Axiom red */
+  --destructive: 0 76% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --input: 220 13% 91%;
+  --ring: 36 72% 56%;
+
+  /* Chart colors: make chart-1 match brand */
+  --chart-1: 36 72% 56%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: .5rem;
+
+  /* ✅ Axiom gradient stops (use sparingly) */
+  --axiom-amber: 36 72% 56%;
+  --axiom-orange: 24 72% 56%;
+  --axiom-warm: 12 72% 56%;
+  --axiom-redorange: 10 76% 50%;
+  --axiom-red: 0 76% 50%;
+}
+
+.dark {
+  --button-outline: rgba(255,255,255, .10);
+  --badge-outline: rgba(255,255,255, .05);
+
+  --opaque-button-border-intensity: 9;
+
+  --elevate-1: rgba(255,255,255, .04);
+  --elevate-2: rgba(255,255,255, .09);
+
+  --background: 222 47% 6%;
+  --foreground: 210 40% 98%;
+  --border: 217 33% 17%;
+
+  --card: 222 47% 8%;
+  --card-foreground: 210 40% 98%;
+  --card-border: 217 33% 17%;
+
+  --sidebar: 222 47% 7%;
+  --sidebar-foreground: 210 40% 98%;
+  --sidebar-border: 217 33% 17%;
+
+  /* ✅ Axiom brand accent (amber/gold) */
+  --sidebar-primary: 36 72% 56%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217 33% 14%;
+  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-ring: 36 72% 56%;
+
+  --popover: 222 47% 8%;
+  --popover-foreground: 210 40% 98%;
+  --popover-border: 217 33% 17%;
+
+  /* ✅ Axiom brand accent (amber/gold) */
+  --primary: 36 72% 56%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 217 33% 14%;
+  --accent-foreground: 210 40% 98%;
+
+  /* OPTIONAL: align destructive to Axiom red */
+  --destructive: 0 76% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --input: 217 33% 22%;
+  --ring: 36 72% 56%;
+
+  --chart-1: 36 72% 56%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 50%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
+
+  /* ✅ Axiom gradient stops (use sparingly) */
+  --axiom-amber: 36 72% 56%;
+  --axiom-orange: 24 72% 56%;
+  --axiom-warm: 12 72% 56%;
+  --axiom-redorange: 10 76% 50%;
+  --axiom-red: 0 76% 50%;
+}
+
+/* Optional helper utility (put anywhere global) */
+.bg-axiom-gradient {
+  background-image: linear-gradient(
+    90deg,
+    hsl(var(--axiom-amber)) 0%,
+    hsl(var(--axiom-orange)) 45%,
+    hsl(var(--axiom-redorange)) 100%
+  );
+}
+
+Why this works
+
+Your neutrals stay premium and unchanged.
+
+Your primary becomes amber/gold, which matches the logo typography and feels “luxury.”
+
+You still get your flame energy via the gradient helper, used only where appropriate.
+
+Next upgrade step for UI (so it looks like a real product)

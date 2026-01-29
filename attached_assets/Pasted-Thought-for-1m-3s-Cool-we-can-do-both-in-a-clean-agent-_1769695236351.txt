@@ -1,0 +1,306 @@
+Thought for 1m 3s
+
+Cool — we can do both in a clean, “agent-proof” way:
+
+UI overhaul execution plan (Pack 1 + Pack 2) aligned to your current repo
+
+Brand token lock-in based on your logo palette (pulled from the images)
+
+1) Web app upgrade plan (Pack 1 + Pack 2)
+Target outcome
+
+Premium AppShell (sidebar + topbar) across all pages
+
+Consistent design kit components
+
+Create wizard becomes a real product flow: Stepper + Review JSON + Draft save/load
+
+Loading/empty/error states standardized everywhere
+
+Files to add (client)
+
+Create these new files:
+
+client/src/app/
+  AppShell.tsx
+  SidebarNav.tsx
+  TopBar.tsx
+
+client/src/components/kit/
+  GlassCard.tsx
+  PageHeader.tsx
+  StatusBadge.tsx
+  DataTable.tsx
+  CodeBlock.tsx
+  CopyButton.tsx
+  EmptyState.tsx
+  Skeletons.tsx
+  Stepper.tsx
+  AssemblyTimeline.tsx
+
+client/src/lib/format/
+  dates.ts
+  bytes.ts
+  status.ts
+
+Files to refactor (client)
+A) client/src/App.tsx
+
+Wrap routes in AppShell
+
+Routes should be:
+
+/create → create wizard
+
+/assemblies → list
+
+/assemblies/:assemblyId → detail
+
+/settings → new
+
+/docs → existing docs page (restyled)
+
+Add redirects:
+
+/ → /create
+
+/runs → /assemblies
+
+/runs/:id → /assemblies/:id
+
+B) client/src/pages/create.tsx (was home.tsx)
+
+Refactor to 5-step wizard:
+
+Basics (+ uploads)
+
+Features
+
+Users
+
+Tech
+
+Review (exact payload JSON preview)
+
+Add:
+
+Stepper at top
+
+Step gating validation
+
+“Assemble” → calls create assembly API → route to detail
+
+Draft Save/Load (localStorage)
+
+autosave on every change
+
+“Save draft” / “Clear draft” buttons
+
+C) client/src/pages/assemblies.tsx (was runs.tsx)
+
+Upgrade to real dashboard:
+
+PageHeader + “New Assembly” button
+
+Search input + basic filters (state/date)
+
+Table with StatusBadge + open questions count
+
+Skeleton rows + EmptyState
+
+D) Assembly detail page (whatever you currently use for /runs/:id)
+
+Refactor into tabs:
+
+Overview: timeline + logs tail + metadata
+
+Kit: download + copy signed URL + manifest viewer + prompt viewer
+
+Deliveries: list + create + retry
+
+Attachments: uploads list + extracted preview + warnings
+
+If you don’t already have a detail page file: create
+
+client/src/pages/assembly-detail.tsx
+
+E) Add client/src/pages/settings.tsx
+
+Panels (even if backend isn’t fully wired yet):
+
+API Keys UI (stub ok)
+
+Webhook test generator (client-side)
+
+Git presets (localStorage ok)
+
+F) Restyle docs page
+
+client/src/pages/api-docs.tsx:
+
+show Assembler API
+
+use CodeBlock + CopyButton for curl examples
+
+Pack 1 “states contract” (must implement everywhere)
+
+For every page and major tab:
+
+Loading → Skeletons
+
+Empty → EmptyState + CTA
+
+Error → error banner with reason code + retry
+
+Success → normal content
+
+Pack 2 wizard upgrades checklist
+
+✅ Review step shows exact JSON payload
+
+✅ “Save Draft / Load Draft / Clear Draft”
+
+✅ Presets (optional but fast win): “Starter”, “API”, “Full Web App”
+
+✅ Uploads show extraction warnings (LOW_TEXT_YIELD / TRUNCATED)
+
+Definition of Done (for this upgrade)
+
+No route renders without AppShell
+
+Create wizard review step exists + is correct payload
+
+Draft persistence survives refresh
+
+Assemblies list usable + has skeleton + empty state
+
+Assembly detail has tabs + copy buttons + kit download
+
+Theme toggle still works (dark-first polished)
+
+2) Brand token lock-in (based on your logo)
+
+From your logo images, the dominant brand colors cluster around:
+
+Amber/Gold: #E0A040
+
+Orange: #E08040
+
+Warm Orange: #E06040
+
+Red-Orange: #E04020
+
+Red: #E02020
+
+That’s a premium “warm-metal + flame gradient” identity. The key is use the gradient sparingly.
+
+Token strategy
+
+Primary accent (solid): Amber #E0A040
+
+Brand gradient: Amber → Orange → Red-Orange
+
+Dark neutrals: deep charcoal layers (not pure black)
+
+Light theme: clean whites with warm accents
+
+Drop-in CSS variables (shadcn-style, HSL)
+
+Put this in your global CSS (where you set :root and .dark).
+You can paste this into client/src/index.css under your current variables.
+
+:root {
+  /* neutrals (light) */
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+
+  --card: 210 40% 98%;
+  --card-foreground: 222 47% 11%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+
+  /* brand accent (light) */
+  --primary: 36 72% 56%;          /* #E0A040 */
+  --primary-foreground: 222 47% 11%;
+  --ring: 36 72% 56%;
+
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+
+  /* status */
+  --destructive: 0 76% 50%;       /* #E02020 */
+  --destructive-foreground: 0 0% 100%;
+}
+
+.dark {
+  /* neutrals (dark-first) */
+  --background: 222 47% 7%;       /* deep charcoal */
+  --foreground: 210 40% 98%;
+
+  --card: 222 35% 11%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 222 35% 11%;
+  --popover-foreground: 210 40% 98%;
+
+  --muted: 222 25% 14%;
+  --muted-foreground: 215 20% 70%;
+
+  --border: 222 20% 20%;
+  --input: 222 20% 20%;
+
+  /* brand accent (dark) */
+  --primary: 36 72% 56%;          /* #E0A040 */
+  --primary-foreground: 222 47% 7%;
+  --ring: 36 72% 56%;
+
+  --secondary: 222 25% 14%;
+  --secondary-foreground: 210 40% 98%;
+
+  --destructive: 0 76% 50%;       /* #E02020 */
+  --destructive-foreground: 0 0% 100%;
+}
+
+/* optional brand gradient helpers */
+:root {
+  --axiom-amber: 36 72% 56%;      /* #E0A040 */
+  --axiom-orange: 24 72% 56%;     /* #E08040 */
+  --axiom-warm: 12 72% 56%;       /* #E06040 */
+  --axiom-redorange: 10 76% 50%;  /* #E04020 */
+  --axiom-red: 0 76% 50%;         /* #E02020 */
+}
+
+How to use the gradient (rules)
+
+Use gradient only for:
+
+Primary CTA button background
+
+Tiny accent lines/dividers
+
+Small badges (optional)
+Avoid gradient for:
+
+Full page backgrounds
+
+Long text sections
+
+Tables
+
+You can implement as a utility:
+
+.bg-axiom-gradient {
+  background-image: linear-gradient(
+    90deg,
+    hsl(var(--axiom-amber)) 0%,
+    hsl(var(--axiom-orange)) 45%,
+    hsl(var(--axiom-redorange)) 100%
+  );
+}
