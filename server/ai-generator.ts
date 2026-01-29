@@ -96,6 +96,39 @@ function buildProjectPackageSection(options: GenerateDocsOptions): string {
   return section;
 }
 
+function buildUploadedDocsSection(options: GenerateDocsOptions): string {
+  const uploadedContext = options.structuredInput?.uploadedContext;
+  if (!uploadedContext) return "";
+  
+  const fileCountMatch = uploadedContext.match(/\*\*Files processed:\*\* (\d+)/);
+  const charsMatch = uploadedContext.match(/\*\*Total characters:\*\* ([\d,]+)/);
+  
+  if (!fileCountMatch) return "";
+  
+  const fileCount = parseInt(fileCountMatch[1], 10);
+  const totalChars = charsMatch ? charsMatch[1] : "UNKNOWN";
+  
+  let section = "\n## Uploaded Reference Documents\n\n";
+  section += `The user provided ${fileCount} supplemental document${fileCount !== 1 ? "s" : ""} for context.\n\n`;
+  section += `- **Files Processed**: ${fileCount}\n`;
+  section += `- **Total Characters Extracted**: ${totalChars}\n`;
+  section += `- **Reference Path**: \`docs/assembler_v1/inputs/USER_UPLOADS_COMPILED.md\`\n`;
+  
+  const docIdMatches = uploadedContext.match(/^## (doc_\S+)/gm);
+  if (docIdMatches && docIdMatches.length > 0) {
+    section += "\n### Included Documents\n";
+    for (const match of docIdMatches.slice(0, 10)) {
+      const docId = match.replace("## ", "").trim();
+      section += `- \`${docId}\`\n`;
+    }
+    if (docIdMatches.length > 10) {
+      section += `- _...and ${docIdMatches.length - 10} more_\n`;
+    }
+  }
+  
+  return section;
+}
+
 function generateModeArtifacts(options: GenerateDocsOptions): Record<string, string> {
   const ctx = options.pipelineContext;
   if (!ctx) return {};
@@ -768,6 +801,11 @@ export async function generateAllDocs(options: GenerateDocsOptions): Promise<Gen
   let projectOverview = results[0].result;
   let rpbs = results[1].result;
   let rebs = results[2].result;
+  
+  const uploadedDocsSection = buildUploadedDocsSection(options);
+  if (uploadedDocsSection) {
+    projectOverview += uploadedDocsSection;
+  }
   
   if (options.pipelineContext) {
     console.log(`[AI] Applying mode overlays for mode=${options.pipelineContext.mode}`);
