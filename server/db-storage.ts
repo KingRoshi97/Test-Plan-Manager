@@ -1,10 +1,11 @@
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, isNull } from "drizzle-orm";
 import { db } from "./db";
 import { 
-  users, assemblies, deliveries,
+  users, assemblies, deliveries, projectPackages,
   type User, type InsertUser, 
   type Assembly, type InsertAssembly,
-  type Delivery, type InsertDelivery
+  type Delivery, type InsertDelivery,
+  type ProjectPackage, type InsertProjectPackage
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 import { randomUUID } from "crypto";
@@ -159,5 +160,51 @@ export class DbStorage implements IStorage {
 
   async deleteHandoff(id: string): Promise<boolean> {
     return this.deleteDelivery(id);
+  }
+
+  async getProjectPackage(id: string): Promise<ProjectPackage | undefined> {
+    const result = await db.select().from(projectPackages).where(eq(projectPackages.id, id));
+    return result[0];
+  }
+
+  async getProjectPackagesByAssemblyId(assemblyId: string): Promise<ProjectPackage[]> {
+    return db.select().from(projectPackages)
+      .where(eq(projectPackages.assemblyId, assemblyId))
+      .orderBy(desc(projectPackages.createdAt));
+  }
+
+  async createProjectPackage(insertPkg: InsertProjectPackage): Promise<ProjectPackage> {
+    const id = `pkg_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+    const result = await db.insert(projectPackages).values({
+      id,
+      assemblyId: null,
+      filename: insertPkg.filename,
+      mimeType: insertPkg.mimeType,
+      sizeBytes: insertPkg.sizeBytes,
+      sha256: insertPkg.sha256,
+      objectKey: insertPkg.objectKey,
+      unpackedObjectKey: null,
+      scanState: "queued",
+      indexState: "queued",
+      summaryJson: null,
+      warningsJson: null,
+      errorCode: null,
+      errorMessage: null,
+      correlationId: insertPkg.correlationId,
+    }).returning();
+    return result[0];
+  }
+
+  async updateProjectPackage(id: string, updates: Partial<ProjectPackage>): Promise<ProjectPackage | undefined> {
+    const result = await db.update(projectPackages)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(projectPackages.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteProjectPackage(id: string): Promise<boolean> {
+    const result = await db.delete(projectPackages).where(eq(projectPackages.id, id)).returning();
+    return result.length > 0;
   }
 }

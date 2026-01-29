@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { createAssemblyRequestSchema, createDeliveryRequestSchema, type Kit, type AssemblyInput, type CreateAssemblyRequest, type UploadedFile } from "@shared/schema";
+import { createAssemblyRequestSchema, createDeliveryRequestSchema, createUpgradeRequestSchema, type Kit, type AssemblyInput, type CreateAssemblyRequest, type UploadedFile, type UpgradeArtifact } from "@shared/schema";
 import { generateSignedUrl, validateSignature, computeSha256 } from "./signing";
 import { processDelivery } from "./adapters";
 import { spawn } from "child_process";
@@ -8,6 +8,12 @@ import path from "path";
 import fs from "fs";
 import { createWorkspace, populateWorkspaceWithAI, getWorkspacePath, type WorkspaceConfig } from "./workspace-manager";
 import { upload, processUploadedFiles, combineExtractedText } from "./file-upload";
+import { registerHandler, enqueue } from "./jobs/queue";
+import { scanAndIndexProjectPackage } from "./jobs/scan-index-package";
+import { writeFile, writeText, readText, getProjectPackagePath, getKitUpgradePath, fileExists as storageFileExists } from "./file-storage";
+import crypto from "crypto";
+
+registerHandler("scanAndIndexProjectPackage", scanAndIndexProjectPackage);
 
 function getBaseUrl(req: Request): string {
   const protocol = req.protocol;
@@ -737,6 +743,329 @@ export function registerV1Routes(app: Express) {
     
     res.json({ ok: processed.success, handoffId: delivery.id });
   });
+
+  // === PROJECT PACKAGES ===
+  
+  const projectZipUpload = upload.single("file");
+  const MAX_ZIP_SIZE = 100 * 1024 * 1024; // 100MB
+
+  app.post("/v1/project-packages", (req: Request, res: Response, next) => {
+    projectZipUpload(req, res, (err: any) => {
+      if (err) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return apiError(req, res, 400, "UPLOAD_TOO_LARGE", "ZIP file exceeds size limit");
+        }
+        return apiError(req, res, 400, "UPLOAD_ERROR", err.message || "Upload failed");
+      }
+      next();
+    });
+  }, async (req: Request, res: Response) => {
+    try {
+      const file = req.file;
+      
+      if (!file) {
+        return apiError(req, res, 400, "NO_FILE", "No file uploaded");
+      }
+      
+      const isZip = file.mimetype === "application/zip" || 
+                    file.mimetype === "application/x-zip-compressed" ||
+                    file.originalname.toLowerCase().endsWith(".zip");
+      
+      if (!isZip) {
+        return apiError(req, res, 400, "INVALID_FILE_TYPE", "Only ZIP files are accepted");
+      }
+      
+      if (file.size > MAX_ZIP_SIZE) {
+        return apiError(req, res, 400, "UPLOAD_TOO_LARGE", `ZIP file exceeds ${MAX_ZIP_SIZE / 1024 / 1024}MB limit`);
+      }
+      
+      const sha256 = crypto.createHash("sha256").update(file.buffer).digest("hex");
+      const packageId = `pkg_${crypto.randomUUID().replace(/-/g, "").substring(0, 12)}`;
+      const objectKey = getProjectPackagePath(packageId, "original.zip");
+      
+      await writeFile(objectKey, file.buffer);
+      
+      const pkg = await storage.createProjectPackage({
+        filename: file.originalname,
+        mimeType: file.mimetype || "application/zip",
+        sizeBytes: file.size,
+        sha256,
+        objectKey,
+        correlationId: req.correlationId || "",
+      });
+      
+      enqueue("scanAndIndexProjectPackage", { projectPackageId: pkg.id });
+      
+      res.status(201).json({
+        projectPackageId: pkg.id,
+        filename: pkg.filename,
+        sizeBytes: pkg.sizeBytes,
+        sha256: pkg.sha256,
+        scanState: pkg.scanState,
+        indexState: pkg.indexState,
+        warnings: [],
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Project package upload error:", error);
+      return apiError(req, res, 500, "UPLOAD_ERROR", error instanceof Error ? error.message : "Upload failed");
+    }
+  });
+
+  app.get("/v1/project-packages/:projectPackageId", async (req: Request<{ projectPackageId: string }>, res: Response) => {
+    const pkg = await storage.getProjectPackage(req.params.projectPackageId);
+    if (!pkg) {
+      return apiError(req, res, 404, "NOT_FOUND", "Project package not found");
+    }
+    
+    res.json({
+      projectPackage: {
+        id: pkg.id,
+        filename: pkg.filename,
+        sizeBytes: pkg.sizeBytes,
+        sha256: pkg.sha256,
+        scanState: pkg.scanState,
+        indexState: pkg.indexState,
+        summary: pkg.summaryJson,
+        warnings: pkg.warningsJson || [],
+        error: pkg.errorCode ? { code: pkg.errorCode, message: pkg.errorMessage } : null,
+        assemblyId: pkg.assemblyId,
+        createdAt: pkg.createdAt.toISOString(),
+        updatedAt: pkg.updatedAt.toISOString(),
+      },
+      correlationId: req.correlationId,
+    });
+  });
+
+  app.post("/v1/assemblies/:assemblyId/project-packages/:projectPackageId/attach", 
+    async (req: Request<{ assemblyId: string; projectPackageId: string }>, res: Response) => {
+    const assembly = await storage.getAssembly(req.params.assemblyId);
+    if (!assembly) {
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
+    }
+    
+    const pkg = await storage.getProjectPackage(req.params.projectPackageId);
+    if (!pkg) {
+      return apiError(req, res, 404, "NOT_FOUND", "Project package not found");
+    }
+    
+    if (pkg.assemblyId && pkg.assemblyId !== assembly.id) {
+      return apiError(req, res, 409, "ALREADY_ATTACHED", "Package already attached to another assembly");
+    }
+    
+    await storage.updateProjectPackage(pkg.id, { assemblyId: assembly.id });
+    
+    res.json({
+      ok: true,
+      assemblyId: assembly.id,
+      projectPackageId: pkg.id,
+      correlationId: req.correlationId,
+    });
+  });
+
+  app.post("/v1/assemblies/:assemblyId/upgrade", async (req: Request<{ assemblyId: string }>, res: Response) => {
+    const assembly = await storage.getAssembly(req.params.assemblyId);
+    if (!assembly) {
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
+    }
+    
+    const parseResult = createUpgradeRequestSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return apiError(req, res, 400, "UPGRADE_REQUEST_INVALID", "Invalid upgrade request", 
+        { errors: parseResult.error.errors });
+    }
+    
+    const { projectPackageId, request, output } = parseResult.data;
+    const mode = output?.mode || "patch_only";
+    
+    const pkg = await storage.getProjectPackage(projectPackageId);
+    if (!pkg) {
+      return apiError(req, res, 404, "NOT_FOUND", "Project package not found");
+    }
+    
+    if (pkg.indexState !== "indexed") {
+      return apiError(req, res, 409, "PROJECT_NOT_INDEXED", "Project package has not been indexed yet");
+    }
+    
+    if (!pkg.assemblyId) {
+      await storage.updateProjectPackage(pkg.id, { assemblyId: assembly.id });
+    }
+    
+    const artifacts: UpgradeArtifact[] = [];
+    const kitId = assembly.id;
+    
+    try {
+      if (pkg.summaryJson) {
+        const summaryKey = getKitUpgradePath(kitId, "PROJECT_SUMMARY.json");
+        const summaryContent = JSON.stringify(pkg.summaryJson, null, 2);
+        await writeText(summaryKey, summaryContent);
+        artifacts.push({
+          type: "project_summary",
+          objectKey: summaryKey,
+          sha256: crypto.createHash("sha256").update(summaryContent).digest("hex"),
+          sizeBytes: Buffer.byteLength(summaryContent),
+        });
+      }
+      
+      if (pkg.unpackedObjectKey) {
+        try {
+          const treeContent = await readText(`${pkg.unpackedObjectKey}/project_tree.txt`);
+          const treeKey = getKitUpgradePath(kitId, "PROJECT_TREE.txt");
+          await writeText(treeKey, treeContent);
+          artifacts.push({
+            type: "project_tree",
+            objectKey: treeKey,
+            sha256: crypto.createHash("sha256").update(treeContent).digest("hex"),
+            sizeBytes: Buffer.byteLength(treeContent),
+          });
+        } catch {}
+        
+        try {
+          const depContent = await readText(`${pkg.unpackedObjectKey}/dependency_snapshot.json`);
+          const depKey = getKitUpgradePath(kitId, "DEPENDENCY_SNAPSHOT.json");
+          await writeText(depKey, depContent);
+          artifacts.push({
+            type: "dep_snapshot",
+            objectKey: depKey,
+            sha256: crypto.createHash("sha256").update(depContent).digest("hex"),
+            sizeBytes: Buffer.byteLength(depContent),
+          });
+        } catch {}
+      }
+      
+      const patchPlan = generatePatchPlan(request, pkg.summaryJson);
+      const planKey = getKitUpgradePath(kitId, "PATCH_PLAN.md");
+      await writeText(planKey, patchPlan);
+      artifacts.push({
+        type: "upgrade_plan",
+        objectKey: planKey,
+        sha256: crypto.createHash("sha256").update(patchPlan).digest("hex"),
+        sizeBytes: Buffer.byteLength(patchPlan),
+      });
+      
+      const diffPlaceholder = "# Patch Diff\n\n(Patch diff will be generated in Phase 2 when auto-apply is implemented)\n";
+      const diffKey = getKitUpgradePath(kitId, "patch.diff");
+      await writeText(diffKey, diffPlaceholder);
+      artifacts.push({
+        type: "upgrade_diff",
+        objectKey: diffKey,
+        sha256: crypto.createHash("sha256").update(diffPlaceholder).digest("hex"),
+        sizeBytes: Buffer.byteLength(diffPlaceholder),
+      });
+      
+      res.json({
+        assemblyId: assembly.id,
+        upgrade: {
+          mode,
+          projectPackageId: pkg.id,
+          artifacts,
+        },
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Upgrade generation error:", error);
+      return apiError(req, res, 500, "UPGRADE_GENERATION_FAILED", 
+        error instanceof Error ? error.message : "Failed to generate upgrade artifacts");
+    }
+  });
+
+  app.get("/v1/assemblies/:assemblyId/upgrade", async (req: Request<{ assemblyId: string }>, res: Response) => {
+    const assembly = await storage.getAssembly(req.params.assemblyId);
+    if (!assembly) {
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
+    }
+    
+    const packages = await storage.getProjectPackagesByAssemblyId(assembly.id);
+    const kitId = assembly.id;
+    const baseUrl = getBaseUrl(req);
+    
+    const artifacts: Array<{ type: string; downloadUrl: string; sha256?: string }> = [];
+    
+    const upgradeFiles = [
+      { type: "upgrade_plan", filename: "PATCH_PLAN.md" },
+      { type: "upgrade_diff", filename: "patch.diff" },
+      { type: "project_summary", filename: "PROJECT_SUMMARY.json" },
+      { type: "project_tree", filename: "PROJECT_TREE.txt" },
+      { type: "dep_snapshot", filename: "DEPENDENCY_SNAPSHOT.json" },
+    ];
+    
+    for (const file of upgradeFiles) {
+      const objectKey = getKitUpgradePath(kitId, file.filename);
+      if (await storageFileExists(objectKey)) {
+        const signedUrl = generateSignedUrl(`${baseUrl}/v1/assemblies/${assembly.id}/upgrade/${file.filename}`, 3600);
+        artifacts.push({
+          type: file.type,
+          downloadUrl: signedUrl,
+        });
+      }
+    }
+    
+    res.json({
+      assemblyId: assembly.id,
+      projectPackages: packages.map(p => ({
+        id: p.id,
+        filename: p.filename,
+        indexState: p.indexState,
+      })),
+      artifacts,
+      correlationId: req.correlationId,
+    });
+  });
+}
+
+function generatePatchPlan(request: { overview: string; goals?: string[]; constraints?: string[]; doNotTouch?: string[] }, summary: any): string {
+  let plan = `# Upgrade Plan\n\n`;
+  plan += `## Overview\n\n${request.overview}\n\n`;
+  
+  if (request.goals && request.goals.length > 0) {
+    plan += `## Goals\n\n`;
+    request.goals.forEach((goal, i) => {
+      plan += `${i + 1}. ${goal}\n`;
+    });
+    plan += `\n`;
+  }
+  
+  if (request.constraints && request.constraints.length > 0) {
+    plan += `## Constraints\n\n`;
+    request.constraints.forEach((c, i) => {
+      plan += `- ${c}\n`;
+    });
+    plan += `\n`;
+  }
+  
+  if (request.doNotTouch && request.doNotTouch.length > 0) {
+    plan += `## Do Not Touch\n\n`;
+    request.doNotTouch.forEach((p) => {
+      plan += `- \`${p}\`\n`;
+    });
+    plan += `\n`;
+  }
+  
+  if (summary) {
+    plan += `## Project Analysis\n\n`;
+    if (summary.framework) plan += `- **Framework**: ${summary.framework}\n`;
+    if (summary.packageManager) plan += `- **Package Manager**: ${summary.packageManager}\n`;
+    if (summary.hasTypeScript) plan += `- **TypeScript**: Yes\n`;
+    if (summary.hasEslint) plan += `- **ESLint**: Yes\n`;
+    if (summary.hasPrettier) plan += `- **Prettier**: Yes\n`;
+    if (summary.fileCount) plan += `- **File Count**: ${summary.fileCount}\n`;
+    if (summary.entryPoints && summary.entryPoints.length > 0) {
+      plan += `- **Entry Points**: ${summary.entryPoints.join(", ")}\n`;
+    }
+    plan += `\n`;
+  }
+  
+  plan += `## Implementation Steps\n\n`;
+  plan += `1. Review the PROJECT_SUMMARY.json and PROJECT_TREE.txt to understand the codebase structure\n`;
+  plan += `2. Identify files that need modification based on the goals above\n`;
+  plan += `3. Create patches for each file following the constraints\n`;
+  plan += `4. Apply patches and run validation (build, lint, test if available)\n`;
+  plan += `5. Generate the final patch.diff or upgraded_project.zip\n\n`;
+  
+  plan += `---\n\n`;
+  plan += `*Generated by Axiom Assembler*\n`;
+  
+  return plan;
 }
 
 const stepProgress: Record<string, number> = {

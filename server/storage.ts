@@ -1,7 +1,8 @@
 import { 
   type User, type InsertUser, 
   type Assembly, type InsertAssembly, type AssemblyState, type AssemblyStep, type Kit, type AssemblyProgress,
-  type Delivery, type InsertDelivery, type DeliveryState, type DeliveryAttempt
+  type Delivery, type InsertDelivery, type DeliveryState, type DeliveryAttempt,
+  type ProjectPackage, type InsertProjectPackage, type ProjectSummary, type ProjectWarning
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -21,6 +22,12 @@ export interface IStorage {
   createDelivery(delivery: InsertDelivery): Promise<Delivery>;
   updateDelivery(id: string, updates: Partial<Delivery>): Promise<Delivery | undefined>;
   deleteDelivery(id: string): Promise<boolean>;
+  
+  getProjectPackage(id: string): Promise<ProjectPackage | undefined>;
+  getProjectPackagesByAssemblyId(assemblyId: string): Promise<ProjectPackage[]>;
+  createProjectPackage(pkg: InsertProjectPackage): Promise<ProjectPackage>;
+  updateProjectPackage(id: string, updates: Partial<ProjectPackage>): Promise<ProjectPackage | undefined>;
+  deleteProjectPackage(id: string): Promise<boolean>;
 
   // Backward compatibility aliases
   getRun(id: string): Promise<Assembly | undefined>;
@@ -40,11 +47,13 @@ export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private assemblies: Map<string, Assembly>;
   private deliveries: Map<string, Delivery>;
+  private projectPackages: Map<string, ProjectPackage>;
 
   constructor() {
     this.users = new Map();
     this.assemblies = new Map();
     this.deliveries = new Map();
+    this.projectPackages = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -170,6 +179,59 @@ export class MemStorage implements IStorage {
 
   async deleteDelivery(id: string): Promise<boolean> {
     return this.deliveries.delete(id);
+  }
+
+  async getProjectPackage(id: string): Promise<ProjectPackage | undefined> {
+    return this.projectPackages.get(id);
+  }
+
+  async getProjectPackagesByAssemblyId(assemblyId: string): Promise<ProjectPackage[]> {
+    return Array.from(this.projectPackages.values())
+      .filter(p => p.assemblyId === assemblyId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async createProjectPackage(insertPkg: InsertProjectPackage): Promise<ProjectPackage> {
+    const id = `pkg_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+    const now = new Date();
+    const pkg: ProjectPackage = {
+      id,
+      assemblyId: null,
+      filename: insertPkg.filename,
+      mimeType: insertPkg.mimeType,
+      sizeBytes: insertPkg.sizeBytes,
+      sha256: insertPkg.sha256,
+      objectKey: insertPkg.objectKey,
+      unpackedObjectKey: null,
+      scanState: "queued",
+      indexState: "queued",
+      summaryJson: null,
+      warningsJson: null,
+      errorCode: null,
+      errorMessage: null,
+      correlationId: insertPkg.correlationId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.projectPackages.set(id, pkg);
+    return pkg;
+  }
+
+  async updateProjectPackage(id: string, updates: Partial<ProjectPackage>): Promise<ProjectPackage | undefined> {
+    const pkg = this.projectPackages.get(id);
+    if (!pkg) return undefined;
+    
+    const updatedPkg: ProjectPackage = {
+      ...pkg,
+      ...updates,
+      updatedAt: new Date(),
+    };
+    this.projectPackages.set(id, updatedPkg);
+    return updatedPkg;
+  }
+
+  async deleteProjectPackage(id: string): Promise<boolean> {
+    return this.projectPackages.delete(id);
   }
 
   // Backward compatibility aliases
