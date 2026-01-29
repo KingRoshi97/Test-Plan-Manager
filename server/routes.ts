@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAssemblySchema, type Kit } from "@shared/schema";
+import { insertAssemblySchema, type Kit, type AssemblyCategory, type AssemblyMode } from "@shared/schema";
 import { computeSha256 } from "./signing";
 import { registerV1Routes } from "./v1-routes";
 import { spawn } from "child_process";
@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 import { createWorkspace, populateWorkspaceWithAI, getWorkspacePath, type WorkspaceConfig } from "./workspace-manager";
 import { processDelivery } from "./adapters";
+import { getPresets, getPresetById, getPresetsByCategory, getPresetsByCategoryAndMode, categoryLabels, modeLabels } from "./presets";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -16,6 +17,37 @@ export async function registerRoutes(
 ): Promise<Server> {
   
   registerV1Routes(app);
+  
+  // === Presets API ===
+  app.get("/api/presets", async (req: Request, res: Response) => {
+    const { category, mode } = req.query;
+    
+    let presets;
+    if (category && mode) {
+      presets = getPresetsByCategoryAndMode(category as AssemblyCategory, mode as AssemblyMode);
+    } else if (category) {
+      presets = getPresetsByCategory(category as AssemblyCategory);
+    } else {
+      presets = getPresets();
+    }
+    
+    res.json({
+      presets,
+      categories: categoryLabels,
+      modes: modeLabels
+    });
+  });
+  
+  app.get("/api/presets/:id", async (req: Request<{ id: string }>, res: Response) => {
+    const preset = getPresetById(req.params.id);
+    if (!preset) {
+      return res.status(404).json({ 
+        error: "Preset not found",
+        code: "NOT_FOUND"
+      });
+    }
+    res.json(preset);
+  });
   
   // === Legacy API routes with backward compatibility ===
   
