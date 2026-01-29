@@ -13,6 +13,8 @@ export async function scanAndIndexProjectPackage(payload: Record<string, unknown
     return;
   }
 
+  let extractedDir: string | null = null;
+
   try {
     await storage.updateProjectPackage(projectPackageId, {
       scanState: "scanning",
@@ -21,6 +23,8 @@ export async function scanAndIndexProjectPackage(payload: Record<string, unknown
     const zipBuffer = await readFile(pkg.objectKey);
 
     const unzipResult = await safeUnzipBuffer(zipBuffer);
+    extractedDir = unzipResult.extractedDir;
+    
     const allWarnings: ProjectWarning[] = unzipResult.warnings.map(w => ({
       code: w.code,
       message: w.message,
@@ -33,7 +37,7 @@ export async function scanAndIndexProjectPackage(payload: Record<string, unknown
       warningsJson: allWarnings,
     });
 
-    const indexResult = await indexProject(unzipResult.extractedDir);
+    const indexResult = await indexProject(extractedDir);
 
     allWarnings.push(...indexResult.warnings);
 
@@ -58,12 +62,21 @@ export async function scanAndIndexProjectPackage(payload: Record<string, unknown
       unpackedObjectKey: unpackedKey,
     });
 
-    await cleanupExtractedDir(unzipResult.extractedDir);
+    await cleanupExtractedDir(extractedDir);
+    extractedDir = null;
 
     console.log(`[ScanIndex] Successfully processed package: ${projectPackageId}`);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`[ScanIndex] Failed to process package: ${projectPackageId}`, error);
+
+    if (extractedDir) {
+      try {
+        await cleanupExtractedDir(extractedDir);
+      } catch (cleanupErr) {
+        console.error(`[ScanIndex] Failed to cleanup extracted dir: ${extractedDir}`, cleanupErr);
+      }
+    }
 
     await storage.updateProjectPackage(projectPackageId, {
       scanState: "failed",
