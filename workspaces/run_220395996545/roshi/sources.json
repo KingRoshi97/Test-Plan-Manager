@@ -1,0 +1,22 @@
+{
+  "roshi_root": "docs/roshi_v2",
+  "sources": [
+    "00_product/RPBS_Product.md",
+    "00_product/REBS_Product.md",
+    "00_product/PROJECT_OVERVIEW.md",
+    "00_registry/domain-map.md",
+    "00_registry/reason-codes.md",
+    "00_registry/action-vocabulary.md",
+    "00_registry/glossary.md"
+  ],
+  "domain_notes": {
+    "enabled": false,
+    "dir": "notes/domains",
+    "pattern": "{slug}.md"
+  },
+  "sourceref": {
+    "required": true,
+    "format": "HeadingPath",
+    "example": "RPBS > Hard Rules Catalog > Feature"
+  }
+}

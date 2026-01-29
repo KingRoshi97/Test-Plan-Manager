@@ -15,11 +15,21 @@ export interface GeneratedDocs {
   glossary: string;
 }
 
+export interface StructuredInput {
+  projectName: string;
+  description: string;
+  features?: { name: string; description: string; priority: "P0" | "P1" | "P2" }[];
+  users?: { type: string; goal: string }[];
+  techStack?: { frontend?: string; backend?: string; database?: string };
+  preset?: string;
+}
+
 export interface GenerateDocsOptions {
   idea: string;
   projectName?: string;
   context?: string;
   domains?: string[];
+  structuredInput?: StructuredInput;
 }
 
 const SYSTEM_PROMPT = `You are Roshi, a documentation architect that generates structured product and engineering documentation for software projects.
@@ -40,14 +50,47 @@ Rules:
 5. Reference sources when extracting from provided context
 6. Use markdown formatting with clear headings`;
 
+function buildStructuredContext(options: GenerateDocsOptions): string {
+  const si = options.structuredInput;
+  if (!si) return "";
+  
+  let ctx = "";
+  
+  if (si.features?.length) {
+    ctx += "\n## Provided Features\n";
+    for (const f of si.features) {
+      ctx += `- [${f.priority}] ${f.name}: ${f.description}\n`;
+    }
+  }
+  
+  if (si.users?.length) {
+    ctx += "\n## Provided User Types\n";
+    for (const u of si.users) {
+      ctx += `- ${u.type}: ${u.goal}\n`;
+    }
+  }
+  
+  if (si.techStack) {
+    ctx += "\n## Tech Stack Preferences\n";
+    if (si.techStack.frontend) ctx += `- Frontend: ${si.techStack.frontend}\n`;
+    if (si.techStack.backend) ctx += `- Backend: ${si.techStack.backend}\n`;
+    if (si.techStack.database) ctx += `- Database: ${si.techStack.database}\n`;
+  }
+  
+  return ctx;
+}
+
 export async function generateProjectOverview(options: GenerateDocsOptions): Promise<string> {
-  const { idea, projectName, context } = options;
+  const { idea, projectName, context, structuredInput } = options;
+  
+  const structuredCtx = buildStructuredContext(options);
   
   const prompt = `Generate a PROJECT_OVERVIEW.md for this project:
 
-Project Name: ${projectName || "Untitled Project"}
-Idea: ${idea}
+Project Name: ${structuredInput?.projectName || projectName || "Untitled Project"}
+Description: ${structuredInput?.description || idea}
 ${context ? `Additional Context:\n${context}` : ""}
+${structuredCtx}
 
 Include:
 1. Project summary (2-3 sentences)
@@ -72,13 +115,18 @@ Format as markdown.`;
 }
 
 export async function generateRPBS(options: GenerateDocsOptions): Promise<string> {
-  const { idea, projectName, context } = options;
+  const { idea, projectName, context, structuredInput } = options;
+  
+  const structuredCtx = buildStructuredContext(options);
   
   const prompt = `Generate RPBS_Product.md (Roshi Product Brief Specification) for:
 
-Project Name: ${projectName || "Untitled Project"}
-Idea: ${idea}
+Project Name: ${structuredInput?.projectName || projectName || "Untitled Project"}
+Description: ${structuredInput?.description || idea}
 ${context ? `Additional Context:\n${context}` : ""}
+${structuredCtx}
+
+IMPORTANT: If features and user types are provided above, use them as the source of truth. Do not invent new features or user types - expand on what is given.
 
 Include these sections:
 # RPBS: ${projectName || "Product"}
@@ -124,14 +172,19 @@ Format as markdown with clear structure.`;
 }
 
 export async function generateREBS(options: GenerateDocsOptions): Promise<string> {
-  const { idea, projectName, context, domains } = options;
+  const { idea, projectName, context, domains, structuredInput } = options;
+  
+  const structuredCtx = buildStructuredContext(options);
   
   const prompt = `Generate REBS_Product.md (Roshi Engineering Brief Specification) for:
 
-Project Name: ${projectName || "Untitled Project"}
-Idea: ${idea}
+Project Name: ${structuredInput?.projectName || projectName || "Untitled Project"}
+Description: ${structuredInput?.description || idea}
 Domains: ${domains?.join(", ") || "platform, api, web"}
 ${context ? `Additional Context:\n${context}` : ""}
+${structuredCtx}
+
+IMPORTANT: If a tech stack is provided above, use it as the implementation preference. Do not contradict what the user has specified.
 
 Include these sections:
 # REBS: ${projectName || "Engineering Brief"}
@@ -359,24 +412,267 @@ Aim for 10-20 relevant terms.`;
   return response.choices[0]?.message?.content || "";
 }
 
+function getTemplateFallback(docType: keyof GeneratedDocs, options: GenerateDocsOptions): string {
+  const projectName = options.structuredInput?.projectName || options.projectName || "Untitled Project";
+  const description = options.structuredInput?.description || options.idea || "No description provided";
+  const domains = options.domains || ["platform", "api", "web"];
+  const features = options.structuredInput?.features || [];
+  const users = options.structuredInput?.users || [];
+  const techStack = options.structuredInput?.techStack || {};
+
+  const p0 = features.filter(f => f.priority === "P0").map(f => `- **${f.name}**: ${f.description}`).join("\n") || "- UNKNOWN: Core features not specified";
+  const p1 = features.filter(f => f.priority === "P1").map(f => `- **${f.name}**: ${f.description}`).join("\n") || "- UNKNOWN: Should-have features not specified";
+  const p2 = features.filter(f => f.priority === "P2").map(f => `- **${f.name}**: ${f.description}`).join("\n") || "- UNKNOWN: Nice-to-have features not specified";
+  const userList = users.map(u => `- **${u.type}**: ${u.goal}`).join("\n") || "- UNKNOWN: User types not specified";
+  const techList = Object.entries(techStack).filter(([_, v]) => v).map(([k, v]) => `- **${k}**: ${v}`).join("\n") || "- UNKNOWN: Tech stack not specified";
+
+  const templates: Record<keyof GeneratedDocs, string> = {
+    projectOverview: `# ${projectName} - Project Overview
+
+## Summary
+${description}
+
+## Value Proposition
+UNKNOWN: Value proposition needs clarification.
+
+## Target Users
+${userList}
+
+## Key Features
+${p0}
+${p1}
+${p2}
+
+## Success Metrics
+- UNKNOWN: Success metrics not defined
+
+## Constraints & Assumptions
+- UNKNOWN: Constraints and assumptions not specified
+
+---
+*Generated by Roshi Studio (template fallback)*
+`,
+    rpbs: `# RPBS: ${projectName}
+
+## 1. Product Vision
+${description}
+
+## 2. User Personas
+${userList}
+
+## 3. User Stories
+UNKNOWN: User stories need to be defined based on user personas.
+
+## 4. Feature Requirements
+
+### Must Have (P0)
+${p0}
+
+### Should Have (P1)
+${p1}
+
+### Nice to Have (P2)
+${p2}
+
+## 5. Hard Rules Catalog
+- UNKNOWN: Business rules not specified
+
+## 6. Acceptance Criteria
+- UNKNOWN: Acceptance criteria not defined
+
+## 7. Out of Scope
+- UNKNOWN: Scope boundaries not defined
+
+## 8. Open Questions
+- What are the specific user workflows?
+- What are the success metrics?
+- What are the integration requirements?
+
+---
+*Generated by Roshi Studio (template fallback)*
+`,
+    rebs: `# REBS: ${projectName}
+
+## 1. System Architecture
+UNKNOWN: System architecture needs design based on requirements.
+
+## 2. Tech Stack
+${techList}
+
+## 3. Data Model
+UNKNOWN: Data model needs to be designed.
+
+## 4. API Design
+UNKNOWN: API endpoints need to be specified.
+
+## 5. Domain Boundaries
+${domains.map(d => `- **${d}**: UNKNOWN - Domain purpose not defined`).join("\n")}
+
+## 6. Security Model
+- Authentication: UNKNOWN
+- Authorization: UNKNOWN
+- Data Protection: UNKNOWN
+
+## 7. Integration Points
+- UNKNOWN: External integrations not specified
+
+## 8. Performance Requirements
+- UNKNOWN: Performance requirements not defined
+
+## 9. Implementation Phases
+1. Phase 1: UNKNOWN - Define phases based on feature priorities
+2. Phase 2: UNKNOWN
+3. Phase 3: UNKNOWN
+
+## 10. Technical Risks
+- UNKNOWN: Technical risks need assessment
+
+---
+*Generated by Roshi Studio (template fallback)*
+`,
+    domainMap: `# Domain Map
+
+## Domains
+
+${domains.map(d => `### ${d}
+- **Purpose**: UNKNOWN
+- **Owns**: UNKNOWN
+- **Depends on**: UNKNOWN`).join("\n\n")}
+
+## Domain-Feature Matrix
+| Feature | ${domains.join(" | ")} |
+|---------|${domains.map(() => "---|").join("")}
+${features.length > 0 ? features.map(f => `| ${f.name} | ${domains.map(() => "UNKNOWN").join(" | ")} |`).join("\n") : "| UNKNOWN | " + domains.map(() => "UNKNOWN").join(" | ") + " |"}
+
+## Cross-Cutting Concerns
+- Logging: UNKNOWN
+- Error handling: UNKNOWN
+- Authentication: UNKNOWN
+- Monitoring: UNKNOWN
+
+---
+*Generated by Roshi Studio (template fallback)*
+`,
+    reasonCodes: `# Reason Codes
+
+## Format
+\`{DOMAIN}_{CATEGORY}_{CODE}\` - Example: AUTH_VALIDATION_001
+
+## Codes
+
+### Authentication (AUTH)
+| Code | Name | Message | HTTP Status |
+|------|------|---------|-------------|
+| AUTH_INVALID_CREDENTIALS | Invalid Credentials | Username or password is incorrect | 401 |
+| AUTH_UNAUTHORIZED | Unauthorized | Access denied | 403 |
+| AUTH_TOKEN_EXPIRED | Token Expired | Authentication token has expired | 401 |
+
+### Validation (VAL)
+| Code | Name | Message | HTTP Status |
+|------|------|---------|-------------|
+| VAL_REQUIRED_FIELD | Required Field | A required field is missing | 400 |
+| VAL_INVALID_FORMAT | Invalid Format | Field format is invalid | 400 |
+
+### Business Logic (BIZ)
+| Code | Name | Message | HTTP Status |
+|------|------|---------|-------------|
+| BIZ_NOT_FOUND | Not Found | Resource not found | 404 |
+| BIZ_CONFLICT | Conflict | Operation conflicts with existing state | 409 |
+
+### System (SYS)
+| Code | Name | Message | HTTP Status |
+|------|------|---------|-------------|
+| SYS_INTERNAL_ERROR | Internal Error | An unexpected error occurred | 500 |
+| SYS_SERVICE_UNAVAILABLE | Service Unavailable | Service temporarily unavailable | 503 |
+
+---
+*Generated by Roshi Studio (template fallback)*
+`,
+    actionVocabulary: `# Action Vocabulary
+
+## Purpose
+Standardized verbs for consistent naming across the codebase.
+
+## Actions
+
+| Action | Meaning | Example Usage |
+|--------|---------|---------------|
+| create | Create a new resource | createUser, createOrder |
+| get | Retrieve a single resource | getUser, getOrder |
+| list | Retrieve multiple resources | listUsers, listOrders |
+| update | Modify an existing resource | updateUser, updateOrder |
+| delete | Remove a resource | deleteUser, deleteOrder |
+| validate | Check if data is valid | validateEmail, validatePayment |
+| execute | Run a process or workflow | executePipeline, executeTask |
+| submit | Send data for processing | submitForm, submitOrder |
+| approve | Accept/authorize a request | approveRequest |
+| reject | Decline a request | rejectRequest |
+| cancel | Cancel an operation | cancelOrder |
+| archive | Move to inactive state | archiveProject |
+| restore | Recover from archive | restoreProject |
+
+---
+*Generated by Roshi Studio (template fallback)*
+`,
+    glossary: `# Glossary
+
+| Term | Definition | Related Terms |
+|------|------------|---------------|
+| ${projectName} | ${description.substring(0, 100)}${description.length > 100 ? "..." : ""} | - |
+${domains.map(d => `| ${d} | Domain within the ${projectName} system | domain |`).join("\n")}
+${features.slice(0, 5).map(f => `| ${f.name} | ${f.description.substring(0, 80)}${f.description.length > 80 ? "..." : ""} | feature |`).join("\n")}
+${users.map(u => `| ${u.type} | ${u.goal.substring(0, 80)}${u.goal.length > 80 ? "..." : ""} | user type |`).join("\n")}
+
+---
+*Generated by Roshi Studio (template fallback)*
+`,
+  };
+
+  return templates[docType];
+}
+
+async function safeGenerate<T>(
+  generator: () => Promise<T>,
+  fallback: () => T,
+  docName: string
+): Promise<{ result: T; usedFallback: boolean }> {
+  try {
+    const result = await generator();
+    if (!result || (typeof result === "string" && result.length < 50)) {
+      console.log(`[AI] ${docName}: Empty response, using fallback`);
+      return { result: fallback(), usedFallback: true };
+    }
+    return { result, usedFallback: false };
+  } catch (error) {
+    console.error(`[AI] ${docName}: Error, using fallback:`, error instanceof Error ? error.message : error);
+    return { result: fallback(), usedFallback: true };
+  }
+}
+
+export type GenerationResult = GeneratedDocs & { generationMode: "ai" | "template_fallback" | "hybrid" };
+
 export async function generateAllDocs(options: GenerateDocsOptions): Promise<GeneratedDocs> {
-  const [projectOverview, rpbs, rebs, domainMap, reasonCodes, actionVocabulary, glossary] = await Promise.all([
-    generateProjectOverview(options),
-    generateRPBS(options),
-    generateREBS(options),
-    generateDomainMap(options),
-    generateReasonCodes(options),
-    generateActionVocabulary(options),
-    generateGlossary(options),
+  const results = await Promise.all([
+    safeGenerate(() => generateProjectOverview(options), () => getTemplateFallback("projectOverview", options), "projectOverview"),
+    safeGenerate(() => generateRPBS(options), () => getTemplateFallback("rpbs", options), "rpbs"),
+    safeGenerate(() => generateREBS(options), () => getTemplateFallback("rebs", options), "rebs"),
+    safeGenerate(() => generateDomainMap(options), () => getTemplateFallback("domainMap", options), "domainMap"),
+    safeGenerate(() => generateReasonCodes(options), () => getTemplateFallback("reasonCodes", options), "reasonCodes"),
+    safeGenerate(() => generateActionVocabulary(options), () => getTemplateFallback("actionVocabulary", options), "actionVocabulary"),
+    safeGenerate(() => generateGlossary(options), () => getTemplateFallback("glossary", options), "glossary"),
   ]);
 
+  const fallbackCount = results.filter(r => r.usedFallback).length;
+  const mode = fallbackCount === 0 ? "ai" : fallbackCount === 7 ? "template_fallback" : "hybrid";
+  console.log(`[AI] Generation complete: mode=${mode}, fallbacks=${fallbackCount}/7`);
+
   return {
-    projectOverview,
-    rpbs,
-    rebs,
-    domainMap,
-    reasonCodes,
-    actionVocabulary,
-    glossary,
+    projectOverview: results[0].result,
+    rpbs: results[1].result,
+    rebs: results[2].result,
+    domainMap: results[3].result,
+    reasonCodes: results[4].result,
+    actionVocabulary: results[5].result,
+    glossary: results[6].result,
   };
 }

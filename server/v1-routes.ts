@@ -1,11 +1,12 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { insertRunSchema, createHandoffRequestSchema, type RunBundle } from "@shared/schema";
+import { createRunRequestSchema, createHandoffRequestSchema, type RunBundle, type RunInput, type CreateRunRequest } from "@shared/schema";
 import { generateSignedUrl, validateSignature, computeSha256 } from "./signing";
 import { processHandoff } from "./adapters";
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
+import { createWorkspace, populateWorkspaceWithAI, getWorkspacePath, type WorkspaceConfig } from "./workspace-manager";
 
 function getBaseUrl(req: Request): string {
   const protocol = req.protocol;
@@ -26,16 +27,27 @@ export function registerV1Routes(app: Express) {
   });
 
   app.post("/v1/runs", async (req: Request, res: Response) => {
-    const parseResult = insertRunSchema.safeParse(req.body);
+    const parseResult = createRunRequestSchema.safeParse(req.body);
     if (!parseResult.success) {
       return apiError(res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message, {
         field: parseResult.error.errors[0].path.join(".")
       });
     }
     
-    const run = await storage.createRun(parseResult.data);
+    const data = parseResult.data;
     
-    executePipeline(run.id, run.idea, run.context || "", run.projectName || undefined);
+    const runInput = buildRunInput(data);
+    
+    const run = await storage.createRun({
+      projectName: runInput.projectName,
+      idea: runInput.legacy?.idea || runInput.description,
+      context: data.context,
+      preset: data.preset,
+      domains: data.domains,
+      input: runInput,
+    });
+    
+    executePipelineV1(run.id, runInput);
     
     res.status(202).json({
       runId: run.id,
@@ -60,14 +72,18 @@ export function registerV1Routes(app: Express) {
         projectName: run.projectName,
         preset: run.preset,
         domains: run.domains,
+        input: run.input || null,
         errors: run.errors || [],
         progress: run.progress || { percent: 0 },
         bundle: run.bundle || {
           available: false,
+          generationMode: null,
           zipBytes: 0,
           zipSha256: null,
           manifestSha256: null,
           agentPromptSha256: null,
+          inputSha256: null,
+          aiContextSha256: null,
         }
       },
       logsTail: run.logsTail || ""
@@ -95,7 +111,13 @@ export function registerV1Routes(app: Express) {
     const promptPath = "dist/roshi_bundle/agent_prompt.md";
     
     let manifest = null;
-    let checksums = { zipSha256: null as string | null, manifestSha256: null as string | null, agentPromptSha256: null as string | null };
+    let checksums = { 
+      zipSha256: null as string | null, 
+      manifestSha256: null as string | null, 
+      agentPromptSha256: null as string | null,
+      inputSha256: null as string | null,
+      aiContextSha256: null as string | null,
+    };
     let sizes = { zipBytes: 0 };
     
     if (fs.existsSync(bundlePath)) {
@@ -115,6 +137,18 @@ export function registerV1Routes(app: Express) {
       checksums.agentPromptSha256 = computeSha256(promptContent);
     }
     
+    const workspacePath = run.bundlePath?.replace("/dist/roshi_bundle.zip", "") || "";
+    const inputPath = path.join(workspacePath, "handoff/input.json");
+    const aiContextPath = path.join(workspacePath, "handoff/ai_context.json");
+    
+    if (fs.existsSync(inputPath)) {
+      checksums.inputSha256 = computeSha256(fs.readFileSync(inputPath));
+    }
+    
+    if (fs.existsSync(aiContextPath)) {
+      checksums.aiContextSha256 = computeSha256(fs.readFileSync(aiContextPath));
+    }
+    
     const baseUrl = getBaseUrl(req);
     const signed = generateSignedUrl(
       `${baseUrl}/v1/runs/${run.id}/bundle.zip`,
@@ -124,8 +158,10 @@ export function registerV1Routes(app: Express) {
     res.json({
       runId: run.id,
       bundle: {
-        bundleVersion: manifest?.bundleVersion || "0.1.0",
+        bundleVersion: manifest?.bundleVersion || "0.2.0",
         createdAt: run.updatedAt.toISOString(),
+        generationMode: manifest?.generationMode || "ai",
+        inputSummary: manifest?.inputSummary || null,
         entryDocs: manifest?.entryDocs || [],
         commandsToRun: manifest?.commandsToRun || [],
         doNotTouch: manifest?.doNotTouch || [],
@@ -282,23 +318,53 @@ export function registerV1Routes(app: Express) {
 
 const stepProgress: Record<string, number> = {
   init: 10,
-  gen: 25,
-  seed: 40,
-  draft: 55,
-  review: 70,
-  verify: 80,
-  lock: 90,
+  gen: 50,
   package: 100,
 };
 
-async function executePipeline(runId: string, idea: string, context: string, projectName?: string) {
-  const steps = [
-    { name: "gen", script: "scripts/roshi-generate.mjs" },
-    { name: "seed", script: "scripts/roshi-seed.mjs" },
-    { name: "draft", script: "scripts/roshi-draft.mjs" },
-    { name: "package", script: "scripts/roshi-package.mjs" }
-  ];
+function buildRunInput(data: CreateRunRequest): RunInput {
+  if (data.projectName && (data.features || data.users || data.description)) {
+    return {
+      projectName: data.projectName,
+      description: data.description || "",
+      features: data.features || [],
+      users: data.users || [],
+      techStack: data.techStack,
+      preset: data.preset,
+      legacy: data.idea ? { idea: data.idea, mappedFromIdea: false } : undefined,
+    };
+  }
+  
+  if (data.idea) {
+    const ideaText = data.idea;
+    const projectName = data.projectName || "Untitled Project";
+    const description = ideaText.length > 280 ? ideaText.slice(0, 280) + "..." : ideaText;
+    
+    return {
+      projectName,
+      description,
+      features: [],
+      users: [],
+      techStack: data.techStack,
+      preset: data.preset,
+      legacy: {
+        idea: ideaText,
+        mappedFromIdea: true,
+      },
+    };
+  }
+  
+  return {
+    projectName: data.projectName || "Untitled Project",
+    description: data.description || "",
+    features: data.features || [],
+    users: data.users || [],
+    techStack: data.techStack,
+    preset: data.preset,
+  };
+}
 
+async function executePipelineV1(runId: string, input: RunInput) {
   try {
     await storage.updateRun(runId, { 
       state: "running", 
@@ -306,51 +372,77 @@ async function executePipeline(runId: string, idea: string, context: string, pro
       progress: { percent: stepProgress["init"] }
     });
     
-    for (const step of steps) {
-      await storage.updateRun(runId, { 
-        step: step.name as any,
-        progress: { percent: stepProgress[step.name] || 50 }
+    const run = await storage.getRun(runId);
+    if (!run) throw new Error("Run not found");
+    
+    const workspaceConfig: WorkspaceConfig = {
+      runId,
+      projectName: input.projectName,
+      idea: input.legacy?.idea || input.description,
+      context: run.context || undefined,
+      domains: run.domains || ["platform", "api", "web"],
+    };
+    
+    console.log(`[v1 Pipeline] Creating workspace for run ${runId}`);
+    const workspacePath = await createWorkspace(workspaceConfig);
+    
+    await storage.updateRun(runId, { 
+      step: "gen",
+      progress: { percent: stepProgress["gen"] }
+    });
+    
+    console.log(`[v1 Pipeline] Generating AI documentation...`);
+    await populateWorkspaceWithAI(workspaceConfig, workspacePath, input);
+    
+    await storage.updateRun(runId, { 
+      step: "package",
+      progress: { percent: stepProgress["package"] }
+    });
+    
+    console.log(`[v1 Pipeline] Packaging bundle...`);
+    
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawn("node", ["scripts/roshi-package-workspace.mjs", "--workspace", workspacePath], {
+        env: { ...process.env, ROSHI_WORKSPACE: workspacePath },
+        cwd: process.cwd()
       });
       
-      await new Promise<void>((resolve, reject) => {
-        const proc = spawn("node", [step.script], {
-          env: { ...process.env, ROSHI_IDEA: idea, ROSHI_CONTEXT: context },
-          cwd: process.cwd()
-        });
-        
-        let stderr = "";
-        let stdout = "";
-        
-        proc.stdout.on("data", (data) => {
-          stdout += data.toString();
-        });
-        
-        proc.stderr.on("data", (data) => {
-          stderr += data.toString();
-        });
-        
-        proc.on("close", (code) => {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject(new Error(`Step ${step.name} failed: ${stderr}`));
-          }
-        });
-        
-        proc.on("error", reject);
+      let stderr = "";
+      let stdout = "";
+      proc.stdout.on("data", (data) => {
+        stdout += data.toString();
+        console.log(data.toString());
       });
-    }
+      proc.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+      
+      proc.on("close", (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Package step failed: ${stderr || stdout}`));
+        }
+      });
+      
+      proc.on("error", reject);
+    });
 
-    const bundlePath = "dist/roshi_bundle.zip";
-    const manifestPath = "dist/roshi_bundle/manifest.json";
-    const promptPath = "dist/roshi_bundle/agent_prompt.md";
+    const bundlePath = path.join(workspacePath, "dist/roshi_bundle.zip");
+    const manifestPath = path.join(workspacePath, "dist/roshi_bundle/manifest.json");
+    const promptPath = path.join(workspacePath, "dist/roshi_bundle/agent_prompt.md");
+    const inputPath = path.join(workspacePath, "handoff/input.json");
+    const aiContextPath = path.join(workspacePath, "handoff/ai_context.json");
     
     let bundle: RunBundle = {
       available: true,
+      generationMode: "ai",
       zipBytes: 0,
       zipSha256: null,
       manifestSha256: null,
       agentPromptSha256: null,
+      inputSha256: null,
+      aiContextSha256: null,
     };
     
     if (fs.existsSync(bundlePath)) {
@@ -367,6 +459,14 @@ async function executePipeline(runId: string, idea: string, context: string, pro
       bundle.agentPromptSha256 = computeSha256(fs.readFileSync(promptPath));
     }
     
+    if (fs.existsSync(inputPath)) {
+      bundle.inputSha256 = computeSha256(fs.readFileSync(inputPath));
+    }
+    
+    if (fs.existsSync(aiContextPath)) {
+      bundle.aiContextSha256 = computeSha256(fs.readFileSync(aiContextPath));
+    }
+    
     await storage.updateRun(runId, { 
       state: "completed", 
       step: "package",
@@ -374,7 +474,10 @@ async function executePipeline(runId: string, idea: string, context: string, pro
       bundle,
       bundlePath,
     });
+    
+    console.log(`[v1 Pipeline] Run ${runId} completed successfully`);
   } catch (error) {
+    console.error(`[v1 Pipeline] Run ${runId} failed:`, error);
     await storage.updateRun(runId, { 
       state: "failed",
       errors: [error instanceof Error ? error.message : "Unknown error"],

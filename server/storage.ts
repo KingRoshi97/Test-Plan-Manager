@@ -67,10 +67,11 @@ export class MemStorage implements IStorage {
     const run: Run = {
       id,
       projectName: insertRun.projectName || null,
-      idea: insertRun.idea,
+      idea: insertRun.idea || null,
       context: insertRun.context || null,
       preset: insertRun.preset || null,
       domains: insertRun.domains || null,
+      input: insertRun.input || null,
       state: "queued",
       step: null,
       progress: null,

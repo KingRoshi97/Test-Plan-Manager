@@ -1,0 +1,23 @@
+{
+  "projectName": "Task Manager Pro",
+  "description": "A task management application for small teams with kanban boards, task assignments, and due date tracking",
+  "features": [
+    {
+      "name": "Kanban Board",
+      "description": "Drag and drop task cards between columns",
+      "priority": "P1"
+    }
+  ],
+  "users": [
+    {
+      "type": "Team Lead",
+      "goal": "Manage team tasks and track progress"
+    }
+  ],
+  "techStack": {
+    "frontend": "React",
+    "backend": "Node/Express",
+    "database": "PostgreSQL"
+  },
+  "preset": ""
+}

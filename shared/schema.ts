@@ -27,6 +27,40 @@ export interface BundleChecksums {
   zipSha256: string | null;
   manifestSha256: string | null;
   agentPromptSha256: string | null;
+  inputSha256?: string | null;
+  aiContextSha256?: string | null;
+}
+
+export interface Feature {
+  name: string;
+  description: string;
+  priority: "P0" | "P1" | "P2";
+}
+
+export interface UserType {
+  type: string;
+  goal: string;
+}
+
+export interface TechStack {
+  frontend?: string;
+  backend?: string;
+  database?: string;
+}
+
+export interface LegacyInput {
+  idea?: string;
+  mappedFromIdea: boolean;
+}
+
+export interface RunInput {
+  projectName: string;
+  description: string;
+  features: Feature[];
+  users: UserType[];
+  techStack?: TechStack;
+  preset?: string;
+  legacy?: LegacyInput;
 }
 
 export interface BundleSizes {
@@ -37,21 +71,27 @@ export interface RunProgress {
   percent: number;
 }
 
+export type GenerationMode = "ai" | "template_fallback" | "hybrid";
+
 export interface RunBundle {
   available: boolean;
+  generationMode?: GenerationMode;
   zipBytes: number;
   zipSha256: string | null;
   manifestSha256: string | null;
   agentPromptSha256: string | null;
+  inputSha256?: string | null;
+  aiContextSha256?: string | null;
 }
 
 export const runs = pgTable("runs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   projectName: text("project_name"),
-  idea: text("idea").notNull(),
+  idea: text("idea"),
   context: text("context"),
   preset: text("preset"),
   domains: text("domains").array(),
+  input: jsonb("input").$type<RunInput>(),
   state: text("state").$type<RunState>().notNull().default("queued"),
   step: text("step").$type<RunStep | null>(),
   progress: jsonb("progress").$type<RunProgress>(),
@@ -63,18 +103,54 @@ export const runs = pgTable("runs", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const featureSchema = z.object({
+  name: z.string().min(1, "Feature name is required"),
+  description: z.string().min(1, "Feature description is required"),
+  priority: z.enum(["P0", "P1", "P2"]),
+});
+
+export const userTypeSchema = z.object({
+  type: z.string().min(1, "User type is required"),
+  goal: z.string().min(1, "User goal is required"),
+});
+
+export const techStackSchema = z.object({
+  frontend: z.string().optional(),
+  backend: z.string().optional(),
+  database: z.string().optional(),
+});
+
+export const createRunRequestSchema = z.object({
+  projectName: z.string().min(1, "Project name is required").optional(),
+  description: z.string().optional(),
+  features: z.array(featureSchema).optional(),
+  users: z.array(userTypeSchema).optional(),
+  techStack: techStackSchema.optional(),
+  preset: z.string().optional(),
+  domains: z.array(z.string()).optional(),
+  idea: z.string().optional(),
+  context: z.string().optional(),
+}).refine(
+  (data) => data.projectName || data.idea,
+  { message: "Either projectName (structured) or idea (legacy) is required" }
+);
+
+export type CreateRunRequest = z.infer<typeof createRunRequestSchema>;
+
 export const insertRunSchema = createInsertSchema(runs).pick({
   projectName: true,
   idea: true,
   context: true,
   preset: true,
   domains: true,
+  input: true,
 }).extend({
   projectName: z.string().optional(),
-  idea: z.string().min(10, "Idea must be at least 10 characters"),
+  idea: z.string().optional(),
   context: z.string().optional(),
   preset: z.string().optional(),
   domains: z.array(z.string()).optional(),
+  input: z.custom<RunInput>().optional(),
 });
 
 export type InsertRun = z.infer<typeof insertRunSchema>;
