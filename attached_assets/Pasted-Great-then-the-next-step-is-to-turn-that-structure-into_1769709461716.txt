@@ -1,0 +1,171 @@
+Great — then the next step is to turn that structure into real product behavior (DB fields + API + UI + doc output) with as little complexity as possible.
+
+Here’s the concrete implementation plan for Categories → Modes → Presets.
+
+1) Add 3 new fields to the Assembly model
+In shared/schema.ts (Zod + types)
+
+Add:
+
+category: "web" | "mobile" | "api" | "library" | "automation" | "game"
+
+mode: "new_build" | "existing_upgrade" | "ui_overhaul" | "refactor_hardening" | "add_feature_module"
+
+presetId: string (optional)
+
+Also add them to:
+
+createAssemblyRequestSchema
+
+Assembly/Run types
+
+In DB (recommended)
+
+Add columns to assemblies:
+
+category (text)
+
+mode (text)
+
+presetId (text nullable)
+
+This lets you filter in the list UI and is better than hiding it in inputJson.
+
+2) Make the wizard Step 0: Category + Mode (then preset)
+Step 0 UI layout (simple)
+
+Row 1: pick Category (6 cards)
+
+Web App
+
+Mobile App
+
+API / Backend
+
+Library / Package (NPM)
+
+Automation / Workflow
+
+Game / Interactive
+
+Row 2: pick Mode (5 chips/buttons)
+
+New Build
+
+Existing Upgrade (ZIP)
+
+UI Overhaul
+
+Refactor / Hardening
+
+Add Feature Module
+
+Then show Presets filtered by (category + mode)
+Example: Web + New Build shows “Web App → New Build (Standard)”, “Web App → New Build (Next.js)”, etc.
+
+Phase 1: ship with one preset per combo (6×5 = 30 max, but you can start with only the most common and add more later).
+
+3) Preset = Defaults (Domains + Wizard Fields + Output Defaults)
+
+Create a single source of truth:
+
+/assembler/presets.json (or server/presets.ts)
+
+Each preset should define:
+
+{
+  "id": "web.new_build.standard",
+  "label": "Web App → New Build",
+  "category": "web",
+  "mode": "new_build",
+  "defaultDomains": ["web","api","uxui","security","infra"],
+  "wizardFieldProfile": "web",
+  "outputDefaults": { "upgradeMode": "patch_only" }
+}
+
+Domain mapping (your exact rules)
+
+Web: web, api, uxui, security, infra
+
+Mobile: uxui, api, security, infra
+
+API: api, security, infra
+
+Library: api, security, infra (api = docs/spec for package)
+
+Automation: api, security, infra, uxui_min
+
+Game: platform, uxui, api_optional
+
+If you don’t have uxui_min as a domain, don’t create a new domain; just have the uxui template adapt based on category.
+
+4) Wizard field profiles (what questions appear)
+
+Implement as a “field profile” per category:
+
+web shows FE/BE/DB
+
+mobile shows RN/Expo + push/offline/auth/navigation
+
+api shows runtime/framework/db/auth
+
+library shows package name/exports/targets/build system
+
+automation shows triggers/integrations/webhooks/auth
+
+game shows engine/platform/monetization/core loop
+
+Rule: you can still store everything in RunInput, but the UI only renders relevant fields.
+
+5) Output defaults by Mode
+
+This is where mode matters:
+
+existing_upgrade: default upgradeOutput = patch_only (+ zip upload strongly encouraged)
+
+ui_overhaul: emphasizes uxui templates + component library + copy guide; “don’t change backend” constraint default
+
+refactor_hardening: defaults include “security + infra hardening” goals
+
+add_feature_module: requires “feature scope” block in wizard
+
+new_build: defaults to full kit generation
+
+6) How this affects doc generation (Assembler side)
+
+When an assembly is created:
+
+use preset to decide which domain packs generate (or which are “primary”)
+
+write into manifest.json:
+
+category, mode, presetId
+
+enabledDomains
+
+recommended build order
+
+This makes the agent output more accurate immediately.
+
+7) What you can ship first (fastest release)
+Phase 1 (minimum viable categories system)
+
+Add category, mode, presetId to request + DB
+
+Add Step 0 in wizard (Category + Mode)
+
+Pick 6 starter presets (one per category) for New Build
+
+On submission, attach these defaults:
+
+default domains
+
+wizard field profile
+
+Phase 2
+
+Add the other modes + combos
+
+Add “Save my preset” (custom presets)
+
+Add analytics: which presets convert best

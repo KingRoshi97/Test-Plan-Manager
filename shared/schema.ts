@@ -110,6 +110,7 @@ export const assemblies = pgTable("assemblies", {
   kit: jsonb("kit").$type<Kit>(),
   kitPath: text("kit_path"),
   logsTail: text("logs_tail"),
+  projectPackageId: varchar("project_package_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -152,6 +153,7 @@ export const createAssemblyRequestSchema = z.object({
   context: z.string().optional(),
   uploadedFiles: z.array(uploadedFileSchema).optional(),
   uploadedContext: z.string().optional(),
+  projectPackageId: z.string().uuid().optional(),
 }).refine(
   (data) => data.projectName || data.idea,
   { message: "Either projectName (structured) or idea (legacy) is required" }
@@ -166,6 +168,7 @@ export const insertAssemblySchema = createInsertSchema(assemblies).pick({
   preset: true,
   domains: true,
   input: true,
+  projectPackageId: true,
 }).extend({
   projectName: z.string().optional(),
   idea: z.string().optional(),
@@ -173,6 +176,7 @@ export const insertAssemblySchema = createInsertSchema(assemblies).pick({
   preset: z.string().optional(),
   domains: z.array(z.string()).optional(),
   input: z.custom<AssemblyInput>().optional(),
+  projectPackageId: z.string().uuid().optional(),
 });
 
 export type InsertAssembly = z.infer<typeof insertAssemblySchema>;
