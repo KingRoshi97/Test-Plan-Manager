@@ -23,6 +23,12 @@ export type AssemblyState = (typeof assemblyStateEnum)[number];
 export const assemblyStepEnum = ["init", "gen", "seed", "draft", "review", "verify", "lock", "package"] as const;
 export type AssemblyStep = (typeof assemblyStepEnum)[number];
 
+export const assemblyCategoryEnum = ["web", "mobile", "api", "library", "automation", "game"] as const;
+export type AssemblyCategory = (typeof assemblyCategoryEnum)[number];
+
+export const assemblyModeEnum = ["new_build", "existing_upgrade", "ui_overhaul", "refactor_hardening", "add_feature_module"] as const;
+export type AssemblyMode = (typeof assemblyModeEnum)[number];
+
 export interface KitChecksums {
   zipSha256: string | null;
   manifestSha256: string | null;
@@ -101,6 +107,9 @@ export const assemblies = pgTable("assemblies", {
   idea: text("idea"),
   context: text("context"),
   preset: text("preset"),
+  category: text("category").$type<AssemblyCategory>(),
+  mode: text("mode").$type<AssemblyMode>(),
+  presetId: text("preset_id"),
   domains: text("domains").array(),
   input: jsonb("input").$type<AssemblyInput>(),
   state: text("state").$type<AssemblyState>().notNull().default("queued"),
@@ -148,6 +157,9 @@ export const createAssemblyRequestSchema = z.object({
   users: z.array(userTypeSchema).optional(),
   techStack: techStackSchema.optional(),
   preset: z.string().optional(),
+  category: z.enum(assemblyCategoryEnum).optional(),
+  mode: z.enum(assemblyModeEnum).optional(),
+  presetId: z.string().optional(),
   domains: z.array(z.string()).optional(),
   idea: z.string().optional(),
   context: z.string().optional(),
@@ -166,6 +178,9 @@ export const insertAssemblySchema = createInsertSchema(assemblies).pick({
   idea: true,
   context: true,
   preset: true,
+  category: true,
+  mode: true,
+  presetId: true,
   domains: true,
   input: true,
   projectPackageId: true,
@@ -174,6 +189,9 @@ export const insertAssemblySchema = createInsertSchema(assemblies).pick({
   idea: z.string().optional(),
   context: z.string().optional(),
   preset: z.string().optional(),
+  category: z.enum(assemblyCategoryEnum).optional(),
+  mode: z.enum(assemblyModeEnum).optional(),
+  presetId: z.string().optional(),
   domains: z.array(z.string()).optional(),
   input: z.custom<AssemblyInput>().optional(),
   projectPackageId: z.string().uuid().optional(),
