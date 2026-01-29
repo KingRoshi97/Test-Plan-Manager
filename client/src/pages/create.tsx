@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,12 +15,24 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
   Download, Loader2, CheckCircle, XCircle, Play, Copy,
   Plus, Trash2, ChevronRight, ChevronLeft, Sparkles, Code, Users, ListTodo, Settings,
-  Upload, File, X
+  Upload, File, X, Package, AlertTriangle, FolderArchive
 } from "lucide-react";
-import type { UploadedFile } from "@shared/schema";
+import type { UploadedFile, ProjectSummary, ProjectWarning, ScanState, IndexState } from "@shared/schema";
 import { useLocation } from "wouter";
 import { PageHeader, StatusBadge, Stepper, AssemblyTimeline, CodeBlock, CopyButton } from "@/components/kit";
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from "@/components/kit";
+
+interface ProjectPackageStatus {
+  id: string;
+  filename: string;
+  sizeBytes: number;
+  scanState: ScanState;
+  indexState: IndexState;
+  summaryJson?: ProjectSummary | null;
+  warningsJson?: ProjectWarning[] | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+}
 
 const featureSchema = z.object({
   name: z.string().min(1, "Feature name required"),
@@ -116,6 +128,12 @@ export default function Create() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Project ZIP upload state
+  const [projectPackage, setProjectPackage] = useState<ProjectPackageStatus | null>(null);
+  const [isUploadingZip, setIsUploadingZip] = useState(false);
+  const [isDraggingZip, setIsDraggingZip] = useState(false);
+  const zipInputRef = useRef<HTMLInputElement>(null);
+  
   const uploadFiles = async (files: FileList | File[]) => {
     if (files.length === 0) return;
     
@@ -192,6 +210,124 @@ export default function Create() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  // Project ZIP upload handlers
+  const uploadProjectZip = async (file: File) => {
+    if (!file.name.endsWith('.zip')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a ZIP file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingZip(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/v1/project-packages", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || "Upload failed");
+      }
+
+      const data = await response.json();
+      setProjectPackage({
+        id: data.packageId,
+        filename: file.name,
+        sizeBytes: file.size,
+        scanState: "queued",
+        indexState: "queued",
+      });
+      
+      toast({
+        title: "ZIP uploaded",
+        description: "Scanning and indexing your project...",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Could not upload ZIP",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingZip(false);
+    }
+  };
+
+  const handleZipDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingZip(false);
+    if (e.dataTransfer.files.length > 0) {
+      uploadProjectZip(e.dataTransfer.files[0]);
+    }
+  }, []);
+
+  const handleZipDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingZip(true);
+  }, []);
+
+  const handleZipDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingZip(false);
+  }, []);
+
+  const removeProjectPackage = () => {
+    setProjectPackage(null);
+  };
+
+  // Poll for project package status
+  useEffect(() => {
+    if (!projectPackage?.id) return;
+    if (projectPackage.indexState === "indexed" || projectPackage.indexState === "failed") return;
+    if (projectPackage.scanState === "failed") return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/v1/project-packages/${projectPackage.id}`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        setProjectPackage(prev => prev ? {
+          ...prev,
+          scanState: data.scanState,
+          indexState: data.indexState,
+          summaryJson: data.summaryJson,
+          warningsJson: data.warningsJson,
+          errorCode: data.errorCode,
+          errorMessage: data.errorMessage,
+        } : null);
+
+        if (data.indexState === "indexed") {
+          toast({
+            title: "Project indexed",
+            description: `Detected: ${data.summaryJson?.framework || "Unknown framework"}`,
+          });
+        } else if (data.indexState === "failed" || data.scanState === "failed") {
+          toast({
+            title: "Indexing failed",
+            description: data.errorMessage || "Could not analyze project",
+            variant: "destructive",
+          });
+        }
+      } catch {
+        // Silent fail on poll errors
+      }
+    }, 2000);
+
+    return () => clearInterval(pollInterval);
+  }, [projectPackage?.id, projectPackage?.indexState, projectPackage?.scanState, toast]);
+
+  const isPackageReady = projectPackage?.scanState === "scanned" && projectPackage?.indexState === "indexed";
+  const isPackageProcessing = projectPackage && !isPackageReady && 
+    projectPackage.scanState !== "failed" && projectPackage.indexState !== "failed";
+
   const featuresField = useFieldArray({
     control: form.control,
     name: "features",
@@ -238,7 +374,7 @@ export default function Create() {
   const activeAssembly = assemblyResponse?.assembly;
 
   const createAssemblyMutation = useMutation({
-    mutationFn: async (data: ProjectFormData) => {
+    mutationFn: async (data: ProjectFormData & { projectPackageId?: string }) => {
       const response = await apiRequest("POST", "/v1/assemblies", data);
       return response.json();
     },
@@ -256,9 +392,14 @@ export default function Create() {
   });
 
   const onSubmit = async (data: ProjectFormData) => {
-    await createAssemblyMutation.mutateAsync(data);
+    const payload: ProjectFormData & { projectPackageId?: string } = { ...data };
+    if (projectPackage?.id && isPackageReady) {
+      payload.projectPackageId = projectPackage.id;
+    }
+    await createAssemblyMutation.mutateAsync(payload);
     form.reset();
     setCurrentStep("basics");
+    setProjectPackage(null);
   };
 
   const handleDownload = async () => {
@@ -400,13 +541,18 @@ Read these docs to understand the project architecture, then implement the appli
                     <Button
                       type="submit"
                       className="w-full btn-axiom-cta"
-                      disabled={createAssemblyMutation.isPending}
+                      disabled={createAssemblyMutation.isPending || (!!projectPackage && !isPackageReady)}
                       data-testid="button-generate"
                     >
                       {createAssemblyMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Starting...
+                        </>
+                      ) : projectPackage && !isPackageReady ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Waiting for project indexing...
                         </>
                       ) : (
                         <>
@@ -559,6 +705,181 @@ Read these docs to understand the project architecture, then implement the appli
                                   </Button>
                                 </div>
                               ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Project ZIP Upload Section */}
+                        <div className="space-y-3 pt-4 border-t">
+                          <FormLabel>Upload Existing Project (ZIP) (Optional)</FormLabel>
+                          {!projectPackage ? (
+                            <>
+                              <div
+                                className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                                  isDraggingZip 
+                                    ? "border-amber-500 bg-amber-500/5" 
+                                    : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                                }`}
+                                onDrop={handleZipDrop}
+                                onDragOver={handleZipDragOver}
+                                onDragLeave={handleZipDragLeave}
+                                data-testid="drop-zone-zip"
+                              >
+                                <input
+                                  type="file"
+                                  ref={zipInputRef}
+                                  className="hidden"
+                                  accept=".zip"
+                                  onChange={(e) => e.target.files?.[0] && uploadProjectZip(e.target.files[0])}
+                                  data-testid="input-zip-upload"
+                                />
+                                {isUploadingZip ? (
+                                  <div className="flex flex-col items-center gap-2">
+                                    <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+                                    <p className="text-sm text-muted-foreground">Uploading...</p>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <FolderArchive className="mx-auto h-8 w-8 text-amber-500" />
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                      Drag and drop your project ZIP file
+                                    </p>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      className="mt-2"
+                                      onClick={() => zipInputRef.current?.click()}
+                                      data-testid="button-browse-zip"
+                                    >
+                                      Browse ZIP File
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                              <FormDescription>
+                                Upload an existing codebase to analyze its structure and generate upgrade documentation.
+                              </FormDescription>
+                            </>
+                          ) : (
+                            <div className="rounded-lg border p-4 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Package className="h-5 w-5 text-amber-500" />
+                                  <span className="font-medium">{projectPackage.filename}</span>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {formatFileSize(projectPackage.sizeBytes)}
+                                  </Badge>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={removeProjectPackage}
+                                  disabled={!!isPackageProcessing}
+                                  data-testid="button-remove-zip"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+
+                              {/* Status indicators */}
+                              <div className="flex items-center gap-4 text-sm">
+                                <div className="flex items-center gap-1.5">
+                                  {projectPackage.scanState === "scanned" ? (
+                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                  ) : projectPackage.scanState === "failed" ? (
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                  ) : (
+                                    <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                                  )}
+                                  <span className={projectPackage.scanState === "failed" ? "text-red-500" : ""}>
+                                    {projectPackage.scanState === "scanned" ? "Scanned" :
+                                     projectPackage.scanState === "failed" ? "Scan Failed" :
+                                     projectPackage.scanState === "scanning" ? "Scanning..." : "Queued"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  {projectPackage.indexState === "indexed" ? (
+                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                  ) : projectPackage.indexState === "failed" ? (
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                  ) : (
+                                    <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                                  )}
+                                  <span className={projectPackage.indexState === "failed" ? "text-red-500" : ""}>
+                                    {projectPackage.indexState === "indexed" ? "Indexed" :
+                                     projectPackage.indexState === "failed" ? "Index Failed" :
+                                     projectPackage.indexState === "indexing" ? "Indexing..." : "Queued"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Error message */}
+                              {(projectPackage.errorCode || projectPackage.errorMessage) && (
+                                <div className="flex items-start gap-2 rounded-md bg-red-500/10 p-3 text-sm text-red-500">
+                                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                                  <div>
+                                    {projectPackage.errorCode && (
+                                      <span className="font-mono text-xs mr-2">[{projectPackage.errorCode}]</span>
+                                    )}
+                                    {projectPackage.errorMessage}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Summary when indexed */}
+                              {isPackageReady && projectPackage.summaryJson && (
+                                <div className="rounded-md bg-muted/50 p-3 space-y-2">
+                                  <div className="grid grid-cols-2 gap-2 text-sm">
+                                    {projectPackage.summaryJson.framework && (
+                                      <div>
+                                        <span className="text-muted-foreground">Framework:</span>{" "}
+                                        <span className="font-medium">{projectPackage.summaryJson.framework}</span>
+                                      </div>
+                                    )}
+                                    {projectPackage.summaryJson.packageManager && (
+                                      <div>
+                                        <span className="text-muted-foreground">Package Manager:</span>{" "}
+                                        <span className="font-medium">{projectPackage.summaryJson.packageManager}</span>
+                                      </div>
+                                    )}
+                                    {projectPackage.summaryJson.fileCount && (
+                                      <div>
+                                        <span className="text-muted-foreground">Files:</span>{" "}
+                                        <span className="font-medium">{projectPackage.summaryJson.fileCount}</span>
+                                      </div>
+                                    )}
+                                    {projectPackage.summaryJson.hasTypeScript !== undefined && (
+                                      <div>
+                                        <span className="text-muted-foreground">TypeScript:</span>{" "}
+                                        <span className="font-medium">{projectPackage.summaryJson.hasTypeScript ? "Yes" : "No"}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {projectPackage.summaryJson.scripts && Object.keys(projectPackage.summaryJson.scripts).length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {Object.keys(projectPackage.summaryJson.scripts).slice(0, 5).map((script) => (
+                                        <Badge key={script} variant="outline" className="text-xs">
+                                          {script}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Warnings */}
+                              {projectPackage.warningsJson && projectPackage.warningsJson.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {projectPackage.warningsJson.map((warning, idx) => (
+                                    <Badge key={idx} variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">
+                                      <AlertTriangle className="h-3 w-3 mr-1" />
+                                      {warning.code}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -884,13 +1205,18 @@ Read these docs to understand the project architecture, then implement the appli
                           <Button
                             type="submit"
                             className="btn-axiom-cta"
-                            disabled={createAssemblyMutation.isPending}
+                            disabled={createAssemblyMutation.isPending || (!!projectPackage && !isPackageReady)}
                             data-testid="button-generate"
                           >
                             {createAssemblyMutation.isPending ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Starting...
+                              </>
+                            ) : projectPackage && !isPackageReady ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Waiting for project indexing...
                               </>
                             ) : (
                               <>

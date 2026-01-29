@@ -165,6 +165,22 @@ export function registerV1Routes(app: Express) {
     
     const data = parseResult.data;
     
+    // Validate projectPackageId if provided
+    let projectPackageId: string | undefined;
+    if (data.projectPackageId) {
+      const pkg = await storage.getProjectPackage(data.projectPackageId);
+      if (!pkg) {
+        return apiError(req, res, 404, "ASSEMBLER_PROJECT_PACKAGE_NOT_FOUND", 
+          "Project package not found");
+      }
+      // Require indexed state for auto-attach
+      if (pkg.scanState !== "scanned" || pkg.indexState !== "indexed") {
+        return apiError(req, res, 409, "ASSEMBLER_PROJECT_NOT_INDEXED",
+          "Project package must be fully indexed before attaching to assembly");
+      }
+      projectPackageId = data.projectPackageId;
+    }
+    
     const assemblyInput = buildAssemblyInput(data);
     
     const assembly = await storage.createAssembly({
@@ -174,16 +190,30 @@ export function registerV1Routes(app: Express) {
       preset: data.preset,
       domains: data.domains,
       input: assemblyInput,
+      projectPackageId,
     });
+    
+    // Auto-attach project package if provided
+    if (projectPackageId) {
+      await storage.attachProjectPackageToAssembly(projectPackageId, assembly.id);
+      await logAudit("package.attach", "project_package", projectPackageId, req, { 
+        assemblyId: assembly.id,
+        attachedDuring: "assembly_creation"
+      });
+    }
     
     executePipelineV1(assembly.id, assemblyInput);
     
-    await logAudit("assembly.create", "assembly", assembly.id, req, { projectName: assemblyInput.projectName });
+    await logAudit("assembly.create", "assembly", assembly.id, req, { 
+      projectName: assemblyInput.projectName,
+      projectPackageId 
+    });
     
     res.status(202).json({
       assemblyId: assembly.id,
       state: assembly.state,
-      statusUrl: `/v1/assemblies/${assembly.id}`
+      statusUrl: `/v1/assemblies/${assembly.id}`,
+      projectPackageId
     });
   });
 
@@ -198,6 +228,22 @@ export function registerV1Routes(app: Express) {
     }
     
     const data = parseResult.data;
+    
+    // Validate projectPackageId if provided
+    let projectPackageId: string | undefined;
+    if (data.projectPackageId) {
+      const pkg = await storage.getProjectPackage(data.projectPackageId);
+      if (!pkg) {
+        return apiError(req, res, 404, "ASSEMBLER_PROJECT_PACKAGE_NOT_FOUND", 
+          "Project package not found");
+      }
+      if (pkg.scanState !== "scanned" || pkg.indexState !== "indexed") {
+        return apiError(req, res, 409, "ASSEMBLER_PROJECT_NOT_INDEXED",
+          "Project package must be fully indexed before attaching to assembly");
+      }
+      projectPackageId = data.projectPackageId;
+    }
+    
     const assemblyInput = buildAssemblyInput(data);
     
     const assembly = await storage.createAssembly({
@@ -207,14 +253,20 @@ export function registerV1Routes(app: Express) {
       preset: data.preset,
       domains: data.domains,
       input: assemblyInput,
+      projectPackageId,
     });
+    
+    if (projectPackageId) {
+      await storage.attachProjectPackageToAssembly(projectPackageId, assembly.id);
+    }
     
     executePipelineV1(assembly.id, assemblyInput);
     
     res.status(202).json({
       runId: assembly.id,
       state: assembly.state,
-      statusUrl: `/v1/runs/${assembly.id}`
+      statusUrl: `/v1/runs/${assembly.id}`,
+      projectPackageId
     });
   });
 

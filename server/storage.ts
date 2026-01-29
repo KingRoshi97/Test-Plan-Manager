@@ -31,6 +31,7 @@ export interface IStorage {
   createProjectPackage(pkg: InsertProjectPackage): Promise<ProjectPackage>;
   updateProjectPackage(id: string, updates: Partial<ProjectPackage>): Promise<ProjectPackage | undefined>;
   deleteProjectPackage(id: string): Promise<boolean>;
+  attachProjectPackageToAssembly(packageId: string, assemblyId: string): Promise<ProjectPackage | undefined>;
   
   // API Keys
   getApiKey(id: string): Promise<ApiKey | undefined>;
@@ -127,6 +128,7 @@ export class MemStorage implements IStorage {
       },
       kitPath: null,
       logsTail: null,
+      projectPackageId: insertAssembly.projectPackageId || null,
       createdAt: now,
       updatedAt: now,
     };
@@ -253,6 +255,22 @@ export class MemStorage implements IStorage {
 
   async deleteProjectPackage(id: string): Promise<boolean> {
     return this.projectPackages.delete(id);
+  }
+
+  async attachProjectPackageToAssembly(packageId: string, assemblyId: string): Promise<ProjectPackage | undefined> {
+    const pkg = this.projectPackages.get(packageId);
+    if (!pkg) return undefined;
+    
+    // Update both sides of the relationship
+    const assembly = this.assemblies.get(assemblyId);
+    if (assembly) {
+      const updatedAssembly = { ...assembly, projectPackageId: packageId, updatedAt: new Date() };
+      this.assemblies.set(assemblyId, updatedAssembly);
+    }
+    
+    const updated = { ...pkg, assemblyId, updatedAt: new Date() };
+    this.projectPackages.set(packageId, updated);
+    return updated;
   }
 
   // API Keys (stub implementation for MemStorage)

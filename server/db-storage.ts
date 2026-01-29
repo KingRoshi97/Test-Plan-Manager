@@ -61,6 +61,7 @@ export class DbStorage implements IStorage {
       },
       kitPath: null,
       logsTail: null,
+      projectPackageId: insertAssembly.projectPackageId || null,
     }).returning();
     return result[0];
   }
@@ -209,6 +210,19 @@ export class DbStorage implements IStorage {
   async deleteProjectPackage(id: string): Promise<boolean> {
     const result = await db.delete(projectPackages).where(eq(projectPackages.id, id)).returning();
     return result.length > 0;
+  }
+
+  async attachProjectPackageToAssembly(packageId: string, assemblyId: string): Promise<ProjectPackage | undefined> {
+    // Update both sides of the relationship
+    await db.update(assemblies)
+      .set({ projectPackageId: packageId, updatedAt: new Date() })
+      .where(eq(assemblies.id, assemblyId));
+    
+    const result = await db.update(projectPackages)
+      .set({ assemblyId, updatedAt: new Date() })
+      .where(eq(projectPackages.id, packageId))
+      .returning();
+    return result[0];
   }
 
   // API Keys
