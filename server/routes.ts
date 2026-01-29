@@ -7,6 +7,7 @@ import { registerV1Routes } from "./v1-routes";
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
+import { createWorkspace, populateWorkspaceWithAI, getWorkspacePath, type WorkspaceConfig } from "./workspace-manager";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -116,43 +117,60 @@ export async function registerRoutes(
 }
 
 async function executePipeline(runId: string, idea: string, context: string) {
-  const steps = [
-    { name: "gen", script: "scripts/roshi-generate.mjs" },
-    { name: "seed", script: "scripts/roshi-seed.mjs" },
-    { name: "draft", script: "scripts/roshi-draft.mjs" },
-    { name: "package", script: "scripts/roshi-package.mjs" }
-  ];
-
   try {
-    for (const step of steps) {
-      await storage.updateRun(runId, { step: step.name as any });
-      
-      await new Promise<void>((resolve, reject) => {
-        const proc = spawn("node", [step.script], {
-          env: { ...process.env, ROSHI_IDEA: idea, ROSHI_CONTEXT: context },
-          cwd: process.cwd()
-        });
-        
-        let stderr = "";
-        proc.stderr.on("data", (data) => {
-          stderr += data.toString();
-        });
-        
-        proc.on("close", (code) => {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject(new Error(`Step ${step.name} failed: ${stderr}`));
-          }
-        });
-        
-        proc.on("error", reject);
+    const run = await storage.getRun(runId);
+    if (!run) throw new Error("Run not found");
+    
+    await storage.updateRun(runId, { step: "init" });
+    
+    const workspaceConfig: WorkspaceConfig = {
+      runId,
+      projectName: run.projectName || "Untitled Project",
+      idea,
+      context: context || undefined,
+      domains: run.domains || ["platform", "api", "web"],
+    };
+    
+    console.log(`[Pipeline] Creating workspace for run ${runId}`);
+    const workspacePath = await createWorkspace(workspaceConfig);
+    
+    await storage.updateRun(runId, { step: "gen" });
+    console.log(`[Pipeline] Generating AI documentation...`);
+    await populateWorkspaceWithAI(workspaceConfig, workspacePath);
+    
+    await storage.updateRun(runId, { step: "package" });
+    console.log(`[Pipeline] Packaging bundle...`);
+    
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawn("node", ["scripts/roshi-package-workspace.mjs", "--workspace", workspacePath], {
+        env: { ...process.env, ROSHI_WORKSPACE: workspacePath },
+        cwd: process.cwd()
       });
-    }
+      
+      let stderr = "";
+      let stdout = "";
+      proc.stdout.on("data", (data) => {
+        stdout += data.toString();
+        console.log(data.toString());
+      });
+      proc.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+      
+      proc.on("close", (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Package step failed: ${stderr || stdout}`));
+        }
+      });
+      
+      proc.on("error", reject);
+    });
 
-    const bundlePath = "dist/roshi_bundle.zip";
-    const manifestPath = "dist/roshi_bundle/manifest.json";
-    const promptPath = "dist/roshi_bundle/agent_prompt.md";
+    const bundlePath = path.join(workspacePath, "dist/roshi_bundle.zip");
+    const manifestPath = path.join(workspacePath, "dist/roshi_bundle/manifest.json");
+    const promptPath = path.join(workspacePath, "dist/roshi_bundle/agent_prompt.md");
     
     let bundle: RunBundle = {
       available: true,
@@ -182,7 +200,10 @@ async function executePipeline(runId: string, idea: string, context: string) {
       bundle,
       bundlePath 
     });
+    
+    console.log(`[Pipeline] Run ${runId} completed successfully`);
   } catch (error) {
+    console.error(`[Pipeline] Run ${runId} failed:`, error);
     await storage.updateRun(runId, { 
       state: "failed",
       errors: [error instanceof Error ? error.message : "Unknown error"]
