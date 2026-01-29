@@ -3,29 +3,39 @@
 ## Overview
 **Domain Slug:** platform
 
-## User Types
-<!-- Who uses this domain -->
+## Note
+The Platform domain serves as the foundation layer and does not directly interact with users. This document describes the developer experience for platform consumers.
 
-| User Type | Description | Primary Goals |
-|-----------|-------------|---------------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+## Consumer Types
 
-## User Journeys
-<!-- Key user journeys in this domain -->
+| Consumer Type | Description | Primary Goals |
+|---------------|-------------|---------------|
+| API Domain | Backend service | Create and manage runs |
+| Web Domain | Frontend application | Display run data |
+| Roshi Scripts | Pipeline scripts | Execute pipeline steps |
 
-### Journey: UNKNOWN
-- **Trigger:** UNKNOWN
-- **Steps:** UNKNOWN
-- **Outcome:** UNKNOWN
+## Entity Lifecycle
 
-## Information Architecture
-<!-- How information is organized -->
-- UNKNOWN
+### Run Lifecycle
+- **Trigger:** User submits idea via web
+- **Steps:**
+  1. Run created with status "created"
+  2. Execute changes status to "running"
+  3. Pipeline completes, status becomes "completed"
+  4. Package creates bundle, status becomes "bundled"
+- **Outcome:** Bundle ready for download
 
-## Accessibility Requirements
-<!-- A11y requirements for this domain -->
-- UNKNOWN
+## Data Architecture
+- Entities defined in shared/schema.ts
+- Validation via Zod schemas
+- In-memory storage for MVP (MemStorage)
+- Future: PostgreSQL via Drizzle ORM
+
+## Developer Experience
+- TypeScript types for all entities
+- Zod schemas for runtime validation
+- Clear entity ownership boundaries
+- State machine diagrams in BELS
 
 ## Open Questions
-<!-- UX-related questions -->
-- UNKNOWN
+- None - platform foundations are defined for MVP

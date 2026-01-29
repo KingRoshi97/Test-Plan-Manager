@@ -3,35 +3,26 @@
 ## Overview
 **Domain Slug:** security
 
-## Screens
+## Note
+The Security domain does not have screens for MVP - authentication is optional. Future versions may add login/logout screens.
 
-### Screen: UNKNOWN
-- **Route:** UNKNOWN
-- **Purpose:** UNKNOWN
-- **Components:**
-  - UNKNOWN
-- **User Actions:**
-  - UNKNOWN
-- **Data Requirements:**
-  - UNKNOWN
+## Future Screens (Post-MVP)
 
-## Screen Flow
-<!-- How screens connect to each other -->
-```
-UNKNOWN -> UNKNOWN -> UNKNOWN
-```
+### Screen: Login (Future)
+- **Route:** /login
+- **Purpose:** User authentication
+- **Components:** LoginForm, PasswordField, SubmitButton
+- **User Actions:** Enter credentials, submit login
 
-## Navigation Patterns
-<!-- How users navigate between screens -->
-- UNKNOWN
+### Screen: Logout (Future)
+- **Route:** /logout
+- **Purpose:** End user session
+- **Components:** LogoutConfirmation
 
-## Modal/Dialog Screens
-<!-- Popup screens -->
-
-| Modal | Trigger | Purpose |
-|-------|---------|---------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+## Current State (MVP)
+- No authentication required
+- All API endpoints are publicly accessible
+- Sessions not tracked
 
 ## Open Questions
-<!-- Screen-related questions -->
-- UNKNOWN
+- Authentication mechanism deferred to post-MVP per PROJECT_OVERVIEW

@@ -3,29 +3,32 @@
 ## Overview
 **Domain Slug:** api
 
-## Visual Design Constraints
-<!-- Visual design rules for this domain -->
-- UNKNOWN
+## Note
+The API domain does not have a UI - it exposes HTTP endpoints. This document describes API response formatting constraints.
 
-## Layout Constraints
-<!-- Layout rules -->
-- UNKNOWN
+## Response Format Constraints
+- All responses are JSON
+- Error responses include { error: string, code: string }
+- Success responses include relevant data payload
+- HTTP status codes follow REST conventions
 
-## Component Constraints
-<!-- Which components can/cannot be used -->
+## Request Constraints
+- Content-Type: application/json for POST/PUT
+- Accept: application/json for all requests
+- Accept: application/zip for download endpoint
 
-| Component | Allowed | Notes |
-|-----------|---------|-------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+## Error Response Format
 
-## Responsive Behavior
-<!-- How UI should respond to different screen sizes -->
-- UNKNOWN
+| Field | Type | Description |
+|-------|------|-------------|
+| error | string | Human-readable error message |
+| code | string | Machine-readable error code |
+| details | object | Optional additional details |
 
 ## Performance Constraints
-<!-- UI performance requirements -->
-- UNKNOWN
+- Response time < 100ms for status checks
+- Pipeline execution may take 5-30 seconds (async)
+- Download endpoint streams file, no size limit for MVP
 
 ## Open Questions
-<!-- UI-related questions -->
-- UNKNOWN
+- None - API constraints are defined for MVP

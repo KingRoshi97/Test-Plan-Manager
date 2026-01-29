@@ -6,29 +6,35 @@
 **Domain Type:** business
 
 ## Purpose
-<!-- Describe the purpose of this domain -->
-UNKNOWN
+The Platform domain defines the core entities and business rules for Roshi Studio. It owns the canonical definitions for Run, Project, User, and other foundational objects.
 
 ## Entities
-<!-- List all entities managed by this domain -->
 
 | Entity | Description | Owner |
 |--------|-------------|-------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| User | A user of the system (optional for MVP - no auth required) | platform |
+| Project | A collection of runs (optional for MVP) | platform |
+| Run | A single pipeline execution with idea, status, and artifacts | platform |
+| DomainPack | Generated documentation for a single domain | platform |
+| Artifact | A file created or modified during pipeline execution | platform |
+| VerifyResult | Result of verification checks for a domain | platform |
+| ERC | Execution Readiness Contract - gates for locking | platform |
+| Bundle | The final zip package for agent handoff | platform |
+| TemplatePack | Versioned set of documentation templates | platform |
+| SourceRef | Citation to a known input/source document | platform |
 
 ## Key Responsibilities
-<!-- What this domain is responsible for -->
-- UNKNOWN
+- Define entity schemas and validation rules
+- Enforce business rules (no invention, no overwrite)
+- Maintain entity state machines
+- Provide canonical definitions for all domains
 
 ## Domain Boundaries
-<!-- What is in scope and out of scope -->
-- **In Scope:** UNKNOWN
-- **Out of Scope:** UNKNOWN
+- **In Scope:** Entity definitions, validation rules, state machines, business rules
+- **Out of Scope:** API routing (api domain), UI (web domain), file I/O (infra domain)
 
 ## Dependencies
-<!-- Other domains this domain depends on -->
-- UNKNOWN
+- None - platform is the foundation domain
 
 ## Open Questions
-<!-- Questions that need answers -->
-- UNKNOWN
+- None - core entities are defined in PROJECT_OVERVIEW

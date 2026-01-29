@@ -5,33 +5,55 @@
 
 ## Screens
 
-### Screen: UNKNOWN
-- **Route:** UNKNOWN
-- **Purpose:** UNKNOWN
+### Screen: Home / Generator
+- **Route:** /
+- **Purpose:** Main landing page where users submit ideas and generate bundles
 - **Components:**
-  - UNKNOWN
+  - IdeaForm: textarea for idea input, optional context field
+  - GenerateButton: triggers pipeline execution
+  - RunStatusDisplay: shows current pipeline step progress
+  - DownloadSection: appears when bundle is ready
 - **User Actions:**
-  - UNKNOWN
+  - Enter idea text
+  - Click Generate
+  - View pipeline progress
+  - Download bundle zip
+  - Copy agent prompt
 - **Data Requirements:**
-  - UNKNOWN
+  - Current run status (if any)
+  - Pipeline step progress
+  - Bundle download URL
+
+### Screen: Run History
+- **Route:** /runs
+- **Purpose:** View past runs and their status
+- **Components:**
+  - RunList: table of past runs with status, date, actions
+  - RunRow: individual run with status badge, download button
+- **User Actions:**
+  - View run history
+  - Download previous bundles
+  - Delete old runs
+- **Data Requirements:**
+  - List of runs with id, status, createdAt, bundlePath
 
 ## Screen Flow
-<!-- How screens connect to each other -->
 ```
-UNKNOWN -> UNKNOWN -> UNKNOWN
+Home (/) -> [Generate] -> Pipeline Running -> Bundle Ready -> Download
+                                           -> Run History (/runs)
 ```
 
 ## Navigation Patterns
-<!-- How users navigate between screens -->
-- UNKNOWN
+- Single-page focus: Home is primary screen
+- Optional: Link to Run History for power users
+- Download triggers browser save dialog
 
 ## Modal/Dialog Screens
-<!-- Popup screens -->
 
 | Modal | Trigger | Purpose |
 |-------|---------|---------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| CopyPromptModal | Click "Copy Agent Prompt" | Display agent_prompt.md content with copy button |
+| ErrorModal | Pipeline fails | Show error message and retry option |
 
 ## Open Questions
-<!-- Screen-related questions -->
-- UNKNOWN
+- None - screens are well-defined for MVP

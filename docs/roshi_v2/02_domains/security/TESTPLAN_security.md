@@ -3,34 +3,41 @@
 ## Overview
 **Domain Slug:** security
 
+## Note
+Security domain is minimal for MVP. Test plan covers future authentication features.
+
 ## Test Categories
 
-### Unit Tests
+### Unit Tests (Future)
 | Test Case | Description | Expected Result |
 |-----------|-------------|-----------------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| Session creation | Create valid session | Session token returned |
+| Session validation | Validate valid token | Validation passes |
+| Session expiry | Expired token rejected | Validation fails |
 
-### Integration Tests
+### Integration Tests (Future)
 | Test Case | Description | Dependencies | Expected Result |
 |-----------|-------------|--------------|-----------------|
-| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+| Auth middleware | Protected route rejects invalid session | api domain | 401 returned |
+| Rate limiting | Excessive requests throttled | api domain | 429 returned |
 
-### E2E Tests
+### E2E Tests (Future)
 | Scenario | Steps | Expected Result |
 |----------|-------|-----------------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| Login flow | Enter credentials, receive token | Token usable for API calls |
+| Logout flow | Logout, token invalidated | Subsequent calls fail |
 
-## Acceptance Scenarios
+## Acceptance Scenarios (MVP)
 <!-- Minimum scenarios that must pass -->
 
 | Scenario ID | Description | Priority |
 |-------------|-------------|----------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| ACC_001 | All endpoints accessible without auth | P0 |
 
-## Edge Cases
-<!-- Known edge cases to test -->
-- UNKNOWN
+## Edge Cases (Future)
+- Invalid credentials → 401 Unauthorized
+- Expired session → 401 with refresh hint
+- Rate limit exceeded → 429 Too Many Requests
 
 ## Open Questions
-<!-- Testing-related questions -->
-- UNKNOWN
+- Authentication mechanism deferred to post-MVP

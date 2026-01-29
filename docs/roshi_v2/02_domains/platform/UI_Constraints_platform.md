@@ -3,29 +3,28 @@
 ## Overview
 **Domain Slug:** platform
 
-## Visual Design Constraints
-<!-- Visual design rules for this domain -->
-- UNKNOWN
+## Note
+The Platform domain does not have a UI - it defines core entities and business rules. This document describes data model constraints.
 
-## Layout Constraints
-<!-- Layout rules -->
-- UNKNOWN
+## Data Model Constraints
+- All entities use UUID for primary key
+- Timestamps use ISO 8601 format
+- Status fields use enum values (not arbitrary strings)
+- Required fields must not be null or empty
 
-## Component Constraints
-<!-- Which components can/cannot be used -->
+## Entity Constraints
 
-| Component | Allowed | Notes |
-|-----------|---------|-------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| Entity | Constraint | Notes |
+|--------|------------|-------|
+| Run.id | UUID v4 format | Generated on creation |
+| Run.idea | Min 10 chars | User-provided input |
+| Run.status | Enum: created, running, completed, failed, bundled | State machine controlled |
+| Bundle.path | Valid file path | Points to zip file |
 
-## Responsive Behavior
-<!-- How UI should respond to different screen sizes -->
-- UNKNOWN
-
-## Performance Constraints
-<!-- UI performance requirements -->
-- UNKNOWN
+## Validation Constraints
+- Idea field: required, min 10 characters
+- Status field: must be valid enum value
+- Timestamps: must be valid ISO 8601
 
 ## Open Questions
-<!-- UI-related questions -->
-- UNKNOWN
+- None - platform constraints are defined for MVP

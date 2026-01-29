@@ -3,32 +3,33 @@
 ## Overview
 **Domain Slug:** web
 **Domain Prefix:** web
-**Domain Type:** business
+**Domain Type:** ui
 
 ## Purpose
-<!-- Describe the purpose of this domain -->
-UNKNOWN
+The Web domain provides the user interface for Roshi Studio. Users interact with this domain to submit ideas, monitor pipeline progress, and download generated bundles.
 
 ## Entities
-<!-- List all entities managed by this domain -->
 
 | Entity | Description | Owner |
 |--------|-------------|-------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| IdeaForm | Form state for idea submission | web |
+| RunStatusView | Display model for pipeline progress | web |
+| DownloadAction | Action trigger for bundle download | web |
 
 ## Key Responsibilities
-<!-- What this domain is responsible for -->
-- UNKNOWN
+- Render idea submission form
+- Display real-time pipeline progress
+- Provide bundle download functionality
+- Show agent prompt for copying
+- Handle form validation and error display
 
 ## Domain Boundaries
-<!-- What is in scope and out of scope -->
-- **In Scope:** UNKNOWN
-- **Out of Scope:** UNKNOWN
+- **In Scope:** UI components, form validation, status display, download triggers
+- **Out of Scope:** Pipeline execution (API domain), storage (infra domain), authentication (security domain)
 
 ## Dependencies
-<!-- Other domains this domain depends on -->
-- UNKNOWN
+- API domain: for run creation and status polling
+- Platform domain: for Run entity state
 
 ## Open Questions
-<!-- Questions that need answers -->
-- UNKNOWN
+- None - boundaries are clear for MVP

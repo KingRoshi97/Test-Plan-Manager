@@ -3,29 +3,38 @@
 ## Overview
 **Domain Slug:** security
 
-## Visual Design Constraints
-<!-- Visual design rules for this domain -->
-- UNKNOWN
+## Note
+Security domain has no UI for MVP - authentication is not required. Constraints listed are for future implementation.
 
-## Layout Constraints
-<!-- Layout rules -->
-- UNKNOWN
+## Login UI Constraints (Future)
+- Simple email/password form
+- Error messages do not reveal account existence
+- Password field masked by default
+- Remember me checkbox optional
 
-## Component Constraints
-<!-- Which components can/cannot be used -->
+## Session UI Constraints (Future)
+- Session indicator in header (future)
+- Logout button accessible from any page
+- Session timeout warning before expiry
+
+## Component Constraints (Future)
 
 | Component | Allowed | Notes |
 |-----------|---------|-------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| LoginForm | Yes | Future implementation |
+| LogoutButton | Yes | Future implementation |
+| SessionIndicator | Yes | Future implementation |
 
-## Responsive Behavior
-<!-- How UI should respond to different screen sizes -->
-- UNKNOWN
+## Security-Specific Constraints (Future)
+- No password hints in error messages
+- CSRF protection on forms
+- Secure cookie flags set
+- Rate limiting on login attempts
 
-## Performance Constraints
-<!-- UI performance requirements -->
-- UNKNOWN
+## MVP State
+- No security UI components needed
+- No authentication forms
+- All access is public
 
 ## Open Questions
-<!-- UI-related questions -->
-- UNKNOWN
+- Authentication mechanism deferred to post-MVP

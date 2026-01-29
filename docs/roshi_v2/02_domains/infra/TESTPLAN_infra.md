@@ -8,29 +8,38 @@
 ### Unit Tests
 | Test Case | Description | Expected Result |
 |-----------|-------------|-----------------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| File read | Read existing file | Contents returned |
+| File read missing | Read non-existent file | Error thrown |
+| File write | Write to new path | File created |
+| File write no-overwrite | Write to existing path | Skip or error |
+| Directory create | Create nested dirs | Dirs created |
 
 ### Integration Tests
 | Test Case | Description | Dependencies | Expected Result |
 |-----------|-------------|--------------|-----------------|
-| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+| Zip creation | Create zip with files | archiver | Valid zip file |
+| Zip contents | Zip contains expected files | archiver | All files present |
+| Path resolution | Resolve relative paths | Node.js path | Correct absolute paths |
 
 ### E2E Tests
 | Scenario | Steps | Expected Result |
 |----------|-------|-----------------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| Bundle creation | Add files, finalize, verify | Valid downloadable zip |
 
 ## Acceptance Scenarios
 <!-- Minimum scenarios that must pass -->
 
 | Scenario ID | Description | Priority |
 |-------------|-------------|----------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| ACC_001 | Files can be read and written | P0 |
+| ACC_002 | Zip archives can be created | P0 |
+| ACC_003 | No-overwrite rule is enforced | P0 |
 
 ## Edge Cases
-<!-- Known edge cases to test -->
-- UNKNOWN
+- Write to non-existent parent dir → create parent dirs
+- Read from non-existent file → throw error
+- Zip with empty content → valid empty zip
+- Path traversal attempt → reject
 
 ## Open Questions
-<!-- Testing-related questions -->
-- UNKNOWN
+- None - infra test plan is defined for MVP

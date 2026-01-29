@@ -3,35 +3,28 @@
 ## Overview
 **Domain Slug:** api
 
-## Screens
+## Note
+The API domain does not have screens - it exposes HTTP endpoints. See DDES_api.md for endpoint specifications.
 
-### Screen: UNKNOWN
-- **Route:** UNKNOWN
-- **Purpose:** UNKNOWN
-- **Components:**
-  - UNKNOWN
-- **User Actions:**
-  - UNKNOWN
-- **Data Requirements:**
-  - UNKNOWN
+## Endpoints (Not Screens)
 
-## Screen Flow
-<!-- How screens connect to each other -->
-```
-UNKNOWN -> UNKNOWN -> UNKNOWN
-```
+### Endpoint: POST /api/runs
+- **Purpose:** Create a new pipeline run
+- **Request Body:** { idea: string, context?: string }
+- **Response:** { id: string, status: "created" }
 
-## Navigation Patterns
-<!-- How users navigate between screens -->
-- UNKNOWN
+### Endpoint: POST /api/runs/:id/execute
+- **Purpose:** Execute the pipeline for a run
+- **Request Body:** none
+- **Response:** { id: string, status: "running" | "completed" | "failed", currentStep: string }
 
-## Modal/Dialog Screens
-<!-- Popup screens -->
+### Endpoint: GET /api/runs/:id
+- **Purpose:** Get run status
+- **Response:** { id: string, status: string, currentStep: string, steps: Step[], bundlePath?: string }
 
-| Modal | Trigger | Purpose |
-|-------|---------|---------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+### Endpoint: GET /api/runs/:id/download
+- **Purpose:** Download bundle zip
+- **Response:** application/zip file
 
 ## Open Questions
-<!-- Screen-related questions -->
-- UNKNOWN
+- None - endpoints are well-defined

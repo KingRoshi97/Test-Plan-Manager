@@ -3,29 +3,33 @@
 ## Overview
 **Domain Slug:** infra
 
-## Visual Design Constraints
-<!-- Visual design rules for this domain -->
-- UNKNOWN
+## Note
+The Infrastructure domain does not have a UI - it provides file system and storage services. This document describes I/O constraints.
 
-## Layout Constraints
-<!-- Layout rules -->
-- UNKNOWN
+## File System Constraints
+- Use Node.js fs module for file operations
+- All paths relative to project root
+- No path traversal outside workspace allowed
+- Create parent directories automatically
 
-## Component Constraints
-<!-- Which components can/cannot be used -->
+## Storage Constraints
 
-| Component | Allowed | Notes |
-|-----------|---------|-------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| Constraint | Value | Notes |
+|------------|-------|-------|
+| Max file size | No limit for MVP | Future: may add limits |
+| Allowed extensions | All | No restrictions for MVP |
+| No-overwrite default | Yes | Skip existing files unless --force |
 
-## Responsive Behavior
-<!-- How UI should respond to different screen sizes -->
-- UNKNOWN
+## Zip Constraints
+- Use archiver library for zip creation
+- Compression level: 9 (maximum)
+- Max zip size: No limit for MVP
+- File paths within zip: relative to bundle root
 
 ## Performance Constraints
-<!-- UI performance requirements -->
-- UNKNOWN
+- Streaming for large files (future)
+- Async operations preferred
+- No blocking I/O in request handlers
 
 ## Open Questions
-<!-- UI-related questions -->
-- UNKNOWN
+- None - infra constraints are defined for MVP
