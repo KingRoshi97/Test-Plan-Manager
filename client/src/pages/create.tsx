@@ -16,7 +16,7 @@ import {
   Download, Loader2, CheckCircle, XCircle, Play, Copy,
   Plus, Trash2, ChevronRight, ChevronLeft, Sparkles, Code, Users, ListTodo, Settings,
   Upload, File, X, Package, AlertTriangle, FolderArchive,
-  Globe, Smartphone, Server, Workflow, Gamepad2, Wand2
+  Globe, Smartphone, Server, Workflow, Gamepad2, Wand2, Palette
 } from "lucide-react";
 import type { UploadedFile, ProjectSummary, ProjectWarning, ScanState, IndexState, AssemblyCategory, AssemblyMode } from "@shared/schema";
 import { useLocation } from "wouter";
@@ -154,12 +154,14 @@ function getStepProgress(currentStep: string | null): number {
   return index >= 0 ? ((index + 1) / PIPELINE_STEPS.length) * 100 : 0;
 }
 
-const FORM_STEPS = ["type", "basics", "features", "users", "tech", "preview"] as const;
+const FORM_STEPS = ["type", "basics", "intent", "features", "users", "ux", "tech", "preview"] as const;
 const STEP_CONFIG = [
   { id: "type", label: "Type" },
   { id: "basics", label: "Basics" },
+  { id: "intent", label: "Intent" },
   { id: "features", label: "Features" },
   { id: "users", label: "Users" },
+  { id: "ux", label: "UX & Screens" },
   { id: "tech", label: "Tech" },
   { id: "preview", label: "Generate" },
 ];
@@ -171,7 +173,6 @@ export default function Create() {
   const [activeAssemblyId, setActiveAssemblyId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<FormStep>("type");
   const [useSimpleMode, setUseSimpleMode] = useState(false);
-  const [useDynamicWizard, setUseDynamicWizard] = useState(true);
   
   // Category/Mode/Preset selection state
   const [selectedCategory, setSelectedCategory] = useState<AssemblyCategory | null>(null);
@@ -592,6 +593,9 @@ Read these docs to understand the project architecture, then implement the appli
     const newDraft = applyWizardPresetDefaults(makeEmptyDraft(), preset.defaults);
     setWizardDraft(newDraft);
     setWizardStepIndex(0);
+    
+    // Auto-advance to Basics tab after preset selection
+    setCurrentStep("basics");
   };
 
   const goNext = () => {
@@ -718,29 +722,37 @@ Read these docs to understand the project architecture, then implement the appli
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     <Tabs value={currentStep} onValueChange={(v) => setCurrentStep(v as FormStep)} className="w-full">
-                      <TabsList className="grid w-full grid-cols-6 mb-6">
+                      <TabsList className="grid w-full grid-cols-8 mb-6">
                         <TabsTrigger value="type" data-testid="tab-type">
                           <Package className="h-4 w-4 mr-1 hidden sm:inline" />
                           Type
                         </TabsTrigger>
-                        <TabsTrigger value="basics" data-testid="tab-basics">
+                        <TabsTrigger value="basics" data-testid="tab-basics" disabled={!wizardFlow}>
                           <Settings className="h-4 w-4 mr-1 hidden sm:inline" />
                           Basics
                         </TabsTrigger>
-                        <TabsTrigger value="features" data-testid="tab-features">
+                        <TabsTrigger value="intent" data-testid="tab-intent" disabled={!wizardFlow}>
+                          <Sparkles className="h-4 w-4 mr-1 hidden sm:inline" />
+                          Intent
+                        </TabsTrigger>
+                        <TabsTrigger value="features" data-testid="tab-features" disabled={!wizardFlow}>
                           <ListTodo className="h-4 w-4 mr-1 hidden sm:inline" />
                           Features
                         </TabsTrigger>
-                        <TabsTrigger value="users" data-testid="tab-users">
+                        <TabsTrigger value="users" data-testid="tab-users" disabled={!wizardFlow}>
                           <Users className="h-4 w-4 mr-1 hidden sm:inline" />
                           Users
                         </TabsTrigger>
-                        <TabsTrigger value="tech" data-testid="tab-tech">
+                        <TabsTrigger value="ux" data-testid="tab-ux" disabled={!wizardFlow}>
+                          <Palette className="h-4 w-4 mr-1 hidden sm:inline" />
+                          UX
+                        </TabsTrigger>
+                        <TabsTrigger value="tech" data-testid="tab-tech" disabled={!wizardFlow}>
                           <Code className="h-4 w-4 mr-1 hidden sm:inline" />
                           Tech
                         </TabsTrigger>
-                        <TabsTrigger value="preview" data-testid="tab-preview">
-                          <Sparkles className="h-4 w-4 mr-1 hidden sm:inline" />
+                        <TabsTrigger value="preview" data-testid="tab-preview" disabled={!wizardFlow}>
+                          <Play className="h-4 w-4 mr-1 hidden sm:inline" />
                           Generate
                         </TabsTrigger>
                       </TabsList>
@@ -850,9 +862,25 @@ Read these docs to understand the project architecture, then implement the appli
                           </div>
                         )}
 
-                        {/* Dynamic Wizard or Navigation */}
-                        {selectedPreset && wizardFlow ? (
-                          <div className="pt-4 border-t">
+                        {/* Navigation - preset already triggers auto-advance to Basics */}
+                        {!selectedPreset && (
+                          <div className="flex justify-end pt-4">
+                            <Button
+                              type="button"
+                              disabled
+                              className="btn-axiom-cta opacity-50"
+                              data-testid="button-next-type"
+                            >
+                              Select a template to continue
+                              <ChevronRight className="ml-2 h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </TabsContent>
+
+                      <TabsContent value="basics" className="space-y-4">
+                        {wizardFlow ? (
+                          <>
                             <DynamicWizard
                               flow={wizardFlow}
                               draft={wizardDraft}
@@ -883,726 +911,351 @@ Read these docs to understand the project architecture, then implement the appli
                               mode={selectedMode as Mode}
                               onSubmit={onWizardSubmit}
                               isSubmitting={createAssemblyMutation.isPending}
+                              activeStepId="basics"
+                              hideInternalNav
                             />
-                          </div>
+                            <div className="flex justify-between pt-4 border-t">
+                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-basics">
+                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                              </Button>
+                              <Button type="button" onClick={goNext} data-testid="button-next-basics" className="btn-axiom-cta">
+                                Next: Intent <ChevronRight className="ml-2 h-4 w-4" />
+                              </Button>
+                            </div>
+                          </>
                         ) : (
-                          <div className="flex justify-end pt-4">
-                            <Button
-                              type="button"
-                              disabled={!selectedPreset}
-                              className="btn-axiom-cta opacity-50"
-                              data-testid="button-next-type"
-                            >
-                              Select a template to continue
-                              <ChevronRight className="ml-2 h-4 w-4" />
-                            </Button>
-                          </div>
+                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
                         )}
                       </TabsContent>
 
-                      <TabsContent value="basics" className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="projectName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Project Name *</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Task Manager Pro" data-testid="input-project-name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="description"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Project Description *</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="A task management application for small teams with kanban boards, due dates, and team member assignments..."
-                                  className="min-h-24"
-                                  data-testid="input-description"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                Describe the core purpose and goals of your project.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <div className="space-y-3">
-                          <FormLabel>Reference Documents (Optional)</FormLabel>
-                          <div
-                            className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
-                              isDragging 
-                                ? "border-primary bg-primary/5" 
-                                : "border-muted-foreground/25 hover:border-muted-foreground/50"
-                            }`}
-                            onDrop={handleDrop}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            data-testid="drop-zone-files"
-                          >
-                            <input
-                              type="file"
-                              ref={fileInputRef}
-                              className="hidden"
-                              accept=".pdf,.docx,.doc,.txt,.md"
-                              multiple
-                              onChange={(e) => e.target.files && uploadFiles(e.target.files)}
-                              data-testid="input-file-upload"
+                      <TabsContent value="intent" className="space-y-4">
+                        {wizardFlow ? (
+                          <>
+                            <DynamicWizard
+                              flow={wizardFlow}
+                              draft={wizardDraft}
+                              onDraftChange={setWizardDraft}
+                              currentStepIndex={wizardStepIndex}
+                              onStepChange={setWizardStepIndex}
+                              projectPackage={projectPackage ? {
+                                id: projectPackage.id,
+                                filename: projectPackage.filename,
+                                sizeBytes: projectPackage.sizeBytes,
+                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
+                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
+                                summaryJson: projectPackage.summaryJson ? {
+                                  framework: projectPackage.summaryJson.framework,
+                                  packageManager: projectPackage.summaryJson.packageManager,
+                                  fileCount: projectPackage.summaryJson.fileCount,
+                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
+                                  scripts: projectPackage.summaryJson.scripts
+                                } : null,
+                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
+                                errorCode: projectPackage.errorCode,
+                                errorMessage: projectPackage.errorMessage
+                              } : null}
+                              onProjectPackageUpload={uploadProjectZip}
+                              onProjectPackageRemove={removeProjectPackage}
+                              isPackageProcessing={!!isPackageProcessing}
+                              isPackageReady={isPackageReady}
+                              mode={selectedMode as Mode}
+                              onSubmit={onWizardSubmit}
+                              isSubmitting={createAssemblyMutation.isPending}
+                              activeStepId="intent"
+                              hideInternalNav
                             />
-                            {isUploading ? (
-                              <div className="flex flex-col items-center gap-2">
-                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                                <p className="text-sm text-muted-foreground">Extracting text...</p>
-                              </div>
-                            ) : (
-                              <>
-                                <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
-                                <p className="mt-2 text-sm text-muted-foreground">
-                                  Drag and drop PDFs, Word docs, or text files
-                                </p>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="mt-2"
-                                  onClick={() => fileInputRef.current?.click()}
-                                  data-testid="button-browse-files"
-                                >
-                                  Browse Files
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                          <FormDescription>
-                            Upload existing documentation, specs, or notes to provide additional context.
-                          </FormDescription>
-                          
-                          {(form.watch("uploadedFiles") || []).length > 0 && (
-                            <div className="space-y-2">
-                              {(form.watch("uploadedFiles") || []).map((file) => (
-                                <div
-                                  key={file.id}
-                                  className="flex items-center justify-between rounded-md border p-2"
-                                  data-testid={`uploaded-file-${file.id}`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <File className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm font-medium">{file.filename}</span>
-                                    <Badge variant="secondary" className="text-xs">
-                                      {formatFileSize(file.size)}
-                                    </Badge>
-                                    <Badge variant="outline" className="text-xs">
-                                      {file.extractedText.length} chars
-                                    </Badge>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeUploadedFile(file.id)}
-                                    data-testid={`button-remove-file-${file.id}`}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ))}
+                            <div className="flex justify-between pt-4 border-t">
+                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-intent">
+                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                              </Button>
+                              <Button type="button" onClick={goNext} data-testid="button-next-intent" className="btn-axiom-cta">
+                                Next: Features <ChevronRight className="ml-2 h-4 w-4" />
+                              </Button>
                             </div>
-                          )}
-                        </div>
-
-                        {/* Project ZIP Upload Section */}
-                        <div className="space-y-3 pt-4 border-t">
-                          <FormLabel>Upload Existing Project (ZIP) (Optional)</FormLabel>
-                          {!projectPackage ? (
-                            <>
-                              <div
-                                className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
-                                  isDraggingZip 
-                                    ? "border-amber-500 bg-amber-500/5" 
-                                    : "border-muted-foreground/25 hover:border-muted-foreground/50"
-                                }`}
-                                onDrop={handleZipDrop}
-                                onDragOver={handleZipDragOver}
-                                onDragLeave={handleZipDragLeave}
-                                data-testid="drop-zone-zip"
-                              >
-                                <input
-                                  type="file"
-                                  ref={zipInputRef}
-                                  className="hidden"
-                                  accept=".zip"
-                                  onChange={(e) => e.target.files?.[0] && uploadProjectZip(e.target.files[0])}
-                                  data-testid="input-zip-upload"
-                                />
-                                {isUploadingZip ? (
-                                  <div className="flex flex-col items-center gap-2">
-                                    <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-                                    <p className="text-sm text-muted-foreground">Uploading...</p>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <FolderArchive className="mx-auto h-8 w-8 text-amber-500" />
-                                    <p className="mt-2 text-sm text-muted-foreground">
-                                      Drag and drop your project ZIP file
-                                    </p>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="mt-2"
-                                      onClick={() => zipInputRef.current?.click()}
-                                      data-testid="button-browse-zip"
-                                    >
-                                      Browse ZIP File
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                              <FormDescription>
-                                Upload an existing codebase to analyze its structure and generate upgrade documentation.
-                              </FormDescription>
-                            </>
-                          ) : (
-                            <div className="rounded-lg border p-4 space-y-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Package className="h-5 w-5 text-amber-500" />
-                                  <span className="font-medium">{projectPackage.filename}</span>
-                                  <Badge variant="secondary" className="text-xs">
-                                    {formatFileSize(projectPackage.sizeBytes)}
-                                  </Badge>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={removeProjectPackage}
-                                  disabled={!!isPackageProcessing}
-                                  data-testid="button-remove-zip"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              {/* Status indicators */}
-                              <div className="flex items-center gap-4 text-sm">
-                                <div className="flex items-center gap-1.5">
-                                  {projectPackage.scanState === "scanned" ? (
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                  ) : projectPackage.scanState === "failed" ? (
-                                    <XCircle className="h-4 w-4 text-red-500" />
-                                  ) : (
-                                    <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
-                                  )}
-                                  <span className={projectPackage.scanState === "failed" ? "text-red-500" : ""}>
-                                    {projectPackage.scanState === "scanned" ? "Scanned" :
-                                     projectPackage.scanState === "failed" ? "Scan Failed" :
-                                     projectPackage.scanState === "scanning" ? "Scanning..." : "Queued"}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  {projectPackage.indexState === "indexed" ? (
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                  ) : projectPackage.indexState === "failed" ? (
-                                    <XCircle className="h-4 w-4 text-red-500" />
-                                  ) : (
-                                    <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
-                                  )}
-                                  <span className={projectPackage.indexState === "failed" ? "text-red-500" : ""}>
-                                    {projectPackage.indexState === "indexed" ? "Indexed" :
-                                     projectPackage.indexState === "failed" ? "Index Failed" :
-                                     projectPackage.indexState === "indexing" ? "Indexing..." : "Queued"}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Error message */}
-                              {(projectPackage.errorCode || projectPackage.errorMessage) && (
-                                <div className="flex items-start gap-2 rounded-md bg-red-500/10 p-3 text-sm text-red-500">
-                                  <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-                                  <div>
-                                    {projectPackage.errorCode && (
-                                      <span className="font-mono text-xs mr-2">[{projectPackage.errorCode}]</span>
-                                    )}
-                                    {projectPackage.errorMessage}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Summary when indexed */}
-                              {isPackageReady && projectPackage.summaryJson && (
-                                <div className="rounded-md bg-muted/50 p-3 space-y-2">
-                                  <div className="grid grid-cols-2 gap-2 text-sm">
-                                    {projectPackage.summaryJson.framework && (
-                                      <div>
-                                        <span className="text-muted-foreground">Framework:</span>{" "}
-                                        <span className="font-medium">{projectPackage.summaryJson.framework}</span>
-                                      </div>
-                                    )}
-                                    {projectPackage.summaryJson.packageManager && (
-                                      <div>
-                                        <span className="text-muted-foreground">Package Manager:</span>{" "}
-                                        <span className="font-medium">{projectPackage.summaryJson.packageManager}</span>
-                                      </div>
-                                    )}
-                                    {projectPackage.summaryJson.fileCount && (
-                                      <div>
-                                        <span className="text-muted-foreground">Files:</span>{" "}
-                                        <span className="font-medium">{projectPackage.summaryJson.fileCount}</span>
-                                      </div>
-                                    )}
-                                    {projectPackage.summaryJson.hasTypeScript !== undefined && (
-                                      <div>
-                                        <span className="text-muted-foreground">TypeScript:</span>{" "}
-                                        <span className="font-medium">{projectPackage.summaryJson.hasTypeScript ? "Yes" : "No"}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                  {projectPackage.summaryJson.scripts && Object.keys(projectPackage.summaryJson.scripts).length > 0 && (
-                                    <div className="flex flex-wrap gap-1">
-                                      {Object.keys(projectPackage.summaryJson.scripts).slice(0, 5).map((script) => (
-                                        <Badge key={script} variant="outline" className="text-xs">
-                                          {script}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Warnings */}
-                              {projectPackage.warningsJson && projectPackage.warningsJson.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {projectPackage.warningsJson.map((warning, idx) => (
-                                    <Badge key={idx} variant="secondary" className="text-xs bg-amber-500/10 text-amber-600">
-                                      <AlertTriangle className="h-3 w-3 mr-1" />
-                                      {warning.code}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex justify-end pt-4">
-                          <Button type="button" onClick={goNext} data-testid="button-next-basics">
-                            Next: Features <ChevronRight className="ml-2 h-4 w-4" />
-                          </Button>
-                        </div>
+                          </>
+                        ) : (
+                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
+                        )}
                       </TabsContent>
 
                       <TabsContent value="features" className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-lg font-medium">Features</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Define the features your project needs. Prioritize with P0 (must-have), P1 (should-have), P2 (nice-to-have).
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => featuresField.append({ name: "", description: "", priority: "P1" })}
-                            data-testid="button-add-feature"
-                          >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Feature
-                          </Button>
-                        </div>
-
-                        {featuresField.fields.length === 0 ? (
-                          <div className="rounded-lg border-2 border-dashed p-8 text-center">
-                            <ListTodo className="mx-auto h-8 w-8 text-muted-foreground" />
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              No features defined yet. Add features to get better documentation.
-                            </p>
-                          </div>
+                        {wizardFlow ? (
+                          <>
+                            <DynamicWizard
+                              flow={wizardFlow}
+                              draft={wizardDraft}
+                              onDraftChange={setWizardDraft}
+                              currentStepIndex={wizardStepIndex}
+                              onStepChange={setWizardStepIndex}
+                              projectPackage={projectPackage ? {
+                                id: projectPackage.id,
+                                filename: projectPackage.filename,
+                                sizeBytes: projectPackage.sizeBytes,
+                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
+                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
+                                summaryJson: projectPackage.summaryJson ? {
+                                  framework: projectPackage.summaryJson.framework,
+                                  packageManager: projectPackage.summaryJson.packageManager,
+                                  fileCount: projectPackage.summaryJson.fileCount,
+                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
+                                  scripts: projectPackage.summaryJson.scripts
+                                } : null,
+                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
+                                errorCode: projectPackage.errorCode,
+                                errorMessage: projectPackage.errorMessage
+                              } : null}
+                              onProjectPackageUpload={uploadProjectZip}
+                              onProjectPackageRemove={removeProjectPackage}
+                              isPackageProcessing={!!isPackageProcessing}
+                              isPackageReady={isPackageReady}
+                              mode={selectedMode as Mode}
+                              onSubmit={onWizardSubmit}
+                              isSubmitting={createAssemblyMutation.isPending}
+                              activeStepId="features"
+                              hideInternalNav
+                            />
+                            <div className="flex justify-between pt-4 border-t">
+                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-features">
+                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                              </Button>
+                              <Button type="button" onClick={goNext} data-testid="button-next-features" className="btn-axiom-cta">
+                                Next: Users <ChevronRight className="ml-2 h-4 w-4" />
+                              </Button>
+                            </div>
+                          </>
                         ) : (
-                          <div className="space-y-4">
-                            {featuresField.fields.map((field, index) => (
-                              <div key={field.id} className="rounded-lg border p-4 space-y-3">
-                                <div className="flex items-start gap-2">
-                                  <div className="flex-1 space-y-3">
-                                    <div className="flex gap-2">
-                                      <FormField
-                                        control={form.control}
-                                        name={`features.${index}.name`}
-                                        render={({ field }) => (
-                                          <FormItem className="flex-1">
-                                            <FormControl>
-                                              <Input placeholder="Feature name" data-testid={`input-feature-name-${index}`} {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                          </FormItem>
-                                        )}
-                                      />
-                                      <FormField
-                                        control={form.control}
-                                        name={`features.${index}.priority`}
-                                        render={({ field }) => (
-                                          <FormItem>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                              <FormControl>
-                                                <SelectTrigger className="w-24" data-testid={`select-feature-priority-${index}`}>
-                                                  <SelectValue />
-                                                </SelectTrigger>
-                                              </FormControl>
-                                              <SelectContent>
-                                                <SelectItem value="P0">P0</SelectItem>
-                                                <SelectItem value="P1">P1</SelectItem>
-                                                <SelectItem value="P2">P2</SelectItem>
-                                              </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                          </FormItem>
-                                        )}
-                                      />
-                                    </div>
-                                    <FormField
-                                      control={form.control}
-                                      name={`features.${index}.description`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormControl>
-                                            <Textarea 
-                                              placeholder="Describe this feature..." 
-                                              className="min-h-16"
-                                              data-testid={`input-feature-desc-${index}`}
-                                              {...field} 
-                                            />
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => featuresField.remove(index)}
-                                    data-testid={`button-remove-feature-${index}`}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
                         )}
-
-                        <div className="flex justify-between pt-4">
-                          <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-features">
-                            <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                          </Button>
-                          <Button type="button" onClick={goNext} data-testid="button-next-features">
-                            Next: Users <ChevronRight className="ml-2 h-4 w-4" />
-                          </Button>
-                        </div>
                       </TabsContent>
 
                       <TabsContent value="users" className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-lg font-medium">User Types</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Define who will use your application and what they want to accomplish.
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => usersField.append({ type: "", goal: "" })}
-                            data-testid="button-add-user"
-                          >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add User Type
-                          </Button>
-                        </div>
-
-                        {usersField.fields.length === 0 ? (
-                          <div className="rounded-lg border-2 border-dashed p-8 text-center">
-                            <Users className="mx-auto h-8 w-8 text-muted-foreground" />
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              No user types defined yet. Add users to improve documentation quality.
-                            </p>
-                          </div>
+                        {wizardFlow ? (
+                          <>
+                            <DynamicWizard
+                              flow={wizardFlow}
+                              draft={wizardDraft}
+                              onDraftChange={setWizardDraft}
+                              currentStepIndex={wizardStepIndex}
+                              onStepChange={setWizardStepIndex}
+                              projectPackage={projectPackage ? {
+                                id: projectPackage.id,
+                                filename: projectPackage.filename,
+                                sizeBytes: projectPackage.sizeBytes,
+                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
+                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
+                                summaryJson: projectPackage.summaryJson ? {
+                                  framework: projectPackage.summaryJson.framework,
+                                  packageManager: projectPackage.summaryJson.packageManager,
+                                  fileCount: projectPackage.summaryJson.fileCount,
+                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
+                                  scripts: projectPackage.summaryJson.scripts
+                                } : null,
+                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
+                                errorCode: projectPackage.errorCode,
+                                errorMessage: projectPackage.errorMessage
+                              } : null}
+                              onProjectPackageUpload={uploadProjectZip}
+                              onProjectPackageRemove={removeProjectPackage}
+                              isPackageProcessing={!!isPackageProcessing}
+                              isPackageReady={isPackageReady}
+                              mode={selectedMode as Mode}
+                              onSubmit={onWizardSubmit}
+                              isSubmitting={createAssemblyMutation.isPending}
+                              activeStepId="users"
+                              hideInternalNav
+                            />
+                            <div className="flex justify-between pt-4 border-t">
+                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-users">
+                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                              </Button>
+                              <Button type="button" onClick={goNext} data-testid="button-next-users" className="btn-axiom-cta">
+                                Next: UX <ChevronRight className="ml-2 h-4 w-4" />
+                              </Button>
+                            </div>
+                          </>
                         ) : (
-                          <div className="space-y-4">
-                            {usersField.fields.map((field, index) => (
-                              <div key={field.id} className="rounded-lg border p-4">
-                                <div className="flex items-start gap-2">
-                                  <div className="flex-1 space-y-3">
-                                    <FormField
-                                      control={form.control}
-                                      name={`users.${index}.type`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>User Type</FormLabel>
-                                          <FormControl>
-                                            <Input placeholder="e.g., Team Lead, Developer, Admin" data-testid={`input-user-type-${index}`} {...field} />
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                    <FormField
-                                      control={form.control}
-                                      name={`users.${index}.goal`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>Primary Goal</FormLabel>
-                                          <FormControl>
-                                            <Input placeholder="What do they want to accomplish?" data-testid={`input-user-goal-${index}`} {...field} />
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => usersField.remove(index)}
-                                    data-testid={`button-remove-user-${index}`}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
                         )}
+                      </TabsContent>
 
-                        <div className="flex justify-between pt-4">
-                          <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-users">
-                            <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                          </Button>
-                          <Button type="button" onClick={goNext} data-testid="button-next-users">
-                            Next: Tech Stack <ChevronRight className="ml-2 h-4 w-4" />
-                          </Button>
-                        </div>
+                      <TabsContent value="ux" className="space-y-4">
+                        {wizardFlow ? (
+                          <>
+                            <DynamicWizard
+                              flow={wizardFlow}
+                              draft={wizardDraft}
+                              onDraftChange={setWizardDraft}
+                              currentStepIndex={wizardStepIndex}
+                              onStepChange={setWizardStepIndex}
+                              projectPackage={projectPackage ? {
+                                id: projectPackage.id,
+                                filename: projectPackage.filename,
+                                sizeBytes: projectPackage.sizeBytes,
+                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
+                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
+                                summaryJson: projectPackage.summaryJson ? {
+                                  framework: projectPackage.summaryJson.framework,
+                                  packageManager: projectPackage.summaryJson.packageManager,
+                                  fileCount: projectPackage.summaryJson.fileCount,
+                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
+                                  scripts: projectPackage.summaryJson.scripts
+                                } : null,
+                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
+                                errorCode: projectPackage.errorCode,
+                                errorMessage: projectPackage.errorMessage
+                              } : null}
+                              onProjectPackageUpload={uploadProjectZip}
+                              onProjectPackageRemove={removeProjectPackage}
+                              isPackageProcessing={!!isPackageProcessing}
+                              isPackageReady={isPackageReady}
+                              mode={selectedMode as Mode}
+                              onSubmit={onWizardSubmit}
+                              isSubmitting={createAssemblyMutation.isPending}
+                              activeStepId="ux"
+                              hideInternalNav
+                            />
+                            <div className="flex justify-between pt-4 border-t">
+                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-ux">
+                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                              </Button>
+                              <Button type="button" onClick={goNext} data-testid="button-next-ux" className="btn-axiom-cta">
+                                Next: Tech <ChevronRight className="ml-2 h-4 w-4" />
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
+                        )}
                       </TabsContent>
 
                       <TabsContent value="tech" className="space-y-4">
-                        <div>
-                          <h3 className="text-lg font-medium">Tech Stack Preferences</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Optional: specify your preferred technologies. Leave blank for AI to suggest.
-                          </p>
-                        </div>
-
-                        <div className="grid gap-4 sm:grid-cols-3">
-                          <FormField
-                            control={form.control}
-                            name="techStack.frontend"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Frontend</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="e.g., React, Vue, Next.js" data-testid="input-tech-frontend" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="techStack.backend"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Backend</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="e.g., Node/Express, Python/FastAPI" data-testid="input-tech-backend" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="techStack.database"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Database</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="e.g., PostgreSQL, MongoDB" data-testid="input-tech-database" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="flex justify-between pt-4">
-                          <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-tech">
-                            <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                          </Button>
-                          <Button type="button" onClick={goNext} data-testid="button-next-tech">
-                            Review & Generate <ChevronRight className="ml-2 h-4 w-4" />
-                          </Button>
-                        </div>
+                        {wizardFlow ? (
+                          <>
+                            <DynamicWizard
+                              flow={wizardFlow}
+                              draft={wizardDraft}
+                              onDraftChange={setWizardDraft}
+                              currentStepIndex={wizardStepIndex}
+                              onStepChange={setWizardStepIndex}
+                              projectPackage={projectPackage ? {
+                                id: projectPackage.id,
+                                filename: projectPackage.filename,
+                                sizeBytes: projectPackage.sizeBytes,
+                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
+                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
+                                summaryJson: projectPackage.summaryJson ? {
+                                  framework: projectPackage.summaryJson.framework,
+                                  packageManager: projectPackage.summaryJson.packageManager,
+                                  fileCount: projectPackage.summaryJson.fileCount,
+                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
+                                  scripts: projectPackage.summaryJson.scripts
+                                } : null,
+                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
+                                errorCode: projectPackage.errorCode,
+                                errorMessage: projectPackage.errorMessage
+                              } : null}
+                              onProjectPackageUpload={uploadProjectZip}
+                              onProjectPackageRemove={removeProjectPackage}
+                              isPackageProcessing={!!isPackageProcessing}
+                              isPackageReady={isPackageReady}
+                              mode={selectedMode as Mode}
+                              onSubmit={onWizardSubmit}
+                              isSubmitting={createAssemblyMutation.isPending}
+                              activeStepId="tech"
+                              hideInternalNav
+                            />
+                            <div className="flex justify-between pt-4 border-t">
+                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-tech">
+                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                              </Button>
+                              <Button type="button" onClick={goNext} data-testid="button-next-tech" className="btn-axiom-cta">
+                                Review <ChevronRight className="ml-2 h-4 w-4" />
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
+                        )}
                       </TabsContent>
 
                       <TabsContent value="preview" className="space-y-4">
-                        <div>
-                          <h3 className="text-lg font-medium">Review Your Input</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Verify your project details before generating the bundle.
-                          </p>
-                        </div>
-
-                        <div className="rounded-lg border p-4 space-y-4">
-                          {/* Type/Mode/Preset info */}
-                          {selectedPreset && (
-                            <div className="pb-3 border-b">
-                              <p className="text-xs font-medium text-muted-foreground mb-2">PROJECT TYPE</p>
-                              <div className="flex flex-wrap gap-2">
-                                <Badge variant="default" className="bg-amber-500">
-                                  {presetsData?.categories[selectedCategory!]?.label}
-                                </Badge>
-                                <Badge variant="secondary">
-                                  {presetsData?.modes[selectedMode!]?.label}
-                                </Badge>
-                                <Badge variant="outline">{selectedPreset.label}</Badge>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-2">
-                                Domains: {selectedPreset.defaultDomains.join(", ")}
-                              </p>
+                        {wizardFlow ? (
+                          <>
+                            <DynamicWizard
+                              flow={wizardFlow}
+                              draft={wizardDraft}
+                              onDraftChange={setWizardDraft}
+                              currentStepIndex={wizardStepIndex}
+                              onStepChange={setWizardStepIndex}
+                              projectPackage={projectPackage ? {
+                                id: projectPackage.id,
+                                filename: projectPackage.filename,
+                                sizeBytes: projectPackage.sizeBytes,
+                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
+                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
+                                summaryJson: projectPackage.summaryJson ? {
+                                  framework: projectPackage.summaryJson.framework,
+                                  packageManager: projectPackage.summaryJson.packageManager,
+                                  fileCount: projectPackage.summaryJson.fileCount,
+                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
+                                  scripts: projectPackage.summaryJson.scripts
+                                } : null,
+                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
+                                errorCode: projectPackage.errorCode,
+                                errorMessage: projectPackage.errorMessage
+                              } : null}
+                              onProjectPackageUpload={uploadProjectZip}
+                              onProjectPackageRemove={removeProjectPackage}
+                              isPackageProcessing={!!isPackageProcessing}
+                              isPackageReady={isPackageReady}
+                              mode={selectedMode as Mode}
+                              onSubmit={onWizardSubmit}
+                              isSubmitting={createAssemblyMutation.isPending}
+                              activeStepId="review"
+                              hideInternalNav
+                            />
+                            <div className="flex justify-between pt-4 border-t">
+                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-preview">
+                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                              </Button>
+                              <Button
+                                type="button"
+                                className="btn-axiom-cta"
+                                disabled={
+                                  createAssemblyMutation.isPending || 
+                                  (!!projectPackage && !isPackageReady) ||
+                                  (!!requiresZip && !projectPackage)
+                                }
+                                onClick={() => onWizardSubmit(wizardDraft)}
+                                data-testid="button-generate"
+                              >
+                                {createAssemblyMutation.isPending ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Starting...
+                                  </>
+                                ) : projectPackage && !isPackageReady ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Waiting for project indexing...
+                                  </>
+                                ) : requiresZip && !projectPackage ? (
+                                  <>
+                                    <AlertTriangle className="mr-2 h-4 w-4" />
+                                    ZIP Required
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="mr-2 h-4 w-4" />
+                                    Generate Kit
+                                  </>
+                                )}
+                              </Button>
                             </div>
-                          )}
-                          
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground">PROJECT NAME</p>
-                            <p className="font-medium">{watchedValues.projectName || "(not set)"}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground">DESCRIPTION</p>
-                            <p className="text-sm">{watchedValues.description || "(not set)"}</p>
-                          </div>
-                          {watchedValues.features && watchedValues.features.length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium text-muted-foreground mb-2">FEATURES ({watchedValues.features.length})</p>
-                              <div className="flex flex-wrap gap-2">
-                                {watchedValues.features.map((f, i) => (
-                                  <Badge key={i} variant={f.priority === "P0" ? "default" : f.priority === "P1" ? "secondary" : "outline"}>
-                                    {f.name} ({f.priority})
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {watchedValues.users && watchedValues.users.length > 0 && (
-                            <div>
-                              <p className="text-xs font-medium text-muted-foreground mb-2">USER TYPES ({watchedValues.users.length})</p>
-                              <div className="flex flex-wrap gap-2">
-                                {watchedValues.users.map((u, i) => (
-                                  <Badge key={i} variant="outline">{u.type}</Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {(watchedValues.techStack?.frontend || watchedValues.techStack?.backend || watchedValues.techStack?.database) && (
-                            <div>
-                              <p className="text-xs font-medium text-muted-foreground mb-2">TECH STACK</p>
-                              <div className="flex flex-wrap gap-2">
-                                {watchedValues.techStack?.frontend && <Badge variant="secondary">{watchedValues.techStack.frontend}</Badge>}
-                                {watchedValues.techStack?.backend && <Badge variant="secondary">{watchedValues.techStack.backend}</Badge>}
-                                {watchedValues.techStack?.database && <Badge variant="secondary">{watchedValues.techStack.database}</Badge>}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* ZIP Required Warning */}
-                        {requiresZip && !projectPackage && (
-                          <div className="rounded-lg border-2 border-amber-500/50 bg-amber-500/10 p-4">
-                            <div className="flex items-center gap-2 text-amber-500">
-                              <AlertTriangle className="h-5 w-5" />
-                              <p className="font-medium">ZIP Required</p>
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              This mode requires uploading your existing project as a ZIP file. 
-                              Go back to the Basics tab to upload your project.
-                            </p>
-                          </div>
+                          </>
+                        ) : (
+                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
                         )}
-                        
-                        {/* Project Package Status */}
-                        {projectPackage && (
-                          <div className="rounded-lg border p-4">
-                            <p className="text-xs font-medium text-muted-foreground mb-2">UPLOADED PROJECT</p>
-                            <div className="flex items-center gap-2">
-                              <FolderArchive className="h-4 w-4 text-amber-500" />
-                              <span className="font-medium">{projectPackage.filename}</span>
-                              {isPackageReady && (
-                                <Badge className="bg-green-500">Ready</Badge>
-                              )}
-                              {isPackageProcessing && (
-                                <Badge variant="secondary">
-                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                                  Processing
-                                </Badge>
-                              )}
-                            </div>
-                            {projectPackage.summaryJson?.framework && (
-                              <p className="text-sm text-muted-foreground mt-1">
-                                Detected: {projectPackage.summaryJson.framework}
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        <div className="flex justify-between pt-4">
-                          <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-preview">
-                            <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                          </Button>
-                          <Button
-                            type="submit"
-                            className="btn-axiom-cta"
-                            disabled={
-                              createAssemblyMutation.isPending || 
-                              (!!projectPackage && !isPackageReady) ||
-                              (!!requiresZip && !projectPackage)
-                            }
-                            data-testid="button-generate"
-                          >
-                            {createAssemblyMutation.isPending ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Starting...
-                              </>
-                            ) : projectPackage && !isPackageReady ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Waiting for project indexing...
-                              </>
-                            ) : requiresZip && !projectPackage ? (
-                              <>
-                                <AlertTriangle className="mr-2 h-4 w-4" />
-                                ZIP Required
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Generate Kit
-                              </>
-                            )}
-                          </Button>
-                        </div>
                       </TabsContent>
                     </Tabs>
                   </form>

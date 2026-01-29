@@ -30,6 +30,8 @@ interface DynamicWizardProps {
   mode: Mode;
   onSubmit: () => void;
   isSubmitting: boolean;
+  activeStepId?: string;
+  hideInternalNav?: boolean;
 }
 
 function FieldHelp({ field }: { field: FieldSpec }) {
@@ -634,10 +636,17 @@ export default function DynamicWizard({
   isPackageReady,
   mode,
   onSubmit,
-  isSubmitting
+  isSubmitting,
+  activeStepId,
+  hideInternalNav
 }: DynamicWizardProps) {
-  const currentStep = flow.steps[currentStepIndex];
-  const isLastStep = currentStepIndex === flow.steps.length - 1;
+  const resolvedStepIndex = activeStepId 
+    ? flow.steps.findIndex(s => s.id === activeStepId) 
+    : currentStepIndex;
+  const safeIndex = resolvedStepIndex >= 0 ? resolvedStepIndex : currentStepIndex;
+  
+  const currentStep = flow.steps[safeIndex];
+  const isLastStep = safeIndex === flow.steps.length - 1;
   const isReviewStep = currentStep?.id === "review";
 
   const handleFieldChange = useCallback((key: string, value: any) => {
@@ -672,31 +681,43 @@ export default function DynamicWizard({
 
   const validation = validateDraftForMode(draft, mode);
 
+  if (!currentStep) {
+    return (
+      <div className="text-center text-muted-foreground py-8">
+        No wizard step available for this section.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {flow.steps.map((step, index) => (
-          <button
-            key={step.id}
-            type="button"
-            onClick={() => onStepChange(index)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
-              index === currentStepIndex
-                ? "bg-amber-500 text-white"
-                : index < currentStepIndex
-                ? "bg-amber-500/20 text-amber-500"
-                : "bg-muted text-muted-foreground"
-            }`}
-            data-testid={`step-${step.id}`}
-          >
-            <span className="font-medium">{index + 1}</span>
-            <span>{step.title}</span>
-          </button>
-        ))}
-      </div>
+      {!hideInternalNav && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {flow.steps.map((step, index) => (
+            <button
+              key={step.id}
+              type="button"
+              onClick={() => onStepChange(index)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all ${
+                index === safeIndex
+                  ? "bg-amber-500 text-white"
+                  : index < safeIndex
+                  ? "bg-amber-500/20 text-amber-500"
+                  : "bg-muted text-muted-foreground"
+              }`}
+              data-testid={`step-${step.id}`}
+            >
+              <span className="font-medium">{index + 1}</span>
+              <span>{step.title}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
-      <div className="min-h-[300px]">
-        <h3 className="text-lg font-semibold mb-4">{currentStep?.title}</h3>
+      <div className={hideInternalNav ? "" : "min-h-[300px]"}>
+        {!hideInternalNav && (
+          <h3 className="text-lg font-semibold mb-4">{currentStep.title}</h3>
+        )}
         
         {isReviewStep ? (
           <ReviewStep draft={draft} mode={mode} />
@@ -714,50 +735,52 @@ export default function DynamicWizard({
         )}
       </div>
 
-      <div className="flex justify-between pt-4 border-t">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handlePrev}
-          disabled={currentStepIndex === 0}
-          data-testid="button-prev-step"
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" /> Back
-        </Button>
-        
-        {isLastStep ? (
+      {!hideInternalNav && (
+        <div className="flex justify-between pt-4 border-t">
           <Button
             type="button"
-            onClick={onSubmit}
-            disabled={isSubmitting || !validation.valid}
-            className="btn-axiom-cta"
-            data-testid="button-generate"
+            variant="outline"
+            onClick={handlePrev}
+            disabled={safeIndex === 0}
+            data-testid="button-prev-step"
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Starting...
-              </>
-            ) : (
-              <>
-                Generate Kit
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </>
-            )}
+            <ChevronLeft className="mr-2 h-4 w-4" /> Back
           </Button>
-        ) : (
-          <Button
-            type="button"
-            onClick={handleNext}
-            disabled={!canProceed()}
-            className="btn-axiom-cta"
-            data-testid="button-next-step"
-          >
-            Next: {flow.steps[currentStepIndex + 1]?.title}
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        )}
-      </div>
+          
+          {isLastStep ? (
+            <Button
+              type="button"
+              onClick={onSubmit}
+              disabled={isSubmitting || !validation.valid}
+              className="btn-axiom-cta"
+              data-testid="button-generate"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                <>
+                  Generate Kit
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={handleNext}
+              disabled={!canProceed()}
+              className="btn-axiom-cta"
+              data-testid="button-next-step"
+            >
+              Next: {flow.steps[safeIndex + 1]?.title}
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
