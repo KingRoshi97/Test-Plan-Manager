@@ -2,6 +2,7 @@ import {
   type User, type InsertUser, 
   type Assembly, type InsertAssembly, type AssemblyState, type AssemblyStep, type Kit, type AssemblyProgress,
   type Delivery, type InsertDelivery, type DeliveryState, type DeliveryAttempt,
+  type DeliveryEvent, type InsertDeliveryEvent,
   type ProjectPackage, type InsertProjectPackage, type ProjectSummary, type ProjectWarning,
   type ApiKey, type InsertApiKey,
   type AuditLog, type InsertAuditLog
@@ -42,6 +43,11 @@ export interface IStorage {
   // Audit Logs
   getAuditLogs(options?: { limit?: number; offset?: number; action?: string; resourceType?: string }): Promise<AuditLog[]>;
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  
+  // Delivery Events
+  getDeliveryEvents(deliveryId: string): Promise<DeliveryEvent[]>;
+  createDeliveryEvent(event: InsertDeliveryEvent): Promise<DeliveryEvent>;
+  getQueuedDeliveriesForRetry(): Promise<Delivery[]>;
 
   // Backward compatibility aliases
   getRun(id: string): Promise<Assembly | undefined>;
@@ -168,6 +174,7 @@ export class MemStorage implements IStorage {
       attempts: 0,
       maxAttempts: 6,
       lastAttemptAt: null,
+      nextAttemptAt: null,
       result: null,
       lastError: null,
       attemptHistory: [],
@@ -317,7 +324,7 @@ export class MemStorage implements IStorage {
     const id = `log_${randomUUID().replace(/-/g, '').substring(0, 16)}`;
     const log: AuditLog = {
       id,
-      action: insertLog.action,
+      action: insertLog.action as AuditLog["action"],
       resourceType: insertLog.resourceType,
       resourceId: insertLog.resourceId || null,
       apiKeyId: insertLog.apiKeyId || null,
@@ -332,6 +339,39 @@ export class MemStorage implements IStorage {
     };
     this.auditLogs.set(id, log);
     return log;
+  }
+
+  // Delivery Events
+  private deliveryEvents: Map<string, DeliveryEvent> = new Map();
+
+  async getDeliveryEvents(deliveryId: string): Promise<DeliveryEvent[]> {
+    return Array.from(this.deliveryEvents.values())
+      .filter(e => e.deliveryId === deliveryId)
+      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime());
+  }
+
+  async createDeliveryEvent(insertEvent: InsertDeliveryEvent): Promise<DeliveryEvent> {
+    const id = `evt_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+    const event: DeliveryEvent = {
+      id,
+      deliveryId: insertEvent.deliveryId,
+      eventType: insertEvent.eventType,
+      occurredAt: new Date(),
+      detailsJson: (insertEvent.detailsJson as any) || null,
+    };
+    this.deliveryEvents.set(id, event);
+    return event;
+  }
+
+  async getQueuedDeliveriesForRetry(): Promise<Delivery[]> {
+    const now = new Date();
+    return Array.from(this.deliveries.values())
+      .filter(d => d.state === "queued" && (!d.nextAttemptAt || new Date(d.nextAttemptAt) <= now))
+      .sort((a, b) => {
+        if (!a.nextAttemptAt) return -1;
+        if (!b.nextAttemptAt) return 1;
+        return new Date(a.nextAttemptAt).getTime() - new Date(b.nextAttemptAt).getTime();
+      });
   }
 
   // Backward compatibility aliases
