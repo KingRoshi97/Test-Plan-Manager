@@ -241,7 +241,7 @@ async function executePipeline(assemblyId: string, idea: string | null, context:
       projectName: assembly.projectName || "Untitled Project",
       idea: idea || "",
       context: context || undefined,
-      domains: assembly.domains || ["platform", "api", "web"],
+      domains: assembly.domains || ["platform", "api", "web", "uxui"],
     };
     
     console.log(`[Pipeline] Creating workspace for assembly ${assemblyId}`);

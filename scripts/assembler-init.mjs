@@ -115,7 +115,8 @@ npm run roshi:lock    # Lock a domain
       { name: "API", slug: "api", prefix: "api", type: "business" },
       { name: "Web", slug: "web", prefix: "web", type: "business" },
       { name: "Infrastructure", slug: "infra", prefix: "infra", type: "crosscutting" },
-      { name: "Security", slug: "security", prefix: "security", type: "crosscutting" }
+      { name: "Security", slug: "security", prefix: "security", type: "crosscutting" },
+      { name: "UX/UI Pack", slug: "uxui", prefix: "uxui", type: "business", description: "Information architecture, journeys, screen specs, design system tokens, component contracts, brand rules.", default: true }
     ]
   }, null, 2);
   ensureFile(domainsJsonPath, domainsContent);
