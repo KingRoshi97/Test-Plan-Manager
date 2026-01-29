@@ -1,7 +1,7 @@
 import { 
   type User, type InsertUser, 
-  type Run, type InsertRun, type RunState, type RunStep, type RunBundle, type RunProgress,
-  type Handoff, type InsertHandoff, type HandoffState, type HandoffAttempt
+  type Assembly, type InsertAssembly, type AssemblyState, type AssemblyStep, type Kit, type AssemblyProgress,
+  type Delivery, type InsertDelivery, type DeliveryState, type DeliveryAttempt
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -10,28 +10,41 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  getRun(id: string): Promise<Run | undefined>;
-  getRuns(): Promise<Run[]>;
-  createRun(run: InsertRun): Promise<Run>;
-  updateRun(id: string, updates: Partial<Run>): Promise<Run | undefined>;
+  getAssembly(id: string): Promise<Assembly | undefined>;
+  getAssemblies(): Promise<Assembly[]>;
+  createAssembly(assembly: InsertAssembly): Promise<Assembly>;
+  updateAssembly(id: string, updates: Partial<Assembly>): Promise<Assembly | undefined>;
+  deleteAssembly(id: string): Promise<boolean>;
+  
+  getDelivery(id: string): Promise<Delivery | undefined>;
+  getDeliveriesByAssemblyId(assemblyId: string): Promise<Delivery[]>;
+  createDelivery(delivery: InsertDelivery): Promise<Delivery>;
+  updateDelivery(id: string, updates: Partial<Delivery>): Promise<Delivery | undefined>;
+  deleteDelivery(id: string): Promise<boolean>;
+
+  // Backward compatibility aliases
+  getRun(id: string): Promise<Assembly | undefined>;
+  getRuns(): Promise<Assembly[]>;
+  createRun(run: InsertAssembly): Promise<Assembly>;
+  updateRun(id: string, updates: Partial<Assembly>): Promise<Assembly | undefined>;
   deleteRun(id: string): Promise<boolean>;
   
-  getHandoff(id: string): Promise<Handoff | undefined>;
-  getHandoffsByRunId(runId: string): Promise<Handoff[]>;
-  createHandoff(handoff: InsertHandoff): Promise<Handoff>;
-  updateHandoff(id: string, updates: Partial<Handoff>): Promise<Handoff | undefined>;
+  getHandoff(id: string): Promise<Delivery | undefined>;
+  getHandoffsByRunId(runId: string): Promise<Delivery[]>;
+  createHandoff(handoff: InsertDelivery): Promise<Delivery>;
+  updateHandoff(id: string, updates: Partial<Delivery>): Promise<Delivery | undefined>;
   deleteHandoff(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
-  private runs: Map<string, Run>;
-  private handoffs: Map<string, Handoff>;
+  private assemblies: Map<string, Assembly>;
+  private deliveries: Map<string, Delivery>;
 
   constructor() {
     this.users = new Map();
-    this.runs = new Map();
-    this.handoffs = new Map();
+    this.assemblies = new Map();
+    this.deliveries = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -51,84 +64,84 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async getRun(id: string): Promise<Run | undefined> {
-    return this.runs.get(id);
+  async getAssembly(id: string): Promise<Assembly | undefined> {
+    return this.assemblies.get(id);
   }
 
-  async getRuns(): Promise<Run[]> {
-    return Array.from(this.runs.values()).sort(
+  async getAssemblies(): Promise<Assembly[]> {
+    return Array.from(this.assemblies.values()).sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
 
-  async createRun(insertRun: InsertRun): Promise<Run> {
-    const id = `run_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+  async createAssembly(insertAssembly: InsertAssembly): Promise<Assembly> {
+    const id = `asmb_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
     const now = new Date();
-    const run: Run = {
+    const assembly: Assembly = {
       id,
-      projectName: insertRun.projectName || null,
-      idea: insertRun.idea || null,
-      context: insertRun.context || null,
-      preset: insertRun.preset || null,
-      domains: insertRun.domains || null,
-      input: insertRun.input || null,
+      projectName: insertAssembly.projectName || null,
+      idea: insertAssembly.idea || null,
+      context: insertAssembly.context || null,
+      preset: insertAssembly.preset || null,
+      domains: insertAssembly.domains || null,
+      input: insertAssembly.input || null,
       state: "queued",
       step: null,
       progress: null,
       errors: null,
-      bundle: {
+      kit: {
         available: false,
         zipBytes: 0,
         zipSha256: null,
         manifestSha256: null,
         agentPromptSha256: null,
       },
-      bundlePath: null,
+      kitPath: null,
       logsTail: null,
       createdAt: now,
       updatedAt: now,
     };
-    this.runs.set(id, run);
-    return run;
+    this.assemblies.set(id, assembly);
+    return assembly;
   }
 
-  async updateRun(id: string, updates: Partial<Run>): Promise<Run | undefined> {
-    const run = this.runs.get(id);
-    if (!run) return undefined;
+  async updateAssembly(id: string, updates: Partial<Assembly>): Promise<Assembly | undefined> {
+    const assembly = this.assemblies.get(id);
+    if (!assembly) return undefined;
     
-    const updatedRun: Run = {
-      ...run,
+    const updatedAssembly: Assembly = {
+      ...assembly,
       ...updates,
       updatedAt: new Date(),
     };
-    this.runs.set(id, updatedRun);
-    return updatedRun;
+    this.assemblies.set(id, updatedAssembly);
+    return updatedAssembly;
   }
 
-  async deleteRun(id: string): Promise<boolean> {
-    return this.runs.delete(id);
+  async deleteAssembly(id: string): Promise<boolean> {
+    return this.assemblies.delete(id);
   }
 
-  async getHandoff(id: string): Promise<Handoff | undefined> {
-    return this.handoffs.get(id);
+  async getDelivery(id: string): Promise<Delivery | undefined> {
+    return this.deliveries.get(id);
   }
 
-  async getHandoffsByRunId(runId: string): Promise<Handoff[]> {
-    return Array.from(this.handoffs.values())
-      .filter(h => h.runId === runId)
+  async getDeliveriesByAssemblyId(assemblyId: string): Promise<Delivery[]> {
+    return Array.from(this.deliveries.values())
+      .filter(d => d.assemblyId === assemblyId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
-  async createHandoff(insertHandoff: InsertHandoff): Promise<Handoff> {
-    const id = `ho_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+  async createDelivery(insertDelivery: InsertDelivery): Promise<Delivery> {
+    const id = `dlv_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
     const now = new Date();
-    const handoff: Handoff = {
+    const delivery: Delivery = {
       id,
-      runId: insertHandoff.runId,
-      type: insertHandoff.type,
-      label: insertHandoff.label || null,
+      assemblyId: insertDelivery.assemblyId,
+      type: insertDelivery.type,
+      label: insertDelivery.label || null,
       state: "queued",
-      config: insertHandoff.config as any,
+      config: insertDelivery.config as any,
       attempts: 0,
       maxAttempts: 6,
       lastAttemptAt: null,
@@ -138,25 +151,71 @@ export class MemStorage implements IStorage {
       createdAt: now,
       updatedAt: now,
     };
-    this.handoffs.set(id, handoff);
-    return handoff;
+    this.deliveries.set(id, delivery);
+    return delivery;
   }
 
-  async updateHandoff(id: string, updates: Partial<Handoff>): Promise<Handoff | undefined> {
-    const handoff = this.handoffs.get(id);
-    if (!handoff) return undefined;
+  async updateDelivery(id: string, updates: Partial<Delivery>): Promise<Delivery | undefined> {
+    const delivery = this.deliveries.get(id);
+    if (!delivery) return undefined;
     
-    const updatedHandoff: Handoff = {
-      ...handoff,
+    const updatedDelivery: Delivery = {
+      ...delivery,
       ...updates,
       updatedAt: new Date(),
     };
-    this.handoffs.set(id, updatedHandoff);
-    return updatedHandoff;
+    this.deliveries.set(id, updatedDelivery);
+    return updatedDelivery;
+  }
+
+  async deleteDelivery(id: string): Promise<boolean> {
+    return this.deliveries.delete(id);
+  }
+
+  // Backward compatibility aliases
+  async getRun(id: string): Promise<Assembly | undefined> {
+    return this.getAssembly(id);
+  }
+
+  async getRuns(): Promise<Assembly[]> {
+    return this.getAssemblies();
+  }
+
+  async createRun(run: InsertAssembly): Promise<Assembly> {
+    return this.createAssembly(run);
+  }
+
+  async updateRun(id: string, updates: Partial<Assembly>): Promise<Assembly | undefined> {
+    return this.updateAssembly(id, updates);
+  }
+
+  async deleteRun(id: string): Promise<boolean> {
+    return this.deleteAssembly(id);
+  }
+  
+  async getHandoff(id: string): Promise<Delivery | undefined> {
+    return this.getDelivery(id);
+  }
+
+  async getHandoffsByRunId(runId: string): Promise<Delivery[]> {
+    return this.getDeliveriesByAssemblyId(runId);
+  }
+
+  async createHandoff(handoff: InsertDelivery): Promise<Delivery> {
+    // Map runId to assemblyId for backward compatibility
+    const delivery: InsertDelivery = {
+      ...handoff,
+      assemblyId: (handoff as any).runId || handoff.assemblyId,
+    };
+    return this.createDelivery(delivery);
+  }
+
+  async updateHandoff(id: string, updates: Partial<Delivery>): Promise<Delivery | undefined> {
+    return this.updateDelivery(id, updates);
   }
 
   async deleteHandoff(id: string): Promise<boolean> {
-    return this.handoffs.delete(id);
+    return this.deleteDelivery(id);
   }
 }
 

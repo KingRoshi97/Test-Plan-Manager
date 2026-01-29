@@ -19,7 +19,7 @@ import {
   Plus, Trash2, ChevronRight, ChevronLeft, Sparkles, Code, Users, ListTodo, Settings,
   Upload, File, X
 } from "lucide-react";
-import type { Run, UploadedFile } from "@shared/schema";
+import type { Assembly, UploadedFile } from "@shared/schema";
 import { Link } from "wouter";
 import { useCallback, useRef } from "react";
 
@@ -94,7 +94,7 @@ type FormStep = typeof FORM_STEPS[number];
 
 export default function Home() {
   const { toast } = useToast();
-  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [activeAssemblyId, setActiveAssemblyId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<FormStep>("basics");
   const [useSimpleMode, setUseSimpleMode] = useState(false);
 
@@ -129,7 +129,7 @@ export default function Home() {
     Array.from(files).forEach(file => formData.append("files", file));
     
     try {
-      const response = await fetch("/v1/upload", {
+      const response = await fetch("/v1/uploads", {
         method: "POST",
         body: formData,
       });
@@ -207,9 +207,9 @@ export default function Home() {
     name: "users",
   });
 
-  interface V1RunResponse {
-    run: {
-      runId: string;
+  interface V1AssemblyResponse {
+    assembly: {
+      assemblyId: string;
       state: string;
       step: string | null;
       createdAt: string;
@@ -220,7 +220,7 @@ export default function Home() {
       input: ProjectFormData | null;
       errors: string[];
       progress: { percent: number };
-      bundle: {
+      kit: {
         available: boolean;
         generationMode: string | null;
         zipBytes: number;
@@ -234,22 +234,22 @@ export default function Home() {
     logsTail: string;
   }
 
-  const { data: runResponse } = useQuery<V1RunResponse>({
-    queryKey: ["/v1/runs", activeRunId],
-    enabled: !!activeRunId,
-    refetchInterval: activeRunId ? 2000 : false,
+  const { data: assemblyResponse } = useQuery<V1AssemblyResponse>({
+    queryKey: ["/v1/assemblies", activeAssemblyId],
+    enabled: !!activeAssemblyId,
+    refetchInterval: activeAssemblyId ? 2000 : false,
   });
 
-  const activeRun = runResponse?.run;
+  const activeAssembly = assemblyResponse?.assembly;
 
-  const createRunMutation = useMutation({
+  const createAssemblyMutation = useMutation({
     mutationFn: async (data: ProjectFormData) => {
-      const response = await apiRequest("POST", "/v1/runs", data);
+      const response = await apiRequest("POST", "/v1/assemblies", data);
       return response.json();
     },
     onSuccess: (result) => {
-      setActiveRunId(result.runId);
-      queryClient.invalidateQueries({ queryKey: ["/v1/runs"] });
+      setActiveAssemblyId(result.assemblyId);
+      queryClient.invalidateQueries({ queryKey: ["/v1/assemblies"] });
     },
     onError: (error) => {
       toast({
@@ -261,36 +261,36 @@ export default function Home() {
   });
 
   const onSubmit = async (data: ProjectFormData) => {
-    await createRunMutation.mutateAsync(data);
+    await createAssemblyMutation.mutateAsync(data);
     form.reset();
     setCurrentStep("basics");
   };
 
   const handleDownload = async () => {
-    if (activeRun?.runId) {
+    if (activeAssembly?.assemblyId) {
       try {
-        const response = await fetch(`/v1/runs/${activeRun.runId}/bundle`);
+        const response = await fetch(`/v1/assemblies/${activeAssembly.assemblyId}/kit`);
         const data = await response.json();
-        if (data.bundle?.download?.zipUrl) {
-          window.location.href = data.bundle.download.zipUrl;
+        if (data.kit?.download?.zipUrl) {
+          window.location.href = data.kit.download.zipUrl;
         } else {
-          window.location.href = `/v1/runs/${activeRun.runId}/bundle.zip?fallback=true`;
+          window.location.href = `/v1/assemblies/${activeAssembly.assemblyId}/kit.zip?fallback=true`;
         }
       } catch {
-        window.location.href = `/api/runs/${activeRun.runId}/download`;
+        window.location.href = `/api/assemblies/${activeAssembly.assemblyId}/kit.zip`;
       }
     }
   };
 
   const handleCopyPrompt = async () => {
-    const projectName = activeRun?.projectName || activeRun?.input?.projectName || "Project";
-    const prompt = `I've generated a Roshi documentation bundle for: "${projectName}"
+    const projectName = activeAssembly?.projectName || activeAssembly?.input?.projectName || "Project";
+    const prompt = `I've generated an Axiom documentation kit for: "${projectName}"
 
-Please download and extract the attached roshi_bundle.zip file. Inside you'll find:
-- docs/roshi_v2/ - Structured domain documentation
-- handoff/input.json - Original structured input
-- handoff/ai_context.json - Normalized AI context
-- manifest.json - Bundle metadata
+Please download and extract the attached axiom_kit.zip file. Inside you'll find:
+- docs/assembler_v1/ - Structured domain documentation
+- delivery/input.json - Original structured input
+- delivery/ai_context.json - Normalized AI context
+- assembly_manifest.json - Kit metadata
 
 Read these docs to understand the project architecture, then implement the application according to the specifications.`;
 
@@ -301,8 +301,8 @@ Read these docs to understand the project architecture, then implement the appli
     });
   };
 
-  const handleNewRun = () => {
-    setActiveRunId(null);
+  const handleNewAssembly = () => {
+    setActiveAssemblyId(null);
     form.reset();
     setCurrentStep("basics");
   };
@@ -321,9 +321,9 @@ Read these docs to understand the project architecture, then implement the appli
     }
   };
 
-  const isRunning = activeRun?.state === "running";
-  const isReady = activeRun?.state === "completed";
-  const isFailed = activeRun?.state === "failed";
+  const isRunning = activeAssembly?.state === "running";
+  const isReady = activeAssembly?.state === "completed";
+  const isFailed = activeAssembly?.state === "failed";
 
   const watchedValues = form.watch();
 
@@ -333,7 +333,7 @@ Read these docs to understand the project architecture, then implement the appli
         <div className="container mx-auto flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
             <FileArchive className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Roshi Studio</h1>
+            <h1 className="text-xl font-bold">Axiom Assembler</h1>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/docs">
@@ -341,7 +341,7 @@ Read these docs to understand the project architecture, then implement the appli
                 API Docs
               </Button>
             </Link>
-            <Link href="/runs">
+            <Link href="/assemblies">
               <Button variant="ghost" size="sm" data-testid="link-history">
                 <History className="mr-2 h-4 w-4" />
                 History
@@ -356,12 +356,12 @@ Read these docs to understand the project architecture, then implement the appli
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Generate Agent Handoff Bundle</CardTitle>
+                <CardTitle>Generate Agent Kit</CardTitle>
                 <CardDescription>
                   Provide structured details for faster, more accurate documentation.
                 </CardDescription>
               </div>
-              {!activeRunId && (
+              {!activeAssemblyId && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -384,7 +384,7 @@ Read these docs to understand the project architecture, then implement the appli
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {!activeRunId ? (
+            {!activeAssemblyId ? (
               useSimpleMode ? (
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -422,10 +422,10 @@ Read these docs to understand the project architecture, then implement the appli
                     <Button
                       type="submit"
                       className="w-full"
-                      disabled={createRunMutation.isPending}
+                      disabled={createAssemblyMutation.isPending}
                       data-testid="button-generate"
                     >
-                      {createRunMutation.isPending ? (
+                      {createAssemblyMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Starting...
@@ -433,7 +433,7 @@ Read these docs to understand the project architecture, then implement the appli
                       ) : (
                         <>
                           <Play className="mr-2 h-4 w-4" />
-                          Generate Bundle
+                          Generate Kit
                         </>
                       )}
                     </Button>
@@ -905,10 +905,10 @@ Read these docs to understand the project architecture, then implement the appli
                           </Button>
                           <Button
                             type="submit"
-                            disabled={createRunMutation.isPending}
+                            disabled={createAssemblyMutation.isPending}
                             data-testid="button-generate"
                           >
-                            {createRunMutation.isPending ? (
+                            {createAssemblyMutation.isPending ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Starting...
@@ -916,7 +916,7 @@ Read these docs to understand the project architecture, then implement the appli
                             ) : (
                               <>
                                 <Sparkles className="mr-2 h-4 w-4" />
-                                Generate Bundle
+                                Generate Kit
                               </>
                             )}
                           </Button>
@@ -930,18 +930,18 @@ Read these docs to understand the project architecture, then implement the appli
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Run Status</p>
+                    <p className="text-sm text-muted-foreground">Assembly Status</p>
                     <div className="flex items-center gap-2">
-                      {getStatusBadge(activeRun?.state || "queued")}
-                      {activeRun?.step && (
+                      {getStatusBadge(activeAssembly?.state || "queued")}
+                      {activeAssembly?.step && (
                         <span className="text-sm text-muted-foreground">
-                          Step: {activeRun.step}
+                          Step: {activeAssembly.step}
                         </span>
                       )}
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleNewRun} data-testid="button-new-run">
-                    New Run
+                  <Button variant="outline" size="sm" onClick={handleNewAssembly} data-testid="button-new-assembly">
+                    New Assembly
                   </Button>
                 </div>
 
@@ -951,7 +951,7 @@ Read these docs to understand the project architecture, then implement the appli
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span className="text-sm">Generating documentation...</span>
                     </div>
-                    <Progress value={getStepProgress(activeRun?.step || null)} />
+                    <Progress value={getStepProgress(activeAssembly?.step || null)} />
                     <p className="text-xs text-muted-foreground">
                       AI is generating structured documentation based on your input. This takes about 30-60 seconds.
                     </p>
@@ -964,8 +964,8 @@ Read these docs to understand the project architecture, then implement the appli
                       <XCircle className="h-5 w-5" />
                       <span className="font-medium">Generation failed</span>
                     </div>
-                    {activeRun?.errors && activeRun.errors.length > 0 && (
-                      <p className="mt-2 text-sm text-muted-foreground">{activeRun.errors[0]}</p>
+                    {activeAssembly?.errors && activeAssembly.errors.length > 0 && (
+                      <p className="mt-2 text-sm text-muted-foreground">{activeAssembly.errors[0]}</p>
                     )}
                   </div>
                 )}
@@ -975,17 +975,17 @@ Read these docs to understand the project architecture, then implement the appli
                     <div className="rounded-lg border border-green-500 bg-green-50 dark:bg-green-950/20 p-4">
                       <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                         <CheckCircle className="h-5 w-5" />
-                        <span className="font-medium">Bundle ready for download</span>
+                        <span className="font-medium">Kit ready for download</span>
                       </div>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Your documentation bundle has been generated and is ready to use with AI coding agents.
+                        Your documentation kit has been generated and is ready to use with AI coding agents.
                       </p>
                     </div>
 
                     <div className="flex gap-2">
                       <Button onClick={handleDownload} className="flex-1" data-testid="button-download">
                         <Download className="mr-2 h-4 w-4" />
-                        Download Bundle
+                        Download Kit
                       </Button>
                       <Button variant="outline" onClick={handleCopyPrompt} data-testid="button-copy-prompt">
                         <Copy className="mr-2 h-4 w-4" />
@@ -995,12 +995,12 @@ Read these docs to understand the project architecture, then implement the appli
                   </div>
                 )}
 
-                {(activeRun?.projectName || activeRun?.input?.projectName) && (
+                {(activeAssembly?.projectName || activeAssembly?.input?.projectName) && (
                   <div className="rounded-lg bg-muted p-3">
                     <p className="text-xs font-medium text-muted-foreground">Project</p>
-                    <p className="text-sm mt-1 font-medium">{activeRun?.projectName || activeRun?.input?.projectName}</p>
-                    {activeRun?.input?.description && (
-                      <p className="text-sm mt-1 text-muted-foreground">{activeRun.input.description}</p>
+                    <p className="text-sm mt-1 font-medium">{activeAssembly?.projectName || activeAssembly?.input?.projectName}</p>
+                    {activeAssembly?.input?.description && (
+                      <p className="text-sm mt-1 text-muted-foreground">{activeAssembly.input.description}</p>
                     )}
                   </div>
                 )}
@@ -1010,7 +1010,7 @@ Read these docs to understand the project architecture, then implement the appli
         </Card>
 
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>Roshi follows a docs-first approach with structured input for better AI generation.</p>
+          <p>Axiom follows a docs-first approach with structured input for better AI generation.</p>
           <p className="mt-1">No invention. No overwrite. Verify before lock.</p>
         </div>
       </main>

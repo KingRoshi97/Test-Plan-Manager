@@ -33,11 +33,11 @@ export interface GenerateDocsOptions {
   structuredInput?: StructuredInput;
 }
 
-const SYSTEM_PROMPT = `You are Roshi, a documentation architect that generates structured product and engineering documentation for software projects.
+const SYSTEM_PROMPT = `You are Axiom Assembler, a documentation architect that generates structured product and engineering documentation for software projects.
 
-Given a project idea, you generate documentation following the Roshi methodology:
-- RPBS (Roshi Product Brief Specification): Product requirements, user stories, features, constraints
-- REBS (Roshi Engineering Brief Specification): Technical architecture, data models, API design, implementation approach
+Given a project idea, you generate documentation following the Assembler methodology:
+- RPBS (Assembler Product Brief Specification): Product requirements, user stories, features, constraints
+- REBS (Assembler Engineering Brief Specification): Technical architecture, data models, API design, implementation approach
 - Domain Map: Mapping of business domains to technical components
 - Reason Codes: Error codes and their meanings
 - Action Vocabulary: Standardized action names (verbs) used across the system
@@ -125,7 +125,7 @@ export async function generateRPBS(options: GenerateDocsOptions): Promise<string
   
   const structuredCtx = buildStructuredContext(options);
   
-  const prompt = `Generate RPBS_Product.md (Roshi Product Brief Specification) for:
+  const prompt = `Generate RPBS_Product.md (Assembler Product Brief Specification) for:
 
 Project Name: ${structuredInput?.projectName || projectName || "Untitled Project"}
 Description: ${structuredInput?.description || idea}
@@ -182,7 +182,7 @@ export async function generateREBS(options: GenerateDocsOptions): Promise<string
   
   const structuredCtx = buildStructuredContext(options);
   
-  const prompt = `Generate REBS_Product.md (Roshi Engineering Brief Specification) for:
+  const prompt = `Generate REBS_Product.md (Assembler Engineering Brief Specification) for:
 
 Project Name: ${structuredInput?.projectName || projectName || "Untitled Project"}
 Description: ${structuredInput?.description || idea}

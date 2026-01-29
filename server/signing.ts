@@ -1,9 +1,10 @@
 import crypto from "crypto";
 
-const SERVER_SECRET = process.env.SESSION_SECRET || "roshi-default-secret-change-in-production";
+const SERVER_SECRET = process.env.SESSION_SECRET || "assembler-default-secret-change-in-production";
 
 export interface SignedUrlParams {
-  runId: string;
+  assemblyId?: string;
+  runId?: string;  // backward compatibility
   expiresInSeconds?: number;
 }
 
@@ -19,7 +20,8 @@ export function generateSignedUrl(baseUrl: string, params: SignedUrlParams): Sig
   const exp = Math.floor(Date.now() / 1000) + expiresInSeconds;
   const expiresAt = new Date(exp * 1000).toISOString();
   
-  const signed = `${params.runId}.${exp}`;
+  const id = params.assemblyId || params.runId || "";
+  const signed = `${id}.${exp}`;
   const sig = crypto.createHmac("sha256", SERVER_SECRET).update(signed).digest("hex");
   
   const url = `${baseUrl}?exp=${exp}&sig=${sig}`;
@@ -27,7 +29,7 @@ export function generateSignedUrl(baseUrl: string, params: SignedUrlParams): Sig
   return { url, expiresAt, exp, sig };
 }
 
-export function validateSignature(runId: string, exp: string | number, sig: string): { valid: boolean; error?: string } {
+export function validateSignature(id: string, exp: string | number, sig: string): { valid: boolean; error?: string } {
   const expNum = typeof exp === "string" ? parseInt(exp, 10) : exp;
   
   if (isNaN(expNum)) {
@@ -39,7 +41,7 @@ export function validateSignature(runId: string, exp: string | number, sig: stri
     return { valid: false, error: "URL has expired" };
   }
   
-  const signed = `${runId}.${expNum}`;
+  const signed = `${id}.${expNum}`;
   const expectedSig = crypto.createHmac("sha256", SERVER_SECRET).update(signed).digest("hex");
   
   if (sig.length !== expectedSig.length) {

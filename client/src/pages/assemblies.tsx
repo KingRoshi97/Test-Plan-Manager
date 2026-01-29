@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Download, Trash2, FileArchive, ArrowLeft, Loader2 } from "lucide-react";
-import type { Run } from "@shared/schema";
+import type { Assembly } from "@shared/schema";
 
 function getStatusBadge(status: string) {
   const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
@@ -30,47 +30,47 @@ function formatDate(date: Date | string) {
   });
 }
 
-export default function Runs() {
+export default function Assemblies() {
   const { toast } = useToast();
 
-  const { data: runs, isLoading } = useQuery<Run[]>({
-    queryKey: ["/api/runs"],
+  const { data: assemblies, isLoading } = useQuery<Assembly[]>({
+    queryKey: ["/api/assemblies"],
     refetchInterval: 5000,
   });
 
-  const deleteRunMutation = useMutation({
-    mutationFn: async (runId: string) => {
-      await apiRequest("DELETE", `/api/runs/${runId}`);
+  const deleteAssemblyMutation = useMutation({
+    mutationFn: async (assemblyId: string) => {
+      await apiRequest("DELETE", `/api/assemblies/${assemblyId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/runs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
       toast({
-        title: "Run deleted",
-        description: "The run has been removed from history.",
+        title: "Assembly deleted",
+        description: "The assembly has been removed from history.",
       });
     },
     onError: (error) => {
       toast({
-        title: "Error deleting run",
+        title: "Error deleting assembly",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const handleDownload = (runId: string) => {
-    window.location.href = `/api/runs/${runId}/download`;
+  const handleDownload = (assemblyId: string) => {
+    window.location.href = `/api/assemblies/${assemblyId}/kit.zip`;
   };
 
-  const handleDelete = (runId: string) => {
-    deleteRunMutation.mutate(runId);
+  const handleDelete = (assemblyId: string) => {
+    deleteAssemblyMutation.mutate(assemblyId);
   };
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
         <div className="container mx-auto flex items-center gap-4 p-4">
-          <Link href="/">
+          <Link href="/create">
             <Button variant="ghost" size="sm" data-testid="link-back">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
@@ -78,7 +78,7 @@ export default function Runs() {
           </Link>
           <div className="flex items-center gap-2">
             <FileArchive className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Run History</h1>
+            <h1 className="text-xl font-bold">Assembly History</h1>
           </div>
         </div>
       </header>
@@ -86,9 +86,9 @@ export default function Runs() {
       <main className="container mx-auto max-w-3xl p-6">
         <Card>
           <CardHeader>
-            <CardTitle>Previous Runs</CardTitle>
+            <CardTitle>Previous Assemblies</CardTitle>
             <CardDescription>
-              View and download bundles from previous pipeline runs.
+              View and download kits from previous assemblies.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -96,39 +96,39 @@ export default function Runs() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : !runs || runs.length === 0 ? (
+            ) : !assemblies || assemblies.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p>No runs yet.</p>
-                <Link href="/">
+                <p>No assemblies yet.</p>
+                <Link href="/create">
                   <Button variant="ghost" className="mt-2" data-testid="link-create-first">
-                    Create your first bundle
+                    Create your first kit
                   </Button>
                 </Link>
               </div>
             ) : (
               <div className="space-y-3">
-                {runs.map((run) => (
+                {assemblies.map((assembly) => (
                   <div
-                    key={run.id}
+                    key={assembly.id}
                     className="flex items-center justify-between rounded-lg border p-4"
-                    data-testid={`row-run-${run.id}`}
+                    data-testid={`row-assembly-${assembly.id}`}
                   >
                     <div className="space-y-1 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        {getStatusBadge(run.state)}
+                        {getStatusBadge(assembly.state)}
                         <span className="text-xs text-muted-foreground">
-                          {formatDate(run.createdAt)}
+                          {formatDate(assembly.createdAt)}
                         </span>
                       </div>
-                      <p className="text-sm truncate">{run.idea}</p>
+                      <p className="text-sm truncate">{assembly.idea}</p>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
-                      {run.state === "completed" && (
+                      {assembly.state === "completed" && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDownload(run.id)}
-                          data-testid={`button-download-${run.id}`}
+                          onClick={() => handleDownload(assembly.id)}
+                          data-testid={`button-download-${assembly.id}`}
                         >
                           <Download className="h-4 w-4" />
                         </Button>
@@ -136,9 +136,9 @@ export default function Runs() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(run.id)}
-                        disabled={deleteRunMutation.isPending}
-                        data-testid={`button-delete-${run.id}`}
+                        onClick={() => handleDelete(assembly.id)}
+                        disabled={deleteAssemblyMutation.isPending}
+                        data-testid={`button-delete-${assembly.id}`}
                       >
                         <Trash2 className="h-4 w-4 text-muted-foreground" />
                       </Button>

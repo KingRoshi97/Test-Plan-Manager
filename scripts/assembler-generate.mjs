@@ -21,9 +21,9 @@ const report = {
 };
 
 function loadDomainsConfig() {
-  const configPath = 'roshi/domains.json';
+  const configPath = 'assembler/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('roshi/domains.json not found. Run roshi:init first.');
+    throw new Error('assembler/domains.json not found. Run roshi:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
@@ -73,7 +73,7 @@ function applyTemplate(template, domain) {
 }
 
 function printReport() {
-  console.log('\n========== ROSHI_REPORT ==========');
+  console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: roshi:gen`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   if (domainArg) console.log(`Domain: ${domainArg}`);
@@ -99,7 +99,7 @@ try {
   if (domainArg) {
     const validDomain = config.domains.find(d => d.slug === domainArg);
     if (!validDomain) {
-      throw new Error(`Domain "${domainArg}" not found in roshi/domains.json`);
+      throw new Error(`Domain "${domainArg}" not found in assembler/domains.json`);
     }
   }
   

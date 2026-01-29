@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertRunSchema, type RunBundle } from "@shared/schema";
+import { insertAssemblySchema, type Kit } from "@shared/schema";
 import { computeSha256 } from "./signing";
 import { registerV1Routes } from "./v1-routes";
 import { spawn } from "child_process";
@@ -16,13 +16,16 @@ export async function registerRoutes(
   
   registerV1Routes(app);
   
-  app.get("/api/runs", async (req: Request, res: Response) => {
-    const runs = await storage.getRuns();
-    res.json(runs);
+  // === Legacy API routes with backward compatibility ===
+  
+  // New: /api/assemblies
+  app.get("/api/assemblies", async (req: Request, res: Response) => {
+    const assemblies = await storage.getAssemblies();
+    res.json(assemblies);
   });
 
-  app.post("/api/runs", async (req: Request, res: Response) => {
-    const parseResult = insertRunSchema.safeParse(req.body);
+  app.post("/api/assemblies", async (req: Request, res: Response) => {
+    const parseResult = insertAssemblySchema.safeParse(req.body);
     if (!parseResult.success) {
       return res.status(400).json({ 
         error: parseResult.error.errors[0].message,
@@ -30,120 +33,230 @@ export async function registerRoutes(
       });
     }
     
-    const run = await storage.createRun(parseResult.data);
-    res.status(201).json(run);
+    const assembly = await storage.createAssembly(parseResult.data);
+    res.status(201).json(assembly);
   });
 
-  app.get("/api/runs/:id", async (req: Request<{ id: string }>, res: Response) => {
-    const run = await storage.getRun(req.params.id);
-    if (!run) {
+  app.get("/api/assemblies/:id", async (req: Request<{ id: string }>, res: Response) => {
+    const assembly = await storage.getAssembly(req.params.id);
+    if (!assembly) {
       return res.status(404).json({ 
-        error: "Run not found",
+        error: "Assembly not found",
         code: "NOT_FOUND"
       });
     }
-    res.json(run);
+    res.json(assembly);
   });
 
-  app.post("/api/runs/:id/execute", async (req: Request<{ id: string }>, res: Response) => {
-    const run = await storage.getRun(req.params.id);
-    if (!run) {
+  app.post("/api/assemblies/:id/execute", async (req: Request<{ id: string }>, res: Response) => {
+    const assembly = await storage.getAssembly(req.params.id);
+    if (!assembly) {
       return res.status(404).json({ 
-        error: "Run not found",
+        error: "Assembly not found",
         code: "NOT_FOUND"
       });
     }
 
-    if (run.state === "running") {
+    if (assembly.state === "running") {
       return res.status(409).json({ 
         error: "Pipeline is already running",
         code: "ALREADY_RUNNING"
       });
     }
 
-    if (run.state === "completed") {
-      return res.json(run);
+    if (assembly.state === "completed") {
+      return res.json(assembly);
     }
 
-    await storage.updateRun(run.id, { state: "running", step: "init" });
+    await storage.updateAssembly(assembly.id, { state: "running", step: "init" });
     
-    executePipeline(run.id, run.idea, run.context || "");
+    executePipeline(assembly.id, assembly.idea, assembly.context || "");
     
-    const updatedRun = await storage.getRun(run.id);
-    res.json(updatedRun);
+    const updatedAssembly = await storage.getAssembly(assembly.id);
+    res.json(updatedAssembly);
   });
 
-  app.get("/api/runs/:id/download", async (req: Request<{ id: string }>, res: Response) => {
-    const run = await storage.getRun(req.params.id);
-    if (!run) {
+  app.get("/api/assemblies/:id/kit.zip", async (req: Request<{ id: string }>, res: Response) => {
+    const assembly = await storage.getAssembly(req.params.id);
+    if (!assembly) {
+      return res.status(404).json({ 
+        error: "Assembly not found",
+        code: "NOT_FOUND"
+      });
+    }
+
+    if (assembly.state !== "completed" || !assembly.kitPath) {
+      return res.status(404).json({ 
+        error: "Kit not ready",
+        code: "KIT_NOT_READY"
+      });
+    }
+
+    const kitPath = path.resolve(assembly.kitPath);
+    if (!fs.existsSync(kitPath)) {
+      return res.status(404).json({ 
+        error: "Kit file not found",
+        code: "FILE_NOT_FOUND"
+      });
+    }
+
+    res.download(kitPath, `axiom_kit_${assembly.id.substring(0, 8)}.zip`);
+  });
+
+  app.delete("/api/assemblies/:id", async (req: Request<{ id: string }>, res: Response) => {
+    const assembly = await storage.getAssembly(req.params.id);
+    if (!assembly) {
+      return res.status(404).json({ 
+        error: "Assembly not found",
+        code: "NOT_FOUND"
+      });
+    }
+
+    await storage.deleteAssembly(req.params.id);
+    res.status(204).send();
+  });
+
+  // Backward compatibility: /api/runs -> /api/assemblies
+  app.get("/api/runs", async (req: Request, res: Response) => {
+    res.set("Deprecation", "true");
+    res.set("Sunset", "2026-03-01");
+    const assemblies = await storage.getAssemblies();
+    res.json(assemblies);
+  });
+
+  app.post("/api/runs", async (req: Request, res: Response) => {
+    res.set("Deprecation", "true");
+    res.set("Sunset", "2026-03-01");
+    const parseResult = insertAssemblySchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ 
+        error: parseResult.error.errors[0].message,
+        code: "VALIDATION_ERROR"
+      });
+    }
+    
+    const assembly = await storage.createAssembly(parseResult.data);
+    res.status(201).json(assembly);
+  });
+
+  app.get("/api/runs/:id", async (req: Request<{ id: string }>, res: Response) => {
+    res.set("Deprecation", "true");
+    res.set("Sunset", "2026-03-01");
+    const assembly = await storage.getAssembly(req.params.id);
+    if (!assembly) {
+      return res.status(404).json({ 
+        error: "Run not found",
+        code: "NOT_FOUND"
+      });
+    }
+    res.json(assembly);
+  });
+
+  app.post("/api/runs/:id/execute", async (req: Request<{ id: string }>, res: Response) => {
+    res.set("Deprecation", "true");
+    res.set("Sunset", "2026-03-01");
+    const assembly = await storage.getAssembly(req.params.id);
+    if (!assembly) {
       return res.status(404).json({ 
         error: "Run not found",
         code: "NOT_FOUND"
       });
     }
 
-    if (run.state !== "completed" || !run.bundlePath) {
+    if (assembly.state === "running") {
+      return res.status(409).json({ 
+        error: "Pipeline is already running",
+        code: "ALREADY_RUNNING"
+      });
+    }
+
+    if (assembly.state === "completed") {
+      return res.json(assembly);
+    }
+
+    await storage.updateAssembly(assembly.id, { state: "running", step: "init" });
+    
+    executePipeline(assembly.id, assembly.idea, assembly.context || "");
+    
+    const updatedAssembly = await storage.getAssembly(assembly.id);
+    res.json(updatedAssembly);
+  });
+
+  app.get("/api/runs/:id/download", async (req: Request<{ id: string }>, res: Response) => {
+    res.set("Deprecation", "true");
+    res.set("Sunset", "2026-03-01");
+    const assembly = await storage.getAssembly(req.params.id);
+    if (!assembly) {
+      return res.status(404).json({ 
+        error: "Run not found",
+        code: "NOT_FOUND"
+      });
+    }
+
+    if (assembly.state !== "completed" || !assembly.kitPath) {
       return res.status(404).json({ 
         error: "Bundle not ready",
         code: "BUNDLE_NOT_READY"
       });
     }
 
-    const bundlePath = path.resolve(run.bundlePath);
-    if (!fs.existsSync(bundlePath)) {
+    const kitPath = path.resolve(assembly.kitPath);
+    if (!fs.existsSync(kitPath)) {
       return res.status(404).json({ 
         error: "Bundle file not found",
         code: "FILE_NOT_FOUND"
       });
     }
 
-    res.download(bundlePath, `roshi_bundle_${run.id.substring(0, 8)}.zip`);
+    res.download(kitPath, `axiom_kit_${assembly.id.substring(0, 8)}.zip`);
   });
 
   app.delete("/api/runs/:id", async (req: Request<{ id: string }>, res: Response) => {
-    const run = await storage.getRun(req.params.id);
-    if (!run) {
+    res.set("Deprecation", "true");
+    res.set("Sunset", "2026-03-01");
+    const assembly = await storage.getAssembly(req.params.id);
+    if (!assembly) {
       return res.status(404).json({ 
         error: "Run not found",
         code: "NOT_FOUND"
       });
     }
 
-    await storage.deleteRun(req.params.id);
+    await storage.deleteAssembly(req.params.id);
     res.status(204).send();
   });
 
   return httpServer;
 }
 
-async function executePipeline(runId: string, idea: string, context: string) {
+async function executePipeline(assemblyId: string, idea: string | null, context: string) {
   try {
-    const run = await storage.getRun(runId);
-    if (!run) throw new Error("Run not found");
+    const assembly = await storage.getAssembly(assemblyId);
+    if (!assembly) throw new Error("Assembly not found");
     
-    await storage.updateRun(runId, { step: "init" });
+    await storage.updateAssembly(assemblyId, { step: "init" });
     
     const workspaceConfig: WorkspaceConfig = {
-      runId,
-      projectName: run.projectName || "Untitled Project",
-      idea,
+      assemblyId,
+      projectName: assembly.projectName || "Untitled Project",
+      idea: idea || "",
       context: context || undefined,
-      domains: run.domains || ["platform", "api", "web"],
+      domains: assembly.domains || ["platform", "api", "web"],
     };
     
-    console.log(`[Pipeline] Creating workspace for run ${runId}`);
+    console.log(`[Pipeline] Creating workspace for assembly ${assemblyId}`);
     const workspacePath = await createWorkspace(workspaceConfig);
     
-    await storage.updateRun(runId, { step: "gen" });
+    await storage.updateAssembly(assemblyId, { step: "gen" });
     console.log(`[Pipeline] Generating AI documentation...`);
     await populateWorkspaceWithAI(workspaceConfig, workspacePath);
     
-    await storage.updateRun(runId, { step: "package" });
-    console.log(`[Pipeline] Packaging bundle...`);
+    await storage.updateAssembly(assemblyId, { step: "package" });
+    console.log(`[Pipeline] Packaging kit...`);
     
     await new Promise<void>((resolve, reject) => {
-      const proc = spawn("node", ["scripts/roshi-package-workspace.mjs", "--workspace", workspacePath], {
-        env: { ...process.env, ROSHI_WORKSPACE: workspacePath },
+      const proc = spawn("node", ["scripts/assembler-package-workspace.mjs", "--workspace", workspacePath], {
+        env: { ...process.env, ASSEMBLER_WORKSPACE: workspacePath },
         cwd: process.cwd()
       });
       
@@ -168,11 +281,11 @@ async function executePipeline(runId: string, idea: string, context: string) {
       proc.on("error", reject);
     });
 
-    const bundlePath = path.join(workspacePath, "dist/roshi_bundle.zip");
-    const manifestPath = path.join(workspacePath, "dist/roshi_bundle/manifest.json");
-    const promptPath = path.join(workspacePath, "dist/roshi_bundle/agent_prompt.md");
+    const kitPath = path.join(workspacePath, "dist/axiom_kit.zip");
+    const manifestPath = path.join(workspacePath, "dist/axiom_kit/assembly_manifest.json");
+    const promptPath = path.join(workspacePath, "dist/axiom_kit/agent_prompt.md");
     
-    let bundle: RunBundle = {
+    let kit: Kit = {
       available: true,
       zipBytes: 0,
       zipSha256: null,
@@ -180,31 +293,31 @@ async function executePipeline(runId: string, idea: string, context: string) {
       agentPromptSha256: null,
     };
     
-    if (fs.existsSync(bundlePath)) {
-      const zipBuffer = fs.readFileSync(bundlePath);
-      bundle.zipBytes = zipBuffer.length;
-      bundle.zipSha256 = computeSha256(zipBuffer);
+    if (fs.existsSync(kitPath)) {
+      const zipBuffer = fs.readFileSync(kitPath);
+      kit.zipBytes = zipBuffer.length;
+      kit.zipSha256 = computeSha256(zipBuffer);
     }
     
     if (fs.existsSync(manifestPath)) {
-      bundle.manifestSha256 = computeSha256(fs.readFileSync(manifestPath));
+      kit.manifestSha256 = computeSha256(fs.readFileSync(manifestPath));
     }
     
     if (fs.existsSync(promptPath)) {
-      bundle.agentPromptSha256 = computeSha256(fs.readFileSync(promptPath));
+      kit.agentPromptSha256 = computeSha256(fs.readFileSync(promptPath));
     }
     
-    await storage.updateRun(runId, { 
+    await storage.updateAssembly(assemblyId, { 
       state: "completed", 
       step: "package",
-      bundle,
-      bundlePath 
+      kit,
+      kitPath 
     });
     
-    console.log(`[Pipeline] Run ${runId} completed successfully`);
+    console.log(`[Pipeline] Assembly ${assemblyId} completed successfully`);
   } catch (error) {
-    console.error(`[Pipeline] Run ${runId} failed:`, error);
-    await storage.updateRun(runId, { 
+    console.error(`[Pipeline] Assembly ${assemblyId} failed:`, error);
+    await storage.updateAssembly(assemblyId, { 
       state: "failed",
       errors: [error instanceof Error ? error.message : "Unknown error"]
     });
