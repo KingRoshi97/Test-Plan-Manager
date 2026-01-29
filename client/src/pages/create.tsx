@@ -919,7 +919,7 @@ Read these docs to understand the project architecture, then implement the appli
                       )}
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleNewAssembly} data-testid="button-new-assembly">
+                  <Button variant="outline" size="sm" onClick={handleNewAssembly} data-testid="button-new-assembly-reset">
                     New Assembly
                   </Button>
                 </div>

@@ -85,7 +85,7 @@ export function SidebarNav() {
               <Button 
                 className="w-full justify-start gap-2" 
                 size="sm"
-                data-testid="button-new-assembly"
+                data-testid="button-new-assembly-sidebar"
               >
                 <Plus className="h-4 w-4" />
                 New Assembly
