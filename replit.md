@@ -119,7 +119,16 @@ queued → running → completed (or failed/canceled)
 
 ## Recent Changes
 
-### January 2026
+### January 2026 (Latest)
+- **Hybrid Input System**: Supports both structured input (features, users, techStack) and legacy idea-only input
+- **Multi-Step Form UI**: 5-tab form wizard (Basics → Features → Users → Tech → Generate) with toggle for simple mode
+- **Manifest v0.2.0**: Bundle manifest includes generationMode, inputSummary, and implementationPlan based on P0/P1/P2 priorities
+- **Template Fallback**: If AI generation fails for any document, structured templates populated with user data are used
+- **Extended Checksums**: Bundle metadata includes inputSha256 and aiContextSha256 for input artifact integrity
+- **Handoff Artifacts**: Workspace includes handoff/input.json and handoff/ai_context.json with normalized AI context
+- **Backward Compatibility**: Legacy idea-only requests auto-map to RunInput with mappedFromIdea flag
+
+### January 2026 (Earlier)
 - **AI-Powered Generation**: Bundles now contain AI-generated docs tailored to user's specific project idea (not Roshi framework docs)
 - **Isolated Workspaces**: Each run gets dedicated workspace at workspaces/{runId}/ preventing cross-contamination
 - **Parallel AI Generation**: All 7 source documents generated concurrently for speed (~40s total)
