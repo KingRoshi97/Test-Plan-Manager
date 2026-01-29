@@ -19,13 +19,15 @@ import {
   Settings, 
   FileText, 
   Upload,
-  Sparkles
+  Sparkles,
+  BarChart3
 } from "lucide-react";
 import axiomLogo from "@/assets/axiom-logo.png";
 
 const navItems = [
   { id: "create", label: "Create", icon: Sparkles, href: "/create" },
   { id: "assemblies", label: "Assemblies", icon: Layers, href: "/assemblies" },
+  { id: "ops", label: "Operations", icon: BarChart3, href: "/ops" },
   { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
   { id: "docs", label: "API Docs", icon: FileText, href: "/docs" },
 ];

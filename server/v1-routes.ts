@@ -12,6 +12,7 @@ import { registerHandler, enqueue } from "./jobs/queue";
 import { scanAndIndexProjectPackage } from "./jobs/scan-index-package";
 import { writeFile, writeText, readText, getProjectPackagePath, getKitUpgradePath, fileExists as storageFileExists } from "./file-storage";
 import crypto from "crypto";
+import { generateApiKey, logAudit, requireApiKey, validateApiKey, optionalApiKey } from "./apikey";
 
 registerHandler("scanAndIndexProjectPackage", scanAndIndexProjectPackage);
 
@@ -38,6 +39,8 @@ function addDeprecationHeaders(res: Response) {
 }
 
 export function registerV1Routes(app: Express) {
+  
+  const optionalAuth = optionalApiKey();
   
   app.get("/health", (req: Request, res: Response) => {
     res.json({ 
@@ -149,7 +152,7 @@ export function registerV1Routes(app: Express) {
   });
 
   // === ASSEMBLIES (was runs) ===
-  app.post("/v1/assemblies", async (req: Request, res: Response) => {
+  app.post("/v1/assemblies", optionalAuth, async (req: Request, res: Response) => {
     const parseResult = createAssemblyRequestSchema.safeParse(req.body);
     if (!parseResult.success) {
       return apiError(req, res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message, {
@@ -171,6 +174,8 @@ export function registerV1Routes(app: Express) {
     });
     
     executePipelineV1(assembly.id, assemblyInput);
+    
+    await logAudit("assembly.create", "assembly", assembly.id, req, { projectName: assemblyInput.projectName });
     
     res.status(202).json({
       assemblyId: assembly.id,
@@ -530,7 +535,7 @@ export function registerV1Routes(app: Express) {
   });
 
   // === DELIVERIES (was handoffs) ===
-  app.post("/v1/assemblies/:assemblyId/deliveries", async (req: Request<{ assemblyId: string }>, res: Response) => {
+  app.post("/v1/assemblies/:assemblyId/deliveries", optionalAuth, async (req: Request<{ assemblyId: string }>, res: Response) => {
     const assembly = await storage.getAssembly(req.params.assemblyId);
     if (!assembly) {
       return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
@@ -552,6 +557,8 @@ export function registerV1Routes(app: Express) {
     const processed = await processDelivery(delivery.id, baseUrl);
     
     const updatedDelivery = processed.delivery || delivery;
+    
+    await logAudit("delivery.create", "delivery", updatedDelivery.id, req, { assemblyId: assembly.id, type: updatedDelivery.type });
     
     res.status(201).json({
       delivery: {
@@ -716,7 +723,7 @@ export function registerV1Routes(app: Express) {
     });
   });
 
-  app.post("/v1/deliveries/:deliveryId/retry", async (req: Request<{ deliveryId: string }>, res: Response) => {
+  app.post("/v1/deliveries/:deliveryId/retry", optionalAuth, async (req: Request<{ deliveryId: string }>, res: Response) => {
     const delivery = await storage.getDelivery(req.params.deliveryId);
     if (!delivery) {
       return apiError(req, res, 404, "NOT_FOUND", "Delivery not found");
@@ -732,6 +739,8 @@ export function registerV1Routes(app: Express) {
     
     const baseUrl = getBaseUrl(req);
     const processed = await processDelivery(delivery.id, baseUrl);
+    
+    await logAudit("delivery.retry", "delivery", delivery.id, req, { success: processed.success });
     
     res.json({ ok: processed.success, deliveryId: delivery.id });
   });
@@ -810,6 +819,8 @@ export function registerV1Routes(app: Express) {
       
       enqueue("scanAndIndexProjectPackage", { projectPackageId: pkg.id });
       
+      await logAudit("package.upload", "project_package", pkg.id, req, { filename: pkg.filename, sizeBytes: pkg.sizeBytes });
+      
       res.status(201).json({
         projectPackageId: pkg.id,
         filename: pkg.filename,
@@ -868,6 +879,8 @@ export function registerV1Routes(app: Express) {
     }
     
     await storage.updateProjectPackage(pkg.id, { assemblyId: assembly.id });
+    
+    await logAudit("package.attach", "project_package", pkg.id, req, { assemblyId: assembly.id });
     
     res.json({
       ok: true,
@@ -967,6 +980,8 @@ export function registerV1Routes(app: Express) {
         sizeBytes: Buffer.byteLength(diffPlaceholder),
       });
       
+      await logAudit("upgrade.generate", "assembly", assembly.id, req, { projectPackageId: pkg.id, mode, artifactCount: artifacts.length });
+      
       res.json({
         assemblyId: assembly.id,
         upgrade: {
@@ -1024,6 +1039,139 @@ export function registerV1Routes(app: Express) {
       artifacts,
       correlationId: req.correlationId,
     });
+  });
+
+  // ===== API Keys Endpoints =====
+  
+  app.get("/v1/api-keys", async (req: Request, res: Response) => {
+    try {
+      const keys = await storage.getApiKeys();
+      
+      const safeKeys = keys.map(k => ({
+        id: k.id,
+        name: k.name,
+        keyPrefix: k.keyPrefix,
+        scopes: k.scopes,
+        lastUsedAt: k.lastUsedAt?.toISOString() || null,
+        expiresAt: k.expiresAt?.toISOString() || null,
+        createdAt: k.createdAt.toISOString(),
+      }));
+      
+      res.json({
+        apiKeys: safeKeys,
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Error listing API keys:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to list API keys");
+    }
+  });
+
+  app.post("/v1/api-keys", async (req: Request, res: Response) => {
+    try {
+      const { name, scopes, expiresAt } = req.body;
+      
+      if (!name || typeof name !== "string") {
+        return apiError(req, res, 400, "INVALID_REQUEST", "Name is required");
+      }
+      
+      const validScopes = ["*", "assemblies:read", "assemblies:write", "deliveries:read", "deliveries:write", "packages:read", "packages:write"];
+      if (scopes && (!Array.isArray(scopes) || scopes.some(s => !validScopes.includes(s)))) {
+        return apiError(req, res, 400, "INVALID_SCOPES", `Invalid scopes. Valid values: ${validScopes.join(", ")}`);
+      }
+      
+      const { rawKey, keyHash, keyPrefix } = generateApiKey();
+      
+      const apiKey = await storage.createApiKey({
+        name,
+        keyHash,
+        keyPrefix,
+        scopes: scopes || ["*"],
+        expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      });
+      
+      await logAudit("apikey.create", "api_key", apiKey.id, req, { name, scopes });
+      
+      res.status(201).json({
+        id: apiKey.id,
+        name: apiKey.name,
+        key: rawKey,
+        keyPrefix: apiKey.keyPrefix,
+        scopes: apiKey.scopes,
+        expiresAt: apiKey.expiresAt?.toISOString() || null,
+        createdAt: apiKey.createdAt.toISOString(),
+        correlationId: req.correlationId,
+        warning: "Store this key securely. It cannot be retrieved again.",
+      });
+    } catch (error) {
+      console.error("Error creating API key:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to create API key");
+    }
+  });
+
+  app.delete("/v1/api-keys/:keyId", async (req: Request<{ keyId: string }>, res: Response) => {
+    try {
+      const { keyId } = req.params;
+      
+      const apiKey = await storage.getApiKey(keyId);
+      if (!apiKey) {
+        return apiError(req, res, 404, "NOT_FOUND", "API key not found");
+      }
+      
+      if (apiKey.revokedAt) {
+        return apiError(req, res, 400, "ALREADY_REVOKED", "API key is already revoked");
+      }
+      
+      await storage.updateApiKey(keyId, { revokedAt: new Date() });
+      
+      await logAudit("apikey.revoke", "api_key", keyId, req);
+      
+      res.json({
+        id: keyId,
+        revoked: true,
+        revokedAt: new Date().toISOString(),
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Error revoking API key:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to revoke API key");
+    }
+  });
+
+  // ===== Audit Logs Endpoints =====
+  
+  app.get("/v1/audit-logs", async (req: Request, res: Response) => {
+    try {
+      const { limit, offset, action, resourceType } = req.query;
+      
+      const logs = await storage.getAuditLogs({
+        limit: limit ? Math.min(parseInt(limit as string, 10), 1000) : 100,
+        offset: offset ? parseInt(offset as string, 10) : 0,
+        action: action as string | undefined,
+        resourceType: resourceType as string | undefined,
+      });
+      
+      res.json({
+        auditLogs: logs.map(l => ({
+          id: l.id,
+          action: l.action,
+          resourceType: l.resourceType,
+          resourceId: l.resourceId,
+          apiKeyId: l.apiKeyId,
+          ipAddress: l.ipAddress,
+          requestMethod: l.requestMethod,
+          requestPath: l.requestPath,
+          statusCode: l.statusCode,
+          correlationId: l.correlationId,
+          metadata: l.metadata,
+          createdAt: l.createdAt.toISOString(),
+        })),
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Error listing audit logs:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to list audit logs");
+    }
   });
 }
 

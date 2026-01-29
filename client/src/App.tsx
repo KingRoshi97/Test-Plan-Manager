@@ -11,6 +11,7 @@ import Assemblies from "@/pages/assemblies";
 import AssemblyDetail from "@/pages/assembly-detail";
 import Settings from "@/pages/settings";
 import ApiDocs from "@/pages/api-docs";
+import Ops from "@/pages/ops";
 import { useEffect } from "react";
 
 function RedirectTo({ to }: { to: string }) {
@@ -35,6 +36,7 @@ function Router() {
         </Route>
         <Route path="/settings" component={Settings} />
         <Route path="/docs" component={ApiDocs} />
+        <Route path="/ops" component={Ops} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>
