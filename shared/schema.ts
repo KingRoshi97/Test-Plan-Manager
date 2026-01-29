@@ -369,6 +369,74 @@ export const createUpgradeRequestSchema = z.object({
 
 export type CreateUpgradeRequest = z.infer<typeof createUpgradeRequestSchema>;
 
+// API Keys table
+export const apiKeys = pgTable("api_keys", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  keyHash: text("key_hash").notNull(),
+  keyPrefix: text("key_prefix").notNull(),
+  scopes: text("scopes").array(),
+  lastUsedAt: timestamp("last_used_at"),
+  expiresAt: timestamp("expires_at"),
+  revokedAt: timestamp("revoked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertApiKeySchema = createInsertSchema(apiKeys).pick({
+  name: true,
+  keyHash: true,
+  keyPrefix: true,
+  scopes: true,
+  expiresAt: true,
+});
+
+export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
+export type ApiKey = typeof apiKeys.$inferSelect;
+
+// Audit Logs table
+export const auditLogActionEnum = [
+  "assembly.create", "assembly.execute", "assembly.delete",
+  "delivery.create", "delivery.retry",
+  "package.upload", "package.attach",
+  "upgrade.generate",
+  "apikey.create", "apikey.revoke",
+] as const;
+export type AuditLogAction = (typeof auditLogActionEnum)[number];
+
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  action: text("action").$type<AuditLogAction>().notNull(),
+  resourceType: text("resource_type").notNull(),
+  resourceId: text("resource_id"),
+  apiKeyId: varchar("api_key_id"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  requestMethod: text("request_method"),
+  requestPath: text("request_path"),
+  statusCode: integer("status_code"),
+  correlationId: text("correlation_id"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).pick({
+  action: true,
+  resourceType: true,
+  resourceId: true,
+  apiKeyId: true,
+  ipAddress: true,
+  userAgent: true,
+  requestMethod: true,
+  requestPath: true,
+  statusCode: true,
+  correlationId: true,
+  metadata: true,
+});
+
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+
 // Backward compatibility aliases
 export type Run = Assembly;
 export type RunState = AssemblyState;

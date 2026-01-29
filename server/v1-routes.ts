@@ -482,6 +482,13 @@ export function registerV1Routes(app: Express) {
       return apiError(req, res, 404, "FILE_NOT_FOUND", "Kit file not found");
     }
     
+    if (assembly.kit?.zipSha256) {
+      res.set("X-Checksum-SHA256", assembly.kit.zipSha256);
+    }
+    if (assembly.kit?.zipBytes) {
+      res.set("X-Content-Length", assembly.kit.zipBytes.toString());
+    }
+    
     res.download(kitPath, `axiom_kit_${assembly.id}.zip`);
   });
 
@@ -510,6 +517,13 @@ export function registerV1Routes(app: Express) {
     const kitPath = path.resolve(assembly.kitPath);
     if (!fs.existsSync(kitPath)) {
       return apiError(req, res, 404, "FILE_NOT_FOUND", "Bundle file not found");
+    }
+    
+    if (assembly.kit?.zipSha256) {
+      res.set("X-Checksum-SHA256", assembly.kit.zipSha256);
+    }
+    if (assembly.kit?.zipBytes) {
+      res.set("X-Content-Length", assembly.kit.zipBytes.toString());
     }
     
     res.download(kitPath, `axiom_kit_${assembly.id}.zip`);
