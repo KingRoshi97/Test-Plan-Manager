@@ -10,11 +10,11 @@ import type { Run } from "@shared/schema";
 
 function getStatusBadge(status: string) {
   const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-    created: { variant: "secondary", label: "Created" },
+    queued: { variant: "secondary", label: "Queued" },
     running: { variant: "default", label: "Running" },
-    completed: { variant: "default", label: "Completed" },
+    completed: { variant: "outline", label: "Ready" },
     failed: { variant: "destructive", label: "Failed" },
-    bundled: { variant: "outline", label: "Ready" },
+    canceled: { variant: "secondary", label: "Canceled" },
   };
   const config = variants[status] || { variant: "secondary", label: status };
   return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -115,7 +115,7 @@ export default function Runs() {
                   >
                     <div className="space-y-1 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        {getStatusBadge(run.status)}
+                        {getStatusBadge(run.state)}
                         <span className="text-xs text-muted-foreground">
                           {formatDate(run.createdAt)}
                         </span>
@@ -123,7 +123,7 @@ export default function Runs() {
                       <p className="text-sm truncate">{run.idea}</p>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
-                      {run.status === "bundled" && (
+                      {run.state === "completed" && (
                         <Button
                           variant="outline"
                           size="sm"

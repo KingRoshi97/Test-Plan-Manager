@@ -232,6 +232,32 @@ function printRoshiReport(report) {
         "docs/roshi_v2/00_registry/**"
       ],
       openQuestions: openQ,
+      implementationPlan: [
+        {
+          step: 1,
+          title: "Scaffold API skeleton",
+          outputs: ["server entrypoint", "routes folder", "run storage model"],
+          acceptance: ["GET /health returns 200", "POST /v1/runs returns runId"]
+        },
+        {
+          step: 2,
+          title: "Implement runs + bundle metadata endpoints",
+          outputs: ["run CRUD", "bundle metadata", "signed URLs"],
+          acceptance: ["GET /v1/runs/:id returns status", "GET /v1/runs/:id/bundle returns checksums + signed url"]
+        },
+        {
+          step: 3,
+          title: "Implement handoffs (pull, webhook, git)",
+          outputs: ["handoff entity", "adapters", "delivery logic"],
+          acceptance: ["POST handoff works for each type", "retry works", "webhook signature verified"]
+        },
+        {
+          step: 4,
+          title: "Build web UI",
+          outputs: ["home page", "run history", "status display"],
+          acceptance: ["can submit idea", "can see progress", "can download bundle"]
+        }
+      ],
       artifacts: {
         zipPath: "dist/roshi_bundle.zip",
         workspaceRoot: "./"

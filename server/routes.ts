@@ -1,7 +1,9 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertRunSchema } from "@shared/schema";
+import { insertRunSchema, type RunBundle } from "@shared/schema";
+import { computeSha256 } from "./signing";
+import { registerV1Routes } from "./v1-routes";
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
@@ -10,6 +12,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  
+  registerV1Routes(app);
   
   app.get("/api/runs", async (req: Request, res: Response) => {
     const runs = await storage.getRuns();
@@ -49,18 +53,18 @@ export async function registerRoutes(
       });
     }
 
-    if (run.status === "running") {
+    if (run.state === "running") {
       return res.status(409).json({ 
         error: "Pipeline is already running",
         code: "ALREADY_RUNNING"
       });
     }
 
-    if (run.status === "bundled") {
+    if (run.state === "completed") {
       return res.json(run);
     }
 
-    await storage.updateRun(run.id, { status: "running", currentStep: "init" });
+    await storage.updateRun(run.id, { state: "running", step: "init" });
     
     executePipeline(run.id, run.idea, run.context || "");
     
@@ -77,7 +81,7 @@ export async function registerRoutes(
       });
     }
 
-    if (run.status !== "bundled" || !run.bundlePath) {
+    if (run.state !== "completed" || !run.bundlePath) {
       return res.status(404).json({ 
         error: "Bundle not ready",
         code: "BUNDLE_NOT_READY"
@@ -121,7 +125,7 @@ async function executePipeline(runId: string, idea: string, context: string) {
 
   try {
     for (const step of steps) {
-      await storage.updateRun(runId, { currentStep: step.name });
+      await storage.updateRun(runId, { step: step.name as any });
       
       await new Promise<void>((resolve, reject) => {
         const proc = spawn("node", [step.script], {
@@ -147,15 +151,41 @@ async function executePipeline(runId: string, idea: string, context: string) {
     }
 
     const bundlePath = "dist/roshi_bundle.zip";
+    const manifestPath = "dist/roshi_bundle/manifest.json";
+    const promptPath = "dist/roshi_bundle/agent_prompt.md";
+    
+    let bundle: RunBundle = {
+      available: true,
+      zipBytes: 0,
+      zipSha256: null,
+      manifestSha256: null,
+      agentPromptSha256: null,
+    };
+    
+    if (fs.existsSync(bundlePath)) {
+      const zipBuffer = fs.readFileSync(bundlePath);
+      bundle.zipBytes = zipBuffer.length;
+      bundle.zipSha256 = computeSha256(zipBuffer);
+    }
+    
+    if (fs.existsSync(manifestPath)) {
+      bundle.manifestSha256 = computeSha256(fs.readFileSync(manifestPath));
+    }
+    
+    if (fs.existsSync(promptPath)) {
+      bundle.agentPromptSha256 = computeSha256(fs.readFileSync(promptPath));
+    }
+    
     await storage.updateRun(runId, { 
-      status: "bundled", 
-      currentStep: "complete",
+      state: "completed", 
+      step: "package",
+      bundle,
       bundlePath 
     });
   } catch (error) {
     await storage.updateRun(runId, { 
-      status: "failed",
-      errorMessage: error instanceof Error ? error.message : "Unknown error"
+      state: "failed",
+      errors: [error instanceof Error ? error.message : "Unknown error"]
     });
   }
 }
