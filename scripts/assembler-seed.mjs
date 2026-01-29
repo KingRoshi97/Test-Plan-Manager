@@ -21,9 +21,9 @@ const report = {
 };
 
 function loadDomainsConfig() {
-  const configPath = 'roshi/domains.json';
+  const configPath = 'assembler/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('roshi/domains.json not found. Run roshi:init first.');
+    throw new Error('assembler/domains.json not found. Run roshi:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
@@ -53,7 +53,7 @@ function loadTargetOutline() {
 }
 
 function printReport() {
-  console.log('\n========== ROSHI_REPORT ==========');
+  console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: roshi:seed`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   if (domainArg) console.log(`Domain: ${domainArg}`);
@@ -78,7 +78,7 @@ try {
   if (domainArg) {
     const validDomain = config.domains.find(d => d.slug === domainArg);
     if (!validDomain) {
-      throw new Error(`Domain "${domainArg}" not found in roshi/domains.json`);
+      throw new Error(`Domain "${domainArg}" not found in assembler/domains.json`);
     }
   }
   
@@ -306,8 +306,8 @@ Build "Roshi Studio": a web app + API that runs the Roshi pipeline using an NPM 
 User pastes an idea + minimal context, clicks Generate, and receives a downloadable "Agent Handoff Bundle" (zip) containing Roshi docs + manifests + exports that can be uploaded to a vibecoding agent.
 
 ## Product Shape
-- NPM engine: @roshi/core (pure logic)
-- API service: runs @roshi/core, produces runs + artifacts + bundle zip
+- NPM engine: @assembler/core (pure logic)
+- API service: runs @assembler/core, produces runs + artifacts + bundle zip
 - Web app: UI to create runs, view status, download zip, copy agent prompt
 
 ## Platforms
@@ -338,7 +338,7 @@ User pastes an idea + minimal context, clicks Generate, and receives a downloada
 - No invention: missing info must become UNKNOWN + logged to Open Questions
 - No overwrite: scripts skip if file exists unless explicitly allowed by spec
 - Verify before lock
-- Always print ROSHI_REPORT after every script run
+- Always print ASSEMBLER_REPORT after every script run
 
 ## Source
 Extracted from: docs/inputs/TARGET_OUTLINE.md

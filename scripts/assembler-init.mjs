@@ -44,7 +44,7 @@ function ensureFile(filePath, content) {
 }
 
 function printReport() {
-  console.log('\n========== ROSHI_REPORT ==========');
+  console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: roshi:init`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`\nCreated (${report.created.length}):`);
@@ -63,18 +63,18 @@ try {
   
   // Create directory structure
   const dirs = [
-    'docs/roshi_v2/00_product',
-    'docs/roshi_v2/00_registry',
-    'docs/roshi_v2/01_templates',
-    'docs/roshi_v2/02_domains',
-    'docs/roshi_v2/03_workflows',
+    'docs/assembler_v1/00_product',
+    'docs/assembler_v1/00_registry',
+    'docs/assembler_v1/01_templates',
+    'docs/assembler_v1/02_domains',
+    'docs/assembler_v1/03_workflows',
     'roshi'
   ];
   
   dirs.forEach(dir => ensureDir(dir));
   
   // Create README.md
-  const readmePath = 'docs/roshi_v2/README.md';
+  const readmePath = 'docs/assembler_v1/README.md';
   const readmeContent = `# Roshi v2 Documentation Workspace
 
 This directory contains the Roshi documentation system for the project.
@@ -82,7 +82,7 @@ This directory contains the Roshi documentation system for the project.
 ## Directory Structure
 
 \`\`\`
-docs/roshi_v2/
+docs/assembler_v1/
 ├── 00_product/          # Product-level specifications
 ├── 00_registry/         # Cross-cutting registries
 ├── 01_templates/        # Document templates
@@ -105,9 +105,9 @@ npm run roshi:lock    # Lock a domain
   ensureFile(readmePath, readmeContent);
   
   // Create domains.json
-  const domainsJsonPath = 'roshi/domains.json';
+  const domainsJsonPath = 'assembler/domains.json';
   const domainsContent = JSON.stringify({
-    roshi_root: "docs/roshi_v2",
+    roshi_root: "docs/assembler_v1",
     domains_dir: "02_domains",
     templates_dir: "01_templates",
     domains: [
@@ -121,9 +121,9 @@ npm run roshi:lock    # Lock a domain
   ensureFile(domainsJsonPath, domainsContent);
   
   // Create sources.json
-  const sourcesJsonPath = 'roshi/sources.json';
+  const sourcesJsonPath = 'assembler/sources.json';
   const sourcesContent = JSON.stringify({
-    roshi_root: "docs/roshi_v2",
+    roshi_root: "docs/assembler_v1",
     sources: [
       "00_product/RPBS_Product.md",
       "00_product/REBS_Product.md",

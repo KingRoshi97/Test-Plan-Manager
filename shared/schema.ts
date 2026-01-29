@@ -17,13 +17,13 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-export const runStateEnum = ["queued", "running", "completed", "failed", "canceled"] as const;
-export type RunState = (typeof runStateEnum)[number];
+export const assemblyStateEnum = ["queued", "running", "completed", "failed", "canceled"] as const;
+export type AssemblyState = (typeof assemblyStateEnum)[number];
 
-export const runStepEnum = ["init", "gen", "seed", "draft", "review", "verify", "lock", "package"] as const;
-export type RunStep = (typeof runStepEnum)[number];
+export const assemblyStepEnum = ["init", "gen", "seed", "draft", "review", "verify", "lock", "package"] as const;
+export type AssemblyStep = (typeof assemblyStepEnum)[number];
 
-export interface BundleChecksums {
+export interface KitChecksums {
   zipSha256: string | null;
   manifestSha256: string | null;
   agentPromptSha256: string | null;
@@ -62,7 +62,7 @@ export interface UploadedFile {
   uploadedAt: string;
 }
 
-export interface RunInput {
+export interface AssemblyInput {
   projectName: string;
   description: string;
   features: Feature[];
@@ -74,17 +74,17 @@ export interface RunInput {
   uploadedContext?: string;
 }
 
-export interface BundleSizes {
+export interface KitSizes {
   zipBytes: number;
 }
 
-export interface RunProgress {
+export interface AssemblyProgress {
   percent: number;
 }
 
 export type GenerationMode = "ai" | "template_fallback" | "hybrid";
 
-export interface RunBundle {
+export interface Kit {
   available: boolean;
   generationMode?: GenerationMode;
   zipBytes: number;
@@ -95,20 +95,20 @@ export interface RunBundle {
   aiContextSha256?: string | null;
 }
 
-export const runs = pgTable("runs", {
+export const assemblies = pgTable("assemblies", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   projectName: text("project_name"),
   idea: text("idea"),
   context: text("context"),
   preset: text("preset"),
   domains: text("domains").array(),
-  input: jsonb("input").$type<RunInput>(),
-  state: text("state").$type<RunState>().notNull().default("queued"),
-  step: text("step").$type<RunStep | null>(),
-  progress: jsonb("progress").$type<RunProgress>(),
+  input: jsonb("input").$type<AssemblyInput>(),
+  state: text("state").$type<AssemblyState>().notNull().default("queued"),
+  step: text("step").$type<AssemblyStep | null>(),
+  progress: jsonb("progress").$type<AssemblyProgress>(),
   errors: text("errors").array(),
-  bundle: jsonb("bundle").$type<RunBundle>(),
-  bundlePath: text("bundle_path"),
+  kit: jsonb("kit").$type<Kit>(),
+  kitPath: text("kit_path"),
   logsTail: text("logs_tail"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -140,7 +140,7 @@ export const uploadedFileSchema = z.object({
   uploadedAt: z.string(),
 });
 
-export const createRunRequestSchema = z.object({
+export const createAssemblyRequestSchema = z.object({
   projectName: z.string().min(1, "Project name is required").optional(),
   description: z.string().optional(),
   features: z.array(featureSchema).optional(),
@@ -157,9 +157,9 @@ export const createRunRequestSchema = z.object({
   { message: "Either projectName (structured) or idea (legacy) is required" }
 );
 
-export type CreateRunRequest = z.infer<typeof createRunRequestSchema>;
+export type CreateAssemblyRequest = z.infer<typeof createAssemblyRequestSchema>;
 
-export const insertRunSchema = createInsertSchema(runs).pick({
+export const insertAssemblySchema = createInsertSchema(assemblies).pick({
   projectName: true,
   idea: true,
   context: true,
@@ -172,17 +172,17 @@ export const insertRunSchema = createInsertSchema(runs).pick({
   context: z.string().optional(),
   preset: z.string().optional(),
   domains: z.array(z.string()).optional(),
-  input: z.custom<RunInput>().optional(),
+  input: z.custom<AssemblyInput>().optional(),
 });
 
-export type InsertRun = z.infer<typeof insertRunSchema>;
-export type Run = typeof runs.$inferSelect;
+export type InsertAssembly = z.infer<typeof insertAssemblySchema>;
+export type Assembly = typeof assemblies.$inferSelect;
 
-export const handoffStateEnum = ["queued", "delivering", "completed", "failed", "canceled"] as const;
-export type HandoffState = (typeof handoffStateEnum)[number];
+export const deliveryStateEnum = ["queued", "delivering", "completed", "failed", "canceled"] as const;
+export type DeliveryState = (typeof deliveryStateEnum)[number];
 
-export const handoffTypeEnum = ["pull", "webhook", "git", "direct"] as const;
-export type HandoffType = (typeof handoffTypeEnum)[number];
+export const deliveryTypeEnum = ["pull", "webhook", "git", "direct"] as const;
+export type DeliveryType = (typeof deliveryTypeEnum)[number];
 
 export interface PullConfig {
   expiresInSeconds?: number;
@@ -212,7 +212,7 @@ export interface DirectConfig {
   options?: Record<string, unknown>;
 }
 
-export type HandoffConfig = PullConfig | WebhookConfig | GitConfig | DirectConfig;
+export type DeliveryConfig = PullConfig | WebhookConfig | GitConfig | DirectConfig;
 
 export interface PullResult {
   zipUrl: string;
@@ -236,7 +236,7 @@ export interface GitResult {
   prUrl?: string;
 }
 
-export interface HandoffAttempt {
+export interface DeliveryAttempt {
   attempt: number;
   at: string;
   ok: boolean;
@@ -244,39 +244,69 @@ export interface HandoffAttempt {
   error?: string;
 }
 
-export const handoffs = pgTable("handoffs", {
+export const deliveries = pgTable("deliveries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  runId: varchar("run_id").notNull(),
-  type: text("type").$type<HandoffType>().notNull(),
+  assemblyId: varchar("assembly_id").notNull(),
+  type: text("type").$type<DeliveryType>().notNull(),
   label: text("label"),
-  state: text("state").$type<HandoffState>().notNull().default("queued"),
-  config: jsonb("config").$type<HandoffConfig>().notNull(),
+  state: text("state").$type<DeliveryState>().notNull().default("queued"),
+  config: jsonb("config").$type<DeliveryConfig>().notNull(),
   attempts: integer("attempts").notNull().default(0),
   maxAttempts: integer("max_attempts").notNull().default(6),
   lastAttemptAt: timestamp("last_attempt_at"),
   result: jsonb("result").$type<PullResult | WebhookResult | GitResult | null>(),
   lastError: text("last_error"),
-  attemptHistory: jsonb("attempt_history").$type<HandoffAttempt[]>(),
+  attemptHistory: jsonb("attempt_history").$type<DeliveryAttempt[]>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertHandoffSchema = z.object({
-  runId: z.string(),
-  type: z.enum(handoffTypeEnum),
+export const insertDeliverySchema = z.object({
+  assemblyId: z.string(),
+  type: z.enum(deliveryTypeEnum),
   label: z.string().optional(),
   config: z.record(z.unknown()),
 });
 
-export type InsertHandoff = z.infer<typeof insertHandoffSchema>;
-export type Handoff = typeof handoffs.$inferSelect;
+export type InsertDelivery = z.infer<typeof insertDeliverySchema>;
+export type Delivery = typeof deliveries.$inferSelect;
 
-export const createHandoffRequestSchema = z.object({
-  type: z.enum(handoffTypeEnum),
+export const createDeliveryRequestSchema = z.object({
+  type: z.enum(deliveryTypeEnum),
   label: z.string().optional(),
   config: z.record(z.unknown()),
 });
 
-export type CreateHandoffRequest = z.infer<typeof createHandoffRequestSchema>;
+export type CreateDeliveryRequest = z.infer<typeof createDeliveryRequestSchema>;
+
+// Backward compatibility aliases
+export type Run = Assembly;
+export type RunState = AssemblyState;
+export type RunStep = AssemblyStep;
+export type RunInput = AssemblyInput;
+export type RunBundle = Kit;
+export type RunProgress = AssemblyProgress;
+export type BundleChecksums = KitChecksums;
+export type BundleSizes = KitSizes;
+export type Handoff = Delivery;
+export type HandoffState = DeliveryState;
+export type HandoffType = DeliveryType;
+export type HandoffConfig = DeliveryConfig;
+export type HandoffAttempt = DeliveryAttempt;
+export type InsertRun = InsertAssembly;
+export type InsertHandoff = InsertDelivery;
+export type CreateRunRequest = CreateAssemblyRequest;
+export type CreateHandoffRequest = CreateDeliveryRequest;
+
+export const runs = assemblies;
+export const handoffs = deliveries;
+export const runStateEnum = assemblyStateEnum;
+export const runStepEnum = assemblyStepEnum;
+export const handoffStateEnum = deliveryStateEnum;
+export const handoffTypeEnum = deliveryTypeEnum;
+export const createRunRequestSchema = createAssemblyRequestSchema;
+export const createHandoffRequestSchema = createDeliveryRequestSchema;
+export const insertRunSchema = insertAssemblySchema;
+export const insertHandoffSchema = insertDeliverySchema;
 
 export * from "./models/chat";

@@ -1,13 +1,13 @@
 import fs from "fs";
 import path from "path";
 import { generateAllDocs, type GenerateDocsOptions } from "./ai-generator";
-import type { RunInput } from "@shared/schema";
+import type { AssemblyInput } from "@shared/schema";
 
 const WORKSPACES_DIR = "workspaces";
-const TEMPLATES_DIR = "docs/roshi_v2/01_templates";
+const TEMPLATES_DIR = "docs/assembler_v1/01_templates";
 
 export interface WorkspaceConfig {
-  runId: string;
+  assemblyId: string;
   projectName: string;
   idea: string;
   context?: string;
@@ -35,8 +35,8 @@ function copyDir(src: string, dest: string) {
 }
 
 export async function createWorkspace(config: WorkspaceConfig): Promise<string> {
-  const workspaceRoot = path.join(WORKSPACES_DIR, config.runId);
-  const docsRoot = path.join(workspaceRoot, "docs/roshi_v2");
+  const workspaceRoot = path.join(WORKSPACES_DIR, config.assemblyId);
+  const docsRoot = path.join(workspaceRoot, "docs/assembler_v1");
   
   ensureDir(workspaceRoot);
   ensureDir(docsRoot);
@@ -45,14 +45,14 @@ export async function createWorkspace(config: WorkspaceConfig): Promise<string> 
   ensureDir(path.join(docsRoot, "01_templates"));
   ensureDir(path.join(docsRoot, "02_domains"));
   ensureDir(path.join(docsRoot, "03_workflows"));
-  ensureDir(path.join(workspaceRoot, "roshi"));
+  ensureDir(path.join(workspaceRoot, "assembler"));
   
   if (fs.existsSync(TEMPLATES_DIR)) {
     copyDir(TEMPLATES_DIR, path.join(docsRoot, "01_templates"));
   }
   
   const domainsConfig = {
-    roshi_root: "docs/roshi_v2",
+    assembler_root: "docs/assembler_v1",
     domains_dir: "02_domains",
     templates_dir: "01_templates",
     domains: config.domains.map((slug, i) => ({
@@ -64,12 +64,12 @@ export async function createWorkspace(config: WorkspaceConfig): Promise<string> 
   };
   
   fs.writeFileSync(
-    path.join(workspaceRoot, "roshi/domains.json"),
+    path.join(workspaceRoot, "assembler/domains.json"),
     JSON.stringify(domainsConfig, null, 2)
   );
   
   const sourcesConfig = {
-    roshi_root: "docs/roshi_v2",
+    assembler_root: "docs/assembler_v1",
     sources: [
       "00_product/RPBS_Product.md",
       "00_product/REBS_Product.md",
@@ -92,33 +92,33 @@ export async function createWorkspace(config: WorkspaceConfig): Promise<string> 
   };
   
   fs.writeFileSync(
-    path.join(workspaceRoot, "roshi/sources.json"),
+    path.join(workspaceRoot, "assembler/sources.json"),
     JSON.stringify(sourcesConfig, null, 2)
   );
   
-  console.log(`[Workspace] Created workspace structure for run ${config.runId}`);
+  console.log(`[Workspace] Created workspace structure for assembly ${config.assemblyId}`);
   
   return workspaceRoot;
 }
 
-export async function populateWorkspaceWithAI(config: WorkspaceConfig, workspaceRoot: string, runInput?: RunInput): Promise<void> {
-  const docsRoot = path.join(workspaceRoot, "docs/roshi_v2");
-  const handoffDir = path.join(workspaceRoot, "handoff");
+export async function populateWorkspaceWithAI(config: WorkspaceConfig, workspaceRoot: string, assemblyInput?: AssemblyInput): Promise<void> {
+  const docsRoot = path.join(workspaceRoot, "docs/assembler_v1");
+  const deliveryDir = path.join(workspaceRoot, "delivery");
   
-  ensureDir(handoffDir);
+  ensureDir(deliveryDir);
   
   console.log(`[AI] Generating documentation for "${config.projectName || config.idea.substring(0, 50)}..."`);
   
   const aiContext = {
-    projectName: runInput?.projectName || config.projectName,
-    description: runInput?.description || config.idea,
-    features: runInput?.features || [],
-    users: runInput?.users || [],
-    techStack: runInput?.techStack || {},
-    preset: runInput?.preset || config.domains?.[0] || "default",
+    projectName: assemblyInput?.projectName || config.projectName,
+    description: assemblyInput?.description || config.idea,
+    features: assemblyInput?.features || [],
+    users: assemblyInput?.users || [],
+    techStack: assemblyInput?.techStack || {},
+    preset: assemblyInput?.preset || config.domains?.[0] || "default",
     domains: config.domains,
-    uploadedContext: runInput?.uploadedContext || null,
-    uploadedFiles: runInput?.uploadedFiles?.map(f => ({
+    uploadedContext: assemblyInput?.uploadedContext || null,
+    uploadedFiles: assemblyInput?.uploadedFiles?.map(f => ({
       id: f.id,
       filename: f.filename,
       mimeType: f.mimeType,
@@ -128,12 +128,12 @@ export async function populateWorkspaceWithAI(config: WorkspaceConfig, workspace
   };
   
   fs.writeFileSync(
-    path.join(handoffDir, "input.json"),
-    JSON.stringify(runInput || {}, null, 2)
+    path.join(deliveryDir, "input.json"),
+    JSON.stringify(assemblyInput || {}, null, 2)
   );
   
   fs.writeFileSync(
-    path.join(handoffDir, "ai_context.json"),
+    path.join(deliveryDir, "ai_context.json"),
     JSON.stringify(aiContext, null, 2)
   );
   
@@ -142,14 +142,14 @@ export async function populateWorkspaceWithAI(config: WorkspaceConfig, workspace
     projectName: config.projectName,
     context: config.context,
     domains: config.domains,
-    structuredInput: runInput ? {
-      projectName: runInput.projectName,
-      description: runInput.description,
-      features: runInput.features,
-      users: runInput.users,
-      techStack: runInput.techStack,
-      preset: runInput.preset,
-      uploadedContext: runInput.uploadedContext,
+    structuredInput: assemblyInput ? {
+      projectName: assemblyInput.projectName,
+      description: assemblyInput.description,
+      features: assemblyInput.features,
+      users: assemblyInput.users,
+      techStack: assemblyInput.techStack,
+      preset: assemblyInput.preset,
+      uploadedContext: assemblyInput.uploadedContext,
     } : undefined,
   };
   
@@ -190,21 +190,21 @@ export async function populateWorkspaceWithAI(config: WorkspaceConfig, workspace
     docs.glossary
   );
   
-  const featuresSection = runInput?.features?.length 
-    ? `## Features\n\n${runInput.features.map(f => `- **${f.name}** (${f.priority}): ${f.description}`).join("\n")}\n`
+  const featuresSection = assemblyInput?.features?.length 
+    ? `## Features\n\n${assemblyInput.features.map(f => `- **${f.name}** (${f.priority}): ${f.description}`).join("\n")}\n`
     : "";
   
-  const usersSection = runInput?.users?.length
-    ? `## User Types\n\n${runInput.users.map(u => `- **${u.type}**: ${u.goal}`).join("\n")}\n`
+  const usersSection = assemblyInput?.users?.length
+    ? `## User Types\n\n${assemblyInput.users.map(u => `- **${u.type}**: ${u.goal}`).join("\n")}\n`
     : "";
   
-  const techSection = runInput?.techStack
-    ? `## Tech Stack\n\n${Object.entries(runInput.techStack).filter(([_, v]) => v).map(([k, v]) => `- **${k}**: ${v}`).join("\n")}\n`
+  const techSection = assemblyInput?.techStack
+    ? `## Tech Stack\n\n${Object.entries(assemblyInput.techStack).filter(([_, v]) => v).map(([k, v]) => `- **${k}**: ${v}`).join("\n")}\n`
     : "";
   
-  const readme = `# ${config.projectName || "Project"} - Roshi Documentation
+  const readme = `# ${config.projectName || "Project"} - Axiom Documentation
 
-Generated by Roshi Studio from idea:
+Generated by Axiom Assembler from idea:
 > ${config.idea}
 
 ${featuresSection}
@@ -225,19 +225,19 @@ ${techSection}
 - \`01_templates/\` - Domain doc templates
 - \`02_domains/\` - Per-domain documentation (generated by pipeline)
 - \`03_workflows/\` - Workflow documentation
-- \`handoff/\` - Handoff artifacts
+- \`delivery/\` - Delivery artifacts
   - input.json - Original structured input
   - ai_context.json - Normalized AI context
 
 ## Next Steps
 
 1. Review generated documentation
-2. Run \`npm run roshi:gen\` to generate domain packs
-3. Run \`npm run roshi:seed\` to seed starter content
-4. Run \`npm run roshi:draft\` to extract truth from sources
+2. Run \`npm run assembler:gen\` to generate domain packs
+3. Run \`npm run assembler:seed\` to seed starter content
+4. Run \`npm run assembler:draft\` to extract truth from sources
 5. Resolve any UNKNOWN items
-6. Run \`npm run roshi:verify\` to validate
-7. Run \`npm run roshi:lock\` to finalize
+6. Run \`npm run assembler:verify\` to validate
+7. Run \`npm run assembler:lock\` to finalize
 
 ## Domains
 
@@ -246,19 +246,19 @@ ${config.domains.map(d => `- ${d}`).join("\n")}
   
   fs.writeFileSync(path.join(docsRoot, "README.md"), readme);
   
-  console.log(`[AI] Generated ${Object.keys(docs).length} source documents + handoff artifacts`);
+  console.log(`[AI] Generated ${Object.keys(docs).length} source documents + delivery artifacts`);
 }
 
-export function getWorkspacePath(runId: string): string {
-  return path.join(WORKSPACES_DIR, runId);
+export function getWorkspacePath(assemblyId: string): string {
+  return path.join(WORKSPACES_DIR, assemblyId);
 }
 
-export function workspaceExists(runId: string): boolean {
-  return fs.existsSync(getWorkspacePath(runId));
+export function workspaceExists(assemblyId: string): boolean {
+  return fs.existsSync(getWorkspacePath(assemblyId));
 }
 
-export function cleanupWorkspace(runId: string): void {
-  const workspacePath = getWorkspacePath(runId);
+export function cleanupWorkspace(assemblyId: string): void {
+  const workspacePath = getWorkspacePath(assemblyId);
   if (fs.existsSync(workspacePath)) {
     fs.rmSync(workspacePath, { recursive: true, force: true });
   }

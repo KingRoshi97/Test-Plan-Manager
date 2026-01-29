@@ -1,8 +1,8 @@
-# Roshi Studio
+# Axiom Assembler
 
 ## Overview
 
-Roshi Studio is a web application and API that runs the Roshi documentation pipeline. Users submit an idea with minimal context, click Generate, and receive a downloadable "Agent Handoff Bundle" (zip) containing Roshi docs, manifests, and exports that can be uploaded to a vibecoding agent for implementation.
+Axiom Assembler is a web application and API that generates complete documentation bundles for software projects. Users submit an idea with minimal context (or use structured input with features, users, tech stack), click Generate, and receive a downloadable "Agent Kit" (zip) containing Axiom docs, manifests, and exports that can be uploaded to a vibecoding agent for implementation.
 
 The system follows a docs-first approach with a strict pipeline: init → gen → seed → draft → review → verify → lock. It enforces discipline through rules like "no invention" (missing info becomes UNKNOWN) and "no overwrite" (scripts skip existing files).
 
@@ -23,7 +23,7 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 - **Framework**: Express.js (v5) running on Node.js
 - **Language**: TypeScript with ESM modules
-- **API Pattern**: RESTful endpoints prefixed with `/api`
+- **API Pattern**: RESTful endpoints prefixed with `/api` and `/v1`
 - **Storage Layer**: Abstract storage interface (`IStorage`) with in-memory implementation, designed for easy swap to database
 
 ### Data Layer
@@ -37,16 +37,16 @@ Preferred communication style: Simple, everyday language.
 - **Production**: esbuild bundles server code, Vite builds client to `dist/public`
 - **Output**: Single CJS bundle for server, static assets for client
 
-### Roshi Pipeline System
-- **Configuration**: `roshi/domains.json` defines domain structure, `roshi/sources.json` defines source documents
-- **Documentation Root**: `docs/roshi_v2/` with structured subdirectories
+### Assembler Pipeline System
+- **Configuration**: `assembler/domains.json` defines domain structure, `assembler/sources.json` defines source documents
+- **Documentation Root**: `docs/assembler_v1/` with structured subdirectories
 - **Templates**: Located in `01_templates/` for generating domain documentation packs
-- **Pipeline Scripts**: npm scripts for each pipeline stage (`roshi:init`, `roshi:gen`, etc.)
-- **Isolated Workspaces**: Each run gets its own workspace at `workspaces/{runId}/` with full Roshi structure
+- **Pipeline Scripts**: npm scripts for each pipeline stage (`assembler:init`, `assembler:gen`, etc.)
+- **Isolated Workspaces**: Each assembly gets its own workspace at `workspaces/{assemblyId}/` with full Assembler structure
 - **AI Generation**: OpenAI (gpt-5-mini via Replit AI Integrations) generates 7 source documents in parallel (~40s)
 
 ### AI-Generated Documents
-When a run executes, the following are generated based on the user's idea:
+When an assembly executes, the following are generated based on the user's idea:
 - **PROJECT_OVERVIEW.md**: Project summary, value proposition, key features
 - **RPBS_Product.md**: Product requirements, user stories, acceptance criteria
 - **REBS_Product.md**: Technical architecture, data models, API design
@@ -56,41 +56,46 @@ When a run executes, the following are generated based on the user's idea:
 - **glossary.md**: Key terms and definitions
 
 ### Core Entities
-- **Run**: Pipeline execution with idea, projectName, preset, domains[], state, step, progress, errors[], bundlePath, checksums
-- **Handoff**: Delivery mechanism with type (pull/webhook/git/direct), config, state, attempts, result, attemptHistory[]
+- **Assembly** (was Run): Pipeline execution with idea, projectName, preset, domains[], state, step, progress, errors[], kitPath, checksums
+- **Delivery** (was Handoff): Delivery mechanism with type (pull/webhook/git/direct), config, state, attempts, result, attemptHistory[]
+- **Kit** (was Bundle): Output artifact containing documentation, manifest, and agent prompt
 
-### API Endpoints (Legacy)
-- `GET /api/runs` - List all runs
-- `POST /api/runs` - Create a new run with idea and optional context
-- `GET /api/runs/:id` - Get run status
-- `POST /api/runs/:id/execute` - Execute the Roshi pipeline
-- `GET /api/runs/:id/download` - Download the bundle zip
-- `DELETE /api/runs/:id` - Delete a run
+### API Endpoints (New)
+- `GET /api/assemblies` - List all assemblies
+- `POST /api/assemblies` - Create a new assembly
+- `GET /api/assemblies/:id` - Get assembly status
+- `POST /api/assemblies/:id/execute` - Execute the Assembler pipeline
+- `GET /api/assemblies/:id/kit.zip` - Download the kit zip
+- `DELETE /api/assemblies/:id` - Delete an assembly
 
 ### API v1 Endpoints (Versioned)
-- `POST /v1/runs` - Create run with idea, projectName, preset, domains
-- `GET /v1/runs/:id` - Get run status with progress/step details
-- `GET /v1/runs/:id/bundle` - Get bundle metadata with signed download URL
-- `GET /v1/runs/:id/bundle.zip` - Download bundle (requires valid signature)
-- `POST /v1/runs/:id/handoffs` - Create handoff (pull/webhook/git/direct)
-- `GET /v1/runs/:id/handoffs` - List handoffs for run
-- `GET /v1/handoffs/:id` - Get handoff details
-- `POST /v1/handoffs/:id/retry` - Retry failed handoff
+- `POST /v1/assemblies` - Create assembly with idea, projectName, preset, domains
+- `GET /v1/assemblies/:id` - Get assembly status with progress/step details
+- `GET /v1/assemblies/:id/kit` - Get kit metadata with signed download URL
+- `GET /v1/assemblies/:id/kit.zip` - Download kit (requires valid signature)
+- `POST /v1/assemblies/:id/deliveries` - Create delivery (pull/webhook/git/direct)
+- `GET /v1/assemblies/:id/deliveries` - List deliveries for assembly
+- `GET /v1/deliveries/:id` - Get delivery details
+- `POST /v1/deliveries/:id/retry` - Retry failed delivery
 
-### Handoff Types
+### Legacy API (Deprecated - Sunset 2026-03-01)
+All `/api/runs` and `/v1/runs` endpoints redirect to assembly equivalents with deprecation headers.
+All `/v1/handoffs` endpoints redirect to delivery equivalents.
+
+### Delivery Types
 - **pull**: Returns signed URLs with optional inline manifest/prompt
-- **webhook**: POST to receiver URL with X-Roshi-Signature header (HMAC-SHA256)
+- **webhook**: POST to receiver URL with X-Assembler-Signature header (HMAC-SHA256)
 - **git**: Push to GitHub/GitLab branch (stubbed, needs implementation)
 - **direct**: Platform-specific adapters (stubbed, needs implementation)
 
-### Run State Flow
+### Assembly State Flow
 queued → running → completed (or failed/canceled)
 
 ### Design Constraints
 - No invention: Missing info must become UNKNOWN and logged to Open Questions
 - No overwrite: Scripts skip existing files unless explicitly allowed
 - Verify before lock: All verifications must pass before locking a domain
-- Always print ROSHI_REPORT after every script run
+- Always print ASSEMBLER_REPORT after every script run
 
 ## External Dependencies
 
@@ -119,26 +124,30 @@ queued → running → completed (or failed/canceled)
 
 ## Recent Changes
 
-### January 2026 (Latest)
+### January 2026 (Latest - Rebrand)
+- **Complete Rebrand**: Renamed from "Roshi Studio" to "Axiom Assembler"
+- **Entity Renaming**: Run → Assembly, Handoff → Delivery, Bundle → Kit
+- **API Routes**: `/v1/assemblies`, `/v1/deliveries`, `/v1/kit` (legacy routes deprecated)
+- **Scripts**: Renamed all scripts to `assembler-*.mjs` prefix
+- **Documentation**: Updated all docs to `docs/assembler_v1/` directory
+- **Error Codes**: Now use `ASSEMBLER_*` prefix
+- **Output Files**: Now use `axiom_kit.zip` naming
+- **Workspace Paths**: Now use `delivery/` directory (was `handoff/`)
+- **Backward Compatibility**: All legacy routes and types maintained until 2026-03-01
+
+### January 2026 (Earlier)
 - **File Upload Support**: Users can upload PDFs, Word docs, and text files as reference documents for additional context
 - **Text Extraction**: Uploaded files are parsed (pdf-parse for PDFs, mammoth for DOCX) and extracted text is passed to AI generator
 - **Drag-and-Drop UI**: File upload zone in Basics tab supports drag-and-drop with file list display and removal
 - **Hybrid Input System**: Supports both structured input (features, users, techStack) and legacy idea-only input
 - **Multi-Step Form UI**: 5-tab form wizard (Basics → Features → Users → Tech → Generate) with toggle for simple mode
-- **Manifest v0.2.0**: Bundle manifest includes generationMode, inputSummary, and implementationPlan based on P0/P1/P2 priorities
+- **Manifest v0.2.0**: Kit manifest includes generationMode, inputSummary, and implementationPlan based on P0/P1/P2 priorities
 - **Template Fallback**: If AI generation fails for any document, structured templates populated with user data are used
-- **Extended Checksums**: Bundle metadata includes inputSha256 and aiContextSha256 for input artifact integrity
-- **Handoff Artifacts**: Workspace includes handoff/input.json and handoff/ai_context.json with normalized AI context
-- **Backward Compatibility**: Legacy idea-only requests auto-map to RunInput with mappedFromIdea flag
-
-### January 2026 (Earlier)
-- **AI-Powered Generation**: Bundles now contain AI-generated docs tailored to user's specific project idea (not Roshi framework docs)
-- **Isolated Workspaces**: Each run gets dedicated workspace at workspaces/{runId}/ preventing cross-contamination
+- **Extended Checksums**: Kit metadata includes inputSha256 and aiContextSha256 for input artifact integrity
+- **Delivery Artifacts**: Workspace includes delivery/input.json and delivery/ai_context.json with normalized AI context
+- **Backward Compatibility**: Legacy idea-only requests auto-map to AssemblyInput with mappedFromIdea flag
+- **AI-Powered Generation**: Kits now contain AI-generated docs tailored to user's specific project idea
+- **Isolated Workspaces**: Each assembly gets dedicated workspace at workspaces/{assemblyId}/ preventing cross-contamination
 - **Parallel AI Generation**: All 7 source documents generated concurrently for speed (~40s total)
-- **Roshi Pipeline Complete**: All 5 domains (platform, api, web, infra, security) documented, verified, and locked
-- **Web App Implemented**: Created Home page with idea form, pipeline execution, download functionality
-- **Run History**: Added /runs page to view and manage previous pipeline runs
-- **Bundle Generation**: Pipeline generates downloadable zip with Roshi documentation
-- **v1 API**: Versioned API with signed URL downloads, handoff system (pull/webhook adapters), bundle checksums
+- **v1 API**: Versioned API with signed URL downloads, delivery system (pull/webhook adapters), kit checksums
 - **API Documentation**: Interactive /docs page with endpoint reference, request/response examples
-- **Handoff System**: Delivery mechanisms for external systems (pull adapter with signed URLs, webhook adapter with HMAC signatures)

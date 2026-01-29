@@ -22,17 +22,17 @@ const report = {
 };
 
 function loadDomainsConfig() {
-  const configPath = 'roshi/domains.json';
+  const configPath = 'assembler/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('roshi/domains.json not found. Run roshi:init first.');
+    throw new Error('assembler/domains.json not found. Run roshi:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
 
 function loadSourcesConfig() {
-  const configPath = 'roshi/sources.json';
+  const configPath = 'assembler/sources.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('roshi/sources.json not found. Run roshi:init first.');
+    throw new Error('assembler/sources.json not found. Run roshi:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
@@ -145,9 +145,9 @@ function generateBELSCandidates(domain, sourceInfo, roshiRoot) {
 | Rule ID | Description | Condition | Action | SourceRef |
 |---------|-------------|-----------|--------|-----------|
 ${domain.slug === 'platform' ? `| ${domain.prefix}_001 | No invention rule | Missing info detected | Write UNKNOWN and log to Open Questions | TARGET_OUTLINE > Constraints |
-| ${domain.prefix}_002 | No overwrite rule | File exists | Skip file, record in ROSHI_REPORT skipped list | TARGET_OUTLINE > Constraints |` : 
+| ${domain.prefix}_002 | No overwrite rule | File exists | Skip file, record in ASSEMBLER_REPORT skipped list | TARGET_OUTLINE > Constraints |` : 
 domain.slug === 'api' ? `| ${domain.prefix}_001 | Verify before lock | Lock requested | Check all verifications pass | TARGET_OUTLINE > Constraints |
-| ${domain.prefix}_002 | Always print ROSHI_REPORT | Script run completes | Print report with created/modified/skipped/failed | TARGET_OUTLINE > Constraints |` :
+| ${domain.prefix}_002 | Always print ASSEMBLER_REPORT | Script run completes | Print report with created/modified/skipped/failed | TARGET_OUTLINE > Constraints |` :
 `| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |`}
 
 ## State Machines (Candidates)
@@ -251,7 +251,7 @@ function generateOpenQuestions(domain) {
 }
 
 function printReport(hasFailed = false) {
-  console.log('\n========== ROSHI_REPORT ==========');
+  console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: roshi:draft`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`Status: ${hasFailed ? 'FAILED' : 'SUCCESS'}`);
@@ -278,7 +278,7 @@ try {
   if (domainArg) {
     const validDomain = domainsConfig.domains.find(d => d.slug === domainArg);
     if (!validDomain) {
-      throw new Error(`Domain "${domainArg}" not found in roshi/domains.json`);
+      throw new Error(`Domain "${domainArg}" not found in assembler/domains.json`);
     }
   }
   

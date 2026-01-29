@@ -86,7 +86,7 @@ export default function DocsPage() {
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
       <div className="mb-6">
-        <Link href="/">
+        <Link href="/create">
           <Button variant="ghost" size="sm" data-testid="link-back">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Home
@@ -95,51 +95,51 @@ export default function DocsPage() {
       </div>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Roshi API v1</h1>
+        <h1 className="text-3xl font-bold mb-2">Assembler API v1</h1>
         <p className="text-muted-foreground">
-          Universal handoff API for generating and delivering Roshi bundles to AI coding agents.
+          Universal delivery API for generating and delivering Axiom kits to AI coding agents.
         </p>
       </div>
 
-      <Tabs defaultValue="runs" className="w-full">
+      <Tabs defaultValue="assemblies" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="runs" data-testid="tab-runs">Runs</TabsTrigger>
-          <TabsTrigger value="handoffs" data-testid="tab-handoffs">Handoffs</TabsTrigger>
-          <TabsTrigger value="types" data-testid="tab-types">Handoff Types</TabsTrigger>
+          <TabsTrigger value="assemblies" data-testid="tab-assemblies">Assemblies</TabsTrigger>
+          <TabsTrigger value="deliveries" data-testid="tab-deliveries">Deliveries</TabsTrigger>
+          <TabsTrigger value="types" data-testid="tab-types">Delivery Types</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="runs" className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Run Endpoints</h2>
+        <TabsContent value="assemblies" className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">Assembly Endpoints</h2>
           
           <EndpointCard
             method="POST"
-            path="/v1/runs"
-            description="Create a new run and start the pipeline"
+            path="/v1/assemblies"
+            description="Create a new assembly and start the pipeline"
             requestExample={`{
   "projectName": "My Project",
   "idea": "Build a todo app with priorities and due dates",
-  "preset": "roshi-studio",
+  "preset": "axiom-assembler",
   "domains": ["platform", "api", "web"]
 }`}
             responseExample={`{
-  "runId": "run_abc123",
+  "assemblyId": "asm_abc123",
   "state": "queued",
-  "statusUrl": "/v1/runs/run_abc123"
+  "statusUrl": "/v1/assemblies/asm_abc123"
 }`}
             notes="Returns 202 Accepted. The pipeline runs asynchronously."
           />
 
           <EndpointCard
             method="GET"
-            path="/v1/runs/{runId}"
-            description="Get run status, progress, and bundle info"
+            path="/v1/assemblies/{assemblyId}"
+            description="Get assembly status, progress, and kit info"
             responseExample={`{
-  "run": {
-    "runId": "run_abc123",
+  "assembly": {
+    "assemblyId": "asm_abc123",
     "state": "completed",
     "step": "package",
     "progress": { "percent": 100 },
-    "bundle": {
+    "kit": {
       "available": true,
       "zipBytes": 37402,
       "zipSha256": "0a93...",
@@ -154,14 +154,14 @@ export default function DocsPage() {
 
           <EndpointCard
             method="GET"
-            path="/v1/runs/{runId}/bundle"
-            description="Get bundle metadata with signed download URL"
+            path="/v1/assemblies/{assemblyId}/kit"
+            description="Get kit metadata with signed download URL"
             responseExample={`{
-  "runId": "run_abc123",
-  "bundle": {
-    "bundleVersion": "0.1.0",
-    "entryDocs": ["docs/roshi_v2/README.md", ...],
-    "commandsToRun": ["npm run roshi:review", ...],
+  "assemblyId": "asm_abc123",
+  "kit": {
+    "kitVersion": "0.2.0",
+    "entryDocs": ["docs/assembler_v1/README.md", ...],
+    "commandsToRun": ["npm run assembler:review", ...],
     "implementationPlan": [...],
     "checksums": {
       "zipSha256": "...",
@@ -170,7 +170,7 @@ export default function DocsPage() {
     },
     "sizes": { "zipBytes": 37402 },
     "download": {
-      "zipUrl": "https://.../bundle.zip?exp=...&sig=...",
+      "zipUrl": "https://.../kit.zip?exp=...&sig=...",
       "expiresAt": "2026-01-29T06:00:00Z"
     }
   }
@@ -179,20 +179,20 @@ export default function DocsPage() {
 
           <EndpointCard
             method="GET"
-            path="/v1/runs/{runId}/bundle.zip"
-            description="Download the bundle zip file"
+            path="/v1/assemblies/{assemblyId}/kit.zip"
+            description="Download the kit zip file"
             responseExample={`(binary zip file)`}
             notes="Supports signed URL auth via ?exp=...&sig=... query params"
           />
         </TabsContent>
 
-        <TabsContent value="handoffs" className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Handoff Endpoints</h2>
+        <TabsContent value="deliveries" className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">Delivery Endpoints</h2>
           
           <EndpointCard
             method="POST"
-            path="/v1/runs/{runId}/handoffs"
-            description="Create a handoff to deliver the bundle"
+            path="/v1/assemblies/{assemblyId}/deliveries"
+            description="Create a delivery to deliver the kit"
             requestExample={`{
   "type": "pull",
   "label": "Agent Download",
@@ -203,13 +203,13 @@ export default function DocsPage() {
   }
 }`}
             responseExample={`{
-  "handoff": {
-    "handoffId": "ho_123",
-    "runId": "run_abc123",
+  "delivery": {
+    "deliveryId": "del_123",
+    "assemblyId": "asm_abc123",
     "type": "pull",
     "state": "completed",
     "result": {
-      "zipUrl": "https://.../bundle.zip?...",
+      "zipUrl": "https://.../kit.zip?...",
       "expiresAt": "...",
       "zipSha256": "...",
       "manifest": {...},
@@ -221,23 +221,23 @@ export default function DocsPage() {
 
           <EndpointCard
             method="GET"
-            path="/v1/runs/{runId}/handoffs"
-            description="List all handoffs for a run"
+            path="/v1/assemblies/{assemblyId}/deliveries"
+            description="List all deliveries for an assembly"
             responseExample={`{
-  "runId": "run_abc123",
-  "handoffs": [
-    { "handoffId": "ho_123", "type": "pull", "state": "completed", ... }
+  "assemblyId": "asm_abc123",
+  "deliveries": [
+    { "deliveryId": "del_123", "type": "pull", "state": "completed", ... }
   ]
 }`}
           />
 
           <EndpointCard
             method="GET"
-            path="/v1/handoffs/{handoffId}"
-            description="Get handoff details with attempt history"
+            path="/v1/deliveries/{deliveryId}"
+            description="Get delivery details with attempt history"
             responseExample={`{
-  "handoff": {
-    "handoffId": "ho_123",
+  "delivery": {
+    "deliveryId": "del_123",
     "state": "completed",
     "attempts": 1,
     "maxAttempts": 6,
@@ -251,17 +251,17 @@ export default function DocsPage() {
 
           <EndpointCard
             method="POST"
-            path="/v1/handoffs/{handoffId}/retry"
-            description="Retry a failed handoff"
+            path="/v1/deliveries/{deliveryId}/retry"
+            description="Retry a failed delivery"
             responseExample={`{
   "ok": true,
-  "handoffId": "ho_123"
+  "deliveryId": "del_123"
 }`}
           />
         </TabsContent>
 
         <TabsContent value="types" className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Handoff Types</h2>
+          <h2 className="text-xl font-semibold mb-4">Delivery Types</h2>
           
           <Card className="mb-4">
             <CardHeader>
@@ -283,23 +283,23 @@ export default function DocsPage() {
           <Card className="mb-4">
             <CardHeader>
               <CardTitle className="text-lg">Webhook (Automation)</CardTitle>
-              <CardDescription>Pushes event to your endpoint when bundle is ready.</CardDescription>
+              <CardDescription>Pushes event to your endpoint when kit is ready.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <CodeBlock code={`{
   "type": "webhook",
   "config": {
-    "url": "https://your-server.com/roshi/webhook",
+    "url": "https://your-server.com/assembler/webhook",
     "secret": "your-signing-secret",
-    "events": ["bundle.ready", "bundle.failed"],
+    "events": ["kit.ready", "kit.failed"],
     "include": ["zipUrl", "manifest", "agentPrompt"]
   }
 }`} />
               <div>
                 <p className="text-sm font-medium mb-2">Webhook Headers</p>
-                <CodeBlock code={`X-Roshi-Timestamp: <unix seconds>
-X-Roshi-Nonce: <random string>
-X-Roshi-Signature: sha256=<hmac>`} />
+                <CodeBlock code={`X-Assembler-Timestamp: <unix seconds>
+X-Assembler-Nonce: <random string>
+X-Assembler-Signature: sha256=<hmac>`} />
               </div>
             </CardContent>
           </Card>
@@ -307,7 +307,7 @@ X-Roshi-Signature: sha256=<hmac>`} />
           <Card className="mb-4">
             <CardHeader>
               <CardTitle className="text-lg">Git (Dev-Native)</CardTitle>
-              <CardDescription>Pushes bundle to a Git repo branch or PR.</CardDescription>
+              <CardDescription>Pushes kit to a Git repo branch or PR.</CardDescription>
             </CardHeader>
             <CardContent>
               <CodeBlock code={`{
@@ -315,14 +315,14 @@ X-Roshi-Signature: sha256=<hmac>`} />
   "config": {
     "provider": "github",
     "repo": "org/repo",
-    "branch": "roshi/run_abc123",
+    "branch": "assembler/asm_abc123",
     "mode": "pr",
     "auth": { "token": "GITHUB_TOKEN" },
-    "pathPrefix": "roshi_bundle"
+    "pathPrefix": "axiom_kit"
   }
 }`} />
               <p className="text-sm text-muted-foreground mt-2">
-                Note: Git handoff requires GitHub token with repo write permissions.
+                Note: Git delivery requires GitHub token with repo write permissions.
               </p>
             </CardContent>
           </Card>
@@ -352,22 +352,22 @@ X-Roshi-Signature: sha256=<hmac>`} />
       <Card className="mt-8">
         <CardHeader>
           <CardTitle>Quick Start</CardTitle>
-          <CardDescription>Generate and retrieve a bundle in 3 steps</CardDescription>
+          <CardDescription>Generate and retrieve a kit in 3 steps</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <p className="text-sm font-medium mb-2">1. Create a run</p>
-            <CodeBlock code={`curl -X POST /v1/runs \\
+            <p className="text-sm font-medium mb-2">1. Create an assembly</p>
+            <CodeBlock code={`curl -X POST /v1/assemblies \\
   -H "Content-Type: application/json" \\
   -d '{"idea": "Build a todo app"}'`} />
           </div>
           <div>
             <p className="text-sm font-medium mb-2">2. Poll for completion</p>
-            <CodeBlock code={`curl /v1/runs/{runId}`} />
+            <CodeBlock code={`curl /v1/assemblies/{assemblyId}`} />
           </div>
           <div>
-            <p className="text-sm font-medium mb-2">3. Get bundle with handoff</p>
-            <CodeBlock code={`curl -X POST /v1/runs/{runId}/handoffs \\
+            <p className="text-sm font-medium mb-2">3. Get kit with delivery</p>
+            <CodeBlock code={`curl -X POST /v1/assemblies/{assemblyId}/deliveries \\
   -H "Content-Type: application/json" \\
   -d '{"type": "pull", "config": {"includeInlinePrompt": true}}'`} />
           </div>

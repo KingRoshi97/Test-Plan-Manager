@@ -1,7 +1,7 @@
 import { storage } from "../storage";
 import { generateSignedUrl, generateWebhookSignature, computeSha256 } from "../signing";
 import { 
-  type Handoff, type HandoffAttempt, 
+  type Delivery, type DeliveryAttempt, 
   type PullConfig, type WebhookConfig, type GitConfig, type DirectConfig,
   type PullResult, type WebhookResult, type GitResult
 } from "@shared/schema";
@@ -9,8 +9,8 @@ import fs from "fs";
 import path from "path";
 
 export interface AdapterContext {
-  handoff: Handoff;
-  bundlePath: string;
+  delivery: Delivery;
+  kitPath: string;
   manifestPath: string;
   promptPath: string;
   baseUrl: string;
@@ -22,40 +22,40 @@ export interface AdapterResult {
   error?: string;
 }
 
-export async function executeHandoff(ctx: AdapterContext): Promise<AdapterResult> {
-  const { handoff } = ctx;
+export async function executeDelivery(ctx: AdapterContext): Promise<AdapterResult> {
+  const { delivery } = ctx;
   
-  switch (handoff.type) {
+  switch (delivery.type) {
     case "pull":
-      return executePullHandoff(ctx);
+      return executePullDelivery(ctx);
     case "webhook":
-      return executeWebhookHandoff(ctx);
+      return executeWebhookDelivery(ctx);
     case "git":
-      return executeGitHandoff(ctx);
+      return executeGitDelivery(ctx);
     case "direct":
-      return executeDirectHandoff(ctx);
+      return executeDirectDelivery(ctx);
     default:
-      return { success: false, error: `Unknown handoff type: ${handoff.type}` };
+      return { success: false, error: `Unknown delivery type: ${delivery.type}` };
   }
 }
 
-async function executePullHandoff(ctx: AdapterContext): Promise<AdapterResult> {
-  const { handoff, bundlePath, manifestPath, promptPath, baseUrl } = ctx;
-  const config = handoff.config as PullConfig;
+async function executePullDelivery(ctx: AdapterContext): Promise<AdapterResult> {
+  const { delivery, kitPath, manifestPath, promptPath, baseUrl } = ctx;
+  const config = delivery.config as PullConfig;
   
   try {
-    if (!fs.existsSync(bundlePath)) {
-      return { success: false, error: "Bundle zip not found" };
+    if (!fs.existsSync(kitPath)) {
+      return { success: false, error: "Kit zip not found" };
     }
     
-    const zipBuffer = fs.readFileSync(bundlePath);
+    const zipBuffer = fs.readFileSync(kitPath);
     const zipSha256 = computeSha256(zipBuffer);
     const zipBytes = zipBuffer.length;
     
-    const runId = handoff.runId;
+    const assemblyId = delivery.assemblyId;
     const signed = generateSignedUrl(
-      `${baseUrl}/v1/runs/${runId}/bundle.zip`,
-      { runId, expiresInSeconds: config.expiresInSeconds || 3600 }
+      `${baseUrl}/v1/assemblies/${assemblyId}/kit.zip`,
+      { assemblyId, expiresInSeconds: config.expiresInSeconds || 3600 }
     );
     
     const result: PullResult = {
@@ -79,9 +79,9 @@ async function executePullHandoff(ctx: AdapterContext): Promise<AdapterResult> {
   }
 }
 
-async function executeWebhookHandoff(ctx: AdapterContext): Promise<AdapterResult> {
-  const { handoff, bundlePath, manifestPath, promptPath, baseUrl } = ctx;
-  const config = handoff.config as WebhookConfig;
+async function executeWebhookDelivery(ctx: AdapterContext): Promise<AdapterResult> {
+  const { delivery, kitPath, manifestPath, promptPath, baseUrl } = ctx;
+  const config = delivery.config as WebhookConfig;
   
   try {
     if (!config.url) {
@@ -92,21 +92,21 @@ async function executeWebhookHandoff(ctx: AdapterContext): Promise<AdapterResult
       return { success: false, error: "Webhook secret is required" };
     }
     
-    const zipBuffer = fs.existsSync(bundlePath) ? fs.readFileSync(bundlePath) : null;
+    const zipBuffer = fs.existsSync(kitPath) ? fs.readFileSync(kitPath) : null;
     const zipSha256 = zipBuffer ? computeSha256(zipBuffer) : null;
     const zipBytes = zipBuffer ? zipBuffer.length : 0;
     
-    const runId = handoff.runId;
+    const assemblyId = delivery.assemblyId;
     const signed = generateSignedUrl(
-      `${baseUrl}/v1/runs/${runId}/bundle.zip`,
-      { runId, expiresInSeconds: 3600 }
+      `${baseUrl}/v1/assemblies/${assemblyId}/kit.zip`,
+      { assemblyId, expiresInSeconds: 3600 }
     );
     
     const payload: Record<string, unknown> = {
-      event: "roshi.bundle.ready",
-      handoffId: handoff.id,
-      runId: handoff.runId,
-      bundle: {
+      event: "assembler.kit.ready",
+      deliveryId: delivery.id,
+      assemblyId: delivery.assemblyId,
+      kit: {
         zipUrl: signed.url,
         expiresAt: signed.expiresAt,
         zipSha256,
@@ -131,9 +131,9 @@ async function executeWebhookHandoff(ctx: AdapterContext): Promise<AdapterResult
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Roshi-Timestamp": sig.timestamp,
-        "X-Roshi-Nonce": sig.nonce,
-        "X-Roshi-Signature": sig.signature,
+        "X-Assembler-Timestamp": sig.timestamp,
+        "X-Assembler-Nonce": sig.nonce,
+        "X-Assembler-Signature": sig.signature,
       },
       body: payloadStr,
     });
@@ -156,19 +156,19 @@ async function executeWebhookHandoff(ctx: AdapterContext): Promise<AdapterResult
   }
 }
 
-async function executeGitHandoff(ctx: AdapterContext): Promise<AdapterResult> {
-  const { handoff } = ctx;
-  const config = handoff.config as GitConfig;
+async function executeGitDelivery(ctx: AdapterContext): Promise<AdapterResult> {
+  const { delivery } = ctx;
+  const config = delivery.config as GitConfig;
   
   return { 
     success: false, 
-    error: `Git handoff to ${config.provider}/${config.repo} not yet implemented. Use pull or webhook instead.` 
+    error: `Git delivery to ${config.provider}/${config.repo} not yet implemented. Use pull or webhook instead.` 
   };
 }
 
-async function executeDirectHandoff(ctx: AdapterContext): Promise<AdapterResult> {
-  const { handoff } = ctx;
-  const config = handoff.config as DirectConfig;
+async function executeDirectDelivery(ctx: AdapterContext): Promise<AdapterResult> {
+  const { delivery } = ctx;
+  const config = delivery.config as DirectConfig;
   
   return { 
     success: false, 
@@ -176,69 +176,72 @@ async function executeDirectHandoff(ctx: AdapterContext): Promise<AdapterResult>
   };
 }
 
-export async function processHandoff(
-  handoffId: string, 
+export async function processDelivery(
+  deliveryId: string, 
   baseUrl: string
-): Promise<{ success: boolean; handoff?: Handoff; error?: string }> {
-  const handoff = await storage.getHandoff(handoffId);
-  if (!handoff) {
-    return { success: false, error: "Handoff not found" };
+): Promise<{ success: boolean; delivery?: Delivery; error?: string }> {
+  const delivery = await storage.getDelivery(deliveryId);
+  if (!delivery) {
+    return { success: false, error: "Delivery not found" };
   }
   
-  const run = await storage.getRun(handoff.runId);
-  if (!run) {
-    return { success: false, error: "Run not found" };
+  const assembly = await storage.getAssembly(delivery.assemblyId);
+  if (!assembly) {
+    return { success: false, error: "Assembly not found" };
   }
   
-  if (run.state !== "completed") {
-    return { success: false, error: "Run not completed yet" };
+  if (assembly.state !== "completed") {
+    return { success: false, error: "Assembly not completed yet" };
   }
   
-  const bundlePath = run.bundlePath || "dist/roshi_bundle.zip";
-  const bundleDir = path.dirname(bundlePath).replace(".zip", "").replace("dist/", "dist/roshi_bundle/");
-  const manifestPath = "dist/roshi_bundle/manifest.json";
-  const promptPath = "dist/roshi_bundle/agent_prompt.md";
+  const kitPath = assembly.kitPath || "dist/axiom_kit.zip";
+  const manifestPath = kitPath.replace(".zip", "/assembly_manifest.json");
+  const promptPath = kitPath.replace(".zip", "/agent_prompt.md");
   
-  await storage.updateHandoff(handoffId, { 
+  await storage.updateDelivery(deliveryId, { 
     state: "delivering",
     lastAttemptAt: new Date(),
   });
   
   const ctx: AdapterContext = {
-    handoff,
-    bundlePath,
+    delivery,
+    kitPath,
     manifestPath,
     promptPath,
     baseUrl,
   };
   
-  const result = await executeHandoff(ctx);
+  const result = await executeDelivery(ctx);
   
-  const newAttempt: HandoffAttempt = {
-    attempt: (handoff.attempts || 0) + 1,
+  const newAttempt: DeliveryAttempt = {
+    attempt: (delivery.attempts || 0) + 1,
     at: new Date().toISOString(),
     ok: result.success,
     error: result.error,
   };
   
-  const attemptHistory = [...(handoff.attemptHistory || []), newAttempt];
+  const attemptHistory = [...(delivery.attemptHistory || []), newAttempt];
   
   if (result.success) {
-    const updated = await storage.updateHandoff(handoffId, {
+    const updated = await storage.updateDelivery(deliveryId, {
       state: "completed",
       attempts: newAttempt.attempt,
       result: result.result,
       attemptHistory,
     });
-    return { success: true, handoff: updated };
+    return { success: true, delivery: updated };
   } else {
-    const newState = newAttempt.attempt >= handoff.maxAttempts ? "failed" : "queued";
-    const updated = await storage.updateHandoff(handoffId, {
+    const newState = newAttempt.attempt >= delivery.maxAttempts ? "failed" : "queued";
+    const updated = await storage.updateDelivery(deliveryId, {
       state: newState,
       attempts: newAttempt.attempt,
       lastError: result.error,
       attemptHistory,
     });
-    return { success: false, handoff: updated, error: result.error };
+    return { success: false, delivery: updated, error: result.error };
   }
 }
+
+// Backward compatibility alias
+export const processHandoff = processDelivery;
+export const executeHandoff = executeDelivery;
