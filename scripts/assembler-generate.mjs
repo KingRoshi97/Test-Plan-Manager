@@ -111,7 +111,9 @@ try {
     'BELS',
     'DIM',
     'SCREENMAP',
-    'TESTPLAN'
+    'TESTPLAN',
+    'COMPONENT_LIBRARY',
+    'COPY_GUIDE'
   ];
   
   // Filter domains if --domain specified
