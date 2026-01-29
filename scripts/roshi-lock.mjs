@@ -32,7 +32,18 @@ function loadDomainsConfig() {
 
 function checkForCriticalUnknowns(belsContent) {
   // Check for UNKNOWN in critical sections
+  // Skip lines that reference UNKNOWN as a concept (e.g., "Write UNKNOWN and log")
   const criticalSections = ['Policy Rules', 'State Machines', 'Validation Rules'];
+  
+  // Patterns that indicate UNKNOWN is being referenced as a concept, not a placeholder
+  const conceptPatterns = [
+    /Write UNKNOWN/i,
+    /log.*UNKNOWN/i,
+    /UNKNOWN.*log/i,
+    /mark.*UNKNOWN/i,
+    /UNKNOWNs exist/i,
+    /contains.*UNKNOWN/i
+  ];
   
   for (const section of criticalSections) {
     const sectionRegex = new RegExp(`## ${section}[\\s\\S]*?(?=##|$)`, 'i');
@@ -42,7 +53,11 @@ function checkForCriticalUnknowns(belsContent) {
       const lines = match[0].split('\n');
       for (const line of lines) {
         if (line.includes('|') && line.includes('UNKNOWN') && !line.includes('---')) {
-          return true;
+          // Skip if line matches a concept pattern
+          const isConceptReference = conceptPatterns.some(pattern => pattern.test(line));
+          if (!isConceptReference) {
+            return true;
+          }
         }
       }
     }
