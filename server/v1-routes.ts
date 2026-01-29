@@ -181,6 +181,13 @@ export function registerV1Routes(app: Express) {
       projectPackageId = data.projectPackageId;
     }
     
+    // Server-side validation: modes that require existing project ZIP
+    const ZIP_REQUIRED_MODES = ["existing_upgrade", "ui_overhaul", "refactor_hardening", "add_feature_module"];
+    if (data.mode && ZIP_REQUIRED_MODES.includes(data.mode) && !projectPackageId) {
+      return apiError(req, res, 400, "ASSEMBLER_ZIP_REQUIRED",
+        `Mode "${data.mode}" requires an existing project ZIP to be uploaded and indexed.`);
+    }
+    
     const assemblyInput = buildAssemblyInput(data);
     
     const assembly = await storage.createAssembly({
@@ -188,6 +195,9 @@ export function registerV1Routes(app: Express) {
       idea: assemblyInput.legacy?.idea || assemblyInput.description,
       context: data.context,
       preset: data.preset,
+      category: data.category,
+      mode: data.mode,
+      presetId: data.presetId,
       domains: data.domains,
       input: assemblyInput,
       projectPackageId,
@@ -206,7 +216,10 @@ export function registerV1Routes(app: Express) {
     
     await logAudit("assembly.create", "assembly", assembly.id, req, { 
       projectName: assemblyInput.projectName,
-      projectPackageId 
+      projectPackageId,
+      category: data.category,
+      mode: data.mode,
+      presetId: data.presetId
     });
     
     res.status(202).json({
