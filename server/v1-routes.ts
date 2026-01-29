@@ -11,6 +11,7 @@ import { buildPipelineContext, type ProjectPackageSummary } from "./presets";
 import { upload, processUploadedFiles, combineExtractedText } from "./file-upload";
 import { registerHandler, enqueue } from "./jobs/queue";
 import { scanAndIndexProjectPackage } from "./jobs/scan-index-package";
+import { ingestUploadedDocs } from "./doc-ingestion";
 import { writeFile, writeText, readText, getProjectPackagePath, getKitUpgradePath, fileExists as storageFileExists } from "./file-storage";
 import crypto from "crypto";
 import { generateApiKey, logAudit, requireApiKey, validateApiKey, optionalApiKey } from "./apikey";
@@ -1431,6 +1432,20 @@ async function executePipelineV1(assemblyId: string, input: AssemblyInput) {
     
     console.log(`[Assembler Pipeline] Creating workspace for assembly ${assemblyId}`);
     const workspacePath = await createWorkspace(workspaceConfig);
+    
+    if (input.docUploadIds && input.docUploadIds.length > 0) {
+      console.log(`[Assembler Pipeline] Ingesting ${input.docUploadIds.length} uploaded documents...`);
+      try {
+        const ingestionResult = await ingestUploadedDocs(input.docUploadIds, workspacePath);
+        console.log(`[Assembler Pipeline] Doc ingestion complete: ${ingestionResult.stats.files} files processed, ${ingestionResult.stats.chars} chars extracted`);
+        
+        if (ingestionResult.compiledContent) {
+          input.uploadedContext = ingestionResult.compiledContent;
+        }
+      } catch (err) {
+        console.error(`[Assembler Pipeline] Doc ingestion warning (non-fatal):`, err);
+      }
+    }
     
     await storage.updateAssembly(assemblyId, { 
       step: "gen",
