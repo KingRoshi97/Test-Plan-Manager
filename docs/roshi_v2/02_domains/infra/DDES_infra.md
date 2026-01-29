@@ -6,29 +6,29 @@
 **Domain Type:** crosscutting
 
 ## Purpose
-<!-- Describe the purpose of this domain -->
-UNKNOWN
+The Infrastructure domain handles file system operations, storage, and zip file creation. It provides the underlying I/O capabilities that other domains depend on.
 
 ## Entities
-<!-- List all entities managed by this domain -->
 
 | Entity | Description | Owner |
 |--------|-------------|-------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| FileSystem | Abstraction for reading/writing files | infra |
+| ZipBuilder | Creates zip archives for bundles | infra |
+| StorageAdapter | Interface for storage backends (local, S3-compatible) | infra |
 
 ## Key Responsibilities
-<!-- What this domain is responsible for -->
-- UNKNOWN
+- Read and write files to the file system
+- Create directory structures
+- Build zip archives for bundles
+- Provide storage abstraction for future S3 migration
+- Handle file path resolution and validation
 
 ## Domain Boundaries
-<!-- What is in scope and out of scope -->
-- **In Scope:** UNKNOWN
-- **Out of Scope:** UNKNOWN
+- **In Scope:** File I/O, directory creation, zip building, storage abstraction
+- **Out of Scope:** Business logic (platform domain), API routing (api domain), UI (web domain)
 
 ## Dependencies
-<!-- Other domains this domain depends on -->
-- UNKNOWN
+- None - infrastructure is a foundation domain
 
 ## Open Questions
-<!-- Questions that need answers -->
-- UNKNOWN
+- None - using local filesystem for MVP per PROJECT_OVERVIEW

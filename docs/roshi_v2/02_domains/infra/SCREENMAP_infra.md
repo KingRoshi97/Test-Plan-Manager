@@ -3,35 +3,25 @@
 ## Overview
 **Domain Slug:** infra
 
-## Screens
+## Note
+The Infrastructure domain does not have screens - it provides backend file system and storage capabilities. See DDES_infra.md for entity specifications.
 
-### Screen: UNKNOWN
-- **Route:** UNKNOWN
-- **Purpose:** UNKNOWN
-- **Components:**
-  - UNKNOWN
-- **User Actions:**
-  - UNKNOWN
-- **Data Requirements:**
-  - UNKNOWN
+## Services Provided
 
-## Screen Flow
-<!-- How screens connect to each other -->
-```
-UNKNOWN -> UNKNOWN -> UNKNOWN
-```
+### Service: FileSystem
+- **Purpose:** Read and write files to local filesystem
+- **Operations:** read, write, exists, mkdir, list
+- **Used By:** All pipeline scripts, package command
 
-## Navigation Patterns
-<!-- How users navigate between screens -->
-- UNKNOWN
+### Service: ZipBuilder
+- **Purpose:** Create zip archives for bundle packaging
+- **Operations:** addFile, finalize, getStream
+- **Used By:** roshi:package command
 
-## Modal/Dialog Screens
-<!-- Popup screens -->
-
-| Modal | Trigger | Purpose |
-|-------|---------|---------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+### Service: StorageAdapter
+- **Purpose:** Abstract storage backend for future S3 migration
+- **Operations:** put, get, delete, list
+- **Used By:** Bundle storage, artifact persistence
 
 ## Open Questions
-<!-- Screen-related questions -->
-- UNKNOWN
+- None - infrastructure services are well-defined

@@ -3,29 +3,46 @@
 ## Overview
 **Domain Slug:** security
 
-## User Types
-<!-- Who uses this domain -->
+## Note
+Security domain is minimal for MVP - no authentication required. UX foundations listed are for future implementation.
+
+## User Types (Future)
 
 | User Type | Description | Primary Goals |
-|-----------|-------------|---------------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+|---------------|-------------|---------------|
+| Anonymous User | Non-authenticated visitor | Access public features |
+| Authenticated User | Logged-in user (future) | Access personal runs and history |
+| Admin (future) | System administrator | Manage users and settings |
 
-## User Journeys
-<!-- Key user journeys in this domain -->
+## User Journeys (Future)
 
-### Journey: UNKNOWN
-- **Trigger:** UNKNOWN
-- **Steps:** UNKNOWN
-- **Outcome:** UNKNOWN
+### Journey: Login (Future)
+- **Trigger:** User clicks login button
+- **Steps:**
+  1. Navigate to login page
+  2. Enter email and password
+  3. Submit form
+  4. Receive session token
+- **Outcome:** User authenticated, can access protected features
 
-## Information Architecture
-<!-- How information is organized -->
-- UNKNOWN
+### Journey: Logout (Future)
+- **Trigger:** User clicks logout button
+- **Steps:**
+  1. Click logout
+  2. Session invalidated
+  3. Redirect to home
+- **Outcome:** User logged out
 
-## Accessibility Requirements
-<!-- A11y requirements for this domain -->
-- UNKNOWN
+## MVP State
+- All users are anonymous
+- No login/logout flows
+- No protected features
+- Full access to all functionality
+
+## Accessibility Requirements (Future)
+- Login form keyboard navigable
+- Error messages announced to screen readers
+- Focus management on auth flows
 
 ## Open Questions
-<!-- UX-related questions -->
-- UNKNOWN
+- Authentication mechanism deferred to post-MVP

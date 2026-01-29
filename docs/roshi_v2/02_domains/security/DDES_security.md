@@ -6,29 +6,27 @@
 **Domain Type:** crosscutting
 
 ## Purpose
-<!-- Describe the purpose of this domain -->
-UNKNOWN
+The Security domain handles authentication and authorization. For MVP, authentication is optional - the app works without login. Future versions may add user accounts.
 
 ## Entities
-<!-- List all entities managed by this domain -->
 
 | Entity | Description | Owner |
 |--------|-------------|-------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| Session | User session state (optional for MVP) | security |
+| AccessControl | Permission checks (minimal for MVP) | security |
 
 ## Key Responsibilities
-<!-- What this domain is responsible for -->
-- UNKNOWN
+- Manage user sessions (optional for MVP)
+- Validate access permissions (minimal for MVP)
+- Provide authentication hooks for future use
+- Rate limiting (future)
 
 ## Domain Boundaries
-<!-- What is in scope and out of scope -->
-- **In Scope:** UNKNOWN
-- **Out of Scope:** UNKNOWN
+- **In Scope:** Session management, access control, rate limiting
+- **Out of Scope:** Business logic (platform domain), API routing (api domain), UI (web domain)
 
 ## Dependencies
-<!-- Other domains this domain depends on -->
-- UNKNOWN
+- Platform domain: User entity if authentication is enabled
 
 ## Open Questions
-<!-- Questions that need answers -->
-- UNKNOWN
+- Authentication mechanism deferred to post-MVP per PROJECT_OVERVIEW

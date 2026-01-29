@@ -3,29 +3,44 @@
 ## Overview
 **Domain Slug:** infra
 
-## User Types
-<!-- Who uses this domain -->
+## Note
+The Infrastructure domain serves as a foundation layer and does not directly interact with users. This document describes the developer experience for infra consumers.
 
-| User Type | Description | Primary Goals |
-|-----------|-------------|---------------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+## Consumer Types
 
-## User Journeys
-<!-- Key user journeys in this domain -->
+| Consumer Type | Description | Primary Goals |
+|---------------|-------------|---------------|
+| API Domain | Backend service | Store and retrieve files |
+| Roshi Scripts | Pipeline scripts | Read/write docs and configs |
+| Package Command | Bundle creation | Create zip archives |
 
-### Journey: UNKNOWN
-- **Trigger:** UNKNOWN
-- **Steps:** UNKNOWN
-- **Outcome:** UNKNOWN
+## Service Patterns
 
-## Information Architecture
-<!-- How information is organized -->
-- UNKNOWN
+### File System Usage
+- **Trigger:** Script or API needs file I/O
+- **Steps:**
+  1. Import fs utilities from infra
+  2. Call read/write/exists methods
+  3. Handle errors appropriately
+- **Outcome:** Files read or written successfully
 
-## Accessibility Requirements
-<!-- A11y requirements for this domain -->
-- UNKNOWN
+### Zip Creation Usage
+- **Trigger:** Package command needs to create bundle
+- **Steps:**
+  1. Create ZipBuilder instance
+  2. Add files to archive
+  3. Finalize and get output path
+- **Outcome:** Zip file created at specified path
+
+## File Organization
+- docs/roshi_v2: Documentation files
+- dist/: Build outputs and bundles
+- roshi/: Configuration files
+
+## Error Handling
+- File not found: throw with clear message
+- Permission denied: throw with guidance
+- Disk full: throw with space requirements
 
 ## Open Questions
-<!-- UX-related questions -->
-- UNKNOWN
+- None - infra foundations are defined for MVP

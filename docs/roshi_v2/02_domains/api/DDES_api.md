@@ -6,29 +6,31 @@
 **Domain Type:** business
 
 ## Purpose
-<!-- Describe the purpose of this domain -->
-UNKNOWN
+The API domain exposes HTTP endpoints that allow clients to create runs, execute the pipeline, check status, and download bundles. It orchestrates calls to the Roshi scripts and manages run lifecycle.
 
 ## Entities
-<!-- List all entities managed by this domain -->
 
 | Entity | Description | Owner |
 |--------|-------------|-------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| RunEndpoint | POST /api/runs - creates a new run | api |
+| ExecuteEndpoint | POST /api/runs/:id/execute - triggers pipeline | api |
+| StatusEndpoint | GET /api/runs/:id - returns run status | api |
+| DownloadEndpoint | GET /api/runs/:id/download - serves bundle zip | api |
 
 ## Key Responsibilities
-<!-- What this domain is responsible for -->
-- UNKNOWN
+- Validate incoming API requests
+- Create and manage Run records
+- Execute pipeline scripts in sequence (gen, seed, draft, package)
+- Return run status with step progress
+- Serve bundle zip files for download
 
 ## Domain Boundaries
-<!-- What is in scope and out of scope -->
-- **In Scope:** UNKNOWN
-- **Out of Scope:** UNKNOWN
+- **In Scope:** HTTP endpoints, request validation, pipeline orchestration, response formatting
+- **Out of Scope:** UI rendering (web domain), file storage details (infra domain), user auth (security domain)
 
 ## Dependencies
-<!-- Other domains this domain depends on -->
-- UNKNOWN
+- Platform domain: Run entity definitions
+- Infra domain: file system access for bundle storage
 
 ## Open Questions
-<!-- Questions that need answers -->
-- UNKNOWN
+- None - API surface is well-defined for MVP

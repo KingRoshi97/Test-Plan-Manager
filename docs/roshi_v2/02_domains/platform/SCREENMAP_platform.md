@@ -3,35 +3,30 @@
 ## Overview
 **Domain Slug:** platform
 
-## Screens
+## Note
+The Platform domain does not have screens - it defines core entities and business rules. See DDES_platform.md for entity specifications.
 
-### Screen: UNKNOWN
-- **Route:** UNKNOWN
-- **Purpose:** UNKNOWN
-- **Components:**
-  - UNKNOWN
-- **User Actions:**
-  - UNKNOWN
-- **Data Requirements:**
-  - UNKNOWN
+## Entities Defined
 
-## Screen Flow
-<!-- How screens connect to each other -->
-```
-UNKNOWN -> UNKNOWN -> UNKNOWN
-```
+### Entity: Run
+- **Purpose:** Represents a single pipeline execution
+- **States:** created, running, completed, failed, bundled
+- **Used By:** API domain (endpoints), Web domain (status display)
 
-## Navigation Patterns
-<!-- How users navigate between screens -->
-- UNKNOWN
+### Entity: Project
+- **Purpose:** Collection of runs (optional for MVP)
+- **States:** created, active, archived
+- **Used By:** Future project management features
 
-## Modal/Dialog Screens
-<!-- Popup screens -->
+### Entity: User
+- **Purpose:** System user (optional for MVP - no auth)
+- **States:** active, inactive
+- **Used By:** Security domain when auth is enabled
 
-| Modal | Trigger | Purpose |
-|-------|---------|---------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+### Entity: Bundle
+- **Purpose:** Final zip package for agent handoff
+- **States:** pending, created, downloaded
+- **Used By:** API domain (download endpoint), Web domain (download button)
 
 ## Open Questions
-<!-- Screen-related questions -->
-- UNKNOWN
+- None - platform entities are well-defined in PROJECT_OVERVIEW
