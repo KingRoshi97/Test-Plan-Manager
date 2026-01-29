@@ -1,0 +1,1648 @@
+# Roshi API Spec v1 — Universal Handoff (Pull • Webhook • Git • Direct)
+
+**Purpose:** Define a stable, versioned HTTP API for Roshi that generates a canonical **Bundle** from an idea/preset and delivers that bundle to vibecoding/AI environments via multiple handoff methods.
+
+This spec is designed to be:
+
+* **Universal:** works with any AI tool (baseline Pull), automation (Webhook), dev-native (Git), and platform integrations where available (Direct).
+* **Deterministic:** same inputs → same bundle structure (subject to versioning).
+* **Safe:** signed downloads, webhook signatures, run isolation, auditability.
+
+---
+
+## 1) Glossary
+
+* **Run**: One execution of the Roshi pipeline that produces a bundle.
+* **Bundle**: Canonical artifact set produced by Roshi. Includes `manifest.json`, `agent_prompt.md`, and `bundle.zip` containing the docs workspace.
+* **Handoff**: A delivery job that routes a bundle to a target (pull/webhook/git/direct).
+* **Adapter**: Internal implementation of a handoff type.
+* **Signed URL**: A URL containing `exp` and `sig` parameters allowing temporary download access.
+
+---
+
+## 2) Versioning
+
+* All API routes are prefixed with `/v1/`.
+* Breaking changes require a new major version (`/v2/`).
+* `manifest.json.bundleVersion` is versioned independently (e.g., `0.1.0`) to track bundle contract evolution.
+
+---
+
+## 3) Core Objects
+
+### 3.1 Run
+
+**Run States**
+
+* `queued` — accepted, waiting to execute
+* `running` — executing pipeline steps
+* `completed` — bundle is available
+* `failed` — error occurred
+* `canceled` — explicitly canceled
+
+**Run Steps**
+
+* `init | gen | seed | draft | review | verify | lock | package`
+
+**Run Record (shape)**
+
+```json
+{
+  "runId": "run_abc123",
+  "state": "running",
+  "step": "draft",
+  "createdAt": "2026-01-28T20:12:00Z",
+  "updatedAt": "2026-01-28T20:12:31Z",
+
+  "input": {
+    "projectName": "Roshi Studio",
+    "description": "Generate Roshi bundles for vibecoding agents.",
+    "features": [
+      { "name": "Run Generator", "description": "Create runs and bundles.", "priority": "P0" }
+    ],
+    "users": [
+      { "type": "Builder", "goal": "Generate a bundle and hand it to an agent." }
+    ],
+    "techStack": { "frontend": "Next.js", "backend": "Node/Express", "database": "Postgres" },
+    "preset": "roshi-studio",
+
+    "legacy": {
+      "idea": "optional legacy idea text",
+      "mappedFromIdea": false
+    }
+  },
+
+  "domains": ["platform","api","web","infra","security"],
+  "errors": [],
+  "progress": { "percent": 55 },
+
+  "bundle": {
+    "available": false,
+    "generationMode": "ai",
+    "zipBytes": 0,
+    "zipSha256": null,
+    "manifestSha256": null,
+    "agentPromptSha256": null
+  }
+}
+```
+
+---
+
+### 3.2 Bundle
+
+**Canonical Files (always)**
+
+* `manifest.json`
+* `agent_prompt.md`
+* `bundle.zip` (contains the docs workspace and related files)
+
+**Bundle MUST include these additional handoff artifacts (hybrid)**
+
+* `handoff/input.json` — the raw structured input saved with the run
+* `handoff/ai_context.json` — normalized context packet used for AI expansion
+
+**Bundle Metadata (shape)**
+
+```json
+{
+  "bundleVersion": "0.2.0",
+  "createdAt": "2026-01-28T20:13:10Z",
+
+  "generationMode": "ai",
+  "inputSummary": {
+    "projectName": "Roshi Studio",
+    "description": "Generate Roshi bundles for vibecoding agents.",
+    "featureCount": 12,
+    "userTypeCount": 3,
+    "techStackProvided": true
+  },
+
+  "entryDocs": ["docs/roshi_v2/README.md", "docs/roshi_v2/00_product/PROJECT_OVERVIEW.md"],
+  "commandsToRun": ["npm run roshi:review", "npm run roshi:verify", "npm run roshi:lock"],
+  "doNotTouch": ["docs/roshi_v2/00_registry/**"],
+
+  "openQuestions": { "count": 35, "paths": ["..."] },
+
+  "checksums": {
+    "zipSha256": "...",
+    "manifestSha256": "...",
+    "agentPromptSha256": "...",
+    "inputSha256": "...",
+    "aiContextSha256": "..."
+  },
+
+  "sizes": { "zipBytes": 1834921 },
+
+  "download": {
+    "zipUrl": "https://api.example.com/v1/runs/run_abc123/bundle.zip?exp=...&sig=...",
+    "expiresAt": "2026-01-28T21:13:10Z"
+  }
+}
+```
+
+---
+
+### 3.3 Handoff
+
+**Handoff States**
+
+* `queued | delivering | completed | failed | canceled`
+
+**Handoff Record (shape)**
+
+```json
+{
+  "handoffId": "ho_123",
+  "runId": "run_abc123",
+  "type": "webhook",
+  "label": "Agent Runner",
+  "state": "delivering",
+  "attempts": 1,
+  "maxAttempts": 6,
+  "lastAttemptAt": "2026-01-28T20:14:01Z",
+  "result": null,
+  "lastError": null,
+  "createdAt": "2026-01-28T20:13:55Z",
+  "updatedAt": "2026-01-28T20:14:01Z"
+}
+```
+
+---
+
+## 4) Endpoints
+
+### 4.0 Endpoint Table (Summary)
+
+| Area     | Method | Route                            | Purpose                     | Auth     | Success | Notes                                |
+| -------- | -----: | -------------------------------- | --------------------------- | -------- | ------: | ------------------------------------ |
+| Health   |    GET | `/health`                        | Liveness check              | Optional |     200 | Keep unversioned or `/v1/health`     |
+| Runs     |   POST | `/v1/runs`                       | Create run + start pipeline | Required |     202 | Prefer async: `queued`               |
+| Runs     |    GET | `/v1/runs/{runId}`               | Run status + logs tail      | Required |     200 | Includes `state`, `step`, `progress` |
+| Bundle   |    GET | `/v1/runs/{runId}/bundle`        | Bundle metadata (NOT zip)   | Required |     200 | Includes checksums + signed URL      |
+| Bundle   |    GET | `/v1/runs/{runId}/bundle.zip`    | Download bundle zip         | Required | 200/302 | Support signed query (`exp`,`sig`)   |
+| Handoffs |   POST | `/v1/runs/{runId}/handoffs`      | Create delivery job         | Required |     201 | One run can have many handoffs       |
+| Handoffs |    GET | `/v1/runs/{runId}/handoffs`      | List handoffs for run       | Required |     200 | Useful for dashboards                |
+| Handoffs |    GET | `/v1/handoffs/{handoffId}`       | Handoff status + history    | Required |     200 | Includes attempt history             |
+| Handoffs |   POST | `/v1/handoffs/{handoffId}/retry` | Retry failed handoff        | Required |     200 | Enforce max attempts                 |
+
+**Auth column guidance**
+
+* "Required" = API key / OAuth required.
+* For private/internal deployments, you may allow unauthenticated bundle download if URLs are signed.
+
+---
+
+### 4.1 Runs
+
+#### POST `/v1/runs`
+
+Create a run and execute pipeline → package bundle.
+
+**Request**
+
+```json
+{
+  "projectName": "Roshi Studio",
+  "idea": "<user idea text>",
+  "preset": "roshi-studio",
+  "domains": ["platform","api","web","infra","security"],
+  "options": {
+    "dryRun": false
+  }
+}
+```
+
+**Response (recommended: fast)**
+
+```json
+{
+  "runId": "run_abc123",
+  "state": "queued",
+  "statusUrl": "/v1/runs/run_abc123"
+}
+```
+
+**Status codes**
+
+* `202 Accepted` (recommended) — run queued
+* `201 Created` — run created and executed synchronously (MVP only)
+* `400` invalid request
+* `401/403` auth
+* `429` rate limited
+
+**Notes**
+
+* For MVP you may return `completed` if synchronous. For production, use a queue/worker.
+
+---
+
+#### GET `/v1/runs/{runId}`
+
+Get run status, current step, and logs tail.
+
+**Response**
+
+```json
+{
+  "run": { "...run record..." },
+  "logsTail": "<last N bytes>"
+}
+```
+
+**Status codes**
+
+* `200` success
+* `404` run not found
+
+---
+
+#### GET `/v1/runs/{runId}/bundle`
+
+Return bundle metadata (manifest + prompt optional + checksums + signed URL).
+
+**Response**
+
+```json
+{
+  "runId": "run_abc123",
+  "bundle": { "...bundle metadata..." }
+}
+```
+
+**Status codes**
+
+* `200` bundle available
+* `409` run not completed yet (or return `200` with `bundle.available=false`)
+* `404` run not found
+
+---
+
+#### GET `/v1/runs/{runId}/bundle.zip`
+
+Download the bundle zip. Implementation options:
+
+* Stream from disk/object store OR
+* 302 redirect to object store signed URL
+
+**Success**
+
+* `200` with `Content-Type: application/zip`
+
+**Failure**
+
+* `404` if bundle not available
+* `401/403` if signature/auth invalid
+
+---
+
+### 4.2 Handoffs
+
+#### POST `/v1/runs/{runId}/handoffs`
+
+Create a handoff delivery job.
+
+**Request**
+
+```json
+{
+  "type": "pull",
+  "label": "Universal Download",
+  "config": {
+    "expiresInSeconds": 3600,
+    "includeInlinePrompt": true
+  }
+}
+```
+
+**Response**
+
+```json
+{
+  "handoff": { "...handoff record..." }
+}
+```
+
+---
+
+#### GET `/v1/runs/{runId}/handoffs`
+
+List handoffs for a run.
+
+**Response**
+
+```json
+{
+  "runId": "run_abc123",
+  "handoffs": [ {"..."}, {"..."} ]
+}
+```
+
+---
+
+#### GET `/v1/handoffs/{handoffId}`
+
+Get handoff details including attempt history.
+
+**Response**
+
+```json
+{
+  "handoff": { "...handoff record..." },
+  "attemptHistory": [
+    { "attempt": 1, "at": "...", "ok": true, "httpStatus": 200 }
+  ]
+}
+```
+
+---
+
+#### POST `/v1/handoffs/{handoffId}/retry`
+
+Retry a failed handoff.
+
+**Response**
+
+```json
+{ "ok": true, "handoffId": "ho_123" }
+```
+
+---
+
+## 5) Handoff Types
+
+### 5.1 Pull (universal)
+
+**Goal:** return signed download URL + optionally inline manifest/prompt.
+
+**Config**
+
+```json
+{
+  "expiresInSeconds": 3600,
+  "includeInlinePrompt": true,
+  "includeInlineManifest": true
+}
+```
+
+**Result**
+
+```json
+{
+  "zipUrl": "https://.../bundle.zip?exp=...&sig=...",
+  "expiresAt": "...",
+  "zipSha256": "...",
+  "zipBytes": 123456
+}
+```
+
+---
+
+### 5.2 Webhook
+
+**Goal:** push event to a receiver when bundle is ready.
+
+**Config**
+
+```json
+{
+  "url": "https://client.com/roshi/webhook",
+  "secret": "shared-signing-secret",
+  "events": ["bundle.ready", "bundle.failed"],
+  "include": ["zipUrl", "manifest", "agentPrompt"]
+}
+```
+
+**Event Payload**
+
+```json
+{
+  "event": "roshi.bundle.ready",
+  "handoffId": "ho_456",
+  "runId": "run_abc123",
+  "bundle": {
+    "zipUrl": "https://...signed...",
+    "expiresAt": "...",
+    "zipSha256": "...",
+    "zipBytes": 123456
+  },
+  "manifest": { "..." },
+  "agentPrompt": "...markdown..."
+}
+```
+
+**Required Headers (sent by Roshi)**
+
+* `X-Roshi-Timestamp: <unix seconds>`
+* `X-Roshi-Nonce: <random string>`
+* `X-Roshi-Signature: sha256=<hex>`
+
+**Signature Construction (HMAC-SHA256)**
+
+* `signed = timestamp + "." + nonce + "." + rawBody`
+* `signature = HMAC_SHA256(secret, signed)`
+
+**Receiver Validation Rules**
+
+* Reject if timestamp older than 5 minutes
+* Reject if nonce already seen (store nonce for 10 minutes)
+* Recompute HMAC and compare
+
+---
+
+### 5.3 Git
+
+**Goal:** push bundle contents into a Git repo branch or PR.
+
+**Config**
+
+```json
+{
+  "provider": "github",
+  "repo": "org/repo",
+  "branch": "roshi/run_abc123",
+  "mode": "commit",
+  "auth": { "token": "GITHUB_TOKEN" },
+  "pathPrefix": "roshi_bundle"
+}
+```
+
+**Delivery Rules**
+
+* Commit includes:
+
+  * `roshi_bundle/manifest.json`
+  * `roshi_bundle/agent_prompt.md`
+  * `roshi_bundle/workspace/**`
+  * `roshi_bundle/exports/**` (if any)
+* If `mode=pr`, open PR into a base branch (default: `main`).
+
+**Result**
+
+```json
+{
+  "provider": "github",
+  "repo": "org/repo",
+  "branch": "roshi/run_abc123",
+  "commitSha": "...",
+  "prUrl": "...optional..."
+}
+```
+
+---
+
+### 5.4 Direct (Adapters)
+
+**Goal:** platform-specific delivery where APIs exist.
+
+**Config**
+
+```json
+{
+  "adapter": "replit|loveable|custom-agent-runner|zip-upload",
+  "connection": { "apiKey": "...", "projectId": "..." },
+  "options": { "autoStart": true }
+}
+```
+
+**Reality Rule**
+
+* Direct delivery is only possible for platforms with APIs or where you control the runtime.
+* If unsupported, return `failed` with a clear `reasonCode`.
+
+---
+
+## 6) Signed URLs (Download Security)
+
+### 6.1 Query Parameters
+
+* `exp` — unix timestamp expiration (seconds)
+* `sig` — signature
+
+### 6.2 Signature
+
+Recommended (HMAC-SHA256):
+
+* `signed = runId + "." + exp`
+* `sig = HMAC_SHA256(SERVER_SECRET, signed)`
+
+### 6.3 Server Validation
+
+* Reject if `now > exp`
+* Recompute signature and compare
+
+---
+
+## 7) Manifest Contract Upgrade (Hybrid + Implementation Plan)
+
+### 7.1 Required new keys
+
+* `bundleVersion` **bump** to `0.2.0`
+* `generationMode`: `"ai" | "template_fallback"`
+* `inputSummary`: counts + techStack flag
+* `implementationPlan`: step-by-step build order
+
+### 7.2 Required handoff files inside bundle
+
+* `handoff/input.json`
+* `handoff/ai_context.json`
+
+### 7.3 Example manifest excerpt
+
+```json
+{
+  "bundleVersion": "0.2.0",
+  "generationMode": "ai",
+  "inputSummary": {
+    "projectName": "Roshi Studio",
+    "description": "Generate Roshi bundles for vibecoding agents.",
+    "featureCount": 12,
+    "userTypeCount": 3,
+    "techStackProvided": true
+  },
+  "implementationPlan": [
+    {
+      "step": 1,
+      "title": "Implement P0 features",
+      "source": "features[P0]",
+      "acceptance": ["All P0 endpoints and UI flows working"]
+    },
+    {
+      "step": 2,
+      "title": "Implement P1 features",
+      "source": "features[P1]"
+    }
+  ]
+}
+```
+
+---
+
+## 8) Error Model
+
+Standard error shape:
+
+```json
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "Human readable message",
+    "details": { "field": "reason" },
+    "reasonCode": "ROSHI_..."
+  }
+}
+```
+
+Suggested error codes:
+
+* `INVALID_REQUEST` (400)
+* `UNAUTHORIZED` (401)
+* `FORBIDDEN` (403)
+* `NOT_FOUND` (404)
+* `CONFLICT` (409)
+* `RATE_LIMITED` (429)
+* `INTERNAL_ERROR` (500)
+
+---
+
+## 9) Audit Logging (Minimum)
+
+Log events:
+
+* `run.created`, `run.started`, `run.step`, `run.completed`, `run.failed`
+* `handoff.created`, `handoff.attempt`, `handoff.completed`, `handoff.failed`
+
+Each event should include:
+
+* timestamp
+* actor (apiKey/userId if applicable)
+* runId
+* handoffId (if applicable)
+* method/type
+* outcome (ok/fail) and error (if fail)
+
+---
+
+## 10) Security Minimums
+
+* API key auth for non-public deployments (`Authorization: Bearer <key>`)
+* Rate limit `POST /v1/runs`
+* Run isolation: each run uses its own workspace directory
+* Zip-slip prevention: only include allowlisted paths in zip
+* Never log secrets (webhook secret, git token)
+
+---
+
+## 11) Adapter Contract (Internal)
+
+**HandoffAdapter Interface**
+
+* `validate(config) -> {ok, errors[]}`
+* `deliver({ runId, bundleMeta, files }, config) -> result`
+* `retry(handoffId) -> result`
+
+Adapter registry:
+
+* `pullAdapter`
+* `webhookAdapter`
+* `gitAdapter`
+* `directAdapterRegistry` (map of adapter name → implementation)
+
+---
+
+## 12) Implementation Notes (Practical MVP)
+
+### MVP storage layout
+
+* `data/runs/<runId>/workspace/` — run workspace
+* `data/runs/<runId>/dist/roshi_bundle.zip` — bundle zip
+* `data/runs/<runId>/status.json` — run state
+* `data/runs/<runId>/logs.txt` — logs
+* `data/handoffs/<handoffId>.json` — handoff records
+
+### Queueing
+
+* MVP may run synchronously.
+* Production: use a job queue (in-process → redis/bullmq later).
+
+---
+
+## 13) Acceptance Checklist
+
+**Runs**
+
+* Create run returns `runId`
+* Status endpoint shows progress and logs
+* Bundle metadata includes checksums + signed URL
+* Bundle download works and respects expiry
+
+**Handoffs**
+
+* Pull returns signed URL
+* Webhook delivers payload with verifiable signature
+* Git creates branch/PR with expected files
+* Retry works for failed deliveries
+
+---
+
+## 14) Open Questions (to decide before public launch)
+
+* Object storage target (S3/R2) vs API-streamed downloads
+* Git provider coverage (GitHub first?)
+* Direct adapter targets (which tools actually have APIs)
+* Auth model (API keys vs OAuth)
+* Multi-tenant model (org/workspace separation)
+
+---
+
+## 15) JSON Schemas (Draft 2020-12)
+
+These schemas are intended for validation at the API boundary. Treat them as **public contracts**.
+
+### 15.1 CreateRunRequest (Hybrid: Structured + Backward Compatible)
+
+This request supports two modes:
+
+* **Hybrid Structured** (recommended): `projectName`, `description`, `features`, `users`, `techStack`
+* **Legacy**: `idea` only (server maps into structured fields)
+
+**Rules**
+
+* If `idea` is provided without structured fields, server maps:
+
+  * `projectName = "Untitled"`
+  * `description = first 140 chars of idea`
+  * `features = []`, `users = []`, `techStack = {}`
+* If structured fields are provided, `idea` is optional and treated as supplemental context.
+
+````json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roshi.dev/schemas/CreateRunRequest.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "projectName": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description", "priority"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "priority": { "type": "string", "enum": ["P0", "P1", "P2"] }
+        }
+      },
+      "default": []
+    },
+
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "goal"],
+        "properties": {
+          "type": { "type": "string", "minLength": 1 },
+          "goal": { "type": "string", "minLength": 1 }
+        }
+      },
+      "default": []
+    },
+
+    "techStack": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "frontend": { "type": "string" },
+        "backend": { "type": "string" },
+        "database": { "type": "string" }
+      },
+      "default": {}
+    },
+
+    "preset": { "type": "string", "minLength": 1, "default": "default" },
+
+    "idea": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Legacy compatibility: if only idea is provided, server maps to structured fields."
+    },
+
+    "domains": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dryRun": { "type": "boolean", "default": false }
+      }
+    }
+  },
+
+  "anyOf": [
+    { "required": ["projectName", "description"] },
+    { "required": ["idea"] }
+  ]
+}
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roshi.dev/schemas/CreateRunRequest.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["idea"],
+  "properties": {
+    "projectName": { "type": "string", "minLength": 1, "default": "Untitled" },
+    "idea": { "type": "string", "minLength": 1 },
+    "preset": { "type": "string", "minLength": 1, "default": "default" },
+    "domains": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dryRun": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}
+````
+
+### 15.2 RunResponse
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roshi.dev/schemas/RunResponse.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runId", "state", "statusUrl"],
+  "properties": {
+    "runId": { "type": "string", "minLength": 1 },
+    "state": { "type": "string", "enum": ["queued", "running", "completed", "failed", "canceled"] },
+    "statusUrl": { "type": "string", "minLength": 1 }
+  }
+}
+```
+
+### 15.3 BundleMetadataResponse
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roshi.dev/schemas/BundleMetadataResponse.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["runId", "bundle"],
+  "properties": {
+    "runId": { "type": "string" },
+    "bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bundleVersion", "entryDocs", "commandsToRun", "doNotTouch", "openQuestions"],
+      "properties": {
+        "bundleVersion": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "entryDocs": { "type": "array", "items": { "type": "string" } },
+        "commandsToRun": { "type": "array", "items": { "type": "string" } },
+        "doNotTouch": { "type": "array", "items": { "type": "string" } },
+        "openQuestions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "paths"],
+          "properties": {
+            "count": { "type": "integer", "minimum": 0 },
+            "paths": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "checksums": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "zipSha256": { "type": "string" },
+            "manifestSha256": { "type": "string" },
+            "agentPromptSha256": { "type": "string" }
+          }
+        },
+        "sizes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "zipBytes": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "download": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "zipUrl": { "type": "string" },
+            "expiresAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### 15.4 CreateHandoffRequest
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roshi.dev/schemas/CreateHandoffRequest.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "config"],
+  "properties": {
+    "type": { "type": "string", "enum": ["pull", "webhook", "git", "direct"] },
+    "label": { "type": "string" },
+    "config": {
+      "oneOf": [
+        { "$ref": "https://roshi.dev/schemas/HandoffPullConfig.json" },
+        { "$ref": "https://roshi.dev/schemas/HandoffWebhookConfig.json" },
+        { "$ref": "https://roshi.dev/schemas/HandoffGitConfig.json" },
+        { "$ref": "https://roshi.dev/schemas/HandoffDirectConfig.json" }
+      ]
+    }
+  }
+}
+```
+
+### 15.5 Handoff Config Schemas
+
+#### HandoffPullConfig
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roshi.dev/schemas/HandoffPullConfig.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "expiresInSeconds": { "type": "integer", "minimum": 60, "maximum": 604800, "default": 3600 },
+    "includeInlinePrompt": { "type": "boolean", "default": true },
+    "includeInlineManifest": { "type": "boolean", "default": true }
+  }
+}
+```
+
+#### HandoffWebhookConfig
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roshi.dev/schemas/HandoffWebhookConfig.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["url", "secret"],
+  "properties": {
+    "url": { "type": "string", "minLength": 1 },
+    "secret": { "type": "string", "minLength": 8 },
+    "events": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["bundle.ready", "bundle.failed"] },
+      "default": ["bundle.ready"]
+    },
+    "include": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["zipUrl", "manifest", "agentPrompt", "checksums"] },
+      "default": ["zipUrl", "manifest", "agentPrompt"]
+    }
+  }
+}
+```
+
+#### HandoffGitConfig
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roshi.dev/schemas/HandoffGitConfig.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["provider", "repo", "branch", "auth"],
+  "properties": {
+    "provider": { "type": "string", "enum": ["github", "gitlab", "bitbucket", "generic"] },
+    "repo": { "type": "string", "minLength": 1 },
+    "branch": { "type": "string", "minLength": 1 },
+    "mode": { "type": "string", "enum": ["commit", "pr"], "default": "commit" },
+    "pathPrefix": { "type": "string", "default": "roshi_bundle" },
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["token"],
+      "properties": {
+        "token": { "type": "string", "minLength": 8 }
+      }
+    }
+  }
+}
+```
+
+#### HandoffDirectConfig
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://roshi.dev/schemas/HandoffDirectConfig.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["adapter", "connection"],
+  "properties": {
+    "adapter": { "type": "string", "minLength": 1 },
+    "connection": { "type": "object" },
+    "options": { "type": "object" }
+  }
+}
+```
+
+---
+
+## 16) State Machines
+
+### 16.1 Run State Machine
+
+**States:** `queued → running → completed | failed | canceled`
+
+**Transitions**
+
+* `queued → running` when a worker claims the run.
+* `running → completed` when `package` step finishes and bundle metadata is written.
+* `running → failed` on any unhandled exception OR policy failure.
+* `queued/running → canceled` only via explicit cancel (optional endpoint).
+
+**Step progression (within running)**
+
+* `init → gen → seed → draft → review → verify → lock → package`
+* If you allow partial runs, `verify/lock/package` may be called again via actions.
+
+**Recommended invariants**
+
+* A run cannot be `completed` unless `bundle.zip` exists and checksums are computed.
+* If `verify` fails, either:
+
+  * mark run `failed` (strict mode), OR
+  * keep run `completed` but mark `verify.status=failed` and block `lock` (flex mode).
+
+### 16.2 Handoff State Machine
+
+**States:** `queued → delivering → completed | failed | canceled`
+
+**Transitions**
+
+* `queued → delivering` when adapter starts.
+* `delivering → completed` when adapter returns success and result is persisted.
+* `delivering → failed` when adapter returns failure; schedule retry if attempts remain.
+* `queued/delivering → canceled` only via explicit cancel (optional endpoint).
+
+**Retry policy (recommended)**
+
+* `maxAttempts`: 6
+* Exponential backoff with jitter:
+
+  * 1m, 2m, 5m, 10m, 20m, 45m
+* For 4xx (except 408/429), do NOT retry by default.
+
+---
+
+## 17) Recommended HTTP Status Codes
+
+### Runs
+
+* `POST /v1/runs`
+
+  * `202` accepted (queued)
+  * `201` created (sync MVP)
+  * `400` invalid
+  * `401/403` auth
+  * `429` rate limit
+
+* `GET /v1/runs/{id}`
+
+  * `200` ok
+  * `404` not found
+
+### Bundle
+
+* `GET /v1/runs/{id}/bundle`
+
+  * `200` ok
+  * `404` run not found
+  * `409` run not complete (optional)
+
+* `GET /v1/runs/{id}/bundle.zip`
+
+  * `200` stream zip
+  * `302` redirect to storage signed URL (optional)
+  * `401/403` invalid signature/auth
+  * `404` bundle missing
+
+### Handoffs
+
+* `POST /v1/runs/{id}/handoffs`
+
+  * `201` created
+  * `409` bundle not ready
+  * `400` invalid config
+
+* `GET /v1/runs/{id}/handoffs`
+
+  * `200` ok
+
+* `GET /v1/handoffs/{handoffId}`
+
+  * `200` ok
+  * `404` not found
+
+* `POST /v1/handoffs/{handoffId}/retry`
+
+  * `200` ok
+  * `409` not retryable (already completed/canceled)
+
+---
+
+## 18) Auth Spec (API Keys + Scopes + Rotation)
+
+### 18.1 Authentication Header
+
+All authenticated requests MUST include:
+
+* `Authorization: Bearer <API_KEY>`
+
+### 18.2 API Key Format (recommended)
+
+* Prefix keys for clarity:
+
+  * `rk_live_<random>` for production
+  * `rk_test_<random>` for test
+
+### 18.3 Scopes (minimum set)
+
+Keys may be scoped to reduce blast radius.
+
+Suggested scopes:
+
+* `runs:create` — create runs
+* `runs:read` — read run status/logs
+* `bundle:read` — read bundle metadata/download
+* `handoffs:create` — create handoffs
+* `handoffs:read` — read handoff status
+* `handoffs:retry` — retry handoffs
+* `admin:*` — administrative operations
+
+**Enforcement rule**
+
+* Endpoints must validate scope before execution.
+
+### 18.4 Key Rotation
+
+* Support multiple active keys per account/workspace.
+* Rotation procedure:
+
+  1. Create new key
+  2. Deploy new key to clients
+  3. Disable old key
+
+### 18.5 Key Storage + Logging Rules
+
+* Store only a hashed form (e.g., SHA-256) server-side.
+* Never log raw keys.
+* In audit logs, reference key by `keyId` only.
+
+---
+
+## 19) Rate Limit Policy
+
+### 19.1 Goals
+
+* Prevent abuse (run spam, download hammering)
+* Keep service stable under load
+
+### 19.2 Dimensions
+
+Rate limit should consider:
+
+* **API key** (primary)
+* **IP address** (secondary)
+* **Endpoint class** (runs vs downloads)
+
+### 19.3 Recommended Limits (starter)
+
+These are conservative and can be tuned.
+
+**Run creation**
+
+* `POST /v1/runs`: 10 per hour per API key (burst 2)
+
+**Handoff creation**
+
+* `POST /v1/runs/{id}/handoffs`: 60 per hour per API key
+
+**Status polling**
+
+* `GET /v1/runs/{id}`: 120 per minute per API key
+
+**Bundle metadata**
+
+* `GET /v1/runs/{id}/bundle`: 60 per minute per API key
+
+**Bundle downloads**
+
+* `GET /v1/runs/{id}/bundle.zip`: 20 per hour per API key
+
+**Webhook attempts (server-side)**
+
+* Max 6 attempts per handoff (see retry policy)
+
+### 19.4 Rate Limit Response
+
+* Use `429 Rate Limited`
+* Include headers:
+
+  * `Retry-After: <seconds>`
+  * `X-RateLimit-Limit`
+  * `X-RateLimit-Remaining`
+  * `X-RateLimit-Reset`
+
+---
+
+## 20) Webhook Receiver Verification Snippets
+
+### 20.1 Node.js (Express) — Verify Roshi Webhook Signature
+
+```js
+import crypto from "node:crypto";
+
+function timingSafeEqual(a, b) {
+  const ba = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ba.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ba, bb);
+}
+
+export function verifyRoshiWebhook(req, secret) {
+  const ts = req.get("X-Roshi-Timestamp");
+  const nonce = req.get("X-Roshi-Nonce");
+  const sigHeader = req.get("X-Roshi-Signature") || "";
+  const sig = sigHeader.replace("sha256=", "");
+
+  if (!ts || !nonce || !sig) return { ok: false, reason: "missing_headers" };
+
+  const now = Math.floor(Date.now() / 1000);
+  const tsInt = Number(ts);
+  if (!Number.isFinite(tsInt)) return { ok: false, reason: "bad_timestamp" };
+  if (Math.abs(now - tsInt) > 300) return { ok: false, reason: "stale_timestamp" };
+
+  // IMPORTANT: you must capture the raw request body bytes.
+  // In Express, use a raw-body middleware or bodyParser with verify option.
+  const rawBody = req.rawBody; // Buffer
+  if (!rawBody) return { ok: false, reason: "missing_raw_body" };
+
+  const signed = `${ts}.${nonce}.` + rawBody.toString("utf8");
+  const expected = crypto.createHmac("sha256", secret).update(signed).digest("hex");
+
+  if (!timingSafeEqual(expected, sig)) return { ok: false, reason: "bad_signature" };
+
+  // Replay protection: store nonce for 10 minutes and reject reuse.
+  return { ok: true };
+}
+```
+
+**Raw body capture (Express example)**
+
+```js
+import express from "express";
+
+const app = express();
+
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
+```
+
+### 20.2 Python (FastAPI) — Verify Roshi Webhook Signature
+
+```python
+import hmac, hashlib, time
+
+def verify_roshi_webhook(headers, raw_body: bytes, secret: str):
+    ts = headers.get("x-roshi-timestamp")
+    nonce = headers.get("x-roshi-nonce")
+    sig = headers.get("x-roshi-signature", "").replace("sha256=", "")
+
+    if not ts or not nonce or not sig:
+        return False, "missing_headers"
+
+    try:
+        ts_int = int(ts)
+    except:
+        return False, "bad_timestamp"
+
+    now = int(time.time())
+    if abs(now - ts_int) > 300:
+        return False, "stale_timestamp"
+
+    signed = f"{ts}.{nonce}.".encode("utf-8") + raw_body
+    expected = hmac.new(secret.encode("utf-8"), signed, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(expected, sig):
+        return False, "bad_signature"
+
+    # Replay protection: store nonce for 10 minutes and reject reuse.
+    return True, "ok"
+```
+
+---
+
+## 21) GitHub PR Mode Spec (Delivery Rules)
+
+### 21.1 Modes
+
+* `mode="commit"` — push a branch only
+* `mode="pr"` — push branch and open a PR
+
+### 21.2 Required Git Outputs
+
+A successful Git handoff must result in:
+
+* a branch `config.branch` existing
+* the following paths present under `config.pathPrefix`:
+
+  * `manifest.json`
+  * `agent_prompt.md`
+  * `workspace/**`
+  * `exports/**` (if any)
+
+### 21.3 Commit/PR Conventions
+
+**Commit message (recommended)**
+
+* `roshi: bundle for <runId>`
+
+**PR title (recommended)**
+
+* `Roshi bundle: <runId>`
+
+**PR body (recommended)**
+
+* include:
+
+  * runId
+  * bundleVersion
+  * openQuestions.count
+  * zipSha256
+
+### 21.4 Base Branch Selection
+
+* Default base branch: `main`
+* Allow override in config:
+
+```json
+{ "baseBranch": "main" }
+```
+
+### 21.5 File Allowlist + Safety
+
+* Only write within `pathPrefix`.
+* Do NOT modify existing files outside `pathPrefix`.
+* If `pathPrefix` exists, either:
+
+  * overwrite within prefix (allowed), OR
+  * create a unique prefix per run (recommended): `roshi_bundle/<runId>/...`
+
+### 21.6 Token Scope
+
+* GitHub token should be repo-scoped.
+* Never log the token.
+
+---
+
+## 22) Multi-Tenant Model (Org/Workspace Isolation)
+
+### 22.1 Tenancy Concepts
+
+* **Account**: billing/auth owner (optional in MVP)
+* **Organization (orgId)**: logical tenant boundary
+* **Workspace (workspaceId)**: environment within an org (e.g., team/project)
+
+### 22.2 Route Shapes (Tenant-Aware)
+
+For public multi-tenant deployments, prefer tenant-scoped routes:
+
+* `POST /v1/orgs/{orgId}/workspaces/{workspaceId}/runs`
+* `GET /v1/orgs/{orgId}/workspaces/{workspaceId}/runs/{runId}`
+* `GET /v1/orgs/{orgId}/workspaces/{workspaceId}/runs/{runId}/bundle`
+* `POST /v1/orgs/{orgId}/workspaces/{workspaceId}/runs/{runId}/handoffs`
+
+For MVP, you may use global `/v1/runs` and infer tenancy from API key.
+
+### 22.3 Data Isolation Rules
+
+* A run belongs to exactly one workspace.
+* API key must be bound to an org/workspace or have scoped access.
+* Prevent IDOR: never allow access to a run/handoff by ID alone without verifying tenant ownership.
+
+### 22.4 Storage Layout (Tenant-Aware)
+
+Recommended on-disk layout (even if you later move to object store/DB):
+
+* `data/orgs/<orgId>/workspaces/<workspaceId>/runs/<runId>/...`
+* `data/orgs/<orgId>/workspaces/<workspaceId>/handoffs/<handoffId>.json`
+
+---
+
+## 23) Data Retention + Deletion
+
+### 23.1 Defaults (recommended)
+
+* **Run metadata** retention: 90 days
+* **Bundle zip** retention: 30 days
+* **Logs** retention: 30 days
+* **Webhook attempt history** retention: 90 days
+
+These should be configurable per org/workspace.
+
+### 23.2 Expiration Behavior
+
+* When a bundle expires:
+
+  * `GET /bundle` returns metadata but `download.zipUrl` is omitted or returns `expired=true`
+  * `GET /bundle.zip` returns `410 Gone` (recommended)
+
+### 23.3 Deletion Endpoints (optional but recommended)
+
+* `DELETE /v1/runs/{runId}` — deletes run metadata + workspace + artifacts (soft delete preferred)
+* `DELETE /v1/handoffs/{handoffId}` — deletes handoff record (keep audit log)
+
+**Soft delete rule**
+
+* Mark as deleted and remove artifacts; keep minimal audit record.
+
+### 23.4 Background Cleanup Job
+
+* Run daily cleanup to:
+
+  * delete expired zips
+  * truncate old logs
+  * prune nonce store for webhook replay protection
+
+---
+
+## 24) Threat Model Checklist (Minimum)
+
+### 24.1 Zip / File System
+
+* ✅ **Zip-slip prevention**: only include allowlisted paths; normalize paths; reject `..` traversal.
+* ✅ **Run isolation**: per-run workspace directory; never run generation in shared folder.
+* ✅ **Symlink safety**: avoid following symlinks when walking directories.
+
+### 24.2 Webhooks
+
+* ✅ **SSRF protection**: restrict webhook URLs (block localhost, 127.0.0.0/8, 10.0.0.0/8, 169.254.0.0/16, 172.16.0.0/12, 192.168.0.0/16) or require allowlist.
+* ✅ **Signed payloads**: timestamp + nonce + HMAC.
+* ✅ **Replay protection**: nonce cache.
+* ✅ **Timeouts**: 5–10s request timeout.
+
+### 24.3 Git Tokens
+
+* ✅ **Never log tokens**; redact secrets in logs.
+* ✅ **Scope tokens**: repo-scoped, least privilege.
+* ✅ **Write boundary**: only write under `pathPrefix`.
+
+### 24.4 API Abuse
+
+* ✅ **Rate limits** on run creation and downloads.
+* ✅ **Payload size limits** (JSON body cap).
+* ✅ **Concurrency limits** (max active runs per tenant).
+
+### 24.5 Logging + Redaction
+
+* ✅ Redact fields:
+
+  * `Authorization`
+  * webhook `secret`
+  * git `token`
+  * any direct adapter credentials
+
+---
+
+## 25) Operational Controls (Recommended)
+
+### 25.1 Concurrency Controls
+
+* Per-tenant max active runs (starter: 3)
+* Global max active runs (starter: environment-dependent)
+
+### 25.2 Timeouts
+
+* Per run max wall time (starter: 10 minutes)
+* Per step timeouts (optional)
+
+### 25.3 Observability
+
+* Include `runId` and `handoffId` on every log line.
+* Emit structured events (see Audit Logging).
+
+---
+
+## 26) File Upload Support (Context Attachments)
+
+### 26.1 Goal
+
+Allow users to upload existing docs/specs (PDF, DOCX, TXT/MD) and have Roshi extract readable text and include it as **additional context** for AI expansion.
+
+### 26.2 UX Guidance
+
+* Add a drag-and-drop zone in Step 1 (Project Basics).
+* Uploads can happen **before** creating a run.
+* On Generate, pass `uploadIds` into `POST /v1/runs`.
+
+### 26.3 API Endpoints (Recommended)
+
+**Create Upload (pre-run)**
+
+* `POST /v1/uploads` (multipart/form-data)
+
+**Get Upload status/metadata**
+
+* `GET /v1/uploads/{uploadId}`
+
+**Bind uploads to run**
+
+* `POST /v1/runs` includes `uploadIds: []`
+
+**Optional run-scoped convenience**
+
+* `POST /v1/runs/{runId}/uploads` (only after run exists)
+
+### 26.4 Data Model
+
+**Upload**
+
+```json
+{
+  "uploadId": "up_123",
+  "filename": "Spec.pdf",
+  "mimeType": "application/pdf",
+  "bytes": 123456,
+  "sha256": "...",
+  "state": "uploaded",
+  "extraction": {
+    "state": "queued",
+    "mode": "text_parse",
+    "textBytes": 0,
+    "textSha256": null,
+    "warnings": []
+  },
+  "createdAt": "...",
+  "updatedAt": "..."
+}
+```
+
+**Upload states**
+
+* `uploaded | extracting | extracted | failed | deleted`
+
+**Extraction states**
+
+* `queued | running | completed | failed`
+
+### 26.5 Extraction Rules
+
+**Allowed types (starter)**
+
+* `application/pdf` (text-based PDFs)
+* `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (DOCX)
+* `text/plain`, `text/markdown`
+
+**Libraries (Node)**
+
+* PDF: `pdf-parse`
+* DOCX: `mammoth`
+
+**Important limitation**
+
+* Scanned/image PDFs may produce little/no text. In that case:
+
+  * set `extraction.warnings += ["LOW_TEXT_YIELD"]`
+  * still store the file; context may be limited unless OCR is added later.
+
+### 26.6 Security Constraints
+
+* Max file size (starter): **10 MB per file**, **25 MB per run**
+* Max extracted text (starter): **500k characters** per run (trim with a note)
+* Filename/path sanitization (no traversal)
+* Store uploads outside web root
+* Optional: virus scan hook (enterprise)
+* Never execute embedded content/macros
+
+### 26.7 Bundle + Manifest Integration
+
+**Bundle must include**
+
+* `handoff/uploads/<uploadId>/<original filename>` (original)
+* `handoff/uploads/<uploadId>/extracted.txt` (extracted text)
+* `handoff/uploads/index.json` (upload metadata list)
+
+**AI context packet**
+
+* `handoff/ai_context.json` must include an `attachments` array:
+
+```json
+{
+  "attachments": [
+    {
+      "uploadId": "up_123",
+      "filename": "Spec.pdf",
+      "mimeType": "application/pdf",
+      "textSha256": "...",
+      "textPreview": "<first N chars>"
+    }
+  ]
+}
+```
+
+**Manifest additions**
+
+* bump `bundleVersion` to `0.3.0` when enabling uploads
+* add `inputSummary.attachmentCount`
+* add `checksums.attachmentsIndexSha256`
+
+### 26.8 Prompt Policy (Don’t Invent)
+
+* Uploaded text is **secondary context**.
+* The structured `input` remains the primary truth.
+* If attachments conflict with structured input:
+
+  * prefer structured input
+  * record an `OPEN_QUESTIONS` item noting the conflict
+
+### 26.9 Rate Limits (uploads)
+
+* `POST /v1/uploads`: 30 per hour per API key
+* `GET /v1/uploads/{id}`: 120 per minute per API key
+
+---
+
+## 27) Implementation Notes for Agents (Optional but Useful) (Optional but Useful)
+
+If you include `implementationPlan` in `manifest.json`, agents should:
+
+1. Read `entryDocs` in order.
+2. Execute `commandsToRun`.
+3. Follow `implementationPlan` steps and enforce `doNotTouch`.
