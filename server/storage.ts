@@ -2,7 +2,9 @@ import {
   type User, type InsertUser, 
   type Assembly, type InsertAssembly, type AssemblyState, type AssemblyStep, type Kit, type AssemblyProgress,
   type Delivery, type InsertDelivery, type DeliveryState, type DeliveryAttempt,
-  type ProjectPackage, type InsertProjectPackage, type ProjectSummary, type ProjectWarning
+  type ProjectPackage, type InsertProjectPackage, type ProjectSummary, type ProjectWarning,
+  type ApiKey, type InsertApiKey,
+  type AuditLog, type InsertAuditLog
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -28,6 +30,18 @@ export interface IStorage {
   createProjectPackage(pkg: InsertProjectPackage): Promise<ProjectPackage>;
   updateProjectPackage(id: string, updates: Partial<ProjectPackage>): Promise<ProjectPackage | undefined>;
   deleteProjectPackage(id: string): Promise<boolean>;
+  
+  // API Keys
+  getApiKey(id: string): Promise<ApiKey | undefined>;
+  getApiKeyByPrefix(prefix: string): Promise<ApiKey | undefined>;
+  getApiKeys(): Promise<ApiKey[]>;
+  createApiKey(apiKey: InsertApiKey): Promise<ApiKey>;
+  updateApiKey(id: string, updates: Partial<ApiKey>): Promise<ApiKey | undefined>;
+  deleteApiKey(id: string): Promise<boolean>;
+  
+  // Audit Logs
+  getAuditLogs(options?: { limit?: number; offset?: number; action?: string; resourceType?: string }): Promise<AuditLog[]>;
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
 
   // Backward compatibility aliases
   getRun(id: string): Promise<Assembly | undefined>;
@@ -232,6 +246,92 @@ export class MemStorage implements IStorage {
 
   async deleteProjectPackage(id: string): Promise<boolean> {
     return this.projectPackages.delete(id);
+  }
+
+  // API Keys (stub implementation for MemStorage)
+  private apiKeys: Map<string, ApiKey> = new Map();
+  private auditLogs: Map<string, AuditLog> = new Map();
+
+  async getApiKey(id: string): Promise<ApiKey | undefined> {
+    return this.apiKeys.get(id);
+  }
+
+  async getApiKeyByPrefix(prefix: string): Promise<ApiKey | undefined> {
+    return Array.from(this.apiKeys.values()).find(k => k.keyPrefix === prefix);
+  }
+
+  async getApiKeys(): Promise<ApiKey[]> {
+    return Array.from(this.apiKeys.values())
+      .filter(k => !k.revokedAt)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async createApiKey(insertKey: InsertApiKey): Promise<ApiKey> {
+    const id = `key_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+    const now = new Date();
+    const key: ApiKey = {
+      id,
+      name: insertKey.name,
+      keyHash: insertKey.keyHash,
+      keyPrefix: insertKey.keyPrefix,
+      scopes: insertKey.scopes || null,
+      lastUsedAt: null,
+      expiresAt: insertKey.expiresAt || null,
+      revokedAt: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.apiKeys.set(id, key);
+    return key;
+  }
+
+  async updateApiKey(id: string, updates: Partial<ApiKey>): Promise<ApiKey | undefined> {
+    const key = this.apiKeys.get(id);
+    if (!key) return undefined;
+    const updatedKey = { ...key, ...updates, updatedAt: new Date() };
+    this.apiKeys.set(id, updatedKey);
+    return updatedKey;
+  }
+
+  async deleteApiKey(id: string): Promise<boolean> {
+    return this.apiKeys.delete(id);
+  }
+
+  async getAuditLogs(options?: { limit?: number; offset?: number; action?: string; resourceType?: string }): Promise<AuditLog[]> {
+    let logs = Array.from(this.auditLogs.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    if (options?.action) {
+      logs = logs.filter(l => l.action === options.action);
+    }
+    if (options?.resourceType) {
+      logs = logs.filter(l => l.resourceType === options.resourceType);
+    }
+    
+    const offset = options?.offset || 0;
+    const limit = options?.limit || 100;
+    return logs.slice(offset, offset + limit);
+  }
+
+  async createAuditLog(insertLog: InsertAuditLog): Promise<AuditLog> {
+    const id = `log_${randomUUID().replace(/-/g, '').substring(0, 16)}`;
+    const log: AuditLog = {
+      id,
+      action: insertLog.action,
+      resourceType: insertLog.resourceType,
+      resourceId: insertLog.resourceId || null,
+      apiKeyId: insertLog.apiKeyId || null,
+      ipAddress: insertLog.ipAddress || null,
+      userAgent: insertLog.userAgent || null,
+      requestMethod: insertLog.requestMethod || null,
+      requestPath: insertLog.requestPath || null,
+      statusCode: insertLog.statusCode || null,
+      correlationId: insertLog.correlationId || null,
+      metadata: insertLog.metadata || null,
+      createdAt: new Date(),
+    };
+    this.auditLogs.set(id, log);
+    return log;
   }
 
   // Backward compatibility aliases

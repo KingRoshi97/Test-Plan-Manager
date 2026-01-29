@@ -1,11 +1,13 @@
-import { eq, desc, isNull } from "drizzle-orm";
+import { eq, desc, isNull, and, like } from "drizzle-orm";
 import { db } from "./db";
 import { 
-  users, assemblies, deliveries, projectPackages,
+  users, assemblies, deliveries, projectPackages, apiKeys, auditLogs,
   type User, type InsertUser, 
   type Assembly, type InsertAssembly,
   type Delivery, type InsertDelivery,
-  type ProjectPackage, type InsertProjectPackage
+  type ProjectPackage, type InsertProjectPackage,
+  type ApiKey, type InsertApiKey,
+  type AuditLog, type InsertAuditLog
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 import { randomUUID } from "crypto";
@@ -206,5 +208,94 @@ export class DbStorage implements IStorage {
   async deleteProjectPackage(id: string): Promise<boolean> {
     const result = await db.delete(projectPackages).where(eq(projectPackages.id, id)).returning();
     return result.length > 0;
+  }
+
+  // API Keys
+  async getApiKey(id: string): Promise<ApiKey | undefined> {
+    const result = await db.select().from(apiKeys).where(eq(apiKeys.id, id));
+    return result[0];
+  }
+
+  async getApiKeyByPrefix(prefix: string): Promise<ApiKey | undefined> {
+    const result = await db.select().from(apiKeys).where(eq(apiKeys.keyPrefix, prefix));
+    return result[0];
+  }
+
+  async getApiKeys(): Promise<ApiKey[]> {
+    return db.select().from(apiKeys)
+      .where(isNull(apiKeys.revokedAt))
+      .orderBy(desc(apiKeys.createdAt));
+  }
+
+  async createApiKey(insertKey: InsertApiKey): Promise<ApiKey> {
+    const id = `key_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+    const result = await db.insert(apiKeys).values({
+      id,
+      name: insertKey.name,
+      keyHash: insertKey.keyHash,
+      keyPrefix: insertKey.keyPrefix,
+      scopes: insertKey.scopes || null,
+      expiresAt: insertKey.expiresAt || null,
+    }).returning();
+    return result[0];
+  }
+
+  async updateApiKey(id: string, updates: Partial<ApiKey>): Promise<ApiKey | undefined> {
+    const result = await db.update(apiKeys)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(apiKeys.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteApiKey(id: string): Promise<boolean> {
+    const result = await db.delete(apiKeys).where(eq(apiKeys.id, id)).returning();
+    return result.length > 0;
+  }
+
+  // Audit Logs
+  async getAuditLogs(options?: { limit?: number; offset?: number; action?: string; resourceType?: string }): Promise<AuditLog[]> {
+    const limit = options?.limit || 100;
+    const offset = options?.offset || 0;
+    
+    let query = db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit).offset(offset);
+    
+    // Apply filters if provided
+    const conditions = [];
+    if (options?.action) {
+      conditions.push(eq(auditLogs.action, options.action as any));
+    }
+    if (options?.resourceType) {
+      conditions.push(eq(auditLogs.resourceType, options.resourceType));
+    }
+    
+    if (conditions.length > 0) {
+      return db.select().from(auditLogs)
+        .where(and(...conditions))
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(limit)
+        .offset(offset);
+    }
+    
+    return query;
+  }
+
+  async createAuditLog(insertLog: InsertAuditLog): Promise<AuditLog> {
+    const id = `log_${randomUUID().replace(/-/g, '').substring(0, 16)}`;
+    const result = await db.insert(auditLogs).values({
+      id,
+      action: insertLog.action,
+      resourceType: insertLog.resourceType,
+      resourceId: insertLog.resourceId || null,
+      apiKeyId: insertLog.apiKeyId || null,
+      ipAddress: insertLog.ipAddress || null,
+      userAgent: insertLog.userAgent || null,
+      requestMethod: insertLog.requestMethod || null,
+      requestPath: insertLog.requestPath || null,
+      statusCode: insertLog.statusCode || null,
+      correlationId: insertLog.correlationId || null,
+      metadata: insertLog.metadata || null,
+    }).returning();
+    return result[0];
   }
 }
