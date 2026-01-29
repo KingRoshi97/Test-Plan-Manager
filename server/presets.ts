@@ -272,3 +272,123 @@ export const modeLabels: Record<AssemblyMode, { label: string; description: stri
   refactor_hardening: { label: "Refactor / Hardening", description: "Improve code quality and security", requiresZip: true },
   add_feature_module: { label: "Add Feature Module", description: "Add new functionality", requiresZip: true },
 };
+
+export interface ProjectPackageSummary {
+  id: string;
+  filename: string;
+  framework?: string;
+  scripts?: Record<string, string>;
+  dependencies?: Record<string, string>;
+  entrypoints?: string[];
+  fileCount?: number;
+  warnings?: string[];
+}
+
+export interface PipelineContext {
+  category: AssemblyCategory;
+  mode: AssemblyMode;
+  presetId?: string;
+  enabledDomains: string[];
+  domainWeights: Record<string, number>;
+  projectPackage?: ProjectPackageSummary;
+}
+
+type DomainWeights = Record<string, number>;
+
+const DEFAULT_DOMAIN_WEIGHTS: Record<AssemblyCategory, Record<AssemblyMode, DomainWeights>> = {
+  web: {
+    new_build: { web: 1.0, api: 0.9, uxui: 0.9, security: 0.6, infra: 0.6 },
+    existing_upgrade: { web: 0.8, api: 0.8, uxui: 0.8, security: 0.7, infra: 0.7 },
+    ui_overhaul: { uxui: 1.0, web: 0.7, api: 0.4, security: 0.5, infra: 0.3 },
+    refactor_hardening: { security: 1.0, infra: 1.0, api: 0.8, web: 0.7, uxui: 0.4 },
+    add_feature_module: { web: 1.0, api: 1.0, uxui: 0.8, security: 0.6, infra: 0.6 },
+  },
+  mobile: {
+    new_build: { uxui: 1.0, api: 0.8, security: 0.7, infra: 0.7 },
+    existing_upgrade: { uxui: 0.8, api: 0.8, security: 0.7, infra: 0.7 },
+    ui_overhaul: { uxui: 1.0, api: 0.4, security: 0.5, infra: 0.3 },
+    refactor_hardening: { security: 1.0, infra: 1.0, api: 0.8, uxui: 0.5 },
+    add_feature_module: { uxui: 1.0, api: 1.0, security: 0.6, infra: 0.6 },
+  },
+  api: {
+    new_build: { api: 1.0, security: 0.9, infra: 0.8 },
+    existing_upgrade: { api: 0.9, security: 0.8, infra: 0.8 },
+    ui_overhaul: { api: 0.8, uxui: 0.6, security: 0.5, infra: 0.4 },
+    refactor_hardening: { security: 1.0, infra: 1.0, api: 0.9 },
+    add_feature_module: { api: 1.0, security: 0.7, infra: 0.6 },
+  },
+  library: {
+    new_build: { api: 1.0, security: 0.8, infra: 0.8 },
+    existing_upgrade: { api: 0.9, security: 0.8, infra: 0.8 },
+    ui_overhaul: { api: 0.7, uxui: 0.5, security: 0.5, infra: 0.4 },
+    refactor_hardening: { security: 1.0, infra: 1.0, api: 0.9 },
+    add_feature_module: { api: 1.0, security: 0.7, infra: 0.6 },
+  },
+  automation: {
+    new_build: { api: 1.0, security: 0.9, infra: 0.9, uxui: 0.5 },
+    existing_upgrade: { api: 0.9, security: 0.8, infra: 0.8, uxui: 0.5 },
+    ui_overhaul: { uxui: 0.9, api: 0.6, security: 0.5, infra: 0.4 },
+    refactor_hardening: { security: 1.0, infra: 1.0, api: 0.9, uxui: 0.4 },
+    add_feature_module: { api: 1.0, infra: 0.8, security: 0.7, uxui: 0.5 },
+  },
+  game: {
+    new_build: { platform: 1.0, uxui: 0.8, api: 0.5 },
+    existing_upgrade: { platform: 0.9, uxui: 0.8, api: 0.6 },
+    ui_overhaul: { uxui: 1.0, platform: 0.6, api: 0.3 },
+    refactor_hardening: { platform: 1.0, security: 0.9, api: 0.7, uxui: 0.5 },
+    add_feature_module: { platform: 1.0, uxui: 0.8, api: 0.6 },
+  },
+};
+
+export function deriveEnabledDomains(
+  category: AssemblyCategory,
+  mode: AssemblyMode,
+  preset?: Preset
+): string[] {
+  if (preset) {
+    return preset.defaultDomains;
+  }
+  const weights = DEFAULT_DOMAIN_WEIGHTS[category]?.[mode] || {};
+  return Object.keys(weights).filter(d => weights[d] >= 0.5);
+}
+
+export function deriveDomainWeights(
+  category: AssemblyCategory,
+  mode: AssemblyMode,
+  enabledDomains: string[]
+): Record<string, number> {
+  const baseWeights = DEFAULT_DOMAIN_WEIGHTS[category]?.[mode] || {};
+  const result: Record<string, number> = {};
+  
+  for (const domain of enabledDomains) {
+    result[domain] = baseWeights[domain] ?? 0.5;
+  }
+  
+  return result;
+}
+
+export function buildPipelineContext(
+  category: AssemblyCategory,
+  mode: AssemblyMode,
+  presetId?: string,
+  projectPackage?: ProjectPackageSummary
+): PipelineContext {
+  const preset = presetId ? getPresetById(presetId) : undefined;
+  const enabledDomains = deriveEnabledDomains(category, mode, preset);
+  const domainWeights = deriveDomainWeights(category, mode, enabledDomains);
+  
+  return {
+    category,
+    mode,
+    presetId,
+    enabledDomains,
+    domainWeights,
+    projectPackage,
+  };
+}
+
+export function getRecommendedBuildOrder(domainWeights: Record<string, number>): string[] {
+  return Object.entries(domainWeights)
+    .sort(([, a], [, b]) => b - a)
+    .map(([domain]) => domain);
+}

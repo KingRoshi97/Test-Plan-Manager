@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import type { PipelineContext } from "./presets";
+import { renderModeOverlay, generateMigrationNotes, generateRegressionChecklist, generateUIChangelog, generateComponentAdoptionPlan, generateHardeningPlan, generateTestStrategy } from "./pipeline/mode-overlays";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -13,6 +15,7 @@ export interface GeneratedDocs {
   reasonCodes: string;
   actionVocabulary: string;
   glossary: string;
+  modeArtifacts?: Record<string, string>;
 }
 
 export interface StructuredInput {
@@ -31,6 +34,94 @@ export interface GenerateDocsOptions {
   context?: string;
   domains?: string[];
   structuredInput?: StructuredInput;
+  pipelineContext?: PipelineContext;
+}
+
+function injectModeOverlay(content: string, options: GenerateDocsOptions, domain: string): string {
+  const ctx = options.pipelineContext;
+  if (!ctx) return content;
+  
+  const overlay = renderModeOverlay({
+    category: ctx.category,
+    mode: ctx.mode,
+    domain,
+    projectSummary: ctx.projectPackage,
+  });
+  
+  if (!overlay) return content;
+  
+  const lines = content.split("\n");
+  let insertIndex = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith("# ")) {
+      insertIndex = i + 1;
+      break;
+    }
+  }
+  
+  lines.splice(insertIndex, 0, "", overlay);
+  return lines.join("\n");
+}
+
+function buildProjectPackageSection(options: GenerateDocsOptions): string {
+  const pkg = options.pipelineContext?.projectPackage;
+  if (!pkg) return "";
+  
+  let section = "\n## Existing Project Snapshot\n\n";
+  section += `- **Filename**: ${pkg.filename}\n`;
+  section += `- **Framework**: ${pkg.framework || "UNKNOWN"}\n`;
+  section += `- **File Count**: ${pkg.fileCount || "UNKNOWN"}\n`;
+  
+  if (pkg.entrypoints?.length) {
+    section += "\n### Detected Entrypoints\n";
+    for (const entry of pkg.entrypoints.slice(0, 10)) {
+      section += `- \`${entry}\`\n`;
+    }
+  }
+  
+  if (pkg.scripts && Object.keys(pkg.scripts).length > 0) {
+    section += "\n### Available Scripts\n";
+    for (const [name, cmd] of Object.entries(pkg.scripts).slice(0, 8)) {
+      section += `- \`${name}\`: ${cmd}\n`;
+    }
+  }
+  
+  if (pkg.warnings?.length) {
+    section += "\n### Analysis Warnings\n";
+    for (const warning of pkg.warnings) {
+      section += `- ${warning}\n`;
+    }
+  }
+  
+  return section;
+}
+
+function generateModeArtifacts(options: GenerateDocsOptions): Record<string, string> {
+  const ctx = options.pipelineContext;
+  if (!ctx) return {};
+  
+  const artifacts: Record<string, string> = {};
+  
+  switch (ctx.mode) {
+    case "existing_upgrade":
+      artifacts["MIGRATION_NOTES.md"] = generateMigrationNotes(ctx.projectPackage);
+      artifacts["REGRESSION_CHECKLIST.md"] = generateRegressionChecklist(ctx.projectPackage);
+      break;
+    case "ui_overhaul":
+      artifacts["UI_CHANGELOG.md"] = generateUIChangelog();
+      artifacts["COMPONENT_ADOPTION_PLAN.md"] = generateComponentAdoptionPlan();
+      break;
+    case "refactor_hardening":
+      artifacts["HARDENING_PLAN.md"] = generateHardeningPlan();
+      artifacts["TEST_STRATEGY.md"] = generateTestStrategy();
+      break;
+    case "add_feature_module":
+      break;
+    case "new_build":
+      break;
+  }
+  
+  return artifacts;
 }
 
 const SYSTEM_PROMPT = `You are Axiom Assembler, a documentation architect that generates structured product and engineering documentation for software projects.
@@ -418,7 +509,9 @@ Aim for 10-20 relevant terms.`;
   return response.choices[0]?.message?.content || "";
 }
 
-function getTemplateFallback(docType: keyof GeneratedDocs, options: GenerateDocsOptions): string {
+type CoreDocType = "projectOverview" | "rpbs" | "rebs" | "domainMap" | "reasonCodes" | "actionVocabulary" | "glossary";
+
+function getTemplateFallback(docType: CoreDocType, options: GenerateDocsOptions): string {
   const projectName = options.structuredInput?.projectName || options.projectName || "Untitled Project";
   const description = options.structuredInput?.description || options.idea || "No description provided";
   const domains = options.domains || ["platform", "api", "web"];
@@ -432,7 +525,7 @@ function getTemplateFallback(docType: keyof GeneratedDocs, options: GenerateDocs
   const userList = users.map(u => `- **${u.type}**: ${u.goal}`).join("\n") || "- UNKNOWN: User types not specified";
   const techList = Object.entries(techStack).filter(([_, v]) => v).map(([k, v]) => `- **${k}**: ${v}`).join("\n") || "- UNKNOWN: Tech stack not specified";
 
-  const templates: Record<keyof GeneratedDocs, string> = {
+  const templates: Record<CoreDocType, string> = {
     projectOverview: `# ${projectName} - Project Overview
 
 ## Summary
@@ -672,13 +765,36 @@ export async function generateAllDocs(options: GenerateDocsOptions): Promise<Gen
   const mode = fallbackCount === 0 ? "ai" : fallbackCount === 7 ? "template_fallback" : "hybrid";
   console.log(`[AI] Generation complete: mode=${mode}, fallbacks=${fallbackCount}/7`);
 
+  let projectOverview = results[0].result;
+  let rpbs = results[1].result;
+  let rebs = results[2].result;
+  
+  if (options.pipelineContext) {
+    console.log(`[AI] Applying mode overlays for mode=${options.pipelineContext.mode}`);
+    
+    const projectPackageSection = buildProjectPackageSection(options);
+    if (projectPackageSection) {
+      projectOverview += projectPackageSection;
+    }
+    
+    projectOverview = injectModeOverlay(projectOverview, options, "general");
+    rpbs = injectModeOverlay(rpbs, options, "uxui");
+    rebs = injectModeOverlay(rebs, options, "api");
+  }
+  
+  const modeArtifacts = generateModeArtifacts(options);
+  if (Object.keys(modeArtifacts).length > 0) {
+    console.log(`[AI] Generated ${Object.keys(modeArtifacts).length} mode artifacts: ${Object.keys(modeArtifacts).join(", ")}`);
+  }
+
   return {
-    projectOverview: results[0].result,
-    rpbs: results[1].result,
-    rebs: results[2].result,
+    projectOverview,
+    rpbs,
+    rebs,
     domainMap: results[3].result,
     reasonCodes: results[4].result,
     actionVocabulary: results[5].result,
     glossary: results[6].result,
+    modeArtifacts: Object.keys(modeArtifacts).length > 0 ? modeArtifacts : undefined,
   };
 }

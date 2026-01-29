@@ -7,6 +7,7 @@ import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
 import { createWorkspace, populateWorkspaceWithAI, getWorkspacePath, type WorkspaceConfig } from "./workspace-manager";
+import { buildPipelineContext, type ProjectPackageSummary } from "./presets";
 import { upload, processUploadedFiles, combineExtractedText } from "./file-upload";
 import { registerHandler, enqueue } from "./jobs/queue";
 import { scanAndIndexProjectPackage } from "./jobs/scan-index-package";
@@ -1386,12 +1387,45 @@ async function executePipelineV1(assemblyId: string, input: AssemblyInput) {
     const assembly = await storage.getAssembly(assemblyId);
     if (!assembly) throw new Error("Assembly not found");
     
+    let projectPackageSummary: ProjectPackageSummary | undefined;
+    if (assembly.projectPackageId) {
+      const pkg = await storage.getProjectPackage(assembly.projectPackageId);
+      if (pkg && pkg.indexState === "indexed" && pkg.summaryJson) {
+        const summary = pkg.summaryJson as Record<string, unknown>;
+        projectPackageSummary = {
+          id: pkg.id,
+          filename: pkg.filename,
+          framework: summary.framework as string | undefined,
+          scripts: summary.scripts as Record<string, string> | undefined,
+          dependencies: summary.dependencies as Record<string, string> | undefined,
+          entrypoints: summary.entrypoints as string[] | undefined,
+          fileCount: summary.fileCount as number | undefined,
+          warnings: summary.warnings as string[] | undefined,
+        };
+        console.log(`[Assembler Pipeline] Loaded project package summary: ${pkg.filename}, framework: ${projectPackageSummary.framework || "unknown"}`);
+      }
+    }
+    
+    const pipelineContext = assembly.category && assembly.mode 
+      ? buildPipelineContext(
+          assembly.category as Parameters<typeof buildPipelineContext>[0],
+          assembly.mode as Parameters<typeof buildPipelineContext>[1],
+          assembly.presetId || undefined,
+          projectPackageSummary
+        )
+      : undefined;
+    
+    if (pipelineContext) {
+      console.log(`[Assembler Pipeline] Built pipeline context: category=${pipelineContext.category}, mode=${pipelineContext.mode}, weights=${JSON.stringify(pipelineContext.domainWeights)}`);
+    }
+    
     const workspaceConfig: WorkspaceConfig = {
       assemblyId,
       projectName: input.projectName,
       idea: input.legacy?.idea || input.description,
       context: assembly.context || undefined,
       domains: assembly.domains || ["platform", "api", "web"],
+      pipelineContext,
     };
     
     console.log(`[Assembler Pipeline] Creating workspace for assembly ${assemblyId}`);
