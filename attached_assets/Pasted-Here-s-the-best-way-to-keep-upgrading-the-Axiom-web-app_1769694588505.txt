@@ -1,0 +1,141 @@
+Here’s the best way to keep upgrading the Axiom web app without it turning into random feature creep: move in upgrade “packs” that map to real product value, each with a clear Definition of Done.
+
+Pack 1 — UI Foundation Hardening (highest ROI)
+
+Goal: make the new premium UI consistent and fast everywhere.
+
+Do:
+
+Implement AppShell + Sidebar + TopBar (every page uses it)
+
+Build the kit components (GlassCard, StatusBadge, CodeBlock+Copy, DataTable, EmptyState, Skeletons, Stepper)
+
+Standardize states contract:
+
+every page has loading/empty/error/success patterns
+
+Add toast + error banner standard (includes reason code + copy)
+
+DoD:
+
+No page renders without AppShell
+
+All API errors show: message + next step + reason code (copy)
+
+No “unstyled” tables/forms
+
+Pack 2 — Create Wizard v2 (conversion upgrade)
+
+Goal: the wizard becomes dead-simple and reliable.
+
+Do:
+
+Add the Review step with exact JSON payload preview
+
+Add “Save as Draft” (localStorage) + “Load Draft”
+
+Add “Preset templates” (Starter / SaaS / Marketplace / Social)
+
+Inline validation + step gating
+
+DoD:
+
+user can refresh and not lose progress
+
+Review step is always correct payload
+
+1-click start from preset
+
+Pack 3 — Assemblies Dashboard (productivity upgrade)
+
+Goal: the app feels like a real control panel.
+
+Do:
+
+Search + filters: state, date range, domain, hasDeliveries, hasAttachments
+
+Sort + pagination (or infinite)
+
+Bulk actions (optional): download kits, retry deliveries
+
+Better list row: status timeline mini + open questions count
+
+DoD:
+
+users can find any assembly fast
+
+list is usable at 1000+ assemblies
+
+Pack 4 — Assembly Detail “Ops Console” (power-user upgrade)
+
+Goal: the detail page answers “what’s happening?” instantly.
+
+Do:
+
+Timeline with step durations
+
+Logs viewer with:
+
+filter (errors only)
+
+copy logs
+
+download logs
+
+Kit tab:
+
+display checksums
+
+signed URL copy
+
+manifest viewer with collapsible sections
+
+Deliveries tab:
+
+delivery event history
+
+retry with exponential backoff indicator
+
+DoD:
+
+any failure is diagnosable from this page alone
+
+Pack 5 — Integrations (universal handoff upgrade)
+
+Goal: make “deliver to agent” truly universal.
+
+Do (methods):
+
+Webhook delivery (POST signed event + signed kit URL)
+
+Pull delivery (tool polls kit endpoint)
+
+Git delivery (push kit contents to repo branch)
+
+Direct download (manual)
+
+UI:
+
+Delivery creation modal with templates
+
+“Test delivery” button (sends sandbox payload)
+
+Per-delivery status + last error + retry
+
+DoD:
+
+user can deliver a kit to at least 1 real target reliably
+
+Pack 6 — Trust / Compliance Layer (enterprise-grade)
+
+Goal: safer + auditable.
+
+Do:
+
+API key management UI
+
+Audit log page (actions and changes)
+
+Signed URL expiry viewer
+
+Rate limit display and warnings
