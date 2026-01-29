@@ -139,6 +139,14 @@ queued → running → completed (or failed/canceled)
 
 ## Recent Changes
 
+### January 2026 (Phase 4 - Delivery Engine)
+- **Delivery Events**: Added `delivery_events` table to track lifecycle events (queued, attempted, response, succeeded, failed, scheduled_retry, dead)
+- **Event Logging**: `processDelivery` now logs events at each stage of delivery processing
+- **Exponential Backoff**: Failed deliveries retry with exponential backoff (30s base, 6h max) using `nextAttemptAt` field
+- **Retry Scheduler**: Background scheduler polls every 10s for queued deliveries past their `nextAttemptAt`
+- **Events API**: New `GET /v1/deliveries/:deliveryId/events` endpoint returns delivery event history
+- **Auto-trigger**: Queued deliveries are automatically triggered when their assembly completes
+
 ### January 2026 (Project Package Feature)
 - **Project Package Upload**: Users can upload ZIP files of existing codebases for analysis
 - **Security**: Safe unzip with zip slip prevention, file size limits (100MB max, 20k files max), timeout protection
