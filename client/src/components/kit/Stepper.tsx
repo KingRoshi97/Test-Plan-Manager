@@ -41,8 +41,8 @@ export function Stepper({ steps, currentStep, onStepClick, className }: StepperP
                 <div
                   className={cn(
                     "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all",
-                    isCompleted && "bg-primary border-primary text-primary-foreground",
-                    isCurrent && "border-primary bg-primary/10 text-primary",
+                    isCompleted && "bg-gradient-to-br from-[hsl(var(--axiom-amber))] via-[hsl(var(--axiom-orange))] to-[hsl(var(--axiom-warm))] border-transparent text-white shadow-[0_0_20px_4px_hsl(var(--primary)/0.5)]",
+                    isCurrent && "border-primary border-[3px] bg-primary/20 text-primary shadow-[0_0_24px_6px_hsl(var(--primary)/0.6)]",
                     !isCompleted && !isCurrent && "border-muted-foreground/30 text-muted-foreground"
                   )}
                 >
@@ -72,7 +72,7 @@ export function Stepper({ steps, currentStep, onStepClick, className }: StepperP
                   <div
                     className={cn(
                       "h-0.5 w-full transition-all",
-                      index < currentIndex ? "bg-primary" : "bg-muted-foreground/30"
+                      index < currentIndex ? "bg-gradient-to-r from-[hsl(var(--axiom-amber))] to-[hsl(var(--axiom-orange))]" : "bg-muted-foreground/30"
                     )}
                   />
                 </div>

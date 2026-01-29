@@ -399,7 +399,7 @@ Read these docs to understand the project architecture, then implement the appli
                     />
                     <Button
                       type="submit"
-                      className="w-full btn-axiom-cta"
+                      className="w-full"
                       disabled={createAssemblyMutation.isPending}
                       data-testid="button-generate"
                     >
@@ -883,7 +883,6 @@ Read these docs to understand the project architecture, then implement the appli
                           </Button>
                           <Button
                             type="submit"
-                            className="btn-axiom-cta"
                             disabled={createAssemblyMutation.isPending}
                             data-testid="button-generate"
                           >

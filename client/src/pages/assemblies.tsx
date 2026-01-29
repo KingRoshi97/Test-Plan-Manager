@@ -71,7 +71,7 @@ export default function Assemblies() {
         subtitle="Manage your documentation kits"
         actions={
           <Link href="/create">
-            <Button className="btn-axiom-cta" data-testid="button-new-assembly">
+            <Button data-testid="button-new-assembly">
               <Plus className="h-4 w-4 mr-2" />
               New Assembly
             </Button>
