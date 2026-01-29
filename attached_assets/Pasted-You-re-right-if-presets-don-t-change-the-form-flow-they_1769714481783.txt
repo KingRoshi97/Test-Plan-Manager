@@ -1,0 +1,271 @@
+You’re right — if presets don’t change the form flow, they don’t improve input quality, and the agent still has to guess. The fix is:
+
+Preset must own a “designated form process” (wizard flow)
+
+Selecting a preset must rebuild the wizard steps + required fields + hints/examples
+
+Prefill + validation must be driven by the preset’s flow (not a generic form)
+
+Below is the clean, scalable way to do it.
+
+What we’re building
+A preset will define:
+
+Flow ID (which wizard process to use)
+
+Step order (what the user sees)
+
+Which fields exist (and which are hidden)
+
+Which fields are required vs optional
+
+Field prompts (helper text + examples for beginners)
+
+Validation rules
+
+Output mapping into the assembly payload
+
+This makes your tool beginner-friendly AND improves agent output quality.
+
+Why your prefills aren’t changing (most common cause)
+
+Usually it’s one of these:
+
+preset defaults are never applied into the wizard state (only stored with assembly)
+
+the wizard state is initialized once and doesn’t re-initialize on preset change
+
+you’re showing the same fields for every preset so “prefill” is invisible
+
+Even if you fix prefill, you still need flow control (what you asked for).
+
+Data model: “Wizard Flow Definition”
+
+Add a wizardFlow object to each preset (or reference a shared flow by flowId).
+
+Minimal structure
+type WizardFlow = {
+  id: string;
+  label: string;
+  steps: WizardStep[];
+};
+
+type WizardStep = {
+  id: string;
+  title: string;
+  description?: string;
+  fieldGroups: FieldGroup[];
+  required?: boolean; // step gating
+};
+
+type FieldGroup = {
+  id: string;
+  title?: string;
+  fields: FieldSpec[];
+};
+
+type FieldSpec = {
+  key: string;                // where it writes in the payload
+  label: string;
+  ui: "text"|"textarea"|"select"|"chips"|"list"|"file_zip"|"file_docs"|"toggle";
+  required?: boolean;
+  placeholder?: string;
+  help?: string;
+  examples?: string[];
+  options?: string[];         // for select/chips
+  dependsOn?: { key: string; equals: any }; // conditional
+};
+
+
+Then each preset includes:
+
+wizardFlowId OR wizardFlow inline
+
+defaults (prefill)
+
+requiredKeys (for validation + gating)
+
+Implementation behavior in the web app
+1) Selecting preset resets the draft correctly
+
+When user selects a preset:
+
+start with makeEmptyDraft()
+
+apply preset defaults: applyPresetDefaults(draft, preset.defaults)
+
+set current flow: flow = flows[preset.flowId]
+
+render only fields in that flow
+
+validation uses only keys used by that flow
+
+2) Step gating becomes preset-specific
+
+Example:
+
+existing_upgrade flow requires ZIP to proceed past Intake step
+
+library flow requires package name + targets
+
+game flow requires engine + platform + core loop
+
+3) Beginner-friendly prompts are per field
+
+Every field has “what to type” and examples so non-devs can answer.
+
+The 12 starter presets need 12 flows? Not necessarily.
+
+You can do 6 flow templates (one per Category), and Modes tweak them.
+
+Flow templates (Category-based):
+
+flow.web
+
+flow.mobile
+
+flow.api
+
+flow.library
+
+flow.automation
+
+flow.game
+
+Then Mode overlays modify:
+
+required steps (ZIP step becomes required)
+
+extra steps (UI overhaul adds “Design goals” step)
+
+required fields (hardening adds “risk” + “tests” fields)
+
+This avoids 30 separate flows.
+
+Example: what “designated form process” looks like
+Web App → New Build (flow.web + mode=new_build)
+
+Steps:
+
+Basics: name, one-liner, audience
+
+Core Features: P0 features list + roles
+
+Screens: screen list + nav style
+
+Tech (optional): FE/BE/DB preference
+
+Constraints: must-have + must-not-do
+
+Review: JSON preview + generate
+
+Web App → Existing Upgrade (flow.web + mode=existing_upgrade)
+
+Steps:
+
+Basics
+
+Upload Project ZIP (REQUIRED)
+
+What to change (goals + constraints + do-not-touch)
+
+Risk & Regression (required: “things that must not break”)
+
+Review → generate upgrade kit
+
+Library → New Build (flow.library)
+
+Steps:
+
+Basics (package name, description)
+
+API Surface (exports, functions/classes)
+
+Targets (node/browser, ESM/CJS, TS types)
+
+Quality (tests, lint, examples)
+
+Review
+
+That’s what makes it user friendly.
+
+What you should add to the Assembly payload
+
+Even for beginners, store structured info for the agent:
+
+category, mode, presetId
+
+intent (plain english summary)
+
+features[] (P0/P1/P2)
+
+users[] (roles + goals)
+
+screens[] (name + purpose)
+
+constraints[] + doNotTouch[]
+
+upgradeOutput (patch_only vs patched_zip)
+
+The agent gets consistent input across all presets.
+
+Replit agent prompt to implement (copy/paste)
+Implement preset-driven wizard flows so presets control the form process (steps/fields/requiredness/prompts), not just defaults.
+
+Repo: client (Vite/React/TS + Wouter), server (Express/TS), shared/schema.ts, presets exist.
+
+GOAL
+- Each preset has a designated wizard flow (flowId) that defines steps and fields.
+- Selecting a preset rebuilds the wizard steps and applies defaults into the draft.
+- Validation and step gating are based on the flow definition.
+- Support beginner-friendly field help + examples per preset/flow.
+
+A) DATA: FLOW DEFINITIONS
+1) Create: client/src/lib/wizard/flows.ts
+- Export flow templates for 6 categories:
+  flow.web, flow.mobile, flow.api, flow.library, flow.automation, flow.game
+- Each flow includes steps + field specs (labels/help/examples).
+- Add a function applyModeToFlow(flow, mode) to:
+  - existing_upgrade: insert REQUIRED zip upload step, add regression step, require projectPackageId
+  - ui_overhaul: add design goals + component/style constraints step
+  - refactor_hardening: add hardening targets + tests gates step
+  - add_feature_module: add “feature module scope” step
+
+B) PRESETS LINK TO FLOWS
+2) Update presets model to include:
+- wizardFlowId: one of the 6 flows (web/mobile/api/library/automation/game)
+- The mode will be applied dynamically to produce the final flow.
+
+C) WIZARD STATE MANAGEMENT
+3) Create: client/src/lib/wizard/draft.ts
+- makeEmptyDraft()
+- applyPresetDefaults(draft, preset.defaults)
+- applyFlowFieldPruning(draft, flow) (optional: only keep keys in flow)
+- validateStep(draft, step) using required fields from FieldSpec (and dependsOn)
+
+4) Update Create Wizard page (client/src/pages/home.tsx or create.tsx)
+- Add Step 0: Category → Mode → Preset selection
+- On preset selection:
+  - set preset in state
+  - build flow = applyModeToFlow(getFlow(preset.wizardFlowId), mode)
+  - reset draft = applyPresetDefaults(makeEmptyDraft(), preset.defaults)
+- Render stepper from flow.steps and fields dynamically.
+
+D) ZIP SUPPORT IN NEW ASSEMBLIES
+5) For steps with ui=file_zip:
+- Implement ZIP upload widget in wizard (reusing existing project package uploader)
+- Save projectPackageId in draft
+- Gate next step until indexState=indexed (for existing_upgrade mode)
+
+E) PAYLOAD + API
+6) When submitting:
+- Send POST /v1/assemblies with:
+  category, mode, presetId, projectPackageId (if any), plus draft fields mapped into request schema
+- Ensure schema accepts these fields (update shared/schema.ts if needed).
+
+ACCEPTANCE
+- Changing presets visibly changes the wizard steps/fields.
+- existing_upgrade preset requires zip upload before continuing.
+- library preset asks for package exports/targets and hides irrelevant web/mobile fields.
+- Prefill defaults appear immediately after preset selection.
+- Review step shows the exact payload that will be sent.
