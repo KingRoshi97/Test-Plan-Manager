@@ -34,6 +34,13 @@ export interface WizardDraft {
   };
   uploads: {
     docUploadIds: string[];
+    docs?: Array<{
+      id: string;
+      name: string;
+      objectPath: string;
+      size: number;
+      mimeType: string;
+    }>;
   };
   projectPackage: {
     id?: string;
@@ -120,7 +127,8 @@ export function makeEmptyDraft(): WizardDraft {
       doNotTouch: []
     },
     uploads: {
-      docUploadIds: []
+      docUploadIds: [],
+      docs: []
     },
     projectPackage: {},
     users: {
@@ -387,6 +395,8 @@ export function mapDraftToCreateAssemblyRequest(options: MapDraftOptions): Creat
     domains,
     projectPackageId,
     docUploadIds: draft.uploads.docUploadIds.length > 0 ? draft.uploads.docUploadIds : undefined,
+    // @ts-expect-error docUploads is defined in schema but zod type inference not picking it up
+    docUploads: draft.uploads.docs && draft.uploads.docs.length > 0 ? draft.uploads.docs : undefined,
     features: features.length > 0 ? features : undefined,
     users: users.length > 0 ? users : undefined,
     techStack: {

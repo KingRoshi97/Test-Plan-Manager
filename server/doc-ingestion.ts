@@ -104,8 +104,16 @@ function isAllowedExtension(filename: string): boolean {
   return ALLOWED_EXTENSIONS.includes(ext);
 }
 
+export interface DocUploadMetadata {
+  id: string;
+  name: string;
+  objectPath: string;
+  size: number;
+  mimeType: string;
+}
+
 export async function ingestUploadedDocs(
-  docUploadIds: string[],
+  docUploads: DocUploadMetadata[],
   workspacePath: string
 ): Promise<DocIngestionResult> {
   const inputsDir = path.join(workspacePath, "docs/assembler_v1/inputs");
@@ -120,59 +128,57 @@ export async function ingestUploadedDocs(
   let totalChars = 0;
   let truncatedOverall = false;
 
-  console.log(`[DocIngestion] Processing ${docUploadIds.length} uploaded documents...`);
+  console.log(`[DocIngestion] Processing ${docUploads.length} uploaded documents...`);
 
-  for (const docId of docUploadIds) {
-    const objectPath = `/objects/uploads/${docId.replace("doc_", "")}`;
-    
-    console.log(`[DocIngestion] Processing doc: ${docId} (path: ${objectPath})`);
+  for (const doc of docUploads) {
+    console.log(`[DocIngestion] Processing doc: ${doc.id} (name: ${doc.name}, path: ${doc.objectPath})`);
+
+    if (!isAllowedExtension(doc.name)) {
+      errors.push(`${doc.id}: Unsupported file type for "${doc.name}"`);
+      continue;
+    }
 
     try {
-      const buffer = await downloadFileFromObjectStorage(objectPath);
+      const buffer = await downloadFileFromObjectStorage(doc.objectPath);
       if (!buffer) {
-        errors.push(`${docId}: Failed to download file`);
+        errors.push(`${doc.id}: Failed to download file`);
         continue;
       }
 
       if (buffer.length > MAX_FILE_SIZE) {
-        errors.push(`${docId}: File exceeds 1MB limit, skipping`);
+        errors.push(`${doc.id}: File exceeds 1MB limit, skipping`);
         continue;
       }
 
-      const filename = `${docId}.txt`;
-      if (!isAllowedExtension(filename.replace(".txt", ".pdf"))) {
-        const originalExt = path.extname(docId).toLowerCase();
-        if (!isAllowedExtension(originalExt || ".pdf")) {
-        }
-      }
-
-      let text = await extractTextFromBuffer(buffer, filename);
+      let text = await extractTextFromBuffer(buffer, doc.name);
       text = normalizeText(text);
 
       const remaining = MAX_TOTAL_SIZE - totalChars;
+      let thisFileTruncated = false;
       if (text.length > remaining || text.length > MAX_FILE_SIZE) {
         const { text: truncatedText, truncated } = truncateWithNote(
           text,
           Math.min(remaining, MAX_FILE_SIZE)
         );
         text = truncatedText;
+        thisFileTruncated = truncated;
         truncatedOverall = truncatedOverall || truncated;
       }
 
       totalChars += text.length;
 
       extractedDocs.push({
-        id: docId,
-        filename,
+        id: doc.id,
+        filename: doc.name,
         text,
-        truncated: text.length >= MAX_FILE_SIZE,
+        truncated: thisFileTruncated,
       });
 
-      const perFilePath = path.join(uploadsDir, `${docId}.txt`);
+      const perFilePath = path.join(uploadsDir, `${doc.id}.txt`);
       fs.writeFileSync(perFilePath, text);
-      perFileTextPaths.push(`docs/assembler_v1/inputs/uploads/${docId}.txt`);
+      perFileTextPaths.push(`docs/assembler_v1/inputs/uploads/${doc.id}.txt`);
 
-      console.log(`[DocIngestion] Extracted ${text.length} chars from ${docId}`);
+      console.log(`[DocIngestion] Extracted ${text.length} chars from ${doc.name} (${doc.id})`);
 
       if (totalChars >= MAX_TOTAL_SIZE) {
         console.log(`[DocIngestion] Reached total size limit, stopping extraction`);
@@ -181,8 +187,8 @@ export async function ingestUploadedDocs(
       }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
-      errors.push(`${docId}: ${errorMsg}`);
-      console.error(`[DocIngestion] Error processing ${docId}:`, error);
+      errors.push(`${doc.id}: ${errorMsg}`);
+      console.error(`[DocIngestion] Error processing ${doc.id}:`, error);
     }
   }
 
@@ -203,7 +209,8 @@ ${errors.length > 0 ? `- **Processing errors:** ${errors.length}` : ""}
 `;
 
   for (const doc of extractedDocs) {
-    compiledContent += `## ${doc.id}
+    compiledContent += `## ${doc.filename}
+*Source: ${doc.id}*${doc.truncated ? " *(truncated)*" : ""}
 
 ${doc.text}
 
