@@ -1,0 +1,117 @@
+You are updating the Axiom web app + Assembler API so the “Project ZIP upload” works for BOTH:
+1) New Assemblies (during Create Wizard intake)
+2) Existing Assemblies (detail page still supported)
+
+Right now ZIP upload only works for existing assemblies (attach after create). Fix that.
+
+GOAL
+- Allow users to upload a project ZIP during the Create Wizard BEFORE creating the assembly.
+- Create the assembly with `projectPackageId` included so the backend automatically attaches it at creation time.
+- Keep existing “attach zip to existing assembly” flow working.
+
+NON-NEGOTIABLES
+- Do not break current create assembly flow for users who do not upload a ZIP.
+- `projectPackageId` must be optional.
+- Must validate project package exists; if indexed required, enforce it consistently.
+- UI must show scan/index status and errors with reason codes.
+
+========================================================
+A) BACKEND CHANGES
+========================================================
+
+1) Update shared schema
+File: shared/schema.ts
+- Extend createAssemblyRequestSchema to include:
+  - projectPackageId?: string (uuid)
+- Extend Assembly/Run model to persist:
+  - projectPackageId?: string (uuid nullable) (optional but recommended)
+If you already store assembly inputJson, you can store projectPackageId there, but prefer a column for filtering.
+
+2) DB change (recommended)
+- Add nullable column on assemblies table:
+  - projectPackageId uuid nullable
+- Migration + Drizzle update.
+
+3) Update create assembly route
+File: server/v1-routes.ts
+Route: POST /v1/assemblies (or /v1/runs if still named)
+
+Behavior:
+- Parse request body.
+- If projectPackageId is present:
+  - Verify project_packages row exists.
+  - If project package must be indexed:
+    - require scanState=scanned AND indexState=indexed
+    - if not indexed, return 409 with reason code ASSEMBLER_PROJECT_NOT_INDEXED
+  - Attach it during creation:
+    - set assemblies.projectPackageId = projectPackageId
+    - and/or set project_packages.assemblyId = newAssemblyId (if your model uses that)
+    - write audit log entry
+- Continue normal pipeline (gen/seed/draft/review/package etc)
+
+Errors:
+- 400 ASSEMBLER_UPGRADE_REQUEST_INVALID (bad uuid, invalid body)
+- 404 ASSEMBLER_PROJECT_PACKAGE_NOT_FOUND
+- 409 ASSEMBLER_PROJECT_NOT_INDEXED
+- 500 ASSEMBLER_STORAGE_WRITE_FAILED (only if needed)
+
+4) Keep existing attach endpoint working
+Route: POST /v1/assemblies/:assemblyId/project-packages/:projectPackageId/attach
+No changes except ensure it does not conflict with “already attached” logic (idempotent).
+
+========================================================
+B) FRONTEND CHANGES (Create Wizard)
+========================================================
+
+1) Add ZIP upload to Create Wizard Step 1 (Intake/Basics)
+File: client/src/pages/create.tsx (or home.tsx if not renamed)
+UI:
+- Section title: “Upload existing project (ZIP) (optional)”
+- Drag/drop + file picker
+- On file selected:
+  - Call POST /v1/project-packages (multipart)
+  - Store returned projectPackageId in wizard state
+  - Start polling GET /v1/project-packages/:id every 1.5–2.5s until:
+    - indexState = indexed (success)
+    - or failed (show error)
+- Display scan/index progress:
+  - “Scanning…” then “Indexing…” then “Ready”
+- Display summary panel when indexed:
+  - framework detected
+  - package manager
+  - scripts (build/test/lint)
+  - warnings list (chips)
+
+2) Ensure the Create Assembly payload includes projectPackageId
+When user clicks Assemble:
+- POST /v1/assemblies with:
+  - existing fields
+  - projectPackageId (if present)
+
+3) Gating rule (choose one and implement consistently)
+Option A (recommended): Require indexed before allowing Assemble if a ZIP is uploaded.
+- If projectPackageId is present and indexState != indexed:
+  - disable Assemble button
+  - show message: “Finish indexing to continue”
+Option B: Allow proceed but show warning that outputs improve after indexing.
+If you choose B, backend must accept non-indexed and handle later attachment (more complexity).
+Use Option A unless already designed otherwise.
+
+4) Error handling
+- Any API failure should show:
+  - banner + toast
+  - reason code with “Copy code” button
+
+========================================================
+C) ACCEPTANCE CHECKLIST
+========================================================
+- User can create an assembly WITHOUT a ZIP (no regressions).
+- User can upload a ZIP in Create Wizard, wait for indexing, then create an assembly with projectPackageId.
+- Backend automatically attaches project package during creation.
+- Existing “attach to existing assembly” still works.
+- UI shows scan/index progress + warnings + errors.
+- All errors include ASSEMBLER_* reason codes and correlation id.
+
+DELIVERABLE
+Implement these backend + frontend changes, commit with message:
+“Add project ZIP intake for new assemblies (projectPackageId in create flow)”
