@@ -1,0 +1,158 @@
+Yep — and your DynamicWizard.tsx confirms the exact cause:
+
+It always renders its own stepper (flow.steps.map(...)) and its own Next/Back buttons. 
+
+DynamicWizard
+
+So when you mount <DynamicWizard /> inside the Type tab, it becomes a “wizard inside the Type tab” and it will walk through Basics/Intent/etc right there. 
+
+DynamicWizard
+
+To make it not happen, you need to change the integration pattern:
+
+Correct architecture
+
+Tabs (Type/Basics/Intent/Features/Users/UX/Tech/Generate) should be the only navigation.
+
+DynamicWizard should render only the fields for the currently selected tab (one step at a time), and not render its internal stepper/Next/Back when used in tab mode.
+
+Fix (small, surgical): Add “tab mode” props to DynamicWizard
+1) Add 2 optional props
+
+Add these to DynamicWizardProps:
+
+  activeStepId?: string;          // render only one step
+  hideInternalNav?: boolean;      // hide stepper + next/back
+
+2) Modify DynamicWizard to support “single-step render”
+
+Right now it always does:
+
+const currentStep = flow.steps[currentStepIndex];
+
+
+DynamicWizard
+
+Change to:
+
+const resolvedStepIndex =
+  activeStepId ? flow.steps.findIndex(s => s.id === activeStepId) : currentStepIndex;
+
+const safeIndex = resolvedStepIndex >= 0 ? resolvedStepIndex : currentStepIndex;
+
+const currentStep = flow.steps[safeIndex];
+const isLastStep = safeIndex === flow.steps.length - 1;
+const isReviewStep = currentStep?.id === "review";
+
+3) Hide the internal stepper + Next/Back when hideInternalNav
+
+Right now the internal stepper is always rendered. 
+
+DynamicWizard
+
+
+Wrap it:
+
+{!hideInternalNav && (
+  <div className="flex items-center gap-2 overflow-x-auto pb-2">
+    ...
+  </div>
+)}
+
+
+And wrap the footer nav too:
+
+{!hideInternalNav && (
+  <div className="flex justify-between pt-4 border-t">
+    ...
+  </div>
+)}
+
+
+✅ Now DynamicWizard can be used in two ways:
+
+Wizard mode (current behavior): stepper + Next/Back
+
+Tab mode: render a single step’s fields, no internal navigation
+
+Then fix create.tsx (so Type tab only shows selection)
+1) Remove <DynamicWizard /> from the Type tab
+
+Type tab should end after preset selection UI.
+
+2) Render one step per tab
+
+In each TabsContent, render:
+
+<DynamicWizard
+  flow={wizardFlow}
+  draft={wizardDraft}
+  onDraftChange={setWizardDraft}
+  currentStepIndex={wizardStepIndex}          // can keep, but unused in tab mode
+  onStepChange={setWizardStepIndex}          // can keep, but unused in tab mode
+  projectPackage={projectPackage}
+  onProjectPackageUpload={uploadProjectZip}
+  onProjectPackageRemove={removeProjectPackage}
+  isPackageProcessing={isPackageProcessing}
+  isPackageReady={isPackageReady}
+  mode={mode}
+  onSubmit={handleSubmit}
+  isSubmitting={isSubmitting}
+  activeStepId="basics"                      // <-- change per tab
+  hideInternalNav
+/>
+
+
+Do the same for:
+
+activeStepId="intent"
+
+activeStepId="features"
+
+activeStepId="users"
+
+activeStepId="ux"
+
+activeStepId="tech"
+
+activeStepId="review" (Generate tab)
+
+3) Add the missing tabs you actually have in the wizard
+
+Your wizard clearly contains “Intent” and “UX & Screens”, so add TabsTrigger/TabsContent for them.
+
+4) After preset selection, switch the tab to Basics
+
+In applyPresetDefaults(preset) add:
+
+setCurrentStep("basics");
+
+One more important note (ZIP gating)
+
+Your ZIP gating currently only checks isPackageReady when the step id is "upload": 
+
+DynamicWizard
+
+if (currentStep?.id === "upload") { ... }
+
+
+If your zip step id is not literally "upload" (some flows use "zip_required" etc), that gating won’t trigger.
+
+Fix it like this:
+
+const isZipStep = currentStep.fieldGroups
+  .flatMap(g => g.fields)
+  .some(f => f.ui === "file_zip");
+
+if (isZipStep) {
+  const zipRequired = currentStep.fieldGroups
+    .flatMap(g => g.fields)
+    .some(f => f.ui === "file_zip" && f.required);
+
+  if (zipRequired && !isPackageReady) return false;
+}
+
+
+This makes ZIP gating work regardless of step id. 
+
+DynamicWizard
