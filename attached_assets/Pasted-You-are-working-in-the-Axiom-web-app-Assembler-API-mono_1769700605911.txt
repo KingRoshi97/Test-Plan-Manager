@@ -1,0 +1,303 @@
+You are working in the Axiom web app + Assembler API monorepo (Vite/React/TS client, Express/TS server, Drizzle/Postgres, object storage abstraction). We already have: Assemblies, Kits, Deliveries, Uploads, signing, adapters. We now need “PROJECT ZIP INTAKE → UPGRADE → OUTPUT PATCH/ZIP/PR” support.
+
+GOAL
+Let users upload a ZIP of an existing codebase (“Project Package”), provide a short upgrade request, and have Assembler produce:
+1) Patch plan + diff (default, safest)
+2) Optional patched zip (“upgraded_project.zip”)
+3) Optional Git delivery (branch push) later
+
+This must integrate into the existing Assembly/Kit/Delivery workflow and be included in the generated kit artifacts.
+
+NON-NEGOTIABLES (SECURITY + RELIABILITY)
+- Implement safe unzip (prevent zip slip / path traversal)
+- Enforce limits: max files, max uncompressed bytes, max nested depth, timeout
+- Quarantine/skip large binaries by default (warn)
+- Store uploaded zip and extracted artifacts in object storage (Local for dev ok)
+- Persist metadata in Postgres (Drizzle)
+- Provide clear reason codes with ASSEMBLER_ prefix and correlation ids
+- Do not break current API/routes/UI
+
+========================================================
+1) DATA MODEL (Drizzle + migrations)
+========================================================
+Add a new table: project_packages
+
+Table: project_packages
+- id (uuid pk)
+- createdAt (timestamp)
+- updatedAt (timestamp)
+- assemblyId (uuid nullable fk -> assemblies.id)  // allow pre-attach
+- filename (text)
+- mimeType (text)
+- sizeBytes (bigint)
+- sha256 (text)  // sha256 of uploaded zip
+- objectKey (text)  // storage key for zip
+- unpackedObjectKey (text nullable) // base key/path for extracted listing/artifacts
+- scanState (enum: queued|scanning|scanned|failed)
+- indexState (enum: queued|indexing|indexed|failed)
+- summaryJson (jsonb nullable) // framework, pkg manager, scripts, ts, lint, routes, etc
+- warningsJson (jsonb nullable) // ZIP_BOMB_RISK, PATH_TRAVERSAL_BLOCKED, BINARY_HEAVY, LARGE_REPO, TRUNCATED_INDEX
+- errorCode (text nullable)
+- errorMessage (text nullable)
+- correlationId (text)
+
+Also add:
+- kit_artifacts table OR extend kits table metadata to reference upgrade artifacts:
+  Option A (recommended): new table kit_artifacts
+  - id uuid
+  - kitId uuid fk -> kits.id
+  - type enum: manifest|agent_prompt|upgrade_plan|upgrade_diff|upgraded_zip|project_summary|project_tree|dep_snapshot
+  - objectKey text
+  - sha256 text nullable
+  - sizeBytes bigint nullable
+  - createdAt timestamp
+
+If kit_artifacts is too much for now, store these in kits.manifestJson + files in storage under /kits/<kitId>/upgrade/* and include paths in manifest.
+
+Create migration(s).
+
+========================================================
+2) STORAGE + HELPERS
+========================================================
+A) Add a server utility: server/security/safe-unzip.ts
+- Function: safeUnzipZipToTemp(zipBufferOrPath, options) -> { extractedDir, stats, warnings }
+- Must:
+  - reject any entry with .. or absolute paths
+  - enforce maxFiles (e.g. 20000)
+  - enforce maxTotalUncompressedBytes (e.g. 250MB dev, configurable)
+  - enforce maxEntrySize (e.g. 25MB)
+  - enforce timeout (e.g. 15s) or streaming abort
+  - skip symlinks
+  - detect binaries by extension and size; produce warning list
+- Return warnings: PATH_TRAVERSAL_BLOCKED, LARGE_REPO, BINARY_HEAVY, ZIP_LIMIT_HIT, TIMEOUT
+
+B) Add server utility: server/indexing/project-indexer.ts
+- Input: extractedDir
+- Output: summaryJson + artifact text:
+  - project_tree.txt (limited depth, skip node_modules, dist, build, .git)
+  - project_summary.json (framework detection, package manager, scripts, ts, eslint, prettier)
+  - dependency_snapshot.json (package.json dependencies + devDependencies)
+  - “hot files” list (entrypoints)
+- Framework detection rules:
+  - Next: next.config.*, app/ or pages/, next dependency
+  - Vite: vite.config.*, vite dependency
+  - Expo: app.json, expo dependency
+  - Express: server entry + express dependency
+- Package manager:
+  - pnpm-lock.yaml -> pnpm
+  - yarn.lock -> yarn
+  - package-lock.json -> npm
+- Scripts: from package.json scripts
+
+C) Add server storage path conventions:
+- project zips: project_packages/<id>/original.zip
+- extracted artifacts: project_packages/<id>/index/project_tree.txt, project_summary.json, dependency_snapshot.json
+- kits upgrade outputs: kits/<kitId>/upgrade/PATCH_PLAN.md, patch.diff, upgraded_project.zip (if generated)
+
+========================================================
+3) API ENDPOINTS (v1)
+========================================================
+Add to server/v1-routes.ts
+
+A) Create project package (upload zip)
+POST /v1/project-packages
+- multipart/form-data field: file (zip)
+- Validate: content-type or extension .zip; max size
+- Store original zip in object storage
+- Compute sha256
+- Create project_packages row with scanState=queued, indexState=queued
+- Kick off background scan+index job (in-process queue)
+- Response:
+{
+  "projectPackageId": "...",
+  "scanState": "queued",
+  "indexState": "queued",
+  "warnings": [],
+  "sha256": "..."
+}
+
+Reason codes:
+- ASSEMBLER_UPLOAD_INVALID_TYPE
+- ASSEMBLER_UPLOAD_TOO_LARGE
+- ASSEMBLER_PROJECT_ZIP_INVALID
+- ASSEMBLER_STORAGE_WRITE_FAILED
+
+B) Get project package
+GET /v1/project-packages/:projectPackageId
+Return full status:
+{
+  "projectPackage": {
+    "id": "...",
+    "filename": "...",
+    "sizeBytes": ...,
+    "sha256": "...",
+    "scanState": "...",
+    "indexState": "...",
+    "summary": {...},
+    "warnings": [...],
+    "error": { "code": "...", "message": "..." }?
+  }
+}
+
+C) Attach project package to an assembly
+POST /v1/assemblies/:assemblyId/project-packages/:projectPackageId/attach
+- sets project_packages.assemblyId = assemblyId (if not already)
+- also record in assembly inputJson (uploadIds/projectPackageId) if applicable
+- audit log event
+
+D) Upgrade request (generate patch artifacts in kit)
+POST /v1/assemblies/:assemblyId/upgrade
+Body:
+{
+  "projectPackageId": "...",
+  "request": {
+    "overview": "what they want done",
+    "goals": ["..."],
+    "constraints": ["..."],
+    "doNotTouch": ["...optional globs..."]
+  },
+  "output": { "mode": "patch_only" | "patched_zip" | "git_pr_later" }
+}
+
+Behavior:
+- Validate project package is indexed
+- Create/Update kit upgrade artifacts:
+  - project_summary.json (from indexer)
+  - project_tree.txt
+  - PATCH_PLAN.md (generated from request + summary)
+  - patch.diff (initially may be empty if you only plan; still generate file)
+  - If mode=patched_zip: generate upgraded_project.zip by applying patch (Phase 2)
+- Response:
+{
+  "assemblyId": "...",
+  "upgrade": {
+    "mode": "patch_only",
+    "artifacts": [
+      {"type":"upgrade_plan","sha256":"...","sizeBytes":...},
+      {"type":"upgrade_diff","sha256":"...","sizeBytes":...}
+    ]
+  }
+}
+
+NOTE: For Phase 1, implement “plan + diff placeholder” without auto-applying changes. Auto-apply comes in Phase 2 after adding a patch application engine.
+
+Reason codes:
+- ASSEMBLER_PROJECT_NOT_INDEXED
+- ASSEMBLER_UPGRADE_REQUEST_INVALID
+- ASSEMBLER_UPGRADE_GENERATION_FAILED
+
+E) Fetch upgrade artifacts (optional convenience)
+GET /v1/assemblies/:assemblyId/upgrade
+- returns list of artifact signed URLs + checksums
+
+========================================================
+4) BACKGROUND JOBS (in-process queue)
+========================================================
+Implement a minimal job runner (if you don’t already have one):
+- server/jobs/queue.ts
+- enqueue(name, payload)
+- worker loop with concurrency=1-2
+Jobs:
+- scanAndIndexProjectPackage(projectPackageId)
+
+scanAndIndexProjectPackage:
+1) download zip from storage
+2) safe unzip to temp
+3) index project (summaryJson + artifacts)
+4) upload artifacts to storage
+5) update project_packages: scanState=scanned/indexState=indexed + summaryJson + warningsJson
+6) on failure: set failed + errorCode/errorMessage
+
+========================================================
+5) KIT INTEGRATION (manifest + artifacts)
+========================================================
+Update kit packaging to include upgrade artifacts when present:
+- assembly_manifest.json should include:
+  - projectPackageId (optional)
+  - upgradeArtifacts: list of { type, path, sha256, sizeBytes }
+- Ensure assembler-package-workspace.mjs bundles:
+  - docs workspace
+  - upgrade/ folder (if exists)
+    - PROJECT_SUMMARY.json
+    - PROJECT_TREE.txt
+    - DEPENDENCY_SNAPSHOT.json
+    - PATCH_PLAN.md
+    - patch.diff
+    - upgraded_project.zip (if mode=patched_zip)
+
+Also update agent_prompt.md template:
+- If project zip present, instruct agent to:
+  - read PROJECT_SUMMARY.json
+  - follow PATCH_PLAN.md
+  - apply patch.diff OR use upgraded_project.zip
+
+========================================================
+6) WEB APP UI CHANGES (client)
+========================================================
+A) Create Wizard (/create)
+Add a section in Step 1 (Basics):
+- “Upload existing project (zip)”
+  - file picker + drag/drop
+  - calls POST /v1/project-packages
+  - shows scan/index progress
+  - polls GET /v1/project-packages/:id until indexed/failed
+  - shows results panel: framework, package manager, scripts, warnings
+- Add a text area: “What do you want changed?” (upgrade overview)
+- Add optional lists: goals[], constraints[], doNotTouch[] (advanced toggle)
+
+B) Review Step
+Show JSON payload that includes:
+- projectPackageId (if uploaded)
+- upgrade request overview/goals/constraints
+- output mode (default patch_only)
+
+C) After assembly created
+On the assembly detail page, add “Upgrade” section (either in Kit tab or its own tab):
+- Buttons:
+  - Generate Upgrade Plan (calls POST /v1/assemblies/:id/upgrade)
+  - Download PATCH_PLAN.md
+  - Download patch.diff
+  - (later) Download upgraded_project.zip
+- Show validation/warnings
+
+D) Error UX
+- Use reason codes from API and show “Copy code” button
+
+========================================================
+7) OPENAPI + DOCS
+========================================================
+Update OpenAPI spec:
+- /v1/project-packages endpoints
+- /v1/assemblies/:id/upgrade endpoints
+Include example payloads and errors.
+
+Update Docs page to include:
+- “Project Upgrade Flow” section
+- curl examples
+
+========================================================
+8) ACCEPTANCE TESTS
+========================================================
+Backend:
+- uploading a zip creates project package row and stores zip
+- safe unzip blocks path traversal entries
+- indexer produces summaryJson and artifacts
+- GET project package returns indexed summary
+- attaching to assembly works
+- upgrade endpoint produces PATCH_PLAN.md and patch.diff artifacts in kit storage
+- kit packaging includes upgrade/ folder
+
+Frontend:
+- create wizard can upload zip and show scan results
+- review step includes projectPackageId and upgrade request
+- assembly detail shows upgrade artifacts and downloads work
+
+DELIVERABLE
+Implement all Phase 1 functionality:
+- Project package upload + scan/index
+- Upgrade plan + diff placeholder generation
+- Kit integration
+- UI support in create wizard + assembly detail
+- OpenAPI update
+
+Do NOT implement Phase 2 “auto-apply patch to generate upgraded zip” yet unless the above is stable.
