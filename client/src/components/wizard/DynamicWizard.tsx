@@ -750,7 +750,7 @@ function StepContent({
   );
 }
 
-function ReviewStep({ draft, mode }: { draft: WizardDraft; mode: Mode }) {
+function ReviewStep({ draft, mode, onFieldChange }: { draft: WizardDraft; mode: Mode; onFieldChange: (key: string, value: any) => void }) {
   const validation = validateDraftForMode(draft, mode);
 
   return (
@@ -872,6 +872,74 @@ function ReviewStep({ draft, mode }: { draft: WizardDraft; mode: Mode }) {
           </div>
         )}
       </div>
+
+      <div className="rounded-lg border p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Automatic Delivery</p>
+            <p className="text-xs text-muted-foreground">Create a delivery target when assembly completes</p>
+          </div>
+          <Switch
+            checked={draft.delivery.enabled}
+            onCheckedChange={(checked) => onFieldChange("delivery.enabled", checked)}
+            data-testid="switch-delivery-enabled"
+          />
+        </div>
+
+        {draft.delivery.enabled && (
+          <div className="space-y-4 pt-2 border-t">
+            <div className="space-y-2">
+              <Label className="text-xs">Delivery Type</Label>
+              <Select
+                value={draft.delivery.type}
+                onValueChange={(v) => onFieldChange("delivery.type", v)}
+              >
+                <SelectTrigger data-testid="select-delivery-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pull">Pull (Signed URL)</SelectItem>
+                  <SelectItem value="webhook">Webhook</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {draft.delivery.type === "pull" && (
+              <p className="text-xs text-muted-foreground">
+                A signed download URL will be created when the kit is ready.
+              </p>
+            )}
+
+            {draft.delivery.type === "webhook" && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs">Webhook URL *</Label>
+                  <Input
+                    type="url"
+                    placeholder="https://example.com/webhook"
+                    value={draft.delivery.webhookUrl || ""}
+                    onChange={(e) => onFieldChange("delivery.webhookUrl", e.target.value)}
+                    data-testid="input-delivery-webhook-url"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Webhook Secret *</Label>
+                  <Input
+                    type="password"
+                    placeholder="Your secret for HMAC signature verification"
+                    value={draft.delivery.webhookSecret || ""}
+                    onChange={(e) => onFieldChange("delivery.webhookSecret", e.target.value)}
+                    data-testid="input-delivery-webhook-secret"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Used to sign webhook payloads with HMAC-SHA256
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -973,7 +1041,7 @@ export default function DynamicWizard({
         )}
         
         {isReviewStep ? (
-          <ReviewStep draft={draft} mode={mode} />
+          <ReviewStep draft={draft} mode={mode} onFieldChange={handleFieldChange} />
         ) : (
           <StepContent
             step={currentStep}
