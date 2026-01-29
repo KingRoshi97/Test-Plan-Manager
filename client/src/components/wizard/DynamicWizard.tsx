@@ -444,15 +444,17 @@ interface DocFile {
   name: string;
   size: number;
   objectPath: string;
+  mimeType: string;
 }
 
 interface DocUploaderProps {
   docUploadIds: string[];
-  onDocsChange: (ids: string[]) => void;
+  docs: DocFile[];
+  onDocsChange: (ids: string[], docs: DocFile[]) => void;
   field: FieldSpec;
 }
 
-function DocUploader({ docUploadIds, onDocsChange, field }: DocUploaderProps) {
+function DocUploader({ docUploadIds, docs, onDocsChange, field }: DocUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedDocs, setUploadedDocs] = useState<DocFile[]>([]);
@@ -525,20 +527,22 @@ function DocUploader({ docUploadIds, onDocsChange, field }: DocUploaderProps) {
           id: docId,
           name: file.name,
           size: file.size,
-          objectPath
+          objectPath,
+          mimeType: file.type || "application/octet-stream"
         });
       }
 
       if (newDocs.length > 0) {
         setUploadedDocs(prev => [...prev, ...newDocs]);
-        onDocsChange([...docUploadIds, ...newDocs.map(d => d.id)]);
+        const allDocs = [...docs, ...newDocs];
+        onDocsChange([...docUploadIds, ...newDocs.map(d => d.id)], allDocs);
       }
     } catch (error) {
       console.error("Error uploading documents:", error);
     } finally {
       setIsUploading(false);
     }
-  }, [docUploadIds, onDocsChange]);
+  }, [docUploadIds, docs, onDocsChange]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -550,8 +554,9 @@ function DocUploader({ docUploadIds, onDocsChange, field }: DocUploaderProps) {
 
   const removeDoc = useCallback((docId: string) => {
     setUploadedDocs(prev => prev.filter(d => d.id !== docId));
-    onDocsChange(docUploadIds.filter(id => id !== docId));
-  }, [docUploadIds, onDocsChange]);
+    const filteredDocs = docs.filter(d => d.id !== docId);
+    onDocsChange(docUploadIds.filter(id => id !== docId), filteredDocs);
+  }, [docUploadIds, docs, onDocsChange]);
 
   return (
     <div className="space-y-3">
@@ -693,6 +698,7 @@ function StepContent({
 
             if (field.ui === "file_docs") {
               const currentIds = getNestedValue(draft as any, field.key) || [];
+              const currentDocs = draft.uploads?.docs || [];
               return (
                 <div key={field.key} className="space-y-2">
                   <Label>
@@ -701,7 +707,11 @@ function StepContent({
                   </Label>
                   <DocUploader
                     docUploadIds={Array.isArray(currentIds) ? currentIds : []}
-                    onDocsChange={(ids) => onFieldChange(field.key, ids)}
+                    docs={currentDocs}
+                    onDocsChange={(ids, docs) => {
+                      onFieldChange(field.key, ids);
+                      onFieldChange("uploads.docs", docs);
+                    }}
                     field={field}
                   />
                 </div>
@@ -841,21 +851,21 @@ function ReviewStep({ draft, mode }: { draft: WizardDraft; mode: Mode }) {
           </div>
         )}
 
-        {draft.uploads?.docUploadIds && draft.uploads.docUploadIds.length > 0 && (
+        {draft.uploads?.docs && draft.uploads.docs.length > 0 && (
           <div>
             <p className="text-xs font-medium text-muted-foreground mb-2">REFERENCE DOCUMENTS</p>
             <p className="text-sm text-muted-foreground">
-              {draft.uploads.docUploadIds.length} document{draft.uploads.docUploadIds.length !== 1 ? "s" : ""} uploaded for context
+              {draft.uploads.docs.length} document{draft.uploads.docs.length !== 1 ? "s" : ""} uploaded for context
             </p>
             <div className="flex flex-wrap gap-1 mt-1">
-              {draft.uploads.docUploadIds.slice(0, 5).map((docId, i) => (
+              {draft.uploads.docs.slice(0, 5).map((doc, i) => (
                 <Badge key={i} variant="outline" className="text-xs">
-                  {docId.replace("doc_", "").slice(0, 8)}...
+                  {doc.name}
                 </Badge>
               ))}
-              {draft.uploads.docUploadIds.length > 5 && (
+              {draft.uploads.docs.length > 5 && (
                 <Badge variant="outline" className="text-xs">
-                  +{draft.uploads.docUploadIds.length - 5} more
+                  +{draft.uploads.docs.length - 5} more
                 </Badge>
               )}
             </div>

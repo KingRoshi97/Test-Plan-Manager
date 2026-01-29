@@ -1332,6 +1332,8 @@ function buildAssemblyInput(data: CreateAssemblyRequest): AssemblyInput {
     uploadedFiles: data.uploadedFiles,
     uploadedContext: data.uploadedContext,
     docUploadIds: data.docUploadIds,
+    // @ts-expect-error docUploads is defined in schema but zod type inference not picking it up
+    docUploads: data.docUploads,
   };
   
   if (data.projectName && (data.features || data.users || data.description)) {
@@ -1433,10 +1435,10 @@ async function executePipelineV1(assemblyId: string, input: AssemblyInput) {
     console.log(`[Assembler Pipeline] Creating workspace for assembly ${assemblyId}`);
     const workspacePath = await createWorkspace(workspaceConfig);
     
-    if (input.docUploadIds && input.docUploadIds.length > 0) {
-      console.log(`[Assembler Pipeline] Ingesting ${input.docUploadIds.length} uploaded documents...`);
+    if (input.docUploads && input.docUploads.length > 0) {
+      console.log(`[Assembler Pipeline] Ingesting ${input.docUploads.length} uploaded documents...`);
       try {
-        const ingestionResult = await ingestUploadedDocs(input.docUploadIds, workspacePath);
+        const ingestionResult = await ingestUploadedDocs(input.docUploads, workspacePath);
         console.log(`[Assembler Pipeline] Doc ingestion complete: ${ingestionResult.stats.files} files processed, ${ingestionResult.stats.chars} chars extracted`);
         
         if (ingestionResult.compiledContent) {

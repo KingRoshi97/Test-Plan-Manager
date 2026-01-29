@@ -68,6 +68,14 @@ export interface UploadedFile {
   uploadedAt: string;
 }
 
+export interface DocUpload {
+  id: string;
+  name: string;
+  objectPath: string;
+  size: number;
+  mimeType: string;
+}
+
 export interface AssemblyInput {
   projectName: string;
   description: string;
@@ -79,6 +87,7 @@ export interface AssemblyInput {
   uploadedFiles?: UploadedFile[];
   uploadedContext?: string;
   docUploadIds?: string[];
+  docUploads?: DocUpload[];
 }
 
 export interface KitSizes {
@@ -168,6 +177,13 @@ export const createAssemblyRequestSchema = z.object({
   uploadedContext: z.string().optional(),
   projectPackageId: z.string().uuid().optional(),
   docUploadIds: z.array(z.string()).optional(),
+  docUploads: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    objectPath: z.string(),
+    size: z.number(),
+    mimeType: z.string(),
+  })).optional(),
 }).refine(
   (data) => data.projectName || data.idea,
   { message: "Either projectName (structured) or idea (legacy) is required" }
