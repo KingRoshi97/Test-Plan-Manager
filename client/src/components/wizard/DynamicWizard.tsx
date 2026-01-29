@@ -840,6 +840,27 @@ function ReviewStep({ draft, mode }: { draft: WizardDraft; mode: Mode }) {
             )}
           </div>
         )}
+
+        {draft.uploads?.docUploadIds && draft.uploads.docUploadIds.length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">REFERENCE DOCUMENTS</p>
+            <p className="text-sm text-muted-foreground">
+              {draft.uploads.docUploadIds.length} document{draft.uploads.docUploadIds.length !== 1 ? "s" : ""} uploaded for context
+            </p>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {draft.uploads.docUploadIds.slice(0, 5).map((docId, i) => (
+                <Badge key={i} variant="outline" className="text-xs">
+                  {docId.replace("doc_", "").slice(0, 8)}...
+                </Badge>
+              ))}
+              {draft.uploads.docUploadIds.length > 5 && (
+                <Badge variant="outline" className="text-xs">
+                  +{draft.uploads.docUploadIds.length - 5} more
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
