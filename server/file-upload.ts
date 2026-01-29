@@ -88,6 +88,12 @@ export async function processUploadedFiles(files: Express.Multer.File[]): Promis
       extractedText,
       uploadedAt: new Date().toISOString(),
     });
+    
+    try {
+      fs.unlinkSync(file.path);
+    } catch (err) {
+      console.warn(`Failed to cleanup uploaded file ${file.path}:`, err);
+    }
   }
   
   return results;

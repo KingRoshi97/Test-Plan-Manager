@@ -16,10 +16,12 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
   Download, Loader2, FileArchive, CheckCircle, XCircle, Play, Copy, History, 
-  Plus, Trash2, ChevronRight, ChevronLeft, Sparkles, Code, Users, ListTodo, Settings
+  Plus, Trash2, ChevronRight, ChevronLeft, Sparkles, Code, Users, ListTodo, Settings,
+  Upload, File, X
 } from "lucide-react";
-import type { Run } from "@shared/schema";
+import type { Run, UploadedFile } from "@shared/schema";
 import { Link } from "wouter";
+import { useCallback, useRef } from "react";
 
 const featureSchema = z.object({
   name: z.string().min(1, "Feature name required"),
@@ -30,6 +32,15 @@ const featureSchema = z.object({
 const userTypeSchema = z.object({
   type: z.string().min(1, "User type required"),
   goal: z.string().min(1, "User goal required"),
+});
+
+const uploadedFileSchema = z.object({
+  id: z.string(),
+  filename: z.string(),
+  mimeType: z.string(),
+  size: z.number(),
+  extractedText: z.string(),
+  uploadedAt: z.string(),
 });
 
 const projectFormSchema = z.object({
@@ -45,9 +56,18 @@ const projectFormSchema = z.object({
   preset: z.string().optional(),
   domains: z.array(z.string()).optional(),
   idea: z.string().optional(),
+  uploadedFiles: z.array(uploadedFileSchema).optional(),
+  uploadedContext: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectFormSchema>;
+
+interface UploadResponse {
+  files: UploadedFile[];
+  combinedContext: string;
+  totalSize: number;
+  totalExtractedLength: number;
+}
 
 const PIPELINE_STEPS = ["init", "gen", "package", "complete"];
 
@@ -92,8 +112,90 @@ export default function Home() {
       },
       preset: "",
       domains: ["platform", "api", "web"],
+      uploadedFiles: [],
+      uploadedContext: "",
     },
   });
+  
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const uploadFiles = async (files: FileList | File[]) => {
+    if (files.length === 0) return;
+    
+    setIsUploading(true);
+    const formData = new FormData();
+    Array.from(files).forEach(file => formData.append("files", file));
+    
+    try {
+      const response = await fetch("/v1/upload", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || "Upload failed");
+      }
+      
+      const data: UploadResponse = await response.json();
+      
+      const currentFiles = form.getValues("uploadedFiles") || [];
+      form.setValue("uploadedFiles", [...currentFiles, ...data.files]);
+      
+      const currentContext = form.getValues("uploadedContext") || "";
+      form.setValue("uploadedContext", currentContext 
+        ? `${currentContext}\n\n${data.combinedContext}` 
+        : data.combinedContext);
+      
+      toast({
+        title: "Files uploaded",
+        description: `${data.files.length} file(s) processed, ${data.totalExtractedLength} characters extracted.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Could not upload files",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files.length > 0) {
+      uploadFiles(e.dataTransfer.files);
+    }
+  }, []);
+  
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+  
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+  
+  const removeUploadedFile = (fileId: string) => {
+    const files = form.getValues("uploadedFiles") || [];
+    const updatedFiles = files.filter(f => f.id !== fileId);
+    form.setValue("uploadedFiles", updatedFiles);
+    
+    const newContext = updatedFiles.map(f => `--- ${f.filename} ---\n${f.extractedText}`).join("\n\n");
+    form.setValue("uploadedContext", newContext);
+  };
+  
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const featuresField = useFieldArray({
     control: form.control,
@@ -399,6 +501,90 @@ Read these docs to understand the project architecture, then implement the appli
                             </FormItem>
                           )}
                         />
+                        
+                        <div className="space-y-3">
+                          <FormLabel>Reference Documents (Optional)</FormLabel>
+                          <div
+                            className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                              isDragging 
+                                ? "border-primary bg-primary/5" 
+                                : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                            }`}
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            data-testid="drop-zone-files"
+                          >
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              className="hidden"
+                              accept=".pdf,.docx,.doc,.txt,.md"
+                              multiple
+                              onChange={(e) => e.target.files && uploadFiles(e.target.files)}
+                              data-testid="input-file-upload"
+                            />
+                            {isUploading ? (
+                              <div className="flex flex-col items-center gap-2">
+                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                <p className="text-sm text-muted-foreground">Extracting text...</p>
+                              </div>
+                            ) : (
+                              <>
+                                <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                  Drag and drop PDFs, Word docs, or text files
+                                </p>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-2"
+                                  onClick={() => fileInputRef.current?.click()}
+                                  data-testid="button-browse-files"
+                                >
+                                  Browse Files
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                          <FormDescription>
+                            Upload existing documentation, specs, or notes to provide additional context.
+                          </FormDescription>
+                          
+                          {(form.watch("uploadedFiles") || []).length > 0 && (
+                            <div className="space-y-2">
+                              {(form.watch("uploadedFiles") || []).map((file) => (
+                                <div
+                                  key={file.id}
+                                  className="flex items-center justify-between rounded-md border p-2"
+                                  data-testid={`uploaded-file-${file.id}`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <File className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium">{file.filename}</span>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {formatFileSize(file.size)}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {file.extractedText.length} chars
+                                    </Badge>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeUploadedFile(file.id)}
+                                    data-testid={`button-remove-file-${file.id}`}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
                         <div className="flex justify-end pt-4">
                           <Button type="button" onClick={goNext} data-testid="button-next-basics">
                             Next: Features <ChevronRight className="ml-2 h-4 w-4" />

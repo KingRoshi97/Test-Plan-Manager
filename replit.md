@@ -120,6 +120,9 @@ queued → running → completed (or failed/canceled)
 ## Recent Changes
 
 ### January 2026 (Latest)
+- **File Upload Support**: Users can upload PDFs, Word docs, and text files as reference documents for additional context
+- **Text Extraction**: Uploaded files are parsed (pdf-parse for PDFs, mammoth for DOCX) and extracted text is passed to AI generator
+- **Drag-and-Drop UI**: File upload zone in Basics tab supports drag-and-drop with file list display and removal
 - **Hybrid Input System**: Supports both structured input (features, users, techStack) and legacy idea-only input
 - **Multi-Step Form UI**: 5-tab form wizard (Basics → Features → Users → Tech → Generate) with toggle for simple mode
 - **Manifest v0.2.0**: Bundle manifest includes generationMode, inputSummary, and implementationPlan based on P0/P1/P2 priorities

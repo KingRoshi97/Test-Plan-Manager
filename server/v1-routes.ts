@@ -27,7 +27,23 @@ export function registerV1Routes(app: Express) {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
-  app.post("/v1/upload", upload.array("files", 5), async (req: Request, res: Response) => {
+  app.post("/v1/upload", (req: Request, res: Response, next) => {
+    upload.array("files", 5)(req, res, (err: any) => {
+      if (err) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return apiError(res, 400, "FILE_TOO_LARGE", "File size exceeds 10MB limit");
+        }
+        if (err.code === "LIMIT_FILE_COUNT") {
+          return apiError(res, 400, "TOO_MANY_FILES", "Maximum 5 files allowed");
+        }
+        if (err.message?.includes("Unsupported file type")) {
+          return apiError(res, 400, "INVALID_FILE_TYPE", err.message);
+        }
+        return apiError(res, 400, "UPLOAD_ERROR", err.message || "Upload failed");
+      }
+      next();
+    });
+  }, async (req: Request, res: Response) => {
     try {
       const files = req.files as Express.Multer.File[];
       

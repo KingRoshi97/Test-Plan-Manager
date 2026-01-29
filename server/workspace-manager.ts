@@ -117,6 +117,14 @@ export async function populateWorkspaceWithAI(config: WorkspaceConfig, workspace
     techStack: runInput?.techStack || {},
     preset: runInput?.preset || config.domains?.[0] || "default",
     domains: config.domains,
+    uploadedContext: runInput?.uploadedContext || null,
+    uploadedFiles: runInput?.uploadedFiles?.map(f => ({
+      id: f.id,
+      filename: f.filename,
+      mimeType: f.mimeType,
+      size: f.size,
+      extractedLength: f.extractedText.length,
+    })) || [],
   };
   
   fs.writeFileSync(
@@ -134,7 +142,15 @@ export async function populateWorkspaceWithAI(config: WorkspaceConfig, workspace
     projectName: config.projectName,
     context: config.context,
     domains: config.domains,
-    structuredInput: runInput,
+    structuredInput: runInput ? {
+      projectName: runInput.projectName,
+      description: runInput.description,
+      features: runInput.features,
+      users: runInput.users,
+      techStack: runInput.techStack,
+      preset: runInput.preset,
+      uploadedContext: runInput.uploadedContext,
+    } : undefined,
   };
   
   const docs = await generateAllDocs(genOptions);
