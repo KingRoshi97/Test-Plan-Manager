@@ -124,6 +124,12 @@ queued → running → completed (or failed/canceled)
 
 ## Recent Changes
 
+### January 2026 (Phase 1 - Contract Hardening)
+- **Correlation IDs**: Every API response now includes `X-Correlation-Id` header and correlationId in body
+- **Standard Error Envelope**: All errors follow format `{ error: { code, message, details?, correlationId } }`
+- **GET /v1/meta**: New endpoint returning apiVersion, bundleVersion, supportedDeliveryTypes, limits, signatureAlgo
+- **GET /v1/health**: Enhanced with correlationId in response body
+
 ### January 2026 (Latest - Visual Pop Enhancement)
 - **Gradient CTA Buttons**: Main CTAs (Generate Kit, New Assembly) use `.btn-axiom-cta` with amber→orange→red-orange gradient and glow
 - **Solid Primary Buttons**: All other buttons use solid `bg-primary` (amber) for consistency
