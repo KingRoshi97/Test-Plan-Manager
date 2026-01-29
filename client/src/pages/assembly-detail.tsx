@@ -70,6 +70,23 @@ export default function AssemblyDetail() {
     enabled: !!assemblyId,
   });
 
+  const { data: kitMetadata } = useQuery<{
+    assemblyId: string;
+    kit: {
+      bundleVersion: string;
+      createdAt: string;
+      expiresAt: string;
+      sizeBytes: number;
+      sha256: string;
+      manifestSha256: string | null;
+      artifacts: Array<{ path: string; sha256: string; sizeBytes: number }>;
+    };
+    urls: { kitZip: string; manifest: string };
+  }>({
+    queryKey: [`/v1/assemblies/${assemblyId}/kit/metadata`],
+    enabled: !!assemblyId && assembly?.state === "completed",
+  });
+
   const retryDelivery = useMutation({
     mutationFn: async (deliveryId: string) => {
       return apiRequest("POST", `/v1/deliveries/${deliveryId}/retry`);
@@ -383,9 +400,28 @@ export default function AssemblyDetail() {
                       size="default"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Kit path: {assembly.kitPath}
-                  </p>
+                  {kitMetadata && (
+                    <dl className="grid grid-cols-2 gap-2 text-sm mt-4">
+                      <dt className="text-muted-foreground">Size</dt>
+                      <dd className="font-mono">{(kitMetadata.kit.sizeBytes / 1024).toFixed(1)} KB</dd>
+                      <dt className="text-muted-foreground">Created</dt>
+                      <dd>{formatDateTime(kitMetadata.kit.createdAt)}</dd>
+                      <dt className="text-muted-foreground">ZIP SHA256</dt>
+                      <dd className="flex items-center gap-1">
+                        <span className="font-mono text-xs">{truncateHash(kitMetadata.kit.sha256)}</span>
+                        <CopyButton value={kitMetadata.kit.sha256} size="icon" />
+                      </dd>
+                      {kitMetadata.kit.manifestSha256 && (
+                        <>
+                          <dt className="text-muted-foreground">Manifest SHA256</dt>
+                          <dd className="flex items-center gap-1">
+                            <span className="font-mono text-xs">{truncateHash(kitMetadata.kit.manifestSha256)}</span>
+                            <CopyButton value={kitMetadata.kit.manifestSha256} size="icon" />
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+                  )}
                 </>
               ) : (
                 <p className="text-sm text-muted-foreground">
@@ -394,6 +430,27 @@ export default function AssemblyDetail() {
               )}
             </GlassCardContent>
           </GlassCard>
+
+          {assembly.state === "completed" && kitMetadata && (
+            <GlassCard>
+              <GlassCardHeader>
+                <GlassCardTitle>Kit Artifacts ({kitMetadata.kit.artifacts.length})</GlassCardTitle>
+              </GlassCardHeader>
+              <GlassCardContent>
+                <div className="space-y-1 max-h-64 overflow-y-auto">
+                  {kitMetadata.kit.artifacts.map((artifact, i) => (
+                    <div key={i} className="flex items-center justify-between py-1.5 px-2 text-sm rounded hover-elevate" data-testid={`artifact-${i}`}>
+                      <span className="font-mono text-xs truncate flex-1">{artifact.path}</span>
+                      <div className="flex items-center gap-2 ml-2">
+                        <span className="text-xs text-muted-foreground">{(artifact.sizeBytes / 1024).toFixed(1)} KB</span>
+                        <CopyButton value={artifact.sha256} size="icon" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </GlassCardContent>
+            </GlassCard>
+          )}
 
           {assembly.state === "completed" && (
             <GlassCard>
