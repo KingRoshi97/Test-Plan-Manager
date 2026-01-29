@@ -78,6 +78,7 @@ export interface AssemblyInput {
   legacy?: LegacyInput;
   uploadedFiles?: UploadedFile[];
   uploadedContext?: string;
+  docUploadIds?: string[];
 }
 
 export interface KitSizes {
@@ -166,6 +167,7 @@ export const createAssemblyRequestSchema = z.object({
   uploadedFiles: z.array(uploadedFileSchema).optional(),
   uploadedContext: z.string().optional(),
   projectPackageId: z.string().uuid().optional(),
+  docUploadIds: z.array(z.string()).optional(),
 }).refine(
   (data) => data.projectName || data.idea,
   { message: "Either projectName (structured) or idea (legacy) is required" }

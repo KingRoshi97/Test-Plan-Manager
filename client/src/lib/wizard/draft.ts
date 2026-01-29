@@ -289,6 +289,7 @@ export interface CreateAssemblyRequest {
   presetId: string;
   domains: string[];
   projectPackageId?: string;
+  docUploadIds?: string[];
   features?: Array<{ name: string; description: string; priority: string }>;
   users?: Array<{ type: string; goal: string }>;
   techStack?: {
@@ -385,6 +386,7 @@ export function mapDraftToCreateAssemblyRequest(options: MapDraftOptions): Creat
     presetId,
     domains,
     projectPackageId,
+    docUploadIds: draft.uploads.docUploadIds.length > 0 ? draft.uploads.docUploadIds : undefined,
     features: features.length > 0 ? features : undefined,
     users: users.length > 0 ? users : undefined,
     techStack: {

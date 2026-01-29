@@ -1330,6 +1330,7 @@ function buildAssemblyInput(data: CreateAssemblyRequest): AssemblyInput {
   const baseInput = {
     uploadedFiles: data.uploadedFiles,
     uploadedContext: data.uploadedContext,
+    docUploadIds: data.docUploadIds,
   };
   
   if (data.projectName && (data.features || data.users || data.description)) {
