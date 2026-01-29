@@ -12,7 +12,7 @@
 | Rule ID | Description | Condition | Action | SourceRef |
 |---------|-------------|-----------|--------|-----------|
 | api_001 | Verify before lock | Lock requested | Check all verifications pass | TARGET_OUTLINE > Constraints |
-| api_002 | Always print ROSHI_REPORT | Script run completes | Print report with created/modified/skipped/failed | TARGET_OUTLINE > Constraints |
+| api_002 | Always print ASSEMBLER_REPORT | Script run completes | Print report with created/modified/skipped/failed | TARGET_OUTLINE > Constraints |
 
 ## State Machines (Candidates)
 <!-- State transitions for entities -->
