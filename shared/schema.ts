@@ -254,6 +254,7 @@ export const deliveries = pgTable("deliveries", {
   attempts: integer("attempts").notNull().default(0),
   maxAttempts: integer("max_attempts").notNull().default(6),
   lastAttemptAt: timestamp("last_attempt_at"),
+  nextAttemptAt: timestamp("next_attempt_at"),
   result: jsonb("result").$type<PullResult | WebhookResult | GitResult | null>(),
   lastError: text("last_error"),
   attemptHistory: jsonb("attempt_history").$type<DeliveryAttempt[]>(),
@@ -278,6 +279,44 @@ export const createDeliveryRequestSchema = z.object({
 });
 
 export type CreateDeliveryRequest = z.infer<typeof createDeliveryRequestSchema>;
+
+// Delivery Events table (for tracking delivery attempts, successes, failures)
+export const deliveryEventTypeEnum = [
+  "queued",
+  "attempted",
+  "response",
+  "succeeded",
+  "failed",
+  "scheduled_retry",
+  "dead"
+] as const;
+export type DeliveryEventType = (typeof deliveryEventTypeEnum)[number];
+
+export interface DeliveryEventDetails {
+  httpStatus?: number;
+  responseBody?: string;
+  errorMessage?: string;
+  nextAttemptAt?: string;
+  attempt?: number;
+  maxAttempts?: number;
+}
+
+export const deliveryEvents = pgTable("delivery_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  deliveryId: varchar("delivery_id").notNull(),
+  eventType: text("event_type").$type<DeliveryEventType>().notNull(),
+  occurredAt: timestamp("occurred_at").defaultNow().notNull(),
+  detailsJson: jsonb("details_json").$type<DeliveryEventDetails>(),
+});
+
+export const insertDeliveryEventSchema = z.object({
+  deliveryId: z.string(),
+  eventType: z.enum(deliveryEventTypeEnum),
+  detailsJson: z.record(z.unknown()).optional(),
+});
+
+export type InsertDeliveryEvent = z.infer<typeof insertDeliveryEventSchema>;
+export type DeliveryEvent = typeof deliveryEvents.$inferSelect;
 
 // Project Package types and table
 export const scanStateEnum = ["queued", "scanning", "scanned", "failed"] as const;
