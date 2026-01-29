@@ -242,6 +242,15 @@ function DynamicField({
         />
       );
 
+    case "file_docs":
+      // This is handled separately by DocUploader in the parent component
+      // The renderField function doesn't have access to upload handlers
+      return null;
+
+    case "file_zip":
+      // This is handled separately by ZipUploader in the parent component
+      return null;
+
     default:
       return (
         <Input
@@ -430,6 +439,202 @@ function ZipUploader({ projectPackage, onUpload, onRemove, isProcessing, isReady
   );
 }
 
+interface DocFile {
+  id: string;
+  name: string;
+  size: number;
+  objectPath: string;
+}
+
+interface DocUploaderProps {
+  docUploadIds: string[];
+  onDocsChange: (ids: string[]) => void;
+  field: FieldSpec;
+}
+
+function DocUploader({ docUploadIds, onDocsChange, field }: DocUploaderProps) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedDocs, setUploadedDocs] = useState<DocFile[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleFileUpload = useCallback(async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    const allowedTypes = [
+      "application/pdf",
+      "text/plain",
+      "text/markdown",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ];
+    const allowedExtensions = [".pdf", ".txt", ".md", ".doc", ".docx"];
+    
+    const validFiles = fileArray.filter(f => 
+      allowedTypes.includes(f.type) || 
+      allowedExtensions.some(ext => f.name.toLowerCase().endsWith(ext))
+    );
+
+    if (validFiles.length === 0) return;
+
+    setIsUploading(true);
+    const newDocs: DocFile[] = [];
+
+    try {
+      for (const file of validFiles) {
+        // Request presigned URL
+        const urlRes = await fetch("/api/uploads/request-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: file.name,
+            size: file.size,
+            contentType: file.type || "application/octet-stream"
+          })
+        });
+
+        if (!urlRes.ok) {
+          console.error("Failed to get upload URL");
+          continue;
+        }
+
+        const { uploadURL, objectPath } = await urlRes.json();
+
+        // Upload file directly to presigned URL
+        const uploadRes = await fetch(uploadURL, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type || "application/octet-stream"
+          }
+        });
+
+        if (!uploadRes.ok) {
+          console.error("Failed to upload file");
+          continue;
+        }
+
+        // Generate a unique ID for this doc
+        const docId = `doc_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        newDocs.push({
+          id: docId,
+          name: file.name,
+          size: file.size,
+          objectPath
+        });
+      }
+
+      if (newDocs.length > 0) {
+        setUploadedDocs(prev => [...prev, ...newDocs]);
+        onDocsChange([...docUploadIds, ...newDocs.map(d => d.id)]);
+      }
+    } catch (error) {
+      console.error("Error uploading documents:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [docUploadIds, onDocsChange]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files.length > 0) {
+      handleFileUpload(e.dataTransfer.files);
+    }
+  }, [handleFileUpload]);
+
+  const removeDoc = useCallback((docId: string) => {
+    setUploadedDocs(prev => prev.filter(d => d.id !== docId));
+    onDocsChange(docUploadIds.filter(id => id !== docId));
+  }, [docUploadIds, onDocsChange]);
+
+  return (
+    <div className="space-y-3">
+      <div
+        className={`rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
+          isDragging 
+            ? "border-amber-500 bg-amber-500/5" 
+            : "border-muted-foreground/25 hover:border-muted-foreground/50"
+        }`}
+        onDrop={handleDrop}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+        data-testid="drop-zone-docs"
+      >
+        <input
+          type="file"
+          ref={inputRef}
+          className="hidden"
+          multiple
+          accept=".pdf,.txt,.md,.doc,.docx"
+          onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+          data-testid="input-doc-upload"
+        />
+        {isUploading ? (
+          <div className="flex flex-col items-center gap-2 py-2">
+            <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+            <p className="text-sm text-muted-foreground">Uploading...</p>
+          </div>
+        ) : (
+          <>
+            <File className="mx-auto h-6 w-6 text-amber-500" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              Drag and drop PDFs, docs, or text files
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => inputRef.current?.click()}
+              data-testid="button-browse-docs"
+            >
+              Browse Files
+            </Button>
+          </>
+        )}
+      </div>
+
+      {field.help && (
+        <p className="text-xs text-muted-foreground">{field.help}</p>
+      )}
+
+      {uploadedDocs.length > 0 && (
+        <div className="space-y-2">
+          {uploadedDocs.map((doc) => (
+            <div 
+              key={doc.id}
+              className="flex items-center justify-between rounded-md border p-2"
+            >
+              <div className="flex items-center gap-2">
+                <File className="h-4 w-4 text-amber-500" />
+                <span className="text-sm font-medium truncate max-w-[200px]">{doc.name}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {formatFileSize(doc.size)}
+                </Badge>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeDoc(doc.id)}
+                data-testid={`button-remove-doc-${doc.id}`}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StepContent({
   step,
   draft,
@@ -481,6 +686,23 @@ function StepContent({
                     isProcessing={isPackageProcessing}
                     isReady={isPackageReady}
                     required={field.required}
+                  />
+                </div>
+              );
+            }
+
+            if (field.ui === "file_docs") {
+              const currentIds = getNestedValue(draft as any, field.key) || [];
+              return (
+                <div key={field.key} className="space-y-2">
+                  <Label>
+                    {field.label}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                  </Label>
+                  <DocUploader
+                    docUploadIds={Array.isArray(currentIds) ? currentIds : []}
+                    onDocsChange={(ids) => onFieldChange(field.key, ids)}
+                    field={field}
                   />
                 </div>
               );
