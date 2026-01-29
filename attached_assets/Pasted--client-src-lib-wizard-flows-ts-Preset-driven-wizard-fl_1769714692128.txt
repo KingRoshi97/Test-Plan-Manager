@@ -1,0 +1,1123 @@
+// client/src/lib/wizard/flows.ts
+// Preset-driven wizard flows (Category → Mode → Preset).
+// These flows are designed for BOTH beginners and devs. Beginner help/examples included.
+// You can render these dynamically to build the wizard UI.
+
+export type Category = "web" | "mobile" | "api" | "library" | "automation" | "game";
+export type Mode =
+  | "new_build"
+  | "existing_upgrade"
+  | "ui_overhaul"
+  | "refactor_hardening"
+  | "add_feature_module";
+
+export type FieldUI =
+  | "text"
+  | "textarea"
+  | "select"
+  | "toggle"
+  | "chips"
+  | "list"
+  | "file_docs"
+  | "file_zip";
+
+export type DependsOn = { key: string; equals: any };
+
+export type FieldSpec = {
+  key: string; // draft path key (string path, ex: "project.name" or "features.p0")
+  label: string;
+  ui: FieldUI;
+  required?: boolean;
+  placeholder?: string;
+  help?: string;
+  examples?: string[];
+  options?: string[];
+  dependsOn?: DependsOn;
+};
+
+export type FieldGroup = {
+  id: string;
+  title?: string;
+  description?: string;
+  fields: FieldSpec[];
+};
+
+export type WizardStep = {
+  id: string;
+  title: string;
+  description?: string;
+  required?: boolean; // step gating
+  fieldGroups: FieldGroup[];
+};
+
+export type WizardFlow = {
+  id: string;
+  label: string;
+  category: Category;
+  steps: WizardStep[];
+};
+
+// ------------------------------
+// Shared field specs (reused)
+// ------------------------------
+
+const F = {
+  projectName: (): FieldSpec => ({
+    key: "project.name",
+    label: "Project name",
+    ui: "text",
+    required: true,
+    placeholder: "e.g., Axiom CRM",
+    help: "A short name you’d put on a dashboard.",
+    examples: ["Stand Tall Boxing App", "Local Events Finder", "Invoice Tracker"]
+  }),
+
+  oneLiner: (): FieldSpec => ({
+    key: "project.oneLiner",
+    label: "One-line description",
+    ui: "textarea",
+    required: true,
+    placeholder: "What is it and who is it for?",
+    help: "Explain the project in one sentence: who it helps + what it does.",
+    examples: [
+      "A web app for freelancers to send invoices and get paid faster.",
+      "A mobile app for members to book classes and manage subscriptions."
+    ]
+  }),
+
+  audience: (): FieldSpec => ({
+    key: "project.audience",
+    label: "Who is this for?",
+    ui: "text",
+    required: false,
+    placeholder: "e.g., small business owners, students, gamers",
+    help: "Optional. Helps us make better UX and copy.",
+    examples: ["Commercial contractors", "Fitness members", "Indie music fans"]
+  }),
+
+  success: (): FieldSpec => ({
+    key: "project.success",
+    label: "What does success look like?",
+    ui: "textarea",
+    required: false,
+    placeholder: "How will you know this worked?",
+    help: "Optional. This guides priorities and tradeoffs.",
+    examples: ["Users can sign up, create 1 invoice, and pay it within 5 minutes."]
+  }),
+
+  docsUpload: (): FieldSpec => ({
+    key: "uploads.docUploadIds",
+    label: "Upload docs (optional)",
+    ui: "file_docs",
+    required: false,
+    help: "Upload PDFs/Docs/notes. We’ll use them for context."
+  }),
+
+  zipUpload: (): FieldSpec => ({
+    key: "projectPackage.id",
+    label: "Upload existing project ZIP (required for upgrades)",
+    ui: "file_zip",
+    required: false, // mode can flip this to required
+    help:
+      "Upload a ZIP of your project. We’ll scan it (framework/scripts/deps) and use it to create upgrade plans."
+  }),
+
+  intent: (): FieldSpec => ({
+    key: "intent.summary",
+    label: "In plain English, what do you want done?",
+    ui: "textarea",
+    required: true,
+    placeholder: "Describe what you want the tool/agent to build or change.",
+    help: "This is the main instruction. Be direct and specific.",
+    examples: [
+      "Build a clean onboarding flow, a dashboard, and a billing page. Keep it simple and fast.",
+      "Upgrade my existing project UI to match the brand kit and fix the API error handling."
+    ]
+  }),
+
+  goals: (): FieldSpec => ({
+    key: "intent.goals",
+    label: "Goals (what must be achieved)",
+    ui: "list",
+    required: false,
+    help: "Add 3–7 bullet goals. Each should be measurable.",
+    examples: [
+      "Users can register/login",
+      "Admin can create items",
+      "Add dark mode and consistent spacing"
+    ]
+  }),
+
+  constraints: (): FieldSpec => ({
+    key: "intent.constraints",
+    label: "Constraints (what must NOT change or must be respected)",
+    ui: "list",
+    required: false,
+    help: "Add anything you want to preserve (routes, naming, design rules, etc).",
+    examples: ["Do not rename API routes", "Keep existing navigation contracts", "No breaking schema changes"]
+  }),
+
+  doNotTouch: (): FieldSpec => ({
+    key: "intent.doNotTouch",
+    label: "Do-not-touch paths (optional)",
+    ui: "list",
+    required: false,
+    help: "File/folder globs the agent should avoid editing.",
+    examples: ["src/navigation/**", "docs/**", "server/migrations/**"]
+  }),
+
+  roles: (): FieldSpec => ({
+    key: "users.roles",
+    label: "User roles",
+    ui: "list",
+    required: false,
+    help: "List the main user types (e.g., Visitor, Member, Admin).",
+    examples: ["Visitor", "Member", "Admin"]
+  }),
+
+  roleGoals: (): FieldSpec => ({
+    key: "users.roleGoals",
+    label: "What must each role be able to do?",
+    ui: "textarea",
+    required: false,
+    help: "Write a short paragraph describing role abilities.",
+    examples: ["Members can browse content, save favorites, and comment. Admins can moderate and manage content."]
+  }),
+
+  featuresP0: (): FieldSpec => ({
+    key: "features.p0",
+    label: "P0 features (must-have for MVP)",
+    ui: "list",
+    required: true,
+    help: "The minimum set needed to ship.",
+    examples: ["Auth (login/register)", "Dashboard", "Create + list items", "Basic settings"]
+  }),
+
+  featuresP1: (): FieldSpec => ({
+    key: "features.p1",
+    label: "P1 features (nice-to-have soon)",
+    ui: "list",
+    required: false,
+    examples: ["Search", "Notifications", "Export"]
+  }),
+
+  featuresP2: (): FieldSpec => ({
+    key: "features.p2",
+    label: "P2 features (later)",
+    ui: "list",
+    required: false,
+    examples: ["AI recommendations", "Advanced analytics"]
+  }),
+
+  screens: (): FieldSpec => ({
+    key: "ux.screens",
+    label: "Screens / pages",
+    ui: "list",
+    required: false,
+    help: "List the main screens the user will navigate through.",
+    examples: ["Login", "Onboarding", "Home", "Detail", "Settings", "Admin"]
+  }),
+
+  navStyle: (): FieldSpec => ({
+    key: "ux.navigationStyle",
+    label: "Navigation style",
+    ui: "select",
+    required: false,
+    options: ["Sidebar", "Top nav", "Tabs (mobile)", "Drawer", "Single-page"],
+    help: "Pick the general navigation pattern."
+  }),
+
+  brandLink: (): FieldSpec => ({
+    key: "brand.assets",
+    label: "Brand assets (optional)",
+    ui: "textarea",
+    required: false,
+    help: "Describe your logo/colors or paste design notes. (If you have a brand kit doc, upload it above.)",
+    examples: ["Dark-first, glass panels, teal/orange gradient CTAs, rounded cards, big typography."]
+  }),
+
+  techFrontend: (): FieldSpec => ({
+    key: "tech.frontend",
+    label: "Frontend preference (optional)",
+    ui: "select",
+    required: false,
+    options: ["No preference", "React", "Next.js", "Vue", "Svelte", "React Native", "Unity", "Godot"],
+    help: "If you don’t know, leave it."
+  }),
+
+  techBackend: (): FieldSpec => ({
+    key: "tech.backend",
+    label: "Backend preference (optional)",
+    ui: "select",
+    required: false,
+    options: ["No preference", "Express", "Fastify", "NestJS", "Django", "Rails", "Serverless"],
+    help: "If you don’t know, leave it."
+  }),
+
+  techDatabase: (): FieldSpec => ({
+    key: "tech.database",
+    label: "Database preference (optional)",
+    ui: "select",
+    required: false,
+    options: ["No preference", "PostgreSQL", "MySQL", "SQLite", "MongoDB", "Firebase"],
+    help: "If you don’t know, leave it."
+  }),
+
+  // Upgrade / hardening specific
+  regressionMustNotBreak: (): FieldSpec => ({
+    key: "upgrade.mustNotBreak",
+    label: "What must NOT break?",
+    ui: "list",
+    required: false, // mode can require
+    help: "List behaviors that must stay working after changes.",
+    examples: ["Login flow", "Checkout flow", "Navigation back behavior", "Existing API contract"]
+  }),
+
+  validationCommands: (): FieldSpec => ({
+    key: "upgrade.validationCommands",
+    label: "Validation commands to run (optional)",
+    ui: "list",
+    required: false,
+    help: "If you know them, list commands that should pass.",
+    examples: ["npm run build", "npm test", "npm run lint"]
+  }),
+
+  hardeningTargets: (): FieldSpec => ({
+    key: "hardening.targets",
+    label: "Hardening targets",
+    ui: "list",
+    required: false, // mode can require
+    help: "What should improve?",
+    examples: ["Reduce crashes", "Improve API error handling", "Add rate limiting", "Improve performance"]
+  }),
+
+  testExpectations: (): FieldSpec => ({
+    key: "hardening.tests",
+    label: "Testing expectations",
+    ui: "select",
+    required: false,
+    options: ["No tests needed", "Smoke tests only", "Add basic unit tests", "Add unit + integration tests"],
+    help: "If you’re not sure, choose 'Smoke tests only'."
+  }),
+
+  // Library-specific
+  packageName: (): FieldSpec => ({
+    key: "library.packageName",
+    label: "NPM package name",
+    ui: "text",
+    required: true,
+    placeholder: "@your-scope/package-name",
+    help: "Name as it will appear on npm."
+  }),
+
+  packagePurpose: (): FieldSpec => ({
+    key: "library.purpose",
+    label: "What does this package do?",
+    ui: "textarea",
+    required: true,
+    placeholder: "Explain the problem it solves.",
+    examples: ["A typed client SDK for my API", "A UI component library", "A CLI for project scaffolding"]
+  }),
+
+  exportsList: (): FieldSpec => ({
+    key: "library.exports",
+    label: "Exports (public API)",
+    ui: "list",
+    required: true,
+    help: "List the main functions/classes/types you want to export.",
+    examples: ["createClient()", "AuthSession", "signRequest()"]
+  }),
+
+  compatibilityTargets: (): FieldSpec => ({
+    key: "library.targets",
+    label: "Compatibility targets",
+    ui: "chips",
+    required: false,
+    options: ["Node 18+", "Node 20+", "Browser", "Bundlers", "Deno", "React Native"],
+    help: "Choose the environments that must work."
+  }),
+
+  moduleFormat: (): FieldSpec => ({
+    key: "library.moduleFormat",
+    label: "Module format",
+    ui: "select",
+    required: false,
+    options: ["ESM only", "CJS only", "Dual (ESM + CJS)"],
+    help: "If unsure, choose ESM only."
+  }),
+
+  // Automation-specific
+  triggers: (): FieldSpec => ({
+    key: "automation.triggers",
+    label: "Triggers",
+    ui: "list",
+    required: true,
+    help: "What starts the workflow?",
+    examples: ["New signup", "Stripe payment succeeded", "Daily schedule", "Webhook received"]
+  }),
+
+  actions: (): FieldSpec => ({
+    key: "automation.actions",
+    label: "Actions",
+    ui: "list",
+    required: true,
+    help: "What happens after trigger?",
+    examples: ["Send email", "Create CRM contact", "Post to Slack", "Update database row"]
+  }),
+
+  integrations: (): FieldSpec => ({
+    key: "automation.integrations",
+    label: "Integrations",
+    ui: "chips",
+    required: false,
+    options: ["Stripe", "Slack", "HubSpot", "Google Sheets", "Airtable", "Discord", "Shopify", "Webhook"],
+    help: "Pick what you need to connect to."
+  }),
+
+  idempotency: (): FieldSpec => ({
+    key: "automation.idempotency",
+    label: "How should duplicates be handled?",
+    ui: "select",
+    required: false,
+    options: ["Not sure", "Ignore duplicates", "Upsert by key", "Queue + dedupe window"],
+    help: "If unsure, choose 'Upsert by key'."
+  }),
+
+  // Game-specific
+  engine: (): FieldSpec => ({
+    key: "game.engine",
+    label: "Game engine / framework",
+    ui: "select",
+    required: true,
+    options: ["No preference", "Unity", "Unreal", "Godot", "Phaser", "Three.js", "Custom"],
+    help: "If you’re not sure, choose 'No preference'."
+  }),
+
+  platform: (): FieldSpec => ({
+    key: "game.platform",
+    label: "Target platform",
+    ui: "chips",
+    required: true,
+    options: ["Web", "iOS", "Android", "PC", "Console"],
+    help: "Choose one or more."
+  }),
+
+  coreLoop: (): FieldSpec => ({
+    key: "game.coreLoop",
+    label: "Core loop",
+    ui: "textarea",
+    required: true,
+    placeholder: "What does the player do minute-to-minute?",
+    examples: ["Jump, collect coins, avoid obstacles, upgrade abilities, repeat."]
+  }),
+
+  monetization: (): FieldSpec => ({
+    key: "game.monetization",
+    label: "Monetization (optional)",
+    ui: "select",
+    required: false,
+    options: ["None", "Paid", "Ads", "In-app purchases", "Cosmetics", "Battle pass"],
+    help: "Optional."
+  })
+};
+
+// ------------------------------
+// Flow templates (6 categories)
+// ------------------------------
+
+export const flowWeb: WizardFlow = {
+  id: "flow.web",
+  label: "Web App Flow",
+  category: "web",
+  steps: [
+    {
+      id: "basics",
+      title: "Basics",
+      description: "High-level context so the agent builds the right thing.",
+      required: true,
+      fieldGroups: [
+        {
+          id: "project",
+          title: "Project",
+          fields: [F.projectName(), F.oneLiner(), F.audience(), F.success()]
+        },
+        {
+          id: "uploads",
+          title: "Context (optional)",
+          fields: [F.docsUpload(), F.zipUpload()]
+        }
+      ]
+    },
+    {
+      id: "intent",
+      title: "What do you want built?",
+      required: true,
+      fieldGroups: [
+        {
+          id: "intent",
+          fields: [F.intent(), F.goals(), F.constraints(), F.doNotTouch()]
+        }
+      ]
+    },
+    {
+      id: "scope",
+      title: "Scope",
+      description: "Keep MVP clear. Start with P0.",
+      required: true,
+      fieldGroups: [
+        { id: "features", title: "Features", fields: [F.featuresP0(), F.featuresP1(), F.featuresP2()] },
+        { id: "users", title: "Users", fields: [F.roles(), F.roleGoals()] }
+      ]
+    },
+    {
+      id: "ux",
+      title: "UX / Screens",
+      required: false,
+      fieldGroups: [
+        { id: "ux", fields: [F.screens(), F.navStyle(), F.brandLink()] }
+      ]
+    },
+    {
+      id: "tech",
+      title: "Tech (optional)",
+      required: false,
+      fieldGroups: [
+        { id: "tech", fields: [F.techFrontend(), F.techBackend(), F.techDatabase()] }
+      ]
+    },
+    {
+      id: "review",
+      title: "Review",
+      required: true,
+      fieldGroups: [
+        {
+          id: "review",
+          description: "Confirm everything looks correct before generating the kit.",
+          fields: []
+        }
+      ]
+    }
+  ]
+};
+
+export const flowMobile: WizardFlow = {
+  id: "flow.mobile",
+  label: "Mobile App Flow",
+  category: "mobile",
+  steps: [
+    {
+      id: "basics",
+      title: "Basics",
+      required: true,
+      fieldGroups: [
+        { id: "project", fields: [F.projectName(), F.oneLiner(), F.audience(), F.success()] },
+        { id: "uploads", fields: [F.docsUpload(), F.zipUpload()] }
+      ]
+    },
+    {
+      id: "intent",
+      title: "What do you want built?",
+      required: true,
+      fieldGroups: [{ id: "intent", fields: [F.intent(), F.goals(), F.constraints(), F.doNotTouch()] }]
+    },
+    {
+      id: "scope",
+      title: "Scope",
+      required: true,
+      fieldGroups: [
+        { id: "features", fields: [F.featuresP0(), F.featuresP1(), F.featuresP2()] },
+        { id: "users", fields: [F.roles(), F.roleGoals()] }
+      ]
+    },
+    {
+      id: "ux",
+      title: "Screens & Navigation",
+      required: false,
+      fieldGroups: [
+        {
+          id: "ux",
+          fields: [
+            F.screens(),
+            {
+              key: "mobile.navigation",
+              label: "Navigation style",
+              ui: "select",
+              required: false,
+              options: ["Tabs", "Stack", "Drawer", "Mixed"],
+              help: "If unsure, choose Tabs."
+            },
+            {
+              key: "mobile.offline",
+              label: "Offline behavior (optional)",
+              ui: "select",
+              required: false,
+              options: ["Not needed", "Read-only offline", "Full offline queue"],
+              help: "If unsure, choose Read-only offline."
+            },
+            {
+              key: "mobile.pushNotifications",
+              label: "Push notifications (optional)",
+              ui: "select",
+              required: false,
+              options: ["None", "Basic", "Important only", "Full system"],
+              help: "Optional."
+            },
+            F.brandLink()
+          ]
+        }
+      ]
+    },
+    {
+      id: "tech",
+      title: "Tech (optional)",
+      required: false,
+      fieldGroups: [
+        {
+          id: "tech",
+          fields: [
+            {
+              key: "tech.frontend",
+              label: "Mobile framework",
+              ui: "select",
+              required: false,
+              options: ["No preference", "React Native (Expo)", "React Native (Bare)", "Flutter", "Native iOS/Android"],
+              help: "If unsure, choose React Native (Expo)."
+            },
+            F.techBackend(),
+            F.techDatabase()
+          ]
+        }
+      ]
+    },
+    { id: "review", title: "Review", required: true, fieldGroups: [{ id: "review", fields: [] }] }
+  ]
+};
+
+export const flowApi: WizardFlow = {
+  id: "flow.api",
+  label: "API / Backend Flow",
+  category: "api",
+  steps: [
+    {
+      id: "basics",
+      title: "Basics",
+      required: true,
+      fieldGroups: [
+        { id: "project", fields: [F.projectName(), F.oneLiner(), F.audience(), F.success()] },
+        { id: "uploads", fields: [F.docsUpload(), F.zipUpload()] }
+      ]
+    },
+    {
+      id: "intent",
+      title: "What do you want built?",
+      required: true,
+      fieldGroups: [{ id: "intent", fields: [F.intent(), F.goals(), F.constraints(), F.doNotTouch()] }]
+    },
+    {
+      id: "api_contract",
+      title: "API contract",
+      required: true,
+      fieldGroups: [
+        {
+          id: "routes",
+          title: "Routes",
+          description: "List key endpoints or actions your API needs.",
+          fields: [
+            {
+              key: "api.routes",
+              label: "Key endpoints",
+              ui: "list",
+              required: true,
+              help: "Write endpoints like: METHOD /path — purpose.",
+              examples: ["POST /v1/auth/login — login", "GET /v1/users/:id — get profile", "POST /v1/items — create item"]
+            },
+            {
+              key: "api.auth",
+              label: "Auth requirements",
+              ui: "select",
+              required: false,
+              options: ["None", "Sessions", "JWT", "API keys", "OAuth"],
+              help: "If unsure, choose Sessions or JWT."
+            },
+            {
+              key: "api.dataEntities",
+              label: "Data entities (optional)",
+              ui: "list",
+              required: false,
+              help: "List the main tables/entities.",
+              examples: ["User", "Session", "Item", "Order", "Payment"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: "tech",
+      title: "Tech (optional)",
+      required: false,
+      fieldGroups: [
+        {
+          id: "tech",
+          fields: [
+            {
+              key: "tech.runtime",
+              label: "Runtime",
+              ui: "select",
+              required: false,
+              options: ["No preference", "Node.js", "Python", "Go", "Java"],
+              help: "If unsure, choose Node.js."
+            },
+            {
+              key: "tech.backend",
+              label: "Framework",
+              ui: "select",
+              required: false,
+              options: ["No preference", "Express", "Fastify", "NestJS", "Django", "Flask", "Gin"],
+              help: "If unsure, choose Express."
+            },
+            F.techDatabase()
+          ]
+        }
+      ]
+    },
+    { id: "review", title: "Review", required: true, fieldGroups: [{ id: "review", fields: [] }] }
+  ]
+};
+
+export const flowLibrary: WizardFlow = {
+  id: "flow.library",
+  label: "Library / NPM Package Flow",
+  category: "library",
+  steps: [
+    {
+      id: "basics",
+      title: "Basics",
+      required: true,
+      fieldGroups: [
+        {
+          id: "package",
+          title: "Package",
+          fields: [F.packageName(), F.packagePurpose()]
+        },
+        {
+          id: "context",
+          title: "Context (optional)",
+          fields: [F.docsUpload(), F.zipUpload()]
+        }
+      ]
+    },
+    {
+      id: "api_surface",
+      title: "Public API",
+      required: true,
+      fieldGroups: [
+        {
+          id: "exports",
+          fields: [F.exportsList(), F.compatibilityTargets(), F.moduleFormat()]
+        }
+      ]
+    },
+    {
+      id: "quality",
+      title: "Quality & publishing",
+      required: false,
+      fieldGroups: [
+        {
+          id: "quality",
+          fields: [
+            {
+              key: "library.examples",
+              label: "Examples needed",
+              ui: "select",
+              required: false,
+              options: ["Yes", "No", "Not sure"],
+              help: "If unsure, choose Yes."
+            },
+            {
+              key: "library.tests",
+              label: "Tests",
+              ui: "select",
+              required: false,
+              options: ["None", "Basic unit tests", "Unit + integration tests"],
+              help: "If unsure, choose Basic unit tests."
+            },
+            {
+              key: "library.publish",
+              label: "Publishing",
+              ui: "select",
+              required: false,
+              options: ["Private only", "Publish to npm", "Publish to GitHub Packages"],
+              help: "Optional."
+            }
+          ]
+        }
+      ]
+    },
+    { id: "review", title: "Review", required: true, fieldGroups: [{ id: "review", fields: [] }] }
+  ]
+};
+
+export const flowAutomation: WizardFlow = {
+  id: "flow.automation",
+  label: "Automation / Workflow Flow",
+  category: "automation",
+  steps: [
+    {
+      id: "basics",
+      title: "Basics",
+      required: true,
+      fieldGroups: [
+        { id: "project", fields: [F.projectName(), F.oneLiner(), F.audience(), F.success()] },
+        { id: "uploads", fields: [F.docsUpload(), F.zipUpload()] }
+      ]
+    },
+    {
+      id: "workflow",
+      title: "Workflow definition",
+      required: true,
+      fieldGroups: [
+        { id: "workflow", fields: [F.triggers(), F.actions(), F.integrations(), F.idempotency()] }
+      ]
+    },
+    {
+      id: "intent",
+      title: "Rules & constraints",
+      required: true,
+      fieldGroups: [
+        { id: "intent", fields: [F.intent(), F.goals(), F.constraints(), F.doNotTouch()] }
+      ]
+    },
+    {
+      id: "ops",
+      title: "Operations (optional)",
+      required: false,
+      fieldGroups: [
+        {
+          id: "ops",
+          fields: [
+            {
+              key: "automation.retries",
+              label: "Retries",
+              ui: "select",
+              required: false,
+              options: ["Not sure", "No retries", "Retry with backoff", "Dead-letter queue"],
+              help: "If unsure, choose Retry with backoff."
+            },
+            {
+              key: "automation.observability",
+              label: "Logging & audit",
+              ui: "select",
+              required: false,
+              options: ["Basic logs", "Event log", "Full audit log"],
+              help: "If unsure, choose Event log."
+            }
+          ]
+        }
+      ]
+    },
+    { id: "review", title: "Review", required: true, fieldGroups: [{ id: "review", fields: [] }] }
+  ]
+};
+
+export const flowGame: WizardFlow = {
+  id: "flow.game",
+  label: "Game / Interactive Flow",
+  category: "game",
+  steps: [
+    {
+      id: "basics",
+      title: "Basics",
+      required: true,
+      fieldGroups: [
+        { id: "project", fields: [F.projectName(), F.oneLiner(), F.audience(), F.success()] },
+        { id: "uploads", fields: [F.docsUpload(), F.zipUpload()] }
+      ]
+    },
+    {
+      id: "game_core",
+      title: "Game core",
+      required: true,
+      fieldGroups: [
+        { id: "game", fields: [F.engine(), F.platform(), F.coreLoop(), F.monetization()] }
+      ]
+    },
+    {
+      id: "scope",
+      title: "Scope",
+      required: true,
+      fieldGroups: [
+        {
+          id: "scope",
+          fields: [
+            {
+              key: "game.mechanics",
+              label: "Key mechanics (optional)",
+              ui: "list",
+              required: false,
+              help: "List the core mechanics you want included.",
+              examples: ["Double jump", "Power-ups", "Enemy AI", "Boss fights"]
+            },
+            {
+              key: "game.progression",
+              label: "Progression (optional)",
+              ui: "textarea",
+              required: false,
+              help: "Explain leveling/unlocks/score progression if relevant."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      id: "intent",
+      title: "Rules & constraints",
+      required: true,
+      fieldGroups: [{ id: "intent", fields: [F.intent(), F.goals(), F.constraints(), F.doNotTouch()] }]
+    },
+    { id: "review", title: "Review", required: true, fieldGroups: [{ id: "review", fields: [] }] }
+  ]
+};
+
+// ------------------------------
+// Flow registry
+// ------------------------------
+
+export const flowRegistry: Record<Category, WizardFlow> = {
+  web: flowWeb,
+  mobile: flowMobile,
+  api: flowApi,
+  library: flowLibrary,
+  automation: flowAutomation,
+  game: flowGame
+};
+
+// ------------------------------
+// Mode application (overlays steps + required fields)
+// ------------------------------
+
+export function applyModeToFlow(base: WizardFlow, mode: Mode): WizardFlow {
+  // Deep clone to avoid mutating base flows
+  const flow: WizardFlow = JSON.parse(JSON.stringify(base));
+
+  // Helpers
+  const findStep = (id: string) => flow.steps.find((s) => s.id === id);
+  const requireField = (key: string) => {
+    for (const step of flow.steps) {
+      for (const group of step.fieldGroups) {
+        for (const field of group.fields) {
+          if (field.key === key) field.required = true;
+        }
+      }
+    }
+  };
+
+  const upsertStepAfter = (afterStepId: string, step: WizardStep) => {
+    const idx = flow.steps.findIndex((s) => s.id === afterStepId);
+    const existingIdx = flow.steps.findIndex((s) => s.id === step.id);
+    if (existingIdx !== -1) flow.steps.splice(existingIdx, 1);
+    flow.steps.splice(idx + 1, 0, step);
+  };
+
+  // Mode changes
+  if (mode === "existing_upgrade") {
+    // Require ZIP upload and add regression + validation step
+    requireField("projectPackage.id");
+
+    const zipStep: WizardStep = {
+      id: "zip_required",
+      title: "Upload project ZIP",
+      description:
+        "Required for upgrades. We scan it (framework/scripts/deps) so the agent doesn’t guess.",
+      required: true,
+      fieldGroups: [
+        {
+          id: "zip",
+          title: "Project ZIP",
+          fields: [
+            { ...F.zipUpload(), required: true },
+            {
+              key: "projectPackage.notes",
+              label: "Notes about the current project (optional)",
+              ui: "textarea",
+              required: false,
+              help: "Anything special about the codebase? (monorepo, legacy areas, known issues)",
+              examples: ["Monorepo with /client and /server", "Navigation contracts are frozen", "Old auth code is fragile"]
+            }
+          ]
+        }
+      ]
+    };
+
+    const regressionStep: WizardStep = {
+      id: "regression",
+      title: "Regression & validation",
+      description: "What must stay working after changes? How should we verify?",
+      required: true,
+      fieldGroups: [
+        {
+          id: "regression",
+          fields: [
+            { ...F.regressionMustNotBreak(), required: true },
+            F.validationCommands()
+          ]
+        }
+      ]
+    };
+
+    // Insert zip step after basics
+    upsertStepAfter("basics", zipStep);
+
+    // Insert regression step after intent (or after zip if intent absent)
+    const after = findStep("intent") ? "intent" : "zip_required";
+    upsertStepAfter(after, regressionStep);
+
+    // Adjust review description
+    const review = findStep("review");
+    if (review) {
+      review.description =
+        "Review the upgrade request. The kit will include migration notes + regression checklist.";
+    }
+  }
+
+  if (mode === "ui_overhaul") {
+    // Insert design-focused step after UX
+    const uiStep: WizardStep = {
+      id: "ui_overhaul",
+      title: "UI overhaul details",
+      description: "Define the design direction so the output matches your brand and quality bar.",
+      required: true,
+      fieldGroups: [
+        {
+          id: "ui",
+          fields: [
+            {
+              key: "ui.goal",
+              label: "What should the UI feel like?",
+              ui: "textarea",
+              required: true,
+              placeholder: "Clean, premium, professional…",
+              examples: ["Dark-first, glass panels, strong typography, minimal clutter."]
+            },
+            {
+              key: "ui.components",
+              label: "Key components to standardize",
+              ui: "list",
+              required: false,
+              examples: ["Buttons", "Cards", "Tables", "Modals", "Forms", "Toasts"]
+            },
+            {
+              key: "ui.mustKeep",
+              label: "What must stay the same?",
+              ui: "list",
+              required: false,
+              examples: ["Navigation structure", "Route names", "Brand colors"]
+            }
+          ]
+        }
+      ]
+    };
+
+    // Try to place after ux step if present, else after scope
+    const anchor = findStep("ux") ? "ux" : "scope";
+    upsertStepAfter(anchor, uiStep);
+
+    const review = findStep("review");
+    if (review) review.description = "Review UI overhaul goals. The kit will include UI changelog + component adoption plan.";
+  }
+
+  if (mode === "refactor_hardening") {
+    // Insert hardening step after intent
+    const hardeningStep: WizardStep = {
+      id: "hardening",
+      title: "Hardening targets",
+      description: "Performance, security, reliability—what should improve?",
+      required: true,
+      fieldGroups: [
+        {
+          id: "hardening",
+          fields: [
+            { ...F.hardeningTargets(), required: true },
+            { ...F.testExpectations(), required: true },
+            {
+              key: "hardening.rollout",
+              label: "Rollout strategy (optional)",
+              ui: "select",
+              required: false,
+              options: ["Not sure", "Ship all at once", "Feature flags", "Phased rollout"],
+              help: "If unsure, choose Feature flags."
+            }
+          ]
+        }
+      ]
+    };
+
+    const after = findStep("intent") ? "intent" : "basics";
+    upsertStepAfter(after, hardeningStep);
+
+    const review = findStep("review");
+    if (review) review.description = "Review hardening goals. The kit will include a hardening plan + test strategy.";
+  }
+
+  if (mode === "add_feature_module") {
+    // Insert module scope step after scope/features if present
+    const moduleStep: WizardStep = {
+      id: "feature_module",
+      title: "Feature module scope",
+      description: "Define the new subsystem so it integrates cleanly.",
+      required: true,
+      fieldGroups: [
+        {
+          id: "module",
+          fields: [
+            {
+              key: "module.name",
+              label: "Module name",
+              ui: "text",
+              required: true,
+              placeholder: "e.g., Billing, Chat, Events"
+            },
+            {
+              key: "module.description",
+              label: "Module description",
+              ui: "textarea",
+              required: true,
+              placeholder: "What is this module and what does it do?"
+            },
+            {
+              key: "module.integrations",
+              label: "Integration points",
+              ui: "list",
+              required: false,
+              help: "What existing parts does it touch?",
+              examples: ["User accounts", "Payments", "Notifications", "Admin dashboard"]
+            },
+            {
+              key: "module.data",
+              label: "New data entities (optional)",
+              ui: "list",
+              required: false,
+              examples: ["Subscription", "Invoice", "Message", "Event"]
+            }
+          ]
+        }
+      ]
+    };
+
+    const anchor = findStep("scope") ? "scope" : "intent";
+    upsertStepAfter(anchor, moduleStep);
+
+    const review = findStep("review");
+    if (review) review.description = "Review the new module scope. The kit will focus on integration and acceptance criteria.";
+  }
+
+  return flow;
+}
+
+// ------------------------------
+// Utility: get flow by category and apply mode
+// ------------------------------
+
+export function getFlow(category: Category, mode: Mode): WizardFlow {
+  const base = flowRegistry[category];
+  return applyModeToFlow(base, mode);
+}

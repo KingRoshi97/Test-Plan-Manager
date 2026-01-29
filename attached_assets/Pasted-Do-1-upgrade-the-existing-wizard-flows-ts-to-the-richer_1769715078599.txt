@@ -1,0 +1,118 @@
+Do (1) upgrade the existing wizard-flows.ts to the richer spec — and bundle (2) the mapping tweaks into that same change.
+
+Reason: if we don’t ship the richer field definitions + beginner help/examples, the “designated form process” goal isn’t actually achieved (the UI will still feel like a generic dev form). And if we don’t ship the mapping at the same time, you’ll end up with fields that render and validate but don’t reliably feed the agent.
+
+Here’s the exact implementation plan I’d have you execute.
+
+What to do next (single upgrade pack)
+1) Replace/extend your current wizard-flows.ts with the richer field library
+
+Add the full F.* field factory set:
+
+help text, examples[], placeholders
+
+category-specific fields (library exports/targets, automation triggers/actions, game engine/core loop)
+
+Ensure every flow template uses F.* so you don’t duplicate text.
+
+Acceptance: selecting a preset changes not only steps, but also how the user is guided (examples/hints appear everywhere).
+
+2) Lock a single canonical “draft shape” (don’t let flows invent new structures)
+
+Create/confirm one draft object like:
+
+draft = {
+  project: { name, oneLiner, audience?, success? },
+  intent: { summary, goals: [], constraints: [], doNotTouch: [] },
+  uploads: { docUploadIds: [] },
+  projectPackage: { id?: string, notes?: string },
+  users: { roles: [], roleGoals?: string },
+  features: { p0: [], p1: [], p2: [] },
+  ux: { screens: [], navigationStyle?: string },
+  tech: { frontend?: string, backend?: string, database?: string, runtime?: string },
+  upgrade: { mustNotBreak: [], validationCommands: [] },
+  hardening: { targets: [], tests?: string, rollout?: string },
+  library: { packageName?: string, purpose?: string, exports?: [], targets?: [], moduleFormat?: string },
+  automation: { triggers?: [], actions?: [], integrations?: [], idempotency?: string },
+  game: { engine?: string, platform?: [], coreLoop?: string, monetization?: string }
+}
+
+
+Your flows should only write into that shape.
+
+Acceptance: the Review step can show a clean JSON preview with no weird keys.
+
+3) Update mapDraftToCreateAssemblyRequest() to be mode + category aware
+
+It should:
+
+Always include: category, mode, presetId
+
+Include projectPackageId only if present
+
+Include only relevant sections (but it’s okay to send extra empty arrays if your schema tolerates it)
+
+Mode gating in mapping (important):
+
+existing_upgrade: require projectPackage.id and upgrade.mustNotBreak (if you chose it as required)
+
+ui_overhaul: include ui.* fields if present
+
+refactor_hardening: require hardening.targets + hardening.tests
+
+Acceptance: backend receives a consistent payload and can build PipelineContext correctly every time.
+
+4) Ensure preset selection actually resets the draft + flow (common bug)
+
+When preset changes:
+
+setDraft(applyPresetDefaults(makeEmptyDraft(), preset.defaults))
+
+setFlow(getFlow(category, mode))
+
+setStepIndex(0)
+
+Acceptance: user sees defaults appear immediately, and steps update immediately.
+
+Replit agent prompt to execute this upgrade
+Upgrade the existing wizard flow system to the richer beginner-friendly spec.
+
+GOAL
+- Expand wizard-flows.ts to include a reusable field library with help/examples/placeholders.
+- Ensure each preset uses a designated flow process (steps + required fields + guidance).
+- Keep a single canonical draft shape and ensure mapping to create request is correct.
+
+TASKS
+1) Update client wizard flow file:
+- Replace/extend the current flows file with:
+  - Field factory library F.* (projectName, oneLiner, intent, goals, constraints, P0/P1/P2, screens, brand, tech, plus category-specific fields for library/automation/game, plus upgrade/hardening fields).
+  - 6 base flows (web, mobile, api, library, automation, game)
+  - applyModeToFlow(baseFlow, mode) to insert required steps + required fields (zip step for existing_upgrade, regression step, hardening step, module step, ui overhaul step)
+  - getFlow(category, mode)
+
+2) Enforce a canonical draft shape:
+- Create/confirm draft type in client/src/lib/wizard/draft.ts
+- makeEmptyDraft() returns all top-level sections (project, intent, uploads, projectPackage, features, users, ux, tech, upgrade, hardening, library, automation, game)
+- All fields in flows write into this shape.
+
+3) Fix preset selection behavior:
+- When category/mode/preset changes: rebuild flow + reset draft (apply preset defaults) + reset to step 0.
+
+4) Update mapDraftToCreateAssemblyRequest:
+- Ensure it maps canonical draft → POST /v1/assemblies payload:
+  category, mode, presetId, projectPackageId (from draft.projectPackage.id), plus relevant draft sections.
+- Add mode-aware validation before submit:
+  - existing_upgrade requires projectPackage.id (and upgrade.mustNotBreak if marked required in flow)
+  - refactor_hardening requires hardening.targets + hardening.tests
+  - add_feature_module requires module.name + module.description
+  - ui_overhaul requires ui.goal
+
+5) UI rendering:
+- Ensure help text + examples render under each field.
+- Support ui types: text, textarea, select, toggle, chips, list, file_docs, file_zip.
+
+ACCEPTANCE
+- Switching presets changes wizard steps AND the fields displayed (including beginner guidance).
+- Prefill defaults appear immediately after preset selection.
+- existing_upgrade preset forces ZIP upload before continuing.
+- Review step shows the final request payload accurately.
