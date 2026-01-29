@@ -1,37 +1,23 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader, StatusBadge, EmptyState, SkeletonTable } from "@/components/kit";
+import { GlassCard, GlassCardContent } from "@/components/kit";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Download, Trash2, FileArchive, ArrowLeft, Loader2 } from "lucide-react";
+import { formatDateTime, formatDomains } from "@/lib/format";
+import { Download, Trash2, Plus, Search, Layers, ExternalLink } from "lucide-react";
 import type { Assembly } from "@shared/schema";
-
-function getStatusBadge(status: string) {
-  const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-    queued: { variant: "secondary", label: "Queued" },
-    running: { variant: "default", label: "Running" },
-    completed: { variant: "outline", label: "Ready" },
-    failed: { variant: "destructive", label: "Failed" },
-    canceled: { variant: "secondary", label: "Canceled" },
-  };
-  const config = variants[status] || { variant: "secondary", label: status };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
-}
-
-function formatDate(date: Date | string) {
-  const d = new Date(date);
-  return d.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default function Assemblies() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [stateFilter, setStateFilter] = useState<string>("all");
 
   const { data: assemblies, isLoading } = useQuery<Assembly[]>({
     queryKey: ["/api/assemblies"],
@@ -46,7 +32,7 @@ export default function Assemblies() {
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
       toast({
         title: "Assembly deleted",
-        description: "The assembly has been removed from history.",
+        description: "The assembly has been removed.",
       });
     },
     onError: (error) => {
@@ -66,90 +52,156 @@ export default function Assemblies() {
     deleteAssemblyMutation.mutate(assemblyId);
   };
 
+  const filteredAssemblies = (assemblies || []).filter((assembly) => {
+    const matchesSearch = 
+      !searchQuery || 
+      assembly.projectName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      assembly.idea?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      assembly.id.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesState = stateFilter === "all" || assembly.state === stateFilter;
+    
+    return matchesSearch && matchesState;
+  });
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto flex items-center gap-4 p-4">
+    <div className="max-w-6xl mx-auto space-y-6">
+      <PageHeader
+        title="Assemblies"
+        subtitle="Manage your documentation kits"
+        actions={
           <Link href="/create">
-            <Button variant="ghost" size="sm" data-testid="link-back">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+            <Button data-testid="button-new-assembly">
+              <Plus className="h-4 w-4 mr-2" />
+              New Assembly
             </Button>
           </Link>
-          <div className="flex items-center gap-2">
-            <FileArchive className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Assembly History</h1>
-          </div>
-        </div>
-      </header>
+        }
+      />
 
-      <main className="container mx-auto max-w-3xl p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Previous Assemblies</CardTitle>
-            <CardDescription>
-              View and download kits from previous assemblies.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : !assemblies || assemblies.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>No assemblies yet.</p>
-                <Link href="/create">
-                  <Button variant="ghost" className="mt-2" data-testid="link-create-first">
-                    Create your first kit
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {assemblies.map((assembly) => (
-                  <div
-                    key={assembly.id}
-                    className="flex items-center justify-between rounded-lg border p-4"
-                    data-testid={`row-assembly-${assembly.id}`}
-                  >
-                    <div className="space-y-1 flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        {getStatusBadge(assembly.state)}
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(assembly.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-sm truncate">{assembly.idea}</p>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      {assembly.state === "completed" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(assembly.id)}
-                          data-testid={`button-download-${assembly.id}`}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(assembly.id)}
-                        disabled={deleteAssemblyMutation.isPending}
-                        data-testid={`button-delete-${assembly.id}`}
-                      >
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+      <GlassCard>
+        <GlassCardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, idea, or ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-search"
+              />
+            </div>
+            <Select value={stateFilter} onValueChange={setStateFilter}>
+              <SelectTrigger className="w-[160px]" data-testid="select-state-filter">
+                <SelectValue placeholder="Filter by state" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All States</SelectItem>
+                <SelectItem value="queued">Queued</SelectItem>
+                <SelectItem value="running">Running</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+                <SelectItem value="canceled">Canceled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isLoading ? (
+            <SkeletonTable rows={5} columns={6} />
+          ) : filteredAssemblies.length === 0 ? (
+            <EmptyState
+              icon={Layers}
+              title={searchQuery || stateFilter !== "all" ? "No matching assemblies" : "No assemblies yet"}
+              description={
+                searchQuery || stateFilter !== "all"
+                  ? "Try adjusting your search or filter criteria."
+                  : "Create your first documentation kit to get started."
+              }
+              action={
+                !searchQuery && stateFilter === "all"
+                  ? { label: "Create Assembly", onClick: () => setLocation("/create") }
+                  : undefined
+              }
+            />
+          ) : (
+            <div className="rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead>Project</TableHead>
+                    <TableHead>State</TableHead>
+                    <TableHead className="hidden sm:table-cell">Created</TableHead>
+                    <TableHead className="hidden md:table-cell">Domains</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAssemblies.map((assembly) => (
+                    <TableRow
+                      key={assembly.id}
+                      className="hover-elevate cursor-pointer"
+                      onClick={() => setLocation(`/assemblies/${assembly.id}`)}
+                      data-testid={`row-assembly-${assembly.id}`}
+                    >
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="font-medium truncate max-w-[200px]">
+                            {assembly.projectName || assembly.idea?.slice(0, 40) || "Untitled"}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono">
+                            {assembly.id.slice(0, 8)}...
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={assembly.state} />
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                        {formatDateTime(assembly.createdAt)}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                        {formatDomains(assembly.domains)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setLocation(`/assemblies/${assembly.id}`)}
+                            data-testid={`button-view-${assembly.id}`}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                          {assembly.state === "completed" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDownload(assembly.id)}
+                              data-testid={`button-download-${assembly.id}`}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(assembly.id)}
+                            disabled={deleteAssemblyMutation.isPending}
+                            data-testid={`button-delete-${assembly.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </GlassCardContent>
+      </GlassCard>
     </div>
   );
 }

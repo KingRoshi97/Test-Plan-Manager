@@ -3,9 +3,13 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { AppShell } from "@/app/AppShell";
 import NotFound from "@/pages/not-found";
 import Create from "@/pages/create";
 import Assemblies from "@/pages/assemblies";
+import AssemblyDetail from "@/pages/assembly-detail";
+import Settings from "@/pages/settings";
 import ApiDocs from "@/pages/api-docs";
 import { useEffect } from "react";
 
@@ -19,24 +23,33 @@ function RedirectTo({ to }: { to: string }) {
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={() => <RedirectTo to="/create" />} />
-      <Route path="/create" component={Create} />
-      <Route path="/assemblies" component={Assemblies} />
-      <Route path="/runs" component={() => <RedirectTo to="/assemblies" />} />
-      <Route path="/docs" component={ApiDocs} />
-      <Route component={NotFound} />
-    </Switch>
+    <AppShell>
+      <Switch>
+        <Route path="/" component={() => <RedirectTo to="/create" />} />
+        <Route path="/create" component={Create} />
+        <Route path="/assemblies" component={Assemblies} />
+        <Route path="/assemblies/:id" component={AssemblyDetail} />
+        <Route path="/runs" component={() => <RedirectTo to="/assemblies" />} />
+        <Route path="/runs/:id">
+          {(params) => <RedirectTo to={`/assemblies/${params.id}`} />}
+        </Route>
+        <Route path="/settings" component={Settings} />
+        <Route path="/docs" component={ApiDocs} />
+        <Route component={NotFound} />
+      </Switch>
+    </AppShell>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <ThemeProvider defaultTheme="dark">
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

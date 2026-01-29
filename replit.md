@@ -124,7 +124,28 @@ queued → running → completed (or failed/canceled)
 
 ## Recent Changes
 
-### January 2026 (Latest - Rebrand)
+### January 2026 (Latest - Premium UI Overhaul)
+- **Design Kit Components**: Created 9 reusable components in `client/src/components/kit/`:
+  - GlassCard: Glassmorphic card with blur effect and gradient borders
+  - PageHeader: Consistent page titles with optional actions
+  - StatusBadge: Assembly status indicator with proper states
+  - CodeBlock: Syntax-highlighted code with copy functionality
+  - CopyButton: One-click copy to clipboard
+  - EmptyState: Placeholder for empty data states
+  - Skeletons: Loading states for cards, tables, and text
+  - Stepper: Multi-step form wizard indicator
+  - AssemblyTimeline: Pipeline progress visualization
+- **AppShell Layout**: New `client/src/app/` with SidebarNav, TopBar for consistent navigation
+- **ThemeProvider**: Dark/light mode toggle with system preference detection
+- **Refactored Pages**: All pages updated to use design kit components
+  - Create: Multi-step wizard with Stepper, GlassCard, AssemblyTimeline
+  - Assemblies: Search/filter table with StatusBadges and EmptyState
+  - Assembly Detail: Tabbed interface (Overview/Kit/Deliveries/Attachments)
+  - Settings: Webhook test tool and git preset configuration
+  - API Docs: Organized endpoint documentation with CodeBlocks
+- **Logo Assets**: `axiom-logo.png` and `axiom-icon.png` in `client/src/assets/`
+
+### January 2026 (Rebrand)
 - **Complete Rebrand**: Renamed from "Roshi Studio" to "Axiom Assembler"
 - **Entity Renaming**: Run → Assembly, Handoff → Delivery, Bundle → Kit
 - **API Routes**: `/v1/assemblies`, `/v1/deliveries`, `/v1/kit` (legacy routes deprecated)

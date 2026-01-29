@@ -1,27 +1,26 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
-  Download, Loader2, FileArchive, CheckCircle, XCircle, Play, Copy, History, 
+  Download, Loader2, CheckCircle, XCircle, Play, Copy,
   Plus, Trash2, ChevronRight, ChevronLeft, Sparkles, Code, Users, ListTodo, Settings,
   Upload, File, X
 } from "lucide-react";
-import type { Assembly, UploadedFile } from "@shared/schema";
-import { Link } from "wouter";
-import { useCallback, useRef } from "react";
+import type { UploadedFile } from "@shared/schema";
+import { useLocation } from "wouter";
+import { PageHeader, StatusBadge, Stepper, AssemblyTimeline, CodeBlock, CopyButton } from "@/components/kit";
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from "@/components/kit";
 
 const featureSchema = z.object({
   name: z.string().min(1, "Feature name required"),
@@ -77,23 +76,19 @@ function getStepProgress(currentStep: string | null): number {
   return index >= 0 ? ((index + 1) / PIPELINE_STEPS.length) * 100 : 0;
 }
 
-function getStatusBadge(status: string) {
-  const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-    queued: { variant: "secondary", label: "Queued" },
-    running: { variant: "default", label: "Running" },
-    completed: { variant: "outline", label: "Ready" },
-    failed: { variant: "destructive", label: "Failed" },
-    canceled: { variant: "secondary", label: "Canceled" },
-  };
-  const config = variants[status] || { variant: "secondary", label: status };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
-}
-
 const FORM_STEPS = ["basics", "features", "users", "tech", "preview"] as const;
+const STEP_CONFIG = [
+  { id: "basics", label: "Basics" },
+  { id: "features", label: "Features" },
+  { id: "users", label: "Users" },
+  { id: "tech", label: "Tech" },
+  { id: "preview", label: "Generate" },
+];
 type FormStep = typeof FORM_STEPS[number];
 
-export default function Home() {
+export default function Create() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [activeAssemblyId, setActiveAssemblyId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<FormStep>("basics");
   const [useSimpleMode, setUseSimpleMode] = useState(false);
@@ -328,62 +323,45 @@ Read these docs to understand the project architecture, then implement the appli
   const watchedValues = form.watch();
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto flex items-center justify-between p-4">
-          <div className="flex items-center gap-2">
-            <FileArchive className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Axiom Assembler</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/docs">
-              <Button variant="ghost" size="sm" data-testid="link-docs">
-                API Docs
-              </Button>
-            </Link>
-            <Link href="/assemblies">
-              <Button variant="ghost" size="sm" data-testid="link-history">
-                <History className="mr-2 h-4 w-4" />
-                History
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto max-w-3xl p-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Generate Agent Kit</CardTitle>
-                <CardDescription>
-                  Provide structured details for faster, more accurate documentation.
-                </CardDescription>
-              </div>
-              {!activeAssemblyId && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setUseSimpleMode(!useSimpleMode)}
-                  data-testid="button-toggle-mode"
-                >
-                  {useSimpleMode ? (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Structured Mode
-                    </>
-                  ) : (
-                    <>
-                      <Code className="mr-2 h-4 w-4" />
-                      Simple Mode
-                    </>
-                  )}
-                </Button>
+    <div className="max-w-3xl mx-auto space-y-6">
+      <PageHeader
+        title="Create Assembly"
+        subtitle="Generate an AI-powered documentation kit for your project"
+        actions={
+          !activeAssemblyId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setUseSimpleMode(!useSimpleMode)}
+              data-testid="button-toggle-mode"
+            >
+              {useSimpleMode ? (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Structured Mode
+                </>
+              ) : (
+                <>
+                  <Code className="mr-2 h-4 w-4" />
+                  Simple Mode
+                </>
               )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
+            </Button>
+          )
+        }
+      />
+
+      {!activeAssemblyId && !useSimpleMode && (
+        <Stepper
+          steps={STEP_CONFIG}
+          currentStep={currentStep}
+          onStepClick={(step) => setCurrentStep(step as FormStep)}
+          className="mb-6"
+        />
+      )}
+
+      <GlassCard>
+        <GlassCardContent className="pt-6 space-y-6">
             {!activeAssemblyId ? (
               useSimpleMode ? (
                 <Form {...form}>
@@ -932,7 +910,7 @@ Read these docs to understand the project architecture, then implement the appli
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Assembly Status</p>
                     <div className="flex items-center gap-2">
-                      {getStatusBadge(activeAssembly?.state || "queued")}
+                      <StatusBadge status={activeAssembly?.state || "queued"} />
                       {activeAssembly?.step && (
                         <span className="text-sm text-muted-foreground">
                           Step: {activeAssembly.step}
@@ -946,12 +924,16 @@ Read these docs to understand the project architecture, then implement the appli
                 </div>
 
                 {isRunning && (
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span className="text-sm">Generating documentation...</span>
                     </div>
-                    <Progress value={getStepProgress(activeAssembly?.step || null)} />
+                    <AssemblyTimeline 
+                      currentStep={activeAssembly?.step || null} 
+                      state={(activeAssembly?.state as "queued" | "running" | "completed" | "failed" | "canceled") || "running"} 
+                      compact 
+                    />
                     <p className="text-xs text-muted-foreground">
                       AI is generating structured documentation based on your input. This takes about 30-60 seconds.
                     </p>
@@ -1006,14 +988,13 @@ Read these docs to understand the project architecture, then implement the appli
                 )}
               </div>
             )}
-          </CardContent>
-        </Card>
+        </GlassCardContent>
+      </GlassCard>
 
-        <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>Axiom follows a docs-first approach with structured input for better AI generation.</p>
-          <p className="mt-1">No invention. No overwrite. Verify before lock.</p>
-        </div>
-      </main>
+      <div className="text-center text-sm text-muted-foreground">
+        <p>Axiom follows a docs-first approach with structured input for better AI generation.</p>
+        <p className="mt-1">No invention. No overwrite. Verify before lock.</p>
+      </div>
     </div>
   );
 }
