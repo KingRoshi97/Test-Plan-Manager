@@ -44,7 +44,19 @@ Preferred communication style: Simple, everyday language.
 - **Pipeline Scripts**: npm scripts for each pipeline stage (`roshi:init`, `roshi:gen`, etc.)
 
 ### Core Entities
-- User, Project, Run, DomainPack, Artifact, VerifyResult, ERC, Bundle, TemplatePack, SourceRef
+- **Run**: Pipeline execution with idea, status, currentStep, bundlePath
+- User, Project, DomainPack, Artifact, VerifyResult, ERC, Bundle, TemplatePack, SourceRef
+
+### API Endpoints
+- `GET /api/runs` - List all runs
+- `POST /api/runs` - Create a new run with idea and optional context
+- `GET /api/runs/:id` - Get run status
+- `POST /api/runs/:id/execute` - Execute the Roshi pipeline
+- `GET /api/runs/:id/download` - Download the bundle zip
+- `DELETE /api/runs/:id` - Delete a run
+
+### Run Status Flow
+created → running → bundled (or failed)
 
 ### Design Constraints
 - No invention: Missing info must become UNKNOWN and logged to Open Questions
@@ -76,3 +88,11 @@ Preferred communication style: Simple, everyday language.
 - **Stripe**: Payment processing capability
 - **Nodemailer**: Email sending
 - **Passport**: Authentication framework
+
+## Recent Changes
+
+### January 2026
+- **Roshi Pipeline Complete**: All 5 domains (platform, api, web, infra, security) documented, verified, and locked
+- **Web App Implemented**: Created Home page with idea form, pipeline execution, download functionality
+- **Run History**: Added /runs page to view and manage previous pipeline runs
+- **Bundle Generation**: Pipeline generates downloadable zip with Roshi documentation
