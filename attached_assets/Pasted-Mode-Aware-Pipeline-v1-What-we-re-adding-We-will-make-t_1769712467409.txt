@@ -1,0 +1,227 @@
+Mode-Aware Pipeline v1
+What we’re adding
+
+We will make the pipeline respond to category + mode + presetId in four ways:
+
+Mode-specific prompts (new_build ≠ existing_upgrade ≠ ui_overhaul)
+
+Domain weighting (some docs become “primary,” others become “supporting”)
+
+Project ZIP integration (upgrade modes pull signals from the repo index)
+
+Kit shape changes (upgrade kits include comparison + migration outputs)
+
+This keeps the system universal, but makes results feel “tailored.”
+
+Implementation design (minimal changes, maximum impact)
+1) Add Pipeline Context object
+
+Create a single object the pipeline carries everywhere:
+
+type PipelineContext = {
+  category: "web"|"mobile"|"api"|"library"|"automation"|"game";
+  mode: "new_build"|"existing_upgrade"|"ui_overhaul"|"refactor_hardening"|"add_feature_module";
+  presetId?: string;
+  enabledDomains: string[];
+  domainWeights: Record<string, number>; // 0.0–1.0
+  projectPackage?: {
+    id: string;
+    summary: any; // from project indexer
+    warnings: string[];
+  };
+};
+
+
+Why: every generator can “look up” how to behave without branching logic scattered everywhere.
+
+2) Mode-specific prompts (without duplicating templates)
+
+Instead of having separate full templates per mode, add a Mode Overlay section to each generated domain doc.
+
+Example: BELS_uxui.md gets an injected section:
+
+MODE_OVERLAY
+
+If mode=ui_overhaul: emphasize component inventory, copy guide, screen specs, token enforcement
+
+If mode=existing_upgrade: add “Compatibility constraints,” “Regression checklist,” “Diff plan”
+
+If mode=refactor_hardening: add “risk reduction plan,” “tests required,” “perf targets”
+
+This avoids maintaining 5 versions of every doc.
+
+Mechanism: a small helper that writes a “Mode Overlay” block into docs at generation or draft time.
+
+3) Domain weighting (priority-driven generation)
+
+Add weights per (category, mode) that influence:
+
+Manifest build order
+
+Which sections get expanded
+
+Which OPEN_QUESTIONS are highlighted
+
+Example weights:
+
+ui_overhaul: uxui=1.0, web=0.7, api=0.4, security=0.5, infra=0.3
+
+existing_upgrade: api=0.8, web=0.8, uxui=0.8, security=0.7, infra=0.6
+
+refactor_hardening: security=1.0, infra=1.0, api=0.8, platform=0.7, uxui=0.4
+
+Result: the kit tells the agent “spend attention here.”
+
+4) Project ZIP integration (upgrade modes)
+
+If projectPackageId is present and indexed, inject the repo summary into:
+
+PROJECT_OVERVIEW.md (context section: detected stack, scripts, entrypoints)
+
+OPEN_QUESTIONS_* (auto-add questions based on detection)
+
+MIGRATION_NOTES.md (new doc for upgrade modes)
+
+REGRESSION_CHECKLIST.md (new doc for upgrade modes)
+
+This uses what you already built (indexer outputs) but makes it materially change the docs.
+
+5) Output format changes per mode (kit shape)
+
+Modify kit packaging to add /mode/* artifacts.
+
+For existing_upgrade
+
+Include:
+
+/mode/COMPARISON.md (current vs target)
+
+/mode/MIGRATION_NOTES.md
+
+/mode/REGRESSION_CHECKLIST.md
+
+/upgrade/* (existing)
+
+For ui_overhaul
+
+Include:
+
+/mode/UI_CHANGELOG.md
+
+/mode/COMPONENT_ADOPTION_PLAN.md
+
+For refactor_hardening
+
+Include:
+
+/mode/HARDENING_PLAN.md
+
+/mode/TEST_STRATEGY.md
+
+For new_build
+
+No extra mode pack by default.
+
+Replit agent prompt (Mode-Aware Pipeline Pack v1)
+Implement “Mode-Aware Pipeline v1” so presets do more than prefill forms. The pipeline must change behavior based on category+mode+presetId, and (if present) projectPackage summary.
+
+Repo: Vite/React client, Express server, shared/schema.ts, scripts/assembler-*.mjs, kit packaging script, v1 API, project zip indexing already exists.
+
+GOAL
+- Add PipelineContext carrying category/mode/presetId/enabledDomains/domainWeights/projectPackage summary.
+- Add mode overlays to generated docs (without duplicating templates).
+- Add domain weighting to manifest build order and doc emphasis.
+- Integrate projectPackage index results into docs for upgrade modes.
+- Add mode-specific kit artifacts in /mode/* for certain modes.
+
+A) SCHEMA + API
+1) shared/schema.ts
+- Ensure assemblies have: category, mode, presetId (existing or add).
+- Ensure createAssemblyRequestSchema includes these.
+- Ensure create assembly route persists them.
+
+2) server: in POST /v1/assemblies
+- Build a PipelineContext from request + preset defaults (enabledDomains, weights).
+- If projectPackageId present and indexed, load its summary/warnings into context.
+
+B) PRESETS + WEIGHTS
+1) Create server/presets.ts (or assembler/presets.json loader)
+- Provide a function:
+  getPreset(presetId) -> preset config
+  deriveEnabledDomains(category, mode, preset) -> string[]
+  deriveDomainWeights(category, mode, preset) -> Record<string, number>
+
+2) Default weights:
+- new_build:
+  web: {web:1.0, api:0.9, uxui:0.9, security:0.6, infra:0.6}
+  mobile: {uxui:1.0, api:0.8, security:0.7, infra:0.7}
+  api: {api:1.0, security:0.9, infra:0.8}
+  library: {api:1.0, security:0.8, infra:0.8}
+  automation: {api:1.0, security:0.9, infra:0.9, uxui:0.5}
+  game: {platform:1.0, uxui:0.8, api:0.5}
+- existing_upgrade:
+  emphasize regression + compatibility: set all enabled domains >=0.7
+- ui_overhaul:
+  uxui=1.0, web=0.7, api=0.4, security=0.5, infra=0.3 (only if enabled)
+- refactor_hardening:
+  security=1.0, infra=1.0, api=0.8, platform=0.7, uxui=0.4
+- add_feature_module:
+  category’s core domains=1.0, others=0.6
+
+C) MODE OVERLAY IN DOCS
+1) Add a helper module:
+- server/pipeline/mode-overlays.ts
+Exports:
+  renderModeOverlay({category, mode, domain, projectSummary?}) -> markdown string
+
+2) Update doc generation scripts (assembler:gen or assembler:draft) to inject a block:
+Insert after the first heading:
+  ## MODE_OVERLAY
+  <rendered markdown>
+
+This overlay should differ by mode:
+- existing_upgrade: compatibility, migration plan, regression checklist, risks
+- ui_overhaul: design tokens, component adoption, screen inventory, copy rules
+- refactor_hardening: stability/perf/security targets, test gates, rollout strategy
+- add_feature_module: integration points, data model deltas, acceptance criteria
+
+D) PROJECT PACKAGE INTEGRATION
+If projectPackage exists (indexed):
+- Include detected framework/scripts/entrypoints in PROJECT_OVERVIEW.md under:
+  “Existing Project Snapshot”
+- Auto-add OPEN_QUESTIONS entries based on common gaps:
+  - no tests scripts
+  - no lint
+  - unclear env vars
+  - large dependency graph
+- For existing_upgrade mode, generate:
+  docs/assembler_v1/00_product/MIGRATION_NOTES.md
+  docs/assembler_v1/00_product/REGRESSION_CHECKLIST.md
+Content should be templated but include project summary signals.
+
+E) MANIFEST UPDATES
+Update manifest.json generation to include:
+- category, mode, presetId
+- enabledDomains
+- domainWeights
+- recommendedBuildOrder derived by weight desc
+- if projectPackage present: include summary reference paths
+
+F) KIT SHAPE CHANGES
+Update packaging script so kit includes /mode/* docs:
+- existing_upgrade: COMPARISON.md, MIGRATION_NOTES.md, REGRESSION_CHECKLIST.md
+- ui_overhaul: UI_CHANGELOG.md, COMPONENT_ADOPTION_PLAN.md
+- refactor_hardening: HARDENING_PLAN.md, TEST_STRATEGY.md
+Only include files relevant to mode; do not include empty placeholders.
+
+G) UI (light touch)
+Create Wizard Review step should show:
+- category, mode, presetId
+- enabledDomains + weights preview (simple list)
+Assembly detail should show a “Mode Pack” section listing /mode/* files.
+
+ACCEPTANCE
+- Creating assemblies with different modes results in different manifest build orders and different Mode Overlay content in docs.
+- existing_upgrade with a project zip shows “Existing Project Snapshot” sections populated.
+- kit.zip includes correct /mode/* files for that mode.
+- No overwrites of user-edited docs (respect existing no-overwrite rules).
