@@ -1,5 +1,5 @@
 {
-  "roshi_root": "docs/roshi_v2",
+  "roshi_root": "docs/assembler_v1",
   "sources": [
     "00_product/RPBS_Product.md",
     "00_product/REBS_Product.md",
