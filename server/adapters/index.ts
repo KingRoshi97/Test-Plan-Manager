@@ -1,12 +1,29 @@
 import { storage } from "../storage";
 import { generateSignedUrl, generateWebhookSignature, computeSha256 } from "../signing";
 import { 
-  type Delivery, type DeliveryAttempt, 
+  type Delivery, type DeliveryAttempt, type DeliveryEventType,
   type PullConfig, type WebhookConfig, type GitConfig, type DirectConfig,
   type PullResult, type WebhookResult, type GitResult
 } from "@shared/schema";
 import fs from "fs";
 import path from "path";
+
+// Helper to log delivery events
+async function logDeliveryEvent(
+  deliveryId: string, 
+  eventType: DeliveryEventType, 
+  details?: Record<string, unknown>
+): Promise<void> {
+  try {
+    await storage.createDeliveryEvent({
+      deliveryId,
+      eventType,
+      detailsJson: details,
+    });
+  } catch (error) {
+    console.error(`Failed to log delivery event: ${eventType}`, error);
+  }
+}
 
 export interface AdapterContext {
   delivery: Delivery;
@@ -198,6 +215,15 @@ export async function processDelivery(
   const manifestPath = kitPath.replace(".zip", "/assembly_manifest.json");
   const promptPath = kitPath.replace(".zip", "/agent_prompt.md");
   
+  const attemptNumber = (delivery.attempts || 0) + 1;
+  
+  // Log attempt event
+  await logDeliveryEvent(deliveryId, "attempted", {
+    attempt: attemptNumber,
+    deliveryType: delivery.type,
+    assemblyId: delivery.assemblyId,
+  });
+  
   await storage.updateDelivery(deliveryId, { 
     state: "delivering",
     lastAttemptAt: new Date(),
@@ -213,8 +239,18 @@ export async function processDelivery(
   
   const result = await executeDelivery(ctx);
   
+  // Log response event for webhook deliveries
+  if (delivery.type === "webhook" && result.result) {
+    const webhookResult = result.result as WebhookResult;
+    await logDeliveryEvent(deliveryId, "response", {
+      attempt: attemptNumber,
+      httpStatus: webhookResult.httpStatus,
+      deliveredAt: webhookResult.deliveredAt,
+    });
+  }
+  
   const newAttempt: DeliveryAttempt = {
-    attempt: (delivery.attempts || 0) + 1,
+    attempt: attemptNumber,
     at: new Date().toISOString(),
     ok: result.success,
     error: result.error,
@@ -223,23 +259,80 @@ export async function processDelivery(
   const attemptHistory = [...(delivery.attemptHistory || []), newAttempt];
   
   if (result.success) {
+    // Log success event
+    await logDeliveryEvent(deliveryId, "succeeded", {
+      attempt: attemptNumber,
+      deliveryType: delivery.type,
+    });
+    
     const updated = await storage.updateDelivery(deliveryId, {
       state: "completed",
       attempts: newAttempt.attempt,
       result: result.result,
       attemptHistory,
+      nextAttemptAt: null, // Clear any scheduled retry
     });
     return { success: true, delivery: updated };
   } else {
-    const newState = newAttempt.attempt >= delivery.maxAttempts ? "failed" : "queued";
+    const isMaxAttempts = attemptNumber >= delivery.maxAttempts;
+    const newState = isMaxAttempts ? "failed" : "queued";
+    
+    // Log failure or dead event
+    if (isMaxAttempts) {
+      await logDeliveryEvent(deliveryId, "dead", {
+        attempt: attemptNumber,
+        error: result.error,
+        reason: "max_attempts_exceeded",
+      });
+    } else {
+      await logDeliveryEvent(deliveryId, "failed", {
+        attempt: attemptNumber,
+        error: result.error,
+        willRetry: true,
+      });
+      
+      // Calculate next retry time with exponential backoff
+      const nextAttemptAt = calculateNextAttemptTime(attemptNumber);
+      
+      await logDeliveryEvent(deliveryId, "scheduled_retry", {
+        attempt: attemptNumber + 1,
+        scheduledFor: nextAttemptAt.toISOString(),
+      });
+      
+      const updated = await storage.updateDelivery(deliveryId, {
+        state: newState,
+        attempts: newAttempt.attempt,
+        lastError: result.error,
+        attemptHistory,
+        nextAttemptAt,
+      });
+      return { success: false, delivery: updated, error: result.error };
+    }
+    
     const updated = await storage.updateDelivery(deliveryId, {
       state: newState,
       attempts: newAttempt.attempt,
       lastError: result.error,
       attemptHistory,
+      nextAttemptAt: null, // No more retries
     });
     return { success: false, delivery: updated, error: result.error };
   }
+}
+
+// Calculate next attempt time with exponential backoff
+// Base delay: 30s, max delay: 6 hours
+function calculateNextAttemptTime(currentAttempt: number): Date {
+  const baseDelayMs = 30 * 1000; // 30 seconds
+  const maxDelayMs = 6 * 60 * 60 * 1000; // 6 hours
+  
+  // Exponential backoff: 30s, 60s, 120s, 240s, etc.
+  const delayMs = Math.min(
+    baseDelayMs * Math.pow(2, currentAttempt - 1),
+    maxDelayMs
+  );
+  
+  return new Date(Date.now() + delayMs);
 }
 
 // Backward compatibility alias
