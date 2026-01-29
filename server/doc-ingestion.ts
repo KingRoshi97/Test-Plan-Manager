@@ -108,7 +108,7 @@ export async function ingestUploadedDocs(
   docUploadIds: string[],
   workspacePath: string
 ): Promise<DocIngestionResult> {
-  const inputsDir = path.join(workspacePath, "docs/inputs");
+  const inputsDir = path.join(workspacePath, "docs/assembler_v1/inputs");
   const uploadsDir = path.join(inputsDir, "uploads");
 
   fs.mkdirSync(inputsDir, { recursive: true });
@@ -170,7 +170,7 @@ export async function ingestUploadedDocs(
 
       const perFilePath = path.join(uploadsDir, `${docId}.txt`);
       fs.writeFileSync(perFilePath, text);
-      perFileTextPaths.push(`docs/inputs/uploads/${docId}.txt`);
+      perFileTextPaths.push(`docs/assembler_v1/inputs/uploads/${docId}.txt`);
 
       console.log(`[DocIngestion] Extracted ${text.length} chars from ${docId}`);
 
@@ -228,7 +228,7 @@ ${errors.map((e) => `- ${e}`).join("\n")}
   );
 
   return {
-    compiledMarkdownPath: "docs/inputs/USER_UPLOADS_COMPILED.md",
+    compiledMarkdownPath: "docs/assembler_v1/inputs/USER_UPLOADS_COMPILED.md",
     perFileTextPaths,
     stats: {
       files: extractedDocs.length,

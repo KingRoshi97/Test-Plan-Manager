@@ -56,6 +56,7 @@ function collectFiles(workspaceRoot) {
     "assembler/domains.json",
     "assembler/sources.json",
     "docs/assembler_v1",
+    "docs/inputs",
     "handoff"
   ];
   
@@ -204,6 +205,36 @@ function printRoshiReport(report) {
       hasStructuredInput: !!(inputData.features?.length || inputData.users?.length),
     };
     
+    const inputArtifacts = [];
+    const inputsDir = path.join(workspaceRoot, "docs/assembler_v1/inputs");
+    if (exists(inputsDir)) {
+      const compiledPath = path.join(inputsDir, "USER_UPLOADS_COMPILED.md");
+      if (exists(compiledPath)) {
+        const content = fs.readFileSync(compiledPath, "utf8");
+        const fileCountMatch = content.match(/\*\*Files processed:\*\* (\d+)/);
+        const charsMatch = content.match(/\*\*Total characters:\*\* ([\d,]+)/);
+        inputArtifacts.push({
+          type: "uploaded_docs",
+          path: "docs/assembler_v1/inputs/USER_UPLOADS_COMPILED.md",
+          stats: {
+            fileCount: fileCountMatch ? parseInt(fileCountMatch[1], 10) : 0,
+            totalChars: charsMatch ? parseInt(charsMatch[1].replace(/,/g, ""), 10) : 0
+          }
+        });
+        
+        const uploadsDir = path.join(inputsDir, "uploads");
+        if (exists(uploadsDir)) {
+          const uploadFiles = fs.readdirSync(uploadsDir).filter(f => f.endsWith(".txt"));
+          for (const uf of uploadFiles) {
+            inputArtifacts.push({
+              type: "uploaded_doc_text",
+              path: `docs/assembler_v1/inputs/uploads/${uf}`
+            });
+          }
+        }
+      }
+    }
+    
     const p0Features = (inputData.features || []).filter(f => f.priority === "P0");
     const p1Features = (inputData.features || []).filter(f => f.priority === "P1");
     const p2Features = (inputData.features || []).filter(f => f.priority === "P2");
@@ -276,7 +307,8 @@ function printRoshiReport(report) {
         workspaceRoot: "./",
         inputJson: "handoff/input.json",
         aiContextJson: "handoff/ai_context.json"
-      }
+      },
+      inputArtifacts: inputArtifacts.length > 0 ? inputArtifacts : undefined
     };
 
     const agentPrompt = `# Roshi Agent Handoff
