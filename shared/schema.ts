@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -17,28 +17,166 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-export const runStatusEnum = ["created", "running", "completed", "failed", "bundled"] as const;
-export type RunStatus = (typeof runStatusEnum)[number];
+export const runStateEnum = ["queued", "running", "completed", "failed", "canceled"] as const;
+export type RunState = (typeof runStateEnum)[number];
+
+export const runStepEnum = ["init", "gen", "seed", "draft", "review", "verify", "lock", "package"] as const;
+export type RunStep = (typeof runStepEnum)[number];
+
+export interface BundleChecksums {
+  zipSha256: string | null;
+  manifestSha256: string | null;
+  agentPromptSha256: string | null;
+}
+
+export interface BundleSizes {
+  zipBytes: number;
+}
+
+export interface RunProgress {
+  percent: number;
+}
+
+export interface RunBundle {
+  available: boolean;
+  zipBytes: number;
+  zipSha256: string | null;
+  manifestSha256: string | null;
+  agentPromptSha256: string | null;
+}
 
 export const runs = pgTable("runs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectName: text("project_name"),
   idea: text("idea").notNull(),
   context: text("context"),
-  status: text("status").$type<RunStatus>().notNull().default("created"),
-  currentStep: text("current_step"),
+  preset: text("preset"),
+  domains: text("domains").array(),
+  state: text("state").$type<RunState>().notNull().default("queued"),
+  step: text("step").$type<RunStep | null>(),
+  progress: jsonb("progress").$type<RunProgress>(),
+  errors: text("errors").array(),
+  bundle: jsonb("bundle").$type<RunBundle>(),
   bundlePath: text("bundle_path"),
-  errorMessage: text("error_message"),
+  logsTail: text("logs_tail"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const insertRunSchema = createInsertSchema(runs).pick({
+  projectName: true,
   idea: true,
   context: true,
+  preset: true,
+  domains: true,
 }).extend({
+  projectName: z.string().optional(),
   idea: z.string().min(10, "Idea must be at least 10 characters"),
   context: z.string().optional(),
+  preset: z.string().optional(),
+  domains: z.array(z.string()).optional(),
 });
 
 export type InsertRun = z.infer<typeof insertRunSchema>;
 export type Run = typeof runs.$inferSelect;
+
+export const handoffStateEnum = ["queued", "delivering", "completed", "failed", "canceled"] as const;
+export type HandoffState = (typeof handoffStateEnum)[number];
+
+export const handoffTypeEnum = ["pull", "webhook", "git", "direct"] as const;
+export type HandoffType = (typeof handoffTypeEnum)[number];
+
+export interface PullConfig {
+  expiresInSeconds?: number;
+  includeInlinePrompt?: boolean;
+  includeInlineManifest?: boolean;
+}
+
+export interface WebhookConfig {
+  url: string;
+  secret: string;
+  events?: string[];
+  include?: string[];
+}
+
+export interface GitConfig {
+  provider: "github" | "gitlab" | "bitbucket" | "generic";
+  repo: string;
+  branch: string;
+  mode?: "commit" | "pr";
+  auth: { token: string };
+  pathPrefix?: string;
+}
+
+export interface DirectConfig {
+  adapter: string;
+  connection: Record<string, string>;
+  options?: Record<string, unknown>;
+}
+
+export type HandoffConfig = PullConfig | WebhookConfig | GitConfig | DirectConfig;
+
+export interface PullResult {
+  zipUrl: string;
+  expiresAt: string;
+  zipSha256: string;
+  zipBytes: number;
+  manifest?: object;
+  agentPrompt?: string;
+}
+
+export interface WebhookResult {
+  deliveredAt: string;
+  httpStatus: number;
+}
+
+export interface GitResult {
+  provider: string;
+  repo: string;
+  branch: string;
+  commitSha?: string;
+  prUrl?: string;
+}
+
+export interface HandoffAttempt {
+  attempt: number;
+  at: string;
+  ok: boolean;
+  httpStatus?: number;
+  error?: string;
+}
+
+export const handoffs = pgTable("handoffs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  runId: varchar("run_id").notNull(),
+  type: text("type").$type<HandoffType>().notNull(),
+  label: text("label"),
+  state: text("state").$type<HandoffState>().notNull().default("queued"),
+  config: jsonb("config").$type<HandoffConfig>().notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  maxAttempts: integer("max_attempts").notNull().default(6),
+  lastAttemptAt: timestamp("last_attempt_at"),
+  result: jsonb("result").$type<PullResult | WebhookResult | GitResult | null>(),
+  lastError: text("last_error"),
+  attemptHistory: jsonb("attempt_history").$type<HandoffAttempt[]>(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertHandoffSchema = z.object({
+  runId: z.string(),
+  type: z.enum(handoffTypeEnum),
+  label: z.string().optional(),
+  config: z.record(z.unknown()),
+});
+
+export type InsertHandoff = z.infer<typeof insertHandoffSchema>;
+export type Handoff = typeof handoffs.$inferSelect;
+
+export const createHandoffRequestSchema = z.object({
+  type: z.enum(handoffTypeEnum),
+  label: z.string().optional(),
+  config: z.record(z.unknown()),
+});
+
+export type CreateHandoffRequest = z.infer<typeof createHandoffRequestSchema>;

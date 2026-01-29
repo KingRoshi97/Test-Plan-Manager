@@ -32,11 +32,11 @@ function getStepProgress(currentStep: string | null): number {
 
 function getStatusBadge(status: string) {
   const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-    created: { variant: "secondary", label: "Created" },
+    queued: { variant: "secondary", label: "Queued" },
     running: { variant: "default", label: "Running" },
-    completed: { variant: "default", label: "Completed" },
+    completed: { variant: "outline", label: "Ready" },
     failed: { variant: "destructive", label: "Failed" },
-    bundled: { variant: "outline", label: "Ready" },
+    canceled: { variant: "secondary", label: "Canceled" },
   };
   const config = variants[status] || { variant: "secondary", label: status };
   return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -128,9 +128,9 @@ Read these docs to understand the project architecture, then implement the appli
     form.reset();
   };
 
-  const isRunning = activeRun?.status === "running";
-  const isReady = activeRun?.status === "bundled";
-  const isFailed = activeRun?.status === "failed";
+  const isRunning = activeRun?.state === "running";
+  const isReady = activeRun?.state === "completed";
+  const isFailed = activeRun?.state === "failed";
 
   return (
     <div className="min-h-screen bg-background">
@@ -140,12 +140,19 @@ Read these docs to understand the project architecture, then implement the appli
             <FileArchive className="h-6 w-6" />
             <h1 className="text-xl font-bold">Roshi Studio</h1>
           </div>
-          <Link href="/runs">
-            <Button variant="ghost" size="sm" data-testid="link-history">
-              <History className="mr-2 h-4 w-4" />
-              History
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/docs">
+              <Button variant="ghost" size="sm" data-testid="link-docs">
+                API Docs
+              </Button>
+            </Link>
+            <Link href="/runs">
+              <Button variant="ghost" size="sm" data-testid="link-history">
+                <History className="mr-2 h-4 w-4" />
+                History
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -223,10 +230,10 @@ Read these docs to understand the project architecture, then implement the appli
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">Run Status</p>
                     <div className="flex items-center gap-2">
-                      {getStatusBadge(activeRun?.status || "created")}
-                      {activeRun?.currentStep && (
+                      {getStatusBadge(activeRun?.state || "queued")}
+                      {activeRun?.step && (
                         <span className="text-sm text-muted-foreground">
-                          Step: {activeRun.currentStep}
+                          Step: {activeRun.step}
                         </span>
                       )}
                     </div>
@@ -242,7 +249,7 @@ Read these docs to understand the project architecture, then implement the appli
                       <Loader2 className="h-4 w-4 animate-spin" />
                       <span className="text-sm">Processing pipeline...</span>
                     </div>
-                    <Progress value={getStepProgress(activeRun?.currentStep || null)} />
+                    <Progress value={getStepProgress(activeRun?.step || null)} />
                     <p className="text-xs text-muted-foreground">
                       This may take a moment. The pipeline generates comprehensive documentation.
                     </p>
@@ -255,8 +262,8 @@ Read these docs to understand the project architecture, then implement the appli
                       <XCircle className="h-5 w-5" />
                       <span className="font-medium">Pipeline failed</span>
                     </div>
-                    {activeRun?.errorMessage && (
-                      <p className="mt-2 text-sm text-muted-foreground">{activeRun.errorMessage}</p>
+                    {activeRun?.errors && activeRun.errors.length > 0 && (
+                      <p className="mt-2 text-sm text-muted-foreground">{activeRun.errors[0]}</p>
                     )}
                     <Button
                       variant="outline"
