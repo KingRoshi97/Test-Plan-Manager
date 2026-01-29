@@ -42,6 +42,18 @@ Preferred communication style: Simple, everyday language.
 - **Documentation Root**: `docs/roshi_v2/` with structured subdirectories
 - **Templates**: Located in `01_templates/` for generating domain documentation packs
 - **Pipeline Scripts**: npm scripts for each pipeline stage (`roshi:init`, `roshi:gen`, etc.)
+- **Isolated Workspaces**: Each run gets its own workspace at `workspaces/{runId}/` with full Roshi structure
+- **AI Generation**: OpenAI (gpt-5-mini via Replit AI Integrations) generates 7 source documents in parallel (~40s)
+
+### AI-Generated Documents
+When a run executes, the following are generated based on the user's idea:
+- **PROJECT_OVERVIEW.md**: Project summary, value proposition, key features
+- **RPBS_Product.md**: Product requirements, user stories, acceptance criteria
+- **REBS_Product.md**: Technical architecture, data models, API design
+- **domain-map.md**: Domain boundaries and feature mapping
+- **reason-codes.md**: Error code catalog
+- **action-vocabulary.md**: Standardized action verbs
+- **glossary.md**: Key terms and definitions
 
 ### Core Entities
 - **Run**: Pipeline execution with idea, projectName, preset, domains[], state, step, progress, errors[], bundlePath, checksums
@@ -108,6 +120,9 @@ queued → running → completed (or failed/canceled)
 ## Recent Changes
 
 ### January 2026
+- **AI-Powered Generation**: Bundles now contain AI-generated docs tailored to user's specific project idea (not Roshi framework docs)
+- **Isolated Workspaces**: Each run gets dedicated workspace at workspaces/{runId}/ preventing cross-contamination
+- **Parallel AI Generation**: All 7 source documents generated concurrently for speed (~40s total)
 - **Roshi Pipeline Complete**: All 5 domains (platform, api, web, infra, security) documented, verified, and locked
 - **Web App Implemented**: Created Home page with idea form, pipeline execution, download functionality
 - **Run History**: Added /runs page to view and manage previous pipeline runs
