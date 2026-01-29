@@ -598,19 +598,71 @@ Read these docs to understand the project architecture, then implement the appli
     setCurrentStep("basics");
   };
 
+  // Helper to check if a step exists in the current wizard flow
+  // Maps tab IDs to their corresponding step IDs in the flow
+  const getStepIdForTab = useCallback((tabId: string): string | null => {
+    if (!wizardFlow) return null;
+    
+    // Direct mappings
+    if (tabId === "preview") return "review";
+    
+    // Check for direct match first
+    const directMatch = wizardFlow.steps.find(s => s.id === tabId);
+    if (directMatch) return tabId;
+    
+    // For "intent" tab, check for category-specific alternatives
+    if (tabId === "intent") {
+      const alternatives = ["library", "automation", "game"];
+      for (const alt of alternatives) {
+        if (wizardFlow.steps.some(s => s.id === alt)) {
+          return alt;
+        }
+      }
+    }
+    
+    return null;
+  }, [wizardFlow]);
+
+  const hasStepInFlow = useCallback((tabId: string): boolean => {
+    return getStepIdForTab(tabId) !== null;
+  }, [getStepIdForTab]);
+
+  // Get array of available tabs based on current flow
+  const getAvailableTabs = useCallback((): FormStep[] => {
+    return FORM_STEPS.filter(step => {
+      if (step === "type") return true; // Type tab always available
+      if (!wizardFlow) return false;
+      return hasStepInFlow(step);
+    });
+  }, [wizardFlow, hasStepInFlow]);
+
   const goNext = () => {
-    const idx = FORM_STEPS.indexOf(currentStep);
-    if (idx < FORM_STEPS.length - 1) {
-      setCurrentStep(FORM_STEPS[idx + 1]);
+    const availableTabs = getAvailableTabs();
+    const currentIdx = availableTabs.indexOf(currentStep);
+    if (currentIdx < availableTabs.length - 1) {
+      setCurrentStep(availableTabs[currentIdx + 1]);
     }
   };
 
   const goPrev = () => {
-    const idx = FORM_STEPS.indexOf(currentStep);
-    if (idx > 0) {
-      setCurrentStep(FORM_STEPS[idx - 1]);
+    const availableTabs = getAvailableTabs();
+    const currentIdx = availableTabs.indexOf(currentStep);
+    if (currentIdx > 0) {
+      setCurrentStep(availableTabs[currentIdx - 1]);
     }
   };
+
+  // Get the next available tab for button labels
+  const getNextTabLabel = useCallback((): string | null => {
+    const availableTabs = getAvailableTabs();
+    const currentIdx = availableTabs.indexOf(currentStep);
+    if (currentIdx < availableTabs.length - 1) {
+      const nextTab = availableTabs[currentIdx + 1];
+      const config = STEP_CONFIG.find(s => s.id === nextTab);
+      return config?.label || nextTab;
+    }
+    return null;
+  }, [currentStep, getAvailableTabs]);
 
   const isRunning = activeAssembly?.state === "running";
   const isReady = activeAssembly?.state === "completed";
@@ -727,31 +779,31 @@ Read these docs to understand the project architecture, then implement the appli
                           <Package className="h-4 w-4 mr-1 hidden sm:inline" />
                           Type
                         </TabsTrigger>
-                        <TabsTrigger value="basics" data-testid="tab-basics" disabled={!wizardFlow}>
+                        <TabsTrigger value="basics" data-testid="tab-basics" disabled={!hasStepInFlow("basics")}>
                           <Settings className="h-4 w-4 mr-1 hidden sm:inline" />
                           Basics
                         </TabsTrigger>
-                        <TabsTrigger value="intent" data-testid="tab-intent" disabled={!wizardFlow}>
+                        <TabsTrigger value="intent" data-testid="tab-intent" disabled={!hasStepInFlow("intent")}>
                           <Sparkles className="h-4 w-4 mr-1 hidden sm:inline" />
                           Intent
                         </TabsTrigger>
-                        <TabsTrigger value="features" data-testid="tab-features" disabled={!wizardFlow}>
+                        <TabsTrigger value="features" data-testid="tab-features" disabled={!hasStepInFlow("features")}>
                           <ListTodo className="h-4 w-4 mr-1 hidden sm:inline" />
                           Features
                         </TabsTrigger>
-                        <TabsTrigger value="users" data-testid="tab-users" disabled={!wizardFlow}>
+                        <TabsTrigger value="users" data-testid="tab-users" disabled={!hasStepInFlow("users")}>
                           <Users className="h-4 w-4 mr-1 hidden sm:inline" />
                           Users
                         </TabsTrigger>
-                        <TabsTrigger value="ux" data-testid="tab-ux" disabled={!wizardFlow}>
+                        <TabsTrigger value="ux" data-testid="tab-ux" disabled={!hasStepInFlow("ux")}>
                           <Palette className="h-4 w-4 mr-1 hidden sm:inline" />
                           UX
                         </TabsTrigger>
-                        <TabsTrigger value="tech" data-testid="tab-tech" disabled={!wizardFlow}>
+                        <TabsTrigger value="tech" data-testid="tab-tech" disabled={!hasStepInFlow("tech")}>
                           <Code className="h-4 w-4 mr-1 hidden sm:inline" />
                           Tech
                         </TabsTrigger>
-                        <TabsTrigger value="preview" data-testid="tab-preview" disabled={!wizardFlow}>
+                        <TabsTrigger value="preview" data-testid="tab-preview" disabled={!hasStepInFlow("preview")}>
                           <Play className="h-4 w-4 mr-1 hidden sm:inline" />
                           Generate
                         </TabsTrigger>
@@ -911,7 +963,7 @@ Read these docs to understand the project architecture, then implement the appli
                               mode={selectedMode as Mode}
                               onSubmit={onWizardSubmit}
                               isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId="basics"
+                              activeStepId={getStepIdForTab("basics") || "basics"}
                               hideInternalNav
                             />
                             <div className="flex justify-between pt-4 border-t">
@@ -929,10 +981,10 @@ Read these docs to understand the project architecture, then implement the appli
                       </TabsContent>
 
                       <TabsContent value="intent" className="space-y-4">
-                        {wizardFlow ? (
+                        {hasStepInFlow("intent") ? (
                           <>
                             <DynamicWizard
-                              flow={wizardFlow}
+                              flow={wizardFlow!}
                               draft={wizardDraft}
                               onDraftChange={setWizardDraft}
                               currentStepIndex={wizardStepIndex}
@@ -961,7 +1013,7 @@ Read these docs to understand the project architecture, then implement the appli
                               mode={selectedMode as Mode}
                               onSubmit={onWizardSubmit}
                               isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId="intent"
+                              activeStepId={getStepIdForTab("intent") || "intent"}
                               hideInternalNav
                             />
                             <div className="flex justify-between pt-4 border-t">
@@ -969,20 +1021,22 @@ Read these docs to understand the project architecture, then implement the appli
                                 <ChevronLeft className="mr-2 h-4 w-4" /> Back
                               </Button>
                               <Button type="button" onClick={goNext} data-testid="button-next-intent" className="btn-axiom-cta">
-                                Next: Features <ChevronRight className="ml-2 h-4 w-4" />
+                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
                               </Button>
                             </div>
                           </>
                         ) : (
-                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
+                          <p className="text-muted-foreground text-center py-8">
+                            This step is not applicable for {selectedCategory} projects.
+                          </p>
                         )}
                       </TabsContent>
 
                       <TabsContent value="features" className="space-y-4">
-                        {wizardFlow ? (
+                        {hasStepInFlow("features") ? (
                           <>
                             <DynamicWizard
-                              flow={wizardFlow}
+                              flow={wizardFlow!}
                               draft={wizardDraft}
                               onDraftChange={setWizardDraft}
                               currentStepIndex={wizardStepIndex}
@@ -1011,7 +1065,7 @@ Read these docs to understand the project architecture, then implement the appli
                               mode={selectedMode as Mode}
                               onSubmit={onWizardSubmit}
                               isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId="features"
+                              activeStepId={getStepIdForTab("features") || "features"}
                               hideInternalNav
                             />
                             <div className="flex justify-between pt-4 border-t">
@@ -1019,20 +1073,22 @@ Read these docs to understand the project architecture, then implement the appli
                                 <ChevronLeft className="mr-2 h-4 w-4" /> Back
                               </Button>
                               <Button type="button" onClick={goNext} data-testid="button-next-features" className="btn-axiom-cta">
-                                Next: Users <ChevronRight className="ml-2 h-4 w-4" />
+                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
                               </Button>
                             </div>
                           </>
                         ) : (
-                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
+                          <p className="text-muted-foreground text-center py-8">
+                            This step is not applicable for {selectedCategory} projects.
+                          </p>
                         )}
                       </TabsContent>
 
                       <TabsContent value="users" className="space-y-4">
-                        {wizardFlow ? (
+                        {hasStepInFlow("users") ? (
                           <>
                             <DynamicWizard
-                              flow={wizardFlow}
+                              flow={wizardFlow!}
                               draft={wizardDraft}
                               onDraftChange={setWizardDraft}
                               currentStepIndex={wizardStepIndex}
@@ -1061,7 +1117,7 @@ Read these docs to understand the project architecture, then implement the appli
                               mode={selectedMode as Mode}
                               onSubmit={onWizardSubmit}
                               isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId="users"
+                              activeStepId={getStepIdForTab("users") || "users"}
                               hideInternalNav
                             />
                             <div className="flex justify-between pt-4 border-t">
@@ -1069,20 +1125,22 @@ Read these docs to understand the project architecture, then implement the appli
                                 <ChevronLeft className="mr-2 h-4 w-4" /> Back
                               </Button>
                               <Button type="button" onClick={goNext} data-testid="button-next-users" className="btn-axiom-cta">
-                                Next: UX <ChevronRight className="ml-2 h-4 w-4" />
+                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
                               </Button>
                             </div>
                           </>
                         ) : (
-                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
+                          <p className="text-muted-foreground text-center py-8">
+                            This step is not applicable for {selectedCategory} projects.
+                          </p>
                         )}
                       </TabsContent>
 
                       <TabsContent value="ux" className="space-y-4">
-                        {wizardFlow ? (
+                        {hasStepInFlow("ux") ? (
                           <>
                             <DynamicWizard
-                              flow={wizardFlow}
+                              flow={wizardFlow!}
                               draft={wizardDraft}
                               onDraftChange={setWizardDraft}
                               currentStepIndex={wizardStepIndex}
@@ -1111,7 +1169,7 @@ Read these docs to understand the project architecture, then implement the appli
                               mode={selectedMode as Mode}
                               onSubmit={onWizardSubmit}
                               isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId="ux"
+                              activeStepId={getStepIdForTab("ux") || "ux"}
                               hideInternalNav
                             />
                             <div className="flex justify-between pt-4 border-t">
@@ -1119,20 +1177,22 @@ Read these docs to understand the project architecture, then implement the appli
                                 <ChevronLeft className="mr-2 h-4 w-4" /> Back
                               </Button>
                               <Button type="button" onClick={goNext} data-testid="button-next-ux" className="btn-axiom-cta">
-                                Next: Tech <ChevronRight className="ml-2 h-4 w-4" />
+                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
                               </Button>
                             </div>
                           </>
                         ) : (
-                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
+                          <p className="text-muted-foreground text-center py-8">
+                            This step is not applicable for {selectedCategory} projects.
+                          </p>
                         )}
                       </TabsContent>
 
                       <TabsContent value="tech" className="space-y-4">
-                        {wizardFlow ? (
+                        {hasStepInFlow("tech") ? (
                           <>
                             <DynamicWizard
-                              flow={wizardFlow}
+                              flow={wizardFlow!}
                               draft={wizardDraft}
                               onDraftChange={setWizardDraft}
                               currentStepIndex={wizardStepIndex}
@@ -1161,7 +1221,7 @@ Read these docs to understand the project architecture, then implement the appli
                               mode={selectedMode as Mode}
                               onSubmit={onWizardSubmit}
                               isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId="tech"
+                              activeStepId={getStepIdForTab("tech") || "tech"}
                               hideInternalNav
                             />
                             <div className="flex justify-between pt-4 border-t">
@@ -1169,12 +1229,14 @@ Read these docs to understand the project architecture, then implement the appli
                                 <ChevronLeft className="mr-2 h-4 w-4" /> Back
                               </Button>
                               <Button type="button" onClick={goNext} data-testid="button-next-tech" className="btn-axiom-cta">
-                                Review <ChevronRight className="ml-2 h-4 w-4" />
+                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
                               </Button>
                             </div>
                           </>
                         ) : (
-                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
+                          <p className="text-muted-foreground text-center py-8">
+                            This step is not applicable for {selectedCategory} projects.
+                          </p>
                         )}
                       </TabsContent>
 
@@ -1211,7 +1273,7 @@ Read these docs to understand the project architecture, then implement the appli
                               mode={selectedMode as Mode}
                               onSubmit={onWizardSubmit}
                               isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId="review"
+                              activeStepId={getStepIdForTab("preview") || "review"}
                               hideInternalNav
                             />
                             <div className="flex justify-between pt-4 border-t">
@@ -1226,7 +1288,7 @@ Read these docs to understand the project architecture, then implement the appli
                                   (!!projectPackage && !isPackageReady) ||
                                   (!!requiresZip && !projectPackage)
                                 }
-                                onClick={() => onWizardSubmit(wizardDraft)}
+                                onClick={() => onWizardSubmit()}
                                 data-testid="button-generate"
                               >
                                 {createAssemblyMutation.isPending ? (
