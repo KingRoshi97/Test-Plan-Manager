@@ -7,6 +7,8 @@ import {
 } from "@shared/schema";
 import fs from "fs";
 import path from "path";
+import { GitHubClient, type FileEntry } from "./github-client";
+import AdmZip from "adm-zip";
 
 // Helper to log delivery events
 async function logDeliveryEvent(
@@ -174,13 +176,104 @@ async function executeWebhookDelivery(ctx: AdapterContext): Promise<AdapterResul
 }
 
 async function executeGitDelivery(ctx: AdapterContext): Promise<AdapterResult> {
-  const { delivery } = ctx;
+  const { delivery, kitPath } = ctx;
   const config = delivery.config as GitConfig;
   
-  return { 
-    success: false, 
-    error: `Git delivery to ${config.provider}/${config.repo} not yet implemented. Use pull or webhook instead.` 
-  };
+  if (config.provider !== "github") {
+    return { 
+      success: false, 
+      error: `Git provider "${config.provider}" not yet implemented. Only "github" is supported.` 
+    };
+  }
+
+  if (!config.repo || !config.branch) {
+    return { 
+      success: false, 
+      error: "Git config requires repo and branch" 
+    };
+  }
+
+  if (!config.auth?.token) {
+    return { 
+      success: false, 
+      error: "Git config requires auth.token (GitHub Personal Access Token)" 
+    };
+  }
+
+  if (!fs.existsSync(kitPath)) {
+    return { success: false, error: "Kit zip not found" };
+  }
+
+  try {
+    const client = new GitHubClient(config);
+    
+    const zip = new AdmZip(kitPath);
+    const zipEntries = zip.getEntries();
+    
+    const files: FileEntry[] = [];
+    for (const entry of zipEntries) {
+      if (entry.isDirectory) continue;
+      
+      files.push({
+        path: entry.entryName,
+        content: entry.getData(),
+        mode: "100644",
+      });
+    }
+
+    if (files.length === 0) {
+      return { success: false, error: "Kit zip is empty" };
+    }
+
+    const commitMessage = `[Axiom Assembler] Add generated kit for assembly ${delivery.assemblyId}`;
+    const mode = config.mode || "commit";
+
+    if (mode === "pr") {
+      const prBranchName = `axiom-kit-${delivery.assemblyId.slice(0, 8)}-${Date.now()}`;
+      const prBody = `This PR contains the Axiom Assembler generated documentation kit.\n\n` +
+        `- Assembly ID: \`${delivery.assemblyId}\`\n` +
+        `- Delivery ID: \`${delivery.id}\`\n` +
+        `- Files: ${files.length}\n`;
+
+      const { prUrl, commitSha } = await client.pushFilesAsPR(
+        config.branch,
+        prBranchName,
+        files,
+        commitMessage,
+        prBody,
+        config.pathPrefix
+      );
+
+      const result: GitResult = {
+        provider: config.provider,
+        repo: config.repo,
+        branch: prBranchName,
+        commitSha,
+        prUrl,
+      };
+
+      return { success: true, result };
+    } else {
+      const { commitSha } = await client.pushFiles(
+        config.branch,
+        files,
+        commitMessage,
+        config.pathPrefix
+      );
+
+      const result: GitResult = {
+        provider: config.provider,
+        repo: config.repo,
+        branch: config.branch,
+        commitSha,
+      };
+
+      return { success: true, result };
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, error: `Git delivery failed: ${message}` };
+  }
 }
 
 async function executeDirectDelivery(ctx: AdapterContext): Promise<AdapterResult> {
