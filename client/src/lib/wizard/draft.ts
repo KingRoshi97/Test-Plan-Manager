@@ -110,6 +110,12 @@ export interface WizardDraft {
     components: string[];
     designSystem?: string;
   };
+  delivery: {
+    enabled: boolean;
+    type: "pull" | "webhook";
+    webhookUrl?: string;
+    webhookSecret?: string;
+  };
 }
 
 export function makeEmptyDraft(): WizardDraft {
@@ -194,6 +200,12 @@ export function makeEmptyDraft(): WizardDraft {
       goal: "",
       components: [],
       designSystem: ""
+    },
+    delivery: {
+      enabled: false,
+      type: "pull",
+      webhookUrl: "",
+      webhookSecret: ""
     }
   };
 }
@@ -356,6 +368,12 @@ export interface CreateAssemblyRequest {
   brand?: {
     assets?: string;
   };
+  delivery?: {
+    enabled: boolean;
+    type: "pull" | "webhook";
+    webhookUrl?: string;
+    webhookSecret?: string;
+  };
 }
 
 export interface MapDraftOptions {
@@ -476,6 +494,15 @@ export function mapDraftToCreateAssemblyRequest(options: MapDraftOptions): Creat
     };
   }
 
+  if (draft.delivery.enabled) {
+    request.delivery = {
+      enabled: true,
+      type: draft.delivery.type,
+      webhookUrl: draft.delivery.type === "webhook" ? draft.delivery.webhookUrl : undefined,
+      webhookSecret: draft.delivery.type === "webhook" ? draft.delivery.webhookSecret : undefined
+    };
+  }
+
   return request;
 }
 
@@ -519,6 +546,15 @@ export function validateDraftForMode(draft: WizardDraft, mode: Mode): Validation
     }
     if (!draft.module.description?.trim()) {
       errors.push("Feature module description is required");
+    }
+  }
+
+  if (draft.delivery.enabled && draft.delivery.type === "webhook") {
+    if (!draft.delivery.webhookUrl?.trim()) {
+      errors.push("Webhook URL is required for webhook delivery");
+    }
+    if (!draft.delivery.webhookSecret?.trim()) {
+      errors.push("Webhook secret is required for webhook delivery");
     }
   }
 

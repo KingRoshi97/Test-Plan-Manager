@@ -88,6 +88,12 @@ export interface AssemblyInput {
   uploadedContext?: string;
   docUploadIds?: string[];
   docUploads?: DocUpload[];
+  delivery?: {
+    enabled: boolean;
+    type: "pull" | "webhook";
+    webhookUrl?: string;
+    webhookSecret?: string;
+  };
 }
 
 export interface KitSizes {
