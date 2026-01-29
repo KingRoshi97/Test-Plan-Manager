@@ -1,10 +1,11 @@
 import { eq, desc, isNull, and, like } from "drizzle-orm";
 import { db } from "./db";
 import { 
-  users, assemblies, deliveries, projectPackages, apiKeys, auditLogs,
+  users, assemblies, deliveries, deliveryEvents, projectPackages, apiKeys, auditLogs,
   type User, type InsertUser, 
   type Assembly, type InsertAssembly,
   type Delivery, type InsertDelivery,
+  type DeliveryEvent, type InsertDeliveryEvent,
   type ProjectPackage, type InsertProjectPackage,
   type ApiKey, type InsertApiKey,
   type AuditLog, type InsertAuditLog
@@ -281,10 +282,8 @@ export class DbStorage implements IStorage {
   }
 
   async createAuditLog(insertLog: InsertAuditLog): Promise<AuditLog> {
-    const id = `log_${randomUUID().replace(/-/g, '').substring(0, 16)}`;
     const result = await db.insert(auditLogs).values({
-      id,
-      action: insertLog.action,
+      action: insertLog.action as any,
       resourceType: insertLog.resourceType,
       resourceId: insertLog.resourceId || null,
       apiKeyId: insertLog.apiKeyId || null,
@@ -297,5 +296,35 @@ export class DbStorage implements IStorage {
       metadata: insertLog.metadata || null,
     }).returning();
     return result[0];
+  }
+
+  // Delivery Events
+  async getDeliveryEvents(deliveryId: string): Promise<DeliveryEvent[]> {
+    return db.select().from(deliveryEvents)
+      .where(eq(deliveryEvents.deliveryId, deliveryId))
+      .orderBy(desc(deliveryEvents.occurredAt));
+  }
+
+  async createDeliveryEvent(insertEvent: InsertDeliveryEvent): Promise<DeliveryEvent> {
+    const id = `evt_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+    const result = await db.insert(deliveryEvents).values({
+      id,
+      deliveryId: insertEvent.deliveryId,
+      eventType: insertEvent.eventType,
+      detailsJson: (insertEvent.detailsJson as any) || null,
+    }).returning();
+    return result[0];
+  }
+
+  async getQueuedDeliveriesForRetry(): Promise<Delivery[]> {
+    const now = new Date();
+    return db.select().from(deliveries)
+      .where(
+        and(
+          eq(deliveries.state, "queued"),
+          // nextAttemptAt is null (never attempted) or past due
+        )
+      )
+      .orderBy(deliveries.nextAttemptAt);
   }
 }
