@@ -2,29 +2,28 @@
 
 ## Overview
 **Domain Slug:** web
-**Generated:** 2026-01-28T21:41:20.108Z
-**Updated:** Resolved for MVP
+**Generated:** 2026-01-29T04:00:08.334Z
 
 ## Unresolved Questions
 
 ### From Draft Process
-- ~~State machine transitions need stakeholder validation~~ RESOLVED: Defined in BELS_web.md
-- ~~Specific error messages need confirmation~~ RESOLVED: Defined in BELS_web.md
-- ~~Implementation details are UNKNOWN~~ RESOLVED: React + Tailwind per PROJECT_OVERVIEW
+- State machine transitions need stakeholder validation
+- Specific error messages need confirmation
+- Implementation details are UNKNOWN
 
 ### Entity-Specific
-- ~~Entity ownership boundaries need clarification~~ RESOLVED: See DDES_web.md
-- ~~Cross-domain interactions need definition~~ RESOLVED: Web calls API domain
+- Entity ownership boundaries need clarification
+- Cross-domain interactions need definition
 
 ### Implementation
-- Technical requirements: React 18, Tailwind CSS, TanStack Query
-- Performance requirements: Standard web performance (deferred to implementation)
-- Integration details: Uses /api/* endpoints from API domain
+- Specific technical requirements: UNKNOWN
+- Performance requirements: UNKNOWN
+- Integration details: UNKNOWN
 
 ## Resolution Tracking
 
 | Question ID | Question | Status | Resolution |
 |-------------|----------|--------|------------|
-| Q001 | Entity ownership | RESOLVED | See DDES_web.md |
-| Q002 | State transitions | RESOLVED | See BELS_web.md |
-| Q003 | Error handling | RESOLVED | See BELS_web.md reason codes |
+| Q001 | Entity ownership | OPEN | UNKNOWN |
+| Q002 | State transitions | OPEN | UNKNOWN |
+| Q003 | Error handling | OPEN | UNKNOWN |

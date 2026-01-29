@@ -2,29 +2,28 @@
 
 ## Overview
 **Domain Slug:** api
-**Generated:** 2026-01-28T21:41:20.107Z
-**Updated:** Resolved for MVP
+**Generated:** 2026-01-29T04:00:08.333Z
 
 ## Unresolved Questions
 
 ### From Draft Process
-- ~~State machine transitions need stakeholder validation~~ RESOLVED: Defined in BELS_api.md
-- ~~Specific error messages need confirmation~~ RESOLVED: Defined in BELS_api.md
-- ~~Implementation details are UNKNOWN~~ RESOLVED: Express.js per PROJECT_OVERVIEW
+- State machine transitions need stakeholder validation
+- Specific error messages need confirmation
+- Implementation details are UNKNOWN
 
 ### Entity-Specific
-- ~~Entity ownership boundaries need clarification~~ RESOLVED: See DDES_api.md
-- ~~Cross-domain interactions need definition~~ RESOLVED: API orchestrates pipeline scripts
+- Entity ownership boundaries need clarification
+- Cross-domain interactions need definition
 
 ### Implementation
-- Technical requirements: Express.js, Node.js
-- Performance requirements: Standard API performance (deferred to implementation)
-- Integration details: Calls roshi scripts via child_process or direct import
+- Specific technical requirements: UNKNOWN
+- Performance requirements: UNKNOWN
+- Integration details: UNKNOWN
 
 ## Resolution Tracking
 
 | Question ID | Question | Status | Resolution |
 |-------------|----------|--------|------------|
-| Q001 | Entity ownership | RESOLVED | See DDES_api.md |
-| Q002 | State transitions | RESOLVED | See BELS_api.md |
-| Q003 | Error handling | RESOLVED | See BELS_api.md reason codes |
+| Q001 | Entity ownership | OPEN | UNKNOWN |
+| Q002 | State transitions | OPEN | UNKNOWN |
+| Q003 | Error handling | OPEN | UNKNOWN |
