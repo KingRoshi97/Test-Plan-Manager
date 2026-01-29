@@ -15,12 +15,61 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
   Download, Loader2, CheckCircle, XCircle, Play, Copy,
   Plus, Trash2, ChevronRight, ChevronLeft, Sparkles, Code, Users, ListTodo, Settings,
-  Upload, File, X, Package, AlertTriangle, FolderArchive
+  Upload, File, X, Package, AlertTriangle, FolderArchive,
+  Globe, Smartphone, Server, Workflow, Gamepad2
 } from "lucide-react";
-import type { UploadedFile, ProjectSummary, ProjectWarning, ScanState, IndexState } from "@shared/schema";
+import type { UploadedFile, ProjectSummary, ProjectWarning, ScanState, IndexState, AssemblyCategory, AssemblyMode } from "@shared/schema";
 import { useLocation } from "wouter";
 import { PageHeader, StatusBadge, Stepper, AssemblyTimeline, CodeBlock, CopyButton } from "@/components/kit";
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from "@/components/kit";
+
+interface CategoryInfo {
+  label: string;
+  description: string;
+  icon: string;
+}
+
+interface ModeInfo {
+  label: string;
+  description: string;
+  requiresZip: boolean;
+}
+
+interface Preset {
+  id: string;
+  label: string;
+  category: AssemblyCategory;
+  mode: AssemblyMode;
+  defaultDomains: string[];
+  wizardFieldProfile: string;
+  outputDefaults: {
+    kitMode: string;
+    upgradeOutput: string;
+  };
+  defaults: {
+    techStack?: { frontend?: string; backend?: string; database?: string; runtime?: string; framework?: string };
+    goals?: string[];
+    constraints?: string[];
+  };
+}
+
+interface PresetsResponse {
+  presets: Preset[];
+  categories: Record<AssemblyCategory, CategoryInfo>;
+  modes: Record<AssemblyMode, ModeInfo>;
+}
+
+const CategoryIcon = ({ icon }: { icon: string }) => {
+  switch (icon) {
+    case "Globe": return <Globe className="h-6 w-6" />;
+    case "Smartphone": return <Smartphone className="h-6 w-6" />;
+    case "Server": return <Server className="h-6 w-6" />;
+    case "Package": return <Package className="h-6 w-6" />;
+    case "Workflow": return <Workflow className="h-6 w-6" />;
+    case "Gamepad2": return <Gamepad2 className="h-6 w-6" />;
+    default: return <Code className="h-6 w-6" />;
+  }
+};
 
 interface ProjectPackageStatus {
   id: string;
@@ -65,6 +114,9 @@ const projectFormSchema = z.object({
     database: z.string().optional(),
   }).optional(),
   preset: z.string().optional(),
+  category: z.string().optional(),
+  mode: z.string().optional(),
+  presetId: z.string().optional(),
   domains: z.array(z.string()).optional(),
   idea: z.string().optional(),
   uploadedFiles: z.array(uploadedFileSchema).optional(),
@@ -88,8 +140,9 @@ function getStepProgress(currentStep: string | null): number {
   return index >= 0 ? ((index + 1) / PIPELINE_STEPS.length) * 100 : 0;
 }
 
-const FORM_STEPS = ["basics", "features", "users", "tech", "preview"] as const;
+const FORM_STEPS = ["type", "basics", "features", "users", "tech", "preview"] as const;
 const STEP_CONFIG = [
+  { id: "type", label: "Type" },
   { id: "basics", label: "Basics" },
   { id: "features", label: "Features" },
   { id: "users", label: "Users" },
@@ -102,8 +155,25 @@ export default function Create() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [activeAssemblyId, setActiveAssemblyId] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState<FormStep>("basics");
+  const [currentStep, setCurrentStep] = useState<FormStep>("type");
   const [useSimpleMode, setUseSimpleMode] = useState(false);
+  
+  // Category/Mode/Preset selection state
+  const [selectedCategory, setSelectedCategory] = useState<AssemblyCategory | null>(null);
+  const [selectedMode, setSelectedMode] = useState<AssemblyMode | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<Preset | null>(null);
+  
+  // Fetch presets from API
+  const { data: presetsData } = useQuery<PresetsResponse>({
+    queryKey: ["/api/presets"],
+  });
+  
+  const filteredPresets = presetsData?.presets.filter(p => 
+    (!selectedCategory || p.category === selectedCategory) &&
+    (!selectedMode || p.mode === selectedMode)
+  ) || [];
+  
+  const requiresZip = selectedMode && presetsData?.modes[selectedMode]?.requiresZip;
 
   const form = useForm<ProjectFormData>({
     resolver: zodResolver(projectFormSchema),
@@ -118,6 +188,9 @@ export default function Create() {
         database: "",
       },
       preset: "",
+      category: "",
+      mode: "",
+      presetId: "",
       domains: ["platform", "api", "web"],
       uploadedFiles: [],
       uploadedContext: "",
@@ -440,7 +513,34 @@ Read these docs to understand the project architecture, then implement the appli
   const handleNewAssembly = () => {
     setActiveAssemblyId(null);
     form.reset();
-    setCurrentStep("basics");
+    setCurrentStep("type");
+    setSelectedCategory(null);
+    setSelectedMode(null);
+    setSelectedPreset(null);
+    setProjectPackage(null);
+  };
+  
+  // Apply preset defaults when a preset is selected
+  const applyPresetDefaults = (preset: Preset) => {
+    setSelectedPreset(preset);
+    form.setValue("category", preset.category);
+    form.setValue("mode", preset.mode);
+    form.setValue("presetId", preset.id);
+    form.setValue("domains", preset.defaultDomains);
+    
+    // Apply tech stack defaults if available
+    if (preset.defaults.techStack) {
+      const techStack = preset.defaults.techStack;
+      if (techStack.frontend && techStack.frontend !== "UNKNOWN" && techStack.frontend !== "DETECT_FROM_ZIP") {
+        form.setValue("techStack.frontend", techStack.frontend);
+      }
+      if (techStack.backend && techStack.backend !== "UNKNOWN" && techStack.backend !== "DETECT_FROM_ZIP") {
+        form.setValue("techStack.backend", techStack.backend);
+      }
+      if (techStack.database && techStack.database !== "UNKNOWN") {
+        form.setValue("techStack.database", techStack.database);
+      }
+    }
   };
 
   const goNext = () => {
@@ -567,7 +667,11 @@ Read these docs to understand the project architecture, then implement the appli
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     <Tabs value={currentStep} onValueChange={(v) => setCurrentStep(v as FormStep)} className="w-full">
-                      <TabsList className="grid w-full grid-cols-5 mb-6">
+                      <TabsList className="grid w-full grid-cols-6 mb-6">
+                        <TabsTrigger value="type" data-testid="tab-type">
+                          <Package className="h-4 w-4 mr-1 hidden sm:inline" />
+                          Type
+                        </TabsTrigger>
                         <TabsTrigger value="basics" data-testid="tab-basics">
                           <Settings className="h-4 w-4 mr-1 hidden sm:inline" />
                           Basics
@@ -589,6 +693,126 @@ Read these docs to understand the project architecture, then implement the appli
                           Generate
                         </TabsTrigger>
                       </TabsList>
+
+                      {/* Step 0: Category + Mode + Preset Selection */}
+                      <TabsContent value="type" className="space-y-6">
+                        {/* Category Selection */}
+                        <div className="space-y-3">
+                          <FormLabel className="text-base font-semibold">What are you building?</FormLabel>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {presetsData?.categories && Object.entries(presetsData.categories).map(([key, info]) => (
+                              <button
+                                type="button"
+                                key={key}
+                                onClick={() => {
+                                  setSelectedCategory(key as AssemblyCategory);
+                                  setSelectedPreset(null);
+                                  form.setValue("category", key);
+                                }}
+                                className={`p-4 rounded-lg border-2 text-left transition-all hover-elevate ${
+                                  selectedCategory === key 
+                                    ? "border-amber-500 bg-amber-500/10" 
+                                    : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                                }`}
+                                data-testid={`category-${key}`}
+                              >
+                                <div className={`mb-2 ${selectedCategory === key ? "text-amber-500" : "text-muted-foreground"}`}>
+                                  <CategoryIcon icon={info.icon} />
+                                </div>
+                                <div className="font-medium">{info.label}</div>
+                                <div className="text-xs text-muted-foreground">{info.description}</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Mode Selection */}
+                        {selectedCategory && (
+                          <div className="space-y-3">
+                            <FormLabel className="text-base font-semibold">What kind of work?</FormLabel>
+                            <div className="flex flex-wrap gap-2">
+                              {presetsData?.modes && Object.entries(presetsData.modes).map(([key, info]) => (
+                                <Button
+                                  type="button"
+                                  key={key}
+                                  variant={selectedMode === key ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedMode(key as AssemblyMode);
+                                    setSelectedPreset(null);
+                                    form.setValue("mode", key);
+                                  }}
+                                  className={selectedMode === key ? "bg-amber-500" : ""}
+                                  data-testid={`mode-${key}`}
+                                >
+                                  {info.label}
+                                  {info.requiresZip && (
+                                    <Badge variant="secondary" className="ml-2 text-xs">ZIP</Badge>
+                                  )}
+                                </Button>
+                              ))}
+                            </div>
+                            {requiresZip && (
+                              <p className="text-xs text-amber-500">
+                                This mode requires uploading your existing project as a ZIP file.
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Preset Selection */}
+                        {selectedCategory && selectedMode && (
+                          <div className="space-y-3">
+                            <FormLabel className="text-base font-semibold">Select a starting template</FormLabel>
+                            {filteredPresets.length > 0 ? (
+                              <div className="space-y-2">
+                                {filteredPresets.map(preset => (
+                                  <button
+                                    type="button"
+                                    key={preset.id}
+                                    onClick={() => applyPresetDefaults(preset)}
+                                    className={`w-full p-4 rounded-lg border-2 text-left transition-all hover-elevate ${
+                                      selectedPreset?.id === preset.id 
+                                        ? "border-amber-500 bg-amber-500/10" 
+                                        : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                                    }`}
+                                    data-testid={`preset-${preset.id}`}
+                                  >
+                                    <div className="font-medium">{preset.label}</div>
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Domains: {preset.defaultDomains.join(", ")}
+                                    </div>
+                                    {preset.defaults.goals && preset.defaults.goals.length > 0 && (
+                                      <div className="text-xs text-muted-foreground mt-2">
+                                        <span className="font-medium">Goals:</span> {preset.defaults.goals.slice(0, 2).join("; ")}
+                                        {preset.defaults.goals.length > 2 && "..."}
+                                      </div>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                No presets available for this combination yet.
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Navigation */}
+                        <div className="flex justify-end pt-4">
+                          <Button
+                            type="button"
+                            onClick={goNext}
+                            disabled={!selectedPreset}
+                            className="btn-axiom-cta"
+                            data-testid="button-next-type"
+                          >
+                            Next: Basics
+                            <ChevronRight className="ml-2 h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TabsContent>
 
                       <TabsContent value="basics" className="space-y-4">
                         <FormField
@@ -1156,6 +1380,25 @@ Read these docs to understand the project architecture, then implement the appli
                         </div>
 
                         <div className="rounded-lg border p-4 space-y-4">
+                          {/* Type/Mode/Preset info */}
+                          {selectedPreset && (
+                            <div className="pb-3 border-b">
+                              <p className="text-xs font-medium text-muted-foreground mb-2">PROJECT TYPE</p>
+                              <div className="flex flex-wrap gap-2">
+                                <Badge variant="default" className="bg-amber-500">
+                                  {presetsData?.categories[selectedCategory!]?.label}
+                                </Badge>
+                                <Badge variant="secondary">
+                                  {presetsData?.modes[selectedMode!]?.label}
+                                </Badge>
+                                <Badge variant="outline">{selectedPreset.label}</Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Domains: {selectedPreset.defaultDomains.join(", ")}
+                              </p>
+                            </div>
+                          )}
+                          
                           <div>
                             <p className="text-xs font-medium text-muted-foreground">PROJECT NAME</p>
                             <p className="font-medium">{watchedValues.projectName || "(not set)"}</p>
@@ -1198,6 +1441,45 @@ Read these docs to understand the project architecture, then implement the appli
                           )}
                         </div>
 
+                        {/* ZIP Required Warning */}
+                        {requiresZip && !projectPackage && (
+                          <div className="rounded-lg border-2 border-amber-500/50 bg-amber-500/10 p-4">
+                            <div className="flex items-center gap-2 text-amber-500">
+                              <AlertTriangle className="h-5 w-5" />
+                              <p className="font-medium">ZIP Required</p>
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              This mode requires uploading your existing project as a ZIP file. 
+                              Go back to the Basics tab to upload your project.
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Project Package Status */}
+                        {projectPackage && (
+                          <div className="rounded-lg border p-4">
+                            <p className="text-xs font-medium text-muted-foreground mb-2">UPLOADED PROJECT</p>
+                            <div className="flex items-center gap-2">
+                              <FolderArchive className="h-4 w-4 text-amber-500" />
+                              <span className="font-medium">{projectPackage.filename}</span>
+                              {isPackageReady && (
+                                <Badge className="bg-green-500">Ready</Badge>
+                              )}
+                              {isPackageProcessing && (
+                                <Badge variant="secondary">
+                                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                  Processing
+                                </Badge>
+                              )}
+                            </div>
+                            {projectPackage.summaryJson?.framework && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Detected: {projectPackage.summaryJson.framework}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
                         <div className="flex justify-between pt-4">
                           <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-preview">
                             <ChevronLeft className="mr-2 h-4 w-4" /> Back
@@ -1205,7 +1487,11 @@ Read these docs to understand the project architecture, then implement the appli
                           <Button
                             type="submit"
                             className="btn-axiom-cta"
-                            disabled={createAssemblyMutation.isPending || (!!projectPackage && !isPackageReady)}
+                            disabled={
+                              createAssemblyMutation.isPending || 
+                              (!!projectPackage && !isPackageReady) ||
+                              (!!requiresZip && !projectPackage)
+                            }
                             data-testid="button-generate"
                           >
                             {createAssemblyMutation.isPending ? (
@@ -1217,6 +1503,11 @@ Read these docs to understand the project architecture, then implement the appli
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 Waiting for project indexing...
+                              </>
+                            ) : requiresZip && !projectPackage ? (
+                              <>
+                                <AlertTriangle className="mr-2 h-4 w-4" />
+                                ZIP Required
                               </>
                             ) : (
                               <>
