@@ -1,12 +1,13 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { createRunRequestSchema, createHandoffRequestSchema, type RunBundle, type RunInput, type CreateRunRequest } from "@shared/schema";
+import { createRunRequestSchema, createHandoffRequestSchema, type RunBundle, type RunInput, type CreateRunRequest, type UploadedFile } from "@shared/schema";
 import { generateSignedUrl, validateSignature, computeSha256 } from "./signing";
 import { processHandoff } from "./adapters";
 import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
 import { createWorkspace, populateWorkspaceWithAI, getWorkspacePath, type WorkspaceConfig } from "./workspace-manager";
+import { upload, processUploadedFiles, combineExtractedText } from "./file-upload";
 
 function getBaseUrl(req: Request): string {
   const protocol = req.protocol;
@@ -24,6 +25,29 @@ export function registerV1Routes(app: Express) {
   
   app.get("/health", (req: Request, res: Response) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  app.post("/v1/upload", upload.array("files", 5), async (req: Request, res: Response) => {
+    try {
+      const files = req.files as Express.Multer.File[];
+      
+      if (!files || files.length === 0) {
+        return apiError(res, 400, "NO_FILES", "No files uploaded");
+      }
+      
+      const uploadedFiles = await processUploadedFiles(files);
+      const combinedContext = combineExtractedText(uploadedFiles);
+      
+      res.json({
+        files: uploadedFiles,
+        combinedContext,
+        totalSize: uploadedFiles.reduce((sum, f) => sum + f.size, 0),
+        totalExtractedLength: combinedContext.length,
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      return apiError(res, 500, "UPLOAD_ERROR", error instanceof Error ? error.message : "Upload failed");
+    }
   });
 
   app.post("/v1/runs", async (req: Request, res: Response) => {
@@ -323,6 +347,11 @@ const stepProgress: Record<string, number> = {
 };
 
 function buildRunInput(data: CreateRunRequest): RunInput {
+  const baseInput = {
+    uploadedFiles: data.uploadedFiles,
+    uploadedContext: data.uploadedContext,
+  };
+  
   if (data.projectName && (data.features || data.users || data.description)) {
     return {
       projectName: data.projectName,
@@ -332,6 +361,7 @@ function buildRunInput(data: CreateRunRequest): RunInput {
       techStack: data.techStack,
       preset: data.preset,
       legacy: data.idea ? { idea: data.idea, mappedFromIdea: false } : undefined,
+      ...baseInput,
     };
   }
   
@@ -351,6 +381,7 @@ function buildRunInput(data: CreateRunRequest): RunInput {
         idea: ideaText,
         mappedFromIdea: true,
       },
+      ...baseInput,
     };
   }
   
@@ -361,6 +392,7 @@ function buildRunInput(data: CreateRunRequest): RunInput {
     users: data.users || [],
     techStack: data.techStack,
     preset: data.preset,
+    ...baseInput,
   };
 }
 

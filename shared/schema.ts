@@ -53,6 +53,15 @@ export interface LegacyInput {
   mappedFromIdea: boolean;
 }
 
+export interface UploadedFile {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  extractedText: string;
+  uploadedAt: string;
+}
+
 export interface RunInput {
   projectName: string;
   description: string;
@@ -61,6 +70,8 @@ export interface RunInput {
   techStack?: TechStack;
   preset?: string;
   legacy?: LegacyInput;
+  uploadedFiles?: UploadedFile[];
+  uploadedContext?: string;
 }
 
 export interface BundleSizes {
@@ -120,6 +131,15 @@ export const techStackSchema = z.object({
   database: z.string().optional(),
 });
 
+export const uploadedFileSchema = z.object({
+  id: z.string(),
+  filename: z.string(),
+  mimeType: z.string(),
+  size: z.number(),
+  extractedText: z.string(),
+  uploadedAt: z.string(),
+});
+
 export const createRunRequestSchema = z.object({
   projectName: z.string().min(1, "Project name is required").optional(),
   description: z.string().optional(),
@@ -130,6 +150,8 @@ export const createRunRequestSchema = z.object({
   domains: z.array(z.string()).optional(),
   idea: z.string().optional(),
   context: z.string().optional(),
+  uploadedFiles: z.array(uploadedFileSchema).optional(),
+  uploadedContext: z.string().optional(),
 }).refine(
   (data) => data.projectName || data.idea,
   { message: "Either projectName (structured) or idea (legacy) is required" }
