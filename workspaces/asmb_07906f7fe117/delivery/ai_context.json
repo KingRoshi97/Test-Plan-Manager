@@ -1,0 +1,21 @@
+{
+  "projectName": "Test Pipeline 1UhLdP",
+  "description": "A task management app with team collaboration features",
+  "features": [],
+  "users": [],
+  "techStack": {
+    "frontend": "",
+    "backend": "",
+    "database": ""
+  },
+  "preset": "web",
+  "domains": [
+    "web",
+    "api",
+    "uxui",
+    "security",
+    "infra"
+  ],
+  "uploadedContext": null,
+  "uploadedFiles": []
+}
