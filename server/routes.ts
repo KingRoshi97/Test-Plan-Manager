@@ -8,6 +8,7 @@ import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
 import { createWorkspace, populateWorkspaceWithAI, getWorkspacePath, type WorkspaceConfig } from "./workspace-manager";
+import { processDelivery } from "./adapters";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -315,11 +316,42 @@ async function executePipeline(assemblyId: string, idea: string | null, context:
     });
     
     console.log(`[Pipeline] Assembly ${assemblyId} completed successfully`);
+    
+    // Auto-trigger any queued deliveries for this assembly
+    triggerQueuedDeliveries(assemblyId).catch(err => {
+      console.error(`[Pipeline] Failed to trigger queued deliveries:`, err);
+    });
   } catch (error) {
     console.error(`[Pipeline] Assembly ${assemblyId} failed:`, error);
     await storage.updateAssembly(assemblyId, { 
       state: "failed",
       errors: [error instanceof Error ? error.message : "Unknown error"]
     });
+  }
+}
+
+// Trigger all queued deliveries for a completed assembly
+async function triggerQueuedDeliveries(assemblyId: string): Promise<void> {
+  const deliveries = await storage.getDeliveriesByAssemblyId(assemblyId);
+  const queuedDeliveries = deliveries.filter((d: { state: string }) => d.state === "queued");
+  
+  if (queuedDeliveries.length === 0) {
+    return;
+  }
+  
+  console.log(`[Pipeline] Triggering ${queuedDeliveries.length} queued deliveries for assembly ${assemblyId}`);
+  
+  // Determine base URL - use REPLIT_DEV_DOMAIN in Replit, otherwise localhost
+  const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+    : "http://localhost:5000";
+  
+  for (const delivery of queuedDeliveries) {
+    try {
+      console.log(`[Pipeline] Processing delivery ${delivery.id} (${delivery.type})`);
+      await processDelivery(delivery.id, baseUrl);
+    } catch (error) {
+      console.error(`[Pipeline] Failed to process delivery ${delivery.id}:`, error);
+    }
   }
 }

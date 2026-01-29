@@ -13,8 +13,11 @@ import { scanAndIndexProjectPackage } from "./jobs/scan-index-package";
 import { writeFile, writeText, readText, getProjectPackagePath, getKitUpgradePath, fileExists as storageFileExists } from "./file-storage";
 import crypto from "crypto";
 import { generateApiKey, logAudit, requireApiKey, validateApiKey, optionalApiKey } from "./apikey";
+import { startDeliveryRetryScheduler } from "./jobs/delivery-retry-scheduler";
 
 registerHandler("scanAndIndexProjectPackage", scanAndIndexProjectPackage);
+
+startDeliveryRetryScheduler();
 
 function getBaseUrl(req: Request): string {
   const protocol = req.protocol;
@@ -723,6 +726,27 @@ export function registerV1Routes(app: Express) {
     });
   });
 
+  // GET /v1/deliveries/:deliveryId/events - Get delivery event history
+  app.get("/v1/deliveries/:deliveryId/events", async (req: Request<{ deliveryId: string }>, res: Response) => {
+    const delivery = await storage.getDelivery(req.params.deliveryId);
+    if (!delivery) {
+      return apiError(req, res, 404, "NOT_FOUND", "Delivery not found");
+    }
+    
+    const events = await storage.getDeliveryEvents(delivery.id);
+    
+    res.json({
+      deliveryId: delivery.id,
+      events: events.map(e => ({
+        id: e.id,
+        eventType: e.eventType,
+        occurredAt: e.occurredAt.toISOString(),
+        details: e.detailsJson || null,
+      })),
+      correlationId: req.correlationId,
+    });
+  });
+
   app.post("/v1/deliveries/:deliveryId/retry", optionalAuth, async (req: Request<{ deliveryId: string }>, res: Response) => {
     const delivery = await storage.getDelivery(req.params.deliveryId);
     if (!delivery) {
@@ -1021,10 +1045,10 @@ export function registerV1Routes(app: Express) {
     for (const file of upgradeFiles) {
       const objectKey = getKitUpgradePath(kitId, file.filename);
       if (await storageFileExists(objectKey)) {
-        const signedUrl = generateSignedUrl(`${baseUrl}/v1/assemblies/${assembly.id}/upgrade/${file.filename}`, 3600);
+        const signed = generateSignedUrl(`${baseUrl}/v1/assemblies/${assembly.id}/upgrade/${file.filename}`, { assemblyId: assembly.id, expiresInSeconds: 3600 });
         artifacts.push({
           type: file.type,
-          downloadUrl: signedUrl,
+          downloadUrl: signed.url,
         });
       }
     }

@@ -1,4 +1,4 @@
-import { eq, desc, isNull, and, like } from "drizzle-orm";
+import { eq, desc, isNull, and, like, or, lte } from "drizzle-orm";
 import { db } from "./db";
 import { 
   users, assemblies, deliveries, deliveryEvents, projectPackages, apiKeys, auditLogs,
@@ -322,7 +322,10 @@ export class DbStorage implements IStorage {
       .where(
         and(
           eq(deliveries.state, "queued"),
-          // nextAttemptAt is null (never attempted) or past due
+          or(
+            isNull(deliveries.nextAttemptAt),
+            lte(deliveries.nextAttemptAt, now)
+          )
         )
       )
       .orderBy(deliveries.nextAttemptAt);
