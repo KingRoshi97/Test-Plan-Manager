@@ -207,22 +207,37 @@
     hsl(var(--axiom-orange)) 45%,
     hsl(var(--axiom-redorange)) 100%
   );
+  color: white;
+  border: none;
+  box-shadow: 0 0 16px hsl(var(--primary) / 0.3);
 }
 
 /* Hover/active should feel premium, not jumpy */
-.btn-axiom-cta:hover {
-  filter: brightness(1.05);
+.btn-axiom-cta:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 0 24px hsl(var(--primary) / 0.5);
 }
 
-.btn-axiom-cta:active {
-  filter: brightness(0.98);
+.btn-axiom-cta:active:not(:disabled) {
+  filter: brightness(0.96);
+  box-shadow: 0 0 12px hsl(var(--primary) / 0.4);
+}
+
+/* Focus ring for accessibility */
+.btn-axiom-cta:focus-visible {
+  outline: none;
+  ring: 2px;
+  ring-color: hsl(var(--ring));
+  ring-offset: 2px;
 }
 
 /* Disabled must look disabled even with gradient */
 .btn-axiom-cta:disabled,
 .btn-axiom-cta[aria-disabled='true'] {
-  filter: grayscale(0.15) brightness(0.85);
-  opacity: 0.7;
+  filter: grayscale(0.2) brightness(0.8);
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /**

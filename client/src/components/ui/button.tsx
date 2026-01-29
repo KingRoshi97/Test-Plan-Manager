@@ -11,7 +11,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-[hsl(var(--axiom-amber))] via-[hsl(var(--axiom-orange))] to-[hsl(var(--axiom-warm))] text-white border-0 shadow-[0_0_16px_hsl(var(--primary)/0.3)]",
+          "bg-primary text-primary-foreground border border-primary-border",
         destructive:
           "bg-destructive text-destructive-foreground border border-destructive-border",
         outline:
