@@ -44,10 +44,10 @@ Preferred communication style: Simple, everyday language.
 - **Pipeline Scripts**: npm scripts for each pipeline stage (`roshi:init`, `roshi:gen`, etc.)
 
 ### Core Entities
-- **Run**: Pipeline execution with idea, status, currentStep, bundlePath
-- User, Project, DomainPack, Artifact, VerifyResult, ERC, Bundle, TemplatePack, SourceRef
+- **Run**: Pipeline execution with idea, projectName, preset, domains[], state, step, progress, errors[], bundlePath, checksums
+- **Handoff**: Delivery mechanism with type (pull/webhook/git/direct), config, state, attempts, result, attemptHistory[]
 
-### API Endpoints
+### API Endpoints (Legacy)
 - `GET /api/runs` - List all runs
 - `POST /api/runs` - Create a new run with idea and optional context
 - `GET /api/runs/:id` - Get run status
@@ -55,8 +55,24 @@ Preferred communication style: Simple, everyday language.
 - `GET /api/runs/:id/download` - Download the bundle zip
 - `DELETE /api/runs/:id` - Delete a run
 
-### Run Status Flow
-created → running → bundled (or failed)
+### API v1 Endpoints (Versioned)
+- `POST /v1/runs` - Create run with idea, projectName, preset, domains
+- `GET /v1/runs/:id` - Get run status with progress/step details
+- `GET /v1/runs/:id/bundle` - Get bundle metadata with signed download URL
+- `GET /v1/runs/:id/bundle.zip` - Download bundle (requires valid signature)
+- `POST /v1/runs/:id/handoffs` - Create handoff (pull/webhook/git/direct)
+- `GET /v1/runs/:id/handoffs` - List handoffs for run
+- `GET /v1/handoffs/:id` - Get handoff details
+- `POST /v1/handoffs/:id/retry` - Retry failed handoff
+
+### Handoff Types
+- **pull**: Returns signed URLs with optional inline manifest/prompt
+- **webhook**: POST to receiver URL with X-Roshi-Signature header (HMAC-SHA256)
+- **git**: Push to GitHub/GitLab branch (stubbed, needs implementation)
+- **direct**: Platform-specific adapters (stubbed, needs implementation)
+
+### Run State Flow
+queued → running → completed (or failed/canceled)
 
 ### Design Constraints
 - No invention: Missing info must become UNKNOWN and logged to Open Questions
@@ -96,3 +112,6 @@ created → running → bundled (or failed)
 - **Web App Implemented**: Created Home page with idea form, pipeline execution, download functionality
 - **Run History**: Added /runs page to view and manage previous pipeline runs
 - **Bundle Generation**: Pipeline generates downloadable zip with Roshi documentation
+- **v1 API**: Versioned API with signed URL downloads, handoff system (pull/webhook adapters), bundle checksums
+- **API Documentation**: Interactive /docs page with endpoint reference, request/response examples
+- **Handoff System**: Delivery mechanisms for external systems (pull adapter with signed URLs, webhook adapter with HMAC signatures)
