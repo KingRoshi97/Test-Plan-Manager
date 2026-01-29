@@ -34,7 +34,31 @@ function addDeprecationHeaders(res: Response) {
 export function registerV1Routes(app: Express) {
   
   app.get("/health", (req: Request, res: Response) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      correlationId: req.correlationId,
+    });
+  });
+
+  app.get("/v1/health", (req: Request, res: Response) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      correlationId: req.correlationId,
+    });
+  });
+
+  app.get("/v1/meta", (req: Request, res: Response) => {
+    res.json({
+      apiVersion: "1.0.0",
+      bundleVersion: "0.2.0",
+      supportedDeliveryTypes: ["webhook", "pull", "git", "manual"],
+      maxUploadSizeBytes: 10 * 1024 * 1024,
+      maxUploadFiles: 5,
+      signatureAlgo: "HMAC-SHA256",
+      correlationId: req.correlationId,
+    });
   });
 
   // === UPLOADS ===
