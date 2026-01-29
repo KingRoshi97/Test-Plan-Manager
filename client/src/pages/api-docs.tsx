@@ -1,37 +1,7 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "wouter";
-import { ArrowLeft, Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-
-function CodeBlock({ code, language = "json" }: { code: string; language?: string }) {
-  const [copied, setCopied] = useState(false);
-  
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  
-  return (
-    <div className="relative group">
-      <pre className="bg-muted p-4 rounded-md overflow-x-auto text-sm">
-        <code>{code}</code>
-      </pre>
-      <Button
-        size="icon"
-        variant="ghost"
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-        onClick={handleCopy}
-        data-testid="button-copy-code"
-      >
-        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      </Button>
-    </div>
-  );
-}
+import { PageHeader, CodeBlock, CopyButton } from "@/components/kit";
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from "@/components/kit";
 
 function EndpointCard({ 
   method, 
@@ -49,57 +19,47 @@ function EndpointCard({
   notes?: string;
 }) {
   const methodColors: Record<string, string> = {
-    GET: "bg-blue-500",
-    POST: "bg-green-500",
-    DELETE: "bg-red-500",
+    GET: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+    POST: "bg-green-500/10 text-green-500 border-green-500/20",
+    DELETE: "bg-red-500/10 text-red-500 border-red-500/20",
   };
   
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <Badge className={`${methodColors[method]} text-white`}>{method}</Badge>
-          <code className="text-sm font-mono">{path}</code>
+    <GlassCard className="mb-4">
+      <GlassCardHeader className="pb-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className={methodColors[method]}>{method}</Badge>
+          <code className="text-sm font-mono bg-muted px-2 py-0.5 rounded">{path}</code>
+          <CopyButton value={path} size="icon" variant="ghost" />
         </div>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        <GlassCardDescription>{description}</GlassCardDescription>
+      </GlassCardHeader>
+      <GlassCardContent className="space-y-4">
         {requestExample && (
           <div>
             <p className="text-sm font-medium mb-2">Request</p>
-            <CodeBlock code={requestExample} />
+            <CodeBlock code={requestExample} language="json" />
           </div>
         )}
         <div>
           <p className="text-sm font-medium mb-2">Response</p>
-          <CodeBlock code={responseExample} />
+          <CodeBlock code={responseExample} language="json" />
         </div>
         {notes && (
           <p className="text-sm text-muted-foreground">{notes}</p>
         )}
-      </CardContent>
-    </Card>
+      </GlassCardContent>
+    </GlassCard>
   );
 }
 
-export default function DocsPage() {
+export default function ApiDocs() {
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
-      <div className="mb-6">
-        <Link href="/create">
-          <Button variant="ghost" size="sm" data-testid="link-back">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Button>
-        </Link>
-      </div>
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Assembler API v1</h1>
-        <p className="text-muted-foreground">
-          Universal delivery API for generating and delivering Axiom kits to AI coding agents.
-        </p>
-      </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <PageHeader
+        title="Assembler API v1"
+        subtitle="Universal delivery API for generating and delivering Axiom kits to AI coding agents"
+      />
 
       <Tabs defaultValue="assemblies" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
@@ -108,8 +68,8 @@ export default function DocsPage() {
           <TabsTrigger value="types" data-testid="tab-types">Delivery Types</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="assemblies" className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Assembly Endpoints</h2>
+        <TabsContent value="assemblies" className="mt-6 space-y-4">
+          <h2 className="text-xl font-semibold">Assembly Endpoints</h2>
           
           <EndpointCard
             method="POST"
@@ -186,8 +146,8 @@ export default function DocsPage() {
           />
         </TabsContent>
 
-        <TabsContent value="deliveries" className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Delivery Endpoints</h2>
+        <TabsContent value="deliveries" className="mt-6 space-y-4">
+          <h2 className="text-xl font-semibold">Delivery Endpoints</h2>
           
           <EndpointCard
             method="POST"
@@ -260,15 +220,15 @@ export default function DocsPage() {
           />
         </TabsContent>
 
-        <TabsContent value="types" className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Delivery Types</h2>
+        <TabsContent value="types" className="mt-6 space-y-4">
+          <h2 className="text-xl font-semibold">Delivery Types</h2>
           
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="text-lg">Pull (Universal)</CardTitle>
-              <CardDescription>Returns signed download URL. Works everywhere.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <GlassCard>
+            <GlassCardHeader>
+              <GlassCardTitle>Pull (Universal)</GlassCardTitle>
+              <GlassCardDescription>Returns signed download URL. Works everywhere.</GlassCardDescription>
+            </GlassCardHeader>
+            <GlassCardContent>
               <CodeBlock code={`{
   "type": "pull",
   "config": {
@@ -276,16 +236,16 @@ export default function DocsPage() {
     "includeInlinePrompt": true,
     "includeInlineManifest": true
   }
-}`} />
-            </CardContent>
-          </Card>
+}`} language="json" />
+            </GlassCardContent>
+          </GlassCard>
 
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="text-lg">Webhook (Automation)</CardTitle>
-              <CardDescription>Pushes event to your endpoint when kit is ready.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <GlassCard>
+            <GlassCardHeader>
+              <GlassCardTitle>Webhook (Automation)</GlassCardTitle>
+              <GlassCardDescription>Pushes event to your endpoint when kit is ready.</GlassCardDescription>
+            </GlassCardHeader>
+            <GlassCardContent className="space-y-4">
               <CodeBlock code={`{
   "type": "webhook",
   "config": {
@@ -294,22 +254,22 @@ export default function DocsPage() {
     "events": ["kit.ready", "kit.failed"],
     "include": ["zipUrl", "manifest", "agentPrompt"]
   }
-}`} />
+}`} language="json" />
               <div>
                 <p className="text-sm font-medium mb-2">Webhook Headers</p>
                 <CodeBlock code={`X-Assembler-Timestamp: <unix seconds>
 X-Assembler-Nonce: <random string>
-X-Assembler-Signature: sha256=<hmac>`} />
+X-Assembler-Signature: sha256=<hmac>`} language="text" />
               </div>
-            </CardContent>
-          </Card>
+            </GlassCardContent>
+          </GlassCard>
 
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="text-lg">Git (Dev-Native)</CardTitle>
-              <CardDescription>Pushes kit to a Git repo branch or PR.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <GlassCard>
+            <GlassCardHeader>
+              <GlassCardTitle>Git (Dev-Native)</GlassCardTitle>
+              <GlassCardDescription>Pushes kit to a Git repo branch or PR.</GlassCardDescription>
+            </GlassCardHeader>
+            <GlassCardContent>
               <CodeBlock code={`{
   "type": "git",
   "config": {
@@ -320,19 +280,19 @@ X-Assembler-Signature: sha256=<hmac>`} />
     "auth": { "token": "GITHUB_TOKEN" },
     "pathPrefix": "axiom_kit"
   }
-}`} />
-              <p className="text-sm text-muted-foreground mt-2">
+}`} language="json" />
+              <p className="text-sm text-muted-foreground mt-4">
                 Note: Git delivery requires GitHub token with repo write permissions.
               </p>
-            </CardContent>
-          </Card>
+            </GlassCardContent>
+          </GlassCard>
 
-          <Card className="mb-4">
-            <CardHeader>
-              <CardTitle className="text-lg">Direct (Platform Adapters)</CardTitle>
-              <CardDescription>Platform-specific delivery where APIs exist.</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <GlassCard>
+            <GlassCardHeader>
+              <GlassCardTitle>Direct (Platform Adapters)</GlassCardTitle>
+              <GlassCardDescription>Platform-specific delivery where APIs exist.</GlassCardDescription>
+            </GlassCardHeader>
+            <GlassCardContent>
               <CodeBlock code={`{
   "type": "direct",
   "config": {
@@ -340,39 +300,39 @@ X-Assembler-Signature: sha256=<hmac>`} />
     "connection": { "apiKey": "...", "projectId": "..." },
     "options": { "autoStart": true }
   }
-}`} />
-              <p className="text-sm text-muted-foreground mt-2">
+}`} language="json" />
+              <p className="text-sm text-muted-foreground mt-4">
                 Note: Direct adapters are platform-specific and require API support.
               </p>
-            </CardContent>
-          </Card>
+            </GlassCardContent>
+          </GlassCard>
         </TabsContent>
       </Tabs>
 
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Quick Start</CardTitle>
-          <CardDescription>Generate and retrieve a kit in 3 steps</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <GlassCard>
+        <GlassCardHeader>
+          <GlassCardTitle>Quick Start</GlassCardTitle>
+          <GlassCardDescription>Generate and retrieve a kit in 3 steps</GlassCardDescription>
+        </GlassCardHeader>
+        <GlassCardContent className="space-y-4">
           <div>
             <p className="text-sm font-medium mb-2">1. Create an assembly</p>
             <CodeBlock code={`curl -X POST /v1/assemblies \\
   -H "Content-Type: application/json" \\
-  -d '{"idea": "Build a todo app"}'`} />
+  -d '{"idea": "Build a todo app"}'`} language="bash" />
           </div>
           <div>
             <p className="text-sm font-medium mb-2">2. Poll for completion</p>
-            <CodeBlock code={`curl /v1/assemblies/{assemblyId}`} />
+            <CodeBlock code={`curl /v1/assemblies/{assemblyId}`} language="bash" />
           </div>
           <div>
             <p className="text-sm font-medium mb-2">3. Get kit with delivery</p>
             <CodeBlock code={`curl -X POST /v1/assemblies/{assemblyId}/deliveries \\
   -H "Content-Type: application/json" \\
-  -d '{"type": "pull", "config": {"includeInlinePrompt": true}}'`} />
+  -d '{"type": "pull", "config": {"includeInlinePrompt": true}}'`} language="bash" />
           </div>
-        </CardContent>
-      </Card>
+        </GlassCardContent>
+      </GlassCard>
     </div>
   );
 }
