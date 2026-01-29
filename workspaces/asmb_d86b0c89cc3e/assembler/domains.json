@@ -1,0 +1,25 @@
+{
+  "assembler_root": "docs/assembler_v1",
+  "domains_dir": "02_domains",
+  "templates_dir": "01_templates",
+  "domains": [
+    {
+      "name": "Platform",
+      "slug": "platform",
+      "prefix": "platform",
+      "type": "business"
+    },
+    {
+      "name": "Api",
+      "slug": "api",
+      "prefix": "api",
+      "type": "crosscutting"
+    },
+    {
+      "name": "Web",
+      "slug": "web",
+      "prefix": "web",
+      "type": "crosscutting"
+    }
+  ]
+}
