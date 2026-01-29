@@ -1,0 +1,17 @@
+{
+  "projectName": "jXEVDD-TestProject",
+  "description": "A test project for verifying doc upload functionality",
+  "features": [],
+  "users": [],
+  "techStack": {},
+  "preset": "web",
+  "domains": [
+    "web",
+    "api",
+    "uxui",
+    "security",
+    "infra"
+  ],
+  "uploadedContext": null,
+  "uploadedFiles": []
+}
