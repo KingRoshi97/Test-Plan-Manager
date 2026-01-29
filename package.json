@@ -9,14 +9,15 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "roshi:init": "node scripts/roshi-init.mjs",
-    "roshi:gen": "node scripts/roshi-generate.mjs",
-    "roshi:seed": "node scripts/roshi-seed.mjs",
-    "roshi:draft": "node scripts/roshi-draft.mjs",
-    "roshi:review": "node scripts/roshi-review.mjs",
-    "roshi:verify": "node scripts/roshi-verify.mjs",
-    "roshi:lock": "node scripts/roshi-lock.mjs",
-    "roshi:all": "npm run roshi:gen && npm run roshi:seed && npm run roshi:draft"
+    "assembler:init": "node scripts/assembler-init.mjs",
+    "assembler:gen": "node scripts/assembler-generate.mjs",
+    "assembler:seed": "node scripts/assembler-seed.mjs",
+    "assembler:draft": "node scripts/assembler-draft.mjs",
+    "assembler:review": "node scripts/assembler-review.mjs",
+    "assembler:verify": "node scripts/assembler-verify.mjs",
+    "assembler:lock": "node scripts/assembler-lock.mjs",
+    "assembler:package": "node scripts/assembler-package.mjs",
+    "assembler:all": "npm run assembler:gen && npm run assembler:seed && npm run assembler:draft"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
