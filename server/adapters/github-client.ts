@@ -161,6 +161,18 @@ export class GitHubClient {
     );
   }
 
+  async branchExists(branch: string): Promise<boolean> {
+    try {
+      await this.getRef(branch);
+      return true;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("404")) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
   async createBranch(baseBranch: string, newBranch: string): Promise<GitHubRef> {
     const baseRef = await this.getRef(baseBranch);
     return this.request<GitHubRef>(
@@ -171,6 +183,16 @@ export class GitHubClient {
         sha: baseRef.object.sha,
       }
     );
+  }
+
+  async createOrUpdateBranch(baseBranch: string, newBranch: string): Promise<GitHubRef> {
+    const exists = await this.branchExists(newBranch);
+    if (exists) {
+      const baseRef = await this.getRef(baseBranch);
+      await this.updateRef(newBranch, baseRef.object.sha);
+      return this.getRef(newBranch);
+    }
+    return this.createBranch(baseBranch, newBranch);
   }
 
   async createPullRequest(
@@ -236,7 +258,7 @@ export class GitHubClient {
     body: string,
     pathPrefix?: string
   ): Promise<{ prUrl: string; prNumber: number; commitSha: string }> {
-    await this.createBranch(baseBranch, prBranch);
+    await this.createOrUpdateBranch(baseBranch, prBranch);
     
     const { commitSha } = await this.pushFiles(prBranch, files, title, pathPrefix);
     
@@ -248,4 +270,18 @@ export class GitHubClient {
       commitSha,
     };
   }
+}
+
+export function sanitizePath(entryPath: string): string | null {
+  let cleaned = entryPath
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "")
+    .replace(/\.\.\/|\.\.$/g, "");
+  
+  const segments = cleaned.split("/").filter(s => s && s !== "." && s !== "..");
+  if (segments.length === 0) {
+    return null;
+  }
+  
+  return segments.join("/");
 }

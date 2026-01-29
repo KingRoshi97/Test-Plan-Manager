@@ -7,7 +7,7 @@ import {
 } from "@shared/schema";
 import fs from "fs";
 import path from "path";
-import { GitHubClient, type FileEntry } from "./github-client";
+import { GitHubClient, type FileEntry, sanitizePath } from "./github-client";
 import AdmZip from "adm-zip";
 
 // Helper to log delivery events
@@ -204,6 +204,16 @@ async function executeGitDelivery(ctx: AdapterContext): Promise<AdapterResult> {
     return { success: false, error: "Kit zip not found" };
   }
 
+  const repoPattern = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+  if (!repoPattern.test(config.repo)) {
+    return { 
+      success: false, 
+      error: "Invalid repo format. Expected 'owner/repo'" 
+    };
+  }
+
+  const safePrefixPath = config.pathPrefix ? sanitizePath(config.pathPrefix) ?? undefined : undefined;
+
   try {
     const client = new GitHubClient(config);
     
@@ -214,15 +224,20 @@ async function executeGitDelivery(ctx: AdapterContext): Promise<AdapterResult> {
     for (const entry of zipEntries) {
       if (entry.isDirectory) continue;
       
+      const safePath = sanitizePath(entry.entryName);
+      if (!safePath) {
+        continue;
+      }
+      
       files.push({
-        path: entry.entryName,
+        path: safePath,
         content: entry.getData(),
         mode: "100644",
       });
     }
 
     if (files.length === 0) {
-      return { success: false, error: "Kit zip is empty" };
+      return { success: false, error: "Kit zip is empty or contains no valid files" };
     }
 
     const commitMessage = `[Axiom Assembler] Add generated kit for assembly ${delivery.assemblyId}`;
@@ -241,7 +256,7 @@ async function executeGitDelivery(ctx: AdapterContext): Promise<AdapterResult> {
         files,
         commitMessage,
         prBody,
-        config.pathPrefix
+        safePrefixPath
       );
 
       const result: GitResult = {
@@ -258,7 +273,7 @@ async function executeGitDelivery(ctx: AdapterContext): Promise<AdapterResult> {
         config.branch,
         files,
         commitMessage,
-        config.pathPrefix
+        safePrefixPath
       );
 
       const result: GitResult = {

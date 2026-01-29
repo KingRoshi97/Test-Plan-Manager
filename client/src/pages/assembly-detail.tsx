@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { formatDateTime, truncateHash } from "@/lib/format";
-import { Download, RefreshCw, FileText, Package, Truck, Paperclip, ArrowLeft, Zap, Upload, Loader2, Plus, Trash2 } from "lucide-react";
+import { Download, RefreshCw, FileText, Package, Truck, Paperclip, ArrowLeft, Zap, Upload, Loader2, Plus, Trash2, GitBranch } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Assembly, Delivery, AssemblyState, ProjectPackage } from "@shared/schema";
+import type { Assembly, Delivery, AssemblyState, ProjectPackage, DeliveryType } from "@shared/schema";
 
 interface UpgradeState {
   overview: string;
@@ -35,6 +38,17 @@ export default function AssemblyDetail() {
   const [newGoal, setNewGoal] = useState("");
   const [newConstraint, setNewConstraint] = useState("");
   const [newDoNotTouch, setNewDoNotTouch] = useState("");
+  const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>("pull");
+  const [deliveryConfig, setDeliveryConfig] = useState({
+    repo: "",
+    branch: "main",
+    token: "",
+    pathPrefix: "",
+    mode: "commit" as "commit" | "pr",
+    webhookUrl: "",
+    webhookSecret: "",
+  });
 
   const { data: assembly, isLoading } = useQuery<Assembly>({
     queryKey: ["/api/assemblies", assemblyId],
@@ -114,6 +128,56 @@ export default function AssemblyDetail() {
     },
     onError: (error: Error) => {
       toast({ title: "Generation failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const createDelivery = useMutation({
+    mutationFn: async () => {
+      let config: Record<string, unknown> = {};
+      
+      if (deliveryType === "git") {
+        config = {
+          provider: "github",
+          repo: deliveryConfig.repo,
+          branch: deliveryConfig.branch,
+          mode: deliveryConfig.mode,
+          auth: { token: deliveryConfig.token },
+          pathPrefix: deliveryConfig.pathPrefix || undefined,
+        };
+      } else if (deliveryType === "webhook") {
+        config = {
+          url: deliveryConfig.webhookUrl,
+          secret: deliveryConfig.webhookSecret,
+        };
+      } else if (deliveryType === "pull") {
+        config = {
+          expiresInSeconds: 3600,
+          includeInlineManifest: true,
+          includeInlinePrompt: true,
+        };
+      }
+      
+      return apiRequest("POST", `/v1/assemblies/${assemblyId}/deliveries`, {
+        type: deliveryType,
+        config,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/v1/assemblies/${assemblyId}/deliveries`] });
+      setDeliveryDialogOpen(false);
+      setDeliveryConfig({
+        repo: "",
+        branch: "main",
+        token: "",
+        pathPrefix: "",
+        mode: "commit",
+        webhookUrl: "",
+        webhookSecret: "",
+      });
+      toast({ title: "Delivery created" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to create delivery", description: error.message, variant: "destructive" });
     },
   });
 
@@ -357,9 +421,158 @@ export default function AssemblyDetail() {
           <GlassCard>
             <GlassCardHeader className="flex flex-row items-center justify-between">
               <GlassCardTitle>Deliveries</GlassCardTitle>
-              <Button size="sm" variant="outline" disabled data-testid="button-create-delivery">
-                Create Delivery
-              </Button>
+              <Dialog open={deliveryDialogOpen} onOpenChange={setDeliveryDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    disabled={assembly.state !== "completed"}
+                    data-testid="button-create-delivery"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Delivery
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Create Delivery</DialogTitle>
+                    <DialogDescription>
+                      Choose how you want to deliver your generated kit.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Delivery Type</Label>
+                      <Select value={deliveryType} onValueChange={(v) => setDeliveryType(v as DeliveryType)}>
+                        <SelectTrigger data-testid="select-delivery-type">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pull">Pull (Signed URL)</SelectItem>
+                          <SelectItem value="webhook">Webhook</SelectItem>
+                          <SelectItem value="git">Git (GitHub)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {deliveryType === "git" && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Repository (owner/repo)</Label>
+                          <Input
+                            placeholder="username/my-repo"
+                            value={deliveryConfig.repo}
+                            onChange={(e) => setDeliveryConfig(c => ({ ...c, repo: e.target.value }))}
+                            data-testid="input-git-repo"
+                          />
+                          {deliveryConfig.repo && !deliveryConfig.repo.match(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/) && (
+                            <p className="text-xs text-red-400">Format must be owner/repo</p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Branch</Label>
+                          <Input
+                            placeholder="main"
+                            value={deliveryConfig.branch}
+                            onChange={(e) => setDeliveryConfig(c => ({ ...c, branch: e.target.value }))}
+                            data-testid="input-git-branch"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>GitHub Token (Personal Access Token)</Label>
+                          <Input
+                            type="password"
+                            placeholder="ghp_..."
+                            value={deliveryConfig.token}
+                            onChange={(e) => setDeliveryConfig(c => ({ ...c, token: e.target.value }))}
+                            data-testid="input-git-token"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Needs repo and content:write permissions
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Path Prefix (optional)</Label>
+                          <Input
+                            placeholder="docs/axiom"
+                            value={deliveryConfig.pathPrefix}
+                            onChange={(e) => setDeliveryConfig(c => ({ ...c, pathPrefix: e.target.value }))}
+                            data-testid="input-git-path"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Mode</Label>
+                          <Select 
+                            value={deliveryConfig.mode} 
+                            onValueChange={(v) => setDeliveryConfig(c => ({ ...c, mode: v as "commit" | "pr" }))}
+                          >
+                            <SelectTrigger data-testid="select-git-mode">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="commit">Direct Commit</SelectItem>
+                              <SelectItem value="pr">Pull Request</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
+                    )}
+
+                    {deliveryType === "webhook" && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Webhook URL</Label>
+                          <Input
+                            placeholder="https://example.com/webhook"
+                            value={deliveryConfig.webhookUrl}
+                            onChange={(e) => setDeliveryConfig(c => ({ ...c, webhookUrl: e.target.value }))}
+                            data-testid="input-webhook-url"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Webhook Secret</Label>
+                          <Input
+                            type="password"
+                            placeholder="your-secret-key"
+                            value={deliveryConfig.webhookSecret}
+                            onChange={(e) => setDeliveryConfig(c => ({ ...c, webhookSecret: e.target.value }))}
+                            data-testid="input-webhook-secret"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {deliveryType === "pull" && (
+                      <p className="text-sm text-muted-foreground">
+                        Creates a signed download URL valid for 1 hour with inline manifest and agent prompt.
+                      </p>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      onClick={() => createDelivery.mutate()}
+                      disabled={
+                        createDelivery.isPending || 
+                        (deliveryType === "git" && (
+                          !deliveryConfig.repo || 
+                          !deliveryConfig.token || 
+                          !deliveryConfig.branch ||
+                          !deliveryConfig.repo.match(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/)
+                        )) ||
+                        (deliveryType === "webhook" && (!deliveryConfig.webhookUrl || !deliveryConfig.webhookSecret))
+                      }
+                      data-testid="button-submit-delivery"
+                    >
+                      {createDelivery.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <GitBranch className="h-4 w-4 mr-2" />
+                      )}
+                      Create
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </GlassCardHeader>
             <GlassCardContent>
               {deliveries.length === 0 ? (
@@ -368,32 +581,67 @@ export default function AssemblyDetail() {
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {deliveries.map((delivery) => (
-                    <div
-                      key={delivery.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{delivery.type}</span>
-                          <StatusBadge status={delivery.state} />
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Attempts: {delivery.attempts}
-                          {delivery.lastAttemptAt && ` • Last: ${formatDateTime(delivery.lastAttemptAt)}`}
-                        </p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => retryDelivery.mutate(delivery.id)}
-                        disabled={delivery.state !== "failed"}
-                        data-testid={`button-retry-${delivery.id}`}
+                  {deliveries.map((delivery) => {
+                    const gitResult = delivery.result as { commitSha?: string; prUrl?: string; repo?: string; branch?: string } | null;
+                    return (
+                      <div
+                        key={delivery.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
+                        data-testid={`delivery-item-${delivery.id}`}
                       >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium capitalize">{delivery.type}</span>
+                            <StatusBadge status={delivery.state} />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Attempts: {delivery.attempts}
+                            {delivery.lastAttemptAt && ` • Last: ${formatDateTime(delivery.lastAttemptAt)}`}
+                          </p>
+                          {delivery.type === "git" && gitResult && (
+                            <div className="text-xs space-y-0.5">
+                              {gitResult.repo && (
+                                <p className="text-muted-foreground">
+                                  Repo: <span className="font-mono">{gitResult.repo}</span>
+                                  {gitResult.branch && <> → <span className="font-mono">{gitResult.branch}</span></>}
+                                </p>
+                              )}
+                              {gitResult.commitSha && (
+                                <p className="text-muted-foreground">
+                                  Commit: <span className="font-mono">{gitResult.commitSha.slice(0, 7)}</span>
+                                </p>
+                              )}
+                              {gitResult.prUrl && (
+                                <a 
+                                  href={gitResult.prUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline"
+                                  data-testid={`link-pr-${delivery.id}`}
+                                >
+                                  View Pull Request →
+                                </a>
+                              )}
+                            </div>
+                          )}
+                          {delivery.lastError && (
+                            <p className="text-xs text-red-400 mt-1">
+                              Error: {delivery.lastError}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => retryDelivery.mutate(delivery.id)}
+                          disabled={delivery.state !== "failed"}
+                          data-testid={`button-retry-${delivery.id}`}
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </GlassCardContent>
