@@ -1,0 +1,84 @@
+How well Assembler covers UX/UI now (with the uxui domain)
+✅ Strong coverage (what an agent can build reliably from)
+
+Information architecture + screen inventory (SCREENMAP)
+
+Behavior + logic spec (BELS + DDES/DIM style docs)
+
+Validation + test intent (TESTPLAN)
+
+Constraints (UI_Constraints)
+
+Unknown tracking (OPEN_QUESTIONS)
+
+Design system baseline (your DESIGN_SYSTEM_V1.md tokens + component contracts)
+
+This is enough to generate a consistent UI if the templates are filled and the build rules are enforced.
+
+⚠️ Gaps (what still needs 1 more layer to hit “premium” consistently)
+
+Even with all this, agents still tend to drift unless you add three specific things:
+
+Per-screen “states contract”
+
+For every screen: explicit loading/empty/error/success requirements, exact copy, and what components render.
+
+You have a lot of this, but make it mandatory + standardized so it’s not optional prose.
+
+Component inventory + variants
+
+A single table listing each component, variants, and where it’s allowed.
+
+Example: StatusBadge variants and which states map to which variant.
+
+This prevents style mismatch across pages.
+
+Brand tokens wired to your real palette
+
+Right now tokens are placeholders (UNKNOWN). To match your logo scheme, you should lock:
+
+accent gradient stops
+
+neutrals (dark surfaces + borders)
+
+status colors
+
+focus ring color
+
+Otherwise the agent will pick random oranges/reds and your “Axiom” look won’t be consistent.
+
+Your logo/color scheme impact
+
+Your logo reads as: black base + warm amber/gold type + orange→red gradient mark. That’s a great premium direction, but it’s easy to overuse. Your design system should explicitly state:
+
+gradient usage: primary CTA only + small highlights
+
+solid accent: amber/gold for focus + active states
+
+neutrals: deep charcoal surfaces (not pure black everywhere)
+
+Two upgrades I recommend adding immediately (fast, high leverage)
+1) Add COMPONENT_LIBRARY_uxui.md
+
+A single source of truth for:
+
+component name, variants, props, and usage rules
+
+“Do / Don’t” rules (prevents UI drift)
+
+2) Add COPY_GUIDE_uxui.md
+
+Locks microcopy tone and default labels:
+
+buttons, empty states, error banners, reason code display format
+
+If you want, I’ll generate both templates in the same style as your existing uxui pack so you can drop them in and rerun assembler:gen with no refactor.
+
+About your terminology separation suggestion
+
+Your namespace convention is correct. One tweak:
+
+Keep Assembler API under /v1/* (public contract)
+
+Keep app/internal endpoints under /api/* (private)
+That cleanly separates “product API” from “your app’s internal routes.”
