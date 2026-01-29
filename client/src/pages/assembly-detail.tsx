@@ -41,17 +41,18 @@ export default function AssemblyDetail() {
     enabled: !!assemblyId,
   });
 
-  const { data: deliveries = [] } = useQuery<Delivery[]>({
-    queryKey: ["/v1/assemblies", assemblyId, "deliveries"],
+  const { data: deliveriesData } = useQuery<{ assemblyId: string; deliveries: Delivery[] }>({
+    queryKey: [`/v1/assemblies/${assemblyId}/deliveries`],
     enabled: !!assemblyId,
   });
+  const deliveries = deliveriesData?.deliveries || [];
 
   const { data: upgradeData, isLoading: upgradeLoading } = useQuery<{
     assemblyId: string;
     projectPackages: Array<{ id: string; filename: string; indexState: string }>;
     artifacts: Array<{ type: string; downloadUrl: string }>;
   }>({
-    queryKey: ["/v1/assemblies", assemblyId, "upgrade"],
+    queryKey: [`/v1/assemblies/${assemblyId}/upgrade`],
     enabled: !!assemblyId,
   });
 
@@ -60,7 +61,7 @@ export default function AssemblyDetail() {
       return apiRequest("POST", `/v1/deliveries/${deliveryId}/retry`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/v1/assemblies", assemblyId, "deliveries"] });
+      queryClient.invalidateQueries({ queryKey: [`/v1/assemblies/${assemblyId}/deliveries`] });
       toast({ title: "Delivery retry initiated" });
     },
     onError: () => {
@@ -86,7 +87,7 @@ export default function AssemblyDetail() {
       toast({ title: "Package uploaded", description: `Scanning ${data.filename}...` });
       if (assemblyId) {
         await apiRequest("POST", `/v1/assemblies/${assemblyId}/project-packages/${data.projectPackageId}/attach`);
-        queryClient.invalidateQueries({ queryKey: ["/v1/assemblies", assemblyId, "upgrade"] });
+        queryClient.invalidateQueries({ queryKey: [`/v1/assemblies/${assemblyId}/upgrade`] });
       }
     },
     onError: (error: Error) => {
@@ -108,7 +109,7 @@ export default function AssemblyDetail() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/v1/assemblies", assemblyId, "upgrade"] });
+      queryClient.invalidateQueries({ queryKey: [`/v1/assemblies/${assemblyId}/upgrade`] });
       toast({ title: "Upgrade plan generated" });
     },
     onError: (error: Error) => {

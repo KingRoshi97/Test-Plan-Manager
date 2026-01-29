@@ -78,6 +78,21 @@ When an assembly executes, the following are generated based on the user's idea:
 - `GET /v1/deliveries/:id` - Get delivery details
 - `POST /v1/deliveries/:id/retry` - Retry failed delivery
 
+### Project Package Endpoints
+- `POST /v1/project-packages` - Upload a ZIP file for analysis (multipart form, field: "file")
+- `GET /v1/project-packages/:id` - Get package status (scanState, indexState, summary)
+- `POST /v1/assemblies/:id/project-packages/:pkgId/attach` - Attach package to assembly
+- `POST /v1/assemblies/:id/upgrade` - Generate upgrade plan from attached package
+- `GET /v1/assemblies/:id/upgrade` - List packages and generated upgrade artifacts
+
+### Project Package Feature
+Allows users to upload existing codebase ZIPs for analysis. The system:
+1. **Scans** the ZIP for security (zip slip prevention, size limits: 100MB max, 20k files)
+2. **Indexes** the project (framework detection, dependency snapshot, file tree)
+3. **Generates** upgrade plans based on user goals/constraints
+
+Supported frameworks: Next.js, Vite, Expo, React Native, Nuxt, Express, Fastify, and more.
+
 ### Legacy API (Deprecated - Sunset 2026-03-01)
 All `/api/runs` and `/v1/runs` endpoints redirect to assembly equivalents with deprecation headers.
 All `/v1/handoffs` endpoints redirect to delivery equivalents.
@@ -123,6 +138,15 @@ queued → running → completed (or failed/canceled)
 - **Passport**: Authentication framework
 
 ## Recent Changes
+
+### January 2026 (Project Package Feature)
+- **Project Package Upload**: Users can upload ZIP files of existing codebases for analysis
+- **Security**: Safe unzip with zip slip prevention, file size limits (100MB max, 20k files max), timeout protection
+- **Framework Detection**: Auto-detect Next.js, Vite, Expo, React Native, Nuxt, Express, Fastify, NestJS, Remix, Astro
+- **Background Jobs**: Simple in-memory job queue for async scan/index processing
+- **Upgrade Tab**: New UI tab on assembly detail page for uploading packages and generating upgrade plans
+- **API Endpoints**: POST/GET project-packages, attach to assembly, generate/get upgrade artifacts
+- **File Storage**: Local file storage utility for development (can be upgraded to object storage later)
 
 ### January 2026 (Phase 1 - Contract Hardening)
 - **Correlation IDs**: Every API response now includes `X-Correlation-Id` header and correlationId in body
