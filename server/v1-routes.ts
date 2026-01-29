@@ -532,6 +532,130 @@ export function registerV1Routes(app: Express) {
     });
   });
 
+  // Kit metadata endpoint for pull deliveries
+  app.get("/v1/assemblies/:assemblyId/kit/metadata", async (req: Request<{ assemblyId: string }>, res: Response) => {
+    const { assemblyId } = req.params;
+    const baseUrl = getBaseUrl(req);
+    
+    const assembly = await storage.getAssembly(assemblyId);
+    if (!assembly) {
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
+    }
+    
+    if (assembly.state !== "completed" || !assembly.kitPath) {
+      return apiError(req, res, 404, "KIT_NOT_READY", "Kit not ready");
+    }
+    
+    const kitPath = path.resolve(assembly.kitPath);
+    if (!fs.existsSync(kitPath)) {
+      return apiError(req, res, 404, "FILE_NOT_FOUND", "Kit file not found");
+    }
+    
+    const zipBuffer = fs.readFileSync(kitPath);
+    const zipSha256 = assembly.kit?.zipSha256 || computeSha256(zipBuffer);
+    const zipBytes = assembly.kit?.zipBytes || zipBuffer.length;
+    
+    const expiresInSeconds = 3600;
+    const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
+    
+    const kitZipSigned = generateSignedUrl(
+      `${baseUrl}/v1/assemblies/${assemblyId}/kit.zip`,
+      { assemblyId, expiresInSeconds }
+    );
+    
+    const workspacePath = assembly.kitPath.replace("/dist/axiom_kit.zip", "");
+    const manifestPath = path.join(workspacePath, "dist/assembly_manifest.json");
+    const promptPath = path.join(workspacePath, "dist/agent_prompt.md");
+    
+    let manifestSha256: string | null = null;
+    if (fs.existsSync(manifestPath)) {
+      manifestSha256 = computeSha256(fs.readFileSync(manifestPath));
+    }
+    
+    const artifacts: { path: string; sha256: string; sizeBytes: number }[] = [];
+    
+    if (fs.existsSync(manifestPath)) {
+      const content = fs.readFileSync(manifestPath);
+      artifacts.push({
+        path: "assembly_manifest.json",
+        sha256: computeSha256(content),
+        sizeBytes: content.length,
+      });
+    }
+    
+    if (fs.existsSync(promptPath)) {
+      const content = fs.readFileSync(promptPath);
+      artifacts.push({
+        path: "agent_prompt.md",
+        sha256: computeSha256(content),
+        sizeBytes: content.length,
+      });
+    }
+    
+    const docsPath = path.join(workspacePath, "docs");
+    if (fs.existsSync(docsPath)) {
+      const scanDir = (dir: string, basePath: string) => {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          const relativePath = path.join(basePath, entry.name);
+          if (entry.isDirectory()) {
+            scanDir(fullPath, relativePath);
+          } else {
+            const content = fs.readFileSync(fullPath);
+            artifacts.push({
+              path: `docs/${relativePath}`,
+              sha256: computeSha256(content),
+              sizeBytes: content.length,
+            });
+          }
+        }
+      };
+      scanDir(docsPath, "");
+    }
+    
+    res.json({
+      assemblyId,
+      kit: {
+        bundleVersion: "1.0.0",
+        createdAt: assembly.createdAt.toISOString(),
+        expiresAt,
+        sizeBytes: zipBytes,
+        sha256: zipSha256,
+        manifestSha256,
+        artifacts,
+      },
+      urls: {
+        kitZip: kitZipSigned.url,
+        manifest: `${baseUrl}/v1/assemblies/${assemblyId}/manifest.json`,
+      },
+    });
+  });
+
+  // Manifest.json endpoint
+  app.get("/v1/assemblies/:assemblyId/manifest.json", async (req: Request<{ assemblyId: string }>, res: Response) => {
+    const { assemblyId } = req.params;
+    
+    const assembly = await storage.getAssembly(assemblyId);
+    if (!assembly) {
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
+    }
+    
+    if (assembly.state !== "completed" || !assembly.kitPath) {
+      return apiError(req, res, 404, "KIT_NOT_READY", "Kit not ready");
+    }
+    
+    const workspacePath = assembly.kitPath.replace("/dist/axiom_kit.zip", "");
+    const manifestPath = path.join(workspacePath, "dist/assembly_manifest.json");
+    
+    if (!fs.existsSync(manifestPath)) {
+      return apiError(req, res, 404, "MANIFEST_NOT_FOUND", "Manifest not found");
+    }
+    
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+    res.json(manifest);
+  });
+
   app.get("/v1/assemblies/:assemblyId/kit.zip", async (req: Request<{ assemblyId: string }>, res: Response) => {
     const { assemblyId } = req.params;
     const { exp, sig } = req.query;
