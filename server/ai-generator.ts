@@ -22,6 +22,7 @@ export interface StructuredInput {
   users?: { type: string; goal: string }[];
   techStack?: { frontend?: string; backend?: string; database?: string };
   preset?: string;
+  uploadedContext?: string;
 }
 
 export interface GenerateDocsOptions {
@@ -75,6 +76,11 @@ function buildStructuredContext(options: GenerateDocsOptions): string {
     if (si.techStack.frontend) ctx += `- Frontend: ${si.techStack.frontend}\n`;
     if (si.techStack.backend) ctx += `- Backend: ${si.techStack.backend}\n`;
     if (si.techStack.database) ctx += `- Database: ${si.techStack.database}\n`;
+  }
+  
+  if (si.uploadedContext) {
+    ctx += "\n## Uploaded Reference Documents\n";
+    ctx += si.uploadedContext;
   }
   
   return ctx;
