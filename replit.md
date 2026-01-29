@@ -125,13 +125,14 @@ queued → running → completed (or failed/canceled)
 ## Recent Changes
 
 ### January 2026 (Latest - Visual Pop Enhancement)
-- **Gradient Buttons**: All primary buttons now use amber→orange→warm gradient with glow effect
+- **Gradient CTA Buttons**: Main CTAs (Generate Kit, New Assembly) use `.btn-axiom-cta` with amber→orange→red-orange gradient and glow
+- **Solid Primary Buttons**: All other buttons use solid `bg-primary` (amber) for consistency
 - **Stepper Glow**: Active/completed steps have gradient fills and prominent amber glow shadows
 - **Sidebar Active State**: Active nav items have amber text, tinted background, and inset glow
 - **Tabs Enhancement**: Active tabs show amber text with underline shadow effect
 - **Input Focus States**: Inputs/textareas have amber focus rings with subtle glow on focus
 - **GlassCard Accents**: Cards have amber-tinted borders with hover glow transitions
-- **Brand Color Variables**: `--axiom-amber`, `--axiom-orange`, `--axiom-warm` for consistent theming
+- **Brand Color Variables**: `--axiom-amber`, `--axiom-orange`, `--axiom-warm`, `--axiom-redorange` for consistent theming
 
 ### January 2026 (Premium UI Overhaul)
 - **Design Kit Components**: Created 9 reusable components in `client/src/components/kit/`:
