@@ -12,7 +12,7 @@
 | Rule ID | Description | Condition | Action | SourceRef |
 |---------|-------------|-----------|--------|-----------|
 | platform_001 | No invention rule | Missing info detected | Write UNKNOWN and log to Open Questions | TARGET_OUTLINE > Constraints |
-| platform_002 | No overwrite rule | File exists | Skip file, record in ROSHI_REPORT skipped list | TARGET_OUTLINE > Constraints |
+| platform_002 | No overwrite rule | File exists | Skip file, record in ASSEMBLER_REPORT skipped list | TARGET_OUTLINE > Constraints |
 
 ## State Machines (Candidates)
 <!-- State transitions for entities -->

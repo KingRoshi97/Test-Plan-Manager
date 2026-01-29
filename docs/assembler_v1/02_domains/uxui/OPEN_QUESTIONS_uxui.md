@@ -1,8 +1,8 @@
-# Open Questions — Security
+# Open Questions — UX/UI Pack
 
 ## Overview
-**Domain Slug:** security
-**Generated:** 2026-01-29T13:20:17.239Z
+**Domain Slug:** uxui
+**Generated:** 2026-01-29T13:20:17.240Z
 
 ## Unresolved Questions
 
