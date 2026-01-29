@@ -16,12 +16,26 @@ import {
   Download, Loader2, CheckCircle, XCircle, Play, Copy,
   Plus, Trash2, ChevronRight, ChevronLeft, Sparkles, Code, Users, ListTodo, Settings,
   Upload, File, X, Package, AlertTriangle, FolderArchive,
-  Globe, Smartphone, Server, Workflow, Gamepad2
+  Globe, Smartphone, Server, Workflow, Gamepad2, Wand2
 } from "lucide-react";
 import type { UploadedFile, ProjectSummary, ProjectWarning, ScanState, IndexState, AssemblyCategory, AssemblyMode } from "@shared/schema";
 import { useLocation } from "wouter";
 import { PageHeader, StatusBadge, Stepper, AssemblyTimeline, CodeBlock, CopyButton } from "@/components/kit";
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from "@/components/kit";
+import DynamicWizard from "@/components/wizard/DynamicWizard";
+import { 
+  getFlow, 
+  type Category, 
+  type Mode, 
+  type WizardFlow 
+} from "@/lib/wizard/flows";
+import { 
+  makeEmptyDraft, 
+  applyPresetDefaults as applyWizardPresetDefaults, 
+  mapDraftToCreateAssemblyRequest,
+  type WizardDraft,
+  type ProjectPackageStatus as WizardPackageStatus
+} from "@/lib/wizard/draft";
 
 interface CategoryInfo {
   label: string;
@@ -157,11 +171,17 @@ export default function Create() {
   const [activeAssemblyId, setActiveAssemblyId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<FormStep>("type");
   const [useSimpleMode, setUseSimpleMode] = useState(false);
+  const [useDynamicWizard, setUseDynamicWizard] = useState(true);
   
   // Category/Mode/Preset selection state
   const [selectedCategory, setSelectedCategory] = useState<AssemblyCategory | null>(null);
   const [selectedMode, setSelectedMode] = useState<AssemblyMode | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<Preset | null>(null);
+  
+  // Dynamic wizard state
+  const [wizardDraft, setWizardDraft] = useState<WizardDraft>(makeEmptyDraft());
+  const [wizardFlow, setWizardFlow] = useState<WizardFlow | null>(null);
+  const [wizardStepIndex, setWizardStepIndex] = useState(0);
   
   // Fetch presets from API
   const { data: presetsData } = useQuery<PresetsResponse>({
@@ -474,6 +494,26 @@ export default function Create() {
     setCurrentStep("basics");
     setProjectPackage(null);
   };
+  
+  const onWizardSubmit = async () => {
+    if (!selectedPreset || !selectedCategory || !selectedMode) return;
+    
+    // Map wizard draft to API request format
+    const request = mapDraftToCreateAssemblyRequest({
+      draft: wizardDraft,
+      category: selectedCategory as Category,
+      mode: selectedMode as Mode,
+      presetId: selectedPreset.id,
+      domains: selectedPreset.defaultDomains,
+      projectPackageId: projectPackage?.id && isPackageReady ? projectPackage.id : undefined
+    });
+    
+    await createAssemblyMutation.mutateAsync(request as any);
+    setWizardDraft(makeEmptyDraft());
+    setWizardFlow(null);
+    setWizardStepIndex(0);
+    setProjectPackage(null);
+  };
 
   const handleDownload = async () => {
     if (activeAssembly?.assemblyId) {
@@ -541,6 +581,17 @@ Read these docs to understand the project architecture, then implement the appli
         form.setValue("techStack.database", techStack.database);
       }
     }
+    
+    // Build the wizard flow and apply defaults to draft
+    const category = preset.category as Category;
+    const mode = preset.mode as Mode;
+    const flow = getFlow(category, mode);
+    setWizardFlow(flow);
+    
+    // Reset wizard draft with preset defaults
+    const newDraft = applyWizardPresetDefaults(makeEmptyDraft(), preset.defaults);
+    setWizardDraft(newDraft);
+    setWizardStepIndex(0);
   };
 
   const goNext = () => {
@@ -592,7 +643,7 @@ Read these docs to understand the project architecture, then implement the appli
         }
       />
 
-      {!activeAssemblyId && !useSimpleMode && (
+      {!activeAssemblyId && !useSimpleMode && !wizardFlow && (
         <Stepper
           steps={STEP_CONFIG}
           currentStep={currentStep}
@@ -799,19 +850,54 @@ Read these docs to understand the project architecture, then implement the appli
                           </div>
                         )}
 
-                        {/* Navigation */}
-                        <div className="flex justify-end pt-4">
-                          <Button
-                            type="button"
-                            onClick={goNext}
-                            disabled={!selectedPreset}
-                            className="btn-axiom-cta"
-                            data-testid="button-next-type"
-                          >
-                            Next: Basics
-                            <ChevronRight className="ml-2 h-4 w-4" />
-                          </Button>
-                        </div>
+                        {/* Dynamic Wizard or Navigation */}
+                        {selectedPreset && wizardFlow ? (
+                          <div className="pt-4 border-t">
+                            <DynamicWizard
+                              flow={wizardFlow}
+                              draft={wizardDraft}
+                              onDraftChange={setWizardDraft}
+                              currentStepIndex={wizardStepIndex}
+                              onStepChange={setWizardStepIndex}
+                              projectPackage={projectPackage ? {
+                                id: projectPackage.id,
+                                filename: projectPackage.filename,
+                                sizeBytes: projectPackage.sizeBytes,
+                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
+                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
+                                summaryJson: projectPackage.summaryJson ? {
+                                  framework: projectPackage.summaryJson.framework,
+                                  packageManager: projectPackage.summaryJson.packageManager,
+                                  fileCount: projectPackage.summaryJson.fileCount,
+                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
+                                  scripts: projectPackage.summaryJson.scripts
+                                } : null,
+                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
+                                errorCode: projectPackage.errorCode,
+                                errorMessage: projectPackage.errorMessage
+                              } : null}
+                              onProjectPackageUpload={uploadProjectZip}
+                              onProjectPackageRemove={removeProjectPackage}
+                              isPackageProcessing={!!isPackageProcessing}
+                              isPackageReady={isPackageReady}
+                              mode={selectedMode as Mode}
+                              onSubmit={onWizardSubmit}
+                              isSubmitting={createAssemblyMutation.isPending}
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex justify-end pt-4">
+                            <Button
+                              type="button"
+                              disabled={!selectedPreset}
+                              className="btn-axiom-cta opacity-50"
+                              data-testid="button-next-type"
+                            >
+                              Select a template to continue
+                              <ChevronRight className="ml-2 h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </TabsContent>
 
                       <TabsContent value="basics" className="space-y-4">
