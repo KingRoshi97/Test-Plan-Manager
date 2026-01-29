@@ -15,9 +15,14 @@ function getBaseUrl(req: Request): string {
   return `${protocol}://${host}`;
 }
 
-function apiError(res: Response, status: number, code: string, message: string, details?: object) {
+function apiError(req: Request, res: Response, status: number, code: string, message: string, details?: object) {
   return res.status(status).json({
-    error: { code, message, details, reasonCode: `ASSEMBLER_${code}` }
+    error: { 
+      code: `ASSEMBLER_${code}`, 
+      message, 
+      details,
+      correlationId: req.correlationId,
+    }
   });
 }
 
@@ -37,15 +42,15 @@ export function registerV1Routes(app: Express) {
     upload.array("files", 5)(req, res, (err: any) => {
       if (err) {
         if (err.code === "LIMIT_FILE_SIZE") {
-          return apiError(res, 400, "FILE_TOO_LARGE", "File size exceeds 10MB limit");
+          return apiError(req, res, 400, "FILE_TOO_LARGE", "File size exceeds 10MB limit");
         }
         if (err.code === "LIMIT_FILE_COUNT") {
-          return apiError(res, 400, "TOO_MANY_FILES", "Maximum 5 files allowed");
+          return apiError(req, res, 400, "TOO_MANY_FILES", "Maximum 5 files allowed");
         }
         if (err.message?.includes("Unsupported file type")) {
-          return apiError(res, 400, "INVALID_FILE_TYPE", err.message);
+          return apiError(req, res, 400, "INVALID_FILE_TYPE", err.message);
         }
-        return apiError(res, 400, "UPLOAD_ERROR", err.message || "Upload failed");
+        return apiError(req, res, 400, "UPLOAD_ERROR", err.message || "Upload failed");
       }
       next();
     });
@@ -54,7 +59,7 @@ export function registerV1Routes(app: Express) {
       const files = req.files as Express.Multer.File[];
       
       if (!files || files.length === 0) {
-        return apiError(res, 400, "NO_FILES", "No files uploaded");
+        return apiError(req, res, 400, "NO_FILES", "No files uploaded");
       }
       
       const uploadedFiles = await processUploadedFiles(files);
@@ -68,7 +73,7 @@ export function registerV1Routes(app: Express) {
       });
     } catch (error) {
       console.error("Upload error:", error);
-      return apiError(res, 500, "UPLOAD_ERROR", error instanceof Error ? error.message : "Upload failed");
+      return apiError(req, res, 500, "UPLOAD_ERROR", error instanceof Error ? error.message : "Upload failed");
     }
   });
 
@@ -78,15 +83,15 @@ export function registerV1Routes(app: Express) {
     upload.array("files", 5)(req, res, (err: any) => {
       if (err) {
         if (err.code === "LIMIT_FILE_SIZE") {
-          return apiError(res, 400, "FILE_TOO_LARGE", "File size exceeds 10MB limit");
+          return apiError(req, res, 400, "FILE_TOO_LARGE", "File size exceeds 10MB limit");
         }
         if (err.code === "LIMIT_FILE_COUNT") {
-          return apiError(res, 400, "TOO_MANY_FILES", "Maximum 5 files allowed");
+          return apiError(req, res, 400, "TOO_MANY_FILES", "Maximum 5 files allowed");
         }
         if (err.message?.includes("Unsupported file type")) {
-          return apiError(res, 400, "INVALID_FILE_TYPE", err.message);
+          return apiError(req, res, 400, "INVALID_FILE_TYPE", err.message);
         }
-        return apiError(res, 400, "UPLOAD_ERROR", err.message || "Upload failed");
+        return apiError(req, res, 400, "UPLOAD_ERROR", err.message || "Upload failed");
       }
       next();
     });
@@ -95,7 +100,7 @@ export function registerV1Routes(app: Express) {
       const files = req.files as Express.Multer.File[];
       
       if (!files || files.length === 0) {
-        return apiError(res, 400, "NO_FILES", "No files uploaded");
+        return apiError(req, res, 400, "NO_FILES", "No files uploaded");
       }
       
       const uploadedFiles = await processUploadedFiles(files);
@@ -109,7 +114,7 @@ export function registerV1Routes(app: Express) {
       });
     } catch (error) {
       console.error("Upload error:", error);
-      return apiError(res, 500, "UPLOAD_ERROR", error instanceof Error ? error.message : "Upload failed");
+      return apiError(req, res, 500, "UPLOAD_ERROR", error instanceof Error ? error.message : "Upload failed");
     }
   });
 
@@ -117,7 +122,7 @@ export function registerV1Routes(app: Express) {
   app.post("/v1/assemblies", async (req: Request, res: Response) => {
     const parseResult = createAssemblyRequestSchema.safeParse(req.body);
     if (!parseResult.success) {
-      return apiError(res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message, {
+      return apiError(req, res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message, {
         field: parseResult.error.errors[0].path.join(".")
       });
     }
@@ -149,7 +154,7 @@ export function registerV1Routes(app: Express) {
     addDeprecationHeaders(res);
     const parseResult = createAssemblyRequestSchema.safeParse(req.body);
     if (!parseResult.success) {
-      return apiError(res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message, {
+      return apiError(req, res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message, {
         field: parseResult.error.errors[0].path.join(".")
       });
     }
@@ -178,7 +183,7 @@ export function registerV1Routes(app: Express) {
   app.get("/v1/assemblies/:assemblyId", async (req: Request<{ assemblyId: string }>, res: Response) => {
     const assembly = await storage.getAssembly(req.params.assemblyId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Assembly not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
     }
     
     res.json({
@@ -214,7 +219,7 @@ export function registerV1Routes(app: Express) {
     addDeprecationHeaders(res);
     const assembly = await storage.getAssembly(req.params.runId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Run not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Run not found");
     }
     
     res.json({
@@ -249,7 +254,7 @@ export function registerV1Routes(app: Express) {
   app.get("/v1/assemblies/:assemblyId/kit", async (req: Request<{ assemblyId: string }>, res: Response) => {
     const assembly = await storage.getAssembly(req.params.assemblyId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Assembly not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
     }
     
     if (assembly.state !== "completed") {
@@ -338,7 +343,7 @@ export function registerV1Routes(app: Express) {
     addDeprecationHeaders(res);
     const assembly = await storage.getAssembly(req.params.runId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Run not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Run not found");
     }
     
     if (assembly.state !== "completed") {
@@ -429,22 +434,22 @@ export function registerV1Routes(app: Express) {
     if (exp && sig) {
       const validation = validateSignature(assemblyId, exp as string, sig as string);
       if (!validation.valid) {
-        return apiError(res, 401, "INVALID_SIGNATURE", validation.error || "Invalid signature");
+        return apiError(req, res, 401, "INVALID_SIGNATURE", validation.error || "Invalid signature");
       }
     }
     
     const assembly = await storage.getAssembly(assemblyId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Assembly not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
     }
     
     if (assembly.state !== "completed" || !assembly.kitPath) {
-      return apiError(res, 404, "KIT_NOT_READY", "Kit not ready");
+      return apiError(req, res, 404, "KIT_NOT_READY", "Kit not ready");
     }
     
     const kitPath = path.resolve(assembly.kitPath);
     if (!fs.existsSync(kitPath)) {
-      return apiError(res, 404, "FILE_NOT_FOUND", "Kit file not found");
+      return apiError(req, res, 404, "FILE_NOT_FOUND", "Kit file not found");
     }
     
     res.download(kitPath, `axiom_kit_${assembly.id}.zip`);
@@ -459,22 +464,22 @@ export function registerV1Routes(app: Express) {
     if (exp && sig) {
       const validation = validateSignature(runId, exp as string, sig as string);
       if (!validation.valid) {
-        return apiError(res, 401, "INVALID_SIGNATURE", validation.error || "Invalid signature");
+        return apiError(req, res, 401, "INVALID_SIGNATURE", validation.error || "Invalid signature");
       }
     }
     
     const assembly = await storage.getAssembly(runId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Run not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Run not found");
     }
     
     if (assembly.state !== "completed" || !assembly.kitPath) {
-      return apiError(res, 404, "BUNDLE_NOT_READY", "Bundle not ready");
+      return apiError(req, res, 404, "BUNDLE_NOT_READY", "Bundle not ready");
     }
     
     const kitPath = path.resolve(assembly.kitPath);
     if (!fs.existsSync(kitPath)) {
-      return apiError(res, 404, "FILE_NOT_FOUND", "Bundle file not found");
+      return apiError(req, res, 404, "FILE_NOT_FOUND", "Bundle file not found");
     }
     
     res.download(kitPath, `axiom_kit_${assembly.id}.zip`);
@@ -484,12 +489,12 @@ export function registerV1Routes(app: Express) {
   app.post("/v1/assemblies/:assemblyId/deliveries", async (req: Request<{ assemblyId: string }>, res: Response) => {
     const assembly = await storage.getAssembly(req.params.assemblyId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Assembly not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
     }
     
     const parseResult = createDeliveryRequestSchema.safeParse(req.body);
     if (!parseResult.success) {
-      return apiError(res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message);
+      return apiError(req, res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message);
     }
     
     const delivery = await storage.createDelivery({
@@ -527,12 +532,12 @@ export function registerV1Routes(app: Express) {
     addDeprecationHeaders(res);
     const assembly = await storage.getAssembly(req.params.runId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Run not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Run not found");
     }
     
     const parseResult = createDeliveryRequestSchema.safeParse(req.body);
     if (!parseResult.success) {
-      return apiError(res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message);
+      return apiError(req, res, 400, "INVALID_REQUEST", parseResult.error.errors[0].message);
     }
     
     const delivery = await storage.createDelivery({
@@ -568,7 +573,7 @@ export function registerV1Routes(app: Express) {
   app.get("/v1/assemblies/:assemblyId/deliveries", async (req: Request<{ assemblyId: string }>, res: Response) => {
     const assembly = await storage.getAssembly(req.params.assemblyId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Assembly not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
     }
     
     const deliveries = await storage.getDeliveriesByAssemblyId(assembly.id);
@@ -594,7 +599,7 @@ export function registerV1Routes(app: Express) {
     addDeprecationHeaders(res);
     const assembly = await storage.getAssembly(req.params.runId);
     if (!assembly) {
-      return apiError(res, 404, "NOT_FOUND", "Run not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Run not found");
     }
     
     const deliveries = await storage.getDeliveriesByAssemblyId(assembly.id);
@@ -618,7 +623,7 @@ export function registerV1Routes(app: Express) {
   app.get("/v1/deliveries/:deliveryId", async (req: Request<{ deliveryId: string }>, res: Response) => {
     const delivery = await storage.getDelivery(req.params.deliveryId);
     if (!delivery) {
-      return apiError(res, 404, "NOT_FOUND", "Delivery not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Delivery not found");
     }
     
     res.json({
@@ -645,7 +650,7 @@ export function registerV1Routes(app: Express) {
     addDeprecationHeaders(res);
     const delivery = await storage.getDelivery(req.params.handoffId);
     if (!delivery) {
-      return apiError(res, 404, "NOT_FOUND", "Handoff not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Handoff not found");
     }
     
     res.json({
@@ -670,15 +675,15 @@ export function registerV1Routes(app: Express) {
   app.post("/v1/deliveries/:deliveryId/retry", async (req: Request<{ deliveryId: string }>, res: Response) => {
     const delivery = await storage.getDelivery(req.params.deliveryId);
     if (!delivery) {
-      return apiError(res, 404, "NOT_FOUND", "Delivery not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Delivery not found");
     }
     
     if (delivery.state === "completed") {
-      return apiError(res, 409, "ALREADY_COMPLETED", "Delivery already completed");
+      return apiError(req, res, 409, "ALREADY_COMPLETED", "Delivery already completed");
     }
     
     if (delivery.attempts >= delivery.maxAttempts) {
-      return apiError(res, 409, "MAX_ATTEMPTS_REACHED", "Maximum attempts reached");
+      return apiError(req, res, 409, "MAX_ATTEMPTS_REACHED", "Maximum attempts reached");
     }
     
     const baseUrl = getBaseUrl(req);
@@ -692,15 +697,15 @@ export function registerV1Routes(app: Express) {
     addDeprecationHeaders(res);
     const delivery = await storage.getDelivery(req.params.handoffId);
     if (!delivery) {
-      return apiError(res, 404, "NOT_FOUND", "Handoff not found");
+      return apiError(req, res, 404, "NOT_FOUND", "Handoff not found");
     }
     
     if (delivery.state === "completed") {
-      return apiError(res, 409, "ALREADY_COMPLETED", "Handoff already completed");
+      return apiError(req, res, 409, "ALREADY_COMPLETED", "Handoff already completed");
     }
     
     if (delivery.attempts >= delivery.maxAttempts) {
-      return apiError(res, 409, "MAX_ATTEMPTS_REACHED", "Maximum attempts reached");
+      return apiError(req, res, 409, "MAX_ATTEMPTS_REACHED", "Maximum attempts reached");
     }
     
     const baseUrl = getBaseUrl(req);
