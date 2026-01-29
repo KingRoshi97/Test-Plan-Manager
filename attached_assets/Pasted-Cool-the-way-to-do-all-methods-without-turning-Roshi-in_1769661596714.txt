@@ -1,0 +1,280 @@
+Cool — the way to do “all methods” without turning Roshi into a mess is to design one canonical bundle and multiple delivery adapters that all wrap the same bundle.
+
+Think of it like:
+
+Roshi Engine → Bundle → Delivery Adapter (pull/webhook/git/direct)
+
+1) The core idea: one bundle format, many delivery methods
+Canonical output (always the same)
+
+Every run produces:
+
+manifest.json (the contract)
+
+agent_prompt.md (what the AI should do)
+
+workspace/ (your Roshi docs + exports)
+
+bundle.zip (portable)
+
+Then delivery is just: “how do we get this bundle into the agent environment?”
+
+That’s what adapters do.
+
+2) API surface that supports ALL methods
+Runs (generation)
+
+POST /v1/runs
+
+creates a run, starts pipeline
+
+GET /v1/runs/:runId
+
+status, logs, summary, errors
+
+GET /v1/runs/:runId/bundle
+
+bundle metadata (URLs, checksums, sizes)
+
+GET /v1/runs/:runId/bundle.zip
+
+the zip file (or a redirect to signed object storage)
+
+Handoff (delivery)
+
+POST /v1/runs/:runId/handoffs
+
+creates a handoff job using a chosen method
+
+GET /v1/runs/:runId/handoffs
+
+list of all handoffs + statuses
+
+GET /v1/handoffs/:handoffId
+
+details, attempt history, last error
+
+POST /v1/handoffs/:handoffId/retry
+
+retry a failed handoff
+
+This is universal because:
+
+generation is separate from delivery
+
+you can do multiple handoffs per run
+
+3) One universal “handoff config” schema
+
+When a client wants delivery, it sends:
+
+{
+  "type": "pull|webhook|git|direct",
+  "label": "optional human name",
+  "config": { }
+}
+
+A) Pull (universal)
+
+Best baseline. Everyone can use it.
+
+{
+  "type": "pull",
+  "config": {
+    "expiresInSeconds": 3600,
+    "includeInlinePrompt": true
+  }
+}
+
+
+Result: API returns bundleZipUrl + agentPrompt + manifest.
+
+B) Webhook (automation-friendly)
+
+Roshi calls their system when ready.
+
+{
+  "type": "webhook",
+  "config": {
+    "url": "https://their-system.com/roshi/webhook",
+    "secret": "shared-signing-secret",
+    "events": ["bundle.ready", "bundle.failed"],
+    "include": ["zipUrl", "manifestUrl", "agentPrompt"]
+  }
+}
+
+
+Result: Roshi POSTs an event payload with signed URLs and a signature header.
+
+C) Git push (best for “agents that code”)
+
+Roshi pushes the bundle contents into a repo branch.
+
+{
+  "type": "git",
+  "config": {
+    "provider": "github|gitlab|bitbucket|generic",
+    "repo": "org/repo",
+    "branch": "roshi/run-<runId>",
+    "auth": { "token": "..." },
+    "mode": "commit|pr",
+    "pathPrefix": "roshi_bundle"
+  }
+}
+
+
+Result: A branch (or PR) exists containing:
+
+roshi_bundle/manifest.json
+
+roshi_bundle/agent_prompt.md
+
+roshi_bundle/workspace/...
+
+This is the cleanest “handoff to a coding agent” because the agent just opens the branch.
+
+D) Direct (platform adapters)
+
+This is where you plug in specific targets (only possible when the target has an API, plugin system, or you control the agent runner).
+
+{
+  "type": "direct",
+  "config": {
+    "adapter": "replit|loveable|custom-agent-runner|zip-upload",
+    "connection": { "apiKey": "...", "projectId": "..." },
+    "options": { "autoStart": true }
+  }
+}
+
+
+Important reality check: you can’t truly “direct push” into every tool unless they expose an API. So “direct” should be an adapter interface with a growing list of supported integrations over time.
+
+4) Adapter architecture (how you keep it universal and clean)
+
+Internally you implement:
+
+HandoffAdapter interface
+
+validate(config)
+
+deliver(bundle, config) -> DeliveryResult
+
+status(handoffId)
+
+retry(handoffId)
+
+Then you ship built-in adapters:
+
+pull-adapter (always available)
+
+webhook-adapter (always available)
+
+git-adapter (available if creds configured)
+
+direct-adapters/* (optional plugins)
+
+This keeps Roshi universal without hardcoding platform logic into your core.
+
+5) The bundle contract that makes agents “start implementing”
+
+Your manifest.json should always include:
+
+Entry docs
+
+Commands to run
+
+Locked paths
+
+Open questions
+
+Next implementation steps (what to build first)
+
+Example fields that matter for agents:
+
+{
+  "entryDocs": ["..."],
+  "commandsToRun": ["npm run roshi:review", "npm run roshi:verify"],
+  "implementationPlan": [
+    { "step": 1, "goal": "Create API skeleton", "outputs": ["server scaffold"] },
+    { "step": 2, "goal": "Implement endpoints", "outputs": ["routes"] }
+  ],
+  "doNotTouch": ["workspace/docs/roshi_v2/00_registry/**"]
+}
+
+
+So any agent (in any environment) can follow the same recipe.
+
+6) Security + reliability you need for “all methods”
+
+If Roshi is a public universal service, you need these or you’ll get abused fast:
+
+Signed downloads (pull/webhook)
+
+bundle URLs should be time-limited
+
+include checksum (sha256) and size
+
+Webhook signing
+
+include X-Roshi-Signature: sha256=...
+
+include replay protection (timestamp + nonce)
+
+Git safety
+
+scope tokens to repo only
+
+never store raw tokens in logs
+
+audit every push (who, where, when)
+
+Rate limiting
+
+per user / per API key
+
+per IP
+
+per “run creation” endpoint
+
+Run isolation
+
+every run executes in its own workspace directory
+
+strict path allowlist (avoid zip-slip / path traversal)
+
+7) What “universal” looks like in practice
+
+To truly support “any AI tool”:
+
+Baseline (works everywhere)
+
+✅ Pull URL + inline agent prompt + zip
+This alone makes it universal.
+
+Automation (works for serious users)
+
+✅ Webhook (so their agent runner can auto-fetch and start)
+
+Dev-native workflow (best for coding agents)
+
+✅ Git push/PR (agents can start immediately from a repo)
+
+Platform integrations (nice-to-have)
+
+✅ Direct adapters where possible
+
+That’s the right “all methods” strategy.
+
+8) Implementation order (no fluff, just what works)
+
+If you want to build this without getting stuck:
+
+Pull (signed bundle URLs + manifest + prompt)
+
+Webhook (delivery events + signing + retries)
+
+Git push (branch/PR delivery)
+
+Direct adapters (as APIs become available)
+
+Even though you want “all,” you still ship them in this order because each step builds on the same bundle contract.

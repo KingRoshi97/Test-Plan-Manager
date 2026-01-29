@@ -2,7 +2,7 @@
 
 ## Overview
 **Domain Slug:** security
-**Generated:** 2026-01-29T04:00:08.334Z
+**Generated:** 2026-01-29T04:03:49.389Z
 
 ## Unresolved Questions
 

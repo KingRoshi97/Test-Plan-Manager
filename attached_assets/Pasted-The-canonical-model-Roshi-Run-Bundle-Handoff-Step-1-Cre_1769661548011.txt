@@ -1,0 +1,290 @@
+The canonical model: Roshi Run → Bundle → Handoff
+Step 1 — Create a run
+
+Client sends:
+
+idea
+
+preset
+
+optional repo context (repo-mapping, constraints)
+
+where to handoff to (handoff target)
+
+API returns:
+
+runId
+
+status URL
+
+Step 2 — Pipeline executes
+
+Roshi builds:
+
+docs workspace
+
+exports
+
+manifest.json
+
+agent_prompt.md
+
+(optional) code scaffold
+
+Step 3 — Bundle produced
+
+Bundle exists as:
+
+a zip
+
+a bundle JSON + file list
+
+a signed download URL
+
+Step 4 — Handoff
+
+Roshi delivers via one of these methods (you support several):
+
+The 4 best handoff methods (in order of universality)
+Method A) “Pull” handoff (universal)
+
+Roshi returns a bundle URL.
+The agent tool (Loveable, Replit, custom agent runner) downloads it.
+
+Pros: works everywhere
+
+Cons: user still has to “paste the URL” or the tool must support fetching
+
+Endpoint
+
+GET /v1/runs/:id/bundle.zip
+or better:
+
+GET /v1/runs/:id/bundle → returns metadata + signed URLs
+
+Method B) Webhook handoff (good for automation)
+
+Client provides a webhook URL.
+When Roshi finishes, it calls the webhook with:
+
+runId
+
+bundle metadata
+
+signed bundle download URL
+
+agent_prompt content
+
+checksum
+
+Pros: hands-off automation
+
+Cons: requires the receiving system to run a webhook server
+
+Payload example
+
+{
+  "event": "roshi.bundle.ready",
+  "runId": "abc123",
+  "bundle": {
+    "zipUrl": "https://api.roshi/.../bundle.zip?sig=...",
+    "sha256": "…",
+    "manifestUrl": "https://api.roshi/.../manifest.json?sig=..."
+  },
+  "agentPrompt": {
+    "format": "markdown",
+    "contentUrl": "https://api.roshi/.../agent_prompt.md?sig=..."
+  }
+}
+
+Method C) “Push to Git” handoff (best for coding agents)
+
+Roshi pushes the bundle contents to a Git repo (GitHub/GitLab) as a commit/branch:
+
+/docs/roshi_v2/...
+
+/handoff/manifest.json
+
+/handoff/agent_prompt.md
+
+/exports/...
+
+Then the agent simply opens the repo and starts implementing.
+
+Pros: clean dev workflow; agents naturally work from repos
+
+Cons: needs Git provider tokens + permissions
+
+This is the single most effective handoff for real builds.
+
+Method D) Direct integration adapters (nice-to-have)
+
+If a platform has an API (or you build a plugin), Roshi can “push” directly into it.
+Examples:
+
+Replit import repo / create repl (if supported)
+
+Loveable project seed (if they expose APIs)
+
+Custom agent runtime that accepts a file bundle
+
+Pros: magical UX
+
+Cons: platform-specific maintenance
+
+Best practice is: build these as adapters later, not in your core.
+
+Your API should expose a “Handoff Target” abstraction
+
+Make the API accept a handoff object.
+
+Create Run request (ideal shape)
+{
+  "idea": "Build Roshi Studio API+Web that generates bundles for agents",
+  "preset": "roshi-studio",
+  "handoff": {
+    "type": "pull",
+    "label": "user-download"
+  }
+}
+
+
+or webhook:
+
+{
+  "idea": "…",
+  "preset": "roshi-studio",
+  "handoff": {
+    "type": "webhook",
+    "url": "https://clientapp.com/webhooks/roshi",
+    "secret": "shared-signing-secret"
+  }
+}
+
+
+or git push:
+
+{
+  "idea": "…",
+  "preset": "roshi-studio",
+  "handoff": {
+    "type": "git",
+    "provider": "github",
+    "repo": "org/project",
+    "branch": "roshi/run-abc123",
+    "token": "GITHUB_TOKEN"
+  }
+}
+
+Minimal endpoint set that supports ALL of this
+Runs
+
+POST /v1/runs → creates run
+
+GET /v1/runs/:id → status + logs + errors
+
+GET /v1/runs/:id/bundle → bundle metadata (urls + checksums)
+
+GET /v1/runs/:id/bundle.zip → actual zip download
+
+Handoffs
+
+POST /v1/runs/:id/handoff → trigger/redo handoff (webhook/git/etc)
+
+GET /v1/runs/:id/handoff → handoff status (delivered/failed + retries)
+
+This lets any platform either:
+
+pull the bundle
+
+receive it via webhook
+
+get it via git branch
+
+How an AI agent “starts implementing” from the bundle
+
+Your bundle already contains the two key pieces:
+
+manifest.json = source of truth:
+
+entry docs
+
+commands to run
+
+locked paths
+
+open questions
+
+agent_prompt.md = pasteable instruction set
+
+So the agent runtime just needs to:
+
+download/unzip (or clone branch)
+
+read agent_prompt.md
+
+run commands listed (review/verify/lock… or code generation steps)
+
+implement the app spec
+
+That’s it.
+
+Critical security + reliability requirements (don’t skip)
+
+If you’re handing bundles to external systems:
+
+1) Signed URLs
+
+Bundle downloads should be time-limited:
+
+zipUrl includes a signature + expiry
+
+2) Webhook signatures
+
+Sign webhook payloads:
+
+X-Roshi-Signature: sha256=...
+
+3) Checksums
+
+Always provide:
+
+sha256 for zip
+
+file count + total size
+
+4) Audit logs
+
+Every run should record:
+
+who requested
+
+what handoff target
+
+delivery status
+
+retry history
+
+The simplest MVP that matches your vision
+
+If you want the fastest path that works with any AI tool today:
+
+Implement the API to generate the bundle
+
+Return:
+
+agentPrompt text (inline)
+
+bundleZipUrl (signed)
+
+manifest (inline or url)
+
+Then any vibecoding tool can:
+
+paste prompt into agent
+
+agent downloads zip from URL
+
+agent starts implementing
+
+No platform-specific integration needed.
