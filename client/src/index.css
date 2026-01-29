@@ -25,17 +25,19 @@
   --sidebar: 30 20% 96%;
   --sidebar-foreground: 222 47% 11%;
   --sidebar-border: 220 13% 91%;
-  --sidebar-primary: 24 95% 53%;
+  /* Axiom brand accent (amber/gold) */
+  --sidebar-primary: 36 72% 56%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 30 20% 92%;
   --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-ring: 24 95% 53%;
+  --sidebar-ring: 36 72% 56%;
 
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
   --popover-border: 220 13% 91%;
 
-  --primary: 24 95% 53%;
+  /* Axiom brand accent (amber/gold) */
+  --primary: 36 72% 56%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 220 14% 96%;
@@ -47,12 +49,20 @@
   --accent: 30 20% 94%;
   --accent-foreground: 222 47% 11%;
 
-  --destructive: 0 84% 60%;
+  /* Axiom red for destructive */
+  --destructive: 0 76% 50%;
   --destructive-foreground: 0 0% 100%;
 
   --input: 220 13% 91%;
-  --ring: 24 95% 53%;
-  --chart-1: 24 95% 53%;
+  --ring: 36 72% 56%;
+  --chart-1: 36 72% 56%;
+
+  /* Axiom gradient stops (use sparingly) */
+  --axiom-amber: 36 72% 56%;
+  --axiom-orange: 24 72% 56%;
+  --axiom-warm: 12 72% 56%;
+  --axiom-redorange: 10 76% 50%;
+  --axiom-red: 0 76% 50%;
   --chart-2: 173 58% 39%;
   --chart-3: 197 37% 24%;
   --chart-4: 43 74% 66%;
@@ -125,17 +135,19 @@
   --sidebar: 222 47% 7%;
   --sidebar-foreground: 210 40% 98%;
   --sidebar-border: 217 33% 17%;
-  --sidebar-primary: 24 95% 53%;
+  /* Axiom brand accent (amber/gold) */
+  --sidebar-primary: 36 72% 56%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 217 33% 14%;
   --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 24 95% 53%;
+  --sidebar-ring: 36 72% 56%;
 
   --popover: 222 47% 8%;
   --popover-foreground: 210 40% 98%;
   --popover-border: 217 33% 17%;
 
-  --primary: 24 95% 53%;
+  /* Axiom brand accent (amber/gold) */
+  --primary: 36 72% 56%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 217 33% 17%;
@@ -147,12 +159,20 @@
   --accent: 217 33% 14%;
   --accent-foreground: 210 40% 98%;
 
-  --destructive: 0 62% 50%;
+  /* Axiom red for destructive */
+  --destructive: 0 76% 50%;
   --destructive-foreground: 0 0% 100%;
 
   --input: 217 33% 22%;
-  --ring: 24 95% 53%;
-  --chart-1: 24 95% 53%;
+  --ring: 36 72% 56%;
+  --chart-1: 36 72% 56%;
+
+  /* Axiom gradient stops (use sparingly) */
+  --axiom-amber: 36 72% 56%;
+  --axiom-orange: 24 72% 56%;
+  --axiom-warm: 12 72% 56%;
+  --axiom-redorange: 10 76% 50%;
+  --axiom-red: 0 76% 50%;
   --chart-2: 173 58% 39%;
   --chart-3: 197 37% 50%;
   --chart-4: 43 74% 66%;
@@ -177,6 +197,32 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+}
+
+/* Axiom gradient CTA button skin - use sparingly (only main CTAs) */
+.btn-axiom-cta {
+  background-image: linear-gradient(
+    90deg,
+    hsl(var(--axiom-amber)) 0%,
+    hsl(var(--axiom-orange)) 45%,
+    hsl(var(--axiom-redorange)) 100%
+  );
+}
+
+/* Hover/active should feel premium, not jumpy */
+.btn-axiom-cta:hover {
+  filter: brightness(1.05);
+}
+
+.btn-axiom-cta:active {
+  filter: brightness(0.98);
+}
+
+/* Disabled must look disabled even with gradient */
+.btn-axiom-cta:disabled,
+.btn-axiom-cta[aria-disabled='true'] {
+  filter: grayscale(0.15) brightness(0.85);
+  opacity: 0.7;
 }
 
 /**
