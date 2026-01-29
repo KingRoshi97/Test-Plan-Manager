@@ -1,0 +1,290 @@
+Perfect — with Vite + React TS + shadcn/ui + Tailwind + Wouter + ThemeProvider, a premium overhaul is mostly a layout + component standardization project, not a rewrite.
+
+Below is a concrete plan you can execute in Replit (and hand to an agent) with a file tree, routing map, component upgrades, and acceptance checklist.
+
+UI Overhaul Plan (implementation-ready)
+A) New layout architecture (sidebar-first)
+
+Goal: one consistent shell that wraps all pages.
+
+Routes (Wouter)
+
+/create → Create Run Wizard
+
+/runs → Runs List
+
+/runs/:runId → Run Detail (tabs)
+
+/settings → Settings
+
+Layout
+
+AppShell
+
+Sidebar (nav + quick actions + status summary)
+
+TopBar (search, theme toggle, user menu)
+
+Main (page content)
+
+Sidebar nav items
+
+Create
+
+Runs
+
+Settings
+
+Sidebar extras
+
+“New Run” button
+
+“Upload Doc” button (opens modal → calls uploads endpoint → shows uploadIds you can attach)
+
+Small “System status” strip: active runs count, last run state
+
+B) Design system foundation (small set of upgraded primitives)
+
+You only need to standardize ~12 components and everything else falls into place:
+
+Core UI
+
+Button, Input, Textarea, Select
+
+Card (glass/elevated), Badge (status)
+
+Tabs
+
+Dialog/Drawer
+
+Toast (use sonner if you already do)
+
+Skeleton + EmptyState
+
+Tooling UI
+
+DataTable (Runs/Handoffs/Uploads)
+
+CodeBlock (copy button + syntax style)
+
+StepWizard (stepper + validation + navigation)
+
+RunTimeline (init → package progression)
+
+Theme tokens (Tailwind + CSS vars)
+
+keep your dark/light toggle
+
+dark-first: dial in surface, border, shadow, blur, muted, accent
+
+establish consistent spacing (8px grid) + radius scale (2xl default for cards/buttons)
+
+Screen upgrades (exact scope)
+1) Create Run Wizard
+
+Steps
+
+Basics (+ uploads)
+
+Features (table editor)
+
+Users (list editor)
+
+Tech (optional)
+
+Review (JSON preview + “Generate Run”)
+
+Must-have UI behaviors
+
+Review step shows the exact payload that will be sent
+
+Inline validation and clean error states
+
+Upload panel shows extraction status + warnings (LOW_TEXT_YIELD, TRUNCATED)
+
+2) Runs List
+
+Header
+
+Search input
+
+Filters (state, date range, preset, generationMode)
+
+Quick actions (New Run, Upload)
+
+Rows
+
+Project name + description snippet
+
+State badge
+
+Created time
+
+Domains
+
+Open questions count
+
+“Open” button
+
+UX
+
+skeleton loading
+
+empty state with CTA “Create your first run”
+
+3) Run Detail (Tabs)
+
+Tabs:
+
+Overview: timeline, progress, logs tail, key metadata
+
+Bundle: download zip, copy signed URL, manifest viewer, agent prompt viewer, show input.json + ai_context.json
+
+Handoffs: create handoff modal + handoff table + retry button + last error
+
+Attachments: uploads list + extracted text preview + warnings
+
+Must-have
+
+copy buttons everywhere (signed URL, checksums, curl snippets, JSON blocks)
+
+error banner with reason codes
+
+4) Settings
+
+API keys list + create/rotate/revoke (UI only if backend not ready)
+
+rate limit info panel
+
+webhook test tool (generate sample signed payload for the user to test receivers)
+
+git presets (repo/baseBranch/pathPrefix)
+
+Suggested file tree (Vite React TS)
+src/
+  app/
+    App.tsx
+    routes.tsx
+    shell/
+      AppShell.tsx
+      SidebarNav.tsx
+      TopBar.tsx
+  pages/
+    CreateRun/
+      CreateRunWizard.tsx
+      steps/
+        BasicsStep.tsx
+        FeaturesStep.tsx
+        UsersStep.tsx
+        TechStep.tsx
+        ReviewStep.tsx
+    Runs/
+      RunsListPage.tsx
+      RunsFilters.tsx
+      RunsTable.tsx
+    RunDetail/
+      RunDetailPage.tsx
+      tabs/
+        OverviewTab.tsx
+        BundleTab.tsx
+        HandoffsTab.tsx
+        AttachmentsTab.tsx
+    Settings/
+      SettingsPage.tsx
+      ApiKeysPanel.tsx
+      WebhookTestPanel.tsx
+      GitPresetsPanel.tsx
+  components/
+    ui/               # shadcn components (existing)
+    kit/              # your upgraded primitives
+      PageHeader.tsx
+      GlassCard.tsx
+      StatusBadge.tsx
+      DataTable.tsx
+      CodeBlock.tsx
+      EmptyState.tsx
+      Stepper.tsx
+      RunTimeline.tsx
+      CopyButton.tsx
+      UploadDropzone.tsx
+  lib/
+    api/
+      client.ts
+      runs.ts
+      uploads.ts
+      handoffs.ts
+    format/
+      dates.ts
+      bytes.ts
+      status.ts
+
+Acceptance checklist (so the overhaul is “done”)
+
+Design consistency
+
+All pages use AppShell + same spacing/radius/shadows
+
+Status colors/badges consistent across runs + handoffs + uploads
+
+Create Wizard
+
+Review step shows payload JSON
+
+Uploads show extraction status/warnings
+
+Generate creates run and routes to /runs/:runId
+
+Runs List
+
+Search + filters work
+
+Skeletons + empty states exist
+
+Run Detail
+
+Tabs work and load correct data
+
+Copy buttons work for URLs, JSON, checksums
+
+Handoff create/retry flows are usable
+
+Settings
+
+Panels exist and are navigable (even if some actions are stubbed)
+
+Replit agent prompt (copy/paste)
+
+Use this to drive the implementation without scope creep:
+
+You are upgrading the Roshi web app UI to a premium dark-first design while preserving light mode.
+Stack: Vite + React + TypeScript + Tailwind + shadcn/ui + Wouter.
+
+GOAL:
+Implement a sidebar-first AppShell and refactor key screens to match the new UX:
+Create Wizard, Runs List, Run Detail (tabs), Settings.
+
+CONSTRAINTS:
+- Do not break existing API behavior or data fetching.
+- Preserve routing (Wouter) but reorganize components as needed.
+- Keep theme toggle working. Dark-first polish, light mode preserved.
+- Build a small design kit (kit components) and reuse everywhere.
+
+DELIVERABLES:
+1) AppShell with SidebarNav + TopBar.
+2) CreateRunWizard with 5 steps: Basics(+uploads), Features, Users, Tech, Review(JSON preview).
+3) RunsListPage with search, filters, status badges, skeletons, empty state.
+4) RunDetailPage with tabs: Overview, Bundle, Handoffs, Attachments.
+5) SettingsPage with panels: API keys, webhook test, git presets.
+6) Design kit components: GlassCard, StatusBadge, DataTable, CodeBlock(with copy), Stepper, EmptyState, RunTimeline, UploadDropzone.
+
+IMPLEMENTATION ORDER:
+- Build AppShell and routes
+- Build kit components
+- Refactor Runs list
+- Refactor Run detail tabs
+- Refactor Create wizard
+- Add Settings page
+- Polish pass (skeletons, empty states, toasts, copy buttons)
+
+ACCEPTANCE:
+No visual regressions in functionality, consistent layout, and all pages navigable via sidebar.

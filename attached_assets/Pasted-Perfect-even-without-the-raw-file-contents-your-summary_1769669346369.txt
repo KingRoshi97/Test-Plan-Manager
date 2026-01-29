@@ -1,0 +1,322 @@
+Perfect — even without the raw file contents, your summary is enough to produce an agent-proof patch plan for those three files, including the exact renames, new route table, and search/replace targets that will compile cleanly once applied.
+
+Below are “drop-in” edits for each file: what to rename, what to add, and what to update.
+
+1) server/v1-routes.ts — exact route + naming patch
+1.1 New route table (Assembler API)
+
+Replace these paths:
+
+Upload
+
+POST /v1/upload → POST /v1/uploads
+
+Add: GET /v1/uploads/:uploadId (you already designed this)
+
+Assemblies (was runs)
+
+POST /v1/runs → POST /v1/assemblies
+
+GET /v1/runs/:runId → GET /v1/assemblies/:assemblyId
+
+Kit (was bundle)
+
+GET /v1/runs/:runId/bundle → GET /v1/assemblies/:assemblyId/kit
+
+GET /v1/runs/:runId/bundle.zip → GET /v1/assemblies/:assemblyId/kit.zip
+
+Deliveries (was handoffs)
+
+POST /v1/runs/:runId/handoffs → POST /v1/assemblies/:assemblyId/deliveries
+
+GET /v1/runs/:runId/handoffs → GET /v1/assemblies/:assemblyId/deliveries
+
+GET /v1/handoffs/:handoffId → GET /v1/deliveries/:deliveryId
+
+POST /v1/handoffs/:handoffId/retry → POST /v1/deliveries/:deliveryId/retry
+
+1.2 Handler signature changes (mechanical)
+
+Everywhere in this file:
+
+Param rename
+
+req.params.runId → req.params.assemblyId
+
+req.params.handoffId → req.params.deliveryId
+
+Names
+
+createRunRequestSchema → createAssemblyRequestSchema
+
+createHandoffRequestSchema → createDeliveryRequestSchema
+
+1.3 Error reason code prefix rename
+
+You said this file uses ROSHI_ reason codes.
+
+Change:
+
+ROSHI_... → ASSEMBLER_...
+
+Keep the suffixes identical so nothing breaks conceptually.
+Example:
+
+ROSHI_INVALID_REQUEST → ASSEMBLER_INVALID_REQUEST
+
+1.4 Bundle/zip rename references
+
+You said it references roshi_bundle.zip and roshi-package-workspace.mjs.
+
+Change:
+
+roshi_bundle.zip → axiom_kit.zip (or axiom_kit_<assemblyId>.zip if you already implement dynamic names)
+
+roshi-package-workspace.mjs → assembler-package-workspace.mjs
+
+If your code constructs filenames dynamically, keep internal storage stable but rename:
+
+download name (header) to axiom_kit_<assemblyId>.zip
+
+1.5 Backward compatibility aliases (recommended)
+
+At the bottom (or near routing setup), add aliases so old clients still work:
+
+Old → New:
+
+/v1/runs → /v1/assemblies
+
+/v1/runs/:runId → /v1/assemblies/:assemblyId
+
+/v1/runs/:runId/bundle → /v1/assemblies/:assemblyId/kit
+
+/v1/runs/:runId/bundle.zip → /v1/assemblies/:assemblyId/kit.zip
+
+/v1/runs/:runId/handoffs → /v1/assemblies/:assemblyId/deliveries
+
+/v1/handoffs/:handoffId → /v1/deliveries/:deliveryId
+
+/v1/handoffs/:handoffId/retry → /v1/deliveries/:deliveryId/retry
+
+/v1/upload → /v1/uploads
+
+Implementation pattern:
+
+define the new route handlers once
+
+for old routes, call the same handler and set headers:
+
+Add headers for old endpoints:
+
+Deprecation: true
+
+Sunset: 2026-03-01 (pick a date)
+
+Optional: Link: </v1/assemblies>; rel="successor-version"
+
+This keeps you safe while migrating UI.
+
+2) shared/schema.ts — type + table + schema rename patch
+
+You said:
+
+Types: Run, RunState, RunStep, RunInput, RunBundle, Handoff, HandoffState, HandoffType
+
+Tables: runs, handoffs
+
+Schemas: createRunRequestSchema, createHandoffRequestSchema
+
+2.1 Types rename
+
+Rename these exports:
+
+Run → Assembly
+
+RunState → AssemblyState
+
+RunStep → AssemblyStep
+
+RunInput → AssemblyInput
+
+RunBundle → Kit (or AssemblyKit if you want explicitness)
+
+Handoff → Delivery
+
+HandoffState → DeliveryState
+
+HandoffType → DeliveryType
+
+2.2 Tables rename (DB-level)
+
+If you truly want full rename, then change:
+
+runs table → assemblies
+
+handoffs table → deliveries
+
+⚠️ This requires a migration and any SQL references updated. If you want “full rename everywhere,” do it.
+
+If you’re not ready for DB migrations, you can keep table names and only rename TypeScript types.
+But you explicitly said full rename — so:
+
+export const runs = ... → export const assemblies = ...
+
+pgTable("runs", ...) → pgTable("assemblies", ...)
+
+same for handoffs → deliveries
+
+2.3 Field renames
+
+runId → assemblyId
+
+handoffId → deliveryId
+
+bundle → kit
+
+2.4 Zod schemas rename
+
+createRunRequestSchema → createAssemblyRequestSchema
+
+createHandoffRequestSchema → createDeliveryRequestSchema
+
+Also update the request shape:
+
+replace runId references with assemblyId
+
+handoff references with delivery
+
+bundle fields with kit
+
+2.5 ID prefix rename (optional but clean)
+
+If you generate IDs:
+
+run_ → asmb_
+
+ho_ → dlv_
+
+This can be implemented in storage/ID helper. In schema.ts, update any regex validations accordingly.
+
+3) client/src/App.tsx — Wouter route overhaul + redirects
+
+You said routes are:
+
+/ → Home
+
+/runs → Runs
+
+/docs → Docs
+
+3.1 New routes
+
+/create → Create wizard (previous Home)
+
+/assemblies → list (previous Runs)
+
+/assemblies/:assemblyId → detail (if you already have a detail page; if not, add route now and point to existing run detail component)
+
+/docs → API docs (keep)
+
+3.2 Backward compatible redirects
+
+/ → redirect to /create
+
+/runs → redirect to /assemblies
+
+/runs/:id → redirect to /assemblies/:id
+
+In Wouter, simplest approach:
+
+Use <Redirect /> from wouter (or implement by useLocation and useEffect).
+
+If you don’t have Redirect, do this pattern:
+
+const Redirect = ({ to }: { to: string }) => {
+  const [, setLocation] = useLocation();
+  useEffect(() => { setLocation(to); }, [to]);
+  return null;
+};
+
+
+Then:
+
+route / → <Redirect to="/create" />
+
+route /runs → <Redirect to="/assemblies" />
+
+route /runs/:id → <Redirect to={/assemblies/${params.id}} />
+
+3.3 UI labels
+
+Update nav labels everywhere:
+
+Runs → Assemblies
+
+Home/Create → Create
+
+Docs label can become “Assembler API” inside the Docs page header
+
+Also: in the UI header, replace “Roshi” with Axiom.
+
+4) One-pass “rename script” checklist (so the agent doesn’t miss anything)
+Replace tokens across repo
+
+ROSHI_ → ASSEMBLER_
+
+roshi- → assembler-
+
+roshi_v2 → assembler_v1
+
+roshi/ folder name already becomes assembler/
+
+“Roshi” (UI) → “Axiom”
+
+“Roshi system” → “Assembler”
+
+Replace endpoint strings across client/server
+
+/v1/runs → /v1/assemblies
+
+/v1/handoffs → /v1/deliveries
+
+/v1/upload → /v1/uploads
+
+/bundle → /kit
+
+bundle.zip → kit.zip
+
+Replace types/imports
+
+Run → Assembly
+
+Handoff → Delivery
+
+5) Smoke test after patch
+
+Run these in order:
+
+npm run assembler:gen (or assembler:all)
+
+Start server
+
+POST /v1/uploads (optional)
+
+POST /v1/assemblies
+
+GET /v1/assemblies/:assemblyId
+
+GET /v1/assemblies/:assemblyId/kit
+
+GET /v1/assemblies/:assemblyId/kit.zip
+
+POST /v1/assemblies/:assemblyId/deliveries
+
+And UI:
+
+/create works
+
+/assemblies loads list
+
+/docs loads
+
+old /runs redirects to /assemblies

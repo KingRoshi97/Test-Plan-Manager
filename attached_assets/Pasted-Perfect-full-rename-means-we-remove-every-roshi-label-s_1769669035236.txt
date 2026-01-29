@@ -1,0 +1,278 @@
+Perfect — full rename means we remove every “roshi” label/string across UI, API, docs, scripts, file paths, and OpenAPI metadata.
+
+Your new naming standard:
+
+Brand: Axiom
+
+System/API: Assembler
+
+Core object model:
+
+Run → Assembly
+
+Bundle → Kit
+
+Handoff → Delivery
+
+Manifest → Assembly Manifest
+
+Below is a complete rename map + execution checklist you (or an agent) can follow without missing anything.
+
+1) Global rename map (single source of truth)
+Product/UI terminology
+
+“Roshi” → Axiom (brand in header, marketing copy)
+
+“Roshi System” → Assembler (system name)
+
+“Run” → Assembly
+
+“Runs” → Assemblies
+
+“Bundle” → Kit
+
+“Handoff(s)” → Delivery / Deliveries
+
+“manifest.json” (display label) → Assembly Manifest
+
+“agent_prompt.md” label stays Agent Prompt (good as-is)
+
+API routes
+
+/v1/runs → /v1/assemblies
+
+/v1/runs/{runId} → /v1/assemblies/{assemblyId}
+
+/v1/runs/{runId}/bundle → /v1/assemblies/{assemblyId}/kit
+
+/v1/runs/{runId}/bundle.zip → /v1/assemblies/{assemblyId}/kit.zip
+
+/v1/runs/{runId}/handoffs → /v1/assemblies/{assemblyId}/deliveries
+
+/v1/handoffs/{handoffId} → /v1/deliveries/{deliveryId}
+
+/v1/handoffs/{handoffId}/retry → /v1/deliveries/{deliveryId}/retry
+
+/v1/uploads stays /v1/uploads
+
+IDs (optional but cleaner)
+
+run_... → asmb_...
+
+ho_... → dlv_...
+
+up_... stays up_...
+
+Package/scripts
+
+roshi:* npm scripts → assembler:*
+
+/scripts/roshi-*.mjs → /scripts/assembler-*.mjs
+
+ROSHI_REPORT → ASSEMBLER_REPORT
+
+Docs and folders
+
+docs/roshi_v2/ → docs/assembler_v1/ (or assembler_v2 if you want to keep version number alignment)
+
+roshi/domains.json → assembler/domains.json
+
+roshi/sources.json → assembler/sources.json
+
+Any “roshi” filenames → “assembler”
+
+Bundle output naming
+
+download name: axiom_kit_<assemblyId>.zip (user-friendly)
+
+inside zip:
+
+manifest.json → assembly_manifest.json
+
+handoff/ → delivery/
+
+handoff/input.json → delivery/input.json
+
+handoff/ai_context.json → delivery/ai_context.json
+
+handoff/uploads/… → delivery/uploads/…
+
+2) Repo-level execution checklist (do this in order)
+Step A — Search & list everything that contains “roshi”
+
+Run a full search:
+
+"roshi"
+
+"ROSHI"
+
+"roshi_v"
+
+"roshi:"
+
+"ROSHI_REPORT"
+
+This gives you the complete hit list before you change anything.
+
+Step B — Rename folders first (paths)
+
+Rename:
+
+docs/roshi_v2 → docs/assembler_v1
+
+roshi/ → assembler/
+
+scripts/roshi-*.mjs → scripts/assembler-*.mjs
+
+Update all references immediately after (imports, config paths, README links).
+
+Step C — Rename npm scripts + CLI commands
+
+In package.json:
+
+roshi:init → assembler:init
+
+roshi:gen → assembler:gen
+
+roshi:seed → assembler:seed
+
+roshi:draft → assembler:draft
+
+roshi:review → assembler:review
+
+roshi:verify → assembler:verify
+
+roshi:lock → assembler:lock
+
+roshi:package → assembler:package
+
+roshi:all → assembler:all
+
+Update any docs that reference npm run roshi:*.
+
+Step D — Rename API + data model
+
+Backend changes:
+
+route modules: runs → assemblies
+
+runId → assemblyId everywhere in request/response
+
+handoffs → deliveries
+
+rename DTOs/schemas:
+
+CreateRunRequest → CreateAssemblyRequest
+
+Run → Assembly
+
+Bundle → Kit
+
+Handoff → Delivery
+
+Also update storage paths:
+
+data/runs/<id> → data/assemblies/<id>
+
+Step E — Update web app UI labels + routing (Wouter)
+
+Frontend changes:
+
+/runs → /assemblies
+
+/runs/:runId → /assemblies/:assemblyId
+
+Rename nav labels and page titles:
+
+Runs → Assemblies
+
+Run Detail → Assembly Detail
+
+Bundle → Kit
+
+Handoffs → Deliveries
+
+Step F — OpenAPI rename (metadata + paths + schemas)
+
+OpenAPI updates:
+
+info.title: Roshi API → Assembler API
+
+info.description should reference Axiom (brand) and Assembler (system)
+
+Change paths to /v1/assemblies/...
+
+Rename schema components (Run* → Assembly*, Bundle* → Kit*, Handoff* → Delivery*)
+
+Update examples to match new field names.
+
+Step G — Bundle packaging rename
+
+Packaging script changes:
+
+manifest.json output file becomes: assembly_manifest.json
+
+bundle.zip becomes: axiom_kit_<assemblyId>.zip (download name)
+
+internal folder handoff/ becomes delivery/
+
+ROSHI_REPORT becomes ASSEMBLER_REPORT
+
+Step H — Final sweep (no “roshi” remains)
+
+Run the full search again for "roshi" and "ROSHI".
+Zero results is the goal.
+
+3) Exact “search/replace” targets (so nothing slips)
+
+Replace text tokens (case-sensitive):
+
+Roshi → Axiom (brand/UI only)
+
+ROSHI → ASSEMBLER
+
+roshi → assembler
+
+roshi_v2 → assembler_v1 (or your chosen version)
+
+Replace domain object terms (careful, but worth it):
+
+runId → assemblyId
+
+runs → assemblies
+
+handoffId → deliveryId
+
+handoffs → deliveries
+
+bundle → kit (in API route names and UI tabs)
+
+4) “Done” definition (acceptance)
+
+You’re finished when:
+
+The app UI shows Axiom and never shows “Roshi”
+
+All routes are /assemblies and /deliveries
+
+All scripts are assembler:*
+
+All docs live under docs/assembler_*
+
+OpenAPI title is Assembler API
+
+grep for "roshi" returns 0 hits
+
+Generate flow still produces a zip kit and handoffs still work
+
+5) One decision I’ll make for you (to avoid ambiguity)
+
+For consistency, I recommend:
+
+Docs folder: docs/assembler_v1/
+
+NPM scripts prefix: assembler:*
+
+API base name: Assembler API
+
+Product name in UI: Axiom

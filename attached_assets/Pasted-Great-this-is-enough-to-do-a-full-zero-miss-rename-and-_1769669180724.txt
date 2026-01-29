@@ -1,0 +1,282 @@
+Great — this is enough to do a full, zero-miss rename and align the UI overhaul to the new IA.
+
+Below is a file-by-file rename map + exact route replacements + a safe execution order for your repo.
+
+0) New naming standard (locked)
+
+Brand (UI/product): Axiom
+
+System/API/engine: Assembler
+
+Run: Assembly
+
+Bundle: Kit
+
+Handoff: Delivery
+
+Upload: Upload (keep as-is)
+
+1) File/folder rename map (use git mv)
+Scripts
+git mv scripts/roshi-init.mjs scripts/assembler-init.mjs
+git mv scripts/roshi-generate.mjs scripts/assembler-generate.mjs
+git mv scripts/roshi-seed.mjs scripts/assembler-seed.mjs
+git mv scripts/roshi-draft.mjs scripts/assembler-draft.mjs
+git mv scripts/roshi-review.mjs scripts/assembler-review.mjs
+git mv scripts/roshi-verify.mjs scripts/assembler-verify.mjs
+git mv scripts/roshi-lock.mjs scripts/assembler-lock.mjs
+git mv scripts/roshi-package.mjs scripts/assembler-package.mjs
+git mv scripts/roshi-package-workspace.mjs scripts/assembler-package-workspace.mjs
+
+Config folders
+git mv roshi assembler
+# becomes:
+# assembler/domains.json
+# assembler/sources.json
+
+Docs folder
+git mv docs/roshi_v2 docs/assembler_v1
+
+Client pages (rename to match new IA)
+
+Recommended page names:
+
+Create wizard → create.tsx
+
+Runs list → assemblies.tsx
+
+API docs → api-docs.tsx
+
+git mv client/src/pages/home.tsx client/src/pages/create.tsx
+git mv client/src/pages/runs.tsx client/src/pages/assemblies.tsx
+git mv client/src/pages/docs.tsx client/src/pages/api-docs.tsx
+
+
+You can keep /docs route if you want; filename doesn’t control URL.
+
+2) NPM scripts rename (package.json)
+
+Replace your roshi:* scripts with assembler:*:
+
+"assembler:init": "node scripts/assembler-init.mjs",
+"assembler:gen": "node scripts/assembler-generate.mjs",
+"assembler:seed": "node scripts/assembler-seed.mjs",
+"assembler:draft": "node scripts/assembler-draft.mjs",
+"assembler:review": "node scripts/assembler-review.mjs",
+"assembler:verify": "node scripts/assembler-verify.mjs",
+"assembler:lock": "node scripts/assembler-lock.mjs",
+"assembler:package": "node scripts/assembler-package.mjs",
+"assembler:all": "npm run assembler:gen && npm run assembler:seed && npm run assembler:draft"
+
+
+Also update any docs that say npm run roshi:* → npm run assembler:*.
+
+3) Server route rename (exact replacements)
+
+You currently have:
+
+routes.ts (legacy /api/runs)
+
+v1-routes.ts (the real API)
+
+V1 API: new routes (Assembler API)
+Keep
+
+GET /health
+
+Uploads (pluralize for correctness)
+
+POST /v1/upload → POST /v1/uploads
+
+Add (you already spec’d this): GET /v1/uploads/:uploadId
+
+Assemblies (was runs)
+
+POST /v1/runs → POST /v1/assemblies
+
+GET /v1/runs/:runId → GET /v1/assemblies/:assemblyId
+
+Kit (was bundle)
+
+GET /v1/runs/:runId/bundle → GET /v1/assemblies/:assemblyId/kit
+
+GET /v1/runs/:runId/bundle.zip → GET /v1/assemblies/:assemblyId/kit.zip
+
+Deliveries (was handoffs)
+
+POST /v1/runs/:runId/handoffs → POST /v1/assemblies/:assemblyId/deliveries
+
+GET /v1/runs/:runId/handoffs → GET /v1/assemblies/:assemblyId/deliveries
+
+GET /v1/handoffs/:handoffId → GET /v1/deliveries/:deliveryId
+
+POST /v1/handoffs/:handoffId/retry → POST /v1/deliveries/:deliveryId/retry
+
+Backwards compatibility (recommended)
+
+Keep the old routes as aliases for 2–4 weeks:
+
+old route calls the same handler and returns same payload
+
+add a response header: Deprecation: true and Sunset: <date>
+
+This prevents breaking existing integrations.
+
+Legacy API (routes.ts)
+
+If you’re keeping it, rename similarly:
+
+/api/runs → /api/assemblies
+
+/api/runs/:id/download → /api/assemblies/:id/kit.zip (or /download-kit)
+
+/api/runs/:id/execute → /api/assemblies/:id/execute (if still used)
+
+Or: leave legacy as-is but change UI to stop calling it.
+
+4) Shared schema rename (shared/schema.ts)
+
+You said this contains Run, Handoff, UploadedFile types + Zod.
+
+Rename:
+
+Run → Assembly
+
+Handoff → Delivery
+
+UploadedFile → keep as Upload or UploadedFile (fine either way)
+
+Field/param renames:
+
+runId → assemblyId
+
+handoffId → deliveryId
+
+bundle → kit
+
+Also update any enums/constants:
+
+RunStep stays conceptually fine but rename to AssemblyStep if you want fully consistent.
+
+5) Storage + workspace + packaging rename (server/)
+
+These are the spots that usually leak “roshi” forever if you don’t handle them:
+
+server/workspace-manager.ts
+
+rename workspace root paths:
+
+.../runs/<runId> → .../assemblies/<assemblyId>
+
+inside workspace output:
+
+bundle.zip → kit zip naming (download name)
+
+internal file: manifest.json → assembly_manifest.json
+
+folder: handoff/ → delivery/
+
+server/ai-generator.ts
+
+rename prompt branding strings: “Roshi” → “Axiom” (UI-facing) and/or “Assembler” (system)
+
+rename any references to ROSHI_REPORT → ASSEMBLER_REPORT
+
+server/file-upload.ts
+
+rename endpoint references /v1/upload → /v1/uploads
+
+ensure upload IDs + storage locations don’t include roshi
+
+server/signing.ts
+
+if signatures include a namespace string like “roshi”, rename it to “assembler”
+
+header names can stay generic; if you used X-Roshi-* headers, rename to X-Assembler-* (recommended)
+
+6) Client routing + UI rename (Wouter)
+
+Current routes:
+
+/ wizard
+
+/runs list
+
+/runs/:id detail
+
+/docs
+
+New routes (recommended):
+
+/create wizard
+
+/assemblies list
+
+/assemblies/:assemblyId detail
+
+/docs (or /api)
+
+Backward-compatible route redirects
+
+/ → redirect to /create
+
+/runs → redirect to /assemblies
+
+/runs/:id → redirect to /assemblies/:id
+
+UI label replacements
+
+“Roshi” → Axiom (header, docs UI)
+
+“Runs” → Assemblies
+
+“Bundle” → Kit
+
+“Handoffs” → Deliveries
+
+“Generate” button → Assemble
+
+“Download bundle” → Download Kit
+
+7) Guaranteed “no roshi left” sweep (commands)
+
+Run these from repo root:
+
+rg -n "Roshi|roshi|ROSHI" .
+rg -n "roshi:" package.json
+rg -n "/v1/runs|/v1/handoffs|/v1/upload|/api/runs" server client shared
+
+
+Goal: 0 matches except maybe historical docs you intentionally keep (but you said full rename, so aim for zero everywhere).
+
+8) UI overhaul alignment (with new names)
+
+Your planned IA becomes:
+
+Create (/create) → wizard
+
+Assemblies (/assemblies) → list + filters
+
+Assembly detail (/assemblies/:assemblyId) → tabs: Overview / Kit / Deliveries / Attachments
+
+API Docs (/docs) → OpenAPI + examples labeled Assembler API
+
+Brand label top-left: Axiom
+
+If you want the cleanest execution (agent-proof)
+
+Use this as the one-line job:
+
+git mv folders/files (section 1)
+
+update package.json scripts
+
+update server routes + handler names (v1 first)
+
+update shared schemas
+
+update client routes + UI labels
+
+run ripgrep sweep to confirm zero roshi
+
+run app smoke test: create assembly → kit download → delivery create → upload extraction
