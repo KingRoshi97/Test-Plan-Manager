@@ -1,0 +1,13 @@
+{
+  "projectName": "DeliveryTest-R7AUB-",
+  "description": "Testing automatic webhook delivery configuration",
+  "features": [],
+  "users": [],
+  "techStack": {},
+  "delivery": {
+    "enabled": true,
+    "type": "webhook",
+    "webhookUrl": "https://httpbin.org/post",
+    "webhookSecret": "test-secret-123"
+  }
+}

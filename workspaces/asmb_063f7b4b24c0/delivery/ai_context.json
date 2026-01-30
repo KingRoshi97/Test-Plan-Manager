@@ -1,0 +1,17 @@
+{
+  "projectName": "WebhookDelivery-8GU2Nc",
+  "description": "Testing automatic webhook delivery",
+  "features": [],
+  "users": [],
+  "techStack": {},
+  "preset": "web",
+  "domains": [
+    "web",
+    "api",
+    "uxui",
+    "security",
+    "infra"
+  ],
+  "uploadedContext": null,
+  "uploadedFiles": []
+}

@@ -1,0 +1,17 @@
+{
+  "projectName": "DeliveryTest-R7AUB-",
+  "description": "Testing automatic webhook delivery configuration",
+  "features": [],
+  "users": [],
+  "techStack": {},
+  "preset": "web",
+  "domains": [
+    "web",
+    "api",
+    "uxui",
+    "security",
+    "infra"
+  ],
+  "uploadedContext": null,
+  "uploadedFiles": []
+}

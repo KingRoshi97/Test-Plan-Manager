@@ -190,6 +190,12 @@ export const createAssemblyRequestSchema = z.object({
     size: z.number(),
     mimeType: z.string(),
   })).optional(),
+  delivery: z.object({
+    enabled: z.boolean(),
+    type: z.enum(["pull", "webhook"]),
+    webhookUrl: z.string().optional(),
+    webhookSecret: z.string().optional(),
+  }).optional(),
 }).refine(
   (data) => data.projectName || data.idea,
   { message: "Either projectName (structured) or idea (legacy) is required" }
