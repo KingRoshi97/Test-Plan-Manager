@@ -8,13 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { 
   ChevronRight, ChevronLeft, Plus, Trash2, Upload, Loader2, FolderArchive,
-  CheckCircle, XCircle, X, Package, AlertTriangle, File, HelpCircle
+  CheckCircle, XCircle, X, Package, AlertTriangle, File, HelpCircle, Copy, Code, ChevronDown
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { WizardFlow, WizardStep, FieldSpec, FieldGroup } from "@/lib/wizard/flows";
 import type { WizardDraft, ProjectPackageStatus } from "@/lib/wizard/draft";
 import { setNestedValue, getNestedValue, validateDraftForMode } from "@/lib/wizard/draft";
 import type { Mode } from "@/lib/wizard/flows";
+import { useToast } from "@/hooks/use-toast";
 
 interface DynamicWizardProps {
   flow: WizardFlow;
@@ -750,8 +752,39 @@ function StepContent({
   );
 }
 
-function ReviewStep({ draft, mode, onFieldChange }: { draft: WizardDraft; mode: Mode; onFieldChange: (key: string, value: any) => void }) {
+function ReviewStep({ draft, mode, onFieldChange }: { 
+  draft: WizardDraft; 
+  mode: Mode; 
+  onFieldChange: (key: string, value: any) => void;
+}) {
+  const { toast } = useToast();
+  const [jsonPreviewOpen, setJsonPreviewOpen] = useState(false);
   const validation = validateDraftForMode(draft, mode);
+  
+  const getRequestPreview = () => {
+    const preview = {
+      projectName: draft.project.name,
+      description: draft.project.oneLiner || draft.intent.summary,
+      mode,
+      features: [
+        ...draft.features.p0.map(f => ({ name: f, priority: "P0" })),
+        ...draft.features.p1.map(f => ({ name: f, priority: "P1" })),
+        ...draft.features.p2.map(f => ({ name: f, priority: "P2" })),
+      ].filter(f => f.name),
+      users: draft.users.roles.map(role => ({ type: role, goal: draft.users.roleGoals || "" })),
+      techStack: {
+        frontend: draft.tech.frontend || undefined,
+        backend: draft.tech.backend || undefined,
+        database: draft.tech.database || undefined,
+      },
+      docUploads: draft.uploads.docs?.length ? draft.uploads.docs.map(d => ({ name: d.name, mimeType: d.mimeType })) : undefined,
+      delivery: draft.delivery.enabled ? {
+        type: draft.delivery.type,
+        webhookUrl: draft.delivery.webhookUrl || undefined,
+      } : undefined,
+    };
+    return JSON.stringify(preview, null, 2);
+  };
 
   return (
     <div className="space-y-4">
@@ -940,6 +973,42 @@ function ReviewStep({ draft, mode, onFieldChange }: { draft: WizardDraft; mode: 
           </div>
         )}
       </div>
+
+      <Collapsible open={jsonPreviewOpen} onOpenChange={setJsonPreviewOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between" data-testid="button-toggle-json-preview">
+            <div className="flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              Request JSON Preview (Partial)
+            </div>
+            <ChevronDown className={`h-4 w-4 transition-transform ${jsonPreviewOpen ? "rotate-180" : ""}`} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="mt-2 rounded-lg border bg-muted/30 p-4">
+            <p className="text-xs text-muted-foreground mb-3">
+              Preview of user-editable fields. Full request includes category, preset, domains, and packageId.
+            </p>
+            <div className="flex justify-end mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(getRequestPreview());
+                  toast({ title: "Copied to clipboard" });
+                }}
+                data-testid="button-copy-json-preview"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy
+              </Button>
+            </div>
+            <pre className="text-xs font-mono overflow-x-auto max-h-[300px] overflow-y-auto whitespace-pre-wrap">
+              {getRequestPreview()}
+            </pre>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }

@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { formatDateTime, truncateHash } from "@/lib/format";
-import { Download, RefreshCw, FileText, Package, Truck, Paperclip, ArrowLeft, Zap, Upload, Loader2, Plus, Trash2, GitBranch } from "lucide-react";
+import { Download, RefreshCw, FileText, Package, Truck, Paperclip, ArrowLeft, Zap, Upload, Loader2, Plus, Trash2, GitBranch, Shield, AlertTriangle, Info, AlertCircle, Filter, Copy, FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Assembly, Delivery, AssemblyState, ProjectPackage, DeliveryType } from "@shared/schema";
+import type { Assembly, Delivery, AssemblyState, ProjectPackage, DeliveryType, SafetyWarning } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
 
 interface UpgradeState {
   overview: string;
@@ -86,6 +87,25 @@ export default function AssemblyDetail() {
     queryKey: [`/v1/assemblies/${assemblyId}/kit/metadata`],
     enabled: !!assemblyId && assembly?.state === "completed",
   });
+
+  const { data: safetyWarningsData, isLoading: safetyLoading } = useQuery<{ warnings: SafetyWarning[] }>({
+    queryKey: [`/v1/assemblies/${assemblyId}/safety-warnings`],
+    enabled: !!assemblyId,
+  });
+  const safetyWarnings = safetyWarningsData?.warnings || [];
+
+  const { data: safetyConfigData, isLoading: safetyConfigLoading } = useQuery<{ config: { safetyMode: string } }>({
+    queryKey: ["/v1/safety/config"],
+  });
+  const safetyMode = safetyConfigData?.config?.safetyMode || "warn";
+  
+  const isSafetyBlocked = (delivery: Delivery) => {
+    if (delivery.state !== "failed") return false;
+    const error = delivery.lastError || "";
+    return error.toLowerCase().includes("safety") || error.toLowerCase().includes("blocked");
+  };
+
+  const [safetyFilter, setSafetyFilter] = useState<string>("all");
 
   const retryDelivery = useMutation({
     mutationFn: async (deliveryId: string) => {
@@ -285,6 +305,15 @@ export default function AssemblyDetail() {
           <TabsTrigger value="upgrade" data-testid="tab-upgrade">
             <Zap className="h-4 w-4 mr-2" />
             Upgrade
+          </TabsTrigger>
+          <TabsTrigger value="safety" data-testid="tab-safety">
+            <Shield className="h-4 w-4 mr-2" />
+            Safety
+            {safetyWarnings.length > 0 && (
+              <Badge variant="destructive" className="ml-2 text-xs h-5 min-w-[20px]">
+                {safetyWarnings.length}
+              </Badge>
+            )}
           </TabsTrigger>
         </TabsList>
 
@@ -647,9 +676,21 @@ export default function AssemblyDetail() {
                         data-testid={`delivery-item-${delivery.id}`}
                       >
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium capitalize">{delivery.type}</span>
                             <StatusBadge status={delivery.state} />
+                            {isSafetyBlocked(delivery) && (
+                              <Badge variant="destructive" className="text-xs" data-testid={`badge-blocked-${delivery.id}`}>
+                                <Shield className="h-3 w-3 mr-1" />
+                                Safety Blocked
+                              </Badge>
+                            )}
+                            {safetyWarnings.length > 0 && !isSafetyBlocked(delivery) && (
+                              <Badge variant="secondary" className="text-xs" data-testid={`badge-warnings-${delivery.id}`}>
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                {safetyWarnings.length} Warning{safetyWarnings.length !== 1 ? "s" : ""}
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-xs text-muted-foreground">
                             Attempts: {delivery.attempts}
@@ -934,6 +975,132 @@ export default function AssemblyDetail() {
               </GlassCardContent>
             </GlassCard>
           )}
+        </TabsContent>
+
+        <TabsContent value="safety" className="space-y-4">
+          <GlassCard>
+            <GlassCardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <GlassCardTitle>Safety Status</GlassCardTitle>
+                </div>
+                {(safetyLoading || safetyConfigLoading) ? (
+                  <div className="text-sm text-muted-foreground">Loading safety data...</div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant={safetyMode === "strict" ? "destructive" : "secondary"} data-testid="badge-safety-mode">
+                      Mode: {safetyMode.toUpperCase()}
+                    </Badge>
+                    <Badge variant="outline" data-testid="badge-warning-count">
+                      Warnings: {safetyWarnings.length}
+                    </Badge>
+                    {safetyWarnings.length > 0 && (
+                      <Badge 
+                        variant={safetyWarnings.some(w => w.severity === "critical") ? "destructive" : 
+                                 safetyWarnings.some(w => w.severity === "warning") ? "default" : "secondary"}
+                        data-testid="badge-max-severity"
+                      >
+                        Max: {safetyWarnings.some(w => w.severity === "critical") ? "CRITICAL" :
+                              safetyWarnings.some(w => w.severity === "warning") ? "WARNING" : "INFO"}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
+            </GlassCardHeader>
+            <GlassCardContent>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <Select value={safetyFilter} onValueChange={setSafetyFilter}>
+                  <SelectTrigger className="w-[150px]" data-testid="select-safety-filter">
+                    <Filter className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Severities</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                    <SelectItem value="warning">Warning</SelectItem>
+                    <SelectItem value="info">Info</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(JSON.stringify(safetyWarnings, null, 2));
+                    toast({ title: "Copied to clipboard" });
+                  }}
+                  data-testid="button-copy-warnings-json"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy JSON
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/v1/assemblies/${assemblyId}/inputs/redacted`, "_blank")}
+                  data-testid="button-download-redacted"
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Download Redacted Inputs
+                </Button>
+              </div>
+
+              {safetyWarnings.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Shield className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                  <p>No safety warnings detected.</p>
+                </div>
+              ) : (
+                <div className="rounded-lg border overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/30">
+                        <th className="px-3 py-2 text-left font-medium">Severity</th>
+                        <th className="px-3 py-2 text-left font-medium">Code</th>
+                        <th className="px-3 py-2 text-left font-medium">Asset</th>
+                        <th className="px-3 py-2 text-left font-medium">Location</th>
+                        <th className="px-3 py-2 text-left font-medium">Message</th>
+                        <th className="px-3 py-2 text-left font-medium">Created</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {safetyWarnings
+                        .filter(w => safetyFilter === "all" || w.severity === safetyFilter)
+                        .map((warning) => (
+                          <tr key={warning.id} className="border-b last:border-0" data-testid={`row-warning-${warning.id}`}>
+                            <td className="px-3 py-2">
+                              <Badge 
+                                variant={warning.severity === "critical" ? "destructive" : 
+                                         warning.severity === "warning" ? "default" : "secondary"}
+                              >
+                                {warning.severity === "critical" && <AlertCircle className="h-3 w-3 mr-1" />}
+                                {warning.severity === "warning" && <AlertTriangle className="h-3 w-3 mr-1" />}
+                                {warning.severity === "info" && <Info className="h-3 w-3 mr-1" />}
+                                {warning.severity.toUpperCase()}
+                              </Badge>
+                            </td>
+                            <td className="px-3 py-2 font-mono text-xs">{warning.code}</td>
+                            <td className="px-3 py-2 text-xs">
+                              {warning.uploadId ? "upload" : warning.projectPackageId ? "package" : "assembly"}
+                            </td>
+                            <td className="px-3 py-2 font-mono text-xs truncate max-w-[200px]" title={warning.filePath || "-"}>
+                              {warning.filePath || "-"}
+                              {warning.line && `:${warning.line}`}
+                              {warning.column && `:${warning.column}`}
+                            </td>
+                            <td className="px-3 py-2 text-xs max-w-[300px]">{warning.message}</td>
+                            <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">
+                              {formatDateTime(warning.createdAt)}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </GlassCardContent>
+          </GlassCard>
         </TabsContent>
       </Tabs>
     </div>
