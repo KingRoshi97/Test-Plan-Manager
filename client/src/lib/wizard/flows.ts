@@ -795,6 +795,60 @@ export function getStepFields(step: WizardStep): FieldSpec[] {
   return step.fieldGroups.flatMap(g => g.fields);
 }
 
+export type TabConfig = {
+  id: string;
+  label: string;
+  stepId: string;
+  icon: "Package" | "Settings" | "Sparkles" | "ListTodo" | "Users" | "Palette" | "Code" | "Play" | "Upload" | "FolderArchive" | "Workflow" | "Gamepad2" | "BookOpen";
+};
+
+const TAB_TYPE: TabConfig = { id: "type", label: "Type", stepId: "type", icon: "Package" };
+const TAB_BASICS: TabConfig = { id: "basics", label: "Basics", stepId: "basics", icon: "Settings" };
+const TAB_INTENT: TabConfig = { id: "intent", label: "Intent", stepId: "intent", icon: "Sparkles" };
+const TAB_FEATURES: TabConfig = { id: "features", label: "Features", stepId: "features", icon: "ListTodo" };
+const TAB_USERS: TabConfig = { id: "users", label: "Users", stepId: "users", icon: "Users" };
+const TAB_UX: TabConfig = { id: "ux", label: "UX", stepId: "ux", icon: "Palette" };
+const TAB_TECH: TabConfig = { id: "tech", label: "Tech", stepId: "tech", icon: "Code" };
+const TAB_PREVIEW: TabConfig = { id: "preview", label: "Generate", stepId: "review", icon: "Play" };
+
+const TAB_UPLOAD: TabConfig = { id: "upload", label: "Upload", stepId: "upload", icon: "Upload" };
+const TAB_UPGRADE: TabConfig = { id: "upgrade", label: "Upgrade", stepId: "upgrade", icon: "FolderArchive" };
+const TAB_UI_OVERHAUL: TabConfig = { id: "ui-overhaul", label: "UI Goals", stepId: "ui-overhaul", icon: "Palette" };
+const TAB_HARDENING: TabConfig = { id: "hardening", label: "Hardening", stepId: "hardening", icon: "Code" };
+const TAB_MODULE: TabConfig = { id: "module", label: "Module", stepId: "module", icon: "ListTodo" };
+
+const TAB_LIBRARY: TabConfig = { id: "library", label: "Package", stepId: "library", icon: "BookOpen" };
+const TAB_AUTOMATION: TabConfig = { id: "automation", label: "Workflow", stepId: "automation", icon: "Workflow" };
+const TAB_GAME: TabConfig = { id: "game", label: "Game", stepId: "game", icon: "Gamepad2" };
+
+const TAB_CONFIGS_BY_CATEGORY: Record<Category, TabConfig[]> = {
+  web: [TAB_TYPE, TAB_BASICS, TAB_INTENT, TAB_FEATURES, TAB_USERS, TAB_UX, TAB_TECH, TAB_PREVIEW],
+  mobile: [TAB_TYPE, TAB_BASICS, TAB_INTENT, TAB_FEATURES, TAB_USERS, TAB_UX, TAB_TECH, TAB_PREVIEW],
+  api: [TAB_TYPE, TAB_BASICS, TAB_INTENT, TAB_FEATURES, TAB_TECH, TAB_PREVIEW],
+  library: [TAB_TYPE, TAB_BASICS, TAB_LIBRARY, TAB_TECH, TAB_PREVIEW],
+  automation: [TAB_TYPE, TAB_BASICS, TAB_AUTOMATION, TAB_TECH, TAB_PREVIEW],
+  game: [TAB_TYPE, TAB_BASICS, TAB_GAME, TAB_FEATURES, TAB_PREVIEW]
+};
+
+const TAB_CONFIGS_BY_MODE: Partial<Record<Mode, TabConfig[]>> = {
+  existing_upgrade: [TAB_TYPE, TAB_BASICS, TAB_UPLOAD, TAB_UPGRADE, TAB_TECH, TAB_PREVIEW],
+  ui_overhaul: [TAB_TYPE, TAB_BASICS, TAB_UPLOAD, TAB_UI_OVERHAUL, TAB_PREVIEW],
+  refactor_hardening: [TAB_TYPE, TAB_BASICS, TAB_UPLOAD, TAB_HARDENING, TAB_PREVIEW],
+  add_feature_module: [TAB_TYPE, TAB_BASICS, TAB_UPLOAD, TAB_MODULE, TAB_TECH, TAB_PREVIEW]
+};
+
+export function getTabsForCategory(category: Category | null, mode: Mode | null): TabConfig[] {
+  if (!category) {
+    return [TAB_TYPE];
+  }
+  
+  if (mode && TAB_CONFIGS_BY_MODE[mode]) {
+    return TAB_CONFIGS_BY_MODE[mode]!;
+  }
+  
+  return TAB_CONFIGS_BY_CATEGORY[category] || [TAB_TYPE, TAB_BASICS, TAB_PREVIEW];
+}
+
 export function getRequiredFields(flow: WizardFlow): FieldSpec[] {
   return flow.steps.flatMap(getStepFields).filter(f => f.required);
 }

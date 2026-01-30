@@ -16,7 +16,8 @@ import {
   Download, Loader2, CheckCircle, XCircle, Play, Copy,
   Plus, Trash2, ChevronRight, ChevronLeft, Sparkles, Code, Users, ListTodo, Settings,
   Upload, File, X, Package, AlertTriangle, FolderArchive,
-  Globe, Smartphone, Server, Workflow, Gamepad2, Wand2, Palette
+  Globe, Smartphone, Server, Workflow, Gamepad2, Wand2, Palette, BookOpen,
+  type LucideIcon
 } from "lucide-react";
 import type { UploadedFile, ProjectSummary, ProjectWarning, ScanState, IndexState, AssemblyCategory, AssemblyMode } from "@shared/schema";
 import { useLocation } from "wouter";
@@ -25,9 +26,11 @@ import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCard
 import DynamicWizard from "@/components/wizard/DynamicWizard";
 import { 
   getFlow, 
+  getTabsForCategory,
   type Category, 
   type Mode, 
-  type WizardFlow 
+  type WizardFlow,
+  type TabConfig
 } from "@/lib/wizard/flows";
 import { 
   makeEmptyDraft, 
@@ -154,24 +157,32 @@ function getStepProgress(currentStep: string | null): number {
   return index >= 0 ? ((index + 1) / PIPELINE_STEPS.length) * 100 : 0;
 }
 
-const FORM_STEPS = ["type", "basics", "intent", "features", "users", "ux", "tech", "preview"] as const;
-const STEP_CONFIG = [
-  { id: "type", label: "Type" },
-  { id: "basics", label: "Basics" },
-  { id: "intent", label: "Intent" },
-  { id: "features", label: "Features" },
-  { id: "users", label: "Users" },
-  { id: "ux", label: "UX & Screens" },
-  { id: "tech", label: "Tech" },
-  { id: "preview", label: "Generate" },
-];
-type FormStep = typeof FORM_STEPS[number];
+const TAB_ICON_MAP: Record<TabConfig["icon"], LucideIcon> = {
+  Package,
+  Settings,
+  Sparkles,
+  ListTodo,
+  Users,
+  Palette,
+  Code,
+  Play,
+  Upload,
+  FolderArchive,
+  Workflow,
+  Gamepad2,
+  BookOpen,
+};
+
+function TabIcon({ icon }: { icon: TabConfig["icon"] }) {
+  const IconComponent = TAB_ICON_MAP[icon];
+  return <IconComponent className="h-4 w-4 mr-1 hidden sm:inline" />;
+}
 
 export default function Create() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [activeAssemblyId, setActiveAssemblyId] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState<FormStep>("type");
+  const [currentStep, setCurrentStep] = useState<string>("type");
   const [useSimpleMode, setUseSimpleMode] = useState(false);
   
   // Category/Mode/Preset selection state
@@ -183,6 +194,12 @@ export default function Create() {
   const [wizardDraft, setWizardDraft] = useState<WizardDraft>(makeEmptyDraft());
   const [wizardFlow, setWizardFlow] = useState<WizardFlow | null>(null);
   const [wizardStepIndex, setWizardStepIndex] = useState(0);
+  
+  // Dynamic tabs based on category and mode
+  const currentTabs = getTabsForCategory(
+    selectedCategory as Category | null, 
+    selectedMode as Mode | null
+  );
   
   // Fetch presets from API
   const { data: presetsData } = useQuery<PresetsResponse>({
@@ -598,71 +615,41 @@ Read these docs to understand the project architecture, then implement the appli
     setCurrentStep("basics");
   };
 
-  // Helper to check if a step exists in the current wizard flow
-  // Maps tab IDs to their corresponding step IDs in the flow
-  const getStepIdForTab = useCallback((tabId: string): string | null => {
-    if (!wizardFlow) return null;
-    
-    // Direct mappings
-    if (tabId === "preview") return "review";
-    
-    // Check for direct match first
-    const directMatch = wizardFlow.steps.find(s => s.id === tabId);
-    if (directMatch) return tabId;
-    
-    // For "intent" tab, check for category-specific alternatives
-    if (tabId === "intent") {
-      const alternatives = ["library", "automation", "game"];
-      for (const alt of alternatives) {
-        if (wizardFlow.steps.some(s => s.id === alt)) {
-          return alt;
-        }
-      }
+  // Get step ID from tab config - directly mapped now
+  const getStepIdForTab = useCallback((tabId: string): string => {
+    const tab = currentTabs.find(t => t.id === tabId);
+    return tab?.stepId || tabId;
+  }, [currentTabs]);
+
+  // Navigation using currentTabs
+  const goNext = useCallback(() => {
+    const currentIdx = currentTabs.findIndex(t => t.id === currentStep);
+    if (currentIdx < currentTabs.length - 1) {
+      setCurrentStep(currentTabs[currentIdx + 1].id);
     }
-    
-    return null;
-  }, [wizardFlow]);
+  }, [currentTabs, currentStep]);
 
-  const hasStepInFlow = useCallback((tabId: string): boolean => {
-    return getStepIdForTab(tabId) !== null;
-  }, [getStepIdForTab]);
-
-  // Get array of available tabs based on current flow
-  const getAvailableTabs = useCallback((): FormStep[] => {
-    return FORM_STEPS.filter(step => {
-      if (step === "type") return true; // Type tab always available
-      if (!wizardFlow) return false;
-      return hasStepInFlow(step);
-    });
-  }, [wizardFlow, hasStepInFlow]);
-
-  const goNext = () => {
-    const availableTabs = getAvailableTabs();
-    const currentIdx = availableTabs.indexOf(currentStep);
-    if (currentIdx < availableTabs.length - 1) {
-      setCurrentStep(availableTabs[currentIdx + 1]);
-    }
-  };
-
-  const goPrev = () => {
-    const availableTabs = getAvailableTabs();
-    const currentIdx = availableTabs.indexOf(currentStep);
+  const goPrev = useCallback(() => {
+    const currentIdx = currentTabs.findIndex(t => t.id === currentStep);
     if (currentIdx > 0) {
-      setCurrentStep(availableTabs[currentIdx - 1]);
+      setCurrentStep(currentTabs[currentIdx - 1].id);
     }
-  };
+  }, [currentTabs, currentStep]);
 
   // Get the next available tab for button labels
   const getNextTabLabel = useCallback((): string | null => {
-    const availableTabs = getAvailableTabs();
-    const currentIdx = availableTabs.indexOf(currentStep);
-    if (currentIdx < availableTabs.length - 1) {
-      const nextTab = availableTabs[currentIdx + 1];
-      const config = STEP_CONFIG.find(s => s.id === nextTab);
-      return config?.label || nextTab;
+    const currentIdx = currentTabs.findIndex(t => t.id === currentStep);
+    if (currentIdx < currentTabs.length - 1) {
+      return currentTabs[currentIdx + 1].label;
     }
     return null;
-  }, [currentStep, getAvailableTabs]);
+  }, [currentStep, currentTabs]);
+
+  // Check if current step is the last step (preview/generate)
+  const isLastStep = useCallback((): boolean => {
+    const currentIdx = currentTabs.findIndex(t => t.id === currentStep);
+    return currentIdx === currentTabs.length - 1;
+  }, [currentTabs, currentStep]);
 
   const isRunning = activeAssembly?.state === "running";
   const isReady = activeAssembly?.state === "completed";
@@ -701,9 +688,9 @@ Read these docs to understand the project architecture, then implement the appli
 
       {!activeAssemblyId && !useSimpleMode && !wizardFlow && (
         <Stepper
-          steps={STEP_CONFIG}
+          steps={currentTabs.map(t => ({ id: t.id, label: t.label }))}
           currentStep={currentStep}
-          onStepClick={(step) => setCurrentStep(step as FormStep)}
+          onStepClick={(step) => setCurrentStep(step)}
           className="mb-6"
         />
       )}
@@ -773,40 +760,22 @@ Read these docs to understand the project architecture, then implement the appli
               ) : (
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <Tabs value={currentStep} onValueChange={(v) => setCurrentStep(v as FormStep)} className="w-full">
-                      <TabsList className="grid w-full grid-cols-8 mb-6">
-                        <TabsTrigger value="type" data-testid="tab-type">
-                          <Package className="h-4 w-4 mr-1 hidden sm:inline" />
-                          Type
-                        </TabsTrigger>
-                        <TabsTrigger value="basics" data-testid="tab-basics" disabled={!hasStepInFlow("basics")}>
-                          <Settings className="h-4 w-4 mr-1 hidden sm:inline" />
-                          Basics
-                        </TabsTrigger>
-                        <TabsTrigger value="intent" data-testid="tab-intent" disabled={!hasStepInFlow("intent")}>
-                          <Sparkles className="h-4 w-4 mr-1 hidden sm:inline" />
-                          Intent
-                        </TabsTrigger>
-                        <TabsTrigger value="features" data-testid="tab-features" disabled={!hasStepInFlow("features")}>
-                          <ListTodo className="h-4 w-4 mr-1 hidden sm:inline" />
-                          Features
-                        </TabsTrigger>
-                        <TabsTrigger value="users" data-testid="tab-users" disabled={!hasStepInFlow("users")}>
-                          <Users className="h-4 w-4 mr-1 hidden sm:inline" />
-                          Users
-                        </TabsTrigger>
-                        <TabsTrigger value="ux" data-testid="tab-ux" disabled={!hasStepInFlow("ux")}>
-                          <Palette className="h-4 w-4 mr-1 hidden sm:inline" />
-                          UX
-                        </TabsTrigger>
-                        <TabsTrigger value="tech" data-testid="tab-tech" disabled={!hasStepInFlow("tech")}>
-                          <Code className="h-4 w-4 mr-1 hidden sm:inline" />
-                          Tech
-                        </TabsTrigger>
-                        <TabsTrigger value="preview" data-testid="tab-preview" disabled={!hasStepInFlow("preview")}>
-                          <Play className="h-4 w-4 mr-1 hidden sm:inline" />
-                          Generate
-                        </TabsTrigger>
+                    <Tabs value={currentStep} onValueChange={setCurrentStep} className="w-full">
+                      <TabsList 
+                        className="grid w-full mb-6" 
+                        style={{ gridTemplateColumns: `repeat(${currentTabs.length}, minmax(0, 1fr))` }}
+                      >
+                        {currentTabs.map((tab, idx) => (
+                          <TabsTrigger 
+                            key={tab.id} 
+                            value={tab.id} 
+                            data-testid={`tab-${tab.id}`}
+                            disabled={idx > 0 && !wizardFlow}
+                          >
+                            <TabIcon icon={tab.icon} />
+                            {tab.label}
+                          </TabsTrigger>
+                        ))}
                       </TabsList>
 
                       {/* Step 0: Category + Mode + Preset Selection */}
@@ -930,395 +899,99 @@ Read these docs to understand the project architecture, then implement the appli
                         )}
                       </TabsContent>
 
-                      <TabsContent value="basics" className="space-y-4">
-                        {wizardFlow ? (
-                          <>
-                            <DynamicWizard
-                              flow={wizardFlow}
-                              draft={wizardDraft}
-                              onDraftChange={setWizardDraft}
-                              currentStepIndex={wizardStepIndex}
-                              onStepChange={setWizardStepIndex}
-                              projectPackage={projectPackage ? {
-                                id: projectPackage.id,
-                                filename: projectPackage.filename,
-                                sizeBytes: projectPackage.sizeBytes,
-                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
-                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
-                                summaryJson: projectPackage.summaryJson ? {
-                                  framework: projectPackage.summaryJson.framework,
-                                  packageManager: projectPackage.summaryJson.packageManager,
-                                  fileCount: projectPackage.summaryJson.fileCount,
-                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
-                                  scripts: projectPackage.summaryJson.scripts
-                                } : null,
-                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
-                                errorCode: projectPackage.errorCode,
-                                errorMessage: projectPackage.errorMessage
-                              } : null}
-                              onProjectPackageUpload={uploadProjectZip}
-                              onProjectPackageRemove={removeProjectPackage}
-                              isPackageProcessing={!!isPackageProcessing}
-                              isPackageReady={isPackageReady}
-                              mode={selectedMode as Mode}
-                              onSubmit={onWizardSubmit}
-                              isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId={getStepIdForTab("basics") || "basics"}
-                              hideInternalNav
-                            />
-                            <div className="flex justify-between pt-4 border-t">
-                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-basics">
-                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                              </Button>
-                              <Button type="button" onClick={goNext} data-testid="button-next-basics" className="btn-axiom-cta">
-                                Next: Intent <ChevronRight className="ml-2 h-4 w-4" />
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
-                        )}
-                      </TabsContent>
-
-                      <TabsContent value="intent" className="space-y-4">
-                        {hasStepInFlow("intent") ? (
-                          <>
-                            <DynamicWizard
-                              flow={wizardFlow!}
-                              draft={wizardDraft}
-                              onDraftChange={setWizardDraft}
-                              currentStepIndex={wizardStepIndex}
-                              onStepChange={setWizardStepIndex}
-                              projectPackage={projectPackage ? {
-                                id: projectPackage.id,
-                                filename: projectPackage.filename,
-                                sizeBytes: projectPackage.sizeBytes,
-                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
-                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
-                                summaryJson: projectPackage.summaryJson ? {
-                                  framework: projectPackage.summaryJson.framework,
-                                  packageManager: projectPackage.summaryJson.packageManager,
-                                  fileCount: projectPackage.summaryJson.fileCount,
-                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
-                                  scripts: projectPackage.summaryJson.scripts
-                                } : null,
-                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
-                                errorCode: projectPackage.errorCode,
-                                errorMessage: projectPackage.errorMessage
-                              } : null}
-                              onProjectPackageUpload={uploadProjectZip}
-                              onProjectPackageRemove={removeProjectPackage}
-                              isPackageProcessing={!!isPackageProcessing}
-                              isPackageReady={isPackageReady}
-                              mode={selectedMode as Mode}
-                              onSubmit={onWizardSubmit}
-                              isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId={getStepIdForTab("intent") || "intent"}
-                              hideInternalNav
-                            />
-                            <div className="flex justify-between pt-4 border-t">
-                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-intent">
-                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                              </Button>
-                              <Button type="button" onClick={goNext} data-testid="button-next-intent" className="btn-axiom-cta">
-                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-muted-foreground text-center py-8">
-                            This step is not applicable for {selectedCategory} projects.
-                          </p>
-                        )}
-                      </TabsContent>
-
-                      <TabsContent value="features" className="space-y-4">
-                        {hasStepInFlow("features") ? (
-                          <>
-                            <DynamicWizard
-                              flow={wizardFlow!}
-                              draft={wizardDraft}
-                              onDraftChange={setWizardDraft}
-                              currentStepIndex={wizardStepIndex}
-                              onStepChange={setWizardStepIndex}
-                              projectPackage={projectPackage ? {
-                                id: projectPackage.id,
-                                filename: projectPackage.filename,
-                                sizeBytes: projectPackage.sizeBytes,
-                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
-                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
-                                summaryJson: projectPackage.summaryJson ? {
-                                  framework: projectPackage.summaryJson.framework,
-                                  packageManager: projectPackage.summaryJson.packageManager,
-                                  fileCount: projectPackage.summaryJson.fileCount,
-                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
-                                  scripts: projectPackage.summaryJson.scripts
-                                } : null,
-                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
-                                errorCode: projectPackage.errorCode,
-                                errorMessage: projectPackage.errorMessage
-                              } : null}
-                              onProjectPackageUpload={uploadProjectZip}
-                              onProjectPackageRemove={removeProjectPackage}
-                              isPackageProcessing={!!isPackageProcessing}
-                              isPackageReady={isPackageReady}
-                              mode={selectedMode as Mode}
-                              onSubmit={onWizardSubmit}
-                              isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId={getStepIdForTab("features") || "features"}
-                              hideInternalNav
-                            />
-                            <div className="flex justify-between pt-4 border-t">
-                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-features">
-                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                              </Button>
-                              <Button type="button" onClick={goNext} data-testid="button-next-features" className="btn-axiom-cta">
-                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-muted-foreground text-center py-8">
-                            This step is not applicable for {selectedCategory} projects.
-                          </p>
-                        )}
-                      </TabsContent>
-
-                      <TabsContent value="users" className="space-y-4">
-                        {hasStepInFlow("users") ? (
-                          <>
-                            <DynamicWizard
-                              flow={wizardFlow!}
-                              draft={wizardDraft}
-                              onDraftChange={setWizardDraft}
-                              currentStepIndex={wizardStepIndex}
-                              onStepChange={setWizardStepIndex}
-                              projectPackage={projectPackage ? {
-                                id: projectPackage.id,
-                                filename: projectPackage.filename,
-                                sizeBytes: projectPackage.sizeBytes,
-                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
-                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
-                                summaryJson: projectPackage.summaryJson ? {
-                                  framework: projectPackage.summaryJson.framework,
-                                  packageManager: projectPackage.summaryJson.packageManager,
-                                  fileCount: projectPackage.summaryJson.fileCount,
-                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
-                                  scripts: projectPackage.summaryJson.scripts
-                                } : null,
-                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
-                                errorCode: projectPackage.errorCode,
-                                errorMessage: projectPackage.errorMessage
-                              } : null}
-                              onProjectPackageUpload={uploadProjectZip}
-                              onProjectPackageRemove={removeProjectPackage}
-                              isPackageProcessing={!!isPackageProcessing}
-                              isPackageReady={isPackageReady}
-                              mode={selectedMode as Mode}
-                              onSubmit={onWizardSubmit}
-                              isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId={getStepIdForTab("users") || "users"}
-                              hideInternalNav
-                            />
-                            <div className="flex justify-between pt-4 border-t">
-                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-users">
-                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                              </Button>
-                              <Button type="button" onClick={goNext} data-testid="button-next-users" className="btn-axiom-cta">
-                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-muted-foreground text-center py-8">
-                            This step is not applicable for {selectedCategory} projects.
-                          </p>
-                        )}
-                      </TabsContent>
-
-                      <TabsContent value="ux" className="space-y-4">
-                        {hasStepInFlow("ux") ? (
-                          <>
-                            <DynamicWizard
-                              flow={wizardFlow!}
-                              draft={wizardDraft}
-                              onDraftChange={setWizardDraft}
-                              currentStepIndex={wizardStepIndex}
-                              onStepChange={setWizardStepIndex}
-                              projectPackage={projectPackage ? {
-                                id: projectPackage.id,
-                                filename: projectPackage.filename,
-                                sizeBytes: projectPackage.sizeBytes,
-                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
-                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
-                                summaryJson: projectPackage.summaryJson ? {
-                                  framework: projectPackage.summaryJson.framework,
-                                  packageManager: projectPackage.summaryJson.packageManager,
-                                  fileCount: projectPackage.summaryJson.fileCount,
-                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
-                                  scripts: projectPackage.summaryJson.scripts
-                                } : null,
-                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
-                                errorCode: projectPackage.errorCode,
-                                errorMessage: projectPackage.errorMessage
-                              } : null}
-                              onProjectPackageUpload={uploadProjectZip}
-                              onProjectPackageRemove={removeProjectPackage}
-                              isPackageProcessing={!!isPackageProcessing}
-                              isPackageReady={isPackageReady}
-                              mode={selectedMode as Mode}
-                              onSubmit={onWizardSubmit}
-                              isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId={getStepIdForTab("ux") || "ux"}
-                              hideInternalNav
-                            />
-                            <div className="flex justify-between pt-4 border-t">
-                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-ux">
-                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                              </Button>
-                              <Button type="button" onClick={goNext} data-testid="button-next-ux" className="btn-axiom-cta">
-                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-muted-foreground text-center py-8">
-                            This step is not applicable for {selectedCategory} projects.
-                          </p>
-                        )}
-                      </TabsContent>
-
-                      <TabsContent value="tech" className="space-y-4">
-                        {hasStepInFlow("tech") ? (
-                          <>
-                            <DynamicWizard
-                              flow={wizardFlow!}
-                              draft={wizardDraft}
-                              onDraftChange={setWizardDraft}
-                              currentStepIndex={wizardStepIndex}
-                              onStepChange={setWizardStepIndex}
-                              projectPackage={projectPackage ? {
-                                id: projectPackage.id,
-                                filename: projectPackage.filename,
-                                sizeBytes: projectPackage.sizeBytes,
-                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
-                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
-                                summaryJson: projectPackage.summaryJson ? {
-                                  framework: projectPackage.summaryJson.framework,
-                                  packageManager: projectPackage.summaryJson.packageManager,
-                                  fileCount: projectPackage.summaryJson.fileCount,
-                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
-                                  scripts: projectPackage.summaryJson.scripts
-                                } : null,
-                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
-                                errorCode: projectPackage.errorCode,
-                                errorMessage: projectPackage.errorMessage
-                              } : null}
-                              onProjectPackageUpload={uploadProjectZip}
-                              onProjectPackageRemove={removeProjectPackage}
-                              isPackageProcessing={!!isPackageProcessing}
-                              isPackageReady={isPackageReady}
-                              mode={selectedMode as Mode}
-                              onSubmit={onWizardSubmit}
-                              isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId={getStepIdForTab("tech") || "tech"}
-                              hideInternalNav
-                            />
-                            <div className="flex justify-between pt-4 border-t">
-                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-tech">
-                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                              </Button>
-                              <Button type="button" onClick={goNext} data-testid="button-next-tech" className="btn-axiom-cta">
-                                Next: {getNextTabLabel()} <ChevronRight className="ml-2 h-4 w-4" />
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-muted-foreground text-center py-8">
-                            This step is not applicable for {selectedCategory} projects.
-                          </p>
-                        )}
-                      </TabsContent>
-
-                      <TabsContent value="preview" className="space-y-4">
-                        {wizardFlow ? (
-                          <>
-                            <DynamicWizard
-                              flow={wizardFlow}
-                              draft={wizardDraft}
-                              onDraftChange={setWizardDraft}
-                              currentStepIndex={wizardStepIndex}
-                              onStepChange={setWizardStepIndex}
-                              projectPackage={projectPackage ? {
-                                id: projectPackage.id,
-                                filename: projectPackage.filename,
-                                sizeBytes: projectPackage.sizeBytes,
-                                scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
-                                indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
-                                summaryJson: projectPackage.summaryJson ? {
-                                  framework: projectPackage.summaryJson.framework,
-                                  packageManager: projectPackage.summaryJson.packageManager,
-                                  fileCount: projectPackage.summaryJson.fileCount,
-                                  hasTypeScript: projectPackage.summaryJson.hasTypeScript,
-                                  scripts: projectPackage.summaryJson.scripts
-                                } : null,
-                                warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
-                                errorCode: projectPackage.errorCode,
-                                errorMessage: projectPackage.errorMessage
-                              } : null}
-                              onProjectPackageUpload={uploadProjectZip}
-                              onProjectPackageRemove={removeProjectPackage}
-                              isPackageProcessing={!!isPackageProcessing}
-                              isPackageReady={isPackageReady}
-                              mode={selectedMode as Mode}
-                              onSubmit={onWizardSubmit}
-                              isSubmitting={createAssemblyMutation.isPending}
-                              activeStepId={getStepIdForTab("preview") || "review"}
-                              hideInternalNav
-                            />
-                            <div className="flex justify-between pt-4 border-t">
-                              <Button type="button" variant="outline" onClick={goPrev} data-testid="button-prev-preview">
-                                <ChevronLeft className="mr-2 h-4 w-4" /> Back
-                              </Button>
-                              <Button
-                                type="button"
-                                className="btn-axiom-cta"
-                                disabled={
-                                  createAssemblyMutation.isPending || 
-                                  (!!projectPackage && !isPackageReady) ||
-                                  (!!requiresZip && !projectPackage)
-                                }
-                                onClick={() => onWizardSubmit()}
-                                data-testid="button-generate"
-                              >
-                                {createAssemblyMutation.isPending ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Starting...
-                                  </>
-                                ) : projectPackage && !isPackageReady ? (
-                                  <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Waiting for project indexing...
-                                  </>
-                                ) : requiresZip && !projectPackage ? (
-                                  <>
-                                    <AlertTriangle className="mr-2 h-4 w-4" />
-                                    ZIP Required
-                                  </>
-                                ) : (
-                                  <>
-                                    <Sparkles className="mr-2 h-4 w-4" />
-                                    Generate Kit
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
-                        )}
-                      </TabsContent>
+                      {/* Dynamic TabsContent for all non-type tabs */}
+                      {currentTabs.filter(tab => tab.id !== "type").map((tab, idx) => {
+                        const isPreviewTab = tab.id === "preview";
+                        const tabIdx = currentTabs.findIndex(t => t.id === tab.id);
+                        
+                        return (
+                          <TabsContent key={tab.id} value={tab.id} className="space-y-4">
+                            {wizardFlow ? (
+                              <>
+                                <DynamicWizard
+                                  flow={wizardFlow}
+                                  draft={wizardDraft}
+                                  onDraftChange={setWizardDraft}
+                                  currentStepIndex={wizardStepIndex}
+                                  onStepChange={setWizardStepIndex}
+                                  projectPackage={projectPackage ? {
+                                    id: projectPackage.id,
+                                    filename: projectPackage.filename,
+                                    sizeBytes: projectPackage.sizeBytes,
+                                    scanState: projectPackage.scanState as "queued" | "scanning" | "scanned" | "failed",
+                                    indexState: projectPackage.indexState as "queued" | "indexing" | "indexed" | "failed",
+                                    summaryJson: projectPackage.summaryJson ? {
+                                      framework: projectPackage.summaryJson.framework,
+                                      packageManager: projectPackage.summaryJson.packageManager,
+                                      fileCount: projectPackage.summaryJson.fileCount,
+                                      hasTypeScript: projectPackage.summaryJson.hasTypeScript,
+                                      scripts: projectPackage.summaryJson.scripts
+                                    } : null,
+                                    warningsJson: projectPackage.warningsJson?.map(w => ({ code: w.code, message: w.message })) || null,
+                                    errorCode: projectPackage.errorCode,
+                                    errorMessage: projectPackage.errorMessage
+                                  } : null}
+                                  onProjectPackageUpload={uploadProjectZip}
+                                  onProjectPackageRemove={removeProjectPackage}
+                                  isPackageProcessing={!!isPackageProcessing}
+                                  isPackageReady={isPackageReady}
+                                  mode={selectedMode as Mode}
+                                  onSubmit={onWizardSubmit}
+                                  isSubmitting={createAssemblyMutation.isPending}
+                                  activeStepId={getStepIdForTab(tab.id)}
+                                  hideInternalNav
+                                />
+                                <div className="flex justify-between pt-4 border-t">
+                                  <Button type="button" variant="outline" onClick={goPrev} data-testid={`button-prev-${tab.id}`}>
+                                    <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                                  </Button>
+                                  {isPreviewTab ? (
+                                    <Button
+                                      type="button"
+                                      className="btn-axiom-cta"
+                                      disabled={
+                                        createAssemblyMutation.isPending || 
+                                        (!!projectPackage && !isPackageReady) ||
+                                        (!!requiresZip && !projectPackage)
+                                      }
+                                      onClick={() => onWizardSubmit()}
+                                      data-testid="button-generate"
+                                    >
+                                      {createAssemblyMutation.isPending ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Starting...
+                                        </>
+                                      ) : projectPackage && !isPackageReady ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          Waiting for project indexing...
+                                        </>
+                                      ) : requiresZip && !projectPackage ? (
+                                        <>
+                                          <AlertTriangle className="mr-2 h-4 w-4" />
+                                          ZIP Required
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Sparkles className="mr-2 h-4 w-4" />
+                                          Generate Kit
+                                        </>
+                                      )}
+                                    </Button>
+                                  ) : (
+                                    <Button type="button" onClick={goNext} data-testid={`button-next-${tab.id}`} className="btn-axiom-cta">
+                                      Next: {currentTabs[tabIdx + 1]?.label || "Next"} <ChevronRight className="ml-2 h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <p className="text-muted-foreground text-center py-8">Select a preset from the Type tab to continue.</p>
+                            )}
+                          </TabsContent>
+                        );
+                      })}
                     </Tabs>
                   </form>
                 </Form>
