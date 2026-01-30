@@ -1,0 +1,181 @@
+Perfect — with those exact types we can make the gating/validation correct and predictable (and keep it lightweight).
+
+Below is a drop-in validateStep() that matches your definitions:
+
+dependsOn uses { key, equals }
+
+chips / list are arrays → required means min 1
+
+select required means non-empty string
+
+file_docs required means min 1 (treat as array; objects or IDs)
+
+file_zip is not validated here (handled via isPackageReady gate)
+
+toggle required means must be boolean (and if you want “must be true” we can add a requiredTrue flag later)
+
+1) Replace validateStepMinimal() with this strict validator
+function getByPath(obj: any, path: string) {
+  return path.split(".").reduce((acc, k) => (acc == null ? undefined : acc[k]), obj);
+}
+
+function isNonEmptyString(v: any) {
+  return typeof v === "string" && v.trim().length > 0;
+}
+
+function isArrayWithMin1(v: any) {
+  return Array.isArray(v) && v.length > 0;
+}
+
+function shouldValidateField(draft: any, field: { dependsOn?: { key: string; equals: any } }) {
+  if (!field.dependsOn) return true;
+  const depVal = getByPath(draft, field.dependsOn.key);
+  return depVal === field.dependsOn.equals;
+}
+
+/**
+ * Validates required fields for a given WizardStep.
+ * Note: file_zip is handled outside via isPackageReady gating.
+ */
+function validateStep(draft: any, step: any) {
+  for (const group of step.fieldGroups || []) {
+    for (const field of group.fields || []) {
+      if (!field.required) continue;
+      if (!shouldValidateField(draft, field)) continue;
+
+      const v = getByPath(draft, field.key);
+
+      switch (field.ui) {
+        case "text":
+        case "textarea": {
+          if (!isNonEmptyString(v)) return false;
+          break;
+        }
+        case "select": {
+          // must be a non-empty string; optionally ensure it’s in options
+          if (!isNonEmptyString(v)) return false;
+          if (Array.isArray(field.options) && field.options.length > 0) {
+            if (!field.options.includes(v)) return false;
+          }
+          break;
+        }
+        case "toggle": {
+          // required means user must have explicitly set a boolean
+          if (typeof v !== "boolean") return false;
+          break;
+        }
+        case "chips":
+        case "list": {
+          if (!isArrayWithMin1(v)) return false;
+          break;
+        }
+        case "file_docs": {
+          // required means at least 1 uploaded item/id
+          if (!isArrayWithMin1(v)) return false;
+          break;
+        }
+        case "file_zip": {
+          // handled via isPackageReady gate; do not fail here
+          break;
+        }
+        default:
+          // if unknown UI appears, be conservative
+          return false;
+      }
+    }
+  }
+  return true;
+}
+
+2) Use it in canEnterTab() (prior-step gating)
+
+Update the earlier logic so it calls this validateStep().
+
+Also update dependsOn logic (already done).
+
+ZIP gate: still separate via isPackageReady, but make it data-driven: if the prior step has a required file_zip field, it blocks until ready.
+
+const canEnterTab = useCallback(
+  (tabId: string) => {
+    if (tabId === "type") return true;
+    if (!wizardFlow) return false;
+
+    const targetPos = currentTabs.findIndex(t => t.id === tabId);
+    if (targetPos < 0) return false;
+
+    for (let i = 0; i < targetPos; i++) {
+      const priorTab = currentTabs[i];
+      if (priorTab.id === "type") continue;
+
+      const priorStepId = priorTab.stepId || priorTab.id;
+      const priorStep = wizardFlow.steps.find(s => s.id === priorStepId);
+      if (!priorStep) continue;
+
+      const requiresZip = priorStep.fieldGroups
+        .flatMap(g => g.fields)
+        .some(f => f.ui === "file_zip" && f.required);
+
+      if (requiresZip && !isPackageReady) return false;
+
+      if (!validateStep(wizardDraft, priorStep)) return false;
+    }
+
+    return true;
+  },
+  [wizardFlow, currentTabs, wizardDraft, isPackageReady]
+);
+
+3) Add a “blocking reason” helper (makes UX feel polished)
+
+This lets you show “Complete Upload first” instead of silently disabling.
+
+const getTabBlockReason = useCallback(
+  (tabId: string): string | null => {
+    if (tabId === "type") return null;
+    if (!wizardFlow) return "Select a preset first.";
+
+    const targetPos = currentTabs.findIndex(t => t.id === tabId);
+    if (targetPos < 0) return null;
+
+    for (let i = 0; i < targetPos; i++) {
+      const priorTab = currentTabs[i];
+      if (priorTab.id === "type") continue;
+
+      const priorStepId = priorTab.stepId || priorTab.id;
+      const priorStep = wizardFlow.steps.find(s => s.id === priorStepId);
+      if (!priorStep) continue;
+
+      const requiresZip = priorStep.fieldGroups
+        .flatMap(g => g.fields)
+        .some(f => f.ui === "file_zip" && f.required);
+
+      if (requiresZip && !isPackageReady) return `Complete: ${priorTab.label} (upload required)`;
+
+      if (!validateStep(wizardDraft, priorStep)) return `Complete: ${priorTab.label}`;
+    }
+
+    return null;
+  },
+  [wizardFlow, currentTabs, wizardDraft, isPackageReady]
+);
+
+
+Then render:
+
+const reason = getTabBlockReason(tab.id);
+<TabsTrigger
+  value={tab.id}
+  disabled={!!reason}
+  title={reason ?? ""} // cheap tooltip
+  className={reason ? "opacity-50 cursor-not-allowed" : undefined}
+>
+  {tab.label}
+</TabsTrigger>
+
+Small correction to your note about file_docs
+
+You said “file_docs: Array of uploaded file objects”. If your draft actually stores IDs (string[]) (which you earlier said it does), this validator still works because it only checks Array.length > 0. So you’re safe either way.
+
+One important note about my file access
+
+A couple older uploaded files in this chat expired on my side earlier, but your type definitions pasted here are sufficient to implement this correctly. No need to re-upload anything unless you want me to patch exact line numbers again.

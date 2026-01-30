@@ -1,0 +1,204 @@
+You’re thinking about it the right way: flows.ts = what, create.tsx = how, DynamicWizard = render.
+
+Right now the Create screen feels “messy” because you effectively have two navigation systems that aren’t fully synchronized:
+
+Outer Tabs (Type/Basics/etc.) controlled by currentStep
+
+Inner Wizard steps controlled by wizardStepIndex
+
+If those two drift even a little, users see the wrong fields “in the wrong tab” or feel like everything is stuck under one tab.
+
+Below is the cleanest way to optimize the UI + navigation without changing flows.ts.
+
+1) Make tabs the “boss” and sync wizardStepIndex to the active tab
+What’s wrong today
+
+You render <DynamicWizard ... currentStepIndex={wizardStepIndex} /> inside each tab, but unless you sync wizardStepIndex when tabs change, the wizard can keep showing whatever step index it last had—making the tab feel meaningless.
+
+Fix (Create.tsx)
+
+Add a tab→stepIndex map and keep them synced.
+
+// 1) Build a map from tab.stepId -> wizard step index
+const tabStepIndexMap = useMemo(() => {
+  if (!wizardFlow) return new Map<string, number>();
+  const map = new Map<string, number>();
+  for (const tab of currentTabs) {
+    if (!tab.stepId) continue;
+    const idx = wizardFlow.steps.findIndex(s => s.id === tab.stepId);
+    if (idx >= 0) map.set(tab.id, idx);
+  }
+  return map;
+}, [wizardFlow, currentTabs]);
+
+// 2) When tab changes, update wizardStepIndex to match that tab’s step
+useEffect(() => {
+  if (!wizardFlow) return;
+  const idx = tabStepIndexMap.get(currentStep);
+  if (typeof idx === "number" && idx !== wizardStepIndex) {
+    setWizardStepIndex(idx);
+  }
+}, [currentStep, wizardFlow, tabStepIndexMap, wizardStepIndex]);
+
+Optional but recommended: sync the other direction too
+
+If your “Next” button increments wizardStepIndex, you should also auto-advance the tab when the wizard crosses into the next section.
+
+useEffect(() => {
+  if (!wizardFlow) return;
+
+  const stepId = wizardFlow.steps[wizardStepIndex]?.id;
+  if (!stepId) return;
+
+  // find the tab whose stepId matches this stepId
+  const owningTab = currentTabs.find(t => t.stepId === stepId);
+  if (owningTab && owningTab.id !== currentStep) {
+    setCurrentStep(owningTab.id);
+  }
+}, [wizardStepIndex, wizardFlow, currentTabs, currentStep]);
+
+
+Result: Tabs always show the correct fields. No “everything in one tab” feeling.
+
+2) Remove duplicate navigation (choose ONE stepper)
+
+Your Create page already has:
+
+<TabsList> (top-level navigation)
+
+(often) a stepper inside DynamicWizard
+
+That’s confusing. Users don’t know which one “matters.”
+
+Best practice for your design
+
+Use Tabs as section navigation (Type → Basics → … → Preview)
+
+Hide DynamicWizard internal step pills + internal footer
+
+Use Create.tsx footer buttons only (Back/Next/Generate)
+
+You’re already passing hideInternalNav. Make sure DynamicWizard supports it.
+
+DynamicWizard.tsx minimal change:
+
+interface DynamicWizardProps {
+  // existing props...
+  hideInternalNav?: boolean;
+}
+
+export default function DynamicWizard({ hideInternalNav = false, ...props }: DynamicWizardProps) {
+  // ...
+  return (
+    <div className="space-y-6">
+      {!hideInternalNav && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {/* step pills */}
+        </div>
+      )}
+
+      {/* step content */}
+
+      {!hideInternalNav && (
+        <div className="flex justify-between pt-4 border-t">
+          {/* internal footer */}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+Result: One navigation system. Zero confusion.
+
+3) Make the tab bar usable (UX polish)
+Problems
+
+Too many tabs squeeze and feel cramped
+
+Users don’t see progress
+
+“Disabled tabs” can feel like the app is broken
+
+Improvements (fast wins)
+
+A) Make TabsList horizontally scrollable instead of forced grid
+Replace:
+
+<TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${currentTabs.length}, 1fr)` }}>
+
+
+With:
+
+<TabsList className="w-full flex gap-2 overflow-x-auto no-scrollbar">
+
+
+And keep each tab as:
+
+<TabsTrigger className="shrink-0" ...>
+
+
+B) Add a small progress indicator
+At the top of the card:
+
+“Step 3 of 6”
+
+Progress bar (optional)
+
+C) Don’t hard-disable future tabs; gate them softly
+Instead of disabling all tabs until a preset is selected, allow clicking but show the “Select preset first” empty state (you already do).
+
+That feels way more user-friendly than “disabled UI”.
+
+4) Make the screen layout feel premium and clear
+
+Right now you’re using max-w-3xl, which makes the wizard feel cramped.
+
+Recommended layout
+
+max-w-6xl
+
+2 columns:
+
+Left: the active tab content
+
+Right: a “Summary” card (always visible)
+
+Summary card shows:
+
+Category / Mode / Preset
+
+ZIP status (required? uploaded? indexed?)
+
+Docs uploaded count
+
+Delivery enabled? webhook target?
+
+This reduces user mistakes because they can always see what they picked.
+
+5) Navigation buttons should be sticky and consistent
+
+Users hate when “Next” moves around depending on content height.
+
+Wrap footer in a sticky container:
+
+<div className="sticky bottom-0 bg-background/80 backdrop-blur border-t py-3 flex justify-between">
+  ...
+</div>
+
+
+Result: Back/Next always in the same place.
+
+The shortest implementation sequence
+
+If you want the foundation tight fast, do these in order:
+
+Tab ↔ wizardStepIndex sync (fixes “everything in one tab”)
+
+Hide DynamicWizard internal nav (single navigation system)
+
+Scrollable tab bar + progress (makes it feel clean)
+
+Sticky footer nav (polish)
+
+Two-column layout with Summary card (premium UX)
