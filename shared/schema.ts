@@ -485,13 +485,52 @@ export const insertApiKeySchema = createInsertSchema(apiKeys).pick({
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type ApiKey = typeof apiKeys.$inferSelect;
 
+// Safety warnings table
+export const safetyWarningSeverityEnum = ["info", "warning", "critical"] as const;
+export type SafetyWarningSeverity = (typeof safetyWarningSeverityEnum)[number];
+
+export const safetyWarnings = pgTable("safety_warnings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  assemblyId: varchar("assembly_id"),
+  projectPackageId: varchar("project_package_id"),
+  uploadId: varchar("upload_id"),
+  code: text("code").notNull(),
+  severity: text("severity").$type<SafetyWarningSeverity>().notNull(),
+  message: text("message").notNull(),
+  details: text("details"),
+  filePath: text("file_path"),
+  line: integer("line"),
+  column: integer("column"),
+  resolved: boolean("resolved").default(false),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSafetyWarningSchema = createInsertSchema(safetyWarnings).pick({
+  assemblyId: true,
+  projectPackageId: true,
+  uploadId: true,
+  code: true,
+  severity: true,
+  message: true,
+  details: true,
+  filePath: true,
+  line: true,
+  column: true,
+});
+
+export type InsertSafetyWarning = z.infer<typeof insertSafetyWarningSchema>;
+export type SafetyWarning = typeof safetyWarnings.$inferSelect;
+
 // Audit Logs table
 export const auditLogActionEnum = [
   "assembly.create", "assembly.execute", "assembly.delete",
   "delivery.create", "delivery.retry",
   "package.upload", "package.attach",
+  "upload.create", "upload.delete",
   "upgrade.generate",
   "apikey.create", "apikey.revoke",
+  "safety.warning", "safety.block",
 ] as const;
 export type AuditLogAction = (typeof auditLogActionEnum)[number];
 

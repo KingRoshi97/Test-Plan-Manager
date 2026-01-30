@@ -5,7 +5,8 @@ import {
   type DeliveryEvent, type InsertDeliveryEvent,
   type ProjectPackage, type InsertProjectPackage, type ProjectSummary, type ProjectWarning,
   type ApiKey, type InsertApiKey,
-  type AuditLog, type InsertAuditLog
+  type AuditLog, type InsertAuditLog,
+  type SafetyWarning, type InsertSafetyWarning
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -45,6 +46,12 @@ export interface IStorage {
   getAuditLogs(options?: { limit?: number; offset?: number; action?: string; resourceType?: string }): Promise<AuditLog[]>;
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
   
+  // Safety Warnings
+  getSafetyWarningsByAssemblyId(assemblyId: string): Promise<SafetyWarning[]>;
+  getSafetyWarningsByPackageId(packageId: string): Promise<SafetyWarning[]>;
+  createSafetyWarning(warning: InsertSafetyWarning): Promise<SafetyWarning>;
+  resolveSafetyWarning(id: string): Promise<SafetyWarning | undefined>;
+  
   // Delivery Events
   getDeliveryEvents(deliveryId: string): Promise<DeliveryEvent[]>;
   createDeliveryEvent(event: InsertDeliveryEvent): Promise<DeliveryEvent>;
@@ -69,12 +76,14 @@ export class MemStorage implements IStorage {
   private assemblies: Map<string, Assembly>;
   private deliveries: Map<string, Delivery>;
   private projectPackages: Map<string, ProjectPackage>;
+  private safetyWarnings: Map<string, SafetyWarning>;
 
   constructor() {
     this.users = new Map();
     this.assemblies = new Map();
     this.deliveries = new Map();
     this.projectPackages = new Map();
+    this.safetyWarnings = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -393,6 +402,54 @@ export class MemStorage implements IStorage {
         if (!b.nextAttemptAt) return 1;
         return new Date(a.nextAttemptAt).getTime() - new Date(b.nextAttemptAt).getTime();
       });
+  }
+
+  // Safety Warnings
+  async getSafetyWarningsByAssemblyId(assemblyId: string): Promise<SafetyWarning[]> {
+    return Array.from(this.safetyWarnings.values())
+      .filter(w => w.assemblyId === assemblyId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getSafetyWarningsByPackageId(packageId: string): Promise<SafetyWarning[]> {
+    return Array.from(this.safetyWarnings.values())
+      .filter(w => w.projectPackageId === packageId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async createSafetyWarning(insertWarning: InsertSafetyWarning): Promise<SafetyWarning> {
+    const id = `sw_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+    const warning: SafetyWarning = {
+      id,
+      assemblyId: insertWarning.assemblyId || null,
+      projectPackageId: insertWarning.projectPackageId || null,
+      uploadId: insertWarning.uploadId || null,
+      code: insertWarning.code,
+      severity: insertWarning.severity,
+      message: insertWarning.message,
+      details: insertWarning.details || null,
+      filePath: insertWarning.filePath || null,
+      line: insertWarning.line || null,
+      column: insertWarning.column || null,
+      resolved: false,
+      resolvedAt: null,
+      createdAt: new Date(),
+    };
+    this.safetyWarnings.set(id, warning);
+    return warning;
+  }
+
+  async resolveSafetyWarning(id: string): Promise<SafetyWarning | undefined> {
+    const warning = this.safetyWarnings.get(id);
+    if (!warning) return undefined;
+    
+    const updated: SafetyWarning = {
+      ...warning,
+      resolved: true,
+      resolvedAt: new Date(),
+    };
+    this.safetyWarnings.set(id, updated);
+    return updated;
   }
 
   // Backward compatibility aliases

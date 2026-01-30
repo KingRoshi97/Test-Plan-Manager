@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import * as crypto from "crypto";
+import { validateFilePath, checkCompressionRatio, type ValidationWarning } from "./upload-validator";
 
 export interface SafeUnzipOptions {
   maxFiles?: number;
@@ -10,6 +11,7 @@ export interface SafeUnzipOptions {
   maxEntrySize?: number;
   timeoutMs?: number;
   skipBinaryExtensions?: string[];
+  maxCompressionRatio?: number;
 }
 
 export interface UnzipStats {
@@ -34,9 +36,10 @@ export interface SafeUnzipResult {
 
 const DEFAULT_OPTIONS: Required<SafeUnzipOptions> = {
   maxFiles: 20000,
-  maxTotalUncompressedBytes: 250 * 1024 * 1024,
+  maxTotalUncompressedBytes: 1024 * 1024 * 1024,
   maxEntrySize: 25 * 1024 * 1024,
-  timeoutMs: 15000,
+  timeoutMs: 30000,
+  maxCompressionRatio: 100,
   skipBinaryExtensions: [
     ".exe", ".dll", ".so", ".dylib", ".bin", ".o", ".a",
     ".zip", ".tar", ".gz", ".7z", ".rar",
@@ -51,14 +54,6 @@ const DEFAULT_OPTIONS: Required<SafeUnzipOptions> = {
 function isBinaryExtension(filename: string, binaryExts: string[]): boolean {
   const ext = path.extname(filename).toLowerCase();
   return binaryExts.includes(ext);
-}
-
-function hasPathTraversal(entryPath: string): boolean {
-  const normalized = path.normalize(entryPath);
-  return normalized.startsWith("..") || 
-         normalized.includes("../") || 
-         normalized.includes("..\\") ||
-         path.isAbsolute(normalized);
 }
 
 export async function safeUnzipBuffer(
@@ -88,18 +83,46 @@ export async function safeUnzipBuffer(
 
   const extractPromise = (async () => {
     const directory = await unzipper.Open.buffer(zipBuffer);
+    
+    let totalCompressedSize = 0;
+    let totalUncompressedSize = 0;
+    for (const entry of directory.files) {
+      if (entry.type !== "Directory") {
+        totalCompressedSize += entry.compressedSize || 0;
+        totalUncompressedSize += entry.uncompressedSize || 0;
+      }
+    }
+    
+    const ratioResult = checkCompressionRatio(
+      totalCompressedSize,
+      totalUncompressedSize,
+      opts.maxCompressionRatio
+    );
+    for (const w of ratioResult.warnings) {
+      warnings.push({
+        code: w.code,
+        message: w.message,
+        details: w.details,
+      });
+    }
+    if (ratioResult.blockedInStrictMode) {
+      return;
+    }
 
     for (const entry of directory.files) {
       if (entry.type === "Directory") {
         continue;
       }
 
-      if (hasPathTraversal(entry.path)) {
-        warnings.push({
-          code: "PATH_TRAVERSAL_BLOCKED",
-          message: `Blocked path traversal attempt: ${entry.path}`,
-          details: entry.path,
-        });
+      const pathValidation = validateFilePath(entry.path);
+      if (pathValidation.blockedInStrictMode) {
+        for (const w of pathValidation.warnings) {
+          warnings.push({
+            code: w.code,
+            message: w.message,
+            details: w.details,
+          });
+        }
         stats.skippedFiles++;
         continue;
       }
