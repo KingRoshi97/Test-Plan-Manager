@@ -1458,6 +1458,7 @@ function buildAssemblyInput(data: CreateAssemblyRequest): AssemblyInput {
     docUploadIds: data.docUploadIds,
     // @ts-expect-error docUploads is defined in schema but zod type inference not picking it up
     docUploads: data.docUploads,
+    delivery: data.delivery,
   };
   
   if (data.projectName && (data.features || data.users || data.description)) {
@@ -1663,11 +1664,75 @@ async function executePipelineV1(assemblyId: string, input: AssemblyInput) {
     });
     
     console.log(`[Assembler Pipeline] Assembly ${assemblyId} completed successfully`);
+    
+    // Auto-trigger queued deliveries after kit is ready
+    triggerQueuedDeliveries(assemblyId).catch(err => {
+      console.error(`[Assembler Pipeline] Failed to trigger queued deliveries:`, err);
+    });
   } catch (error) {
     console.error(`[Assembler Pipeline] Assembly ${assemblyId} failed:`, error);
     await storage.updateAssembly(assemblyId, { 
       state: "failed",
       errors: [error instanceof Error ? error.message : "Unknown error"],
     });
+  }
+}
+
+// Trigger all queued deliveries for a completed assembly
+async function triggerQueuedDeliveries(assemblyId: string): Promise<void> {
+  const assembly = await storage.getAssembly(assemblyId);
+  if (!assembly) return;
+
+  // Auto-create delivery from wizard config if enabled
+  const deliveryConfig = assembly.input?.delivery;
+  if (deliveryConfig?.enabled && deliveryConfig.type) {
+    try {
+      console.log(`[Assembler Pipeline] Auto-creating ${deliveryConfig.type} delivery from wizard config`);
+      let config: Record<string, unknown> = {};
+      
+      if (deliveryConfig.type === "pull") {
+        config = {
+          expiresInSeconds: 3600,
+          includeInlineManifest: true,
+          includeInlinePrompt: true,
+        };
+      } else if (deliveryConfig.type === "webhook") {
+        config = {
+          url: deliveryConfig.webhookUrl,
+          secret: deliveryConfig.webhookSecret,
+        };
+      }
+      
+      await storage.createDelivery({
+        assemblyId,
+        type: deliveryConfig.type,
+        config: config as any,
+      });
+    } catch (error) {
+      console.error(`[Assembler Pipeline] Failed to auto-create delivery:`, error);
+    }
+  }
+
+  const deliveries = await storage.getDeliveriesByAssemblyId(assemblyId);
+  const queuedDeliveries = deliveries.filter((d: { state: string }) => d.state === "queued");
+  
+  if (queuedDeliveries.length === 0) {
+    return;
+  }
+  
+  console.log(`[Assembler Pipeline] Triggering ${queuedDeliveries.length} queued deliveries for assembly ${assemblyId}`);
+  
+  // Determine base URL - use REPLIT_DEV_DOMAIN in Replit, otherwise localhost
+  const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
+    : "http://localhost:5000";
+  
+  for (const delivery of queuedDeliveries) {
+    try {
+      console.log(`[Assembler Pipeline] Processing delivery ${delivery.id} (${delivery.type})`);
+      await processDelivery(delivery.id, baseUrl);
+    } catch (error) {
+      console.error(`[Assembler Pipeline] Failed to process delivery ${delivery.id}:`, error);
+    }
   }
 }
