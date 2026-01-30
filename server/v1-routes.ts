@@ -1455,6 +1455,48 @@ export function registerV1Routes(app: Express) {
     }
   });
   
+  // Redacted inputs download - masks detected secrets
+  app.get("/v1/assemblies/:id/inputs/redacted", optionalAuth, async (req: Request, res: Response) => {
+    try {
+      const assemblyId = req.params.id;
+      const assembly = await storage.getAssembly(assemblyId);
+      if (!assembly) {
+        return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
+      }
+      
+      const { redactSecretsInText } = await import("./security/secret-scanner");
+      
+      let compiledContent = "";
+      
+      // Get uploaded context from assembly
+      const input = assembly.input as { uploadedContext?: string } | null;
+      if (input?.uploadedContext) {
+        compiledContent = input.uploadedContext;
+      }
+      
+      // Redact any secrets found
+      if (compiledContent) {
+        compiledContent = redactSecretsInText(compiledContent);
+      }
+      
+      const header = `# Redacted Compiled Uploads
+## Assembly: ${assembly.projectName || assemblyId}
+## Generated: ${new Date().toISOString()}
+## Warning: This document has been scanned and secrets have been redacted.
+
+---
+
+`;
+      
+      res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="redacted_inputs_${assemblyId.slice(0, 8)}.md"`);
+      res.send(header + (compiledContent || "No uploaded content available."));
+    } catch (error) {
+      console.error("Error generating redacted inputs:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to generate redacted inputs");
+    }
+  });
+  
   // === RETENTION ===
   
   app.get("/v1/admin/retention/config", async (req: Request, res: Response) => {
