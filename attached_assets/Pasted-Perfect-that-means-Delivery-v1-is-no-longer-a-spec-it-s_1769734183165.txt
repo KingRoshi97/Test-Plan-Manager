@@ -1,0 +1,129 @@
+Perfect — that means Delivery v1 is no longer a spec; it’s a working integration layer. At this point, Assembler has the two “big unlocks”:
+
+High-quality intake (preset-driven wizard + uploads)
+
+Universal output + delivery (kit + pull/webhook + retries + tracking)
+
+So yes: we can move to the next feature pillar, and the right next pillar is:
+
+Safety v1 + Public-Readiness (the real “OK point” gate)
+
+Because once you have uploads + webhooks, you’re one step away from being public-facing. Safety is what prevents the tool from becoming fragile or risky.
+
+Safety v1 checklist (what you should implement next)
+1) Upload Protections (ZIP + Docs)
+
+Zip-slip/path traversal protection (reject ../, absolute paths, weird unicode)
+
+File type allowlist enforced by extension + magic bytes (best effort)
+
+Size limits:
+
+ZIP: max (ex: 200MB)
+
+docs: max per file (ex: 25MB) + total per assembly (ex: 100MB)
+
+Extraction limits:
+
+max files extracted (ex: 20k)
+
+max extracted bytes (ex: 1GB)
+
+Bomb detection: compression ratio thresholds
+
+2) Secret Scanning (baseline)
+
+Run secret scan on:
+
+extracted doc text artifacts
+
+repo index results / selected file samples (don’t need full scan yet)
+
+Detect common patterns:
+
+AWS keys, Stripe keys, JWT secrets, private keys, OAuth tokens
+
+high-entropy strings
+Then:
+
+warn in UI
+
+optionally redact in compiled docs
+
+optionally refuse delivery if “hard” secrets detected (configurable)
+
+3) Retention Policy + Deletion Jobs
+
+You need predictable cleanup:
+
+uploaded docs expire after N days
+
+uploaded project zips expire after N days
+
+generated kits expire after N days
+
+delivery attempts retained longer (auditing)
+
+Add:
+
+retentionDays config
+
+nightly cleanup job (cron) or interval worker
+
+4) Audit Log (minimal but real)
+
+Record:
+
+upload created (doc/zip)
+
+assembly created
+
+kit generated
+
+delivery created/attempted/succeeded/failed
+
+manual retry clicked
+Include actor (user/session) if you have auth; if not, at least IP + request ID.
+
+5) Webhook Safety Hardening
+
+enforce HTTPS for webhook URLs (or allow localhost in dev)
+
+block private IP ranges by default (SSRF protection)
+
+limit redirects
+
+strict timeouts
+
+cap payload size
+
+allow per-target disable
+
+What comes after Safety v1 (if you want to keep going)
+Ops Console v1.1 (polish)
+
+search/filter deliveries
+
+reason-code explanations in UI
+
+copyable cURL snippets for pull/webhook verification
+
+“Test webhook” button that sends a signed test event
+
+Preset Profiles v1.1
+
+truly unique form processes per preset (not just per category/mode)
+
+preset “requiredness” and step insertion rules
+
+Next step: I need one decision from you
+
+Do you want Safety v1 to be:
+
+Strict (blocks delivery if secrets detected, blocks risky zips)
+
+Warn-only (flags issues but still allows everything)
+
+If you don’t answer, I’d implement warn-only by default with an admin toggle to enforce strict later.
+
+If you say “go”, I’ll give you the Replit agent prompt for Safety v1 that plugs into your existing upload + ingestion + delivery pipeline with minimal refactors.
