@@ -1,0 +1,116 @@
+Yep — here’s the skip-disabled-tabs upgrade (clean + UX-friendly). This makes goNext/goPrev jump over tabs the user can’t enter yet (ex: they haven’t selected a preset, or ZIP is required but not ready).
+
+1) Add a single “tab enabled?” function
+
+Drop this near your navigation helpers (same area as goNext/goPrev):
+
+const canEnterTab = useCallback(
+  (tabId: string) => {
+    // Always allow Type (category/mode/preset selection)
+    if (tabId === "type") return true;
+
+    // If wizard isn't initialized yet, block everything except Type
+    // (wizardFlow is a good proxy for "preset selected and flow built")
+    if (!wizardFlow) return false;
+
+    // If this mode requires ZIP and it isn't ready yet, block downstream tabs
+    // NOTE: if you have a stronger per-step validator, use that instead.
+    const modeRequiresZip =
+      mode === "existing_upgrade" || mode === "ui_overhaul" || mode === "refactor_hardening";
+
+    if (modeRequiresZip && !isPackageReady) {
+      // Allow the upload tab/step if you have a dedicated one,
+      // but otherwise keep user on Type until upload is done.
+      // If you have a tab like "upload", add: if (tabId === "upload") return true;
+      return false;
+    }
+
+    return true;
+  },
+  [wizardFlow, mode, isPackageReady]
+);
+
+
+If your tabs include a dedicated upload step (ex: tabId === "upload"), allow it explicitly.
+
+2) Update goNext / goPrev to skip disabled tabs
+
+Replace your current goNext/goPrev bodies with this pattern:
+
+const goNext = useCallback(() => {
+  const currentIdx = currentTabs.findIndex((t) => t.id === currentStep);
+  if (currentIdx < 0) return;
+
+  for (let i = currentIdx + 1; i < currentTabs.length; i++) {
+    const nextId = currentTabs[i].id;
+    if (canEnterTab(nextId)) {
+      setCurrentStep(nextId);
+      return;
+    }
+  }
+}, [currentTabs, currentStep, canEnterTab]);
+
+const goPrev = useCallback(() => {
+  const currentIdx = currentTabs.findIndex((t) => t.id === currentStep);
+  if (currentIdx < 0) return;
+
+  for (let i = currentIdx - 1; i >= 0; i--) {
+    const prevId = currentTabs[i].id;
+    if (canEnterTab(prevId)) {
+      setCurrentStep(prevId);
+      return;
+    }
+  }
+}, [currentTabs, currentStep, canEnterTab]);
+
+
+Now Next/Back won’t land on tabs the user can’t use.
+
+3) Prevent clicking into disabled tabs (important UX)
+
+Where you do:
+
+<Tabs value={currentStep} onValueChange={setCurrentStep}>
+
+
+Change to:
+
+<Tabs
+  value={currentStep}
+  onValueChange={(next) => {
+    if (canEnterTab(next)) setCurrentStep(next);
+    else {
+      // Optional: toast/snackbar
+      // toast({ title: "Complete previous step first", description: "Select a preset (and upload ZIP if required)." });
+    }
+  }}
+>
+
+
+And visually mark disabled triggers:
+
+<TabsTrigger
+  value={tab.id}
+  disabled={!canEnterTab(tab.id)}
+  className={!canEnterTab(tab.id) ? "opacity-50 cursor-not-allowed" : undefined}
+>
+  {tab.label}
+</TabsTrigger>
+
+4) Optional: “smart Next label”
+
+If you show a Next button label like “Next: Features”, update it to find the next enabled tab using the same logic:
+
+const getNextEnabledTab = useCallback(() => {
+  const currentIdx = currentTabs.findIndex((t) => t.id === currentStep);
+  if (currentIdx < 0) return null;
+
+  for (let i = currentIdx + 1; i < currentTabs.length; i++) {
+    if (canEnterTab(currentTabs[i].id)) return currentTabs[i];
+  }
+  return null;
+}, [currentTabs, currentStep, canEnterTab]);
+
+One thing: file access
+
+A couple of earlier uploads in this chat have expired on my side, so if you want me to reference exact line numbers again or patch specific blocks verbatim, re-upload the current create.tsx from your repo. The snippets above are still correct and safe to apply.

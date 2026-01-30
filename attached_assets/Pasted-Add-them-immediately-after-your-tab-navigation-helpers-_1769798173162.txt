@@ -1,0 +1,96 @@
+Add them immediately after your tab navigation helpers—right after goNext / goPrev (around line ~624–638 in your file), and before getNextTabLabel / isLastStep. That keeps all navigation logic in one place and avoids scattering sync code across the file.
+
+Here’s the exact drop-in patch (with the smallest risk of loops).
+
+0) One import change
+
+At the very top, change:
+
+import { useState, useCallback, useRef, useEffect } from "react";
+
+
+to:
+
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+
+1) Insert this block right after goPrev
+
+You currently have:
+
+const goPrev = useCallback(() => {
+  const currentIdx = currentTabs.findIndex(t => t.id === currentStep);
+  if (currentIdx > 0) {
+    setCurrentStep(currentTabs[currentIdx - 1].id);
+  }
+}, [currentTabs, currentStep]);
+
+// Get the next available tab for button labels
+const getNextTabLabel = useCallback((): string | null => {
+
+
+Insert the following between those:
+
+// --- Sync: Tabs (currentStep) <-> Wizard step index (wizardStepIndex)
+
+// Map tab.id -> wizard step index using tab.stepId
+const tabToWizardIndex = useMemo(() => {
+  if (!wizardFlow) return new Map<string, number>();
+
+  const map = new Map<string, number>();
+  for (const tab of currentTabs) {
+    const stepId = tab.stepId || tab.id;
+    const idx = wizardFlow.steps.findIndex(s => s.id === stepId);
+    if (idx >= 0) map.set(tab.id, idx);
+  }
+  return map;
+}, [wizardFlow, currentTabs]);
+
+// 1) When tab changes, update wizardStepIndex to match the tab’s step
+useEffect(() => {
+  if (!wizardFlow) return;
+
+  const idx = tabToWizardIndex.get(currentStep);
+
+  // If tab has no mapped step (e.g., "type"), leave wizardStepIndex as-is
+  if (typeof idx !== "number") return;
+
+  if (idx !== wizardStepIndex) {
+    setWizardStepIndex(idx);
+  }
+}, [currentStep, wizardFlow, tabToWizardIndex, wizardStepIndex]);
+
+// 2) When wizardStepIndex changes (only relevant if wizard can navigate internally),
+// update the tab so the top nav always matches the wizard’s current step.
+useEffect(() => {
+  if (!wizardFlow) return;
+
+  const stepId = wizardFlow.steps[wizardStepIndex]?.id;
+  if (!stepId) return;
+
+  const owningTab = currentTabs.find(t => (t.stepId || t.id) === stepId);
+  if (!owningTab) return;
+
+  if (owningTab.id !== currentStep) {
+    setCurrentStep(owningTab.id);
+  }
+}, [wizardStepIndex, wizardFlow, currentTabs, currentStep]);
+
+Important note (so you don’t accidentally create weird behavior)
+
+If your DynamicWizard is now running in “tab mode” (one step per tab) and you’ve disabled its internal Next/Back, then useEffect #2 is optional.
+
+Keep useEffect #1 no matter what (tabs should always control what’s shown).
+
+Only keep useEffect #2 if the wizard can still change wizardStepIndex internally.
+
+If you want it bulletproof, you can gate #2 behind a flag like const wizardControlsNav = !hideInternalNav; and only run #2 when wizardControlsNav is true.
+
+Why this location is correct
+
+Putting the sync effects right after goNext/goPrev ensures:
+
+all navigation behavior (manual tab switching + programmatic next/prev + sync) is in one place
+
+fewer regressions when you later refactor layout/render code
+
+you don’t accidentally set state inside render blocks
