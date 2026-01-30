@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -621,20 +621,232 @@ Read these docs to understand the project architecture, then implement the appli
     return tab?.stepId || tabId;
   }, [currentTabs]);
 
-  // Navigation using currentTabs
+  // Navigation using currentTabs (skips disabled tabs)
   const goNext = useCallback(() => {
     const currentIdx = currentTabs.findIndex(t => t.id === currentStep);
-    if (currentIdx < currentTabs.length - 1) {
-      setCurrentStep(currentTabs[currentIdx + 1].id);
+    if (currentIdx < 0) return;
+
+    for (let i = currentIdx + 1; i < currentTabs.length; i++) {
+      const nextId = currentTabs[i].id;
+      // For goNext, we allow navigating to the next tab even if prior isn't valid
+      // because user is moving forward linearly
+      setCurrentStep(nextId);
+      return;
     }
   }, [currentTabs, currentStep]);
 
   const goPrev = useCallback(() => {
     const currentIdx = currentTabs.findIndex(t => t.id === currentStep);
-    if (currentIdx > 0) {
-      setCurrentStep(currentTabs[currentIdx - 1].id);
+    if (currentIdx < 0) return;
+
+    for (let i = currentIdx - 1; i >= 0; i--) {
+      const prevId = currentTabs[i].id;
+      // Always allow going back
+      setCurrentStep(prevId);
+      return;
     }
   }, [currentTabs, currentStep]);
+
+  // --- Sync: Tabs (currentStep) <-> Wizard step index (wizardStepIndex) ---
+
+  // Map tab.id -> wizard step index using tab.stepId
+  const tabToWizardIndex = useMemo(() => {
+    if (!wizardFlow) return new Map<string, number>();
+
+    const map = new Map<string, number>();
+    for (const tab of currentTabs) {
+      const stepId = tab.stepId || tab.id;
+      const idx = wizardFlow.steps.findIndex(s => s.id === stepId);
+      if (idx >= 0) map.set(tab.id, idx);
+    }
+    return map;
+  }, [wizardFlow, currentTabs]);
+
+  // 1) When tab changes, update wizardStepIndex to match the tab's step
+  useEffect(() => {
+    if (!wizardFlow) return;
+
+    const idx = tabToWizardIndex.get(currentStep);
+
+    // If tab has no mapped step (e.g., "type"), leave wizardStepIndex as-is
+    if (typeof idx !== "number") return;
+
+    if (idx !== wizardStepIndex) {
+      setWizardStepIndex(idx);
+    }
+  }, [currentStep, wizardFlow, tabToWizardIndex, wizardStepIndex]);
+
+  // 2) When wizardStepIndex changes (if wizard navigates internally),
+  // update the tab so the top nav always matches the wizard's current step.
+  useEffect(() => {
+    if (!wizardFlow) return;
+
+    const stepId = wizardFlow.steps[wizardStepIndex]?.id;
+    if (!stepId) return;
+
+    const owningTab = currentTabs.find(t => (t.stepId || t.id) === stepId);
+    if (!owningTab) return;
+
+    if (owningTab.id !== currentStep) {
+      setCurrentStep(owningTab.id);
+    }
+  }, [wizardStepIndex, wizardFlow, currentTabs, currentStep]);
+
+  // --- Step Validation Helpers ---
+
+  const getByPath = useCallback((obj: any, path: string) => {
+    return path.split(".").reduce((acc, k) => (acc == null ? undefined : acc[k]), obj);
+  }, []);
+
+  const isNonEmptyString = useCallback((v: any) => {
+    return typeof v === "string" && v.trim().length > 0;
+  }, []);
+
+  const isArrayWithMin1 = useCallback((v: any) => {
+    return Array.isArray(v) && v.length > 0;
+  }, []);
+
+  const shouldValidateField = useCallback((draft: any, field: { dependsOn?: { key: string; equals: any } }) => {
+    if (!field.dependsOn) return true;
+    const depVal = getByPath(draft, field.dependsOn.key);
+    return depVal === field.dependsOn.equals;
+  }, [getByPath]);
+
+  /**
+   * Validates required fields for a given WizardStep.
+   * Note: file_zip is handled outside via isPackageReady gating.
+   */
+  const validateStep = useCallback((draft: any, step: any) => {
+    for (const group of step.fieldGroups || []) {
+      for (const field of group.fields || []) {
+        if (!field.required) continue;
+        if (!shouldValidateField(draft, field)) continue;
+
+        const v = getByPath(draft, field.key);
+
+        switch (field.ui) {
+          case "text":
+          case "textarea": {
+            if (!isNonEmptyString(v)) return false;
+            break;
+          }
+          case "select": {
+            if (!isNonEmptyString(v)) return false;
+            if (Array.isArray(field.options) && field.options.length > 0) {
+              if (!field.options.includes(v)) return false;
+            }
+            break;
+          }
+          case "toggle": {
+            if (typeof v !== "boolean") return false;
+            break;
+          }
+          case "chips":
+          case "list": {
+            if (!isArrayWithMin1(v)) return false;
+            break;
+          }
+          case "file_docs": {
+            if (!isArrayWithMin1(v)) return false;
+            break;
+          }
+          case "file_zip": {
+            // handled via isPackageReady gate; do not fail here
+            break;
+          }
+          default:
+            break;
+        }
+      }
+    }
+    return true;
+  }, [getByPath, isNonEmptyString, isArrayWithMin1, shouldValidateField]);
+
+  // --- Tab Gating ---
+
+  const canEnterTab = useCallback(
+    (tabId: string) => {
+      if (tabId === "type") return true;
+      if (!wizardFlow) return false;
+
+      const targetPos = currentTabs.findIndex(t => t.id === tabId);
+      if (targetPos < 0) return false;
+
+      for (let i = 0; i < targetPos; i++) {
+        const priorTab = currentTabs[i];
+        if (priorTab.id === "type") continue;
+
+        const priorStepId = priorTab.stepId || priorTab.id;
+        const priorStep = wizardFlow.steps.find(s => s.id === priorStepId);
+        if (!priorStep) continue;
+
+        const requiresZip = priorStep.fieldGroups
+          .flatMap((g: any) => g.fields)
+          .some((f: any) => f.ui === "file_zip" && f.required);
+
+        if (requiresZip && !isPackageReady) return false;
+
+        if (!validateStep(wizardDraft, priorStep)) return false;
+      }
+
+      return true;
+    },
+    [wizardFlow, currentTabs, wizardDraft, isPackageReady, validateStep]
+  );
+
+  const getTabBlockReason = useCallback(
+    (tabId: string): string | null => {
+      if (tabId === "type") return null;
+      if (!wizardFlow) return "Select a preset first";
+
+      const targetPos = currentTabs.findIndex(t => t.id === tabId);
+      if (targetPos < 0) return null;
+
+      for (let i = 0; i < targetPos; i++) {
+        const priorTab = currentTabs[i];
+        if (priorTab.id === "type") continue;
+
+        const priorStepId = priorTab.stepId || priorTab.id;
+        const priorStep = wizardFlow.steps.find(s => s.id === priorStepId);
+        if (!priorStep) continue;
+
+        const requiresZip = priorStep.fieldGroups
+          .flatMap((g: any) => g.fields)
+          .some((f: any) => f.ui === "file_zip" && f.required);
+
+        if (requiresZip && !isPackageReady) return `Complete: ${priorTab.label} (upload required)`;
+
+        if (!validateStep(wizardDraft, priorStep)) return `Complete: ${priorTab.label}`;
+      }
+
+      return null;
+    },
+    [wizardFlow, currentTabs, wizardDraft, isPackageReady, validateStep]
+  );
+
+  // --- Tab Progress Indicator ---
+  const tabProgress = useMemo(() => {
+    if (!wizardFlow) return { completed: 0, total: currentTabs.length };
+    
+    let completed = 0;
+    for (const tab of currentTabs) {
+      if (tab.id === "type") {
+        // Type is always "complete" once preset is selected
+        if (wizardFlow) completed++;
+        continue;
+      }
+      
+      const stepId = tab.stepId || tab.id;
+      const step = wizardFlow.steps.find(s => s.id === stepId);
+      if (!step) continue;
+      
+      if (validateStep(wizardDraft, step)) {
+        completed++;
+      }
+    }
+    
+    return { completed, total: currentTabs.length };
+  }, [wizardFlow, currentTabs, wizardDraft, validateStep]);
 
   // Get the next available tab for button labels
   const getNextTabLabel = useCallback((): string | null => {
@@ -760,22 +972,41 @@ Read these docs to understand the project architecture, then implement the appli
               ) : (
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <Tabs value={currentStep} onValueChange={setCurrentStep} className="w-full">
+                    <Tabs 
+                      value={currentStep} 
+                      onValueChange={(next) => {
+                        if (canEnterTab(next)) setCurrentStep(next);
+                      }} 
+                      className="w-full"
+                    >
+                      {/* Progress indicator */}
+                      {wizardFlow && (
+                        <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
+                          <span>Step {currentTabs.findIndex(t => t.id === currentStep) + 1} of {currentTabs.length}</span>
+                          <span>{tabProgress.completed}/{tabProgress.total} complete</span>
+                        </div>
+                      )}
                       <TabsList 
                         className="grid w-full mb-6" 
                         style={{ gridTemplateColumns: `repeat(${currentTabs.length}, minmax(0, 1fr))` }}
                       >
-                        {currentTabs.map((tab, idx) => (
-                          <TabsTrigger 
-                            key={tab.id} 
-                            value={tab.id} 
-                            data-testid={`tab-${tab.id}`}
-                            disabled={idx > 0 && !wizardFlow}
-                          >
-                            <TabIcon icon={tab.icon} />
-                            {tab.label}
-                          </TabsTrigger>
-                        ))}
+                        {currentTabs.map((tab) => {
+                          const reason = getTabBlockReason(tab.id);
+                          const isDisabled = !!reason;
+                          return (
+                            <TabsTrigger 
+                              key={tab.id} 
+                              value={tab.id} 
+                              data-testid={`tab-${tab.id}`}
+                              disabled={isDisabled}
+                              title={reason ?? ""}
+                              className={isDisabled ? "opacity-50 cursor-not-allowed" : undefined}
+                            >
+                              <TabIcon icon={tab.icon} />
+                              {tab.label}
+                            </TabsTrigger>
+                          );
+                        })}
                       </TabsList>
 
                       {/* Step 0: Category + Mode + Preset Selection */}
