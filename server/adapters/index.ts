@@ -9,6 +9,13 @@ import fs from "fs";
 import path from "path";
 import { GitHubClient, type FileEntry, sanitizePath } from "./github-client";
 import AdmZip from "adm-zip";
+import { 
+  validateWebhookUrl, 
+  sanitizeWebhookPayload, 
+  getWebhookFetchOptions,
+  getSafetyConfig,
+  shouldBlockDeliveryOnSecrets
+} from "../security";
 
 // Helper to log delivery events
 async function logDeliveryEvent(
@@ -111,6 +118,21 @@ async function executeWebhookDelivery(ctx: AdapterContext): Promise<AdapterResul
       return { success: false, error: "Webhook secret is required" };
     }
     
+    const safetyConfig = getSafetyConfig();
+    const urlValidation = await validateWebhookUrl(config.url, {
+      enforceHttps: safetyConfig.webhook.enforceHttps,
+      allowLocalhost: safetyConfig.webhook.allowLocalhostInDev,
+      blockPrivateIps: safetyConfig.webhook.blockPrivateIps,
+    });
+    
+    if (urlValidation.blocked) {
+      return { success: false, error: `Webhook URL blocked: ${urlValidation.reason}` };
+    }
+    
+    if (urlValidation.warnings.length > 0) {
+      console.log(`[Webhook] URL warnings for ${config.url}:`, urlValidation.warnings);
+    }
+    
     const zipBuffer = fs.existsSync(kitPath) ? fs.readFileSync(kitPath) : null;
     const zipSha256 = zipBuffer ? computeSha256(zipBuffer) : null;
     const zipBytes = zipBuffer ? zipBuffer.length : 0;
@@ -143,10 +165,21 @@ async function executeWebhookDelivery(ctx: AdapterContext): Promise<AdapterResul
       payload.agentPrompt = fs.readFileSync(promptPath, "utf-8");
     }
     
-    const payloadStr = JSON.stringify(payload);
+    const sanitized = sanitizeWebhookPayload(payload, safetyConfig.webhook.maxPayloadBytes);
+    if (sanitized.truncated) {
+      console.log(`[Webhook] Payload truncated: ${sanitized.originalSize} -> ${sanitized.payload.length} bytes`);
+    }
+    
+    const payloadStr = sanitized.payload;
     const sig = generateWebhookSignature(payloadStr, config.secret);
     
+    const fetchOptions = getWebhookFetchOptions({
+      timeoutMs: safetyConfig.webhook.timeoutMs,
+      maxRedirects: safetyConfig.webhook.maxRedirects,
+    });
+    
     const response = await fetch(config.url, {
+      ...fetchOptions,
       method: "POST",
       headers: {
         "Content-Type": "application/json",

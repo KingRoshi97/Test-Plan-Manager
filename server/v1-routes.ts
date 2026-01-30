@@ -1388,6 +1388,113 @@ export function registerV1Routes(app: Express) {
       return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to list audit logs");
     }
   });
+  
+  // === SAFETY CONFIGURATION ===
+  
+  app.get("/v1/safety/config", async (req: Request, res: Response) => {
+    const { getSafetyConfig } = await import("./security");
+    const config = getSafetyConfig();
+    res.json({
+      config,
+      correlationId: req.correlationId,
+    });
+  });
+  
+  app.patch("/v1/safety/config", async (req: Request, res: Response) => {
+    try {
+      const { updateSafetyConfig } = await import("./security");
+      const updates = req.body;
+      const config = updateSafetyConfig(updates);
+      res.json({
+        config,
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Error updating safety config:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to update safety config");
+    }
+  });
+  
+  app.post("/v1/safety/mode", async (req: Request, res: Response) => {
+    try {
+      const { mode } = req.body;
+      if (mode !== "warn" && mode !== "strict") {
+        return apiError(req, res, 400, "INVALID_MODE", "Mode must be 'warn' or 'strict'");
+      }
+      const { setSafetyMode, getSafetyConfig } = await import("./security");
+      setSafetyMode(mode);
+      res.json({
+        mode,
+        config: getSafetyConfig(),
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Error setting safety mode:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to set safety mode");
+    }
+  });
+  
+  // === SAFETY WARNINGS ===
+  
+  app.get("/v1/assemblies/:id/safety-warnings", optionalAuth, async (req: Request, res: Response) => {
+    try {
+      const assemblyId = req.params.id;
+      const assembly = await storage.getAssembly(assemblyId);
+      if (!assembly) {
+        return apiError(req, res, 404, "NOT_FOUND", "Assembly not found");
+      }
+      
+      const warnings = await storage.getSafetyWarningsByAssemblyId(assemblyId);
+      res.json({
+        warnings,
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Error listing safety warnings:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to list safety warnings");
+    }
+  });
+  
+  // === RETENTION ===
+  
+  app.get("/v1/admin/retention/config", async (req: Request, res: Response) => {
+    const { getRetentionConfig } = await import("./jobs/retention-cleanup");
+    const config = getRetentionConfig();
+    res.json({
+      config,
+      correlationId: req.correlationId,
+    });
+  });
+  
+  app.patch("/v1/admin/retention/config", async (req: Request, res: Response) => {
+    try {
+      const { updateRetentionConfig } = await import("./jobs/retention-cleanup");
+      const updates = req.body;
+      const config = updateRetentionConfig(updates);
+      res.json({
+        config,
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Error updating retention config:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to update retention config");
+    }
+  });
+  
+  app.post("/v1/admin/retention/cleanup", async (req: Request, res: Response) => {
+    try {
+      const { dryRun = true } = req.body;
+      const { runCleanup } = await import("./jobs/retention-cleanup");
+      const result = await runCleanup({ dryRun });
+      res.json({
+        result,
+        correlationId: req.correlationId,
+      });
+    } catch (error) {
+      console.error("Error running cleanup:", error);
+      return apiError(req, res, 500, "INTERNAL_ERROR", "Failed to run cleanup");
+    }
+  });
 }
 
 function generatePatchPlan(request: { overview: string; goals?: string[]; constraints?: string[]; doNotTouch?: string[] }, summary: any): string {
