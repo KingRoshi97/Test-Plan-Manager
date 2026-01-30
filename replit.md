@@ -88,6 +88,31 @@ Allows users to upload existing codebase ZIPs for analysis. The system performs:
 3. **Upgrade Plan Generation**: Based on user goals and constraints.
 Supported frameworks include Next.js, Vite, Expo, React Native, Nuxt, Express, Fastify, etc.
 
+### Safety v1
+Security infrastructure prerequisite for public launch:
+- **Upload Protections** (`server/security/upload-validator.ts`, `safe-unzip.ts`):
+  - Path traversal/zip-slip detection
+  - File type allowlist with magic bytes validation
+  - Size limits: 200MB ZIP, 25MB doc, 100MB total docs
+  - Extraction limits: 20k files, 1GB total
+  - Compression bomb detection (100x ratio threshold)
+- **Secret Scanning** (`server/security/secret-scanner.ts`):
+  - 30+ patterns for AWS, Stripe, GitHub, OpenAI, JWT, OAuth, private keys
+  - High-entropy string detection
+  - Optional redaction support
+- **Webhook Safety** (`server/security/webhook-validator.ts`):
+  - HTTPS enforcement (localhost exception for dev)
+  - SSRF protection blocking private IP ranges
+  - 10s timeout, 5MB payload cap, redirect limits
+- **Retention Cleanup** (`server/jobs/retention-cleanup.ts`):
+  - Configurable per-asset retention (30d docs/zips, 90d kits, 180d delivery attempts)
+  - Scheduled worker with dry-run mode
+- **Safety Infrastructure**:
+  - `safety_warnings` table for tracking issues
+  - Global safety mode (warn vs strict)
+  - API: `GET/PATCH /v1/safety/config`, `/v1/admin/retention/*`
+- **Audit Logging**: `audit_logs` table with viewer in Ops page
+
 ### UI/UX Design
 - **Visuals**: Features gradient CTA buttons, solid primary buttons, glowing stepper elements, amber-accented sidebar, tab, and input focus states, and glassmorphic card accents.
 - **Components**: Reusable design kit components like `GlassCard`, `PageHeader`, `StatusBadge`, `CodeBlock`, `Stepper`, `AssemblyTimeline`.
