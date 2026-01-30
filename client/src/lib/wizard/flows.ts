@@ -647,7 +647,13 @@ const STEP_LIBRARY: WizardStep = {
   required: true,
   fieldGroups: [
     {
+      id: "project-info",
+      title: "Project Basics",
+      fields: [F.projectName(), F.oneLiner(), F.audience()]
+    },
+    {
       id: "package-info",
+      title: "Package Configuration",
       fields: [
         F.packageName(),
         F.packagePurpose(),
@@ -655,6 +661,12 @@ const STEP_LIBRARY: WizardStep = {
         F.compatibilityTargets(),
         F.moduleFormat()
       ]
+    },
+    {
+      id: "uploads",
+      title: "Reference Documents",
+      description: "Optional docs for additional context",
+      fields: [F.docsUpload()]
     }
   ]
 };
@@ -666,13 +678,25 @@ const STEP_AUTOMATION: WizardStep = {
   required: true,
   fieldGroups: [
     {
+      id: "project-info",
+      title: "Project Basics",
+      fields: [F.projectName(), F.oneLiner(), F.audience()]
+    },
+    {
       id: "automation-info",
+      title: "Workflow Configuration",
       fields: [
         F.triggers(),
         F.actions(),
         F.integrations(),
         F.idempotency()
       ]
+    },
+    {
+      id: "uploads",
+      title: "Reference Documents",
+      description: "Optional docs for additional context",
+      fields: [F.docsUpload()]
     }
   ]
 };
@@ -725,13 +749,13 @@ const BASE_FLOWS: Record<Category, WizardFlow> = {
     id: "flow.library",
     label: "Library / Package",
     category: "library",
-    steps: [STEP_BASICS, STEP_LIBRARY, STEP_TECH, STEP_REVIEW]
+    steps: [STEP_LIBRARY, STEP_TECH, STEP_REVIEW]
   },
   automation: {
     id: "flow.automation",
     label: "Automation / Workflow",
     category: "automation",
-    steps: [STEP_BASICS, STEP_AUTOMATION, STEP_TECH, STEP_REVIEW]
+    steps: [STEP_AUTOMATION, STEP_TECH, STEP_REVIEW]
   },
   game: {
     id: "flow.game",
@@ -825,8 +849,8 @@ const TAB_CONFIGS_BY_CATEGORY: Record<Category, TabConfig[]> = {
   web: [TAB_TYPE, TAB_BASICS, TAB_INTENT, TAB_FEATURES, TAB_USERS, TAB_UX, TAB_TECH, TAB_PREVIEW],
   mobile: [TAB_TYPE, TAB_BASICS, TAB_INTENT, TAB_FEATURES, TAB_USERS, TAB_UX, TAB_TECH, TAB_PREVIEW],
   api: [TAB_TYPE, TAB_BASICS, TAB_INTENT, TAB_FEATURES, TAB_TECH, TAB_PREVIEW],
-  library: [TAB_TYPE, TAB_BASICS, TAB_LIBRARY, TAB_TECH, TAB_PREVIEW],
-  automation: [TAB_TYPE, TAB_BASICS, TAB_AUTOMATION, TAB_TECH, TAB_PREVIEW],
+  library: [TAB_TYPE, TAB_LIBRARY, TAB_TECH, TAB_PREVIEW],
+  automation: [TAB_TYPE, TAB_AUTOMATION, TAB_TECH, TAB_PREVIEW],
   game: [TAB_TYPE, TAB_BASICS, TAB_GAME, TAB_FEATURES, TAB_PREVIEW]
 };
 
