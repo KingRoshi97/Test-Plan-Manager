@@ -1,0 +1,197 @@
+Below is a paste-ready PROJECT_OVERVIEW.md that matches your current intent and known app context (roles, modules, keep DB/schema, preserve brand, rebuild via Roshi, consolidate docs as the official starting point). It’s written to be the canonical Roshi entry doc.
+
+After it, I’m also giving you a paste-ready START_HERE.md so the agent never starts from random scraps.
+
+docs/roshi_v2/00_product/PROJECT_OVERVIEW.md
+# PROJECT_OVERVIEW — 40 A.K.R.E.S. App (Canonical)
+
+## 1) Mission (what are we building?)
+40 A.K.R.E.S. is a mobile-first community platform for members to connect, learn, build, and govern together.
+The app combines community chat (channels + DMs), live programming (rooms/livestream), governance (proposals + voting),
+events, profiles, and ops/moderation tools under a role-based access model.
+This repo is being rebuilt using the Roshi System to restore clarity, consistency, and production readiness.
+
+## 2) Current rebuild context (why Roshi)
+The app was close to production-ready before Roshi was added, but the repo became messy during the final push.
+We are now using Roshi to rebuild cleanly from a single canonical overview + domain packs.
+“Preexisting” means the code/docs that existed BEFORE Roshi was introduced.
+
+## 3) Target users & roles (RBAC baseline)
+- Visitor: onboarding role with minimal permissions. Can access public spaces/channels, view certain community pages, and manage own profile.
+- Passport: verified member role with expanded community access (channels, posting, participation) based on rules in domain specs.
+- Citizen: higher-trust member role with priority access and broader participation rights.
+- Moderator: moderation capabilities (reports, mod actions, content controls) and elevated write permissions in constrained areas.
+- Admin: full platform control (ops console, system settings, global permissions, audit review).
+
+Notes:
+- Public “Welcome” channel exists conceptually as an onboarding surface. Non-admins can read; write is restricted.
+- Role rules must be expressed in Roshi domains (AccessControl + policies) and enforced consistently.
+
+## 4) What exists today (foundation we keep)
+### 4.1 Data model — DO NOT CHANGE during reset
+- DB schema: `server/db/schema.ts`
+- DB client: `server/db/client.ts`
+- Migrations: `drizzle/**`
+Policy: treat DB/schema/migrations as read-only while we reset UI/domains.
+
+### 4.2 Brand identity — DO NOT CHANGE during reset
+We must preserve the existing visual identity (colors/logos) while rebuilding screens.
+- Tokens (authoritative): `src/theme/tokens.ts`
+- Brand assets (logos/icons): `src/assets/brand/**`
+- Brand docs (authoritative):
+  - `docs/roshi_v2/00_product/BRAND_PACK.md`
+  - `docs/roshi_v2/00_product/UI_STYLE_CONTRACT.md`
+
+Non-negotiables:
+- Teal/Lime identity stays.
+- Dark-mode-first, premium/clean aesthetic.
+- No hardcoded hex colors outside tokens.
+
+## 5) What we are rebuilding (scope of wipe)
+### 5.1 Frontend (primary reset target)
+We will wipe preexisting frontend runtime code (screens/components/hooks/state/services) and rebuild via Roshi.
+Keep only a minimal runnable shell + brand tokens/assets.
+
+Wipe targets (preexisting):
+- `src/screens/**` or `src/pages/**`
+- `src/components/**`
+- `src/hooks/**`
+- `src/store/**` / `src/state/**`
+- `src/api/**` / `src/services/**` (client)
+- `src/features/**` (if present)
+
+Keep (frontend minimum shell):
+- `src/App.tsx` (or current entrypoint)
+- minimal navigation shell
+- `src/theme/tokens.ts`
+- `src/assets/brand/**`
+- placeholder screen(s) for boot
+
+### 5.2 Backend (decision)
+Default approach: keep backend routes/services temporarily to avoid “no UI and no API” during rebuild,
+then refactor/replace backend modules later via Roshi once domain ERCs are locked.
+
+DB/schema/migrations remain unchanged regardless.
+
+## 6) Product modules (domains Roshi should build)
+Initial domain list (can be adjusted, but must be explicit):
+1) Identity & Auth
+   - sessions
+   - 2FA/step-up (if in scope)
+   - role assignment + user state
+2) Community
+   - Spaces/Categories/Channels
+   - Room/channel permissions
+   - Messages, threads, pinned canon docs
+   - DMs
+3) Live
+   - live rooms / livestream capability
+   - viewer/speaker roles, signaling, moderation hooks
+4) Governance
+   - proposals, voting, eligibility
+   - audit + integrity
+5) Events
+   - event listings, RSVP, artifacts
+6) Notifications
+   - push + in-app notifications
+7) Search & Discovery
+   - search across spaces/channels/docs
+   - saved views (optional)
+8) Profile & Settings
+   - profile, preferences, security settings
+9) Ops & Moderation Console
+   - reports, mod queue, actions/appeals
+   - audit logs + anti-raid/abuse controls (phased)
+
+## 7) MVP → Production priorities
+### MVP (must have)
+- Auth + sessions working
+- Community channels + chat working
+- Public onboarding surfaces (Welcome/read-only for most)
+- Basic roles (Visitor/Passport/Citizen/Admin/Moderator)
+- Profile basics
+- Minimal ops controls for safety
+
+### V1 (production baseline)
+- Moderation tooling (reports, queue, audit)
+- Notifications
+- Search/discovery
+- Live rooms/livestream features (if stable)
+- Governance basics
+
+Later
+- Advanced reputation/badges/quests
+- Expanded live programming features + artifacts
+- Deeper governance + treasury views
+
+## 8) Official documentation starting point (bucket 3 rule)
+The official Roshi starting point is THIS doc plus the brand docs.
+We are consolidating all historical notes into `docs/legacy/**` as an evidence library.
+
+Rules:
+- `docs/legacy/**` is NOT canonical truth. It is evidence.
+- If a legacy note contains something important, it must be promoted into:
+  - PROJECT_OVERVIEW.md (for high-level truth), or
+  - a canonical Roshi doc under `docs/roshi_v2/00_product/` or relevant domain pack.
+
+## 9) Definitions (critical vocabulary)
+- Preexisting: anything that existed before Roshi was introduced (or legacy code created during messy integration).
+- Domain: a product module with its own Roshi pack (logic, UX constraints, screens, test plan, ERC).
+- Roshi-generated: created by Roshi scripts or rebuilt from Roshi domain packs.
+- Canonical docs: `docs/roshi_v2/00_product/**` and locked ERCs under domain packs.
+
+## 10) Open questions (explicit unknowns)
+1) Backend wipe timing: do we keep legacy API during frontend rebuild, or go DB-only early?
+2) Confirm final domain list + sequencing (which domain is rebuilt first).
+3) Confirm exact navigation contracts to preserve (route names/params).
+4) Confirm what is “public” besides Welcome (if any).
+
+docs/roshi_v2/00_product/START_HERE.md
+# START_HERE — Roshi Operating Instructions (Canonical)
+
+## 1) Read order (mandatory)
+1) PROJECT_OVERVIEW.md
+2) BRAND_PACK.md
+3) UI_STYLE_CONTRACT.md
+4) repo-mapping.md (registry)
+
+## 2) Canonical vs evidence
+- Canonical truth lives in:
+  - docs/roshi_v2/00_product/**
+  - locked ERCs inside domain packs
+- Evidence lives in:
+  - docs/legacy/**
+
+If evidence conflicts with canonical truth, canonical wins until explicitly updated.
+
+## 3) No-overwrite rule
+Roshi scripts must be idempotent and must not overwrite authored domain docs.
+If a file exists and is not seed-marked, skip it and report the skip.
+
+## 4) Reporting rule
+Every run must output a ROSHI_REPORT:
+- created
+- modified
+- skipped
+- moved/archived
+- deleted (only if explicitly allowed)
+- fail reasons
+
+## 5) Safety rule
+Do not touch:
+- server/db/schema.ts
+- server/db/client.ts
+- drizzle/**
+Do not break brand:
+- src/theme/tokens.ts
+- src/assets/brand/**
+
+Next concrete action (the one you should tell Replit)
+
+Now that you have the canonical starting doc, the next step is:
+
+Consolidate attached_assets/ + existing .md into docs/legacy/**
+
+Purge/restart Roshi domains (archive docs/roshi_v2/02_domains/** then regenerate clean packs)
+
+Keep PROJECT_OVERVIEW.md as the “start doc” that Roshi uses

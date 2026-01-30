@@ -17,7 +17,11 @@
     "assembler:verify": "node scripts/assembler-verify.mjs",
     "assembler:lock": "node scripts/assembler-lock.mjs",
     "assembler:package": "node scripts/assembler-package.mjs",
-    "assembler:all": "npm run assembler:gen && npm run assembler:seed && npm run assembler:draft"
+    "assembler:all": "npm run assembler:gen && npm run assembler:seed && npm run assembler:draft",
+    "roshi:reorg": "node scripts/roshi-reorg.mjs",
+    "roshi:consolidate": "node scripts/roshi-consolidate.mjs",
+    "roshi:reset": "node scripts/roshi-reset.mjs",
+    "roshi:purge": "node scripts/roshi-purge.mjs"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.18.0",
@@ -78,6 +82,7 @@
     "lucide-react": "^0.453.0",
     "mammoth": "^1.11.0",
     "memorystore": "^1.6.7",
+    "minimatch": "^10.1.1",
     "multer": "^2.0.2",
     "next-themes": "^0.4.6",
     "openai": "^6.17.0",
