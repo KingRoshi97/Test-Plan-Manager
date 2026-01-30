@@ -678,8 +678,20 @@ Read these docs to understand the project architecture, then implement the appli
 
   // 2) When wizardStepIndex changes (if wizard navigates internally),
   // update the tab so the top nav always matches the wizard's current step.
+  // Note: We use a ref to track the last synced index and respect manual "type" navigation.
+  const lastWizardStepIndex = useRef(wizardStepIndex);
+  const currentStepRef = useRef(currentStep);
+  currentStepRef.current = currentStep;
+  
   useEffect(() => {
     if (!wizardFlow) return;
+    
+    // Don't override if user manually navigated to "type" (escape hatch)
+    if (currentStepRef.current === "type") return;
+    
+    // Only sync when wizardStepIndex actually changed
+    if (lastWizardStepIndex.current === wizardStepIndex) return;
+    lastWizardStepIndex.current = wizardStepIndex;
 
     const stepId = wizardFlow.steps[wizardStepIndex]?.id;
     if (!stepId) return;
@@ -687,10 +699,8 @@ Read these docs to understand the project architecture, then implement the appli
     const owningTab = currentTabs.find(t => (t.stepId || t.id) === stepId);
     if (!owningTab) return;
 
-    if (owningTab.id !== currentStep) {
-      setCurrentStep(owningTab.id);
-    }
-  }, [wizardStepIndex, wizardFlow, currentTabs, currentStep]);
+    setCurrentStep(owningTab.id);
+  }, [wizardStepIndex, wizardFlow, currentTabs]);
 
   // --- Step Validation Helpers ---
 
@@ -975,7 +985,10 @@ Read these docs to understand the project architecture, then implement the appli
                     <Tabs 
                       value={currentStep} 
                       onValueChange={(next) => {
-                        if (canEnterTab(next)) setCurrentStep(next);
+                        // "type" tab is always accessible (escape hatch)
+                        if (next === "type" || canEnterTab(next)) {
+                          setCurrentStep(next);
+                        }
                       }} 
                       className="w-full"
                     >
