@@ -12,8 +12,9 @@ import { randomUUID } from "crypto";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  upsertUser(user: InsertUser): Promise<User>;
   
   getAssembly(id: string): Promise<Assembly | undefined>;
   getAssemblies(): Promise<Assembly[]>;
@@ -90,17 +91,41 @@ export class MemStorage implements IStorage {
     return this.users.get(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getUserByEmail(email: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.email === email,
     );
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    const now = new Date();
+    const user: User = { 
+      id,
+      email: insertUser.email || null,
+      firstName: insertUser.firstName || null,
+      lastName: insertUser.lastName || null,
+      profileImageUrl: insertUser.profileImageUrl || null,
+      createdAt: now,
+      updatedAt: now,
+    };
     this.users.set(id, user);
     return user;
+  }
+
+  async upsertUser(insertUser: InsertUser): Promise<User> {
+    const existingId = insertUser.id;
+    if (existingId && this.users.has(existingId)) {
+      const existing = this.users.get(existingId)!;
+      const updated: User = {
+        ...existing,
+        ...insertUser,
+        updatedAt: new Date(),
+      };
+      this.users.set(existingId, updated);
+      return updated;
+    }
+    return this.createUser(insertUser);
   }
 
   async getAssembly(id: string): Promise<Assembly | undefined> {
@@ -425,7 +450,7 @@ export class MemStorage implements IStorage {
       projectPackageId: insertWarning.projectPackageId || null,
       uploadId: insertWarning.uploadId || null,
       code: insertWarning.code,
-      severity: insertWarning.severity,
+      severity: insertWarning.severity as "info" | "warning" | "critical",
       message: insertWarning.message,
       details: insertWarning.details || null,
       filePath: insertWarning.filePath || null,
