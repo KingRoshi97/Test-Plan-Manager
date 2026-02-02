@@ -1,7 +1,7 @@
-import { eq, desc, isNull, and, like, or, lte } from "drizzle-orm";
+import { eq, desc, isNull, and, like, or, lte, sql } from "drizzle-orm";
 import { db } from "./db";
 import { 
-  users, assemblies, deliveries, deliveryEvents, projectPackages, apiKeys, auditLogs, safetyWarnings,
+  users, assemblies, deliveries, deliveryEvents, projectPackages, apiKeys, auditLogs, safetyWarnings, assemblyTemplates,
   type User, type InsertUser, 
   type Assembly, type InsertAssembly,
   type Delivery, type InsertDelivery,
@@ -9,7 +9,8 @@ import {
   type ProjectPackage, type InsertProjectPackage,
   type ApiKey, type InsertApiKey,
   type AuditLog, type InsertAuditLog,
-  type SafetyWarning, type InsertSafetyWarning
+  type SafetyWarning, type InsertSafetyWarning,
+  type AssemblyTemplate, type InsertAssemblyTemplate
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 import { randomUUID } from "crypto";
@@ -399,5 +400,81 @@ export class DbStorage implements IStorage {
       .where(eq(safetyWarnings.id, id))
       .returning();
     return result[0];
+  }
+
+  // Assembly Templates
+  async getAssemblyTemplate(id: string): Promise<AssemblyTemplate | undefined> {
+    const result = await db.select().from(assemblyTemplates).where(eq(assemblyTemplates.id, id));
+    return result[0];
+  }
+
+  async getAssemblyTemplatesByUserId(userId: string): Promise<AssemblyTemplate[]> {
+    return db.select().from(assemblyTemplates)
+      .where(eq(assemblyTemplates.userId, userId))
+      .orderBy(desc(assemblyTemplates.createdAt));
+  }
+
+  async getPublicAssemblyTemplates(): Promise<AssemblyTemplate[]> {
+    return db.select().from(assemblyTemplates)
+      .where(eq(assemblyTemplates.isPublic, "true"))
+      .orderBy(desc(assemblyTemplates.usageCount));
+  }
+
+  async createAssemblyTemplate(insertTemplate: InsertAssemblyTemplate): Promise<AssemblyTemplate> {
+    const result = await db.insert(assemblyTemplates).values({
+      userId: insertTemplate.userId,
+      name: insertTemplate.name,
+      description: insertTemplate.description || null,
+      presetId: insertTemplate.presetId,
+      projectName: insertTemplate.projectName || null,
+      idea: insertTemplate.idea || null,
+      domains: insertTemplate.domains || null,
+      goals: insertTemplate.goals || null,
+      constraints: insertTemplate.constraints || null,
+      techStack: insertTemplate.techStack || null,
+      isPublic: insertTemplate.isPublic || "false",
+      usageCount: "0",
+    }).returning();
+    return result[0];
+  }
+
+  async updateAssemblyTemplate(id: string, updates: Partial<AssemblyTemplate>): Promise<AssemblyTemplate | undefined> {
+    const result = await db.update(assemblyTemplates)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(assemblyTemplates.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteAssemblyTemplate(id: string): Promise<boolean> {
+    const result = await db.delete(assemblyTemplates).where(eq(assemblyTemplates.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async incrementTemplateUsage(id: string): Promise<void> {
+    await db.update(assemblyTemplates)
+      .set({ usageCount: sql`CAST(CAST(usage_count AS INTEGER) + 1 AS VARCHAR)` })
+      .where(eq(assemblyTemplates.id, id));
+  }
+
+  // User profile updates
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async incrementUsage(userId: string, field: "usageKitsGenerated" | "usageApiCalls"): Promise<void> {
+    if (field === "usageKitsGenerated") {
+      await db.update(users)
+        .set({ usageKitsGenerated: sql`usage_kits_generated + 1` })
+        .where(eq(users.id, userId));
+    } else if (field === "usageApiCalls") {
+      await db.update(users)
+        .set({ usageApiCalls: sql`usage_api_calls + 1` })
+        .where(eq(users.id, userId));
+    }
   }
 }

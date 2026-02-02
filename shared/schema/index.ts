@@ -4,3 +4,4 @@ export * from "./assemblies";
 export * from "./deliveries";
 export * from "./packages";
 export * from "./safety";
+export * from "./templates";

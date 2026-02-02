@@ -18,15 +18,28 @@ import {
   Layers, 
   Settings, 
   FileText, 
-  Upload,
   Sparkles,
-  BarChart3
+  BarChart3,
+  Bookmark,
+  CreditCard,
+  User,
+  TrendingUp
 } from "lucide-react";
 import axiomLogo from "@/assets/axiom-logo.png";
 
-const navItems = [
+const mainNavItems = [
   { id: "create", label: "Create", icon: Sparkles, href: "/create" },
   { id: "assemblies", label: "Assemblies", icon: Layers, href: "/assemblies" },
+  { id: "templates", label: "Templates", icon: Bookmark, href: "/templates" },
+];
+
+const accountNavItems = [
+  { id: "usage", label: "Usage", icon: TrendingUp, href: "/usage" },
+  { id: "billing", label: "Billing", icon: CreditCard, href: "/billing" },
+  { id: "profile", label: "Profile", icon: User, href: "/profile" },
+];
+
+const systemNavItems = [
   { id: "ops", label: "Operations", icon: BarChart3, href: "/ops" },
   { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
   { id: "docs", label: "API Docs", icon: FileText, href: "/docs" },
@@ -57,10 +70,54 @@ export function SidebarNav() {
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Build</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {mainNavItems.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.href)}
+                    data-testid={`nav-${item.id}`}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {accountNavItems.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={isActive(item.href)}
+                    data-testid={`nav-${item.id}`}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {systemNavItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton 
                     asChild 
