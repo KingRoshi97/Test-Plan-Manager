@@ -1,14 +1,15 @@
 import { eq, desc, isNull, and, like, or, lte } from "drizzle-orm";
 import { db } from "./db";
 import { 
-  users, assemblies, deliveries, deliveryEvents, projectPackages, apiKeys, auditLogs,
+  users, assemblies, deliveries, deliveryEvents, projectPackages, apiKeys, auditLogs, safetyWarnings,
   type User, type InsertUser, 
   type Assembly, type InsertAssembly,
   type Delivery, type InsertDelivery,
   type DeliveryEvent, type InsertDeliveryEvent,
   type ProjectPackage, type InsertProjectPackage,
   type ApiKey, type InsertApiKey,
-  type AuditLog, type InsertAuditLog
+  type AuditLog, type InsertAuditLog,
+  type SafetyWarning, type InsertSafetyWarning
 } from "@shared/schema";
 import type { IStorage } from "./storage";
 import { randomUUID } from "crypto";
@@ -19,14 +20,29 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.username, username));
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email));
     return result[0];
   }
 
   async createUser(user: InsertUser): Promise<User> {
     const result = await db.insert(users).values(user).returning();
     return result[0];
+  }
+
+  async upsertUser(user: InsertUser): Promise<User> {
+    const [result] = await db
+      .insert(users)
+      .values(user)
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          ...user,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
   }
 
   async getAssembly(id: string): Promise<Assembly | undefined> {
@@ -346,5 +362,42 @@ export class DbStorage implements IStorage {
         )
       )
       .orderBy(deliveries.nextAttemptAt);
+  }
+
+  // Safety Warnings
+  async getSafetyWarningsByAssemblyId(assemblyId: string): Promise<SafetyWarning[]> {
+    return db.select().from(safetyWarnings)
+      .where(eq(safetyWarnings.assemblyId, assemblyId))
+      .orderBy(desc(safetyWarnings.createdAt));
+  }
+
+  async getSafetyWarningsByPackageId(packageId: string): Promise<SafetyWarning[]> {
+    return db.select().from(safetyWarnings)
+      .where(eq(safetyWarnings.projectPackageId, packageId))
+      .orderBy(desc(safetyWarnings.createdAt));
+  }
+
+  async createSafetyWarning(insertWarning: InsertSafetyWarning): Promise<SafetyWarning> {
+    const result = await db.insert(safetyWarnings).values({
+      assemblyId: insertWarning.assemblyId || null,
+      projectPackageId: insertWarning.projectPackageId || null,
+      uploadId: insertWarning.uploadId || null,
+      code: insertWarning.code,
+      severity: insertWarning.severity as "info" | "warning" | "critical",
+      message: insertWarning.message,
+      details: insertWarning.details || null,
+      filePath: insertWarning.filePath || null,
+      line: insertWarning.line || null,
+      column: insertWarning.column || null,
+    }).returning();
+    return result[0];
+  }
+
+  async resolveSafetyWarning(id: string): Promise<SafetyWarning | undefined> {
+    const result = await db.update(safetyWarnings)
+      .set({ resolved: true, resolvedAt: new Date() })
+      .where(eq(safetyWarnings.id, id))
+      .returning();
+    return result[0];
   }
 }

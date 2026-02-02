@@ -10,11 +10,16 @@ import fs from "fs";
 import { createWorkspace, populateWorkspaceWithAI, getWorkspacePath, type WorkspaceConfig } from "./workspace-manager";
 import { processDelivery } from "./adapters";
 import { getPresets, getPresetById, getPresetsByCategory, getPresetsByCategoryAndMode, categoryLabels, modeLabels } from "./presets";
+import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  
+  // Setup authentication (must be BEFORE other routes)
+  await setupAuth(app);
+  registerAuthRoutes(app);
   
   registerV1Routes(app);
   

@@ -55,9 +55,11 @@ export default function Settings() {
         </GlassCardHeader>
         <GlassCardContent>
           <div className="text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg">
-            <p>API key management coming soon.</p>
-            <p className="mt-2 opacity-70">
-              Use the /v1/assemblies endpoints with your session for now.
+            <p>API keys can be managed from the Operations dashboard.</p>
+            <p className="mt-2">
+              <a href="/ops" className="text-primary underline hover:no-underline">
+                Go to Operations → API Keys
+              </a>
             </p>
           </div>
         </GlassCardContent>
