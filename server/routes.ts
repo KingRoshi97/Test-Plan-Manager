@@ -154,6 +154,151 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  // === Templates API ===
+  
+  app.get("/api/templates", async (req: Request, res: Response) => {
+    const userId = (req as any).user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated", code: "UNAUTHORIZED" });
+    }
+    const templates = await storage.getAssemblyTemplatesByUserId(userId);
+    res.json(templates);
+  });
+
+  app.get("/api/templates/public", async (req: Request, res: Response) => {
+    const templates = await storage.getPublicAssemblyTemplates();
+    res.json(templates);
+  });
+
+  app.post("/api/templates", async (req: Request, res: Response) => {
+    const userId = (req as any).user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated", code: "UNAUTHORIZED" });
+    }
+    
+    const { name, description, presetId, projectName, idea, domains, goals, constraints, techStack, isPublic } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: "Name is required", code: "VALIDATION_ERROR" });
+    }
+    
+    const template = await storage.createAssemblyTemplate({
+      userId,
+      name,
+      description,
+      presetId,
+      projectName,
+      idea,
+      domains,
+      goals,
+      constraints,
+      techStack,
+      isPublic: isPublic ? "true" : "false",
+    });
+    
+    res.status(201).json(template);
+  });
+
+  app.get("/api/templates/:id", async (req: Request<{ id: string }>, res: Response) => {
+    const userId = (req as any).user?.claims?.sub;
+    const template = await storage.getAssemblyTemplate(req.params.id);
+    if (!template) {
+      return res.status(404).json({ error: "Template not found", code: "NOT_FOUND" });
+    }
+    if (template.isPublic !== "true" && template.userId !== userId) {
+      return res.status(403).json({ error: "Not authorized to view this template", code: "FORBIDDEN" });
+    }
+    res.json(template);
+  });
+
+  app.delete("/api/templates/:id", async (req: Request<{ id: string }>, res: Response) => {
+    const userId = (req as any).user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated", code: "UNAUTHORIZED" });
+    }
+    
+    const template = await storage.getAssemblyTemplate(req.params.id);
+    if (!template) {
+      return res.status(404).json({ error: "Template not found", code: "NOT_FOUND" });
+    }
+    
+    if (template.userId !== userId) {
+      return res.status(403).json({ error: "Not authorized to delete this template", code: "FORBIDDEN" });
+    }
+    
+    await storage.deleteAssemblyTemplate(req.params.id);
+    res.status(204).send();
+  });
+
+  app.post("/api/templates/:id/use", async (req: Request<{ id: string }>, res: Response) => {
+    const userId = (req as any).user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated", code: "UNAUTHORIZED" });
+    }
+    
+    const template = await storage.getAssemblyTemplate(req.params.id);
+    if (!template) {
+      return res.status(404).json({ error: "Template not found", code: "NOT_FOUND" });
+    }
+    
+    if (template.isPublic !== "true" && template.userId !== userId) {
+      return res.status(403).json({ error: "Not authorized to use this template", code: "FORBIDDEN" });
+    }
+    
+    await storage.incrementTemplateUsage(req.params.id);
+    res.json(template);
+  });
+
+  // === User Profile & Preferences API ===
+  
+  app.get("/api/user/usage", async (req: Request, res: Response) => {
+    const userId = (req as any).user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated", code: "UNAUTHORIZED" });
+    }
+    
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found", code: "NOT_FOUND" });
+    }
+    
+    res.json({
+      kitsGenerated: parseInt(user.usageKitsGenerated || "0"),
+      apiCalls: parseInt(user.usageApiCalls || "0"),
+      kitsThisMonth: parseInt(user.usageKitsGenerated || "0"),
+      averageKitTime: 45,
+      activeDeliveries: 0,
+      templatesCreated: 0,
+      usageResetAt: user.usageResetAt,
+      subscriptionTier: user.subscriptionTier || "free",
+    });
+  });
+
+  app.patch("/api/user/preferences", async (req: Request, res: Response) => {
+    const userId = (req as any).user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated", code: "UNAUTHORIZED" });
+    }
+    
+    const { emailNotifications, emailOnKitReady, emailOnDeliveryComplete } = req.body;
+    
+    const updates: any = {};
+    if (typeof emailNotifications === "boolean") updates.emailNotifications = emailNotifications;
+    if (typeof emailOnKitReady === "boolean") updates.emailOnKitReady = emailOnKitReady;
+    if (typeof emailOnDeliveryComplete === "boolean") updates.emailOnDeliveryComplete = emailOnDeliveryComplete;
+    
+    const user = await storage.updateUser(userId, updates);
+    if (!user) {
+      return res.status(404).json({ error: "User not found", code: "NOT_FOUND" });
+    }
+    
+    res.json({
+      emailNotifications: user.emailNotifications,
+      emailOnKitReady: user.emailOnKitReady,
+      emailOnDeliveryComplete: user.emailOnDeliveryComplete,
+    });
+  });
+
   // Backward compatibility: /api/runs -> /api/assemblies
   app.get("/api/runs", async (req: Request, res: Response) => {
     res.set("Deprecation", "true");

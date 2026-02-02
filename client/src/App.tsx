@@ -13,6 +13,10 @@ import AssemblyDetail from "@/pages/assembly-detail";
 import Settings from "@/pages/settings";
 import ApiDocs from "@/pages/api-docs";
 import Ops from "@/pages/ops";
+import Billing from "@/pages/billing";
+import Profile from "@/pages/profile";
+import Templates from "@/pages/templates";
+import Usage from "@/pages/usage";
 import { useEffect } from "react";
 
 function RedirectTo({ to }: { to: string }) {
@@ -38,6 +42,10 @@ function Router() {
         <Route path="/settings" component={Settings} />
         <Route path="/docs" component={ApiDocs} />
         <Route path="/ops" component={Ops} />
+        <Route path="/billing" component={Billing} />
+        <Route path="/profile" component={Profile} />
+        <Route path="/templates" component={Templates} />
+        <Route path="/usage" component={Usage} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>

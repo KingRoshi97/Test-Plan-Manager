@@ -6,7 +6,8 @@ import {
   type ProjectPackage, type InsertProjectPackage, type ProjectSummary, type ProjectWarning,
   type ApiKey, type InsertApiKey,
   type AuditLog, type InsertAuditLog,
-  type SafetyWarning, type InsertSafetyWarning
+  type SafetyWarning, type InsertSafetyWarning,
+  type AssemblyTemplate, type InsertAssemblyTemplate
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -58,6 +59,19 @@ export interface IStorage {
   createDeliveryEvent(event: InsertDeliveryEvent): Promise<DeliveryEvent>;
   getQueuedDeliveriesForRetry(): Promise<Delivery[]>;
 
+  // Assembly Templates
+  getAssemblyTemplate(id: string): Promise<AssemblyTemplate | undefined>;
+  getAssemblyTemplatesByUserId(userId: string): Promise<AssemblyTemplate[]>;
+  getPublicAssemblyTemplates(): Promise<AssemblyTemplate[]>;
+  createAssemblyTemplate(template: InsertAssemblyTemplate): Promise<AssemblyTemplate>;
+  updateAssemblyTemplate(id: string, updates: Partial<AssemblyTemplate>): Promise<AssemblyTemplate | undefined>;
+  deleteAssemblyTemplate(id: string): Promise<boolean>;
+  incrementTemplateUsage(id: string): Promise<void>;
+  
+  // User profile updates
+  updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
+  incrementUsage(userId: string, field: "usageKitsGenerated" | "usageApiCalls"): Promise<void>;
+
   // Backward compatibility aliases
   getRun(id: string): Promise<Assembly | undefined>;
   getRuns(): Promise<Assembly[]>;
@@ -106,6 +120,14 @@ export class MemStorage implements IStorage {
       firstName: insertUser.firstName || null,
       lastName: insertUser.lastName || null,
       profileImageUrl: insertUser.profileImageUrl || null,
+      subscriptionTier: "free",
+      stripeCustomerId: null,
+      emailNotifications: true,
+      emailOnKitReady: true,
+      emailOnDeliveryComplete: true,
+      usageKitsGenerated: 0,
+      usageApiCalls: 0,
+      usageResetAt: now,
       createdAt: now,
       updatedAt: now,
     };
@@ -475,6 +497,86 @@ export class MemStorage implements IStorage {
     };
     this.safetyWarnings.set(id, updated);
     return updated;
+  }
+
+  // Assembly Templates
+  private assemblyTemplates: Map<string, AssemblyTemplate> = new Map();
+
+  async getAssemblyTemplate(id: string): Promise<AssemblyTemplate | undefined> {
+    return this.assemblyTemplates.get(id);
+  }
+
+  async getAssemblyTemplatesByUserId(userId: string): Promise<AssemblyTemplate[]> {
+    return Array.from(this.assemblyTemplates.values())
+      .filter(t => t.userId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getPublicAssemblyTemplates(): Promise<AssemblyTemplate[]> {
+    return Array.from(this.assemblyTemplates.values())
+      .filter(t => t.isPublic === "true")
+      .sort((a, b) => parseInt(b.usageCount || "0") - parseInt(a.usageCount || "0"));
+  }
+
+  async createAssemblyTemplate(insertTemplate: InsertAssemblyTemplate): Promise<AssemblyTemplate> {
+    const id = `tpl_${randomUUID().replace(/-/g, '').substring(0, 12)}`;
+    const now = new Date();
+    const template: AssemblyTemplate = {
+      id,
+      userId: insertTemplate.userId,
+      name: insertTemplate.name,
+      description: insertTemplate.description || null,
+      presetId: insertTemplate.presetId,
+      projectName: insertTemplate.projectName || null,
+      idea: insertTemplate.idea || null,
+      domains: insertTemplate.domains || null,
+      goals: insertTemplate.goals || null,
+      constraints: insertTemplate.constraints || null,
+      techStack: insertTemplate.techStack || null,
+      isPublic: insertTemplate.isPublic || "false",
+      usageCount: "0",
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.assemblyTemplates.set(id, template);
+    return template;
+  }
+
+  async updateAssemblyTemplate(id: string, updates: Partial<AssemblyTemplate>): Promise<AssemblyTemplate | undefined> {
+    const template = this.assemblyTemplates.get(id);
+    if (!template) return undefined;
+    const updated = { ...template, ...updates, updatedAt: new Date() };
+    this.assemblyTemplates.set(id, updated);
+    return updated;
+  }
+
+  async deleteAssemblyTemplate(id: string): Promise<boolean> {
+    return this.assemblyTemplates.delete(id);
+  }
+
+  async incrementTemplateUsage(id: string): Promise<void> {
+    const template = this.assemblyTemplates.get(id);
+    if (template) {
+      template.usageCount = String(parseInt(template.usageCount || "0") + 1);
+      this.assemblyTemplates.set(id, template);
+    }
+  }
+
+  // User profile updates
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    const updated = { ...user, ...updates, updatedAt: new Date() };
+    this.users.set(id, updated);
+    return updated;
+  }
+
+  async incrementUsage(userId: string, field: "usageKitsGenerated" | "usageApiCalls"): Promise<void> {
+    const user = this.users.get(userId);
+    if (user) {
+      (user as any)[field] = ((user as any)[field] || 0) + 1;
+      this.users.set(userId, user);
+    }
   }
 
   // Backward compatibility aliases

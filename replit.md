@@ -40,7 +40,7 @@ Preferred communication style: Simple, everyday language.
   - `index.ts`: barrel export (all re-exported via `shared/schema.ts`)
 - **Validation**: Zod schemas generated from Drizzle
 - **Migrations**: Drizzle Kit in `/migrations`
-- **Database Tables** (8 total): users, api_keys, assemblies, deliveries, delivery_events, project_packages, safety_warnings, audit_logs
+- **Database Tables** (9 total): users, api_keys, assemblies, assembly_templates, deliveries, delivery_events, project_packages, safety_warnings, audit_logs
 
 ### Build System
 - **Development**: Vite dev server with Express backend, HMR.
@@ -81,6 +81,16 @@ Preferred communication style: Simple, everyday language.
     - `GET /v1/assemblies/:id/deliveries`: List deliveries for an assembly.
     - `GET /v1/deliveries/:id`: Get delivery details.
     - `POST /v1/deliveries/:id/retry`: Retry failed delivery.
+- **Templates Management**:
+    - `GET /api/templates`: List user's templates (auth required).
+    - `GET /api/templates/public`: List public templates.
+    - `POST /api/templates`: Create a template (auth required).
+    - `GET /api/templates/:id`: Get template (auth/ownership check).
+    - `DELETE /api/templates/:id`: Delete template (auth/ownership required).
+    - `POST /api/templates/:id/use`: Use template (auth required).
+- **User Profile & Preferences**:
+    - `GET /api/user/usage`: Get usage statistics (auth required).
+    - `PATCH /api/user/preferences`: Update email preferences (auth required).
 - **Project Package Analysis**:
     - `POST /v1/project-packages`: Upload a ZIP file for analysis.
     - `GET /v1/project-packages/:id`: Get package status.
@@ -124,8 +134,13 @@ Security infrastructure prerequisite for public launch:
 - **Visuals**: Features gradient CTA buttons, solid primary buttons, glowing stepper elements, amber-accented sidebar, tab, and input focus states, and glassmorphic card accents.
 - **Components**: Reusable design kit components like `GlassCard`, `PageHeader`, `StatusBadge`, `CodeBlock`, `Stepper`, `AssemblyTimeline`.
 - **Layout**: `AppShell` with `SidebarNav` and `TopBar` for consistent navigation.
+- **Sidebar Navigation**: Organized into three groups:
+  - Build: Create, Assemblies, Templates
+  - Account: Usage, Billing, Profile
+  - System: Operations, Settings, API Docs
 - **Theming**: `ThemeProvider` for dark/light mode with system preference detection.
 - **Workflows**: Multi-step form wizard for assembly creation, tabbed interfaces for detail pages.
+- **Account Pages**: Usage analytics, billing/subscription info, profile settings with email preferences.
 
 ## External Dependencies
 

@@ -1,7 +1,17 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, index, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, index, jsonb, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Subscription tier enum
+export const SubscriptionTier = {
+  FREE: "free",
+  PRO: "pro",
+  TEAM: "team",
+  ENTERPRISE: "enterprise",
+} as const;
+
+export type SubscriptionTierType = typeof SubscriptionTier[keyof typeof SubscriptionTier];
 
 // Session storage table (required for Replit Auth)
 export const sessions = pgTable(
@@ -21,6 +31,14 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  subscriptionTier: varchar("subscription_tier").default("free").notNull(),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  emailNotifications: boolean("email_notifications").default(true).notNull(),
+  emailOnKitReady: boolean("email_on_kit_ready").default(true).notNull(),
+  emailOnDeliveryComplete: boolean("email_on_delivery_complete").default(true).notNull(),
+  usageKitsGenerated: integer("usage_kits_generated").default(0).notNull(),
+  usageApiCalls: integer("usage_api_calls").default(0).notNull(),
+  usageResetAt: timestamp("usage_reset_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
