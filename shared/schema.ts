@@ -596,5 +596,3 @@ export const createRunRequestSchema = createAssemblyRequestSchema;
 export const createHandoffRequestSchema = createDeliveryRequestSchema;
 export const insertRunSchema = insertAssemblySchema;
 export const insertHandoffSchema = insertDeliverySchema;
-
-export * from "./models/chat";
