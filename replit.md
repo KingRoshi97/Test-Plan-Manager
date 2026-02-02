@@ -31,9 +31,16 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Management
 - **ORM**: Drizzle ORM with PostgreSQL dialect
-- **Schema**: `shared/schema.ts` (shared between frontend/backend)
-- **Validation**: Zod schemas generated from Drizzle.
-- **Migrations**: Drizzle Kit in `/migrations`.
+- **Schema**: Modular structure in `shared/schema/`:
+  - `auth.ts`: users, apiKeys tables
+  - `assemblies.ts`: assemblies table + related types (Kit, AssemblyInput, Feature, etc.)
+  - `deliveries.ts`: deliveries, delivery_events tables
+  - `packages.ts`: project_packages table + upgrade types
+  - `safety.ts`: safety_warnings, audit_logs tables
+  - `index.ts`: barrel export (all re-exported via `shared/schema.ts`)
+- **Validation**: Zod schemas generated from Drizzle
+- **Migrations**: Drizzle Kit in `/migrations`
+- **Database Tables** (8 total): users, api_keys, assemblies, deliveries, delivery_events, project_packages, safety_warnings, audit_logs
 
 ### Build System
 - **Development**: Vite dev server with Express backend, HMR.
