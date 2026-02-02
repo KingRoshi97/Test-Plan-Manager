@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * roshi:gen - Generate per-domain doc packs
+ * assembler:gen - Generate per-domain doc packs
  * Creates domain folder structure and doc files from templates.
  */
 
@@ -23,7 +23,7 @@ const report = {
 function loadDomainsConfig() {
   const configPath = 'assembler/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('assembler/domains.json not found. Run roshi:init first.');
+    throw new Error('assembler/domains.json not found. Run assembler:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
@@ -74,7 +74,7 @@ function applyTemplate(template, domain) {
 
 function printReport() {
   console.log('\n========== ASSEMBLER_REPORT ==========');
-  console.log(`Script: roshi:gen`);
+  console.log(`Script: assembler:gen`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   if (domainArg) console.log(`Domain: ${domainArg}`);
   console.log(`\nCreated (${report.created.length}):`);
@@ -89,7 +89,7 @@ function printReport() {
 }
 
 try {
-  console.log('Running roshi:gen...');
+  console.log('Running assembler:gen...');
   
   const config = loadDomainsConfig();
   const roshiRoot = config.roshi_root;

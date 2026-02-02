@@ -6,7 +6,7 @@
 **Domain Type:** business
 
 ## Purpose
-The Platform domain defines the core entities and business rules for Roshi Studio. It owns the canonical definitions for Run, Project, User, and other foundational objects.
+The Platform domain defines the core entities and business rules for Axiom Assembler. It owns the canonical definitions for Run, Project, User, and other foundational objects.
 
 ## Entities
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * roshi:verify - Verify the system (gate check)
+ * assembler:verify - Verify the system (gate check)
  * Fails if required files are missing, undefined reason codes referenced,
  * UNKNOWNs in locked sections, or required template sections absent.
  */
@@ -30,7 +30,7 @@ const verify = {
 function loadDomainsConfig() {
   const configPath = 'assembler/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('assembler/domains.json not found. Run roshi:init first.');
+    throw new Error('assembler/domains.json not found. Run assembler:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
@@ -111,7 +111,7 @@ function checkLockedDomainsForUnknowns(roshiRoot, domains, domainsDir) {
 
 function printReport() {
   console.log('\n========== ASSEMBLER_REPORT ==========');
-  console.log(`Script: roshi:verify`);
+  console.log(`Script: assembler:verify`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`Status: ${verify.passed ? 'PASS ✓' : 'FAIL ✗'}`);
   if (domainArg) console.log(`Domain: ${domainArg}`);
@@ -147,7 +147,7 @@ function printReport() {
 }
 
 try {
-  console.log('Running roshi:verify...');
+  console.log('Running assembler:verify...');
   
   const config = loadDomainsConfig();
   const roshiRoot = config.roshi_root;

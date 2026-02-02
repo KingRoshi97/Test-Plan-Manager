@@ -12,7 +12,7 @@ The API domain serves machine clients (Web frontend), not human users directly. 
 |---------------|-------------|---------------|
 | Web Frontend | React application | Create runs, get status, download bundles |
 | CLI (future) | Command-line tool | Automate bundle generation |
-| External (future) | Third-party integrations | Integrate Roshi into workflows |
+| External (future) | Third-party integrations | Integrate Axiom Assembler into workflows |
 
 ## API Design Principles
 - RESTful resource-oriented design

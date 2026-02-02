@@ -15,7 +15,7 @@
 ### Integration Tests
 | Test Case | Description | Dependencies | Expected Result |
 |-----------|-------------|--------------|-----------------|
-| Pipeline execution | Execute gen/seed/draft/package | Roshi scripts | All steps complete |
+| Pipeline execution | Execute gen/seed/draft/package | Assembler scripts | All steps complete |
 | Bundle creation | Package run into zip | infra domain | Zip file created |
 | File serving | Serve zip for download | infra domain | Zip stream returned |
 

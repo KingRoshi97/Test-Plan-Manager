@@ -1,7 +1,7 @@
 # Glossary
 
 ## Overview
-This document defines key terms used throughout the Roshi system.
+This document defines key terms used throughout the Axiom Assembler system.
 
 ## Terms
 
@@ -17,9 +17,9 @@ This document defines key terms used throughout the Roshi system.
 | Domain Pack | Set of generated documentation for a single domain |
 | UNKNOWN | Placeholder for missing information that needs resolution |
 | Open Questions | List of unresolved questions requiring answers |
-| Pipeline | Sequence of roshi commands: init, gen, seed, draft, review, verify, lock |
-| Bundle | Zip file containing all generated artifacts for handoff |
-| Vibecoding Agent | AI agent that consumes Roshi bundles to implement code |
+| Pipeline | Sequence of assembler commands: init, gen, seed, draft, review, verify, lock |
+| Agent Kit | Zip file containing all generated artifacts for handoff |
+| Vibecoding Agent | AI agent that consumes Agent Kits to implement code |
 
 ## Open Questions
 - UNKNOWN

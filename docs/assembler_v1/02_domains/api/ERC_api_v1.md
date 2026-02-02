@@ -29,7 +29,7 @@
 | Rule ID | Description | Condition | Action | SourceRef |
 |---------|-------------|-----------|--------|-----------|
 | api_001 | Verify before lock | Lock requested | Check all verifications pass | TARGET_OUTLINE > Constraints |
-| api_002 | Always print ROSHI_REPORT | Script run completes | Print report with created/modified/skipped/failed | TARGET_OUTLINE > Constraints |
+| api_002 | Always print ASSEMBLER_REPORT | Script run completes | Print report with created/modified/skipped/failed | TARGET_OUTLINE > Constraints |
 | api_003 | Idea required | POST /api/runs called | Validate idea field present and min 10 chars | PROJECT_OVERVIEW > Key Flows |
 | api_004 | Run must exist | Any /api/runs/:id endpoint | Return 404 if run not found | PROJECT_OVERVIEW > Core Objects |
 
@@ -108,6 +108,6 @@
 - Implementation must match exactly what is specified here
 
 ## Sign-off
-- **Locked by:** roshi:lock script
+- **Locked by:** assembler:lock script
 - **Lock date:** 2026-01-29T03:55:58.894Z
 - **Hash:** ed2ce8187c4a3677

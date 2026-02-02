@@ -12,7 +12,7 @@ The Platform domain serves as the foundation layer and does not directly interac
 |---------------|-------------|---------------|
 | API Domain | Backend service | Create and manage runs |
 | Web Domain | Frontend application | Display run data |
-| Roshi Scripts | Pipeline scripts | Execute pipeline steps |
+| Assembler Scripts | Pipeline scripts | Execute pipeline steps |
 
 ## Entity Lifecycle
 

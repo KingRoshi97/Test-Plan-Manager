@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * roshi:init - Initialize Roshi workspace
+ * assembler:init - Initialize Axiom Assembler workspace
  * Creates the folder tree and baseline files if missing.
  */
 
@@ -45,7 +45,7 @@ function ensureFile(filePath, content) {
 
 function printReport() {
   console.log('\n========== ASSEMBLER_REPORT ==========');
-  console.log(`Script: roshi:init`);
+  console.log(`Script: assembler:init`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`\nCreated (${report.created.length}):`);
   report.created.forEach(f => console.log(`  + ${f}`));
@@ -59,7 +59,7 @@ function printReport() {
 }
 
 try {
-  console.log('Running roshi:init...');
+  console.log('Running assembler:init...');
   
   // Create directory structure
   const dirs = [
@@ -75,9 +75,9 @@ try {
   
   // Create README.md
   const readmePath = 'docs/assembler_v1/README.md';
-  const readmeContent = `# Roshi v2 Documentation Workspace
+  const readmeContent = `# Axiom Assembler Documentation Workspace
 
-This directory contains the Roshi documentation system for the project.
+This directory contains the Axiom Assembler documentation system for the project.
 
 ## Directory Structure
 
@@ -93,13 +93,13 @@ docs/assembler_v1/
 ## Pipeline Commands
 
 \`\`\`bash
-npm run roshi:init    # Initialize workspace
-npm run roshi:gen     # Generate domain doc packs
-npm run roshi:seed    # Seed starter scaffolding
-npm run roshi:draft   # Draft truth candidates
-npm run roshi:review  # Review packet
-npm run roshi:verify  # Verify system
-npm run roshi:lock    # Lock a domain
+npm run assembler:init    # Initialize workspace
+npm run assembler:gen     # Generate domain doc packs
+npm run assembler:seed    # Seed starter scaffolding
+npm run assembler:draft   # Draft truth candidates
+npm run assembler:review  # Review packet
+npm run assembler:verify  # Verify system
+npm run assembler:lock    # Lock a domain
 \`\`\`
 `;
   ensureFile(readmePath, readmeContent);

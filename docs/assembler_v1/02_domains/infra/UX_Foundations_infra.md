@@ -11,7 +11,7 @@ The Infrastructure domain serves as a foundation layer and does not directly int
 | Consumer Type | Description | Primary Goals |
 |---------------|-------------|---------------|
 | API Domain | Backend service | Store and retrieve files |
-| Roshi Scripts | Pipeline scripts | Read/write docs and configs |
+| Assembler Scripts | Pipeline scripts | Read/write docs and configs |
 | Package Command | Bundle creation | Create zip archives |
 
 ## Service Patterns
@@ -33,9 +33,9 @@ The Infrastructure domain serves as a foundation layer and does not directly int
 - **Outcome:** Zip file created at specified path
 
 ## File Organization
-- docs/roshi_v2: Documentation files
+- docs/assembler_v1: Documentation files
 - dist/: Build outputs and bundles
-- roshi/: Configuration files
+- assembler/: Configuration files
 
 ## Error Handling
 - File not found: throw with clear message
