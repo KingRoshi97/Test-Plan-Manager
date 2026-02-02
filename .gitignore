@@ -10,3 +10,6 @@ workspaces/
 
 # Uploaded files
 uploads/
+
+# Development artifacts (pasted specs, screenshots)
+attached_assets/
