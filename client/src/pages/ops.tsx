@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/kit";
+import { PageHeader, EmptyState } from "@/components/kit";
 import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardDescription, GlassCardContent } from "@/components/kit";
 import { StatusBadge } from "@/components/kit";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,9 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  Copy
+  Copy,
+  Layers,
+  FileText
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -213,9 +215,16 @@ export default function Ops() {
               Loading assemblies...
             </div>
           ) : filteredAssemblies.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No assemblies found
-            </div>
+            <EmptyState
+              icon={Layers}
+              title={searchQuery || stateFilter !== "all" ? "No matching assemblies" : "No assemblies yet"}
+              description={
+                searchQuery || stateFilter !== "all"
+                  ? "Try adjusting your search or filter criteria."
+                  : "Assemblies will appear here once created."
+              }
+              className="py-8"
+            />
           ) : (
             <div className="rounded-lg border overflow-hidden">
               <Table>
@@ -312,9 +321,12 @@ export default function Ops() {
               Loading API keys...
             </div>
           ) : apiKeys.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No API keys created yet
-            </div>
+            <EmptyState
+              icon={Key}
+              title="No API keys yet"
+              description="Create an API key above to enable programmatic access."
+              className="py-8"
+            />
           ) : (
             <div className="rounded-lg border overflow-hidden">
               <Table>
@@ -345,8 +357,7 @@ export default function Ops() {
                       <TableCell className="text-right">
                         <Button
                           size="icon"
-                          variant="ghost"
-                          className="text-destructive hover:text-destructive"
+                          variant="destructive"
                           onClick={() => revokeKeyMutation.mutate(key.id)}
                           disabled={revokeKeyMutation.isPending}
                           data-testid={`button-revoke-${key.id}`}
@@ -380,9 +391,12 @@ export default function Ops() {
               Loading audit logs...
             </div>
           ) : auditLogs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No audit logs available
-            </div>
+            <EmptyState
+              icon={FileText}
+              title="No audit logs yet"
+              description="API activity and security events will appear here."
+              className="py-8"
+            />
           ) : (
             <div className="rounded-lg border overflow-hidden">
               <Table>

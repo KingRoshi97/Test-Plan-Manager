@@ -4,6 +4,7 @@ export { StatusBadge } from "./StatusBadge";
 export { CopyButton } from "./CopyButton";
 export { CodeBlock } from "./CodeBlock";
 export { EmptyState } from "./EmptyState";
+export { ErrorBoundary } from "./ErrorBoundary";
 export { SkeletonRow, SkeletonTable, SkeletonCard, SkeletonCodeBlock, SkeletonPageHeader } from "./Skeletons";
 export { Stepper } from "./Stepper";
 export { AssemblyTimeline } from "./AssemblyTimeline";
