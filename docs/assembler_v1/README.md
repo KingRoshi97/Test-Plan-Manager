@@ -1,11 +1,11 @@
-# Roshi v2 Documentation Workspace
+# Axiom Assembler Documentation Workspace
 
-This directory contains the Roshi documentation system for the project.
+This directory contains the Axiom Assembler documentation system for the project.
 
 ## Directory Structure
 
 ```
-docs/roshi_v2/
+docs/assembler_v1/
 ├── 00_product/          # Product-level specifications
 │   ├── RPBS_Product.md  # Requirements & Policy Baseline Spec
 │   ├── REBS_Product.md  # Requirements & Entity Baseline Spec
@@ -31,13 +31,13 @@ docs/roshi_v2/
 ## Pipeline Commands
 
 ```bash
-npm run roshi:init    # Initialize workspace
-npm run roshi:gen     # Generate domain doc packs
-npm run roshi:seed    # Seed starter scaffolding
-npm run roshi:draft   # Draft truth candidates
-npm run roshi:review  # Review packet
-npm run roshi:verify  # Verify system
-npm run roshi:lock    # Lock a domain
+npm run assembler:init    # Initialize workspace
+npm run assembler:gen     # Generate domain doc packs
+npm run assembler:seed    # Seed starter scaffolding
+npm run assembler:draft   # Draft truth candidates
+npm run assembler:review  # Review packet
+npm run assembler:verify  # Verify system
+npm run assembler:lock    # Lock a domain
 ```
 
 ## Rules
@@ -45,4 +45,4 @@ npm run roshi:lock    # Lock a domain
 1. **No invention**: Missing info must become UNKNOWN + logged to Open Questions
 2. **No overwrite**: Scripts skip if file exists unless explicitly allowed
 3. **Verify before lock**: All verifications must pass before locking
-4. **Always print ROSHI_REPORT**: Every script run outputs a report
+4. **Always print ASSEMBLER_REPORT**: Every script run outputs a report

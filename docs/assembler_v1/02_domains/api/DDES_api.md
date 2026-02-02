@@ -6,7 +6,7 @@
 **Domain Type:** business
 
 ## Purpose
-The API domain exposes HTTP endpoints that allow clients to create runs, execute the pipeline, check status, and download bundles. It orchestrates calls to the Roshi scripts and manages run lifecycle.
+The API domain exposes HTTP endpoints that allow clients to create assemblies, execute the pipeline, check status, and download kits. It orchestrates calls to the assembler scripts and manages assembly lifecycle.
 
 ## Entities
 

@@ -6,7 +6,7 @@
 **Domain Type:** ui
 
 ## Purpose
-The Web domain provides the user interface for Roshi Studio. Users interact with this domain to submit ideas, monitor pipeline progress, and download generated bundles.
+The Web domain provides the user interface for Axiom Assembler. Users interact with this domain to submit ideas, monitor pipeline progress, and download generated bundles.
 
 ## Entities
 

@@ -16,7 +16,7 @@ The Infrastructure domain does not have screens - it provides backend file syste
 ### Service: ZipBuilder
 - **Purpose:** Create zip archives for bundle packaging
 - **Operations:** addFile, finalize, getStream
-- **Used By:** roshi:package command
+- **Used By:** assembler:package command
 
 ### Service: StorageAdapter
 - **Purpose:** Abstract storage backend for future S3 migration

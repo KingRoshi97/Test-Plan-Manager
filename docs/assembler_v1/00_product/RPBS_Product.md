@@ -4,7 +4,7 @@
 This document defines the hard rules and policies for the product.
 
 ## Product Name
-Roshi Studio
+Axiom Assembler
 
 ## Hard Rules Catalog
 <!-- Define immutable business rules here -->

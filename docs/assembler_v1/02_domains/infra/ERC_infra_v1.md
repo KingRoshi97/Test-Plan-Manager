@@ -78,6 +78,6 @@
 - Implementation must match exactly what is specified here
 
 ## Sign-off
-- **Locked by:** roshi:lock script
+- **Locked by:** assembler:lock script
 - **Lock date:** 2026-01-29T03:55:59.726Z
 - **Hash:** 03bb107f62bc0359

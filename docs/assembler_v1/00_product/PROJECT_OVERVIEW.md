@@ -1,12 +1,12 @@
-# Project Overview — Roshi Studio
+# Project Overview — Axiom Assembler
 
 ## Goal
-Build "Roshi Studio": a web app + API that runs the Roshi pipeline using an NPM package.
-User pastes an idea + minimal context, clicks Generate, and receives a downloadable "Agent Handoff Bundle" (zip) containing Roshi docs + manifests + exports that can be uploaded to a vibecoding agent.
+Build "Axiom Assembler": a web app + API that runs the assembler pipeline.
+User pastes an idea + minimal context, clicks Generate, and receives a downloadable "Agent Kit" (zip) containing documentation + manifests + exports that can be uploaded to a vibecoding agent.
 
 ## Product Shape
-- NPM engine: @roshi/core (pure logic)
-- API service: runs @roshi/core, produces runs + artifacts + bundle zip
+- NPM engine: @axiom/core (pure logic)
+- API service: runs @axiom/core, produces assemblies + artifacts + kit zip
 - Web app: UI to create runs, view status, download zip, copy agent prompt
 
 ## Platforms
@@ -37,7 +37,7 @@ User pastes an idea + minimal context, clicks Generate, and receives a downloada
 - No invention: missing info must become UNKNOWN + logged to Open Questions
 - No overwrite: scripts skip if file exists unless explicitly allowed by spec
 - Verify before lock
-- Always print ROSHI_REPORT after every script run
+- Always print ASSEMBLER_REPORT after every script run
 
 ## Source
 Extracted from: docs/inputs/TARGET_OUTLINE.md
