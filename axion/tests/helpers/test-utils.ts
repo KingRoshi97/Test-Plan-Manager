@@ -84,6 +84,28 @@ function copyDirectory(src: string, dest: string): void {
   }
 }
 
+export function runCommand(command: string): CommandResult {
+  const options: ExecSyncOptions = {
+    cwd: process.cwd(),
+    encoding: 'utf-8',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  };
+  
+  let stdout = '';
+  let stderr = '';
+  let exitCode = 0;
+  
+  try {
+    stdout = execSync(command, options) as string;
+  } catch (error: any) {
+    exitCode = error.status || 1;
+    stdout = error.stdout || '';
+    stderr = error.stderr || '';
+  }
+  
+  return { exitCode, stdout, stderr };
+}
+
 export function runAxionCommand(
   workspace: string,
   command: string,

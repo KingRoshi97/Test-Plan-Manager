@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "run_id": "run_2026-02-03T15-20-09_a4242ad4",
+  "started_at": "2026-02-03T15:20:09.956Z",
+  "finished_at": "2026-02-03T15:20:09.958Z",
+  "root": "/home/runner/workspace",
+  "invocation": {
+    "command": "axion-run",
+    "args": [
+      "--root",
+      "/home/runner/workspace",
+      "--module",
+      "desktop",
+      "--plan",
+      "docs:content"
+    ]
+  },
+  "plan": "docs:content",
+  "preset": null,
+  "mode": "module",
+  "module": "desktop",
+  "stages": [
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "desktop",
+      "started_at": "2026-02-03T15:20:09.958Z",
+      "finished_at": "2026-02-03T15:20:09.958Z",
+      "status": "blocked_by",
+      "json_result": {
+        "status": "blocked_by",
+        "stage": "draft",
+        "module": "desktop",
+        "missing": [
+          "seed"
+        ],
+        "hint": [
+          "draft blocked unless seed complete for target module(s)"
+        ]
+      },
+      "stdout_tail": "",
+      "stderr_tail": "",
+      "exit_code": null
+    }
+  ],
+  "overall_status": "blocked_by",
+  "next_commands": [
+    "draft blocked unless seed complete for target module(s)"
+  ]
+}

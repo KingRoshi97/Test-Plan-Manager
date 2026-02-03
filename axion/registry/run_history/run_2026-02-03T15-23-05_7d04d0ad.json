@@ -1,0 +1,64 @@
+{
+  "version": "1.0.0",
+  "run_id": "run_2026-02-03T15-23-05_7d04d0ad",
+  "started_at": "2026-02-03T15:23:06.022Z",
+  "finished_at": "2026-02-03T15:23:06.975Z",
+  "root": "/home/runner/workspace",
+  "invocation": {
+    "command": "axion-run",
+    "args": [
+      "--root",
+      "/home/runner/workspace",
+      "--module",
+      "architecture",
+      "--plan",
+      "docs:scaffold"
+    ]
+  },
+  "plan": "docs:scaffold",
+  "preset": null,
+  "mode": "module",
+  "module": "architecture",
+  "stages": [
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "architecture",
+      "started_at": "2026-02-03T15:23:06.024Z",
+      "finished_at": "2026-02-03T15:23:06.455Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "architecture",
+        "files_created": [
+          "domains/architecture/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] Found 1 attachment(s) in attachments folder:\n       - START_HERE.txt\n[INFO] Saved attachments content to registry/attachments_content.md\n[INFO] Use this content during draft stage to populate documentation.\n\n\n[AXION] Generate\n\n[INFO] Generating Architecture...\n[DONE] Architecture\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"architecture\",\n  \"files_created\": [\n    \"domains/architecture/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "architecture",
+      "started_at": "2026-02-03T15:23:06.457Z",
+      "finished_at": "2026-02-03T15:23:06.973Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "architecture",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Architecture...\n[DONE] Architecture\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"architecture\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    }
+  ],
+  "overall_status": "success",
+  "next_commands": []
+}
