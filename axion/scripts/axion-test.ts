@@ -4,9 +4,20 @@
  * 
  * Runs test suites, lint, typecheck, and smoke tests.
  * 
+ * Two-Root Model Support:
+ * - System Root: <BUILD_ROOT>/axion/ (configs, templates)
+ * - Workspace Root: <BUILD_ROOT>/<PROJECT_NAME>/ (outputs, app)
+ * 
  * Usage:
- *   node --import tsx axion/scripts/axion-test.ts
- *   node --import tsx axion/scripts/axion-test.ts --app-path ./axion-app
+ *   node --import tsx axion/scripts/axion-test.ts --build-root <path> --project-name <name>
+ *   node --import tsx axion/scripts/axion-test.ts --app-path ./axion-app  (legacy mode)
+ * 
+ * Flags:
+ *   --build-root <path>       Build root containing axion/ system folder (two-root mode)
+ *   --project-name <name>     Project name (two-root mode)
+ *   --app-path <path>         App path (legacy mode)
+ *   --dry-run                 Show what would be done without running
+ *   --json                    Output only JSON
  */
 
 import * as fs from 'fs';
@@ -17,8 +28,17 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
-const STAGE_MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+// Default paths (legacy mode) - will be overridden by two-root mode
+let AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+let WORKSPACE_ROOT = AXION_ROOT;
+let STAGE_MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+
+// Setup paths for two-root mode
+function setupTwoRootPaths(buildRoot: string, projectName: string): void {
+  AXION_ROOT = path.join(buildRoot, 'axion');
+  WORKSPACE_ROOT = path.join(buildRoot, projectName);
+  STAGE_MARKERS_PATH = path.join(WORKSPACE_ROOT, 'registry', 'stage_markers.json');
+}
 
 interface TestResult {
   status: 'success' | 'blocked_by' | 'failed';
@@ -87,12 +107,26 @@ function runCommand(command: string, cwd: string): { success: boolean; output: s
 function main() {
   const args = process.argv.slice(2);
   const appPathIdx = args.indexOf('--app-path');
+  const buildRootIdx = args.indexOf('--build-root');
+  const projectNameIdx = args.indexOf('--project-name');
   const skipLint = args.includes('--skip-lint');
   const skipTypecheck = args.includes('--skip-typecheck');
+  const dryRun = args.includes('--dry-run');
+  
+  // Two-root mode takes precedence
+  const buildRoot = buildRootIdx !== -1 ? args[buildRootIdx + 1] : null;
+  const projectName = projectNameIdx !== -1 ? args[projectNameIdx + 1] : null;
   
   let appPath = appPathIdx !== -1 ? args[appPathIdx + 1] : null;
   
   console.log('\n[AXION] Test\n');
+  
+  // If two-root mode, set up paths accordingly
+  if (buildRoot && projectName) {
+    setupTwoRootPaths(buildRoot, projectName);
+    appPath = path.join(WORKSPACE_ROOT, 'app');
+    console.log(`[INFO] Two-root mode: ${buildRoot}/${projectName}`);
+  }
   
   if (!appPath) {
     appPath = findAppPath();
@@ -104,11 +138,22 @@ function main() {
       stage: 'test',
       hint: [
         'Could not find app directory',
-        'Use --app-path to specify location',
+        'Use --app-path to specify location, or --build-root and --project-name',
       ],
     };
     console.log(JSON.stringify(result, null, 2));
     process.exit(1);
+  }
+  
+  if (dryRun) {
+    const result: TestResult = {
+      status: 'success',
+      stage: 'test',
+      app_path: appPath,
+      hint: ['Dry run - would run tests']
+    };
+    console.log(JSON.stringify(result, null, 2));
+    return;
   }
   
   console.log(`App path: ${appPath}`);
@@ -167,6 +212,22 @@ function main() {
     status: overallSuccess ? 'success' : 'failed',
   };
   saveStageMarkers(markers);
+  
+  // Write test_report.json for activation gate (critical for two-root mode)
+  const testReport = {
+    generated_at: new Date().toISOString(),
+    status: overallSuccess ? 'PASS' : 'FAIL',
+    tests_passed: totalPassed,
+    tests_failed: totalFailed,
+    lint_errors: lintErrors,
+    typecheck_errors: typecheckErrors,
+    duration_ms: 0
+  };
+  const reportDir = path.join(WORKSPACE_ROOT, 'registry');
+  if (!fs.existsSync(reportDir)) {
+    fs.mkdirSync(reportDir, { recursive: true });
+  }
+  fs.writeFileSync(path.join(reportDir, 'test_report.json'), JSON.stringify(testReport, null, 2));
   
   const result: TestResult = {
     status: overallSuccess ? 'success' : 'failed',
