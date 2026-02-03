@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "markers": {
+    "backend": {
+      "generate": {
+        "completed_at": "2026-01-01T00:00:00Z"
+      },
+      "seed": {
+        "completed_at": "2026-01-01T00:00:00Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T07:08:18.537Z",
+        "status": "PASS"
+      }
+    },
+    "contracts": {
+      "generate": {
+        "completed_at": "2026-01-01T00:00:00Z"
+      },
+      "seed": {
+        "completed_at": "2026-01-01T00:00:00Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T07:08:18.536Z",
+        "status": "PASS"
+      }
+    }
+  }
+}

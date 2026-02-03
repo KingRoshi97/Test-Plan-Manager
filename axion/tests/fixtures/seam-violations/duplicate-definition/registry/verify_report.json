@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-02-03T07:08:18.543Z",
+  "overall_status": "FAIL",
+  "modules": {
+    "contracts": {
+      "status": "PASS",
+      "reason_codes": [],
+      "hints": []
+    },
+    "backend": {
+      "status": "PASS",
+      "reason_codes": [],
+      "hints": []
+    }
+  },
+  "seam_violations": [
+    {
+      "module": "backend",
+      "seam": "error_model",
+      "reason_code": "SEAM_DUPLICATE_DEFINITION",
+      "description": "Module \"backend\" duplicates error_model definition from owner \"contracts\"",
+      "file": "domains/backend/README.md",
+      "line": 9,
+      "fix_action": "Remove duplicate definition and link to contracts/README.md instead"
+    }
+  ],
+  "template_drift": {
+    "status": "FAIL",
+    "current_revision": 0,
+    "changes": {
+      "added": [],
+      "removed": [],
+      "modified": []
+    }
+  },
+  "next_commands": [
+    "node --import tsx axion/scripts/axion-repair.ts --seams",
+    "node --import tsx axion/scripts/axion-hash-templates.ts --generate --bump"
+  ]
+}
