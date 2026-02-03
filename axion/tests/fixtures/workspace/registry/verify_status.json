@@ -1,5 +1,22 @@
 {
   "version": "1.0.0",
-  "last_verified": null,
-  "modules": {}
+  "last_verified": "2026-02-03T07:03:32.813Z",
+  "modules": {
+    "architecture": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T07:03:32.812Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 25 [TBD] placeholders",
+        "Address 2 UNKNOWN items"
+      ]
+    }
+  }
 }
