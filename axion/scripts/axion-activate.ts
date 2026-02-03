@@ -5,10 +5,10 @@
  * Sets the active build pointer (ACTIVE_BUILD.json) to route runtime/deploy
  * to a specific build root. This is the only way to "switch routing" to a new build.
  * 
- * Gates (all must pass to activate):
+ * Default Gates (all must pass to activate):
  * - Docs must be locked (lock_manifest.json exists)
  * - Verify must PASS (verify_report.json status = PASS)
- * - Tests must PASS (if --require-tests flag is set)
+ * - Tests must PASS if test_report.json exists (unless --allow-no-tests)
  * 
  * The ACTIVE_BUILD.json pointer file is written to a stable location (kits directory
  * or a specified pointer path) and is the single source of truth for what build is active.
@@ -20,9 +20,9 @@
  * Flags:
  *   --build-root <path>       Build root containing the kit to activate
  *   --project-name <name>     Project name (workspace folder name)
- *   --pointer <path>          Path for ACTIVE_BUILD.json (default: <build-root>/../ACTIVE_BUILD.json)
- *   --require-tests           Require tests to pass before activation
- *   --force                   Skip gates (not recommended)
+ *   --pointer <path>          Path for ACTIVE_BUILD.json (default: <build-root>/ACTIVE_BUILD.json)
+ *   --allow-no-tests          Allow activation even if tests haven't run
+ *   --force                   Skip all gates (not recommended)
  *   --dry-run                 Show what would be done without changes
  *   --json                    Output only JSON (no human-readable text)
  */
@@ -53,7 +53,7 @@ interface ActivateOptions {
   buildRoot: string;
   projectName: string;
   pointerPath?: string;
-  requireTests: boolean;
+  allowNoTests: boolean;
   force: boolean;
   dryRun: boolean;
   jsonOutput: boolean;
@@ -82,7 +82,7 @@ function parseArgs(args: string[]): ActivateOptions {
     buildRoot: '',
     projectName: '',
     pointerPath: undefined,
-    requireTests: false,
+    allowNoTests: false,
     force: false,
     dryRun: false,
     jsonOutput: false
@@ -100,8 +100,8 @@ function parseArgs(args: string[]): ActivateOptions {
       case '--pointer':
         options.pointerPath = args[++i];
         break;
-      case '--require-tests':
-        options.requireTests = true;
+      case '--allow-no-tests':
+        options.allowNoTests = true;
         break;
       case '--force':
         options.force = true;
@@ -203,10 +203,10 @@ function main(): void {
   const workspaceRoot = path.join(buildRoot, projectName);
   const appPath = path.join(workspaceRoot, 'app');
   
-  // Default pointer path is one level up from build root
+  // Default pointer path is inside the build root
   const pointerPath = options.pointerPath 
     ? path.resolve(options.pointerPath)
-    : path.join(path.dirname(buildRoot), 'ACTIVE_BUILD.json');
+    : path.join(buildRoot, 'ACTIVE_BUILD.json');
 
   log(`[INFO] Build root: ${buildRoot}`, options.jsonOutput);
   log(`[INFO] Project name: ${projectName}`, options.jsonOutput);
@@ -256,26 +256,28 @@ function main(): void {
     log('[FAIL] Verify did not pass', options.jsonOutput);
   }
 
-  // Gate 3: Tests PASS (only if required)
-  let testsPass: boolean | null = null;
-  if (options.requireTests) {
-    testsPass = checkTestsPass(workspaceRoot);
-    if (testsPass === true) {
-      gatesPassed.push('tests_pass');
-      log('[PASS] Tests passed', options.jsonOutput);
-    } else if (testsPass === null) {
-      gatesFailed.push('tests_pass');
-      hints.push('Run test stage before activation (--require-tests is set)');
-      log('[FAIL] Tests have not run', options.jsonOutput);
+  // Gate 3: Tests PASS (if test_report.json exists, tests must pass unless --allow-no-tests)
+  let testsPass: boolean | null = checkTestsPass(workspaceRoot);
+  if (testsPass === null) {
+    // No test report exists
+    if (options.allowNoTests) {
+      log('[SKIP] Tests not run (--allow-no-tests)', options.jsonOutput);
     } else {
-      gatesFailed.push('tests_pass');
+      gatesFailed.push('tests_not_run');
+      hints.push('Run test stage before activation, or use --allow-no-tests to skip');
+      log('[FAIL] Tests have not run', options.jsonOutput);
+    }
+  } else if (testsPass === true) {
+    gatesPassed.push('tests_pass');
+    log('[PASS] Tests passed', options.jsonOutput);
+  } else {
+    // Tests ran but failed
+    if (options.allowNoTests) {
+      log('[WARN] Tests failed (--allow-no-tests, continuing)', options.jsonOutput);
+    } else {
+      gatesFailed.push('tests_fail');
       hints.push('Fix failing tests before activation');
       log('[FAIL] Tests failed', options.jsonOutput);
-    }
-  } else {
-    testsPass = checkTestsPass(workspaceRoot);
-    if (testsPass !== null) {
-      log(`[INFO] Tests ${testsPass ? 'passed' : 'failed'} (not required for activation)`, options.jsonOutput);
     }
   }
 
