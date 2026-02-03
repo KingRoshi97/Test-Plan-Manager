@@ -1,18 +1,28 @@
 {
   "version": "1.0.0",
-  "last_verified": "2026-02-03T08:40:40.917Z",
+  "last_verified": "2026-02-03T08:48:14.321Z",
   "modules": {
     "contracts": {
-      "status": "PASS",
-      "verified_at": "2026-02-03T08:40:40.910Z",
-      "reason_codes": [],
-      "hints": []
+      "status": "FAIL",
+      "verified_at": "2026-02-03T08:48:14.315Z",
+      "reason_codes": [
+        "MISSING_DERIVATION_BLOCK"
+      ],
+      "hints": [
+        "Add ## RPBS_DERIVATIONS (Required) section"
+      ]
     },
     "backend": {
-      "status": "PASS",
-      "verified_at": "2026-02-03T08:40:40.911Z",
-      "reason_codes": [],
-      "hints": []
+      "status": "FAIL",
+      "verified_at": "2026-02-03T08:48:14.317Z",
+      "reason_codes": [
+        "MISSING_DERIVATION_BLOCK",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add ## RPBS_DERIVATIONS (Required) section",
+        "Dependency contracts must pass verify first"
+      ]
     }
   }
 }

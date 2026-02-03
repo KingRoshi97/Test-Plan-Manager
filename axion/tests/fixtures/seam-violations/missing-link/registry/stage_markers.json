@@ -9,8 +9,8 @@
         "completed_at": "2026-01-01T00:00:00Z"
       },
       "verify": {
-        "completed_at": "2026-02-03T08:40:38.671Z",
-        "status": "PASS"
+        "completed_at": "2026-02-03T08:48:12.724Z",
+        "status": "FAIL"
       }
     },
     "contracts": {
@@ -21,8 +21,8 @@
         "completed_at": "2026-01-01T00:00:00Z"
       },
       "verify": {
-        "completed_at": "2026-02-03T08:40:38.671Z",
-        "status": "PASS"
+        "completed_at": "2026-02-03T08:48:12.720Z",
+        "status": "FAIL"
       }
     }
   }

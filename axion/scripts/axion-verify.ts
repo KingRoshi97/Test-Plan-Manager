@@ -17,6 +17,7 @@ import * as crypto from 'crypto';
 
 const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
 const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
+const COVERAGE_MAP_PATH = path.join(AXION_ROOT, 'config', 'coverage_map.json');
 const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
 const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
 const STATUS_PATH = path.join(AXION_ROOT, 'registry', 'verify_status.json');
@@ -24,6 +25,25 @@ const REPORT_PATH = path.join(AXION_ROOT, 'registry', 'verify_report.json');
 const SEAMS_PATH = path.join(AXION_ROOT, 'registry', 'seams.json');
 const HASH_FILE = path.join(AXION_ROOT, 'registry', 'template_hashes.json');
 const TEMPLATES_PATH = path.join(AXION_ROOT, 'templates');
+
+// Core modules requiring RPBS_DERIVATIONS enforcement
+const CORE_MODULES = ['contracts', 'database', 'auth', 'backend', 'state', 'frontend', 'fullstack', 'systems'];
+
+interface CoverageMap {
+  version: string;
+  core_modules: string[];
+  blocks: Record<string, {
+    source: string;
+    source_section: string;
+    required_for: string[];
+    notes: string;
+  }>;
+  enforcement_rules: {
+    derivation_block_required: boolean;
+    unknown_requires_question: boolean;
+    capability_mention_required: boolean;
+  };
+}
 
 // ────────────────────────────────────────────────────────────
 // Types
@@ -153,6 +173,74 @@ function loadSeamRegistry(): SeamRegistry | null {
   return JSON.parse(fs.readFileSync(SEAMS_PATH, 'utf-8'));
 }
 
+function loadCoverageMap(): CoverageMap | null {
+  if (!fs.existsSync(COVERAGE_MAP_PATH)) {
+    return null;
+  }
+  return JSON.parse(fs.readFileSync(COVERAGE_MAP_PATH, 'utf-8'));
+}
+
+// ────────────────────────────────────────────────────────────
+// Derivation block verification
+// ────────────────────────────────────────────────────────────
+
+interface DerivationCheckResult {
+  hasBlock: boolean;
+  hasTenancy: boolean;
+  hasNFP: boolean;
+  hasCapabilities: boolean;
+  hasOpenQuestions: boolean;
+  unresolvedUnknowns: number;
+  openQuestionsReferenced: boolean;
+}
+
+function checkDerivationBlock(content: string): DerivationCheckResult {
+  const result: DerivationCheckResult = {
+    hasBlock: false,
+    hasTenancy: false,
+    hasNFP: false,
+    hasCapabilities: false,
+    hasOpenQuestions: false,
+    unresolvedUnknowns: 0,
+    openQuestionsReferenced: false,
+  };
+  
+  // Check for the derivation block header
+  result.hasBlock = content.includes('## RPBS_DERIVATIONS (Required)');
+  
+  if (!result.hasBlock) {
+    return result;
+  }
+  
+  // Extract derivation block content
+  const blockStart = content.indexOf('## RPBS_DERIVATIONS (Required)');
+  const blockEnd = content.indexOf('\n## ', blockStart + 1);
+  const blockContent = blockEnd !== -1 
+    ? content.slice(blockStart, blockEnd)
+    : content.slice(blockStart);
+  
+  // Check required fields
+  result.hasTenancy = /Tenancy\/Org Model:/i.test(blockContent);
+  result.hasNFP = /Non-Functional Profile/i.test(blockContent);
+  result.hasCapabilities = /Enabled capabilities/i.test(blockContent) || 
+    (/Billing\/Entitlements:/i.test(blockContent) && /Notifications:/i.test(blockContent));
+  result.hasOpenQuestions = /OPEN_QUESTIONS impacting this module:/i.test(blockContent);
+  
+  // Count UNKNOWN values in derivation block
+  const unknownMatches = blockContent.match(/:\s*UNKNOWN/g) || [];
+  result.unresolvedUnknowns = unknownMatches.length;
+  
+  // Check if UNKNOWN values have corresponding Q-IDs referenced
+  const openQLine = blockContent.match(/OPEN_QUESTIONS impacting this module:\s*(.+)/i);
+  if (openQLine && openQLine[1]) {
+    const qValue = openQLine[1].trim();
+    // Check if Q-IDs are referenced (Q-1, Q-2, etc.) or explicitly NONE
+    result.openQuestionsReferenced = /Q-\d+/i.test(qValue) || qValue.toUpperCase() === 'NONE';
+  }
+  
+  return result;
+}
+
 // ────────────────────────────────────────────────────────────
 // Module verification
 // ────────────────────────────────────────────────────────────
@@ -160,6 +248,10 @@ function loadSeamRegistry(): SeamRegistry | null {
 function verifyModule(mod: Module, markers: StageMarkers): { status: 'PASS' | 'FAIL'; reason_codes: string[]; hints: string[] } {
   const reason_codes: string[] = [];
   const hints: string[] = [];
+  
+  const coverageMap = loadCoverageMap();
+  const coreModules = coverageMap?.core_modules || CORE_MODULES;
+  const isCoreModule = coreModules.includes(mod.slug);
   
   if (!markers.markers[mod.slug]?.generate) {
     reason_codes.push('PREREQ_NOT_SATISFIED');
@@ -181,6 +273,43 @@ function verifyModule(mod: Module, markers: StageMarkers): { status: 'PASS' | 'F
   
   const content = fs.readFileSync(docPath, 'utf-8');
   
+  // Derivation block enforcement for core modules
+  if (isCoreModule) {
+    const derivCheck = checkDerivationBlock(content);
+    
+    if (!derivCheck.hasBlock) {
+      reason_codes.push('MISSING_DERIVATION_BLOCK');
+      hints.push('Add ## RPBS_DERIVATIONS (Required) section');
+    } else {
+      // Check for required derivation fields
+      if (!derivCheck.hasTenancy) {
+        reason_codes.push('UNRESOLVED_DERIVATION');
+        hints.push('Add Tenancy/Org Model field to derivation block');
+      }
+      
+      if (!derivCheck.hasNFP) {
+        reason_codes.push('UNRESOLVED_DERIVATION');
+        hints.push('Add Non-Functional Profile implications field');
+      }
+      
+      if (!derivCheck.hasCapabilities) {
+        reason_codes.push('UNRESOLVED_DERIVATION');
+        hints.push('Add enabled capabilities toggles (Billing/Notifications/Uploads/Public API)');
+      }
+      
+      if (!derivCheck.hasOpenQuestions) {
+        reason_codes.push('UNRESOLVED_DERIVATION');
+        hints.push('Add OPEN_QUESTIONS impacting this module field');
+      }
+      
+      // Check UNKNOWN values have Q-IDs if applicable
+      if (derivCheck.unresolvedUnknowns > 0 && !derivCheck.openQuestionsReferenced) {
+        reason_codes.push('UNKNOWN_WITHOUT_OPEN_QUESTION');
+        hints.push(`${derivCheck.unresolvedUnknowns} UNKNOWN values require Q-IDs in OPEN_QUESTIONS field`);
+      }
+    }
+  }
+  
   if (!content.includes('## ACCEPTANCE')) {
     reason_codes.push('MISSING_ACCEPTANCE');
     hints.push('Add ACCEPTANCE criteria section');
@@ -200,10 +329,14 @@ function verifyModule(mod: Module, markers: StageMarkers): { status: 'PASS' | 'F
     hints.push(`Resolve ${tbdCount} [TBD] placeholders`);
   }
   
-  const unknownCount = (content.match(/UNKNOWN/g) || []).length;
+  // Skip global UNKNOWN check for derivation blocks (handled separately above)
+  const contentWithoutDerivBlock = isCoreModule 
+    ? content.replace(/## RPBS_DERIVATIONS \(Required\)[\s\S]*?(?=\n## |$)/, '')
+    : content;
+  const unknownCount = (contentWithoutDerivBlock.match(/UNKNOWN/g) || []).length;
   if (unknownCount > 0) {
     reason_codes.push('UNKNOWN_WITHOUT_QUESTION');
-    hints.push(`Address ${unknownCount} UNKNOWN items`);
+    hints.push(`Address ${unknownCount} UNKNOWN items outside derivation block`);
   }
   
   if (mod.dependencies) {
