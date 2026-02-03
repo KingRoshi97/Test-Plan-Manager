@@ -166,51 +166,75 @@ describe('Doctor - Config Validation', () => {
 
 describe('Doctor - Template Markers', () => {
   
-  it('can detect templates missing canonical markers', () => {
+  it('core templates directory exists with ROSHI templates', () => {
     const templatesDir = path.join(AXION_ROOT, 'templates');
     const coreDir = path.join(templatesDir, 'core');
     
-    if (fs.existsSync(coreDir)) {
-      const templates = fs.readdirSync(coreDir).filter(f => f.endsWith('.template.md'));
-      
-      let withMarkers = 0;
-      let withoutMarkers = 0;
-      
-      for (const t of templates) {
-        const content = fs.readFileSync(path.join(coreDir, t), 'utf-8');
-        if (content.includes('AXION:TEMPLATE_CONTRACT:v1')) {
-          withMarkers++;
-        } else {
-          withoutMarkers++;
-        }
+    assert(fs.existsSync(coreDir), 'templates/core directory must exist');
+    
+    const templates = fs.readdirSync(coreDir).filter(f => f.endsWith('.template.md'));
+    assert(templates.length >= 7, 'Should have at least 7 core ROSHI templates');
+    
+    let withMarkers = 0;
+    let withoutMarkers = 0;
+    
+    for (const t of templates) {
+      const content = fs.readFileSync(path.join(coreDir, t), 'utf-8');
+      if (content.includes('AXION:TEMPLATE_CONTRACT:v1')) {
+        withMarkers++;
+      } else {
+        withoutMarkers++;
       }
-      
-      assert(withMarkers + withoutMarkers === templates.length, 'Should count all templates');
     }
+    
+    assert(withMarkers + withoutMarkers === templates.length, 'Should count all templates');
   });
   
-  it('module templates have markers', () => {
-    const modulesDir = path.join(AXION_ROOT, 'templates', 'modules');
+  it('module templates exist at templates/<slug>/README.template.md', () => {
+    const configPath = path.join(AXION_ROOT, 'config', 'domains.json');
+    assert(fs.existsSync(configPath), 'domains.json must exist to verify module templates');
     
-    if (fs.existsSync(modulesDir)) {
-      const dirs = fs.readdirSync(modulesDir, { withFileTypes: true })
-        .filter(d => d.isDirectory())
-        .map(d => d.name);
-      
-      let checked = 0;
-      for (const dir of dirs) {
-        const templatePath = path.join(modulesDir, dir, 'README.template.md');
-        if (fs.existsSync(templatePath)) {
-          const content = fs.readFileSync(templatePath, 'utf-8');
-          assert(
-            content.includes('AXION:TEMPLATE_CONTRACT:v1') && content.includes('AXION:MODULE:'),
-            `Module ${dir} template should have canonical markers`
-          );
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const templatesDir = path.join(AXION_ROOT, 'templates');
+    
+    let checked = 0;
+    const missing: string[] = [];
+    
+    for (const mod of config.modules) {
+      const templatePath = path.join(templatesDir, mod.slug, 'README.template.md');
+      if (fs.existsSync(templatePath)) {
+        checked++;
+      } else {
+        missing.push(mod.slug);
+      }
+    }
+    
+    assert(checked >= 19, `Should have at least 19 module templates, found ${checked}. Missing: ${missing.join(', ')}`);
+  });
+  
+  it('module templates have canonical markers', () => {
+    const configPath = path.join(AXION_ROOT, 'config', 'domains.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const templatesDir = path.join(AXION_ROOT, 'templates');
+    
+    let checked = 0;
+    const withoutMarkers: string[] = [];
+    
+    for (const mod of config.modules) {
+      const templatePath = path.join(templatesDir, mod.slug, 'README.template.md');
+      if (fs.existsSync(templatePath)) {
+        const content = fs.readFileSync(templatePath, 'utf-8');
+        if (content.includes('AXION:TEMPLATE_CONTRACT:v1') && content.includes('AXION:MODULE:')) {
           checked++;
+        } else {
+          withoutMarkers.push(mod.slug);
         }
       }
-      
-      assert(checked >= 22, 'Should have checked at least 22 module templates');
     }
+    
+    assert(
+      withoutMarkers.length === 0,
+      `All module templates should have canonical markers. Missing: ${withoutMarkers.join(', ')}`
+    );
   });
 });
