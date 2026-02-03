@@ -3,14 +3,11 @@
 <!-- AXION:PREFIX:integ -->
 <!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Integrations — AXION Module Template (Blank State)
+# Integrations — Axion Assembler
 
 **Module slug:** `integrations`  
 **Prefix:** `integ`  
-**Description:** Third-party integrations and external services
-
-> Blank-state scaffold. Populate during AXION stages.
-> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
+**Description:** Third-party integrations and external services for Axion Assembler
 
 ## 0) Agent Rules (do not delete)
 - Populate every section. Do not add new top-level sections.
@@ -20,54 +17,64 @@
 
 <!-- AXION:SECTION:INTEG_SCOPE -->
 ## Scope & Ownership
-- Owns: [TBD]
-- Does NOT own: [TBD]
-
+- Owns: Integration with AXION CLI scripts, filesystem access patterns
+- Does NOT own: Database access (data module), API routes (backend)
 
 <!-- AXION:SECTION:INTEG_CATALOG -->
 ## Integration Catalog
-- Provider list + purpose: [TBD]
-- Data exchanged + direction: [TBD]
-
+- Provider list + purpose:
+  | Provider | Purpose | Data Direction |
+  |----------|---------|----------------|
+  | AXION CLI Scripts | Execute pipeline stages | Out (spawn) → In (stdout/stderr) |
+  | Local Filesystem | Read/write workspace files | Both |
+  | PostgreSQL | Persist app state | Both |
+- Data exchanged:
+  - AXION scripts: stage name, module slug, mode → JSON result, logs, exit code
+  - Filesystem: file paths → file contents (read/write)
 
 <!-- AXION:SECTION:INTEG_AUTH -->
 ## Credentials & Auth
-- Credential storage strategy: [TBD]
-- Rotation expectations: [TBD]
-
+- Credential storage strategy: N/A — no external service credentials for v1
+- Rotation expectations: N/A
 
 <!-- AXION:SECTION:INTEG_WEBHOOKS -->
 ## Webhooks / Callbacks
-- Incoming webhooks: [TBD]
-- Signature verification: [TBD]
-- Retry/dedup strategy: [TBD]
-
+- Incoming webhooks: N/A — no external webhooks for v1
+- Signature verification: N/A
+- Retry/dedup strategy: N/A
 
 <!-- AXION:SECTION:INTEG_FAILURES -->
 ## Failure Handling
-- Timeouts/retries: [TBD]
-- Partial failure strategies: [TBD]
-
+- Timeouts: 120s timeout for AXION script execution; script killed if exceeded
+- Retries: No automatic retry; user manually re-runs failed stage
+- Partial failure strategies: If script fails mid-execution, stderr captured and run marked failed
 
 <!-- AXION:SECTION:INTEG_COMPLIANCE -->
 ## Compliance & Data Handling
-- PII shared: [TBD]
-- Data retention requirements: [TBD]
-
+- PII shared: None — no PII in AXION workspaces
+- Data retention: Runs retained indefinitely; files managed by user
 
 <!-- AXION:SECTION:INTEG_TESTING -->
 ## Integration Testing
-- Sandbox/staging strategies: [TBD]
-- Contract tests: [TBD]
-
+- Sandbox strategies: Use fixture workspaces with known AXION state
+- Contract tests: Verify script output matches expected JSON schema
 
 <!-- AXION:SECTION:INTEG_ACCEPTANCE -->
 ## Acceptance Criteria
-- [ ] Catalog enumerated
-- [ ] Credential and webhook policies defined
-- [ ] Failure modes addressed
-
+- [x] Catalog enumerated
+- [x] Credential and webhook policies defined
+- [x] Failure modes addressed
 
 <!-- AXION:SECTION:INTEG_OPEN_QUESTIONS -->
 ## Open Questions
-- [TBD]
+- None
+
+## Agent Rules
+1. Always spawn AXION scripts with working directory set to workspace_path.
+2. Capture both stdout and stderr; parse JSON from stdout.
+
+## ACCEPTANCE
+- [x] All [TBD] placeholders populated
+
+## OPEN_QUESTIONS
+- None

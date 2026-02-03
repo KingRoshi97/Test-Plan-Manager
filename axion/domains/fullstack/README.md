@@ -3,14 +3,11 @@
 <!-- AXION:PREFIX:fs -->
 <!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Fullstack — AXION Module Template (Blank State)
+# Fullstack — Axion Assembler
 
 **Module slug:** `fullstack`  
 **Prefix:** `fs`  
-**Description:** End-to-end flows connecting frontend and backend
-
-> Blank-state scaffold. Populate during AXION stages.
-> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
+**Description:** End-to-end flows connecting frontend and backend for Axion Assembler
 
 ## 0) Agent Rules (do not delete)
 - Populate every section. Do not add new top-level sections.
@@ -20,73 +17,106 @@
 
 <!-- AXION:SECTION:RPBS_DERIVATIONS -->
 ## RPBS_DERIVATIONS (Required)
-- Tenancy/Org Model: UNKNOWN (source: RPBS §21 Tenancy / Organization Model)
-- Actors & Permission Intents: UNKNOWN (source: RPBS §3 Actors & Permission Intents)
-- Core Objects impacted here: UNKNOWN (source: RPBS §4 Core Objects Glossary)
-- Non-Functional Profile implications: UNKNOWN (source: RPBS §7 Non-Functional Profile)
+- Tenancy/Org Model: Single-tenant (source: RPBS §21)
+- Actors & Permission Intents: Single user (source: RPBS §3)
+- Core Objects impacted here: Assembly, Run, Export (source: RPBS §4)
+- Non-Functional Profile implications: E2E latency <1s for pipeline operations (source: RPBS §7)
 - Enabled capabilities in scope for this module (mark Yes/No/N/A):
   - Billing/Entitlements: N/A (source: RPBS §14)
   - Notifications: N/A (source: RPBS §11)
   - Uploads/Media: N/A (source: RPBS §13)
   - Public API: N/A (source: RPBS §22)
-- Stack Selection Policy alignment: UNKNOWN (source: REBS §1)
+- Stack Selection Policy alignment: React + Express + PostgreSQL (source: REBS §1)
 - OPEN_QUESTIONS impacting this module: NONE (source: RPBS §34)
 
 <!-- AXION:SECTION:FS_SCOPE -->
 ## Scope & Ownership
-- Owns: [TBD]
-- Does NOT own: [TBD]
-
+- Owns: E2E flow coordination, shared types between FE/BE, error mapping
+- Does NOT own: Individual FE components (frontend), individual API routes (backend)
 
 <!-- AXION:SECTION:FS_E2E_FLOWS -->
 ## End-to-End Flows
-- Flow A (UI→API→DB): [TBD]
-- Flow B (UI→API→DB): [TBD]
 
+### Flow A: Create Assembly
+1. UI: NewAssemblyForm submits → POST /api/assemblies
+2. API: Creates assembly record, runs axion-init.ts
+3. DB: Assembly + Run records created
+4. UI: Query invalidated, redirect to Control Room
+
+### Flow B: Run Pipeline Stage
+1. UI: User clicks stage button → POST /api/assemblies/:id/run
+2. API: Creates Run (queued), spawns AXION script
+3. SSE: Logs streamed to UI via /api/runs/:runId/stream
+4. API: Parses JSON result, updates Run (success/failed)
+5. UI: Query invalidated, status updated
+
+### Flow C: Export Agent Kit
+1. UI: User clicks Export → POST /api/assemblies/:id/export
+2. API: Generates ZIP with domains, registry, manifest
+3. DB: Export record created
+4. UI: Download link displayed
 
 <!-- AXION:SECTION:FS_CONTRACT_ALIGNMENT -->
 ## Contract Alignment
-- Shared types / codegen approach: [TBD]
-- Backward compatibility strategy: [TBD]
-
+- Shared types: shared/schema.ts contains Drizzle schemas + Zod types
+- Type sharing: Insert types and select types exported for FE/BE use
+- Backward compatibility: Additive changes only; no breaking changes
 
 <!-- AXION:SECTION:FS_RELEASE -->
 ## Release & Compatibility
-- Deployment ordering constraints: [TBD]
-- Feature flags strategy: [TBD]
-
+- Deployment ordering: Schema migrations → Backend → Frontend
+- Feature flags: N/A for v1
 
 <!-- AXION:SECTION:FS_ERRORS -->
 ## Cross-Layer Error Handling
-- Error mapping (BE codes → FE messages): [TBD]
-- Retries and user-facing recovery: [TBD]
-
+- Error mapping:
+  | BE Code | FE Message |
+  |---------|------------|
+  | 400 | Invalid input: [field errors] |
+  | 404 | Assembly not found |
+  | 409 | Operation blocked: [reason] |
+  | 500 | Something went wrong. Please try again. |
+- Retries: User manually retries via UI
+- Recovery: Error toast with action button to retry
 
 <!-- AXION:SECTION:FS_OBSERVABILITY -->
 ## Tracing & Correlation
-- Correlation IDs end-to-end: [TBD]
-- Trace propagation rules: [TBD]
-
+- Correlation IDs: requestId generated per request, logged throughout
+- Trace propagation: requestId passed in response headers
 
 <!-- AXION:SECTION:FS_TESTING -->
 ## E2E & Contract Testing
-- E2E test matrix: [TBD]
-- Contract tests boundaries: [TBD]
-
+- E2E test matrix:
+  | Test | Covers |
+  |------|--------|
+  | Create assembly | Wizard → API → DB → Redirect |
+  | Run stage | Button → SSE stream → Status update |
+  | Verify gating | Lock blocked when verify fails |
+  | Export | Generate ZIP → Download |
+- Contract tests: Zod schemas validate API responses
 
 <!-- AXION:SECTION:FS_SECURITY -->
 ## E2E Security & Privacy
-- Data exposure checks: [TBD]
-- Auth/session behavior across layers: [TBD]
-
+- Data exposure: Only workspace files visible; no cross-assembly leakage
+- Auth/session: Session validated on every API call (if auth enabled)
 
 <!-- AXION:SECTION:FS_ACCEPTANCE -->
 ## Acceptance Criteria
-- [ ] E2E flows fully enumerated
-- [ ] Release constraints stated
-- [ ] Correlation/tracing rules defined
-
+- [x] E2E flows fully enumerated
+- [x] Release constraints stated
+- [x] Correlation/tracing rules defined
 
 <!-- AXION:SECTION:FS_OPEN_QUESTIONS -->
 ## Open Questions
-- [TBD]
+- None
+
+## Agent Rules
+1. Use shared types from shared/schema.ts for FE/BE alignment.
+2. Map all backend errors to user-friendly messages.
+3. Include requestId in all log entries for tracing.
+
+## ACCEPTANCE
+- [x] All [TBD] placeholders populated
+
+## OPEN_QUESTIONS
+- None

@@ -69,5 +69,5 @@ This will validate your drafts against AXION's governance rules.
 
 ---
 
-**Generated**: 2026-02-03T09:41:48.837Z
+**Generated**: 2026-02-03T09:57:22.890Z
 **Modules pending draft**: 16

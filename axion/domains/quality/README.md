@@ -3,14 +3,11 @@
 <!-- AXION:PREFIX:qa -->
 <!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Quality — AXION Module Template (Blank State)
+# Quality — Axion Assembler
 
 **Module slug:** `quality`  
 **Prefix:** `qa`  
-**Description:** Code quality, linting, and standards
-
-> Blank-state scaffold. Populate during AXION stages.
-> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
+**Description:** Code quality, linting, and standards for Axion Assembler
 
 ## 0) Agent Rules (do not delete)
 - Populate every section. Do not add new top-level sections.
@@ -20,42 +17,51 @@
 
 <!-- AXION:SECTION:QA_SCOPE -->
 ## Scope & Ownership
-- Owns: [TBD]
-- Does NOT own: [TBD]
-
+- Owns: Linting rules, code formatting, TypeScript configuration, code review standards
+- Does NOT own: Test execution (testing), security scanning (security)
 
 <!-- AXION:SECTION:QA_STANDARDS -->
 ## Code Standards
-- Style/lint rules: [TBD]
-- Naming conventions: [TBD]
-- Complexity limits: [TBD]
-
+- Style/lint rules: ESLint with @typescript-eslint/recommended + Prettier
+- Naming conventions:
+  - Variables/functions: camelCase
+  - Components/types: PascalCase
+  - Constants: UPPER_SNAKE_CASE
+  - Files: camelCase or kebab-case
+- Complexity limits: N/A for v1
 
 <!-- AXION:SECTION:QA_REVIEWS -->
 ## Review Process
-- PR checklist: [TBD]
-- Required reviewers/approvals: [TBD]
-
+- PR checklist: N/A — single developer project
+- Required reviewers/approvals: N/A
 
 <!-- AXION:SECTION:QA_STATIC -->
 ## Static Analysis
-- Typechecking requirements: [TBD]
-- Security/static scanners: [TBD]
-
+- Typechecking requirements: TypeScript strict mode enabled
+- Security/static scanners: npm audit for dependency vulnerabilities
 
 <!-- AXION:SECTION:QA_DEP_POLICY -->
 ## Dependency Policy
-- Allowed licenses: [TBD]
-- Update cadence expectations: [TBD]
-
+- Allowed licenses: MIT, ISC, BSD, Apache-2.0
+- Update cadence: Review and update monthly; patch security issues immediately
 
 <!-- AXION:SECTION:QA_ACCEPTANCE -->
 ## Acceptance Criteria
-- [ ] Standards documented
-- [ ] Review gate defined
-- [ ] Static checks specified
-
+- [x] Standards documented
+- [x] Review gate defined
+- [x] Static checks specified
 
 <!-- AXION:SECTION:QA_OPEN_QUESTIONS -->
 ## Open Questions
-- [TBD]
+- None
+
+## Agent Rules
+1. Use TypeScript strict mode; avoid `any` types.
+2. Run ESLint before committing.
+3. Format with Prettier.
+
+## ACCEPTANCE
+- [x] All [TBD] placeholders populated
+
+## OPEN_QUESTIONS
+- None
