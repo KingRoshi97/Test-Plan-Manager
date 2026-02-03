@@ -25,6 +25,40 @@
 - Interfaces with: [TBD]
 
 
+<!-- AXION:SECTION:ARCH_TECH_STACK -->
+## Tech Stack Selection
+
+> **Owner:** Architecture module owns all stack decisions. Downstream modules must reference, not redefine.
+> See `axion/config/stack_profiles.json` for available profiles.
+
+### Selected Profile
+- Profile: [TBD] (e.g., default-web-saas, serverless-node, enterprise-java)
+- Rationale: [TBD]
+
+### Frontend
+- Framework: [TBD]
+- Language: [TBD]
+- Styling: [TBD]
+- State Management: [TBD]
+
+### Backend
+- Runtime: [TBD]
+- Language: [TBD]
+- Framework: [TBD]
+- API Style: [TBD]
+
+### Database
+- Engine: [TBD]
+- ORM: [TBD]
+
+### Deployment
+- Platform: [TBD]
+- CI/CD: [TBD]
+
+### Tradeoffs & Non-Goals
+- [TBD] - What we explicitly chose NOT to use and why
+
+
 <!-- AXION:SECTION:ARCH_SYSTEM_OVERVIEW -->
 ## System Overview
 - One-paragraph architecture summary: [TBD]
