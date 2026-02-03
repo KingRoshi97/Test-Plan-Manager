@@ -2,44 +2,139 @@
   "axion_root": "axion",
   "domains_dir": "domains",
   "templates_dir": "templates",
-  "domains": [
+  "modules": [
     {
-      "name": "Platform",
-      "slug": "platform",
-      "prefix": "platform",
-      "type": "business"
+      "name": "Architecture",
+      "slug": "architecture",
+      "prefix": "arch",
+      "type": "foundation",
+      "description": "System architecture, patterns, and structural decisions"
     },
     {
-      "name": "API",
-      "slug": "api",
-      "prefix": "api",
-      "type": "business"
+      "name": "Systems",
+      "slug": "systems",
+      "prefix": "sys",
+      "type": "foundation",
+      "description": "System components, services, and their interactions"
     },
     {
-      "name": "Web",
-      "slug": "web",
-      "prefix": "web",
-      "type": "business"
+      "name": "Contracts",
+      "slug": "contracts",
+      "prefix": "contract",
+      "type": "foundation",
+      "description": "API contracts, interfaces, and data schemas"
     },
     {
-      "name": "Infrastructure",
-      "slug": "infra",
-      "prefix": "infra",
-      "type": "crosscutting"
+      "name": "Database",
+      "slug": "database",
+      "prefix": "db",
+      "type": "data",
+      "description": "Database schema, migrations, and data models"
+    },
+    {
+      "name": "Data",
+      "slug": "data",
+      "prefix": "data",
+      "type": "data",
+      "description": "Data flows, transformations, and validation"
+    },
+    {
+      "name": "Auth",
+      "slug": "auth",
+      "prefix": "auth",
+      "type": "security",
+      "description": "Authentication, authorization, and identity management"
+    },
+    {
+      "name": "Backend",
+      "slug": "backend",
+      "prefix": "be",
+      "type": "core",
+      "description": "Server-side logic, APIs, and business rules"
+    },
+    {
+      "name": "Integrations",
+      "slug": "integrations",
+      "prefix": "integ",
+      "type": "core",
+      "description": "Third-party integrations and external services"
+    },
+    {
+      "name": "State",
+      "slug": "state",
+      "prefix": "state",
+      "type": "frontend",
+      "description": "State management, stores, and client-side data"
+    },
+    {
+      "name": "Frontend",
+      "slug": "frontend",
+      "prefix": "fe",
+      "type": "frontend",
+      "description": "UI components, pages, and user interactions"
+    },
+    {
+      "name": "Fullstack",
+      "slug": "fullstack",
+      "prefix": "fs",
+      "type": "integration",
+      "description": "End-to-end flows connecting frontend and backend"
+    },
+    {
+      "name": "Testing",
+      "slug": "testing",
+      "prefix": "test",
+      "type": "quality",
+      "description": "Test strategies, coverage, and automation"
+    },
+    {
+      "name": "Quality",
+      "slug": "quality",
+      "prefix": "qa",
+      "type": "quality",
+      "description": "Code quality, linting, and standards"
     },
     {
       "name": "Security",
       "slug": "security",
-      "prefix": "security",
-      "type": "crosscutting"
+      "prefix": "sec",
+      "type": "crosscutting",
+      "description": "Security policies, audits, and vulnerability management"
     },
     {
-      "name": "UX/UI Pack",
-      "slug": "uxui",
-      "prefix": "uxui",
-      "type": "business",
-      "description": "Information architecture, journeys, screen specs, design system tokens, component contracts, brand rules.",
-      "default": true
+      "name": "DevOps",
+      "slug": "devops",
+      "prefix": "devops",
+      "type": "operations",
+      "description": "CI/CD, deployment, and infrastructure automation"
+    },
+    {
+      "name": "Cloud",
+      "slug": "cloud",
+      "prefix": "cloud",
+      "type": "operations",
+      "description": "Cloud infrastructure, scaling, and hosting"
+    },
+    {
+      "name": "DevEx",
+      "slug": "devex",
+      "prefix": "dx",
+      "type": "operations",
+      "description": "Developer experience, tooling, and workflows"
+    },
+    {
+      "name": "Mobile",
+      "slug": "mobile",
+      "prefix": "mobile",
+      "type": "platform",
+      "description": "Mobile app development (iOS, Android, React Native)"
+    },
+    {
+      "name": "Desktop",
+      "slug": "desktop",
+      "prefix": "desktop",
+      "type": "platform",
+      "description": "Desktop app development (Electron, Tauri)"
     }
   ]
 }

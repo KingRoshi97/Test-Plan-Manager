@@ -28,12 +28,23 @@ const report = {
   failed: []
 };
 
-function loadDomainsConfig() {
+function loadConfig() {
   const configPath = 'axion/config/domains.json';
   if (!fs.existsSync(configPath)) {
     throw new Error('axion/config/domains.json not found. Run axion:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+}
+
+function getModuleConfig(config, moduleSlug) {
+  const moduleConfig = config.modules?.find(m => m.slug === moduleSlug);
+  if (moduleConfig) return moduleConfig;
+  return {
+    slug: moduleSlug,
+    name: moduleSlug.charAt(0).toUpperCase() + moduleSlug.slice(1),
+    prefix: moduleSlug,
+    type: 'business'
+  };
 }
 
 function ensureDir(dirPath) {
@@ -99,7 +110,7 @@ function printReport() {
 try {
   console.log('Running axion:generate...');
   
-  const config = loadDomainsConfig();
+  const config = loadConfig();
   const axionRoot = config.axion_root || 'axion';
   const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
   
@@ -124,17 +135,12 @@ try {
     const domainDir = path.join(domainsDir, module);
     ensureDir(domainDir);
     
-    // Create a synthetic domain object for templates
-    const domain = {
-      slug: module,
-      name: module.charAt(0).toUpperCase() + module.slice(1),
-      prefix: module,
-      type: 'business'
-    };
+    // Get module config from domains.json or use defaults
+    const moduleConfig = getModuleConfig(config, module);
     
     for (const templateName of docTemplates) {
       const template = loadTemplate(templateName, axionRoot);
-      const content = applyTemplate(template, domain);
+      const content = applyTemplate(template, moduleConfig);
       const fileName = `${templateName}_${module}.md`;
       const filePath = path.join(domainDir, fileName);
       ensureFile(filePath, content);

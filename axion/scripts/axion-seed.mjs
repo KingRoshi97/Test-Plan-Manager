@@ -31,7 +31,7 @@ const report = {
   failed: []
 };
 
-function loadDomainsConfig() {
+function loadConfig() {
   const configPath = 'axion/config/domains.json';
   if (!fs.existsSync(configPath)) {
     throw new Error('axion/config/domains.json not found. Run axion:init first.');
@@ -74,7 +74,7 @@ function printReport() {
 try {
   console.log('Running axion:seed...');
   
-  const config = loadDomainsConfig();
+  const config = loadConfig();
   const axionRoot = config.axion_root || 'axion';
   
   // Process each module

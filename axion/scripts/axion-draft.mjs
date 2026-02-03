@@ -32,7 +32,7 @@ const report = {
   failed: []
 };
 
-function loadDomainsConfig() {
+function loadConfig() {
   const configPath = 'axion/config/domains.json';
   if (!fs.existsSync(configPath)) {
     throw new Error('axion/config/domains.json not found. Run axion:init first.');
@@ -163,9 +163,9 @@ function printReport(hasFailed = false) {
 try {
   console.log('Running axion:draft...');
   
-  const domainsConfig = loadDomainsConfig();
-  const axionRoot = domainsConfig.axion_root || 'axion';
-  const domainsDir = path.join(axionRoot, domainsConfig.domains_dir || 'domains');
+  const config = loadConfig();
+  const axionRoot = config.axion_root || 'axion';
+  const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
   
   // Process each module
   for (const module of modules) {
