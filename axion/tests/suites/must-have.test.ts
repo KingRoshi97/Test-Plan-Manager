@@ -1,11 +1,18 @@
 /**
  * AXION Must-Have Test Suite
  * 
- * The 12 essential tests that validate the complete AXION pipeline.
+ * The 13 essential tests that validate the complete AXION pipeline.
  * These tests form the minimum validation for system correctness.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { describe, it } from '../helpers/test-runner';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const axionRoot = path.resolve(__dirname, '..', '..');
 import {
   createTestWorkspace,
   runAxionCommand,
@@ -446,6 +453,40 @@ describe('AXION Must-Have Tests', () => {
     } finally {
       ctx1.cleanup();
       ctx2.cleanup();
+    }
+  });
+
+  it('13. all templates contain canonical contract markers', () => {
+    const templatesDir = path.join(axionRoot, 'templates');
+    if (!fs.existsSync(templatesDir)) {
+      throw new Error(`Templates directory not found: ${templatesDir}`);
+    }
+    
+    const templateDirs = fs.readdirSync(templatesDir, { withFileTypes: true })
+      .filter(d => d.isDirectory())
+      .map(d => d.name);
+    
+    const errors: string[] = [];
+    
+    for (const slug of templateDirs) {
+      const templatePath = path.join(templatesDir, slug, 'README.template.md');
+      if (!fs.existsSync(templatePath)) {
+        continue;
+      }
+      
+      const content = fs.readFileSync(templatePath, 'utf-8');
+      
+      if (!content.includes('AXION:TEMPLATE_CONTRACT:v1')) {
+        errors.push(`${slug}: missing AXION:TEMPLATE_CONTRACT:v1 marker`);
+      }
+      
+      if (!content.includes(`AXION:MODULE:${slug}`)) {
+        errors.push(`${slug}: missing or mismatched AXION:MODULE:${slug} marker`);
+      }
+    }
+    
+    if (errors.length > 0) {
+      throw new Error(`Template contract marker violations:\n${errors.join('\n')}`);
     }
   });
 });
