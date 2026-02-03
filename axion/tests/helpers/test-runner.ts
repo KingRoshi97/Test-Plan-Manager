@@ -1,16 +1,23 @@
 #!/usr/bin/env node
 /**
- * AXION Test Runner
+ * AXION Test Runner (ESM)
  * 
  * Runs the test suite with clear pass/fail reporting.
+ * Uses dynamic import() for ESM compatibility.
  * 
  * Usage:
- *   npx ts-node axion/tests/helpers/test-runner.ts
- *   npx ts-node axion/tests/helpers/test-runner.ts --filter <pattern>
+ *   node --import tsx axion/tests/helpers/test-runner.ts --all
+ *   node --import tsx axion/tests/helpers/test-runner.ts --suite must-have
+ *   node --import tsx axion/tests/helpers/test-runner.ts --suite governance --filter seam
+ *   node --import tsx axion/tests/helpers/test-runner.ts --suite must-have --suite governance
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { pathToFileURL, fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 interface TestResult {
   name: string;
@@ -19,12 +26,14 @@ interface TestResult {
   error?: string;
 }
 
+interface TestCase {
+  name: string;
+  fn: () => void | Promise<void>;
+}
+
 interface TestSuite {
   name: string;
-  tests: Array<{
-    name: string;
-    fn: () => void | Promise<void>;
-  }>;
+  tests: TestCase[];
 }
 
 const suites: TestSuite[] = [];
@@ -44,23 +53,88 @@ export function it(name: string, fn: () => void | Promise<void>): void {
   currentSuite.tests.push({ name, fn });
 }
 
-export async function runTests(filter?: string): Promise<void> {
+async function walk(dir: string): Promise<string[]> {
+  const out: string[] = [];
+  const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+  for (const e of entries) {
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      out.push(...await walk(full));
+    } else if (e.isFile() && e.name.endsWith('.test.ts')) {
+      out.push(full);
+    }
+  }
+  return out;
+}
+
+async function loadSuites(): Promise<void> {
+  const suiteDir = path.resolve(__dirname, '..', 'suites');
+  const files = await walk(suiteDir);
+  files.sort();
+  
+  for (const file of files) {
+    await import(pathToFileURL(file).href);
+  }
+}
+
+function matchSuite(suiteName: string, selected: string[]): boolean {
+  const n = suiteName.toLowerCase();
+  return selected.some(s => n.includes(s.toLowerCase()));
+}
+
+interface RunOptions {
+  suiteFilters: string[];
+  testFilter?: string;
+  runAll: boolean;
+}
+
+function parseArgs(args: string[]): RunOptions {
+  const suiteFilters: string[] = [];
+  let testFilter: string | undefined;
+  let runAll = false;
+  
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--all') {
+      runAll = true;
+    } else if (arg === '--suite' && args[i + 1]) {
+      suiteFilters.push(args[i + 1]);
+      i++;
+    } else if (arg === '--filter' && args[i + 1]) {
+      testFilter = args[i + 1];
+      i++;
+    }
+  }
+  
+  if (suiteFilters.length === 0 && !runAll) {
+    runAll = true;
+  }
+  
+  return { suiteFilters, testFilter, runAll };
+}
+
+export async function runTests(options: RunOptions): Promise<void> {
   const results: TestResult[] = [];
   let passed = 0;
   let failed = 0;
+  let skippedSuites = 0;
+  let skippedTests = 0;
   
   console.log('\n[AXION] Test Runner\n');
   console.log('='.repeat(60));
   
-  for (const suite of suites) {
-    if (filter && !suite.name.toLowerCase().includes(filter.toLowerCase())) {
-      continue;
-    }
-    
+  const suitesToRun = options.runAll 
+    ? suites 
+    : suites.filter(s => matchSuite(s.name, options.suiteFilters));
+  
+  skippedSuites = suites.length - suitesToRun.length;
+  
+  for (const suite of suitesToRun) {
     console.log(`\n[SUITE] ${suite.name}\n`);
     
     for (const test of suite.tests) {
-      if (filter && !test.name.toLowerCase().includes(filter.toLowerCase())) {
+      if (options.testFilter && !test.name.toLowerCase().includes(options.testFilter.toLowerCase())) {
+        skippedTests++;
         continue;
       }
       
@@ -96,7 +170,12 @@ export async function runTests(filter?: string): Promise<void> {
   }
   
   console.log('\n' + '='.repeat(60));
-  console.log(`\n[SUMMARY] ${passed} passed, ${failed} failed, ${passed + failed} total\n`);
+  console.log(`\n[SUMMARY] ${passed} passed, ${failed} failed, ${passed + failed} total`);
+  
+  if (skippedSuites > 0 || skippedTests > 0) {
+    console.log(`         (${skippedSuites} suites skipped, ${skippedTests} tests filtered)`);
+  }
+  console.log('');
   
   if (failed > 0) {
     console.log('[FAILED TESTS]:');
@@ -115,17 +194,16 @@ export async function runTests(filter?: string): Promise<void> {
   process.exit(0);
 }
 
-if (require.main === module) {
+const isMain = import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isMain) {
   const args = process.argv.slice(2);
-  const filterIdx = args.indexOf('--filter');
-  const filter = filterIdx !== -1 ? args[filterIdx + 1] : undefined;
+  const options = parseArgs(args);
   
-  const testsDir = path.join(__dirname, '..', 'suites');
-  const testFiles = fs.readdirSync(testsDir).filter(f => f.endsWith('.test.ts'));
-  
-  for (const file of testFiles) {
-    require(path.join(testsDir, file));
-  }
-  
-  runTests(filter);
+  loadSuites()
+    .then(() => runTests(options))
+    .catch(err => {
+      console.error('[FATAL] Test runner error:', err);
+      process.exit(1);
+    });
 }

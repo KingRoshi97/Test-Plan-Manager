@@ -265,6 +265,74 @@ describe('Verify Report Structure', () => {
   
 });
 
+describe('Marker-Based Seam Detection', () => {
+  it('SEAM_OWNER_VIOLATION via AXION:SEAM_OWNER marker', () => {
+    const workspace = path.join(__dirname, '..', 'fixtures', 'seam-violations', 'marker-owner-violation');
+    
+    if (!fs.existsSync(workspace)) {
+      console.log('    (skipped: fixture not found)');
+      return;
+    }
+    
+    const registryPath = path.join(workspace, 'registry');
+    if (!fs.existsSync(registryPath)) {
+      fs.mkdirSync(registryPath, { recursive: true });
+    }
+    
+    const seamsPath = path.join(workspace, 'registry', 'seams.json');
+    const seamsContent = {
+      version: '1.0.0',
+      seams: {
+        error_model: {
+          owner: 'contracts',
+          description: 'Error codes and response shapes',
+          canonical_doc: 'contracts/README.md',
+          sections: ['CONTRACT_ERROR_MODEL'],
+          related_modules: ['contracts', 'backend', 'frontend'],
+          link_instruction: 'Reference contracts module for error definitions'
+        }
+      },
+      reason_codes: {
+        SEAM_OWNER_VIOLATION: 'Non-owner module defines seam content',
+        SEAM_MISSING_LINK: 'Module references seam without proper link',
+        SEAM_DUPLICATE_DEFINITION: 'Module duplicates owner definition'
+      }
+    };
+    fs.writeFileSync(seamsPath, JSON.stringify(seamsContent, null, 2));
+    
+    const configPath = path.join(workspace, 'config');
+    if (!fs.existsSync(configPath)) {
+      fs.mkdirSync(configPath, { recursive: true });
+    }
+    const domainsPath = path.join(configPath, 'domains.json');
+    const domainsContent = {
+      axion_root: 'axion',
+      domains_dir: 'domains',
+      templates_dir: 'templates',
+      modules: [
+        { name: 'Contracts', slug: 'contracts', dependencies: [] },
+        { name: 'Backend', slug: 'backend', dependencies: ['contracts'] }
+      ],
+      canonical_order: ['contracts', 'backend'],
+      stages: ['generate', 'seed', 'draft', 'review', 'verify', 'lock']
+    };
+    fs.writeFileSync(domainsPath, JSON.stringify(domainsContent, null, 2));
+    
+    runVerify(workspace);
+    
+    const report = loadReport(workspace);
+    if (!report) throw new Error('verify_report.json not generated');
+    
+    const ownerViolation = report.seam_violations.find(
+      v => v.reason_code === 'SEAM_OWNER_VIOLATION' && v.module === 'backend'
+    );
+    
+    if (!ownerViolation) {
+      throw new Error('Expected SEAM_OWNER_VIOLATION for backend module via marker detection');
+    }
+  });
+});
+
 console.log('\n' + '═'.repeat(60));
 console.log('GOVERNANCE TESTS COMPLETE');
 console.log('═'.repeat(60) + '\n');

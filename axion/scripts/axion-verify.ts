@@ -220,9 +220,15 @@ function verifyModule(mod: Module, markers: StageMarkers): { status: 'PASS' | 'F
 }
 
 // ────────────────────────────────────────────────────────────
-// Seam verification (inline, not external script)
+// Seam verification (marker-based + regex fallback)
 // ────────────────────────────────────────────────────────────
 
+// Marker patterns for deterministic seam detection
+const SEAM_OWNER_MARKER = /<!--\s*AXION:SEAM_OWNER:(\w+)\s*-->/;
+const SEAM_DEFINITION_START = /<!--\s*AXION:SEAM_DEFINITION_START\s*-->/;
+const SEAM_DEFINITION_END = /<!--\s*AXION:SEAM_DEFINITION_END\s*-->/;
+
+// Regex fallback patterns for legacy compatibility
 const DEFINITION_PATTERNS: Record<string, RegExp[]> = {
   error_model: [/error\s*codes?:\s*\[/i, /error\s*taxonomy/i, /error\s*response\s*shape/i, /HTTP\s*\d{3}\s*:/],
   schema_truth: [/entity\s*schema/i, /field\s*definitions?:/i, /data\s*model:/i, /table\s*structure/i],
@@ -243,15 +249,82 @@ const MENTION_PATTERNS: Record<string, RegExp[]> = {
   feature_flags: [/feature\s*flag/i, /feature\s*toggle/i, /rollout/i, /targeting/i],
 };
 
-const LINK_PATTERNS = [/see\s+\[.*?\]\(.*?\/README\.md\)/i, /refer\s+to\s+\[.*?\]/i, /defined\s+in\s+\[.*?\]/i, /→\s*\[.*?\]/, /link:\s*\[.*?\]/i];
+const LINK_PATTERNS = [
+  /\((?:\.\.\/)*\w+\/README\.md(?:#[^)]+)?\)/i,
+  /see\s+\[.*?\]\(.*?\/README\.md\)/i,
+  /refer\s+to\s+\[.*?\]/i,
+  /defined\s+in\s+\[.*?\]/i,
+  /→\s*\[.*?\]/,
+  /link:\s*\[.*?\]/i,
+];
 
-function checkForDefinitions(content: string, seamName: string): { found: boolean; line?: number } {
+interface SeamOwnerMarker {
+  found: boolean;
+  seam?: string;
+  line?: number;
+}
+
+interface DefinitionBlock {
+  found: boolean;
+  startLine?: number;
+  endLine?: number;
+  content?: string;
+  hash?: string;
+}
+
+function findSeamOwnerMarker(content: string): SeamOwnerMarker {
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(SEAM_OWNER_MARKER);
+    if (match) {
+      return { found: true, seam: match[1], line: i + 1 };
+    }
+  }
+  return { found: false };
+}
+
+function extractDefinitionBlock(content: string): DefinitionBlock {
+  const lines = content.split('\n');
+  let startLine: number | undefined;
+  let endLine: number | undefined;
+  
+  for (let i = 0; i < lines.length; i++) {
+    if (SEAM_DEFINITION_START.test(lines[i])) {
+      startLine = i + 1;
+    }
+    if (SEAM_DEFINITION_END.test(lines[i]) && startLine !== undefined) {
+      endLine = i + 1;
+      break;
+    }
+  }
+  
+  if (startLine !== undefined && endLine !== undefined) {
+    const blockContent = lines.slice(startLine, endLine - 1).join('\n');
+    const normalized = blockContent.replace(/\s+/g, ' ').toLowerCase().trim();
+    const hash = crypto.createHash('sha256').update(normalized).digest('hex').substring(0, 16);
+    return { found: true, startLine, endLine, content: blockContent, hash };
+  }
+  
+  return { found: false };
+}
+
+function checkForDefinitions(content: string, seamName: string): { found: boolean; line?: number; isMarker?: boolean } {
+  const ownerMarker = findSeamOwnerMarker(content);
+  if (ownerMarker.found && ownerMarker.seam === seamName) {
+    return { found: true, line: ownerMarker.line, isMarker: true };
+  }
+  
+  const defBlock = extractDefinitionBlock(content);
+  if (defBlock.found) {
+    return { found: true, line: defBlock.startLine, isMarker: true };
+  }
+  
   const patterns = DEFINITION_PATTERNS[seamName] || [];
   const lines = content.split('\n');
   for (let i = 0; i < lines.length; i++) {
     for (const pattern of patterns) {
       if (pattern.test(lines[i])) {
-        return { found: true, line: i + 1 };
+        return { found: true, line: i + 1, isMarker: false };
       }
     }
   }
@@ -259,6 +332,12 @@ function checkForDefinitions(content: string, seamName: string): { found: boolea
 }
 
 function hasProperLink(content: string, seam: Seam): boolean {
+  const canonicalPath = seam.canonical_doc.replace(/\//g, '\\/');
+  const exactPathPattern = new RegExp(`\\((?:\\.\\.\\/)*${canonicalPath}(?:#[^)]+)?\\)`, 'i');
+  if (exactPathPattern.test(content)) {
+    return true;
+  }
+  
   const ownerRef = new RegExp(seam.owner, 'i');
   return ownerRef.test(content) && LINK_PATTERNS.some(p => p.test(content));
 }
@@ -278,6 +357,14 @@ function loadOwnerContent(seam: Seam): string | null {
 
 function checkForDuplicateDefinition(content: string, seamName: string, ownerContent: string | null): { found: boolean; line?: number } {
   if (!ownerContent) return { found: false };
+  
+  const ownerBlock = extractDefinitionBlock(ownerContent);
+  const nonOwnerBlock = extractDefinitionBlock(content);
+  
+  if (ownerBlock.found && nonOwnerBlock.found && ownerBlock.hash === nonOwnerBlock.hash) {
+    return { found: true, line: nonOwnerBlock.startLine };
+  }
+  
   const patterns = DEFINITION_PATTERNS[seamName] || [];
   const lines = content.split('\n');
   for (let i = 0; i < lines.length; i++) {
