@@ -1,0 +1,69 @@
+{
+  "$schema": "./seams.schema.json",
+  "version": "1.0.0",
+  "description": "Seam Owner Registry - defines single ownership for cross-cutting topics to prevent duplication",
+  "governance_rule": "Non-owner modules must LINK to owner definitions, not redefine them",
+  "seams": {
+    "error_model": {
+      "owner": "contracts",
+      "description": "Error codes, error response shapes, failure taxonomy",
+      "canonical_doc": "contracts/README.md",
+      "sections": ["CONTRACT_ERROR_MODEL", "CONTRACT_ERROR_CODES"],
+      "related_modules": ["backend", "frontend", "integrations"],
+      "link_instruction": "Reference contracts module for error definitions. Do not define error codes locally."
+    },
+    "schema_truth": {
+      "owner": "database",
+      "description": "Entity schemas, data models, field definitions, constraints",
+      "canonical_doc": "database/README.md",
+      "sections": ["DB_SCHEMA", "DB_ENTITIES"],
+      "related_modules": ["backend", "data", "contracts"],
+      "link_instruction": "Reference database module for schema definitions. Do not duplicate entity structures."
+    },
+    "identity": {
+      "owner": "auth",
+      "description": "User identity, authentication flows, session management, authorization rules",
+      "canonical_doc": "auth/README.md",
+      "sections": ["AUTH_IDENTITY", "AUTH_FLOWS", "AUTH_RBAC"],
+      "related_modules": ["backend", "frontend", "security"],
+      "link_instruction": "Reference auth module for identity definitions. Do not define auth rules locally."
+    },
+    "webhooks": {
+      "owner": "integrations",
+      "description": "Webhook contracts, event payloads, delivery guarantees, retry policies",
+      "canonical_doc": "integrations/README.md",
+      "sections": ["INTEG_WEBHOOKS", "INTEG_EVENTS"],
+      "related_modules": ["backend", "contracts", "security"],
+      "link_instruction": "Reference integrations module for webhook specs. Do not define event shapes locally."
+    },
+    "correlation_ids": {
+      "owner": "systems",
+      "description": "Request tracing, correlation ID propagation, distributed tracing standards",
+      "canonical_doc": "systems/README.md",
+      "sections": ["SYS_TRACING", "SYS_OBSERVABILITY"],
+      "related_modules": ["backend", "fullstack", "devops"],
+      "link_instruction": "Reference systems module for tracing standards. Do not define correlation patterns locally."
+    },
+    "api_versioning": {
+      "owner": "backend",
+      "description": "API version strategy, deprecation policy, breaking change rules",
+      "canonical_doc": "backend/README.md",
+      "sections": ["BE_VERSIONING", "BE_DEPRECATION"],
+      "related_modules": ["contracts", "integrations", "frontend"],
+      "link_instruction": "Reference backend module for versioning policy. Do not define version rules locally."
+    },
+    "feature_flags": {
+      "owner": "state",
+      "description": "Feature flag definitions, rollout rules, targeting logic",
+      "canonical_doc": "state/README.md",
+      "sections": ["STATE_FEATURE_FLAGS"],
+      "related_modules": ["frontend", "backend", "devops"],
+      "link_instruction": "Reference state module for feature flag definitions. Do not define flags locally."
+    }
+  },
+  "reason_codes": {
+    "SEAM_OWNER_VIOLATION": "Non-owner module defines content that belongs to the seam owner",
+    "SEAM_MISSING_LINK": "Module references a seam topic without linking to owner",
+    "SEAM_DUPLICATE_DEFINITION": "Same definition appears in both owner and non-owner module"
+  }
+}
