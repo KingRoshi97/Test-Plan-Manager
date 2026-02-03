@@ -3,7 +3,7 @@
   "markers": {
     "architecture": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.738Z",
+        "completed_at": "2026-02-03T09:50:06.790Z",
         "files": [
           "domains/architecture/README.md"
         ]
@@ -27,7 +27,7 @@
     },
     "systems": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.738Z",
+        "completed_at": "2026-02-03T09:50:06.791Z",
         "files": [
           "domains/systems/README.md"
         ]
@@ -51,7 +51,7 @@
     },
     "contracts": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.740Z",
+        "completed_at": "2026-02-03T09:50:06.792Z",
         "files": [
           "domains/contracts/README.md"
         ]
@@ -75,7 +75,7 @@
     },
     "database": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.746Z",
+        "completed_at": "2026-02-03T09:50:06.792Z",
         "files": [
           "domains/database/README.md"
         ]
@@ -90,7 +90,7 @@
     },
     "data": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.748Z",
+        "completed_at": "2026-02-03T09:50:06.793Z",
         "files": [
           "domains/data/README.md"
         ]
@@ -105,7 +105,7 @@
     },
     "auth": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.749Z",
+        "completed_at": "2026-02-03T09:50:06.793Z",
         "files": [
           "domains/auth/README.md"
         ]
@@ -120,7 +120,7 @@
     },
     "backend": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.750Z",
+        "completed_at": "2026-02-03T09:50:06.794Z",
         "files": [
           "domains/backend/README.md"
         ]
@@ -135,7 +135,7 @@
     },
     "integrations": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.751Z",
+        "completed_at": "2026-02-03T09:50:06.795Z",
         "files": [
           "domains/integrations/README.md"
         ]
@@ -150,7 +150,7 @@
     },
     "state": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.752Z",
+        "completed_at": "2026-02-03T09:50:06.795Z",
         "files": [
           "domains/state/README.md"
         ]
@@ -165,7 +165,7 @@
     },
     "frontend": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.753Z",
+        "completed_at": "2026-02-03T09:50:06.795Z",
         "files": [
           "domains/frontend/README.md"
         ]
@@ -180,7 +180,7 @@
     },
     "fullstack": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.753Z",
+        "completed_at": "2026-02-03T09:50:06.796Z",
         "files": [
           "domains/fullstack/README.md"
         ]
@@ -195,7 +195,7 @@
     },
     "testing": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.754Z",
+        "completed_at": "2026-02-03T09:50:06.796Z",
         "files": [
           "domains/testing/README.md"
         ]
@@ -210,7 +210,7 @@
     },
     "quality": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.755Z",
+        "completed_at": "2026-02-03T09:50:06.796Z",
         "files": [
           "domains/quality/README.md"
         ]
@@ -225,7 +225,7 @@
     },
     "security": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.756Z",
+        "completed_at": "2026-02-03T09:50:06.796Z",
         "files": [
           "domains/security/README.md"
         ]
@@ -240,7 +240,7 @@
     },
     "devops": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.756Z",
+        "completed_at": "2026-02-03T09:50:06.796Z",
         "files": [
           "domains/devops/README.md"
         ]
@@ -255,7 +255,7 @@
     },
     "cloud": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.757Z",
+        "completed_at": "2026-02-03T09:50:06.796Z",
         "files": [
           "domains/cloud/README.md"
         ]
@@ -270,7 +270,7 @@
     },
     "devex": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.758Z",
+        "completed_at": "2026-02-03T09:50:06.797Z",
         "files": [
           "domains/devex/README.md"
         ]
@@ -285,7 +285,7 @@
     },
     "mobile": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.759Z",
+        "completed_at": "2026-02-03T09:50:06.797Z",
         "files": [
           "domains/mobile/README.md"
         ]
@@ -300,7 +300,7 @@
     },
     "desktop": {
       "generate": {
-        "completed_at": "2026-02-03T09:41:38.759Z",
+        "completed_at": "2026-02-03T09:50:06.797Z",
         "files": [
           "domains/desktop/README.md"
         ]

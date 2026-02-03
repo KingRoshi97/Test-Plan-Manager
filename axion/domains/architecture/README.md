@@ -109,16 +109,3 @@
 <!-- AXION:SECTION:ARCH_OPEN_QUESTIONS -->
 ## Open Questions
 - [TBD]
-
-
-## Agent Rules
-
-1. [TBD] - Define agent constraints.
-2. [TBD] - Define agent behaviors.
-
-## ACCEPTANCE
-- [ ] All [TBD] placeholders populated
-
-
-## OPEN_QUESTIONS
-- [TBD] - List unresolved questions
