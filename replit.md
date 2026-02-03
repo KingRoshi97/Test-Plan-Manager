@@ -41,6 +41,12 @@ Preferred communication style: Simple, everyday language.
 - **Module Mode System**: Supports per-module generation (`--module <name>`) or all modules (`--all`), with dependency tracking for 19 defined modules. Stages are tracked and prerequisite checks enforced.
 - **Pipeline Scripts**: A series of scripts manage the `generate`, `seed`, `draft`, `review`, `verify`, and `lock` stages of documentation production.
 - **AI-Generated Documents**: Includes `PROJECT_OVERVIEW.md`, `RPBS_Product.md`, `REBS_Product.md`, and others.
+- **Two-Root Model** (Feb 2026): Separates system files from workspace outputs.
+  - **System Root** (`<BUILD_ROOT>/axion/`): Contains immutable scripts, templates, and configs.
+  - **Workspace Root** (`<BUILD_ROOT>/<PROJECT_NAME>/`): Contains all generated outputs (`source_docs/`, `domains/`, `registry/`, `app/`).
+  - **Usage**: `npx tsx axion/scripts/axion-run.ts --build-root "$(pwd)" --project-name myapp --preset system --plan docs:scaffold`
+  - **Safety Policies**: Refuse non-empty workspace, archive existing, prevent writing into `axion/`.
+  - **Stage 0**: `axion-prepare-root.ts` creates workspace directories before preflight.
 - **Onboarding Scripts**:
   - `axion-init.ts`: Scaffolds fresh AXION workspace (directories, configs, RPBS/REBS templates) with `--mode fresh`.
   - `axion-overhaul.ts`: Archives existing project to `_axion_archive/<timestamp>/`, creates `_axion_rebuild/` workspace.
