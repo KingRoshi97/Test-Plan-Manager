@@ -210,10 +210,10 @@ function main(): void {
   }
   
   // Determine project name
-  let projectName = options.projectName;
+  let projectName: string | undefined = options.projectName;
   if (!projectName) {
-    projectName = extractProjectName(buildRoot);
-    if (!projectName) {
+    const extracted = extractProjectName(buildRoot);
+    if (!extracted) {
       outputJson({
         status: 'failed',
         stage: 'prepare-root',
@@ -226,6 +226,7 @@ function main(): void {
       });
       process.exit(1);
     }
+    projectName = extracted;
   }
   
   const workspaceRoot = path.join(buildRoot, projectName);
