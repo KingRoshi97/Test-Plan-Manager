@@ -1,0 +1,176 @@
+#!/usr/bin/env node
+/**
+ * AXION Generate Script
+ * 
+ * Creates module documentation from templates.
+ * 
+ * Usage:
+ *   npx ts-node axion/scripts/axion-generate.ts --module <name>
+ *   npx ts-node axion/scripts/axion-generate.ts --all
+ */
+
+import * as fs from 'fs';
+import * as path from 'path';
+
+const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
+const TEMPLATES_PATH = path.join(AXION_ROOT, 'templates');
+const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
+const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+
+interface Module {
+  name: string;
+  slug: string;
+  prefix: string;
+  type: string;
+  description: string;
+  dependencies?: string[];
+}
+
+interface Config {
+  modules: Module[];
+  canonical_order: string[];
+}
+
+interface StageMarkers {
+  version: string;
+  markers: Record<string, Record<string, any>>;
+}
+
+function loadConfig(): Config {
+  if (!fs.existsSync(CONFIG_PATH)) {
+    console.error('[ERROR] domains.json not found');
+    process.exit(1);
+  }
+  return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+}
+
+function loadMarkers(): StageMarkers {
+  if (!fs.existsSync(MARKERS_PATH)) {
+    return { version: '1.0.0', markers: {} };
+  }
+  return JSON.parse(fs.readFileSync(MARKERS_PATH, 'utf-8'));
+}
+
+function saveMarkers(markers: StageMarkers): void {
+  const dir = path.dirname(MARKERS_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(MARKERS_PATH, JSON.stringify(markers, null, 2));
+}
+
+function getTemplate(moduleSlug: string): string {
+  const modulePath = path.join(TEMPLATES_PATH, moduleSlug, 'README.template.md');
+  const minimalPath = path.join(TEMPLATES_PATH, '_minimal.template.md');
+  
+  if (fs.existsSync(modulePath)) {
+    return fs.readFileSync(modulePath, 'utf-8');
+  }
+  if (fs.existsSync(minimalPath)) {
+    return fs.readFileSync(minimalPath, 'utf-8');
+  }
+  
+  return `# {{MODULE_NAME}} Module
+
+## AXION Contract Header
+- AXION:PREFIX: {{PREFIX}}
+- AXION:PLACEHOLDER_POLICY: [TBD] must be populated
+
+## Metadata
+- Version: 0.1.0
+- Status: DRAFT
+
+## 1. Scope and Ownership
+[TBD]
+
+## 2. Interfaces and Dependencies
+[TBD]
+
+## ACCEPTANCE
+- [ ] All sections populated
+
+## OPEN_QUESTIONS
+- [TBD]
+`;
+}
+
+function generateModule(mod: Module): string[] {
+  const template = getTemplate(mod.slug);
+  
+  const content = template
+    .replace(/\{\{MODULE_NAME\}\}/g, mod.name)
+    .replace(/\{\{SLUG\}\}/g, mod.slug)
+    .replace(/\{\{PREFIX\}\}/g, mod.prefix)
+    .replace(/\{\{DESCRIPTION\}\}/g, mod.description);
+  
+  const moduleDir = path.join(DOMAINS_PATH, mod.slug);
+  if (!fs.existsSync(moduleDir)) {
+    fs.mkdirSync(moduleDir, { recursive: true });
+  }
+  
+  const docPath = path.join(moduleDir, 'README.md');
+  fs.writeFileSync(docPath, content);
+  
+  return [path.relative(AXION_ROOT, docPath)];
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  const moduleArg = args.indexOf('--module');
+  const targetModule = moduleArg !== -1 ? args[moduleArg + 1] : null;
+  const runAll = args.includes('--all');
+  
+  if (!targetModule && !runAll) {
+    console.log('Usage:');
+    console.log('  npx ts-node axion/scripts/axion-generate.ts --module <name>');
+    console.log('  npx ts-node axion/scripts/axion-generate.ts --all');
+    process.exit(1);
+  }
+  
+  const config = loadConfig();
+  const markers = loadMarkers();
+  
+  const modulesToGenerate = runAll
+    ? config.canonical_order.map(slug => config.modules.find(m => m.slug === slug)!)
+    : [config.modules.find(m => m.slug === targetModule)!];
+  
+  if (!runAll && !modulesToGenerate[0]) {
+    console.error(`[ERROR] Module "${targetModule}" not found in config`);
+    process.exit(1);
+  }
+  
+  console.log('\n[AXION] Generate\n');
+  
+  for (const mod of modulesToGenerate) {
+    if (!mod) continue;
+    
+    console.log(`[INFO] Generating ${mod.name}...`);
+    const files = generateModule(mod);
+    
+    if (!markers.markers[mod.slug]) {
+      markers.markers[mod.slug] = {};
+    }
+    markers.markers[mod.slug].generate = {
+      completed_at: new Date().toISOString(),
+      files: files,
+    };
+    
+    console.log(`[DONE] ${mod.name}`);
+  }
+  
+  saveMarkers(markers);
+  
+  const response = {
+    status: 'success',
+    stage: 'generate',
+    module: runAll ? 'all' : targetModule,
+    files_created: modulesToGenerate.filter(Boolean).map(m => `domains/${m.slug}/README.md`),
+    marker_written: true,
+  };
+  
+  console.log('\n' + JSON.stringify(response, null, 2) + '\n');
+  process.exit(0);
+}
+
+main();
