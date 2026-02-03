@@ -1,17 +1,23 @@
 #!/usr/bin/env node
 /**
- * roshi:lock - Lock a domain (ERC creation)
+ * axion:lock - Lock a domain (ERC creation)
  * Creates an Execution Readiness Contract when domain is ready.
+ * REQUIRES verify to have passed first.
+ * 
+ * Usage:
+ *   node axion/scripts/axion-lock.mjs --module <name>
+ *   node axion/scripts/axion-lock.mjs --module <name> --version v2
  */
 
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import { readVerifyStatus, failJson } from './_axion_module_mode.mjs';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const domainArg = args.find((_, i, arr) => arr[i - 1] === '--domain');
+const moduleArg = args.find((_, i, arr) => arr[i - 1] === '--module');
 const versionArg = args.find((_, i, arr) => arr[i - 1] === '--version') || 'v1';
 
 // Report tracking
@@ -23,19 +29,16 @@ const report = {
 };
 
 function loadDomainsConfig() {
-  const configPath = 'assembler/domains.json';
+  const configPath = 'axion/config/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('assembler/domains.json not found. Run roshi:init first.');
+    throw new Error('axion/config/domains.json not found. Run axion:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
 
 function checkForCriticalUnknowns(belsContent) {
-  // Check for UNKNOWN in critical sections
-  // Skip lines that reference UNKNOWN as a concept (e.g., "Write UNKNOWN and log")
   const criticalSections = ['Policy Rules', 'State Machines', 'Validation Rules'];
   
-  // Patterns that indicate UNKNOWN is being referenced as a concept, not a placeholder
   const conceptPatterns = [
     /Write UNKNOWN/i,
     /log.*UNKNOWN/i,
@@ -49,11 +52,9 @@ function checkForCriticalUnknowns(belsContent) {
     const sectionRegex = new RegExp(`## ${section}[\\s\\S]*?(?=##|$)`, 'i');
     const match = belsContent.match(sectionRegex);
     if (match && match[0].includes('UNKNOWN')) {
-      // Check if it's just in the table header example
       const lines = match[0].split('\n');
       for (const line of lines) {
         if (line.includes('|') && line.includes('UNKNOWN') && !line.includes('---')) {
-          // Skip if line matches a concept pattern
           const isConceptReference = conceptPatterns.some(pattern => pattern.test(line));
           if (!isConceptReference) {
             return true;
@@ -69,14 +70,14 @@ function generateHash(content) {
   return crypto.createHash('sha256').update(content).digest('hex').substring(0, 16);
 }
 
-function createERC(domain, belsContent, version) {
+function createERC(module, belsContent, version) {
   const lockDate = new Date().toISOString();
   const hash = generateHash(belsContent);
   
-  return `# Execution Readiness Contract (ERC) — ${domain.name} ${version}
+  return `# Execution Readiness Contract (ERC) — ${module} ${version}
 
 ## Overview
-**Domain Slug:** ${domain.slug}
+**Module:** ${module}
 **Version:** ${version}
 **Lock Date:** ${lockDate}
 **Content Hash:** ${hash}
@@ -98,7 +99,7 @@ ${belsContent}
 - Implementation must match exactly what is specified here
 
 ## Sign-off
-- **Locked by:** roshi:lock script
+- **Locked by:** axion:lock script
 - **Lock date:** ${lockDate}
 - **Hash:** ${hash}
 `;
@@ -106,10 +107,10 @@ ${belsContent}
 
 function printReport(hasWarning = false) {
   console.log('\n========== ASSEMBLER_REPORT ==========');
-  console.log(`Script: roshi:lock`);
+  console.log(`Script: axion:lock`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`Status: ${report.failed.length > 0 ? 'FAILED' : hasWarning ? 'WARNING' : 'SUCCESS'}`);
-  if (domainArg) console.log(`Domain: ${domainArg}`);
+  if (moduleArg) console.log(`Module: ${moduleArg}`);
   console.log(`Version: ${versionArg}`);
   console.log(`\nCreated (${report.created.length}):`);
   report.created.forEach(f => console.log(`  + ${f}`));
@@ -123,23 +124,29 @@ function printReport(hasWarning = false) {
 }
 
 try {
-  console.log('Running roshi:lock...');
+  console.log('Running axion:lock...');
   
-  if (!domainArg) {
-    throw new Error('--domain <slug> is required for roshi:lock');
+  // Check verify status first
+  const status = readVerifyStatus();
+  if (!status || status.status !== 'PASS') {
+    failJson({
+      status: 'blocked_by',
+      stage: 'lock',
+      missing: ['verify_pass'],
+      hint: ['run: node axion/scripts/axion-verify.mjs --all'],
+    });
+  }
+  
+  if (!moduleArg) {
+    throw new Error('--module <slug> is required for axion:lock');
   }
   
   const config = loadDomainsConfig();
-  const roshiRoot = config.roshi_root;
+  const axionRoot = config.axion_root || 'axion';
+  const domainsDir = config.domains_dir || 'domains';
   
-  // Validate domain argument
-  const domain = config.domains.find(d => d.slug === domainArg);
-  if (!domain) {
-    throw new Error(`Domain "${domainArg}" not found in assembler/domains.json`);
-  }
-  
-  const domainDir = path.join(roshiRoot, config.domains_dir, domain.slug);
-  const belsPath = path.join(domainDir, `BELS_${domain.slug}.md`);
+  const domainDir = path.join(axionRoot, domainsDir, moduleArg);
+  const belsPath = path.join(domainDir, `BELS_${moduleArg}.md`);
   
   // Check BELS exists
   if (!fs.existsSync(belsPath)) {
@@ -150,30 +157,31 @@ try {
   
   // Check for critical UNKNOWNs
   if (checkForCriticalUnknowns(belsContent)) {
-    report.failed.push('Cannot lock - domain contains UNKNOWN in critical sections');
-    report.failed.push('Run roshi:review to see details');
+    report.failed.push('Cannot lock - module contains UNKNOWN in critical sections');
+    report.failed.push('Run axion:review to see details');
     printReport();
     process.exit(1);
   }
   
   // Check if ERC already exists
-  const ercPath = path.join(domainDir, `ERC_${domain.slug}_${versionArg}.md`);
+  const ercPath = path.join(domainDir, `ERC_${moduleArg}_${versionArg}.md`);
   if (fs.existsSync(ercPath)) {
     report.skipped.push(`${ercPath} (already exists)`);
-    console.log(`ERC ${versionArg} already exists for ${domain.slug}. Use a different version.`);
+    console.log(`ERC ${versionArg} already exists for ${moduleArg}. Use a different version.`);
     printReport(true);
     process.exit(0);
   }
   
   // Create ERC
-  const ercContent = createERC(domain, belsContent, versionArg);
+  const ercContent = createERC(moduleArg, belsContent, versionArg);
   
   if (!dryRun) {
+    fs.mkdirSync(path.dirname(ercPath), { recursive: true });
     fs.writeFileSync(ercPath, ercContent, 'utf8');
   }
   report.created.push(ercPath);
   
-  // Optionally create lock hashes file
+  // Create lock hashes file
   const hashesPath = path.join(domainDir, 'LOCK_HASHES.json');
   const hashes = fs.existsSync(hashesPath) 
     ? JSON.parse(fs.readFileSync(hashesPath, 'utf8'))
@@ -189,7 +197,7 @@ try {
   }
   report.created.push(hashesPath);
   
-  console.log(`\n✓ Domain "${domain.slug}" locked as ${versionArg}`);
+  console.log(`\nModule "${moduleArg}" locked as ${versionArg}`);
   printReport();
   
 } catch (error) {

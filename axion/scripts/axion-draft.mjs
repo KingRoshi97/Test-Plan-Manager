@@ -1,17 +1,28 @@
 #!/usr/bin/env node
 /**
- * roshi:draft - Draft truth candidates
+ * axion:draft - Draft truth candidates
  * Reads from sources and produces initial domain logic candidates.
  * FAILS if required input files are missing.
+ * 
+ * Usage:
+ *   node axion/scripts/axion-draft.mjs --all
+ *   node axion/scripts/axion-draft.mjs --module <name>
  */
 
 import fs from 'fs';
 import path from 'path';
+import {
+  parseModuleArgs,
+  ensurePrereqs,
+  isStageDone,
+  markStageDone,
+  failJson,
+} from './_axion_module_mode.mjs';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const domainArg = args.find((_, i, arr) => arr[i - 1] === '--domain');
+const { modules } = parseModuleArgs(process.argv);
 
 // Report tracking
 const report = {
@@ -22,40 +33,19 @@ const report = {
 };
 
 function loadDomainsConfig() {
-  const configPath = 'assembler/domains.json';
+  const configPath = 'axion/config/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('assembler/domains.json not found. Run roshi:init first.');
+    throw new Error('axion/config/domains.json not found. Run axion:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
 
 function loadSourcesConfig() {
-  const configPath = 'assembler/sources.json';
+  const configPath = 'axion/config/sources.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('assembler/sources.json not found. Run roshi:init first.');
+    throw new Error('axion/config/sources.json not found. Run axion:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-}
-
-function checkRequiredFiles(roshiRoot) {
-  const requiredFiles = [
-    `${roshiRoot}/00_product/RPBS_Product.md`,
-    `${roshiRoot}/00_product/REBS_Product.md`,
-    `${roshiRoot}/00_registry/domain-map.md`,
-    `${roshiRoot}/00_registry/action-vocabulary.md`,
-    `${roshiRoot}/00_registry/reason-codes.md`,
-    `${roshiRoot}/00_registry/glossary.md`,
-    `${roshiRoot}/00_product/PROJECT_OVERVIEW.md`
-  ];
-  
-  const missing = [];
-  for (const file of requiredFiles) {
-    if (!fs.existsSync(file)) {
-      missing.push(file);
-    }
-  }
-  
-  return missing;
 }
 
 function ensureFile(filePath, content) {
@@ -67,9 +57,6 @@ function ensureFile(filePath, content) {
   }
   
   if (fs.existsSync(filePath)) {
-    // Check if file has been authored (more than just template)
-    const existingContent = fs.readFileSync(filePath, 'utf8');
-    // For draft, we update BELS files with candidates
     if (!dryRun) {
       fs.writeFileSync(filePath, content, 'utf8');
     }
@@ -84,144 +71,50 @@ function ensureFile(filePath, content) {
   return true;
 }
 
-function extractSourceInfo(roshiRoot) {
-  // Read available source files and extract useful information
-  const info = {
-    entities: [],
-    rules: [],
-    domains: []
-  };
-  
-  // Read REBS for entities
-  const rebsPath = `${roshiRoot}/00_product/REBS_Product.md`;
-  if (fs.existsSync(rebsPath)) {
-    const content = fs.readFileSync(rebsPath, 'utf8');
-    // Extract entity names
-    const entityMatches = content.match(/\| (User|Project|Run|DomainPack|Artifact|VerifyResult|ERC|Bundle|TemplatePack|SourceRef)/g);
-    if (entityMatches) {
-      info.entities = entityMatches.map(m => m.replace('| ', ''));
-    }
-  }
-  
-  // Read domain-map for domain info
-  const domainMapPath = `${roshiRoot}/00_registry/domain-map.md`;
-  if (fs.existsSync(domainMapPath)) {
-    const content = fs.readFileSync(domainMapPath, 'utf8');
-    // Extract domain responsibilities
-    info.domainMapContent = content;
-  }
-  
-  return info;
-}
-
-function generateBELSCandidates(domain, sourceInfo, roshiRoot) {
-  const sourceRef = `SourceRef: REBS_Product > Core Entities`;
-  
-  // Determine which entities belong to this domain based on domain-map
-  let domainEntities = [];
-  if (domain.slug === 'platform') {
-    domainEntities = ['User', 'Project', 'TemplatePack', 'SourceRef'];
-  } else if (domain.slug === 'api') {
-    domainEntities = ['Run', 'DomainPack', 'Artifact', 'VerifyResult', 'ERC', 'Bundle'];
-  } else if (domain.slug === 'web') {
-    domainEntities = [];
-  } else if (domain.slug === 'infra') {
-    domainEntities = [];
-  } else if (domain.slug === 'security') {
-    domainEntities = [];
-  }
-  
-  return `# Business Entity Logic Specification (BELS) — ${domain.name}
+function generateBELSCandidates(module) {
+  return `# Business Entity Logic Specification (BELS) — ${module}
 
 ## Overview
-**Domain Slug:** ${domain.slug}
-**Domain Prefix:** ${domain.prefix}
+**Domain Slug:** ${module}
 **Status:** DRAFT - Truth Candidates
 
 ## Policy Rules (Candidates)
-<!-- Business rules that govern this domain -->
-<!-- ${sourceRef} -->
 
 | Rule ID | Description | Condition | Action | SourceRef |
 |---------|-------------|-----------|--------|-----------|
-${domain.slug === 'platform' ? `| ${domain.prefix}_001 | No invention rule | Missing info detected | Write UNKNOWN and log to Open Questions | TARGET_OUTLINE > Constraints |
-| ${domain.prefix}_002 | No overwrite rule | File exists | Skip file, record in ASSEMBLER_REPORT skipped list | TARGET_OUTLINE > Constraints |` : 
-domain.slug === 'api' ? `| ${domain.prefix}_001 | Verify before lock | Lock requested | Check all verifications pass | TARGET_OUTLINE > Constraints |
-| ${domain.prefix}_002 | Always print ASSEMBLER_REPORT | Script run completes | Print report with created/modified/skipped/failed | TARGET_OUTLINE > Constraints |` :
-`| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |`}
+| ${module}_001 | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
 
 ## State Machines (Candidates)
-<!-- State transitions for entities -->
-${domainEntities.length > 0 ? domainEntities.map(entity => {
-  if (entity === 'Run') {
-    return `### Entity: Run
+
+### Entity: UNKNOWN
 | Current State | Event | Next State | Deny Code | SourceRef |
 |---------------|-------|------------|-----------|-----------|
-| created | start | running | UNKNOWN | REBS_Product > Run |
-| running | complete | completed | UNKNOWN | REBS_Product > Run |
-| running | fail | failed | API_RUN_003 | REBS_Product > Run |
-| completed | package | bundled | UNKNOWN | REBS_Product > Run |`;
-  } else if (entity === 'ERC') {
-    return `### Entity: ERC
-| Current State | Event | Next State | Deny Code | SourceRef |
-|---------------|-------|------------|-----------|-----------|
-| draft | verify | verified | API_VERIFY_001 | REBS_Product > ERC |
-| verified | lock | locked | API_LOCK_001 | REBS_Product > ERC |`;
-  } else if (entity === 'Project') {
-    return `### Entity: Project
-| Current State | Event | Next State | Deny Code | SourceRef |
-|---------------|-------|------------|-----------|-----------|
-| created | activate | active | UNKNOWN | REBS_Product > Project |
-| active | archive | archived | UNKNOWN | REBS_Product > Project |`;
-  } else {
-    return `### Entity: ${entity}
-| Current State | Event | Next State | Deny Code | SourceRef |
-|---------------|-------|------------|-----------|-----------|
-| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | REBS_Product > ${entity} |`;
-  }
-}).join('\n\n') : `### Entity: UNKNOWN
-| Current State | Event | Next State | Deny Code | SourceRef |
-|---------------|-------|------------|-----------|-----------|
-| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |`}
+| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
 
 ## Validation Rules (Candidates)
-<!-- Data validation rules -->
 
 | Field | Rule | Error Code | SourceRef |
 |-------|------|------------|-----------|
-${domainEntities.length > 0 ? domainEntities.map(entity => 
-  `| ${entity}.id | Required, UUID format | UNKNOWN | REBS_Product > ${entity} |`
-).join('\n') : '| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |'}
+| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
 
 ## Reason Codes Referenced
-<!-- Referenced from reason-codes.md -->
 
 | Code | Message | Severity |
 |------|---------|----------|
-${domain.slug === 'api' ? `| API_RUN_001 | Run not found | ERROR |
-| API_RUN_003 | Run failed | ERROR |
-| API_VERIFY_001 | Verification failed | ERROR |
-| API_LOCK_001 | Cannot lock - UNKNOWNs exist | ERROR |` :
-domain.slug === 'platform' ? `| PLATFORM_USER_001 | User not found | ERROR |
-| PLATFORM_PROJECT_001 | Project not found | ERROR |` :
-domain.slug === 'security' ? `| SECURITY_ACCESS_001 | Access denied | ERROR |` :
-'| UNKNOWN | UNKNOWN | UNKNOWN |'}
+| UNKNOWN | UNKNOWN | UNKNOWN |
 
 ## Open Questions
-<!-- Questions generated during draft -->
-${domainEntities.length === 0 ? `- What entities does the ${domain.name} domain own?
-- What business rules apply to this domain?` : 
-`- Complete state machine transitions need validation
-- Error codes need confirmation from stakeholders`}
+- Entity ownership needs clarification
+- State transitions need validation
 - Specific implementation details: UNKNOWN
 `;
 }
 
-function generateOpenQuestions(domain) {
-  return `# Open Questions — ${domain.name}
+function generateOpenQuestions(module) {
+  return `# Open Questions — ${module}
 
 ## Overview
-**Domain Slug:** ${domain.slug}
+**Domain Slug:** ${module}
 **Generated:** ${new Date().toISOString()}
 
 ## Unresolved Questions
@@ -252,10 +145,10 @@ function generateOpenQuestions(domain) {
 
 function printReport(hasFailed = false) {
   console.log('\n========== ASSEMBLER_REPORT ==========');
-  console.log(`Script: roshi:draft`);
+  console.log(`Script: axion:draft`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`Status: ${hasFailed ? 'FAILED' : 'SUCCESS'}`);
-  if (domainArg) console.log(`Domain: ${domainArg}`);
+  console.log(`Modules: ${modules.join(', ')}`);
   console.log(`\nCreated (${report.created.length}):`);
   report.created.forEach(f => console.log(`  + ${f}`));
   console.log(`\nModified (${report.modified.length}):`);
@@ -268,51 +161,39 @@ function printReport(hasFailed = false) {
 }
 
 try {
-  console.log('Running roshi:draft...');
+  console.log('Running axion:draft...');
   
   const domainsConfig = loadDomainsConfig();
-  const sourcesConfig = loadSourcesConfig();
-  const roshiRoot = domainsConfig.roshi_root;
+  const axionRoot = domainsConfig.axion_root || 'axion';
+  const domainsDir = path.join(axionRoot, domainsConfig.domains_dir || 'domains');
   
-  // Validate domain argument if provided
-  if (domainArg) {
-    const validDomain = domainsConfig.domains.find(d => d.slug === domainArg);
-    if (!validDomain) {
-      throw new Error(`Domain "${domainArg}" not found in assembler/domains.json`);
-    }
-  }
-  
-  // Check required input files exist (Inputs Pack rule)
-  const missingFiles = checkRequiredFiles(roshiRoot);
-  if (missingFiles.length > 0) {
-    report.failed.push('Required input files missing:');
-    missingFiles.forEach(f => report.failed.push(`  - ${f}`));
-    printReport(true);
-    process.exit(1);
-  }
-  
-  console.log('All required input files found. Proceeding with draft...');
-  
-  // Extract information from sources
-  const sourceInfo = extractSourceInfo(roshiRoot);
-  
-  // Filter domains if --domain specified
-  const domainsToProcess = domainArg 
-    ? domainsConfig.domains.filter(d => d.slug === domainArg)
-    : domainsConfig.domains;
-  
-  for (const domain of domainsToProcess) {
-    const domainDir = path.join(roshiRoot, domainsConfig.domains_dir, domain.slug);
+  // Process each module
+  for (const module of modules) {
+    // Check prereqs: seed must be done for this module
+    ensurePrereqs({
+      stageName: 'draft',
+      module,
+      stagePrereq: (m) => isStageDone('seed', m),
+    });
+    
+    console.log(`Drafting module: ${module}`);
+    
+    const domainDir = path.join(domainsDir, module);
     
     // Generate BELS candidates
-    const belsContent = generateBELSCandidates(domain, sourceInfo, roshiRoot);
-    const belsPath = path.join(domainDir, `BELS_${domain.slug}.md`);
+    const belsContent = generateBELSCandidates(module);
+    const belsPath = path.join(domainDir, `BELS_${module}.md`);
     ensureFile(belsPath, belsContent);
     
     // Generate Open Questions doc
-    const openQuestionsContent = generateOpenQuestions(domain);
-    const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${domain.slug}.md`);
+    const openQuestionsContent = generateOpenQuestions(module);
+    const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
     ensureFile(openQuestionsPath, openQuestionsContent);
+    
+    // Mark stage done for this module
+    if (!dryRun) {
+      markStageDone('draft', module);
+    }
   }
   
   printReport(false);

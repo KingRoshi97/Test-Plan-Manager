@@ -1,17 +1,29 @@
 #!/usr/bin/env node
 /**
- * assembler:verify - Verify the system (gate check)
+ * axion:verify - Verify the system (gate check)
  * Fails if required files are missing, undefined reason codes referenced,
  * UNKNOWNs in locked sections, or required template sections absent.
+ * 
+ * Usage:
+ *   node axion/scripts/axion-verify.mjs --all
+ *   node axion/scripts/axion-verify.mjs --module <name>
  */
 
 import fs from 'fs';
 import path from 'path';
+import {
+  parseModuleArgs,
+  ensurePrereqs,
+  isStageDone,
+  markStageDone,
+  writeVerifyStatus,
+  failJson,
+} from './_axion_module_mode.mjs';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const domainArg = args.find((_, i, arr) => arr[i - 1] === '--domain');
+const { modules, all } = parseModuleArgs(process.argv);
 
 // Report tracking
 const report = {
@@ -28,29 +40,24 @@ const verify = {
 };
 
 function loadDomainsConfig() {
-  const configPath = 'assembler/domains.json';
+  const configPath = 'axion/config/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('assembler/domains.json not found. Run assembler:init first.');
+    throw new Error('axion/config/domains.json not found. Run axion:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
 
-function checkRequiredFiles(roshiRoot) {
-  const requiredFiles = [
-    `${roshiRoot}/00_product/RPBS_Product.md`,
-    `${roshiRoot}/00_product/REBS_Product.md`,
-    `${roshiRoot}/00_registry/domain-map.md`,
-    `${roshiRoot}/00_registry/action-vocabulary.md`,
-    `${roshiRoot}/00_registry/reason-codes.md`,
-    `${roshiRoot}/00_registry/glossary.md`,
-    `${roshiRoot}/00_product/PROJECT_OVERVIEW.md`
-  ];
-  
+function checkDomainFiles(axionRoot, module, domainsDir) {
+  const requiredDocs = ['BELS', 'DDES', 'DIM', 'SCREENMAP', 'TESTPLAN'];
   const results = [];
-  for (const file of requiredFiles) {
-    const exists = fs.existsSync(file);
+  
+  const domainDir = path.join(axionRoot, domainsDir, module);
+  
+  for (const docType of requiredDocs) {
+    const filePath = path.join(domainDir, `${docType}_${module}.md`);
+    const exists = fs.existsSync(filePath);
     results.push({
-      file,
+      file: filePath,
       passed: exists,
       message: exists ? 'File exists' : 'File missing'
     });
@@ -60,50 +67,30 @@ function checkRequiredFiles(roshiRoot) {
   return results;
 }
 
-function checkDomainFiles(roshiRoot, domains, domainsDir) {
-  const requiredDocs = ['BELS', 'DDES', 'DIM', 'SCREENMAP', 'TESTPLAN'];
+function checkLockedDomainsForUnknowns(axionRoot, module, domainsDir) {
   const results = [];
+  const domainDir = path.join(axionRoot, domainsDir, module);
   
-  for (const domain of domains) {
-    const domainDir = path.join(roshiRoot, domainsDir, domain.slug);
-    
-    for (const docType of requiredDocs) {
-      const filePath = path.join(domainDir, `${docType}_${domain.slug}.md`);
-      const exists = fs.existsSync(filePath);
-      results.push({
-        file: filePath,
-        passed: exists,
-        message: exists ? 'File exists' : 'File missing'
-      });
-      if (!exists) verify.passed = false;
-    }
+  if (!fs.existsSync(domainDir)) {
+    return results;
   }
   
-  return results;
-}
-
-function checkLockedDomainsForUnknowns(roshiRoot, domains, domainsDir) {
-  const results = [];
+  // Check for ERC files (indicates locked domain)
+  const files = fs.readdirSync(domainDir);
+  const ercFiles = files.filter(f => f.startsWith('ERC_'));
   
-  for (const domain of domains) {
-    const domainDir = path.join(roshiRoot, domainsDir, domain.slug);
+  for (const ercFile of ercFiles) {
+    const ercPath = path.join(domainDir, ercFile);
+    const content = fs.readFileSync(ercPath, 'utf8');
+    const unknownCount = (content.match(/UNKNOWN/g) || []).length;
     
-    // Check for ERC files (indicates locked domain)
-    const ercFiles = fs.readdirSync(domainDir).filter(f => f.startsWith('ERC_'));
-    
-    for (const ercFile of ercFiles) {
-      const ercPath = path.join(domainDir, ercFile);
-      const content = fs.readFileSync(ercPath, 'utf8');
-      const unknownCount = (content.match(/UNKNOWN/g) || []).length;
-      
-      const passed = unknownCount === 0;
-      results.push({
-        file: ercPath,
-        passed,
-        message: passed ? 'No UNKNOWNs in locked ERC' : `${unknownCount} UNKNOWNs found in locked ERC`
-      });
-      if (!passed) verify.passed = false;
-    }
+    const passed = unknownCount === 0;
+    results.push({
+      file: ercPath,
+      passed,
+      message: passed ? 'No UNKNOWNs in locked ERC' : `${unknownCount} UNKNOWNs found in locked ERC`
+    });
+    if (!passed) verify.passed = false;
   }
   
   return results;
@@ -111,10 +98,10 @@ function checkLockedDomainsForUnknowns(roshiRoot, domains, domainsDir) {
 
 function printReport() {
   console.log('\n========== ASSEMBLER_REPORT ==========');
-  console.log(`Script: assembler:verify`);
+  console.log(`Script: axion:verify`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
-  console.log(`Status: ${verify.passed ? 'PASS ✓' : 'FAIL ✗'}`);
-  if (domainArg) console.log(`Domain: ${domainArg}`);
+  console.log(`Status: ${verify.passed ? 'PASS' : 'FAIL'}`);
+  console.log(`Modules: ${modules.join(', ')}`);
   
   console.log('\n--- VERIFICATION RESULTS ---');
   
@@ -122,10 +109,10 @@ function printReport() {
   const failedChecks = verify.checks.filter(c => !c.passed);
   
   console.log(`\nPassed (${passedChecks.length}):`);
-  passedChecks.forEach(c => console.log(`  ✓ ${c.file}: ${c.message}`));
+  passedChecks.forEach(c => console.log(`  + ${c.file}: ${c.message}`));
   
   console.log(`\nFailed (${failedChecks.length}):`);
-  failedChecks.forEach(c => console.log(`  ✗ ${c.file}: ${c.message}`));
+  failedChecks.forEach(c => console.log(`  - ${c.file}: ${c.message}`));
   
   console.log('\n--- FILE OPERATIONS ---');
   console.log(`Created (${report.created.length}):`);
@@ -139,41 +126,62 @@ function printReport() {
   console.log('\n===================================');
   
   if (!verify.passed) {
-    console.log('\n⚠️  VERIFICATION FAILED - Do not proceed with build.');
-    process.exit(1);
+    console.log('\nVERIFICATION FAILED - Do not proceed with lock.');
   } else {
-    console.log('\n✓ VERIFICATION PASSED - System ready for build.');
+    console.log('\nVERIFICATION PASSED - Modules ready for lock.');
   }
 }
 
 try {
-  console.log('Running assembler:verify...');
+  console.log('Running axion:verify...');
   
   const config = loadDomainsConfig();
-  const roshiRoot = config.roshi_root;
+  const axionRoot = config.axion_root || 'axion';
+  const domainsDir = config.domains_dir || 'domains';
   
-  // Validate domain argument if provided
-  if (domainArg) {
-    const validDomain = config.domains.find(d => d.slug === domainArg);
-    if (!validDomain) {
-      throw new Error(`Domain "${domainArg}" not found in assembler/domains.json`);
+  // Process each module
+  for (const module of modules) {
+    // Check prereqs: review must be done for this module
+    ensurePrereqs({
+      stageName: 'verify',
+      module,
+      stagePrereq: (m) => isStageDone('review', m),
+    });
+    
+    console.log(`Verifying module: ${module}`);
+    
+    // Check domain files
+    verify.checks.push(...checkDomainFiles(axionRoot, module, domainsDir));
+    
+    // Check locked domains for UNKNOWNs
+    verify.checks.push(...checkLockedDomainsForUnknowns(axionRoot, module, domainsDir));
+    
+    // If this module failed, exit with blocked_by
+    if (!verify.passed) {
+      failJson({
+        status: 'FAIL',
+        stage: 'verify',
+        module,
+        reason: 'verification_failed',
+        details: verify.checks.filter(c => !c.passed).map(c => c.message),
+      });
+    }
+    
+    // Mark stage done for this module
+    if (!dryRun) {
+      markStageDone('verify', module, { result: 'PASS' });
     }
   }
   
-  // Filter domains if --domain specified
-  const domainsToProcess = domainArg 
-    ? config.domains.filter(d => d.slug === domainArg)
-    : config.domains;
-  
-  // Run verification checks
-  console.log('Checking required files...');
-  verify.checks.push(...checkRequiredFiles(roshiRoot));
-  
-  console.log('Checking domain files...');
-  verify.checks.push(...checkDomainFiles(roshiRoot, domainsToProcess, config.domains_dir));
-  
-  console.log('Checking locked domains for UNKNOWNs...');
-  verify.checks.push(...checkLockedDomainsForUnknowns(roshiRoot, domainsToProcess, config.domains_dir));
+  // Write global verify status
+  if (!dryRun) {
+    writeVerifyStatus({
+      status: 'PASS',
+      timestamp: new Date().toISOString(),
+      mode: all ? 'all' : 'module',
+      modules,
+    });
+  }
   
   printReport();
   
