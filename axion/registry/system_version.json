@@ -1,0 +1,11 @@
+{
+  "axion_version": "1.0.0",
+  "schema_versions": {
+    "verify_report": "1.0.0",
+    "stage_markers": "1.0.0",
+    "seams": "1.0.0",
+    "template_hashes": "1.0.0"
+  },
+  "last_upgraded": "2026-02-03T07:59:00.149Z",
+  "upgrade_count": 2
+}
