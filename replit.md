@@ -47,12 +47,37 @@ Preferred communication style: Simple, everyday language.
 - **Production**: esbuild for server, Vite for client (output to `dist/public`).
 - **Output**: Single CJS bundle for server, static assets for client.
 
-### Assembler Pipeline
-- **Configuration**: `assembler/domains.json` (domain structure), `assembler/sources.json` (source documents).
-- **Documentation Root**: `docs/assembler_v1/`.
-- **Templates**: Located in `01_templates/` for generating domain-specific documentation.
-- **Pipeline Scripts**: npm scripts for each stage (e.g., `assembler:init`, `assembler:gen`).
-- **AI Generation**: OpenAI (gpt-5-mini via Replit AI Integrations) generates 7 source documents in parallel.
+### AXION Pipeline (Module Mode)
+- **Configuration**: `axion/config/domains.json`, `axion/config/sources.json`
+- **Documentation Root**: `axion/source_docs/`
+- **Templates**: Located in `axion/templates/` (23 templates including ALRP, TIES, SROL)
+- **Domains Directory**: `axion/domains/<module>/` - each module gets its own folder
+- **Stage Markers**: `axion/source_docs/registry/stage_markers/<stage>/<module>.json`
+
+#### Module Mode System
+Scripts now support `--module <name>` or `--all` flags with dependency tracking:
+- **19 Modules in Order**: architecture, systems, contracts, database, data, auth, backend, integrations, state, frontend, fullstack, testing, quality, security, devops, cloud, devex, mobile, desktop
+- **Prerequisite Checking**: Each stage enforces dependencies (e.g., can't seed frontend until backend seeded)
+- **Stage Tracking**: Scripts create markers in `stage_markers/<stage>/<module>.json`
+- **Verify Gate**: Lock script requires `verify_status.json = PASS` before proceeding
+
+#### Pipeline Scripts
+- `axion-generate.mjs` - Generate per-module doc packs
+- `axion-seed.mjs` - Seed starter scaffolding (prereq: generate)
+- `axion-draft.mjs` - Draft truth candidates (prereq: seed)
+- `axion-review.mjs` - Review packet, count UNKNOWNs (prereq: draft)
+- `axion-verify.mjs` - Verify system gate check (prereq: review, writes verify_status.json)
+- `axion-lock.mjs` - Lock domain, create ERC (requires verify PASS)
+
+#### Shared Helper
+`axion/scripts/_axion_module_mode.mjs` provides:
+- `AXION_MODULE_ORDER` - 19 modules in execution order
+- `AXION_PREREQS` - Dependency map for each module
+- `parseModuleArgs()` - Parse --module/--all flags
+- `isStageDone()`, `markStageDone()` - Stage marker management
+- `ensurePrereqs()` - Block execution if prereqs not met
+- `readVerifyStatus()`, `writeVerifyStatus()` - Global verify status
+- `failJson()` - Output blocked_by JSON and exit
 
 ### AI-Generated Documents
 - PROJECT_OVERVIEW.md
