@@ -1,4 +1,69 @@
 {
   "version": "1.0.0",
-  "markers": {}
+  "markers": {
+    "architecture": {
+      "generate": {
+        "completed_at": "2026-02-03T09:29:17.604Z",
+        "files": [
+          "domains/architecture/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:29:18.315Z"
+      },
+      "draft": {
+        "completed_at": "2026-02-03T09:29:19.025Z"
+      },
+      "review": {
+        "completed_at": "2026-02-03T09:29:19.644Z",
+        "unknown_count": 2,
+        "tbd_count": 40,
+        "issues": []
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:29:20.367Z",
+        "status": "FAIL"
+      }
+    },
+    "systems": {
+      "generate": {
+        "completed_at": "2026-02-03T09:29:17.888Z",
+        "files": [
+          "domains/systems/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:29:18.524Z"
+      },
+      "draft": {
+        "completed_at": "2026-02-03T09:29:19.220Z"
+      },
+      "review": {
+        "completed_at": "2026-02-03T09:29:19.917Z",
+        "unknown_count": 6,
+        "tbd_count": 24,
+        "issues": []
+      }
+    },
+    "contracts": {
+      "generate": {
+        "completed_at": "2026-02-03T09:29:18.090Z",
+        "files": [
+          "domains/contracts/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:29:18.772Z"
+      },
+      "draft": {
+        "completed_at": "2026-02-03T09:29:19.438Z"
+      },
+      "review": {
+        "completed_at": "2026-02-03T09:29:20.139Z",
+        "unknown_count": 6,
+        "tbd_count": 23,
+        "issues": []
+      }
+    }
+  }
 }
