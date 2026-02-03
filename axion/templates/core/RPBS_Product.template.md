@@ -191,7 +191,249 @@ Provide 5–12 journeys. Each journey must include success + at least one failur
 
 ---
 
-## 11) Tech Constraints vs Preferences
+## 11) Notifications & Messaging Matrix
+
+### Notification Channels Supported
+| Channel | Enabled? | Notes |
+|---------|----------|-------|
+| Email | Yes \| No \| UNKNOWN | |
+| In-app | Yes \| No \| UNKNOWN | |
+| Push | Yes \| No \| UNKNOWN | |
+| SMS | Yes \| No \| UNKNOWN | |
+
+### Notification Events
+| Event ID | Trigger Condition | Audience (Actor) | Channel(s) | User Opt-Out? | Urgency (L/M/H) | Required Copy? | Notes |
+|----------|-------------------|------------------|------------|---------------|-----------------|----------------|-------|
+| N-01 | {{TRIGGER_N1}} | {{AUDIENCE_N1}} | {{CHANNEL_N1}} | Y/N/UNKNOWN | L/M/H | Y/N | |
+| N-02 | {{TRIGGER_N2}} | {{AUDIENCE_N2}} | {{CHANNEL_N2}} | Y/N/UNKNOWN | L/M/H | Y/N | |
+
+### Delivery Expectations
+- **Send timing:** immediate \| batched \| UNKNOWN
+- **Quiet hours:** Yes \| No \| UNKNOWN
+- **Retry behavior:** Yes \| No \| UNKNOWN
+
+> **Rule:** If any channel is enabled but events are unknown, add OPEN_QUESTIONS.
+
+---
+
+## 12) Search, Sort, Filter, and Discovery
+
+### Search Scope
+| Entity/Object | Searchable? | Search Fields (max 10) | Fuzzy Match? | Notes |
+|---------------|-------------|------------------------|--------------|-------|
+| {{ENTITY_S1}} | Y/N/UNKNOWN | {{FIELDS_S1}} | Y/N/UNKNOWN | |
+| {{ENTITY_S2}} | Y/N/UNKNOWN | {{FIELDS_S2}} | Y/N/UNKNOWN | |
+
+### Filters
+| Entity/Object | Filter Fields (max 10) | Default Filters | Notes |
+|---------------|------------------------|-----------------|-------|
+| {{ENTITY_F1}} | {{FILTER_F1}} | {{DEFAULT_F1}} | |
+
+### Sorting
+| Entity/Object | Sort Options | Default Sort | Notes |
+|---------------|--------------|--------------|-------|
+| {{ENTITY_SO1}} | {{SORT_SO1}} | {{DEFAULT_SO1}} | |
+
+### Pagination Expectations
+- **Default page size:** {{PAGE_SIZE}} \| UNKNOWN
+- **Pagination type:** cursor \| offset \| UNKNOWN
+
+> **Rule:** If search is enabled, define at least one searchable entity or mark UNKNOWN + OPEN_QUESTION.
+
+---
+
+## 13) File / Media Handling
+
+### Upload Support
+- **Uploads allowed:** Yes \| No \| UNKNOWN
+- **Download access:** public \| private \| mixed \| UNKNOWN
+
+### File Types & Limits
+| File Type Category | Allowed? | Examples | Max Size | Notes |
+|--------------------|----------|----------|----------|-------|
+| Images | Y/N/UNKNOWN | {{IMG_EXAMPLES}} | {{IMG_SIZE}} | |
+| Documents | Y/N/UNKNOWN | {{DOC_EXAMPLES}} | {{DOC_SIZE}} | |
+| Video | Y/N/UNKNOWN | {{VID_EXAMPLES}} | {{VID_SIZE}} | |
+
+### Storage & Security Expectations
+- **Virus scanning required:** Yes \| No \| UNKNOWN
+- **Signed URLs required:** Yes \| No \| UNKNOWN
+- **Expiring links:** Yes \| No \| UNKNOWN
+- **PII in files allowed:** Yes \| No \| UNKNOWN
+
+### Moderation (if user-generated content)
+- **Content moderation required:** Yes \| No \| UNKNOWN
+- **If Yes:** manual \| automatic \| both \| UNKNOWN
+
+> **Rule:** If uploads are enabled, max size and allowed types cannot be UNKNOWN (must ask).
+
+---
+
+## 14) Billing, Plans, and Entitlements
+
+### Billing Included?
+- **Billing required:** Yes \| No \| UNKNOWN
+- **If Yes:** subscription \| one-time \| usage-based \| mixed \| UNKNOWN
+
+### Plans / Tiers
+| Plan ID | Name | Price (optional) | Billing Period | Intended User | Notes |
+|---------|------|------------------|----------------|---------------|-------|
+| P-01 | {{PLAN_1}} | {{PRICE_1}} | {{PERIOD_1}} | {{USER_1}} | |
+| P-02 | {{PLAN_2}} | {{PRICE_2}} | {{PERIOD_2}} | {{USER_2}} | |
+
+### Entitlements (Feature Gates)
+| Feature | Available In Plans | Limits (if any) | Notes |
+|---------|-------------------|-----------------|-------|
+| {{FEAT_E1}} | {{PLANS_E1}} | {{LIMIT_E1}} | |
+
+### Trials, Upgrades, and Cancellations
+- **Trial included:** Yes \| No \| UNKNOWN
+- **Trial length:** {{TRIAL_LENGTH}} \| UNKNOWN
+- **Upgrade/downgrade allowed:** Yes \| No \| UNKNOWN
+- **Cancellation behavior:** immediate \| end-of-period \| UNKNOWN
+- **Refunds:** Yes \| No \| UNKNOWN
+
+### Billing Edge Cases
+- **Payment failure handling:** UNKNOWN \| Defined: {{PAYMENT_FAIL}}
+- **Grace period:** Yes \| No \| UNKNOWN
+- **Proration:** Yes \| No \| UNKNOWN
+
+> **Rule:** If billing is Yes, "billing type" cannot remain UNKNOWN—add OPEN_QUESTIONS.
+
+---
+
+## 15) Admin / Backoffice Requirements
+
+### Admin Interface Included?
+- **Admin UI required:** Yes \| No \| UNKNOWN
+
+### Admin Capabilities
+| Capability | Required? | Notes |
+|------------|-----------|-------|
+| Manage users (create/invite/disable) | Y/N/UNKNOWN | |
+| Manage roles/permissions | Y/N/UNKNOWN | |
+| View audit logs | Y/N/UNKNOWN | |
+| View billing/subscriptions | Y/N/UNKNOWN | |
+| Content moderation | Y/N/UNKNOWN | |
+| Data export | Y/N/UNKNOWN | |
+| Support tooling (impersonation?) | Y/N/UNKNOWN | |
+
+### Access & Security
+- **Admin access restricted to:** {{ADMIN_ACTORS}}
+- **Strong auth required (MFA/SSO):** Yes \| No \| UNKNOWN
+- **Admin actions must be auditable:** Yes \| No \| UNKNOWN
+
+### Operational Expectations
+- **Support requests workflow:** Yes \| No \| UNKNOWN
+- **SLA expectations (if any):** {{SLA_NOTES}}
+
+> **Rule:** If admin is Yes, auditing requirement must be specified or set to default Yes + log as assumption.
+
+---
+
+## 16) Audit Logging, Activity History, and Data Export
+
+### Audit Logging Required?
+- **Audit log required:** Yes \| No \| UNKNOWN
+- **If Yes, who can view it?:** {{AUDIT_VIEWERS}}
+
+### Auditable Events (minimum set)
+| Event Category | Required? | Notes |
+|----------------|-----------|-------|
+| Auth events (login/logout/failed attempts) | Y/N/UNKNOWN | |
+| Permission/role changes | Y/N/UNKNOWN | |
+| Data changes (create/update/delete of core objects) | Y/N/UNKNOWN | |
+| Billing events (if billing enabled) | Y/N/UNKNOWN | |
+| Admin actions | Y/N/UNKNOWN | |
+
+### Data Export
+- **User export required:** Yes \| No \| UNKNOWN
+- **Admin export required:** Yes \| No \| UNKNOWN
+- **Export formats:** CSV \| JSON \| UNKNOWN
+- **Scope:** full account \| per object \| UNKNOWN
+- **Data portability requirement:** Yes \| No \| UNKNOWN
+
+> **Rule:** If auditing is Yes, define at least 3 auditable categories or add OPEN_QUESTIONS.
+
+---
+
+## 17) Abuse Prevention, Rate Limits, and Safety
+
+### Abuse Prevention Needed?
+- **Abuse prevention required:** Yes \| No \| UNKNOWN
+- **Rate limiting required:** Yes \| No \| UNKNOWN
+- **Anti-spam controls required:** Yes \| No \| UNKNOWN
+
+### Threat/Abuse Scenarios
+| Scenario | Likelihood (L/M/H) | Impact (L/M/H) | Notes |
+|----------|-------------------|----------------|-------|
+| Credential stuffing | L/M/H | L/M/H | |
+| Spam content submissions | L/M/H | L/M/H | |
+| Excessive API calls | L/M/H | L/M/H | |
+| Scraping | L/M/H | L/M/H | |
+
+### User Controls
+- **Report content/user:** Yes \| No \| UNKNOWN
+- **Blocking/muting:** Yes \| No \| UNKNOWN
+- **CAPTCHA:** Yes \| No \| UNKNOWN
+
+> **Rule:** If public signup exists, rate limiting defaults to Yes unless explicitly disabled.
+
+---
+
+## 18) Data Import, Migration, and Onboarding
+
+### Data Import Required?
+- **Import required:** Yes \| No \| UNKNOWN
+- **If Yes, source types:** CSV \| API \| manual \| UNKNOWN
+
+### Import Scope
+| Object | Import Required? | Source Format | Notes |
+|--------|------------------|---------------|-------|
+| {{OBJ_IMP1}} | Y/N/UNKNOWN | {{FORMAT_IMP1}} | |
+
+### Migration Expectations
+- **Existing system migration:** Yes \| No \| UNKNOWN
+- **If Yes, migration timeline constraint:** {{MIGRATION_TIMELINE}}
+
+> **Rule:** If import is Yes, at least one object must be listed.
+
+---
+
+## 19) Offline, Sync, and Caching Expectations
+
+### Offline Support
+- **Offline required:** Yes \| No \| UNKNOWN
+- **If Yes, offline modes:** read-only \| queued writes \| full offline \| UNKNOWN
+
+### Sync & Conflict Rules
+- **Conflict resolution:** last-write-wins \| user-merge \| UNKNOWN
+- **Background sync:** Yes \| No \| UNKNOWN
+- **Cache TTL expectations:** {{CACHE_TTL}}
+
+> **Rule:** If mobile is a target platform, offline should be explicitly Yes/No (not UNKNOWN).
+
+---
+
+## 20) Reliability, Recovery, and Support Expectations
+
+### Reliability Tier
+- **Reliability:** basic \| standard \| high \| UNKNOWN
+
+### Recovery Expectations
+- **Backups required:** Yes \| No \| UNKNOWN
+- **RPO/RTO targets:** UNKNOWN \| Defined: {{RPO_RTO}}
+- **Disaster recovery required:** Yes \| No \| UNKNOWN
+
+### Support Expectations
+- **Support channel:** email \| chat \| UNKNOWN
+- **SLA expectation:** none \| basic \| strict \| UNKNOWN
+
+> **Rule:** If data sensitivity is high, backups default to Yes.
+
+---
+
+## 21) Tech Constraints vs Preferences
 
 ### Constraints (must, binding)
 | Constraint | Reason |
@@ -209,7 +451,7 @@ Provide 5–12 journeys. Each journey must include success + at least one failur
 
 ---
 
-## 12) OPEN_QUESTIONS (Mandatory)
+## 22) OPEN_QUESTIONS (Mandatory)
 
 | ID | Question | Why Needed | Impact if Wrong | Owner | Status |
 |----|----------|------------|-----------------|-------|--------|
@@ -218,7 +460,7 @@ Provide 5–12 journeys. Each journey must include success + at least one failur
 
 ---
 
-## 13) ASSUMPTIONS (Mandatory)
+## 23) ASSUMPTIONS (Mandatory)
 
 | ID | Assumption | Basis | Risk | How to Validate |
 |----|------------|-------|------|-----------------|
