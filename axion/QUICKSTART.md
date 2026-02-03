@@ -29,14 +29,27 @@ node --import tsx axion/scripts/axion-init.ts --mode fresh
 ```
 
 This creates:
-- `axion/source_docs/product/RPBS_Product.md` - Product requirements (edit first!)
-- `axion/source_docs/product/REBS_Product.md` - Engineering requirements (edit second!)
+- `axion/source_docs/product/attachments/START_HERE.txt` - **Start here!** Paste your project idea
+- `axion/source_docs/product/attachments/` - Drop additional docs here
+- `axion/source_docs/product/RPBS_Product.md` - Product requirements
+- `axion/source_docs/product/REBS_Product.md` - Engineering requirements
 - `axion/config/domains.json` - Module definitions
 - `axion/config/presets.json` - Pipeline presets
 
-### Step 2: Fill in Your Requirements
+### Step 2: Provide Your Project Input
 
-Edit the two source documents to define your project:
+**Option A: Attachments Workflow (Recommended for IDE users)**
+
+1. Open `axion/source_docs/product/attachments/START_HERE.txt`
+2. Paste your project idea, requirements, or any existing documentation
+3. Add additional files (specs, designs, API docs) to the `attachments/` folder
+4. Run `node --import tsx axion/scripts/axion-generate.ts --all`
+
+The generate stage reads ALL files from the attachments folder and saves them to `registry/attachments_content.md` for use in drafting documentation.
+
+**Option B: Direct RPBS/REBS Edit**
+
+Edit the source documents directly:
 
 **RPBS_Product.md** (Product):
 - Product vision and value proposition
@@ -173,6 +186,7 @@ axion/
 │   └── verify_report.json
 ├── source_docs/           # Your inputs
 │   └── product/
+│       ├── attachments/   # Drop files here (START_HERE.txt, specs, etc.)
 │       ├── RPBS_Product.md
 │       └── REBS_Product.md
 ├── templates/             # Module templates

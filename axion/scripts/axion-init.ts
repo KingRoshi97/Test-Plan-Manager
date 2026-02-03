@@ -284,7 +284,7 @@ If you're using AXION directly from your IDE, this is where you provide your pro
 
 ## How AXION Uses These Files
 
-The AXION pipeline reads ALL files from this folder during the \`draft\` stage to extract context for generating your documentation. The more detail you provide, the better your Agent Kit will be.
+The AXION pipeline reads ALL files from this folder during the \`generate\` stage and saves the combined content to \`registry/attachments_content.md\`. This content is then available during the \`draft\` stage to populate your documentation. The more detail you provide, the better your Agent Kit will be.
 
 ## File Types Supported
 
