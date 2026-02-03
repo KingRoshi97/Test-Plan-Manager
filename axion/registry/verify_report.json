@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-02-03T09:46:00.146Z",
+  "generated_at": "2026-02-03T10:06:01.899Z",
   "overall_status": "FAIL",
   "modules": {
     "architecture": {
@@ -7,52 +7,42 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION"
       ],
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 40 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block"
+        "Address 1 UNKNOWN items outside derivation block"
       ]
     },
     "systems": {
       "status": "FAIL",
       "reason_codes": [
-        "UNKNOWN_WITHOUT_OPEN_QUESTION",
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
-        "4 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 24 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency architecture must pass verify first"
       ]
     },
     "contracts": {
       "status": "FAIL",
       "reason_codes": [
-        "UNKNOWN_WITHOUT_OPEN_QUESTION",
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
-        "4 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 23 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency architecture must pass verify first",
         "Dependency systems must pass verify first"
       ]
@@ -60,19 +50,15 @@
     "database": {
       "status": "FAIL",
       "reason_codes": [
-        "UNKNOWN_WITHOUT_OPEN_QUESTION",
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
-        "5 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 22 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency contracts must pass verify first"
       ]
     },
@@ -81,7 +67,6 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
@@ -89,8 +74,7 @@
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 20 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency database must pass verify first",
         "Dependency contracts must pass verify first"
       ]
@@ -98,20 +82,16 @@
     "auth": {
       "status": "FAIL",
       "reason_codes": [
-        "UNKNOWN_WITHOUT_OPEN_QUESTION",
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
-        "4 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 22 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency contracts must pass verify first",
         "Dependency database must pass verify first"
       ]
@@ -119,21 +99,17 @@
     "backend": {
       "status": "FAIL",
       "reason_codes": [
-        "UNKNOWN_WITHOUT_OPEN_QUESTION",
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
-        "6 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 24 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency contracts must pass verify first",
         "Dependency database must pass verify first",
         "Dependency auth must pass verify first"
@@ -144,7 +120,6 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
@@ -152,8 +127,7 @@
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 21 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency backend must pass verify first",
         "Dependency contracts must pass verify first"
       ]
@@ -161,39 +135,31 @@
     "state": {
       "status": "FAIL",
       "reason_codes": [
-        "UNKNOWN_WITHOUT_OPEN_QUESTION",
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
-        "3 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 21 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency contracts must pass verify first"
       ]
     },
     "frontend": {
       "status": "FAIL",
       "reason_codes": [
-        "UNKNOWN_WITHOUT_OPEN_QUESTION",
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
-        "6 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 29 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency state must pass verify first",
         "Dependency contracts must pass verify first"
       ]
@@ -201,20 +167,16 @@
     "fullstack": {
       "status": "FAIL",
       "reason_codes": [
-        "UNKNOWN_WITHOUT_OPEN_QUESTION",
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
-        "5 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 22 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency frontend must pass verify first",
         "Dependency backend must pass verify first"
       ]
@@ -224,7 +186,6 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
@@ -232,8 +193,7 @@
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 21 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency backend must pass verify first",
         "Dependency frontend must pass verify first"
       ]
@@ -243,14 +203,12 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION"
       ],
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 17 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block"
+        "Address 1 UNKNOWN items outside derivation block"
       ]
     },
     "security": {
@@ -258,7 +216,6 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
@@ -266,8 +223,7 @@
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 19 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency auth must pass verify first",
         "Dependency backend must pass verify first"
       ]
@@ -277,7 +233,6 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
@@ -285,8 +240,7 @@
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 19 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency backend must pass verify first",
         "Dependency testing must pass verify first"
       ]
@@ -296,15 +250,13 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 20 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency devops must pass verify first"
       ]
     },
@@ -313,15 +265,13 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED"
       ],
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 17 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency quality must pass verify first"
       ]
     },
@@ -330,7 +280,6 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
@@ -338,8 +287,7 @@
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 23 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency frontend must pass verify first",
         "Dependency state must pass verify first"
       ]
@@ -349,7 +297,6 @@
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
-        "TBD_IN_REQUIRED",
         "UNKNOWN_WITHOUT_QUESTION",
         "DEP_NOT_VERIFIED",
         "DEP_NOT_VERIFIED"
@@ -357,8 +304,7 @@
       "hints": [
         "Add required section: ## 1.",
         "Add required section: ## 2.",
-        "Resolve 18 [TBD] placeholders",
-        "Address 2 UNKNOWN items outside derivation block",
+        "Address 1 UNKNOWN items outside derivation block",
         "Dependency frontend must pass verify first",
         "Dependency state must pass verify first"
       ]
@@ -367,11 +313,19 @@
   "seam_violations": [
     {
       "module": "contracts",
+      "seam": "schema_truth",
+      "reason_code": "SEAM_MISSING_LINK",
+      "description": "Module \"contracts\" references schema_truth without linking to owner",
+      "file": "domains/contracts/README.md",
+      "fix_action": "Add link to database/README.md for schema_truth references"
+    },
+    {
+      "module": "contracts",
       "seam": "webhooks",
       "reason_code": "SEAM_OWNER_VIOLATION",
       "description": "Module \"contracts\" defines webhooks content that belongs to \"integrations\"",
       "file": "domains/contracts/README.md",
-      "line": 70,
+      "line": 93,
       "fix_action": "Reference integrations module for webhook specs. Do not define event shapes locally."
     },
     {
@@ -380,16 +334,32 @@
       "reason_code": "SEAM_OWNER_VIOLATION",
       "description": "Module \"contracts\" defines api_versioning content that belongs to \"backend\"",
       "file": "domains/contracts/README.md",
-      "line": 64,
+      "line": 88,
       "fix_action": "Reference backend module for versioning policy. Do not define version rules locally."
     },
     {
-      "module": "backend",
-      "seam": "webhooks",
+      "module": "data",
+      "seam": "schema_truth",
       "reason_code": "SEAM_MISSING_LINK",
-      "description": "Module \"backend\" references webhooks without linking to owner",
+      "description": "Module \"data\" references schema_truth without linking to owner",
+      "file": "domains/data/README.md",
+      "fix_action": "Add link to database/README.md for schema_truth references"
+    },
+    {
+      "module": "backend",
+      "seam": "schema_truth",
+      "reason_code": "SEAM_MISSING_LINK",
+      "description": "Module \"backend\" references schema_truth without linking to owner",
       "file": "domains/backend/README.md",
-      "fix_action": "Add link to integrations/README.md for webhooks references"
+      "fix_action": "Add link to database/README.md for schema_truth references"
+    },
+    {
+      "module": "backend",
+      "seam": "correlation_ids",
+      "reason_code": "SEAM_MISSING_LINK",
+      "description": "Module \"backend\" references correlation_ids without linking to owner",
+      "file": "domains/backend/README.md",
+      "fix_action": "Add link to systems/README.md for correlation_ids references"
     },
     {
       "module": "integrations",
@@ -406,6 +376,14 @@
       "description": "Module \"fullstack\" references correlation_ids without linking to owner",
       "file": "domains/fullstack/README.md",
       "fix_action": "Add link to systems/README.md for correlation_ids references"
+    },
+    {
+      "module": "security",
+      "seam": "identity",
+      "reason_code": "SEAM_MISSING_LINK",
+      "description": "Module \"security\" references identity without linking to owner",
+      "file": "domains/security/README.md",
+      "fix_action": "Add link to auth/README.md for identity references"
     },
     {
       "module": "devops",
