@@ -51,6 +51,7 @@ Preferred communication style: Simple, everyday language.
   - **Stack Consistency**: Verify rule checks downstream modules match architecture's tech stack selection.
   - **Repair Mode**: Suggests fix actions for violations.
   - **Preset Execution**: Topological dependency resolution with guards (disallow_lock, lock_requires_verify_pass).
+  - **RPBS/REBS Propagation**: Deterministic derivation of product requirements (RPBS) and engineering policies (REBS) to all 8 core modules via `coverage_map.json` and RPBS_DERIVATIONS blocks with structured UNKNOWN/N/A placeholders.
 - **Stack Profiles**: 5 default profiles (default-web-saas, serverless-node, enterprise-java, python-data, go-microservices) in `stack_profiles.json`.
 - **Schema Contracts**:
   - `verify_report.json`: Uses `generated_at` (not timestamp), `modules` as Record (not array), `current_revision` (not revision).
