@@ -1,10 +1,19 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "stage_plans": {
-    "scaffold": ["generate", "seed"],
-    "docs": ["draft", "review", "verify"],
-    "full": ["generate", "seed", "draft", "review", "verify"],
-    "release": ["verify", "lock"]
+    "docs:scaffold": ["generate", "seed"],
+    "docs:content": ["draft", "review", "verify"],
+    "docs:full": ["generate", "seed", "draft", "review", "verify"],
+    "docs:release": ["verify", "lock"],
+    "app:bootstrap": ["scaffold-app"],
+    "app:build": ["build"],
+    "app:test": ["test"],
+    "app:full": ["scaffold-app", "build", "test"],
+    "app:ship": ["deploy"],
+    "system:overhaul": ["overhaul"],
+    "system:import": ["import"],
+    "system:full": ["generate", "seed", "draft", "review", "verify", "lock", "scaffold-app", "build", "test", "deploy", "package"],
+    "export:package": ["package"]
   },
   "presets": {
     "system": {
@@ -219,14 +228,14 @@
       "description": "Review + verify across all modules (no drafting).",
       "modules": ["architecture", "systems", "contracts", "database", "data", "auth", "backend", "integrations", "state", "frontend", "fullstack", "testing", "quality", "security", "devops", "cloud", "devex", "mobile", "desktop"],
       "include_dependencies": false,
-      "recommended_stage_plan": "docs"
+      "recommended_stage_plan": "docs:content"
     },
     "prelock": {
       "label": "Pre-Lock Readiness",
       "description": "Run full readiness loop (generate→seed→draft→review→verify), stop before lock.",
       "modules": ["architecture", "systems", "contracts", "database", "data", "auth", "backend", "integrations", "state", "frontend", "fullstack", "testing", "quality", "security", "devops", "cloud", "devex", "mobile", "desktop"],
       "include_dependencies": false,
-      "recommended_stage_plan": "full",
+      "recommended_stage_plan": "docs:full",
       "guards": {
         "disallow_lock": true
       }
@@ -236,10 +245,44 @@
       "description": "Verify must PASS; then lock (ERC generation).",
       "modules": ["architecture", "systems", "contracts", "database", "data", "auth", "backend", "integrations", "state", "frontend", "fullstack", "testing", "quality", "security", "devops", "cloud", "devex", "mobile", "desktop"],
       "include_dependencies": false,
-      "recommended_stage_plan": "release",
+      "recommended_stage_plan": "docs:release",
       "guards": {
         "lock_requires_verify_pass": true
       }
+    }
+  },
+  "gates": {
+    "draft": {
+      "requires_stage": "seed",
+      "error": "DRAFT_BLOCKED_SEED_INCOMPLETE",
+      "message": "draft blocked unless seed complete for target module(s)"
+    },
+    "verify": {
+      "requires_stage": "review",
+      "error": "VERIFY_BLOCKED_REVIEW_INCOMPLETE",
+      "message": "verify blocked unless review complete"
+    },
+    "lock": {
+      "requires_verify_pass": true,
+      "error": "LOCK_REFUSED_VERIFY_NOT_PASS",
+      "message": "lock refused unless latest verify is PASS"
+    },
+    "scaffold-app": {
+      "requires_docs_locked": true,
+      "allow_override": "dev_build",
+      "error": "SCAFFOLD_BLOCKED_DOCS_NOT_LOCKED",
+      "message": "scaffold-app blocked unless docs are locked (or explicit override 'dev_build')"
+    },
+    "build": {
+      "requires_stage": "scaffold-app",
+      "error": "BUILD_BLOCKED_SCAFFOLD_INCOMPLETE",
+      "message": "build blocked unless scaffold-app complete"
+    },
+    "deploy": {
+      "requires_tests_pass": true,
+      "allow_override": true,
+      "error": "DEPLOY_BLOCKED_TESTS_NOT_PASS",
+      "message": "deploy blocked unless tests PASS (or explicit override)"
     }
   }
 }
