@@ -442,6 +442,105 @@ function verifySeams(modules: string[]): SeamViolation[] {
 }
 
 // ────────────────────────────────────────────────────────────
+// Stack consistency verification
+// ────────────────────────────────────────────────────────────
+
+interface StackViolation {
+  module: string;
+  issue: string;
+  expected: string;
+  found: string;
+  file: string;
+}
+
+function extractArchitectureStack(): Record<string, string> | null {
+  const archPath = path.join(DOMAINS_PATH, 'architecture', 'README.md');
+  if (!fs.existsSync(archPath)) return null;
+  
+  const content = fs.readFileSync(archPath, 'utf-8');
+  const stack: Record<string, string> = {};
+  
+  const patterns: Record<string, RegExp> = {
+    'frontend_framework': /^- Framework:\s*(.+)$/m,
+    'frontend_language': /^- Language:\s*(.+)$/m,
+    'backend_runtime': /^- Runtime:\s*(.+)$/m,
+    'backend_framework': /^- Framework:\s*(.+)$/m,
+    'database_engine': /^- Engine:\s*(.+)$/m,
+    'database_orm': /^- ORM:\s*(.+)$/m,
+  };
+  
+  for (const [key, pattern] of Object.entries(patterns)) {
+    const match = content.match(pattern);
+    if (match && match[1] && !match[1].includes('[TBD]')) {
+      stack[key] = match[1].trim();
+    }
+  }
+  
+  return Object.keys(stack).length > 0 ? stack : null;
+}
+
+function verifyStackConsistency(modules: string[]): StackViolation[] {
+  const violations: StackViolation[] = [];
+  const archStack = extractArchitectureStack();
+  
+  if (!archStack) return violations;
+  
+  const moduleStackPatterns: Record<string, { key: string; pattern: RegExp }[]> = {
+    frontend: [
+      { key: 'frontend_framework', pattern: /(?:framework|react|vue|angular|svelte)/i },
+      { key: 'frontend_language', pattern: /(?:typescript|javascript|ts|js)\b/i },
+    ],
+    backend: [
+      { key: 'backend_runtime', pattern: /(?:node|python|java|go|rust)\b/i },
+      { key: 'backend_framework', pattern: /(?:express|fastify|django|flask|spring)\b/i },
+    ],
+    database: [
+      { key: 'database_engine', pattern: /(?:postgres|mysql|mongodb|sqlite)\b/i },
+      { key: 'database_orm', pattern: /(?:drizzle|prisma|typeorm|sequelize)\b/i },
+    ],
+  };
+  
+  for (const moduleName of modules) {
+    if (moduleName === 'architecture') continue;
+    
+    const patterns = moduleStackPatterns[moduleName];
+    if (!patterns) continue;
+    
+    const modulePath = path.join(DOMAINS_PATH, moduleName, 'README.md');
+    if (!fs.existsSync(modulePath)) continue;
+    
+    const content = fs.readFileSync(modulePath, 'utf-8');
+    
+    for (const { key, pattern } of patterns) {
+      if (!archStack[key]) continue;
+      
+      const archValue = archStack[key].toLowerCase();
+      const matches = content.match(new RegExp(pattern, 'gi'));
+      
+      if (matches) {
+        for (const match of matches) {
+          const matchLower = match.toLowerCase();
+          if (!archValue.includes(matchLower) && !matchLower.includes(archValue.split(' ')[0].toLowerCase())) {
+            const archValueLower = archStack[key].toLowerCase().split(' ')[0];
+            if (!matchLower.includes(archValueLower) && !archValueLower.includes(matchLower)) {
+              violations.push({
+                module: moduleName,
+                issue: `Stack mismatch for ${key}`,
+                expected: archStack[key],
+                found: match,
+                file: `domains/${moduleName}/README.md`,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return violations;
+}
+
+// ────────────────────────────────────────────────────────────
 // Template hashing (inline, not external script)
 // ────────────────────────────────────────────────────────────
 
@@ -602,7 +701,20 @@ function main() {
     }
   }
   
-  // 3. Template hashing
+  // 3. Stack consistency
+  console.log('\n[INFO] Checking stack consistency...');
+  const stackViolations = verifyStackConsistency(moduleNames);
+  
+  if (stackViolations.length === 0) {
+    console.log('[PASS] Stack choices consistent');
+  } else {
+    console.log(`[WARN] Found ${stackViolations.length} stack mismatch(es)`);
+    for (const v of stackViolations) {
+      console.log(`  - ${v.module}: expected "${v.expected}" but found "${v.found}"`);
+    }
+  }
+  
+  // 4. Template hashing
   console.log('\n[INFO] Checking template hashes...');
   const templateDrift = verifyTemplateHashes();
   
