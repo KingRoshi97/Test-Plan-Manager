@@ -6,6 +6,44 @@ Axiom Assembler is a web application and API designed to generate comprehensive 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Project Structure
+
+The repository is organized into two main areas:
+
+```
+/
+├── webapp/                  # Web application (React frontend + Express backend)
+│   ├── client/              # React frontend with Vite
+│   ├── server/              # Express.js API server
+│   ├── shared/              # Shared types and schemas
+│   ├── uploads/             # Uploaded files (runtime)
+│   ├── vite.config.ts       # Vite configuration
+│   ├── tsconfig.json        # TypeScript config for webapp
+│   ├── tailwind.config.ts   # Tailwind CSS config
+│   ├── drizzle.config.ts    # Drizzle ORM config
+│   └── components.json      # shadcn/ui config
+├── axion/                   # AXION documentation engine
+│   ├── config/              # Module configuration (domains.json, sources.json)
+│   ├── scripts/             # Pipeline scripts (generate, seed, draft, etc.)
+│   ├── source_docs/         # User's project documentation (RPBS, REBS)
+│   ├── templates/           # 23 documentation templates
+│   ├── domains/             # Per-module output folders
+│   └── docs/                # AXION system documentation
+├── workspaces/              # Isolated assembly workspaces
+├── migrations/              # Drizzle database migrations
+├── attached_assets/         # User-uploaded attachments for form
+├── docs/                    # General project documentation
+├── tsconfig.json            # Root tsconfig (extends webapp)
+├── tailwind.config.ts       # Symlink → webapp/tailwind.config.ts
+├── postcss.config.js        # Symlink → webapp/postcss.config.js
+├── components.json          # Symlink → webapp/components.json
+├── client/                  # Symlink → webapp/client
+├── server/                  # Symlink → webapp/server
+└── shared/                  # Symlink → webapp/shared
+```
+
+**Note**: Root-level symlinks maintain backward compatibility with npm scripts and Vite's build system.
+
 ## System Architecture
 
 ### Core Design Principles
@@ -132,21 +170,21 @@ Supported frameworks include Next.js, Vite, Expo, React Native, Nuxt, Express, F
 
 ### Safety v1
 Security infrastructure prerequisite for public launch:
-- **Upload Protections** (`server/security/upload-validator.ts`, `safe-unzip.ts`):
+- **Upload Protections** (`webapp/server/security/upload-validator.ts`, `safe-unzip.ts`):
   - Path traversal/zip-slip detection
   - File type allowlist with magic bytes validation
   - Size limits: 200MB ZIP, 25MB doc, 100MB total docs
   - Extraction limits: 20k files, 1GB total
   - Compression bomb detection (100x ratio threshold)
-- **Secret Scanning** (`server/security/secret-scanner.ts`):
+- **Secret Scanning** (`webapp/server/security/secret-scanner.ts`):
   - 30+ patterns for AWS, Stripe, GitHub, OpenAI, JWT, OAuth, private keys
   - High-entropy string detection
   - Optional redaction support
-- **Webhook Safety** (`server/security/webhook-validator.ts`):
+- **Webhook Safety** (`webapp/server/security/webhook-validator.ts`):
   - HTTPS enforcement (localhost exception for dev)
   - SSRF protection blocking private IP ranges
   - 10s timeout, 5MB payload cap, redirect limits
-- **Retention Cleanup** (`server/jobs/retention-cleanup.ts`):
+- **Retention Cleanup** (`webapp/server/jobs/retention-cleanup.ts`):
   - Configurable per-asset retention (30d docs/zips, 90d kits, 180d delivery attempts)
   - Scheduled worker with dry-run mode
 - **Safety Infrastructure**:
