@@ -35,17 +35,23 @@ Preferred communication style: Simple, everyday language.
 
 ### AXION Pipeline (Documentation Engine)
 - **Purpose**: Generates per-module documentation packs and manages the lifecycle.
-- **Configuration**: `domains.json`, `sources.json`, `presets.json`.
+- **Configuration**: `domains.json`, `sources.json`, `presets.json`, `stack_profiles.json`.
 - **Templates**: 29 templates (7 core ROSHI + 22 module README.template.md).
 - **ROSHI Sequential Flow**: Defines the order and dependencies of core documents (RPBS, REBS, DDES, UX_Foundations, etc.).
 - **Module Mode System**: Supports per-module generation (`--module <name>`) or all modules (`--all`), with dependency tracking for 19 defined modules. Stages are tracked and prerequisite checks enforced.
 - **Pipeline Scripts**: A series of scripts manage the `generate`, `seed`, `draft`, `review`, `verify`, and `lock` stages of documentation production.
 - **AI-Generated Documents**: Includes `PROJECT_OVERVIEW.md`, `RPBS_Product.md`, `REBS_Product.md`, and others.
+- **Onboarding Scripts**:
+  - `axion-init.ts`: Scaffolds fresh AXION workspace (directories, configs, RPBS/REBS templates) with `--mode fresh`.
+  - `axion-overhaul.ts`: Archives existing project to `_axion_archive/<timestamp>/`, creates `_axion_rebuild/` workspace.
+  - `QUICKSTART.md`: Step-by-step guide for new users.
 - **Governance Features**:
   - **Seam Ownership**: Marker-based detection using `<!-- AXION:SEAM_OWNER:<seam> -->` HTML comments.
   - **Template Hashing**: Detects drift via content hashing.
+  - **Stack Consistency**: Verify rule checks downstream modules match architecture's tech stack selection.
   - **Repair Mode**: Suggests fix actions for violations.
   - **Preset Execution**: Topological dependency resolution with guards (disallow_lock, lock_requires_verify_pass).
+- **Stack Profiles**: 5 default profiles (default-web-saas, serverless-node, enterprise-java, python-data, go-microservices) in `stack_profiles.json`.
 - **Schema Contracts**:
   - `verify_report.json`: Uses `generated_at` (not timestamp), `modules` as Record (not array), `current_revision` (not revision).
   - `stage_markers.json`: Record<module, Record<stage, data>> structure.
