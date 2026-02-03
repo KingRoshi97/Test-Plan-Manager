@@ -15,8 +15,23 @@ import * as path from 'path';
 
 const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
 const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
+const COVERAGE_MAP_PATH = path.join(AXION_ROOT, 'config', 'coverage_map.json');
 const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
 const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+
+// Core modules requiring RPBS_DERIVATIONS blocks
+const CORE_MODULES = ['contracts', 'database', 'auth', 'backend', 'state', 'frontend', 'fullstack', 'systems'];
+
+interface CoverageMap {
+  version: string;
+  core_modules: string[];
+  blocks: Record<string, {
+    source: string;
+    source_section: string;
+    required_for: string[];
+    notes: string;
+  }>;
+}
 
 interface Module {
   name: string;
@@ -69,6 +84,50 @@ function checkPrerequisites(mod: Module, markers: StageMarkers, config: Config):
   return missing;
 }
 
+function loadCoverageMap(): CoverageMap | null {
+  if (!fs.existsSync(COVERAGE_MAP_PATH)) {
+    return null;
+  }
+  return JSON.parse(fs.readFileSync(COVERAGE_MAP_PATH, 'utf-8'));
+}
+
+function generateDerivationBlock(modSlug: string): string {
+  const coverageMap = loadCoverageMap();
+  const coreModules = coverageMap?.core_modules || CORE_MODULES;
+  
+  if (!coreModules.includes(modSlug)) {
+    return '';
+  }
+  
+  const lines: string[] = [
+    '<!-- AXION:SECTION:RPBS_DERIVATIONS -->',
+    '## RPBS_DERIVATIONS (Required)',
+    '- Tenancy/Org Model: UNKNOWN (source: RPBS §21 Tenancy / Organization Model)',
+    '- Actors & Permission Intents: UNKNOWN (source: RPBS §3 Actors & Permission Intents)',
+    '- Core Objects impacted here: UNKNOWN (source: RPBS §4 Core Objects Glossary)',
+    '- Non-Functional Profile implications: UNKNOWN (source: RPBS §7 Non-Functional Profile)',
+    '- Enabled capabilities in scope for this module (mark Yes/No/N/A):',
+    '  - Billing/Entitlements: N/A (source: RPBS §14)',
+    '  - Notifications: N/A (source: RPBS §11)',
+    '  - Uploads/Media: N/A (source: RPBS §13)',
+    '  - Public API: N/A (source: RPBS §22)',
+  ];
+  
+  // Add module-specific fields
+  if (['auth', 'backend', 'database', 'frontend'].includes(modSlug)) {
+    lines.push('- Privacy Controls (Deletion/Export): UNKNOWN (source: RPBS §29)');
+  }
+  
+  if (['contracts', 'backend', 'frontend', 'fullstack', 'systems'].includes(modSlug)) {
+    lines.push('- Stack Selection Policy alignment: UNKNOWN (source: REBS §1)');
+  }
+  
+  lines.push('- OPEN_QUESTIONS impacting this module: NONE (source: RPBS §34)');
+  lines.push('');
+  
+  return lines.join('\n');
+}
+
 function seedModule(mod: Module): void {
   const docPath = path.join(DOMAINS_PATH, mod.slug, 'README.md');
   
@@ -77,6 +136,33 @@ function seedModule(mod: Module): void {
   }
   
   let content = fs.readFileSync(docPath, 'utf-8');
+  
+  // Scaffold RPBS_DERIVATIONS block for core modules
+  const coreModules = loadCoverageMap()?.core_modules || CORE_MODULES;
+  if (coreModules.includes(mod.slug) && !content.includes('## RPBS_DERIVATIONS (Required)')) {
+    const derivationBlock = generateDerivationBlock(mod.slug);
+    if (derivationBlock) {
+      // Insert after Agent Rules section if it exists
+      const agentRulesIdx = content.indexOf('## 0) Agent Rules');
+      if (agentRulesIdx !== -1) {
+        // Find the next ## section after Agent Rules
+        const afterAgentRules = content.indexOf('\n## ', agentRulesIdx + 1);
+        if (afterAgentRules !== -1) {
+          content = content.slice(0, afterAgentRules) + '\n\n' + derivationBlock + content.slice(afterAgentRules);
+        } else {
+          content += '\n\n' + derivationBlock;
+        }
+      } else {
+        // Insert at beginning if no Agent Rules
+        const firstSection = content.indexOf('\n## ');
+        if (firstSection !== -1) {
+          content = content.slice(0, firstSection) + '\n\n' + derivationBlock + content.slice(firstSection);
+        } else {
+          content += '\n\n' + derivationBlock;
+        }
+      }
+    }
+  }
   
   if (!content.includes('## ACCEPTANCE')) {
     content += '\n\n## ACCEPTANCE\n- [ ] All [TBD] placeholders populated\n';

@@ -1,17 +1,19 @@
 {
   "version": "1.0.0",
-  "last_verified": "2026-02-03T08:40:39.789Z",
+  "last_verified": "2026-02-03T08:48:13.487Z",
   "modules": {
     "backend": {
       "status": "FAIL",
-      "verified_at": "2026-02-03T08:40:39.784Z",
+      "verified_at": "2026-02-03T08:48:13.483Z",
       "reason_codes": [
         "PREREQ_NOT_SATISFIED",
-        "PREREQ_NOT_SATISFIED"
+        "PREREQ_NOT_SATISFIED",
+        "MISSING_DERIVATION_BLOCK"
       ],
       "hints": [
         "Run generate stage first",
-        "Run seed stage first"
+        "Run seed stage first",
+        "Add ## RPBS_DERIVATIONS (Required) section"
       ]
     }
   }

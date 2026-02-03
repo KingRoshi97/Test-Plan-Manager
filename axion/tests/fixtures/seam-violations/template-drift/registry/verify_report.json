@@ -1,16 +1,18 @@
 {
-  "generated_at": "2026-02-03T08:40:39.789Z",
+  "generated_at": "2026-02-03T08:48:13.487Z",
   "overall_status": "FAIL",
   "modules": {
     "backend": {
       "status": "FAIL",
       "reason_codes": [
         "PREREQ_NOT_SATISFIED",
-        "PREREQ_NOT_SATISFIED"
+        "PREREQ_NOT_SATISFIED",
+        "MISSING_DERIVATION_BLOCK"
       ],
       "hints": [
         "Run generate stage first",
-        "Run seed stage first"
+        "Run seed stage first",
+        "Add ## RPBS_DERIVATIONS (Required) section"
       ]
     }
   },

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-02-03T08:40:41.490Z",
+  "generated_at": "2026-02-03T08:48:14.658Z",
   "overall_status": "FAIL",
   "modules": {
     "contracts": {
@@ -7,6 +7,7 @@
       "reason_codes": [
         "PREREQ_NOT_SATISFIED",
         "PREREQ_NOT_SATISFIED",
+        "MISSING_DERIVATION_BLOCK",
         "MISSING_ACCEPTANCE",
         "MISSING_SECTION",
         "MISSING_SECTION"
@@ -14,6 +15,7 @@
       "hints": [
         "Run generate stage first",
         "Run seed stage first",
+        "Add ## RPBS_DERIVATIONS (Required) section",
         "Add ACCEPTANCE criteria section",
         "Add required section: ## 1.",
         "Add required section: ## 2."
@@ -24,6 +26,7 @@
       "reason_codes": [
         "PREREQ_NOT_SATISFIED",
         "PREREQ_NOT_SATISFIED",
+        "MISSING_DERIVATION_BLOCK",
         "MISSING_ACCEPTANCE",
         "MISSING_SECTION",
         "MISSING_SECTION",
@@ -32,6 +35,7 @@
       "hints": [
         "Run generate stage first",
         "Run seed stage first",
+        "Add ## RPBS_DERIVATIONS (Required) section",
         "Add ACCEPTANCE criteria section",
         "Add required section: ## 1.",
         "Add required section: ## 2.",

@@ -1,16 +1,26 @@
 {
-  "generated_at": "2026-02-03T08:40:38.677Z",
+  "generated_at": "2026-02-03T08:48:12.731Z",
   "overall_status": "FAIL",
   "modules": {
     "contracts": {
-      "status": "PASS",
-      "reason_codes": [],
-      "hints": []
+      "status": "FAIL",
+      "reason_codes": [
+        "MISSING_DERIVATION_BLOCK"
+      ],
+      "hints": [
+        "Add ## RPBS_DERIVATIONS (Required) section"
+      ]
     },
     "backend": {
-      "status": "PASS",
-      "reason_codes": [],
-      "hints": []
+      "status": "FAIL",
+      "reason_codes": [
+        "MISSING_DERIVATION_BLOCK",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add ## RPBS_DERIVATIONS (Required) section",
+        "Dependency contracts must pass verify first"
+      ]
     }
   },
   "seam_violations": [
@@ -33,6 +43,7 @@
     }
   },
   "next_commands": [
+    "node --import tsx axion/scripts/axion-repair.ts --module <failed_module>",
     "node --import tsx axion/scripts/axion-repair.ts --seams",
     "node --import tsx axion/scripts/axion-hash-templates.ts --generate --bump"
   ]
