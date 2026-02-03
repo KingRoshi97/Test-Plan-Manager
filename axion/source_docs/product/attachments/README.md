@@ -6,7 +6,7 @@ This folder stores **user input documents** for the AXION documentation pipeline
 
 If you're using AXION directly from your IDE without the web application, this is where you provide your project information:
 
-1. **Start with `START_HERE.md`** - Open this file and paste your project idea, requirements, or any existing documentation
+1. **Start with `START_HERE.txt`** - Open this file and paste your project idea, requirements, or any existing documentation
 2. **Add supporting files** - Drop any additional materials here:
    - Existing specifications
    - Reference materials  
@@ -22,7 +22,7 @@ The AXION pipeline reads files from this folder during the `draft` stage to extr
 
 ## Recommended Input Structure
 
-In `START_HERE.md`, include:
+In `START_HERE.txt`, include:
 
 ```markdown
 # Project Name
@@ -49,8 +49,8 @@ In `START_HERE.md`, include:
 
 ## File Types Supported
 
-- `.md` - Markdown (recommended for text)
-- `.txt` - Plain text
+- `.txt` - Plain text (recommended - editable in Replit)
+- `.md` - Markdown (read-only preview in Replit)
 - `.json` - Structured data
 - `.yaml` / `.yml` - Configuration
 - `.png`, `.jpg`, `.svg` - Images/mockups
