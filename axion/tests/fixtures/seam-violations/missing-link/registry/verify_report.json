@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-02-03T07:08:18.066Z",
+  "overall_status": "FAIL",
+  "modules": {
+    "contracts": {
+      "status": "PASS",
+      "reason_codes": [],
+      "hints": []
+    },
+    "backend": {
+      "status": "PASS",
+      "reason_codes": [],
+      "hints": []
+    }
+  },
+  "seam_violations": [
+    {
+      "module": "backend",
+      "seam": "error_model",
+      "reason_code": "SEAM_MISSING_LINK",
+      "description": "Module \"backend\" references error_model without linking to owner",
+      "file": "domains/backend/README.md",
+      "fix_action": "Add link to contracts/README.md for error_model references"
+    }
+  ],
+  "template_drift": {
+    "status": "FAIL",
+    "current_revision": 0,
+    "changes": {
+      "added": [],
+      "removed": [],
+      "modified": []
+    }
+  },
+  "next_commands": [
+    "node --import tsx axion/scripts/axion-repair.ts --seams",
+    "node --import tsx axion/scripts/axion-hash-templates.ts --generate --bump"
+  ]
+}

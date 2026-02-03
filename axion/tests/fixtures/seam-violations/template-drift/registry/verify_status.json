@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "last_verified": "2026-02-03T07:08:19.126Z",
+  "modules": {
+    "backend": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T07:08:19.122Z",
+      "reason_codes": [
+        "PREREQ_NOT_SATISFIED",
+        "PREREQ_NOT_SATISFIED"
+      ],
+      "hints": [
+        "Run generate stage first",
+        "Run seed stage first"
+      ]
+    }
+  }
+}

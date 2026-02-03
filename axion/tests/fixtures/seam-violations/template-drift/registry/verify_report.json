@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-02-03T07:08:19.126Z",
+  "overall_status": "FAIL",
+  "modules": {
+    "backend": {
+      "status": "FAIL",
+      "reason_codes": [
+        "PREREQ_NOT_SATISFIED",
+        "PREREQ_NOT_SATISFIED"
+      ],
+      "hints": [
+        "Run generate stage first",
+        "Run seed stage first"
+      ]
+    }
+  },
+  "seam_violations": [],
+  "template_drift": {
+    "status": "FAIL",
+    "current_revision": 1,
+    "changes": {
+      "added": [],
+      "removed": [],
+      "modified": [
+        "templates/backend/README.template.md"
+      ]
+    }
+  },
+  "next_commands": [
+    "node --import tsx axion/scripts/axion-repair.ts --module <failed_module>",
+    "node --import tsx axion/scripts/axion-hash-templates.ts --generate --bump"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "revision": 1,
+  "templates": [
+    {
+      "path": "templates/backend/README.template.md",
+      "hash": "abcd1234abcd1234",
+      "size": 100,
+      "modified": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "registries": [],
+  "total_files": 1
+}

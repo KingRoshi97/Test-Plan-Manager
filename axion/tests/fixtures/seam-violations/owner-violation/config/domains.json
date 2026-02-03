@@ -1,0 +1,7 @@
+{
+  "modules": [
+    { "name": "Backend", "slug": "backend", "dependencies": ["contracts"] },
+    { "name": "Contracts", "slug": "contracts", "dependencies": [] }
+  ],
+  "canonical_order": ["contracts", "backend"]
+}

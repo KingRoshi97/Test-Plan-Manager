@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "seams": {
+    "error_model": {
+      "owner": "contracts",
+      "description": "Error codes, error response shapes, failure taxonomy",
+      "canonical_doc": "contracts/README.md",
+      "sections": ["CONTRACT_ERROR_MODEL"],
+      "related_modules": ["backend"],
+      "link_instruction": "Reference contracts module for error definitions."
+    }
+  },
+  "reason_codes": {
+    "SEAM_OWNER_VIOLATION": "Non-owner module defines content",
+    "SEAM_MISSING_LINK": "Module references seam topic without linking",
+    "SEAM_DUPLICATE_DEFINITION": "Same definition in both modules"
+  }
+}

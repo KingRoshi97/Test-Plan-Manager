@@ -1,0 +1,6 @@
+{
+  "modules": [
+    { "name": "Backend", "slug": "backend", "dependencies": [] }
+  ],
+  "canonical_order": ["backend"]
+}

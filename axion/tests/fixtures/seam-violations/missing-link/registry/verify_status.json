@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "last_verified": "2026-02-03T07:08:18.066Z",
+  "modules": {
+    "contracts": {
+      "status": "PASS",
+      "verified_at": "2026-02-03T07:08:18.061Z",
+      "reason_codes": [],
+      "hints": []
+    },
+    "backend": {
+      "status": "PASS",
+      "verified_at": "2026-02-03T07:08:18.063Z",
+      "reason_codes": [],
+      "hints": []
+    }
+  }
+}
