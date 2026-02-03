@@ -1,8 +1,14 @@
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
+<!-- AXION:MODULE:core -->
+<!-- AXION:PREFIX:rebs -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
+
 # REBS: Requirements and Engineering Boundaries Specification
 
-## AXION Contract Header
-- AXION:PREFIX: rebs
-- AXION:PLACEHOLDER_POLICY: [TBD] must be populated, N/A with reason if not applicable
+**Module slug:** `core`  
+**Prefix:** `rebs`
+
+> Blank-state scaffold. Populate during AXION stages.
 
 ## Metadata
 - Version: 0.1.0

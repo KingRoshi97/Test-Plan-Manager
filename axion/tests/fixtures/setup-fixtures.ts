@@ -23,11 +23,17 @@ const MODULES = [
 ];
 
 function copyMinimalTemplate(): void {
-  const minimalTemplate = `# {{MODULE_NAME}} Module Documentation
+  const minimalTemplate = `<!-- AXION:TEMPLATE_CONTRACT:v1 -->
+<!-- AXION:MODULE:{{SLUG}} -->
+<!-- AXION:PREFIX:{{PREFIX}} -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-## AXION Contract Header
-- AXION:PREFIX: {{PREFIX}}
-- AXION:PLACEHOLDER_POLICY: [TBD] must be populated, N/A with reason if not applicable
+# {{MODULE_NAME}} Module Documentation
+
+**Module slug:** \`{{SLUG}}\`  
+**Prefix:** \`{{PREFIX}}\`
+
+> Blank-state scaffold. Populate during AXION stages.
 
 ## Metadata
 - Version: 0.1.0
