@@ -1,231 +1,90 @@
 # Axiom Assembler
 
 ## Overview
-Axiom Assembler is a web application and API designed to generate comprehensive documentation bundles for software projects. Users provide a project idea, and the system produces a downloadable "Agent Kit" (zip file) containing documentation, manifests, and exports ready for upload to a vibecoding agent for implementation. The project aims to streamline the software development process by enforcing a docs-first approach through a strict pipeline: init → gen → seed → draft → review → verify → lock. Key principles include "no invention" for missing information and "no overwrite" for existing files, ensuring discipline and consistency.
+Axiom Assembler is a web application and API that generates comprehensive documentation bundles ("Agent Kits") for software projects based on a user-provided idea. These kits, containing documentation, manifests, and exports, are designed for upload to vibecoding agents to guide implementation. The project enforces a strict docs-first development pipeline: init → gen → seed → draft → review → verify → lock. Core principles include "no invention" for missing information and "no overwrite" for existing files, aiming to streamline software development, ensure consistency, and maintain discipline.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
-## Project Structure
-
-The repository is organized into two main areas:
-
-```
-/
-├── webapp/                  # Web application (React frontend + Express backend)
-│   ├── client/              # React frontend with Vite
-│   ├── server/              # Express.js API server
-│   ├── shared/              # Shared types and schemas
-│   ├── uploads/             # Uploaded files (runtime)
-│   ├── vite.config.ts       # Vite configuration
-│   ├── tsconfig.json        # TypeScript config for webapp
-│   ├── tailwind.config.ts   # Tailwind CSS config
-│   ├── drizzle.config.ts    # Drizzle ORM config
-│   └── components.json      # shadcn/ui config
-├── axion/                   # AXION documentation engine
-│   ├── config/              # Module configuration (domains.json, sources.json)
-│   ├── scripts/             # Pipeline scripts (generate, seed, draft, etc.)
-│   ├── source_docs/         # User's project documentation (RPBS, REBS)
-│   ├── templates/           # 23 documentation templates
-│   ├── domains/             # Per-module output folders
-│   └── docs/                # AXION system documentation
-├── workspaces/              # Isolated assembly workspaces
-├── migrations/              # Drizzle database migrations
-├── attached_assets/         # User-uploaded attachments for form
-├── docs/                    # General project documentation
-├── tsconfig.json            # Root tsconfig (extends webapp)
-├── tailwind.config.ts       # Symlink → webapp/tailwind.config.ts
-├── postcss.config.js        # Symlink → webapp/postcss.config.js
-├── components.json          # Symlink → webapp/components.json
-├── client/                  # Symlink → webapp/client
-├── server/                  # Symlink → webapp/server
-└── shared/                  # Symlink → webapp/shared
-```
-
-**Note**: Root-level symlinks maintain backward compatibility with npm scripts and Vite's build system.
-
 ## System Architecture
 
 ### Core Design Principles
-- **Docs-First Approach**: Emphasizes documentation generation as the initial step in the software development lifecycle.
+- **Docs-First Approach**: Documentation generation is the initial step in the software development lifecycle.
 - **Strict Pipeline**: Enforces a sequential process (init → gen → seed → draft → review → verify → lock) for consistent outputs.
-- **No Invention**: Missing information is explicitly marked as `UNKNOWN` rather than being fabricated.
-- **No Overwrite**: Existing files are not overwritten by scripts unless explicitly allowed.
-- **Isolated Workspaces**: Each assembly operates in its dedicated workspace (`workspaces/{assemblyId}/`) to prevent cross-contamination.
+- **No Invention**: Missing information is explicitly marked as `UNKNOWN`.
+- **No Overwrite**: Existing files are not overwritten unless explicitly allowed.
+- **Isolated Workspaces**: Each assembly operates in a dedicated workspace to prevent cross-contamination.
 
 ### Frontend
 - **Framework**: React with TypeScript
-- **Routing**: Wouter
 - **State Management**: TanStack React Query
 - **UI Components**: shadcn/ui (built on Radix UI)
 - **Styling**: Tailwind CSS with CSS variables
 - **Build Tool**: Vite
 
 ### Backend
-- **Framework**: Express.js (v5) on Node.js
-- **Language**: TypeScript with ESM modules
-- **API Pattern**: RESTful, prefixed with `/api` and `/v1`
-- **Storage Layer**: Abstract `IStorage` interface with in-memory implementation for flexibility.
+- **Framework**: Express.js (v5) on Node.js with TypeScript and ESM modules.
+- **API Pattern**: RESTful, prefixed with `/api` and `/v1`.
+- **Storage Layer**: Abstract `IStorage` interface.
 
 ### Data Management
-- **ORM**: Drizzle ORM with PostgreSQL dialect
-- **Schema**: Modular structure in `shared/schema/`:
-  - `auth.ts`: users, apiKeys tables
-  - `assemblies.ts`: assemblies table + related types (Kit, AssemblyInput, Feature, etc.)
-  - `deliveries.ts`: deliveries, delivery_events tables
-  - `packages.ts`: project_packages table + upgrade types
-  - `safety.ts`: safety_warnings, audit_logs tables
-  - `index.ts`: barrel export (all re-exported via `shared/schema.ts`)
-- **Validation**: Zod schemas generated from Drizzle
-- **Migrations**: Drizzle Kit in `/migrations`
-- **Database Tables** (9 total): users, api_keys, assemblies, assembly_templates, deliveries, delivery_events, project_packages, safety_warnings, audit_logs
+- **ORM**: Drizzle ORM with PostgreSQL dialect.
+- **Schema**: Modular structure for entities like users, API keys, assemblies, deliveries, packages, safety warnings, and audit logs.
+- **Validation**: Zod schemas.
+- **Migrations**: Drizzle Kit.
 
-### Build System
-- **Development**: Vite dev server with Express backend, HMR.
-- **Production**: esbuild for server, Vite for client (output to `dist/public`).
-- **Output**: Single CJS bundle for server, static assets for client.
+### AXION Pipeline (Documentation Engine)
+- **Purpose**: Generates per-module documentation packs and manages the lifecycle.
+- **Configuration**: `domains.json`, `sources.json`.
+- **Templates**: 23 documentation templates categorized by area (e.g., core, frontend, backend, security).
+- **ROSHI Sequential Flow**: Defines the order and dependencies of core documents (RPBS, REBS, DDES, UX_Foundations, etc.).
+- **Module Mode System**: Supports per-module generation (`--module <name>`) or all modules (`--all`), with dependency tracking for 19 defined modules. Stages are tracked and prerequisite checks enforced.
+- **Pipeline Scripts**: A series of scripts manage the `generate`, `seed`, `draft`, `review`, `verify`, and `lock` stages of documentation production.
+- **AI-Generated Documents**: Includes `PROJECT_OVERVIEW.md`, `RPBS_Product.md`, `REBS_Product.md`, and others.
 
-### AXION Pipeline (Module Mode)
-- **Configuration**: `axion/config/domains.json`, `axion/config/sources.json`
-- **Documentation Root**: `axion/source_docs/`
-- **Templates**: Located in `axion/templates/` (23 templates including ALRP, TIES, SROL)
-- **Domains Directory**: `axion/domains/<module>/` - each module gets its own folder
-- **Stage Markers**: `axion/source_docs/registry/stage_markers/<stage>/<module>.json`
-
-#### Module Mode System
-Scripts now support `--module <name>` or `--all` flags with dependency tracking:
-- **19 Modules in Order**: architecture, systems, contracts, database, data, auth, backend, integrations, state, frontend, fullstack, testing, quality, security, devops, cloud, devex, mobile, desktop
-- **Prerequisite Checking**: Each stage enforces dependencies (e.g., can't seed frontend until backend seeded)
-- **Stage Tracking**: Scripts create markers in `stage_markers/<stage>/<module>.json`
-- **Verify Gate**: Lock script requires `verify_status.json = PASS` before proceeding
-
-#### Pipeline Scripts
-- `axion-generate.mjs` - Generate per-module doc packs
-- `axion-seed.mjs` - Seed starter scaffolding (prereq: generate)
-- `axion-draft.mjs` - Draft truth candidates (prereq: seed)
-- `axion-review.mjs` - Review packet, count UNKNOWNs (prereq: draft)
-- `axion-verify.mjs` - Verify system gate check (prereq: review, writes verify_status.json)
-- `axion-lock.mjs` - Lock domain, create ERC (requires verify PASS)
-
-#### Shared Helper
-`axion/scripts/_axion_module_mode.mjs` provides:
-- `AXION_MODULE_ORDER` - 19 modules in execution order
-- `AXION_PREREQS` - Dependency map for each module
-- `parseModuleArgs()` - Parse --module/--all flags
-- `isStageDone()`, `markStageDone()` - Stage marker management
-- `ensurePrereqs()` - Block execution if prereqs not met
-- `readVerifyStatus()`, `writeVerifyStatus()` - Global verify status
-- `failJson()` - Output blocked_by JSON and exit
-
-### AI-Generated Documents
-- PROJECT_OVERVIEW.md
-- RPBS_Product.md (Product requirements)
-- REBS_Product.md (Technical architecture)
-- domain-map.md
-- reason-codes.md
-- action-vocabulary.md
-- glossary.md
-
-### Core Entities
-- **Assembly**: Represents a pipeline execution, including idea, project name, preset, domains, state, progress, and output kit path.
-- **Delivery**: Manages the delivery of the generated kit, with types like `pull`, `webhook`, `git`, and `direct`.
+### Key Entities
+- **Assembly**: Represents a pipeline execution, including project details, state, and output kit path.
+- **Delivery**: Manages the delivery of the generated kit.
 - **Kit**: The output artifact containing documentation, manifest, and agent prompt.
 
 ### API Endpoints
-- **Assembly Management**:
-    - `GET /api/assemblies` / `GET /v1/assemblies`: List assemblies.
-    - `POST /api/assemblies` / `POST /v1/assemblies`: Create a new assembly.
-    - `GET /api/assemblies/:id` / `GET /v1/assemblies/:id`: Get assembly status.
-    - `POST /api/assemblies/:id/execute`: Execute pipeline.
-    - `GET /api/assemblies/:id/kit.zip` / `GET /v1/assemblies/:id/kit`: Download kit.
-    - `DELETE /api/assemblies/:id`: Delete assembly.
-- **Delivery Management**:
-    - `POST /v1/assemblies/:id/deliveries`: Create a delivery.
-    - `GET /v1/assemblies/:id/deliveries`: List deliveries for an assembly.
-    - `GET /v1/deliveries/:id`: Get delivery details.
-    - `POST /v1/deliveries/:id/retry`: Retry failed delivery.
-- **Templates Management**:
-    - `GET /api/templates`: List user's templates (auth required).
-    - `GET /api/templates/public`: List public templates.
-    - `POST /api/templates`: Create a template (auth required).
-    - `GET /api/templates/:id`: Get template (auth/ownership check).
-    - `DELETE /api/templates/:id`: Delete template (auth/ownership required).
-    - `POST /api/templates/:id/use`: Use template (auth required).
-- **User Profile & Preferences**:
-    - `GET /api/user/usage`: Get usage statistics (auth required).
-    - `PATCH /api/user/preferences`: Update email preferences (auth required).
-- **Project Package Analysis**:
-    - `POST /v1/project-packages`: Upload a ZIP file for analysis.
-    - `GET /v1/project-packages/:id`: Get package status.
-    - `POST /v1/assemblies/:id/project-packages/:pkgId/attach`: Attach package to assembly.
-    - `POST /v1/assemblies/:id/upgrade`: Generate upgrade plan.
-    - `GET /v1/assemblies/:id/upgrade`: List packages and upgrade artifacts.
-
-### Project Package Feature
-Allows users to upload existing codebase ZIPs for analysis. The system performs:
-1. **Scanning**: Security checks (zip slip, size limits: 100MB max, 20k files).
-2. **Indexing**: Framework detection, dependency snapshot, file tree.
-3. **Upgrade Plan Generation**: Based on user goals and constraints.
-Supported frameworks include Next.js, Vite, Expo, React Native, Nuxt, Express, Fastify, etc.
+- **Assembly Management**: Create, list, retrieve status, execute pipeline, download kits, delete.
+- **Delivery Management**: Create, list, retrieve details, retry deliveries.
+- **Templates Management**: List public/user templates, create, retrieve, delete, use templates.
+- **User Profile & Preferences**: Get usage, update preferences.
+- **Project Package Analysis**: Upload ZIPs for code analysis (scanning, indexing, upgrade plan generation), attach packages to assemblies, generate/list upgrade plans.
 
 ### Safety v1
-Security infrastructure prerequisite for public launch:
-- **Upload Protections** (`webapp/server/security/upload-validator.ts`, `safe-unzip.ts`):
-  - Path traversal/zip-slip detection
-  - File type allowlist with magic bytes validation
-  - Size limits: 200MB ZIP, 25MB doc, 100MB total docs
-  - Extraction limits: 20k files, 1GB total
-  - Compression bomb detection (100x ratio threshold)
-- **Secret Scanning** (`webapp/server/security/secret-scanner.ts`):
-  - 30+ patterns for AWS, Stripe, GitHub, OpenAI, JWT, OAuth, private keys
-  - High-entropy string detection
-  - Optional redaction support
-- **Webhook Safety** (`webapp/server/security/webhook-validator.ts`):
-  - HTTPS enforcement (localhost exception for dev)
-  - SSRF protection blocking private IP ranges
-  - 10s timeout, 5MB payload cap, redirect limits
-- **Retention Cleanup** (`webapp/server/jobs/retention-cleanup.ts`):
-  - Configurable per-asset retention (30d docs/zips, 90d kits, 180d delivery attempts)
-  - Scheduled worker with dry-run mode
-- **Safety Infrastructure**:
-  - `safety_warnings` table for tracking issues
-  - Global safety mode (warn vs strict)
-  - API: `GET/PATCH /v1/safety/config`, `/v1/admin/retention/*`
-- **Audit Logging**: `audit_logs` table with viewer in Ops page
+- **Upload Protections**: Path traversal, file type validation, size limits, compression bomb detection.
+- **Secret Scanning**: Detects sensitive patterns and high-entropy strings.
+- **Webhook Safety**: HTTPS enforcement, SSRF protection, timeouts, payload limits.
+- **Retention Cleanup**: Configurable asset retention policies.
+- **Audit Logging**: Tracks system events.
 
 ### UI/UX Design
-- **Visuals**: Features gradient CTA buttons, solid primary buttons, glowing stepper elements, amber-accented sidebar, tab, and input focus states, and glassmorphic card accents.
-- **Components**: Reusable design kit components like `GlassCard`, `PageHeader`, `StatusBadge`, `CodeBlock`, `Stepper`, `AssemblyTimeline`.
-- **Layout**: `AppShell` with `SidebarNav` and `TopBar` for consistent navigation.
-- **Sidebar Navigation**: Organized into three groups:
-  - Build: Create, Assemblies, Templates
-  - Account: Usage, Billing, Profile
-  - System: Operations, Settings, API Docs
-- **Theming**: `ThemeProvider` for dark/light mode with system preference detection.
-- **Workflows**: Multi-step form wizard for assembly creation, tabbed interfaces for detail pages.
-- **Account Pages**: Usage analytics, billing/subscription info, profile settings with email preferences.
+- **Visuals**: Gradient CTAs, solid primary buttons, glowing stepper elements, amber-accented focus states, glassmorphic cards.
+- **Components**: Reusable design system components like `GlassCard`, `PageHeader`, `Stepper`.
+- **Layout**: `AppShell` with `SidebarNav` and `TopBar`.
+- **Theming**: Dark/light mode with system preference detection.
+- **Workflows**: Multi-step form wizards and tabbed interfaces.
 
 ## External Dependencies
 
 ### Database
-- **PostgreSQL**: Primary database.
-- **connect-pg-simple**: For Express session storage.
+- **PostgreSQL**
+- **connect-pg-simple**
 
 ### UI Libraries
-- **Radix UI**: Accessible, unstyled UI primitives.
-- **Lucide React**: Icon library.
-- **Embla Carousel**: Carousel component.
-- **React Day Picker**: Date picker.
-- **Vaul**: Drawer component.
-- **CMDK**: Command palette.
-
-### Development Tools
-- **Replit Plugins**: Runtime error overlay, cartographer, dev banner.
-- **TypeScript**: Strict mode.
+- **Radix UI**
+- **Lucide React**
+- **Embla Carousel**
+- **React Day Picker**
+- **Vaul**
+- **CMDK**
 
 ### Third-Party Integrations
-- **OpenAI**: AI integration.
-- **Google Generative AI**: Alternative AI provider.
-- **Stripe**: Payment processing.
-- **Nodemailer**: Email sending.
-- **Passport**: Authentication framework.
+- **OpenAI**
+- **Google Generative AI**
+- **Stripe**
+- **Nodemailer**
+- **Passport**
