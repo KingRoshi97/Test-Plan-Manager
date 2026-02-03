@@ -102,6 +102,34 @@ function writeFile(filePath: string, content: string): void {
   fs.writeFileSync(filePath, content);
 }
 
+function readAttachmentsFolder(attachmentsPath: string): string {
+  if (!fs.existsSync(attachmentsPath)) {
+    return '';
+  }
+  
+  const files = fs.readdirSync(attachmentsPath);
+  const textExtensions = ['.txt', '.md', '.json', '.yaml', '.yml'];
+  const contents: string[] = [];
+  
+  for (const file of files) {
+    if (file === 'README.md' || file === 'README.txt') continue;
+    
+    const ext = path.extname(file).toLowerCase();
+    if (textExtensions.includes(ext)) {
+      const filePath = path.join(attachmentsPath, file);
+      const stat = fs.statSync(filePath);
+      if (stat.isFile()) {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        if (content.trim()) {
+          contents.push(`--- ${file} ---\n${content}`);
+        }
+      }
+    }
+  }
+  
+  return contents.join('\n\n');
+}
+
 function createFreshWorkspace(target: string): void {
   console.log(`\n[AXION] Creating fresh workspace at: ${target}\n`);
   
@@ -113,6 +141,7 @@ function createFreshWorkspace(target: string): void {
     'templates',
     'registry',
     'source_docs/product',
+    'source_docs/product/attachments',
     'source_docs/registry',
     'scripts',
     'docs',
@@ -236,6 +265,115 @@ function createFreshWorkspace(target: string): void {
   
   writeFile(path.join(axionRoot, 'source_docs', 'product', 'RPBS_Product.md'), rpbsTemplate);
   console.log('  [+] Created source_docs/product/RPBS_Product.md');
+  
+  const attachmentsReadme = `# Attachments Folder
+
+This folder stores **user input documents** for the AXION documentation pipeline.
+
+## For IDE-Only Users (No Web App)
+
+If you're using AXION directly from your IDE, this is where you provide your project information:
+
+1. **Start with \`START_HERE.txt\`** - Open this file and paste your project idea, requirements, or any existing documentation
+2. **Add supporting files** - Drop any additional materials here:
+   - Existing specifications
+   - Reference materials
+   - Design mockups or wireframes
+   - API documentation
+   - Database schemas
+
+## How AXION Uses These Files
+
+The AXION pipeline reads ALL files from this folder during the \`draft\` stage to extract context for generating your documentation. The more detail you provide, the better your Agent Kit will be.
+
+## File Types Supported
+
+- \`.txt\` - Plain text (recommended - editable in Replit)
+- \`.md\` - Markdown (read-only preview in Replit)
+- \`.json\` - Structured data
+- \`.yaml\` / \`.yml\` - Configuration
+
+## Next Steps
+
+After adding your input files, run:
+\`\`\`bash
+node --import tsx axion/scripts/axion-generate.ts --all
+\`\`\`
+`;
+  
+  writeFile(path.join(axionRoot, 'source_docs', 'product', 'attachments', 'README.md'), attachmentsReadme);
+  console.log('  [+] Created source_docs/product/attachments/README.md');
+  
+  const startHereTemplate = `# START HERE
+
+> Paste your project idea, requirements, or existing documentation below.
+> Delete these instructions when you're ready.
+
+---
+
+## What are you building?
+
+[Describe your idea in plain language. What problem does it solve?]
+
+## Who is it for?
+
+[Describe your target users or audience]
+
+## Core Features
+
+List the main things users should be able to do:
+
+- [ ] Feature 1: [Description]
+- [ ] Feature 2: [Description]
+- [ ] Feature 3: [Description]
+
+## User Flows (Optional)
+
+Describe how users will interact with your app:
+
+1. User does X...
+2. Then Y happens...
+3. Result is Z...
+
+## Technical Preferences (Optional)
+
+If you have specific technology preferences, note them here:
+
+- Frontend: [React, Vue, Svelte, etc.]
+- Backend: [Node.js, Python, Go, etc.]
+- Database: [PostgreSQL, MongoDB, SQLite, etc.]
+- Auth: [Email/password, OAuth, magic links, etc.]
+
+## Non-Functional Requirements (Optional)
+
+- Performance: [Expected load, response times]
+- Security: [Compliance needs, data sensitivity]
+- Scale: [Expected users, growth]
+
+## Existing Materials
+
+If you have existing docs, paste relevant sections below or add files to this folder:
+
+---
+
+[Paste content here]
+
+---
+
+## Open Questions
+
+Things you're not sure about yet:
+
+- Q1: [Question]
+- Q2: [Question]
+
+---
+
+> Next Step: Run \`node --import tsx axion/scripts/axion-generate.ts --all\` to start the AXION pipeline.
+`;
+  
+  writeFile(path.join(axionRoot, 'source_docs', 'product', 'attachments', 'START_HERE.txt'), startHereTemplate);
+  console.log('  [+] Created source_docs/product/attachments/START_HERE.txt');
   
   const rebsTemplate = `<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:core -->
@@ -370,14 +508,25 @@ AXION is a documentation-first development system that generates comprehensive "
 ### 1. Initialize (you just did this!)
 
 Your workspace is ready with:
-- \`source_docs/product/RPBS_Product.md\` - Product requirements (edit this first!)
-- \`source_docs/product/REBS_Product.md\` - Engineering requirements (edit second!)
+- \`source_docs/product/attachments/START_HERE.txt\` - **Start here!** Paste your project idea
+- \`source_docs/product/attachments/\` - Drop any additional docs here
+- \`source_docs/product/RPBS_Product.md\` - Product requirements (auto-populated from attachments)
+- \`source_docs/product/REBS_Product.md\` - Engineering requirements
 - \`config/domains.json\` - Module definitions
 - \`config/presets.json\` - Pipeline presets
 
-### 2. Fill in RPBS and REBS
+### 2. Provide Your Project Input
 
-Edit the two source documents:
+**Option A: Quick Start (Recommended)**
+
+1. Open \`source_docs/product/attachments/START_HERE.txt\`
+2. Paste your project idea, requirements, or any existing docs
+3. Add any additional files to the \`attachments/\` folder
+4. Run the pipeline - AXION reads ALL files in attachments/
+
+**Option B: Direct Edit**
+
+Edit the source documents directly:
 
 1. **RPBS_Product.md** - Define what you're building:
    - Product vision
@@ -494,9 +643,10 @@ axion/
   
   console.log('\n[AXION] Workspace initialized successfully!\n');
   console.log('Next steps:');
-  console.log('  1. Edit axion/source_docs/product/RPBS_Product.md');
-  console.log('  2. Edit axion/source_docs/product/REBS_Product.md');
-  console.log('  3. Run: node --import tsx axion/scripts/axion-run.ts --preset foundation --plan scaffold\n');
+  console.log('  1. Open axion/source_docs/product/attachments/START_HERE.txt');
+  console.log('  2. Paste your project idea, requirements, or any existing docs');
+  console.log('  3. Run: node --import tsx axion/scripts/axion-generate.ts --all\n');
+  console.log('See axion/QUICKSTART.md for detailed instructions.\n');
   
   const result = {
     status: 'SUCCESS',
@@ -505,6 +655,8 @@ axion/
     created: [
       'config/domains.json',
       'config/presets.json',
+      'source_docs/product/attachments/README.md',
+      'source_docs/product/attachments/START_HERE.txt',
       'source_docs/product/RPBS_Product.md',
       'source_docs/product/REBS_Product.md',
       'templates/_minimal.template.md',
@@ -512,9 +664,8 @@ axion/
       'QUICKSTART.md',
     ],
     next_commands: [
-      `edit ${path.join(axionRoot, 'source_docs', 'product', 'RPBS_Product.md')}`,
-      `edit ${path.join(axionRoot, 'source_docs', 'product', 'REBS_Product.md')}`,
-      'node --import tsx axion/scripts/axion-run.ts --preset foundation --plan scaffold',
+      `edit ${path.join(axionRoot, 'source_docs', 'product', 'attachments', 'START_HERE.txt')}`,
+      'node --import tsx axion/scripts/axion-generate.ts --all',
     ],
   };
   

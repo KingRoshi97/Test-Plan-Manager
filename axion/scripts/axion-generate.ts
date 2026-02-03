@@ -17,6 +17,7 @@ const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
 const TEMPLATES_PATH = path.join(AXION_ROOT, 'templates');
 const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
 const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+const ATTACHMENTS_PATH = path.join(AXION_ROOT, 'source_docs', 'product', 'attachments');
 
 interface Module {
   name: string;
@@ -58,6 +59,66 @@ function saveMarkers(markers: StageMarkers): void {
     fs.mkdirSync(dir, { recursive: true });
   }
   fs.writeFileSync(MARKERS_PATH, JSON.stringify(markers, null, 2));
+}
+
+interface AttachmentContent {
+  files: string[];
+  content: string;
+  totalSize: number;
+}
+
+function readAttachmentsFolder(): AttachmentContent {
+  const result: AttachmentContent = {
+    files: [],
+    content: '',
+    totalSize: 0,
+  };
+  
+  if (!fs.existsSync(ATTACHMENTS_PATH)) {
+    return result;
+  }
+  
+  const files = fs.readdirSync(ATTACHMENTS_PATH);
+  const textExtensions = ['.txt', '.md', '.json', '.yaml', '.yml'];
+  const contents: string[] = [];
+  
+  for (const file of files) {
+    if (file === 'README.md' || file === 'README.txt') continue;
+    
+    const ext = path.extname(file).toLowerCase();
+    if (textExtensions.includes(ext)) {
+      const filePath = path.join(ATTACHMENTS_PATH, file);
+      const stat = fs.statSync(filePath);
+      if (stat.isFile()) {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        if (content.trim()) {
+          result.files.push(file);
+          result.totalSize += stat.size;
+          contents.push(`<!-- ATTACHMENT: ${file} -->\n${content}`);
+        }
+      }
+    }
+  }
+  
+  result.content = contents.join('\n\n---\n\n');
+  return result;
+}
+
+function saveAttachmentsContext(attachments: AttachmentContent): void {
+  if (attachments.files.length === 0) return;
+  
+  const contextPath = path.join(AXION_ROOT, 'registry', 'attachments_context.json');
+  const context = {
+    read_at: new Date().toISOString(),
+    files: attachments.files,
+    total_size_bytes: attachments.totalSize,
+    content_preview: attachments.content.slice(0, 500) + (attachments.content.length > 500 ? '...' : ''),
+  };
+  
+  fs.writeFileSync(contextPath, JSON.stringify(context, null, 2));
+  
+  const fullContentPath = path.join(AXION_ROOT, 'registry', 'attachments_content.md');
+  fs.writeFileSync(fullContentPath, `# User Input (from attachments folder)\n\n${attachments.content}`);
 }
 
 function getTemplate(moduleSlug: string): string {
@@ -130,6 +191,21 @@ function main() {
   
   const config = loadConfig();
   const markers = loadMarkers();
+  
+  // Read user input from attachments folder
+  const attachments = readAttachmentsFolder();
+  if (attachments.files.length > 0) {
+    console.log(`[INFO] Found ${attachments.files.length} attachment(s) in attachments folder:`);
+    for (const file of attachments.files) {
+      console.log(`       - ${file}`);
+    }
+    saveAttachmentsContext(attachments);
+    console.log('[INFO] Saved attachments content to registry/attachments_content.md');
+    console.log('[INFO] Use this content during draft stage to populate documentation.\n');
+  } else {
+    console.log('[INFO] No attachments found. Add your project input to:');
+    console.log('       source_docs/product/attachments/START_HERE.txt\n');
+  }
   
   const modulesToGenerate = runAll
     ? config.canonical_order.map(slug => config.modules.find(m => m.slug === slug)!)
