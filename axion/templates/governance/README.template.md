@@ -1,32 +1,34 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:governance -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:gov -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Governance Module — {{DOMAIN_NAME}}
+# Governance — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Governance
-**Last Updated:** [TBD]
+**Module slug:** `governance`  
+**Prefix:** `gov`  
+**Description:** Process and governance standards for AXION pipeline
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:GOV_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:GOV_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define governance scope
-- [ ] Define authority structure
-- [ ] Define escalation paths
-
----
 
 <!-- AXION:SECTION:GOV_TRUTH_HIERARCHY -->
 ## Truth Hierarchy
-
-- [ ] Define document precedence
-- [ ] Define override rules
-- [ ] Define conflict resolution
+- Document precedence: [TBD]
+- Override rules: [TBD]
+- Conflict resolution: [TBD]
 
 ### Document Hierarchy
 1. RPBS (Product) - Level 0
@@ -39,52 +41,49 @@
 8. TIES - Level 6
 9. SROL - Level 7
 
----
 
-<!-- AXION:SECTION:GOV_MODULE_ORDER_PREREQS -->
+<!-- AXION:SECTION:GOV_MODULE_ORDER -->
 ## Module Order & Prerequisites
+- Module execution order: [TBD]
+- Prerequisite checking: [TBD]
+- Parallel execution rules: [TBD]
 
-- [ ] Define module execution order
-- [ ] Define prerequisite checking
-- [ ] Define parallel execution rules
-
----
 
 <!-- AXION:SECTION:GOV_REASON_CODES -->
 ## Reason Codes
+- Reason code format: [TBD]
+- Severity levels: [TBD]
+- Usage requirements: [TBD]
 
-- [ ] Define reason code format
-- [ ] Define severity levels
-- [ ] Define usage requirements
-
----
 
 <!-- AXION:SECTION:GOV_VERIFY_GATES -->
 ## Verify Gates
+- Verification rules: [TBD]
+- Pass/fail criteria: [TBD]
+- Exception process: [TBD]
 
-- [ ] Define verification rules
-- [ ] Define pass/fail criteria
-- [ ] Define exception process
-
----
 
 <!-- AXION:SECTION:GOV_LOCK_RULES -->
 ## Lock Rules
+- Lock prerequisites: [TBD]
+- ERC generation: [TBD]
+- Unlock process: [TBD]
 
-- [ ] Define lock prerequisites
-- [ ] Define ERC generation
-- [ ] Define unlock process
-
----
 
 <!-- AXION:SECTION:GOV_CHANGE_CONTROL -->
 ## Change Control
+- Change request process: [TBD]
+- Impact assessment: [TBD]
+- Approval workflow: [TBD]
 
-- [ ] Define change request process
-- [ ] Define impact assessment
-- [ ] Define approval workflow
 
----
+<!-- AXION:SECTION:GOV_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Truth hierarchy documented
+- [ ] Verify gates defined
+- [ ] Lock rules specified
 
+
+<!-- AXION:SECTION:GOV_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

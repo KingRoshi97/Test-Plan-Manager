@@ -1,62 +1,75 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:contracts -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:contract -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Contracts Module — {{DOMAIN_NAME}}
+# Contracts — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Foundation
-**Prefix:** contract
-**Last Updated:** [TBD]
+**Module slug:** `contracts`  
+**Prefix:** `contract`  
+**Description:** API contracts, interfaces, and data schemas
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:CONTRACT_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:CONTRACT_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define contract ownership
-- [ ] Define schema authority
-- [ ] Define breaking change process
 
----
+<!-- AXION:SECTION:CONTRACT_API_SURFACE -->
+## API Surface Inventory
+- Endpoint list (method, path, purpose): [TBD]
+- Ownership by module: [TBD]
 
-<!-- AXION:SECTION:CONTRACT_API_CONTRACTS -->
-## API Contracts
 
-- [ ] Define request/response schemas
-- [ ] Define versioning strategy
-- [ ] Define deprecation policy
+<!-- AXION:SECTION:CONTRACT_SCHEMAS -->
+## Schemas & Types
+- Request/response schema references: [TBD]
+- Canonical type definitions and versioning: [TBD]
 
----
 
-<!-- AXION:SECTION:CONTRACT_DATA_SCHEMAS -->
-## Data Schemas
+<!-- AXION:SECTION:CONTRACT_ERRORS -->
+## Error Model
+- Error envelope standard: [TBD]
+- Error codes list + meanings: [TBD]
+- Client-facing vs internal errors: [TBD]
 
-- [ ] Define entity schemas
-- [ ] Define validation rules
-- [ ] Define transformation contracts
 
----
+<!-- AXION:SECTION:CONTRACT_VERSIONING -->
+## Compatibility & Versioning
+- Versioning rules: [TBD]
+- Backward compatibility guarantees: [TBD]
+- Deprecation policy: [TBD]
 
-<!-- AXION:SECTION:CONTRACT_EVENT_CONTRACTS -->
-## Event Contracts
 
-- [ ] Define event schemas
-- [ ] Define message formats
-- [ ] Define ordering guarantees
+<!-- AXION:SECTION:CONTRACT_EVENTS -->
+## Events, Webhooks, Async Contracts
+- Event list + payload schema: [TBD]
+- Delivery guarantees (at-least-once/exactly-once): [TBD]
+- Idempotency keys: [TBD]
 
----
 
-<!-- AXION:SECTION:CONTRACT_INTERFACE_DEFINITIONS -->
-## Interface Definitions
+<!-- AXION:SECTION:CONTRACT_SECURITY -->
+## Security & Privacy Constraints
+- Auth requirements per endpoint: [TBD]
+- PII fields + handling rules: [TBD]
 
-- [ ] Define service interfaces
-- [ ] Define callback contracts
-- [ ] Define error contracts
 
----
+<!-- AXION:SECTION:CONTRACT_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] All public endpoints enumerated
+- [ ] Schema ownership is explicit
+- [ ] Error and versioning rules documented
 
+
+<!-- AXION:SECTION:CONTRACT_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

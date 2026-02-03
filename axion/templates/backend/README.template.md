@@ -1,206 +1,85 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:backend -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:be -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Backend Module — {{DOMAIN_NAME}}
+# Backend — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Backend
-**Last Updated:** [TBD]
+**Module slug:** `backend`  
+**Prefix:** `be`  
+**Description:** Server-side logic, APIs, and business rules
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:BE_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:BE_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-### Boundaries
-- [ ] Define what this module owns
-- [ ] Define what is explicitly out of scope
-- [ ] Define integration points with other modules
 
-### Ownership
-- **Owner:** [TBD]
-- **Stakeholders:** [TBD]
+<!-- AXION:SECTION:BE_API -->
+## API Endpoints & Handlers
+- Endpoint inventory link (from contracts): [LINK]
+- Handler responsibilities: [TBD]
 
----
 
-<!-- AXION:SECTION:BE_API_CONTRACTS -->
-## API Design & Contracts
+<!-- AXION:SECTION:BE_DOMAIN -->
+## Domain Logic & Rules
+- Core business rules: [TBD]
+- Validation rules: [TBD]
+- State machines/workflows: [TBD]
 
-### API Standards
-- [ ] Define API style (REST/GraphQL/gRPC)
-- [ ] Define versioning strategy
-- [ ] Define documentation approach
 
-### Contracts
-- **Base URL Pattern:** [TBD]
-- **Auth Header:** [TBD]
-- **Response Format:** [TBD]
+<!-- AXION:SECTION:BE_JOBS -->
+## Async Jobs & Queues
+- Job list + triggers: [TBD]
+- Retry/backoff/dlq rules: [TBD]
 
----
 
-<!-- AXION:SECTION:BE_BUSINESS_LOGIC -->
-## Business Logic Layer
+<!-- AXION:SECTION:BE_CACHING -->
+## Caching Strategy
+- Cache layers: [TBD]
+- Invalidation rules: [TBD]
 
-### Service Architecture
-- [ ] Define service boundaries
-- [ ] Define validation rules
-- [ ] Define business rule location
 
-### Patterns
-- **Service Pattern:** [TBD]
-- **Domain Model:** [TBD]
-- **Workflow Engine:** [TBD]
+<!-- AXION:SECTION:BE_INTEGRATION -->
+## Integration Points
+- External services touched: [TBD]
+- Idempotency and webhook verification: [TBD]
 
----
-
-<!-- AXION:SECTION:BE_DATA_LAYER -->
-## Data Layer & ORM
-
-### Database Design
-- [ ] Define schema conventions
-- [ ] Define migration strategy
-- [ ] Define query patterns
-
-### Configuration
-- **ORM:** [TBD]
-- **Connection Pool:** [TBD]
-- **Read Replicas:** [TBD]
-
----
-
-<!-- AXION:SECTION:BE_AUTHZ_AUTHN -->
-## Authentication & Authorization
-
-### Auth Architecture
-- [ ] Define auth flow
-- [ ] Define session/token strategy
-- [ ] Define permission model
-
-### Implementation
-- **Auth Provider:** [TBD]
-- **Token Type:** [TBD]
-- **RBAC/ABAC:** [TBD]
-
----
-
-<!-- AXION:SECTION:BE_RESILIENCE -->
-## Resilience & Reliability
-
-### Patterns
-- [ ] Define retry strategies
-- [ ] Define circuit breaker rules
-- [ ] Define graceful degradation
-
-### Configuration
-- **Health Checks:** [TBD]
-- **Timeouts:** [TBD]
-- **Fallbacks:** [TBD]
-
----
-
-<!-- AXION:SECTION:BE_SECURITY -->
-## Security
-
-### Security Controls
-- [ ] Define input validation rules
-- [ ] Define injection prevention
-- [ ] Define secrets management
-
-### Implementation
-- **Sanitization:** [TBD]
-- **Rate Limiting:** [TBD]
-- **Audit Logging:** [TBD]
-
----
-
-<!-- AXION:SECTION:BE_PERFORMANCE -->
-## Performance & Scaling
-
-### Optimization
-- [ ] Define caching strategy
-- [ ] Define N+1 prevention
-- [ ] Define query optimization
-
-### Scaling
-- **Horizontal:** [TBD]
-- **Vertical:** [TBD]
-- **Auto-scaling:** [TBD]
-
----
-
-<!-- AXION:SECTION:BE_INTEGRATIONS -->
-## External Integrations
-
-### Third-Party Services
-- [ ] Define integration patterns
-- [ ] Define webhook handling
-- [ ] Define retry/fallback strategy
-
-### Inventory
-
-| Service | Purpose | Auth Type | Fallback |
-|---------|---------|-----------|----------|
-| [TBD] | [TBD] | [TBD] | [TBD] |
-
----
-
-<!-- AXION:SECTION:BE_TESTING -->
-## Testing Strategy
-
-### Coverage
-- [ ] Define unit test scope
-- [ ] Define integration test scope
-- [ ] Define contract test scope
-
-### Tools
-- **Unit Framework:** [TBD]
-- **Integration:** [TBD]
-- **Mocking:** [TBD]
-
----
 
 <!-- AXION:SECTION:BE_OBSERVABILITY -->
 ## Observability
+- Structured logging fields: [TBD]
+- Metrics + tracing: [TBD]
 
-### Logging
-- [ ] Define log levels
-- [ ] Define structured logging format
-- [ ] Define sensitive data masking
 
-### Monitoring
-- **Metrics:** [TBD]
-- **Tracing:** [TBD]
-- **Alerting:** [TBD]
+<!-- AXION:SECTION:BE_RELIABILITY -->
+## Reliability & Resilience
+- Timeouts/retries/circuit breakers: [TBD]
+- Graceful degradation: [TBD]
 
----
 
-<!-- AXION:SECTION:BE_RUNTIME_DEPLOYMENT -->
-## Runtime & Deployment
+<!-- AXION:SECTION:BE_SECURITY -->
+## Backend Security
+- Input validation/injection defenses: [TBD]
+- Secrets management expectations: [TBD]
 
-### Configuration
-- [ ] Define environment variables
-- [ ] Define feature flags
-- [ ] Define deployment strategy
 
-### Infrastructure
-- **Runtime:** [TBD]
-- **Container:** [TBD]
-- **Orchestration:** [TBD]
+<!-- AXION:SECTION:BE_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Business rules enumerated
+- [ ] Failure handling documented
+- [ ] Observability requirements defined
 
----
 
-## Schema Reference
-
-### Tables
-
-| Table | Purpose | Owner |
-|-------|---------|-------|
-| [TBD] | [TBD] | [TBD] |
-
----
-
+<!-- AXION:SECTION:BE_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

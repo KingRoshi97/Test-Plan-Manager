@@ -191,9 +191,16 @@ Templates use a contract header for verification:
 ```markdown
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:frontend -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:fe -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 ```
+
+Each template includes:
+- **Metadata block**: Module slug, prefix, and description
+- **Agent Rules section**: Explicit guidance for population (do not delete)
+- **Section keys**: Stable AXION:SECTION markers that never change
+- **Acceptance criteria**: Checkboxes for verification
+- **Open Questions**: Captures UNKNOWNs and pending decisions
 
 ### Section Keys
 
@@ -232,18 +239,21 @@ Example usage:
 - **Standards:** [TBD]
 ```
 
-### Placeholder Tokens
+### Placeholder Policy
 
-Standard tokens for verification:
+Templates follow a strict placeholder policy for consistent verification:
 
-| Token | Meaning |
-|-------|---------|
-| `[TBD]` | Not yet filled |
-| `[DECISION]` | Needs a choice |
-| `[ASSUMPTION]` | Explicitly assumed |
-| `[OUT-OF-SCOPE]` | Intentionally excluded |
-| `[LINK]` | Reference to another doc |
-| `UNKNOWN` | Information not available |
+| Token | When to Use |
+|-------|-------------|
+| `[TBD]` | Must be populated with concrete content during draft stage |
+| `N/A — <reason>` | Section is not applicable (never leave blank) |
+| `UNKNOWN` | Upstream truth is missing; add to Open Questions |
+| `[DECISION]` | Needs a choice from stakeholders |
+| `[ASSUMPTION]` | Explicitly assumed pending confirmation |
+| `[OUT-OF-SCOPE]` | Intentionally excluded from scope |
+| `[LINK]` | Reference to another document |
+
+**Key rule:** At verify stage, `[TBD]` is not allowed in required sections. Sections must either be populated or marked `N/A — <reason>`.
 
 ### Verify Rules
 

@@ -1,121 +1,67 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:security -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:sec -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Security Module — {{DOMAIN_NAME}}
+# Security — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Security
-**Last Updated:** [TBD]
+**Module slug:** `security`  
+**Prefix:** `sec`  
+**Description:** Security policies, audits, and vulnerability management
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:SEC_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:SEC_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-### Boundaries
-- [ ] Define security ownership
-- [ ] Define incident response roles
-- [ ] Define compliance scope
 
-### Ownership
-- **Owner:** [TBD]
-- **Stakeholders:** [TBD]
+<!-- AXION:SECTION:SEC_THREAT -->
+## Threat Model
+- Top threats by asset: [TBD]
+- Abuse cases: [TBD]
 
----
 
-<!-- AXION:SECTION:SEC_PRODUCT_SECURITY -->
-## Product Security
+<!-- AXION:SECTION:SEC_POLICIES -->
+## Security Policies
+- Data classification: [TBD]
+- Encryption requirements: [TBD]
+- Secrets requirements: [TBD]
 
-### Threat Modeling
-- [ ] Define threat model process
-- [ ] Define risk assessment approach
-- [ ] Define security review triggers
 
-### Documentation
-- **Threat Model:** [TBD]
-- **Risk Register:** [TBD]
-- **Review Cadence:** [TBD]
-
----
-
-<!-- AXION:SECTION:SEC_APPSEC_STANDARDS -->
-## Application Security Standards
-
-### Secure Coding
-- [ ] Define input validation rules
-- [ ] Define output encoding rules
-- [ ] Define auth/authz patterns
-
-### OWASP
-- **Top 10 Coverage:** [TBD]
-- **SAST Tool:** [TBD]
-- **DAST Tool:** [TBD]
-
----
-
-<!-- AXION:SECTION:SEC_SECOPS_IR -->
-## Security Operations & Incident Response
-
-### IR Process
-- [ ] Define incident classification
-- [ ] Define response procedures
-- [ ] Define communication plan
-
-### Runbooks
-- **Detection:** [TBD]
-- **Containment:** [TBD]
-- **Recovery:** [TBD]
-
----
-
-<!-- AXION:SECTION:SEC_VULN_MGMT -->
+<!-- AXION:SECTION:SEC_VULN -->
 ## Vulnerability Management
+- Scanning tools/process: [TBD]
+- Patch SLAs: [TBD]
 
-### Process
-- [ ] Define scanning cadence
-- [ ] Define remediation SLAs
-- [ ] Define exception process
 
-### Tools
-- **Scanner:** [TBD]
-- **Tracking:** [TBD]
-- **SLA by Severity:** [TBD]
+<!-- AXION:SECTION:SEC_IR -->
+## Incident Response
+- Detection signals: [TBD]
+- Response runbooks ownership: [TBD]
 
----
 
-<!-- AXION:SECTION:SEC_SUPPLY_CHAIN -->
-## Supply Chain Security
+<!-- AXION:SECTION:SEC_SUPPLY -->
+## Supply Chain
+- Dependency controls: [TBD]
+- Build provenance expectations: [TBD]
 
-### Dependencies
-- [ ] Define dependency review
-- [ ] Define update policy
-- [ ] Define SBOM requirements
 
-### Tools
-- **SCA Tool:** [TBD]
-- **License Scanning:** [TBD]
-- **Update Automation:** [TBD]
+<!-- AXION:SECTION:SEC_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Threat model exists
+- [ ] Policies documented
+- [ ] Vuln + IR process defined
 
----
 
-<!-- AXION:SECTION:SEC_GRC_COMPLIANCE -->
-## Governance, Risk & Compliance
-
-### Compliance
-- [ ] Define applicable frameworks
-- [ ] Define audit cadence
-- [ ] Define evidence collection
-
-### Frameworks
-
-| Framework | Status | Last Audit |
-|-----------|--------|------------|
-| [TBD] | [TBD] | [TBD] |
-
----
-
+<!-- AXION:SECTION:SEC_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

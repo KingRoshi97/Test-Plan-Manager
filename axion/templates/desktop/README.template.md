@@ -1,70 +1,66 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:desktop -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:desktop -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Desktop Module — {{DOMAIN_NAME}}
+# Desktop — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Desktop
-**Last Updated:** [TBD]
+**Module slug:** `desktop`  
+**Prefix:** `desktop`  
+**Description:** Desktop app development (Electron, Tauri)
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:DESKTOP_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:DESKTOP_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define platform scope (Windows/macOS/Linux)
-- [ ] Define framework (Electron/Tauri/native)
-- [ ] Define distribution strategy
 
----
+<!-- AXION:SECTION:DESKTOP_ARCH -->
+## App Architecture
+- Framework/runtime: [TBD]
+- Process model: [TBD]
 
-<!-- AXION:SECTION:DESKTOP_ARCHITECTURE -->
-## Architecture
 
-- [ ] Define process architecture
-- [ ] Define IPC patterns
-- [ ] Define window management
-
----
-
-<!-- AXION:SECTION:DESKTOP_OS_INTEGRATIONS -->
+<!-- AXION:SECTION:DESKTOP_OS -->
 ## OS Integrations
+- File system, protocol handlers, tray/menu: [TBD]
+- Auto-start/background services: [TBD]
 
-- [ ] Define system tray behavior
-- [ ] Define file system access
-- [ ] Define native menus/shortcuts
 
----
+<!-- AXION:SECTION:DESKTOP_PACKAGING -->
+## Packaging, Signing & Updates
+- Code signing/notarization: [TBD]
+- Auto-update strategy: [TBD]
 
-<!-- AXION:SECTION:DESKTOP_SECURITY_SIGNING -->
-## Security & Code Signing
 
-- [ ] Define code signing process
-- [ ] Define notarization (macOS)
-- [ ] Define secure storage
+<!-- AXION:SECTION:DESKTOP_SECURITY -->
+## Security
+- Local storage + secrets: [TBD]
+- Sandboxing/permissions: [TBD]
 
----
 
-<!-- AXION:SECTION:DESKTOP_UPDATES_DISTRIBUTION -->
-## Updates & Distribution
+<!-- AXION:SECTION:DESKTOP_TESTING -->
+## Testing & Supportability
+- OS matrix: [TBD]
+- Crash dumps/log capture: [TBD]
 
-- [ ] Define auto-update mechanism
-- [ ] Define distribution channels
-- [ ] Define rollback strategy
 
----
+<!-- AXION:SECTION:DESKTOP_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Update strategy exists
+- [ ] Signing requirements stated
+- [ ] OS matrix defined
 
-<!-- AXION:SECTION:DESKTOP_TESTING_OBSERVABILITY -->
-## Testing & Observability
 
-- [ ] Define OS version matrix
-- [ ] Define crash reporting
-- [ ] Define telemetry
-
----
-
+<!-- AXION:SECTION:DESKTOP_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

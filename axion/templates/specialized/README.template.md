@@ -1,65 +1,62 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:specialized -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:spec -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Specialized Domains Module — {{DOMAIN_NAME}}
+# Specialized — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Specialized
-**Last Updated:** [TBD]
+**Module slug:** `specialized`  
+**Prefix:** `spec`  
+**Description:** Non-standard domains (game, embedded, blockchain, AR/VR, robotics)
+
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
 This is the "escape hatch" for non-standard development domains.
 
----
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
 
-<!-- AXION:SECTION:SPEC_SCOPE_OWNERSHIP -->
+<!-- AXION:SECTION:SPEC_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
+- Domain type: [TBD]
 
-- [ ] Define specialized domain type
-- [ ] Define team expertise required
-- [ ] Define integration points
-
----
 
 <!-- AXION:SECTION:SPEC_WHEN_TO_USE -->
 ## When to Use
+- Use case criteria: [TBD]
+- Evaluation process: [TBD]
+- Alternatives considered: [TBD]
 
-- [ ] Define use case criteria
-- [ ] Define evaluation process
-- [ ] Define alternatives considered
-
----
 
 <!-- AXION:SECTION:SPEC_STANDARDS -->
 ## Domain-Specific Standards
+- Technology constraints: [TBD]
+- Performance requirements: [TBD]
+- Security considerations: [TBD]
 
-- [ ] Define technology constraints
-- [ ] Define performance requirements
-- [ ] Define security considerations
 
----
-
-<!-- AXION:SECTION:SPEC_INTEGRATION_POINTS -->
+<!-- AXION:SECTION:SPEC_INTEGRATION -->
 ## Integration Points
+- API boundaries: [TBD]
+- Data exchange: [TBD]
+- Event contracts: [TBD]
 
-- [ ] Define API boundaries
-- [ ] Define data exchange
-- [ ] Define event contracts
 
----
-
-<!-- AXION:SECTION:SPEC_TESTING_GATES -->
+<!-- AXION:SECTION:SPEC_TESTING -->
 ## Testing & Release Gates
+- Testing requirements: [TBD]
+- Hardware/device testing: [TBD]
+- Release criteria: [TBD]
 
-- [ ] Define testing requirements
-- [ ] Define hardware/device testing
-- [ ] Define release criteria
 
----
-
-## Domain-Specific Sections
+<!-- AXION:SECTION:SPEC_DOMAIN_DETAILS -->
+## Domain-Specific Details
 
 ### Game Development
 - Engine: [TBD]
@@ -86,7 +83,14 @@ This is the "escape hatch" for non-standard development domains.
 - Control: [TBD]
 - Safety: [TBD]
 
----
 
+<!-- AXION:SECTION:SPEC_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Domain type identified
+- [ ] Integration points defined
+- [ ] Testing gates specified
+
+
+<!-- AXION:SECTION:SPEC_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

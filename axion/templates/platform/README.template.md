@@ -1,88 +1,86 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:platform -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:platform -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Platform Module — {{DOMAIN_NAME}}
+# Platform — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Platform
-**Last Updated:** [TBD]
+**Module slug:** `platform`  
+**Prefix:** `platform`  
+**Description:** Internal developer platform (golden paths, self-service)
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:PLATFORM_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:PLATFORM_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
+- SLA commitments: [TBD]
 
-- [ ] Define internal platform scope
-- [ ] Define developer experience ownership
-- [ ] Define SLA commitments
-
----
 
 <!-- AXION:SECTION:PLATFORM_GOLDEN_PATHS -->
 ## Golden Paths
+- Standard service templates: [TBD]
+- Recommended patterns: [TBD]
+- Scaffolding tools: [TBD]
 
-- [ ] Define standard service templates
-- [ ] Define recommended patterns
-- [ ] Define scaffolding tools
-
----
 
 <!-- AXION:SECTION:PLATFORM_SELF_SERVICE -->
 ## Self-Service Capabilities
+- Environment provisioning: [TBD]
+- Database provisioning: [TBD]
+- Secret management: [TBD]
 
-- [ ] Define environment provisioning
-- [ ] Define database provisioning
-- [ ] Define secret management
-
----
 
 <!-- AXION:SECTION:PLATFORM_ENVIRONMENTS -->
 ## Environment Management
+- Environment tiers: [TBD]
+- Promotion process: [TBD]
+- Parity requirements: [TBD]
 
-- [ ] Define environment tiers
-- [ ] Define promotion process
-- [ ] Define parity requirements
 
----
-
-<!-- AXION:SECTION:PLATFORM_SECRETS_CONFIG -->
+<!-- AXION:SECTION:PLATFORM_SECRETS -->
 ## Secrets & Configuration
+- Vault integration: [TBD]
+- Rotation policies: [TBD]
+- Access controls: [TBD]
 
-- [ ] Define vault integration
-- [ ] Define rotation policies
-- [ ] Define access controls
 
----
-
-<!-- AXION:SECTION:PLATFORM_CICD_PLATFORM -->
+<!-- AXION:SECTION:PLATFORM_CICD -->
 ## CI/CD Platform
+- Pipeline templates: [TBD]
+- Runner management: [TBD]
+- Caching strategy: [TBD]
 
-- [ ] Define pipeline templates
-- [ ] Define runner management
-- [ ] Define caching strategy
 
----
-
-<!-- AXION:SECTION:PLATFORM_OBSERVABILITY_PLATFORM -->
+<!-- AXION:SECTION:PLATFORM_OBSERVABILITY -->
 ## Observability Platform
+- Logging infrastructure: [TBD]
+- Metrics collection: [TBD]
+- Tracing backend: [TBD]
 
-- [ ] Define logging infrastructure
-- [ ] Define metrics collection
-- [ ] Define tracing backend
 
----
-
-<!-- AXION:SECTION:PLATFORM_POLICY_GUARDRAILS -->
+<!-- AXION:SECTION:PLATFORM_POLICY -->
 ## Policy & Guardrails
+- Compliance checks: [TBD]
+- Security gates: [TBD]
+- Cost controls: [TBD]
 
-- [ ] Define compliance checks
-- [ ] Define security gates
-- [ ] Define cost controls
 
----
+<!-- AXION:SECTION:PLATFORM_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Golden paths documented
+- [ ] Self-service capabilities defined
+- [ ] Observability platform specified
 
+
+<!-- AXION:SECTION:PLATFORM_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]
