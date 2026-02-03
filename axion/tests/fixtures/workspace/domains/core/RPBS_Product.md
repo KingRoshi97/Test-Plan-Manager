@@ -1,8 +1,14 @@
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
+<!-- AXION:MODULE:core -->
+<!-- AXION:PREFIX:rpbs -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
+
 # RPBS: Requirements and Product Boundaries Specification
 
-## AXION Contract Header
-- AXION:PREFIX: rpbs
-- AXION:PLACEHOLDER_POLICY: [TBD] must be populated, N/A with reason if not applicable
+**Module slug:** `core`  
+**Prefix:** `rpbs`
+
+> Blank-state scaffold. Populate during AXION stages.
 
 ## Metadata
 - Version: 0.1.0

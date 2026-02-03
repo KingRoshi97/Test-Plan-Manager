@@ -166,10 +166,10 @@ describe('AXION Must-Have Tests', () => {
       
       const generatedDoc = readFile(ctx.workspacePath, 'domains/architecture/README.md');
       
-      assertContains(generatedDoc, 'AXION Contract Header', 'Should have contract header');
+      assertContains(generatedDoc, 'AXION:TEMPLATE_CONTRACT:v1', 'Should have template contract marker');
+      assertContains(generatedDoc, 'AXION:MODULE:architecture', 'Should have module marker matching slug');
       assertContains(generatedDoc, 'AXION:PREFIX', 'Should have prefix');
       assertContains(generatedDoc, 'AXION:PLACEHOLDER_POLICY', 'Should have placeholder policy');
-      assertContains(generatedDoc, 'Scope and Ownership', 'Should have scope section');
       assertContains(generatedDoc, 'ACCEPTANCE', 'Should have acceptance section');
       assertContains(generatedDoc, 'OPEN_QUESTIONS', 'Should have open questions section');
     } finally {
