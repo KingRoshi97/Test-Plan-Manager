@@ -434,7 +434,17 @@ async function executeStage(
   }
   
   const args = ['--import', 'tsx', scriptPath];
-  if (moduleSlug) {
+  
+  // App stages (non-module stages) need different arguments
+  const appStages = ['scaffold-app', 'build-plan', 'build-exec', 'build', 'test', 'deploy', 'activate', 'run-app'];
+  const isAppStage = appStages.includes(stage);
+  
+  if (isAppStage && paths.isTwoRoot) {
+    // For app stages in two-root mode, pass build root and project name
+    const buildRoot = path.dirname(paths.root); // Parent of workspace is build root
+    const projectName = path.basename(paths.root); // Workspace folder name is project name
+    args.push('--build-root', buildRoot, '--project-name', projectName);
+  } else if (moduleSlug) {
     args.push('--module', moduleSlug);
   }
   

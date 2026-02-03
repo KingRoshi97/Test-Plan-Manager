@@ -5,9 +5,21 @@
  * Creates the actual application skeleton from locked documentation + selected stack profile.
  * Gate: Blocked unless docs are locked (or explicit --override dev_build)
  * 
+ * Two-Root Model Support:
+ * - System Root: <BUILD_ROOT>/axion/ (configs, templates)
+ * - Workspace Root: <BUILD_ROOT>/<PROJECT_NAME>/ (outputs, app)
+ * 
  * Usage:
- *   node --import tsx axion/scripts/axion-scaffold-app.ts
- *   node --import tsx axion/scripts/axion-scaffold-app.ts --output ./my-app
+ *   node --import tsx axion/scripts/axion-scaffold-app.ts --build-root <path> --project-name <name>
+ *   node --import tsx axion/scripts/axion-scaffold-app.ts --output ./my-app  (legacy mode)
+ * 
+ * Flags:
+ *   --build-root <path>       Build root containing axion/ system folder (two-root mode)
+ *   --project-name <name>     Project name (two-root mode)
+ *   --output <path>           Output path for scaffolded app (legacy mode)
+ *   --override                Skip lock gate for dev builds
+ *   --dry-run                 Show what would be done without changes
+ *   --json                    Output only JSON
  */
 
 import * as fs from 'fs';
@@ -17,12 +29,25 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
-const LOCK_MANIFEST_PATH = path.join(AXION_ROOT, 'registry', 'lock_manifest.json');
-const STACK_PROFILES_PATH = path.join(AXION_ROOT, 'config', 'stack_profiles.json');
-const ARCHITECTURE_README = path.join(AXION_ROOT, 'domains', 'architecture', 'README.md');
-const DATABASE_README = path.join(AXION_ROOT, 'domains', 'database', 'README.md');
-const CONTRACTS_README = path.join(AXION_ROOT, 'domains', 'contracts', 'README.md');
+// Default paths (legacy mode) - will be overridden by two-root mode flags
+let AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+let WORKSPACE_ROOT = AXION_ROOT;  // In legacy mode, same as AXION_ROOT
+let LOCK_MANIFEST_PATH = path.join(AXION_ROOT, 'registry', 'lock_manifest.json');
+let STACK_PROFILES_PATH = path.join(AXION_ROOT, 'config', 'stack_profiles.json');
+let ARCHITECTURE_README = path.join(AXION_ROOT, 'domains', 'architecture', 'README.md');
+let DATABASE_README = path.join(AXION_ROOT, 'domains', 'database', 'README.md');
+let CONTRACTS_README = path.join(AXION_ROOT, 'domains', 'contracts', 'README.md');
+
+// Setup paths for two-root mode
+function setupTwoRootPaths(buildRoot: string, projectName: string): void {
+  AXION_ROOT = path.join(buildRoot, 'axion');
+  WORKSPACE_ROOT = path.join(buildRoot, projectName);
+  LOCK_MANIFEST_PATH = path.join(WORKSPACE_ROOT, 'registry', 'lock_manifest.json');
+  STACK_PROFILES_PATH = path.join(AXION_ROOT, 'config', 'stack_profiles.json');
+  ARCHITECTURE_README = path.join(WORKSPACE_ROOT, 'domains', 'architecture', 'README.md');
+  DATABASE_README = path.join(WORKSPACE_ROOT, 'domains', 'database', 'README.md');
+  CONTRACTS_README = path.join(WORKSPACE_ROOT, 'domains', 'contracts', 'README.md');
+}
 
 interface StackProfile {
   id: string;
@@ -412,16 +437,87 @@ npm run dev
   return createdFiles;
 }
 
+function writeScaffoldReport(
+  workspaceRoot: string, 
+  filesCreated: string[],
+  profile: StackProfile,
+  dryRun: boolean
+): void {
+  const reportPath = path.join(workspaceRoot, 'registry', 'app_scaffold_report.json');
+  const report = {
+    generated_at: new Date().toISOString(),
+    stack_profile: profile.id,
+    stack_label: profile.label,
+    files_created: filesCreated,
+    status: 'success'
+  };
+  
+  if (!dryRun) {
+    const dir = path.dirname(reportPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf-8');
+  }
+}
+
 function main() {
   const args = process.argv.slice(2);
+  
+  // Parse flags
   const outputIdx = args.indexOf('--output');
+  const buildRootIdx = args.indexOf('--build-root');
+  const projectNameIdx = args.indexOf('--project-name');
   const overrideFlag = args.includes('--override');
+  const dryRunFlag = args.includes('--dry-run');
+  const jsonFlag = args.includes('--json');
   
-  const outputPath = outputIdx !== -1 
-    ? args[outputIdx + 1] 
-    : path.join(process.cwd(), 'axion-app');
+  // Determine mode: two-root or legacy
+  const isTwoRootMode = buildRootIdx !== -1 && projectNameIdx !== -1;
   
-  console.log('\n[AXION] App Scaffolder\n');
+  let outputPath: string;
+  let projectName: string | undefined;
+  
+  if (isTwoRootMode) {
+    const buildRoot = path.resolve(args[buildRootIdx + 1]);
+    projectName = args[projectNameIdx + 1];
+    
+    // Setup two-root paths
+    setupTwoRootPaths(buildRoot, projectName);
+    
+    // Output goes to workspace/app
+    outputPath = path.join(WORKSPACE_ROOT, 'app');
+    
+    if (!jsonFlag) {
+      console.log('\n[AXION] App Scaffolder (Two-Root Mode)\n');
+      console.log(`[INFO] Build root: ${buildRoot}`);
+      console.log(`[INFO] Project: ${projectName}`);
+      console.log(`[INFO] Workspace: ${WORKSPACE_ROOT}`);
+    }
+  } else {
+    // Legacy mode
+    outputPath = outputIdx !== -1 
+      ? args[outputIdx + 1] 
+      : path.join(process.cwd(), 'axion-app');
+    
+    if (!jsonFlag) {
+      console.log('\n[AXION] App Scaffolder\n');
+    }
+  }
+  
+  // Check workspace exists in two-root mode
+  if (isTwoRootMode && !fs.existsSync(WORKSPACE_ROOT)) {
+    const result: ScaffoldResult = {
+      status: 'failed',
+      stage: 'scaffold-app',
+      hint: [
+        `Workspace not found at ${WORKSPACE_ROOT}`,
+        'Run prepare-root first to create the workspace'
+      ],
+    };
+    console.log(JSON.stringify(result, null, 2));
+    process.exit(1);
+  }
   
   if (!isDocsLocked() && !overrideFlag) {
     const result: ScaffoldResult = {
@@ -439,7 +535,7 @@ function main() {
   }
   
   if (!isDocsLocked() && overrideFlag) {
-    console.log('[WARN] Running in dev_build mode (docs not locked)');
+    if (!jsonFlag) console.log('[WARN] Running in dev_build mode (docs not locked)');
   }
   
   const profile = detectStackFromDocs();
@@ -453,17 +549,39 @@ function main() {
     process.exit(1);
   }
   
-  console.log(`Stack: ${profile.frontend.framework} + ${profile.backend.framework} + ${profile.database.engine}`);
-  console.log(`Output: ${outputPath}`);
-  console.log('');
-  
-  if (fs.existsSync(outputPath)) {
-    console.log('[INFO] Output directory exists, will merge/overwrite files');
+  if (!jsonFlag) {
+    console.log(`Stack: ${profile.frontend.framework} + ${profile.backend.framework} + ${profile.database.engine}`);
+    console.log(`Output: ${outputPath}`);
+    console.log('');
   }
   
-  const filesCreated = createDirectoryStructure(outputPath, profile);
+  if (fs.existsSync(outputPath)) {
+    if (!jsonFlag) console.log('[INFO] Output directory exists, will merge/overwrite files');
+  }
   
-  console.log(`\n[SUCCESS] Created ${filesCreated.length} files\n`);
+  // Create the scaffold (unless dry-run)
+  let filesCreated: string[] = [];
+  if (!dryRunFlag) {
+    filesCreated = createDirectoryStructure(outputPath, profile);
+  } else {
+    if (!jsonFlag) console.log('[DRY-RUN] Would create directory structure');
+    // Simulate what would be created
+    filesCreated = [
+      'package.json', 'tsconfig.json', 'drizzle.config.ts', 'vite.config.ts',
+      'tailwind.config.ts', 'postcss.config.js', 'theme.json', '.replit',
+      'server/index.ts', 'server/routes.ts', 'server/storage.ts', 'server/vite.ts',
+      'shared/schema.ts', 'client/index.html', 'client/src/main.tsx',
+      'client/src/App.tsx', 'client/src/index.css', 'README.md'
+    ];
+  }
+  
+  // Write scaffold report in two-root mode
+  if (isTwoRootMode) {
+    writeScaffoldReport(WORKSPACE_ROOT, filesCreated, profile, dryRunFlag);
+    if (!jsonFlag) console.log('[INFO] Created app_scaffold_report.json');
+  }
+  
+  if (!jsonFlag) console.log(`\n[SUCCESS] Created ${filesCreated.length} files\n`);
   
   const result: ScaffoldResult = {
     status: 'success',
