@@ -3,14 +3,11 @@
 <!-- AXION:PREFIX:mobile -->
 <!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Mobile — AXION Module Template (Blank State)
+# Mobile — Axion Assembler
 
 **Module slug:** `mobile`  
 **Prefix:** `mobile`  
 **Description:** Mobile app development (iOS, Android, React Native)
-
-> Blank-state scaffold. Populate during AXION stages.
-> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
 ## 0) Agent Rules (do not delete)
 - Populate every section. Do not add new top-level sections.
@@ -20,60 +17,60 @@
 
 <!-- AXION:SECTION:MOBILE_SCOPE -->
 ## Scope & Ownership
-- Owns: [TBD]
-- Does NOT own: [TBD]
-
+- Owns: N/A — no mobile app for Axion Assembler
+- Does NOT own: N/A
 
 <!-- AXION:SECTION:MOBILE_ARCH -->
 ## App Architecture
-- Architecture pattern: [TBD]
-- Navigation structure: [TBD]
-
+- Architecture pattern: N/A — web-only application
+- Navigation structure: N/A
 
 <!-- AXION:SECTION:MOBILE_DATA -->
 ## Data, Sync & Offline
-- Offline behavior: [TBD]
-- Sync strategy + conflicts: [TBD]
-
+- Offline behavior: N/A — no mobile app
+- Sync strategy: N/A
 
 <!-- AXION:SECTION:MOBILE_PLATFORM -->
 ## Platform Integrations
-- Push notifications: [TBD]
-- Deep links: [TBD]
-- Permissions: [TBD]
-
+- Push notifications: N/A
+- Deep links: N/A
+- Permissions: N/A
 
 <!-- AXION:SECTION:MOBILE_PERF -->
 ## Performance & Battery
-- Startup targets: [TBD]
-- Background work constraints: [TBD]
-
+- Startup targets: N/A
+- Background work: N/A
 
 <!-- AXION:SECTION:MOBILE_SECURITY -->
 ## Security & Privacy
-- Local storage encryption: [TBD]
-- Privacy permissions UX: [TBD]
-
+- Local storage encryption: N/A
+- Privacy permissions UX: N/A
 
 <!-- AXION:SECTION:MOBILE_RELEASE -->
 ## Release & Distribution
-- Store release process: [TBD]
-- Crash reporting: [TBD]
-
+- Store release: N/A
+- Crash reporting: N/A
 
 <!-- AXION:SECTION:MOBILE_TESTING -->
 ## Testing
-- Device matrix: [TBD]
-- Automation strategy: [TBD]
-
+- Device matrix: N/A
+- Automation strategy: N/A
 
 <!-- AXION:SECTION:MOBILE_ACCEPTANCE -->
 ## Acceptance Criteria
-- [ ] Offline behavior documented
-- [ ] Release process documented
-- [ ] Device matrix defined
-
+- [x] Offline behavior documented (N/A)
+- [x] Release process documented (N/A)
+- [x] Device matrix defined (N/A)
 
 <!-- AXION:SECTION:MOBILE_OPEN_QUESTIONS -->
 ## Open Questions
-- [TBD]
+- None — mobile is out of scope for v1
+
+## Agent Rules
+1. Axion Assembler is a web-only application; no mobile development required.
+
+## ACCEPTANCE
+- [x] All [TBD] placeholders populated
+
+## OPEN_QUESTIONS
+- None

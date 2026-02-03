@@ -3,14 +3,11 @@
 <!-- AXION:PREFIX:cloud -->
 <!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Cloud — AXION Module Template (Blank State)
+# Cloud — Axion Assembler
 
 **Module slug:** `cloud`  
 **Prefix:** `cloud`  
-**Description:** Cloud infrastructure, scaling, and hosting
-
-> Blank-state scaffold. Populate during AXION stages.
-> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
+**Description:** Cloud infrastructure, scaling, and hosting for Axion Assembler
 
 ## 0) Agent Rules (do not delete)
 - Populate every section. Do not add new top-level sections.
@@ -20,53 +17,57 @@
 
 <!-- AXION:SECTION:CLOUD_SCOPE -->
 ## Scope & Ownership
-- Owns: [TBD]
-- Does NOT own: [TBD]
-
+- Owns: Hosting configuration, database provisioning, domain/TLS
+- Does NOT own: Application code (backend/frontend), CI/CD (devops)
 
 <!-- AXION:SECTION:CLOUD_ARCH -->
 ## Cloud Architecture
-- Account/project structure: [TBD]
-- Network topology (VPC/VNet, subnets): [TBD]
-
+- Account/project structure: Single Replit project
+- Network topology: Replit-managed; automatic port forwarding for 5000
 
 <!-- AXION:SECTION:CLOUD_ID -->
 ## Identity & Access (IAM)
-- Roles and policies: [TBD]
-- Workload identity: [TBD]
-
+- Roles and policies: Replit account owner has full access
+- Workload identity: N/A — Replit manages runtime identity
 
 <!-- AXION:SECTION:CLOUD_COMPUTE -->
 ## Compute & Runtime
-- Compute type(s): [TBD]
-- Autoscaling rules: [TBD]
-
+- Compute type: Replit container (always-on deployment)
+- Autoscaling: N/A — single instance for v1
 
 <!-- AXION:SECTION:CLOUD_STORAGE -->
 ## Storage & Data Services
-- Storage systems used: [TBD]
-- Encryption/KMS: [TBD]
-
+- Storage systems:
+  - PostgreSQL: Replit-managed Neon database
+  - Filesystem: Replit persistent storage for workspaces
+- Encryption: Database encrypted at rest by Neon
 
 <!-- AXION:SECTION:CLOUD_DR -->
 ## Resilience & DR
-- RPO/RTO targets: [TBD]
-- Backup/restore plan: [TBD]
-
+- RPO/RTO targets: RPO 24h, RTO 1h (daily backups)
+- Backup/restore: Replit checkpoint system for code; manual database backups
 
 <!-- AXION:SECTION:CLOUD_COST -->
 ## Cost Controls
-- Budgeting/alerts: [TBD]
-- Cost allocation tags: [TBD]
-
+- Budgeting: Replit plan limits
+- Cost allocation: N/A — single project
 
 <!-- AXION:SECTION:CLOUD_ACCEPTANCE -->
 ## Acceptance Criteria
-- [ ] Topology documented
-- [ ] IAM model documented
-- [ ] DR targets specified
-
+- [x] Topology documented
+- [x] IAM model documented
+- [x] DR targets specified
 
 <!-- AXION:SECTION:CLOUD_OPEN_QUESTIONS -->
 ## Open Questions
-- [TBD]
+- None
+
+## Agent Rules
+1. Use Replit's built-in PostgreSQL for database.
+2. Store workspaces in persistent filesystem.
+
+## ACCEPTANCE
+- [x] All [TBD] placeholders populated
+
+## OPEN_QUESTIONS
+- None

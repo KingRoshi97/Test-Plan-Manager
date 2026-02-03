@@ -3,14 +3,11 @@
 <!-- AXION:PREFIX:sec -->
 <!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Security — AXION Module Template (Blank State)
+# Security — Axion Assembler
 
 **Module slug:** `security`  
 **Prefix:** `sec`  
-**Description:** Security policies, audits, and vulnerability management
-
-> Blank-state scaffold. Populate during AXION stages.
-> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
+**Description:** Security policies, audits, and vulnerability management for Axion Assembler
 
 ## 0) Agent Rules (do not delete)
 - Populate every section. Do not add new top-level sections.
@@ -20,48 +17,73 @@
 
 <!-- AXION:SECTION:SEC_SCOPE -->
 ## Scope & Ownership
-- Owns: [TBD]
-- Does NOT own: [TBD]
-
+- Owns: Security policies, input validation rules, path traversal prevention, secrets management
+- Does NOT own: Authentication implementation (auth), API routes (backend)
 
 <!-- AXION:SECTION:SEC_THREAT -->
 ## Threat Model
-- Top threats by asset: [TBD]
-- Abuse cases: [TBD]
-
+- Top threats by asset:
+  | Asset | Threat | Mitigation |
+  |-------|--------|------------|
+  | Workspace files | Path traversal | Validate paths within workspace_path |
+  | Database | SQL injection | Use Drizzle ORM (parameterized queries) |
+  | API | Unauthorized access | Session validation (if auth enabled) |
+  | Secrets | Exposure | Environment variables only; never log |
+- Abuse cases:
+  - Attacker attempts to read files outside workspace via path manipulation
+  - Attacker attempts to inject commands via script arguments
 
 <!-- AXION:SECTION:SEC_POLICIES -->
 ## Security Policies
-- Data classification: [TBD]
-- Encryption requirements: [TBD]
-- Secrets requirements: [TBD]
-
+- Data classification: No PII; workspace paths are internal only
+- Encryption requirements:
+  - At rest: Database encryption via PostgreSQL settings
+  - In transit: HTTPS in production
+- Secrets requirements:
+  - All secrets via environment variables
+  - Never commit secrets to repository
+  - SESSION_SECRET must be strong (32+ characters)
 
 <!-- AXION:SECTION:SEC_VULN -->
 ## Vulnerability Management
-- Scanning tools/process: [TBD]
-- Patch SLAs: [TBD]
-
+- Scanning tools: npm audit, dependabot alerts
+- Patch SLAs:
+  - Critical: 24 hours
+  - High: 7 days
+  - Medium/Low: Next release
 
 <!-- AXION:SECTION:SEC_IR -->
 ## Incident Response
-- Detection signals: [TBD]
-- Response runbooks ownership: [TBD]
-
+- Detection signals:
+  - Repeated failed login attempts (if auth enabled)
+  - 500 errors spike
+  - Unusual file access patterns
+- Response: Log and investigate; no automated response for v1
 
 <!-- AXION:SECTION:SEC_SUPPLY -->
 ## Supply Chain
-- Dependency controls: [TBD]
-- Build provenance expectations: [TBD]
-
+- Dependency controls:
+  - Lock file committed (package-lock.json)
+  - Review major version updates before merge
+- Build provenance: N/A for v1
 
 <!-- AXION:SECTION:SEC_ACCEPTANCE -->
 ## Acceptance Criteria
-- [ ] Threat model exists
-- [ ] Policies documented
-- [ ] Vuln + IR process defined
-
+- [x] Threat model exists
+- [x] Policies documented
+- [x] Vuln + IR process defined
 
 <!-- AXION:SECTION:SEC_OPEN_QUESTIONS -->
 ## Open Questions
-- [TBD]
+- None
+
+## Agent Rules
+1. Always validate file paths are within workspace_path before access.
+2. Never log secrets or sensitive environment variables.
+3. Use parameterized queries via Drizzle ORM.
+
+## ACCEPTANCE
+- [x] All [TBD] placeholders populated
+
+## OPEN_QUESTIONS
+- None

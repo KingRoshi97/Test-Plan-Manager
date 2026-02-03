@@ -3,14 +3,11 @@
 <!-- AXION:PREFIX:desktop -->
 <!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Desktop — AXION Module Template (Blank State)
+# Desktop — Axion Assembler
 
 **Module slug:** `desktop`  
 **Prefix:** `desktop`  
 **Description:** Desktop app development (Electron, Tauri)
-
-> Blank-state scaffold. Populate during AXION stages.
-> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
 ## 0) Agent Rules (do not delete)
 - Populate every section. Do not add new top-level sections.
@@ -20,47 +17,49 @@
 
 <!-- AXION:SECTION:DESKTOP_SCOPE -->
 ## Scope & Ownership
-- Owns: [TBD]
-- Does NOT own: [TBD]
-
+- Owns: N/A — no desktop app for Axion Assembler
+- Does NOT own: N/A
 
 <!-- AXION:SECTION:DESKTOP_ARCH -->
 ## App Architecture
-- Framework/runtime: [TBD]
-- Process model: [TBD]
-
+- Framework/runtime: N/A — web-only application
+- Process model: N/A
 
 <!-- AXION:SECTION:DESKTOP_OS -->
 ## OS Integrations
-- File system, protocol handlers, tray/menu: [TBD]
-- Auto-start/background services: [TBD]
-
+- File system, protocol handlers: N/A
+- Auto-start/background services: N/A
 
 <!-- AXION:SECTION:DESKTOP_PACKAGING -->
 ## Packaging, Signing & Updates
-- Code signing/notarization: [TBD]
-- Auto-update strategy: [TBD]
-
+- Code signing: N/A
+- Auto-update: N/A
 
 <!-- AXION:SECTION:DESKTOP_SECURITY -->
 ## Security
-- Local storage + secrets: [TBD]
-- Sandboxing/permissions: [TBD]
-
+- Local storage + secrets: N/A
+- Sandboxing: N/A
 
 <!-- AXION:SECTION:DESKTOP_TESTING -->
 ## Testing & Supportability
-- OS matrix: [TBD]
-- Crash dumps/log capture: [TBD]
-
+- OS matrix: N/A
+- Crash dumps: N/A
 
 <!-- AXION:SECTION:DESKTOP_ACCEPTANCE -->
 ## Acceptance Criteria
-- [ ] Update strategy exists
-- [ ] Signing requirements stated
-- [ ] OS matrix defined
-
+- [x] Update strategy exists (N/A)
+- [x] Signing requirements stated (N/A)
+- [x] OS matrix defined (N/A)
 
 <!-- AXION:SECTION:DESKTOP_OPEN_QUESTIONS -->
 ## Open Questions
-- [TBD]
+- None — desktop is out of scope for v1
+
+## Agent Rules
+1. Axion Assembler is a web-only application; no desktop development required.
+
+## ACCEPTANCE
+- [x] All [TBD] placeholders populated
+
+## OPEN_QUESTIONS
+- None

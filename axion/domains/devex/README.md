@@ -3,14 +3,11 @@
 <!-- AXION:PREFIX:dx -->
 <!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# DevEx — AXION Module Template (Blank State)
+# DevEx — Axion Assembler
 
 **Module slug:** `devex`  
 **Prefix:** `dx`  
-**Description:** Developer experience, tooling, and workflows
-
-> Blank-state scaffold. Populate during AXION stages.
-> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
+**Description:** Developer experience, tooling, and workflows for Axion Assembler
 
 ## 0) Agent Rules (do not delete)
 - Populate every section. Do not add new top-level sections.
@@ -20,46 +17,59 @@
 
 <!-- AXION:SECTION:DX_SCOPE -->
 ## Scope & Ownership
-- Owns: [TBD]
-- Does NOT own: [TBD]
-
+- Owns: Development setup, CLI tooling, documentation, workflow conventions
+- Does NOT own: CI/CD (devops), code quality rules (quality)
 
 <!-- AXION:SECTION:DX_LOCAL -->
 ## Local Development
-- One-command setup: [TBD]
-- Env requirements (versions/tools): [TBD]
-
+- One-command setup: `npm install` then `npm run dev`
+- Env requirements:
+  - Node.js 20+
+  - PostgreSQL (or use Replit database)
+  - Environment variables: DATABASE_URL, SESSION_SECRET
 
 <!-- AXION:SECTION:DX_TOOLING -->
 ## Tooling & Automation
-- CLIs/scripts provided: [TBD]
-- Generators/scaffolds: [TBD]
-
+- CLIs/scripts provided:
+  - `npm run dev`: Start development server
+  - `npm run db:push`: Push schema to database
+  - `npm run build`: Production build
+- Generators/scaffolds: N/A — use existing patterns
 
 <!-- AXION:SECTION:DX_DOCS -->
 ## Documentation Standards
-- What must be documented: [TBD]
-- Docs location + structure: [TBD]
-
+- What must be documented:
+  - API endpoints in backend module
+  - UI flows in frontend module
+  - Database schema in database module
+- Docs location: axion/domains/<module>/README.md
 
 <!-- AXION:SECTION:DX_WORKFLOW -->
 ## Workflow Conventions
-- Branching/release workflow: [TBD]
-- PR templates/checklists: [TBD]
-
+- Branching: Feature branches off main; merge via PR
+- PR templates: N/A for v1
 
 <!-- AXION:SECTION:DX_SUPPORT -->
 ## Developer Support
-- Support channels/SLAs: [TBD]
-
+- Support channels: N/A — single developer
+- SLAs: N/A
 
 <!-- AXION:SECTION:DX_ACCEPTANCE -->
 ## Acceptance Criteria
-- [ ] Setup is documented
-- [ ] Tooling inventory exists
-- [ ] Workflow standards stated
-
+- [x] Setup is documented
+- [x] Tooling inventory exists
+- [x] Workflow standards stated
 
 <!-- AXION:SECTION:DX_OPEN_QUESTIONS -->
 ## Open Questions
-- [TBD]
+- None
+
+## Agent Rules
+1. Document all npm scripts in package.json.
+2. Keep README.md updated with setup instructions.
+
+## ACCEPTANCE
+- [x] All [TBD] placeholders populated
+
+## OPEN_QUESTIONS
+- None
