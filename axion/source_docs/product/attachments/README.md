@@ -1,25 +1,67 @@
 # Attachments Folder
 
-This folder stores **user-uploaded documents** that are attached during form creation.
+This folder stores **user input documents** for the AXION documentation pipeline.
 
-When users fill out the web form to create an assembly, they can attach supporting documents such as:
-- Existing specifications
-- Reference materials
-- Design mockups
-- Previous documentation
-- Exported files from other tools
+## For IDE-Only Users (No Web App)
 
-## Usage
+If you're using AXION directly from your IDE without the web application, this is where you provide your project information:
 
-Files uploaded through the web form are stored here with unique identifiers to prevent conflicts.
+1. **Start with `START_HERE.md`** - Open this file and paste your project idea, requirements, or any existing documentation
+2. **Add supporting files** - Drop any additional materials here:
+   - Existing specifications
+   - Reference materials  
+   - Design mockups or wireframes
+   - API documentation
+   - Database schemas
+   - Previous documentation
+   - Exported files from other tools
 
-The pipeline can reference these attachments during the `draft` stage to extract additional context.
+## How AXION Uses These Files
 
-## File Naming
+The AXION pipeline reads files from this folder during the `draft` stage to extract context for generating your documentation. The more detail you provide, the better your Agent Kit will be.
 
-Uploaded files are stored as:
+## Recommended Input Structure
+
+In `START_HERE.md`, include:
+
+```markdown
+# Project Name
+
+## What are you building?
+[Describe your idea in plain language]
+
+## Who is it for?
+[Describe your target users]
+
+## Core Features
+- Feature 1
+- Feature 2
+- Feature 3
+
+## Technical Preferences (Optional)
+- Frontend: [React, Vue, etc.]
+- Backend: [Node, Python, etc.]
+- Database: [PostgreSQL, MongoDB, etc.]
+
+## Additional Context
+[Any other details, constraints, or requirements]
 ```
-{assemblyId}_{originalFileName}
-```
 
-This ensures traceability back to the assembly that uploaded them.
+## File Types Supported
+
+- `.md` - Markdown (recommended for text)
+- `.txt` - Plain text
+- `.json` - Structured data
+- `.yaml` / `.yml` - Configuration
+- `.png`, `.jpg`, `.svg` - Images/mockups
+- `.pdf` - Documents
+
+## Next Steps
+
+After adding your input files:
+
+1. Run `npx tsx axion/scripts/axion-init.ts --mode fresh` to initialize
+2. Run `npx tsx axion/scripts/axion-generate.ts --all` to generate docs
+3. Follow the pipeline stages: seed → draft → review → verify → lock
+
+See `axion/QUICKSTART.md` for detailed instructions.
