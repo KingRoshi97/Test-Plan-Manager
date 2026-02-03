@@ -18,6 +18,20 @@
 - If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
 - If non-applicable, write `N/A — <reason>` (never leave blank).
 
+<!-- AXION:SECTION:RPBS_DERIVATIONS -->
+## RPBS_DERIVATIONS (Required)
+- Tenancy/Org Model: UNKNOWN (source: RPBS §21 Tenancy / Organization Model)
+- Actors & Permission Intents: UNKNOWN (source: RPBS §3 Actors & Permission Intents)
+- Core Objects impacted here: UNKNOWN (source: RPBS §4 Core Objects Glossary)
+- Non-Functional Profile implications: UNKNOWN (source: RPBS §7 Non-Functional Profile)
+- Enabled capabilities in scope for this module (mark Yes/No/N/A):
+  - Billing/Entitlements: N/A (source: RPBS §14)
+  - Notifications: N/A (source: RPBS §11)
+  - Uploads/Media: N/A (source: RPBS §13)
+  - Public API: N/A (source: RPBS §22)
+- Privacy Controls (Deletion/Export): UNKNOWN (source: RPBS §29)
+- OPEN_QUESTIONS impacting this module: NONE (source: RPBS §34)
+
 <!-- AXION:SECTION:DB_SCOPE -->
 ## Scope & Ownership
 - Owns: [TBD]
