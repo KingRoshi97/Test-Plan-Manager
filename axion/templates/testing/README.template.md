@@ -1,71 +1,69 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:testing -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:test -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Testing Module — {{DOMAIN_NAME}}
+# Testing — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Quality
-**Prefix:** test
-**Last Updated:** [TBD]
+**Module slug:** `testing`  
+**Prefix:** `test`  
+**Description:** Test strategies, coverage, and automation
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:TEST_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:TEST_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define testing ownership
-- [ ] Define coverage targets
-- [ ] Define QA responsibilities
 
----
+<!-- AXION:SECTION:TEST_STRATEGY -->
+## Test Strategy
+- Testing pyramid for this product: [TBD]
+- Risk-based coverage priorities: [TBD]
 
-<!-- AXION:SECTION:TEST_UNIT -->
-## Unit Testing
 
-- [ ] Define unit test scope
-- [ ] Define mocking strategy
-- [ ] Define assertion patterns
+<!-- AXION:SECTION:TEST_TYPES -->
+## Test Types & Coverage
+- Unit: [TBD]
+- Integration: [TBD]
+- E2E: [TBD]
+- Contract: [TBD]
+- Performance: [TBD]
 
----
 
-<!-- AXION:SECTION:TEST_INTEGRATION -->
-## Integration Testing
+<!-- AXION:SECTION:TEST_ENV -->
+## Test Environments & Data
+- Environments used: [TBD]
+- Test data management: [TBD]
 
-- [ ] Define integration boundaries
-- [ ] Define fixture strategy
-- [ ] Define database handling
-
----
-
-<!-- AXION:SECTION:TEST_E2E -->
-## End-to-End Testing
-
-- [ ] Define E2E scope
-- [ ] Define browser matrix
-- [ ] Define test data management
-
----
 
 <!-- AXION:SECTION:TEST_AUTOMATION -->
-## Automation
+## Automation & CI Integration
+- Runner strategy (parallelization): [TBD]
+- Flake policy: [TBD]
 
-- [ ] Define CI integration
-- [ ] Define parallel execution
-- [ ] Define flaky test handling
 
----
+<!-- AXION:SECTION:TEST_REPORTING -->
+## Reporting & Signals
+- Coverage targets: [TBD]
+- Gate thresholds: [TBD]
 
-<!-- AXION:SECTION:TEST_COVERAGE -->
-## Coverage
 
-- [ ] Define coverage thresholds
-- [ ] Define critical path coverage
-- [ ] Define reporting
+<!-- AXION:SECTION:TEST_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Test types defined with owners
+- [ ] CI gates specified
+- [ ] Data strategy documented
 
----
 
+<!-- AXION:SECTION:TEST_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

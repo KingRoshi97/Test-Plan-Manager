@@ -1,70 +1,72 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:data -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:data -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Data Module — {{DOMAIN_NAME}}
+# Data — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Data
-**Last Updated:** [TBD]
+**Module slug:** `data`  
+**Prefix:** `data`  
+**Description:** Data flows, transformations, and validation
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:DATA_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:DATA_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define data engineering scope
-- [ ] Define analytics scope
-- [ ] Define ML scope
 
----
+<!-- AXION:SECTION:DATA_SOURCES -->
+## Sources & Ingestion
+- Source systems list: [TBD]
+- Ingestion method (batch/stream/CDC): [TBD]
 
-<!-- AXION:SECTION:DATA_DATA_ENGINEERING -->
-## Data Engineering
 
-- [ ] Define ingestion patterns
-- [ ] Define ETL/ELT approach
-- [ ] Define warehouse structure
+<!-- AXION:SECTION:DATA_TRANSFORMS -->
+## Transforms & Modeling
+- Transformation stages: [TBD]
+- Canonical metrics/dimensions: [TBD]
 
----
 
-<!-- AXION:SECTION:DATA_ANALYTICS_ENGINEERING -->
-## Analytics Engineering
+<!-- AXION:SECTION:DATA_QUALITY -->
+## Data Quality Controls
+- Validations (schema, ranges, referential): [TBD]
+- Anomaly detection rules: [TBD]
 
-- [ ] Define metrics layer
-- [ ] Define dashboard standards
-- [ ] Define self-service scope
 
----
+<!-- AXION:SECTION:DATA_LINEAGE -->
+## Lineage & Metadata
+- Lineage tracking approach: [TBD]
+- Dataset documentation expectations: [TBD]
 
-<!-- AXION:SECTION:DATA_ML_ENGINEERING -->
-## ML Engineering
 
-- [ ] Define model deployment
-- [ ] Define inference patterns
-- [ ] Define monitoring
+<!-- AXION:SECTION:DATA_ACCESS -->
+## Access & Governance
+- Access control model: [TBD]
+- Sensitive data classification: [TBD]
 
----
 
-<!-- AXION:SECTION:DATA_GOVERNANCE_PRIVACY -->
-## Governance & Privacy
+<!-- AXION:SECTION:DATA_OBSERVABILITY -->
+## Data Observability
+- Freshness/volume/quality metrics: [TBD]
+- Alerting and ownership: [TBD]
 
-- [ ] Define data classification
-- [ ] Define retention policies
-- [ ] Define privacy controls
 
----
+<!-- AXION:SECTION:DATA_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Sources + outputs enumerated
+- [ ] Quality checks defined
+- [ ] Governance model stated
 
-<!-- AXION:SECTION:DATA_QUALITY_OBSERVABILITY -->
-## Quality & Observability
 
-- [ ] Define data quality checks
-- [ ] Define lineage tracking
-- [ ] Define freshness monitoring
-
----
-
+<!-- AXION:SECTION:DATA_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

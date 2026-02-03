@@ -1,79 +1,74 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:database -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:db -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Database Module — {{DOMAIN_NAME}}
+# Database — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Data
-**Prefix:** db
-**Last Updated:** [TBD]
+**Module slug:** `database`  
+**Prefix:** `db`  
+**Description:** Database schema, migrations, and data models
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:DB_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:DB_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define database ownership
-- [ ] Define migration authority
-- [ ] Define DBA responsibilities
 
----
+<!-- AXION:SECTION:DB_MODELS -->
+## Data Models & Tables
+- Table list (name → purpose → owner): [TBD]
+- Relationships + cardinality notes: [TBD]
 
-<!-- AXION:SECTION:DB_SCHEMA_DESIGN -->
-## Schema Design
 
-- [ ] Define table naming conventions
-- [ ] Define column naming conventions
-- [ ] Define primary key strategy
+<!-- AXION:SECTION:DB_CONSTRAINTS -->
+## Constraints & Integrity
+- Primary keys strategy: [TBD]
+- Uniqueness constraints: [TBD]
+- Foreign keys and cascade rules: [TBD]
 
----
 
 <!-- AXION:SECTION:DB_MIGRATIONS -->
-## Migrations
+## Migrations & Change Management
+- Migration tool/process: [TBD]
+- Forward/backward compatibility approach: [TBD]
+- Zero-downtime migration rules: [TBD]
 
-- [ ] Define migration tool
-- [ ] Define rollback strategy
-- [ ] Define data migration approach
 
----
+<!-- AXION:SECTION:DB_INDEXING -->
+## Indexing & Query Performance
+- Index strategy: [TBD]
+- Known hot queries and plans: [TBD]
 
-<!-- AXION:SECTION:DB_RELATIONSHIPS -->
-## Relationships
 
-- [ ] Define foreign key strategy
-- [ ] Define cascade behavior
-- [ ] Define join patterns
+<!-- AXION:SECTION:DB_RETENTION -->
+## Retention, Archival, Deletion
+- Retention rules: [TBD]
+- Deletion policy (privacy): [TBD]
 
----
 
-<!-- AXION:SECTION:DB_PERFORMANCE -->
-## Performance
+<!-- AXION:SECTION:DB_BACKUP_DR -->
+## Backup & Disaster Recovery
+- Backup cadence + RPO/RTO: [TBD]
+- Restore validation process: [TBD]
 
-- [ ] Define indexing strategy
-- [ ] Define query optimization
-- [ ] Define connection pooling
 
----
+<!-- AXION:SECTION:DB_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Schema is enumerated
+- [ ] Migration rules documented
+- [ ] Backup/restore expectations specified
 
-<!-- AXION:SECTION:DB_BACKUP_RECOVERY -->
-## Backup & Recovery
 
-- [ ] Define backup schedule
-- [ ] Define retention policy
-- [ ] Define recovery testing
-
----
-
-## Schema Reference
-
-| Table | Purpose | Owner |
-|-------|---------|-------|
-| [TBD] | [TBD] | [TBD] |
-
----
-
+<!-- AXION:SECTION:DB_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

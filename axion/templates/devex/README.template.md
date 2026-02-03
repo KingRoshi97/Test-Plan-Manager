@@ -1,70 +1,65 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:devex -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:dx -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Developer Experience Module — {{DOMAIN_NAME}}
+# DevEx — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** DevEx
-**Last Updated:** [TBD]
+**Module slug:** `devex`  
+**Prefix:** `dx`  
+**Description:** Developer experience, tooling, and workflows
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:DX_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:DX_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define DevEx team scope
-- [ ] Define tooling ownership
-- [ ] Define support model
 
----
-
-<!-- AXION:SECTION:DX_LOCAL_DEV -->
+<!-- AXION:SECTION:DX_LOCAL -->
 ## Local Development
+- One-command setup: [TBD]
+- Env requirements (versions/tools): [TBD]
 
-- [ ] Define setup process
-- [ ] Define dev containers
-- [ ] Define mock services
 
----
+<!-- AXION:SECTION:DX_TOOLING -->
+## Tooling & Automation
+- CLIs/scripts provided: [TBD]
+- Generators/scaffolds: [TBD]
 
-<!-- AXION:SECTION:DX_TOOLING_STANDARDS -->
-## Tooling Standards
 
-- [ ] Define IDE configuration
-- [ ] Define linting/formatting
-- [ ] Define CLI tools
+<!-- AXION:SECTION:DX_DOCS -->
+## Documentation Standards
+- What must be documented: [TBD]
+- Docs location + structure: [TBD]
 
----
 
-<!-- AXION:SECTION:DX_DOCS_PRACTICES -->
-## Documentation Practices
+<!-- AXION:SECTION:DX_WORKFLOW -->
+## Workflow Conventions
+- Branching/release workflow: [TBD]
+- PR templates/checklists: [TBD]
 
-- [ ] Define doc standards
-- [ ] Define API documentation
-- [ ] Define architecture docs
 
----
+<!-- AXION:SECTION:DX_SUPPORT -->
+## Developer Support
+- Support channels/SLAs: [TBD]
 
-<!-- AXION:SECTION:DX_AUTOMATION_SCAFFOLDING -->
-## Automation & Scaffolding
 
-- [ ] Define code generators
-- [ ] Define project templates
-- [ ] Define automation scripts
+<!-- AXION:SECTION:DX_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Setup is documented
+- [ ] Tooling inventory exists
+- [ ] Workflow standards stated
 
----
 
-<!-- AXION:SECTION:DX_CONTRIBUTION_WORKFLOWS -->
-## Contribution Workflows
-
-- [ ] Define PR process
-- [ ] Define review standards
-- [ ] Define merge policies
-
----
-
+<!-- AXION:SECTION:DX_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

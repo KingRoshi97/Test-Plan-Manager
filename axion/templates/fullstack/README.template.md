@@ -1,136 +1,78 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:fullstack -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:fs -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Fullstack Module — {{DOMAIN_NAME}}
+# Fullstack — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Fullstack
-**Last Updated:** [TBD]
+**Module slug:** `fullstack`  
+**Prefix:** `fs`  
+**Description:** End-to-end flows connecting frontend and backend
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:FS_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:FS_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-### Boundaries
-- [ ] Define end-to-end feature boundaries
-- [ ] Define frontend/backend handoff points
-- [ ] Define shared contract ownership
 
-### Ownership
-- **Owner:** [TBD]
-- **Stakeholders:** [TBD]
-
----
-
-<!-- AXION:SECTION:FS_END_TO_END_FLOWS -->
+<!-- AXION:SECTION:FS_E2E_FLOWS -->
 ## End-to-End Flows
+- Flow A (UI→API→DB): [TBD]
+- Flow B (UI→API→DB): [TBD]
 
-### Critical Paths
-- [ ] Define primary user journeys
-- [ ] Define data flow from UI to DB
-- [ ] Define error propagation
 
-### Flows
+<!-- AXION:SECTION:FS_CONTRACT_ALIGNMENT -->
+## Contract Alignment
+- Shared types / codegen approach: [TBD]
+- Backward compatibility strategy: [TBD]
 
-| Flow | Frontend Entry | API Call | DB Operation | Response |
-|------|----------------|----------|--------------|----------|
-| [TBD] | [TBD] | [TBD] | [TBD] | [TBD] |
 
----
+<!-- AXION:SECTION:FS_RELEASE -->
+## Release & Compatibility
+- Deployment ordering constraints: [TBD]
+- Feature flags strategy: [TBD]
 
-<!-- AXION:SECTION:FS_CONTRACT_SHARING -->
-## Contract Sharing
 
-### Type Sharing
-- [ ] Define shared type strategy
-- [ ] Define codegen approach
-- [ ] Define validation sharing
+<!-- AXION:SECTION:FS_ERRORS -->
+## Cross-Layer Error Handling
+- Error mapping (BE codes → FE messages): [TBD]
+- Retries and user-facing recovery: [TBD]
 
-### Implementation
-- **Schema Source:** [TBD]
-- **Type Generation:** [TBD]
-- **Validation Library:** [TBD]
 
----
+<!-- AXION:SECTION:FS_OBSERVABILITY -->
+## Tracing & Correlation
+- Correlation IDs end-to-end: [TBD]
+- Trace propagation rules: [TBD]
 
-<!-- AXION:SECTION:FS_RELEASE_COMPAT -->
-## Release Compatibility
 
-### Deployment Coordination
-- [ ] Define client/API release order
-- [ ] Define backward compatibility window
-- [ ] Define migration coordination
+<!-- AXION:SECTION:FS_TESTING -->
+## E2E & Contract Testing
+- E2E test matrix: [TBD]
+- Contract tests boundaries: [TBD]
 
-### Strategy
-- **API Versioning:** [TBD]
-- **Client Versioning:** [TBD]
-- **Rollback Plan:** [TBD]
 
----
+<!-- AXION:SECTION:FS_SECURITY -->
+## E2E Security & Privacy
+- Data exposure checks: [TBD]
+- Auth/session behavior across layers: [TBD]
 
-<!-- AXION:SECTION:FS_FLAGS_EXPERIMENTS -->
-## Feature Flags & Experiments
 
-### Flag Strategy
-- [ ] Define flag scope (client/server/both)
-- [ ] Define experiment framework
-- [ ] Define rollout percentages
+<!-- AXION:SECTION:FS_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] E2E flows fully enumerated
+- [ ] Release constraints stated
+- [ ] Correlation/tracing rules defined
 
-### Implementation
-- **Flag System:** [TBD]
-- **A/B Testing:** [TBD]
-- **Metrics:** [TBD]
 
----
-
-<!-- AXION:SECTION:FS_SECURITY_E2E -->
-## End-to-End Security
-
-### Security Boundaries
-- [ ] Define data protection across layers
-- [ ] Define auth token flow
-- [ ] Define PII handling
-
-### Implementation
-- **Encryption:** [TBD]
-- **Token Refresh:** [TBD]
-- **Audit Trail:** [TBD]
-
----
-
-<!-- AXION:SECTION:FS_TESTING_E2E -->
-## End-to-End Testing
-
-### E2E Strategy
-- [ ] Define critical path tests
-- [ ] Define test data management
-- [ ] Define environment strategy
-
-### Tools
-- **E2E Framework:** [TBD]
-- **Test Data:** [TBD]
-- **CI Integration:** [TBD]
-
----
-
-<!-- AXION:SECTION:FS_OBSERVABILITY_E2E -->
-## End-to-End Observability
-
-### Tracing
-- [ ] Define distributed tracing
-- [ ] Define correlation IDs
-- [ ] Define cross-layer metrics
-
-### Implementation
-- **Trace Provider:** [TBD]
-- **Dashboards:** [TBD]
-- **Alerts:** [TBD]
-
----
-
+<!-- AXION:SECTION:FS_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

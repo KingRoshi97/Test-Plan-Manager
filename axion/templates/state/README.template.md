@@ -1,71 +1,73 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:state -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:state -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# State Module — {{DOMAIN_NAME}}
+# State — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Frontend
-**Prefix:** state
-**Last Updated:** [TBD]
+**Module slug:** `state`  
+**Prefix:** `state`  
+**Description:** State management, stores, and client-side data
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:STATE_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:STATE_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define state ownership
-- [ ] Define local vs global boundaries
-- [ ] Define persistence scope
 
----
+<!-- AXION:SECTION:STATE_MODEL -->
+## State Model
+- State domains/slices: [TBD]
+- State invariants: [TBD]
 
-<!-- AXION:SECTION:STATE_ARCHITECTURE -->
-## State Architecture
 
-- [ ] Define state library/pattern
-- [ ] Define store structure
-- [ ] Define selector patterns
+<!-- AXION:SECTION:STATE_SOURCES -->
+## State Sources
+- Local UI state: [TBD]
+- Server state/cache: [TBD]
+- Derived state/selectors: [TBD]
 
----
 
-<!-- AXION:SECTION:STATE_DATA_FLOW -->
-## Data Flow
+<!-- AXION:SECTION:STATE_UPDATES -->
+## Update Patterns
+- Action/event patterns: [TBD]
+- Optimistic updates + rollback: [TBD]
 
-- [ ] Define action patterns
-- [ ] Define side effect handling
-- [ ] Define async state
 
----
+<!-- AXION:SECTION:STATE_PERSIST -->
+## Persistence & Hydration
+- What persists and where: [TBD]
+- Migration of persisted state: [TBD]
 
-<!-- AXION:SECTION:STATE_PERSISTENCE -->
-## Persistence
 
-- [ ] Define storage strategy (localStorage, indexedDB)
-- [ ] Define hydration approach
-- [ ] Define cache invalidation
+<!-- AXION:SECTION:STATE_ERROR -->
+## Error & Edge-Case Handling
+- Error states representation: [TBD]
+- Concurrency conflicts: [TBD]
 
----
 
-<!-- AXION:SECTION:STATE_SYNC -->
-## Server Sync
+<!-- AXION:SECTION:STATE_TESTING -->
+## Testing Strategy
+- Unit tests for reducers/selectors/stores: [TBD]
+- Integration tests: [TBD]
 
-- [ ] Define sync strategy
-- [ ] Define optimistic updates
-- [ ] Define conflict resolution
 
----
+<!-- AXION:SECTION:STATE_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] State model enumerated
+- [ ] Update patterns documented
+- [ ] Persistence strategy stated
 
-<!-- AXION:SECTION:STATE_DEVTOOLS -->
-## DevTools & Debugging
 
-- [ ] Define debugging tools
-- [ ] Define state inspection
-- [ ] Define time-travel debugging
-
----
-
+<!-- AXION:SECTION:STATE_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

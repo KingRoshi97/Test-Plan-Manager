@@ -1,88 +1,72 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:cloud -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:cloud -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Cloud Module — {{DOMAIN_NAME}}
+# Cloud — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Cloud
-**Last Updated:** [TBD]
+**Module slug:** `cloud`  
+**Prefix:** `cloud`  
+**Description:** Cloud infrastructure, scaling, and hosting
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:CLOUD_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:CLOUD_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define cloud provider(s)
-- [ ] Define account structure
-- [ ] Define cost ownership
 
----
+<!-- AXION:SECTION:CLOUD_ARCH -->
+## Cloud Architecture
+- Account/project structure: [TBD]
+- Network topology (VPC/VNet, subnets): [TBD]
 
-<!-- AXION:SECTION:CLOUD_IAC_STANDARDS -->
-## Infrastructure as Code
 
-- [ ] Define IaC tool
-- [ ] Define module structure
-- [ ] Define state management
+<!-- AXION:SECTION:CLOUD_ID -->
+## Identity & Access (IAM)
+- Roles and policies: [TBD]
+- Workload identity: [TBD]
 
----
 
-<!-- AXION:SECTION:CLOUD_NETWORKING_EDGE -->
-## Networking & Edge
-
-- [ ] Define VPC architecture
-- [ ] Define CDN strategy
-- [ ] Define DNS management
-
----
-
-<!-- AXION:SECTION:CLOUD_IDENTITY_ACCESS -->
-## Identity & Access
-
-- [ ] Define IAM structure
-- [ ] Define service accounts
-- [ ] Define least privilege
-
----
-
-<!-- AXION:SECTION:CLOUD_COMPUTE_RUNTIME -->
+<!-- AXION:SECTION:CLOUD_COMPUTE -->
 ## Compute & Runtime
+- Compute type(s): [TBD]
+- Autoscaling rules: [TBD]
 
-- [ ] Define compute strategy
-- [ ] Define container orchestration
-- [ ] Define serverless usage
 
----
+<!-- AXION:SECTION:CLOUD_STORAGE -->
+## Storage & Data Services
+- Storage systems used: [TBD]
+- Encryption/KMS: [TBD]
 
-<!-- AXION:SECTION:CLOUD_STORAGE_DATA -->
-## Storage & Data
 
-- [ ] Define storage tiers
-- [ ] Define backup strategy
-- [ ] Define data lifecycle
-
----
-
-<!-- AXION:SECTION:CLOUD_RESILIENCE_DR -->
+<!-- AXION:SECTION:CLOUD_DR -->
 ## Resilience & DR
+- RPO/RTO targets: [TBD]
+- Backup/restore plan: [TBD]
 
-- [ ] Define availability targets
-- [ ] Define multi-region strategy
-- [ ] Define disaster recovery
 
----
+<!-- AXION:SECTION:CLOUD_COST -->
+## Cost Controls
+- Budgeting/alerts: [TBD]
+- Cost allocation tags: [TBD]
 
-<!-- AXION:SECTION:CLOUD_SECURITY_COMPLIANCE -->
-## Security & Compliance
 
-- [ ] Define security groups
-- [ ] Define encryption standards
-- [ ] Define audit logging
+<!-- AXION:SECTION:CLOUD_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Topology documented
+- [ ] IAM model documented
+- [ ] DR targets specified
 
----
 
+<!-- AXION:SECTION:CLOUD_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

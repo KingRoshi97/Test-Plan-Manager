@@ -1,108 +1,77 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:architecture -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:arch -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Architecture Module — {{DOMAIN_NAME}}
+# Architecture — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Architecture
-**Last Updated:** [TBD]
+**Module slug:** `architecture`  
+**Prefix:** `arch`  
+**Description:** System architecture, patterns, and structural decisions
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:ARCH_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:ARCH_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
+- Interfaces with: [TBD]
 
-### Boundaries
-- [ ] Define architectural decision scope
-- [ ] Define what requires ADR
-- [ ] Define review authority
 
-### Ownership
-- **Owner:** [TBD]
-- **Stakeholders:** [TBD]
+<!-- AXION:SECTION:ARCH_SYSTEM_OVERVIEW -->
+## System Overview
+- One-paragraph architecture summary: [TBD]
+- Primary quality attributes (NFRs): [TBD]
+- Key constraints (tech/org/legal): [TBD]
 
----
 
-<!-- AXION:SECTION:ARCH_SYSTEM_ARCH -->
-## System Architecture
+<!-- AXION:SECTION:ARCH_BOUNDARIES -->
+## Module Boundaries & Responsibilities
+- Boundary list (module → responsibility): [TBD]
+- Cross-cutting concerns ownership (auth, logging, errors): [TBD]
 
-### High-Level Design
-- [ ] Define system boundaries
-- [ ] Define major components
-- [ ] Define communication patterns
 
-### Patterns
-- **Architecture Style:** [TBD]
-- **Communication:** [TBD]
-- **Data Flow:** [TBD]
+<!-- AXION:SECTION:ARCH_DEPENDENCIES -->
+## Dependency Graph
+- Upstream dependencies: [TBD]
+- Downstream consumers: [TBD]
+- Forbidden dependencies (must not happen): [TBD]
 
----
 
-<!-- AXION:SECTION:ARCH_MODULE_BOUNDARIES -->
-## Module Boundaries
+<!-- AXION:SECTION:ARCH_DATAFLOWS -->
+## Core Data Flows
+- Flow A: [TBD] (trigger → processing → storage → output)
+- Flow B: [TBD]
 
-### Domain Separation
-- [ ] Define module responsibilities
-- [ ] Define interface contracts
-- [ ] Define dependency rules
 
-### Modules
+<!-- AXION:SECTION:ARCH_NFRS -->
+## Non-Functional Requirements
+- Performance targets: [TBD]
+- Reliability targets (SLO/SLI): [TBD]
+- Security posture: [TBD]
+- Observability requirements: [TBD]
 
-| Module | Responsibility | Dependencies | Interface |
-|--------|---------------|--------------|-----------|
-| [TBD] | [TBD] | [TBD] | [TBD] |
 
----
+<!-- AXION:SECTION:ARCH_ADRS -->
+## Architecture Decisions (ADRs)
+- ADR-001: [TBD] (decision, alternatives, rationale, consequences)
+- ADR-002: [TBD]
 
-<!-- AXION:SECTION:ARCH_DATA_FLOWS -->
-## Data Flows
 
-### Flow Patterns
-- [ ] Define data ownership
-- [ ] Define sync vs async boundaries
-- [ ] Define event-driven patterns
+<!-- AXION:SECTION:ARCH_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Boundaries are unambiguous and complete
+- [ ] Core flows are documented end-to-end
+- [ ] NFR targets exist (or explicit N/A with reason)
 
-### Diagrams
-- **Primary Flow:** [TBD]
-- **Event Flow:** [TBD]
-- **Error Flow:** [TBD]
 
----
-
-<!-- AXION:SECTION:ARCH_TECH_STACK -->
-## Technology Stack
-
-### Stack Decisions
-- [ ] Define language choices
-- [ ] Define framework choices
-- [ ] Define infrastructure choices
-
-### Inventory
-
-| Layer | Technology | Version | Rationale |
-|-------|------------|---------|-----------|
-| [TBD] | [TBD] | [TBD] | [TBD] |
-
----
-
-<!-- AXION:SECTION:ARCH_ADRS_DECISIONS -->
-## Architecture Decision Records
-
-### ADR Process
-- [ ] Define ADR template
-- [ ] Define review process
-- [ ] Define decision lifecycle
-
-### Active ADRs
-
-| ID | Title | Status | Date |
-|----|-------|--------|------|
-| [TBD] | [TBD] | [TBD] | [TBD] |
-
----
-
+<!-- AXION:SECTION:ARCH_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

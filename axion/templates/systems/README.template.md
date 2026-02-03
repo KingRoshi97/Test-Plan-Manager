@@ -1,79 +1,76 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:systems -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:sys -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Systems Module — {{DOMAIN_NAME}}
+# Systems — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Systems
-**Last Updated:** [TBD]
+**Module slug:** `systems`  
+**Prefix:** `sys`  
+**Description:** System components, services, and their interactions
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:SYS_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:SYS_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-- [ ] Define systems engineering scope
-- [ ] Define cross-cutting responsibilities
-- [ ] Define technical standards authority
 
----
+<!-- AXION:SECTION:SYS_COMPONENTS -->
+## System Components & Services
+- Component inventory (name → purpose → owner): [TBD]
+- Inter-service communication patterns: [TBD]
 
-<!-- AXION:SECTION:SYS_RUNTIME_STANDARDS -->
-## Runtime Standards
 
-- [ ] Define language/runtime versions
-- [ ] Define container base images
-- [ ] Define dependency policies
+<!-- AXION:SECTION:SYS_RUNTIME -->
+## Runtime Model
+- Processes/containers/functions: [TBD]
+- Concurrency model: [TBD]
+- Backpressure/retry strategy: [TBD]
 
----
 
-<!-- AXION:SECTION:SYS_CONFIG_MANAGEMENT -->
-## Configuration Management
+<!-- AXION:SECTION:SYS_FAILURE_MODES -->
+## Failure Modes & Recovery
+- Known failure modes: [TBD]
+- Degradation strategy: [TBD]
+- Safe shutdown/startup requirements: [TBD]
 
-- [ ] Define config hierarchy
-- [ ] Define environment variable patterns
-- [ ] Define secret injection
 
----
+<!-- AXION:SECTION:SYS_CONFIG -->
+## Configuration & Feature Control
+- Configuration sources: [TBD]
+- Feature flags / toggles: [TBD]
 
-<!-- AXION:SECTION:SYS_OBSERVABILITY_STANDARDS -->
-## Observability Standards
 
-- [ ] Define logging format
-- [ ] Define metric naming
-- [ ] Define tracing propagation
+<!-- AXION:SECTION:SYS_OBSERVABILITY -->
+## Observability (System-Level)
+- Logging requirements: [TBD]
+- Metrics (golden signals): [TBD]
+- Tracing requirements: [TBD]
 
----
 
-<!-- AXION:SECTION:SYS_SECURITY_BASELINES -->
-## Security Baselines
+<!-- AXION:SECTION:SYS_SECURITY_BASELINE -->
+## Security Baseline
+- Secrets handling: [TBD]
+- Least-privilege expectations: [TBD]
+- Dependency hygiene: [TBD]
 
-- [ ] Define hardening requirements
-- [ ] Define network policies
-- [ ] Define access patterns
 
----
+<!-- AXION:SECTION:SYS_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Component inventory exists
+- [ ] Failure modes + recovery documented
+- [ ] Observability requirements specified
 
-<!-- AXION:SECTION:SYS_RELIABILITY_PATTERNS -->
-## Reliability Patterns
 
-- [ ] Define circuit breaker usage
-- [ ] Define retry patterns
-- [ ] Define timeout standards
-
----
-
-<!-- AXION:SECTION:SYS_DEPENDENCY_POLICY -->
-## Dependency Policy
-
-- [ ] Define approval process
-- [ ] Define update cadence
-- [ ] Define vulnerability response
-
----
-
+<!-- AXION:SECTION:SYS_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]

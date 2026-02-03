@@ -1,196 +1,93 @@
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:MODULE:frontend -->
-<!-- AXION:REQUIRED_SECTIONS:enforced -->
-<!-- AXION:VERIFY_NONEMPTY_RULE:v1 -->
+<!-- AXION:PREFIX:fe -->
+<!-- AXION:PLACEHOLDER_POLICY:v1 -->
 
-# Frontend Module — {{DOMAIN_NAME}}
+# Frontend — AXION Module Template (Blank State)
 
-## Overview
-**Domain Slug:** {{DOMAIN_SLUG}}
-**Module Type:** Frontend
-**Last Updated:** [TBD]
+**Module slug:** `frontend`  
+**Prefix:** `fe`  
+**Description:** UI components, pages, and user interactions
 
----
+> Blank-state scaffold. Populate during AXION stages.
+> Replace `[TBD]` with concrete content. Use `N/A — <reason>` if not applicable. Use `UNKNOWN` only when upstream truth is missing.
 
-<!-- AXION:SECTION:FE_SCOPE_OWNERSHIP -->
+## 0) Agent Rules (do not delete)
+- Populate every section. Do not add new top-level sections.
+- Do not rename section keys. Titles may be edited, keys may not.
+- If upstream meaning is missing, write `UNKNOWN` and add it to **Open Questions**.
+- If non-applicable, write `N/A — <reason>` (never leave blank).
+
+<!-- AXION:SECTION:FE_SCOPE -->
 ## Scope & Ownership
+- Owns: [TBD]
+- Does NOT own: [TBD]
 
-### Boundaries
-- [ ] Define what this module owns
-- [ ] Define what is explicitly out of scope
-- [ ] Define integration points with other modules
 
-### Ownership
-- **Owner:** [TBD]
-- **Stakeholders:** [TBD]
+<!-- AXION:SECTION:FE_INFORMATION_ARCH -->
+## Information Architecture
+- Route map (path → page → purpose): [TBD]
+- Navigation rules: [TBD]
 
----
 
-<!-- AXION:SECTION:FE_UI_LOGIC -->
-## UI Logic & State Management
+<!-- AXION:SECTION:FE_COMPONENTS -->
+## Component System
+- Component inventory (shared vs feature): [TBD]
+- Styling/theming approach: [TBD]
 
-### State Architecture
-- [ ] Define local vs global state boundaries
-- [ ] Define state persistence strategy
-- [ ] Define hydration approach (if SSR)
 
-### Patterns
-- **State Library:** [TBD]
-- **Store Structure:** [TBD]
-- **Side Effects:** [TBD]
+<!-- AXION:SECTION:FE_UI_FLOWS -->
+## Critical User Flows
+- Flow 1: [TBD] (steps, edge cases, errors)
+- Flow 2: [TBD]
 
----
 
-<!-- AXION:SECTION:FE_ROUTING_NAV -->
-## Routing & Navigation
-
-### Route Structure
-- [ ] Define route hierarchy
-- [ ] Define route guards/protection
-- [ ] Define deep linking strategy
-
-### Navigation Patterns
-- **Router:** [TBD]
-- **History Mode:** [TBD]
-- **404 Handling:** [TBD]
-
----
-
-<!-- AXION:SECTION:FE_DATA_FETCHING -->
-## Data Fetching & API Integration
-
-### Fetch Strategy
-- [ ] Define caching approach
-- [ ] Define optimistic updates
-- [ ] Define error retry logic
-
-### Contracts
-- **API Client:** [TBD]
-- **Response Types:** [TBD]
-- **Polling/Subscriptions:** [TBD]
-
----
-
-<!-- AXION:SECTION:FE_FORMS_VALIDATION -->
+<!-- AXION:SECTION:FE_FORMS -->
 ## Forms & Validation
+- Form list: [TBD]
+- Validation rules + error UX: [TBD]
 
-### Form Handling
-- [ ] Define form state management
-- [ ] Define validation timing (blur/submit/realtime)
-- [ ] Define multi-step form patterns
 
-### Rules
-- **Validation Library:** [TBD]
-- **Error Display:** [TBD]
-- **Autosave:** [TBD]
+<!-- AXION:SECTION:FE_A11Y -->
+## Accessibility Requirements
+- Keyboard rules: [TBD]
+- Screen reader rules: [TBD]
+- Focus management: [TBD]
 
----
 
-<!-- AXION:SECTION:FE_ACCESSIBILITY -->
-## Accessibility (a11y)
+<!-- AXION:SECTION:FE_PERF -->
+## Performance Requirements
+- Loading strategy (splits, assets): [TBD]
+- Runtime performance constraints: [TBD]
 
-### Requirements (blank-state)
-- [ ] Define keyboard navigation rules
-- [ ] Define screen reader behavior (ARIA, live regions)
-- [ ] Define focus management rules
-- [ ] Define contrast & typography constraints
-
-### Standards
-- **WCAG Level:** [TBD]
-- **Testing Approach:** [TBD]
-- **Exceptions:** [TBD]
-
----
-
-<!-- AXION:SECTION:FE_PERFORMANCE -->
-## Performance
-
-### Budgets
-- [ ] Define bundle size limits
-- [ ] Define Core Web Vitals targets
-- [ ] Define loading time thresholds
-
-### Strategies
-- **Code Splitting:** [TBD]
-- **Lazy Loading:** [TBD]
-- **Image Optimization:** [TBD]
-
----
 
 <!-- AXION:SECTION:FE_SECURITY -->
-## Security
+## Frontend Security
+- XSS/CSRF mitigation patterns: [TBD]
+- Client storage rules: [TBD]
 
-### Client-Side Security
-- [ ] Define XSS prevention
-- [ ] Define CSRF handling
-- [ ] Define sensitive data storage rules
-
-### Rules
-- **CSP Policy:** [TBD]
-- **Cookie Settings:** [TBD]
-- **Token Storage:** [TBD]
-
----
-
-<!-- AXION:SECTION:FE_TESTING -->
-## Testing Strategy
-
-### Coverage
-- [ ] Define unit test scope
-- [ ] Define integration test scope
-- [ ] Define E2E test scope
-
-### Tools
-- **Unit Framework:** [TBD]
-- **E2E Framework:** [TBD]
-- **Visual Regression:** [TBD]
-
----
-
-<!-- AXION:SECTION:FE_BUILD_TOOLING -->
-## Build & Tooling
-
-### Build Configuration
-- [ ] Define bundler settings
-- [ ] Define environment config
-- [ ] Define CI/CD integration
-
-### Tools
-- **Bundler:** [TBD]
-- **Linting:** [TBD]
-- **Type Checking:** [TBD]
-
----
 
 <!-- AXION:SECTION:FE_OBSERVABILITY -->
-## Observability
+## Client Observability
+- Events/analytics taxonomy: [TBD]
+- RUM/perf metrics: [TBD]
+- Error reporting: [TBD]
 
-### Monitoring
-- [ ] Define error tracking
-- [ ] Define performance monitoring
-- [ ] Define user analytics
 
-### Tools
-- **Error Tracker:** [TBD]
-- **APM:** [TBD]
-- **Analytics:** [TBD]
+<!-- AXION:SECTION:FE_TESTING -->
+## Frontend Testing
+- Unit tests scope: [TBD]
+- E2E critical paths: [TBD]
+- Visual regression scope: [TBD]
 
----
 
-## Component Library
+<!-- AXION:SECTION:FE_ACCEPTANCE -->
+## Acceptance Criteria
+- [ ] Route map exists
+- [ ] Critical flows documented with error UX
+- [ ] A11y and perf requirements stated
 
-### Inventory
 
-| Component | Variants | Sizes | Used On | Notes |
-|-----------|----------|-------|---------|-------|
-| [TBD] | [TBD] | [TBD] | [TBD] | [TBD] |
-
-### Component Rules
-- [ ] Define component naming conventions
-- [ ] Define variant patterns
-- [ ] Define composition rules
-
----
-
+<!-- AXION:SECTION:FE_OPEN_QUESTIONS -->
 ## Open Questions
-- [ ] [TBD]
+- [TBD]
