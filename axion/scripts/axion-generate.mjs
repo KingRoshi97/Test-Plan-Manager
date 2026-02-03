@@ -1,16 +1,24 @@
 #!/usr/bin/env node
 /**
- * assembler:gen - Generate per-domain doc packs
+ * axion:generate - Generate per-module doc packs
  * Creates domain folder structure and doc files from templates.
+ * 
+ * Usage:
+ *   node axion/scripts/axion-generate.mjs --all
+ *   node axion/scripts/axion-generate.mjs --module <name>
  */
 
 import fs from 'fs';
 import path from 'path';
+import {
+  parseModuleArgs,
+  markStageDone,
+} from './_axion_module_mode.mjs';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const domainArg = args.find((_, i, arr) => arr[i - 1] === '--domain');
+const { modules } = parseModuleArgs(process.argv);
 
 // Report tracking
 const report = {
@@ -21,9 +29,9 @@ const report = {
 };
 
 function loadDomainsConfig() {
-  const configPath = 'assembler/domains.json';
+  const configPath = 'axion/config/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('assembler/domains.json not found. Run assembler:init first.');
+    throw new Error('axion/config/domains.json not found. Run axion:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
@@ -55,8 +63,8 @@ function ensureFile(filePath, content) {
   return true;
 }
 
-function loadTemplate(templateName, roshiRoot) {
-  const templatePath = path.join(roshiRoot, '01_templates', `${templateName}.template.md`);
+function loadTemplate(templateName, axionRoot) {
+  const templatePath = path.join(axionRoot, 'templates', `${templateName}.template.md`);
   if (fs.existsSync(templatePath)) {
     return fs.readFileSync(templatePath, 'utf8');
   }
@@ -66,17 +74,17 @@ function loadTemplate(templateName, roshiRoot) {
 
 function applyTemplate(template, domain) {
   return template
-    .replace(/\{\{DOMAIN_NAME\}\}/g, domain.name)
+    .replace(/\{\{DOMAIN_NAME\}\}/g, domain.name || domain.slug)
     .replace(/\{\{DOMAIN_SLUG\}\}/g, domain.slug)
-    .replace(/\{\{DOMAIN_PREFIX\}\}/g, domain.prefix)
-    .replace(/\{\{DOMAIN_TYPE\}\}/g, domain.type);
+    .replace(/\{\{DOMAIN_PREFIX\}\}/g, domain.prefix || domain.slug)
+    .replace(/\{\{DOMAIN_TYPE\}\}/g, domain.type || 'business');
 }
 
 function printReport() {
   console.log('\n========== ASSEMBLER_REPORT ==========');
-  console.log(`Script: assembler:gen`);
+  console.log(`Script: axion:generate`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
-  if (domainArg) console.log(`Domain: ${domainArg}`);
+  console.log(`Modules: ${modules.join(', ')}`);
   console.log(`\nCreated (${report.created.length}):`);
   report.created.forEach(f => console.log(`  + ${f}`));
   console.log(`\nModified (${report.modified.length}):`);
@@ -89,19 +97,11 @@ function printReport() {
 }
 
 try {
-  console.log('Running assembler:gen...');
+  console.log('Running axion:generate...');
   
   const config = loadDomainsConfig();
-  const roshiRoot = config.roshi_root;
-  const domainsDir = path.join(roshiRoot, config.domains_dir);
-  
-  // Validate domain argument if provided
-  if (domainArg) {
-    const validDomain = config.domains.find(d => d.slug === domainArg);
-    if (!validDomain) {
-      throw new Error(`Domain "${domainArg}" not found in assembler/domains.json`);
-    }
-  }
+  const axionRoot = config.axion_root || 'axion';
+  const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
   
   // Document templates to generate
   const docTemplates = [
@@ -116,21 +116,33 @@ try {
     'COPY_GUIDE'
   ];
   
-  // Filter domains if --domain specified
-  const domainsToProcess = domainArg 
-    ? config.domains.filter(d => d.slug === domainArg)
-    : config.domains;
-  
-  for (const domain of domainsToProcess) {
-    const domainDir = path.join(domainsDir, domain.slug);
+  // Process each module
+  for (const module of modules) {
+    console.log(`Generating module: ${module}`);
+    
+    // Generate is the first stage - no prereq check needed
+    const domainDir = path.join(domainsDir, module);
     ensureDir(domainDir);
     
+    // Create a synthetic domain object for templates
+    const domain = {
+      slug: module,
+      name: module.charAt(0).toUpperCase() + module.slice(1),
+      prefix: module,
+      type: 'business'
+    };
+    
     for (const templateName of docTemplates) {
-      const template = loadTemplate(templateName, roshiRoot);
+      const template = loadTemplate(templateName, axionRoot);
       const content = applyTemplate(template, domain);
-      const fileName = `${templateName}_${domain.slug}.md`;
+      const fileName = `${templateName}_${module}.md`;
       const filePath = path.join(domainDir, fileName);
       ensureFile(filePath, content);
+    }
+    
+    // Mark stage done for this module
+    if (!dryRun) {
+      markStageDone('generate', module);
     }
   }
   

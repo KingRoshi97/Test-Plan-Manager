@@ -1,16 +1,27 @@
 #!/usr/bin/env node
 /**
- * roshi:review - Review packet
+ * axion:review - Review packet
  * Summarizes UNKNOWNs, conflicts, missing reason codes, and missing sections.
+ * 
+ * Usage:
+ *   node axion/scripts/axion-review.mjs --all
+ *   node axion/scripts/axion-review.mjs --module <name>
  */
 
 import fs from 'fs';
 import path from 'path';
+import {
+  parseModuleArgs,
+  ensurePrereqs,
+  isStageDone,
+  markStageDone,
+  failJson,
+} from './_axion_module_mode.mjs';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const domainArg = args.find((_, i, arr) => arr[i - 1] === '--domain');
+const { modules } = parseModuleArgs(process.argv);
 
 // Report tracking
 const report = {
@@ -29,9 +40,9 @@ const review = {
 };
 
 function loadDomainsConfig() {
-  const configPath = 'assembler/domains.json';
+  const configPath = 'axion/config/domains.json';
   if (!fs.existsSync(configPath)) {
-    throw new Error('assembler/domains.json not found. Run roshi:init first.');
+    throw new Error('axion/config/domains.json not found. Run axion:init first.');
   }
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
@@ -62,15 +73,15 @@ function checkRequiredSections(content, docType) {
 
 function printReport() {
   console.log('\n========== ASSEMBLER_REPORT ==========');
-  console.log(`Script: roshi:review`);
+  console.log(`Script: axion:review`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
-  if (domainArg) console.log(`Domain: ${domainArg}`);
+  console.log(`Modules: ${modules.join(', ')}`);
   
   console.log('\n--- REVIEW SUMMARY ---');
   
-  console.log('\nUNKNOWN Counts by Domain:');
-  for (const [domain, count] of Object.entries(review.unknownCounts)) {
-    console.log(`  ${domain}: ${count} UNKNOWNs`);
+  console.log('\nUNKNOWN Counts by Module:');
+  for (const [module, count] of Object.entries(review.unknownCounts)) {
+    console.log(`  ${module}: ${count} UNKNOWNs`);
   }
   
   console.log(`\nConflicts Detected: ${review.conflicts.length}`);
@@ -96,61 +107,63 @@ function printReport() {
   // Recommendation
   const totalUnknowns = Object.values(review.unknownCounts).reduce((a, b) => a + b, 0);
   if (totalUnknowns > 0 || review.conflicts.length > 0 || review.missingReasonCodes.length > 0) {
-    console.log('\n⚠️  RECOMMENDATION: Do not lock domains until issues are resolved.');
+    console.log('\nRECOMMENDATION: Do not lock modules until issues are resolved.');
   } else {
-    console.log('\n✓ All domains ready for lock.');
+    console.log('\nAll modules ready for verify.');
   }
 }
 
 try {
-  console.log('Running roshi:review...');
+  console.log('Running axion:review...');
   
   const config = loadDomainsConfig();
-  const roshiRoot = config.roshi_root;
-  const domainsDir = path.join(roshiRoot, config.domains_dir);
+  const axionRoot = config.axion_root || 'axion';
+  const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
   
-  // Validate domain argument if provided
-  if (domainArg) {
-    const validDomain = config.domains.find(d => d.slug === domainArg);
-    if (!validDomain) {
-      throw new Error(`Domain "${domainArg}" not found in assembler/domains.json`);
-    }
-  }
-  
-  // Filter domains if --domain specified
-  const domainsToProcess = domainArg 
-    ? config.domains.filter(d => d.slug === domainArg)
-    : config.domains;
-  
-  for (const domain of domainsToProcess) {
-    const domainDir = path.join(domainsDir, domain.slug);
+  // Process each module
+  for (const module of modules) {
+    // Check prereqs: draft must be done for this module
+    ensurePrereqs({
+      stageName: 'review',
+      module,
+      stagePrereq: (m) => isStageDone('draft', m),
+    });
+    
+    console.log(`Reviewing module: ${module}`);
+    
+    const domainDir = path.join(domainsDir, module);
     let totalUnknowns = 0;
     
     // Check BELS file
-    const belsPath = path.join(domainDir, `BELS_${domain.slug}.md`);
+    const belsPath = path.join(domainDir, `BELS_${module}.md`);
     if (fs.existsSync(belsPath)) {
       const content = fs.readFileSync(belsPath, 'utf8');
       totalUnknowns += countUnknowns(content);
       
       const missingSections = checkRequiredSections(content, 'BELS');
       missingSections.forEach(s => {
-        review.missingSections.push(`${domain.slug}/BELS: Missing section "${s}"`);
+        review.missingSections.push(`${module}/BELS: Missing section "${s}"`);
       });
     } else {
-      review.missingSections.push(`${domain.slug}: BELS file missing`);
+      review.missingSections.push(`${module}: BELS file missing`);
     }
     
     // Check other domain docs
     const docTypes = ['DDES', 'DIM', 'SCREENMAP', 'TESTPLAN'];
     for (const docType of docTypes) {
-      const docPath = path.join(domainDir, `${docType}_${domain.slug}.md`);
+      const docPath = path.join(domainDir, `${docType}_${module}.md`);
       if (fs.existsSync(docPath)) {
         const content = fs.readFileSync(docPath, 'utf8');
         totalUnknowns += countUnknowns(content);
       }
     }
     
-    review.unknownCounts[domain.slug] = totalUnknowns;
+    review.unknownCounts[module] = totalUnknowns;
+    
+    // Mark stage done for this module
+    if (!dryRun) {
+      markStageDone('review', module);
+    }
   }
   
   printReport();
