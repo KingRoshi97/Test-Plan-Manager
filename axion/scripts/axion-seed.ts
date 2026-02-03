@@ -18,6 +18,8 @@ const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
 const COVERAGE_MAP_PATH = path.join(AXION_ROOT, 'config', 'coverage_map.json');
 const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
 const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+const AGENT_PROMPT_TEMPLATE_PATH = path.join(AXION_ROOT, 'templates', 'AGENT_PROMPT.template.md');
+const AGENT_PROMPT_OUTPUT_PATH = path.join(AXION_ROOT, 'registry', 'AGENT_PROMPT.md');
 
 // Core modules requiring RPBS_DERIVATIONS blocks
 const CORE_MODULES = ['contracts', 'database', 'auth', 'backend', 'state', 'frontend', 'fullstack', 'systems'];
@@ -89,6 +91,67 @@ function loadCoverageMap(): CoverageMap | null {
     return null;
   }
   return JSON.parse(fs.readFileSync(COVERAGE_MAP_PATH, 'utf-8'));
+}
+
+function generateAgentPrompt(config: Config, markers: StageMarkers): void {
+  let template: string;
+  
+  if (fs.existsSync(AGENT_PROMPT_TEMPLATE_PATH)) {
+    template = fs.readFileSync(AGENT_PROMPT_TEMPLATE_PATH, 'utf-8');
+  } else {
+    template = `# AXION Draft Instructions
+
+You are an AI coding agent helping to draft documentation for a software project.
+
+## Your Task
+
+Read the user's project input and generate content for each module's documentation.
+
+## Source Materials
+
+1. **User Input**: \`{{ATTACHMENTS_CONTENT_PATH}}\`
+2. **Product Requirements (RPBS)**: \`{{RPBS_PATH}}\`
+3. **Engineering Requirements (REBS)**: \`{{REBS_PATH}}\`
+
+## Modules to Draft
+
+{{MODULE_LIST}}
+
+## After Drafting
+
+Run: \`node --import tsx axion/scripts/axion-verify.ts --all\`
+
+---
+**Generated**: {{TIMESTAMP}}
+`;
+  }
+  
+  const modulesToDraft = config.canonical_order
+    .filter(slug => markers.markers[slug]?.seed && !markers.markers[slug]?.draft)
+    .map((slug, i) => {
+      const mod = config.modules.find(m => m.slug === slug);
+      const deps = mod?.dependencies?.length ? ` (depends on: ${mod.dependencies.join(', ')})` : '';
+      return `${i + 1}. **${mod?.name || slug}**: \`axion/domains/${slug}/README.md\`${deps}`;
+    });
+  
+  const attachmentsPath = fs.existsSync(path.join(AXION_ROOT, 'registry', 'attachments_content.md'))
+    ? 'axion/registry/attachments_content.md'
+    : 'axion/source_docs/product/attachments/START_HERE.txt';
+  
+  const output = template
+    .replace('{{ATTACHMENTS_CONTENT_PATH}}', attachmentsPath)
+    .replace('{{RPBS_PATH}}', 'axion/source_docs/product/RPBS_Product.md')
+    .replace('{{REBS_PATH}}', 'axion/source_docs/product/REBS_Product.md')
+    .replace('{{MODULE_LIST}}', modulesToDraft.join('\n'))
+    .replace('{{MODULE_COUNT}}', String(modulesToDraft.length))
+    .replace('{{TIMESTAMP}}', new Date().toISOString());
+  
+  const registryDir = path.dirname(AGENT_PROMPT_OUTPUT_PATH);
+  if (!fs.existsSync(registryDir)) {
+    fs.mkdirSync(registryDir, { recursive: true });
+  }
+  
+  fs.writeFileSync(AGENT_PROMPT_OUTPUT_PATH, output);
 }
 
 function generateDerivationBlock(modSlug: string): string {
@@ -257,14 +320,27 @@ function main() {
   
   saveMarkers(markers);
   
+  // Generate AGENT_PROMPT.md for AI agents
+  if (runAll) {
+    generateAgentPrompt(config, markers);
+    console.log('\n[INFO] Generated registry/AGENT_PROMPT.md for AI agent drafting');
+  }
+  
   const response = {
     status: 'success',
     stage: 'seed',
     module: runAll ? 'all' : targetModule,
     marker_written: true,
+    agent_prompt: runAll ? 'registry/AGENT_PROMPT.md' : null,
   };
   
-  console.log('\n' + JSON.stringify(response, null, 2) + '\n');
+  console.log('\n' + JSON.stringify(response, null, 2));
+  
+  if (runAll) {
+    console.log('\n[NEXT STEP] Ask your AI agent to draft documentation:');
+    console.log('            "Please draft the AXION documentation following axion/registry/AGENT_PROMPT.md"\n');
+  }
+  
   process.exit(0);
 }
 

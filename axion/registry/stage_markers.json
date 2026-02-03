@@ -3,13 +3,13 @@
   "markers": {
     "architecture": {
       "generate": {
-        "completed_at": "2026-02-03T09:29:17.604Z",
+        "completed_at": "2026-02-03T09:41:38.738Z",
         "files": [
           "domains/architecture/README.md"
         ]
       },
       "seed": {
-        "completed_at": "2026-02-03T09:29:18.315Z"
+        "completed_at": "2026-02-03T09:41:48.804Z"
       },
       "draft": {
         "completed_at": "2026-02-03T09:29:19.025Z"
@@ -27,13 +27,13 @@
     },
     "systems": {
       "generate": {
-        "completed_at": "2026-02-03T09:29:17.888Z",
+        "completed_at": "2026-02-03T09:41:38.738Z",
         "files": [
           "domains/systems/README.md"
         ]
       },
       "seed": {
-        "completed_at": "2026-02-03T09:29:18.524Z"
+        "completed_at": "2026-02-03T09:41:48.805Z"
       },
       "draft": {
         "completed_at": "2026-02-03T09:29:19.220Z"
@@ -47,13 +47,13 @@
     },
     "contracts": {
       "generate": {
-        "completed_at": "2026-02-03T09:29:18.090Z",
+        "completed_at": "2026-02-03T09:41:38.740Z",
         "files": [
           "domains/contracts/README.md"
         ]
       },
       "seed": {
-        "completed_at": "2026-02-03T09:29:18.772Z"
+        "completed_at": "2026-02-03T09:41:48.806Z"
       },
       "draft": {
         "completed_at": "2026-02-03T09:29:19.438Z"
@@ -63,6 +63,182 @@
         "unknown_count": 6,
         "tbd_count": 23,
         "issues": []
+      }
+    },
+    "database": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.746Z",
+        "files": [
+          "domains/database/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.807Z"
+      }
+    },
+    "data": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.748Z",
+        "files": [
+          "domains/data/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.815Z"
+      }
+    },
+    "auth": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.749Z",
+        "files": [
+          "domains/auth/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.817Z"
+      }
+    },
+    "backend": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.750Z",
+        "files": [
+          "domains/backend/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.818Z"
+      }
+    },
+    "integrations": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.751Z",
+        "files": [
+          "domains/integrations/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.819Z"
+      }
+    },
+    "state": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.752Z",
+        "files": [
+          "domains/state/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.820Z"
+      }
+    },
+    "frontend": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.753Z",
+        "files": [
+          "domains/frontend/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.821Z"
+      }
+    },
+    "fullstack": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.753Z",
+        "files": [
+          "domains/fullstack/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.822Z"
+      }
+    },
+    "testing": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.754Z",
+        "files": [
+          "domains/testing/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.823Z"
+      }
+    },
+    "quality": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.755Z",
+        "files": [
+          "domains/quality/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.824Z"
+      }
+    },
+    "security": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.756Z",
+        "files": [
+          "domains/security/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.826Z"
+      }
+    },
+    "devops": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.756Z",
+        "files": [
+          "domains/devops/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.827Z"
+      }
+    },
+    "cloud": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.757Z",
+        "files": [
+          "domains/cloud/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.831Z"
+      }
+    },
+    "devex": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.758Z",
+        "files": [
+          "domains/devex/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.833Z"
+      }
+    },
+    "mobile": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.759Z",
+        "files": [
+          "domains/mobile/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.834Z"
+      }
+    },
+    "desktop": {
+      "generate": {
+        "completed_at": "2026-02-03T09:41:38.759Z",
+        "files": [
+          "domains/desktop/README.md"
+        ]
+      },
+      "seed": {
+        "completed_at": "2026-02-03T09:41:48.836Z"
       }
     }
   }

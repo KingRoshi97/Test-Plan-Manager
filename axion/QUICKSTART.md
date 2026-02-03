@@ -121,14 +121,34 @@ Then follow the "Fresh Project" steps above in the new workspace.
 
 ## Pipeline Stages
 
-| Stage | Purpose | Command |
-|-------|---------|---------|
+| Stage | Purpose | How |
+|-------|---------|-----|
 | **generate** | Create module docs from templates | `axion-generate.ts --all` |
 | **seed** | Add placeholder content structure | `axion-seed.ts --all` |
-| **draft** | Fill in actual content | `axion-draft.ts --all` |
+| **draft** | Fill in actual content | **Ask your AI Agent** (see below) |
 | **review** | Check completeness, count UNKNOWNs | `axion-review.ts --all` |
 | **verify** | Validate rules, seams, cross-refs | `axion-verify.ts --all` |
 | **lock** | Finalize and generate ERC | `axion-lock.ts --all` |
+
+---
+
+## AI Agent Integration
+
+AXION is designed to work with **any AI coding agent** (Replit Agent, Cursor, GitHub Copilot, Windsurf, Cline, etc.).
+
+The **draft** stage is where AI generates your documentation content. After running `seed`, a prompt file is created at `registry/AGENT_PROMPT.md` with instructions for your AI agent.
+
+### Workflow
+
+1. Add your project input to `source_docs/product/attachments/START_HERE.txt`
+2. Run: `node --import tsx axion/scripts/axion-generate.ts --all`
+3. Run: `node --import tsx axion/scripts/axion-seed.ts --all`
+4. **Ask your AI agent**: "Please draft the AXION documentation following the instructions in `axion/registry/AGENT_PROMPT.md`"
+5. Run: `node --import tsx axion/scripts/axion-verify.ts --all`
+
+The AI agent reads your input, RPBS/REBS, and the module templates, then generates appropriate content for each module's documentation.
+
+This approach works universally across any IDE with an AI coding assistant
 
 ---
 
