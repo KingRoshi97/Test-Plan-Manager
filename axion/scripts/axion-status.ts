@@ -137,8 +137,10 @@ function formatTable(summaries: ModuleSummary[], config: Config): string {
     
     for (const stage of stages) {
       const stageData = summary.stages[stage];
-      if (stageData) {
+      if (stageData && stageData.status) {
         row.push(stageData.status === 'completed' ? '✓' : stageData.status.charAt(0).toUpperCase());
+      } else if (stageData) {
+        row.push('✓'); // Has data but no explicit status = completed
       } else {
         row.push('·');
       }
