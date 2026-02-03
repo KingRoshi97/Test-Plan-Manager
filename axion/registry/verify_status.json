@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
-  "last_verified": "2026-02-03T09:29:20.369Z",
+  "last_verified": "2026-02-03T09:46:00.146Z",
   "modules": {
     "architecture": {
       "status": "FAIL",
-      "verified_at": "2026-02-03T09:29:20.367Z",
+      "verified_at": "2026-02-03T09:46:00.114Z",
       "reason_codes": [
         "MISSING_SECTION",
         "MISSING_SECTION",
@@ -16,6 +16,370 @@
         "Add required section: ## 2.",
         "Resolve 40 [TBD] placeholders",
         "Address 2 UNKNOWN items outside derivation block"
+      ]
+    },
+    "systems": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.117Z",
+      "reason_codes": [
+        "UNKNOWN_WITHOUT_OPEN_QUESTION",
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "4 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 24 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency architecture must pass verify first"
+      ]
+    },
+    "contracts": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.118Z",
+      "reason_codes": [
+        "UNKNOWN_WITHOUT_OPEN_QUESTION",
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "4 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 23 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency architecture must pass verify first",
+        "Dependency systems must pass verify first"
+      ]
+    },
+    "database": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.119Z",
+      "reason_codes": [
+        "UNKNOWN_WITHOUT_OPEN_QUESTION",
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "5 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 22 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "data": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.120Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 20 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency database must pass verify first",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "auth": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.120Z",
+      "reason_codes": [
+        "UNKNOWN_WITHOUT_OPEN_QUESTION",
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "4 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 22 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency contracts must pass verify first",
+        "Dependency database must pass verify first"
+      ]
+    },
+    "backend": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.121Z",
+      "reason_codes": [
+        "UNKNOWN_WITHOUT_OPEN_QUESTION",
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "6 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 24 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency contracts must pass verify first",
+        "Dependency database must pass verify first",
+        "Dependency auth must pass verify first"
+      ]
+    },
+    "integrations": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.123Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 21 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency backend must pass verify first",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "state": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.124Z",
+      "reason_codes": [
+        "UNKNOWN_WITHOUT_OPEN_QUESTION",
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "3 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 21 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "frontend": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.125Z",
+      "reason_codes": [
+        "UNKNOWN_WITHOUT_OPEN_QUESTION",
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "6 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 29 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency state must pass verify first",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "fullstack": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.125Z",
+      "reason_codes": [
+        "UNKNOWN_WITHOUT_OPEN_QUESTION",
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "5 UNKNOWN values require Q-IDs in OPEN_QUESTIONS field",
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 22 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency frontend must pass verify first",
+        "Dependency backend must pass verify first"
+      ]
+    },
+    "testing": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.126Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 21 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency backend must pass verify first",
+        "Dependency frontend must pass verify first"
+      ]
+    },
+    "quality": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.126Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 17 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block"
+      ]
+    },
+    "security": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.126Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 19 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency auth must pass verify first",
+        "Dependency backend must pass verify first"
+      ]
+    },
+    "devops": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.126Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 19 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency backend must pass verify first",
+        "Dependency testing must pass verify first"
+      ]
+    },
+    "cloud": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.126Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 20 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency devops must pass verify first"
+      ]
+    },
+    "devex": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.127Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 17 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency quality must pass verify first"
+      ]
+    },
+    "mobile": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.127Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 23 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency frontend must pass verify first",
+        "Dependency state must pass verify first"
+      ]
+    },
+    "desktop": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:46:00.127Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 18 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block",
+        "Dependency frontend must pass verify first",
+        "Dependency state must pass verify first"
       ]
     }
   }

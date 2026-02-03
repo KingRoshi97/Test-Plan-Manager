@@ -21,7 +21,7 @@
         "issues": []
       },
       "verify": {
-        "completed_at": "2026-02-03T09:29:20.367Z",
+        "completed_at": "2026-02-03T09:46:00.115Z",
         "status": "FAIL"
       }
     },
@@ -43,6 +43,10 @@
         "unknown_count": 6,
         "tbd_count": 24,
         "issues": []
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.117Z",
+        "status": "FAIL"
       }
     },
     "contracts": {
@@ -63,6 +67,10 @@
         "unknown_count": 6,
         "tbd_count": 23,
         "issues": []
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.119Z",
+        "status": "FAIL"
       }
     },
     "database": {
@@ -74,6 +82,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.807Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.119Z",
+        "status": "FAIL"
       }
     },
     "data": {
@@ -85,6 +97,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.815Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.120Z",
+        "status": "FAIL"
       }
     },
     "auth": {
@@ -96,6 +112,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.817Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.121Z",
+        "status": "FAIL"
       }
     },
     "backend": {
@@ -107,6 +127,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.818Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.122Z",
+        "status": "FAIL"
       }
     },
     "integrations": {
@@ -118,6 +142,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.819Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.123Z",
+        "status": "FAIL"
       }
     },
     "state": {
@@ -129,6 +157,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.820Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.124Z",
+        "status": "FAIL"
       }
     },
     "frontend": {
@@ -140,6 +172,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.821Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.125Z",
+        "status": "FAIL"
       }
     },
     "fullstack": {
@@ -151,6 +187,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.822Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.125Z",
+        "status": "FAIL"
       }
     },
     "testing": {
@@ -162,6 +202,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.823Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.126Z",
+        "status": "FAIL"
       }
     },
     "quality": {
@@ -173,6 +217,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.824Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.126Z",
+        "status": "FAIL"
       }
     },
     "security": {
@@ -184,6 +232,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.826Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.126Z",
+        "status": "FAIL"
       }
     },
     "devops": {
@@ -195,6 +247,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.827Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.126Z",
+        "status": "FAIL"
       }
     },
     "cloud": {
@@ -206,6 +262,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.831Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.126Z",
+        "status": "FAIL"
       }
     },
     "devex": {
@@ -217,6 +277,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.833Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.127Z",
+        "status": "FAIL"
       }
     },
     "mobile": {
@@ -228,6 +292,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.834Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.127Z",
+        "status": "FAIL"
       }
     },
     "desktop": {
@@ -239,6 +307,10 @@
       },
       "seed": {
         "completed_at": "2026-02-03T09:41:48.836Z"
+      },
+      "verify": {
+        "completed_at": "2026-02-03T09:46:00.127Z",
+        "status": "FAIL"
       }
     }
   }
