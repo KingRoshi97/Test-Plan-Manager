@@ -35,12 +35,20 @@ Preferred communication style: Simple, everyday language.
 
 ### AXION Pipeline (Documentation Engine)
 - **Purpose**: Generates per-module documentation packs and manages the lifecycle.
-- **Configuration**: `domains.json`, `sources.json`.
-- **Templates**: 23 documentation templates categorized by area (e.g., core, frontend, backend, security).
+- **Configuration**: `domains.json`, `sources.json`, `presets.json`.
+- **Templates**: 29 templates (7 core ROSHI + 22 module README.template.md).
 - **ROSHI Sequential Flow**: Defines the order and dependencies of core documents (RPBS, REBS, DDES, UX_Foundations, etc.).
 - **Module Mode System**: Supports per-module generation (`--module <name>`) or all modules (`--all`), with dependency tracking for 19 defined modules. Stages are tracked and prerequisite checks enforced.
 - **Pipeline Scripts**: A series of scripts manage the `generate`, `seed`, `draft`, `review`, `verify`, and `lock` stages of documentation production.
 - **AI-Generated Documents**: Includes `PROJECT_OVERVIEW.md`, `RPBS_Product.md`, `REBS_Product.md`, and others.
+- **Governance Features**:
+  - **Seam Ownership**: Marker-based detection using `<!-- AXION:SEAM_OWNER:<seam> -->` HTML comments.
+  - **Template Hashing**: Detects drift via content hashing.
+  - **Repair Mode**: Suggests fix actions for violations.
+  - **Preset Execution**: Topological dependency resolution with guards (disallow_lock, lock_requires_verify_pass).
+- **Schema Contracts**:
+  - `verify_report.json`: Uses `generated_at` (not timestamp), `modules` as Record (not array), `current_revision` (not revision).
+  - `stage_markers.json`: Record<module, Record<stage, data>> structure.
 
 ### Key Entities
 - **Assembly**: Represents a pipeline execution, including project details, state, and output kit path.

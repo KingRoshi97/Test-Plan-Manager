@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "last_verified": "2026-02-03T07:27:15.068Z",
+  "modules": {
+    "contracts": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T07:27:15.048Z",
+      "reason_codes": [
+        "PREREQ_NOT_SATISFIED",
+        "PREREQ_NOT_SATISFIED",
+        "MISSING_ACCEPTANCE",
+        "MISSING_SECTION",
+        "MISSING_SECTION"
+      ],
+      "hints": [
+        "Run generate stage first",
+        "Run seed stage first",
+        "Add ACCEPTANCE criteria section",
+        "Add required section: ## 1.",
+        "Add required section: ## 2."
+      ]
+    },
+    "backend": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T07:27:15.057Z",
+      "reason_codes": [
+        "PREREQ_NOT_SATISFIED",
+        "PREREQ_NOT_SATISFIED",
+        "MISSING_ACCEPTANCE",
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Run generate stage first",
+        "Run seed stage first",
+        "Add ACCEPTANCE criteria section",
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Dependency contracts must pass verify first"
+      ]
+    }
+  }
+}

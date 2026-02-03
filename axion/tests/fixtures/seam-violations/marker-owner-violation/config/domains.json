@@ -1,0 +1,31 @@
+{
+  "axion_root": "axion",
+  "domains_dir": "domains",
+  "templates_dir": "templates",
+  "modules": [
+    {
+      "name": "Contracts",
+      "slug": "contracts",
+      "dependencies": []
+    },
+    {
+      "name": "Backend",
+      "slug": "backend",
+      "dependencies": [
+        "contracts"
+      ]
+    }
+  ],
+  "canonical_order": [
+    "contracts",
+    "backend"
+  ],
+  "stages": [
+    "generate",
+    "seed",
+    "draft",
+    "review",
+    "verify",
+    "lock"
+  ]
+}

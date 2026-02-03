@@ -8,6 +8,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync, ExecSyncOptions } from 'child_process';
 import * as crypto from 'crypto';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const FIXTURES_PATH = path.join(__dirname, '..', 'fixtures', 'workspace');
 const TEMP_WORKSPACES_PATH = path.join(__dirname, '..', 'temp');
@@ -233,4 +237,59 @@ export function assertFileNotExists(workspace: string, relativePath: string, mes
       `${message || 'File should not exist'}: ${relativePath}`
     );
   }
+}
+
+export function expect(actual: any) {
+  return {
+    toBe(expected: any) {
+      if (actual !== expected) {
+        throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+      }
+    },
+    toEqual(expected: any) {
+      const actualStr = JSON.stringify(actual);
+      const expectedStr = JSON.stringify(expected);
+      if (actualStr !== expectedStr) {
+        throw new Error(`Expected ${expectedStr}, got ${actualStr}`);
+      }
+    },
+    toBeTruthy() {
+      if (!actual) {
+        throw new Error(`Expected truthy value, got ${JSON.stringify(actual)}`);
+      }
+    },
+    toBeFalsy() {
+      if (actual) {
+        throw new Error(`Expected falsy value, got ${JSON.stringify(actual)}`);
+      }
+    },
+    toContain(expected: any) {
+      if (Array.isArray(actual)) {
+        if (!actual.includes(expected)) {
+          throw new Error(`Expected array to contain ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+        }
+      } else if (typeof actual === 'string') {
+        if (!actual.includes(expected)) {
+          throw new Error(`Expected string to contain ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+        }
+      } else {
+        throw new Error(`toContain requires array or string, got ${typeof actual}`);
+      }
+    },
+    toBeGreaterThan(expected: number) {
+      if (!(actual > expected)) {
+        throw new Error(`Expected ${actual} to be greater than ${expected}`);
+      }
+    },
+    toBeLessThan(expected: number) {
+      if (!(actual < expected)) {
+        throw new Error(`Expected ${actual} to be less than ${expected}`);
+      }
+    },
+    toHaveLength(expected: number) {
+      if (actual?.length !== expected) {
+        throw new Error(`Expected length ${expected}, got ${actual?.length}`);
+      }
+    },
+  };
 }
