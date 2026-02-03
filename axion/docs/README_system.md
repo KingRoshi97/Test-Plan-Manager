@@ -255,6 +255,79 @@ Templates follow a strict placeholder policy for consistent verification:
 
 **Key rule:** At verify stage, `[TBD]` is not allowed in required sections. Sections must either be populated or marked `N/A — <reason>`.
 
+## Governance Features
+
+### Seam Owner Registry
+
+Cross-cutting topics (seams) have single ownership to prevent duplication across modules:
+
+| Seam | Owner | Description |
+|------|-------|-------------|
+| `error_model` | contracts | Error codes, response shapes |
+| `schema_truth` | database | Entity schemas, field definitions |
+| `identity` | auth | Authentication, authorization |
+| `webhooks` | integrations | Event payloads, delivery guarantees |
+| `correlation_ids` | systems | Request tracing, correlation ID propagation |
+| `api_versioning` | backend | Version strategy, deprecation policy |
+| `feature_flags` | state | Feature flag definitions, rollout rules |
+
+**Governance rule:** Non-owner modules must LINK to owner definitions, not redefine them.
+
+Registry location: `registry/seams.json`
+
+Verify command:
+```bash
+npx ts-node axion/scripts/axion-verify-seams.ts --module <name>
+npx ts-node axion/scripts/axion-verify-seams.ts --all
+```
+
+### Repair Mode
+
+When verification fails, the repair script outputs actionable fix lists:
+
+```bash
+npx ts-node axion/scripts/axion-repair.ts --module <name>
+npx ts-node axion/scripts/axion-repair.ts --all
+npx ts-node axion/scripts/axion-repair.ts --module <name> --save
+```
+
+Repair mode produces:
+- Missing sections with exact fix actions
+- Duplicated definitions to remove
+- Unresolved `[TBD]` placeholders
+- `UNKNOWN` items without Open Questions entries
+- Next commands to run after fixes
+
+Reason codes for issues:
+- `MISSING_SECTION` (critical): Required section missing
+- `EMPTY_SECTION` (critical): Section has no content
+- `TBD_IN_REQUIRED` (critical): Placeholder in required section
+- `UNKNOWN_WITHOUT_QUESTION` (warning): UNKNOWN without Open Questions
+- `SEAM_OWNER_VIOLATION` (warning): Non-owner defines seam content
+- `INCOMPLETE_CHECKLIST` (info): Unchecked acceptance items
+
+### Template Drift Detection
+
+Templates and registry docs are hashed to detect unauthorized changes:
+
+```bash
+# Generate baseline hashes
+npx ts-node axion/scripts/axion-hash-templates.ts --generate
+
+# Verify no drift
+npx ts-node axion/scripts/axion-hash-templates.ts --verify
+
+# Show what changed
+npx ts-node axion/scripts/axion-hash-templates.ts --diff
+
+# Bump revision to acknowledge changes
+npx ts-node axion/scripts/axion-hash-templates.ts --generate --bump --note "description"
+```
+
+Hash registry location: `registry/template_hashes.json`
+
+Verification fails if hashes change without a recorded revision bump. This prevents slow "death by edits" drift.
+
 ### Verify Rules
 
 A section passes verification if it contains:
