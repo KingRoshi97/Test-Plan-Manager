@@ -183,19 +183,40 @@ function parseJsonFromOutput(output: string): Record<string, any> | null {
 // PATH HELPERS
 // ============================================================================
 
-function getPaths(root: string) {
-  const axionRoot = path.join(root, 'axion');
+/**
+ * Get paths for AXION operations.
+ * 
+ * In two-root mode:
+ * - systemRoot: contains axion/ with configs, templates, scripts
+ * - workspaceRoot: contains registry/, domains/ outputs
+ * 
+ * In legacy mode:
+ * - root contains axion/ with everything
+ */
+function getPaths(workspaceRoot: string, systemRoot?: string) {
+  // System root is where axion/ system folder lives
+  const axionSystem = path.join(systemRoot || workspaceRoot, 'axion');
+  
+  // In two-root mode, outputs go directly to workspace root
+  // In legacy mode, outputs go to axion/registry, axion/domains
+  const isTwoRoot = systemRoot !== undefined && systemRoot !== workspaceRoot;
+  const registryBase = isTwoRoot ? workspaceRoot : path.join(workspaceRoot, 'axion');
+  
   return {
-    root,
-    axionRoot,
-    config: path.join(axionRoot, 'config', 'domains.json'),
-    presets: path.join(axionRoot, 'config', 'presets.json'),
-    registry: path.join(axionRoot, 'registry'),
-    runLock: path.join(axionRoot, 'registry', 'run_lock.json'),
-    runHistory: path.join(axionRoot, 'registry', 'run_history'),
-    stageMarkers: path.join(axionRoot, 'registry', 'stage_markers.json'),
-    verifyReport: path.join(axionRoot, 'registry', 'verify_report.json'),
-    lockManifest: path.join(axionRoot, 'registry', 'lock_manifest.json'),
+    root: workspaceRoot,
+    axionRoot: axionSystem,
+    isTwoRoot,
+    // System configs (always in axion/ system folder)
+    config: path.join(axionSystem, 'config', 'domains.json'),
+    presets: path.join(axionSystem, 'config', 'presets.json'),
+    // Output registry (in workspace or axion/ depending on mode)
+    registry: path.join(registryBase, 'registry'),
+    runLock: path.join(registryBase, 'registry', 'run_lock.json'),
+    runHistory: path.join(registryBase, 'registry', 'run_history'),
+    stageMarkers: path.join(registryBase, 'registry', 'stage_markers.json'),
+    verifyReport: path.join(registryBase, 'registry', 'verify_report.json'),
+    lockManifest: path.join(registryBase, 'registry', 'lock_manifest.json'),
+    // Scripts are always in the axion system folder
     scripts: __dirname,
   };
 }
@@ -358,12 +379,17 @@ function saveRunHistory(paths: ReturnType<typeof getPaths>, history: RunHistory)
 // PREFLIGHT
 // ============================================================================
 
-async function runPreflight(root: string): Promise<{ success: boolean; output: string }> {
+async function runPreflight(workspaceRoot: string, buildRoot: string | null): Promise<{ success: boolean; output: string }> {
   const preflightScript = path.join(__dirname, 'axion-preflight.ts');
   
+  const args = ['--import', 'tsx', preflightScript, '--root', workspaceRoot];
+  if (buildRoot) {
+    args.push('--build-root', buildRoot);
+  }
+  
   return new Promise((resolve) => {
-    const proc = spawn('node', ['--import', 'tsx', preflightScript, '--root', root], {
-      cwd: root,
+    const proc = spawn('node', args, {
+      env: process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     
@@ -586,6 +612,93 @@ function checkGate(
 // MAIN
 // ============================================================================
 
+// ============================================================================
+// PREPARE ROOT EXECUTION
+// ============================================================================
+
+interface PrepareRootResult {
+  status: 'success' | 'failed' | 'blocked_by';
+  stage: 'prepare-root';
+  root?: string;
+  project_name?: string;
+  created?: boolean;
+  dirs_created?: string[];
+  archived?: boolean;
+  archive_path?: string;
+  dry_run?: boolean;
+  reason_codes?: string[];
+  hint?: string[];
+}
+
+async function runPrepareRoot(
+  buildRoot: string,
+  projectName: string | null,
+  allowNonempty: boolean,
+  archiveExisting: boolean,
+  dryRun: boolean
+): Promise<{ success: boolean; workspaceRoot: string | null; output: string }> {
+  const scriptPath = path.join(__dirname, 'axion-prepare-root.ts');
+  
+  if (!fs.existsSync(scriptPath)) {
+    return { success: false, workspaceRoot: null, output: 'prepare-root script not found' };
+  }
+  
+  const args = ['--import', 'tsx', scriptPath, '--build-root', buildRoot];
+  if (projectName) {
+    args.push('--project-name', projectName);
+  }
+  if (allowNonempty) {
+    args.push('--allow-nonempty');
+  }
+  if (archiveExisting) {
+    args.push('--archive-existing');
+  }
+  if (dryRun) {
+    args.push('--dry-run');
+  }
+  
+  return new Promise((resolve) => {
+    const proc = spawn('node', args, {
+      cwd: buildRoot,
+      env: process.env,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    
+    let stdout = '';
+    let stderr = '';
+    
+    proc.stdout?.on('data', (data) => {
+      const text = data.toString();
+      stdout += text;
+      process.stdout.write(text);
+    });
+    
+    proc.stderr?.on('data', (data) => {
+      const text = data.toString();
+      stderr += text;
+      process.stderr.write(text);
+    });
+    
+    proc.on('close', (code) => {
+      const jsonResult = parseJsonFromOutput(stdout) as PrepareRootResult | null;
+      
+      if (code === 0 && jsonResult?.status === 'success') {
+        resolve({ 
+          success: true, 
+          workspaceRoot: jsonResult.root || null,
+          output: stdout 
+        });
+      } else {
+        resolve({ 
+          success: false, 
+          workspaceRoot: null,
+          output: stdout + stderr 
+        });
+      }
+    });
+  });
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   
@@ -594,20 +707,33 @@ async function main(): Promise<void> {
   const planIdx = args.indexOf('--plan');
   const moduleIdx = args.indexOf('--module');
   const rootIdx = args.indexOf('--root');
+  const buildRootIdx = args.indexOf('--build-root');
+  const projectNameIdx = args.indexOf('--project-name');
   const allFlag = args.includes('--all');
   const overrideFlag = args.includes('--override');
   const dryRunFlag = args.includes('--dry-run');
   const autoPrereqsFlag = args.includes('--auto-prereqs');
   const unlockIfStaleFlag = args.includes('--unlock-if-stale');
+  const allowNonemptyFlag = args.includes('--allow-nonempty');
+  const archiveExistingFlag = args.includes('--archive-existing');
   const jsonFlag = args.includes('--json');
   const helpFlag = args.includes('--help') || args.includes('-h');
   
   const presetName = presetIdx !== -1 ? args[presetIdx + 1] : null;
   const planName = planIdx !== -1 ? args[planIdx + 1] : 'docs:full';
   const targetModule = moduleIdx !== -1 ? args[moduleIdx + 1] : null;
-  const root = rootIdx !== -1 ? path.resolve(args[rootIdx + 1]) : process.cwd();
+  const projectName = projectNameIdx !== -1 ? args[projectNameIdx + 1] : null;
   
-  const paths = getPaths(root);
+  // Determine root handling:
+  // --build-root: points to directory containing axion/ system folder
+  // --root: legacy, points to workspace root (where axion/ outputs go)
+  // If --build-root provided, use two-root model with prepare-root
+  const buildRoot = buildRootIdx !== -1 ? path.resolve(args[buildRootIdx + 1]) : null;
+  let root = rootIdx !== -1 ? path.resolve(args[rootIdx + 1]) : process.cwd();
+  
+  // Initial paths (may be re-computed after prepare-root)
+  // In two-root mode, buildRoot contains the axion/ system folder
+  let paths = getPaths(root, buildRoot || undefined);
   
   // Handle help
   if (helpFlag) {
@@ -615,18 +741,28 @@ async function main(): Promise<void> {
 AXION Run - Deterministic Execution Wrapper
 
 Usage:
-  node --import tsx axion/scripts/axion-run.ts --preset <name> --plan <plan>
-  node --import tsx axion/scripts/axion-run.ts --all --plan <plan>
-  node --import tsx axion/scripts/axion-run.ts --module <slug> --plan <plan>
+  # Two-Root Model (recommended):
+  node --import tsx axion/scripts/axion-run.ts --build-root <path> --preset <name> --plan <plan>
+  
+  # Legacy single-root mode:
+  node --import tsx axion/scripts/axion-run.ts --root <path> --preset <name> --plan <plan>
 
 Targets (mutually exclusive):
   --preset <name>   Run preset from presets.json
   --all             Run all modules in canonical order
   --module <slug>   Run single module (checks prereqs)
 
-Options:
+Root Options:
+  --build-root <path>   Build root containing axion/ system folder (two-root model)
+  --project-name <n>    Override project name (reads from RPBS by default)
+  --root <path>         Legacy: workspace root (default: current directory)
+
+Workspace Safety:
+  --allow-nonempty      Allow building on existing non-empty workspace
+  --archive-existing    Archive existing workspace contents before proceeding
+
+Other Options:
   --plan <name>        Stage plan to execute (default: docs:full)
-  --root <path>        Workspace root (default: current directory)
   --override           Allow gate overrides where permitted
   --auto-prereqs       Automatically run missing prereqs
   --dry-run            Print resolved stages/modules without executing
@@ -645,7 +781,11 @@ Stage Plans:
   app:ship         deploy
   export:package   package
 
-Example:
+Examples:
+  # Two-root model: creates project workspace from RPBS project name
+  node --import tsx axion/scripts/axion-run.ts --build-root . --preset system --plan docs:full
+  
+  # Legacy mode (workspace root contains axion/)
   node --import tsx axion/scripts/axion-run.ts --preset system --plan docs:full
 `);
     process.exit(0);
@@ -671,8 +811,55 @@ Example:
   if (!jsonFlag) {
     console.log('\n[AXION] Run\n');
     log('INFO', `Run ID: ${runId}`);
+    if (buildRoot) {
+      log('INFO', `Build Root: ${buildRoot}`);
+    }
     log('INFO', `Root: ${root}`);
   }
+  
+  // ========================================================================
+  // STEP 0: PREPARE ROOT (Two-Root Model)
+  // ========================================================================
+  
+  if (buildRoot) {
+    if (!jsonFlag) {
+      console.log('\n--- Prepare Root ---\n');
+    }
+    
+    // Note: prepare-root should always create directories (not dry-run)
+    // even when axion-run is in dry-run mode, because preflight needs the dirs to exist
+    const prepareResult = await runPrepareRoot(
+      buildRoot,
+      projectName,
+      allowNonemptyFlag,
+      archiveExistingFlag,
+      false  // Never dry-run prepare-root - workspace must exist for preflight
+    );
+    
+    if (!prepareResult.success) {
+      const result = {
+        status: 'failed',
+        stage: 'run',
+        run_id: runId,
+        reason_codes: ['PREPARE_ROOT_FAILED'],
+        hint: ['Fix prepare-root errors before running'],
+      };
+      console.log(JSON.stringify(result, null, 2));
+      process.exit(1);
+    }
+    
+    // Update root to point to the created workspace
+    if (prepareResult.workspaceRoot) {
+      root = prepareResult.workspaceRoot;
+      if (!jsonFlag) {
+        log('INFO', `Workspace root set to: ${root}`);
+      }
+    }
+  }
+  
+  // Re-compute paths after potential root change
+  // In two-root mode, buildRoot is the system root; root is now the workspace root
+  paths = getPaths(root, buildRoot || undefined);
   
   // ========================================================================
   // STEP 1: PREFLIGHT
@@ -682,7 +869,7 @@ Example:
     console.log('\n--- Preflight ---\n');
   }
   
-  const preflight = await runPreflight(root);
+  const preflight = await runPreflight(root, buildRoot);
   if (!preflight.success) {
     const result = {
       status: 'failed',

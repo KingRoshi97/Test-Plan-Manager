@@ -279,20 +279,15 @@ function checkTemplatesDirectory(root: string): CheckResult {
 function checkOutputDirWritable(root: string, dirName: string): CheckResult {
   const dirPath = path.join(root, dirName);
   
-  // Try to create if doesn't exist
+  // Check if directory exists
   if (!fs.existsSync(dirPath)) {
-    try {
-      fs.mkdirSync(dirPath, { recursive: true });
-      return { name: `${dirName}_writable`, status: 'ok', message: 'created' };
-    } catch (e) {
-      return {
-        name: `${dirName}_writable`,
-        status: 'fail',
-        message: `Cannot create ${dirName}/ directory`,
-        reason_code: 'OUTPUT_NOT_WRITABLE',
-        hint: `Check permissions on ${root}`,
-      };
-    }
+    return {
+      name: `${dirName}_writable`,
+      status: 'fail',
+      message: `${dirName}/ directory not found`,
+      reason_code: 'OUTPUT_NOT_WRITABLE',
+      hint: `Run prepare-root to create workspace directories, or use --build-root flag`,
+    };
   }
   
   // Check if writable by attempting to create a temp file
@@ -312,36 +307,61 @@ function checkOutputDirWritable(root: string, dirName: string): CheckResult {
   }
 }
 
-function checkRegistryDir(root: string): CheckResult {
-  return checkOutputDirWritable(root, 'axion/registry');
+function checkRegistryDir(root: string, twoRootMode: boolean): CheckResult {
+  const dirName = twoRootMode ? 'registry' : 'axion/registry';
+  return checkOutputDirWritable(root, dirName);
 }
 
-function checkDomainsDir(root: string): CheckResult {
-  return checkOutputDirWritable(root, 'axion/domains');
+function checkDomainsDir(root: string, twoRootMode: boolean): CheckResult {
+  const dirName = twoRootMode ? 'domains' : 'axion/domains';
+  return checkOutputDirWritable(root, dirName);
 }
 
-function runAllChecks(root: string): CheckResult[] {
+/**
+ * Run all preflight checks.
+ * 
+ * In two-root mode:
+ * - systemRoot: where axion/ system folder lives (configs, templates, scripts)
+ * - workspaceRoot: where outputs go (registry/, domains/)
+ * 
+ * In legacy mode:
+ * - root: contains both axion/ system and axion/registry, axion/domains outputs
+ */
+function runAllChecks(systemRoot: string, workspaceRoot: string, twoRootMode: boolean): CheckResult[] {
   return [
+    // Runtime checks (don't depend on paths)
     checkNodeRuntime(),
-    checkTsxAvailable(root),
-    checkAxionDirectory(root),
-    checkConfigDirectory(root),
-    checkDomainsJson(root),
-    checkPresetsJson(root),
-    checkTemplatesDirectory(root),
-    checkRegistryDir(root),
-    checkDomainsDir(root),
+    checkTsxAvailable(systemRoot),
+    
+    // System folder checks (always against systemRoot)
+    checkAxionDirectory(systemRoot),
+    checkConfigDirectory(systemRoot),
+    checkDomainsJson(systemRoot),
+    checkPresetsJson(systemRoot),
+    checkTemplatesDirectory(systemRoot),
+    
+    // Output directory checks (against workspaceRoot)
+    checkRegistryDir(workspaceRoot, twoRootMode),
+    checkDomainsDir(workspaceRoot, twoRootMode),
   ];
 }
 
 function main(): void {
   const args = process.argv.slice(2);
   
-  // Parse --root argument
+  // Parse --root argument (workspace root for outputs)
   const rootIdx = args.indexOf('--root');
   let root = process.cwd();
   if (rootIdx !== -1 && args[rootIdx + 1]) {
     root = path.resolve(args[rootIdx + 1]);
+  }
+  
+  // Parse --build-root argument (contains axion/ system folder)
+  // If not provided, we assume legacy mode where root contains axion/
+  const buildRootIdx = args.indexOf('--build-root');
+  let buildRoot: string | null = null;
+  if (buildRootIdx !== -1 && args[buildRootIdx + 1]) {
+    buildRoot = path.resolve(args[buildRootIdx + 1]);
   }
   
   // Handle help
@@ -350,31 +370,49 @@ function main(): void {
 AXION Preflight Validation
 
 Usage:
+  # Legacy mode (root contains axion/):
   node --import tsx axion/scripts/axion-preflight.ts [--root <path>]
+  
+  # Two-root mode:
+  node --import tsx axion/scripts/axion-preflight.ts --root <workspace> --build-root <build>
 
 Options:
-  --root <path>   Workspace root (default: current directory)
-  --help          Show this help
+  --root <path>         Workspace root for outputs (default: current directory)
+  --build-root <path>   Build root containing axion/ system folder (two-root mode)
+  --help                Show this help
 
 Checks performed:
   - Node.js version >= 18
   - tsx dependency installed
-  - axion/ directory exists
+  - axion/ system directory exists (in build root)
   - axion/config/ directory exists
   - domains.json valid
   - presets.json valid
   - templates/ directory populated
-  - registry/ writable
-  - domains/ writable
+  - registry/ writable (in workspace root)
+  - domains/ writable (in workspace root)
 `);
     process.exit(0);
   }
   
   console.log('\n[AXION] Preflight Validation\n');
-  log('INFO', `Root: ${root}`);
+  
+  // Determine system root and workspace root
+  const twoRootMode = buildRoot !== null;
+  const systemRoot = twoRootMode ? buildRoot! : root;
+  const workspaceRoot = root;
+  
+  if (twoRootMode) {
+    log('INFO', `Mode: Two-root`);
+    log('INFO', `System root: ${systemRoot}`);
+    log('INFO', `Workspace root: ${workspaceRoot}`);
+  } else {
+    log('INFO', `Mode: Legacy (single root)`);
+    log('INFO', `Root: ${root}`);
+  }
   console.log('');
   
-  const checks = runAllChecks(root);
+  const checks = runAllChecks(systemRoot, workspaceRoot, twoRootMode);
   const failed = checks.filter(c => c.status === 'fail');
   const passed = checks.filter(c => c.status === 'ok');
   
