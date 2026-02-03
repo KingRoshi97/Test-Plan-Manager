@@ -1,0 +1,8 @@
+{
+  "read_at": "2026-02-03T09:29:18.088Z",
+  "files": [
+    "START_HERE.txt"
+  ],
+  "total_size_bytes": 8543,
+  "content_preview": "<!-- ATTACHMENT: START_HERE.txt -->\nPrompt: Build the AXION Controller Web App\n\nYou are building a production-ready web application called Axion Assembler. This web app is the controller for the AXION system. AXION already exists as a repo with scripts, templates, registries, module dependencies, presets, governance checks, hashing drift detection, repair outputs, and tests. The web app must expose and orchestrate all AXION features through a clean UI + backend API, and it must do so by executin..."
+}

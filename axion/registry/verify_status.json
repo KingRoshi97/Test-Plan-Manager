@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "last_verified": "2026-02-03T09:29:20.369Z",
+  "modules": {
+    "architecture": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T09:29:20.367Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "TBD_IN_REQUIRED",
+        "UNKNOWN_WITHOUT_QUESTION"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Resolve 40 [TBD] placeholders",
+        "Address 2 UNKNOWN items outside derivation block"
+      ]
+    }
+  }
+}
