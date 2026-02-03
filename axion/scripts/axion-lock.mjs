@@ -28,7 +28,7 @@ const report = {
   failed: []
 };
 
-function loadDomainsConfig() {
+function loadConfig() {
   const configPath = 'axion/config/domains.json';
   if (!fs.existsSync(configPath)) {
     throw new Error('axion/config/domains.json not found. Run axion:init first.');
@@ -141,7 +141,7 @@ try {
     throw new Error('--module <slug> is required for axion:lock');
   }
   
-  const config = loadDomainsConfig();
+  const config = loadConfig();
   const axionRoot = config.axion_root || 'axion';
   const domainsDir = config.domains_dir || 'domains';
   
