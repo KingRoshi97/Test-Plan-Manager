@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
-  "last_verified": "2026-02-03T09:17:57.744Z",
+  "last_verified": "2026-02-03T15:22:42.671Z",
   "modules": {
     "contracts": {
       "status": "FAIL",
-      "verified_at": "2026-02-03T09:17:57.737Z",
+      "verified_at": "2026-02-03T15:22:42.665Z",
       "reason_codes": [
         "MISSING_DERIVATION_BLOCK"
       ],
@@ -14,7 +14,7 @@
     },
     "backend": {
       "status": "FAIL",
-      "verified_at": "2026-02-03T09:17:57.739Z",
+      "verified_at": "2026-02-03T15:22:42.667Z",
       "reason_codes": [
         "MISSING_DERIVATION_BLOCK",
         "DEP_NOT_VERIFIED"
