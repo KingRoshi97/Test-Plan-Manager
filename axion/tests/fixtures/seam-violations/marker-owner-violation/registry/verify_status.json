@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
-  "last_verified": "2026-02-03T08:48:14.658Z",
+  "last_verified": "2026-02-03T09:18:00.040Z",
   "modules": {
     "contracts": {
       "status": "FAIL",
-      "verified_at": "2026-02-03T08:48:14.653Z",
+      "verified_at": "2026-02-03T09:18:00.031Z",
       "reason_codes": [
         "PREREQ_NOT_SATISFIED",
         "PREREQ_NOT_SATISFIED",
@@ -24,7 +24,7 @@
     },
     "backend": {
       "status": "FAIL",
-      "verified_at": "2026-02-03T08:48:14.654Z",
+      "verified_at": "2026-02-03T09:18:00.033Z",
       "reason_codes": [
         "PREREQ_NOT_SATISFIED",
         "PREREQ_NOT_SATISFIED",
