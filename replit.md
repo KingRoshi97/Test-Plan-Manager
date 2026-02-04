@@ -1,87 +1,47 @@
-# Axion Assembler
+# AXION Documentation System
 
 ## Overview
 
-Axion Assembler is a web application that serves as the controller interface for the AXION documentation-first development system. AXION generates comprehensive "Agent Kits" for AI-guided software development through a strict pipeline: init → generate → seed → draft → review → verify → lock → package.
+AXION is a documentation-first development system that generates comprehensive "Agent Kits" for AI-guided software development. It follows a strict pipeline: init → generate → seed → draft → review → verify → lock → package.
 
-This web app provides a UI to control all AXION capabilities:
-- Pipeline stage execution (init, generate, seed, draft, review, verify, lock)
-- Module targeting (--all, --module with dependency-aware blocking)
-- Presets and stage plans from configuration
-- Registry artifact visibility (stage markers, verify reports, drift detection)
-- Export/packaging of Agent Kit bundles
+## Project Structure
 
-The app calls existing AXION scripts rather than re-implementing their logic, capturing stdout/stderr and exit codes for auditability.
+```
+axion/
+├── config/           # Configuration files (stage-plans, presets)
+├── scripts/          # AXION TypeScript CLI scripts
+├── templates/        # Document templates for each module
+└── README.md         # AXION system documentation
+```
 
-## User Preferences
+## AXION Pipeline Stages
 
-Preferred communication style: Simple, everyday language.
+1. **kit-create** - Initialize a new Agent Kit workspace
+2. **docs:scaffold** - Generate module documentation structure from templates
+3. **docs:content** - Fill documentation sections with AI-generated content
+4. **docs:full** - Run scaffold + content in sequence
+5. **app:bootstrap** - Generate application boilerplate from locked documentation
 
-## System Architecture
+## Module System
 
-### Two-Root Architecture
-AXION uses a two-root model separating immutable system files from mutable project outputs:
-- **System Root** (`axion/`): Contains scripts, templates, configs - read-only during execution
-- **Workspace Root** (`<project-name>/`): Contains generated docs, registry state, app code - all outputs
-
-### Documentation Pipeline (ROSHI Flow)
-Sequential document generation ensuring consistency:
-1. RPBS (Product Truth) → REBS (Engineering Philosophy)
-2. generate → seed → draft → review → verify → lock
-3. Each stage has gates that block progression until prerequisites pass
-
-### Technology Stack
-- **Frontend**: React with TypeScript, Tailwind CSS, TanStack Query + Zustand for state
-- **Backend**: Node.js with Express, TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Build**: Vite for frontend bundling
-
-### Key Design Patterns
-- **Script Orchestration**: Backend spawns AXION TypeScript scripts as child processes
-- **Deterministic Execution**: All actions logged with timestamps, args, exit codes
-- **Gate Enforcement**: Lock requires verify PASS; scaffold requires docs locked
-- **Non-Destructive**: Never overwrites RPBS/REBS without explicit user action
-
-### Module System
 19 domain modules with defined dependencies:
-- Foundation: architecture, systems, contracts
-- Data: database, data
-- Security: auth
-- Application: backend, integrations, state, frontend, fullstack
-- Quality: testing, quality, security, devops, cloud, devex
-- Clients: mobile, desktop
+- **Foundation**: architecture, systems, contracts
+- **Data**: database, data
+- **Security**: auth
+- **Application**: backend, integrations, state, frontend, fullstack
+- **Quality**: testing, quality, security, devops, cloud, devex
+- **Clients**: mobile, desktop
 
-### Registry Artifacts
-Pipeline state tracked in JSON files:
-- `stage_markers.json`: Completion status per module/stage
-- `verify_report.json`: Verification results with reason codes
-- `verify_status.json`: Pass/fail status per module
-- `seams.json`: Cross-module ownership rules
+## Usage
 
-## External Dependencies
+Run AXION scripts via npx ts-node from the axion directory:
 
-### Database
-- PostgreSQL for persistent storage
-- Drizzle ORM for schema management and queries
-- Schema tracks assemblies, runs, exports, and pipeline state
+```bash
+# Create a new kit
+npx ts-node scripts/axion-kit-create.ts <kit-name>
 
-### AXION Scripts (External System)
-The web app orchestrates these existing TypeScript scripts:
-- `axion-init.ts`: Initialize workspace
-- `axion-generate.ts`: Create module docs from templates
-- `axion-seed.ts`: Add scaffolding placeholders
-- `axion-draft.ts`: Fill documentation sections
-- `axion-review.ts`: Validate and count issues
-- `axion-verify.ts`: Final gate check
-- `axion-lock.ts`: Freeze modules, generate ERC
-- `axion-package.ts`: Bundle into Agent Kit
-
-### File System
-- Reads/writes to workspace directories
-- Template copying from system root
-- ZIP generation for exports
-
-### Process Execution
-- Child process spawning for script execution
-- stdout/stderr capture for logging
-- Exit code handling for success/failure detection
+# Run pipeline stages
+npx ts-node scripts/axion-run.ts --kit <kit-path> --stage docs:scaffold
+npx ts-node scripts/axion-run.ts --kit <kit-path> --stage docs:content
+npx ts-node scripts/axion-run.ts --kit <kit-path> --stage app:bootstrap
+```
