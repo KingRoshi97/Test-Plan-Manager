@@ -263,25 +263,27 @@ export default function AxionController() {
               ) : (
                 <div className="space-y-2">
                   {kitsData?.kits?.map((kit) => (
-                    <div
+                    <Card
                       key={kit.id}
                       data-testid={`card-kit-${kit.id}`}
-                      className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors ${
-                        selectedKit?.id === kit.id ? "border-primary bg-accent" : "hover-elevate"
+                      className={`cursor-pointer toggle-elevate ${
+                        selectedKit?.id === kit.id ? "toggle-elevated border-primary" : ""
                       }`}
                       onClick={() => setSelectedKit(kit)}
                     >
-                      <div className="flex items-center gap-3">
-                        <FolderOpen className="h-5 w-5" />
-                        <div>
-                          <p className="font-medium">{kit.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Created {new Date(kit.createdAt).toLocaleDateString()}
-                          </p>
+                      <CardContent className="flex items-center justify-between p-4">
+                        <div className="flex items-center gap-3">
+                          <FolderOpen className="h-5 w-5" />
+                          <div>
+                            <p className="font-medium">{kit.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Created {new Date(kit.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <Badge variant={getStatusColor(kit.status)}>{kit.status}</Badge>
-                    </div>
+                        <Badge variant={getStatusColor(kit.status)}>{kit.status}</Badge>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               )}
