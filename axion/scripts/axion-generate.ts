@@ -7,17 +7,36 @@
  * Usage:
  *   npx ts-node axion/scripts/axion-generate.ts --module <name>
  *   npx ts-node axion/scripts/axion-generate.ts --all
+ *   npx ts-node axion/scripts/axion-generate.ts --root <workspace> --module <name>
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Parse --root argument for two-root mode
+function parseRootArg(): string | null {
+  const args = process.argv.slice(2);
+  const rootIdx = args.indexOf('--root');
+  if (rootIdx !== -1 && args[rootIdx + 1]) {
+    return path.resolve(args[rootIdx + 1]);
+  }
+  return null;
+}
+
+// Two-root mode: system folder for templates/config, workspace for outputs
+const WORKSPACE_ROOT = parseRootArg();
 const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+
+// System paths (read-only, from axion/ system folder)
 const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
 const TEMPLATES_PATH = path.join(AXION_ROOT, 'templates');
-const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
-const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
-const ATTACHMENTS_PATH = path.join(AXION_ROOT, 'source_docs', 'product', 'attachments');
+
+// Workspace paths (writable, from workspace root or axion/ for legacy mode)
+const WORKSPACE_BASE = WORKSPACE_ROOT || AXION_ROOT;
+const DOMAINS_PATH = path.join(WORKSPACE_BASE, WORKSPACE_ROOT ? 'domains' : 'domains');
+const MARKERS_PATH = path.join(WORKSPACE_BASE, WORKSPACE_ROOT ? 'registry' : 'registry', 'stage_markers.json');
+const ATTACHMENTS_PATH = path.join(WORKSPACE_BASE, WORKSPACE_ROOT ? 'source_docs' : 'source_docs', 'product', 'attachments');
+const REGISTRY_PATH = path.join(WORKSPACE_BASE, WORKSPACE_ROOT ? 'registry' : 'registry');
 
 interface Module {
   name: string;
@@ -33,10 +52,8 @@ interface Config {
   canonical_order: string[];
 }
 
-interface StageMarkers {
-  version: string;
-  markers: Record<string, Record<string, any>>;
-}
+// Flat markers structure: { moduleName: { stageName: { ... } } }
+type StageMarkers = Record<string, Record<string, any>>;
 
 function loadConfig(): Config {
   if (!fs.existsSync(CONFIG_PATH)) {
@@ -48,7 +65,7 @@ function loadConfig(): Config {
 
 function loadMarkers(): StageMarkers {
   if (!fs.existsSync(MARKERS_PATH)) {
-    return { version: '1.0.0', markers: {} };
+    return {};
   }
   return JSON.parse(fs.readFileSync(MARKERS_PATH, 'utf-8'));
 }
@@ -107,7 +124,7 @@ function readAttachmentsFolder(): AttachmentContent {
 function saveAttachmentsContext(attachments: AttachmentContent): void {
   if (attachments.files.length === 0) return;
   
-  const contextPath = path.join(AXION_ROOT, 'registry', 'attachments_context.json');
+  const contextPath = path.join(REGISTRY_PATH, 'attachments_context.json');
   const context = {
     read_at: new Date().toISOString(),
     files: attachments.files,
@@ -117,7 +134,7 @@ function saveAttachmentsContext(attachments: AttachmentContent): void {
   
   fs.writeFileSync(contextPath, JSON.stringify(context, null, 2));
   
-  const fullContentPath = path.join(AXION_ROOT, 'registry', 'attachments_content.md');
+  const fullContentPath = path.join(REGISTRY_PATH, 'attachments_content.md');
   fs.writeFileSync(fullContentPath, `# User Input (from attachments folder)\n\n${attachments.content}`);
 }
 
@@ -173,7 +190,7 @@ function generateModule(mod: Module): string[] {
   const docPath = path.join(moduleDir, 'README.md');
   fs.writeFileSync(docPath, content);
   
-  return [path.relative(AXION_ROOT, docPath)];
+  return [path.relative(WORKSPACE_BASE, docPath)];
 }
 
 function main() {
@@ -224,10 +241,10 @@ function main() {
     console.log(`[INFO] Generating ${mod.name}...`);
     const files = generateModule(mod);
     
-    if (!markers.markers[mod.slug]) {
-      markers.markers[mod.slug] = {};
+    if (!markers[mod.slug]) {
+      markers[mod.slug] = {};
     }
-    markers.markers[mod.slug].generate = {
+    markers[mod.slug].generate = {
       completed_at: new Date().toISOString(),
       files: files,
     };

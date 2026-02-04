@@ -12,6 +12,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -67,39 +68,28 @@ function checkNodeRuntime(): CheckResult {
   return { name: 'node', status: 'ok', message: `Node.js ${version}` };
 }
 
-function checkTsxAvailable(root: string): CheckResult {
-  const tsxPaths = [
-    path.join(root, 'node_modules', '.bin', 'tsx'),
-    path.join(root, 'node_modules', 'tsx'),
-  ];
-  
-  const pkgJsonPath = path.join(root, 'package.json');
-  
-  // Check node_modules
-  const tsxExists = tsxPaths.some(p => fs.existsSync(p));
-  
-  // Check package.json dependencies
-  let inDeps = false;
-  if (fs.existsSync(pkgJsonPath)) {
+function checkTsxAvailable(_root: string): CheckResult {
+  // Check if tsx is available in the host environment (via npx or PATH)
+  // This is more flexible than checking local node_modules since kits
+  // don't need tsx installed locally - they rely on the host environment
+  try {
+    execSync('npx tsx --version', { stdio: 'pipe', timeout: 10000 });
+    return { name: 'tsx', status: 'ok' };
+  } catch {
+    // Fallback: check if tsx is in PATH
     try {
-      const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
-      inDeps = !!(pkg.dependencies?.tsx || pkg.devDependencies?.tsx);
+      execSync('which tsx', { stdio: 'pipe' });
+      return { name: 'tsx', status: 'ok' };
     } catch {
-      // Ignore parse errors here
+      return {
+        name: 'tsx',
+        status: 'fail',
+        message: 'tsx is not installed',
+        reason_code: 'MISSING_DEPENDENCY',
+        hint: 'npm install -g tsx or ensure tsx is available via npx',
+      };
     }
   }
-  
-  if (!tsxExists && !inDeps) {
-    return {
-      name: 'tsx',
-      status: 'fail',
-      message: 'tsx is not installed',
-      reason_code: 'MISSING_DEPENDENCY',
-      hint: 'npm install tsx',
-    };
-  }
-  
-  return { name: 'tsx', status: 'ok' };
 }
 
 function checkAxionDirectory(root: string): CheckResult {
