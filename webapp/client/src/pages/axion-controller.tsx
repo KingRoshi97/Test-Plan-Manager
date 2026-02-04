@@ -465,9 +465,12 @@ export default function AxionController() {
                     <ScrollArea className="h-[400px] border rounded-md">
                       <div className="p-2 space-y-1">
                         {dirEntries.map((entry) => (
-                          <div
+                          <Button
                             key={entry.name}
-                            className="flex items-center gap-2 p-2 rounded hover-elevate cursor-pointer"
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start gap-2"
+                            data-testid={`file-entry-${entry.name.replace(/[^a-zA-Z0-9-_]/g, "-")}`}
                             onClick={() => {
                               const newPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
                               navigateTo(newPath);
@@ -479,7 +482,7 @@ export default function AxionController() {
                               <FileText className="h-4 w-4 text-muted-foreground" />
                             )}
                             <span className="text-sm">{entry.name}</span>
-                          </div>
+                          </Button>
                         ))}
                         {dirEntries.length === 0 && (
                           <p className="text-muted-foreground text-sm text-center py-4">
