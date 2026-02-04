@@ -1,111 +1,87 @@
-# Axiom Assembler
+# Axion Assembler
 
 ## Overview
-Axiom Assembler is a web application and API that generates comprehensive documentation bundles ("Agent Kits") for software projects based on a user-provided idea. These kits, containing documentation, manifests, and exports, are designed for upload to vibecoding agents to guide implementation. The project enforces a strict docs-first development pipeline: init → gen → seed → draft → review → verify → lock. Core principles include "no invention" for missing information and "no overwrite" for existing files, aiming to streamline software development, ensure consistency, and maintain discipline.
+
+Axion Assembler is a web application that serves as the controller interface for the AXION documentation-first development system. AXION generates comprehensive "Agent Kits" for AI-guided software development through a strict pipeline: init → generate → seed → draft → review → verify → lock → package.
+
+This web app provides a UI to control all AXION capabilities:
+- Pipeline stage execution (init, generate, seed, draft, review, verify, lock)
+- Module targeting (--all, --module with dependency-aware blocking)
+- Presets and stage plans from configuration
+- Registry artifact visibility (stage markers, verify reports, drift detection)
+- Export/packaging of Agent Kit bundles
+
+The app calls existing AXION scripts rather than re-implementing their logic, capturing stdout/stderr and exit codes for auditability.
 
 ## User Preferences
+
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Core Design Principles
-- **Docs-First Approach**: Documentation generation is the initial step in the software development lifecycle.
-- **Strict Pipeline**: Enforces a sequential process (init → gen → seed → draft → review → verify → lock) for consistent outputs.
-- **No Invention**: Missing information is explicitly marked as `UNKNOWN`.
-- **No Overwrite**: Existing files are not overwritten unless explicitly allowed.
-- **Isolated Workspaces**: Each assembly operates in a dedicated workspace to prevent cross-contamination.
+### Two-Root Architecture
+AXION uses a two-root model separating immutable system files from mutable project outputs:
+- **System Root** (`axion/`): Contains scripts, templates, configs - read-only during execution
+- **Workspace Root** (`<project-name>/`): Contains generated docs, registry state, app code - all outputs
 
-### Frontend
-- **Framework**: React with TypeScript
-- **State Management**: TanStack React Query
-- **UI Components**: shadcn/ui (built on Radix UI)
-- **Styling**: Tailwind CSS with CSS variables
-- **Build Tool**: Vite
+### Documentation Pipeline (ROSHI Flow)
+Sequential document generation ensuring consistency:
+1. RPBS (Product Truth) → REBS (Engineering Philosophy)
+2. generate → seed → draft → review → verify → lock
+3. Each stage has gates that block progression until prerequisites pass
 
-### Backend
-- **Framework**: Express.js (v5) on Node.js with TypeScript and ESM modules.
-- **API Pattern**: RESTful, prefixed with `/api` and `/v1`.
-- **Storage Layer**: Abstract `IStorage` interface.
+### Technology Stack
+- **Frontend**: React with TypeScript, Tailwind CSS, TanStack Query + Zustand for state
+- **Backend**: Node.js with Express, TypeScript
+- **Database**: PostgreSQL with Drizzle ORM
+- **Build**: Vite for frontend bundling
 
-### Data Management
-- **ORM**: Drizzle ORM with PostgreSQL dialect.
-- **Schema**: Modular structure for entities like users, API keys, assemblies, deliveries, packages, safety warnings, and audit logs.
-- **Validation**: Zod schemas.
-- **Migrations**: Drizzle Kit.
+### Key Design Patterns
+- **Script Orchestration**: Backend spawns AXION TypeScript scripts as child processes
+- **Deterministic Execution**: All actions logged with timestamps, args, exit codes
+- **Gate Enforcement**: Lock requires verify PASS; scaffold requires docs locked
+- **Non-Destructive**: Never overwrites RPBS/REBS without explicit user action
 
-### AXION Pipeline (Documentation Engine)
-- **Purpose**: Generates per-module documentation packs and manages the lifecycle.
-- **Configuration**: `domains.json`, `sources.json`, `presets.json`, `stack_profiles.json`.
-- **Templates**: 29 templates (7 core ROSHI + 22 module README.template.md).
-- **ROSHI Sequential Flow**: Defines the order and dependencies of core documents (RPBS, REBS, DDES, UX_Foundations, etc.).
-- **Module Mode System**: Supports per-module generation (`--module <name>`) or all modules (`--all`), with dependency tracking for 19 defined modules. Stages are tracked and prerequisite checks enforced.
-- **Pipeline Scripts**: A series of scripts manage the `generate`, `seed`, `draft`, `review`, `verify`, and `lock` stages of documentation production.
-- **AI-Generated Documents**: Includes `PROJECT_OVERVIEW.md`, `RPBS_Product.md`, `REBS_Product.md`, and others.
-- **Two-Root Model** (Feb 2026): Separates system files from workspace outputs.
-  - **System Root** (`<BUILD_ROOT>/axion/`): Contains immutable scripts, templates, and configs.
-  - **Workspace Root** (`<BUILD_ROOT>/<PROJECT_NAME>/`): Contains all generated outputs (`source_docs/`, `domains/`, `registry/`, `app/`).
-  - **Usage**: `npx tsx axion/scripts/axion-run.ts --build-root "$(pwd)" --project-name myapp --preset system --plan docs:scaffold`
-  - **Safety Policies**: Refuse non-empty workspace, archive existing, prevent writing into `axion/`.
-  - **Stage 0**: `axion-prepare-root.ts` creates workspace directories before preflight.
-- **Onboarding Scripts**:
-  - `axion-init.ts`: Scaffolds fresh AXION workspace (directories, configs, RPBS/REBS templates) with `--mode fresh`.
-  - `axion-overhaul.ts`: Archives existing project to `_axion_archive/<timestamp>/`, creates `_axion_rebuild/` workspace.
-  - `QUICKSTART.md`: Step-by-step guide for new users.
-- **Governance Features**:
-  - **Seam Ownership**: Marker-based detection using `<!-- AXION:SEAM_OWNER:<seam> -->` HTML comments.
-  - **Template Hashing**: Detects drift via content hashing.
-  - **Stack Consistency**: Verify rule checks downstream modules match architecture's tech stack selection.
-  - **Repair Mode**: Suggests fix actions for violations.
-  - **Preset Execution**: Topological dependency resolution with guards (disallow_lock, lock_requires_verify_pass).
-  - **RPBS/REBS Propagation**: Deterministic derivation of product requirements (RPBS) and engineering policies (REBS) to all 8 core modules via `coverage_map.json` and RPBS_DERIVATIONS blocks with structured UNKNOWN/N/A placeholders.
-- **Stack Profiles**: 5 default profiles (default-web-saas, serverless-node, enterprise-java, python-data, go-microservices) in `stack_profiles.json`.
-- **Schema Contracts**:
-  - `verify_report.json`: Uses `generated_at` (not timestamp), `modules` as Record (not array), `current_revision` (not revision).
-  - `stage_markers.json`: Record<module, Record<stage, data>> structure.
+### Module System
+19 domain modules with defined dependencies:
+- Foundation: architecture, systems, contracts
+- Data: database, data
+- Security: auth
+- Application: backend, integrations, state, frontend, fullstack
+- Quality: testing, quality, security, devops, cloud, devex
+- Clients: mobile, desktop
 
-### Key Entities
-- **Assembly**: Represents a pipeline execution, including project details, state, and output kit path.
-- **Delivery**: Manages the delivery of the generated kit.
-- **Kit**: The output artifact containing documentation, manifest, and agent prompt.
-
-### API Endpoints
-- **Assembly Management**: Create, list, retrieve status, execute pipeline, download kits, delete.
-- **Delivery Management**: Create, list, retrieve details, retry deliveries.
-- **Templates Management**: List public/user templates, create, retrieve, delete, use templates.
-- **User Profile & Preferences**: Get usage, update preferences.
-- **Project Package Analysis**: Upload ZIPs for code analysis (scanning, indexing, upgrade plan generation), attach packages to assemblies, generate/list upgrade plans.
-
-### Safety v1
-- **Upload Protections**: Path traversal, file type validation, size limits, compression bomb detection.
-- **Secret Scanning**: Detects sensitive patterns and high-entropy strings.
-- **Webhook Safety**: HTTPS enforcement, SSRF protection, timeouts, payload limits.
-- **Retention Cleanup**: Configurable asset retention policies.
-- **Audit Logging**: Tracks system events.
-
-### UI/UX Design
-- **Visuals**: Gradient CTAs, solid primary buttons, glowing stepper elements, amber-accented focus states, glassmorphic cards.
-- **Components**: Reusable design system components like `GlassCard`, `PageHeader`, `Stepper`.
-- **Layout**: `AppShell` with `SidebarNav` and `TopBar`.
-- **Theming**: Dark/light mode with system preference detection.
-- **Workflows**: Multi-step form wizards and tabbed interfaces.
+### Registry Artifacts
+Pipeline state tracked in JSON files:
+- `stage_markers.json`: Completion status per module/stage
+- `verify_report.json`: Verification results with reason codes
+- `verify_status.json`: Pass/fail status per module
+- `seams.json`: Cross-module ownership rules
 
 ## External Dependencies
 
 ### Database
-- **PostgreSQL**
-- **connect-pg-simple**
+- PostgreSQL for persistent storage
+- Drizzle ORM for schema management and queries
+- Schema tracks assemblies, runs, exports, and pipeline state
 
-### UI Libraries
-- **Radix UI**
-- **Lucide React**
-- **Embla Carousel**
-- **React Day Picker**
-- **Vaul**
-- **CMDK**
+### AXION Scripts (External System)
+The web app orchestrates these existing TypeScript scripts:
+- `axion-init.ts`: Initialize workspace
+- `axion-generate.ts`: Create module docs from templates
+- `axion-seed.ts`: Add scaffolding placeholders
+- `axion-draft.ts`: Fill documentation sections
+- `axion-review.ts`: Validate and count issues
+- `axion-verify.ts`: Final gate check
+- `axion-lock.ts`: Freeze modules, generate ERC
+- `axion-package.ts`: Bundle into Agent Kit
 
-### Third-Party Integrations
-- **OpenAI**
-- **Google Generative AI**
-- **Stripe**
-- **Nodemailer**
-- **Passport**
+### File System
+- Reads/writes to workspace directories
+- Template copying from system root
+- ZIP generation for exports
+
+### Process Execution
+- Child process spawning for script execution
+- stdout/stderr capture for logging
+- Exit code handling for success/failure detection
