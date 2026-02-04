@@ -1,0 +1,1453 @@
+{
+  "version": "1.0.0",
+  "run_id": "run_2026-02-04T03-42-46_421aa19a",
+  "started_at": "2026-02-04T03:42:48.268Z",
+  "finished_at": "2026-02-04T03:43:20.847Z",
+  "root": "/home/runner/workspace/axion-ui-controller/myproject",
+  "invocation": {
+    "command": "axion-run",
+    "args": [
+      "--build-root",
+      "/home/runner/workspace/axion-ui-controller",
+      "--project-name",
+      "myproject",
+      "--preset",
+      "system",
+      "--plan",
+      "docs:full"
+    ]
+  },
+  "plan": "docs:full",
+  "preset": "system",
+  "mode": "preset",
+  "module": null,
+  "stages": [
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "architecture",
+      "started_at": "2026-02-04T03:42:48.271Z",
+      "finished_at": "2026-02-04T03:42:48.695Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "architecture",
+        "files_created": [
+          "domains/architecture/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Architecture...\n[DONE] Architecture\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"architecture\",\n  \"files_created\": [\n    \"domains/architecture/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "systems",
+      "started_at": "2026-02-04T03:42:48.696Z",
+      "finished_at": "2026-02-04T03:42:49.182Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "systems",
+        "files_created": [
+          "domains/systems/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Systems...\n[DONE] Systems\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"systems\",\n  \"files_created\": [\n    \"domains/systems/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "contracts",
+      "started_at": "2026-02-04T03:42:49.183Z",
+      "finished_at": "2026-02-04T03:42:49.572Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "contracts",
+        "files_created": [
+          "domains/contracts/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Contracts...\n[DONE] Contracts\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"contracts\",\n  \"files_created\": [\n    \"domains/contracts/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "database",
+      "started_at": "2026-02-04T03:42:49.573Z",
+      "finished_at": "2026-02-04T03:42:50.010Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "database",
+        "files_created": [
+          "domains/database/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Database...\n[DONE] Database\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"database\",\n  \"files_created\": [\n    \"domains/database/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "data",
+      "started_at": "2026-02-04T03:42:50.011Z",
+      "finished_at": "2026-02-04T03:42:50.409Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "data",
+        "files_created": [
+          "domains/data/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Data...\n[DONE] Data\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"data\",\n  \"files_created\": [\n    \"domains/data/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "auth",
+      "started_at": "2026-02-04T03:42:50.410Z",
+      "finished_at": "2026-02-04T03:42:50.800Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "auth",
+        "files_created": [
+          "domains/auth/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Auth...\n[DONE] Auth\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"auth\",\n  \"files_created\": [\n    \"domains/auth/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "backend",
+      "started_at": "2026-02-04T03:42:50.801Z",
+      "finished_at": "2026-02-04T03:42:51.275Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "backend",
+        "files_created": [
+          "domains/backend/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Backend...\n[DONE] Backend\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"backend\",\n  \"files_created\": [\n    \"domains/backend/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "integrations",
+      "started_at": "2026-02-04T03:42:51.276Z",
+      "finished_at": "2026-02-04T03:42:51.635Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "integrations",
+        "files_created": [
+          "domains/integrations/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Integrations...\n[DONE] Integrations\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"integrations\",\n  \"files_created\": [\n    \"domains/integrations/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "state",
+      "started_at": "2026-02-04T03:42:51.636Z",
+      "finished_at": "2026-02-04T03:42:52.061Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "state",
+        "files_created": [
+          "domains/state/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating State...\n[DONE] State\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"state\",\n  \"files_created\": [\n    \"domains/state/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "frontend",
+      "started_at": "2026-02-04T03:42:52.062Z",
+      "finished_at": "2026-02-04T03:42:52.491Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "frontend",
+        "files_created": [
+          "domains/frontend/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Frontend...\n[DONE] Frontend\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"frontend\",\n  \"files_created\": [\n    \"domains/frontend/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "fullstack",
+      "started_at": "2026-02-04T03:42:52.491Z",
+      "finished_at": "2026-02-04T03:42:52.858Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "fullstack",
+        "files_created": [
+          "domains/fullstack/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Fullstack...\n[DONE] Fullstack\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"fullstack\",\n  \"files_created\": [\n    \"domains/fullstack/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "testing",
+      "started_at": "2026-02-04T03:42:52.858Z",
+      "finished_at": "2026-02-04T03:42:53.320Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "testing",
+        "files_created": [
+          "domains/testing/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Testing...\n[DONE] Testing\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"testing\",\n  \"files_created\": [\n    \"domains/testing/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "quality",
+      "started_at": "2026-02-04T03:42:53.321Z",
+      "finished_at": "2026-02-04T03:42:53.719Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "quality",
+        "files_created": [
+          "domains/quality/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Quality...\n[DONE] Quality\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"quality\",\n  \"files_created\": [\n    \"domains/quality/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "security",
+      "started_at": "2026-02-04T03:42:53.720Z",
+      "finished_at": "2026-02-04T03:42:54.111Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "security",
+        "files_created": [
+          "domains/security/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Security...\n[DONE] Security\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"security\",\n  \"files_created\": [\n    \"domains/security/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "devops",
+      "started_at": "2026-02-04T03:42:54.112Z",
+      "finished_at": "2026-02-04T03:42:54.586Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "devops",
+        "files_created": [
+          "domains/devops/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating DevOps...\n[DONE] DevOps\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"devops\",\n  \"files_created\": [\n    \"domains/devops/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "cloud",
+      "started_at": "2026-02-04T03:42:54.587Z",
+      "finished_at": "2026-02-04T03:42:54.949Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "cloud",
+        "files_created": [
+          "domains/cloud/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Cloud...\n[DONE] Cloud\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"cloud\",\n  \"files_created\": [\n    \"domains/cloud/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "devex",
+      "started_at": "2026-02-04T03:42:54.950Z",
+      "finished_at": "2026-02-04T03:42:55.365Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "devex",
+        "files_created": [
+          "domains/devex/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating DevEx...\n[DONE] DevEx\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"devex\",\n  \"files_created\": [\n    \"domains/devex/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "mobile",
+      "started_at": "2026-02-04T03:42:55.366Z",
+      "finished_at": "2026-02-04T03:42:55.784Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "mobile",
+        "files_created": [
+          "domains/mobile/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Mobile...\n[DONE] Mobile\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"mobile\",\n  \"files_created\": [\n    \"domains/mobile/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "generate",
+      "mode": "module",
+      "module": "desktop",
+      "started_at": "2026-02-04T03:42:55.785Z",
+      "finished_at": "2026-02-04T03:42:56.185Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "generate",
+        "module": "desktop",
+        "files_created": [
+          "domains/desktop/README.md"
+        ],
+        "marker_written": true
+      },
+      "stdout_tail": "[INFO] No attachments found. Add your project input to:\n       source_docs/product/attachments/START_HERE.txt\n\n\n[AXION] Generate\n\n[INFO] Generating Desktop...\n[DONE] Desktop\n\n{\n  \"status\": \"success\",\n  \"stage\": \"generate\",\n  \"module\": \"desktop\",\n  \"files_created\": [\n    \"domains/desktop/README.md\"\n  ],\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "architecture",
+      "started_at": "2026-02-04T03:42:56.186Z",
+      "finished_at": "2026-02-04T03:42:56.676Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "architecture",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Architecture...\n[DONE] Architecture\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"architecture\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "systems",
+      "started_at": "2026-02-04T03:42:56.677Z",
+      "finished_at": "2026-02-04T03:42:57.054Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "systems",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Systems...\n[DONE] Systems\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"systems\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "contracts",
+      "started_at": "2026-02-04T03:42:57.055Z",
+      "finished_at": "2026-02-04T03:42:57.478Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "contracts",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Contracts...\n[DONE] Contracts\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"contracts\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "database",
+      "started_at": "2026-02-04T03:42:57.479Z",
+      "finished_at": "2026-02-04T03:42:57.882Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "database",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Database...\n[DONE] Database\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"database\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "data",
+      "started_at": "2026-02-04T03:42:57.883Z",
+      "finished_at": "2026-02-04T03:42:58.259Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "data",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Data...\n[DONE] Data\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"data\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "auth",
+      "started_at": "2026-02-04T03:42:58.260Z",
+      "finished_at": "2026-02-04T03:42:58.725Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "auth",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Auth...\n[DONE] Auth\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"auth\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "backend",
+      "started_at": "2026-02-04T03:42:58.726Z",
+      "finished_at": "2026-02-04T03:42:59.089Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "backend",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Backend...\n[DONE] Backend\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"backend\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "integrations",
+      "started_at": "2026-02-04T03:42:59.090Z",
+      "finished_at": "2026-02-04T03:42:59.529Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "integrations",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Integrations...\n[DONE] Integrations\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"integrations\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "state",
+      "started_at": "2026-02-04T03:42:59.529Z",
+      "finished_at": "2026-02-04T03:42:59.941Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "state",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding State...\n[DONE] State\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"state\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "frontend",
+      "started_at": "2026-02-04T03:42:59.942Z",
+      "finished_at": "2026-02-04T03:43:00.314Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "frontend",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Frontend...\n[DONE] Frontend\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"frontend\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "fullstack",
+      "started_at": "2026-02-04T03:43:00.315Z",
+      "finished_at": "2026-02-04T03:43:00.715Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "fullstack",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Fullstack...\n[DONE] Fullstack\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"fullstack\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "testing",
+      "started_at": "2026-02-04T03:43:00.716Z",
+      "finished_at": "2026-02-04T03:43:01.149Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "testing",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Testing...\n[DONE] Testing\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"testing\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "quality",
+      "started_at": "2026-02-04T03:43:01.150Z",
+      "finished_at": "2026-02-04T03:43:01.547Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "quality",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Quality...\n[DONE] Quality\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"quality\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "security",
+      "started_at": "2026-02-04T03:43:01.548Z",
+      "finished_at": "2026-02-04T03:43:02.034Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "security",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Security...\n[DONE] Security\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"security\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "devops",
+      "started_at": "2026-02-04T03:43:02.035Z",
+      "finished_at": "2026-02-04T03:43:02.400Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "devops",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding DevOps...\n[DONE] DevOps\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"devops\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "cloud",
+      "started_at": "2026-02-04T03:43:02.401Z",
+      "finished_at": "2026-02-04T03:43:02.814Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "cloud",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Cloud...\n[DONE] Cloud\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"cloud\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "devex",
+      "started_at": "2026-02-04T03:43:02.815Z",
+      "finished_at": "2026-02-04T03:43:03.262Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "devex",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding DevEx...\n[DONE] DevEx\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"devex\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "mobile",
+      "started_at": "2026-02-04T03:43:03.263Z",
+      "finished_at": "2026-02-04T03:43:03.686Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "mobile",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Mobile...\n[DONE] Mobile\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"mobile\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "seed",
+      "mode": "module",
+      "module": "desktop",
+      "started_at": "2026-02-04T03:43:03.687Z",
+      "finished_at": "2026-02-04T03:43:04.184Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "seed",
+        "module": "desktop",
+        "marker_written": true,
+        "agent_prompt": null
+      },
+      "stdout_tail": "\n[AXION] Seed\n\n[INFO] Seeding Desktop...\n[DONE] Desktop\n\n{\n  \"status\": \"success\",\n  \"stage\": \"seed\",\n  \"module\": \"desktop\",\n  \"marker_written\": true,\n  \"agent_prompt\": null\n}\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "architecture",
+      "started_at": "2026-02-04T03:43:04.185Z",
+      "finished_at": "2026-02-04T03:43:04.650Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "architecture",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Architecture...\n[DONE] Architecture\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"architecture\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "systems",
+      "started_at": "2026-02-04T03:43:04.651Z",
+      "finished_at": "2026-02-04T03:43:05.170Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "systems",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Systems...\n[DONE] Systems\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"systems\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "contracts",
+      "started_at": "2026-02-04T03:43:05.172Z",
+      "finished_at": "2026-02-04T03:43:05.536Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "contracts",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Contracts...\n[DONE] Contracts\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"contracts\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "database",
+      "started_at": "2026-02-04T03:43:05.538Z",
+      "finished_at": "2026-02-04T03:43:05.939Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "database",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Database...\n[DONE] Database\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"database\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "data",
+      "started_at": "2026-02-04T03:43:05.940Z",
+      "finished_at": "2026-02-04T03:43:06.377Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "data",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Data...\n[DONE] Data\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"data\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "auth",
+      "started_at": "2026-02-04T03:43:06.378Z",
+      "finished_at": "2026-02-04T03:43:06.733Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "auth",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Auth...\n[DONE] Auth\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"auth\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "backend",
+      "started_at": "2026-02-04T03:43:06.734Z",
+      "finished_at": "2026-02-04T03:43:07.158Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "backend",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Backend...\n[DONE] Backend\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"backend\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "integrations",
+      "started_at": "2026-02-04T03:43:07.159Z",
+      "finished_at": "2026-02-04T03:43:07.584Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "integrations",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Integrations...\n[DONE] Integrations\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"integrations\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "state",
+      "started_at": "2026-02-04T03:43:07.585Z",
+      "finished_at": "2026-02-04T03:43:07.957Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "state",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting State...\n[DONE] State\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"state\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "frontend",
+      "started_at": "2026-02-04T03:43:07.959Z",
+      "finished_at": "2026-02-04T03:43:08.432Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "frontend",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Frontend...\n[DONE] Frontend\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"frontend\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "fullstack",
+      "started_at": "2026-02-04T03:43:08.433Z",
+      "finished_at": "2026-02-04T03:43:08.832Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "fullstack",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Fullstack...\n[DONE] Fullstack\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"fullstack\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "testing",
+      "started_at": "2026-02-04T03:43:08.833Z",
+      "finished_at": "2026-02-04T03:43:09.260Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "testing",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Testing...\n[DONE] Testing\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"testing\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "quality",
+      "started_at": "2026-02-04T03:43:09.260Z",
+      "finished_at": "2026-02-04T03:43:09.672Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "quality",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Quality...\n[DONE] Quality\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"quality\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "security",
+      "started_at": "2026-02-04T03:43:09.673Z",
+      "finished_at": "2026-02-04T03:43:10.055Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "security",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Security...\n[DONE] Security\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"security\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "devops",
+      "started_at": "2026-02-04T03:43:10.056Z",
+      "finished_at": "2026-02-04T03:43:10.484Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "devops",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting DevOps...\n[DONE] DevOps\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"devops\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "cloud",
+      "started_at": "2026-02-04T03:43:10.486Z",
+      "finished_at": "2026-02-04T03:43:10.876Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "cloud",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Cloud...\n[DONE] Cloud\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"cloud\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "devex",
+      "started_at": "2026-02-04T03:43:10.878Z",
+      "finished_at": "2026-02-04T03:43:11.275Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "devex",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting DevEx...\n[DONE] DevEx\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"devex\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "mobile",
+      "started_at": "2026-02-04T03:43:11.276Z",
+      "finished_at": "2026-02-04T03:43:11.729Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "mobile",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Mobile...\n[DONE] Mobile\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"mobile\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "draft",
+      "mode": "module",
+      "module": "desktop",
+      "started_at": "2026-02-04T03:43:11.730Z",
+      "finished_at": "2026-02-04T03:43:12.098Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "draft",
+        "module": "desktop",
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Draft\n\n[INFO] Drafting Desktop...\n[DONE] Desktop\n\n{\n  \"status\": \"success\",\n  \"stage\": \"draft\",\n  \"module\": \"desktop\",\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "architecture",
+      "started_at": "2026-02-04T03:43:12.099Z",
+      "finished_at": "2026-02-04T03:43:12.562Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "architecture",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Architecture...\n  unknown_count: 2\n  tbd_count: 40\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"architecture\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "systems",
+      "started_at": "2026-02-04T03:43:12.564Z",
+      "finished_at": "2026-02-04T03:43:13.017Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "systems",
+        "unknown_count": 6,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Systems...\n  unknown_count: 6\n  tbd_count: 24\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 6\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"systems\",\n  \"unknown_count\": 6,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "contracts",
+      "started_at": "2026-02-04T03:43:13.018Z",
+      "finished_at": "2026-02-04T03:43:13.393Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "contracts",
+        "unknown_count": 6,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Contracts...\n  unknown_count: 6\n  tbd_count: 23\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 6\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"contracts\",\n  \"unknown_count\": 6,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "database",
+      "started_at": "2026-02-04T03:43:13.394Z",
+      "finished_at": "2026-02-04T03:43:13.852Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "database",
+        "unknown_count": 7,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Database...\n  unknown_count: 7\n  tbd_count: 22\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 7\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"database\",\n  \"unknown_count\": 7,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "data",
+      "started_at": "2026-02-04T03:43:13.853Z",
+      "finished_at": "2026-02-04T03:43:14.219Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "data",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Data...\n  unknown_count: 2\n  tbd_count: 20\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"data\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "auth",
+      "started_at": "2026-02-04T03:43:14.220Z",
+      "finished_at": "2026-02-04T03:43:14.636Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "auth",
+        "unknown_count": 6,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Auth...\n  unknown_count: 6\n  tbd_count: 22\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 6\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"auth\",\n  \"unknown_count\": 6,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "backend",
+      "started_at": "2026-02-04T03:43:14.637Z",
+      "finished_at": "2026-02-04T03:43:15.033Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "backend",
+        "unknown_count": 8,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Backend...\n  unknown_count: 8\n  tbd_count: 24\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 8\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"backend\",\n  \"unknown_count\": 8,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "integrations",
+      "started_at": "2026-02-04T03:43:15.033Z",
+      "finished_at": "2026-02-04T03:43:15.396Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "integrations",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Integrations...\n  unknown_count: 2\n  tbd_count: 21\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"integrations\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "state",
+      "started_at": "2026-02-04T03:43:15.397Z",
+      "finished_at": "2026-02-04T03:43:15.899Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "state",
+        "unknown_count": 5,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing State...\n  unknown_count: 5\n  tbd_count: 21\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 5\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"state\",\n  \"unknown_count\": 5,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "frontend",
+      "started_at": "2026-02-04T03:43:15.900Z",
+      "finished_at": "2026-02-04T03:43:16.293Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "frontend",
+        "unknown_count": 8,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Frontend...\n  unknown_count: 8\n  tbd_count: 29\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 8\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"frontend\",\n  \"unknown_count\": 8,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "fullstack",
+      "started_at": "2026-02-04T03:43:16.294Z",
+      "finished_at": "2026-02-04T03:43:16.711Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "fullstack",
+        "unknown_count": 7,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Fullstack...\n  unknown_count: 7\n  tbd_count: 22\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 7\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"fullstack\",\n  \"unknown_count\": 7,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "testing",
+      "started_at": "2026-02-04T03:43:16.712Z",
+      "finished_at": "2026-02-04T03:43:17.122Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "testing",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Testing...\n  unknown_count: 2\n  tbd_count: 21\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"testing\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "quality",
+      "started_at": "2026-02-04T03:43:17.124Z",
+      "finished_at": "2026-02-04T03:43:17.498Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "quality",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Quality...\n  unknown_count: 2\n  tbd_count: 17\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"quality\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "security",
+      "started_at": "2026-02-04T03:43:17.499Z",
+      "finished_at": "2026-02-04T03:43:17.942Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "security",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Security...\n  unknown_count: 2\n  tbd_count: 19\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"security\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "devops",
+      "started_at": "2026-02-04T03:43:17.943Z",
+      "finished_at": "2026-02-04T03:43:18.417Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "devops",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing DevOps...\n  unknown_count: 2\n  tbd_count: 19\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"devops\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "cloud",
+      "started_at": "2026-02-04T03:43:18.418Z",
+      "finished_at": "2026-02-04T03:43:18.891Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "cloud",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Cloud...\n  unknown_count: 2\n  tbd_count: 20\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"cloud\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "devex",
+      "started_at": "2026-02-04T03:43:18.892Z",
+      "finished_at": "2026-02-04T03:43:19.364Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "devex",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing DevEx...\n  unknown_count: 2\n  tbd_count: 17\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"devex\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "mobile",
+      "started_at": "2026-02-04T03:43:19.366Z",
+      "finished_at": "2026-02-04T03:43:19.771Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "mobile",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Mobile...\n  unknown_count: 2\n  tbd_count: 23\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"mobile\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "review",
+      "mode": "module",
+      "module": "desktop",
+      "started_at": "2026-02-04T03:43:19.773Z",
+      "finished_at": "2026-02-04T03:43:20.361Z",
+      "status": "success",
+      "json_result": {
+        "status": "success",
+        "stage": "review",
+        "module": "desktop",
+        "unknown_count": 2,
+        "total_issues": 0,
+        "marker_written": true
+      },
+      "stdout_tail": "\n[AXION] Review\n\n[INFO] Reviewing Desktop...\n  unknown_count: 2\n  tbd_count: 18\n  broken_refs: 0\n  issues: 0\n\n[SUMMARY]\n  Total UNKNOWNs: 2\n  Total Issues: 0\n\n{\n  \"status\": \"success\",\n  \"stage\": \"review\",\n  \"module\": \"desktop\",\n  \"unknown_count\": 2,\n  \"total_issues\": 0,\n  \"marker_written\": true\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 0
+    },
+    {
+      "stage": "verify",
+      "mode": "module",
+      "module": "architecture",
+      "started_at": "2026-02-04T03:43:20.363Z",
+      "finished_at": "2026-02-04T03:43:20.847Z",
+      "status": "failed",
+      "json_result": {
+        "status": "failed",
+        "stage": "verify",
+        "module": "architecture",
+        "all_passed": false,
+        "seam_violations": 0,
+        "template_drift": "FAIL"
+      },
+      "stdout_tail": "\n[AXION] Verify\n\n[INFO] Verifying Architecture...\n[FAIL] Architecture\n  Reason codes: MISSING_SECTION, MISSING_SECTION, TBD_IN_REQUIRED, UNKNOWN_WITHOUT_QUESTION\n\n[INFO] Checking seam ownership...\n[PASS] No seam violations\n\n[INFO] Checking stack consistency...\n[PASS] Stack choices consistent\n\n[INFO] Checking template hashes...\n[FAIL] Template drift detected\n\n[INFO] Report written to: registry/verify_report.json\n\n{\n  \"status\": \"failed\",\n  \"stage\": \"verify\",\n  \"module\": \"architecture\",\n  \"all_passed\": false,\n  \"seam_violations\": 0,\n  \"template_drift\": \"FAIL\"\n}\n\n",
+      "stderr_tail": "",
+      "exit_code": 1
+    }
+  ],
+  "overall_status": "failed",
+  "next_commands": []
+}
