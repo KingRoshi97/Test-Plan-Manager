@@ -35,6 +35,15 @@ function ensureKitsDir() {
   }
 }
 
+// Kit metadata file stored in each kit directory
+const KIT_METADATA_FILE = "kit.json";
+
+interface KitMetadata {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
 // Load existing kits from disk on startup
 function loadExistingKits() {
   ensureKitsDir();
@@ -43,7 +52,43 @@ function loadExistingKits() {
     for (const entry of entries) {
       if (entry.isDirectory()) {
         const kitPath = path.join(KITS_ROOT, entry.name);
-        const kitId = `kit_${entry.name}`;
+        const metadataPath = path.join(kitPath, KIT_METADATA_FILE);
+        
+        let kitId: string;
+        let kitName: string;
+        let createdAt: string;
+        
+        // Try to read kit metadata for consistent IDs
+        if (fs.existsSync(metadataPath)) {
+          try {
+            const metadata: KitMetadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+            kitId = metadata.id;
+            kitName = metadata.name;
+            createdAt = metadata.createdAt;
+          } catch {
+            // Fallback to directory-based ID if metadata corrupt
+            kitId = `kit_${entry.name}`;
+            kitName = entry.name;
+            createdAt = fs.statSync(kitPath).birthtime.toISOString();
+          }
+        } else {
+          // Legacy kit without metadata - generate and save
+          const stat = fs.statSync(kitPath);
+          kitId = `kit_${entry.name}`;
+          kitName = entry.name;
+          createdAt = stat.birthtime.toISOString();
+          
+          // Save metadata for future consistency
+          try {
+            fs.writeFileSync(metadataPath, JSON.stringify({
+              id: kitId,
+              name: kitName,
+              createdAt
+            }, null, 2));
+          } catch {
+            // Ignore write errors
+          }
+        }
         
         // Check if kit already loaded
         if (kits.has(kitId)) continue;
@@ -54,7 +99,6 @@ function loadExistingKits() {
         if (fs.existsSync(stageMarkersPath)) {
           try {
             const markers = JSON.parse(fs.readFileSync(stageMarkersPath, "utf-8"));
-            // Determine status based on stage markers
             if (Object.keys(markers).length > 0) {
               status = "scaffolding";
             }
@@ -63,13 +107,10 @@ function loadExistingKits() {
           }
         }
         
-        // Get creation time from stat
-        const stat = fs.statSync(kitPath);
-        
         const kit: AxionKit = {
           id: kitId,
-          name: entry.name,
-          createdAt: stat.birthtime.toISOString(),
+          name: kitName,
+          createdAt,
           path: kitPath,
           status
         };
@@ -125,13 +166,25 @@ export function registerAxionRoutes(app: Express) {
 
     createProcess.on("close", (code) => {
       if (code === 0) {
+        const createdAt = new Date().toISOString();
         const kit: AxionKit = {
           id: kitId,
           name: sanitizedName,
-          createdAt: new Date().toISOString(),
+          createdAt,
           path: kitPath,
           status: "created"
         };
+        
+        // Save kit metadata for persistence across restarts
+        try {
+          fs.writeFileSync(
+            path.join(kitPath, KIT_METADATA_FILE),
+            JSON.stringify({ id: kitId, name: sanitizedName, createdAt }, null, 2)
+          );
+        } catch {
+          // Ignore write errors
+        }
+        
         kits.set(kitId, kit);
         res.status(201).json({ kit, output });
       } else {
@@ -307,18 +360,28 @@ export function registerAxionRoutes(app: Express) {
       return res.status(404).json({ error: "Kit not found", code: "NOT_FOUND" });
     }
 
-    const filePath = (req.query.path as string) || "";
+    const rawPath = (req.query.path as string) || "";
     
-    // Security: reject absolute paths or path traversal attempts
-    if (path.isAbsolute(filePath) || filePath.includes("..")) {
-      return res.status(403).json({ error: "Invalid path", code: "FORBIDDEN" });
+    // Security: decode the path
+    let filePath: string;
+    try {
+      filePath = decodeURIComponent(rawPath);
+    } catch {
+      return res.status(400).json({ error: "Invalid path encoding", code: "BAD_REQUEST" });
     }
     
+    // Security: reject absolute paths
+    if (path.isAbsolute(filePath)) {
+      return res.status(403).json({ error: "Absolute paths not allowed", code: "FORBIDDEN" });
+    }
+    
+    // Security: resolve paths and use canonical containment check
     const resolvedKitPath = path.resolve(kit.path);
     const fullPath = path.resolve(kit.path, filePath);
 
-    // Security: ensure resolved path is within kit (double-check after resolution)
-    if (!fullPath.startsWith(resolvedKitPath + path.sep) && fullPath !== resolvedKitPath) {
+    // Canonical containment: resolved path must be within or equal to kit root
+    // This handles all traversal attempts (.., symlinks, etc.) after resolution
+    if (fullPath !== resolvedKitPath && !fullPath.startsWith(resolvedKitPath + path.sep)) {
       return res.status(403).json({ error: "Access denied", code: "FORBIDDEN" });
     }
 
