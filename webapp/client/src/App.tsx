@@ -17,6 +17,7 @@ import Billing from "@/pages/billing";
 import Profile from "@/pages/profile";
 import Templates from "@/pages/templates";
 import Usage from "@/pages/usage";
+import AxionController from "@/pages/axion-controller";
 import { useEffect } from "react";
 
 function RedirectTo({ to }: { to: string }) {
@@ -46,6 +47,7 @@ function Router() {
         <Route path="/profile" component={Profile} />
         <Route path="/templates" component={Templates} />
         <Route path="/usage" component={Usage} />
+        <Route path="/axion" component={AxionController} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>

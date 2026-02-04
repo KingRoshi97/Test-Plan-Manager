@@ -11,6 +11,7 @@ import { createWorkspace, populateWorkspaceWithAI, getWorkspacePath, type Worksp
 import { processDelivery } from "./adapters";
 import { getPresets, getPresetById, getPresetsByCategory, getPresetsByCategoryAndMode, categoryLabels, modeLabels } from "./presets";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { registerAxionRoutes } from "./axion-routes";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -22,6 +23,9 @@ export async function registerRoutes(
   registerAuthRoutes(app);
   
   registerV1Routes(app);
+  
+  // AXION Controller routes
+  registerAxionRoutes(app);
   
   // === Presets API ===
   app.get("/api/presets", async (req: Request, res: Response) => {
