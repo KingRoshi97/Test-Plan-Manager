@@ -7,24 +7,37 @@
  * Writes verify_report.json (consolidated) + verify_status.json + stage_markers.json.
  * 
  * Usage:
- *   npx ts-node axion/scripts/axion-verify.ts --module <name>
- *   npx ts-node axion/scripts/axion-verify.ts --all
+ *   npx tsx axion/scripts/axion-verify.ts --root <workspace> --module <name>
+ *   npx tsx axion/scripts/axion-verify.ts --root <workspace> --all
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
-const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+// Parse --root argument first for two-root support
+const args = process.argv.slice(2);
+const rootArgIndex = args.indexOf('--root');
+const WORKSPACE_ROOT = rootArgIndex !== -1 && args[rootArgIndex + 1]
+  ? args[rootArgIndex + 1]
+  : process.env.AXION_WORKSPACE || process.cwd();
+
+// System root (read-only) - contains config and templates
+const AXION_ROOT = process.env.AXION_SYSTEM_ROOT || path.join(path.dirname(WORKSPACE_ROOT), 'axion');
+
+// Config from system root
 const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
 const COVERAGE_MAP_PATH = path.join(AXION_ROOT, 'config', 'coverage_map.json');
-const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
-const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
-const STATUS_PATH = path.join(AXION_ROOT, 'registry', 'verify_status.json');
-const REPORT_PATH = path.join(AXION_ROOT, 'registry', 'verify_report.json');
-const SEAMS_PATH = path.join(AXION_ROOT, 'registry', 'seams.json');
-const HASH_FILE = path.join(AXION_ROOT, 'registry', 'template_hashes.json');
 const TEMPLATES_PATH = path.join(AXION_ROOT, 'templates');
+
+// Outputs to workspace root
+const DOMAINS_PATH = path.join(WORKSPACE_ROOT, 'domains');
+const REGISTRY_PATH = path.join(WORKSPACE_ROOT, 'registry');
+const MARKERS_PATH = path.join(REGISTRY_PATH, 'stage_markers.json');
+const STATUS_PATH = path.join(REGISTRY_PATH, 'verify_status.json');
+const REPORT_PATH = path.join(REGISTRY_PATH, 'verify_report.json');
+const SEAMS_PATH = path.join(REGISTRY_PATH, 'seams.json');
+const HASH_FILE = path.join(REGISTRY_PATH, 'template_hashes.json');
 
 // Core modules requiring RPBS_DERIVATIONS enforcement
 const CORE_MODULES = ['contracts', 'database', 'auth', 'backend', 'state', 'frontend', 'fullstack', 'systems'];
@@ -60,10 +73,8 @@ interface Config {
   canonical_order: string[];
 }
 
-interface StageMarkers {
-  version: string;
-  markers: Record<string, Record<string, any>>;
-}
+// Flat markers structure: { moduleName: { stageName: { ... } } }
+type StageMarkers = Record<string, Record<string, any>>;
 
 interface VerifyStatus {
   version: string;
@@ -134,12 +145,15 @@ function loadConfig(): Config {
 
 function loadMarkers(): StageMarkers {
   if (!fs.existsSync(MARKERS_PATH)) {
-    return { version: '1.0.0', markers: {} };
+    return {};
   }
   return JSON.parse(fs.readFileSync(MARKERS_PATH, 'utf-8'));
 }
 
 function saveMarkers(markers: StageMarkers): void {
+  if (!fs.existsSync(REGISTRY_PATH)) {
+    fs.mkdirSync(REGISTRY_PATH, { recursive: true });
+  }
   fs.writeFileSync(MARKERS_PATH, JSON.stringify(markers, null, 2));
 }
 
@@ -253,12 +267,12 @@ function verifyModule(mod: Module, markers: StageMarkers): { status: 'PASS' | 'F
   const coreModules = coverageMap?.core_modules || CORE_MODULES;
   const isCoreModule = coreModules.includes(mod.slug);
   
-  if (!markers.markers[mod.slug]?.generate) {
+  if (!markers[mod.slug]?.generate) {
     reason_codes.push('PREREQ_NOT_SATISFIED');
     hints.push('Run generate stage first');
   }
   
-  if (!markers.markers[mod.slug]?.seed) {
+  if (!markers[mod.slug]?.seed) {
     reason_codes.push('PREREQ_NOT_SATISFIED');
     hints.push('Run seed stage first');
   }
@@ -341,7 +355,7 @@ function verifyModule(mod: Module, markers: StageMarkers): { status: 'PASS' | 'F
   
   if (mod.dependencies) {
     for (const dep of mod.dependencies) {
-      if (!markers.markers[dep]?.verify || markers.markers[dep].verify.status !== 'PASS') {
+      if (!markers[dep]?.verify || markers[dep].verify.status !== 'PASS') {
         reason_codes.push('DEP_NOT_VERIFIED');
         hints.push(`Dependency ${dep} must pass verify first`);
       }
@@ -761,15 +775,14 @@ function verifyTemplateHashes(): { status: 'PASS' | 'FAIL'; current_revision: nu
 // ────────────────────────────────────────────────────────────
 
 function main() {
-  const args = process.argv.slice(2);
   const moduleArg = args.indexOf('--module');
   const targetModule = moduleArg !== -1 ? args[moduleArg + 1] : null;
   const runAll = args.includes('--all');
   
   if (!targetModule && !runAll) {
     console.log('Usage:');
-    console.log('  node --import tsx axion/scripts/axion-verify.ts --module <name>');
-    console.log('  node --import tsx axion/scripts/axion-verify.ts --all');
+    console.log('  npx tsx axion/scripts/axion-verify.ts --root <workspace> --module <name>');
+    console.log('  npx tsx axion/scripts/axion-verify.ts --root <workspace> --all');
     process.exit(1);
   }
   
@@ -816,8 +829,8 @@ function main() {
       allModulesPassed = false;
     }
     
-    if (!markers.markers[mod.slug]) markers.markers[mod.slug] = {};
-    markers.markers[mod.slug].verify = { completed_at: new Date().toISOString(), status: result.status };
+    if (!markers[mod.slug]) markers[mod.slug] = {};
+    markers[mod.slug].verify = { completed_at: new Date().toISOString(), status: result.status };
   }
   
   // 2. Seam verification
