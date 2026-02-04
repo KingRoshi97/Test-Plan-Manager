@@ -1,0 +1,399 @@
+Prompt: Build the AXION Controller Web App
+
+You are building a production-ready web application called Axion Assembler. This web app is the controller for the AXION system. AXION already exists as a repo with scripts, templates, registries, module dependencies, presets, governance checks, hashing drift detection, repair outputs, and tests. The web app must expose and orchestrate all AXION features through a clean UI + backend API, and it must do so by executing the existing AXION scripts as the source of truth.
+
+Absolute Requirements
+
+Do not re-implement AXION logic.
+The web app must call the existing scripts (init/generate/seed/draft/review/verify/lock/package if present) and read the artifacts they produce.
+
+Full feature coverage.
+Every major AXION capability must be controllable from the web app:
+
+pipeline stages (init→generate→seed→draft→review→verify→lock)
+
+module mode (--all, --module <slug>) with dependency-aware blocked_by handling
+
+presets (presets.json) and stage plans (scaffold/docs/full/release)
+
+registry artifact visibility: stage markers, verify_status, verify_report, erc outputs, drift hashes, repair outputs
+
+verify gating: lock must be refused unless verify PASS
+
+template drift detection / hashing tools and revision bump workflow
+
+repair mode: grouped fix lists + next commands
+
+export/packaging: generate and download “Agent Kit” zip + manifest
+
+Deterministic, auditable execution.
+Every action must log:
+
+command invoked
+
+args
+
+timestamps
+
+stdout/stderr captured
+
+exit code
+
+JSON response (if present)
+
+files written (if discoverable)
+
+No destructive behavior.
+The app must never overwrite RPBS/REBS unless the user explicitly edits them.
+It must never modify templates unless the user enters a dedicated Template Editor flow.
+
+Universal workspace support.
+The app must work on any host (not Replit-specific). It must treat workspaces as folders under a configurable base path.
+
+Implementation Deliverable
+
+Build the complete web app with:
+
+UI (pages and components)
+
+Backend API
+
+Persistent storage for app metadata (lightweight DB)
+
+A job runner that executes AXION scripts safely and streams logs
+
+File browsing and editor for key docs (RPBS/REBS and module README outputs)
+
+Export ZIP generation
+
+Automated tests for the controller behaviors
+
+Recommended Stack (use this unless hard constraint exists)
+
+Frontend: Next.js (App Router), TypeScript
+
+Backend: Next.js API routes OR separate Node server (choose one, but keep it clean)
+
+Job execution: Node child_process spawn with queued jobs
+
+Storage: SQLite (or Postgres if you prefer), with Prisma or drizzle
+
+Realtime logs: WebSockets or SSE (SSE is fine and simpler)
+
+File editing: simple text editor with preview (markdown rendering)
+
+Auth: optional for v1; if added, keep it minimal (local login)
+
+Core Concepts the App Must Model
+Entity: Assembly
+
+Represents one AXION workspace instance.
+Fields:
+
+id, name, description
+
+workspace_path
+
+created_at, updated_at
+
+selected preset + stage plan
+
+selected stack profile
+
+last_run_id (nullable)
+
+Entity: Run
+
+Represents an execution of a stage (or stage plan) against --all or a module.
+Fields:
+
+id, assembly_id
+
+stage (init/generate/seed/draft/review/verify/lock/package)
+
+mode (all/module)
+
+module (nullable)
+
+status (queued/running/success/failed/blocked_by)
+
+started_at, finished_at
+
+stdout, stderr (stored)
+
+json_result (stored)
+
+exit_code
+
+next_commands (parsed from output if present)
+
+Entity: ArtifactIndex (optional but recommended)
+
+Tracks key artifact paths for quick access:
+
+stage_markers.json path
+
+verify_status.json path
+
+verify_report.json path
+
+erc directory path
+
+template hash registry path
+
+proposals directory path
+
+export kit history path
+
+Must-Have Pages (UI)
+1) Dashboard
+
+list assemblies
+
+overall health per assembly:
+
+last stage result
+
+verify PASS/FAIL/unknown
+
+lock eligible indicator
+
+drift PASS/FAIL indicator
+
+actions:
+
+New Assembly
+
+Open Assembly
+
+Export last kit (if exists)
+
+2) New Assembly Wizard
+
+create assembly (name/description)
+
+choose preset (from config/presets.json)
+
+choose stage plan (scaffold/docs/full/release)
+
+choose stack profile (from REBS defaults or list)
+
+create workspace folder and run init automatically
+
+3) Assembly Control Room
+
+This is the heart of the app.
+
+Pipeline Stepper:
+
+stage buttons: init, generate, seed, draft, review, verify, lock, package/export
+
+each stage shows last run status and timestamp
+
+Module Grid:
+
+19 modules with per-stage marker state
+
+module status badges (pending/seeded/verified/locked)
+
+quick run per module stage (generate/seed/draft/review/verify)
+
+Run Log Panel:
+
+live log streaming during execution
+
+show raw JSON output and parsed fields
+
+show blocked_by details + one-click “run next command” actions
+
+4) Docs Workspace Browser
+
+browse key directories:
+
+source_docs/product (RPBS/REBS)
+
+domains/<module>/README.md outputs
+
+templates (read-only unless template edit mode)
+
+registry artifacts (verify_report, stage_markers, hashes, ERC)
+
+provide:
+
+markdown preview
+
+edit/save (only for allowed files: RPBS/REBS + domain READMEs; templates only in template mode)
+
+5) Verify Center
+
+load verify_report.json
+
+summary:
+
+overall PASS/FAIL
+
+module failures with reason codes
+
+next commands list
+
+drilldown:
+
+violations list with fix_action hints (if present)
+
+buttons:
+
+run repair (if repair script exists)
+
+rerun verify
+
+6) Lock & ERC
+
+lock button (must refuse if verify not PASS)
+
+show ERC outputs per module
+
+show locked timestamp / history
+
+7) Drift / Hashing Console
+
+show template drift status (PASS/FAIL)
+
+show added/removed/modified templates
+
+actions:
+
+run hash verify
+
+generate new baseline + bump revision (explicit user action)
+
+8) Export / Agent Kit
+
+generate export ZIP containing:
+
+domains outputs
+
+RPBS/REBS
+
+registry artifacts (verify_report, stage_markers, hashes, ERC)
+
+presets used + run metadata
+
+manifest.json
+
+list previous exports and download links
+
+9) Settings (minimal)
+
+base workspace directory
+
+max concurrent jobs (default 1)
+
+safe mode toggles:
+
+disallow lock without verify PASS (must be ON)
+
+disallow template edits (default ON)
+
+Backend/API Requirements
+Script Execution API
+
+Implement endpoints (examples):
+
+POST /api/assemblies
+
+GET /api/assemblies
+
+GET /api/assemblies/:id
+
+POST /api/assemblies/:id/run
+body: { stage, mode: "all"|"module", module?: string, preset?: string, plan?: string }
+
+GET /api/runs/:runId (status + logs)
+
+GET /api/assemblies/:id/artifacts (paths + parsed summaries)
+
+POST /api/assemblies/:id/export (create zip)
+
+GET /api/exports/:exportId/download
+
+Job Runner
+
+queue jobs per assembly
+
+only one job active per assembly at a time
+
+capture stdout/stderr incrementally
+
+attempt to parse JSON output (AXION scripts produce JSON objects)
+
+also parse:
+
+[FAIL] / reason codes lines
+
+next_commands arrays if present
+
+stream logs via SSE:
+
+GET /api/runs/:runId/stream
+
+File API (controlled)
+
+GET /api/files?path=...
+
+PUT /api/files (only allowed paths)
+
+prevent path traversal; enforce workspace root
+
+Critical Behavior Rules (Must Enforce)
+
+Lock gate: refuse lock unless latest verify_report overall_status is PASS.
+
+Blocked_by handling: if script outputs status=blocked_by, display missing prereqs and provide runnable next steps.
+
+Module order: for --all, preserve canonical dependency order.
+
+No template mutation by default: templates are read-only unless “Template Edit Mode” is explicitly enabled.
+
+Auditability: every run must be stored with full logs + JSON output + timestamp.
+
+Controller Test Plan (must implement)
+
+Create automated tests for:
+
+running a stage produces a Run record and streams logs
+
+blocked_by is parsed and displayed correctly (missing prereqs + hints)
+
+lock endpoint refuses when verify not PASS
+
+verify center correctly reads verify_report.json
+
+export creates a zip and includes manifest + required artifacts
+
+drift console reads drift status and lists changes
+
+Use fixture workspaces (like your current AXION tests) and do not require real external services.
+
+Deliverables Checklist
+
+When done, output:
+
+repo structure (app, api, worker, db schema)
+
+list of endpoints
+
+list of pages
+
+job runner design details (queue, streaming, parsing)
+
+security constraints for file editing
+
+tests list + how to run
+
+brief “how to use” sequence:
+
+create assembly → init → generate → seed → draft → review → verify → lock → export
+
+Build this as a clean, maintainable controller app that exposes AXION’s power without hiding failures.
+Make sure all AXION features are reachable from the web app.
+
