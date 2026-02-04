@@ -413,7 +413,8 @@ async function executeStage(
   stage: string,
   moduleSlug: string | null,
   paths: ReturnType<typeof getPaths>,
-  root: string
+  root: string,
+  override: boolean = false
 ): Promise<StageResult> {
   const started_at = new Date().toISOString();
   const scriptPath = path.join(paths.scripts, `axion-${stage}.ts`);
@@ -444,6 +445,9 @@ async function executeStage(
     const buildRoot = path.dirname(paths.root); // Parent of workspace is build root
     const projectName = path.basename(paths.root); // Workspace folder name is project name
     args.push('--build-root', buildRoot, '--project-name', projectName);
+    if (override) {
+      args.push('--override');
+    }
   } else {
     // For doc stages, always pass --root so script knows where to operate
     args.push('--root', root);
@@ -1076,7 +1080,7 @@ Examples:
             log('RUN', `${stage} --module ${moduleSlug}`);
           }
           
-          const result = await executeStage(stage, moduleSlug, paths, root);
+          const result = await executeStage(stage, moduleSlug, paths, root, overrideFlag);
           history.stages.push(result);
           
           if (result.status === 'blocked_by') {
@@ -1139,7 +1143,7 @@ Examples:
             if (!jsonFlag) {
               log('RUN', `lock --module ${moduleSlug}`);
             }
-            const result = await executeStage('lock', moduleSlug, paths, root);
+            const result = await executeStage('lock', moduleSlug, paths, root, overrideFlag);
             history.stages.push(result);
             
             if (result.status !== 'success') {
@@ -1156,7 +1160,7 @@ Examples:
           if (!jsonFlag) {
             log('RUN', stage);
           }
-          const result = await executeStage(stage, null, paths, root);
+          const result = await executeStage(stage, null, paths, root, overrideFlag);
           history.stages.push(result);
           
           if (result.status !== 'success') {
