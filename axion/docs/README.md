@@ -4,11 +4,27 @@ This folder centralizes all README documentation for the AXION system.
 
 ## Quick Links
 
+### Core Concepts
 | File | Describes |
 |------|-----------|
 | `README_system.md` | The AXION system — pipeline, ROSHI flow, modules, template contracts |
 | `README_product.md` | The `source_docs/product/` folder — RPBS, REBS (the "spark") |
 | `README_registry.md` | The `source_docs/registry/` folder — glossary, reason codes (guardrails) |
+
+### Architecture & Pipeline
+| File | Describes |
+|------|-----------|
+| `TWO_ROOT_ARCHITECTURE.md` | System root vs workspace root separation |
+| `RUN_ORCHESTRATOR.md` | How axion-run.ts works with presets and plans |
+| `APP_PIPELINE.md` | App stages: scaffold-app → build → test → deploy → activate |
+| `GATES_AND_OVERRIDES.md` | Quality gates and --override flag |
+| `STAGE_MARKERS.md` | How registry/stage_markers.json tracks progress |
+
+### Reference
+| File | Describes |
+|------|-----------|
+| `CLI_REFERENCE.md` | All 29 scripts with CLI arguments |
+| `../QUICKSTART.md` | Getting started guide |
 
 ## Three-Folder Architecture
 
