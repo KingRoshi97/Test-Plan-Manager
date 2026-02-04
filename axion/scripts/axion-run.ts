@@ -444,13 +444,17 @@ async function executeStage(
     const buildRoot = path.dirname(paths.root); // Parent of workspace is build root
     const projectName = path.basename(paths.root); // Workspace folder name is project name
     args.push('--build-root', buildRoot, '--project-name', projectName);
-  } else if (moduleSlug) {
-    args.push('--module', moduleSlug);
+  } else {
+    // For doc stages, always pass --root so script knows where to operate
+    args.push('--root', root);
+    if (moduleSlug) {
+      args.push('--module', moduleSlug);
+    }
   }
   
   return new Promise((resolve) => {
     const proc = spawn('node', args, {
-      cwd: root,
+      // Keep parent cwd where tsx is installed, scripts use --root or --build-root parameters
       env: { ...process.env, AXION_WORKSPACE: paths.axionRoot },
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -669,7 +673,7 @@ async function runPrepareRoot(
   
   return new Promise((resolve) => {
     const proc = spawn('node', args, {
-      cwd: buildRoot,
+      // Keep parent cwd where tsx is installed, scripts use --build-root parameter
       env: process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });

@@ -8,18 +8,37 @@
  * Usage:
  *   npx ts-node axion/scripts/axion-seed.ts --module <name>
  *   npx ts-node axion/scripts/axion-seed.ts --all
+ *   npx ts-node axion/scripts/axion-seed.ts --root <workspace> --module <name>
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Parse --root argument for two-root mode
+function parseRootArg(): string | null {
+  const args = process.argv.slice(2);
+  const rootIdx = args.indexOf('--root');
+  if (rootIdx !== -1 && args[rootIdx + 1]) {
+    return path.resolve(args[rootIdx + 1]);
+  }
+  return null;
+}
+
+// Two-root mode: system folder for templates/config, workspace for outputs
+const WORKSPACE_ROOT = parseRootArg();
 const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+
+// System paths (read-only, from axion/ system folder)
 const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
 const COVERAGE_MAP_PATH = path.join(AXION_ROOT, 'config', 'coverage_map.json');
-const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
-const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
 const AGENT_PROMPT_TEMPLATE_PATH = path.join(AXION_ROOT, 'templates', 'AGENT_PROMPT.template.md');
-const AGENT_PROMPT_OUTPUT_PATH = path.join(AXION_ROOT, 'registry', 'AGENT_PROMPT.md');
+
+// Workspace paths (writable, from workspace root or axion/ for legacy mode)
+const WORKSPACE_BASE = WORKSPACE_ROOT || AXION_ROOT;
+const DOMAINS_PATH = path.join(WORKSPACE_BASE, 'domains');
+const MARKERS_PATH = path.join(WORKSPACE_BASE, 'registry', 'stage_markers.json');
+const AGENT_PROMPT_OUTPUT_PATH = path.join(WORKSPACE_BASE, 'registry', 'AGENT_PROMPT.md');
+const REGISTRY_PATH = path.join(WORKSPACE_BASE, 'registry');
 
 // Core modules requiring RPBS_DERIVATIONS blocks
 const CORE_MODULES = ['contracts', 'database', 'auth', 'backend', 'state', 'frontend', 'fullstack', 'systems'];
@@ -48,10 +67,8 @@ interface Config {
   canonical_order: string[];
 }
 
-interface StageMarkers {
-  version: string;
-  markers: Record<string, Record<string, any>>;
-}
+// Flat markers structure: { moduleName: { stageName: { ... } } }
+type StageMarkers = Record<string, Record<string, any>>;
 
 function loadConfig(): Config {
   return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
@@ -59,7 +76,7 @@ function loadConfig(): Config {
 
 function loadMarkers(): StageMarkers {
   if (!fs.existsSync(MARKERS_PATH)) {
-    return { version: '1.0.0', markers: {} };
+    return {};
   }
   return JSON.parse(fs.readFileSync(MARKERS_PATH, 'utf-8'));
 }
@@ -71,13 +88,13 @@ function saveMarkers(markers: StageMarkers): void {
 function checkPrerequisites(mod: Module, markers: StageMarkers, config: Config): string[] {
   const missing: string[] = [];
   
-  if (!markers.markers[mod.slug]?.generate) {
+  if (!markers[mod.slug]?.generate) {
     missing.push(`generate:${mod.slug}`);
   }
   
   if (mod.dependencies) {
     for (const dep of mod.dependencies) {
-      if (!markers.markers[dep]?.generate) {
+      if (!markers[dep]?.generate) {
         missing.push(dep);
       }
     }
@@ -127,16 +144,16 @@ Run: \`node --import tsx axion/scripts/axion-verify.ts --all\`
   }
   
   const modulesToDraft = config.canonical_order
-    .filter(slug => markers.markers[slug]?.seed && !markers.markers[slug]?.draft)
+    .filter(slug => markers[slug]?.seed && !markers[slug]?.draft)
     .map((slug, i) => {
       const mod = config.modules.find(m => m.slug === slug);
       const deps = mod?.dependencies?.length ? ` (depends on: ${mod.dependencies.join(', ')})` : '';
       return `${i + 1}. **${mod?.name || slug}**: \`axion/domains/${slug}/README.md\`${deps}`;
     });
   
-  const attachmentsPath = fs.existsSync(path.join(AXION_ROOT, 'registry', 'attachments_content.md'))
-    ? 'axion/registry/attachments_content.md'
-    : 'axion/source_docs/product/attachments/START_HERE.txt';
+  const attachmentsPath = fs.existsSync(path.join(REGISTRY_PATH, 'attachments_content.md'))
+    ? 'registry/attachments_content.md'
+    : 'source_docs/product/attachments/START_HERE.txt';
   
   const output = template
     .replace('{{ATTACHMENTS_CONTENT_PATH}}', attachmentsPath)
@@ -308,10 +325,10 @@ function main() {
     console.log(`[INFO] Seeding ${mod.name}...`);
     seedModule(mod);
     
-    if (!markers.markers[mod.slug]) {
-      markers.markers[mod.slug] = {};
+    if (!markers[mod.slug]) {
+      markers[mod.slug] = {};
     }
-    markers.markers[mod.slug].seed = {
+    markers[mod.slug].seed = {
       completed_at: new Date().toISOString(),
     };
     
