@@ -23,7 +23,8 @@ import {
   Bookmark,
   CreditCard,
   User,
-  TrendingUp
+  TrendingUp,
+  Cpu
 } from "lucide-react";
 import axiomLogo from "@/assets/axiom-logo.png";
 
@@ -40,6 +41,7 @@ const accountNavItems = [
 ];
 
 const systemNavItems = [
+  { id: "axion", label: "AXION Controller", icon: Cpu, href: "/axion" },
   { id: "ops", label: "Operations", icon: BarChart3, href: "/ops" },
   { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
   { id: "docs", label: "API Docs", icon: FileText, href: "/docs" },
