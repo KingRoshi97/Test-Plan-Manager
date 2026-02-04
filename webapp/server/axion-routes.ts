@@ -35,6 +35,55 @@ function ensureKitsDir() {
   }
 }
 
+// Load existing kits from disk on startup
+function loadExistingKits() {
+  ensureKitsDir();
+  try {
+    const entries = fs.readdirSync(KITS_ROOT, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const kitPath = path.join(KITS_ROOT, entry.name);
+        const kitId = `kit_${entry.name}`;
+        
+        // Check if kit already loaded
+        if (kits.has(kitId)) continue;
+        
+        // Try to read stage markers for status
+        let status: AxionKit["status"] = "created";
+        const stageMarkersPath = path.join(kitPath, "registry/stage_markers.json");
+        if (fs.existsSync(stageMarkersPath)) {
+          try {
+            const markers = JSON.parse(fs.readFileSync(stageMarkersPath, "utf-8"));
+            // Determine status based on stage markers
+            if (Object.keys(markers).length > 0) {
+              status = "scaffolding";
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+        
+        // Get creation time from stat
+        const stat = fs.statSync(kitPath);
+        
+        const kit: AxionKit = {
+          id: kitId,
+          name: entry.name,
+          createdAt: stat.birthtime.toISOString(),
+          path: kitPath,
+          status
+        };
+        kits.set(kitId, kit);
+      }
+    }
+  } catch (err) {
+    console.error("[AXION] Failed to load existing kits:", err);
+  }
+}
+
+// Initialize on module load
+loadExistingKits();
+
 export function registerAxionRoutes(app: Express) {
   
   // List all kits
@@ -259,10 +308,17 @@ export function registerAxionRoutes(app: Express) {
     }
 
     const filePath = (req.query.path as string) || "";
-    const fullPath = path.join(kit.path, filePath);
+    
+    // Security: reject absolute paths or path traversal attempts
+    if (path.isAbsolute(filePath) || filePath.includes("..")) {
+      return res.status(403).json({ error: "Invalid path", code: "FORBIDDEN" });
+    }
+    
+    const resolvedKitPath = path.resolve(kit.path);
+    const fullPath = path.resolve(kit.path, filePath);
 
-    // Security: ensure path is within kit
-    if (!fullPath.startsWith(kit.path)) {
+    // Security: ensure resolved path is within kit (double-check after resolution)
+    if (!fullPath.startsWith(resolvedKitPath + path.sep) && fullPath !== resolvedKitPath) {
       return res.status(403).json({ error: "Access denied", code: "FORBIDDEN" });
     }
 
