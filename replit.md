@@ -18,6 +18,7 @@ This repl is dedicated to developing, enhancing, and testing the AXION documenta
 │   ├── unit/               # Unit tests for individual scripts
 │   ├── integration/        # Pipeline and module dependency tests
 │   ├── validation/         # Template and config validation
+│   ├── core/               # Core System Contract tests
 │   ├── e2e/                # End-to-end workflow tests
 │   └── helpers/            # Test utilities
 ├── vitest.config.ts        # Vitest configuration
@@ -35,6 +36,7 @@ npx vitest run
 npx vitest run tests/unit
 npx vitest run tests/integration
 npx vitest run tests/validation
+npx vitest run tests/core
 npx vitest run tests/e2e
 
 # Watch mode for development
@@ -42,32 +44,35 @@ npx vitest
 
 # Run with coverage
 npx vitest run --coverage
-
-# Run legacy AXION tests
-npx tsx axion/tests/helpers/test-runner.ts
 ```
 
 ## Test Coverage
 
 The test suite includes:
 
-### Unit Tests (9 tests)
+### Unit Tests (17 tests)
 - Kit creation argument validation
 - Kit structure creation
 - Manifest generation
-- Dry run mode
-- Idempotency checks
+- RPBS seeding with project descriptions
+- Config file validation (domains, presets, stack profiles)
 
 ### Validation Tests (102 tests)
 - Script existence and structure
 - Template completeness
-- Config file validation (domains, presets, stack profiles)
+- Config file validation
 
 ### Integration Tests (8 tests)
 - Module dependency graph validation
 - Topological ordering
 - Pipeline flow
 - Config file consistency
+
+### Core Contract Tests (33 tests)
+- **Pipeline Definition**: Stage order, module ordering, dependency gating, preset configurations
+- **Reason Codes**: Registry validation, script-level codes, blocked_by semantics
+- **Output Contracts**: JSON stdout contract, manifest schema, artifact locations
+- **Two-Root Safety**: System root protection, kit isolation
 
 ### E2E Tests (9 tests)
 - Full kit creation workflow
@@ -78,8 +83,8 @@ The test suite includes:
 ## AXION Pipeline Stages
 
 1. **kit-create** - Initialize a new Agent Kit workspace
-2. **docs:scaffold** - Generate module documentation structure
-3. **docs:content** - Fill documentation with AI-generated content
+2. **docs:scaffold** - Generate module documentation structure (generate + seed)
+3. **docs:content** - Fill documentation with AI-generated content (draft + review + verify)
 4. **docs:full** - Run scaffold + content in sequence
 5. **app:bootstrap** - Generate application boilerplate
 
@@ -105,6 +110,23 @@ npx tsx axion/scripts/axion-doctor.ts
 - **Application**: backend, integrations, state, frontend, fullstack
 - **Quality**: testing, quality, security, devops, cloud, devex
 - **Clients**: mobile, desktop
+
+## Core System Contracts
+
+### Pipeline Guarantees
+- Stages execute in order: generate → seed → draft → review → verify → lock
+- Module dependencies enforced before execution
+- Presets define module scopes with optional guards
+
+### Diagnostic Guarantees
+- Reason codes use SCREAMING_SNAKE_CASE
+- blocked_by responses include: status, stage, missing list, runnable hints
+- Known codes: MISSING_SECTION, TBD_IN_REQUIRED, DEP_NOT_VERIFIED, SEAM_*
+
+### Interface Guarantees
+- Kit-create emits JSON with status, stage, kit_root, manifest_path
+- Manifest includes version, created_at, project_name, expected_commands
+- Artifacts in predictable locations under kit root
 
 ## Development Notes
 
