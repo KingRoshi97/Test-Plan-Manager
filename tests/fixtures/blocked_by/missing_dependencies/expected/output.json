@@ -1,0 +1,10 @@
+{
+  "status": "blocked_by",
+  "stage": "seed",
+  "module": "frontend",
+  "missing": ["contracts", "state"],
+  "hint": [
+    "npx tsx axion/scripts/axion-seed.ts --build-root <kit> --module contracts",
+    "npx tsx axion/scripts/axion-seed.ts --build-root <kit> --module state"
+  ]
+}

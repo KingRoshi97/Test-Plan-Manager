@@ -128,6 +128,49 @@ npx tsx axion/scripts/axion-doctor.ts
 - Manifest includes version, created_at, project_name, expected_commands
 - Artifacts in predictable locations under kit root
 
+## AXION Upgrade Workflow
+
+When upgrading AXION, follow the contracted change workflow:
+
+### 1. Write Change Contract
+Create `axion/changes/{feature-name}.md` using the template. This documents:
+- Problem being solved
+- Scope and affected scripts
+- Contract changes (stdout JSON, schemas, reason codes)
+- Test plan and rollout strategy
+
+### 2. Add Fixtures
+Create fixtures in `tests/fixtures/` that demonstrate expected behavior:
+- `blocked_by/` - Scenarios that should block
+- `security_gate/` - Security policy violations
+- `schema_change/` - Migration test data
+
+### 3. Write Tests First
+Add/update tests before implementation. Tests should assert:
+- Exact reason codes
+- Required JSON fields
+- Artifact schema correctness
+
+### 4. Implement (Behind Flag if Risky)
+Use feature flags in `axion/config/system.json`:
+```json
+{
+  "feature_flags": {
+    "strict_root_safety": { "enabled": true },
+    "require_template_hash_match": { "enabled": false }
+  }
+}
+```
+
+### 5. Run Release Gate
+```bash
+./tests/release-gate.sh
+```
+All checks must pass before considering the upgrade complete.
+
+### 6. Update Changelog
+Document changes in `axion/CHANGELOG.md`.
+
 ## Development Notes
 
 - Tests use temp directories in `tests/temp/` which are auto-cleaned
