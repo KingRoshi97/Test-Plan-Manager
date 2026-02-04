@@ -6,17 +6,30 @@
  * Requires generate and seed stages to be complete.
  * 
  * Usage:
- *   npx ts-node axion/scripts/axion-draft.ts --module <name>
- *   npx ts-node axion/scripts/axion-draft.ts --all
+ *   npx tsx axion/scripts/axion-draft.ts --root <workspace> --module <name>
+ *   npx tsx axion/scripts/axion-draft.ts --root <workspace> --all
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 
-const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+// Parse --root argument first for two-root support
+const args = process.argv.slice(2);
+const rootArgIndex = args.indexOf('--root');
+const WORKSPACE_ROOT = rootArgIndex !== -1 && args[rootArgIndex + 1]
+  ? args[rootArgIndex + 1]
+  : process.env.AXION_WORKSPACE || process.cwd();
+
+// System root (read-only) - contains config and templates
+const AXION_ROOT = process.env.AXION_SYSTEM_ROOT || path.join(path.dirname(WORKSPACE_ROOT), 'axion');
+
+// Config from system root
 const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
-const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
-const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+
+// Outputs to workspace root
+const DOMAINS_PATH = path.join(WORKSPACE_ROOT, 'domains');
+const REGISTRY_PATH = path.join(WORKSPACE_ROOT, 'registry');
+const MARKERS_PATH = path.join(REGISTRY_PATH, 'stage_markers.json');
 
 interface Module {
   name: string;
@@ -31,10 +44,8 @@ interface Config {
   canonical_order: string[];
 }
 
-interface StageMarkers {
-  version: string;
-  markers: Record<string, Record<string, any>>;
-}
+// Flat markers structure: { moduleName: { stageName: { ... } } }
+type StageMarkers = Record<string, Record<string, any>>;
 
 function loadConfig(): Config {
   return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
@@ -42,29 +53,32 @@ function loadConfig(): Config {
 
 function loadMarkers(): StageMarkers {
   if (!fs.existsSync(MARKERS_PATH)) {
-    return { version: '1.0.0', markers: {} };
+    return {};
   }
   return JSON.parse(fs.readFileSync(MARKERS_PATH, 'utf-8'));
 }
 
 function saveMarkers(markers: StageMarkers): void {
+  if (!fs.existsSync(REGISTRY_PATH)) {
+    fs.mkdirSync(REGISTRY_PATH, { recursive: true });
+  }
   fs.writeFileSync(MARKERS_PATH, JSON.stringify(markers, null, 2));
 }
 
 function checkPrerequisites(mod: Module, markers: StageMarkers): string[] {
   const missing: string[] = [];
   
-  if (!markers.markers[mod.slug]?.generate) {
+  if (!markers[mod.slug]?.generate) {
     missing.push(`generate:${mod.slug}`);
   }
   
-  if (!markers.markers[mod.slug]?.seed) {
+  if (!markers[mod.slug]?.seed) {
     missing.push(`seed:${mod.slug}`);
   }
   
   if (mod.dependencies) {
     for (const dep of mod.dependencies) {
-      if (!markers.markers[dep]?.seed) {
+      if (!markers[dep]?.seed) {
         missing.push(dep);
       }
     }
@@ -89,15 +103,14 @@ function draftModule(mod: Module): void {
 }
 
 function main() {
-  const args = process.argv.slice(2);
   const moduleArg = args.indexOf('--module');
   const targetModule = moduleArg !== -1 ? args[moduleArg + 1] : null;
   const runAll = args.includes('--all');
   
   if (!targetModule && !runAll) {
     console.log('Usage:');
-    console.log('  npx ts-node axion/scripts/axion-draft.ts --module <name>');
-    console.log('  npx ts-node axion/scripts/axion-draft.ts --all');
+    console.log('  npx tsx axion/scripts/axion-draft.ts --root <workspace> --module <name>');
+    console.log('  npx tsx axion/scripts/axion-draft.ts --root <workspace> --all');
     process.exit(1);
   }
   
@@ -130,12 +143,12 @@ function main() {
         missing: missing,
         hint: missing.map(m => {
           if (m.startsWith('generate:')) {
-            return `npx ts-node axion/scripts/axion-generate.ts --module ${m.replace('generate:', '')}`;
+            return `npx tsx axion/scripts/axion-generate.ts --root ${WORKSPACE_ROOT} --module ${m.replace('generate:', '')}`;
           }
           if (m.startsWith('seed:')) {
-            return `npx ts-node axion/scripts/axion-seed.ts --module ${m.replace('seed:', '')}`;
+            return `npx tsx axion/scripts/axion-seed.ts --root ${WORKSPACE_ROOT} --module ${m.replace('seed:', '')}`;
           }
-          return `npx ts-node axion/scripts/axion-seed.ts --module ${m}`;
+          return `npx tsx axion/scripts/axion-seed.ts --root ${WORKSPACE_ROOT} --module ${m}`;
         }),
       };
       
@@ -150,10 +163,10 @@ function main() {
     console.log(`[INFO] Drafting ${mod.name}...`);
     draftModule(mod);
     
-    if (!markers.markers[mod.slug]) {
-      markers.markers[mod.slug] = {};
+    if (!markers[mod.slug]) {
+      markers[mod.slug] = {};
     }
-    markers.markers[mod.slug].draft = {
+    markers[mod.slug].draft = {
       completed_at: new Date().toISOString(),
     };
     

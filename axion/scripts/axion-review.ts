@@ -6,17 +6,30 @@
  * identifies issues for fixing before verify.
  * 
  * Usage:
- *   npx ts-node axion/scripts/axion-review.ts --module <name>
- *   npx ts-node axion/scripts/axion-review.ts --all
+ *   npx tsx axion/scripts/axion-review.ts --root <workspace> --module <name>
+ *   npx tsx axion/scripts/axion-review.ts --root <workspace> --all
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 
-const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+// Parse --root argument first for two-root support
+const args = process.argv.slice(2);
+const rootArgIndex = args.indexOf('--root');
+const WORKSPACE_ROOT = rootArgIndex !== -1 && args[rootArgIndex + 1]
+  ? args[rootArgIndex + 1]
+  : process.env.AXION_WORKSPACE || process.cwd();
+
+// System root (read-only) - contains config and templates
+const AXION_ROOT = process.env.AXION_SYSTEM_ROOT || path.join(path.dirname(WORKSPACE_ROOT), 'axion');
+
+// Config from system root
 const CONFIG_PATH = path.join(AXION_ROOT, 'config', 'domains.json');
-const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
-const MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+
+// Outputs to workspace root
+const DOMAINS_PATH = path.join(WORKSPACE_ROOT, 'domains');
+const REGISTRY_PATH = path.join(WORKSPACE_ROOT, 'registry');
+const MARKERS_PATH = path.join(REGISTRY_PATH, 'stage_markers.json');
 
 interface Module {
   name: string;
@@ -28,10 +41,8 @@ interface Config {
   canonical_order: string[];
 }
 
-interface StageMarkers {
-  version: string;
-  markers: Record<string, Record<string, any>>;
-}
+// Flat markers structure: { moduleName: { stageName: { ... } } }
+type StageMarkers = Record<string, Record<string, any>>;
 
 interface ReviewIssue {
   type: string;
@@ -54,12 +65,15 @@ function loadConfig(): Config {
 
 function loadMarkers(): StageMarkers {
   if (!fs.existsSync(MARKERS_PATH)) {
-    return { version: '1.0.0', markers: {} };
+    return {};
   }
   return JSON.parse(fs.readFileSync(MARKERS_PATH, 'utf-8'));
 }
 
 function saveMarkers(markers: StageMarkers): void {
+  if (!fs.existsSync(REGISTRY_PATH)) {
+    fs.mkdirSync(REGISTRY_PATH, { recursive: true });
+  }
   fs.writeFileSync(MARKERS_PATH, JSON.stringify(markers, null, 2));
 }
 
@@ -130,15 +144,14 @@ function reviewModule(mod: Module, config: Config): ReviewResult {
 }
 
 function main() {
-  const args = process.argv.slice(2);
   const moduleArg = args.indexOf('--module');
   const targetModule = moduleArg !== -1 ? args[moduleArg + 1] : null;
   const runAll = args.includes('--all');
   
   if (!targetModule && !runAll) {
     console.log('Usage:');
-    console.log('  npx ts-node axion/scripts/axion-review.ts --module <name>');
-    console.log('  npx ts-node axion/scripts/axion-review.ts --all');
+    console.log('  npx tsx axion/scripts/axion-review.ts --root <workspace> --module <name>');
+    console.log('  npx tsx axion/scripts/axion-review.ts --root <workspace> --all');
     process.exit(1);
   }
   
@@ -172,10 +185,10 @@ function main() {
     console.log(`  broken_refs: ${result.broken_refs.length}`);
     console.log(`  issues: ${result.issues.length}`);
     
-    if (!markers.markers[mod.slug]) {
-      markers.markers[mod.slug] = {};
+    if (!markers[mod.slug]) {
+      markers[mod.slug] = {};
     }
-    markers.markers[mod.slug].review = {
+    markers[mod.slug].review = {
       completed_at: new Date().toISOString(),
       unknown_count: result.unknown_count,
       tbd_count: result.tbd_count,
