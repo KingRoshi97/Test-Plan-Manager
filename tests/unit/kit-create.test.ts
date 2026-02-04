@@ -113,7 +113,7 @@ describe('axion-kit-create', () => {
       
       const rpbsContent = fs.readFileSync(rpbsPath, 'utf-8');
       expect(rpbsContent).toContain('RPBSTest');
-      expect(rpbsContent).toContain('RPBS');
+      expect(rpbsContent).toContain('A test project description');
     });
     
     it('should copy all required snapshot directories', () => {

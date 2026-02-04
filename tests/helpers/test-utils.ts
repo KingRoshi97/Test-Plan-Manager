@@ -42,7 +42,8 @@ export function runAxionCommand(
   const timeout = options.timeout || 30000;
   const scriptPath = path.join(process.cwd(), 'axion', 'scripts', script);
   
-  const cmd = `npx tsx ${scriptPath} ${args.join(' ')}`;
+  const quotedArgs = args.map(arg => arg.includes(' ') ? `"${arg}"` : arg);
+  const cmd = `npx tsx ${scriptPath} ${quotedArgs.join(' ')}`;
   
   try {
     const stdout = execSync(cmd, {
