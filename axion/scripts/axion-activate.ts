@@ -30,6 +30,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { writeJsonAtomic } from '../lib/atomic-writer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -165,7 +166,7 @@ function writeActiveBuildPointer(pointerPath: string, pointer: ActiveBuildPointe
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(pointerPath, JSON.stringify(pointer, null, 2), 'utf-8');
+    writeJsonAtomic(pointerPath, pointer);
   }
 }
 

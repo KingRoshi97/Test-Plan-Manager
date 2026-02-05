@@ -14,6 +14,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+import { writeJsonAtomic } from '../lib/atomic-writer.js';
 
 // Parse --root argument first for two-root support
 const args = process.argv.slice(2);
@@ -169,7 +170,7 @@ function saveStatus(status: VerifyStatus): void {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  fs.writeFileSync(STATUS_PATH, JSON.stringify(status, null, 2));
+  writeJsonAtomic(STATUS_PATH, status);
 }
 
 function saveReport(report: VerifyReport): void {
@@ -177,7 +178,7 @@ function saveReport(report: VerifyReport): void {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2));
+  writeJsonAtomic(REPORT_PATH, report);
 }
 
 function loadSeamRegistry(): SeamRegistry | null {
