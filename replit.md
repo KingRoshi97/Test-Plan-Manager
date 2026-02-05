@@ -100,6 +100,18 @@ The test suite includes:
 - Writes `real_test_report.json` to registry/
 - Optional in release gate (requires npm install)
 
+**Concurrency/Run-Lock Tests** (`e2e.concurrency.test.ts`):
+- Validates run lock mechanism that prevents concurrent executions
+- Tests:
+  - Lock schema validation (version, run_id, created_at, pid, command, args)
+  - Lock lifecycle (create on run, release on completion)
+  - Stale lock detection (30 minute threshold)
+  - Stale lock auto-cleanup
+  - Corrupted lock file handling
+  - --unlock-if-stale command acceptance
+- Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
+- Required in release gate (Step 5d)
+
 ## AXION Pipeline Stages
 
 1. **kit-create** - Initialize a new Agent Kit workspace

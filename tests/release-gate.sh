@@ -66,6 +66,11 @@ echo "   (Spawns app, polls /api/health endpoint)"
 echo "   [SKIPPED] Requires npm install and spawned server - run manually: npx vitest run tests/suites/e2e.real-results.test.ts"
 
 echo ""
+echo "5d. E2E Concurrency/Run-Lock Tests"
+echo "   (Lock lifecycle, stale detection, corrupted lock handling)"
+run_check "e2e-concurrency" "npx vitest run tests/suites/e2e.concurrency.test.ts --passWithNoTests --testTimeout=120000"
+
+echo ""
 echo "6. Doctor Extension Tests"
 echo "   (Active build, pollution, run lock checks)"
 run_check "doctor-tests" "npx vitest run tests/suites/doctor-extensions.test.ts --passWithNoTests --testTimeout=60000"
