@@ -86,14 +86,23 @@ function cleanupTestContext(ctx: TestContext, passed: boolean): void {
   }
 }
 
-function runCommand(command: string, cwd: string): { stdout: string; json: any } {
-  const stdout = execSync(command, {
-    cwd,
-    encoding: 'utf-8',
-    timeout: 120000,
-    env: { ...process.env, AXION_SYSTEM_ROOT: path.join(cwd, 'axion') },
-  });
+function runCommandExpectFail(command: string, cwd: string): { stdout: string; stderr: string; json: any } {
+  try {
+    execSync(command, {
+      cwd,
+      encoding: 'utf-8',
+      timeout: 120000,
+      env: { ...process.env, AXION_SYSTEM_ROOT: path.join(cwd, 'axion') },
+    });
+    throw new Error('Expected command to fail but it succeeded');
+  } catch (err: any) {
+    const stdout = (err.stdout || '') as string;
+    const stderr = (err.stderr || '') as string;
+    return { stdout, stderr, json: parseJsonFromOutput(stdout) };
+  }
+}
 
+function parseJsonFromOutput(stdout: string): any {
   let json: any = null;
   try {
     json = JSON.parse(stdout.trim());
@@ -115,8 +124,18 @@ function runCommand(command: string, cwd: string): { stdout: string; json: any }
       }
     }
   }
+  return json;
+}
 
-  return { stdout, json };
+function runCommand(command: string, cwd: string): { stdout: string; json: any } {
+  const stdout = execSync(command, {
+    cwd,
+    encoding: 'utf-8',
+    timeout: 120000,
+    env: { ...process.env, AXION_SYSTEM_ROOT: path.join(cwd, 'axion') },
+  });
+
+  return { stdout, json: parseJsonFromOutput(stdout) };
 }
 
 function createCompliantFixture(build: BuildContext): void {
@@ -435,5 +454,55 @@ describe('E2E Multi-Build Routing', () => {
     expect(resultB.json.resolved_app_path.startsWith(ctx.buildB.buildRoot)).toBe(true);
 
     console.log('[CWD TEST] CWD-relative resolution is correct');
+  }, 60000);
+
+  it('run-app refuses app_path outside build root (APP_PATH_OUTSIDE_BUILD_ROOT)', () => {
+    const buildRoot = ctx.buildA.buildRoot;
+    const pointerPath = ctx.buildA.pointerPath;
+
+    const traversalAppPath = path.join(buildRoot, '..', 'evil', 'app');
+
+    const originalPointer = JSON.parse(fs.readFileSync(pointerPath, 'utf-8'));
+    const poisonedPointer = {
+      ...originalPointer,
+      app_path: traversalAppPath,
+    };
+    fs.writeFileSync(pointerPath, JSON.stringify(poisonedPointer, null, 2));
+
+    const hashBefore = hashFile(pointerPath);
+
+    console.log('\n[NEGATIVE] Running with traversal app_path:', traversalAppPath);
+    const runAppCmd = `npx tsx ${AXION_SOURCE}/scripts/axion-run-app.ts --dry-run --pointer ${pointerPath} --json`;
+    const result = runCommandExpectFail(runAppCmd, PROJECT_ROOT);
+
+    const hashAfter = hashFile(pointerPath);
+    expect(hashAfter).toBe(hashBefore);
+    console.log('  Pointer file unchanged (hash match)');
+
+    expect(result.json).toBeTruthy();
+    expect(result.json.status).toBe('failed');
+    expect(result.json.reason_codes).toContain('APP_PATH_OUTSIDE_BUILD_ROOT');
+
+    expect(result.json.pointer_path).toBeTruthy();
+    expect(path.isAbsolute(result.json.pointer_path)).toBe(true);
+
+    expect(result.json.active_build_root).toBe(path.resolve(buildRoot));
+
+    expect(result.json.resolved_app_path).toBeTruthy();
+    const rootPrefix = result.json.active_build_root.endsWith(path.sep)
+      ? result.json.active_build_root
+      : result.json.active_build_root + path.sep;
+    expect(
+      result.json.resolved_app_path === result.json.active_build_root ||
+      result.json.resolved_app_path.startsWith(rootPrefix)
+    ).toBe(false);
+    expect(result.json.resolved_app_path).toContain(path.join('evil', 'app'));
+
+    console.log('  status:', result.json.status);
+    console.log('  reason_codes:', result.json.reason_codes);
+    console.log('  resolved_app_path:', result.json.resolved_app_path);
+
+    fs.writeFileSync(pointerPath, JSON.stringify(originalPointer, null, 2));
+    console.log('[NEGATIVE] APP_PATH_OUTSIDE_BUILD_ROOT correctly rejected');
   }, 60000);
 });

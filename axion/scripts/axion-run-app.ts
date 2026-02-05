@@ -179,9 +179,9 @@ async function main(): Promise<void> {
   const activeBuildRoot = pointer.active_build_root;
   const appPath = pointer.app_path;
   const projectName = pointer.project_name;
-  const resolvedAppPath = path.isAbsolute(appPath)
-    ? appPath
-    : path.resolve(activeBuildRoot, appPath);
+  const resolvedAppPath = path.resolve(
+    path.isAbsolute(appPath) ? appPath : path.resolve(activeBuildRoot, appPath)
+  );
 
   log(`[INFO] Pointer: ${absPointerPath}`, options.jsonOutput);
   log(`[INFO] Active build: ${activeBuildRoot}`, options.jsonOutput);
@@ -189,7 +189,10 @@ async function main(): Promise<void> {
   log(`[INFO] Resolved app path: ${resolvedAppPath}`, options.jsonOutput);
   log(`[INFO] Activated at: ${pointer.activated_at}`, options.jsonOutput);
 
-  if (!resolvedAppPath.startsWith(activeBuildRoot)) {
+  const rootPrefix = activeBuildRoot.endsWith(path.sep)
+    ? activeBuildRoot
+    : activeBuildRoot + path.sep;
+  if (resolvedAppPath !== activeBuildRoot && !resolvedAppPath.startsWith(rootPrefix)) {
     const result: RunAppResult = {
       status: 'failed',
       stage: 'run-app',
