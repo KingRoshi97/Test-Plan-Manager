@@ -61,6 +61,11 @@ echo "   (Real workflow: kit → scaffold → build → test → activate)"
 run_check "e2e-golden" "npx vitest run tests/suites/e2e.two-root.test.ts --passWithNoTests --testTimeout=180000"
 
 echo ""
+echo "5c. E2E Real Results Smoke Test (optional)"
+echo "   (Spawns app, polls /api/health endpoint)"
+echo "   [SKIPPED] Requires npm install and spawned server - run manually: npx vitest run tests/suites/e2e.real-results.test.ts"
+
+echo ""
 echo "6. Doctor Extension Tests"
 echo "   (Active build, pollution, run lock checks)"
 run_check "doctor-tests" "npx vitest run tests/suites/doctor-extensions.test.ts --passWithNoTests --testTimeout=60000"

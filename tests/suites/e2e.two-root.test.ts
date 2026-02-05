@@ -252,7 +252,7 @@ describe('E2E Two-Root Golden Path', () => {
     const activateCmd = `npx tsx axion/scripts/axion-activate.ts ` +
       `--build-root ${ctx.buildRoot} ` +
       `--project-name ${ctx.projectName} ` +
-      `--force ` +
+      `--allow-no-tests ` +
       `--json`;
     
     const activateResult = runCommand(activateCmd, ctx.buildRoot);
@@ -463,16 +463,34 @@ This module integrates with dependent modules through well-defined interfaces.
     JSON.stringify(verifyStatus, null, 2)
   );
   
-  // Create verify_report.json
+  // Create verify_report.json (required for verify_pass gate)
   const verifyReport = {
     version: '1.0.0',
+    generated_at: new Date().toISOString(),
+    status: 'PASS',
     overall_status: 'PASS',
+    current_revision: 'e2e-fixture-v1',
     modules_verified: minimalModules.length,
+    modules: Object.fromEntries(minimalModules.map(m => [m, { status: 'PASS', issues: [] }])),
     issues: [],
     timestamp: new Date().toISOString()
   };
   fs.writeFileSync(
     path.join(registryPath, 'verify_report.json'),
     JSON.stringify(verifyReport, null, 2)
+  );
+  
+  // Create lock_manifest.json (required for docs_locked gate)
+  const lockManifest = {
+    version: '1.0.0',
+    locked_at: new Date().toISOString(),
+    locked_by: 'e2e-test',
+    revision: 'e2e-fixture-v1',
+    modules: minimalModules,
+    checksums: Object.fromEntries(minimalModules.map(m => [m, 'e2e-checksum-' + m]))
+  };
+  fs.writeFileSync(
+    path.join(registryPath, 'lock_manifest.json'),
+    JSON.stringify(lockManifest, null, 2)
   );
 }
