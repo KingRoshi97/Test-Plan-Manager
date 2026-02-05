@@ -13,3 +13,7 @@ uploads/
 
 # Development artifacts (pasted specs, screenshots)
 attached_assets/
+
+# Release gate artifacts (generated on each run)
+axion/registry/release_gate_report.json
+axion/registry/release_gate_logs/

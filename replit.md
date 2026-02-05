@@ -46,6 +46,55 @@ npx vitest
 npx vitest run --coverage
 ```
 
+## Release Gate
+
+The release gate validates the entire AXION system before upgrades:
+
+```bash
+# Run full release check (TypeScript version)
+npx tsx axion/scripts/axion-release-check.ts
+
+# Run with optional checks (e.g., real-results)
+npx tsx axion/scripts/axion-release-check.ts --include-optional
+
+# Run specific check only
+npx tsx axion/scripts/axion-release-check.ts --filter e2e-portability
+
+# Output JSON report only (logs to stderr)
+npx tsx axion/scripts/axion-release-check.ts --json
+
+# Legacy shell gate (deprecated)
+./tests/release-gate.sh
+```
+
+### Release Check Options
+
+| Option | Description |
+|--------|-------------|
+| `--strict` | Treat warnings as failures (default: true) |
+| `--json` | Output only JSON to stdout, logs to stderr |
+| `--timeout-ms <n>` | Timeout per check in ms (default: 120000) |
+| `--include-optional` | Run optional checks (e.g., real-results) |
+| `--filter <id>` | Run only specific check(s), comma-separated |
+
+### Report Artifact
+
+Located at `axion/registry/release_gate_report.json`:
+
+```json
+{
+  "version": "1.0.0",
+  "generated_at": "2026-02-05T21:30:00Z",
+  "producer": { "script": "axion-release-check", "revision": 1 },
+  "duration_ms": 45000,
+  "passed": true,
+  "logs_dir": "axion/registry/release_gate_logs/release_2026-02-05T21-30-00/",
+  "checks": [...],
+  "failures": [...],
+  "next_commands": [...]
+}
+```
+
 ## Test Coverage
 
 The test suite includes:
@@ -137,6 +186,17 @@ The test suite includes:
 - Proves kits survive agent interruptions mid-write
 - Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
 - Required in release gate (Step 5f)
+
+**Release Check Tests** (`release-check.test.ts`):
+- Validates the axion-release-check.ts script output and behavior
+- Tests:
+  1. Report schema validation (version, generated_at, producer, checks, failures)
+  2. Check entries contain required fields (id, name, passed, duration_ms, log_path)
+  3. Optional checks marked as skipped when --include-optional not set
+  4. --filter option runs only specified checks
+  5. --json flag outputs JSON to stdout, human logs to stderr
+  6. Log files created for each check run
+- 8 tests total
 
 ## Atomic Writer Library
 
