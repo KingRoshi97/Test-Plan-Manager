@@ -113,6 +113,19 @@ The test suite includes:
 - Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
 - Required in release gate (Step 5d)
 
+**Kit Portability Tests** (`e2e.portability.test.ts`):
+- Validates the "universal kit" claim: kits can be moved/copied and still work
+- Test phases:
+  1. Create kit at location A (kit-create, scaffold-app, activate)
+  2. Copy entire build root from A to B
+  3. Re-activate in location B (rewrites ACTIVE_BUILD.json)
+  4. Run doctor on relocated kit
+  5. Run run-app --dry-run on relocated kit
+  6. Scan for hardcoded original paths (fail if found)
+- Proves kits have no hidden coupling to original filesystem location
+- Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
+- Required in release gate (Step 5e)
+
 ## AXION Pipeline Stages
 
 1. **kit-create** - Initialize a new Agent Kit workspace
