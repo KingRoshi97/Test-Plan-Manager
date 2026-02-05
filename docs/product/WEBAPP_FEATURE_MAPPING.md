@@ -399,8 +399,8 @@ Web app should parse and render (not interpret logs):
 
 # 5) Recent Changes
 
-**2026-02-05** — Added axion-doctor active build validation (ACTIVE_BUILD_PRESENT/TARGET_EXISTS/GATES), system pollution scan (SYSTEM_ROOT_POLLUTION), stale run lock detection (RUN_LOCK_STALE with 30-minute threshold); JSON output extended with `active_build`, `pollution`, `run_lock` sections. Total: 18 checks across 8 categories. Corrupt artifacts (invalid JSON) now treated as unsatisfied gates.
+**2026-02-05** — System Health page now uses extended `axion-doctor` JSON output with `active_build`, `pollution`, and `run_lock` sections for richer diagnostics display.
 
-**2026-02-05** — Two-root kit workflow completed (kit-create, activate, scaffold-app, build-plan, run-app, test). Feature flags support for strict_dependency_gating.
+**2026-02-05** — Routing & Activation uses `axion-activate` with gate validation (verify/lock/tests when `strict_dependency_gating` enabled). Active Build panel reads from priority ACTIVE_BUILD.json locations.
 
-**2026-02-05** — Initial WEBAPP_FEATURE_MAPPING.md created with Update Protocol. All 29 scripts mapped to web app surfaces.
+**2026-02-05** — Initial mapping created. All 29 AXION scripts mapped to web app surfaces.
