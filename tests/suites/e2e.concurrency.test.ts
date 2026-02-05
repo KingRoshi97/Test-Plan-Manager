@@ -481,15 +481,20 @@ describe('E2E Concurrency/Run-Lock Test Suite', () => {
       removeLockIfExists(ctx);
     });
     
-    it('should accept --unlock-if-stale flag without error', () => {
-      console.log('\n[TEST] --unlock-if-stale command acceptance');
+    it('should resolve workspace path and remove stale lock in two-root mode', () => {
+      console.log('\n[TEST] --unlock-if-stale resolves workspace path correctly');
       
-      // Note: In two-root mode, --unlock-if-stale looks at different path than
-      // where prepare-root creates the workspace. This tests that the flag is
-      // accepted and completes without error.
+      // Create a stale lock in the project workspace
+      const staleLock = createStaleLock(ctx);
+      const lockPath = getRunLockPath(ctx);
       
+      console.log(`  [INFO] Created stale lock: ${staleLock.run_id}`);
+      expect(fs.existsSync(lockPath), 'Stale lock should exist').toBe(true);
+      
+      // Use --unlock-if-stale with --project-name to specify workspace
       const unlockCmd = `npx tsx axion/scripts/axion-run.ts ` +
         `--build-root ${ctx.buildRoot} ` +
+        `--project-name ${ctx.projectName} ` +
         `--unlock-if-stale`;
       
       const result = runAxionCommand(unlockCmd, ctx);
@@ -497,15 +502,25 @@ describe('E2E Concurrency/Run-Lock Test Suite', () => {
       // Command should complete successfully
       expect(result.code).toBe(0);
       
-      // Should output success JSON
+      // Parse JSON output
       const combinedOutput = result.stdout + result.stderr;
-      expect(combinedOutput).toContain('unlock-if-stale');
+      const jsonMatch = combinedOutput.match(/\{[\s\S]*"status"[\s\S]*\}/);
+      expect(jsonMatch, 'Should have JSON output').toBeTruthy();
       
-      console.log('  ✓ --unlock-if-stale accepted and completed');
+      const output = JSON.parse(jsonMatch![0]);
+      expect(output.status).toBe('success');
+      expect(output.action).toBe('unlock-if-stale');
+      expect(output.unlocked_stale_lock).toBe(true);
+      expect(output.lock_path).toContain(ctx.projectName);
+      
+      // Stale lock should be removed
+      expect(fs.existsSync(lockPath), 'Stale lock should be removed').toBe(false);
+      
+      console.log('  ✓ --unlock-if-stale correctly resolved workspace and removed stale lock');
     });
     
-    it('should preserve fresh lock when detected', () => {
-      console.log('\n[TEST] Fresh lock detection behavior');
+    it('should preserve fresh lock with --unlock-if-stale', () => {
+      console.log('\n[TEST] Fresh lock preserved by --unlock-if-stale');
       
       // Create a fresh lock at the project workspace level
       const freshLock = createFakeLock(ctx, {
@@ -516,14 +531,65 @@ describe('E2E Concurrency/Run-Lock Test Suite', () => {
       
       console.log(`  [INFO] Created fresh lock: ${freshLock.run_id}`);
       
-      // The lock at project workspace level should be preserved
-      // (since --unlock-if-stale looks at a different path in two-root mode)
-      expect(fs.existsSync(lockPath), 'Fresh lock should exist').toBe(true);
+      // Use --unlock-if-stale - should NOT remove fresh lock
+      const unlockCmd = `npx tsx axion/scripts/axion-run.ts ` +
+        `--build-root ${ctx.buildRoot} ` +
+        `--project-name ${ctx.projectName} ` +
+        `--unlock-if-stale`;
+      
+      const result = runAxionCommand(unlockCmd, ctx);
+      
+      // Command should complete successfully
+      expect(result.code).toBe(0);
+      
+      // Parse JSON output - should indicate lock was NOT removed
+      const combinedOutput = result.stdout + result.stderr;
+      const jsonMatch = combinedOutput.match(/\{[\s\S]*"status"[\s\S]*\}/);
+      const output = JSON.parse(jsonMatch![0]);
+      
+      expect(output.unlocked_stale_lock).toBe(false);
+      
+      // Fresh lock should still exist
+      expect(fs.existsSync(lockPath), 'Fresh lock should still exist').toBe(true);
       
       const currentLock = JSON.parse(fs.readFileSync(lockPath, 'utf-8'));
       expect(currentLock.run_id).toBe(freshLock.run_id);
       
-      console.log('  ✓ Fresh lock preserved');
+      console.log('  ✓ Fresh lock preserved (not removed as stale)');
+    });
+    
+    it('should emit MISSING_WORKSPACE_CONTEXT when project name cannot be resolved', () => {
+      console.log('\n[TEST] MISSING_WORKSPACE_CONTEXT on missing project name');
+      
+      // Create a temp build root with no RPBS
+      const emptyBuildRoot = path.join(ctx.buildRoot, '_empty_build');
+      fs.mkdirSync(path.join(emptyBuildRoot, 'axion'), { recursive: true });
+      
+      // Use --unlock-if-stale without --project-name and no RPBS
+      const unlockCmd = `npx tsx axion/scripts/axion-run.ts ` +
+        `--build-root ${emptyBuildRoot} ` +
+        `--unlock-if-stale`;
+      
+      const result = runAxionCommand(unlockCmd, ctx);
+      
+      // Should fail with exit code 1
+      expect(result.code).toBe(1);
+      
+      // Parse JSON output
+      const combinedOutput = result.stdout + result.stderr;
+      const jsonMatch = combinedOutput.match(/\{[\s\S]*"status"[\s\S]*\}/);
+      expect(jsonMatch, 'Should have JSON output').toBeTruthy();
+      
+      const output = JSON.parse(jsonMatch![0]);
+      expect(output.status).toBe('failed');
+      expect(output.reason_codes).toContain('MISSING_WORKSPACE_CONTEXT');
+      expect(output.hint).toBeDefined();
+      expect(output.hint.some((h: string) => h.includes('--project-name'))).toBe(true);
+      
+      // Clean up
+      fs.rmSync(emptyBuildRoot, { recursive: true, force: true });
+      
+      console.log('  ✓ MISSING_WORKSPACE_CONTEXT emitted correctly');
     });
   });
   
