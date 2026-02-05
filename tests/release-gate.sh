@@ -56,6 +56,11 @@ echo "   (Full workflows: kit-create → verify)"
 run_check "e2e-tests" "npx vitest run tests/e2e --passWithNoTests --testTimeout=60000"
 
 echo ""
+echo "5b. E2E Two-Root Golden Path"
+echo "   (Real workflow: kit → scaffold → build → test → activate)"
+run_check "e2e-golden" "npx vitest run tests/suites/e2e.two-root.test.ts --passWithNoTests --testTimeout=180000"
+
+echo ""
 echo "6. Doctor Extension Tests"
 echo "   (Active build, pollution, run lock checks)"
 run_check "doctor-tests" "npx vitest run tests/suites/doctor-extensions.test.ts --passWithNoTests --testTimeout=60000"
