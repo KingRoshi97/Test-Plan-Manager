@@ -6,9 +6,17 @@ This directory contains fixtures that demonstrate expected AXION behaviors. Each
 
 ```
 fixtures/
-├── blocked_by/           # Scenarios that should emit blocked_by status
-├── security_gate/        # Security policy violation scenarios
-├── schema_change/        # Schema migration test data
+├── active_build/
+│   ├── missing/              # Kit without ACTIVE_BUILD.json
+│   ├── invalid_json/         # ACTIVE_BUILD.json with invalid JSON
+│   └── points_to_missing_root/  # ACTIVE_BUILD.json pointing to nonexistent path
+├── blocked_by/               # Scenarios that should emit blocked_by status
+├── pollution/
+│   └── axion_contains_domains/  # Polluted axion snapshot
+├── run_lock/
+│   └── stale/                # Stale run lock scenarios
+├── schema_change/            # Schema migration test data
+├── security_gate/            # Security policy violation scenarios
 └── README.md
 ```
 
