@@ -80,6 +80,26 @@ The test suite includes:
 - Snapshot integrity
 - README generation
 
+### E2E Suite Tests (tests/suites/)
+
+**Two-Root Golden Path** (`e2e.two-root.test.ts`):
+- Full workflow: kit-create → scaffold-app → build-plan → test → activate → run-app dry-run
+- Validates documentation-first pipeline gates (docs_locked, verify_pass)
+- Two-root safety assertions (no system pollution, artifacts under workspace)
+- Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS, preserve on FAIL)
+
+**Real Results Smoke Test** (`e2e.real-results.test.ts`):
+- Spawns scaffolded app and polls `/api/health` endpoint
+- Hardened implementation:
+  - Reliable port reservation via OS-assigned port
+  - Spawn via `node --import tsx` (more reliable than npx)
+  - Deadline-based polling (25s) with bounded backoff (100ms → 500ms)
+  - Early-exit detection with stderr capture
+  - Guaranteed process cleanup (SIGTERM → wait → SIGKILL)
+- Records metrics: startup_ms, health_latency_ms, response body
+- Writes `real_test_report.json` to registry/
+- Optional in release gate (requires npm install)
+
 ## AXION Pipeline Stages
 
 1. **kit-create** - Initialize a new Agent Kit workspace
