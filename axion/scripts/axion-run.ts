@@ -24,6 +24,7 @@ import * as path from 'path';
 import { spawn, SpawnOptions } from 'child_process';
 import { fileURLToPath } from 'url';
 import * as crypto from 'crypto';
+import { writeJsonAtomic, cleanupOrphanTmp } from '../lib/atomic-writer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -296,7 +297,7 @@ function loadStageMarkers(markersPath: string): StageMarkers {
 }
 
 function saveStageMarkers(markersPath: string, markers: StageMarkers): void {
-  fs.writeFileSync(markersPath, JSON.stringify(markers, null, 2));
+  writeJsonAtomic(markersPath, markers);
 }
 
 function loadVerifyReport(reportPath: string): VerifyReport | null {
@@ -355,7 +356,7 @@ function acquireLock(paths: ReturnType<typeof getPaths>, runId: string, args: st
     args,
   };
   
-  fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2));
+  writeJsonAtomic(lockPath, lock);
   return { acquired: true };
 }
 
@@ -424,7 +425,7 @@ function saveRunHistory(paths: ReturnType<typeof getPaths>, history: RunHistory)
   }
   
   const filePath = path.join(paths.runHistory, `${history.run_id}.json`);
-  fs.writeFileSync(filePath, JSON.stringify(history, null, 2));
+  writeJsonAtomic(filePath, history);
 }
 
 // ============================================================================
@@ -960,6 +961,18 @@ Examples:
   // Re-compute paths after potential root change
   // In two-root mode, buildRoot is the system root; root is now the workspace root
   paths = getPaths(root, buildRoot || undefined);
+  
+  // ========================================================================
+  // STEP 0.5: CLEANUP ORPHAN TMP FILES
+  // ========================================================================
+  
+  // Clean up any orphan .tmp files from interrupted previous runs
+  if (fs.existsSync(paths.registry)) {
+    const cleanupResult = cleanupOrphanTmp(paths.registry);
+    if (cleanupResult.removed.length > 0 && !jsonFlag) {
+      log('WARN', `Cleaned up ${cleanupResult.removed.length} orphan tmp file(s) from previous run`);
+    }
+  }
   
   // ========================================================================
   // STEP 1: PREFLIGHT

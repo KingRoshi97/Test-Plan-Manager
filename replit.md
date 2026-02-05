@@ -126,6 +126,34 @@ The test suite includes:
 - Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
 - Required in release gate (Step 5e)
 
+**Atomic Writes Tests** (`e2e.atomic-writes.test.ts`):
+- Validates crash resilience via atomic write patterns (write-to-tmp + rename)
+- Tests:
+  1. Target artifact survives AFTER_TMP_WRITE failpoint (verify_report.json unchanged after crash)
+  2. Orphan .tmp cleanup on next run (stale tmp files from interrupted runs are removed)
+  3. Corrupt .tmp doesn't poison reads (valid artifacts read correctly despite corrupt tmp files)
+- Uses `AXION_FAILPOINT` env var to simulate crash conditions
+- Critical artifacts protected: verify_report.json, stage_markers.json, run.lock, ACTIVE_BUILD.json
+- Proves kits survive agent interruptions mid-write
+- Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
+- Required in release gate (Step 5f)
+
+## Atomic Writer Library
+
+Located at `axion/lib/atomic-writer.ts`, provides crash-resilient file writing:
+
+```typescript
+// API
+writeJsonAtomic(path: string, data: unknown, opts?: AtomicWriteOptions): void;
+writeTextAtomic(path: string, text: string, opts?: AtomicWriteOptions): void;
+cleanupOrphanTmp(dir: string, pattern?: RegExp): { removed: string[]; errors: string[] };
+
+// Failpoints for testing (via AXION_FAILPOINT env var)
+type Failpoint = 'AFTER_TMP_WRITE' | 'BEFORE_RENAME';
+```
+
+Pattern: Write to `.{basename}.tmp`, then atomic rename. Original file preserved if crash occurs.
+
 ## AXION Pipeline Stages
 
 1. **kit-create** - Initialize a new Agent Kit workspace

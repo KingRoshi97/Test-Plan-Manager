@@ -76,6 +76,11 @@ echo "   (Kit relocation, path resolution, no hardcoded paths)"
 run_check "e2e-portability" "npx vitest run tests/suites/e2e.portability.test.ts --passWithNoTests --testTimeout=200000"
 
 echo ""
+echo "5f. E2E Atomic Writes Tests"
+echo "   (Crash resilience, orphan cleanup, artifact integrity)"
+run_check "e2e-atomic-writes" "npx vitest run tests/suites/e2e.atomic-writes.test.ts --passWithNoTests --testTimeout=120000"
+
+echo ""
 echo "6. Doctor Extension Tests"
 echo "   (Active build, pollution, run lock checks)"
 run_check "doctor-tests" "npx vitest run tests/suites/doctor-extensions.test.ts --passWithNoTests --testTimeout=60000"
