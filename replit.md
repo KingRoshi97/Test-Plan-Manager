@@ -108,7 +108,8 @@ The test suite includes:
   - Stale lock detection (30 minute threshold)
   - Stale lock auto-cleanup
   - Corrupted lock file handling
-  - --unlock-if-stale command acceptance
+  - --unlock-if-stale workspace path resolution in two-root mode
+  - MISSING_WORKSPACE_CONTEXT failure when project name cannot be resolved
 - Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
 - Required in release gate (Step 5d)
 

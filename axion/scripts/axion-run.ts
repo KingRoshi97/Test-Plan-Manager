@@ -221,6 +221,58 @@ function getPaths(workspaceRoot: string, systemRoot?: string) {
   };
 }
 
+/**
+ * Resolve workspace context for two-root mode.
+ * 
+ * This is a pure read-only function that determines the workspace path
+ * from build root and project name. Used by both normal runs and --unlock-if-stale.
+ * 
+ * @param buildRoot - The build root containing axion/ system folder
+ * @param projectNameArg - Optional project name override
+ * @returns Workspace context or null if project name cannot be determined
+ */
+function resolveWorkspaceContext(
+  buildRoot: string,
+  projectNameArg?: string
+): { buildRoot: string; projectName: string; workspaceRoot: string } | null {
+  const resolvedBuildRoot = path.resolve(buildRoot);
+  
+  // Use provided project name or extract from RPBS
+  let projectName = projectNameArg;
+  
+  if (!projectName) {
+    // Read from RPBS_Product.md - same logic as axion-prepare-root.ts
+    const rpbsPath = path.join(resolvedBuildRoot, 'axion', 'source_docs', 'product', 'RPBS_Product.md');
+    
+    if (fs.existsSync(rpbsPath)) {
+      const content = fs.readFileSync(rpbsPath, 'utf-8');
+      
+      // Look for **Project:** field
+      const projectMatch = content.match(/\*\*Project:\*\*\s*(.+)/);
+      if (projectMatch) {
+        const name = projectMatch[1].trim();
+        // If it's a placeholder, treat as null
+        if (!(name.startsWith('{{') && name.endsWith('}}'))) {
+          // Sanitize: lowercase, replace spaces/special chars with dashes
+          projectName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        }
+      }
+    }
+  }
+  
+  if (!projectName) {
+    return null;
+  }
+  
+  const workspaceRoot = path.join(resolvedBuildRoot, projectName);
+  
+  return {
+    buildRoot: resolvedBuildRoot,
+    projectName,
+    workspaceRoot
+  };
+}
+
 // ============================================================================
 // FILE LOADERS
 // ============================================================================
@@ -811,8 +863,38 @@ Examples:
   
   // Handle unlock-if-stale
   if (unlockIfStaleFlag) {
-    unlockIfStale(paths);
-    console.log(JSON.stringify({ status: 'success', stage: 'unlock', action: 'unlock-if-stale' }));
+    // In two-root mode, resolve workspace context first
+    if (buildRoot) {
+      const context = resolveWorkspaceContext(buildRoot, projectName ?? undefined);
+      
+      if (!context) {
+        // Cannot determine workspace path
+        console.log(JSON.stringify({
+          status: 'failed',
+          stage: 'run',
+          reason_codes: ['MISSING_WORKSPACE_CONTEXT'],
+          hint: [
+            'Provide --project-name <name> or ensure RPBS_Product.md contains a project name',
+            `Expected RPBS at: ${path.join(buildRoot, 'axion', 'source_docs', 'product', 'RPBS_Product.md')}`
+          ]
+        }, null, 2));
+        process.exit(1);
+      }
+      
+      // Recompute paths with resolved workspace
+      paths = getPaths(context.workspaceRoot, buildRoot);
+    }
+    
+    const lockPath = paths.runLock;
+    const unlocked = unlockIfStale(paths);
+    
+    console.log(JSON.stringify({
+      status: 'success',
+      stage: 'unlock',
+      action: 'unlock-if-stale',
+      unlocked_stale_lock: unlocked,
+      lock_path: lockPath
+    }, null, 2));
     process.exit(0);
   }
   
