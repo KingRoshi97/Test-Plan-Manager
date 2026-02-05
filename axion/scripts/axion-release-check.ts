@@ -151,6 +151,15 @@ const CHECK_REGISTRY: ReleaseCheck[] = [
     args: ['-c', 'npx vitest run tests/suites/e2e.atomic-writes.test.ts --passWithNoTests --testTimeout=120000'],
   },
   {
+    id: 'e2e-multi-build',
+    name: 'E2E Multi-Build Routing Tests',
+    description: 'Pointer-explicit build switching, no cross-contamination',
+    required: true,
+    timeout_ms: 180000,
+    command: 'bash',
+    args: ['-c', 'npx vitest run tests/suites/e2e.multi-build-routing.test.ts --passWithNoTests --testTimeout=180000'],
+  },
+  {
     id: 'doctor-tests',
     name: 'Doctor Extension Tests',
     description: 'Active build, pollution, run lock checks',

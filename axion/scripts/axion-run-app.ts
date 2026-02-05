@@ -29,6 +29,9 @@ const __dirname = path.dirname(__filename);
 interface RunAppResult {
   status: 'success' | 'failed' | 'blocked_by';
   stage: 'run-app';
+  pointer_path?: string;
+  active_build_root?: string;
+  resolved_app_path?: string;
   app_path?: string;
   project_name?: string;
   command?: string;
@@ -155,13 +158,16 @@ async function main(): Promise<void> {
   // Load active build pointer
   const pointer = loadActivePointer(options.pointerPath);
   
+  const absPointerPath = path.resolve(options.pointerPath);
+
   if (!pointer) {
     const result: RunAppResult = {
       status: 'blocked_by',
       stage: 'run-app',
+      pointer_path: absPointerPath,
       reason_codes: ['NO_ACTIVE_BUILD'],
       hint: [
-        `No active build found at ${options.pointerPath}`,
+        `No active build found at ${absPointerPath}`,
         'Run axion-activate to set the active build first',
         'Or provide --pointer <path> to specify ACTIVE_BUILD.json location'
       ]
@@ -170,22 +176,47 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const activeBuildRoot = pointer.active_build_root;
   const appPath = pointer.app_path;
   const projectName = pointer.project_name;
+  const resolvedAppPath = path.isAbsolute(appPath)
+    ? appPath
+    : path.resolve(activeBuildRoot, appPath);
 
-  log(`[INFO] Active build: ${pointer.active_build_root}`, options.jsonOutput);
+  log(`[INFO] Pointer: ${absPointerPath}`, options.jsonOutput);
+  log(`[INFO] Active build: ${activeBuildRoot}`, options.jsonOutput);
   log(`[INFO] Project: ${projectName}`, options.jsonOutput);
-  log(`[INFO] App path: ${appPath}`, options.jsonOutput);
+  log(`[INFO] Resolved app path: ${resolvedAppPath}`, options.jsonOutput);
   log(`[INFO] Activated at: ${pointer.activated_at}`, options.jsonOutput);
 
-  // Check app path exists
-  if (!fs.existsSync(appPath)) {
+  if (!resolvedAppPath.startsWith(activeBuildRoot)) {
     const result: RunAppResult = {
       status: 'failed',
       stage: 'run-app',
+      pointer_path: absPointerPath,
+      active_build_root: activeBuildRoot,
+      resolved_app_path: resolvedAppPath,
+      reason_codes: ['APP_PATH_OUTSIDE_BUILD_ROOT'],
+      hint: [
+        `Resolved app path escapes build root: ${resolvedAppPath}`,
+        `Build root: ${activeBuildRoot}`,
+        'This is a path traversal safety violation'
+      ]
+    };
+    console.log(JSON.stringify(result, null, 2));
+    process.exit(1);
+  }
+
+  if (!fs.existsSync(resolvedAppPath)) {
+    const result: RunAppResult = {
+      status: 'failed',
+      stage: 'run-app',
+      pointer_path: absPointerPath,
+      active_build_root: activeBuildRoot,
+      resolved_app_path: resolvedAppPath,
       reason_codes: ['APP_PATH_NOT_FOUND'],
       hint: [
-        `App path not found: ${appPath}`,
+        `App path not found: ${resolvedAppPath}`,
         'Run scaffold-app and build-exec to create the app'
       ]
     };
@@ -193,20 +224,22 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Detect start command
-  const startCommand = detectStartCommand(appPath);
+  const startCommand = detectStartCommand(resolvedAppPath);
   log(`[INFO] Start command: ${startCommand}`, options.jsonOutput);
 
   if (options.dryRun) {
     log('\n[DRY-RUN] Would run the following:', options.jsonOutput);
     if (options.install) {
-      log(`  cd ${appPath} && npm install`, options.jsonOutput);
+      log(`  cd ${resolvedAppPath} && npm install`, options.jsonOutput);
     }
-    log(`  cd ${appPath} && ${startCommand}`, options.jsonOutput);
+    log(`  cd ${resolvedAppPath} && ${startCommand}`, options.jsonOutput);
     
     const result: RunAppResult = {
       status: 'success',
       stage: 'run-app',
+      pointer_path: absPointerPath,
+      active_build_root: activeBuildRoot,
+      resolved_app_path: resolvedAppPath,
       app_path: appPath,
       project_name: projectName,
       command: startCommand,
@@ -216,15 +249,17 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Run npm install if requested
   if (options.install) {
     log('\n[INFO] Running npm install...', options.jsonOutput);
     try {
-      await runCommand('npm install', appPath);
+      await runCommand('npm install', resolvedAppPath);
     } catch (err: any) {
       const result: RunAppResult = {
         status: 'failed',
         stage: 'run-app',
+        pointer_path: absPointerPath,
+        active_build_root: activeBuildRoot,
+        resolved_app_path: resolvedAppPath,
         reason_codes: ['INSTALL_FAILED'],
         hint: ['npm install failed', err.message]
       };
@@ -236,13 +271,15 @@ async function main(): Promise<void> {
   log('\n[INFO] Starting app...', options.jsonOutput);
   log('', options.jsonOutput);
 
-  // Start the app (this will run until interrupted)
   try {
-    await runCommand(startCommand, appPath);
+    await runCommand(startCommand, resolvedAppPath);
     
     const result: RunAppResult = {
       status: 'success',
       stage: 'run-app',
+      pointer_path: absPointerPath,
+      active_build_root: activeBuildRoot,
+      resolved_app_path: resolvedAppPath,
       app_path: appPath,
       project_name: projectName,
       command: startCommand
@@ -252,6 +289,9 @@ async function main(): Promise<void> {
     const result: RunAppResult = {
       status: 'failed',
       stage: 'run-app',
+      pointer_path: absPointerPath,
+      active_build_root: activeBuildRoot,
+      resolved_app_path: resolvedAppPath,
       reason_codes: ['START_FAILED'],
       hint: ['Failed to start app', err.message]
     };
