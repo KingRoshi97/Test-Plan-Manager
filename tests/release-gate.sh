@@ -56,7 +56,17 @@ echo "   (Full workflows: kit-create → verify)"
 run_check "e2e-tests" "npx vitest run tests/e2e --passWithNoTests --testTimeout=60000"
 
 echo ""
-echo "6. No Pollution Check"
+echo "6. Doctor Extension Tests"
+echo "   (Active build, pollution, run lock checks)"
+run_check "doctor-tests" "npx vitest run tests/suites/doctor-extensions.test.ts --passWithNoTests --testTimeout=60000"
+
+echo ""
+echo "7. Documentation Drift Check"
+echo "   (Script inventory, contamination scan)"
+run_check "docs-check" "npx tsx axion/scripts/axion-docs-check.ts --json"
+
+echo ""
+echo "8. No Pollution Check"
 echo "   (No writes into system root)"
 run_check "no-pollution" "test ! -d ./axion/test-output"
 
