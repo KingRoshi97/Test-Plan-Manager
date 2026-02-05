@@ -187,6 +187,23 @@ The test suite includes:
 - Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
 - Required in release gate (Step 5f)
 
+**Multi-Build Routing Tests** (`e2e.multi-build-routing.test.ts`):
+- Validates pointer-explicit build switching is deterministic and isolated
+- Why pointer-explicit mode is required: `axion-run-app` defaults to CWD-relative
+  ACTIVE_BUILD.json which makes multi-build routing flaky under automation.
+  Using `--pointer` guarantees deterministic resolution regardless of working directory.
+- Tests:
+  1. Pointer-explicit switching: Creates two kits (A, B), provisions each
+     (kit-create → scaffold-app → activate), runs four dry-runs alternating
+     A/B pointers, asserts `resolved_app_path` starts with correct build root
+  2. CWD-relative default pointer: Spawns `run-app --dry-run` with `cwd=A`
+     and no `--pointer`, asserts resolution under A; repeats for B
+- Safety assertions:
+  - Hash-compare both ACTIVE_BUILD.json files before/after all runs (no cross-contamination)
+  - No writes into system snapshots (pollution check)
+- Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
+- Required in release gate
+
 **Release Check Tests** (`release-check.test.ts`):
 - Validates the axion-release-check.ts script output and behavior
 - Tests:
