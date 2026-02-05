@@ -424,8 +424,9 @@ Web app should parse and render (not interpret logs):
 | `axion-upgrade` | No | Maintenance | System-only (not web-invoked) |
 | `axion-overhaul` | No | Maintenance | System-only (not web-invoked) |
 | `axion-preflight` | No | Maintenance | Internal pre-execution |
+| `axion-docs-check` | No | Validation | Release gate documentation validator |
 
-**Summary:** 22 web-invoked scripts, 7 internal-only
+**Summary:** 22 web-invoked scripts, 8 internal-only
 
 ---
 

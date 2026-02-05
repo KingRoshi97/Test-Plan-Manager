@@ -10,6 +10,30 @@ This is **not** a web app spec — see `docs/product/WEBAPP_FEATURE_MAPPING.md` 
 
 ## Entries (Append-Only)
 
+### 2026-02-05 — Documentation drift detection (axion-docs-check)
+
+**New script:** `axion-docs-check.ts`
+
+**Purpose:** Prevent documentation drift as the system evolves
+
+**Checks performed:**
+- Script inventory completeness (all scripts in WEBAPP_FEATURE_MAPPING)
+- Orphan detection (scripts exist but not mapped)
+- Contamination scan (banned dev-speak tokens in web mapping)
+- Required docs presence (INDEX, UPGRADE_LOG, FEATURE_MAPPING)
+
+**JSON output:**
+- `status`: PASS | WARN | FAIL
+- `issues`: { missing_scripts, orphan_scripts, contamination, missing_docs }
+- `summary`: { scripts_mapped, scripts_exist, web_invoked, internal_only }
+- `suggestions`: array of fix hints
+
+**Release gate integration:** Added as step 7 in tests/release-gate.sh
+
+**Tests:** 6 new tests in tests/suites/docs-check.test.ts
+
+---
+
 ### 2026-02-05 — Core contract + doctor extension milestone
 
 **Tests:** 45 passing (33 core contract + 12 doctor extension)
