@@ -389,7 +389,76 @@ Web app should parse and render (not interpret logs):
 
 ---
 
-# 4) Open Questions (Track as system evolves)
+# 4) Script Inventory (Web App Controller Reference)
+
+> Complete list of all AXION scripts. **Web Invoked** = the web app backend calls this directly.
+
+| Script | Web Invoked | Category | Web App Usage |
+|--------|-------------|----------|---------------|
+| `axion-kit-create` | Yes | Build | New Build Wizard creates kits |
+| `axion-prepare-root` | No | Build | Internal to kit-create |
+| `axion-activate` | Yes | Routing | Activate button calls this |
+| `axion-active` | Yes | Routing | Active Build panel reads state |
+| `axion-run` | Yes | Pipeline | Pipeline runner orchestrator |
+| `axion-init` | Yes | Docs | Pipeline stepper (via run or direct) |
+| `axion-generate` | Yes | Docs | Pipeline stepper |
+| `axion-seed` | Yes | Docs | Pipeline stepper |
+| `axion-draft` | Yes | Docs | Pipeline stepper |
+| `axion-review` | Yes | Docs | Pipeline stepper |
+| `axion-verify` | Yes | Docs | Verification dashboard trigger |
+| `axion-verify-seams` | No | Governance | Called by verify internally |
+| `axion-hash-templates` | No | Governance | Called by verify internally |
+| `axion-repair` | Yes | Docs | Repair center trigger |
+| `axion-lock` | Yes | Docs | Lock button in pipeline |
+| `axion-package` | Yes | Docs | Export center trigger |
+| `axion-scaffold-app` | Yes | App | App Build Center |
+| `axion-build-plan` | Yes | App | Plan Viewer trigger |
+| `axion-build` | Yes | App | Build execution |
+| `axion-test` | Yes | App | Test runner |
+| `axion-run-app` | Yes | App | Run panel |
+| `axion-deploy` | Yes | App | Deploy center |
+| `axion-doctor` | Yes | Diagnostics | System Health page |
+| `axion-status` | Yes | Diagnostics | Build Status display |
+| `axion-next` | Yes | Diagnostics | Command hints |
+| `axion-clean` | Yes | Maintenance | Maintenance page |
+| `axion-upgrade` | No | Maintenance | System-only (not web-invoked) |
+| `axion-overhaul` | No | Maintenance | System-only (not web-invoked) |
+| `axion-preflight` | No | Maintenance | Internal pre-execution |
+
+**Summary:** 22 web-invoked scripts, 7 internal-only
+
+---
+
+# 5) Artifacts Inventory (Web App Rendering Reference)
+
+> Complete list of artifacts the web app needs to read and render.
+
+| Artifact | Path | Web Renders | Render Context |
+|----------|------|-------------|----------------|
+| `manifest.json` | `<BUILD_ROOT>/` | Yes | Build Dashboard, Build Detail header |
+| `ACTIVE_BUILD.json` | Priority locations | Yes | Active Build panel, Routing page |
+| `stage_markers.json` | `<PROJECT>/registry/` | Yes | Pipeline Stepper badges |
+| `verify_report.json` | `<PROJECT>/registry/` | Yes | Verification Dashboard (structured violations) |
+| `verify_status.json` | `<PROJECT>/registry/` | Yes | Pipeline Stepper (pass/fail summary) |
+| `run_history/*.json` | `<PROJECT>/registry/run_history/` | Yes | Run History viewer |
+| `build_plan.json` | `<PROJECT>/registry/` | Yes | Plan Viewer (task graph) |
+| `test_report.json` | `<PROJECT>/registry/` | Yes | Test Viewer, Activation eligibility |
+| `run_lock.json` | `<PROJECT>/registry/` | Yes | Concurrency indicator (stale warning) |
+| `lock.json` | `<PROJECT>/registry/` | Yes | Lock status, Activation eligibility |
+| `erc/*` | `<PROJECT>/registry/erc/` | Yes | ERC Viewer (locked artifacts) |
+| `RPBS_Product.md` | `<BUILD>/axion/source_docs/product/` | Yes | RPBS Editor |
+| `REBS_Product.md` | `<BUILD>/axion/source_docs/product/` | Yes | REBS Editor |
+| `domains/<module>/README.md` | `<PROJECT>/domains/` | Yes | Module documentation viewer/editor |
+| `doctor JSON` | (stdout) | Yes | System Health page (all 3 sections) |
+
+**Doctor JSON sections to render:**
+- `active_build`: { configured, path, valid, build_root }
+- `pollution`: { clean, paths }
+- `run_lock`: { exists, stale, age_minutes }
+
+---
+
+# 6) Open Questions (Track as system evolves)
 - Where is the canonical `ACTIVE_BUILD.json` location in system mode? → Resolved: Priority order defined (env var → build root → kits/ → axion-builds/)
 - Do we support multiple stack profiles? Where is stack_profile.json stored and locked?
 - Do we implement build-exec in-system or keep "agent executes tasks" external?
@@ -397,7 +466,7 @@ Web app should parse and render (not interpret logs):
 
 ---
 
-# 5) Recent Changes
+# 7) Recent Changes
 
 **2026-02-05** — System Health page now uses extended `axion-doctor` JSON output with `active_build`, `pollution`, and `run_lock` sections for richer diagnostics display.
 
