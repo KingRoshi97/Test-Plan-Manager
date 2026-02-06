@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { Play, FolderTree, Shield, Zap } from "lucide-react";
+import { Play, FolderTree, Shield, Zap, Activity, FileText } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,8 @@ import { Sun, Moon } from "lucide-react";
 
 const navItems = [
   { title: "Pipeline", href: "/", icon: Play },
+  { title: "Status", href: "/status", icon: Activity },
+  { title: "Reports", href: "/reports", icon: FileText },
   { title: "Files", href: "/files", icon: FolderTree },
   { title: "Release Gate", href: "/release", icon: Shield },
 ];
