@@ -124,6 +124,27 @@ AXION defines a clear pipeline for kit creation and application development:
 
 **Pipeline position**: Runs after import + scaffold + build-plan. Orchestrates reconcile → build-exec → test → activate.
 
+### Journey E2E Tests
+`tests/suites/e2e.journeys.test.ts` — Product-level acceptance tests validating full user workflows through the AXION pipeline. No agent dependencies or nondeterminism; gate artifacts (verify + lock) are fixture-written since draft/review/verify require AI agent calls.
+
+**Greenfield Journey** (4 tests):
+1. `kit-create → generate → seed → fixture gates → scaffold-app → build-plan`
+2. First `iterate` (no `--allow-apply`): asserts `stopped_at_gate` at apply step, `next_commands` contains `--allow-apply`
+3. Second `iterate --allow-apply`: asserts `completed`, verifies `ACTIVE_BUILD.json`, `build_exec_report.json` with `summary.succeeded > 0`, all steps PASSED/SKIPPED
+4. Third `iterate` (no `--allow-apply`): asserts manifest not regenerated (fingerprint idempotency), manifest hash unchanged
+5. Two-root safety invariant: asserts no `domains/`, `registry/`, `app/` pollution inside `<B>/axion/`
+
+**Import Journey** (5 tests):
+1. Creates realistic fullstack source repo (Express + React + App.tsx + routes + `/api/health`)
+2. `kit-create → axion-import → generate → seed → fixture gates → scaffold-app → build-plan`
+3. Validates `import_report.json`: framework detection (express), health path found, ≥1 route detected
+4. Validates `import_facts.json`: valid `stack_id_candidate` (`default-web-saas`)
+5. `axion-reconcile`: zero CRITICAL mismatches (source aligns with scaffold conventions), non-critical items allowed
+6. `iterate --allow-apply`: completes full import→reconcile→iterate chain
+7. Two-root safety: no pollution inside `<B>/axion/`
+
+**Registered** in release gate as `e2e-journeys` (required, 360s timeout).
+
 ### Core System Contracts and Guarantees
 -   **Pipeline Guarantees**: Strict stage execution order (generate → seed → draft → review → verify → lock), enforced module dependencies, and preset-defined module scopes.
 -   **Diagnostic Guarantees**: Standardized SCREAMING_SNAKE_CASE reason codes, `blocked_by` responses with detailed status and hints, and known codes like `MISSING_SECTION`.

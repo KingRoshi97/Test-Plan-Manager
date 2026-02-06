@@ -14,6 +14,9 @@ uploads/
 # Development artifacts (pasted specs, screenshots)
 attached_assets/
 
+# Test run artifacts (temp workspaces from E2E tests)
+.axion_test_runs/
+
 # Release gate artifacts (generated on each run)
 axion/registry/release_gate_report.json
 axion/registry/release_gate_logs/

@@ -205,6 +205,15 @@ const CHECK_REGISTRY: ReleaseCheck[] = [
     args: ['-c', 'npx vitest run tests/suites/e2e.iterate.test.ts --passWithNoTests --testTimeout=300000'],
   },
   {
+    id: 'e2e-journeys',
+    name: 'E2E Journey Tests',
+    description: 'Greenfield + import full user workflows through complete pipeline',
+    required: true,
+    timeout_ms: 360000,
+    command: 'bash',
+    args: ['-c', 'npx vitest run tests/suites/e2e.journeys.test.ts --passWithNoTests --testTimeout=300000'],
+  },
+  {
     id: 'doctor-tests',
     name: 'Doctor Extension Tests',
     description: 'Active build, pollution, run lock checks',
