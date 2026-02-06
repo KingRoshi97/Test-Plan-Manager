@@ -169,6 +169,15 @@ const CHECK_REGISTRY: ReleaseCheck[] = [
     args: ['-c', 'npx vitest run tests/suites/e2e.build-exec.test.ts --passWithNoTests --testTimeout=180000'],
   },
   {
+    id: 'e2e-stack-profile',
+    name: 'E2E Stack Profile Contract Tests',
+    description: 'Stack profile wire-through: scaffold writes profile + anchors, build-plan includes stack_id, build-exec manifest includes stack_id',
+    required: true,
+    timeout_ms: 180000,
+    command: 'bash',
+    args: ['-c', 'npx vitest run tests/suites/e2e.stack-profile.test.ts --passWithNoTests --testTimeout=180000'],
+  },
+  {
     id: 'doctor-tests',
     name: 'Doctor Extension Tests',
     description: 'Active build, pollution, run lock checks',

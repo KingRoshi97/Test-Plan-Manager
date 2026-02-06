@@ -49,6 +49,13 @@ function setupTwoRootPaths(buildRoot: string, projectName: string): void {
   CONTRACTS_README = path.join(WORKSPACE_ROOT, 'domains', 'contracts', 'README.md');
 }
 
+interface StackProfileConventions {
+  app_dir: string;
+  server_entry: string;
+  health_path: string;
+  anchors: Record<string, string>;
+}
+
 interface StackProfile {
   id: string;
   label: string;
@@ -74,6 +81,21 @@ interface StackProfile {
   };
 }
 
+interface ResolvedStackProfile {
+  version: string;
+  stack_id: string;
+  language: string;
+  runtime: string;
+  package_manager: string;
+  app: {
+    type: string;
+    framework: string;
+    frontend: { framework: string };
+    styling: string;
+  };
+  conventions: StackProfileConventions;
+}
+
 interface ScaffoldResult {
   status: 'success' | 'blocked_by' | 'failed';
   stage: string;
@@ -93,6 +115,44 @@ function loadStackProfiles(): Record<string, StackProfile> {
   }
   const data = JSON.parse(fs.readFileSync(STACK_PROFILES_PATH, 'utf-8'));
   return data.profiles || {};
+}
+
+function buildResolvedProfile(profile: StackProfile): ResolvedStackProfile {
+  return {
+    version: '1.0.0',
+    stack_id: profile.id === 'detected' ? 'default-web-saas' : profile.id,
+    language: profile.backend.language.toLowerCase().includes('typescript') ? 'ts' : profile.backend.language.toLowerCase(),
+    runtime: profile.backend.runtime.toLowerCase().includes('node') ? 'node' : profile.backend.runtime.toLowerCase(),
+    package_manager: 'npm',
+    app: {
+      type: 'web',
+      framework: profile.backend.framework.toLowerCase().replace('.js', ''),
+      frontend: { framework: profile.frontend.framework.toLowerCase() },
+      styling: profile.frontend.styling.toLowerCase().includes('tailwind') ? 'tailwind' : profile.frontend.styling.toLowerCase(),
+    },
+    conventions: {
+      app_dir: 'app',
+      server_entry: 'server/index.ts',
+      health_path: '/api/health',
+      anchors: {
+        ROUTES: '<!-- AXION:ANCHOR:ROUTES -->',
+        MIDDLEWARE: '<!-- AXION:ANCHOR:MIDDLEWARE -->',
+        CLIENT_ROUTES: '<!-- AXION:ANCHOR:CLIENT_ROUTES -->',
+        SERVER_CONFIG: '<!-- AXION:ANCHOR:SERVER_CONFIG -->',
+      },
+    },
+  };
+}
+
+function writeStackProfile(workspaceRoot: string, resolved: ResolvedStackProfile, dryRun: boolean): void {
+  const profilePath = path.join(workspaceRoot, 'registry', 'stack_profile.json');
+  if (!dryRun) {
+    const dir = path.dirname(profilePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(profilePath, JSON.stringify(resolved, null, 2), 'utf-8');
+  }
 }
 
 function detectStackFromDocs(): StackProfile | null {
@@ -278,7 +338,9 @@ import { registerRoutes } from './routes';
 
 const app = express();
 app.use(express.json());
+// <!-- AXION:ANCHOR:MIDDLEWARE -->
 
+// <!-- AXION:ANCHOR:SERVER_CONFIG -->
 registerRoutes(app);
 
 const PORT = process.env.PORT || 5000;
@@ -299,7 +361,7 @@ export function registerRoutes(app: Express) {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // TODO: Add routes based on locked API contracts documentation
+  // <!-- AXION:ANCHOR:ROUTES -->
 }
 `;
   
@@ -336,6 +398,7 @@ export default function App() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      {/* <!-- AXION:ANCHOR:CLIENT_ROUTES --> */}
       <Route component={NotFound} />
     </Switch>
   );
@@ -575,10 +638,14 @@ function main() {
     ];
   }
   
-  // Write scaffold report in two-root mode
+  // Write scaffold report and stack profile in two-root mode
   if (isTwoRootMode) {
     writeScaffoldReport(WORKSPACE_ROOT, filesCreated, profile, dryRunFlag);
     if (!jsonFlag) console.log('[INFO] Created app_scaffold_report.json');
+
+    const resolved = buildResolvedProfile(profile);
+    writeStackProfile(WORKSPACE_ROOT, resolved, dryRunFlag);
+    if (!jsonFlag) console.log('[INFO] Created registry/stack_profile.json');
   }
   
   if (!jsonFlag) console.log(`\n[SUCCESS] Created ${filesCreated.length} files\n`);
