@@ -1,21 +1,74 @@
 import { type Express, type Request, type Response } from 'express';
-import { spawn, execSync } from 'child_process';
+import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { RunRequest, RunResult, FileEntry, FileContent, WorkspaceInfo } from '../shared/schema.js';
+import type { RunResult, FileEntry, FileContent, WorkspaceInfo } from '../shared/schema.js';
 
 const PROJECT_ROOT = process.cwd();
 const WORKSPACES_DIR = path.join(PROJECT_ROOT, 'workspaces');
-
-function getWorkspacePath(projectName: string): string {
-  return path.join(WORKSPACES_DIR, projectName);
-}
 
 function ensureWorkspacesDir() {
   if (!fs.existsSync(WORKSPACES_DIR)) {
     fs.mkdirSync(WORKSPACES_DIR, { recursive: true });
   }
 }
+
+interface PipelineStep {
+  cmd: string;
+  args: (projectName: string, buildRoot: string, body: Record<string, unknown>) => string[];
+  label: string;
+  cwd?: (buildRoot: string) => string;
+  needsWorkspace?: boolean;
+}
+
+const pipelineSteps: Record<string, PipelineStep> = {
+  'kit-create': {
+    cmd: 'npx',
+    args: (pn, _br) => ['tsx', 'axion/scripts/axion-kit-create.ts', '--target', path.join(WORKSPACES_DIR, pn), '--project-name', pn, '--source', path.join(PROJECT_ROOT, 'axion'), '--force', '--json'],
+    label: 'kit-create',
+  },
+  'generate': {
+    cmd: 'node',
+    args: () => ['axion/scripts/axion-generate.mjs', '--all'],
+    label: 'generate',
+    cwd: (br) => br,
+  },
+  'seed': {
+    cmd: 'node',
+    args: () => ['axion/scripts/axion-seed.mjs', '--all'],
+    label: 'seed',
+    cwd: (br) => br,
+  },
+  'scaffold-app': {
+    cmd: 'npx',
+    args: (pn, br) => ['tsx', 'axion/scripts/axion-scaffold-app.ts', '--build-root', br, '--project-name', pn, '--override', 'dev_build', '--json'],
+    label: 'scaffold-app',
+  },
+  'build-plan': {
+    cmd: 'npx',
+    args: (pn, br) => ['tsx', 'axion/scripts/axion-build-plan.ts', '--build-root', br, '--project-name', pn, '--json'],
+    label: 'build-plan',
+  },
+  'iterate': {
+    cmd: 'npx',
+    args: (pn, br, body) => {
+      const a = ['tsx', 'axion/scripts/axion-iterate.ts', '--build-root', br, '--project-name', pn, '--json'];
+      if (body.allowApply) a.push('--allow-apply');
+      return a;
+    },
+    label: 'iterate',
+  },
+  'import': {
+    cmd: 'npx',
+    args: (pn, br, body) => ['tsx', 'axion/scripts/axion-import.ts', '--source-root', String(body.sourcePath || ''), '--build-root', br, '--project-name', pn, '--json'],
+    label: 'import',
+  },
+  'reconcile': {
+    cmd: 'npx',
+    args: (pn, br) => ['tsx', 'axion/scripts/axion-reconcile.ts', '--build-root', br, '--project-name', pn, '--json'],
+    label: 'reconcile',
+  },
+};
 
 export function registerRoutes(app: Express) {
   app.get('/api/health', (_req: Request, res: Response) => {
@@ -46,133 +99,114 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  app.post('/api/pipeline/kit-create', async (req: Request, res: Response) => {
-    const { projectName } = req.body;
-    if (!projectName || typeof projectName !== 'string') {
-      res.status(400).json({ error: 'projectName is required' });
-      return;
-    }
+  for (const [stepId, step] of Object.entries(pipelineSteps)) {
+    app.post(`/api/pipeline/${stepId}`, async (req: Request, res: Response) => {
+      const { projectName } = req.body;
+      if (!projectName || typeof projectName !== 'string') {
+        res.status(400).json({ error: 'projectName is required' });
+        return;
+      }
+      ensureWorkspacesDir();
+      const buildRoot = path.join(WORKSPACES_DIR, projectName);
+      const args = step.args(projectName, buildRoot, req.body);
+      const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+      const result = await runCommand(step.cmd, args, step.label, cwd);
+      res.json(result);
+    });
 
-    ensureWorkspacesDir();
-    const targetPath = path.join(WORKSPACES_DIR, projectName);
+    app.get(`/api/pipeline/${stepId}/stream`, (req: Request, res: Response) => {
+      const bodyParam = req.query.body as string;
+      if (!bodyParam) {
+        res.status(400).json({ error: 'body query param required' });
+        return;
+      }
 
-    const result = await runCommand('npx', [
-      'tsx', 'axion/scripts/axion-kit-create.ts',
-      '--target', targetPath,
-      '--project-name', projectName,
-      '--source', path.join(PROJECT_ROOT, 'axion'),
-      '--force',
-      '--json',
-    ], 'kit-create');
+      let body: Record<string, unknown>;
+      try {
+        body = JSON.parse(bodyParam);
+      } catch {
+        res.status(400).json({ error: 'invalid JSON in body param' });
+        return;
+      }
 
-    res.json(result);
-  });
+      const projectName = body.projectName as string;
+      if (!projectName) {
+        res.status(400).json({ error: 'projectName required in body' });
+        return;
+      }
 
-  app.post('/api/pipeline/generate', async (req: Request, res: Response) => {
-    const { projectName } = req.body;
-    if (!projectName) { res.status(400).json({ error: 'projectName required' }); return; }
+      ensureWorkspacesDir();
+      const buildRoot = path.join(WORKSPACES_DIR, projectName);
+      const args = step.args(projectName, buildRoot, body);
+      const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
 
-    const buildRoot = path.join(WORKSPACES_DIR, projectName);
-    const result = await runCommand('node', [
-      'axion/scripts/axion-generate.mjs', '--all',
-    ], 'generate', buildRoot);
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      });
 
-    res.json(result);
-  });
+      const start = Date.now();
+      let stdout = '';
+      let stderr = '';
 
-  app.post('/api/pipeline/seed', async (req: Request, res: Response) => {
-    const { projectName } = req.body;
-    if (!projectName) { res.status(400).json({ error: 'projectName required' }); return; }
+      const child = spawn(step.cmd, args, {
+        cwd,
+        env: { ...process.env },
+        timeout: 300000,
+      });
 
-    const buildRoot = path.join(WORKSPACES_DIR, projectName);
-    const result = await runCommand('node', [
-      'axion/scripts/axion-seed.mjs', '--all',
-    ], 'seed', buildRoot);
+      const sendEvent = (event: string, data: string) => {
+        const lines = data.split('\n');
+        for (const line of lines) {
+          res.write(`event: ${event}\ndata: ${line}\n\n`);
+        }
+      };
 
-    res.json(result);
-  });
+      child.stdout.on('data', (data: Buffer) => {
+        const text = data.toString();
+        stdout += text;
+        sendEvent('stdout', text.trimEnd());
+      });
 
-  app.post('/api/pipeline/scaffold-app', async (req: Request, res: Response) => {
-    const { projectName } = req.body;
-    if (!projectName) { res.status(400).json({ error: 'projectName required' }); return; }
+      child.stderr.on('data', (data: Buffer) => {
+        const text = data.toString();
+        stderr += text;
+        sendEvent('stderr', text.trimEnd());
+      });
 
-    const buildRoot = path.join(WORKSPACES_DIR, projectName);
-    const result = await runCommand('npx', [
-      'tsx', 'axion/scripts/axion-scaffold-app.ts',
-      '--build-root', buildRoot,
-      '--project-name', projectName,
-      '--override', 'dev_build',
-      '--json',
-    ], 'scaffold-app');
+      child.on('close', (code: number | null) => {
+        const result: RunResult = {
+          status: code === 0 ? 'success' : 'error',
+          command: step.label,
+          exitCode: code ?? 1,
+          stdout,
+          stderr,
+          durationMs: Date.now() - start,
+        };
+        res.write(`event: done\ndata: ${JSON.stringify(result)}\n\n`);
+        res.end();
+      });
 
-    res.json(result);
-  });
+      child.on('error', (err: Error) => {
+        const result: RunResult = {
+          status: 'error',
+          command: step.label,
+          exitCode: 1,
+          stdout,
+          stderr: stderr + '\n' + err.message,
+          durationMs: Date.now() - start,
+        };
+        res.write(`event: done\ndata: ${JSON.stringify(result)}\n\n`);
+        res.end();
+      });
 
-  app.post('/api/pipeline/build-plan', async (req: Request, res: Response) => {
-    const { projectName } = req.body;
-    if (!projectName) { res.status(400).json({ error: 'projectName required' }); return; }
-
-    const buildRoot = path.join(WORKSPACES_DIR, projectName);
-    const result = await runCommand('npx', [
-      'tsx', 'axion/scripts/axion-build-plan.ts',
-      '--build-root', buildRoot,
-      '--project-name', projectName,
-      '--json',
-    ], 'build-plan');
-
-    res.json(result);
-  });
-
-  app.post('/api/pipeline/iterate', async (req: Request, res: Response) => {
-    const { projectName, allowApply } = req.body;
-    if (!projectName) { res.status(400).json({ error: 'projectName required' }); return; }
-
-    const buildRoot = path.join(WORKSPACES_DIR, projectName);
-    const args = [
-      'tsx', 'axion/scripts/axion-iterate.ts',
-      '--build-root', buildRoot,
-      '--project-name', projectName,
-      '--json',
-    ];
-    if (allowApply) args.push('--allow-apply');
-
-    const result = await runCommand('npx', args, 'iterate');
-    res.json(result);
-  });
-
-  app.post('/api/pipeline/import', async (req: Request, res: Response) => {
-    const { projectName, sourcePath } = req.body;
-    if (!projectName || !sourcePath) {
-      res.status(400).json({ error: 'projectName and sourcePath required' });
-      return;
-    }
-
-    const buildRoot = path.join(WORKSPACES_DIR, projectName);
-    const result = await runCommand('npx', [
-      'tsx', 'axion/scripts/axion-import.ts',
-      '--source-root', sourcePath,
-      '--build-root', buildRoot,
-      '--project-name', projectName,
-      '--json',
-    ], 'import');
-
-    res.json(result);
-  });
-
-  app.post('/api/pipeline/reconcile', async (req: Request, res: Response) => {
-    const { projectName } = req.body;
-    if (!projectName) { res.status(400).json({ error: 'projectName required' }); return; }
-
-    const buildRoot = path.join(WORKSPACES_DIR, projectName);
-    const result = await runCommand('npx', [
-      'tsx', 'axion/scripts/axion-reconcile.ts',
-      '--build-root', buildRoot,
-      '--project-name', projectName,
-      '--json',
-    ], 'reconcile');
-
-    res.json(result);
-  });
+      req.on('close', () => {
+        child.kill();
+      });
+    });
+  }
 
   app.get('/api/files/browse', (req: Request, res: Response) => {
     const dirPath = req.query.path as string;

@@ -152,7 +152,27 @@ AXION defines a clear pipeline for kit creation and application development:
 -   **Two-Root Safety**: Ensures the AXION system root is protected and generated kits are isolated within their workspaces, preventing system pollution.
 
 ### UI/UX Decisions
-The system's interaction is primarily via command-line interface (CLI), with output structured for clarity and machine readability (e.g., JSON reports). The documentation-first approach aims to provide a clear blueprint for development.
+The system includes both a CLI and a web-based Dashboard for interacting with the AXION pipeline.
+
+### Web Dashboard Architecture
+- **Stack**: Express + Vite + React on port 5000
+- **Routing**: wouter with 3 pages: Pipeline (/), Files (/files), Release Gate (/release)
+- **UI Components**: Shadcn UI (Card, Button, Badge, Input, ScrollArea, Sidebar, Tooltip)
+- **Theming**: CSS custom properties with @theme inline block for Tailwind v4, ThemeProvider with localStorage persistence
+- **State Management**: TanStack Query for server state, React state for UI state
+- **Streaming**: Server-Sent Events (SSE) for real-time pipeline output — GET /api/pipeline/{step}/stream?body={json}
+- **Toast Notifications**: Custom toast system for pipeline success/error feedback
+- **Key Files**:
+  - `client/src/App.tsx` - Root with SidebarProvider, routing, ThemeProvider
+  - `client/src/pages/pipeline.tsx` - Run pipeline steps with SSE streaming
+  - `client/src/pages/files.tsx` - Browse workspace files
+  - `client/src/pages/release.tsx` - View release gate reports
+  - `client/src/components/app-sidebar.tsx` - Sidebar navigation
+  - `server/routes.ts` - API routes with declarative pipeline step registry
+  - `server/dev.ts` - Dev server with Vite middleware
+  - `shared/schema.ts` - Shared TypeScript types
+- **API Patterns**: Each pipeline step has both POST (batch) and GET/stream (SSE) endpoints
+- **Security**: File browsing restricted to workspaces/ directory only
 
 ## External Dependencies
 
@@ -160,3 +180,8 @@ The system's interaction is primarily via command-line interface (CLI), with out
 -   **tsx**: Executes TypeScript files directly without prior compilation.
 -   **TypeScript**: Provides type-checking and language features for the entire codebase.
 -   **npm**: Used as the package manager within generated application kits and for managing project dependencies.
+-   **Shadcn UI**: Component library (Card, Button, Badge, Input, ScrollArea, Sidebar, Tooltip).
+-   **wouter**: Lightweight client-side routing.
+-   **TanStack Query**: Server state management and caching.
+-   **class-variance-authority**: Component variant management.
+-   **Radix UI**: Accessible UI primitives underlying Shadcn components.
