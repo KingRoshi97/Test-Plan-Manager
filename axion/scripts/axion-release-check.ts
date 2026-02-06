@@ -187,6 +187,15 @@ const CHECK_REGISTRY: ReleaseCheck[] = [
     args: ['-c', 'npx vitest run tests/suites/e2e.import-mode.test.ts --passWithNoTests --testTimeout=180000'],
   },
   {
+    id: 'e2e-reconcile',
+    name: 'E2E Reconcile Tests',
+    description: 'Aligned facts = PASS, deliberate drift = exact mismatches, missing prereqs = blocked_by codes',
+    required: true,
+    timeout_ms: 180000,
+    command: 'bash',
+    args: ['-c', 'npx vitest run tests/suites/e2e.reconcile.test.ts --passWithNoTests --testTimeout=180000'],
+  },
+  {
     id: 'doctor-tests',
     name: 'Doctor Extension Tests',
     description: 'Active build, pollution, run lock checks',
