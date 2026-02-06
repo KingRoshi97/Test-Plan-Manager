@@ -26,6 +26,7 @@ interface StatusData {
   hasManifest: boolean;
   hasDomains: boolean;
   hasApp: boolean;
+  statusSource?: string;
 }
 
 export default function StatusPage() {
@@ -117,7 +118,12 @@ export default function StatusPage() {
         <>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Module Pipeline Status</CardTitle>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <CardTitle className="text-sm">Module Pipeline Status</CardTitle>
+                <Badge variant="secondary" className="no-default-active-elevate" data-testid="badge-status-source">
+                  {statusData.statusSource === "database" ? "from database" : "from files"}
+                </Badge>
+              </div>
               <p className="text-xs text-muted-foreground">Stage completion for each module in {statusData.projectName}</p>
             </CardHeader>
             <CardContent>

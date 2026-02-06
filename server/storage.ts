@@ -1,0 +1,140 @@
+import { db } from "./db.js";
+import { eq, desc, and } from "drizzle-orm";
+import {
+  workspaces, pipelineRuns, moduleStatuses, reports,
+  type InsertWorkspace, type InsertPipelineRun, type InsertModuleStatus, type InsertReport,
+  type Workspace, type PipelineRun, type ModuleStatus, type Report,
+} from "../shared/schema.js";
+
+export interface IStorage {
+  getWorkspaces(): Promise<Workspace[]>;
+  getWorkspace(projectName: string): Promise<Workspace | undefined>;
+  upsertWorkspace(data: InsertWorkspace): Promise<Workspace>;
+  deleteWorkspace(projectName: string): Promise<void>;
+
+  createPipelineRun(data: InsertPipelineRun): Promise<PipelineRun>;
+  getPipelineRuns(projectName: string, limit?: number): Promise<PipelineRun[]>;
+  getAllPipelineRuns(limit?: number): Promise<PipelineRun[]>;
+
+  upsertModuleStatus(data: InsertModuleStatus): Promise<ModuleStatus>;
+  getModuleStatuses(projectName: string): Promise<ModuleStatus[]>;
+  bulkUpsertModuleStatuses(projectName: string, statuses: Array<{ moduleName: string; stage: string; status: string }>): Promise<void>;
+
+  createReport(data: InsertReport): Promise<Report>;
+  getReports(projectName: string, reportType?: string): Promise<Report[]>;
+  getLatestReport(projectName: string, reportType: string): Promise<Report | undefined>;
+}
+
+export class DatabaseStorage implements IStorage {
+  async getWorkspaces(): Promise<Workspace[]> {
+    return db.select().from(workspaces).orderBy(desc(workspaces.createdAt));
+  }
+
+  async getWorkspace(projectName: string): Promise<Workspace | undefined> {
+    const [ws] = await db.select().from(workspaces).where(eq(workspaces.projectName, projectName));
+    return ws;
+  }
+
+  async upsertWorkspace(data: InsertWorkspace): Promise<Workspace> {
+    const existing = await this.getWorkspace(data.projectName);
+    if (existing) {
+      const [updated] = await db.update(workspaces)
+        .set(data)
+        .where(eq(workspaces.projectName, data.projectName))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(workspaces).values(data).returning();
+    return created;
+  }
+
+  async deleteWorkspace(projectName: string): Promise<void> {
+    await db.delete(workspaces).where(eq(workspaces.projectName, projectName));
+  }
+
+  async createPipelineRun(data: InsertPipelineRun): Promise<PipelineRun> {
+    const [run] = await db.insert(pipelineRuns).values(data).returning();
+    return run;
+  }
+
+  async getPipelineRuns(projectName: string, limit = 50): Promise<PipelineRun[]> {
+    return db.select().from(pipelineRuns)
+      .where(eq(pipelineRuns.projectName, projectName))
+      .orderBy(desc(pipelineRuns.createdAt))
+      .limit(limit);
+  }
+
+  async getAllPipelineRuns(limit = 50): Promise<PipelineRun[]> {
+    return db.select().from(pipelineRuns)
+      .orderBy(desc(pipelineRuns.createdAt))
+      .limit(limit);
+  }
+
+  async upsertModuleStatus(data: InsertModuleStatus): Promise<ModuleStatus> {
+    const [existing] = await db.select().from(moduleStatuses)
+      .where(and(
+        eq(moduleStatuses.projectName, data.projectName),
+        eq(moduleStatuses.moduleName, data.moduleName),
+        eq(moduleStatuses.stage, data.stage),
+      ));
+
+    if (existing) {
+      const [updated] = await db.update(moduleStatuses)
+        .set({ status: data.status, updatedAt: new Date() })
+        .where(eq(moduleStatuses.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db.insert(moduleStatuses).values(data).returning();
+    return created;
+  }
+
+  async getModuleStatuses(projectName: string): Promise<ModuleStatus[]> {
+    return db.select().from(moduleStatuses)
+      .where(eq(moduleStatuses.projectName, projectName));
+  }
+
+  async bulkUpsertModuleStatuses(projectName: string, statuses: Array<{ moduleName: string; stage: string; status: string }>): Promise<void> {
+    for (const s of statuses) {
+      await this.upsertModuleStatus({
+        projectName,
+        moduleName: s.moduleName,
+        stage: s.stage,
+        status: s.status,
+      });
+    }
+  }
+
+  async createReport(data: InsertReport): Promise<Report> {
+    const [report] = await db.insert(reports).values(data).returning();
+    return report;
+  }
+
+  async getReports(projectName: string, reportType?: string): Promise<Report[]> {
+    if (reportType) {
+      return db.select().from(reports)
+        .where(and(
+          eq(reports.projectName, projectName),
+          eq(reports.reportType, reportType),
+        ))
+        .orderBy(desc(reports.createdAt));
+    }
+    return db.select().from(reports)
+      .where(eq(reports.projectName, projectName))
+      .orderBy(desc(reports.createdAt));
+  }
+
+  async getLatestReport(projectName: string, reportType: string): Promise<Report | undefined> {
+    const [report] = await db.select().from(reports)
+      .where(and(
+        eq(reports.projectName, projectName),
+        eq(reports.reportType, reportType),
+      ))
+      .orderBy(desc(reports.createdAt))
+      .limit(1);
+    return report;
+  }
+}
+
+export const storage = new DatabaseStorage();

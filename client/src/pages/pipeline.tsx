@@ -37,7 +37,7 @@ import {
   Trash2,
   PackageOpen,
 } from "lucide-react";
-import type { WorkspaceInfo, RunResult } from "@shared/schema";
+import type { WorkspaceInfo, RunResult, PipelineRun } from "@shared/schema";
 
 interface StepDef {
   id: string;
@@ -192,6 +192,7 @@ export default function PipelinePage() {
       setRunningStep(null);
       setStreamingOutput("");
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pipeline-runs"] });
     });
 
     es.addEventListener("error", () => {
@@ -328,7 +329,7 @@ export default function PipelinePage() {
       {outputs.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">
-            History ({outputs.length} runs)
+            Session Runs ({outputs.length})
           </h3>
           {outputs.map((output, i) => (
             <OutputCard
@@ -341,6 +342,8 @@ export default function PipelinePage() {
           ))}
         </div>
       )}
+
+      <PipelineRunHistory projectName={projectName} />
     </div>
   );
 }
@@ -422,5 +425,104 @@ function OutputCard({ output, expanded, onToggle, testId }: {
         </CardContent>
       )}
     </Card>
+  );
+}
+
+function PipelineRunHistory({ projectName }: { projectName: string }) {
+  const [expandedRun, setExpandedRun] = useState<number | null>(null);
+
+  const { data: runs = [], isLoading } = useQuery<PipelineRun[]>({
+    queryKey: ["/api/pipeline-runs", projectName],
+    queryFn: async () => {
+      const res = await fetch(`/api/pipeline-runs?projectName=${encodeURIComponent(projectName)}&limit=20`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    refetchInterval: 10000,
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="py-8 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (runs.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <h3 className="text-sm font-medium text-muted-foreground" data-testid="text-run-history-header">
+        Run History ({runs.length} saved)
+      </h3>
+      {runs.map((run, i) => {
+        const isSuccess = run.status === "success";
+        const expanded = expandedRun === i;
+        const createdAt = new Date(run.createdAt).toLocaleString();
+
+        return (
+          <Card key={run.id} data-testid={`db-run-${run.id}`}>
+            <button
+              onClick={() => setExpandedRun(expanded ? null : i)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left"
+              data-testid={`db-run-${run.id}-toggle`}
+            >
+              {expanded ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />}
+              {isSuccess
+                ? <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+                : <XCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />}
+              <span className="font-medium text-sm">{run.stepLabel}</span>
+              <Badge variant="secondary" className="no-default-active-elevate shrink-0">{run.stepGroup}</Badge>
+              <span className="text-xs text-muted-foreground ml-auto shrink-0 flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {(run.durationMs / 1000).toFixed(1)}s
+              </span>
+              <Badge variant={isSuccess ? "success" : "error"} className="no-default-active-elevate shrink-0">
+                exit {run.exitCode}
+              </Badge>
+            </button>
+            {expanded && (
+              <CardContent className="space-y-3 pt-0">
+                <div className="text-xs text-muted-foreground">{createdAt}</div>
+                {run.parsedJson ? (
+                  <div className="rounded-md p-3 bg-muted text-xs">
+                    <div className="font-semibold mb-1 text-muted-foreground">Parsed JSON</div>
+                    <pre className="overflow-x-auto whitespace-pre-wrap">
+                      {JSON.stringify(run.parsedJson as Record<string, unknown>, null, 2)}
+                    </pre>
+                  </div>
+                ) : null}
+                {run.stdout && (
+                  <div>
+                    <div className="text-xs font-medium mb-1 flex items-center gap-1 text-muted-foreground">
+                      <Terminal className="w-3 h-3" /> stdout
+                    </div>
+                    <ScrollArea className="max-h-64">
+                      <pre className="rounded-md p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap bg-background border">
+                        {run.stdout || "(empty)"}
+                      </pre>
+                    </ScrollArea>
+                  </div>
+                )}
+                {run.stderr && (
+                  <div>
+                    <div className="text-xs font-medium mb-1 text-muted-foreground">stderr</div>
+                    <ScrollArea className="max-h-40">
+                      <pre className="rounded-md p-3 text-xs font-mono overflow-x-auto whitespace-pre-wrap bg-background border text-red-700 dark:text-red-400">
+                        {run.stderr}
+                      </pre>
+                    </ScrollArea>
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        );
+      })}
+    </div>
   );
 }
