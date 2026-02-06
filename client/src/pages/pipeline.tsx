@@ -36,6 +36,9 @@ import {
   Sparkles,
   Trash2,
   PackageOpen,
+  Play,
+  Square,
+  Zap,
 } from "lucide-react";
 import type { WorkspaceInfo, RunResult, PipelineRun } from "@shared/schema";
 
@@ -88,6 +91,7 @@ const stepGroups: StepGroup[] = [
       { id: "build-plan", label: "Build Plan", icon: <FileText className="w-4 h-4" />, endpoint: "/api/pipeline/build-plan", desc: "Generate task list" },
       { id: "iterate", label: "Iterate (dry)", icon: <RotateCw className="w-4 h-4" />, endpoint: "/api/pipeline/iterate", desc: "Dry run" },
       { id: "iterate-apply", label: "Iterate (apply)", icon: <ArrowRight className="w-4 h-4" />, endpoint: "/api/pipeline/iterate", desc: "Apply changes", extra: { allowApply: true } },
+      { id: "build", label: "Build", icon: <Hammer className="w-4 h-4" />, endpoint: "/api/pipeline/build", desc: "Execute build" },
       { id: "test", label: "Test", icon: <FlaskConical className="w-4 h-4" />, endpoint: "/api/pipeline/test", desc: "Run workspace tests" },
       { id: "activate", label: "Activate", icon: <Power className="w-4 h-4" />, endpoint: "/api/pipeline/activate", desc: "Set active build" },
     ],
@@ -109,6 +113,8 @@ const stepGroups: StepGroup[] = [
     label: "Operations",
     desc: "Package and clean",
     steps: [
+      { id: "deploy", label: "Deploy", icon: <ArrowRight className="w-4 h-4" />, endpoint: "/api/pipeline/deploy", desc: "Deploy application" },
+      { id: "overhaul", label: "Overhaul", icon: <RotateCw className="w-4 h-4" />, endpoint: "/api/pipeline/overhaul", desc: "System overhaul" },
       { id: "package", label: "Package", icon: <PackageOpen className="w-4 h-4" />, endpoint: "/api/pipeline/package", desc: "Bundle Agent Kit" },
       { id: "clean", label: "Clean", icon: <Trash2 className="w-4 h-4" />, endpoint: "/api/pipeline/clean", desc: "Clean artifacts" },
     ],
@@ -279,6 +285,11 @@ export default function PipelinePage() {
         </Card>
       ))}
 
+      <PresetsPanel
+        projectName={projectName}
+        disabled={!!runningStep}
+      />
+
       {streamingOutput && (
         <Card>
           <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
@@ -418,6 +429,356 @@ function OutputCard({ output, expanded, onToggle, testId }: {
                   data-testid={`${testId}-stderr`}
                 >
                   {output.stderr}
+                </pre>
+              </ScrollArea>
+            </div>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+interface PresetsData {
+  stage_plans: Record<string, string[]>;
+  presets: Record<string, {
+    label: string;
+    description: string;
+    modules: string[];
+    include_dependencies?: boolean;
+    recommended_stage_plan?: string;
+    guards?: Record<string, boolean>;
+  }>;
+}
+
+interface PresetStepProgress {
+  index: number;
+  stepId: string;
+  label: string;
+  status: "pending" | "running" | "success" | "error" | "skipped";
+  durationMs?: number;
+  reason?: string;
+}
+
+function PresetsPanel({ projectName, disabled }: { projectName: string; disabled: boolean }) {
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [selectedStagePlan, setSelectedStagePlan] = useState<string | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const [stepProgress, setStepProgress] = useState<PresetStepProgress[]>([]);
+  const [presetOutput, setPresetOutput] = useState("");
+  const [runSummary, setRunSummary] = useState<{ succeeded: number; failed: number } | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  const { data: presetsData, isLoading } = useQuery<PresetsData>({
+    queryKey: ["/api/presets"],
+    queryFn: async () => {
+      const res = await fetch("/api/presets");
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  useEffect(() => {
+    return () => { eventSourceRef.current?.close(); };
+  }, []);
+
+  if (isLoading || !presetsData) return null;
+
+  const { stage_plans, presets } = presetsData;
+  const presetEntries = Object.entries(presets);
+  const currentPreset = selectedPreset ? presets[selectedPreset] : null;
+
+  const postSetupStagePlans = Object.entries(stage_plans).filter(
+    ([id]) => !["system:import", "system:overhaul"].includes(id)
+  );
+
+  const effectiveStagePlan = selectedStagePlan
+    || currentPreset?.recommended_stage_plan
+    || null;
+
+  const runPreset = () => {
+    if (!selectedPreset || !effectiveStagePlan || isRunning || disabled) return;
+
+    setIsRunning(true);
+    setPresetOutput("");
+    setRunSummary(null);
+    setStepProgress([]);
+
+    const body = JSON.stringify({
+      projectName,
+      presetId: selectedPreset,
+      stagePlan: effectiveStagePlan,
+    });
+
+    const url = `/api/preset/run/stream?body=${encodeURIComponent(body)}`;
+    const es = new EventSource(url);
+    eventSourceRef.current = es;
+
+    es.addEventListener("plan", (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        const steps = (data.steps as string[]).map((stepId: string, i: number) => ({
+          index: i,
+          stepId,
+          label: stepId,
+          status: "pending" as const,
+        }));
+        setStepProgress(steps);
+      } catch {}
+    });
+
+    es.addEventListener("step-start", (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setStepProgress((prev) =>
+          prev.map((s) =>
+            s.index === data.index
+              ? { ...s, label: data.label, status: "running" }
+              : s
+          )
+        );
+      } catch {}
+    });
+
+    es.addEventListener("stdout", (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setPresetOutput((prev) => prev + data.text + "\n");
+      } catch {}
+    });
+
+    es.addEventListener("stderr", (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setPresetOutput((prev) => prev + "[stderr] " + data.text + "\n");
+      } catch {}
+    });
+
+    es.addEventListener("step-done", (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setStepProgress((prev) =>
+          prev.map((s) =>
+            s.index === data.index
+              ? { ...s, label: data.label, status: data.status, durationMs: data.durationMs, reason: data.reason }
+              : s
+          )
+        );
+      } catch {}
+    });
+
+    es.addEventListener("done", (e) => {
+      es.close();
+      eventSourceRef.current = null;
+      setIsRunning(false);
+      try {
+        const data = JSON.parse(e.data);
+        setRunSummary({ succeeded: data.succeeded, failed: data.failed });
+        if (data.failed === 0) {
+          toast({ title: `Preset "${presets[selectedPreset].label}" completed`, description: `${data.succeeded} steps succeeded`, variant: "success" });
+        } else {
+          toast({ title: `Preset "${presets[selectedPreset].label}" had failures`, description: `${data.succeeded} succeeded, ${data.failed} failed`, variant: "destructive" });
+        }
+      } catch {}
+      queryClient.invalidateQueries({ queryKey: ["/api/pipeline-runs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
+    });
+
+    es.addEventListener("error", () => {
+      es.close();
+      eventSourceRef.current = null;
+      setIsRunning(false);
+      toast({ title: "Preset run connection lost", variant: "destructive" });
+    });
+  };
+
+  const cancelRun = () => {
+    eventSourceRef.current?.close();
+    eventSourceRef.current = null;
+    setIsRunning(false);
+  };
+
+  const presetCategories: { label: string; ids: string[] }[] = [
+    { label: "Full System", ids: presetEntries.filter(([, p]) => p.modules.length > 10).map(([id]) => id) },
+    { label: "Layers", ids: ["foundation", "core-spec", "security-layer", "ops", "quality-light", "quality-deep"] },
+    { label: "App Targets", ids: ["web", "fullstack-web", "backend-api", "mobile", "desktop", "cross-platform-app"] },
+    { label: "Focused", ids: presetEntries.filter(([id]) => id.endsWith("-only")).map(([id]) => id) },
+    { label: "Other", ids: presetEntries.filter(([id]) => !["foundation", "core-spec", "security-layer", "ops", "quality-light", "quality-deep", "web", "fullstack-web", "backend-api", "mobile", "desktop", "cross-platform-app"].includes(id) && !id.endsWith("-only") && presets[id].modules.length <= 10).map(([id]) => id) },
+  ].filter(c => c.ids.length > 0);
+
+  return (
+    <Card data-testid="card-presets-panel">
+      <CardHeader className="pb-2">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-2 w-full text-left"
+          data-testid="button-presets-toggle"
+        >
+          {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          <Zap className="w-4 h-4 text-primary" />
+          <CardTitle className="text-sm">Presets — Run All</CardTitle>
+          <Badge variant="secondary" className="no-default-active-elevate ml-auto">
+            {presetEntries.length} presets
+          </Badge>
+        </button>
+        <p className="text-xs text-muted-foreground mt-1">
+          Select a preset and stage plan, then run all steps in sequence.
+        </p>
+      </CardHeader>
+
+      {expanded && (
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="text-xs font-medium text-muted-foreground">Preset</div>
+            {presetCategories.map((cat) => (
+              <div key={cat.label} className="space-y-1.5">
+                <div className="text-xs text-muted-foreground">{cat.label}</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {cat.ids.filter((id) => presets[id]).map((id) => (
+                    <Button
+                      key={id}
+                      variant={selectedPreset === id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setSelectedPreset(selectedPreset === id ? null : id);
+                        setRunSummary(null);
+                        setStepProgress([]);
+                        setPresetOutput("");
+                      }}
+                      disabled={isRunning}
+                      data-testid={`button-preset-${id}`}
+                    >
+                      {presets[id].label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {currentPreset && (
+            <div className="rounded-md bg-muted p-3 space-y-2">
+              <div className="text-sm font-medium">{currentPreset.label}</div>
+              <div className="text-xs text-muted-foreground">{currentPreset.description}</div>
+              <div className="flex flex-wrap gap-1">
+                {currentPreset.modules.map((m) => (
+                  <Badge key={m} variant="secondary" className="no-default-active-elevate text-xs">
+                    {m}
+                  </Badge>
+                ))}
+              </div>
+              {currentPreset.include_dependencies && (
+                <div className="text-xs text-muted-foreground">Includes dependency modules</div>
+              )}
+            </div>
+          )}
+
+          {selectedPreset && (
+            <div className="space-y-2">
+              <div className="text-xs font-medium text-muted-foreground">Stage Plan</div>
+              <div className="flex flex-wrap gap-1.5">
+                {postSetupStagePlans.map(([id, steps]) => (
+                  <Button
+                    key={id}
+                    variant={effectiveStagePlan === id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedStagePlan(id)}
+                    disabled={isRunning}
+                    data-testid={`button-stage-plan-${id}`}
+                  >
+                    <span>{id}</span>
+                    <Badge variant="secondary" className="no-default-active-elevate ml-1">
+                      {steps.length}
+                    </Badge>
+                  </Button>
+                ))}
+              </div>
+              {effectiveStagePlan && stage_plans[effectiveStagePlan] && (
+                <div className="text-xs text-muted-foreground">
+                  Steps: {stage_plans[effectiveStagePlan].join(" → ")}
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedPreset && effectiveStagePlan && (
+            <div className="flex items-center gap-2">
+              {!isRunning ? (
+                <Button
+                  onClick={runPreset}
+                  disabled={disabled}
+                  data-testid="button-run-preset"
+                >
+                  <Play className="w-4 h-4" />
+                  Run {currentPreset?.label} — {effectiveStagePlan}
+                </Button>
+              ) : (
+                <Button
+                  variant="destructive"
+                  onClick={cancelRun}
+                  data-testid="button-cancel-preset"
+                >
+                  <Square className="w-4 h-4" />
+                  Cancel
+                </Button>
+              )}
+            </div>
+          )}
+
+          {stepProgress.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-muted-foreground">Progress</div>
+              {stepProgress.map((step) => (
+                <div
+                  key={step.index}
+                  className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-muted"
+                  data-testid={`preset-step-${step.stepId}`}
+                >
+                  {step.status === "running" && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />}
+                  {step.status === "success" && <CheckCircle2 className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />}
+                  {step.status === "error" && <XCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />}
+                  {step.status === "skipped" && <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                  {step.status === "pending" && <div className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 shrink-0" />}
+                  <span className="text-xs font-medium">{step.label}</span>
+                  {step.reason && <span className="text-xs text-muted-foreground">({step.reason})</span>}
+                  {step.durationMs != null && (
+                    <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1 shrink-0">
+                      <Clock className="w-3 h-3" />
+                      {(step.durationMs / 1000).toFixed(1)}s
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {runSummary && (
+            <div className="flex items-center gap-2 text-sm" data-testid="text-preset-summary">
+              {runSummary.failed === 0 ? (
+                <Badge variant="success" className="no-default-active-elevate">
+                  All {runSummary.succeeded} steps passed
+                </Badge>
+              ) : (
+                <>
+                  <Badge variant="success" className="no-default-active-elevate">{runSummary.succeeded} passed</Badge>
+                  <Badge variant="error" className="no-default-active-elevate">{runSummary.failed} failed</Badge>
+                </>
+              )}
+            </div>
+          )}
+
+          {presetOutput && (
+            <div>
+              <div className="text-xs font-medium mb-1 flex items-center gap-1 text-muted-foreground">
+                <Terminal className="w-3 h-3" /> Output
+              </div>
+              <ScrollArea className="max-h-64">
+                <pre
+                  className="rounded-md p-3 text-xs font-mono whitespace-pre-wrap bg-background border"
+                  data-testid="text-preset-output"
+                >
+                  {presetOutput}
                 </pre>
               </ScrollArea>
             </div>

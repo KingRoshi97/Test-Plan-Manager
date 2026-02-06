@@ -208,6 +208,31 @@ const pipelineSteps: Record<string, PipelineStep> = {
     group: 'ops',
     desc: 'Bundle Agent Kit',
   },
+  'build': {
+    cmd: 'npx',
+    args: (pn, br, body) => {
+      const a = ['tsx', 'axion/scripts/axion-build.ts', '--build-root', br, '--project-name', pn, '--json'];
+      if (body.allowApply) a.push('--allow-apply');
+      return a;
+    },
+    label: 'Build',
+    group: 'build',
+    desc: 'Execute build',
+  },
+  'deploy': {
+    cmd: 'npx',
+    args: (pn, br) => ['tsx', 'axion/scripts/axion-deploy.ts', '--build-root', br, '--project-name', pn, '--json'],
+    label: 'Deploy',
+    group: 'ops',
+    desc: 'Deploy application',
+  },
+  'overhaul': {
+    cmd: 'npx',
+    args: (pn, br) => ['tsx', 'axion/scripts/axion-overhaul.ts', '--build-root', br, '--project-name', pn, '--json'],
+    label: 'Overhaul',
+    group: 'ops',
+    desc: 'System overhaul',
+  },
 };
 
 function tryParseJson(text: string): Record<string, unknown> | null {
@@ -537,6 +562,216 @@ export function registerRoutes(app: Express) {
       });
     });
   }
+
+  // --- Presets API ---
+  const PRESETS_PATH = path.join(AXION_ROOT, 'config', 'presets.json');
+
+  function loadPresets(): Record<string, unknown> | null {
+    try {
+      return JSON.parse(fs.readFileSync(PRESETS_PATH, 'utf-8'));
+    } catch {
+      return null;
+    }
+  }
+
+  app.get('/api/presets', (_req: Request, res: Response) => {
+    const data = loadPresets();
+    if (!data) {
+      res.status(404).json({ error: 'presets.json not found' });
+      return;
+    }
+    res.json(data);
+  });
+
+  app.get('/api/preset/run/stream', (req: Request, res: Response) => {
+    const bodyParam = req.query.body as string;
+    if (!bodyParam) {
+      res.status(400).json({ error: 'body query param required' });
+      return;
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(bodyParam);
+    } catch {
+      res.status(400).json({ error: 'invalid JSON in body param' });
+      return;
+    }
+
+    const projectName = body.projectName as string;
+    const presetId = body.presetId as string;
+    const stagePlanId = body.stagePlan as string;
+    if (!projectName || !presetId || !stagePlanId) {
+      res.status(400).json({ error: 'projectName, presetId, and stagePlan required' });
+      return;
+    }
+
+    const presetsData = loadPresets();
+    if (!presetsData) {
+      res.status(404).json({ error: 'presets.json not found' });
+      return;
+    }
+
+    const stagePlans = presetsData.stage_plans as Record<string, string[]> | undefined;
+    const presets = presetsData.presets as Record<string, { label: string; modules: string[] }> | undefined;
+    if (!stagePlans || !presets) {
+      res.status(500).json({ error: 'Invalid presets.json format' });
+      return;
+    }
+
+    const stageSteps = stagePlans[stagePlanId];
+    if (!stageSteps) {
+      res.status(400).json({ error: `Unknown stage plan: ${stagePlanId}` });
+      return;
+    }
+
+    const preset = presets[presetId];
+    if (!preset) {
+      res.status(400).json({ error: `Unknown preset: ${presetId}` });
+      return;
+    }
+
+    const validSteps: string[] = [];
+    const skippedSteps: string[] = [];
+    for (const s of stageSteps) {
+      if (pipelineSteps[s]) {
+        validSteps.push(s);
+      } else {
+        skippedSteps.push(s);
+      }
+    }
+
+    if (validSteps.length === 0) {
+      res.status(400).json({ error: 'No valid pipeline steps found for this stage plan', skipped: skippedSteps });
+      return;
+    }
+
+    const presetModules = preset.modules || [];
+    const presetGuards = (preset as any).guards || {};
+
+    ensureWorkspacesDir();
+    const buildRoot = path.join(WORKSPACES_DIR, projectName);
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    res.write(`event: plan\ndata: ${JSON.stringify({ presetId, presetLabel: preset.label, stagePlan: stagePlanId, steps: validSteps, skippedSteps, modules: presetModules, totalSteps: validSteps.length })}\n\n`);
+
+    let aborted = false;
+    req.on('close', () => { aborted = true; });
+
+    const runStepsSequentially = async () => {
+      const allResults: RunResult[] = [];
+      let verifyPassed = true;
+      for (let i = 0; i < validSteps.length; i++) {
+        if (aborted) break;
+        const stepId = validSteps[i];
+        const step = pipelineSteps[stepId];
+
+        res.write(`event: step-start\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, total: validSteps.length })}\n\n`);
+
+        const stepBody: Record<string, unknown> = { projectName, ...body };
+        if (presetModules.length > 0 && presetModules.length < 19) {
+          stepBody.module = presetModules.join(',');
+        }
+        if (presetGuards.disallow_lock && stepId === 'lock') {
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'disallow_lock guard' })}\n\n`);
+          continue;
+        }
+        if (presetGuards.lock_requires_verify_pass && stepId === 'lock' && !verifyPassed) {
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'lock_requires_verify_pass guard: verify did not pass' })}\n\n`);
+          continue;
+        }
+        const args = step.args(projectName, buildRoot, stepBody);
+        const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+
+        const result = await new Promise<RunResult>((resolve) => {
+          const start = Date.now();
+          let stdout = '';
+          let stderr = '';
+
+          const child = spawn(step.cmd, args, {
+            cwd,
+            env: { ...process.env },
+            timeout: 300000,
+          });
+
+          child.stdout.on('data', (data: Buffer) => {
+            const text = data.toString();
+            stdout += text;
+            if (!aborted) {
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: text.trimEnd() })}\n\n`);
+            }
+          });
+
+          child.stderr.on('data', (data: Buffer) => {
+            const text = data.toString();
+            stderr += text;
+            if (!aborted) {
+              res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: text.trimEnd() })}\n\n`);
+            }
+          });
+
+          child.on('close', (code: number | null) => {
+            resolve({
+              status: code === 0 ? 'success' : 'error',
+              command: step.label,
+              exitCode: code ?? 1,
+              stdout,
+              stderr,
+              durationMs: Date.now() - start,
+            });
+          });
+
+          child.on('error', (err: Error) => {
+            resolve({
+              status: 'error',
+              command: step.label,
+              exitCode: 1,
+              stdout,
+              stderr: stderr + '\n' + err.message,
+              durationMs: Date.now() - start,
+            });
+          });
+
+          if (aborted) child.kill();
+        });
+
+        persistRunResult(stepId, step, projectName, result).catch(() => {});
+        allResults.push(result);
+
+        if (stepId === 'verify' && result.status !== 'success') {
+          verifyPassed = false;
+        }
+
+        if (!aborted) {
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: result.status, exitCode: result.exitCode, durationMs: result.durationMs })}\n\n`);
+        }
+
+        if (result.status === 'error' && !body.continueOnError) {
+          break;
+        }
+      }
+
+      if (!aborted) {
+        const succeeded = allResults.filter(r => r.status === 'success').length;
+        const failed = allResults.filter(r => r.status === 'error').length;
+        res.write(`event: done\ndata: ${JSON.stringify({ presetId, stagePlan: stagePlanId, totalSteps: validSteps.length, succeeded, failed, results: allResults })}\n\n`);
+        res.end();
+      }
+    };
+
+    runStepsSequentially().catch((err) => {
+      if (!aborted) {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: err?.message || 'Unknown error' })}\n\n`);
+        res.end();
+      }
+    });
+  });
 
   app.get('/api/pipeline-runs', async (req: Request, res: Response) => {
     const projectName = req.query.projectName as string | undefined;
