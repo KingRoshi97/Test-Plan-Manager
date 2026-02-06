@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   FileText,
@@ -18,6 +17,7 @@ import {
   Bug,
   FileCode,
   Timer,
+  FolderTree,
 } from "lucide-react";
 import type { WorkspaceInfo } from "@shared/schema";
 
@@ -43,13 +43,18 @@ interface ReportResult {
 }
 
 export default function ReportsPage() {
-  const [projectName, setProjectName] = useState("my-project");
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
 
   const { data: workspaces = [] } = useQuery<WorkspaceInfo[]>({
     queryKey: ["/api/workspaces"],
   });
+
+  useEffect(() => {
+    if (!selectedProject && workspaces.length > 0) {
+      setSelectedProject(workspaces[0].projectName);
+    }
+  }, [workspaces, selectedProject]);
 
   const { data: reportData, isLoading: reportLoading } = useQuery<ReportResult>({
     queryKey: ["/api/reports", selectedProject, selectedReport],
@@ -61,12 +66,6 @@ export default function ReportsPage() {
     enabled: !!selectedProject && !!selectedReport,
   });
 
-  const selectProject = (name: string) => {
-    setProjectName(name);
-    setSelectedProject(name);
-    setSelectedReport(null);
-  };
-
   return (
     <div className="space-y-6 p-6 max-w-6xl mx-auto">
       <div>
@@ -75,37 +74,32 @@ export default function ReportsPage() {
       </div>
 
       <Card>
-        <CardContent className="pt-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Input
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              className="max-w-xs"
-              placeholder="Project name"
-              data-testid="input-reports-project"
-            />
-            <Button
-              onClick={() => selectProject(projectName)}
-              disabled={!projectName}
-              data-testid="button-load-reports"
-            >
-              <FileText className="w-4 h-4" />
-              <span className="ml-2">Load Reports</span>
-            </Button>
-          </div>
-          {workspaces.length > 0 && (
-            <div className="flex gap-1.5 mt-3 flex-wrap">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Workspace</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {workspaces.length > 0 ? (
+            <div className="flex gap-1.5 flex-wrap">
               {workspaces.map((ws) => (
                 <Button
                   key={ws.projectName}
-                  variant={selectedProject === ws.projectName ? "default" : "secondary"}
+                  variant={selectedProject === ws.projectName ? "default" : "outline"}
                   size="sm"
-                  onClick={() => selectProject(ws.projectName)}
+                  onClick={() => {
+                    setSelectedProject(ws.projectName);
+                    setSelectedReport(null);
+                  }}
                   data-testid={`button-rws-${ws.projectName}`}
                 >
+                  <FolderTree className="w-3.5 h-3.5" />
                   {ws.projectName}
                 </Button>
               ))}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Info className="w-4 h-4" />
+              No workspaces detected. Run the pipeline to create one.
             </div>
           )}
         </CardContent>
@@ -173,7 +167,7 @@ function ReportViewer({ reportType, data, projectName }: {
       <Card>
         <CardContent className="py-8 text-center">
           <p className="text-sm text-muted-foreground" data-testid="text-report-not-found">
-            Report not found for workspace "{projectName}". This report hasn't been generated yet.
+            Report not found for workspace "{projectName}". Run the corresponding pipeline step to generate it.
           </p>
         </CardContent>
       </Card>
@@ -607,98 +601,70 @@ function TestReportViewer({ label, data, path }: {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-center gap-2 sm:gap-4 rounded-md bg-muted p-2">
+        <div className="flex flex-wrap justify-center gap-4 py-2">
           <TestGauge
             value={testsPassed}
-            max={Math.max(totalTests, 1)}
-            label="Passed"
+            max={totalTests}
+            label="Tests Passed"
             icon={CheckCircle2}
             colorClass="text-green-600 dark:text-green-400"
           />
           <TestGauge
             value={testsFailed}
-            max={Math.max(totalTests, 1)}
-            label="Failed"
-            icon={XCircle}
-            colorClass={testsFailed > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}
+            max={totalTests}
+            label="Tests Failed"
+            icon={Bug}
+            colorClass="text-red-600 dark:text-red-400"
           />
           <TestGauge
             value={lintErrors}
-            max={Math.max(lintErrors, 1)}
-            label="Lint"
-            icon={Bug}
-            colorClass={lintErrors > 0 ? "text-yellow-600 dark:text-yellow-400" : "text-muted-foreground"}
+            max={lintErrors + 10}
+            label="Lint Errors"
+            icon={FileCode}
+            colorClass="text-yellow-600 dark:text-yellow-400"
           />
           <TestGauge
             value={typecheckErrors}
-            max={Math.max(typecheckErrors, 1)}
-            label="Types"
+            max={typecheckErrors + 10}
+            label="Type Errors"
             icon={FileCode}
-            colorClass={typecheckErrors > 0 ? "text-yellow-600 dark:text-yellow-400" : "text-muted-foreground"}
+            colorClass="text-orange-600 dark:text-orange-400"
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-md bg-muted p-3 text-center">
-            <div className="text-lg font-bold tabular-nums">{totalTests}</div>
-            <div className="text-xs text-muted-foreground">Total Tests</div>
-          </div>
-          <div className="rounded-md bg-muted p-3 text-center">
-            <div className="text-lg font-bold tabular-nums">{totalIssues}</div>
-            <div className="text-xs text-muted-foreground">Issues</div>
-          </div>
-          <div className="rounded-md bg-muted p-3 text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Timer className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-lg font-bold tabular-nums">{(durationMs / 1000).toFixed(1)}</span>
-            </div>
-            <div className="text-xs text-muted-foreground">Seconds</div>
-          </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Timer className="w-3.5 h-3.5" />
+          Duration: {(durationMs / 1000).toFixed(1)}s
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground px-1">Quality Checks</p>
-          {checks.map((check, i) => {
-            const CheckIcon = check.icon;
-            return (
-              <div key={i} className="flex items-center gap-3 rounded-md border px-3 py-2.5">
-                {check.skipped ? (
-                  <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
-                    <span className="text-[10px] text-muted-foreground">--</span>
-                  </div>
-                ) : check.passed ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
-                ) : (
-                  <XCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-                )}
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <CheckIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium">{check.label}</span>
-                </div>
-                <span className="text-xs text-muted-foreground shrink-0">{check.detail}</span>
-              </div>
-            );
-          })}
+          {checks.map((check) => (
+            <div key={check.label} className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted text-xs">
+              {check.skipped ? (
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 shrink-0" />
+              ) : check.passed ? (
+                <CheckCircle2 className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />
+              ) : (
+                <XCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+              )}
+              <check.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className="font-medium">{check.label}</span>
+              <span className="text-muted-foreground ml-auto">{check.detail}</span>
+            </div>
+          ))}
         </div>
-
-        {path && (
-          <p className="text-xs text-muted-foreground truncate px-1">
-            Source: <span className="font-mono">{path}</span>
-          </p>
-        )}
 
         <div>
           <button
             onClick={() => setShowRaw(!showRaw)}
-            className="flex items-center gap-1 text-xs text-muted-foreground mb-1 px-1"
-            data-testid="button-test-raw-toggle"
+            className="flex items-center gap-1 text-xs text-muted-foreground mb-1"
           >
             {showRaw ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
             Raw JSON
           </button>
           {showRaw && (
-            <ScrollArea className="max-h-[300px]">
-              <pre className="text-xs font-mono whitespace-pre-wrap p-3 rounded-md bg-muted" data-testid="text-test-report-raw">
+            <ScrollArea className="max-h-[400px]">
+              <pre className="text-xs font-mono whitespace-pre-wrap p-3 rounded-md bg-muted" data-testid="text-report-raw">
                 {JSON.stringify(data, null, 2)}
               </pre>
             </ScrollArea>
