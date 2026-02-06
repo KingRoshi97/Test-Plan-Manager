@@ -181,14 +181,27 @@ function sha256(content: string): string {
   return crypto.createHash('sha256').update(content, 'utf-8').digest('hex');
 }
 
-function detectStackProfile(workspaceRoot: string): string {
+interface StackProfileData {
+  stack_id: string;
+  anchors: Record<string, string>;
+}
+
+function readStackProfile(workspaceRoot: string): StackProfileData {
+  const profilePath = path.join(workspaceRoot, 'registry', 'stack_profile.json');
+  if (fs.existsSync(profilePath)) {
+    const profile = JSON.parse(fs.readFileSync(profilePath, 'utf-8'));
+    return {
+      stack_id: profile.stack_id || 'default-web-saas',
+      anchors: profile.conventions?.anchors || {},
+    };
+  }
   const archReadme = path.join(workspaceRoot, 'domains', 'architecture', 'README.md');
   if (fs.existsSync(archReadme)) {
     const content = fs.readFileSync(archReadme, 'utf-8');
     const match = content.match(/stack profile:\s*\*\*([^*]+)\*\*/i);
-    if (match) return match[1].trim();
+    if (match) return { stack_id: match[1].trim(), anchors: {} };
   }
-  return 'default-web-saas';
+  return { stack_id: 'default-web-saas', anchors: {} };
 }
 
 function isPathWithinWorkspace(workspaceRoot: string, targetPath: string): boolean {
@@ -545,20 +558,20 @@ function main(): void {
 
   log('[INFO] Pre-flight gates passed (docs locked, verify PASS)', options.jsonOutput);
 
-  const stackProfile = detectStackProfile(workspaceRoot);
-  log(`[INFO] Stack profile: ${stackProfile}`, options.jsonOutput);
+  const stackData = readStackProfile(workspaceRoot);
+  log(`[INFO] Stack profile: ${stackData.stack_id}`, options.jsonOutput);
 
   if (options.dryRun) {
-    handleDryRun(workspaceRoot, projectName, stackProfile, options);
+    handleDryRun(workspaceRoot, projectName, stackData, options);
   } else if (options.apply) {
-    handleApply(workspaceRoot, projectName, stackProfile, options);
+    handleApply(workspaceRoot, projectName, stackData, options);
   }
 }
 
 function handleDryRun(
   workspaceRoot: string,
   projectName: string,
-  stackProfile: string,
+  stackData: StackProfileData,
   options: BuildExecOptions,
 ): void {
   const planPath = path.join(workspaceRoot, 'registry', 'build_plan.json');
@@ -577,7 +590,7 @@ function handleDryRun(
   const plan: BuildPlan = JSON.parse(fs.readFileSync(planPath, 'utf-8'));
   log(`[INFO] Build plan loaded: ${plan.total_tasks} tasks`, options.jsonOutput);
 
-  const manifest = generateManifestFromPlan(workspaceRoot, projectName, stackProfile, plan, planPath);
+  const manifest = generateManifestFromPlan(workspaceRoot, projectName, stackData.stack_id, plan, planPath);
 
   const validation = validateManifest(manifest);
   if (!validation.valid) {
@@ -600,7 +613,7 @@ function handleDryRun(
 function handleApply(
   workspaceRoot: string,
   projectName: string,
-  stackProfile: string,
+  stackData: StackProfileData,
   options: BuildExecOptions,
 ): void {
   let manifest: BuildExecManifest;
@@ -631,7 +644,7 @@ function handleApply(
       process.exit(1);
     }
     const plan: BuildPlan = JSON.parse(fs.readFileSync(planPath, 'utf-8'));
-    manifest = generateManifestFromPlan(workspaceRoot, projectName, stackProfile, plan, planPath);
+    manifest = generateManifestFromPlan(workspaceRoot, projectName, stackData.stack_id, plan, planPath);
   }
 
   manifest.workspace_root = path.resolve(workspaceRoot);

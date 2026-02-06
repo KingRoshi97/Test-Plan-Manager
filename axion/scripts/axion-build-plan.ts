@@ -59,6 +59,7 @@ interface BuildTask {
 interface BuildPlan {
   generated_at: string;
   project_name: string;
+  stack_id: string;
   version: string;
   phases: string[];
   tasks: BuildTask[];
@@ -117,6 +118,18 @@ function checkScaffoldExists(workspaceRoot: string): boolean {
   return fs.existsSync(reportPath);
 }
 
+function readStackProfile(workspaceRoot: string): { stack_id: string; anchors: Record<string, string> } {
+  const profilePath = path.join(workspaceRoot, 'registry', 'stack_profile.json');
+  if (fs.existsSync(profilePath)) {
+    const profile = JSON.parse(fs.readFileSync(profilePath, 'utf-8'));
+    return {
+      stack_id: profile.stack_id || 'default-web-saas',
+      anchors: profile.conventions?.anchors || {},
+    };
+  }
+  return { stack_id: 'default-web-saas', anchors: {} };
+}
+
 function readModuleDocs(workspaceRoot: string): Map<string, string> {
   const domainsDir = path.join(workspaceRoot, 'domains');
   const modules = new Map<string, string>();
@@ -140,7 +153,7 @@ function readModuleDocs(workspaceRoot: string): Map<string, string> {
   return modules;
 }
 
-function generateBuildPlan(projectName: string, moduleDocs: Map<string, string>): BuildPlan {
+function generateBuildPlan(projectName: string, moduleDocs: Map<string, string>, stackInfo: { stack_id: string; anchors: Record<string, string> }): BuildPlan {
   const tasks: BuildTask[] = [];
   let taskId = 1;
   
@@ -300,6 +313,7 @@ function generateBuildPlan(projectName: string, moduleDocs: Map<string, string>)
   const plan: BuildPlan = {
     generated_at: new Date().toISOString(),
     project_name: projectName,
+    stack_id: stackInfo.stack_id,
     version: '1.0.0',
     phases: ['infrastructure', 'backend', 'frontend', 'testing'],
     tasks,
@@ -379,12 +393,15 @@ function main(): void {
     process.exit(1);
   }
 
-  // Read module docs
+  // Read module docs and stack profile
   const moduleDocs = readModuleDocs(workspaceRoot);
   log(`[INFO] Found ${moduleDocs.size} module docs`, options.jsonOutput);
 
+  const stackInfo = readStackProfile(workspaceRoot);
+  log(`[INFO] Stack profile: ${stackInfo.stack_id}`, options.jsonOutput);
+
   // Generate build plan
-  const plan = generateBuildPlan(projectName, moduleDocs);
+  const plan = generateBuildPlan(projectName, moduleDocs, stackInfo);
   log(`[INFO] Generated ${plan.total_tasks} tasks across ${plan.phases.length} phases`, options.jsonOutput);
 
   // Write plan
