@@ -25,12 +25,36 @@ AXION operates on a documentation-first principle, generating comprehensive "Age
 
 ### Pipeline Stages
 AXION defines a clear pipeline for kit creation and application development:
+0b. **import** (optional): Analyzes an existing repo, produces import report + doc seeds (pre-pipeline)
 1.  **kit-create**: Initializes a new Agent Kit workspace.
 2.  **docs:scaffold**: Generates and seeds module documentation structures.
 3.  **docs:content**: Fills documentation with AI-generated content (draft, review, verify).
 4.  **docs:full**: Combines `docs:scaffold` and `docs:content`.
 5.  **app:bootstrap**: Generates application boilerplate.
 6.  **build-exec**: Executes the build plan, generating a manifest and applying file operations.
+
+### Import Mode v1
+`axion-import` is a read-only analysis command for existing repos. It produces artifacts the docs pipeline can refine, without modifying the source.
+
+**CLI**: `npx tsx axion/scripts/axion-import.ts --source-root PATH --build-root PATH --project-name NAME [--emit-manifest] [--json]`
+
+**Outputs** (written to workspace under `registry/`):
+- `import_report.json` — Full analysis: languages, frameworks, routes, health endpoints, anchor suggestions, warnings
+- `import_facts.json` — Normalized subset: stack_id_candidate, app_dir_candidate, server_entry_candidate, health_path_candidate, anchor_targets
+- `import_patch_manifest.json` (with `--emit-manifest`) — Suggested anchor insertions using `patch_file` ops
+- Doc seeds in `domains/` (architecture, systems, contracts, frontend, backend) marked with `AXION:IMPORTED:SOURCE_ROOT_HASH`
+
+**Detectors** (generic, regex-based, no AST):
+- package.json deps/scripts parsing
+- File pattern scanning (server/, src/, app/, pages/)
+- Route regex: `app.get("/...")`, `router.post("/...")`, `fastify.get("/...")`
+- Next.js API routes: `pages/api/*`, `app/api/*`
+- Health endpoint search: `/api/health`, `/health`, `/healthz`
+
+**Stack ID candidates**: `default-web-saas` (frontend+backend), `api-only-node` (backend only), `unknown`
+**Confidence**: 0.9 (multiple strong signals), 0.6 (one strong), 0.3 (weak), 0.0 (unknown)
+
+**Safety**: Never writes to source-root. Read-only guarantee tested via tree hash before/after.
 
 ### Core System Contracts and Guarantees
 -   **Pipeline Guarantees**: Strict stage execution order (generate → seed → draft → review → verify → lock), enforced module dependencies, and preset-defined module scopes.

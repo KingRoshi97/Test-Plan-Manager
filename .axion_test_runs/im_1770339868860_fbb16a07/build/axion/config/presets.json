@@ -1,0 +1,288 @@
+{
+  "version": "2.0",
+  "stage_plans": {
+    "docs:scaffold": ["generate", "seed"],
+    "docs:content": ["draft", "review", "verify"],
+    "docs:full": ["generate", "seed", "draft", "review", "verify"],
+    "docs:release": ["verify", "lock"],
+    "app:bootstrap": ["scaffold-app"],
+    "app:build": ["build"],
+    "app:test": ["test"],
+    "app:full": ["scaffold-app", "build", "test"],
+    "app:ship": ["deploy"],
+    "system:overhaul": ["overhaul"],
+    "system:import": ["import"],
+    "system:full": ["generate", "seed", "draft", "review", "verify", "lock", "scaffold-app", "build", "test", "deploy", "package"],
+    "export:package": ["package"]
+  },
+  "presets": {
+    "system": {
+      "label": "Entire System",
+      "description": "All modules (full AXION system).",
+      "modules": ["architecture", "systems", "contracts", "database", "data", "auth", "backend", "integrations", "state", "frontend", "fullstack", "testing", "quality", "security", "devops", "cloud", "devex", "mobile", "desktop"],
+      "include_dependencies": false,
+      "guards": {
+        "lock_requires_verify_pass": true
+      }
+    },
+    "foundation": {
+      "label": "Foundation Layer",
+      "description": "Boundaries, runtime assumptions, and API/contract foundation.",
+      "modules": ["architecture", "systems", "contracts"],
+      "include_dependencies": true
+    },
+    "core-spec": {
+      "label": "Core Spec Layer",
+      "description": "Stabilize contracts, schema, and identity early to reduce downstream rework.",
+      "modules": ["contracts", "database", "auth"],
+      "include_dependencies": true
+    },
+    "web": {
+      "label": "Web App",
+      "description": "Frontend web application focus.",
+      "modules": ["frontend", "state"],
+      "include_dependencies": true
+    },
+    "web-only": {
+      "label": "Web App (Module Only)",
+      "description": "Only touch frontend/state modules; will block if prereqs missing.",
+      "modules": ["frontend", "state"],
+      "include_dependencies": false
+    },
+    "mobile": {
+      "label": "Mobile App",
+      "description": "Mobile client build target.",
+      "modules": ["mobile"],
+      "include_dependencies": true
+    },
+    "mobile-only": {
+      "label": "Mobile (Module Only)",
+      "description": "Only touch the mobile module; will block if prereqs missing.",
+      "modules": ["mobile"],
+      "include_dependencies": false
+    },
+    "desktop": {
+      "label": "Desktop App",
+      "description": "Desktop client build target.",
+      "modules": ["desktop"],
+      "include_dependencies": true
+    },
+    "desktop-only": {
+      "label": "Desktop (Module Only)",
+      "description": "Only touch the desktop module; will block if prereqs missing.",
+      "modules": ["desktop"],
+      "include_dependencies": false
+    },
+    "backend-api": {
+      "label": "Backend API",
+      "description": "Backend service/API focus.",
+      "modules": ["backend"],
+      "include_dependencies": true
+    },
+    "backend-only": {
+      "label": "Backend (Module Only)",
+      "description": "Only touch backend module; will block if prereqs missing.",
+      "modules": ["backend"],
+      "include_dependencies": false
+    },
+    "fullstack-web": {
+      "label": "Fullstack Web",
+      "description": "End-to-end web: UI + state + backend + end-to-end integration.",
+      "modules": ["fullstack", "frontend", "state", "backend"],
+      "include_dependencies": true
+    },
+    "cross-platform-app": {
+      "label": "Cross-Platform App",
+      "description": "Mobile + web clients sharing backend/contract foundations.",
+      "modules": ["mobile", "frontend", "state", "backend", "fullstack"],
+      "include_dependencies": true
+    },
+    "api-contracts": {
+      "label": "API Contracts",
+      "description": "Define API surface, schemas/types, error model, versioning.",
+      "modules": ["contracts"],
+      "include_dependencies": true
+    },
+    "contracts-only": {
+      "label": "Contracts (Module Only)",
+      "description": "Only touch contracts module; will block if prereqs missing.",
+      "modules": ["contracts"],
+      "include_dependencies": false
+    },
+    "database-schema": {
+      "label": "Database Schema",
+      "description": "Schema, migrations, constraints, indexing, retention, backup/DR.",
+      "modules": ["database"],
+      "include_dependencies": true
+    },
+    "database-only": {
+      "label": "Database (Module Only)",
+      "description": "Only touch database module; will block if prereqs missing.",
+      "modules": ["database"],
+      "include_dependencies": false
+    },
+    "identity-access": {
+      "label": "Identity & Access",
+      "description": "Identity model, authn/authz, permissions, critical flows.",
+      "modules": ["auth"],
+      "include_dependencies": true
+    },
+    "auth-only": {
+      "label": "Auth (Module Only)",
+      "description": "Only touch auth module; will block if prereqs missing.",
+      "modules": ["auth"],
+      "include_dependencies": false
+    },
+    "integrations": {
+      "label": "Integrations",
+      "description": "Third-party providers, creds, webhooks, failure modes, data handling.",
+      "modules": ["integrations"],
+      "include_dependencies": true
+    },
+    "integrations-only": {
+      "label": "Integrations (Module Only)",
+      "description": "Only touch integrations module; will block if prereqs missing.",
+      "modules": ["integrations"],
+      "include_dependencies": false
+    },
+    "state-model": {
+      "label": "State Model",
+      "description": "State domains, update patterns, persistence/hydration, edge cases.",
+      "modules": ["state"],
+      "include_dependencies": true
+    },
+    "state-only": {
+      "label": "State (Module Only)",
+      "description": "Only touch state module; will block if prereqs missing.",
+      "modules": ["state"],
+      "include_dependencies": false
+    },
+    "data-platform": {
+      "label": "Data Platform",
+      "description": "Data sources, transforms, quality, lineage, access/governance.",
+      "modules": ["data", "database"],
+      "include_dependencies": true
+    },
+    "analytics": {
+      "label": "Analytics Layer",
+      "description": "Analytics-focused data modeling and metrics definitions.",
+      "modules": ["data"],
+      "include_dependencies": true
+    },
+    "eventing": {
+      "label": "Eventing & Webhooks",
+      "description": "Event/webhook-driven integration surface and guarantees.",
+      "modules": ["contracts", "integrations", "backend"],
+      "include_dependencies": true
+    },
+    "security-layer": {
+      "label": "Security Layer",
+      "description": "Threat model, security policies, vuln mgmt, incident response, supply chain.",
+      "modules": ["security", "auth"],
+      "include_dependencies": true
+    },
+    "security-only": {
+      "label": "Security (Module Only)",
+      "description": "Only touch security module; will block if prereqs missing.",
+      "modules": ["security"],
+      "include_dependencies": false
+    },
+    "ops": {
+      "label": "Ops Stack",
+      "description": "DevOps + cloud + devex: pipelines, environments, observability, runbooks, tooling.",
+      "modules": ["devops", "cloud", "devex"],
+      "include_dependencies": true
+    },
+    "cloud-runtime": {
+      "label": "Cloud Runtime",
+      "description": "Cloud topology, IAM, compute/runtime, storage, DR, cost controls.",
+      "modules": ["cloud"],
+      "include_dependencies": true
+    },
+    "release-engineering": {
+      "label": "Release Engineering",
+      "description": "CI/CD, rollout/rollback, environment promotion rules, runbooks.",
+      "modules": ["devops"],
+      "include_dependencies": true
+    },
+    "developer-experience": {
+      "label": "Developer Experience",
+      "description": "Local dev, tooling, docs standards, workflow conventions, dev support.",
+      "modules": ["devex"],
+      "include_dependencies": true
+    },
+    "quality-light": {
+      "label": "Quality (Light)",
+      "description": "Minimal population for testing/quality docs (owners, intended gates, placeholders).",
+      "modules": ["testing", "quality"],
+      "include_dependencies": true
+    },
+    "quality-deep": {
+      "label": "Quality (Deep)",
+      "description": "Full testing strategy + automation + CI gates (pairs naturally with DevOps).",
+      "modules": ["testing", "quality", "devops"],
+      "include_dependencies": true
+    },
+    "docs-pass": {
+      "label": "Docs Pass",
+      "description": "Review + verify across all modules (no drafting).",
+      "modules": ["architecture", "systems", "contracts", "database", "data", "auth", "backend", "integrations", "state", "frontend", "fullstack", "testing", "quality", "security", "devops", "cloud", "devex", "mobile", "desktop"],
+      "include_dependencies": false,
+      "recommended_stage_plan": "docs:content"
+    },
+    "prelock": {
+      "label": "Pre-Lock Readiness",
+      "description": "Run full readiness loop (generate→seed→draft→review→verify), stop before lock.",
+      "modules": ["architecture", "systems", "contracts", "database", "data", "auth", "backend", "integrations", "state", "frontend", "fullstack", "testing", "quality", "security", "devops", "cloud", "devex", "mobile", "desktop"],
+      "include_dependencies": false,
+      "recommended_stage_plan": "docs:full",
+      "guards": {
+        "disallow_lock": true
+      }
+    },
+    "release": {
+      "label": "Release (Verify + Lock)",
+      "description": "Verify must PASS; then lock (ERC generation).",
+      "modules": ["architecture", "systems", "contracts", "database", "data", "auth", "backend", "integrations", "state", "frontend", "fullstack", "testing", "quality", "security", "devops", "cloud", "devex", "mobile", "desktop"],
+      "include_dependencies": false,
+      "recommended_stage_plan": "docs:release",
+      "guards": {
+        "lock_requires_verify_pass": true
+      }
+    }
+  },
+  "gates": {
+    "draft": {
+      "requires_stage": "seed",
+      "error": "DRAFT_BLOCKED_SEED_INCOMPLETE",
+      "message": "draft blocked unless seed complete for target module(s)"
+    },
+    "verify": {
+      "requires_stage": "review",
+      "error": "VERIFY_BLOCKED_REVIEW_INCOMPLETE",
+      "message": "verify blocked unless review complete"
+    },
+    "lock": {
+      "requires_verify_pass": true,
+      "error": "LOCK_REFUSED_VERIFY_NOT_PASS",
+      "message": "lock refused unless latest verify is PASS"
+    },
+    "scaffold-app": {
+      "requires_docs_locked": true,
+      "allow_override": "dev_build",
+      "error": "SCAFFOLD_BLOCKED_DOCS_NOT_LOCKED",
+      "message": "scaffold-app blocked unless docs are locked (or explicit override 'dev_build')"
+    },
+    "build": {
+      "requires_stage": "scaffold-app",
+      "error": "BUILD_BLOCKED_SCAFFOLD_INCOMPLETE",
+      "message": "build blocked unless scaffold-app complete"
+    },
+    "deploy": {
+      "requires_tests_pass": true,
+      "allow_override": true,
+      "error": "DEPLOY_BLOCKED_TESTS_NOT_PASS",
+      "message": "deploy blocked unless tests PASS (or explicit override)"
+    }
+  }
+}

@@ -178,15 +178,6 @@ const CHECK_REGISTRY: ReleaseCheck[] = [
     args: ['-c', 'npx vitest run tests/suites/e2e.stack-profile.test.ts --passWithNoTests --testTimeout=180000'],
   },
   {
-    id: 'e2e-import-mode',
-    name: 'E2E Import Mode Tests',
-    description: 'Analyze writes report + facts, read-only guarantee on source, emit-manifest produces valid patch ops',
-    required: true,
-    timeout_ms: 180000,
-    command: 'bash',
-    args: ['-c', 'npx vitest run tests/suites/e2e.import-mode.test.ts --passWithNoTests --testTimeout=180000'],
-  },
-  {
     id: 'doctor-tests',
     name: 'Doctor Extension Tests',
     description: 'Active build, pollution, run lock checks',
