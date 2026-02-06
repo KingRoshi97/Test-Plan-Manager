@@ -10,7 +10,7 @@ This repl is dedicated to developing, enhancing, and testing the AXION documenta
 /
 ├── axion/                  # AXION system code
 │   ├── config/             # Configuration files (domains, presets, stack profiles)
-│   ├── scripts/            # AXION TypeScript CLI scripts (29 scripts)
+│   ├── scripts/            # AXION TypeScript CLI scripts (30 scripts)
 │   ├── templates/          # Document templates for each module
 │   ├── tests/              # Legacy test suites
 │   └── docs/               # AXION documentation
@@ -204,6 +204,16 @@ The test suite includes:
 - Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
 - Required in release gate
 
+**Build Executor Tests** (`e2e.build-exec.test.ts`):
+- Validates the axion-build-exec.ts implementation executor
+- Tests:
+  1. Dry-run golden path: plan in → manifest JSON out, no files created/modified (hash snapshot)
+  2. Apply creates file + writes report: manifest with create_file op, file appears with correct content, build_exec_report.json written atomically
+  3. Guard refusal: refuses without lock_manifest.json (DOCS_NOT_LOCKED), actionable hints
+- Provisions full workspace (kit-create → scaffold-app → build-plan) in beforeAll
+- Uses temp workspace at `.axion_test_runs/<run_id>/` (cleanup on PASS)
+- Required in release gate
+
 **Release Check Tests** (`release-check.test.ts`):
 - Validates the axion-release-check.ts script output and behavior
 - Tests:
@@ -238,6 +248,7 @@ Pattern: Write to `.{basename}.tmp`, then atomic rename. Original file preserved
 3. **docs:content** - Fill documentation with AI-generated content (draft + review + verify)
 4. **docs:full** - Run scaffold + content in sequence
 5. **app:bootstrap** - Generate application boilerplate
+6. **build-exec** - Execute build plan into code (generate manifest → apply file ops)
 
 ## Running AXION Commands
 
@@ -250,6 +261,12 @@ npx tsx axion/scripts/axion-status.ts --build-root ./my-kit
 
 # Run doctor to check system health
 npx tsx axion/scripts/axion-doctor.ts
+
+# Build execution: dry-run (emit manifest, no writes)
+npx tsx axion/scripts/axion-build-exec.ts --dry-run --build-root ./my-kit --project-name MyProject --json
+
+# Build execution: apply from manifest
+npx tsx axion/scripts/axion-build-exec.ts --apply --manifest ./manifest.json --build-root ./my-kit --project-name MyProject --json
 ```
 
 ## Module System
