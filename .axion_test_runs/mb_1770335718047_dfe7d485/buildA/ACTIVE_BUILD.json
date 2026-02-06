@@ -1,0 +1,10 @@
+{
+  "active_build_root": "/home/runner/workspace/.axion_test_runs/mb_1770335718047_dfe7d485/buildA",
+  "project_name": "ProjectAlpha",
+  "app_path": "/home/runner/workspace/.axion_test_runs/mb_1770335718047_dfe7d485/buildA/ProjectAlpha/app",
+  "activated_at": "2026-02-05T23:55:23.601Z",
+  "activated_by": "axion-activate",
+  "docs_locked": true,
+  "verify_passed": true,
+  "tests_passed": null
+}

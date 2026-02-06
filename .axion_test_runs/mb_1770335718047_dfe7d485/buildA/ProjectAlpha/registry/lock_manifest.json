@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "locked_at": "2026-02-05T23:55:19.977Z",
+  "locked_by": "e2e-test",
+  "revision": "e2e-fixture-v1",
+  "modules": [
+    "architecture",
+    "contracts"
+  ],
+  "checksums": {
+    "architecture": "e2e-checksum-architecture",
+    "contracts": "e2e-checksum-contracts"
+  }
+}
