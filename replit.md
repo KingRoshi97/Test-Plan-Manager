@@ -56,6 +56,37 @@ AXION defines a clear pipeline for kit creation and application development:
 
 **Safety**: Never writes to source-root. Read-only guarantee tested via tree hash before/after.
 
+### Reconcile v1
+`axion-reconcile` deterministically compares imported facts against build-authoritative outputs (stack profile + build plan) to detect drift and produce actionable mismatch reports.
+
+**CLI**: `npx tsx axion/scripts/axion-reconcile.ts --build-root PATH --project-name NAME [--json]`
+
+**Inputs** (all required, read from `registry/`):
+- `import_facts.json` — Import truth snapshot (from axion-import)
+- `stack_profile.json` — Current intended stack configuration (from scaffold-app)
+- `build_plan.json` — What AXION intends to implement (from build-plan)
+
+**Optional metadata** (not required but reported):
+- `lock_manifest.json` — Whether docs are locked
+- `verify_report.json` — Whether docs are verified
+
+**Output**: `registry/reconcile_report.json` — Versioned, atomically written report with:
+- `status`: PASS (no critical mismatches) or FAIL (critical mismatches found)
+- `summary`: counts of mismatches by severity (critical/warning/info)
+- `mismatches[]`: each with `id`, `category`, `severity`, `imported_value`, `expected_value`, `reason_code`, `suggested_action`, `hints`
+- `next_commands`: suggested remediation commands
+
+**5 Comparison Axes**:
+1. **STACK_ID**: `import_facts.stack_id_candidate` vs `stack_profile.stack_id` → `STACK_ID_MISMATCH`
+2. **ENTRYPOINTS**: `import_facts.server_entry_candidate` vs `stack_profile.conventions.server_entry` → `SERVER_ENTRY_MISMATCH`
+3. **HEALTH_ENDPOINT**: `import_facts.health_path_candidate` vs `stack_profile.conventions.health_path` → `HEALTH_PATH_MISMATCH`
+4. **ROUTES**: Imported routes vs build_plan route-tagged tasks → `ROUTE_FOUND_NOT_PLANNED` / `ROUTE_PLANNED_NOT_FOUND` / `ROUTES_NOT_AVAILABLE_IN_PLAN`
+5. **DEPENDENCIES**: Imported deps vs stack profile expected frameworks → `DEPENDENCY_EXPECTED_NOT_FOUND` (informational in v1)
+
+**Gates** (blocked_by if missing): `MISSING_IMPORT_FACTS`, `MISSING_STACK_PROFILE`, `MISSING_BUILD_PLAN`
+
+**Pipeline position**: Runs after import + scaffold + build-plan. Does NOT require docs lock/verify.
+
 ### Core System Contracts and Guarantees
 -   **Pipeline Guarantees**: Strict stage execution order (generate → seed → draft → review → verify → lock), enforced module dependencies, and preset-defined module scopes.
 -   **Diagnostic Guarantees**: Standardized SCREAMING_SNAKE_CASE reason codes, `blocked_by` responses with detailed status and hints, and known codes like `MISSING_SECTION`.
