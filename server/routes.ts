@@ -116,8 +116,6 @@ const pipelineSteps: Record<string, PipelineStep> = {
       const a = ['axion/scripts/axion-lock.mjs'];
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
-      } else {
-        a.push('--all');
       }
       return a;
     },
@@ -407,6 +405,62 @@ async function syncReportsToDb(projectName: string, stepId: string) {
   }
 }
 
+function runSingleStep(
+  step: PipelineStep,
+  args: string[],
+  cwd: string,
+  aborted: boolean,
+  onOutput: (event: string, data: string) => void,
+): Promise<RunResult> {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    let stdout = '';
+    let stderr = '';
+
+    const child = spawn(step.cmd, args, {
+      cwd,
+      env: { ...process.env },
+      timeout: 300000,
+    });
+
+    child.stdout.on('data', (data: Buffer) => {
+      const text = data.toString();
+      stdout += text;
+      onOutput('stdout', text.trimEnd());
+    });
+
+    child.stderr.on('data', (data: Buffer) => {
+      const text = data.toString();
+      stderr += text;
+      onOutput('stderr', text.trimEnd());
+    });
+
+    child.on('close', (code: number | null) => {
+      resolve({
+        status: code === 0 ? 'success' : 'error',
+        command: step.label,
+        exitCode: code ?? 1,
+        stdout,
+        stderr,
+        durationMs: Date.now() - start,
+      });
+    });
+
+    child.on('error', (err: Error) => {
+      resolve({
+        status: 'error',
+        command: step.label,
+        exitCode: 1,
+        stdout,
+        stderr: stderr + '\n' + err.message,
+        durationMs: Date.now() - start,
+      });
+    });
+
+    if (aborted) child.kill();
+  });
+}
+
 export function registerRoutes(app: Express) {
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -693,6 +747,63 @@ export function registerRoutes(app: Express) {
           res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'lock_requires_verify_pass guard: verify did not pass' })}\n\n`);
           continue;
         }
+
+        if (stepId === 'lock' && presetModules.length > 0) {
+          const lockStart = Date.now();
+          let lockSucceeded = 0;
+          let lockFailed = 0;
+          let lockStdout = '';
+          let lockStderr = '';
+
+          for (const mod of presetModules) {
+            if (aborted) break;
+            const lockBody = { ...stepBody, module: mod };
+            const lockArgs = step.args(projectName, buildRoot, lockBody);
+            const lockCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+
+            if (!aborted) {
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Locking module: ${mod}` })}\n\n`);
+            }
+
+            const lockResult = await runSingleStep(step, lockArgs, lockCwd, aborted, (event, data) => {
+              if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
+            });
+
+            lockStdout += lockResult.stdout;
+            lockStderr += lockResult.stderr;
+            if (lockResult.status === 'success') {
+              lockSucceeded++;
+            } else {
+              lockFailed++;
+              if (!aborted) {
+                res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Lock for ${mod}: failed (exit ${lockResult.exitCode})` })}\n\n`);
+              }
+            }
+          }
+
+          const combinedResult: RunResult = {
+            status: lockFailed === 0 ? 'success' : 'error',
+            command: step.label,
+            exitCode: lockFailed === 0 ? 0 : 1,
+            stdout: lockStdout,
+            stderr: lockStderr,
+            durationMs: Date.now() - lockStart,
+          };
+
+          persistRunResult(stepId, step, projectName, combinedResult).catch(() => {});
+          allResults.push(combinedResult);
+
+          if (!aborted) {
+            const reason = `${lockSucceeded} locked, ${lockFailed} failed`;
+            res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: `${step.label} (${presetModules.length} modules)`, status: combinedResult.status, exitCode: combinedResult.exitCode, durationMs: combinedResult.durationMs, reason })}\n\n`);
+          }
+
+          if (combinedResult.status === 'error' && !body.continueOnError) {
+            break;
+          }
+          continue;
+        }
+
         const args = step.args(projectName, buildRoot, stepBody);
         const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
 
@@ -1150,6 +1261,74 @@ export function registerRoutes(app: Express) {
       'tsx', 'axion/scripts/axion-release-check.ts', '--json',
     ], 'release-check');
     res.json(result);
+  });
+
+  app.get('/api/modules/:projectName', (req: Request, res: Response) => {
+    const projectName = req.params.projectName as string;
+    const projectPath = getProjectPath(projectName);
+
+    const discoveredModules: Array<{ name: string; hasBels: boolean; hasErc: boolean; stages: Record<string, string> }> = [];
+
+    const domainsDir = path.join(AXION_ROOT, 'domains');
+    const projectDomainsDir = path.join(projectPath, 'domains');
+
+    const moduleDirs = new Set<string>();
+    for (const dir of [domainsDir, projectDomainsDir]) {
+      if (fs.existsSync(dir)) {
+        try {
+          const entries = fs.readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isDirectory() && !entry.name.startsWith('.')) {
+              moduleDirs.add(entry.name);
+            }
+          }
+        } catch {}
+      }
+    }
+
+    const stages = ['generate', 'seed', 'draft', 'review', 'verify', 'lock'];
+    const markerDirs = [
+      path.join(AXION_ROOT, 'registry'),
+      path.join(projectPath, 'registry'),
+    ];
+
+    for (const mod of moduleDirs) {
+      const stageStatuses: Record<string, string> = {};
+      for (const stage of stages) {
+        let status = 'pending';
+        for (const dir of markerDirs) {
+          const markerPath = path.join(dir, 'stage_markers', stage, `${mod}.json`);
+          if (fs.existsSync(markerPath)) {
+            try {
+              const data = JSON.parse(fs.readFileSync(markerPath, 'utf-8'));
+              status = data?.status === 'DONE' ? 'done' : 'partial';
+            } catch {
+              status = 'error';
+            }
+            break;
+          }
+        }
+        stageStatuses[stage] = status;
+      }
+
+      let hasBels = false;
+      let hasErc = false;
+      for (const dir of [domainsDir, projectDomainsDir]) {
+        const modDir = path.join(dir, mod);
+        if (fs.existsSync(modDir)) {
+          try {
+            const files = fs.readdirSync(modDir);
+            if (files.some(f => f.startsWith('BELS_'))) hasBels = true;
+            if (files.some(f => f.startsWith('ERC_'))) hasErc = true;
+          } catch {}
+        }
+      }
+
+      discoveredModules.push({ name: mod, hasBels, hasErc, stages: stageStatuses });
+    }
+
+    discoveredModules.sort((a, b) => a.name.localeCompare(b.name));
+    res.json(discoveredModules);
   });
 
   app.get('/api/config/:configName', (req: Request, res: Response) => {

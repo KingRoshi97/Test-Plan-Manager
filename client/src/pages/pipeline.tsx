@@ -39,6 +39,8 @@ import {
   Play,
   Square,
   Zap,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 import type { WorkspaceInfo, RunResult, PipelineRun } from "@shared/schema";
 
@@ -60,6 +62,13 @@ interface StepGroup {
   steps: StepDef[];
 }
 
+interface ModuleInfo {
+  name: string;
+  hasBels: boolean;
+  hasErc: boolean;
+  stages: Record<string, string>;
+}
+
 const stepGroups: StepGroup[] = [
   {
     id: "setup",
@@ -79,7 +88,7 @@ const stepGroups: StepGroup[] = [
       { id: "draft", label: "Draft", icon: <PenLine className="w-4 h-4" />, endpoint: "/api/pipeline/draft", desc: "Draft documentation", needsModule: true },
       { id: "review", label: "Review", icon: <Eye className="w-4 h-4" />, endpoint: "/api/pipeline/review", desc: "Review for issues", needsModule: true },
       { id: "verify", label: "Verify", icon: <ShieldCheck className="w-4 h-4" />, endpoint: "/api/pipeline/verify", desc: "Verify completeness", needsModule: true },
-      { id: "lock", label: "Lock", icon: <Lock className="w-4 h-4" />, endpoint: "/api/pipeline/lock", desc: "Lock for build", needsModule: true },
+      { id: "lock", label: "Lock", icon: <Lock className="w-4 h-4" />, endpoint: "/api/pipeline/lock", desc: "Lock for build (requires module)", needsModule: true },
     ],
   },
   {
@@ -121,19 +130,64 @@ const stepGroups: StepGroup[] = [
   },
 ];
 
+function parseBlockedByMessage(stdout: string, stderr: string): string | null {
+  const combined = stdout + "\n" + stderr;
+  try {
+    const lines = combined.trim().split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("{")) {
+        const parsed = JSON.parse(trimmed);
+        if (parsed.status === "blocked_by") {
+          const missing = Array.isArray(parsed.missing) ? parsed.missing.join(", ") : "";
+          const hint = Array.isArray(parsed.hint) ? parsed.hint.join("; ") : "";
+          return `Blocked: missing ${missing}. ${hint}`;
+        }
+        if (parsed.error) {
+          return `Error: ${parsed.error}`;
+        }
+      }
+    }
+  } catch {}
+  const errLine = stderr.split("\n").filter(Boolean).pop();
+  if (errLine && errLine.includes("--module")) {
+    return "This step requires a module to be selected. Choose a module from the dropdown.";
+  }
+  return null;
+}
+
 export default function PipelinePage() {
-  const [projectName, setProjectName] = useState("my-project");
+  const [projectName, setProjectName] = useState("");
   const [sourcePath, setSourcePath] = useState("");
-  const [moduleFilter, setModuleFilter] = useState("");
+  const [selectedModule, setSelectedModule] = useState("");
   const [outputs, setOutputs] = useState<RunResult[]>([]);
   const [expandedOutput, setExpandedOutput] = useState<number | null>(null);
   const [runningStep, setRunningStep] = useState<string | null>(null);
   const [streamingOutput, setStreamingOutput] = useState<string>("");
+  const [showAdvancedConfig, setShowAdvancedConfig] = useState(false);
+  const [showManualSteps, setShowManualSteps] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const { data: workspaces = [] } = useQuery<WorkspaceInfo[]>({
     queryKey: ["/api/workspaces"],
   });
+
+  const { data: modules = [] } = useQuery<ModuleInfo[]>({
+    queryKey: ["/api/modules", projectName],
+    queryFn: async () => {
+      if (!projectName) return [];
+      const res = await fetch(`/api/modules/${encodeURIComponent(projectName)}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!projectName,
+  });
+
+  useEffect(() => {
+    if (!projectName && workspaces.length > 0) {
+      setProjectName(workspaces[0].projectName);
+    }
+  }, [workspaces, projectName]);
 
   useEffect(() => {
     return () => {
@@ -143,6 +197,17 @@ export default function PipelinePage() {
 
   const runStep = async (step: StepDef) => {
     if (runningStep) return;
+
+    if (!projectName) {
+      toast({ title: "No workspace selected", description: "Select or create a workspace first.", variant: "destructive" });
+      return;
+    }
+
+    if (step.id === "lock" && !selectedModule) {
+      toast({ title: "Module required for Lock", description: "The Lock step requires a specific module. Select one from the module dropdown.", variant: "destructive" });
+      return;
+    }
+
     setRunningStep(step.id);
     setStreamingOutput("");
 
@@ -154,8 +219,8 @@ export default function PipelinePage() {
     if (step.needsSourcePath && sourcePath) {
       body.sourcePath = sourcePath;
     }
-    if (step.needsModule && moduleFilter) {
-      body.module = moduleFilter;
+    if (step.needsModule && selectedModule) {
+      body.module = selectedModule;
     }
 
     const params = new URLSearchParams({ body: JSON.stringify(body) });
@@ -185,10 +250,11 @@ export default function PipelinePage() {
         if (result.status === "success") {
           toast({ title: `${step.label} completed`, variant: "success" });
         } else {
-          const errSummary = result.stderr?.split("\n").filter(Boolean).slice(-2).join(" ") || "Unknown error";
+          const blockedMsg = parseBlockedByMessage(result.stdout, result.stderr);
+          const errSummary = blockedMsg || result.stderr?.split("\n").filter(Boolean).slice(-2).join(" ") || "Unknown error";
           toast({
             title: `${step.label} failed (exit ${result.exitCode})`,
-            description: errSummary.slice(0, 120),
+            description: errSummary.slice(0, 200),
             variant: "destructive",
           });
         }
@@ -199,6 +265,7 @@ export default function PipelinePage() {
       setStreamingOutput("");
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
       queryClient.invalidateQueries({ queryKey: ["/api/pipeline-runs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/modules", projectName] });
     });
 
     es.addEventListener("error", () => {
@@ -210,6 +277,8 @@ export default function PipelinePage() {
     });
   };
 
+  const hasWorkspace = workspaces.length > 0;
+
   return (
     <div className="space-y-6 p-6 max-w-5xl mx-auto">
       <div>
@@ -219,76 +288,186 @@ export default function PipelinePage() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-3">
-          <CardTitle className="text-sm">Configuration</CardTitle>
+          <CardTitle className="text-sm">Workspace</CardTitle>
+          {hasWorkspace && (
+            <Badge variant="success" className="no-default-active-elevate">
+              {workspaces.length} detected
+            </Badge>
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="text-xs text-muted-foreground w-20 shrink-0">Project</label>
-            <Input
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              className="max-w-xs"
-              data-testid="input-project-name"
-            />
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="text-xs text-muted-foreground w-20 shrink-0">Source Path</label>
-            <Input
-              value={sourcePath}
-              onChange={(e) => setSourcePath(e.target.value)}
-              placeholder="Path to existing repo (for Import)"
-              className="max-w-md"
-              data-testid="input-source-path"
-            />
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <label className="text-xs text-muted-foreground w-20 shrink-0">Module</label>
-            <Input
-              value={moduleFilter}
-              onChange={(e) => setModuleFilter(e.target.value)}
-              placeholder="Leave empty for --all (e.g. architecture)"
-              className="max-w-md"
-              data-testid="input-module-filter"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {stepGroups.map((group) => (
-        <Card key={group.id}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{group.label}</CardTitle>
-            <p className="text-xs text-muted-foreground">{group.desc}</p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {group.steps.map((step) => (
+          {hasWorkspace ? (
+            <div className="flex gap-1.5 flex-wrap">
+              {workspaces.map((ws) => (
                 <Button
-                  key={step.id}
-                  variant="secondary"
-                  onClick={() => runStep(step)}
-                  disabled={!!runningStep}
-                  className="justify-start gap-2 h-auto py-2 px-3"
-                  data-testid={`button-step-${step.id}`}
+                  key={ws.projectName}
+                  variant={projectName === ws.projectName ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setProjectName(ws.projectName);
+                    setSelectedModule("");
+                  }}
+                  data-testid={`button-ws-${ws.projectName}`}
                 >
-                  {runningStep === step.id
-                    ? <Loader2 className="w-4 h-4 animate-spin" />
-                    : step.icon}
-                  <div className="text-left">
-                    <div className="text-xs font-medium">{step.label}</div>
-                    <div className="text-xs text-muted-foreground">{step.desc}</div>
+                  <FolderTree className="w-3.5 h-3.5" />
+                  {ws.projectName}
+                  <div className="flex gap-0.5 ml-1">
+                    {ws.hasManifest && <Badge variant="success" className="no-default-active-elevate text-[10px] px-1 py-0">M</Badge>}
+                    {ws.hasRegistry && <Badge variant="success" className="no-default-active-elevate text-[10px] px-1 py-0">R</Badge>}
+                    {ws.hasDomains && <Badge variant="success" className="no-default-active-elevate text-[10px] px-1 py-0">D</Badge>}
+                    {ws.hasApp && <Badge variant="success" className="no-default-active-elevate text-[10px] px-1 py-0">A</Badge>}
                   </div>
                 </Button>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      ))}
+          ) : (
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Info className="w-4 h-4" />
+                No workspace detected. Enter a project name to create one.
+              </div>
+            </div>
+          )}
+
+          {!hasWorkspace && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="text-xs text-muted-foreground w-20 shrink-0">Project</label>
+              <Input
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="my-project"
+                className="max-w-xs"
+                data-testid="input-project-name"
+              />
+            </div>
+          )}
+
+          <button
+            onClick={() => setShowAdvancedConfig(!showAdvancedConfig)}
+            className="flex items-center gap-1 text-xs text-muted-foreground"
+            data-testid="button-advanced-config"
+          >
+            {showAdvancedConfig ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            Advanced options
+          </button>
+
+          {showAdvancedConfig && (
+            <div className="space-y-3 pl-4 border-l-2 border-muted">
+              {hasWorkspace && (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <label className="text-xs text-muted-foreground w-20 shrink-0">Project</label>
+                  <Input
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    className="max-w-xs"
+                    data-testid="input-project-name"
+                  />
+                  <span className="text-xs text-muted-foreground">Create a new workspace by typing a new name</span>
+                </div>
+              )}
+              <div className="flex items-center gap-3 flex-wrap">
+                <label className="text-xs text-muted-foreground w-20 shrink-0">Source Path</label>
+                <Input
+                  value={sourcePath}
+                  onChange={(e) => setSourcePath(e.target.value)}
+                  placeholder="Path to existing repo (for Import step)"
+                  className="max-w-md"
+                  data-testid="input-source-path"
+                />
+              </div>
+              <div className="flex items-center gap-3 flex-wrap">
+                <label className="text-xs text-muted-foreground w-20 shrink-0">Module</label>
+                {modules.length > 0 ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <select
+                      value={selectedModule}
+                      onChange={(e) => setSelectedModule(e.target.value)}
+                      className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                      data-testid="select-module"
+                    >
+                      <option value="">All modules</option>
+                      {modules.map((m) => (
+                        <option key={m.name} value={m.name}>
+                          {m.name} {m.hasErc ? "(locked)" : m.hasBels ? "(has BELS)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-xs text-muted-foreground">
+                      {modules.length} modules found. Lock requires a specific module.
+                    </span>
+                  </div>
+                ) : (
+                  <Input
+                    value={selectedModule}
+                    onChange={(e) => setSelectedModule(e.target.value)}
+                    placeholder="Run generate first to discover modules"
+                    className="max-w-md"
+                    data-testid="input-module-filter"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <PresetsPanel
         projectName={projectName}
         disabled={!!runningStep}
       />
+
+      <div>
+        <button
+          onClick={() => setShowManualSteps(!showManualSteps)}
+          className="flex items-center gap-2 text-sm text-muted-foreground mb-3"
+          data-testid="button-toggle-manual-steps"
+        >
+          {showManualSteps ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          Individual Steps
+          <span className="text-xs">(run steps manually)</span>
+        </button>
+
+        {showManualSteps && (
+          <div className="space-y-4">
+            {stepGroups.map((group) => (
+              <Card key={group.id}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">{group.label}</CardTitle>
+                  <p className="text-xs text-muted-foreground">{group.desc}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {group.steps.map((step) => {
+                      const isLockWithoutModule = step.id === "lock" && !selectedModule;
+                      return (
+                        <Button
+                          key={step.id}
+                          variant="secondary"
+                          onClick={() => runStep(step)}
+                          disabled={!!runningStep || isLockWithoutModule}
+                          className="justify-start gap-2 h-auto py-2 px-3"
+                          data-testid={`button-step-${step.id}`}
+                        >
+                          {runningStep === step.id
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : step.icon}
+                          <div className="text-left">
+                            <div className="text-xs font-medium">{step.label}</div>
+                            <div className="text-xs text-muted-foreground">{step.desc}</div>
+                          </div>
+                          {isLockWithoutModule && (
+                            <AlertTriangle className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400 shrink-0 ml-auto" />
+                          )}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       {streamingOutput && (
         <Card>
@@ -305,34 +484,6 @@ export default function PipelinePage() {
                 {streamingOutput}
               </pre>
             </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
-
-      {workspaces.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-muted-foreground">Workspaces</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5">
-              {workspaces.map((ws) => (
-                <div
-                  key={ws.projectName}
-                  className="flex items-center gap-3 flex-wrap px-3 py-2 rounded-md bg-muted text-sm"
-                  data-testid={`workspace-${ws.projectName}`}
-                >
-                  <FolderTree className="w-4 h-4 text-primary shrink-0" />
-                  <span className="font-medium">{ws.projectName}</span>
-                  <div className="flex gap-1.5 ml-auto flex-wrap">
-                    {ws.hasManifest && <Badge variant="success" className="no-default-active-elevate">manifest</Badge>}
-                    {ws.hasRegistry && <Badge variant="success" className="no-default-active-elevate">registry</Badge>}
-                    {ws.hasDomains && <Badge variant="success" className="no-default-active-elevate">domains</Badge>}
-                    {ws.hasApp && <Badge variant="success" className="no-default-active-elevate">app</Badge>}
-                  </div>
-                </div>
-              ))}
-            </div>
           </CardContent>
         </Card>
       )}
@@ -374,6 +525,8 @@ function OutputCard({ output, expanded, onToggle, testId }: {
     parsedJson = JSON.parse(lastLine);
   } catch {}
 
+  const blockedMsg = !isSuccess ? parseBlockedByMessage(output.stdout, output.stderr) : null;
+
   return (
     <Card data-testid={testId}>
       <button
@@ -397,6 +550,12 @@ function OutputCard({ output, expanded, onToggle, testId }: {
 
       {expanded && (
         <CardContent className="space-y-3 pt-0">
+          {blockedMsg && (
+            <div className="flex items-start gap-2 px-3 py-2 rounded-md bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900 text-sm" data-testid={`${testId}-blocked`}>
+              <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+              <span className="text-yellow-800 dark:text-yellow-300">{blockedMsg}</span>
+            </div>
+          )}
           {parsedJson && (
             <div className="rounded-md p-3 bg-muted text-xs">
               <div className="font-semibold mb-1 text-muted-foreground">Parsed JSON</div>
@@ -467,7 +626,6 @@ function PresetsPanel({ projectName, disabled }: { projectName: string; disabled
   const [stepProgress, setStepProgress] = useState<PresetStepProgress[]>([]);
   const [presetOutput, setPresetOutput] = useState("");
   const [runSummary, setRunSummary] = useState<{ succeeded: number; failed: number } | null>(null);
-  const [expanded, setExpanded] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const { data: presetsData, isLoading } = useQuery<PresetsData>({
@@ -499,6 +657,11 @@ function PresetsPanel({ projectName, disabled }: { projectName: string; disabled
 
   const runPreset = () => {
     if (!selectedPreset || !effectiveStagePlan || isRunning || disabled) return;
+
+    if (!projectName) {
+      toast({ title: "No workspace selected", description: "Select or create a workspace first.", variant: "destructive" });
+      return;
+    }
 
     setIsRunning(true);
     setPresetOutput("");
@@ -583,6 +746,7 @@ function PresetsPanel({ projectName, disabled }: { projectName: string; disabled
       } catch {}
       queryClient.invalidateQueries({ queryKey: ["/api/pipeline-runs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/modules", projectName] });
     });
 
     es.addEventListener("error", () => {
@@ -610,181 +774,174 @@ function PresetsPanel({ projectName, disabled }: { projectName: string; disabled
   return (
     <Card data-testid="card-presets-panel">
       <CardHeader className="pb-2">
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="flex items-center gap-2 w-full text-left"
-          data-testid="button-presets-toggle"
-        >
-          {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-primary" />
-          <CardTitle className="text-sm">Presets — Run All</CardTitle>
+          <CardTitle className="text-sm">Presets — Automated Workflows</CardTitle>
           <Badge variant="secondary" className="no-default-active-elevate ml-auto">
             {presetEntries.length} presets
           </Badge>
-        </button>
+        </div>
         <p className="text-xs text-muted-foreground mt-1">
-          Select a preset and stage plan, then run all steps in sequence.
+          Select a preset and stage plan to run the full pipeline automatically. The system handles module orchestration, step ordering, and error recovery.
         </p>
       </CardHeader>
 
-      {expanded && (
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="text-xs font-medium text-muted-foreground">Preset</div>
-            {presetCategories.map((cat) => (
-              <div key={cat.label} className="space-y-1.5">
-                <div className="text-xs text-muted-foreground">{cat.label}</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {cat.ids.filter((id) => presets[id]).map((id) => (
-                    <Button
-                      key={id}
-                      variant={selectedPreset === id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        setSelectedPreset(selectedPreset === id ? null : id);
-                        setRunSummary(null);
-                        setStepProgress([]);
-                        setPresetOutput("");
-                      }}
-                      disabled={isRunning}
-                      data-testid={`button-preset-${id}`}
-                    >
-                      {presets[id].label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {currentPreset && (
-            <div className="rounded-md bg-muted p-3 space-y-2">
-              <div className="text-sm font-medium">{currentPreset.label}</div>
-              <div className="text-xs text-muted-foreground">{currentPreset.description}</div>
-              <div className="flex flex-wrap gap-1">
-                {currentPreset.modules.map((m) => (
-                  <Badge key={m} variant="secondary" className="no-default-active-elevate text-xs">
-                    {m}
-                  </Badge>
-                ))}
-              </div>
-              {currentPreset.include_dependencies && (
-                <div className="text-xs text-muted-foreground">Includes dependency modules</div>
-              )}
-            </div>
-          )}
-
-          {selectedPreset && (
-            <div className="space-y-2">
-              <div className="text-xs font-medium text-muted-foreground">Stage Plan</div>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          <div className="text-xs font-medium text-muted-foreground">1. Choose a Preset</div>
+          {presetCategories.map((cat) => (
+            <div key={cat.label} className="space-y-1.5">
+              <div className="text-xs text-muted-foreground">{cat.label}</div>
               <div className="flex flex-wrap gap-1.5">
-                {postSetupStagePlans.map(([id, steps]) => (
+                {cat.ids.filter((id) => presets[id]).map((id) => (
                   <Button
                     key={id}
-                    variant={effectiveStagePlan === id ? "default" : "outline"}
+                    variant={selectedPreset === id ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedStagePlan(id)}
+                    onClick={() => {
+                      setSelectedPreset(selectedPreset === id ? null : id);
+                      setRunSummary(null);
+                      setStepProgress([]);
+                      setPresetOutput("");
+                    }}
                     disabled={isRunning}
-                    data-testid={`button-stage-plan-${id}`}
+                    data-testid={`button-preset-${id}`}
                   >
-                    <span>{id}</span>
-                    <Badge variant="secondary" className="no-default-active-elevate ml-1">
-                      {steps.length}
-                    </Badge>
+                    {presets[id].label}
                   </Button>
                 ))}
               </div>
-              {effectiveStagePlan && stage_plans[effectiveStagePlan] && (
-                <div className="text-xs text-muted-foreground">
-                  Steps: {stage_plans[effectiveStagePlan].join(" → ")}
-                </div>
-              )}
             </div>
-          )}
+          ))}
+        </div>
 
-          {selectedPreset && effectiveStagePlan && (
-            <div className="flex items-center gap-2">
-              {!isRunning ? (
-                <Button
-                  onClick={runPreset}
-                  disabled={disabled}
-                  data-testid="button-run-preset"
-                >
-                  <Play className="w-4 h-4" />
-                  Run {currentPreset?.label} — {effectiveStagePlan}
-                </Button>
-              ) : (
-                <Button
-                  variant="destructive"
-                  onClick={cancelRun}
-                  data-testid="button-cancel-preset"
-                >
-                  <Square className="w-4 h-4" />
-                  Cancel
-                </Button>
-              )}
-            </div>
-          )}
-
-          {stepProgress.length > 0 && (
-            <div className="space-y-1.5">
-              <div className="text-xs font-medium text-muted-foreground">Progress</div>
-              {stepProgress.map((step) => (
-                <div
-                  key={step.index}
-                  className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-muted"
-                  data-testid={`preset-step-${step.stepId}`}
-                >
-                  {step.status === "running" && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />}
-                  {step.status === "success" && <CheckCircle2 className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />}
-                  {step.status === "error" && <XCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />}
-                  {step.status === "skipped" && <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
-                  {step.status === "pending" && <div className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 shrink-0" />}
-                  <span className="text-xs font-medium">{step.label}</span>
-                  {step.reason && <span className="text-xs text-muted-foreground">({step.reason})</span>}
-                  {step.durationMs != null && (
-                    <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1 shrink-0">
-                      <Clock className="w-3 h-3" />
-                      {(step.durationMs / 1000).toFixed(1)}s
-                    </span>
-                  )}
-                </div>
+        {currentPreset && (
+          <div className="rounded-md bg-muted p-3 space-y-2">
+            <div className="text-sm font-medium">{currentPreset.label}</div>
+            <div className="text-xs text-muted-foreground">{currentPreset.description}</div>
+            <div className="flex flex-wrap gap-1">
+              {currentPreset.modules.map((m) => (
+                <Badge key={m} variant="secondary" className="no-default-active-elevate text-xs">
+                  {m}
+                </Badge>
               ))}
             </div>
-          )}
+            {currentPreset.include_dependencies && (
+              <div className="text-xs text-muted-foreground">Includes dependency modules</div>
+            )}
+          </div>
+        )}
 
-          {runSummary && (
-            <div className="flex items-center gap-2 text-sm" data-testid="text-preset-summary">
-              {runSummary.failed === 0 ? (
-                <Badge variant="success" className="no-default-active-elevate">
-                  All {runSummary.succeeded} steps passed
-                </Badge>
-              ) : (
-                <>
-                  <Badge variant="success" className="no-default-active-elevate">{runSummary.succeeded} passed</Badge>
-                  <Badge variant="error" className="no-default-active-elevate">{runSummary.failed} failed</Badge>
-                </>
-              )}
-            </div>
-          )}
-
-          {presetOutput && (
-            <div>
-              <div className="text-xs font-medium mb-1 flex items-center gap-1 text-muted-foreground">
-                <Terminal className="w-3 h-3" /> Output
-              </div>
-              <ScrollArea className="max-h-64">
-                <pre
-                  className="rounded-md p-3 text-xs font-mono whitespace-pre-wrap bg-background border"
-                  data-testid="text-preset-output"
+        {selectedPreset && (
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-muted-foreground">2. Choose a Stage Plan</div>
+            <div className="flex flex-wrap gap-1.5">
+              {postSetupStagePlans.map(([id, steps]) => (
+                <Button
+                  key={id}
+                  variant={effectiveStagePlan === id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedStagePlan(id)}
+                  disabled={isRunning}
+                  data-testid={`button-stage-plan-${id}`}
                 >
-                  {presetOutput}
-                </pre>
-              </ScrollArea>
+                  <span>{id}</span>
+                  <Badge variant="secondary" className="no-default-active-elevate ml-1">
+                    {steps.length}
+                  </Badge>
+                </Button>
+              ))}
             </div>
-          )}
-        </CardContent>
-      )}
+            {effectiveStagePlan && stage_plans[effectiveStagePlan] && (
+              <div className="text-xs text-muted-foreground">
+                Steps: {stage_plans[effectiveStagePlan].join(" → ")}
+              </div>
+            )}
+          </div>
+        )}
+
+        {selectedPreset && effectiveStagePlan && (
+          <div className="flex items-center gap-2">
+            {!isRunning ? (
+              <Button
+                onClick={runPreset}
+                disabled={disabled || !projectName}
+                data-testid="button-run-preset"
+              >
+                <Play className="w-4 h-4" />
+                Run {currentPreset?.label} — {effectiveStagePlan}
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                onClick={cancelRun}
+                data-testid="button-cancel-preset"
+              >
+                <Square className="w-4 h-4" />
+                Cancel
+              </Button>
+            )}
+          </div>
+        )}
+
+        {stepProgress.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="text-xs font-medium text-muted-foreground">Progress</div>
+            {stepProgress.map((step) => (
+              <div
+                key={step.index}
+                className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md bg-muted"
+                data-testid={`preset-step-${step.stepId}`}
+              >
+                {step.status === "running" && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />}
+                {step.status === "success" && <CheckCircle2 className="w-3.5 h-3.5 text-green-600 dark:text-green-400 shrink-0" />}
+                {step.status === "error" && <XCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />}
+                {step.status === "skipped" && <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                {step.status === "pending" && <div className="w-3.5 h-3.5 rounded-full border-2 border-muted-foreground/30 shrink-0" />}
+                <span className="text-xs font-medium">{step.label}</span>
+                {step.reason && <span className="text-xs text-muted-foreground">({step.reason})</span>}
+                {step.durationMs != null && (
+                  <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1 shrink-0">
+                    <Clock className="w-3 h-3" />
+                    {(step.durationMs / 1000).toFixed(1)}s
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {runSummary && (
+          <div className="flex items-center gap-2 text-sm" data-testid="text-preset-summary">
+            {runSummary.failed === 0 ? (
+              <Badge variant="success" className="no-default-active-elevate">
+                All {runSummary.succeeded} steps passed
+              </Badge>
+            ) : (
+              <>
+                <Badge variant="success" className="no-default-active-elevate">{runSummary.succeeded} passed</Badge>
+                <Badge variant="error" className="no-default-active-elevate">{runSummary.failed} failed</Badge>
+              </>
+            )}
+          </div>
+        )}
+
+        {presetOutput && (
+          <div>
+            <div className="text-xs font-medium mb-1 flex items-center gap-1 text-muted-foreground">
+              <Terminal className="w-3 h-3" /> Output
+            </div>
+            <ScrollArea className="max-h-64">
+              <pre
+                className="rounded-md p-3 text-xs font-mono whitespace-pre-wrap bg-background border"
+                data-testid="text-preset-output"
+              >
+                {presetOutput}
+              </pre>
+            </ScrollArea>
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }
