@@ -87,6 +87,43 @@ AXION defines a clear pipeline for kit creation and application development:
 
 **Pipeline position**: Runs after import + scaffold + build-plan. Does NOT require docs lock/verify.
 
+### Iterate v1
+`axion-iterate` is a deterministic orchestration wrapper that chains AXION primitives into a "do the right next thing" sequence with explicit gates. No autonomy — stops at gates and outputs deterministic `next_commands`, never applies changes without `--allow-apply`.
+
+**CLI**: `npx tsx axion/scripts/axion-iterate.ts --build-root PATH --project-name NAME [--allow-apply] [--stop-after STEP] [--json] [--timeout-ms N]`
+
+**Step sequence** (stops at first gate failure):
+1. **doctor** — Build mode health check (`axion-doctor --root --json`)
+2. **reconcile** — Import vs build drift detection (`axion-reconcile`); stops on CRITICAL mismatches
+3. **plan** — Verify `build_plan.json` exists and parses
+4. **manifest** — Fingerprint-gated manifest generation via `build-exec --dry-run`; skips if SHA-256 hashes of `build_plan.json` + `stack_profile.json` + `lock_manifest.json` match previous `iteration_state.json`
+5. **apply** — Gate: requires `--allow-apply`; runs `build-exec --apply --manifest`
+6. **test** — Workspace tests via `axion-test`
+7. **activate** — Activate build pointer via `axion-activate`
+
+**Pre-gate**: Active non-stale `run_lock.json` stops iteration immediately with `RUN_LOCK_ACTIVE`.
+
+**Output**: `registry/iteration_state.json` — Atomically written state with:
+- `version`, `generated_at`, `producer`
+- `overall_status`: `completed` | `stopped_at_gate` | `error`
+- `stopped_at`: `{ step, reason }` or null
+- `steps_executed[]`: each with `name`, `status` (PASSED|FAILED|SKIPPED|STOPPED), `duration_ms`, `output_ref`, `reason_codes`, `summary`, `next_commands`
+- `fingerprints`: `{ build_plan_hash, stack_profile_hash, lock_manifest_hash, last_manifest_hash }`
+- `reports`: refs to doctor, reconcile, manifest, exec_report, test, activate outputs
+- `next_commands[]`: actionable remediation commands
+
+**Stdout JSON**: `{ status, stage: "iterate", iteration_state_path, overall_status, stopped_at, steps_count, next_commands }`
+
+**Exit codes**: 0 only if `overall_status === "completed"`, 1 otherwise.
+
+**Safety guarantees**:
+- Never applies changes without `--allow-apply`
+- Fingerprint-based idempotency prevents redundant manifest regeneration
+- Atomic writes for iteration_state.json
+- Run-lock check prevents concurrent iteration
+
+**Pipeline position**: Runs after import + scaffold + build-plan. Orchestrates reconcile → build-exec → test → activate.
+
 ### Core System Contracts and Guarantees
 -   **Pipeline Guarantees**: Strict stage execution order (generate → seed → draft → review → verify → lock), enforced module dependencies, and preset-defined module scopes.
 -   **Diagnostic Guarantees**: Standardized SCREAMING_SNAKE_CASE reason codes, `blocked_by` responses with detailed status and hints, and known codes like `MISSING_SECTION`.
