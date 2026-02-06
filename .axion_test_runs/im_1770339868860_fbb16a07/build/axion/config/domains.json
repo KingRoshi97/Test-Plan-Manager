@@ -1,0 +1,218 @@
+{
+  "axion_root": "axion",
+  "domains_dir": "domains",
+  "templates_dir": "templates",
+  "modules": [
+    {
+      "name": "Architecture",
+      "slug": "architecture",
+      "prefix": "arch",
+      "type": "foundation",
+      "description": "System architecture, patterns, and structural decisions",
+      "dependencies": []
+    },
+    {
+      "name": "Systems",
+      "slug": "systems",
+      "prefix": "sys",
+      "type": "foundation",
+      "description": "System components, services, and their interactions",
+      "dependencies": ["architecture"]
+    },
+    {
+      "name": "Contracts",
+      "slug": "contracts",
+      "prefix": "contract",
+      "type": "foundation",
+      "description": "API contracts, interfaces, and data schemas",
+      "dependencies": ["architecture", "systems"]
+    },
+    {
+      "name": "Database",
+      "slug": "database",
+      "prefix": "db",
+      "type": "data",
+      "description": "Database schema, migrations, and data models",
+      "dependencies": ["contracts"]
+    },
+    {
+      "name": "Data",
+      "slug": "data",
+      "prefix": "data",
+      "type": "data",
+      "description": "Data flows, transformations, and validation",
+      "dependencies": ["database", "contracts"]
+    },
+    {
+      "name": "Auth",
+      "slug": "auth",
+      "prefix": "auth",
+      "type": "security",
+      "description": "Authentication, authorization, and identity management",
+      "dependencies": ["contracts", "database"]
+    },
+    {
+      "name": "Backend",
+      "slug": "backend",
+      "prefix": "be",
+      "type": "core",
+      "description": "Server-side logic, APIs, and business rules",
+      "dependencies": ["contracts", "database", "auth"]
+    },
+    {
+      "name": "Integrations",
+      "slug": "integrations",
+      "prefix": "integ",
+      "type": "core",
+      "description": "Third-party integrations and external services",
+      "dependencies": ["backend", "contracts"]
+    },
+    {
+      "name": "State",
+      "slug": "state",
+      "prefix": "state",
+      "type": "frontend",
+      "description": "State management, stores, and client-side data",
+      "dependencies": ["contracts"]
+    },
+    {
+      "name": "Frontend",
+      "slug": "frontend",
+      "prefix": "fe",
+      "type": "frontend",
+      "description": "UI components, pages, and user interactions",
+      "dependencies": ["state", "contracts"]
+    },
+    {
+      "name": "Fullstack",
+      "slug": "fullstack",
+      "prefix": "fs",
+      "type": "integration",
+      "description": "End-to-end flows connecting frontend and backend",
+      "dependencies": ["frontend", "backend"]
+    },
+    {
+      "name": "Testing",
+      "slug": "testing",
+      "prefix": "test",
+      "type": "quality",
+      "description": "Test strategies, coverage, and automation",
+      "dependencies": ["backend", "frontend"]
+    },
+    {
+      "name": "Quality",
+      "slug": "quality",
+      "prefix": "qa",
+      "type": "quality",
+      "description": "Code quality, linting, and standards",
+      "dependencies": []
+    },
+    {
+      "name": "Security",
+      "slug": "security",
+      "prefix": "sec",
+      "type": "crosscutting",
+      "description": "Security policies, audits, and vulnerability management",
+      "dependencies": ["auth", "backend"]
+    },
+    {
+      "name": "DevOps",
+      "slug": "devops",
+      "prefix": "devops",
+      "type": "operations",
+      "description": "CI/CD, deployment, and infrastructure automation",
+      "dependencies": ["backend", "testing"]
+    },
+    {
+      "name": "Cloud",
+      "slug": "cloud",
+      "prefix": "cloud",
+      "type": "operations",
+      "description": "Cloud infrastructure, scaling, and hosting",
+      "dependencies": ["devops"]
+    },
+    {
+      "name": "DevEx",
+      "slug": "devex",
+      "prefix": "dx",
+      "type": "operations",
+      "description": "Developer experience, tooling, and workflows",
+      "dependencies": ["quality"]
+    },
+    {
+      "name": "Mobile",
+      "slug": "mobile",
+      "prefix": "mobile",
+      "type": "platform",
+      "description": "Mobile app development (iOS, Android, React Native)",
+      "dependencies": ["frontend", "state"]
+    },
+    {
+      "name": "Desktop",
+      "slug": "desktop",
+      "prefix": "desktop",
+      "type": "platform",
+      "description": "Desktop app development (Electron, Tauri)",
+      "dependencies": ["frontend", "state"]
+    }
+  ],
+  "canonical_order": [
+    "architecture",
+    "systems",
+    "contracts",
+    "database",
+    "data",
+    "auth",
+    "backend",
+    "integrations",
+    "state",
+    "frontend",
+    "fullstack",
+    "testing",
+    "quality",
+    "security",
+    "devops",
+    "cloud",
+    "devex",
+    "mobile",
+    "desktop"
+  ],
+  "stages": ["generate", "seed", "draft", "review", "verify", "lock"],
+  "roshi_docs": {
+    "RPBS": {
+      "path": "core/RPBS_Product.md",
+      "description": "Requirements and Product Boundaries Specification",
+      "prerequisites": []
+    },
+    "REBS": {
+      "path": "core/REBS_Product.md",
+      "description": "Requirements and Engineering Boundaries Specification",
+      "prerequisites": ["RPBS"]
+    },
+    "DDES": {
+      "path": "core/DDES.md",
+      "description": "Detailed Design and Engineering Specification",
+      "prerequisites": ["RPBS", "REBS"]
+    },
+    "UX_Foundations": {
+      "path": "core/UX_Foundations.md",
+      "description": "UX patterns and user experience guidelines",
+      "prerequisites": ["DDES"]
+    },
+    "UI_Constraints": {
+      "path": "core/UI_Constraints.md",
+      "description": "UI constraints and design system rules",
+      "prerequisites": ["UX_Foundations"]
+    },
+    "ALRP": {
+      "path": "core/ALRP.md",
+      "description": "Agent Loop Response Protocol",
+      "prerequisites": ["UI_Constraints"]
+    },
+    "ERC": {
+      "path": "core/ERC.md",
+      "description": "Execution Readiness Checkpoint",
+      "prerequisites": ["ALRP"]
+    }
+  }
+}
