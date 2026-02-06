@@ -196,6 +196,15 @@ const CHECK_REGISTRY: ReleaseCheck[] = [
     args: ['-c', 'npx vitest run tests/suites/e2e.reconcile.test.ts --passWithNoTests --testTimeout=180000'],
   },
   {
+    id: 'e2e-iterate',
+    name: 'E2E Iterate Tests',
+    description: 'Deterministic orchestration: apply gate, reconcile gate, plan gate, full path',
+    required: true,
+    timeout_ms: 300000,
+    command: 'bash',
+    args: ['-c', 'npx vitest run tests/suites/e2e.iterate.test.ts --passWithNoTests --testTimeout=300000'],
+  },
+  {
     id: 'doctor-tests',
     name: 'Doctor Extension Tests',
     description: 'Active build, pollution, run lock checks',
