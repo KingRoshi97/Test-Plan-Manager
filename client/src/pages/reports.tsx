@@ -14,6 +14,10 @@ import {
   Info,
   ChevronDown,
   ChevronRight,
+  FlaskConical,
+  Bug,
+  FileCode,
+  Timer,
 } from "lucide-react";
 import type { WorkspaceInfo } from "@shared/schema";
 
@@ -180,6 +184,10 @@ function ReportViewer({ reportType, data, projectName }: {
 
   if (reportType === "verify" || reportType === "reconcile" || reportType === "iteration-state" || reportType === "build-exec") {
     return <StructuredReportViewer label={reportLabel} data={data.data} reportType={reportType} />;
+  }
+
+  if (reportType === "test") {
+    return <TestReportViewer label={reportLabel} data={data.data} path={data.path} />;
   }
 
   return (
@@ -472,5 +480,231 @@ function BuildExecDetails({ report }: { report: Record<string, unknown> }) {
         </div>
       )}
     </div>
+  );
+}
+
+function TestGauge({ value, max, label, icon: Icon, colorClass }: {
+  value: number;
+  max: number;
+  label: string;
+  icon: typeof CheckCircle2;
+  colorClass: string;
+}) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  const circumference = 2 * Math.PI * 28;
+  const strokeDashoffset = circumference - (pct / 100) * circumference;
+
+  return (
+    <div className="flex flex-col items-center gap-2 p-3">
+      <div className="relative w-16 h-16">
+        <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+          <circle
+            cx="32"
+            cy="32"
+            r="28"
+            fill="none"
+            stroke="hsl(var(--muted))"
+            strokeWidth="4"
+          />
+          <circle
+            cx="32"
+            cy="32"
+            r="28"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            className={`${colorClass} transition-all duration-700`}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm font-bold tabular-nums">{value}</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <Icon className={`w-3 h-3 ${colorClass}`} />
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function TestReportViewer({ label, data, path }: {
+  label: string;
+  data: unknown;
+  path?: string;
+}) {
+  const [showRaw, setShowRaw] = useState(false);
+  const report = data as Record<string, unknown>;
+
+  const status = String(report.status || "unknown");
+  const isPass = status === "PASS" || status === "success";
+  const testsPassed = typeof report.tests_passed === "number" ? report.tests_passed : 0;
+  const testsFailed = typeof report.tests_failed === "number" ? report.tests_failed : 0;
+  const lintErrors = typeof report.lint_errors === "number" ? report.lint_errors : 0;
+  const typecheckErrors = typeof report.typecheck_errors === "number" ? report.typecheck_errors : 0;
+  const durationMs = typeof report.duration_ms === "number" ? report.duration_ms : 0;
+  const generatedAt = report.generated_at ? String(report.generated_at) : null;
+
+  const totalTests = testsPassed + testsFailed;
+  const totalIssues = testsFailed + lintErrors + typecheckErrors;
+
+  const checks = [
+    {
+      label: "Unit Tests",
+      icon: FlaskConical,
+      passed: testsFailed === 0 && totalTests > 0,
+      skipped: totalTests === 0,
+      detail: totalTests > 0 ? `${testsPassed}/${totalTests} passed` : "No tests run",
+    },
+    {
+      label: "Lint",
+      icon: FileCode,
+      passed: lintErrors === 0,
+      skipped: false,
+      detail: lintErrors > 0 ? `${lintErrors} error${lintErrors !== 1 ? "s" : ""}` : "Clean",
+    },
+    {
+      label: "TypeScript",
+      icon: FileCode,
+      passed: typecheckErrors === 0,
+      skipped: false,
+      detail: typecheckErrors > 0 ? `${typecheckErrors} error${typecheckErrors !== 1 ? "s" : ""}` : "Clean",
+    },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-3">
+            {isPass
+              ? <div className="flex items-center justify-center w-9 h-9 rounded-md bg-green-100 dark:bg-green-950/40">
+                  <CheckCircle2 className="w-4.5 h-4.5 text-green-600 dark:text-green-400" />
+                </div>
+              : <div className="flex items-center justify-center w-9 h-9 rounded-md bg-red-100 dark:bg-red-950/40">
+                  <XCircle className="w-4.5 h-4.5 text-red-600 dark:text-red-400" />
+                </div>
+            }
+            <div>
+              <CardTitle className="text-sm">{label}</CardTitle>
+              {generatedAt && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {new Date(generatedAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+          </div>
+          <Badge
+            variant={isPass ? "success" : "error"}
+            className="no-default-active-elevate"
+            data-testid="text-test-report-status"
+          >
+            {status.toUpperCase()}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-4 rounded-md bg-muted p-2">
+          <TestGauge
+            value={testsPassed}
+            max={Math.max(totalTests, 1)}
+            label="Passed"
+            icon={CheckCircle2}
+            colorClass="text-green-600 dark:text-green-400"
+          />
+          <TestGauge
+            value={testsFailed}
+            max={Math.max(totalTests, 1)}
+            label="Failed"
+            icon={XCircle}
+            colorClass={testsFailed > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}
+          />
+          <TestGauge
+            value={lintErrors}
+            max={Math.max(lintErrors, 1)}
+            label="Lint"
+            icon={Bug}
+            colorClass={lintErrors > 0 ? "text-yellow-600 dark:text-yellow-400" : "text-muted-foreground"}
+          />
+          <TestGauge
+            value={typecheckErrors}
+            max={Math.max(typecheckErrors, 1)}
+            label="Types"
+            icon={FileCode}
+            colorClass={typecheckErrors > 0 ? "text-yellow-600 dark:text-yellow-400" : "text-muted-foreground"}
+          />
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-md bg-muted p-3 text-center">
+            <div className="text-lg font-bold tabular-nums">{totalTests}</div>
+            <div className="text-xs text-muted-foreground">Total Tests</div>
+          </div>
+          <div className="rounded-md bg-muted p-3 text-center">
+            <div className="text-lg font-bold tabular-nums">{totalIssues}</div>
+            <div className="text-xs text-muted-foreground">Issues</div>
+          </div>
+          <div className="rounded-md bg-muted p-3 text-center">
+            <div className="flex items-center justify-center gap-1">
+              <Timer className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-lg font-bold tabular-nums">{(durationMs / 1000).toFixed(1)}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">Seconds</div>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground px-1">Quality Checks</p>
+          {checks.map((check, i) => {
+            const CheckIcon = check.icon;
+            return (
+              <div key={i} className="flex items-center gap-3 rounded-md border px-3 py-2.5">
+                {check.skipped ? (
+                  <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
+                    <span className="text-[10px] text-muted-foreground">--</span>
+                  </div>
+                ) : check.passed ? (
+                  <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                )}
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <CheckIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium">{check.label}</span>
+                </div>
+                <span className="text-xs text-muted-foreground shrink-0">{check.detail}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        {path && (
+          <p className="text-xs text-muted-foreground truncate px-1">
+            Source: <span className="font-mono">{path}</span>
+          </p>
+        )}
+
+        <div>
+          <button
+            onClick={() => setShowRaw(!showRaw)}
+            className="flex items-center gap-1 text-xs text-muted-foreground mb-1 px-1"
+            data-testid="button-test-raw-toggle"
+          >
+            {showRaw ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            Raw JSON
+          </button>
+          {showRaw && (
+            <ScrollArea className="max-h-[300px]">
+              <pre className="text-xs font-mono whitespace-pre-wrap p-3 rounded-md bg-muted" data-testid="text-test-report-raw">
+                {JSON.stringify(data, null, 2)}
+              </pre>
+            </ScrollArea>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
