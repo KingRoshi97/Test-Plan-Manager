@@ -2,7 +2,7 @@
 
 ## Overview
 **Domain Slug:** auth
-**Generated:** 2026-02-06T23:07:05.140Z
+**Generated:** 2026-02-06T23:16:49.288Z
 
 ## Unresolved Questions
 
