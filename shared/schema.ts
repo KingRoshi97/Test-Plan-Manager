@@ -1,3 +1,67 @@
+import { pgTable, serial, text, integer, timestamp, jsonb, varchar } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+export const workspaces = pgTable("workspaces", {
+  id: serial("id").primaryKey(),
+  projectName: varchar("project_name", { length: 255 }).notNull().unique(),
+  path: text("path").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  hasManifest: integer("has_manifest").default(0).notNull(),
+  hasRegistry: integer("has_registry").default(0).notNull(),
+  hasDomains: integer("has_domains").default(0).notNull(),
+  hasApp: integer("has_app").default(0).notNull(),
+});
+
+export const pipelineRuns = pgTable("pipeline_runs", {
+  id: serial("id").primaryKey(),
+  workspaceId: integer("workspace_id"),
+  projectName: varchar("project_name", { length: 255 }).notNull(),
+  stepId: varchar("step_id", { length: 100 }).notNull(),
+  stepLabel: varchar("step_label", { length: 255 }).notNull(),
+  stepGroup: varchar("step_group", { length: 50 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(),
+  exitCode: integer("exit_code").notNull(),
+  durationMs: integer("duration_ms").notNull(),
+  stdout: text("stdout").default(""),
+  stderr: text("stderr").default(""),
+  parsedJson: jsonb("parsed_json"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const moduleStatuses = pgTable("module_statuses", {
+  id: serial("id").primaryKey(),
+  projectName: varchar("project_name", { length: 255 }).notNull(),
+  moduleName: varchar("module_name", { length: 100 }).notNull(),
+  stage: varchar("stage", { length: 50 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const reports = pgTable("reports", {
+  id: serial("id").primaryKey(),
+  projectName: varchar("project_name", { length: 255 }).notNull(),
+  reportType: varchar("report_type", { length: 100 }).notNull(),
+  data: jsonb("data").notNull(),
+  filePath: text("file_path"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertWorkspaceSchema = createInsertSchema(workspaces).omit({ id: true, createdAt: true });
+export const insertPipelineRunSchema = createInsertSchema(pipelineRuns).omit({ id: true, createdAt: true });
+export const insertModuleStatusSchema = createInsertSchema(moduleStatuses).omit({ id: true, updatedAt: true });
+export const insertReportSchema = createInsertSchema(reports).omit({ id: true, createdAt: true });
+
+export type InsertWorkspace = z.infer<typeof insertWorkspaceSchema>;
+export type InsertPipelineRun = z.infer<typeof insertPipelineRunSchema>;
+export type InsertModuleStatus = z.infer<typeof insertModuleStatusSchema>;
+export type InsertReport = z.infer<typeof insertReportSchema>;
+
+export type Workspace = typeof workspaces.$inferSelect;
+export type PipelineRun = typeof pipelineRuns.$inferSelect;
+export type ModuleStatus = typeof moduleStatuses.$inferSelect;
+export type Report = typeof reports.$inferSelect;
+
 export interface PipelineCommand {
   id: string;
   label: string;

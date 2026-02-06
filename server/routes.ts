@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo } from '../shared/schema.js';
+import { storage } from './storage.js';
 
 const PROJECT_ROOT = process.cwd();
 const WORKSPACES_DIR = path.join(PROJECT_ROOT, 'workspaces');
@@ -209,30 +210,207 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
 };
 
+function tryParseJson(text: string): Record<string, unknown> | null {
+  try {
+    const lines = text.trim().split('\n');
+    const lastLine = lines[lines.length - 1];
+    return JSON.parse(lastLine);
+  } catch {
+    return null;
+  }
+}
+
+async function persistRunResult(stepId: string, step: PipelineStep, projectName: string, result: RunResult) {
+  try {
+    const parsedJson = tryParseJson(result.stdout);
+    await storage.createPipelineRun({
+      workspaceId: null,
+      projectName,
+      stepId,
+      stepLabel: step.label,
+      stepGroup: step.group,
+      status: result.status,
+      exitCode: result.exitCode,
+      durationMs: result.durationMs,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      parsedJson,
+    });
+
+    await syncWorkspaceToDb(projectName);
+
+    if (result.status === 'success') {
+      await syncModuleStatusToDb(projectName);
+      await syncReportsToDb(projectName, stepId);
+    }
+  } catch (err) {
+    console.error('Failed to persist pipeline run:', err);
+  }
+}
+
+async function syncWorkspaceToDb(projectName: string) {
+  const wsPath = path.join(WORKSPACES_DIR, projectName);
+  if (!fs.existsSync(wsPath)) return;
+
+  await storage.upsertWorkspace({
+    projectName,
+    path: wsPath,
+    hasManifest: fs.existsSync(path.join(wsPath, 'manifest.json')) ? 1 : 0,
+    hasRegistry: fs.existsSync(path.join(wsPath, projectName, 'registry')) ? 1 : 0,
+    hasDomains: fs.existsSync(path.join(wsPath, projectName, 'domains')) ? 1 : 0,
+    hasApp: fs.existsSync(path.join(wsPath, projectName, 'app')) ? 1 : 0,
+  });
+}
+
+async function syncModuleStatusToDb(projectName: string) {
+  const buildRoot = path.join(WORKSPACES_DIR, projectName);
+  const modules = [
+    'architecture', 'systems', 'contracts', 'database', 'data',
+    'auth', 'backend', 'integrations', 'state', 'frontend',
+    'fullstack', 'testing', 'quality', 'security', 'devops',
+    'cloud', 'devex', 'mobile', 'desktop',
+  ];
+  const stages = ['generate', 'seed', 'draft', 'review', 'verify', 'lock'];
+  const markerDirs = [
+    path.join(buildRoot, 'axion', 'registry'),
+    path.join(buildRoot, projectName, 'registry'),
+    path.join(buildRoot, 'registry'),
+  ];
+
+  const statuses: Array<{ moduleName: string; stage: string; status: string }> = [];
+  for (const mod of modules) {
+    for (const stage of stages) {
+      let status = 'pending';
+      for (const dir of markerDirs) {
+        const markerPath = path.join(dir, 'stage_markers', stage, `${mod}.json`);
+        if (fs.existsSync(markerPath)) {
+          try {
+            const data = JSON.parse(fs.readFileSync(markerPath, 'utf-8'));
+            status = data?.status === 'DONE' ? 'done' : 'partial';
+          } catch {
+            status = 'error';
+          }
+          break;
+        }
+      }
+      statuses.push({ moduleName: mod, stage, status });
+    }
+  }
+
+  await storage.bulkUpsertModuleStatuses(projectName, statuses);
+}
+
+const REPORT_FILE_MAP: Record<string, string[]> = {
+  'import-report': ['import_report.json'],
+  'import-facts': ['import_facts.json'],
+  'reconcile': ['reconcile_report.json'],
+  'iteration-state': ['iteration_state.json'],
+  'build-plan': ['build_plan.json'],
+  'build-exec': ['build_exec_report.json'],
+  'stack-profile': ['stack_profile.json'],
+  'verify': ['verify_report.json'],
+  'verify-status': ['verify_status.json'],
+  'test': ['test_report.json'],
+  'lock-manifest': ['lock_manifest.json'],
+};
+
+const STEP_TO_REPORTS: Record<string, string[]> = {
+  'kit-create': [],
+  'generate': [],
+  'seed': [],
+  'draft': [],
+  'review': [],
+  'verify': ['verify', 'verify-status'],
+  'lock': ['lock-manifest'],
+  'scaffold-app': ['stack-profile'],
+  'build-plan': ['build-plan'],
+  'iterate': ['iteration-state', 'build-exec'],
+  'test': ['test'],
+  'activate': [],
+  'import': ['import-report', 'import-facts'],
+  'reconcile': ['reconcile'],
+  'doctor': [],
+  'status': [],
+  'next': [],
+  'docs-check': [],
+  'clean': [],
+  'package': [],
+};
+
+async function syncReportsToDb(projectName: string, stepId: string) {
+  const reportTypes = STEP_TO_REPORTS[stepId] || [];
+  const buildRoot = path.join(WORKSPACES_DIR, projectName);
+
+  for (const reportType of reportTypes) {
+    const fileNames = REPORT_FILE_MAP[reportType];
+    if (!fileNames) continue;
+
+    for (const fileName of fileNames) {
+      const candidates = [
+        path.join(buildRoot, projectName, 'registry', fileName),
+        path.join(buildRoot, 'registry', fileName),
+        path.join(buildRoot, 'axion', 'registry', fileName),
+      ];
+
+      for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+          try {
+            const content = fs.readFileSync(candidate, 'utf-8');
+            const data = JSON.parse(content);
+            await storage.createReport({
+              projectName,
+              reportType,
+              data,
+              filePath: candidate,
+            });
+          } catch {}
+          break;
+        }
+      }
+    }
+  }
+}
+
 export function registerRoutes(app: Express) {
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  app.get('/api/workspaces', (_req: Request, res: Response) => {
+  app.get('/api/workspaces', async (_req: Request, res: Response) => {
     ensureWorkspacesDir();
     try {
+      const dbWorkspaces = await storage.getWorkspaces();
+      const wsInfos: WorkspaceInfo[] = dbWorkspaces.map(ws => ({
+        path: ws.path,
+        projectName: ws.projectName,
+        exists: fs.existsSync(ws.path),
+        hasManifest: ws.hasManifest === 1,
+        hasRegistry: ws.hasRegistry === 1,
+        hasDomains: ws.hasDomains === 1,
+        hasApp: ws.hasApp === 1,
+      }));
+
       const entries = fs.readdirSync(WORKSPACES_DIR, { withFileTypes: true });
-      const workspaces: WorkspaceInfo[] = entries
-        .filter(e => e.isDirectory())
-        .map(e => {
-          const wsPath = path.join(WORKSPACES_DIR, e.name);
-          return {
+      const diskProjects = entries.filter(e => e.isDirectory()).map(e => e.name);
+      const dbProjectNames = new Set(dbWorkspaces.map(w => w.projectName));
+
+      for (const name of diskProjects) {
+        if (!dbProjectNames.has(name)) {
+          const wsPath = path.join(WORKSPACES_DIR, name);
+          wsInfos.push({
             path: wsPath,
-            projectName: e.name,
+            projectName: name,
             exists: true,
             hasManifest: fs.existsSync(path.join(wsPath, 'manifest.json')),
-            hasRegistry: fs.existsSync(path.join(wsPath, e.name, 'registry')),
-            hasDomains: fs.existsSync(path.join(wsPath, e.name, 'domains')),
-            hasApp: fs.existsSync(path.join(wsPath, e.name, 'app')),
-          };
-        });
-      res.json(workspaces);
+            hasRegistry: fs.existsSync(path.join(wsPath, name, 'registry')),
+            hasDomains: fs.existsSync(path.join(wsPath, name, 'domains')),
+            hasApp: fs.existsSync(path.join(wsPath, name, 'app')),
+          });
+          await syncWorkspaceToDb(name);
+        }
+      }
+
+      res.json(wsInfos);
     } catch {
       res.json([]);
     }
@@ -260,6 +438,7 @@ export function registerRoutes(app: Express) {
       const args = step.args(projectName, buildRoot, req.body);
       const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
       const result = await runCommand(step.cmd, args, step.label, cwd);
+      await persistRunResult(stepId, step, projectName, result);
       res.json(result);
     });
 
@@ -334,6 +513,7 @@ export function registerRoutes(app: Express) {
           stderr,
           durationMs: Date.now() - start,
         };
+        persistRunResult(stepId, step, projectName, result).catch(() => {});
         res.write(`event: done\ndata: ${JSON.stringify(result)}\n\n`);
         res.end();
       });
@@ -347,6 +527,7 @@ export function registerRoutes(app: Express) {
           stderr: stderr + '\n' + err.message,
           durationMs: Date.now() - start,
         };
+        persistRunResult(stepId, step, projectName, result).catch(() => {});
         res.write(`event: done\ndata: ${JSON.stringify(result)}\n\n`);
         res.end();
       });
@@ -357,11 +538,108 @@ export function registerRoutes(app: Express) {
     });
   }
 
-  app.get('/api/reports/:projectName/:reportType', (req: Request, res: Response) => {
+  app.get('/api/pipeline-runs', async (req: Request, res: Response) => {
+    const projectName = req.query.projectName as string | undefined;
+    const limit = parseInt(req.query.limit as string || '50', 10);
+    try {
+      const runs = projectName
+        ? await storage.getPipelineRuns(projectName, limit)
+        : await storage.getAllPipelineRuns(limit);
+      res.json(runs);
+    } catch (err: any) {
+      console.error('Failed to fetch pipeline runs:', err?.message || err);
+      res.status(500).json({ error: 'Failed to fetch pipeline runs', detail: err?.message });
+    }
+  });
+
+  app.get('/api/db/status/:projectName', async (req: Request, res: Response) => {
+    const projectName = req.params.projectName as string;
+    try {
+      const moduleStatusList = await storage.getModuleStatuses(projectName);
+
+      const modules: Record<string, Record<string, string>> = {};
+      for (const ms of moduleStatusList) {
+        if (!modules[ms.moduleName]) modules[ms.moduleName] = {};
+        modules[ms.moduleName][ms.stage] = ms.status;
+      }
+
+      res.json({
+        projectName,
+        modules,
+        source: 'database',
+      });
+    } catch {
+      res.json({ projectName, modules: {}, source: 'database' });
+    }
+  });
+
+  app.get('/api/db/reports/:projectName', async (req: Request, res: Response) => {
+    const projectName = req.params.projectName as string;
+    const reportType = req.query.type as string | undefined;
+    try {
+      const reports = await storage.getReports(projectName, reportType);
+      res.json(reports);
+    } catch {
+      res.json([]);
+    }
+  });
+
+  app.get('/api/db/reports/:projectName/latest/:reportType', async (req: Request, res: Response) => {
     const projectName = req.params.projectName as string;
     const reportType = req.params.reportType as string;
-    const buildRoot = path.join(WORKSPACES_DIR, projectName);
+    try {
+      const report = await storage.getLatestReport(projectName, reportType);
+      if (report) {
+        res.json({ found: true, data: report.data, filePath: report.filePath, createdAt: report.createdAt });
+      } else {
+        res.json({ found: false, data: null });
+      }
+    } catch {
+      res.json({ found: false, data: null });
+    }
+  });
 
+  app.get('/api/reports/:projectName/:reportType', async (req: Request, res: Response) => {
+    const projectName = req.params.projectName as string;
+    const reportType = req.params.reportType as string;
+
+    if (reportType === 'all') {
+      const buildRoot = path.join(WORKSPACES_DIR, projectName);
+      const registryDirs = [
+        path.join(buildRoot, projectName, 'registry'),
+        path.join(buildRoot, 'registry'),
+      ];
+      const fileReports: Record<string, unknown> = {};
+      for (const dir of registryDirs) {
+        if (!fs.existsSync(dir)) continue;
+        const resolved = path.resolve(dir);
+        if (!resolved.startsWith(WORKSPACES_DIR)) continue;
+        try {
+          const entries = fs.readdirSync(dir);
+          for (const entry of entries) {
+            if (!entry.endsWith('.json')) continue;
+            const key = entry.replace('.json', '');
+            if (fileReports[key]) continue;
+            try {
+              const content = fs.readFileSync(path.join(dir, entry), 'utf-8');
+              fileReports[key] = JSON.parse(content);
+            } catch {}
+          }
+        } catch {}
+      }
+      res.json(fileReports);
+      return;
+    }
+
+    try {
+      const dbReport = await storage.getLatestReport(projectName, reportType);
+      if (dbReport) {
+        res.json({ found: true, path: dbReport.filePath, data: dbReport.data, source: 'database', createdAt: dbReport.createdAt });
+        return;
+      }
+    } catch {}
+
+    const buildRoot = path.join(WORKSPACES_DIR, projectName);
     const reportPaths: Record<string, string[]> = {
       'import-report': [
         path.join(buildRoot, projectName, 'registry', 'import_report.json'),
@@ -433,7 +711,7 @@ export function registerRoutes(app: Express) {
       if (fs.existsSync(resolved)) {
         try {
           const content = fs.readFileSync(resolved, 'utf-8');
-          res.json({ found: true, path: resolved, data: JSON.parse(content) });
+          res.json({ found: true, path: resolved, data: JSON.parse(content), source: 'filesystem' });
           return;
         } catch {
           continue;
@@ -444,75 +722,63 @@ export function registerRoutes(app: Express) {
     res.json({ found: false, data: null });
   });
 
-  app.get('/api/reports/:projectName/all', (req: Request, res: Response) => {
-    const projectName = req.params.projectName as string;
-    const buildRoot = path.join(WORKSPACES_DIR, projectName);
-    const registryDirs = [
-      path.join(buildRoot, projectName, 'registry'),
-      path.join(buildRoot, 'registry'),
-    ];
-
-    const reports: Record<string, unknown> = {};
-
-    for (const dir of registryDirs) {
-      if (!fs.existsSync(dir)) continue;
-      const resolved = path.resolve(dir);
-      if (!resolved.startsWith(WORKSPACES_DIR)) continue;
-      try {
-        const entries = fs.readdirSync(dir);
-        for (const entry of entries) {
-          if (!entry.endsWith('.json')) continue;
-          const key = entry.replace('.json', '');
-          if (reports[key]) continue;
-          try {
-            const content = fs.readFileSync(path.join(dir, entry), 'utf-8');
-            reports[key] = JSON.parse(content);
-          } catch {}
-        }
-      } catch {}
-    }
-
-    res.json(reports);
-  });
-
-  app.get('/api/status/:projectName', (req: Request, res: Response) => {
+  app.get('/api/status/:projectName', async (req: Request, res: Response) => {
     const projectName = req.params.projectName as string;
     const buildRoot = path.join(WORKSPACES_DIR, projectName);
 
-    const modules = [
+    const allModules = [
       'architecture', 'systems', 'contracts', 'database', 'data',
       'auth', 'backend', 'integrations', 'state', 'frontend',
       'fullstack', 'testing', 'quality', 'security', 'devops',
       'cloud', 'devex', 'mobile', 'desktop',
     ];
-
     const stages = ['generate', 'seed', 'draft', 'review', 'verify', 'lock'];
 
-    const markerDirs = [
-      path.join(buildRoot, 'axion', 'registry'),
-      path.join(buildRoot, projectName, 'registry'),
-      path.join(buildRoot, 'registry'),
-    ];
+    let moduleStatus: Record<string, Record<string, string>> = {};
+    let statusSource = 'filesystem';
 
-    const moduleStatus: Record<string, Record<string, string>> = {};
-
-    for (const mod of modules) {
-      moduleStatus[mod] = {};
-      for (const stage of stages) {
-        let status = 'pending';
-        for (const dir of markerDirs) {
-          const markerPath = path.join(dir, 'stage_markers', stage, `${mod}.json`);
-          if (fs.existsSync(markerPath)) {
-            try {
-              const data = JSON.parse(fs.readFileSync(markerPath, 'utf-8'));
-              status = data?.status === 'DONE' ? 'done' : 'partial';
-            } catch {
-              status = 'error';
-            }
-            break;
+    try {
+      const dbStatuses = await storage.getModuleStatuses(projectName);
+      if (dbStatuses.length > 0) {
+        statusSource = 'database';
+        for (const ms of dbStatuses) {
+          if (!moduleStatus[ms.moduleName]) moduleStatus[ms.moduleName] = {};
+          moduleStatus[ms.moduleName][ms.stage] = ms.status;
+        }
+        for (const mod of allModules) {
+          if (!moduleStatus[mod]) moduleStatus[mod] = {};
+          for (const stage of stages) {
+            if (!moduleStatus[mod][stage]) moduleStatus[mod][stage] = 'pending';
           }
         }
-        moduleStatus[mod][stage] = status;
+      }
+    } catch {}
+
+    if (statusSource === 'filesystem') {
+      const markerDirs = [
+        path.join(buildRoot, 'axion', 'registry'),
+        path.join(buildRoot, projectName, 'registry'),
+        path.join(buildRoot, 'registry'),
+      ];
+
+      for (const mod of allModules) {
+        moduleStatus[mod] = {};
+        for (const stage of stages) {
+          let status = 'pending';
+          for (const dir of markerDirs) {
+            const markerPath = path.join(dir, 'stage_markers', stage, `${mod}.json`);
+            if (fs.existsSync(markerPath)) {
+              try {
+                const data = JSON.parse(fs.readFileSync(markerPath, 'utf-8'));
+                status = data?.status === 'DONE' ? 'done' : 'partial';
+              } catch {
+                status = 'error';
+              }
+              break;
+            }
+          }
+          moduleStatus[mod][stage] = status;
+        }
       }
     }
 
@@ -554,6 +820,7 @@ export function registerRoutes(app: Express) {
       hasManifest: fs.existsSync(path.join(buildRoot, 'manifest.json')),
       hasDomains: fs.existsSync(path.join(buildRoot, projectName, 'domains')),
       hasApp: fs.existsSync(path.join(buildRoot, projectName, 'app')),
+      statusSource,
     });
   });
 
