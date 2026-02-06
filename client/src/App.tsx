@@ -9,11 +9,15 @@ import { AppSidebar } from "@/components/app-sidebar";
 import PipelinePage from "@/pages/pipeline";
 import FilesPage from "@/pages/files";
 import ReleasePage from "@/pages/release";
+import StatusPage from "@/pages/status";
+import ReportsPage from "@/pages/reports";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={PipelinePage} />
+      <Route path="/status" component={StatusPage} />
+      <Route path="/reports" component={ReportsPage} />
       <Route path="/files" component={FilesPage} />
       <Route path="/release" component={ReleasePage} />
       <Route>

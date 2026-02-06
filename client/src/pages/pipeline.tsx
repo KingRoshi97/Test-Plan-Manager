@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { formatSize } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Play,
   Plus,
   Layers,
   Package,
@@ -25,6 +23,19 @@ import {
   Clock,
   Loader2,
   Terminal,
+  Search,
+  GitCompare,
+  Stethoscope,
+  PenLine,
+  Eye,
+  ShieldCheck,
+  Lock,
+  FlaskConical,
+  Power,
+  Import,
+  Sparkles,
+  Trash2,
+  PackageOpen,
 } from "lucide-react";
 import type { WorkspaceInfo, RunResult } from "@shared/schema";
 
@@ -35,20 +46,79 @@ interface StepDef {
   endpoint: string;
   desc: string;
   extra?: Record<string, unknown>;
+  needsSourcePath?: boolean;
+  needsModule?: boolean;
 }
 
-const steps: StepDef[] = [
-  { id: "kit-create", label: "Kit Create", icon: <Plus className="w-4 h-4" />, endpoint: "/api/pipeline/kit-create", desc: "Initialize workspace" },
-  { id: "generate", label: "Generate", icon: <Layers className="w-4 h-4" />, endpoint: "/api/pipeline/generate", desc: "Generate doc packs" },
-  { id: "seed", label: "Seed", icon: <Package className="w-4 h-4" />, endpoint: "/api/pipeline/seed", desc: "Seed baseline docs" },
-  { id: "scaffold-app", label: "Scaffold App", icon: <Hammer className="w-4 h-4" />, endpoint: "/api/pipeline/scaffold-app", desc: "App skeleton" },
-  { id: "build-plan", label: "Build Plan", icon: <FileText className="w-4 h-4" />, endpoint: "/api/pipeline/build-plan", desc: "Task graph" },
-  { id: "iterate", label: "Iterate (dry)", icon: <RotateCw className="w-4 h-4" />, endpoint: "/api/pipeline/iterate", desc: "Dry run" },
-  { id: "iterate-apply", label: "Iterate (apply)", icon: <ArrowRight className="w-4 h-4" />, endpoint: "/api/pipeline/iterate", desc: "Apply changes", extra: { allowApply: true } },
+interface StepGroup {
+  id: string;
+  label: string;
+  desc: string;
+  steps: StepDef[];
+}
+
+const stepGroups: StepGroup[] = [
+  {
+    id: "setup",
+    label: "Setup",
+    desc: "Initialize and scaffold workspace",
+    steps: [
+      { id: "kit-create", label: "Kit Create", icon: <Plus className="w-4 h-4" />, endpoint: "/api/pipeline/kit-create", desc: "Initialize workspace" },
+      { id: "generate", label: "Generate", icon: <Layers className="w-4 h-4" />, endpoint: "/api/pipeline/generate", desc: "Generate doc structure" },
+      { id: "seed", label: "Seed", icon: <Package className="w-4 h-4" />, endpoint: "/api/pipeline/seed", desc: "Seed baseline docs" },
+    ],
+  },
+  {
+    id: "docs",
+    label: "Docs Pipeline",
+    desc: "Draft, review, verify, and lock documentation",
+    steps: [
+      { id: "draft", label: "Draft", icon: <PenLine className="w-4 h-4" />, endpoint: "/api/pipeline/draft", desc: "Draft documentation", needsModule: true },
+      { id: "review", label: "Review", icon: <Eye className="w-4 h-4" />, endpoint: "/api/pipeline/review", desc: "Review for issues", needsModule: true },
+      { id: "verify", label: "Verify", icon: <ShieldCheck className="w-4 h-4" />, endpoint: "/api/pipeline/verify", desc: "Verify completeness", needsModule: true },
+      { id: "lock", label: "Lock", icon: <Lock className="w-4 h-4" />, endpoint: "/api/pipeline/lock", desc: "Lock for build", needsModule: true },
+    ],
+  },
+  {
+    id: "build",
+    label: "Build & Deploy",
+    desc: "Scaffold, plan, build, test, and activate",
+    steps: [
+      { id: "scaffold-app", label: "Scaffold App", icon: <Hammer className="w-4 h-4" />, endpoint: "/api/pipeline/scaffold-app", desc: "App boilerplate" },
+      { id: "build-plan", label: "Build Plan", icon: <FileText className="w-4 h-4" />, endpoint: "/api/pipeline/build-plan", desc: "Generate task list" },
+      { id: "iterate", label: "Iterate (dry)", icon: <RotateCw className="w-4 h-4" />, endpoint: "/api/pipeline/iterate", desc: "Dry run" },
+      { id: "iterate-apply", label: "Iterate (apply)", icon: <ArrowRight className="w-4 h-4" />, endpoint: "/api/pipeline/iterate", desc: "Apply changes", extra: { allowApply: true } },
+      { id: "test", label: "Test", icon: <FlaskConical className="w-4 h-4" />, endpoint: "/api/pipeline/test", desc: "Run workspace tests" },
+      { id: "activate", label: "Activate", icon: <Power className="w-4 h-4" />, endpoint: "/api/pipeline/activate", desc: "Set active build" },
+    ],
+  },
+  {
+    id: "analysis",
+    label: "Analysis",
+    desc: "Import, reconcile, diagnose",
+    steps: [
+      { id: "import", label: "Import", icon: <Import className="w-4 h-4" />, endpoint: "/api/pipeline/import", desc: "Analyze existing repo", needsSourcePath: true },
+      { id: "reconcile", label: "Reconcile", icon: <GitCompare className="w-4 h-4" />, endpoint: "/api/pipeline/reconcile", desc: "Check drift" },
+      { id: "doctor", label: "Doctor", icon: <Stethoscope className="w-4 h-4" />, endpoint: "/api/pipeline/doctor", desc: "System health check" },
+      { id: "next", label: "Next Steps", icon: <Sparkles className="w-4 h-4" />, endpoint: "/api/pipeline/next", desc: "Recommendations" },
+      { id: "docs-check", label: "Docs Check", icon: <Search className="w-4 h-4" />, endpoint: "/api/pipeline/docs-check", desc: "Check doc health" },
+    ],
+  },
+  {
+    id: "ops",
+    label: "Operations",
+    desc: "Package and clean",
+    steps: [
+      { id: "package", label: "Package", icon: <PackageOpen className="w-4 h-4" />, endpoint: "/api/pipeline/package", desc: "Bundle Agent Kit" },
+      { id: "clean", label: "Clean", icon: <Trash2 className="w-4 h-4" />, endpoint: "/api/pipeline/clean", desc: "Clean artifacts" },
+    ],
+  },
 ];
 
 export default function PipelinePage() {
   const [projectName, setProjectName] = useState("my-project");
+  const [sourcePath, setSourcePath] = useState("");
+  const [moduleFilter, setModuleFilter] = useState("");
   const [outputs, setOutputs] = useState<RunResult[]>([]);
   const [expandedOutput, setExpandedOutput] = useState<number | null>(null);
   const [runningStep, setRunningStep] = useState<string | null>(null);
@@ -74,7 +144,14 @@ export default function PipelinePage() {
       eventSourceRef.current.close();
     }
 
-    const body = { projectName, ...(step.extra || {}) };
+    const body: Record<string, unknown> = { projectName, ...(step.extra || {}) };
+    if (step.needsSourcePath && sourcePath) {
+      body.sourcePath = sourcePath;
+    }
+    if (step.needsModule && moduleFilter) {
+      body.module = moduleFilter;
+    }
+
     const params = new URLSearchParams({ body: JSON.stringify(body) });
     const url = `${step.endpoint}/stream?${params.toString()}`;
 
@@ -130,42 +207,76 @@ export default function PipelinePage() {
     <div className="space-y-6 p-6 max-w-5xl mx-auto">
       <div>
         <h2 className="text-lg font-semibold" data-testid="text-pipeline-header">Pipeline</h2>
-        <p className="text-sm text-muted-foreground mt-1">Run AXION pipeline steps sequentially to build your project.</p>
+        <p className="text-sm text-muted-foreground mt-1">Run AXION pipeline steps to build your project.</p>
       </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0 pb-3">
-          <CardTitle className="text-sm">Project</CardTitle>
-          <Input
-            value={projectName}
-            onChange={(e) => setProjectName(e.target.value)}
-            className="max-w-xs"
-            data-testid="input-project-name"
-          />
+          <CardTitle className="text-sm">Configuration</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-            {steps.map((step) => (
-              <Button
-                key={step.id}
-                variant="secondary"
-                onClick={() => runStep(step)}
-                disabled={!!runningStep}
-                className="justify-start gap-2 h-auto py-2 px-3"
-                data-testid={`button-step-${step.id}`}
-              >
-                {runningStep === step.id
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : step.icon}
-                <div className="text-left">
-                  <div className="text-xs font-medium">{step.label}</div>
-                  <div className="text-xs text-muted-foreground">{step.desc}</div>
-                </div>
-              </Button>
-            ))}
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="text-xs text-muted-foreground w-20 shrink-0">Project</label>
+            <Input
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              className="max-w-xs"
+              data-testid="input-project-name"
+            />
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="text-xs text-muted-foreground w-20 shrink-0">Source Path</label>
+            <Input
+              value={sourcePath}
+              onChange={(e) => setSourcePath(e.target.value)}
+              placeholder="Path to existing repo (for Import)"
+              className="max-w-md"
+              data-testid="input-source-path"
+            />
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <label className="text-xs text-muted-foreground w-20 shrink-0">Module</label>
+            <Input
+              value={moduleFilter}
+              onChange={(e) => setModuleFilter(e.target.value)}
+              placeholder="Leave empty for --all (e.g. architecture)"
+              className="max-w-md"
+              data-testid="input-module-filter"
+            />
           </div>
         </CardContent>
       </Card>
+
+      {stepGroups.map((group) => (
+        <Card key={group.id}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">{group.label}</CardTitle>
+            <p className="text-xs text-muted-foreground">{group.desc}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {group.steps.map((step) => (
+                <Button
+                  key={step.id}
+                  variant="secondary"
+                  onClick={() => runStep(step)}
+                  disabled={!!runningStep}
+                  className="justify-start gap-2 h-auto py-2 px-3"
+                  data-testid={`button-step-${step.id}`}
+                >
+                  {runningStep === step.id
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : step.icon}
+                  <div className="text-left">
+                    <div className="text-xs font-medium">{step.label}</div>
+                    <div className="text-xs text-muted-foreground">{step.desc}</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
 
       {streamingOutput && (
         <Card>
