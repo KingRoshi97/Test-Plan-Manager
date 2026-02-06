@@ -172,7 +172,8 @@ The system includes both a CLI and a web-based Dashboard for interacting with th
   - `server/dev.ts` - Dev server with Vite middleware
   - `shared/schema.ts` - Shared TypeScript types
 - **API Patterns**: Each pipeline step has both POST (batch) and GET/stream (SSE) endpoints
-- **Security**: File browsing restricted to workspaces/ directory only
+- **Security**: File browsing restricted to project directories at repo root (excludes system dirs like axion/, tests/, client/, server/)
+- **Two-Root Model**: Build root is the repo root itself. Project workspaces (`my-project/`) are created as siblings to `axion/` at the repo root. Pipeline commands use `--build-root <repo-root> --project-name <project>`. No `workspaces/` subdirectory.
 
 ## External Dependencies
 
