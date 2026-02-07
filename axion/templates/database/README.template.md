@@ -34,18 +34,31 @@
 
 <!-- AXION:SECTION:DB_SCOPE -->
 ## Scope & Ownership
+<!-- AGENT: Derive from domain-map.md boundaries for the database module.
+"Owns" = table schemas, migrations, indexes, constraints, data integrity rules, backup/restore procedures.
+"Does NOT own" = business logic operating on data (backend module), API types (contracts module), query construction in handlers (backend module).
+Common mistake: claiming ownership of ORM model behavior or service-layer data transformations — database owns the schema, not the queries. -->
 - Owns: [TBD]
 - Does NOT own: [TBD]
 
 
 <!-- AXION:SECTION:DB_MODELS -->
 ## Data Models & Tables
+<!-- AGENT: Derive from RPBS §4 Core Objects Glossary + DDES entity details for this domain.
+Table list = every table with: name, purpose, owning domain module (e.g., users table owned by auth module).
+Relationships = foreign key relationships with cardinality (1:1, 1:N, M:N via join table), cascade behavior.
+Common mistake: creating tables not traceable to a Core Object in RPBS §4, or missing join tables for M:N relationships. -->
 - Table list (name → purpose → owner): [TBD]
 - Relationships + cardinality notes: [TBD]
 
 
 <!-- AXION:SECTION:DB_CONSTRAINTS -->
 ## Constraints & Integrity
+<!-- AGENT: Derive from DDES relationships and entity definitions.
+Primary keys = UUID vs auto-increment vs composite keys — pick one strategy and justify.
+Uniqueness = which columns/combinations must be unique (e.g., email per tenant, slug per org).
+Foreign keys = every FK with ON DELETE/ON UPDATE behavior (CASCADE, SET NULL, RESTRICT) — derive from DDES relationship semantics.
+Common mistake: missing uniqueness constraints that BELS implies (e.g., "email must be unique" rule without a DB constraint). -->
 - Primary keys strategy: [TBD]
 - Uniqueness constraints: [TBD]
 - Foreign keys and cascade rules: [TBD]
@@ -53,6 +66,11 @@
 
 <!-- AXION:SECTION:DB_MIGRATIONS -->
 ## Migrations & Change Management
+<!-- AGENT: Based on architecture module's ORM choice (e.g., Drizzle, Prisma, Knex).
+Migration tool = which tool generates and runs migrations, where migration files live, naming conventions.
+Forward/backward compatibility = can the app run with old schema during deploy? Expand-then-contract pattern for breaking changes.
+Zero-downtime rules = no DROP COLUMN in same deploy as code removal, add nullable columns first, backfill then add NOT NULL.
+Common mistake: writing destructive migrations (DROP TABLE/COLUMN) without a backfill or rollback plan. -->
 - Migration tool/process: [TBD]
 - Forward/backward compatibility approach: [TBD]
 - Zero-downtime migration rules: [TBD]
@@ -60,18 +78,30 @@
 
 <!-- AXION:SECTION:DB_INDEXING -->
 ## Indexing & Query Performance
+<!-- AGENT: Based on RPBS §7 performance targets + expected query patterns from DIM exposed interfaces.
+Index strategy = which columns get indexes (FKs, frequently filtered/sorted columns, unique constraints), composite index ordering.
+Hot queries = the most frequent or latency-sensitive queries (e.g., "list user's orders sorted by date"), expected EXPLAIN plan, target response time.
+Common mistake: over-indexing (indexes on every column) or under-indexing (no indexes on FK columns used in JOINs). -->
 - Index strategy: [TBD]
 - Known hot queries and plans: [TBD]
 
 
 <!-- AXION:SECTION:DB_RETENTION -->
 ## Retention, Archival, Deletion
+<!-- AGENT: Derive from RPBS §8 Data Retention Policy.
+Retention rules = how long each data type is kept (e.g., logs 90 days, user data until deletion request, audit trail 7 years).
+Deletion policy = hard delete vs soft delete per table, GDPR/privacy right-to-deletion implementation, cascading deletion across related tables.
+Common mistake: soft-deleting everything without a hard-delete cleanup job — soft deletes accumulate and degrade query performance. -->
 - Retention rules: [TBD]
 - Deletion policy (privacy): [TBD]
 
 
 <!-- AXION:SECTION:DB_BACKUP_DR -->
 ## Backup & Disaster Recovery
+<!-- AGENT: Derive from RPBS §7 reliability requirements.
+Backup cadence = how often (continuous WAL, daily snapshots, etc.), RPO (max data loss tolerance), RTO (max downtime tolerance).
+Restore validation = how often restore is tested, automated vs manual restore process, who is responsible.
+Common mistake: defining backup without testing restore — an untested backup is not a backup. -->
 - Backup cadence + RPO/RTO: [TBD]
 - Restore validation process: [TBD]
 
