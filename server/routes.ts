@@ -604,17 +604,18 @@ export function registerRoutes(app: Express) {
       return;
     }
 
-    const stagePlanId = (req.query.stagePlan as string) || 'docs:full';
+    const stagePlanId = resolveStagePlanId((req.query.stagePlan as string) || 'docs:full');
     const presetsData = loadPresets();
     if (!presetsData) {
       res.status(500).json({ error: 'Could not load presets.json' });
       return;
     }
 
-    const stagePlans = presetsData.stage_plans as Record<string, string[]>;
+    const stagePlans = presetsData.stage_plans as Record<string, { label?: string; description?: string; steps: string[] } | string[]>;
     const presets = presetsData.presets as Record<string, { label: string; modules: string[]; guards?: Record<string, boolean> }>;
 
-    const stageSteps = stagePlans[stagePlanId];
+    const rawPlan = stagePlans[stagePlanId];
+    const stageSteps = Array.isArray(rawPlan) ? rawPlan : rawPlan?.steps;
     if (!stageSteps) {
       res.status(400).json({ error: `Unknown stage plan: ${stagePlanId}` });
       return;
@@ -993,6 +994,20 @@ export function registerRoutes(app: Express) {
   // --- Presets API ---
   const PRESETS_PATH = path.join(AXION_ROOT, 'config', 'presets.json');
 
+  const STAGE_PLAN_ALIASES: Record<string, string> = {
+    'docs:scaffold': 'docs:full',
+    'docs:content': 'docs:full',
+    'app:bootstrap': 'app:full',
+    'app:build': 'app:full',
+    'app:test': 'app:full',
+    'app:ship': 'system:full',
+    'system:overhaul': 'system:full',
+  };
+
+  function resolveStagePlanId(id: string): string {
+    return STAGE_PLAN_ALIASES[id] || id;
+  }
+
   function loadPresets(): Record<string, unknown> | null {
     try {
       return JSON.parse(fs.readFileSync(PRESETS_PATH, 'utf-8'));
@@ -1027,7 +1042,7 @@ export function registerRoutes(app: Express) {
 
     const projectName = body.projectName as string;
     const presetId = body.presetId as string;
-    const stagePlanId = body.stagePlan as string;
+    const stagePlanId = resolveStagePlanId(body.stagePlan as string);
     if (!projectName || !presetId || !stagePlanId) {
       res.status(400).json({ error: 'projectName, presetId, and stagePlan required' });
       return;
@@ -1039,14 +1054,15 @@ export function registerRoutes(app: Express) {
       return;
     }
 
-    const stagePlans = presetsData.stage_plans as Record<string, string[]> | undefined;
+    const stagePlans = presetsData.stage_plans as Record<string, { label?: string; description?: string; steps: string[] } | string[]> | undefined;
     const presets = presetsData.presets as Record<string, { label: string; modules: string[] }> | undefined;
     if (!stagePlans || !presets) {
       res.status(500).json({ error: 'Invalid presets.json format' });
       return;
     }
 
-    const stageSteps = stagePlans[stagePlanId];
+    const rawPlan = stagePlans[stagePlanId];
+    const stageSteps = Array.isArray(rawPlan) ? rawPlan : rawPlan?.steps;
     if (!stageSteps) {
       res.status(400).json({ error: `Unknown stage plan: ${stagePlanId}` });
       return;

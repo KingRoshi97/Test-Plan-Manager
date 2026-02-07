@@ -3,6 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
+import { stepLabel } from "@/lib/labels";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,8 +56,14 @@ interface ModuleStatusData {
   registryFiles: Record<string, boolean>;
 }
 
+interface StagePlanConfig {
+  label: string;
+  description: string;
+  steps: string[];
+}
+
 interface PresetsData {
-  stage_plans: Record<string, string[]>;
+  stage_plans: Record<string, StagePlanConfig | string[]>;
   presets: Record<string, {
     label: string;
     description: string;
@@ -86,6 +93,16 @@ interface StepProgress {
   status: "pending" | "running" | "success" | "error" | "skipped";
   durationMs?: number;
   reason?: string;
+}
+
+function getStagePlanLabel(key: string, plan: StagePlanConfig | string[]): string {
+  if (!Array.isArray(plan) && plan.label) return plan.label;
+  return key;
+}
+
+function getStagePlanSteps(plan: StagePlanConfig | string[]): string[] {
+  if (Array.isArray(plan)) return plan;
+  return plan.steps || [];
 }
 
 function getStateBadgeVariant(state: string) {
@@ -136,6 +153,14 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 const STAGES = ["generate", "seed", "draft", "review", "verify", "lock"];
+const STAGE_SHORT_LABELS: Record<string, string> = {
+  generate: "Gen",
+  seed: "Seed",
+  draft: "Draft",
+  review: "Rev",
+  verify: "Ver",
+  lock: "Lock",
+};
 
 export default function AssemblyPage() {
   const [, params] = useRoute("/assembly/:id");
@@ -193,7 +218,7 @@ export default function AssemblyPage() {
   const exportMutation = useMutation({
     mutationFn: () => apiRequest(`/api/assemblies/${assemblyId}/export`, { method: "POST" }),
     onSuccess: () => {
-      toast({ title: "Export completed", description: "Kit has been exported successfully.", variant: "success" });
+      toast({ title: "Export completed", description: "Kit has been exported successfully." });
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId] });
     },
     onError: () => {
@@ -214,9 +239,7 @@ export default function AssemblyPage() {
   }, []);
 
   const stagePlans = presetsData?.stage_plans
-    ? Object.entries(presetsData.stage_plans).filter(
-        ([id]) => !["system:import", "system:overhaul"].includes(id)
-      )
+    ? Object.entries(presetsData.stage_plans)
     : [];
 
   const runPipeline = () => {
@@ -240,7 +263,7 @@ export default function AssemblyPage() {
         const steps = (data.steps as string[]).map((stepId: string, i: number) => ({
           index: i,
           stepId,
-          label: stepId,
+          label: stepLabel(stepId),
           status: "pending" as const,
         }));
         setStepProgress(steps);
@@ -253,7 +276,7 @@ export default function AssemblyPage() {
         setStepProgress((prev) =>
           prev.map((s) =>
             s.index === data.index
-              ? { ...s, label: data.label || s.label, status: "running" }
+              ? { ...s, label: data.label || stepLabel(s.stepId), status: "running" }
               : s
           )
         );
@@ -284,7 +307,7 @@ export default function AssemblyPage() {
         setStepProgress((prev) =>
           prev.map((s) =>
             s.index === data.index
-              ? { ...s, label: data.label || s.label, status: data.status, durationMs: data.durationMs, reason: data.reason }
+              ? { ...s, label: data.label || stepLabel(s.stepId), status: data.status, durationMs: data.durationMs, reason: data.reason }
               : s
           )
         );
@@ -298,7 +321,7 @@ export default function AssemblyPage() {
       try {
         const data = JSON.parse(e.data);
         if (data.failed === 0) {
-          toast({ title: "Pipeline completed", description: `${data.succeeded} steps succeeded`, variant: "success" });
+          toast({ title: "Pipeline completed", description: `${data.succeeded} steps succeeded` });
         } else {
           toast({ title: "Pipeline had failures", description: `${data.succeeded} succeeded, ${data.failed} failed`, variant: "destructive" });
         }
@@ -402,13 +425,13 @@ export default function AssemblyPage() {
               onValueChange={setSelectedStagePlan}
               disabled={isRunning}
             >
-              <SelectTrigger className="w-64" data-testid="select-stage-plan">
-                <SelectValue placeholder="Select stage plan" />
+              <SelectTrigger className="w-72" data-testid="select-stage-plan">
+                <SelectValue placeholder="What do you want to run?" />
               </SelectTrigger>
               <SelectContent>
-                {stagePlans.map(([id, steps]) => (
+                {stagePlans.map(([id, plan]) => (
                   <SelectItem key={id} value={id} data-testid={`select-item-plan-${id}`}>
-                    {id} ({steps.length} steps)
+                    {getStagePlanLabel(id, plan)} ({getStagePlanSteps(plan).length} steps)
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -447,7 +470,7 @@ export default function AssemblyPage() {
                     {step.status === "skipped" && (
                       <Circle className="w-5 h-5 text-yellow-400" data-testid={`step-icon-skipped-${i}`} />
                     )}
-                    <span className="text-[10px] text-muted-foreground max-w-16 truncate text-center">
+                    <span className="text-[10px] text-muted-foreground max-w-20 truncate text-center">
                       {step.label}
                     </span>
                   </div>
@@ -500,7 +523,7 @@ export default function AssemblyPage() {
                         <div
                           key={stage}
                           className="flex items-center gap-0.5"
-                          title={`${stage}: ${status}`}
+                          title={`${STAGE_SHORT_LABELS[stage] || stage}: ${status}`}
                         >
                           <div
                             className={`w-2 h-2 rounded-full ${getModuleStatusColor(status)}`}
@@ -510,10 +533,10 @@ export default function AssemblyPage() {
                       );
                     })}
                   </div>
-                  <div className="flex items-center gap-0.5 flex-wrap">
+                  <div className="flex items-center gap-1 flex-wrap">
                     {STAGES.map((stage) => (
-                      <span key={stage} className="text-[8px] text-muted-foreground w-2 text-center" title={stage}>
-                        {stage[0].toUpperCase()}
+                      <span key={stage} className="text-[8px] text-muted-foreground" title={stepLabel(stage)}>
+                        {STAGE_SHORT_LABELS[stage] || stage[0].toUpperCase()}
                       </span>
                     ))}
                   </div>
