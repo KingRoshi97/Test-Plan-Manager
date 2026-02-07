@@ -59,7 +59,7 @@ AXION defines a clear pipeline for kit creation and application development:
 ### UI/UX Decisions (Web Dashboard)
 The system includes a web-based Dashboard for interacting with the AXION pipeline, built with Express, Vite, and React.
 - **Assembly-Driven Architecture**: Transforms the dashboard into an Assembly-centric automation engine, where an "Assembly" represents a project idea.
-- **Orchestration Engine**: Server-side pipeline runner for automated step chaining with SSE streaming and gate enforcement.
+- **Orchestration Engine**: Server-side pipeline runner for automated step chaining with SSE streaming and gate enforcement. Steps `review`, `draft`, `verify`, and `lock` use per-module iteration to satisfy dependency ordering (ensurePrereqs). The verify step is non-blocking — it sets verifyPassed=false but does not halt the pipeline.
 - **Database**: PostgreSQL for managing assemblies and pipeline runs.
 - **Storage Layer**: Provides full CRUD operations for assemblies and runs via an `IStorage` interface.
 - **Web Dashboard Pages**: Includes Assembly listing, New Assembly creation, Assembly Control Room (with pipeline stepper, step-level timing, and SSE streaming), System Health page, Pipeline Logs viewer, Kit Export page, and existing tool pages (Status, Reports, Files, Release Gate).
