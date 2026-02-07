@@ -4,19 +4,19 @@
 **Domain Slug:** architecture
 **Focus:** system structure and component organization
 **Status:** DRAFT - Truth Candidates
-**Project:** nw-app-test
+**Project:** Application
 
 ## Policy Rules (Candidates)
 
 | Rule ID | Description | Condition | Action | SourceRef |
 |---------|-------------|-----------|--------|-----------|
-| ARCH_001 | User component must follow layered architecture pattern | When user operations are invoked | Route through service layer before data access | RPBS > Architecture > Layered Pattern |
-| ARCH_002 | Platform targets component must follow layered architecture pattern | When platform targets operations are invoked | Route through service layer before data access | RPBS > Architecture > Layered Pattern |
-| ARCH_003 | Integrations complexity component must follow layered architecture pattern | When integrations complexity operations are invoked | Route through service layer before data access | RPBS > Architecture > Layered Pattern |
+| ARCH_001 | Application component must follow layered architecture pattern | When application operations are invoked | Route through service layer before data access | RPBS > Architecture > Layered Pattern |
+| ARCH_002 | User component must follow layered architecture pattern | When user operations are invoked | Route through service layer before data access | RPBS > Architecture > Layered Pattern |
+| ARCH_003 | Platform targets component must follow layered architecture pattern | When platform targets operations are invoked | Route through service layer before data access | RPBS > Architecture > Layered Pattern |
 
 ## State Machines (Candidates)
 
-### Entity: User
+### Entity: Application
 | Current State | Event | Next State | Deny Code | SourceRef |
 |---------------|-------|------------|-----------|-----------|
 | Uninitialized | INIT | Ready | ARCH_NOT_READY | RPBS > architecture |
@@ -28,9 +28,9 @@
 
 | Field | Rule | Error Code | SourceRef |
 |-------|------|------------|-----------|
+| application_config | Must conform to defined schema | ARCH_INVALID_APPLICATION_CONFIG | RPBS > architecture |
 | user_config | Must conform to defined schema | ARCH_INVALID_USER_CONFIG | RPBS > architecture |
 | platform targets_config | Must conform to defined schema | ARCH_INVALID_PLATFORM TARGETS_CONFIG | RPBS > architecture |
-| integrations complexity_config | Must conform to defined schema | ARCH_INVALID_INTEGRATIONS COMPLEXITY_CONFIG | RPBS > architecture |
 
 ## Reason Codes Referenced
 
@@ -40,9 +40,9 @@
 | ARCH_UNAVAILABLE | PROCESS denied: transition from Ready not allowed | ERROR |
 | ARCH_BUSY | COMPLETE denied: transition from Active not allowed | ERROR |
 | ARCH_ERROR | ERROR denied: transition from Active not allowed | ERROR |
+| ARCH_INVALID_APPLICATION_CONFIG | Validation failed: must conform to defined schema | WARN |
 | ARCH_INVALID_USER_CONFIG | Validation failed: must conform to defined schema | WARN |
 | ARCH_INVALID_PLATFORM TARGETS_CONFIG | Validation failed: must conform to defined schema | WARN |
-| ARCH_INVALID_INTEGRATIONS COMPLEXITY_CONFIG | Validation failed: must conform to defined schema | WARN |
 
 ## Open Questions
 - Specific architecture domain thresholds need stakeholder input

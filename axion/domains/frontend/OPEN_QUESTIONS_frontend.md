@@ -3,8 +3,8 @@
 ## Overview
 **Domain Slug:** frontend
 **Focus:** client-side UI, components, and user interactions
-**Generated:** 2026-02-07T17:04:32.776Z
-**Project:** nw-app-test
+**Generated:** 2026-02-07T17:15:36.561Z
+**Project:** Application
 
 ## Unresolved Questions
 
@@ -14,9 +14,9 @@
 - Integration boundaries with dependent modules need clarification
 
 ### Entity-Specific
+- Application lifecycle and ownership boundaries in frontend context
 - User lifecycle and ownership boundaries in frontend context
 - Platform targets lifecycle and ownership boundaries in frontend context
-- Integrations complexity lifecycle and ownership boundaries in frontend context
 
 ### Implementation
 - Specific technical constraints for frontend domain
@@ -27,9 +27,9 @@
 
 | Question ID | Question | Status | Resolution |
 |-------------|----------|--------|------------|
-| Q001 | User lifecycle management in frontend domain | OPEN | Needs stakeholder input |
-| Q002 | Platform targets lifecycle management in frontend domain | OPEN | Needs stakeholder input |
-| Q003 | Integrations complexity lifecycle management in frontend domain | OPEN | Needs stakeholder input |
-| Q008 | frontend performance requirements | OPEN | Needs benchmarking |
-| Q009 | frontend error recovery strategy | OPEN | Needs architecture review |
-| Q010 | frontend cross-domain interactions | OPEN | Needs integration planning |
+| Q001 | Application lifecycle management in frontend domain | OPEN | Needs stakeholder input |
+| Q002 | User lifecycle management in frontend domain | OPEN | Needs stakeholder input |
+| Q003 | Platform targets lifecycle management in frontend domain | OPEN | Needs stakeholder input |
+| Q009 | frontend performance requirements | OPEN | Needs benchmarking |
+| Q010 | frontend error recovery strategy | OPEN | Needs architecture review |
+| Q011 | frontend cross-domain interactions | OPEN | Needs integration planning |

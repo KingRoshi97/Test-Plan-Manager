@@ -78,7 +78,7 @@ function checkLockedDomainsForUnknowns(axionRoot, module, domainsDir) {
   for (const ercFile of ercFiles) {
     const ercPath = path.join(domainDir, ercFile);
     const content = fs.readFileSync(ercPath, 'utf8');
-    const unknownCount = (content.match(/UNKNOWN/g) || []).length;
+    const unknownCount = (content.match(/\bUNKNOWN\b/g) || []).length;
     
     const passed = unknownCount === 0;
     results.push({

@@ -1,10 +1,52 @@
-# DIM — Quality
+# Domain Interface Map (DIM) — quality
+
+<!-- AXION:CORE_DOC:DIM -->
 
 ## Overview
 **Domain Slug:** quality
+**Prefix:** qu
+**Type:** business
+**Project:** Application
 
-<!-- Content to be filled -->
-UNKNOWN
+---
+
+## Exposed Interfaces
+
+| Interface ID | Type | Method | Path/Name | Description | Consumer(s) | Contract Ref |
+|-------------|------|--------|-----------|-------------|-------------|--------------|
+| qu_IF_001 | REST | GET | /api/applications | List all application records | frontend | contracts/quality |
+| qu_IF_002 | REST | GET | /api/users | List all user records | frontend | contracts/quality |
+| qu_IF_003 | REST | GET | /api/platform targetss | List all platform targets records | frontend | contracts/quality |
+| qu_IF_004 | REST | POST | /api/applications | Create a new application | frontend | contracts/quality |
+| qu_IF_005 | REST | POST | /api/users | Create a new user | frontend | contracts/quality |
+
+---
+
+## Consumed Interfaces
+
+| Interface ID | Provider Module | Type | Description | Contract Ref |
+|-------------|----------------|------|-------------|--------------|
+| contracts_IF_001 | contracts | REST | Type definitions for quality operations | contracts/contracts |
+
+---
+
+## Event Contracts
+
+| Event Name | Direction | Payload Schema | Trigger | Consumer(s) | Guarantee |
+|-----------|-----------|---------------|---------|-------------|-----------|
+| APPLICATION_CREATED | emit | { applicationId, createdBy } | New application is created | state, frontend | at-least-once |
+| USER_CREATED | emit | { userId, createdBy } | New user is created | state, frontend | at-least-once |
+
+---
+
+## Data Flow Summary
+
+- **Inbound:** Client requests arrive via REST API endpoints defined above
+- **Processing:** Validate against contracts, apply quality business rules, persist changes
+- **Outbound:** Return processed data to consumers, emit domain events for state updates
+
+---
 
 ## Open Questions
-- UNKNOWN
+- Specific rate limiting policies for quality endpoints need definition
+- Event delivery guarantees need infrastructure planning
