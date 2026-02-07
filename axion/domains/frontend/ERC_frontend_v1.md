@@ -1,10 +1,27 @@
+# Execution Readiness Contract (ERC) — frontend v1
+
+## Overview
+**Module:** frontend
+**Version:** v1
+**Lock Date:** 2026-02-07T17:21:49.676Z
+**Content Hash:** b2b6cdd66076d803
+
+## Verification Status
+- [x] No critical UNKNOWNs in BELS (verified at lock time)
+- [x] Policy rules have reason codes + messages
+- [x] State machines have deny codes
+- [x] Minimum acceptance scenarios defined
+
+## Locked Content
+
+### From BELS at Lock Time
 # Business Entity Logic Specification (BELS) — frontend
 
 ## Overview
 **Domain Slug:** frontend
 **Focus:** client-side UI, components, and user interactions
 **Status:** DRAFT - Truth Candidates
-**Project:** hhhhhhh
+**Project:** note-pad-app-test
 
 ## Policy Rules (Candidates)
 
@@ -48,3 +65,14 @@
 - Specific frontend domain thresholds need stakeholder input
 - Error recovery strategies need further definition
 - Cross-module interaction patterns need validation
+
+
+## Implementation Notes
+- This ERC was generated from the BELS document at lock time
+- Any changes to business logic must go through a new version
+- Implementation must match exactly what is specified here
+
+## Sign-off
+- **Locked by:** axion:lock script
+- **Lock date:** 2026-02-07T17:21:49.676Z
+- **Hash:** b2b6cdd66076d803
