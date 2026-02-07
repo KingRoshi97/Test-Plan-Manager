@@ -1,15 +1,15 @@
 {
   "version": "1.0.0",
-  "created_at": "2026-02-07T15:27:11.205Z",
+  "created_at": "2026-02-07T15:41:21.328Z",
   "source_axion": "/home/runner/workspace/axion",
   "project_name": "nw-app-test",
   "stack_profile": "default-web-saas",
   "status": "created",
   "snapshot_revision": {
-    "git_commit": "f4ad49167e460844dc7b5e01b172708209a9e231",
+    "git_commit": "a7af3752c831904b07bd508eb5e18fff1dd25437",
     "git_branch": "main",
     "file_count": 89,
-    "content_hash": "6aa80e700cd7"
+    "content_hash": "ec3e09c2abaa"
   },
   "environment": {
     "node_version": "v20.20.0",
