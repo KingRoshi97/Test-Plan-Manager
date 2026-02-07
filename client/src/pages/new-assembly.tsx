@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
+import { stepLabel } from "@/lib/labels";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,9 +25,30 @@ interface PresetConfig {
   modules: string[];
 }
 
+interface StagePlanConfig {
+  label: string;
+  description: string;
+  steps: string[];
+}
+
 interface PresetsResponse {
   presets: Record<string, PresetConfig>;
-  stage_plans: Record<string, string[]>;
+  stage_plans: Record<string, StagePlanConfig | string[]>;
+}
+
+function getStagePlanLabel(key: string, plan: StagePlanConfig | string[]): string {
+  if (!Array.isArray(plan) && plan.label) return plan.label;
+  return key;
+}
+
+function getStagePlanDescription(plan: StagePlanConfig | string[]): string | null {
+  if (!Array.isArray(plan) && plan.description) return plan.description;
+  return null;
+}
+
+function getStagePlanSteps(plan: StagePlanConfig | string[]): string[] {
+  if (Array.isArray(plan)) return plan;
+  return plan.steps || [];
 }
 
 export default function NewAssemblyPage() {
@@ -59,7 +81,7 @@ export default function NewAssemblyPage() {
   });
 
   const selectedPreset = presetsData?.presets?.[presetId];
-  const selectedStagePlanSteps = presetsData?.stage_plans?.[stagePlan];
+  const selectedPlan = presetsData?.stage_plans?.[stagePlan];
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -173,31 +195,36 @@ export default function NewAssemblyPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="stagePlan">Stage Plan</Label>
+              <Label htmlFor="stagePlan">What do you want to do?</Label>
               {presetsLoading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Loading stage plans...
+                  Loading...
                 </div>
               ) : (
                 <Select value={stagePlan} onValueChange={setStagePlan} data-testid="select-stage-plan">
                   <SelectTrigger data-testid="select-stage-plan-trigger">
-                    <SelectValue placeholder="Select a stage plan" />
+                    <SelectValue placeholder="Select what to run" />
                   </SelectTrigger>
                   <SelectContent>
-                    {stagePlanEntries.map(([key]) => (
+                    {stagePlanEntries.map(([key, plan]) => (
                       <SelectItem key={key} value={key} data-testid={`select-stage-plan-option-${key}`}>
-                        {key}
+                        {getStagePlanLabel(key, plan)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
-              {selectedStagePlanSteps && selectedStagePlanSteps.length > 0 && (
+              {selectedPlan && getStagePlanDescription(selectedPlan) && (
+                <p className="text-xs text-muted-foreground" data-testid="text-stage-plan-description">
+                  {getStagePlanDescription(selectedPlan)}
+                </p>
+              )}
+              {selectedPlan && getStagePlanSteps(selectedPlan).length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-1" data-testid="stage-plan-steps">
-                  {selectedStagePlanSteps.map((step, i) => (
+                  {getStagePlanSteps(selectedPlan).map((step, i) => (
                     <Badge key={i} variant="secondary" className="no-default-active-elevate" data-testid={`badge-stage-step-${i}`}>
-                      {step}
+                      {stepLabel(step)}
                     </Badge>
                   ))}
                 </div>

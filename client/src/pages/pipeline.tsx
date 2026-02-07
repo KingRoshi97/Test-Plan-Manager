@@ -598,8 +598,14 @@ function OutputCard({ output, expanded, onToggle, testId }: {
   );
 }
 
+interface StagePlanEntry {
+  label?: string;
+  description?: string;
+  steps: string[];
+}
+
 interface PresetsData {
-  stage_plans: Record<string, string[]>;
+  stage_plans: Record<string, StagePlanEntry | string[]>;
   presets: Record<string, {
     label: string;
     description: string;
@@ -647,8 +653,13 @@ function PresetsPanel({ projectName, disabled }: { projectName: string; disabled
   const presetEntries = Object.entries(presets);
   const currentPreset = selectedPreset ? presets[selectedPreset] : null;
 
+  const getPlanSteps = (plan: StagePlanEntry | string[]): string[] =>
+    Array.isArray(plan) ? plan : plan.steps || [];
+  const getPlanLabel = (id: string, plan: StagePlanEntry | string[]): string =>
+    !Array.isArray(plan) && plan.label ? plan.label : id;
+
   const postSetupStagePlans = Object.entries(stage_plans).filter(
-    ([id]) => !["system:import", "system:overhaul"].includes(id)
+    ([id]) => !["system:import"].includes(id)
   );
 
   const effectiveStagePlan = selectedStagePlan
@@ -836,7 +847,7 @@ function PresetsPanel({ projectName, disabled }: { projectName: string; disabled
           <div className="space-y-2">
             <div className="text-xs font-medium text-muted-foreground">2. Choose a Stage Plan</div>
             <div className="flex flex-wrap gap-1.5">
-              {postSetupStagePlans.map(([id, steps]) => (
+              {postSetupStagePlans.map(([id, plan]) => (
                 <Button
                   key={id}
                   variant={effectiveStagePlan === id ? "default" : "outline"}
@@ -845,16 +856,16 @@ function PresetsPanel({ projectName, disabled }: { projectName: string; disabled
                   disabled={isRunning}
                   data-testid={`button-stage-plan-${id}`}
                 >
-                  <span>{id}</span>
+                  <span>{getPlanLabel(id, plan)}</span>
                   <Badge variant="secondary" className="no-default-active-elevate ml-1">
-                    {steps.length}
+                    {getPlanSteps(plan).length}
                   </Badge>
                 </Button>
               ))}
             </div>
             {effectiveStagePlan && stage_plans[effectiveStagePlan] && (
               <div className="text-xs text-muted-foreground">
-                Steps: {stage_plans[effectiveStagePlan].join(" → ")}
+                Steps: {getPlanSteps(stage_plans[effectiveStagePlan]).join(" → ")}
               </div>
             )}
           </div>
