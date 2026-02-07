@@ -92,7 +92,8 @@ const AXION_SNAPSHOT_DIRS = [
   'config',
   'scripts',
   'templates',
-  'source_docs'
+  'source_docs',
+  'domains'
 ];
 
 const AXION_SNAPSHOT_FILES = [
