@@ -454,7 +454,7 @@ export default function AssemblyPage() {
             <div className="flex items-center gap-1 overflow-x-auto py-2" data-testid="pipeline-stepper">
               {stepProgress.map((step, i) => (
                 <div key={step.index} className="flex items-center gap-1 shrink-0">
-                  <div className="flex flex-col items-center gap-1">
+                  <div className="flex flex-col items-center gap-1" title={step.reason || undefined}>
                     {step.status === "pending" && (
                       <Circle className="w-5 h-5 text-gray-400" data-testid={`step-icon-pending-${i}`} />
                     )}
@@ -473,6 +473,11 @@ export default function AssemblyPage() {
                     <span className="text-[10px] text-muted-foreground max-w-20 truncate text-center">
                       {step.label}
                     </span>
+                    {step.reason && (step.status === "error" || step.status === "skipped") && (
+                      <span className="text-[9px] text-red-500 dark:text-red-400 max-w-24 text-center leading-tight" data-testid={`step-reason-${i}`}>
+                        {step.reason}
+                      </span>
+                    )}
                   </div>
                   {i < stepProgress.length - 1 && (
                     <div className="w-4 h-px bg-border shrink-0 mt-[-12px]" />
