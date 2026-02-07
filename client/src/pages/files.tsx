@@ -74,7 +74,7 @@ export default function FilesPage() {
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <FolderTree className="w-12 h-12 text-muted-foreground mb-3" />
             <p className="text-sm text-muted-foreground">
-              No workspaces yet. Run "Kit Create" in the Pipeline page to create one.
+              No workspaces yet. Create an assembly and run a pipeline to generate one.
             </p>
           </CardContent>
         </Card>
