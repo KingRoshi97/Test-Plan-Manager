@@ -2,7 +2,7 @@
 
 ## Overview
 **Domain Slug:** systems
-**Generated:** 2026-02-06T23:16:49.286Z
+**Generated:** 2026-02-06T23:42:06.150Z
 
 ## Unresolved Questions
 
