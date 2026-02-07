@@ -1,26 +1,26 @@
 {
   "version": "1.0.0",
-  "created_at": "2026-02-06T23:16:23.943Z",
+  "created_at": "2026-02-07T03:05:17.698Z",
   "source_axion": "/home/runner/workspace/axion",
-  "project_name": "new test",
+  "project_name": "note-pad-app-test",
   "stack_profile": "default-web-saas",
   "status": "created",
   "snapshot_revision": {
-    "git_commit": "61bd8b6ba76e40121c0527975191ec3083e205f3",
+    "git_commit": "c271305e8a759e487e833edd9cee3ed2304ef598",
     "git_branch": "main",
-    "file_count": 157,
-    "content_hash": "06fa8e2d5ab7"
+    "file_count": 196,
+    "content_hash": "d76ed23d18a6"
   },
   "environment": {
     "node_version": "v20.20.0",
     "platform": "linux"
   },
   "expected_commands": {
-    "docs_pipeline": "npx tsx axion/scripts/axion-run.ts --build-root . --project-name new test --preset system --plan docs:full",
-    "scaffold_app": "npx tsx axion/scripts/axion-scaffold-app.ts --build-root . --project-name new test",
-    "build": "npx tsx axion/scripts/axion-build-plan.ts --build-root . --project-name new test",
-    "test": "npx tsx axion/scripts/axion-test.ts --build-root . --project-name new test",
-    "activate": "npx tsx axion/scripts/axion-activate.ts --build-root . --project-name new test",
+    "docs_pipeline": "npx tsx axion/scripts/axion-run.ts --build-root . --project-name note-pad-app-test --preset system --plan docs:full",
+    "scaffold_app": "npx tsx axion/scripts/axion-scaffold-app.ts --build-root . --project-name note-pad-app-test",
+    "build": "npx tsx axion/scripts/axion-build-plan.ts --build-root . --project-name note-pad-app-test",
+    "test": "npx tsx axion/scripts/axion-test.ts --build-root . --project-name note-pad-app-test",
+    "activate": "npx tsx axion/scripts/axion-activate.ts --build-root . --project-name note-pad-app-test",
     "run_app": "npx tsx axion/scripts/axion-run-app.ts"
   }
 }
