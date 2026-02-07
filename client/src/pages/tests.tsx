@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
+import { toast } from "@/hooks/use-toast";
 
 interface TestCase {
   name: string;
@@ -56,6 +57,36 @@ function formatDuration(ms: number): string {
   return (ms / 60000).toFixed(1) + "m";
 }
 
+function ElapsedTimer({ running }: { running: boolean }) {
+  const [elapsed, setElapsed] = useState(0);
+  const startRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (!running) {
+      setElapsed(0);
+      return;
+    }
+    startRef.current = Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - startRef.current);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [running]);
+
+  if (!running) return null;
+
+  const secs = Math.floor(elapsed / 1000);
+  const mins = Math.floor(secs / 60);
+  const display = mins > 0 ? `${mins}m ${secs % 60}s` : `${secs}s`;
+
+  return (
+    <span className="text-xs text-muted-foreground flex items-center gap-1" data-testid="text-elapsed">
+      <Clock className="w-3 h-3" />
+      {display}
+    </span>
+  );
+}
+
 function StatusIcon({ status }: { status: "pass" | "fail" | "skip" | "error" }) {
   switch (status) {
     case "pass":
@@ -85,6 +116,8 @@ export default function TestsPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [liveResult, setLiveResult] = useState<TestResult | null>(null);
   const [progressLines, setProgressLines] = useState<string[]>([]);
+  const [runError, setRunError] = useState<string | null>(null);
+  const liveResultRef = useRef<TestResult | null>(null);
 
   const { data, isLoading } = useQuery<LastTestResponse>({
     queryKey: ["/api/tests/last"],
@@ -106,8 +139,10 @@ export default function TestsPage() {
   const runTests = useCallback(async () => {
     setIsRunning(true);
     setLiveResult(null);
+    liveResultRef.current = null;
     setProgressLines([]);
     setExpandedFiles(new Set());
+    setRunError(null);
 
     try {
       const response = await fetch("/api/tests/run", {
@@ -116,12 +151,24 @@ export default function TestsPage() {
       });
 
       if (!response.ok) {
+        const errText = await response.text().catch(() => "Unknown error");
+        let errMsg = `Server returned ${response.status}`;
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson.error) errMsg = errJson.error;
+        } catch {
+          if (errText) errMsg = errText;
+        }
+        setRunError(errMsg);
+        toast({ title: "Test run failed", description: errMsg, variant: "destructive" });
         setIsRunning(false);
         return;
       }
 
       const reader = response.body?.getReader();
       if (!reader) {
+        setRunError("Could not read response stream");
+        toast({ title: "Test run failed", description: "Could not read response stream", variant: "destructive" });
         setIsRunning(false);
         return;
       }
@@ -129,30 +176,40 @@ export default function TestsPage() {
       const decoder = new TextDecoder();
       let buffer = "";
 
-      const processChunks = (raw: string) => {
-        const chunks = raw.split("\n\n");
-        const remainder = chunks.pop() || "";
-        for (const chunk of chunks) {
-          const eventMatch = chunk.match(/^event:\s*(.+)/m);
-          const dataMatch = chunk.match(/^data:\s*(.+)/m);
+      const processChunks = (raw: string): string => {
+        const parts = raw.split("\n\n");
+        const remainder = parts.pop() || "";
+        for (const part of parts) {
+          if (!part.trim()) continue;
+          const eventMatch = part.match(/^event:\s*(.+)/m);
+          const dataMatch = part.match(/^data:\s*([\s\S]+)/m);
           if (!eventMatch || !dataMatch) continue;
 
           const eventType = eventMatch[1].trim();
+          const rawData = dataMatch[1].trim();
+
           try {
-            const payload = JSON.parse(dataMatch[1]);
+            const payload = JSON.parse(rawData);
 
             if (eventType === "progress" && payload.text) {
-              setProgressLines((prev) => [...prev.slice(-20), payload.text.trim()]);
+              setProgressLines((prev) => [...prev.slice(-30), payload.text.trim()]);
             } else if (eventType === "done") {
-              setLiveResult(payload as TestResult);
-              if (payload.testFiles) {
-                const failedFiles = (payload.testFiles as TestFile[])
-                  .filter((f) => f.status === "fail")
-                  .map((f) => f.file);
+              const res = payload as TestResult;
+              setLiveResult(res);
+              liveResultRef.current = res;
+              if (res.testFiles) {
+                const failedFiles = res.testFiles
+                  .filter((f: TestFile) => f.status === "fail")
+                  .map((f: TestFile) => f.file);
                 setExpandedFiles(new Set(failedFiles));
               }
+            } else if (eventType === "error") {
+              setRunError(payload.error || "Unknown error during test run");
+              toast({ title: "Test run error", description: payload.error || "Unknown error", variant: "destructive" });
             }
-          } catch {}
+          } catch (parseErr) {
+            console.warn("SSE parse error:", parseErr, "raw:", rawData.substring(0, 200));
+          }
         }
         return remainder;
       };
@@ -166,22 +223,31 @@ export default function TestsPage() {
       if (buffer.trim()) {
         processChunks(buffer + "\n\n");
       }
-    } catch {} finally {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Connection failed";
+      setRunError(msg);
+      toast({ title: "Test run failed", description: msg, variant: "destructive" });
+    } finally {
       setIsRunning(false);
       queryClient.invalidateQueries({ queryKey: ["/api/tests/last"] });
-      try {
-        const lastRes = await fetch("/api/tests/last");
-        if (lastRes.ok) {
-          const lastData = await lastRes.json() as LastTestResponse;
-          if (lastData.result && !liveResult) {
-            setLiveResult(lastData.result);
-            const failedFiles = lastData.result.testFiles
-              .filter((f: TestFile) => f.status === "fail")
-              .map((f: TestFile) => f.file);
-            if (failedFiles.length > 0) setExpandedFiles(new Set(failedFiles));
+      if (!liveResultRef.current) {
+        try {
+          const lastRes = await fetch("/api/tests/last");
+          if (lastRes.ok) {
+            const lastData = await lastRes.json() as LastTestResponse;
+            if (lastData.result) {
+              setLiveResult(lastData.result);
+              liveResultRef.current = lastData.result;
+              const failedFiles = lastData.result.testFiles
+                .filter((f: TestFile) => f.status === "fail")
+                .map((f: TestFile) => f.file);
+              if (failedFiles.length > 0) setExpandedFiles(new Set(failedFiles));
+            }
           }
+        } catch {
+          console.warn("Failed to fetch last test results after run");
         }
-      } catch {}
+      }
     }
   }, []);
 
@@ -208,7 +274,8 @@ export default function TestsPage() {
         <FlaskConical className="w-5 h-5" />
         <h2 className="text-lg font-semibold" data-testid="text-tests-header">Test Suite</h2>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
-          {result?.timestamp && (
+          {running && <ElapsedTimer running={running} />}
+          {!running && result?.timestamp && (
             <span className="text-xs text-muted-foreground" data-testid="text-last-run-time">
               Last run: {new Date(result.timestamp).toLocaleString()}
             </span>
@@ -238,12 +305,31 @@ export default function TestsPage() {
           <CardContent className="py-8">
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Running test suite...</p>
+              <p className="text-sm text-muted-foreground">Running test suite... this may take a few minutes.</p>
               {progressLines.length > 0 && (
-                <pre className="text-xs text-muted-foreground bg-muted p-3 rounded-md w-full max-h-32 overflow-y-auto whitespace-pre-wrap" data-testid="pre-progress">
+                <pre className="text-xs text-muted-foreground bg-muted p-3 rounded-md w-full max-h-40 overflow-y-auto whitespace-pre-wrap font-mono" data-testid="pre-progress">
                   {progressLines.join("\n")}
                 </pre>
               )}
+              {progressLines.length === 0 && (
+                <p className="text-xs text-muted-foreground">Waiting for output from Vitest...</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {runError && !running && !result && (
+        <Card data-testid="card-run-error">
+          <CardContent className="py-8">
+            <div className="flex flex-col items-center gap-3">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+              <p className="text-sm font-medium">Test run failed</p>
+              <p className="text-xs text-muted-foreground max-w-md text-center">{runError}</p>
+              <Button onClick={runTests} variant="outline" className="mt-2" data-testid="button-retry">
+                <RotateCcw className="w-4 h-4" />
+                Retry
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -438,7 +524,7 @@ export default function TestsPage() {
         </>
       )}
 
-      {!result && !running && (
+      {!result && !running && !runError && (
         <Card data-testid="card-empty-state">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <FlaskConical className="w-12 h-12 text-muted-foreground/50 mb-4" />
