@@ -18,14 +18,13 @@ import {
   markStageDone,
   writeVerifyStatus,
   failJson,
+  AXION_REQUIRED_DOC_TYPES,
 } from './_axion_module_mode.mjs';
 
-// Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const { modules, all } = parseModuleArgs(process.argv);
 
-// Report tracking
 const report = {
   created: [],
   modified: [],
@@ -33,7 +32,6 @@ const report = {
   failed: []
 };
 
-// Verification results
 const verify = {
   passed: true,
   checks: []
@@ -48,12 +46,11 @@ function loadConfig() {
 }
 
 function checkDomainFiles(axionRoot, module, domainsDir) {
-  const requiredDocs = ['BELS', 'DDES', 'DIM', 'SCREENMAP', 'TESTPLAN'];
   const results = [];
   
   const domainDir = path.join(axionRoot, domainsDir, module);
   
-  for (const docType of requiredDocs) {
+  for (const docType of AXION_REQUIRED_DOC_TYPES) {
     const filePath = path.join(domainDir, `${docType}_${module}.md`);
     const exists = fs.existsSync(filePath);
     results.push({
@@ -75,7 +72,6 @@ function checkLockedDomainsForUnknowns(axionRoot, module, domainsDir) {
     return results;
   }
   
-  // Check for ERC files (indicates locked domain)
   const files = fs.readdirSync(domainDir);
   const ercFiles = files.filter(f => f.startsWith('ERC_'));
   
@@ -102,6 +98,7 @@ function printReport() {
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`Status: ${verify.passed ? 'PASS' : 'FAIL'}`);
   console.log(`Modules: ${modules.join(', ')}`);
+  console.log(`Required Doc Types: ${AXION_REQUIRED_DOC_TYPES.join(', ')}`);
   
   console.log('\n--- VERIFICATION RESULTS ---');
   
@@ -139,9 +136,7 @@ try {
   const axionRoot = config.axion_root || 'axion';
   const domainsDir = config.domains_dir || 'domains';
   
-  // Process each module
   for (const module of modules) {
-    // Check prereqs: review must be done for this module
     ensurePrereqs({
       stageName: 'verify',
       module,
@@ -150,13 +145,9 @@ try {
     
     console.log(`Verifying module: ${module}`);
     
-    // Check domain files
     verify.checks.push(...checkDomainFiles(axionRoot, module, domainsDir));
-    
-    // Check locked domains for UNKNOWNs
     verify.checks.push(...checkLockedDomainsForUnknowns(axionRoot, module, domainsDir));
     
-    // If this module failed, exit with blocked_by
     if (!verify.passed) {
       failJson({
         status: 'FAIL',
@@ -167,13 +158,11 @@ try {
       });
     }
     
-    // Mark stage done for this module
     if (!dryRun) {
       markStageDone('verify', module, { result: 'PASS' });
     }
   }
   
-  // Write global verify status
   if (!dryRun) {
     writeVerifyStatus({
       status: 'PASS',
