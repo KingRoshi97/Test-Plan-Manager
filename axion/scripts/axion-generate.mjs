@@ -13,14 +13,13 @@ import path from 'path';
 import {
   parseModuleArgs,
   markStageDone,
+  AXION_DOC_TYPES,
 } from './_axion_module_mode.mjs';
 
-// Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const { modules } = parseModuleArgs(process.argv);
 
-// Report tracking
 const report = {
   created: [],
   modified: [],
@@ -75,12 +74,27 @@ function ensureFile(filePath, content) {
 }
 
 function loadTemplate(templateName, axionRoot) {
-  const templatePath = path.join(axionRoot, 'templates', `${templateName}.template.md`);
-  if (fs.existsSync(templatePath)) {
-    return fs.readFileSync(templatePath, 'utf8');
+  const searchPaths = [
+    path.join(axionRoot, 'templates', 'core', `${templateName}.template.md`),
+    path.join(axionRoot, 'templates', `${templateName}.template.md`),
+  ];
+  for (const templatePath of searchPaths) {
+    if (fs.existsSync(templatePath)) {
+      return fs.readFileSync(templatePath, 'utf8');
+    }
   }
-  // Return default template if not found
-  return `# ${templateName} — {{DOMAIN_NAME}}\n\n## Overview\n**Domain Slug:** {{DOMAIN_SLUG}}\n\n<!-- Content to be filled -->\nUNKNOWN\n\n## Open Questions\n- UNKNOWN\n`;
+  return `# ${templateName} — {{DOMAIN_NAME}}
+
+## Overview
+**Domain Slug:** {{DOMAIN_SLUG}}
+**Domain Type:** {{DOMAIN_TYPE}}
+**Prefix:** {{DOMAIN_PREFIX}}
+
+<!-- Content to be filled by the workspace agent -->
+
+## Open Questions
+- UNKNOWN
+`;
 }
 
 function applyTemplate(template, domain) {
@@ -96,6 +110,7 @@ function printReport() {
   console.log(`Script: axion:generate`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`Modules: ${modules.join(', ')}`);
+  console.log(`Doc Types: ${AXION_DOC_TYPES.join(', ')}`);
   console.log(`\nCreated (${report.created.length}):`);
   report.created.forEach(f => console.log(`  + ${f}`));
   console.log(`\nModified (${report.modified.length}):`);
@@ -114,31 +129,15 @@ try {
   const axionRoot = config.axion_root || 'axion';
   const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
   
-  // Document templates to generate
-  const docTemplates = [
-    'DDES',
-    'UX_Foundations',
-    'UI_Constraints',
-    'BELS',
-    'DIM',
-    'SCREENMAP',
-    'TESTPLAN',
-    'COMPONENT_LIBRARY',
-    'COPY_GUIDE'
-  ];
-  
-  // Process each module
   for (const module of modules) {
     console.log(`Generating module: ${module}`);
     
-    // Generate is the first stage - no prereq check needed
     const domainDir = path.join(domainsDir, module);
     ensureDir(domainDir);
     
-    // Get module config from domains.json or use defaults
     const moduleConfig = getModuleConfig(config, module);
     
-    for (const templateName of docTemplates) {
+    for (const templateName of AXION_DOC_TYPES) {
       const template = loadTemplate(templateName, axionRoot);
       const content = applyTemplate(template, moduleConfig);
       const fileName = `${templateName}_${module}.md`;
@@ -146,7 +145,6 @@ try {
       ensureFile(filePath, content);
     }
     
-    // Mark stage done for this module
     if (!dryRun) {
       markStageDone('generate', module);
     }

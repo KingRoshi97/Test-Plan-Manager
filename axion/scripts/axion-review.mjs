@@ -16,14 +16,14 @@ import {
   isStageDone,
   markStageDone,
   failJson,
+  AXION_DOC_TYPES,
+  AXION_REVIEWED_DOC_TYPES,
 } from './_axion_module_mode.mjs';
 
-// Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const { modules } = parseModuleArgs(process.argv);
 
-// Report tracking
 const report = {
   created: [],
   modified: [],
@@ -31,7 +31,6 @@ const report = {
   failed: []
 };
 
-// Review results
 const review = {
   unknownCounts: {},
   conflicts: [],
@@ -53,13 +52,7 @@ function countUnknowns(content) {
 }
 
 function checkRequiredSections(content, docType) {
-  const requiredSections = {
-    BELS: ['Policy Rules', 'State Machines', 'Validation Rules', 'Reason Codes'],
-    DDES: ['Overview', 'Entities', 'Key Responsibilities'],
-    DIM: ['Exposed Interfaces', 'Consumed Interfaces']
-  };
-  
-  const sections = requiredSections[docType] || [];
+  const sections = AXION_REVIEWED_DOC_TYPES[docType] || [];
   const missing = [];
   
   for (const section of sections) {
@@ -104,7 +97,6 @@ function printReport() {
   report.failed.forEach(f => console.log(`  ! ${f}`));
   console.log('\n===================================');
   
-  // Recommendation
   const totalUnknowns = Object.values(review.unknownCounts).reduce((a, b) => a + b, 0);
   if (totalUnknowns > 0 || review.conflicts.length > 0 || review.missingReasonCodes.length > 0) {
     console.log('\nRECOMMENDATION: Do not lock modules until issues are resolved.');
@@ -120,9 +112,7 @@ try {
   const axionRoot = config.axion_root || 'axion';
   const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
   
-  // Process each module
   for (const module of modules) {
-    // Check prereqs: draft must be done for this module
     ensurePrereqs({
       stageName: 'review',
       module,
@@ -134,7 +124,6 @@ try {
     const domainDir = path.join(domainsDir, module);
     let totalUnknowns = 0;
     
-    // Check BELS file
     const belsPath = path.join(domainDir, `BELS_${module}.md`);
     if (fs.existsSync(belsPath)) {
       const content = fs.readFileSync(belsPath, 'utf8');
@@ -148,19 +137,21 @@ try {
       review.missingSections.push(`${module}: BELS file missing`);
     }
     
-    // Check other domain docs
-    const docTypes = ['DDES', 'DIM', 'SCREENMAP', 'TESTPLAN'];
-    for (const docType of docTypes) {
+    for (const docType of AXION_DOC_TYPES) {
       const docPath = path.join(domainDir, `${docType}_${module}.md`);
       if (fs.existsSync(docPath)) {
         const content = fs.readFileSync(docPath, 'utf8');
         totalUnknowns += countUnknowns(content);
+        
+        const missingSections = checkRequiredSections(content, docType);
+        missingSections.forEach(s => {
+          review.missingSections.push(`${module}/${docType}: Missing section "${s}"`);
+        });
       }
     }
     
     review.unknownCounts[module] = totalUnknowns;
     
-    // Mark stage done for this module
     if (!dryRun) {
       markStageDone('review', module);
     }
