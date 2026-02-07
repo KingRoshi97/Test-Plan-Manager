@@ -1,192 +1,104 @@
-import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
-
-interface FillResult {
+export interface UnknownScanResult {
   module: string;
   file: string;
-  unknownsBefore: number;
-  unknownsAfter: number;
-  success: boolean;
-  error?: string;
+  relativePath: string;
+  unknownCount: number;
+  sections: string[];
+}
+
+export interface ScanReport {
+  totalUnknowns: number;
+  totalFiles: number;
+  filesWithUnknowns: UnknownScanResult[];
 }
 
 function countUnknowns(content: string): number {
   return (content.match(/UNKNOWN/g) || []).length;
 }
 
-function buildSystemPrompt(projectDescription: string): string {
-  return `You are a software architecture documentation expert. You are filling in a BELS (Business Entity Logic Specification) document for a software project.
+function findSectionsWithUnknowns(content: string): string[] {
+  const sections: string[] = [];
+  const sectionRegex = /^## (.+)$/gm;
+  let match;
+  const sectionPositions: { name: string; start: number }[] = [];
 
-PROJECT DESCRIPTION:
-${projectDescription}
-
-INSTRUCTIONS:
-- Replace every "UNKNOWN" placeholder with realistic, specific, and appropriate content based on the project description.
-- For Policy Rules: provide real rule descriptions, conditions, actions, and source references relevant to the project domain.
-- For State Machines: define real entity names, states, events, transitions, and deny codes.
-- For Validation Rules: define real field names, validation rules, and error codes.
-- For Reason Codes: provide real error/status codes with messages and severity levels.
-- For Open Questions: replace UNKNOWN with specific technical details or mark as "N/A" if not applicable.
-- Keep the exact same markdown table structure and formatting.
-- Do NOT add new sections or remove existing ones.
-- Do NOT wrap the output in code fences or add any preamble.
-- Return ONLY the complete updated document content, nothing else.
-- Make sure ALL UNKNOWNs are replaced — there should be zero remaining.
-- Be specific to the project domain. For a "note pad app" the entities would be Notes, Folders, Tags, etc.`;
-}
-
-export async function fillBelsContent(
-  belsPath: string,
-  projectDescription: string,
-  onProgress?: (msg: string) => void
-): Promise<FillResult> {
-  const module = path.basename(path.dirname(belsPath));
-  const result: FillResult = {
-    module,
-    file: belsPath,
-    unknownsBefore: 0,
-    unknownsAfter: 0,
-    success: false,
-  };
-
-  try {
-    if (!fs.existsSync(belsPath)) {
-      result.error = `BELS file not found: ${belsPath}`;
-      return result;
-    }
-
-    const content = fs.readFileSync(belsPath, 'utf8');
-    result.unknownsBefore = countUnknowns(content);
-
-    if (result.unknownsBefore === 0) {
-      result.success = true;
-      onProgress?.(`Module ${module}: no UNKNOWNs to fill`);
-      return result;
-    }
-
-    onProgress?.(`Module ${module}: filling ${result.unknownsBefore} UNKNOWNs with AI...`);
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
-      messages: [
-        { role: 'system', content: buildSystemPrompt(projectDescription) },
-        { role: 'user', content: `Fill in all UNKNOWN placeholders in this BELS document for the "${module}" module:\n\n${content}` },
-      ],
-      max_completion_tokens: 4096,
-    });
-
-    const filledContent = response.choices[0]?.message?.content;
-    if (!filledContent) {
-      result.error = 'AI returned empty response';
-      return result;
-    }
-
-    result.unknownsAfter = countUnknowns(filledContent);
-    fs.writeFileSync(belsPath, filledContent, 'utf8');
-    result.success = true;
-
-    onProgress?.(`Module ${module}: ${result.unknownsBefore} → ${result.unknownsAfter} UNKNOWNs`);
-    return result;
-  } catch (error) {
-    result.error = error instanceof Error ? error.message : String(error);
-    onProgress?.(`Module ${module}: AI fill error - ${result.error}`);
-    return result;
+  while ((match = sectionRegex.exec(content)) !== null) {
+    sectionPositions.push({ name: match[1], start: match.index });
   }
-}
 
-export async function fillOpenQuestionsContent(
-  oqPath: string,
-  projectDescription: string,
-  onProgress?: (msg: string) => void
-): Promise<FillResult> {
-  const module = path.basename(path.dirname(oqPath));
-  const result: FillResult = {
-    module,
-    file: oqPath,
-    unknownsBefore: 0,
-    unknownsAfter: 0,
-    success: false,
-  };
-
-  try {
-    if (!fs.existsSync(oqPath)) {
-      result.success = true;
-      return result;
+  for (let i = 0; i < sectionPositions.length; i++) {
+    const start = sectionPositions[i].start;
+    const end = i + 1 < sectionPositions.length ? sectionPositions[i + 1].start : content.length;
+    const sectionContent = content.substring(start, end);
+    if (sectionContent.includes('UNKNOWN')) {
+      sections.push(sectionPositions[i].name);
     }
-
-    const content = fs.readFileSync(oqPath, 'utf8');
-    result.unknownsBefore = countUnknowns(content);
-
-    if (result.unknownsBefore === 0) {
-      result.success = true;
-      return result;
-    }
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a software architecture expert. Fill in all UNKNOWN placeholders in this Open Questions document for a "${module}" module of the following project:\n\n${projectDescription}\n\nReplace UNKNOWN with specific, realistic answers. Return ONLY the complete updated document.`,
-        },
-        { role: 'user', content },
-      ],
-      max_completion_tokens: 2048,
-    });
-
-    const filledContent = response.choices[0]?.message?.content;
-    if (filledContent) {
-      result.unknownsAfter = countUnknowns(filledContent);
-      fs.writeFileSync(oqPath, filledContent, 'utf8');
-      result.success = true;
-    } else {
-      result.error = 'AI returned empty response';
-    }
-
-    return result;
-  } catch (error) {
-    result.error = error instanceof Error ? error.message : String(error);
-    return result;
   }
+
+  return sections;
 }
 
-export async function fillModuleContent(
+export function scanBelsFile(filePath: string, projectRoot: string): UnknownScanResult | null {
+  if (!fs.existsSync(filePath)) return null;
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  const unknownCount = countUnknowns(content);
+
+  if (unknownCount === 0) return null;
+
+  const module = path.basename(path.dirname(filePath));
+  return {
+    module,
+    file: filePath,
+    relativePath: path.relative(projectRoot, filePath),
+    unknownCount,
+    sections: findSectionsWithUnknowns(content),
+  };
+}
+
+export function scanModuleForUnknowns(
   projectRoot: string,
-  moduleName: string,
-  projectDescription: string,
-  onProgress?: (msg: string) => void
-): Promise<{ bels: FillResult; openQuestions: FillResult }> {
+  moduleName: string
+): UnknownScanResult[] {
   const domainsDir = path.join(projectRoot, 'axion', 'domains', moduleName);
+  const results: UnknownScanResult[] = [];
+
   const belsPath = path.join(domainsDir, `BELS_${moduleName}.md`);
+  const belsResult = scanBelsFile(belsPath, projectRoot);
+  if (belsResult) results.push(belsResult);
+
   const oqPath = path.join(domainsDir, `OPEN_QUESTIONS_${moduleName}.md`);
-
-  const bels = await fillBelsContent(belsPath, projectDescription, onProgress);
-  const openQuestions = await fillOpenQuestionsContent(oqPath, projectDescription, onProgress);
-
-  return { bels, openQuestions };
-}
-
-export async function fillAllModulesContent(
-  buildRoot: string,
-  modules: string[],
-  projectDescription: string,
-  onProgress?: (msg: string) => void
-): Promise<FillResult[]> {
-  const results: FillResult[] = [];
-
-  for (const mod of modules) {
-    const { bels, openQuestions } = await fillModuleContent(buildRoot, mod, projectDescription, onProgress);
-    results.push(bels);
-    if (openQuestions.unknownsBefore > 0) {
-      results.push(openQuestions);
-    }
-  }
+  const oqResult = scanBelsFile(oqPath, projectRoot);
+  if (oqResult) results.push(oqResult);
 
   return results;
+}
+
+export function scanAllModulesForUnknowns(
+  projectRoot: string,
+  modules: string[]
+): ScanReport {
+  const filesWithUnknowns: UnknownScanResult[] = [];
+  let totalFiles = 0;
+
+  for (const mod of modules) {
+    const domainsDir = path.join(projectRoot, 'axion', 'domains', mod);
+    const belsPath = path.join(domainsDir, `BELS_${mod}.md`);
+    const oqPath = path.join(domainsDir, `OPEN_QUESTIONS_${mod}.md`);
+
+    if (fs.existsSync(belsPath)) totalFiles++;
+    if (fs.existsSync(oqPath)) totalFiles++;
+
+    const results = scanModuleForUnknowns(projectRoot, mod);
+    filesWithUnknowns.push(...results);
+  }
+
+  return {
+    totalUnknowns: filesWithUnknowns.reduce((sum, r) => sum + r.unknownCount, 0),
+    totalFiles,
+    filesWithUnknowns,
+  };
 }
