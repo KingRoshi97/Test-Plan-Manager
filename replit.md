@@ -35,15 +35,14 @@ AXION defines a clear pipeline for kit creation and application development:
 - **`axion-reconcile`**: Deterministically compares imported facts against build-authoritative outputs to detect drift and report mismatches.
 - **`axion-iterate`**: An orchestration wrapper that chains AXION primitives, enforcing gates and producing `next_commands` for remediation. It operates deterministically, requiring explicit `--allow-apply` for changes.
 
-### AI Auto-Remediation (Feb 2026)
-- **`server/ai-content-fill.ts`**: AI-powered module that fills UNKNOWN placeholders in BELS documentation using OpenAI (gpt-5-mini model via Replit AI Integrations).
-- **Auto-remediation in Lock Step**: When the lock step detects UNKNOWN content in BELS files, the orchestrator automatically:
-  1. Calls the AI content fill module with the assembly's project description as context.
-  2. Replaces UNKNOWN placeholders with project-specific content.
-  3. Retries the lock step (up to 2 attempts).
-  4. Gates retries on whether AI actually reduced UNKNOWN count.
-- **Integration**: Uses `AI_INTEGRATIONS_OPENAI_BASE_URL` and `AI_INTEGRATIONS_OPENAI_API_KEY` env vars (auto-configured by Replit AI Integrations).
-- **Both orchestration paths** (assembly-based and preset-based) support auto-remediation.
+### UNKNOWN Detection & Agent-Driven Content Fill (Feb 2026)
+- **`server/ai-content-fill.ts`**: Scan-only module that identifies BELS and Open Questions files containing UNKNOWN placeholders. Reports file paths, UNKNOWN counts, and which sections need content.
+- **Lock Step UNKNOWN Detection**: When the lock step fails due to UNKNOWN content, the orchestrator:
+  1. Scans the failed modules to identify exactly which files and sections contain UNKNOWNs.
+  2. Reports this information via SSE stream so the dashboard and workspace agent can see what needs filling.
+  3. Does NOT call external AI APIs — content filling is handled by the workspace AI agent directly.
+- **`/api/scan-unknowns` endpoint**: Returns a JSON report of all BELS/Open Questions files with UNKNOWN placeholders, including counts and affected sections. Accepts optional `?modules=` query parameter to scope the scan.
+- **Agent-driven workflow**: The workspace AI agent reads the BELS templates, understands the project context, and writes filled content directly to the files — no external API keys needed.
 
 ### Core System Contracts and Guarantees
 - **Pipeline Guarantees**: Enforced strict stage execution order and module dependencies.
