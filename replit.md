@@ -62,7 +62,9 @@ The system includes a web-based Dashboard for interacting with the AXION pipelin
 - **Orchestration Engine**: Server-side pipeline runner for automated step chaining with SSE streaming and gate enforcement.
 - **Database**: PostgreSQL for managing assemblies and pipeline runs.
 - **Storage Layer**: Provides full CRUD operations for assemblies and runs via an `IStorage` interface.
-- **Web Dashboard Pages**: Includes Assembly listing, New Assembly creation, Assembly Control Room (with pipeline stepper and SSE streaming), and existing tool pages (Status, Reports, Files, Release Gate).
+- **Web Dashboard Pages**: Includes Assembly listing, New Assembly creation, Assembly Control Room (with pipeline stepper, step-level timing, and SSE streaming), System Health page, Pipeline Logs viewer, Kit Export page, and existing tool pages (Status, Reports, Files, Release Gate).
+- **Pipeline Retry**: Transient failure retry with exponential backoff for ENOENT, ETIMEDOUT, ECONNRESET, and OOM-kill (exit 137).
+- **Workspace Detection**: Detects workspaces by manifest.json, registry/, domains/, or app/ subdirectories.
 - **Theming**: Uses CSS custom properties with Tailwind v4 and Shadcn UI components.
 - **State Management**: TanStack Query for server state and React for UI state.
 - **Two-Root Model**: Project workspaces are created as siblings to the `axion/` directory at the repository root.

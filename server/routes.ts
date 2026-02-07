@@ -20,7 +20,8 @@ function isProjectDir(name: string): boolean {
   if (name.startsWith('.')) return false;
   const fullPath = path.join(PROJECT_ROOT, name);
   if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isDirectory()) return false;
-  return fs.existsSync(path.join(fullPath, 'registry')) ||
+  return fs.existsSync(path.join(fullPath, 'manifest.json')) ||
+         fs.existsSync(path.join(fullPath, 'registry')) ||
          fs.existsSync(path.join(fullPath, 'domains')) ||
          fs.existsSync(path.join(fullPath, 'app'));
 }
@@ -460,6 +461,34 @@ function runSingleStep(
 
     if (aborted) child.kill();
   });
+}
+
+async function runSingleStepWithRetry(
+  step: PipelineStep,
+  args: string[],
+  cwd: string,
+  aborted: boolean,
+  onOutput: (event: string, data: string) => void,
+  maxRetries = 2,
+  backoffMs = 1000,
+): Promise<RunResult> {
+  let lastResult: RunResult | undefined;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (aborted) {
+      return { status: 'error' as const, command: step.label, exitCode: 1, stdout: '', stderr: 'Aborted before execution', durationMs: 0 };
+    }
+    lastResult = await runSingleStep(step, args, cwd, aborted, onOutput);
+    if (lastResult.status === 'success') return lastResult;
+    const isTransient = lastResult.stderr.includes('ENOENT') ||
+      lastResult.stderr.includes('ETIMEDOUT') ||
+      lastResult.stderr.includes('ECONNRESET') ||
+      lastResult.exitCode === 137;
+    if (!isTransient || attempt >= maxRetries) break;
+    const delay = backoffMs * Math.pow(2, attempt);
+    onOutput('stderr', `[retry] Attempt ${attempt + 1} failed (transient error), retrying in ${delay}ms...`);
+    await new Promise((r) => setTimeout(r, delay));
+  }
+  return lastResult!;
 }
 
 export function registerRoutes(app: Express) {

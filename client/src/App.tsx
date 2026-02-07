@@ -10,6 +10,9 @@ import DashboardPage from "@/pages/dashboard";
 import FilesPage from "@/pages/files";
 import NewAssemblyPage from "@/pages/new-assembly";
 import AssemblyPage from "@/pages/assembly";
+import HealthPage from "@/pages/health";
+import LogsPage from "@/pages/logs";
+import ExportPage from "@/pages/export";
 
 function Router() {
   return (
@@ -18,6 +21,9 @@ function Router() {
       <Route path="/new" component={NewAssemblyPage} />
       <Route path="/assembly/:id" component={AssemblyPage} />
       <Route path="/files" component={FilesPage} />
+      <Route path="/health" component={HealthPage} />
+      <Route path="/logs" component={LogsPage} />
+      <Route path="/export" component={ExportPage} />
       <Route>
         <div className="flex items-center justify-center h-full">
           <p className="text-muted-foreground">Page not found</p>
