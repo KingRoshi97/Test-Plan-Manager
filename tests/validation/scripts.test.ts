@@ -13,12 +13,19 @@ describe('AXION Scripts Validation', () => {
       'axion-run.ts',
       'axion-status.ts',
       'axion-doctor.ts',
-      'axion-init.mjs',
       'axion-build.ts',
       'axion-scaffold-app.ts',
       'axion-test.ts',
+      'axion-verify-seams.ts',
+      'axion-init.mjs',
+      'axion-generate.mjs',
+      'axion-seed.mjs',
+      'axion-draft.mjs',
+      'axion-review.mjs',
+      'axion-verify.mjs',
       'axion-lock.mjs',
-      'axion-verify-seams.ts'
+      'axion-package.mjs',
+      '_axion_module_mode.mjs',
     ];
     
     for (const script of requiredScripts) {
@@ -28,7 +35,7 @@ describe('AXION Scripts Validation', () => {
     }
   });
   
-  describe('scripts have proper structure', () => {
+  describe('TypeScript scripts have proper structure', () => {
     const scripts = fs.readdirSync(SCRIPTS_DIR)
       .filter(f => f.endsWith('.ts') && !f.includes('.test.'));
     
@@ -48,6 +55,38 @@ describe('AXION Scripts Validation', () => {
           expect(content).not.toMatch(/^>{7}/m);
           expect(content).not.toMatch(/^={7}$/m);
         });
+      });
+    }
+  });
+
+  describe('MJS pipeline scripts have proper structure', () => {
+    const mjsScripts = fs.readdirSync(SCRIPTS_DIR)
+      .filter(f => f.endsWith('.mjs'));
+
+    for (const script of mjsScripts) {
+      describe(script, () => {
+        const content = readTextFile(path.join(SCRIPTS_DIR, script));
+
+        it('should be non-empty and importable', () => {
+          expect(content).toBeTruthy();
+          const hasImport = content!.includes('import ');
+          const hasRequire = content!.includes('require(');
+          const hasExport = content!.includes('export ');
+          expect(hasImport || hasRequire || hasExport).toBe(true);
+        });
+
+        it('should not have merge conflicts', () => {
+          expect(content).not.toMatch(/^<{7}/m);
+          expect(content).not.toMatch(/^>{7}/m);
+          expect(content).not.toMatch(/^={7}$/m);
+        });
+
+        const standaloneScripts = ['_axion_module_mode.mjs', 'axion-init.mjs', 'axion-package.mjs', 'axion-package-workspace.mjs'];
+        if (!standaloneScripts.includes(script)) {
+          it('should import shared module _axion_module_mode.mjs', () => {
+            expect(content).toContain('_axion_module_mode.mjs');
+          });
+        }
       });
     }
   });
