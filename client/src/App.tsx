@@ -6,16 +6,22 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import DashboardPage from "@/pages/dashboard";
 import PipelinePage from "@/pages/pipeline";
 import FilesPage from "@/pages/files";
 import ReleasePage from "@/pages/release";
 import StatusPage from "@/pages/status";
 import ReportsPage from "@/pages/reports";
+import NewAssemblyPage from "@/pages/new-assembly";
+import AssemblyPage from "@/pages/assembly";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={PipelinePage} />
+      <Route path="/" component={DashboardPage} />
+      <Route path="/new" component={NewAssemblyPage} />
+      <Route path="/assembly/:id" component={AssemblyPage} />
+      <Route path="/pipeline" component={PipelinePage} />
       <Route path="/status" component={StatusPage} />
       <Route path="/reports" component={ReportsPage} />
       <Route path="/files" component={FilesPage} />

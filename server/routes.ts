@@ -2,7 +2,7 @@ import { type Express, type Request, type Response } from 'express';
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { RunResult, FileEntry, FileContent, WorkspaceInfo } from '../shared/schema.js';
+import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly } from '../shared/schema.js';
 import { storage } from './storage.js';
 
 const PROJECT_ROOT = process.cwd();
@@ -464,6 +464,371 @@ function runSingleStep(
 export function registerRoutes(app: Express) {
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  app.get('/api/assemblies', async (_req: Request, res: Response) => {
+    try {
+      const list = await storage.getAssemblies();
+      const enriched = list.map(a => {
+        const projectPath = a.projectName ? getProjectPath(a.projectName) : null;
+        const wsExists = projectPath ? fs.existsSync(projectPath) : false;
+        const hasRegistry = projectPath ? fs.existsSync(path.join(projectPath, 'registry')) : false;
+        const hasDomains = projectPath ? fs.existsSync(path.join(projectPath, 'domains')) : false;
+        const hasApp = projectPath ? fs.existsSync(path.join(projectPath, 'app')) : false;
+
+        let verifyStatus = 'unknown';
+        if (projectPath && hasRegistry) {
+          const vPath = path.join(projectPath, 'registry', 'verify_report.json');
+          if (fs.existsSync(vPath)) {
+            try {
+              const vr = JSON.parse(fs.readFileSync(vPath, 'utf-8'));
+              verifyStatus = vr.overall_status || vr.status || 'unknown';
+            } catch {}
+          }
+        }
+
+        let lockEligible = verifyStatus === 'PASS';
+
+        return {
+          ...a,
+          wsExists,
+          hasRegistry,
+          hasDomains,
+          hasApp,
+          verifyStatus,
+          lockEligible,
+        };
+      });
+      res.json(enriched);
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to fetch assemblies' });
+    }
+  });
+
+  app.get('/api/assemblies/:id', async (req: Request, res: Response) => {
+    try {
+      const assembly = await storage.getAssembly(req.params.id as string);
+      if (!assembly) {
+        res.status(404).json({ error: 'Assembly not found' });
+        return;
+      }
+      const projectPath = assembly.projectName ? getProjectPath(assembly.projectName) : null;
+      const wsExists = projectPath ? fs.existsSync(projectPath) : false;
+      const hasRegistry = projectPath ? fs.existsSync(path.join(projectPath, 'registry')) : false;
+      const hasDomains = projectPath ? fs.existsSync(path.join(projectPath, 'domains')) : false;
+      const hasApp = projectPath ? fs.existsSync(path.join(projectPath, 'app')) : false;
+
+      let verifyStatus = 'unknown';
+      if (projectPath && hasRegistry) {
+        const vPath = path.join(projectPath, 'registry', 'verify_report.json');
+        if (fs.existsSync(vPath)) {
+          try {
+            const vr = JSON.parse(fs.readFileSync(vPath, 'utf-8'));
+            verifyStatus = vr.overall_status || vr.status || 'unknown';
+          } catch {}
+        }
+      }
+
+      res.json({
+        ...assembly,
+        wsExists,
+        hasRegistry,
+        hasDomains,
+        hasApp,
+        verifyStatus,
+        lockEligible: verifyStatus === 'PASS',
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to fetch assembly' });
+    }
+  });
+
+  app.post('/api/assemblies', async (req: Request, res: Response) => {
+    try {
+      const { projectName, idea, preset, presetId, mode, domains, context, category } = req.body;
+      if (!projectName || typeof projectName !== 'string') {
+        res.status(400).json({ error: 'projectName is required' });
+        return;
+      }
+      const slug = projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+      const assembly = await storage.createAssembly({
+        projectName: slug,
+        idea: idea || null,
+        preset: preset || null,
+        presetId: presetId || null,
+        mode: mode || null,
+        domains: domains || null,
+        context: context || null,
+        category: category || null,
+        state: 'queued',
+        step: null,
+        progress: null,
+        errors: null,
+        kit: null,
+        kitPath: null,
+        logsTail: null,
+        input: null,
+        projectPackageId: null,
+      });
+      res.json(assembly);
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to create assembly' });
+    }
+  });
+
+  app.delete('/api/assemblies/:id', async (req: Request, res: Response) => {
+    try {
+      await storage.deleteAssembly(req.params.id as string);
+      res.json({ ok: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to delete assembly' });
+    }
+  });
+
+  const activeRuns = new Map<string, boolean>();
+
+  app.get('/api/assemblies/:id/run/stream', async (req: Request, res: Response) => {
+    const assemblyId = req.params.id;
+    const assembly = await storage.getAssembly(assemblyId);
+    if (!assembly) {
+      res.status(404).json({ error: 'Assembly not found' });
+      return;
+    }
+    if (!assembly.projectName) {
+      res.status(400).json({ error: 'Assembly has no project name' });
+      return;
+    }
+
+    if (activeRuns.get(assemblyId)) {
+      res.status(409).json({ error: 'Pipeline already running for this assembly' });
+      return;
+    }
+
+    const stagePlanId = (req.query.stagePlan as string) || 'docs:full';
+    const presetsData = loadPresets();
+    if (!presetsData) {
+      res.status(500).json({ error: 'Could not load presets.json' });
+      return;
+    }
+
+    const stagePlans = presetsData.stage_plans as Record<string, string[]>;
+    const presets = presetsData.presets as Record<string, { label: string; modules: string[]; guards?: Record<string, boolean> }>;
+
+    const stageSteps = stagePlans[stagePlanId];
+    if (!stageSteps) {
+      res.status(400).json({ error: `Unknown stage plan: ${stagePlanId}` });
+      return;
+    }
+
+    const presetId = assembly.presetId || assembly.preset || 'system';
+    const preset = presets[presetId] || presets['system'];
+    const presetModules = preset?.modules || [];
+    const presetGuards = preset?.guards || {};
+
+    const needsInit = !fs.existsSync(getProjectPath(assembly.projectName));
+    const fullSteps: string[] = [];
+    if (needsInit) {
+      fullSteps.push('kit-create', 'generate', 'seed');
+    }
+    for (const s of stageSteps) {
+      if (!fullSteps.includes(s) && pipelineSteps[s]) {
+        fullSteps.push(s);
+      }
+    }
+
+    if (fullSteps.length === 0) {
+      res.status(400).json({ error: 'No valid steps for this stage plan' });
+      return;
+    }
+
+    const projectName = assembly.projectName;
+    const buildRoot = PROJECT_ROOT;
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    activeRuns.set(assemblyId, true);
+
+    await storage.updateAssembly(assemblyId, {
+      state: 'running',
+      step: fullSteps[0],
+      progress: { currentIndex: 0, totalSteps: fullSteps.length, steps: fullSteps },
+    });
+
+    res.write(`event: plan\ndata: ${JSON.stringify({ assemblyId, presetId, stagePlan: stagePlanId, steps: fullSteps, modules: presetModules, totalSteps: fullSteps.length })}\n\n`);
+
+    let aborted = false;
+    req.on('close', () => { aborted = true; activeRuns.delete(assemblyId); });
+
+    const orchestrate = async () => {
+      const allResults: RunResult[] = [];
+      let verifyPassed = true;
+      let lastError: string | null = null;
+
+      for (let i = 0; i < fullSteps.length; i++) {
+        if (aborted) break;
+        const stepId = fullSteps[i];
+        const step = pipelineSteps[stepId];
+
+        await storage.updateAssembly(assemblyId, {
+          step: stepId,
+          progress: { currentIndex: i, totalSteps: fullSteps.length, steps: fullSteps, status: 'running' },
+        });
+
+        res.write(`event: step-start\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, total: fullSteps.length })}\n\n`);
+
+        if (presetGuards.disallow_lock && stepId === 'lock') {
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'disallow_lock guard' })}\n\n`);
+          continue;
+        }
+        if (presetGuards.lock_requires_verify_pass && stepId === 'lock' && !verifyPassed) {
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'verify did not pass' })}\n\n`);
+          continue;
+        }
+
+        const stepBody: Record<string, unknown> = { projectName };
+        if (presetModules.length > 0 && presetModules.length < 19) {
+          stepBody.module = presetModules.join(',');
+        }
+
+        if (stepId === 'lock' && presetModules.length > 0) {
+          const lockStart = Date.now();
+          let lockSucceeded = 0;
+          let lockFailed = 0;
+          let lockStdout = '';
+          let lockStderr = '';
+
+          for (const mod of presetModules) {
+            if (aborted) break;
+            const lockBody = { ...stepBody, module: mod };
+            const lockArgs = step.args(projectName, buildRoot, lockBody);
+            const lockCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+
+            if (!aborted) {
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Locking module: ${mod}` })}\n\n`);
+            }
+
+            const lockResult = await runSingleStep(step, lockArgs, lockCwd, aborted, (event, data) => {
+              if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
+            });
+
+            lockStdout += lockResult.stdout;
+            lockStderr += lockResult.stderr;
+            if (lockResult.status === 'success') {
+              lockSucceeded++;
+            } else {
+              lockFailed++;
+            }
+          }
+
+          const combinedResult: RunResult = {
+            status: lockFailed === 0 ? 'success' : 'error',
+            command: step.label,
+            exitCode: lockFailed === 0 ? 0 : 1,
+            stdout: lockStdout,
+            stderr: lockStderr,
+            durationMs: Date.now() - lockStart,
+          };
+
+          persistRunResult(stepId, step, projectName, combinedResult).catch(() => {});
+          allResults.push(combinedResult);
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: combinedResult.status, exitCode: combinedResult.exitCode, durationMs: combinedResult.durationMs })}\n\n`);
+
+          if (combinedResult.status === 'error') {
+            lastError = `Lock failed for some modules`;
+            break;
+          }
+          continue;
+        }
+
+        const args = step.args(projectName, buildRoot, stepBody);
+        const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+
+        const result = await runSingleStep(step, args, cwd, aborted, (event, data) => {
+          if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
+        });
+
+        persistRunResult(stepId, step, projectName, result).catch(() => {});
+        allResults.push(result);
+
+        if (stepId === 'verify' && result.status !== 'success') {
+          verifyPassed = false;
+        }
+
+        res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: result.status, exitCode: result.exitCode, durationMs: result.durationMs })}\n\n`);
+
+        if (result.status === 'error') {
+          lastError = `Step ${step.label} failed (exit ${result.exitCode})`;
+          await storage.updateAssembly(assemblyId, {
+            state: 'failed',
+            step: stepId,
+            errors: [lastError],
+            logsTail: result.stderr.slice(-500) || result.stdout.slice(-500),
+          });
+          break;
+        }
+      }
+
+      activeRuns.delete(assemblyId);
+
+      if (!aborted) {
+        const succeeded = allResults.filter(r => r.status === 'success').length;
+        const failed = allResults.filter(r => r.status === 'error').length;
+        const finalState = failed === 0 ? 'completed' : 'failed';
+
+        await storage.updateAssembly(assemblyId, {
+          state: finalState,
+          step: fullSteps[fullSteps.length - 1],
+          progress: { currentIndex: fullSteps.length, totalSteps: fullSteps.length, steps: fullSteps, status: finalState },
+          errors: lastError ? [lastError] : null,
+        });
+
+        res.write(`event: done\ndata: ${JSON.stringify({ assemblyId, totalSteps: fullSteps.length, succeeded, failed, state: finalState })}\n\n`);
+        res.end();
+      }
+    };
+
+    orchestrate().catch((err) => {
+      activeRuns.delete(assemblyId);
+      if (!aborted) {
+        storage.updateAssembly(assemblyId, { state: 'failed', errors: [err?.message || 'Unknown error'] }).catch(() => {});
+        res.write(`event: error\ndata: ${JSON.stringify({ error: err?.message || 'Unknown error' })}\n\n`);
+        res.end();
+      }
+    });
+  });
+
+  app.post('/api/assemblies/:id/export', async (req: Request, res: Response) => {
+    const assembly = await storage.getAssembly(req.params.id as string);
+    if (!assembly || !assembly.projectName) {
+      res.status(404).json({ error: 'Assembly not found' });
+      return;
+    }
+    const projectPath = getProjectPath(assembly.projectName);
+    if (!fs.existsSync(projectPath)) {
+      res.status(400).json({ error: 'Workspace does not exist' });
+      return;
+    }
+
+    const step = pipelineSteps['package'];
+    if (!step) {
+      res.status(500).json({ error: 'Package step not registered' });
+      return;
+    }
+
+    const args = step.args(assembly.projectName, PROJECT_ROOT, {});
+    const result = await runCommand(step.cmd, args, 'Package');
+    await persistRunResult('package', step, assembly.projectName, result);
+
+    if (result.status === 'success') {
+      await storage.updateAssembly(req.params.id, { state: 'exported' });
+    }
+
+    res.json(result);
   });
 
   app.get('/api/workspaces', async (_req: Request, res: Response) => {

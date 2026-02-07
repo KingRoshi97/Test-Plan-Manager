@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { Play, FolderTree, Shield, Zap, Activity, FileText } from "lucide-react";
+import { Layers, Play, FolderTree, Shield, Zap, Activity, FileText, Plus } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,13 +11,19 @@ import {
   SidebarMenuButton,
   SidebarHeader,
   SidebarFooter,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Sun, Moon } from "lucide-react";
 
-const navItems = [
-  { title: "Pipeline", href: "/", icon: Play },
+const assemblyNav = [
+  { title: "Assemblies", href: "/", icon: Layers },
+  { title: "New Assembly", href: "/new", icon: Plus },
+];
+
+const toolsNav = [
+  { title: "Pipeline (Legacy)", href: "/pipeline", icon: Play },
   { title: "Status", href: "/status", icon: Activity },
   { title: "Reports", href: "/reports", icon: FileText },
   { title: "Files", href: "/files", icon: FolderTree },
@@ -37,16 +43,38 @@ export function AppSidebar() {
           </div>
           <div>
             <h1 className="text-sm font-semibold" data-testid="text-title">AXION</h1>
-            <p className="text-xs text-muted-foreground">Dashboard</p>
+            <p className="text-xs text-muted-foreground">Assembler</p>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Assemblies</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {assemblyNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location === item.href}
+                    tooltip={item.title}
+                  >
+                    <Link href={item.href} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarSeparator />
+        <SidebarGroup>
+          <SidebarGroupLabel>Tools</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {toolsNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
