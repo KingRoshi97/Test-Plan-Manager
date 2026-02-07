@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { Layers, Play, FolderTree, Shield, Zap, Activity, FileText, Plus } from "lucide-react";
+import { Layers, FolderTree, Zap, Plus } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -23,11 +23,7 @@ const assemblyNav = [
 ];
 
 const toolsNav = [
-  { title: "Pipeline (Legacy)", href: "/pipeline", icon: Play },
-  { title: "Status", href: "/status", icon: Activity },
-  { title: "Reports", href: "/reports", icon: FileText },
   { title: "Files", href: "/files", icon: FolderTree },
-  { title: "Release Gate", href: "/release", icon: Shield },
 ];
 
 export function AppSidebar() {
