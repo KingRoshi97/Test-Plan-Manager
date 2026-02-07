@@ -101,7 +101,7 @@ function checkAxionDirectory(root: string): CheckResult {
       status: 'fail',
       message: 'axion/ directory not found',
       reason_code: 'BAD_WORKDIR',
-      hint: `cd to repository root or run: node --import tsx axion/scripts/axion-init.ts`,
+      hint: `cd to repository root or run: node axion/scripts/axion-init.mjs`,
     };
   }
   

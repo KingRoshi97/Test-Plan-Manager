@@ -20,8 +20,8 @@ A fresh kit created with kit-create, no modules have been run through generate/s
   "module": "frontend",
   "missing": ["contracts", "state"],
   "hint": [
-    "npx tsx axion/scripts/axion-seed.ts --build-root <kit> --module contracts",
-    "npx tsx axion/scripts/axion-seed.ts --build-root <kit> --module state"
+    "node axion/scripts/axion-seed.mjs --build-root <kit> --module contracts",
+    "node axion/scripts/axion-seed.mjs --build-root <kit> --module state"
   ]
 }
 ```

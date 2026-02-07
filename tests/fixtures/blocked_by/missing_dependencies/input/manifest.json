@@ -10,6 +10,6 @@
     }
   },
   "expected_commands": [
-    "npx tsx axion/scripts/axion-seed.ts --build-root <kit> --module frontend"
+    "node axion/scripts/axion-seed.mjs --build-root <kit> --module frontend"
   ]
 }

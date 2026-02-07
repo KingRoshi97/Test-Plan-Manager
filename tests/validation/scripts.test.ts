@@ -13,11 +13,11 @@ describe('AXION Scripts Validation', () => {
       'axion-run.ts',
       'axion-status.ts',
       'axion-doctor.ts',
-      'axion-init.ts',
+      'axion-init.mjs',
       'axion-build.ts',
       'axion-scaffold-app.ts',
       'axion-test.ts',
-      'axion-lock.ts',
+      'axion-lock.mjs',
       'axion-verify-seams.ts'
     ];
     

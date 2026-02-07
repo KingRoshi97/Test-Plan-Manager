@@ -289,7 +289,7 @@ function createPlan(moduleName: string, issues: RepairIssue[]): RepairPlan {
     }
   } else {
     nextCommands.push(`# Module "${moduleName}" is ready for verify stage`);
-    nextCommands.push(`npx ts-node axion/scripts/axion-verify.ts --module ${moduleName}`);
+    nextCommands.push(`node axion/scripts/axion-verify.mjs --module ${moduleName}`);
   }
   
   return {

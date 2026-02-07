@@ -18,12 +18,12 @@ What users/agents can do after this change.
 
 ### Scripts Affected
 - [ ] axion-kit-create.ts
-- [ ] axion-generate.ts
-- [ ] axion-seed.ts
-- [ ] axion-draft.ts
-- [ ] axion-review.ts
-- [ ] axion-verify.ts
-- [ ] axion-lock.ts
+- [ ] axion-generate.mjs
+- [ ] axion-seed.mjs
+- [ ] axion-draft.mjs
+- [ ] axion-review.mjs
+- [ ] axion-verify.mjs
+- [ ] axion-lock.mjs
 - [ ] axion-status.ts
 - [ ] Other: ___
 

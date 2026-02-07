@@ -174,7 +174,7 @@ describe('AXION Core System Contract', () => {
       ];
 
       it('should define known reason codes in verify script', () => {
-        const verifyPath = path.join(AXION_ROOT, 'scripts', 'axion-verify.ts');
+        const verifyPath = path.join(AXION_ROOT, 'scripts', 'axion-verify.mjs');
         const content = fs.readFileSync(verifyPath, 'utf-8');
         
         expect(content).toContain('MISSING_SECTION');
@@ -207,7 +207,7 @@ describe('AXION Core System Contract', () => {
           '--project-name', 'BlockedTest'
         ]);
 
-        const result = runAxionCommand('axion-seed.ts', [
+        const result = runAxionCommand('axion-seed.mjs', [
           '--build-root', targetDir,
           '--module', 'frontend'
         ]);
@@ -232,7 +232,7 @@ describe('AXION Core System Contract', () => {
           '--project-name', 'HintTest'
         ]);
 
-        const result = runAxionCommand('axion-seed.ts', [
+        const result = runAxionCommand('axion-seed.mjs', [
           '--build-root', targetDir,
           '--module', 'frontend'
         ]);

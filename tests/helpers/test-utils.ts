@@ -43,7 +43,8 @@ export function runAxionCommand(
   const scriptPath = path.join(process.cwd(), 'axion', 'scripts', script);
   
   const quotedArgs = args.map(arg => arg.includes(' ') ? `"${arg}"` : arg);
-  const cmd = `npx tsx ${scriptPath} ${quotedArgs.join(' ')}`;
+  const runner = script.endsWith('.mjs') ? 'node' : 'npx tsx';
+  const cmd = `${runner} ${scriptPath} ${quotedArgs.join(' ')}`;
   
   try {
     const stdout = execSync(cmd, {

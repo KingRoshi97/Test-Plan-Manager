@@ -62,7 +62,7 @@ The 7 core documents must be consistent:
 
 When you've drafted all modules, tell the user to run:
 ```bash
-node --import tsx axion/scripts/axion-verify.ts --all
+node axion/scripts/axion-verify.mjs --all
 ```
 
 This will validate your drafts against AXION's governance rules.

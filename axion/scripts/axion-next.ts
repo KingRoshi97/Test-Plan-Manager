@@ -63,13 +63,13 @@ function main() {
       console.log(JSON.stringify({
         status: 'unknown',
         message: 'No verify report found. Run axion-verify first.',
-        next_commands: ['node --import tsx axion/scripts/axion-verify.ts --all'],
+        next_commands: ['node axion/scripts/axion-verify.mjs --all'],
       }, null, 2));
     } else {
       console.log('\n[AXION] Next Steps\n');
       console.log('[?] No verify report found');
       console.log('\nRun verify first:');
-      console.log('  node --import tsx axion/scripts/axion-verify.ts --all');
+      console.log('  node axion/scripts/axion-verify.mjs --all');
     }
     process.exit(1);
   }
