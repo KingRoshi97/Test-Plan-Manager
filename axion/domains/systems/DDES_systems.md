@@ -6,7 +6,7 @@
 **Domain Slug:** systems
 **Domain Prefix:** systems
 **Domain Type:** business
-**Project:** Application
+**Project:** hhhhhhh
 
 ---
 
@@ -19,11 +19,11 @@ Manages system-level services, health monitoring, and infrastructure coordinatio
 
 | Entity | Description | Owner | Fields (key) | Relationships |
 |--------|-------------|-------|-------------|---------------|
-| Application | Core application entity | This domain | id, name, description, createdAt | standalone |
-| User | Core user entity | auth domain | id, email, name, role, createdAt | owns many resources |
+| Note | Core note entity | This domain | id, title, content, authorId, createdAt | belongs_to User |
 | Platform targets | Core platform targets entity | This domain | id, name, description, createdAt | standalone |
 | Integrations complexity | Core integrations complexity entity | This domain | id, name, description, createdAt | standalone |
 | Role | Core role entity | This domain | id, name, description, createdAt | standalone |
+| Tech Lead | Core tech lead entity | This domain | id, name, description, createdAt | standalone |
 
 ---
 

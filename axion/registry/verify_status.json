@@ -1,26 +1,8 @@
 {
   "status": "PASS",
-  "timestamp": "2026-02-07T17:18:21.426Z",
-  "mode": "all",
+  "timestamp": "2026-02-07T17:22:31.417Z",
+  "mode": "module",
   "modules": [
-    "architecture",
-    "systems",
-    "contracts",
-    "database",
-    "data",
-    "auth",
-    "backend",
-    "integrations",
-    "state",
-    "frontend",
-    "fullstack",
-    "testing",
-    "quality",
-    "security",
-    "devops",
-    "cloud",
-    "devex",
-    "mobile",
-    "desktop"
+    "frontend"
   ]
 }

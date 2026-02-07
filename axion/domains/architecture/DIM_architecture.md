@@ -6,7 +6,7 @@
 **Domain Slug:** architecture
 **Prefix:** ar
 **Type:** business
-**Project:** Application
+**Project:** hhhhhhh
 
 ---
 
@@ -14,11 +14,11 @@
 
 | Interface ID | Type | Method | Path/Name | Description | Consumer(s) | Contract Ref |
 |-------------|------|--------|-----------|-------------|-------------|--------------|
-| ar_IF_001 | REST | GET | /api/applications | List all application records | frontend | contracts/architecture |
-| ar_IF_002 | REST | GET | /api/users | List all user records | frontend | contracts/architecture |
-| ar_IF_003 | REST | GET | /api/platform targetss | List all platform targets records | frontend | contracts/architecture |
-| ar_IF_004 | REST | POST | /api/applications | Create a new application | frontend | contracts/architecture |
-| ar_IF_005 | REST | POST | /api/users | Create a new user | frontend | contracts/architecture |
+| ar_IF_001 | REST | GET | /api/notes | List all note records | frontend | contracts/architecture |
+| ar_IF_002 | REST | GET | /api/platform targetss | List all platform targets records | frontend | contracts/architecture |
+| ar_IF_003 | REST | GET | /api/integrations complexitys | List all integrations complexity records | frontend | contracts/architecture |
+| ar_IF_004 | REST | POST | /api/notes | Create a new note | frontend | contracts/architecture |
+| ar_IF_005 | REST | POST | /api/platform targetss | Create a new platform targets | frontend | contracts/architecture |
 
 ---
 
@@ -34,8 +34,8 @@
 
 | Event Name | Direction | Payload Schema | Trigger | Consumer(s) | Guarantee |
 |-----------|-----------|---------------|---------|-------------|-----------|
-| APPLICATION_CREATED | emit | { applicationId, createdBy } | New application is created | state, frontend | at-least-once |
-| USER_CREATED | emit | { userId, createdBy } | New user is created | state, frontend | at-least-once |
+| NOTE_CREATED | emit | { noteId, createdBy } | New note is created | state, frontend | at-least-once |
+| PLATFORM TARGETS_CREATED | emit | { platform targetsId, createdBy } | New platform targets is created | state, frontend | at-least-once |
 
 ---
 
