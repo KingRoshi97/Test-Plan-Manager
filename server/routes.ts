@@ -30,6 +30,39 @@ function getProjectPath(projectName: string): string {
   return path.join(PROJECT_ROOT, projectName);
 }
 
+function expandModulesWithDependencies(modules: string[], includeDeps: boolean): string[] {
+  if (!includeDeps || modules.length === 0) return modules;
+
+  const domainsPath = path.join(AXION_ROOT, 'config', 'domains.json');
+  let domainsConfig: { modules?: Array<{ slug: string; dependencies?: string[] }> };
+  try {
+    domainsConfig = JSON.parse(fs.readFileSync(domainsPath, 'utf8'));
+  } catch {
+    return modules;
+  }
+
+  const allDomains = domainsConfig.modules || [];
+  const depMap: Record<string, string[]> = {};
+  for (const mod of allDomains) {
+    depMap[mod.slug] = mod.dependencies || [];
+  }
+
+  const expanded = new Set<string>();
+  function collectDeps(slug: string) {
+    if (expanded.has(slug)) return;
+    for (const dep of depMap[slug] || []) {
+      collectDeps(dep);
+    }
+    expanded.add(slug);
+  }
+
+  for (const mod of modules) {
+    collectDeps(mod);
+  }
+
+  return Array.from(expanded);
+}
+
 interface PipelineStep {
   cmd: string;
   args: (projectName: string, buildRoot: string, body: Record<string, unknown>) => string[];
@@ -642,7 +675,7 @@ export function registerRoutes(app: Express) {
     }
 
     const stagePlans = presetsData.stage_plans as Record<string, { label?: string; description?: string; steps: string[] } | string[]>;
-    const presets = presetsData.presets as Record<string, { label: string; modules: string[]; guards?: Record<string, boolean> }>;
+    const presets = presetsData.presets as Record<string, { label: string; modules: string[]; include_dependencies?: boolean; guards?: Record<string, boolean> }>;
 
     const rawPlan = stagePlans[stagePlanId];
     const stageSteps = Array.isArray(rawPlan) ? rawPlan : rawPlan?.steps;
@@ -653,7 +686,7 @@ export function registerRoutes(app: Express) {
 
     const presetId = assembly.presetId || assembly.preset || 'system';
     const preset = presets[presetId] || presets['system'];
-    const presetModules = preset?.modules || [];
+    const presetModules = expandModulesWithDependencies(preset?.modules || [], preset?.include_dependencies ?? false);
     const presetGuards = preset?.guards || {};
 
     const needsInit = !fs.existsSync(getProjectPath(assembly.projectName));
@@ -1107,7 +1140,7 @@ export function registerRoutes(app: Express) {
     }
 
     const stagePlans = presetsData.stage_plans as Record<string, { label?: string; description?: string; steps: string[] } | string[]> | undefined;
-    const presets = presetsData.presets as Record<string, { label: string; modules: string[] }> | undefined;
+    const presets = presetsData.presets as Record<string, { label: string; modules: string[]; include_dependencies?: boolean; guards?: Record<string, boolean> }> | undefined;
     if (!stagePlans || !presets) {
       res.status(500).json({ error: 'Invalid presets.json format' });
       return;
@@ -1141,8 +1174,8 @@ export function registerRoutes(app: Express) {
       return;
     }
 
-    const presetModules = preset.modules || [];
-    const presetGuards = (preset as any).guards || {};
+    const presetModules = expandModulesWithDependencies(preset.modules || [], preset.include_dependencies ?? false);
+    const presetGuards = preset.guards || {};
 
     const buildRoot = PROJECT_ROOT;
 
