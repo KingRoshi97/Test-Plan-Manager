@@ -63,7 +63,7 @@ npx tsx axion/scripts/axion-run.ts \
 ### For individual doc scripts (generate, seed, draft, review, verify, lock):
 
 ```bash
-npx tsx axion/scripts/axion-generate.ts \
+node axion/scripts/axion-generate.mjs \
   --root /path/to/workspace      # Direct path to workspace root
   --module architecture          # Specific module (or --all)
 ```

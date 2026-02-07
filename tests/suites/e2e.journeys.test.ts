@@ -236,12 +236,12 @@ describe('E2E Greenfield Journey', () => {
     fs.mkdirSync(ctx.registryDir, { recursive: true });
 
     console.log('  [STEP 2] generate --all');
-    const generateCmd = `npx tsx ${AXION_SOURCE}/scripts/axion-generate.ts --root ${ctx.workspace} --all`;
+    const generateCmd = `node ${AXION_SOURCE}/scripts/axion-generate.mjs --root ${ctx.workspace} --all`;
     execSync(generateCmd, { cwd: PROJECT_ROOT, encoding: 'utf-8', timeout: 60000 });
     console.log('    generate: done');
 
     console.log('  [STEP 3] seed --all');
-    const seedCmd = `npx tsx ${AXION_SOURCE}/scripts/axion-seed.ts --root ${ctx.workspace} --all`;
+    const seedCmd = `node ${AXION_SOURCE}/scripts/axion-seed.mjs --root ${ctx.workspace} --all`;
     execSync(seedCmd, { cwd: PROJECT_ROOT, encoding: 'utf-8', timeout: 60000 });
     console.log('    seed: done');
 
@@ -497,12 +497,12 @@ describe('E2E Import Journey', () => {
     console.log(`    axion-import: success, stack_id_candidate=${importResult.json.stack_id_candidate}`);
 
     console.log('  [STEP 3] generate --all');
-    const generateCmd = `npx tsx ${AXION_SOURCE}/scripts/axion-generate.ts --root ${ctx.workspace} --all`;
+    const generateCmd = `node ${AXION_SOURCE}/scripts/axion-generate.mjs --root ${ctx.workspace} --all`;
     execSync(generateCmd, { cwd: PROJECT_ROOT, encoding: 'utf-8', timeout: 60000 });
     console.log('    generate: done');
 
     console.log('  [STEP 4] seed --all');
-    const seedCmd = `npx tsx ${AXION_SOURCE}/scripts/axion-seed.ts --root ${ctx.workspace} --all`;
+    const seedCmd = `node ${AXION_SOURCE}/scripts/axion-seed.mjs --root ${ctx.workspace} --all`;
     execSync(seedCmd, { cwd: PROJECT_ROOT, encoding: 'utf-8', timeout: 60000 });
     console.log('    seed: done');
 

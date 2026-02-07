@@ -45,11 +45,11 @@ npx tsx axion/scripts/axion-prepare-root.ts \
   [--archive-existing]     # Archive existing first
 ```
 
-### axion-init.ts
+### axion-init.mjs
 Initialize fresh workspace with templates.
 
 ```bash
-npx tsx axion/scripts/axion-init.ts \
+node axion/scripts/axion-init.mjs \
   --mode fresh             # Fresh initialization
   [--root <path>]          # Workspace root
 ```
@@ -66,61 +66,61 @@ npx tsx axion/scripts/axion-preflight.ts \
 
 ## Documentation Pipeline
 
-### axion-generate.ts
+### axion-generate.mjs
 Generate module scaffolds.
 
 ```bash
-npx tsx axion/scripts/axion-generate.ts \
+node axion/scripts/axion-generate.mjs \
   --root <path>            # Workspace root
   [--module <name>]        # Single module
   [--all]                  # All modules
 ```
 
-### axion-seed.ts
+### axion-seed.mjs
 Seed templates into modules.
 
 ```bash
-npx tsx axion/scripts/axion-seed.ts \
+node axion/scripts/axion-seed.mjs \
   --root <path>            # Workspace root
   [--module <name>]        # Single module
   [--all]                  # All modules
 ```
 
-### axion-draft.ts
+### axion-draft.mjs
 AI-generate documentation content.
 
 ```bash
-npx tsx axion/scripts/axion-draft.ts \
+node axion/scripts/axion-draft.mjs \
   --root <path>            # Workspace root
   [--module <name>]        # Single module
   [--all]                  # All modules
 ```
 
-### axion-review.ts
+### axion-review.mjs
 AI review documentation.
 
 ```bash
-npx tsx axion/scripts/axion-review.ts \
+node axion/scripts/axion-review.mjs \
   --root <path>            # Workspace root
   [--module <name>]        # Single module
   [--all]                  # All modules
 ```
 
-### axion-verify.ts
+### axion-verify.mjs
 Validate documentation quality.
 
 ```bash
-npx tsx axion/scripts/axion-verify.ts \
+node axion/scripts/axion-verify.mjs \
   --root <path>            # Workspace root
   [--module <name>]        # Single module
   [--all]                  # All modules
 ```
 
-### axion-lock.ts
+### axion-lock.mjs
 Lock documentation (make immutable).
 
 ```bash
-npx tsx axion/scripts/axion-lock.ts \
+node axion/scripts/axion-lock.mjs \
   --root <path>            # Workspace root
   [--module <name>]        # Single module
   [--all]                  # All modules

@@ -196,10 +196,10 @@ function createFreshWorkspace(newRoot: string, dryRun: boolean): void {
   
   fs.mkdirSync(newRoot, { recursive: true });
   
-  const initScript = path.join(process.cwd(), 'axion', 'scripts', 'axion-init.ts');
+  const initScript = path.join(process.cwd(), 'axion', 'scripts', 'axion-init.mjs');
   if (fs.existsSync(initScript)) {
     try {
-      execSync(`node --import tsx ${initScript} --mode fresh --target ${newRoot}`, {
+      execSync(`node ${initScript} --mode fresh --target ${newRoot}`, {
         stdio: 'inherit',
         cwd: process.cwd(),
       });

@@ -25,7 +25,7 @@ AXION is a folder-based system. To use it in your project:
 ### Step 1: Initialize Workspace
 
 ```bash
-node --import tsx axion/scripts/axion-init.ts --mode fresh
+node axion/scripts/axion-init.mjs --mode fresh
 ```
 
 This creates:
@@ -43,7 +43,7 @@ This creates:
 1. Open `axion/source_docs/product/attachments/START_HERE.txt`
 2. Paste your project idea, requirements, or any existing documentation
 3. Add additional files (specs, designs, API docs) to the `attachments/` folder
-4. Run `node --import tsx axion/scripts/axion-generate.ts --all`
+4. Run `node axion/scripts/axion-generate.mjs --all`
 
 The generate stage reads ALL files from the attachments folder and saves them to `registry/attachments_content.md` for use in drafting documentation.
 
@@ -82,22 +82,22 @@ Option B: **Run stages manually**:
 
 ```bash
 # Generate all module docs from templates
-node --import tsx axion/scripts/axion-generate.ts --all
+node axion/scripts/axion-generate.mjs --all
 
 # Seed placeholders
-node --import tsx axion/scripts/axion-seed.ts --all
+node axion/scripts/axion-seed.mjs --all
 
 # Draft content
-node --import tsx axion/scripts/axion-draft.ts --all
+node axion/scripts/axion-draft.mjs --all
 
 # Review completeness
-node --import tsx axion/scripts/axion-review.ts --all
+node axion/scripts/axion-review.mjs --all
 
 # Verify rules
-node --import tsx axion/scripts/axion-verify.ts --all
+node axion/scripts/axion-verify.mjs --all
 
 # Lock and generate ERC
-node --import tsx axion/scripts/axion-lock.ts --all
+node axion/scripts/axion-lock.mjs --all
 ```
 
 ---
@@ -123,12 +123,12 @@ Then follow the "Fresh Project" steps above in the new workspace.
 
 | Stage | Purpose | How |
 |-------|---------|-----|
-| **generate** | Create module docs from templates | `axion-generate.ts --all` |
-| **seed** | Add placeholder content structure | `axion-seed.ts --all` |
+| **generate** | Create module docs from templates | `axion-generate.mjs --all` |
+| **seed** | Add placeholder content structure | `axion-seed.mjs --all` |
 | **draft** | Fill in actual content | **Ask your AI Agent** (see below) |
-| **review** | Check completeness, count UNKNOWNs | `axion-review.ts --all` |
-| **verify** | Validate rules, seams, cross-refs | `axion-verify.ts --all` |
-| **lock** | Finalize and generate ERC | `axion-lock.ts --all` |
+| **review** | Check completeness, count UNKNOWNs | `axion-review.mjs --all` |
+| **verify** | Validate rules, seams, cross-refs | `axion-verify.mjs --all` |
+| **lock** | Finalize and generate ERC | `axion-lock.mjs --all` |
 
 ---
 
@@ -141,10 +141,10 @@ The **draft** stage is where AI generates your documentation content. After runn
 ### Workflow
 
 1. Add your project input to `source_docs/product/attachments/START_HERE.txt`
-2. Run: `node --import tsx axion/scripts/axion-generate.ts --all`
-3. Run: `node --import tsx axion/scripts/axion-seed.ts --all`
+2. Run: `node axion/scripts/axion-generate.mjs --all`
+3. Run: `node axion/scripts/axion-seed.mjs --all`
 4. **Ask your AI agent**: "Please draft the AXION documentation following the instructions in `axion/registry/AGENT_PROMPT.md`"
-5. Run: `node --import tsx axion/scripts/axion-verify.ts --all`
+5. Run: `node axion/scripts/axion-verify.mjs --all`
 
 The AI agent reads your input, RPBS/REBS, and the module templates, then generates appropriate content for each module's documentation.
 
@@ -214,9 +214,9 @@ axion/
 │   ├── backend/
 │   └── ...
 └── scripts/               # Pipeline scripts
-    ├── axion-init.ts
-    ├── axion-generate.ts
-    ├── axion-verify.ts
+    ├── axion-init.mjs
+    ├── axion-generate.mjs
+    ├── axion-verify.mjs
     └── ...
 ```
 
@@ -256,7 +256,7 @@ AXION enforces several rules during verify:
 
 ```bash
 # 1. Initialize
-node --import tsx axion/scripts/axion-init.ts --mode fresh
+node axion/scripts/axion-init.mjs --mode fresh
 
 # 2. Edit RPBS_Product.md:
 #    - Vision: "Simple todo list for personal productivity"

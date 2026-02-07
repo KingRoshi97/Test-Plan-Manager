@@ -39,8 +39,8 @@ interface VerifyReport {
 }
 
 function runVerify(workspace: string): CommandResult {
-  const scriptPath = path.join(AXION_ROOT, 'scripts', 'axion-verify.ts');
-  const fullCommand = `node --import tsx ${scriptPath} --all`;
+  const scriptPath = path.join(AXION_ROOT, 'scripts', 'axion-verify.mjs');
+  const fullCommand = `node ${scriptPath} --all`;
   const options: ExecSyncOptions = {
     cwd: process.cwd(),
     env: { ...process.env, AXION_WORKSPACE: workspace },

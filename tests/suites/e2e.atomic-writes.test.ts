@@ -182,7 +182,7 @@ Standard web application architecture.
     console.log('  Step 3: Run verify with AFTER_TMP_WRITE failpoint');
     
     // Set AXION_SYSTEM_ROOT to point to the axion/ dir in the build root
-    const verifyCmd = `npx tsx ${AXION_SOURCE}/scripts/axion-verify.ts ` +
+    const verifyCmd = `node ${AXION_SOURCE}/scripts/axion-verify.mjs ` +
       `--root ${ctx.workspaceRoot} ` +
       `--all ` +
       `--json`;
