@@ -436,6 +436,24 @@ async function syncReportsToDb(projectName: string, stepId: string) {
   }
 }
 
+function writeStageMarker(buildRoot: string, stage: string, status: 'success' | 'failed'): void {
+  const markersPath = path.join(buildRoot, 'axion', 'registry', 'stage_markers.json');
+  const registryDir = path.dirname(markersPath);
+  if (!fs.existsSync(registryDir)) {
+    fs.mkdirSync(registryDir, { recursive: true });
+  }
+  let markers: Record<string, Record<string, { completed_at: string; status: string }>> = {};
+  if (fs.existsSync(markersPath)) {
+    try { markers = JSON.parse(fs.readFileSync(markersPath, 'utf-8')); } catch { markers = {}; }
+  }
+  if (!markers['global']) markers['global'] = {};
+  markers['global'][stage] = {
+    completed_at: new Date().toISOString(),
+    status,
+  };
+  fs.writeFileSync(markersPath, JSON.stringify(markers, null, 2), 'utf-8');
+}
+
 function ensureArchitectureReadme(buildRoot: string, assembly: any): void {
   const readmePath = path.join(buildRoot, 'axion', 'domains', 'architecture', 'README.md');
   if (fs.existsSync(readmePath)) return;
@@ -889,6 +907,10 @@ export function registerRoutes(app: Express) {
         persistRunResult(stepId, step, projectName, result).catch(() => {});
         allResults.push(result);
 
+        if (stepId === 'scaffold-app' && result.status === 'success') {
+          writeStageMarker(buildRoot, 'scaffold-app', 'success');
+        }
+
         if (stepId === 'verify' && result.status !== 'success') {
           verifyPassed = false;
         }
@@ -1031,6 +1053,9 @@ export function registerRoutes(app: Express) {
       const args = step.args(projectName, buildRoot, req.body);
       const cwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
       const result = await runCommand(step.cmd, args, step.label, cwd);
+      if (stepId === 'scaffold-app' && result.status === 'success') {
+        writeStageMarker(buildRoot, 'scaffold-app', 'success');
+      }
       await persistRunResult(stepId, step, projectName, result);
       res.json(result);
     });
@@ -1109,6 +1134,9 @@ export function registerRoutes(app: Express) {
           stderr,
           durationMs: Date.now() - start,
         };
+        if (stepId === 'scaffold-app' && result.status === 'success') {
+          writeStageMarker(buildRoot, 'scaffold-app', 'success');
+        }
         persistRunResult(stepId, step, projectName, result).catch(() => {});
         res.write(`event: done\ndata: ${JSON.stringify(result)}\n\n`);
         res.end();
@@ -1353,6 +1381,10 @@ export function registerRoutes(app: Express) {
           continue;
         }
 
+        if (stepId === 'scaffold-app') {
+          ensureArchitectureReadme(buildRoot, { projectName });
+        }
+
         const args = step.args(projectName, buildRoot, stepBody);
         const cwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
 
@@ -1408,6 +1440,10 @@ export function registerRoutes(app: Express) {
 
           if (aborted) child.kill();
         });
+
+        if (stepId === 'scaffold-app' && result.status === 'success') {
+          writeStageMarker(buildRoot, 'scaffold-app', 'success');
+        }
 
         persistRunResult(stepId, step, projectName, result).catch(() => {});
         allResults.push(result);
