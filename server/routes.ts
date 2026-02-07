@@ -72,6 +72,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
     cmd: 'npx',
     args: (pn) => ['tsx', 'axion/scripts/axion-kit-create.ts', '--target', path.join(WORKSPACES_DIR, pn), '--project-name', pn, '--source', path.join(PROJECT_ROOT, 'axion'), '--force', '--json'],
     label: 'Kit Create',
+    cwd: () => PROJECT_ROOT,
     group: 'setup',
     desc: 'Initialize workspace',
   },
@@ -155,8 +156,9 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'scaffold-app': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', 'axion/scripts/axion-scaffold-app.ts', '--build-root', br, '--project-name', pn, '--override', 'dev_build', '--json'],
+    args: (_pn, br) => ['tsx', 'axion/scripts/axion-scaffold-app.ts', '--output', path.join(br, 'app'), '--override', 'dev_build', '--json'],
     label: 'Scaffold App',
+    cwd: (br) => br,
     group: 'build',
     desc: 'App boilerplate',
   },
@@ -434,6 +436,34 @@ async function syncReportsToDb(projectName: string, stepId: string) {
   }
 }
 
+function ensureArchitectureReadme(buildRoot: string, assembly: any): void {
+  const readmePath = path.join(buildRoot, 'axion', 'domains', 'architecture', 'README.md');
+  if (fs.existsSync(readmePath)) return;
+
+  const archDir = path.join(buildRoot, 'axion', 'domains', 'architecture');
+  if (!fs.existsSync(archDir)) return;
+
+  const projectName = assembly?.projectName || 'Project';
+  const idea = assembly?.idea || '';
+
+  let stackHints = 'React, Express, PostgreSQL, Drizzle, TypeScript, Tailwind CSS';
+  const belsPath = path.join(archDir, 'BELS_architecture.md');
+  if (fs.existsSync(belsPath)) {
+    const belsContent = fs.readFileSync(belsPath, 'utf-8');
+    if (belsContent.includes('Vue')) stackHints = stackHints.replace('React', 'Vue');
+    if (belsContent.includes('Svelte')) stackHints = stackHints.replace('React', 'Svelte');
+    if (belsContent.includes('Fastify')) stackHints = stackHints.replace('Express', 'Fastify');
+    if (belsContent.includes('Hono')) stackHints = stackHints.replace('Express', 'Hono');
+    if (belsContent.includes('MySQL')) stackHints = stackHints.replace('PostgreSQL', 'MySQL');
+    if (belsContent.includes('SQLite')) stackHints = stackHints.replace('PostgreSQL', 'SQLite');
+    if (belsContent.includes('Prisma')) stackHints = stackHints.replace('Drizzle', 'Prisma');
+  }
+
+  const content = `# Architecture — ${projectName}\n\n## Overview\n${idea || 'A full-stack web application.'}\n\n## Technology Stack\n${stackHints}\n\n## Stack Details\n- **Frontend**: React with TypeScript and Tailwind CSS\n- **Backend**: Express.js with TypeScript\n- **Database**: PostgreSQL with Drizzle ORM\n- **Deployment**: Replit\n`;
+
+  fs.writeFileSync(readmePath, content, 'utf-8');
+}
+
 function runSingleStep(
   step: PipelineStep,
   args: string[],
@@ -451,6 +481,7 @@ function runSingleStep(
       cwd,
       env: { ...process.env, ...(extraEnv || {}) },
       timeout: 300000,
+      shell: true,
     });
 
     child.stdout.on('data', (data: Buffer) => {
@@ -844,6 +875,10 @@ export function registerRoutes(app: Express) {
           continue;
         }
 
+        if (stepId === 'scaffold-app') {
+          ensureArchitectureReadme(buildRoot, assembly);
+        }
+
         const args = step.args(projectName, buildRoot, stepBody);
         const cwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
 
@@ -990,6 +1025,9 @@ export function registerRoutes(app: Express) {
         return;
       }
       const buildRoot = getProjectPath(projectName);
+      if (stepId === 'scaffold-app') {
+        ensureArchitectureReadme(buildRoot, { projectName });
+      }
       const args = step.args(projectName, buildRoot, req.body);
       const cwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
       const result = await runCommand(step.cmd, args, step.label, cwd);
@@ -1019,6 +1057,9 @@ export function registerRoutes(app: Express) {
       }
 
       const buildRoot = getProjectPath(projectName);
+      if (stepId === 'scaffold-app') {
+        ensureArchitectureReadme(buildRoot, { projectName });
+      }
       const args = step.args(projectName, buildRoot, body);
       const cwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
 
@@ -1037,6 +1078,7 @@ export function registerRoutes(app: Express) {
         cwd,
         env: { ...process.env },
         timeout: 300000,
+        shell: true,
       });
 
       const sendEvent = (event: string, data: string) => {
@@ -1323,6 +1365,7 @@ export function registerRoutes(app: Express) {
             cwd,
             env: { ...process.env, ...assemblyEnv2 },
             timeout: 300000,
+            shell: true,
           });
 
           child.stdout.on('data', (data: Buffer) => {
@@ -1947,6 +1990,7 @@ export function registerRoutes(app: Express) {
       cwd: PROJECT_ROOT,
       env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
       timeout: 300000,
+      shell: true,
     });
 
     child.stdout.on('data', (data: Buffer) => {
@@ -2144,6 +2188,7 @@ function runCommand(cmd: string, args: string[], label: string, cwd?: string): P
       cwd: cwd || PROJECT_ROOT,
       env: { ...process.env },
       timeout: 300000,
+      shell: true,
     });
 
     child.stdout.on('data', (data: Buffer) => {
