@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { Layers, FolderTree, Zap, Plus } from "lucide-react";
+import { Layers, FolderTree, Zap, Plus, HeartPulse, ScrollText, Package } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +24,9 @@ const assemblyNav = [
 
 const toolsNav = [
   { title: "Files", href: "/files", icon: FolderTree },
+  { title: "Health", href: "/health", icon: HeartPulse },
+  { title: "Logs", href: "/logs", icon: ScrollText },
+  { title: "Export", href: "/export", icon: Package },
 ];
 
 export function AppSidebar() {

@@ -473,6 +473,11 @@ export default function AssemblyPage() {
                     <span className="text-[10px] text-muted-foreground max-w-20 truncate text-center">
                       {step.label}
                     </span>
+                    {step.durationMs != null && step.durationMs > 0 && step.status !== "pending" && step.status !== "running" && (
+                      <span className="text-[9px] text-muted-foreground" data-testid={`step-duration-${i}`}>
+                        {formatDuration(step.durationMs)}
+                      </span>
+                    )}
                     {step.reason && (step.status === "error" || step.status === "skipped") && (
                       <span className="text-[9px] text-red-500 dark:text-red-400 max-w-24 text-center leading-tight" data-testid={`step-reason-${i}`}>
                         {step.reason}
