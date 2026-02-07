@@ -1,8 +1,332 @@
 {
-  "status": "PASS",
-  "timestamp": "2026-02-07T17:22:31.417Z",
-  "mode": "module",
-  "modules": [
-    "frontend"
-  ]
+  "version": "1.0.0",
+  "last_verified": "2026-02-03T10:06:01.899Z",
+  "modules": {
+    "architecture": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.798Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block"
+      ]
+    },
+    "systems": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.800Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency architecture must pass verify first"
+      ]
+    },
+    "contracts": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.801Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency architecture must pass verify first",
+        "Dependency systems must pass verify first"
+      ]
+    },
+    "database": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.802Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "data": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.803Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency database must pass verify first",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "auth": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.804Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency contracts must pass verify first",
+        "Dependency database must pass verify first"
+      ]
+    },
+    "backend": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.805Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency contracts must pass verify first",
+        "Dependency database must pass verify first",
+        "Dependency auth must pass verify first"
+      ]
+    },
+    "integrations": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.806Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency backend must pass verify first",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "state": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.806Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "frontend": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.807Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency state must pass verify first",
+        "Dependency contracts must pass verify first"
+      ]
+    },
+    "fullstack": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.808Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency frontend must pass verify first",
+        "Dependency backend must pass verify first"
+      ]
+    },
+    "testing": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.809Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency backend must pass verify first",
+        "Dependency frontend must pass verify first"
+      ]
+    },
+    "quality": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.809Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block"
+      ]
+    },
+    "security": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.810Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency auth must pass verify first",
+        "Dependency backend must pass verify first"
+      ]
+    },
+    "devops": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.811Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency backend must pass verify first",
+        "Dependency testing must pass verify first"
+      ]
+    },
+    "cloud": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.812Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency devops must pass verify first"
+      ]
+    },
+    "devex": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.813Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency quality must pass verify first"
+      ]
+    },
+    "mobile": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.814Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency frontend must pass verify first",
+        "Dependency state must pass verify first"
+      ]
+    },
+    "desktop": {
+      "status": "FAIL",
+      "verified_at": "2026-02-03T10:06:01.814Z",
+      "reason_codes": [
+        "MISSING_SECTION",
+        "MISSING_SECTION",
+        "UNKNOWN_WITHOUT_QUESTION",
+        "DEP_NOT_VERIFIED",
+        "DEP_NOT_VERIFIED"
+      ],
+      "hints": [
+        "Add required section: ## 1.",
+        "Add required section: ## 2.",
+        "Address 1 UNKNOWN items outside derivation block",
+        "Dependency frontend must pass verify first",
+        "Dependency state must pass verify first"
+      ]
+    }
+  }
 }

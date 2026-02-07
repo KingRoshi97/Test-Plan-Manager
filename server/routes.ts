@@ -8,26 +8,19 @@ import { scanAllModulesForUnknowns } from './ai-content-fill.js';
 
 const PROJECT_ROOT = process.cwd();
 const AXION_ROOT = path.join(PROJECT_ROOT, 'axion');
-
-const EXCLUDED_ROOT_DIRS = new Set([
-  'axion', 'node_modules', '.git', '.cache', '.config', '.local',
-  'tests', 'client', 'server', 'shared', 'dist', 'build',
-  'attached_assets', '.replit', '.upm',
-]);
+const WORKSPACES_DIR = path.join(PROJECT_ROOT, 'workspaces');
 
 function isProjectDir(name: string): boolean {
-  if (EXCLUDED_ROOT_DIRS.has(name)) return false;
   if (name.startsWith('.')) return false;
-  const fullPath = path.join(PROJECT_ROOT, name);
+  const fullPath = path.join(WORKSPACES_DIR, name);
   if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isDirectory()) return false;
   return fs.existsSync(path.join(fullPath, 'manifest.json')) ||
-         fs.existsSync(path.join(fullPath, 'registry')) ||
-         fs.existsSync(path.join(fullPath, 'domains')) ||
+         fs.existsSync(path.join(fullPath, 'axion', 'domains')) ||
          fs.existsSync(path.join(fullPath, 'app'));
 }
 
 function getProjectPath(projectName: string): string {
-  return path.join(PROJECT_ROOT, projectName);
+  return path.join(WORKSPACES_DIR, projectName);
 }
 
 function expandModulesWithDependencies(modules: string[], includeDeps: boolean): string[] {
@@ -76,7 +69,7 @@ interface PipelineStep {
 const pipelineSteps: Record<string, PipelineStep> = {
   'kit-create': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', 'axion/scripts/axion-kit-create.ts', '--target', br, '--project-name', pn, '--source', path.join(PROJECT_ROOT, 'axion'), '--force', '--json'],
+    args: (pn) => ['tsx', 'axion/scripts/axion-kit-create.ts', '--target', path.join(WORKSPACES_DIR, pn), '--project-name', pn, '--source', path.join(PROJECT_ROOT, 'axion'), '--force', '--json'],
     label: 'Kit Create',
     group: 'setup',
     desc: 'Initialize workspace',
@@ -708,7 +701,7 @@ export function registerRoutes(app: Express) {
     }
 
     const projectName = assembly.projectName;
-    const buildRoot = PROJECT_ROOT;
+    const buildRoot = getProjectPath(projectName);
 
     const assemblyEnv: Record<string, string> = {
       AXION_PROJECT_NAME: projectName,
@@ -783,7 +776,7 @@ export function registerRoutes(app: Express) {
             if (aborted) break;
             const modBody = { ...stepBody, module: mod };
             const modArgs = step.args(projectName, buildRoot, modBody);
-            const modCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+            const modCwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
 
             if (!aborted) {
               res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `${step.label} module: ${mod}` })}\n\n`);
@@ -809,7 +802,7 @@ export function registerRoutes(app: Express) {
           }
 
           if (stepId === 'lock' && failedModules.length > 0 && !aborted) {
-            const scanReport = scanAllModulesForUnknowns(PROJECT_ROOT, failedModules);
+            const scanReport = scanAllModulesForUnknowns(buildRoot, failedModules);
             const fileList = scanReport.filesWithUnknowns.map(f => `  - ${f.relativePath} (${f.unknownCount} UNKNOWNs in: ${f.sections.join(', ')})`).join('\n');
             res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `\n--- UNKNOWN Content Detected ---\nLock failed for ${failedModules.length} module(s) due to UNKNOWN placeholders.\nTotal UNKNOWNs: ${scanReport.totalUnknowns}\nFiles needing content:\n${fileList}\n\nThe workspace agent can fill these files using the project description. Use the /api/scan-unknowns endpoint to get the full report.` })}\n\n`);
           }
@@ -839,7 +832,7 @@ export function registerRoutes(app: Express) {
         }
 
         const args = step.args(projectName, buildRoot, stepBody);
-        const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+        const cwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
 
         const result = await runSingleStep(step, args, cwd, aborted, (event, data) => {
           if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
@@ -913,7 +906,8 @@ export function registerRoutes(app: Express) {
       return;
     }
 
-    const args = step.args(assembly.projectName, PROJECT_ROOT, {});
+    const packageBuildRoot = getProjectPath(assembly.projectName);
+    const args = step.args(assembly.projectName, packageBuildRoot, {});
     const result = await runCommand(step.cmd, args, 'Package');
     await persistRunResult('package', step, assembly.projectName, result);
 
@@ -937,7 +931,9 @@ export function registerRoutes(app: Express) {
         hasApp: ws.hasApp === 1,
       }));
 
-      const entries = fs.readdirSync(PROJECT_ROOT, { withFileTypes: true });
+      const wsDir = WORKSPACES_DIR;
+      if (!fs.existsSync(wsDir)) fs.mkdirSync(wsDir, { recursive: true });
+      const entries = fs.readdirSync(wsDir, { withFileTypes: true });
       const diskProjects = entries.filter(e => e.isDirectory() && isProjectDir(e.name)).map(e => e.name);
       const dbProjectNames = new Set(dbWorkspaces.map(w => w.projectName));
 
@@ -980,9 +976,9 @@ export function registerRoutes(app: Express) {
         res.status(400).json({ error: 'projectName is required' });
         return;
       }
-      const buildRoot = PROJECT_ROOT;
+      const buildRoot = getProjectPath(projectName);
       const args = step.args(projectName, buildRoot, req.body);
-      const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+      const cwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
       const result = await runCommand(step.cmd, args, step.label, cwd);
       await persistRunResult(stepId, step, projectName, result);
       res.json(result);
@@ -1009,9 +1005,9 @@ export function registerRoutes(app: Express) {
         return;
       }
 
-      const buildRoot = PROJECT_ROOT;
+      const buildRoot = getProjectPath(projectName);
       const args = step.args(projectName, buildRoot, body);
-      const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+      const cwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
 
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -1184,7 +1180,7 @@ export function registerRoutes(app: Express) {
     const presetModules = expandModulesWithDependencies(preset.modules || [], preset.include_dependencies ?? false);
     const presetGuards = preset.guards || {};
 
-    const buildRoot = PROJECT_ROOT;
+    const buildRoot = getProjectPath(projectName);
 
     const assemblyEnv2: Record<string, string> = {
       AXION_PROJECT_NAME: projectName,
@@ -1241,7 +1237,7 @@ export function registerRoutes(app: Express) {
             if (aborted) break;
             const modBody = { ...stepBody, module: mod };
             const modArgs = step.args(projectName, buildRoot, modBody);
-            const modCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+            const modCwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
 
             if (!aborted) {
               res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `${step.label} module: ${mod}` })}\n\n`);
@@ -1270,7 +1266,7 @@ export function registerRoutes(app: Express) {
           }
 
           if (stepId === 'lock' && failedModules2.length > 0 && !aborted) {
-            const scanReport = scanAllModulesForUnknowns(PROJECT_ROOT, failedModules2);
+            const scanReport = scanAllModulesForUnknowns(buildRoot, failedModules2);
             const fileList = scanReport.filesWithUnknowns.map(f => `  - ${f.relativePath} (${f.unknownCount} UNKNOWNs in: ${f.sections.join(', ')})`).join('\n');
             res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `\n--- UNKNOWN Content Detected ---\nLock failed for ${failedModules2.length} module(s) due to UNKNOWN placeholders.\nTotal UNKNOWNs: ${scanReport.totalUnknowns}\nFiles needing content:\n${fileList}\n\nThe workspace agent can fill these files using the project description. Use the /api/scan-unknowns endpoint to get the full report.` })}\n\n`);
           }
@@ -1303,7 +1299,7 @@ export function registerRoutes(app: Express) {
         }
 
         const args = step.args(projectName, buildRoot, stepBody);
-        const cwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+        const cwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
 
         const result = await new Promise<RunResult>((resolve) => {
           const start = Date.now();
@@ -1831,12 +1827,14 @@ export function registerRoutes(app: Express) {
 
   app.get('/api/scan-unknowns', (req: Request, res: Response) => {
     const modules = req.query.modules as string | undefined;
+    const projectName = req.query.projectName as string | undefined;
+    const scanRoot = projectName ? getProjectPath(projectName) : PROJECT_ROOT;
     let moduleList: string[] = [];
 
     if (modules) {
       moduleList = modules.split(',').map(m => m.trim()).filter(Boolean);
     } else {
-      const domainsDir = path.join(AXION_ROOT, 'domains');
+      const domainsDir = path.join(scanRoot, 'axion', 'domains');
       if (fs.existsSync(domainsDir)) {
         try {
           const entries = fs.readdirSync(domainsDir, { withFileTypes: true });
@@ -1850,7 +1848,7 @@ export function registerRoutes(app: Express) {
       return;
     }
 
-    const report = scanAllModulesForUnknowns(PROJECT_ROOT, moduleList);
+    const report = scanAllModulesForUnknowns(scanRoot, moduleList);
     res.json(report);
   });
 

@@ -60,8 +60,8 @@ In `START_HERE.txt`, include:
 
 After adding your input files:
 
-1. Run `node axion/scripts/axion-init.mjs --mode fresh` to initialize
-2. Run `node axion/scripts/axion-generate.mjs --all` to generate docs
+1. Run `npx tsx axion/scripts/axion-init.ts --mode fresh` to initialize
+2. Run `npx tsx axion/scripts/axion-generate.ts --all` to generate docs
 3. Follow the pipeline stages: seed → draft → review → verify → lock
 
 See `axion/QUICKSTART.md` for detailed instructions.

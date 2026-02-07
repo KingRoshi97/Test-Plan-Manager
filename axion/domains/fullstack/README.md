@@ -39,7 +39,7 @@
 
 ### Flow A: Create Assembly
 1. UI: NewAssemblyForm submits → POST /api/assemblies
-2. API: Creates assembly record, runs axion-init.mjs
+2. API: Creates assembly record, runs axion-init.ts
 3. DB: Assembly + Run records created
 4. UI: Query invalidated, redirect to Control Room
 
