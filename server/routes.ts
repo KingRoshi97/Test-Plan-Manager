@@ -9,6 +9,7 @@ import { scanAllModulesForUnknowns } from './ai-content-fill.js';
 const PROJECT_ROOT = process.cwd();
 const AXION_ROOT = path.join(PROJECT_ROOT, 'axion');
 const WORKSPACES_DIR = path.join(PROJECT_ROOT, 'workspaces');
+const EXCLUDED_ROOT_DIRS = new Set(['node_modules', 'server', 'client', 'shared', 'dist', '.git', '.replit', '.config', 'attached_assets']);
 
 function isProjectDir(name: string): boolean {
   if (name.startsWith('.')) return false;
@@ -320,8 +321,8 @@ async function syncWorkspaceToDb(projectName: string) {
     projectName,
     path: projectPath,
     hasManifest: fs.existsSync(path.join(projectPath, 'manifest.json')) ? 1 : 0,
-    hasRegistry: fs.existsSync(path.join(projectPath, 'registry')) ? 1 : 0,
-    hasDomains: fs.existsSync(path.join(projectPath, 'domains')) ? 1 : 0,
+    hasRegistry: (fs.existsSync(path.join(projectPath, 'axion', 'registry')) || fs.existsSync(path.join(projectPath, 'registry'))) ? 1 : 0,
+    hasDomains: (fs.existsSync(path.join(projectPath, 'axion', 'domains')) || fs.existsSync(path.join(projectPath, 'domains'))) ? 1 : 0,
     hasApp: fs.existsSync(path.join(projectPath, 'app')) ? 1 : 0,
   });
 }
@@ -336,7 +337,7 @@ async function syncModuleStatusToDb(projectName: string) {
   ];
   const stages = ['generate', 'seed', 'draft', 'review', 'verify', 'lock'];
   const markerDirs = [
-    path.join(AXION_ROOT, 'registry'),
+    path.join(projectPath, 'axion', 'registry'),
     path.join(projectPath, 'registry'),
   ];
 
@@ -410,8 +411,8 @@ async function syncReportsToDb(projectName: string, stepId: string) {
 
     for (const fileName of fileNames) {
       const candidates = [
+        path.join(projectPath, 'axion', 'registry', fileName),
         path.join(projectPath, 'registry', fileName),
-        path.join(AXION_ROOT, 'registry', fileName),
       ];
 
       for (const candidate of candidates) {
@@ -530,18 +531,24 @@ export function registerRoutes(app: Express) {
       const enriched = list.map(a => {
         const projectPath = a.projectName ? getProjectPath(a.projectName) : null;
         const wsExists = projectPath ? fs.existsSync(projectPath) : false;
-        const hasRegistry = projectPath ? fs.existsSync(path.join(projectPath, 'registry')) : false;
-        const hasDomains = projectPath ? fs.existsSync(path.join(projectPath, 'domains')) : false;
+        const hasRegistry = projectPath ? (fs.existsSync(path.join(projectPath, 'axion', 'registry')) || fs.existsSync(path.join(projectPath, 'registry'))) : false;
+        const hasDomains = projectPath ? (fs.existsSync(path.join(projectPath, 'axion', 'domains')) || fs.existsSync(path.join(projectPath, 'domains'))) : false;
         const hasApp = projectPath ? fs.existsSync(path.join(projectPath, 'app')) : false;
 
         let verifyStatus = 'unknown';
-        if (projectPath && hasRegistry) {
-          const vPath = path.join(projectPath, 'registry', 'verify_report.json');
-          if (fs.existsSync(vPath)) {
-            try {
-              const vr = JSON.parse(fs.readFileSync(vPath, 'utf-8'));
-              verifyStatus = vr.overall_status || vr.status || 'unknown';
-            } catch {}
+        if (projectPath) {
+          const vPaths = [
+            path.join(projectPath, 'axion', 'registry', 'verify_report.json'),
+            path.join(projectPath, 'registry', 'verify_report.json'),
+          ];
+          for (const vPath of vPaths) {
+            if (fs.existsSync(vPath)) {
+              try {
+                const vr = JSON.parse(fs.readFileSync(vPath, 'utf-8'));
+                verifyStatus = vr.overall_status || vr.status || 'unknown';
+              } catch {}
+              break;
+            }
           }
         }
 
@@ -572,18 +579,24 @@ export function registerRoutes(app: Express) {
       }
       const projectPath = assembly.projectName ? getProjectPath(assembly.projectName) : null;
       const wsExists = projectPath ? fs.existsSync(projectPath) : false;
-      const hasRegistry = projectPath ? fs.existsSync(path.join(projectPath, 'registry')) : false;
-      const hasDomains = projectPath ? fs.existsSync(path.join(projectPath, 'domains')) : false;
+      const hasRegistry = projectPath ? (fs.existsSync(path.join(projectPath, 'axion', 'registry')) || fs.existsSync(path.join(projectPath, 'registry'))) : false;
+      const hasDomains = projectPath ? (fs.existsSync(path.join(projectPath, 'axion', 'domains')) || fs.existsSync(path.join(projectPath, 'domains'))) : false;
       const hasApp = projectPath ? fs.existsSync(path.join(projectPath, 'app')) : false;
 
       let verifyStatus = 'unknown';
-      if (projectPath && hasRegistry) {
-        const vPath = path.join(projectPath, 'registry', 'verify_report.json');
-        if (fs.existsSync(vPath)) {
-          try {
-            const vr = JSON.parse(fs.readFileSync(vPath, 'utf-8'));
-            verifyStatus = vr.overall_status || vr.status || 'unknown';
-          } catch {}
+      if (projectPath) {
+        const vPaths = [
+          path.join(projectPath, 'axion', 'registry', 'verify_report.json'),
+          path.join(projectPath, 'registry', 'verify_report.json'),
+        ];
+        for (const vPath of vPaths) {
+          if (fs.existsSync(vPath)) {
+            try {
+              const vr = JSON.parse(fs.readFileSync(vPath, 'utf-8'));
+              verifyStatus = vr.overall_status || vr.status || 'unknown';
+            } catch {}
+            break;
+          }
         }
       }
 
@@ -945,8 +958,8 @@ export function registerRoutes(app: Express) {
             projectName: name,
             exists: true,
             hasManifest: fs.existsSync(path.join(projectPath, 'manifest.json')),
-            hasRegistry: fs.existsSync(path.join(projectPath, 'registry')),
-            hasDomains: fs.existsSync(path.join(projectPath, 'domains')),
+            hasRegistry: fs.existsSync(path.join(projectPath, 'axion', 'registry')) || fs.existsSync(path.join(projectPath, 'registry')),
+            hasDomains: fs.existsSync(path.join(projectPath, 'axion', 'domains')) || fs.existsSync(path.join(projectPath, 'domains')),
             hasApp: fs.existsSync(path.join(projectPath, 'app')),
           });
           await syncWorkspaceToDb(name);
@@ -1486,49 +1499,59 @@ export function registerRoutes(app: Express) {
     } catch {}
 
     const projectPath = getProjectPath(projectName);
+    const wsAxionRegistry = path.join(projectPath, 'axion', 'registry');
+    const projectRegistry = path.join(projectPath, 'registry');
     const reportPaths: Record<string, string[]> = {
       'import-report': [
-        path.join(projectPath, 'registry', 'import_report.json'),
+        path.join(wsAxionRegistry, 'import_report.json'),
+        path.join(projectRegistry, 'import_report.json'),
       ],
       'import-facts': [
-        path.join(projectPath, 'registry', 'import_facts.json'),
+        path.join(wsAxionRegistry, 'import_facts.json'),
+        path.join(projectRegistry, 'import_facts.json'),
       ],
       'reconcile': [
-        path.join(projectPath, 'registry', 'reconcile_report.json'),
+        path.join(wsAxionRegistry, 'reconcile_report.json'),
+        path.join(projectRegistry, 'reconcile_report.json'),
       ],
       'iteration-state': [
-        path.join(projectPath, 'registry', 'iteration_state.json'),
+        path.join(wsAxionRegistry, 'iteration_state.json'),
+        path.join(projectRegistry, 'iteration_state.json'),
       ],
       'build-plan': [
-        path.join(projectPath, 'registry', 'build_plan.json'),
+        path.join(wsAxionRegistry, 'build_plan.json'),
+        path.join(projectRegistry, 'build_plan.json'),
       ],
       'build-exec': [
-        path.join(projectPath, 'registry', 'build_exec_report.json'),
+        path.join(wsAxionRegistry, 'build_exec_report.json'),
+        path.join(projectRegistry, 'build_exec_report.json'),
       ],
       'stack-profile': [
-        path.join(projectPath, 'registry', 'stack_profile.json'),
+        path.join(wsAxionRegistry, 'stack_profile.json'),
+        path.join(projectRegistry, 'stack_profile.json'),
       ],
       'verify': [
-        path.join(projectPath, 'registry', 'verify_report.json'),
-        path.join(AXION_ROOT, 'registry', 'verify_report.json'),
-        path.join(AXION_ROOT, 'source_docs', 'registry', 'verify_report.json'),
+        path.join(wsAxionRegistry, 'verify_report.json'),
+        path.join(projectRegistry, 'verify_report.json'),
       ],
       'verify-status': [
-        path.join(projectPath, 'registry', 'verify_status.json'),
-        path.join(AXION_ROOT, 'source_docs', 'registry', 'verify_status.json'),
+        path.join(wsAxionRegistry, 'verify_status.json'),
+        path.join(projectRegistry, 'verify_status.json'),
       ],
       'test': [
-        path.join(projectPath, 'registry', 'test_report.json'),
+        path.join(wsAxionRegistry, 'test_report.json'),
+        path.join(projectRegistry, 'test_report.json'),
       ],
       'active-build': [
         path.join(projectPath, 'ACTIVE_BUILD.json'),
       ],
       'lock-manifest': [
-        path.join(projectPath, 'registry', 'lock_manifest.json'),
+        path.join(wsAxionRegistry, 'lock_manifest.json'),
+        path.join(projectRegistry, 'lock_manifest.json'),
       ],
       'stage-markers': [
-        path.join(AXION_ROOT, 'registry', 'stage_markers.json'),
-        path.join(projectPath, 'registry', 'stage_markers.json'),
+        path.join(wsAxionRegistry, 'stage_markers.json'),
+        path.join(projectRegistry, 'stage_markers.json'),
       ],
     };
 
@@ -1589,7 +1612,7 @@ export function registerRoutes(app: Express) {
 
     if (statusSource === 'filesystem') {
       const markerDirs = [
-        path.join(AXION_ROOT, 'registry'),
+        path.join(projectPath, 'axion', 'registry'),
         path.join(projectPath, 'registry'),
       ];
 
@@ -1624,7 +1647,8 @@ export function registerRoutes(app: Express) {
 
     for (const file of checkFiles) {
       registryFiles[file] = false;
-      if (fs.existsSync(path.join(projectPath, 'registry', file))) {
+      if (fs.existsSync(path.join(projectPath, 'axion', 'registry', file)) ||
+          fs.existsSync(path.join(projectPath, 'registry', file))) {
         registryFiles[file] = true;
       }
     }
@@ -1644,7 +1668,7 @@ export function registerRoutes(app: Express) {
       registryFiles,
       activeBuild,
       hasManifest: fs.existsSync(path.join(projectPath, 'manifest.json')),
-      hasDomains: fs.existsSync(path.join(projectPath, 'domains')),
+      hasDomains: fs.existsSync(path.join(projectPath, 'axion', 'domains')) || fs.existsSync(path.join(projectPath, 'domains')),
       hasApp: fs.existsSync(path.join(projectPath, 'app')),
       statusSource,
     });
@@ -1763,11 +1787,11 @@ export function registerRoutes(app: Express) {
 
     const discoveredModules: Array<{ name: string; hasBels: boolean; hasErc: boolean; stages: Record<string, string> }> = [];
 
-    const domainsDir = path.join(AXION_ROOT, 'domains');
+    const wsAxionDomainsDir = path.join(projectPath, 'axion', 'domains');
     const projectDomainsDir = path.join(projectPath, 'domains');
 
     const moduleDirs = new Set<string>();
-    for (const dir of [domainsDir, projectDomainsDir]) {
+    for (const dir of [wsAxionDomainsDir, projectDomainsDir]) {
       if (fs.existsSync(dir)) {
         try {
           const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -1781,16 +1805,14 @@ export function registerRoutes(app: Express) {
     }
 
     const stages = ['generate', 'seed', 'draft', 'review', 'verify', 'lock'];
-    const markerDirs = [
-      path.join(AXION_ROOT, 'registry'),
-      path.join(projectPath, 'registry'),
-    ];
+    const wsRegistryDir = path.join(projectPath, 'axion', 'registry');
+    const projectRegistryDir = path.join(projectPath, 'registry');
 
     for (const mod of moduleDirs) {
       const stageStatuses: Record<string, string> = {};
       for (const stage of stages) {
         let status = 'pending';
-        for (const dir of markerDirs) {
+        for (const dir of [wsRegistryDir, projectRegistryDir]) {
           const markerPath = path.join(dir, 'stage_markers', stage, `${mod}.json`);
           if (fs.existsSync(markerPath)) {
             try {
@@ -1807,7 +1829,7 @@ export function registerRoutes(app: Express) {
 
       let hasBels = false;
       let hasErc = false;
-      for (const dir of [domainsDir, projectDomainsDir]) {
+      for (const dir of [wsAxionDomainsDir, projectDomainsDir]) {
         const modDir = path.join(dir, mod);
         if (fs.existsSync(modDir)) {
           try {
