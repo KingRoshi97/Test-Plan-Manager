@@ -13,6 +13,7 @@ import AssemblyPage from "@/pages/assembly";
 import HealthPage from "@/pages/health";
 import LogsPage from "@/pages/logs";
 import ExportPage from "@/pages/export";
+import TestsPage from "@/pages/tests";
 
 function Router() {
   return (
@@ -24,6 +25,7 @@ function Router() {
       <Route path="/health" component={HealthPage} />
       <Route path="/logs" component={LogsPage} />
       <Route path="/export" component={ExportPage} />
+      <Route path="/tests" component={TestsPage} />
       <Route>
         <div className="flex items-center justify-center h-full">
           <p className="text-muted-foreground">Page not found</p>

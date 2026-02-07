@@ -1874,6 +1874,163 @@ export function registerRoutes(app: Express) {
     res.json(report);
   });
 
+  // ── Test Suite API ──────────────────────────────────────────────
+  let lastTestResult: {
+    timestamp: string;
+    durationMs: number;
+    status: 'pass' | 'fail' | 'error';
+    summary: { total: number; passed: number; failed: number; skipped: number };
+    testFiles: Array<{
+      file: string;
+      status: 'pass' | 'fail';
+      durationMs: number;
+      tests: Array<{
+        name: string;
+        fullName: string;
+        status: 'pass' | 'fail' | 'skip';
+        durationMs: number;
+        error?: string;
+      }>;
+    }>;
+  } | null = null;
+
+  let testRunning = false;
+
+  app.get('/api/tests/last', (_req: Request, res: Response) => {
+    res.json({ running: testRunning, result: lastTestResult });
+  });
+
+  app.post('/api/tests/run', (req: Request, res: Response) => {
+    if (testRunning) {
+      res.status(409).json({ error: 'A test run is already in progress' });
+      return;
+    }
+
+    const filterFile = req.body?.file as string | undefined;
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    testRunning = true;
+    let aborted = false;
+    req.on('close', () => { aborted = true; });
+
+    res.write(`event: start\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
+
+    const args = ['--run', '--reporter=json'];
+    if (filterFile) {
+      args.push(filterFile);
+    }
+
+    const start = Date.now();
+    let jsonOutput = '';
+    let stderrOutput = '';
+
+    const child = spawn('npx', ['vitest', ...args], {
+      cwd: PROJECT_ROOT,
+      env: { ...process.env, FORCE_COLOR: '0' },
+      timeout: 300000,
+    });
+
+    child.stdout.on('data', (data: Buffer) => {
+      jsonOutput += data.toString();
+      if (!aborted) {
+        res.write(`event: progress\ndata: ${JSON.stringify({ type: 'stdout', text: data.toString().substring(0, 500) })}\n\n`);
+      }
+    });
+
+    child.stderr.on('data', (data: Buffer) => {
+      stderrOutput += data.toString();
+      if (!aborted) {
+        res.write(`event: progress\ndata: ${JSON.stringify({ type: 'stderr', text: data.toString().substring(0, 500) })}\n\n`);
+      }
+    });
+
+    child.on('close', (code: number | null) => {
+      const durationMs = Date.now() - start;
+      testRunning = false;
+
+      try {
+        const parsed = JSON.parse(jsonOutput);
+        const testFiles: typeof lastTestResult extends null ? never : NonNullable<typeof lastTestResult>['testFiles'] = [];
+
+        if (parsed.testResults && Array.isArray(parsed.testResults)) {
+          for (const fileResult of parsed.testResults) {
+            const relFile = (fileResult.name as string).replace(PROJECT_ROOT + '/', '');
+            const tests: Array<{ name: string; fullName: string; status: 'pass' | 'fail' | 'skip'; durationMs: number; error?: string }> = [];
+
+            if (fileResult.assertionResults && Array.isArray(fileResult.assertionResults)) {
+              for (const t of fileResult.assertionResults) {
+                const status = t.status === 'passed' ? 'pass' as const
+                  : t.status === 'failed' ? 'fail' as const
+                  : 'skip' as const;
+                tests.push({
+                  name: t.title || t.ancestorTitles?.join(' > ') || 'unknown',
+                  fullName: t.fullName || t.title || 'unknown',
+                  status,
+                  durationMs: t.duration || 0,
+                  error: t.failureMessages?.join('\n') || undefined,
+                });
+              }
+            }
+
+            testFiles.push({
+              file: relFile,
+              status: fileResult.status === 'passed' ? 'pass' : 'fail',
+              durationMs: fileResult.endTime - fileResult.startTime || 0,
+              tests,
+            });
+          }
+        }
+
+        const passed = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'pass').length, 0);
+        const failed = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'fail').length, 0);
+        const skipped = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'skip').length, 0);
+
+        lastTestResult = {
+          timestamp: new Date().toISOString(),
+          durationMs,
+          status: failed > 0 ? 'fail' : 'pass',
+          summary: { total: passed + failed + skipped, passed, failed, skipped },
+          testFiles,
+        };
+
+        if (!aborted) {
+          res.write(`event: done\ndata: ${JSON.stringify(lastTestResult)}\n\n`);
+          res.end();
+        }
+      } catch {
+        const errorResult = {
+          timestamp: new Date().toISOString(),
+          durationMs,
+          status: 'error' as const,
+          summary: { total: 0, passed: 0, failed: 0, skipped: 0 },
+          testFiles: [],
+          errorOutput: stderrOutput.substring(0, 5000),
+          rawOutput: jsonOutput.substring(0, 5000),
+        };
+        lastTestResult = errorResult;
+
+        if (!aborted) {
+          res.write(`event: done\ndata: ${JSON.stringify(errorResult)}\n\n`);
+          res.end();
+        }
+      }
+    });
+
+    child.on('error', (err: Error) => {
+      testRunning = false;
+      if (!aborted) {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`);
+        res.end();
+      }
+    });
+  });
+
   app.get('/api/config/:configName', (req: Request, res: Response) => {
     const configName = req.params.configName as string;
     const allowedConfigs = ['domains', 'categories', 'presets', 'sources', 'stack_profiles', 'coverage_map', 'system'];
