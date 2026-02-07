@@ -2,7 +2,7 @@
 
 ## Overview
 **Domain Slug:** architecture
-**Generated:** 2026-02-06T23:16:49.285Z
+**Generated:** 2026-02-06T23:42:06.149Z
 
 ## Unresolved Questions
 

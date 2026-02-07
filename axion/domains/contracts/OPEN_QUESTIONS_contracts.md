@@ -2,7 +2,7 @@
 
 ## Overview
 **Domain Slug:** contracts
-**Generated:** 2026-02-06T23:16:49.287Z
+**Generated:** 2026-02-06T23:42:06.150Z
 
 ## Unresolved Questions
 
