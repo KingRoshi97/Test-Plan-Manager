@@ -618,7 +618,7 @@ export function registerRoutes(app: Express) {
   const activeRuns = new Map<string, boolean>();
 
   app.get('/api/assemblies/:id/run/stream', async (req: Request, res: Response) => {
-    const assemblyId = req.params.id;
+    const assemblyId = req.params.id as string;
     const assembly = await storage.getAssembly(assemblyId);
     if (!assembly) {
       res.status(404).json({ error: 'Assembly not found' });
@@ -699,13 +699,14 @@ export function registerRoutes(app: Express) {
       const allResults: RunResult[] = [];
       let verifyPassed = true;
       let lastError: string | null = null;
+      let guardFailures = 0;
 
       for (let i = 0; i < fullSteps.length; i++) {
         if (aborted) break;
         const stepId = fullSteps[i];
         const step = pipelineSteps[stepId];
 
-        await storage.updateAssembly(assemblyId, {
+        await storage.updateAssembly(assemblyId as string, {
           step: stepId,
           progress: { currentIndex: i, totalSteps: fullSteps.length, steps: fullSteps, status: 'running' },
         });
@@ -718,7 +719,7 @@ export function registerRoutes(app: Express) {
         }
         if (presetGuards.lock_requires_verify_pass && stepId === 'lock' && !verifyPassed) {
           res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: 0, reason: 'Documentation must pass verification before it can be locked. Run "Generate Documentation" first.' })}\n\n`);
-          failed++;
+          guardFailures++;
           continue;
         }
 
@@ -827,7 +828,7 @@ export function registerRoutes(app: Express) {
           state: finalState,
           step: fullSteps[fullSteps.length - 1],
           progress: { currentIndex: fullSteps.length, totalSteps: fullSteps.length, steps: fullSteps, status: finalState },
-          errors: lastError ? [lastError] : null,
+          errors: lastError ? [lastError] : undefined,
         });
 
         res.write(`event: done\ndata: ${JSON.stringify({ assemblyId, totalSteps: fullSteps.length, succeeded, failed, state: finalState })}\n\n`);
@@ -868,7 +869,7 @@ export function registerRoutes(app: Express) {
     await persistRunResult('package', step, assembly.projectName, result);
 
     if (result.status === 'success') {
-      await storage.updateAssembly(req.params.id, { state: 'exported' });
+      await storage.updateAssembly(req.params.id as string, { state: 'exported' });
     }
 
     res.json(result);
@@ -1151,6 +1152,7 @@ export function registerRoutes(app: Express) {
     const runStepsSequentially = async () => {
       const allResults: RunResult[] = [];
       let verifyPassed = true;
+      let guardFailures = 0;
       for (let i = 0; i < validSteps.length; i++) {
         if (aborted) break;
         const stepId = validSteps[i];
@@ -1168,7 +1170,7 @@ export function registerRoutes(app: Express) {
         }
         if (presetGuards.lock_requires_verify_pass && stepId === 'lock' && !verifyPassed) {
           res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: 0, reason: 'Documentation must pass verification before it can be locked. Run "Generate Documentation" first.' })}\n\n`);
-          failed++;
+          guardFailures++;
           continue;
         }
 
