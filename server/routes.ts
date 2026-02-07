@@ -446,6 +446,7 @@ function runSingleStep(
   cwd: string,
   aborted: boolean,
   onOutput: (event: string, data: string) => void,
+  extraEnv?: Record<string, string>,
 ): Promise<RunResult> {
   return new Promise((resolve) => {
     const start = Date.now();
@@ -454,7 +455,7 @@ function runSingleStep(
 
     const child = spawn(step.cmd, args, {
       cwd,
-      env: { ...process.env },
+      env: { ...process.env, ...(extraEnv || {}) },
       timeout: 300000,
     });
 
@@ -504,13 +505,14 @@ async function runSingleStepWithRetry(
   onOutput: (event: string, data: string) => void,
   maxRetries = 2,
   backoffMs = 1000,
+  extraEnv?: Record<string, string>,
 ): Promise<RunResult> {
   let lastResult: RunResult | undefined;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     if (aborted) {
       return { status: 'error' as const, command: step.label, exitCode: 1, stdout: '', stderr: 'Aborted before execution', durationMs: 0 };
     }
-    lastResult = await runSingleStep(step, args, cwd, aborted, onOutput);
+    lastResult = await runSingleStep(step, args, cwd, aborted, onOutput, extraEnv);
     if (lastResult.status === 'success') return lastResult;
     const isTransient = lastResult.stderr.includes('ENOENT') ||
       lastResult.stderr.includes('ETIMEDOUT') ||
@@ -708,6 +710,11 @@ export function registerRoutes(app: Express) {
     const projectName = assembly.projectName;
     const buildRoot = PROJECT_ROOT;
 
+    const assemblyEnv: Record<string, string> = {
+      AXION_PROJECT_NAME: projectName,
+      AXION_PROJECT_IDEA: (assembly as any).idea || '',
+    };
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -784,7 +791,7 @@ export function registerRoutes(app: Express) {
 
             const modResult = await runSingleStep(step, modArgs, modCwd, aborted, (event, data) => {
               if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
-            });
+            }, assemblyEnv);
 
             modStdout += modResult.stdout;
             modStderr += modResult.stderr;
@@ -836,7 +843,7 @@ export function registerRoutes(app: Express) {
 
         const result = await runSingleStep(step, args, cwd, aborted, (event, data) => {
           if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
-        });
+        }, assemblyEnv);
 
         persistRunResult(stepId, step, projectName, result).catch(() => {});
         allResults.push(result);
@@ -1179,6 +1186,11 @@ export function registerRoutes(app: Express) {
 
     const buildRoot = PROJECT_ROOT;
 
+    const assemblyEnv2: Record<string, string> = {
+      AXION_PROJECT_NAME: projectName,
+      AXION_PROJECT_IDEA: (body.idea as string) || '',
+    };
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -1237,7 +1249,7 @@ export function registerRoutes(app: Express) {
 
             const modResult = await runSingleStep(step, modArgs, modCwd, aborted, (event, data) => {
               if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
-            });
+            }, assemblyEnv2);
 
             modStdout += modResult.stdout;
             modStderr += modResult.stderr;
@@ -1300,7 +1312,7 @@ export function registerRoutes(app: Express) {
 
           const child = spawn(step.cmd, args, {
             cwd,
-            env: { ...process.env },
+            env: { ...process.env, ...assemblyEnv2 },
             timeout: 300000,
           });
 
