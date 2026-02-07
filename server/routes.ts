@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly } from '../shared/schema.js';
 import { storage } from './storage.js';
+import { fillAllModulesContent } from './ai-content-fill.js';
 
 const PROJECT_ROOT = process.cwd();
 const AXION_ROOT = path.join(PROJECT_ROOT, 'axion');
@@ -703,6 +704,8 @@ export function registerRoutes(app: Express) {
           let lockFailed = 0;
           let lockStdout = '';
           let lockStderr = '';
+          const failedModules: string[] = [];
+          const MAX_REMEDIATION_ATTEMPTS = 2;
 
           for (const mod of presetModules) {
             if (aborted) break;
@@ -723,7 +726,72 @@ export function registerRoutes(app: Express) {
             if (lockResult.status === 'success') {
               lockSucceeded++;
             } else {
+              const hasUnknowns = lockResult.stdout.includes('UNKNOWN') || lockResult.stderr.includes('UNKNOWN') || lockResult.stderr.includes('critical unknowns');
+              if (hasUnknowns) {
+                failedModules.push(mod);
+              }
               lockFailed++;
+            }
+          }
+
+          if (failedModules.length > 0 && !aborted && assembly.description) {
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `\n--- AI Auto-Remediation ---\nDetected UNKNOWN content in ${failedModules.length} module(s): ${failedModules.join(', ')}\nUsing AI to fill documentation gaps...` })}\n\n`);
+
+            for (let attempt = 0; attempt < MAX_REMEDIATION_ATTEMPTS && failedModules.length > 0 && !aborted; attempt++) {
+              const fillResults = await fillAllModulesContent(
+                PROJECT_ROOT,
+                failedModules,
+                assembly.description,
+                (msg) => {
+                  if (!aborted) res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `[AI Fill] ${msg}` })}\n\n`);
+                }
+              );
+
+              const filled = fillResults.filter(r => r.success && r.unknownsAfter === 0);
+              const anyImproved = fillResults.some(r => r.success && r.unknownsAfter < r.unknownsBefore);
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `AI filled ${filled.length}/${fillResults.length} files successfully (attempt ${attempt + 1})` })}\n\n`);
+
+              if (!anyImproved) {
+                res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `AI remediation did not reduce UNKNOWNs, skipping retry` })}\n\n`);
+                break;
+              }
+
+              failedModules.length = 0;
+              lockFailed = 0;
+              lockSucceeded = 0;
+              lockStdout = '';
+              lockStderr = '';
+
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Retrying lock for all modules after AI remediation...` })}\n\n`);
+
+              for (const mod of presetModules) {
+                if (aborted) break;
+                const lockBody = { ...stepBody, module: mod };
+                const lockArgs = step.args(projectName, buildRoot, lockBody);
+                const lockCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+
+                if (!aborted) {
+                  res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Re-locking module: ${mod}` })}\n\n`);
+                }
+
+                const retryResult = await runSingleStep(step, lockArgs, lockCwd, aborted, (event, data) => {
+                  if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
+                });
+
+                lockStdout += retryResult.stdout;
+                lockStderr += retryResult.stderr;
+                if (retryResult.status === 'success') {
+                  lockSucceeded++;
+                } else {
+                  const hasUnknowns = retryResult.stdout.includes('UNKNOWN') || retryResult.stderr.includes('UNKNOWN') || retryResult.stderr.includes('critical unknowns');
+                  if (hasUnknowns) {
+                    failedModules.push(mod);
+                  }
+                  lockFailed++;
+                }
+              }
+
+              if (lockFailed === 0) break;
             }
           }
 
@@ -1137,6 +1205,8 @@ export function registerRoutes(app: Express) {
           let lockFailed = 0;
           let lockStdout = '';
           let lockStderr = '';
+          const failedModules2: string[] = [];
+          const MAX_REMEDIATION_ATTEMPTS_2 = 2;
 
           for (const mod of presetModules) {
             if (aborted) break;
@@ -1157,10 +1227,85 @@ export function registerRoutes(app: Express) {
             if (lockResult.status === 'success') {
               lockSucceeded++;
             } else {
+              const hasUnknowns = lockResult.stdout.includes('UNKNOWN') || lockResult.stderr.includes('UNKNOWN') || lockResult.stderr.includes('critical unknowns');
+              if (hasUnknowns) {
+                failedModules2.push(mod);
+              }
               lockFailed++;
               if (!aborted) {
                 res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Lock for ${mod}: failed (exit ${lockResult.exitCode})` })}\n\n`);
               }
+            }
+          }
+
+          let projectDesc = (body.description as string) || '';
+          if (!projectDesc && failedModules2.length > 0) {
+            try {
+              const allAssemblies = await storage.getAssemblies();
+              const matchingAssembly = allAssemblies.find(a => a.projectName === projectName);
+              if (matchingAssembly?.description) {
+                projectDesc = matchingAssembly.description;
+              }
+            } catch {}
+          }
+          if (failedModules2.length > 0 && !aborted && projectDesc) {
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `\n--- AI Auto-Remediation ---\nDetected UNKNOWN content in ${failedModules2.length} module(s): ${failedModules2.join(', ')}\nUsing AI to fill documentation gaps...` })}\n\n`);
+
+            for (let attempt = 0; attempt < MAX_REMEDIATION_ATTEMPTS_2 && failedModules2.length > 0 && !aborted; attempt++) {
+              const fillResults = await fillAllModulesContent(
+                PROJECT_ROOT,
+                failedModules2,
+                projectDesc,
+                (msg) => {
+                  if (!aborted) res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `[AI Fill] ${msg}` })}\n\n`);
+                }
+              );
+
+              const filled = fillResults.filter(r => r.success && r.unknownsAfter === 0);
+              const anyImproved2 = fillResults.some(r => r.success && r.unknownsAfter < r.unknownsBefore);
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `AI filled ${filled.length}/${fillResults.length} files successfully (attempt ${attempt + 1})` })}\n\n`);
+
+              if (!anyImproved2) {
+                res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `AI remediation did not reduce UNKNOWNs, skipping retry` })}\n\n`);
+                break;
+              }
+
+              failedModules2.length = 0;
+              lockFailed = 0;
+              lockSucceeded = 0;
+              lockStdout = '';
+              lockStderr = '';
+
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Retrying lock for all modules after AI remediation...` })}\n\n`);
+
+              for (const mod of presetModules) {
+                if (aborted) break;
+                const lockBody = { ...stepBody, module: mod };
+                const lockArgs = step.args(projectName, buildRoot, lockBody);
+                const lockCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+
+                if (!aborted) {
+                  res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Re-locking module: ${mod}` })}\n\n`);
+                }
+
+                const retryResult = await runSingleStep(step, lockArgs, lockCwd, aborted, (event, data) => {
+                  if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
+                });
+
+                lockStdout += retryResult.stdout;
+                lockStderr += retryResult.stderr;
+                if (retryResult.status === 'success') {
+                  lockSucceeded++;
+                } else {
+                  const hasUnknowns = retryResult.stdout.includes('UNKNOWN') || retryResult.stderr.includes('UNKNOWN') || retryResult.stderr.includes('critical unknowns');
+                  if (hasUnknowns) {
+                    failedModules2.push(mod);
+                  }
+                  lockFailed++;
+                }
+              }
+
+              if (lockFailed === 0) break;
             }
           }
 
