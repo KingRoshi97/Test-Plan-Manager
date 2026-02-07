@@ -1,6 +1,30 @@
 import { pgTable, serial, text, integer, timestamp, jsonb, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+export const assemblies = pgTable("assemblies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectName: text("project_name"),
+  idea: text("idea"),
+  context: text("context"),
+  preset: text("preset"),
+  domains: text("domains").array(),
+  input: jsonb("input"),
+  state: text("state").notNull().default("queued"),
+  step: text("step"),
+  progress: jsonb("progress"),
+  errors: text("errors").array(),
+  kit: jsonb("kit"),
+  kitPath: text("kit_path"),
+  logsTail: text("logs_tail"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  projectPackageId: varchar("project_package_id"),
+  category: text("category"),
+  mode: text("mode"),
+  presetId: text("preset_id"),
+});
 
 export const workspaces = pgTable("workspaces", {
   id: serial("id").primaryKey(),
@@ -47,16 +71,19 @@ export const reports = pgTable("reports", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const insertAssemblySchema = createInsertSchema(assemblies).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertWorkspaceSchema = createInsertSchema(workspaces).omit({ id: true, createdAt: true });
 export const insertPipelineRunSchema = createInsertSchema(pipelineRuns).omit({ id: true, createdAt: true });
 export const insertModuleStatusSchema = createInsertSchema(moduleStatuses).omit({ id: true, updatedAt: true });
 export const insertReportSchema = createInsertSchema(reports).omit({ id: true, createdAt: true });
 
+export type InsertAssembly = z.infer<typeof insertAssemblySchema>;
 export type InsertWorkspace = z.infer<typeof insertWorkspaceSchema>;
 export type InsertPipelineRun = z.infer<typeof insertPipelineRunSchema>;
 export type InsertModuleStatus = z.infer<typeof insertModuleStatusSchema>;
 export type InsertReport = z.infer<typeof insertReportSchema>;
 
+export type Assembly = typeof assemblies.$inferSelect;
 export type Workspace = typeof workspaces.$inferSelect;
 export type PipelineRun = typeof pipelineRuns.$inferSelect;
 export type ModuleStatus = typeof moduleStatuses.$inferSelect;

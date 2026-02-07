@@ -1,12 +1,18 @@
 import { db } from "./db.js";
 import { eq, desc, and } from "drizzle-orm";
 import {
-  workspaces, pipelineRuns, moduleStatuses, reports,
-  type InsertWorkspace, type InsertPipelineRun, type InsertModuleStatus, type InsertReport,
-  type Workspace, type PipelineRun, type ModuleStatus, type Report,
+  assemblies, workspaces, pipelineRuns, moduleStatuses, reports,
+  type InsertAssembly, type InsertWorkspace, type InsertPipelineRun, type InsertModuleStatus, type InsertReport,
+  type Assembly, type Workspace, type PipelineRun, type ModuleStatus, type Report,
 } from "../shared/schema.js";
 
 export interface IStorage {
+  createAssembly(data: InsertAssembly): Promise<Assembly>;
+  getAssemblies(): Promise<Assembly[]>;
+  getAssembly(id: string): Promise<Assembly | undefined>;
+  updateAssembly(id: string, data: Partial<InsertAssembly & { state: string; step: string; progress: unknown; errors: string[]; logsTail: string; updatedAt: Date }>): Promise<Assembly | undefined>;
+  deleteAssembly(id: string): Promise<void>;
+
   getWorkspaces(): Promise<Workspace[]>;
   getWorkspace(projectName: string): Promise<Workspace | undefined>;
   upsertWorkspace(data: InsertWorkspace): Promise<Workspace>;
@@ -26,6 +32,32 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  async createAssembly(data: InsertAssembly): Promise<Assembly> {
+    const [assembly] = await db.insert(assemblies).values(data).returning();
+    return assembly;
+  }
+
+  async getAssemblies(): Promise<Assembly[]> {
+    return db.select().from(assemblies).orderBy(desc(assemblies.createdAt));
+  }
+
+  async getAssembly(id: string): Promise<Assembly | undefined> {
+    const [assembly] = await db.select().from(assemblies).where(eq(assemblies.id, id));
+    return assembly;
+  }
+
+  async updateAssembly(id: string, data: Partial<InsertAssembly & { state: string; step: string; progress: unknown; errors: string[]; logsTail: string; updatedAt: Date }>): Promise<Assembly | undefined> {
+    const [updated] = await db.update(assemblies)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(assemblies.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteAssembly(id: string): Promise<void> {
+    await db.delete(assemblies).where(eq(assemblies.id, id));
+  }
+
   async getWorkspaces(): Promise<Workspace[]> {
     return db.select().from(workspaces).orderBy(desc(workspaces.createdAt));
   }
