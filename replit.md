@@ -20,6 +20,12 @@ AXION employs a documentation-first approach to generate comprehensive "Agent Ki
 - **Stack Profile Contract (`registry/stack_profile.json`)**: Authoritative source for stack configuration within a kit workspace.
 - **Anchor Convention**: Uses HTML comment-like anchors (`<!-- AXION:ANCHOR:<ID> -->`) for dynamic content injection during code generation.
 
+### Script Duality: `.mjs` vs `.ts`
+Eight pipeline scripts exist in both `.mjs` (JavaScript) and `.ts` (TypeScript) versions under `axion/scripts/`: draft, generate, init, lock, package, review, seed, verify.
+- **`.mjs` scripts are the active pipeline** — these are the ones invoked by `npm run axion:*` commands and used by the orchestrator.
+- **`.ts` scripts are the older TypeScript versions** — used by the TypeScript CLI (`axion-run.ts`) and kept for backward compatibility with the kit-create export flow.
+- **Shared logic** lives in `_axion_module_mode.mjs` (imported by all `.mjs` scripts). Shared constants (doc types, prereqs) are defined there and loaded from `axion/config/domains.json` at runtime.
+
 ### Pipeline Stages
 AXION defines a clear pipeline for kit creation and application development:
 - **import**: Analyzes existing repositories to produce import reports and documentation seeds.
