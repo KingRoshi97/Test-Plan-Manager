@@ -1917,29 +1917,102 @@ export function registerRoutes(app: Express) {
 
     testRunning = true;
     let aborted = false;
-    req.on('close', () => { aborted = true; });
+    req.on('close', () => {
+      aborted = true;
+      clearInterval(heartbeat);
+    });
 
     res.write(`event: start\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
 
-    const args = ['--run', '--reporter=json'];
+    const heartbeat = setInterval(() => {
+      if (!aborted) {
+        res.write(`event: heartbeat\ndata: ${JSON.stringify({ ts: Date.now() })}\n\n`);
+      }
+    }, 10000);
+
+    const jsonOutFile = `/tmp/vitest-results-${Date.now()}.json`;
+    const args = ['--run', '--reporter=default', '--reporter=json', `--outputFile.json=${jsonOutFile}`];
     if (filterFile) {
       args.push(filterFile);
     }
 
     const start = Date.now();
-    let jsonOutput = '';
+    let stdoutBuffer = '';
     let stderrOutput = '';
+    let filesCompleted = 0;
+
+    const stripAnsi = (str: string) => str.replace(/\u001b\[[0-9;]*m/g, '');
 
     const child = spawn('npx', ['vitest', ...args], {
       cwd: PROJECT_ROOT,
-      env: { ...process.env, FORCE_COLOR: '0' },
+      env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
       timeout: 300000,
     });
 
     child.stdout.on('data', (data: Buffer) => {
-      jsonOutput += data.toString();
+      const text = data.toString();
+      stdoutBuffer += text;
+
+      const lines = stdoutBuffer.split('\n');
+      stdoutBuffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const clean = stripAnsi(line).trim();
+        if (!clean) continue;
+
+        const filePassMatch = clean.match(/^[✓✔√]\s+([\w/.-]+\.(?:test|spec)\.\w+)\s+\((\d+)\s+tests?\)\s+(\d+m?s)/);
+        const fileFailMatch = clean.match(/^[❯✗✘×x]\s+([\w/.-]+\.(?:test|spec)\.\w+)\s+\((\d+)\s+tests?\s*(?:\|\s*\d+\s+failed)?\)\s+(\d+m?s)/);
+        const filePassMatch2 = clean.match(/^[✓✔√]\s+([\w/.-]+\.(?:test|spec)\.\w+)\s+(\d+m?s)/);
+        const fileFailMatch2 = clean.match(/^[❯✗✘×x]\s+([\w/.-]+\.(?:test|spec)\.\w+)\s+(\d+m?s)/);
+
+        if (!filePassMatch && !fileFailMatch && !filePassMatch2 && !fileFailMatch2) {
+          const altMatch = clean.match(/^[❯✗✘×x✓✔√]\s+(.+?\.(?:test|spec)\.\w+)\s+\((\d+)\s+test/);
+          if (altMatch) {
+            const isPass = /^[✓✔√]/.test(clean);
+            const durMatch = clean.match(/(\d+m?s)\s*$/);
+            filesCompleted++;
+            if (!aborted) {
+              res.write(`event: file-complete\ndata: ${JSON.stringify({
+                file: altMatch[1].trim(),
+                status: isPass ? 'pass' : 'fail',
+                testCount: parseInt(altMatch[2]),
+                duration: durMatch ? durMatch[1] : '',
+                index: filesCompleted,
+              })}\n\n`);
+            }
+            continue;
+          }
+        }
+
+        if (filePassMatch || fileFailMatch) {
+          const m = filePassMatch || fileFailMatch;
+          filesCompleted++;
+          if (!aborted) {
+            res.write(`event: file-complete\ndata: ${JSON.stringify({
+              file: m![1].trim(),
+              status: filePassMatch ? 'pass' : 'fail',
+              testCount: parseInt(m![2]),
+              duration: m![3].trim(),
+              index: filesCompleted,
+            })}\n\n`);
+          }
+        } else if (filePassMatch2 || fileFailMatch2) {
+          const m = filePassMatch2 || fileFailMatch2;
+          filesCompleted++;
+          if (!aborted) {
+            res.write(`event: file-complete\ndata: ${JSON.stringify({
+              file: m![1].trim(),
+              status: filePassMatch2 ? 'pass' : 'fail',
+              testCount: 0,
+              duration: m![2].trim(),
+              index: filesCompleted,
+            })}\n\n`);
+          }
+        }
+      }
+
       if (!aborted) {
-        res.write(`event: progress\ndata: ${JSON.stringify({ type: 'stdout', text: data.toString().substring(0, 500) })}\n\n`);
+        res.write(`event: progress\ndata: ${JSON.stringify({ type: 'stdout', text: stripAnsi(text).substring(0, 500) })}\n\n`);
       }
     });
 
@@ -1951,14 +2024,21 @@ export function registerRoutes(app: Express) {
     });
 
     child.on('close', (code: number | null) => {
+      clearInterval(heartbeat);
       const durationMs = Date.now() - start;
       testRunning = false;
 
+      let parsed: any = null;
       try {
-        const parsed = JSON.parse(jsonOutput);
-        const testFiles: typeof lastTestResult extends null ? never : NonNullable<typeof lastTestResult>['testFiles'] = [];
+        const jsonContent = fs.readFileSync(jsonOutFile, 'utf-8');
+        parsed = JSON.parse(jsonContent);
+        try { fs.unlinkSync(jsonOutFile); } catch {}
+      } catch {}
 
-        if (parsed.testResults && Array.isArray(parsed.testResults)) {
+      if (parsed && parsed.testResults && Array.isArray(parsed.testResults)) {
+        try {
+          const testFiles: typeof lastTestResult extends null ? never : NonNullable<typeof lastTestResult>['testFiles'] = [];
+
           for (const fileResult of parsed.testResults) {
             const relFile = (fileResult.name as string).replace(PROJECT_ROOT + '/', '');
             const tests: Array<{ name: string; fullName: string; status: 'pass' | 'fail' | 'skip'; durationMs: number; error?: string }> = [];
@@ -1985,44 +2065,46 @@ export function registerRoutes(app: Express) {
               tests,
             });
           }
-        }
 
-        const passed = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'pass').length, 0);
-        const failed = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'fail').length, 0);
-        const skipped = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'skip').length, 0);
+          const passed = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'pass').length, 0);
+          const failed = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'fail').length, 0);
+          const skipped = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'skip').length, 0);
 
-        lastTestResult = {
-          timestamp: new Date().toISOString(),
-          durationMs,
-          status: failed > 0 ? 'fail' : 'pass',
-          summary: { total: passed + failed + skipped, passed, failed, skipped },
-          testFiles,
-        };
+          lastTestResult = {
+            timestamp: new Date().toISOString(),
+            durationMs,
+            status: failed > 0 ? 'fail' : 'pass',
+            summary: { total: passed + failed + skipped, passed, failed, skipped },
+            testFiles,
+          };
 
-        if (!aborted) {
-          res.write(`event: done\ndata: ${JSON.stringify(lastTestResult)}\n\n`);
-          res.end();
-        }
-      } catch {
-        const errorResult = {
-          timestamp: new Date().toISOString(),
-          durationMs,
-          status: 'error' as const,
-          summary: { total: 0, passed: 0, failed: 0, skipped: 0 },
-          testFiles: [],
-          errorOutput: stderrOutput.substring(0, 5000),
-          rawOutput: jsonOutput.substring(0, 5000),
-        };
-        lastTestResult = errorResult;
+          if (!aborted) {
+            res.write(`event: done\ndata: ${JSON.stringify(lastTestResult)}\n\n`);
+            res.end();
+          }
+          return;
+        } catch {}
+      }
 
-        if (!aborted) {
-          res.write(`event: done\ndata: ${JSON.stringify(errorResult)}\n\n`);
-          res.end();
-        }
+      const errorResult = {
+        timestamp: new Date().toISOString(),
+        durationMs,
+        status: 'error' as const,
+        summary: { total: 0, passed: 0, failed: 0, skipped: 0 },
+        testFiles: [],
+        errorOutput: stderrOutput.substring(0, 5000),
+        rawOutput: stdoutBuffer.substring(0, 5000),
+      };
+      lastTestResult = errorResult;
+
+      if (!aborted) {
+        res.write(`event: done\ndata: ${JSON.stringify(errorResult)}\n\n`);
+        res.end();
       }
     });
 
     child.on('error', (err: Error) => {
+      clearInterval(heartbeat);
       testRunning = false;
       if (!aborted) {
         res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`);

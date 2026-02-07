@@ -17,6 +17,7 @@ import {
   FileCode2,
   RotateCcw,
   AlertTriangle,
+  WifiOff,
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
@@ -49,6 +50,14 @@ interface TestResult {
 interface LastTestResponse {
   running: boolean;
   result: TestResult | null;
+}
+
+interface LiveFileProgress {
+  file: string;
+  status: "pass" | "fail";
+  testCount: number;
+  duration: string;
+  index: number;
 }
 
 function formatDuration(ms: number): string {
@@ -115,9 +124,12 @@ export default function TestsPage() {
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [isRunning, setIsRunning] = useState(false);
   const [liveResult, setLiveResult] = useState<TestResult | null>(null);
+  const [liveFiles, setLiveFiles] = useState<LiveFileProgress[]>([]);
   const [progressLines, setProgressLines] = useState<string[]>([]);
   const [runError, setRunError] = useState<string | null>(null);
+  const [connectionLost, setConnectionLost] = useState(false);
   const liveResultRef = useRef<TestResult | null>(null);
+  const lastEventTimeRef = useRef<number>(Date.now());
 
   const { data, isLoading } = useQuery<LastTestResponse>({
     queryKey: ["/api/tests/last"],
@@ -126,6 +138,24 @@ export default function TestsPage() {
 
   const result = liveResult || data?.result || null;
   const running = isRunning || (data?.running ?? false);
+
+  useEffect(() => {
+    if (!isRunning) return;
+    const checkInterval = setInterval(() => {
+      const timeSinceLastEvent = Date.now() - lastEventTimeRef.current;
+      if (timeSinceLastEvent > 60000) {
+        setConnectionLost(true);
+        setIsRunning(false);
+        toast({
+          title: "Connection lost",
+          description: "The test run connection was interrupted. The tests may still be running on the server — try refreshing or running again.",
+          variant: "destructive",
+        });
+        clearInterval(checkInterval);
+      }
+    }, 5000);
+    return () => clearInterval(checkInterval);
+  }, [isRunning]);
 
   const toggleFile = useCallback((file: string) => {
     setExpandedFiles((prev) => {
@@ -140,9 +170,12 @@ export default function TestsPage() {
     setIsRunning(true);
     setLiveResult(null);
     liveResultRef.current = null;
+    setLiveFiles([]);
     setProgressLines([]);
     setExpandedFiles(new Set());
     setRunError(null);
+    setConnectionLost(false);
+    lastEventTimeRef.current = Date.now();
 
     try {
       const response = await fetch("/api/tests/run", {
@@ -188,11 +221,28 @@ export default function TestsPage() {
           const eventType = eventMatch[1].trim();
           const rawData = dataMatch[1].trim();
 
+          lastEventTimeRef.current = Date.now();
+
           try {
             const payload = JSON.parse(rawData);
 
-            if (eventType === "progress" && payload.text) {
-              setProgressLines((prev) => [...prev.slice(-30), payload.text.trim()]);
+            if (eventType === "file-complete") {
+              const fp: LiveFileProgress = {
+                file: payload.file,
+                status: payload.status,
+                testCount: payload.testCount || 0,
+                duration: payload.duration || "",
+                index: payload.index || 0,
+              };
+              setLiveFiles((prev) => [...prev, fp]);
+            } else if (eventType === "progress" && payload.text) {
+              const text = payload.text.trim();
+              if (text && !text.startsWith("stdout |")) {
+                setProgressLines((prev) => {
+                  const lines = text.split("\n").filter((l: string) => l.trim());
+                  return [...prev, ...lines].slice(-50);
+                });
+              }
             } else if (eventType === "done") {
               const res = payload as TestResult;
               setLiveResult(res);
@@ -268,6 +318,9 @@ export default function TestsPage() {
   const grouped = result?.testFiles ? groupByDirectory(result.testFiles) : {};
   const sortedGroups = Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
 
+  const livePassedCount = liveFiles.filter((f) => f.status === "pass").length;
+  const liveFailedCount = liveFiles.filter((f) => f.status === "fail").length;
+
   return (
     <div className="space-y-6 p-6 max-w-5xl mx-auto" data-testid="tests-page">
       <div className="flex items-center gap-3 flex-wrap">
@@ -301,25 +354,113 @@ export default function TestsPage() {
       </div>
 
       {running && !liveResult && (
-        <Card data-testid="card-running">
+        <div className="space-y-4" data-testid="section-running">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Running test suite...
+            </span>
+            {liveFiles.length > 0 && (
+              <span className="text-xs text-muted-foreground" data-testid="text-live-file-count">
+                {liveFiles.length} file{liveFiles.length !== 1 ? "s" : ""} completed
+              </span>
+            )}
+            {livePassedCount > 0 && (
+              <span className="text-xs text-green-600 dark:text-green-400" data-testid="text-live-passed">
+                {livePassedCount} passed
+              </span>
+            )}
+            {liveFailedCount > 0 && (
+              <span className="text-xs text-red-600 dark:text-red-400" data-testid="text-live-failed">
+                {liveFailedCount} failed
+              </span>
+            )}
+          </div>
+
+          {liveFiles.length > 0 && (
+            <Card data-testid="card-live-progress">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm">Live Progress</CardTitle>
+                <span className="text-xs text-muted-foreground">
+                  {livePassedCount} passed, {liveFailedCount} failed
+                </span>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="max-h-[400px]">
+                  <div className="divide-y" data-testid="live-file-list">
+                    {liveFiles.map((lf, idx) => {
+                      const fileName = lf.file.split("/").pop() || lf.file;
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-3 px-4 py-2"
+                          data-testid={`live-file-${idx}`}
+                        >
+                          <StatusIcon status={lf.status} />
+                          <FileCode2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                          <span className="text-sm truncate" data-testid={`live-filename-${idx}`}>
+                            {fileName}
+                          </span>
+                          <div className="ml-auto flex items-center gap-2 shrink-0 flex-wrap">
+                            {lf.testCount > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {lf.testCount} test{lf.testCount !== 1 ? "s" : ""}
+                              </span>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {lf.duration}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+
+          {liveFiles.length === 0 && (
+            <Card data-testid="card-running">
+              <CardContent className="py-8">
+                <div className="flex flex-col items-center gap-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Waiting for test results...</p>
+                  <p className="text-xs text-muted-foreground">Individual file results will appear here as they complete.</p>
+                  {progressLines.length > 0 && (
+                    <ScrollArea className="w-full max-h-48">
+                      <pre className="text-xs text-muted-foreground bg-muted p-3 rounded-md whitespace-pre-wrap font-mono" data-testid="pre-progress">
+                        {progressLines.slice(-20).join("\n")}
+                      </pre>
+                    </ScrollArea>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {connectionLost && !running && (
+        <Card data-testid="card-connection-lost">
           <CardContent className="py-8">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Running test suite... this may take a few minutes.</p>
-              {progressLines.length > 0 && (
-                <pre className="text-xs text-muted-foreground bg-muted p-3 rounded-md w-full max-h-40 overflow-y-auto whitespace-pre-wrap font-mono" data-testid="pre-progress">
-                  {progressLines.join("\n")}
-                </pre>
-              )}
-              {progressLines.length === 0 && (
-                <p className="text-xs text-muted-foreground">Waiting for output from Vitest...</p>
-              )}
+            <div className="flex flex-col items-center gap-3">
+              <WifiOff className="w-8 h-8 text-yellow-500" />
+              <p className="text-sm font-medium">Connection interrupted</p>
+              <p className="text-xs text-muted-foreground max-w-md text-center">
+                The connection to the test run was lost. The tests may have finished on the server.
+                Try running again or refresh the page.
+              </p>
+              <Button onClick={runTests} variant="outline" className="mt-2" data-testid="button-retry-lost">
+                <RotateCcw className="w-4 h-4" />
+                Run Again
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {runError && !running && !result && (
+      {runError && !running && !result && !connectionLost && (
         <Card data-testid="card-run-error">
           <CardContent className="py-8">
             <div className="flex flex-col items-center gap-3">
@@ -524,7 +665,7 @@ export default function TestsPage() {
         </>
       )}
 
-      {!result && !running && !runError && (
+      {!result && !running && !runError && !connectionLost && (
         <Card data-testid="card-empty-state">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <FlaskConical className="w-12 h-12 text-muted-foreground/50 mb-4" />
