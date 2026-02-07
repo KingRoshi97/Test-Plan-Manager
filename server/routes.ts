@@ -683,11 +683,12 @@ export function registerRoutes(app: Express) {
         res.write(`event: step-start\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, total: fullSteps.length })}\n\n`);
 
         if (presetGuards.disallow_lock && stepId === 'lock') {
-          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'disallow_lock guard' })}\n\n`);
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'Locking is disabled for this preset' })}\n\n`);
           continue;
         }
         if (presetGuards.lock_requires_verify_pass && stepId === 'lock' && !verifyPassed) {
-          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'verify did not pass' })}\n\n`);
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: 0, reason: 'Documentation must pass verification before it can be locked. Run "Generate Documentation" first.' })}\n\n`);
+          failed++;
           continue;
         }
 
@@ -1121,11 +1122,12 @@ export function registerRoutes(app: Express) {
           stepBody.module = presetModules.join(',');
         }
         if (presetGuards.disallow_lock && stepId === 'lock') {
-          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'disallow_lock guard' })}\n\n`);
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'Locking is disabled for this preset' })}\n\n`);
           continue;
         }
         if (presetGuards.lock_requires_verify_pass && stepId === 'lock' && !verifyPassed) {
-          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'lock_requires_verify_pass guard: verify did not pass' })}\n\n`);
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: 0, reason: 'Documentation must pass verification before it can be locked. Run "Generate Documentation" first.' })}\n\n`);
+          failed++;
           continue;
         }
 
