@@ -1,3 +1,20 @@
+# Execution Readiness Contract (ERC) — systems v1
+
+## Overview
+**Module:** systems
+**Version:** v1
+**Lock Date:** 2026-02-07T17:04:33.898Z
+**Content Hash:** ded657a8459abb88
+
+## Verification Status
+- [x] No critical UNKNOWNs in BELS (verified at lock time)
+- [x] Policy rules have reason codes + messages
+- [x] State machines have deny codes
+- [x] Minimum acceptance scenarios defined
+
+## Locked Content
+
+### From BELS at Lock Time
 # Business Entity Logic Specification (BELS) — systems
 
 ## Overview
@@ -48,3 +65,14 @@
 - Specific systems domain thresholds need stakeholder input
 - Error recovery strategies need further definition
 - Cross-module interaction patterns need validation
+
+
+## Implementation Notes
+- This ERC was generated from the BELS document at lock time
+- Any changes to business logic must go through a new version
+- Implementation must match exactly what is specified here
+
+## Sign-off
+- **Locked by:** axion:lock script
+- **Lock date:** 2026-02-07T17:04:33.898Z
+- **Hash:** ded657a8459abb88

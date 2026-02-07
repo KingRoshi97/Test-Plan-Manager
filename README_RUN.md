@@ -1,6 +1,6 @@
 # AXION Build Runbook
 
-## Project: note-pad-app-test
+## Project: nw-app-test
 
 This build root was created by AXION kit-create. Follow these steps to build and run.
 
@@ -15,37 +15,37 @@ This build root was created by AXION kit-create. Follow these steps to build and
 ### 1. Run Docs Pipeline (generate → seed → draft → review → verify → lock)
 
 ```bash
-npx tsx axion/scripts/axion-run.ts --build-root . --project-name note-pad-app-test --preset system --plan docs:full
+npx tsx axion/scripts/axion-run.ts --build-root . --project-name nw-app-test --preset system --plan docs:full
 ```
 
 ### 2. Lock Documentation
 
 ```bash
-npx tsx axion/scripts/axion-run.ts --build-root . --project-name note-pad-app-test --preset system --plan docs:release
+npx tsx axion/scripts/axion-run.ts --build-root . --project-name nw-app-test --preset system --plan docs:release
 ```
 
 ### 3. Scaffold Application
 
 ```bash
-npx tsx axion/scripts/axion-scaffold-app.ts --build-root . --project-name note-pad-app-test
+npx tsx axion/scripts/axion-scaffold-app.ts --build-root . --project-name nw-app-test
 ```
 
 ### 4. Generate Build Plan
 
 ```bash
-npx tsx axion/scripts/axion-build-plan.ts --build-root . --project-name note-pad-app-test
+npx tsx axion/scripts/axion-build-plan.ts --build-root . --project-name nw-app-test
 ```
 
 ### 5. Run Tests
 
 ```bash
-npx tsx axion/scripts/axion-test.ts --build-root . --project-name note-pad-app-test
+npx tsx axion/scripts/axion-test.ts --build-root . --project-name nw-app-test
 ```
 
 ### 6. Activate Build
 
 ```bash
-npx tsx axion/scripts/axion-activate.ts --build-root . --project-name note-pad-app-test
+npx tsx axion/scripts/axion-activate.ts --build-root . --project-name nw-app-test
 ```
 
 ### 7. Run Application
@@ -58,16 +58,16 @@ npx tsx axion/scripts/axion-run-app.ts
 
 After completion, you should have:
 
-- `note-pad-app-test/registry/` - Stage markers, verify report, lock manifest
-- `note-pad-app-test/domains/` - Module documentation
-- `note-pad-app-test/app/` - Application code
+- `nw-app-test/registry/` - Stage markers, verify report, lock manifest
+- `nw-app-test/domains/` - Module documentation
+- `nw-app-test/app/` - Application code
 - `ACTIVE_BUILD.json` - Points to active build
 - `manifest.json` - Build metadata
 
 ## Two-Root Model
 
 - **System Root**: `./axion/` - Immutable scripts/templates/configs
-- **Workspace Root**: `./note-pad-app-test/` - All generated outputs
+- **Workspace Root**: `./nw-app-test/` - All generated outputs
 
 ⚠️ Never modify files in `axion/` after kit creation.
 
