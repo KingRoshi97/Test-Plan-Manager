@@ -35,6 +35,16 @@ AXION defines a clear pipeline for kit creation and application development:
 - **`axion-reconcile`**: Deterministically compares imported facts against build-authoritative outputs to detect drift and report mismatches.
 - **`axion-iterate`**: An orchestration wrapper that chains AXION primitives, enforcing gates and producing `next_commands` for remediation. It operates deterministically, requiring explicit `--allow-apply` for changes.
 
+### AI Auto-Remediation (Feb 2026)
+- **`server/ai-content-fill.ts`**: AI-powered module that fills UNKNOWN placeholders in BELS documentation using OpenAI (gpt-5-mini model via Replit AI Integrations).
+- **Auto-remediation in Lock Step**: When the lock step detects UNKNOWN content in BELS files, the orchestrator automatically:
+  1. Calls the AI content fill module with the assembly's project description as context.
+  2. Replaces UNKNOWN placeholders with project-specific content.
+  3. Retries the lock step (up to 2 attempts).
+  4. Gates retries on whether AI actually reduced UNKNOWN count.
+- **Integration**: Uses `AI_INTEGRATIONS_OPENAI_BASE_URL` and `AI_INTEGRATIONS_OPENAI_API_KEY` env vars (auto-configured by Replit AI Integrations).
+- **Both orchestration paths** (assembly-based and preset-based) support auto-remediation.
+
 ### Core System Contracts and Guarantees
 - **Pipeline Guarantees**: Enforced strict stage execution order and module dependencies.
 - **Diagnostic Guarantees**: Standardized SCREAMING_SNAKE_CASE reason codes and detailed `blocked_by` responses.
