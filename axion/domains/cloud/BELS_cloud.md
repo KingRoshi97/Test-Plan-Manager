@@ -2,34 +2,49 @@
 
 ## Overview
 **Domain Slug:** cloud
+**Focus:** cloud domain concerns
 **Status:** DRAFT - Truth Candidates
+**Project:** Application
 
 ## Policy Rules (Candidates)
 
 | Rule ID | Description | Condition | Action | SourceRef |
 |---------|-------------|-----------|--------|-----------|
-| cloud_001 | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+| CLOU_001 | Application operations must follow cloud domain rules | When application interacts with cloud subsystem | Apply cloud-specific validation and processing | RPBS > cloud > Application Rules |
+| CLOU_002 | User operations must follow cloud domain rules | When user interacts with cloud subsystem | Apply cloud-specific validation and processing | RPBS > cloud > User Rules |
+| CLOU_003 | Platform targets operations must follow cloud domain rules | When platform targets interacts with cloud subsystem | Apply cloud-specific validation and processing | RPBS > cloud > Platform targets Rules |
 
 ## State Machines (Candidates)
 
-### Entity: UNKNOWN
+### Entity: ApplicationProcess
 | Current State | Event | Next State | Deny Code | SourceRef |
 |---------------|-------|------------|-----------|-----------|
-| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+| Pending | START | Active | CLOU_START_ERROR | RPBS > cloud |
+| Active | COMPLETE | Done | CLOU_COMPLETE_ERROR | RPBS > cloud |
+| Active | FAIL | Failed | CLOU_OPERATION_FAILED | RPBS > cloud |
+| Failed | RETRY | Active | CLOU_RETRY_ERROR | RPBS > cloud |
 
 ## Validation Rules (Candidates)
 
 | Field | Rule | Error Code | SourceRef |
 |-------|------|------------|-----------|
-| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+| application_cloud_config | Configuration must be valid for cloud domain | CLOU_INVALID_APPLICATION_CONFIG | RPBS > cloud |
+| user_cloud_config | Configuration must be valid for cloud domain | CLOU_INVALID_USER_CONFIG | RPBS > cloud |
+| platform targets_cloud_config | Configuration must be valid for cloud domain | CLOU_INVALID_PLATFORM TARGETS_CONFIG | RPBS > cloud |
 
 ## Reason Codes Referenced
 
 | Code | Message | Severity |
 |------|---------|----------|
-| UNKNOWN | UNKNOWN | UNKNOWN |
+| CLOU_START_ERROR | START denied: transition from Pending not allowed | ERROR |
+| CLOU_COMPLETE_ERROR | COMPLETE denied: transition from Active not allowed | ERROR |
+| CLOU_OPERATION_FAILED | FAIL denied: transition from Active not allowed | ERROR |
+| CLOU_RETRY_ERROR | RETRY denied: transition from Failed not allowed | ERROR |
+| CLOU_INVALID_APPLICATION_CONFIG | Validation failed: configuration must be valid for cloud domain | WARN |
+| CLOU_INVALID_USER_CONFIG | Validation failed: configuration must be valid for cloud domain | WARN |
+| CLOU_INVALID_PLATFORM TARGETS_CONFIG | Validation failed: configuration must be valid for cloud domain | WARN |
 
 ## Open Questions
-- Entity ownership needs clarification
-- State transitions need validation
-- Specific implementation details: UNKNOWN
+- Specific cloud domain thresholds need stakeholder input
+- Error recovery strategies need further definition
+- Cross-module interaction patterns need validation

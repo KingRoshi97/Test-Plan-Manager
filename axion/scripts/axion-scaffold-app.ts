@@ -568,18 +568,12 @@ function main() {
     }
   }
   
-  // Check workspace exists in two-root mode
+  // Create workspace directory in two-root mode if it doesn't exist
   if (isTwoRootMode && !fs.existsSync(WORKSPACE_ROOT)) {
-    const result: ScaffoldResult = {
-      status: 'failed',
-      stage: 'scaffold-app',
-      hint: [
-        `Workspace not found at ${WORKSPACE_ROOT}`,
-        'Run prepare-root first to create the workspace'
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    fs.mkdirSync(WORKSPACE_ROOT, { recursive: true });
+    if (!jsonFlag) {
+      console.log(`[INFO] Created workspace directory: ${WORKSPACE_ROOT}`);
+    }
   }
   
   if (!isDocsLocked() && !overrideFlag) {

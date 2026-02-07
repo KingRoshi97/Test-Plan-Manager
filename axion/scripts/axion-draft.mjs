@@ -435,6 +435,255 @@ function getDefaultModuleContent(moduleName) {
   };
 }
 
+const MODULE_DDES_CONTENT = {
+  architecture: {
+    purpose: 'Defines the overall system structure, component organization, and layering strategy',
+    responsibilities: ['Define system component boundaries and layering', 'Establish communication patterns between modules', 'Enforce architectural constraints and conventions'],
+    inScope: ['System-wide structural patterns', 'Component organization and naming'],
+    outOfScope: ['Individual module implementation details', 'UI rendering logic'],
+  },
+  systems: {
+    purpose: 'Manages system-level services, health monitoring, and infrastructure coordination',
+    responsibilities: ['Manage service lifecycle and health checks', 'Coordinate system startup and shutdown sequences', 'Monitor system resource utilization'],
+    inScope: ['Service management and orchestration', 'System health and diagnostics'],
+    outOfScope: ['Business logic implementation', 'User-facing features'],
+  },
+  contracts: {
+    purpose: 'Defines API contracts, type schemas, and interface specifications for cross-module communication',
+    responsibilities: ['Define request/response schemas for all API endpoints', 'Maintain Zod validation schemas', 'Enforce type consistency across modules'],
+    inScope: ['API type definitions and validation schemas', 'Cross-module interface contracts'],
+    outOfScope: ['Route handler implementation', 'Database schema management'],
+  },
+  database: {
+    purpose: 'Manages database schema, migrations, and data persistence layer',
+    responsibilities: ['Define and maintain database table schemas', 'Execute safe schema migrations', 'Enforce data integrity constraints'],
+    inScope: ['Table definitions and relationships', 'Migration management', 'Query optimization'],
+    outOfScope: ['Business logic processing', 'API route handling'],
+  },
+  data: {
+    purpose: 'Handles data validation, transformation, and flow between system layers',
+    responsibilities: ['Validate and sanitize incoming data', 'Transform data between internal representations', 'Enforce data type coercion rules'],
+    inScope: ['Data validation pipelines', 'Type coercion and transformation'],
+    outOfScope: ['Database schema management', 'API contract definitions'],
+  },
+  auth: {
+    purpose: 'Manages user authentication, authorization, session management, and access control',
+    responsibilities: ['Authenticate user credentials', 'Manage session tokens and expiration', 'Enforce role-based access control'],
+    inScope: ['Login/logout flows', 'Token management', 'Permission checks'],
+    outOfScope: ['User profile management beyond auth', 'Business data access'],
+  },
+  backend: {
+    purpose: 'Implements server-side business logic, API route handlers, and request processing',
+    responsibilities: ['Handle incoming API requests', 'Execute business logic operations', 'Coordinate data persistence through storage layer'],
+    inScope: ['Route handler implementation', 'Business rule enforcement', 'Error handling'],
+    outOfScope: ['Database schema definition', 'Client-side rendering'],
+  },
+  state: {
+    purpose: 'Manages client-side application state, data caching, and state synchronization',
+    responsibilities: ['Manage UI state through immutable store patterns', 'Cache server data for optimistic updates', 'Synchronize state across components'],
+    inScope: ['Client-side store management', 'Query caching strategies'],
+    outOfScope: ['Server-side data persistence', 'API implementation'],
+  },
+  frontend: {
+    purpose: 'Implements client-side UI components, pages, and user interaction patterns',
+    responsibilities: ['Render UI components and pages', 'Handle user input and form validation', 'Manage client-side routing'],
+    inScope: ['Component implementation', 'Page layouts', 'Form handling'],
+    outOfScope: ['Server-side logic', 'Database operations'],
+  },
+  mobile: {
+    purpose: 'Defines mobile-specific layout patterns, touch interactions, and responsive behavior',
+    responsibilities: ['Ensure responsive layouts for mobile viewports', 'Implement touch-friendly interaction patterns', 'Handle offline/online state transitions'],
+    inScope: ['Mobile layout adaptations', 'Touch interaction targets'],
+    outOfScope: ['Desktop-specific patterns', 'Server-side processing'],
+  },
+  desktop: {
+    purpose: 'Defines desktop-specific interaction patterns, keyboard navigation, and window management',
+    responsibilities: ['Support keyboard navigation and shortcuts', 'Manage window state and resizing', 'Implement desktop-optimized layouts'],
+    inScope: ['Keyboard accessibility', 'Window management patterns'],
+    outOfScope: ['Mobile-specific patterns', 'Server-side processing'],
+  },
+};
+
+const MODULE_DIM_CONTENT = {
+  architecture: { exposedType: 'Config', consumedFrom: 'contracts' },
+  systems: { exposedType: 'Service', consumedFrom: 'architecture' },
+  contracts: { exposedType: 'Schema', consumedFrom: 'database' },
+  database: { exposedType: 'Query', consumedFrom: 'contracts' },
+  data: { exposedType: 'Pipeline', consumedFrom: 'database' },
+  auth: { exposedType: 'Session', consumedFrom: 'database' },
+  backend: { exposedType: 'REST', consumedFrom: 'contracts' },
+  state: { exposedType: 'Store', consumedFrom: 'backend' },
+  frontend: { exposedType: 'Component', consumedFrom: 'state' },
+  mobile: { exposedType: 'View', consumedFrom: 'frontend' },
+  desktop: { exposedType: 'Window', consumedFrom: 'frontend' },
+};
+
+function generateDDES(module, ctx) {
+  const modDdes = MODULE_DDES_CONTENT[module] || {
+    purpose: `Manages ${module} domain concerns for ${ctx.name}`,
+    responsibilities: [
+      `Handle ${module}-specific operations`,
+      `Validate ${module} domain data`,
+      `Coordinate with dependent modules`,
+    ],
+    inScope: [`${module} domain logic`, `${module} data management`],
+    outOfScope: ['Cross-domain concerns', 'Infrastructure management'],
+  };
+
+  const entityRows = ctx.entities.slice(0, 5).map(e => {
+    const domainMap = {
+      'User': { fields: 'id, email, name, role, createdAt', rels: 'owns many resources' },
+      'Note': { fields: 'id, title, content, authorId, createdAt', rels: 'belongs_to User' },
+      'Tag': { fields: 'id, name, slug, color', rels: 'many_to_many with content entities' },
+      'Folder': { fields: 'id, name, parentId, ownerId', rels: 'belongs_to User, has_many children' },
+      'Task': { fields: 'id, title, description, status, assigneeId', rels: 'belongs_to User' },
+      'Category': { fields: 'id, name, slug, parentId', rels: 'has_many children' },
+      'Comment': { fields: 'id, body, authorId, targetId, createdAt', rels: 'belongs_to User' },
+      'Document': { fields: 'id, title, content, authorId, status', rels: 'belongs_to User' },
+      'Post': { fields: 'id, title, body, authorId, status', rels: 'belongs_to User' },
+      'Product': { fields: 'id, name, description, price, categoryId', rels: 'belongs_to Category' },
+      'Order': { fields: 'id, userId, status, total, createdAt', rels: 'belongs_to User' },
+      'Message': { fields: 'id, content, senderId, recipientId', rels: 'belongs_to User' },
+      'Team': { fields: 'id, name, description, ownerId', rels: 'belongs_to User, has_many members' },
+      'Project': { fields: 'id, name, description, teamId, status', rels: 'belongs_to Team' },
+    };
+    const info = domainMap[e] || { fields: `id, name, description, createdAt`, rels: 'standalone' };
+    const owner = e.toLowerCase() === 'user' ? 'auth domain' : 'This domain';
+    return `| ${e} | Core ${e.toLowerCase()} entity | ${owner} | ${info.fields} | ${info.rels} |`;
+  }).join('\n');
+
+  const responsibilities = modDdes.responsibilities.map(r => `- ${r}`).join('\n');
+
+  return `# Domain Design & Entity Specification (DDES) — ${module}
+
+<!-- AXION:CORE_DOC:DDES -->
+
+## Overview
+**Domain Slug:** ${module}
+**Domain Prefix:** ${module}
+**Domain Type:** business
+**Project:** ${ctx.name}
+
+---
+
+## Purpose
+${modDdes.purpose}
+
+---
+
+## Entities
+
+| Entity | Description | Owner | Fields (key) | Relationships |
+|--------|-------------|-------|-------------|---------------|
+${entityRows}
+
+---
+
+## Key Responsibilities
+
+${responsibilities}
+
+---
+
+## Domain Boundaries
+
+- **In Scope:**
+  - ${modDdes.inScope[0]}
+  - ${modDdes.inScope[1] || `${module} configuration management`}
+- **Out of Scope:**
+  - ${modDdes.outOfScope[0]}
+  - ${modDdes.outOfScope[1] || 'Concerns owned by other domains'}
+
+---
+
+## Dependencies
+
+| Dependency | What Is Consumed | Why |
+|-----------|-----------------|-----|
+| contracts | Type definitions and validation schemas | Ensure data consistency |
+| database | Persistence layer | Store and retrieve ${module} data |
+
+---
+
+## Open Questions
+- Specific ${module} domain lifecycle events need further definition
+- Cross-domain data ownership boundaries need stakeholder input
+`;
+}
+
+function generateDIM(module, ctx) {
+  const modDim = MODULE_DIM_CONTENT[module] || { exposedType: 'REST', consumedFrom: 'contracts' };
+  const prefix = module.substring(0, 2).toLowerCase();
+
+  const exposedRows = ctx.entities.slice(0, 3).map((e, i) => {
+    const ifId = `${prefix}_IF_${String(i + 1).padStart(3, '0')}`;
+    return `| ${ifId} | REST | GET | /api/${e.toLowerCase()}s | List all ${e.toLowerCase()} records | frontend | contracts/${module} |`;
+  }).join('\n');
+
+  const mutationRows = ctx.entities.slice(0, 2).map((e, i) => {
+    const ifId = `${prefix}_IF_${String(i + 4).padStart(3, '0')}`;
+    return `| ${ifId} | REST | POST | /api/${e.toLowerCase()}s | Create a new ${e.toLowerCase()} | frontend | contracts/${module} |`;
+  }).join('\n');
+
+  const consumedRows = [
+    `| ${modDim.consumedFrom}_IF_001 | ${modDim.consumedFrom} | REST | Type definitions for ${module} operations | contracts/${modDim.consumedFrom} |`,
+  ].join('\n');
+
+  const eventRows = ctx.entities.slice(0, 2).map(e =>
+    `| ${e.toUpperCase()}_CREATED | emit | { ${e.toLowerCase()}Id, createdBy } | New ${e.toLowerCase()} is created | state, frontend | at-least-once |`
+  ).join('\n');
+
+  return `# Domain Interface Map (DIM) — ${module}
+
+<!-- AXION:CORE_DOC:DIM -->
+
+## Overview
+**Domain Slug:** ${module}
+**Prefix:** ${prefix}
+**Type:** business
+**Project:** ${ctx.name}
+
+---
+
+## Exposed Interfaces
+
+| Interface ID | Type | Method | Path/Name | Description | Consumer(s) | Contract Ref |
+|-------------|------|--------|-----------|-------------|-------------|--------------|
+${exposedRows}
+${mutationRows}
+
+---
+
+## Consumed Interfaces
+
+| Interface ID | Provider Module | Type | Description | Contract Ref |
+|-------------|----------------|------|-------------|--------------|
+${consumedRows}
+
+---
+
+## Event Contracts
+
+| Event Name | Direction | Payload Schema | Trigger | Consumer(s) | Guarantee |
+|-----------|-----------|---------------|---------|-------------|-----------|
+${eventRows}
+
+---
+
+## Data Flow Summary
+
+- **Inbound:** Client requests arrive via REST API endpoints defined above
+- **Processing:** Validate against contracts, apply ${module} business rules, persist changes
+- **Outbound:** Return processed data to consumers, emit domain events for state updates
+
+---
+
+## Open Questions
+- Specific rate limiting policies for ${module} endpoints need definition
+- Event delivery guarantees need infrastructure planning
+`;
+}
+
 function generateBELSCandidates(module, ctx, rpbsRules) {
   const modContent = MODULE_CONTENT[module] || getDefaultModuleContent(module);
 
@@ -607,6 +856,14 @@ try {
     const belsContent = generateBELSCandidates(module, ctx, rpbsRules);
     const belsPath = path.join(domainDir, `BELS_${module}.md`);
     ensureFile(belsPath, belsContent);
+    
+    const ddesContent = generateDDES(module, ctx);
+    const ddesPath = path.join(domainDir, `DDES_${module}.md`);
+    ensureFile(ddesPath, ddesContent);
+    
+    const dimContent = generateDIM(module, ctx);
+    const dimPath = path.join(domainDir, `DIM_${module}.md`);
+    ensureFile(dimPath, dimContent);
     
     const openQuestionsContent = generateOpenQuestions(module, ctx);
     const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
