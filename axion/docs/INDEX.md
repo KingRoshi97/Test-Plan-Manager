@@ -14,7 +14,7 @@ Declares what each living document is for, preventing content drift and duplicat
 | Document | Location | Purpose | Update When |
 |----------|----------|---------|-------------|
 | **System Upgrade Log** | `axion/docs/SYSTEM_UPGRADE_LOG.md` | Track system upgrades: tests, contracts, flags, schemas, hardening | New tests, doctor checks, feature flags, contract changes |
-| **Change Contracts** | `axion/changes/*.md` | Document planned/in-progress system changes with test plans | Before implementing any contracted change |
+| **Change Contract Template** | `axion/docs/CHANGE_CONTRACT_TEMPLATE.md` | Template for documenting planned/in-progress system changes with test plans | Before implementing any contracted change |
 | **Changelog** | `axion/CHANGELOG.md` | Release notes for versioned releases | Each version release |
 
 ### Product & Web App

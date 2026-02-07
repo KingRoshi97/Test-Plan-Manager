@@ -16,6 +16,12 @@ attached_assets/
 
 # Test run artifacts (temp workspaces from E2E tests)
 .axion_test_runs/
+tests/temp/
+axion/tests/temp/
+
+# Build artifacts
+axion/dist/
+axion/node_modules/
 
 # Release gate artifacts (generated on each run)
 axion/registry/release_gate_report.json

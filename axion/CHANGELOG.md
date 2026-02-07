@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Change contract workflow for safe upgrades (`axion/changes/`)
+- Change contract workflow for safe upgrades (template at `axion/docs/CHANGE_CONTRACT_TEMPLATE.md`)
 - Feature flags system (`axion/config/system.json`)
 - Release gate validation process
 
