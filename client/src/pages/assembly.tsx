@@ -27,7 +27,17 @@ import {
   ChevronDown,
   ChevronRight,
   Terminal,
+  RotateCcw,
 } from "lucide-react";
+
+interface AssemblyProgress {
+  currentIndex?: number;
+  totalSteps?: number;
+  steps?: string[];
+  status?: string;
+  stagePlanId?: string;
+  stagePlanLabel?: string;
+}
 
 interface EnrichedAssembly {
   id: string;
@@ -37,7 +47,7 @@ interface EnrichedAssembly {
   presetId: string | null;
   state: string;
   step: string | null;
-  progress: unknown;
+  progress: AssemblyProgress | null;
   errors: string[] | null;
   createdAt: string;
   updatedAt: string;
@@ -172,6 +182,8 @@ export default function AssemblyPage() {
   const [stepProgress, setStepProgress] = useState<StepProgress[]>([]);
   const [streamOutput, setStreamOutput] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [activePlanLabel, setActivePlanLabel] = useState<string>("");
+  const [forceShowSelector, setForceShowSelector] = useState(false);
   const terminalRef = useRef<HTMLPreElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -238,6 +250,39 @@ export default function AssemblyPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (assembly && !isRunning && stepProgress.length === 0 && !forceShowSelector) {
+      const progress = assembly.progress as AssemblyProgress | null;
+      if (progress?.stagePlanId && !selectedStagePlan) {
+        setSelectedStagePlan(progress.stagePlanId);
+      }
+      if (progress?.stagePlanLabel && !activePlanLabel) {
+        setActivePlanLabel(progress.stagePlanLabel);
+      }
+      if (progress?.steps && assembly.state !== "queued") {
+        const totalSteps = progress.steps.length;
+        const currentIdx = progress.currentIndex ?? totalSteps;
+        const isCompleted = assembly.state === "completed" || assembly.state === "exported";
+        const isFailed = assembly.state === "failed";
+
+        const failedIdx = isFailed
+          ? (currentIdx >= totalSteps ? totalSteps - 1 : currentIdx)
+          : -1;
+
+        setStepProgress(progress.steps.map((sid: string, idx: number) => {
+          if (isCompleted) return { index: idx, stepId: sid, label: stepLabel(sid), status: "success" as const };
+          if (isFailed) {
+            if (idx < failedIdx) return { index: idx, stepId: sid, label: stepLabel(sid), status: "success" as const };
+            if (idx === failedIdx) return { index: idx, stepId: sid, label: stepLabel(sid), status: "error" as const };
+            return { index: idx, stepId: sid, label: stepLabel(sid), status: "pending" as const };
+          }
+          if (idx < currentIdx) return { index: idx, stepId: sid, label: stepLabel(sid), status: "success" as const };
+          return { index: idx, stepId: sid, label: stepLabel(sid), status: "pending" as const };
+        }));
+      }
+    }
+  }, [assembly]);
+
   const stagePlans = presetsData?.stage_plans
     ? Object.entries(presetsData.stage_plans)
     : [];
@@ -248,6 +293,7 @@ export default function AssemblyPage() {
     setIsRunning(true);
     setStreamOutput("");
     setStepProgress([]);
+    setForceShowSelector(false);
 
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
@@ -267,6 +313,9 @@ export default function AssemblyPage() {
           status: "pending" as const,
         }));
         setStepProgress(steps);
+        if (data.stagePlanLabel) {
+          setActivePlanLabel(data.stagePlanLabel);
+        }
       } catch {}
     });
 
@@ -419,36 +468,97 @@ export default function AssemblyPage() {
           <CardTitle className="text-sm">Pipeline</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Select
-              value={selectedStagePlan}
-              onValueChange={setSelectedStagePlan}
-              disabled={isRunning}
-            >
-              <SelectTrigger className="w-72" data-testid="select-stage-plan">
-                <SelectValue placeholder="What do you want to run?" />
-              </SelectTrigger>
-              <SelectContent>
-                {stagePlans.map(([id, plan]) => (
-                  <SelectItem key={id} value={id} data-testid={`select-item-plan-${id}`}>
-                    {getStagePlanLabel(id, plan)} ({getStagePlanSteps(plan).length} steps)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={runPipeline}
-              disabled={!selectedStagePlan || isRunning}
-              data-testid="button-run-pipeline"
-            >
-              {isRunning ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Play className="w-4 h-4" />
-              )}
-              {isRunning ? "Running..." : "Run Pipeline"}
-            </Button>
-          </div>
+          {(() => {
+            const hasRun = stepProgress.length > 0 || (!forceShowSelector && assembly.state !== "queued" && assembly.progress?.steps);
+            const resolvedPlanLabel = activePlanLabel || (assembly.progress as AssemblyProgress)?.stagePlanLabel || selectedStagePlan;
+            const failedStep = stepProgress.find(s => s.status === "error");
+            const pipelineFinished = !isRunning && stepProgress.length > 0 && stepProgress.every(s => s.status !== "pending" && s.status !== "running");
+            const pipelineSucceeded = pipelineFinished && !failedStep;
+            const pipelineFailed = pipelineFinished && !!failedStep;
+            const showSelector = !hasRun && !isRunning;
+
+            return (
+              <div className="flex items-center gap-3 flex-wrap">
+                {showSelector ? (
+                  <>
+                    <Select
+                      value={selectedStagePlan}
+                      onValueChange={setSelectedStagePlan}
+                    >
+                      <SelectTrigger className="w-72" data-testid="select-stage-plan">
+                        <SelectValue placeholder="What do you want to run?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stagePlans.map(([id, plan]) => (
+                          <SelectItem key={id} value={id} data-testid={`select-item-plan-${id}`}>
+                            {getStagePlanLabel(id, plan)} ({getStagePlanSteps(plan).length} steps)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={runPipeline}
+                      disabled={!selectedStagePlan}
+                      data-testid="button-run-pipeline"
+                    >
+                      <Play className="w-4 h-4" />
+                      Run Pipeline
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Badge variant="secondary" className="no-default-active-elevate text-xs" data-testid="badge-pipeline-plan">
+                      {resolvedPlanLabel || "Pipeline"}
+                    </Badge>
+                    {isRunning && (
+                      <Badge variant="default" className="no-default-active-elevate bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-transparent text-xs" data-testid="badge-pipeline-running">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        Running
+                      </Badge>
+                    )}
+                    {pipelineFailed && (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setIsRunning(false);
+                          setStepProgress([]);
+                          setStreamOutput("");
+                          setTimeout(() => runPipeline(), 0);
+                        }}
+                        disabled={!selectedStagePlan}
+                        data-testid="button-retry-pipeline"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        Retry
+                      </Button>
+                    )}
+                    {pipelineSucceeded && (
+                      <Badge variant="success" className="no-default-active-elevate text-xs" data-testid="badge-pipeline-success">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Completed
+                      </Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setStepProgress([]);
+                        setStreamOutput("");
+                        setActivePlanLabel("");
+                        setSelectedStagePlan("");
+                        setForceShowSelector(true);
+                      }}
+                      className="text-xs text-muted-foreground"
+                      disabled={isRunning}
+                      data-testid="button-change-pipeline"
+                    >
+                      Change Pipeline
+                    </Button>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           {stepProgress.length > 0 && (
             <div className="flex items-center gap-1 overflow-x-auto py-2" data-testid="pipeline-stepper">

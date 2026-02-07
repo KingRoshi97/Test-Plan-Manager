@@ -684,13 +684,15 @@ export function registerRoutes(app: Express) {
 
     activeRuns.set(assemblyId, true);
 
+    const stagePlanLabel = !Array.isArray(rawPlan) && rawPlan.label ? rawPlan.label : stagePlanId;
+
     await storage.updateAssembly(assemblyId, {
       state: 'running',
       step: fullSteps[0],
-      progress: { currentIndex: 0, totalSteps: fullSteps.length, steps: fullSteps },
+      progress: { currentIndex: 0, totalSteps: fullSteps.length, steps: fullSteps, stagePlanId, stagePlanLabel },
     });
 
-    res.write(`event: plan\ndata: ${JSON.stringify({ assemblyId, presetId, stagePlan: stagePlanId, steps: fullSteps, modules: presetModules, totalSteps: fullSteps.length })}\n\n`);
+    res.write(`event: plan\ndata: ${JSON.stringify({ assemblyId, presetId, stagePlan: stagePlanId, stagePlanLabel, steps: fullSteps, modules: presetModules, totalSteps: fullSteps.length })}\n\n`);
 
     let aborted = false;
     req.on('close', () => { aborted = true; activeRuns.delete(assemblyId); });
@@ -728,54 +730,57 @@ export function registerRoutes(app: Express) {
           stepBody.module = presetModules.join(',');
         }
 
-        if (stepId === 'lock' && presetModules.length > 0) {
-          const lockStart = Date.now();
-          let lockSucceeded = 0;
-          let lockFailed = 0;
-          let lockStdout = '';
-          let lockStderr = '';
+        const perModuleSteps = ['review', 'draft', 'verify', 'lock'];
+        if (perModuleSteps.includes(stepId) && presetModules.length > 0) {
+          const perModStart = Date.now();
+          let modSucceeded = 0;
+          let modFailed = 0;
+          let modStdout = '';
+          let modStderr = '';
           const failedModules: string[] = [];
 
           for (const mod of presetModules) {
             if (aborted) break;
-            const lockBody = { ...stepBody, module: mod };
-            const lockArgs = step.args(projectName, buildRoot, lockBody);
-            const lockCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+            const modBody = { ...stepBody, module: mod };
+            const modArgs = step.args(projectName, buildRoot, modBody);
+            const modCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
 
             if (!aborted) {
-              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Locking module: ${mod}` })}\n\n`);
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `${step.label} module: ${mod}` })}\n\n`);
             }
 
-            const lockResult = await runSingleStep(step, lockArgs, lockCwd, aborted, (event, data) => {
+            const modResult = await runSingleStep(step, modArgs, modCwd, aborted, (event, data) => {
               if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
             });
 
-            lockStdout += lockResult.stdout;
-            lockStderr += lockResult.stderr;
-            if (lockResult.status === 'success') {
-              lockSucceeded++;
+            modStdout += modResult.stdout;
+            modStderr += modResult.stderr;
+            if (modResult.status === 'success') {
+              modSucceeded++;
             } else {
-              const hasUnknowns = lockResult.stdout.includes('UNKNOWN') || lockResult.stderr.includes('UNKNOWN') || lockResult.stderr.includes('critical unknowns');
-              if (hasUnknowns) {
-                failedModules.push(mod);
+              if (stepId === 'lock') {
+                const hasUnknowns = modResult.stdout.includes('UNKNOWN') || modResult.stderr.includes('UNKNOWN') || modResult.stderr.includes('critical unknowns');
+                if (hasUnknowns) {
+                  failedModules.push(mod);
+                }
               }
-              lockFailed++;
+              modFailed++;
             }
           }
 
-          if (failedModules.length > 0 && !aborted) {
+          if (stepId === 'lock' && failedModules.length > 0 && !aborted) {
             const scanReport = scanAllModulesForUnknowns(PROJECT_ROOT, failedModules);
             const fileList = scanReport.filesWithUnknowns.map(f => `  - ${f.relativePath} (${f.unknownCount} UNKNOWNs in: ${f.sections.join(', ')})`).join('\n');
             res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `\n--- UNKNOWN Content Detected ---\nLock failed for ${failedModules.length} module(s) due to UNKNOWN placeholders.\nTotal UNKNOWNs: ${scanReport.totalUnknowns}\nFiles needing content:\n${fileList}\n\nThe workspace agent can fill these files using the project description. Use the /api/scan-unknowns endpoint to get the full report.` })}\n\n`);
           }
 
           const combinedResult: RunResult = {
-            status: lockFailed === 0 ? 'success' : 'error',
+            status: modFailed === 0 ? 'success' : 'error',
             command: step.label,
-            exitCode: lockFailed === 0 ? 0 : 1,
-            stdout: lockStdout,
-            stderr: lockStderr,
-            durationMs: Date.now() - lockStart,
+            exitCode: modFailed === 0 ? 0 : 1,
+            stdout: modStdout,
+            stderr: modStderr,
+            durationMs: Date.now() - perModStart,
           };
 
           persistRunResult(stepId, step, projectName, combinedResult).catch(() => {});
@@ -783,8 +788,12 @@ export function registerRoutes(app: Express) {
           res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: combinedResult.status, exitCode: combinedResult.exitCode, durationMs: combinedResult.durationMs })}\n\n`);
 
           if (combinedResult.status === 'error') {
-            lastError = `Lock failed for some modules`;
-            break;
+            if (stepId === 'verify') {
+              verifyPassed = false;
+            } else {
+              lastError = `${step.label} failed for some modules (${modFailed} failed, ${modSucceeded} succeeded)`;
+              break;
+            }
           }
           continue;
         }
@@ -1174,69 +1183,76 @@ export function registerRoutes(app: Express) {
           continue;
         }
 
-        if (stepId === 'lock' && presetModules.length > 0) {
-          const lockStart = Date.now();
-          let lockSucceeded = 0;
-          let lockFailed = 0;
-          let lockStdout = '';
-          let lockStderr = '';
+        const perModuleSteps2 = ['review', 'draft', 'verify', 'lock'];
+        if (perModuleSteps2.includes(stepId) && presetModules.length > 0) {
+          const perModStart = Date.now();
+          let modSucceeded = 0;
+          let modFailed = 0;
+          let modStdout = '';
+          let modStderr = '';
           const failedModules2: string[] = [];
 
           for (const mod of presetModules) {
             if (aborted) break;
-            const lockBody = { ...stepBody, module: mod };
-            const lockArgs = step.args(projectName, buildRoot, lockBody);
-            const lockCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
+            const modBody = { ...stepBody, module: mod };
+            const modArgs = step.args(projectName, buildRoot, modBody);
+            const modCwd = step.cwd ? step.cwd(buildRoot) : PROJECT_ROOT;
 
             if (!aborted) {
-              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Locking module: ${mod}` })}\n\n`);
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `${step.label} module: ${mod}` })}\n\n`);
             }
 
-            const lockResult = await runSingleStep(step, lockArgs, lockCwd, aborted, (event, data) => {
+            const modResult = await runSingleStep(step, modArgs, modCwd, aborted, (event, data) => {
               if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
             });
 
-            lockStdout += lockResult.stdout;
-            lockStderr += lockResult.stderr;
-            if (lockResult.status === 'success') {
-              lockSucceeded++;
+            modStdout += modResult.stdout;
+            modStderr += modResult.stderr;
+            if (modResult.status === 'success') {
+              modSucceeded++;
             } else {
-              const hasUnknowns = lockResult.stdout.includes('UNKNOWN') || lockResult.stderr.includes('UNKNOWN') || lockResult.stderr.includes('critical unknowns');
-              if (hasUnknowns) {
-                failedModules2.push(mod);
+              if (stepId === 'lock') {
+                const hasUnknowns = modResult.stdout.includes('UNKNOWN') || modResult.stderr.includes('UNKNOWN') || modResult.stderr.includes('critical unknowns');
+                if (hasUnknowns) {
+                  failedModules2.push(mod);
+                }
               }
-              lockFailed++;
+              modFailed++;
               if (!aborted) {
-                res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Lock for ${mod}: failed (exit ${lockResult.exitCode})` })}\n\n`);
+                res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `${step.label} for ${mod}: failed (exit ${modResult.exitCode})` })}\n\n`);
               }
             }
           }
 
-          if (failedModules2.length > 0 && !aborted) {
+          if (stepId === 'lock' && failedModules2.length > 0 && !aborted) {
             const scanReport = scanAllModulesForUnknowns(PROJECT_ROOT, failedModules2);
             const fileList = scanReport.filesWithUnknowns.map(f => `  - ${f.relativePath} (${f.unknownCount} UNKNOWNs in: ${f.sections.join(', ')})`).join('\n');
             res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `\n--- UNKNOWN Content Detected ---\nLock failed for ${failedModules2.length} module(s) due to UNKNOWN placeholders.\nTotal UNKNOWNs: ${scanReport.totalUnknowns}\nFiles needing content:\n${fileList}\n\nThe workspace agent can fill these files using the project description. Use the /api/scan-unknowns endpoint to get the full report.` })}\n\n`);
           }
 
           const combinedResult: RunResult = {
-            status: lockFailed === 0 ? 'success' : 'error',
+            status: modFailed === 0 ? 'success' : 'error',
             command: step.label,
-            exitCode: lockFailed === 0 ? 0 : 1,
-            stdout: lockStdout,
-            stderr: lockStderr,
-            durationMs: Date.now() - lockStart,
+            exitCode: modFailed === 0 ? 0 : 1,
+            stdout: modStdout,
+            stderr: modStderr,
+            durationMs: Date.now() - perModStart,
           };
 
           persistRunResult(stepId, step, projectName, combinedResult).catch(() => {});
           allResults.push(combinedResult);
 
           if (!aborted) {
-            const reason = `${lockSucceeded} locked, ${lockFailed} failed`;
+            const reason = `${modSucceeded} succeeded, ${modFailed} failed`;
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: `${step.label} (${presetModules.length} modules)`, status: combinedResult.status, exitCode: combinedResult.exitCode, durationMs: combinedResult.durationMs, reason })}\n\n`);
           }
 
-          if (combinedResult.status === 'error' && !body.continueOnError) {
-            break;
+          if (combinedResult.status === 'error') {
+            if (stepId === 'verify') {
+              verifyPassed = false;
+            } else if (!body.continueOnError) {
+              break;
+            }
           }
           continue;
         }
