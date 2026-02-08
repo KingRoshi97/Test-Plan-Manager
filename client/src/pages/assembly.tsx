@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   Play,
@@ -28,6 +29,11 @@ import {
   ChevronRight,
   Terminal,
   RotateCcw,
+  FileInput,
+  GitCompare,
+  RefreshCw,
+  Rocket,
+  Trash2,
 } from "lucide-react";
 
 interface AssemblyProgress {
@@ -184,6 +190,8 @@ export default function AssemblyPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [activePlanLabel, setActivePlanLabel] = useState<string>("");
   const [forceShowSelector, setForceShowSelector] = useState(false);
+  const [importSourcePath, setImportSourcePath] = useState("");
+  const [showActions, setShowActions] = useState(false);
   const terminalRef = useRef<HTMLPreElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -238,6 +246,26 @@ export default function AssemblyPage() {
     },
   });
 
+  const runSingleStep = useMutation({
+    mutationFn: async (params: { stepId: string; body?: Record<string, unknown> }) => {
+      const res = await apiRequest(`/api/pipeline/${params.stepId}`, {
+        method: "POST",
+        body: JSON.stringify({ projectName: assembly?.projectName, ...params.body }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return res;
+    },
+    onSuccess: (_data, variables) => {
+      toast({ title: `${stepLabel(variables.stepId)} completed` });
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/status", assembly?.projectName] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pipeline-runs", assembly?.projectName] });
+    },
+    onError: (_err, variables) => {
+      toast({ title: `${stepLabel(variables.stepId)} failed`, variant: "destructive" });
+    },
+  });
+
   useEffect(() => {
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
@@ -287,7 +315,7 @@ export default function AssemblyPage() {
     ? Object.entries(presetsData.stage_plans)
     : [];
 
-  const runPipeline = () => {
+  const runPipeline = (startFromStep?: string) => {
     if (!assemblyId || !selectedStagePlan || isRunning) return;
 
     setIsRunning(true);
@@ -299,7 +327,10 @@ export default function AssemblyPage() {
       eventSourceRef.current.close();
     }
 
-    const url = `/api/assemblies/${assemblyId}/run/stream?stagePlan=${encodeURIComponent(selectedStagePlan)}`;
+    let url = `/api/assemblies/${assemblyId}/run/stream?stagePlan=${encodeURIComponent(selectedStagePlan)}`;
+    if (startFromStep) {
+      url += `&startFromStep=${encodeURIComponent(startFromStep)}`;
+    }
     const es = new EventSource(url);
     eventSourceRef.current = es;
 
@@ -497,7 +528,7 @@ export default function AssemblyPage() {
                       </SelectContent>
                     </Select>
                     <Button
-                      onClick={runPipeline}
+                      onClick={() => runPipeline()}
                       disabled={!selectedStagePlan}
                       data-testid="button-run-pipeline"
                     >
@@ -516,21 +547,38 @@ export default function AssemblyPage() {
                         Running
                       </Badge>
                     )}
-                    {pipelineFailed && (
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setIsRunning(false);
-                          setStepProgress([]);
-                          setStreamOutput("");
-                          setTimeout(() => runPipeline(), 0);
-                        }}
-                        disabled={!selectedStagePlan}
-                        data-testid="button-retry-pipeline"
-                      >
-                        <RotateCcw className="w-4 h-4" />
-                        Retry
-                      </Button>
+                    {pipelineFailed && failedStep && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setIsRunning(false);
+                            setStepProgress([]);
+                            setStreamOutput("");
+                            setTimeout(() => runPipeline(failedStep.stepId), 0);
+                          }}
+                          disabled={!selectedStagePlan}
+                          data-testid="button-retry-from-failed"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Retry from {failedStep.label}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setIsRunning(false);
+                            setStepProgress([]);
+                            setStreamOutput("");
+                            setTimeout(() => runPipeline(), 0);
+                          }}
+                          disabled={!selectedStagePlan}
+                          data-testid="button-retry-pipeline"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Restart All
+                        </Button>
+                      </>
                     )}
                     {pipelineSucceeded && (
                       <Badge variant="success" className="no-default-active-elevate text-xs" data-testid="badge-pipeline-success">
@@ -619,6 +667,146 @@ export default function AssemblyPage() {
           )}
         </CardContent>
       </Card>
+
+      {assembly.wsExists && (
+        <div data-testid="section-actions">
+          <button
+            onClick={() => setShowActions(!showActions)}
+            className="flex items-center gap-2 text-sm text-muted-foreground mb-3"
+            data-testid="button-toggle-actions"
+          >
+            {showActions ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            Individual Actions
+          </button>
+
+          {showActions && (
+            <Card>
+              <CardContent className="pt-4 space-y-4">
+                <div className="space-y-3">
+                  <div className="text-xs font-medium text-muted-foreground">Import & Analysis</div>
+                  <div className="flex items-end gap-2 flex-wrap">
+                    <div className="flex-1 min-w-48">
+                      <label className="text-xs text-muted-foreground mb-1 block">Source Repository Path</label>
+                      <Input
+                        placeholder="/path/to/existing/repo"
+                        value={importSourcePath}
+                        onChange={(e) => setImportSourcePath(e.target.value)}
+                        data-testid="input-import-source-path"
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "import", body: { sourcePath: importSourcePath } })}
+                      disabled={runSingleStep.isPending || !importSourcePath}
+                      data-testid="button-action-import"
+                    >
+                      {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileInput className="w-4 h-4" />}
+                      Import
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "reconcile" })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-reconcile"
+                    >
+                      {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <GitCompare className="w-4 h-4" />}
+                      Reconcile
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3 space-y-3">
+                  <div className="text-xs font-medium text-muted-foreground">Build & Deploy</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "iterate", body: { allowApply: true } })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-iterate"
+                    >
+                      {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                      Iterate
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "build-plan" })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-build-plan"
+                    >
+                      Build Plan
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "build-exec" })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-build-exec"
+                    >
+                      Build Exec
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "deploy" })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-deploy"
+                    >
+                      <Rocket className="w-4 h-4" />
+                      Deploy
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "clean" })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-clean"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Clean
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3 space-y-3">
+                  <div className="text-xs font-medium text-muted-foreground">Analysis</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "status" })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-status"
+                    >
+                      Status
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "next" })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-next"
+                    >
+                      Next Steps
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "activate" })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-activate"
+                    >
+                      Activate
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {modules.length > 0 && (
         <Card data-testid="card-module-grid">

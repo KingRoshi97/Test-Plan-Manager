@@ -274,6 +274,25 @@ const pipelineSteps: Record<string, PipelineStep> = {
     group: 'build',
     desc: 'Execute build',
   },
+  'build-exec': {
+    cmd: 'npx',
+    args: (pn, _br, body) => {
+      const a = ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-build-exec.ts'), '--build-root', WORKSPACES_DIR, '--project-name', pn];
+      if (body.dryRun) {
+        a.push('--dry-run');
+      } else {
+        a.push('--apply');
+        const manifestPath = path.join(WORKSPACES_DIR, pn, 'registry', 'build_plan.json');
+        a.push('--manifest', manifestPath);
+      }
+      a.push('--json');
+      return a;
+    },
+    label: 'Build Exec',
+    cwd: () => PROJECT_ROOT,
+    group: 'build',
+    desc: 'Execute build plan',
+  },
   'deploy': {
     cmd: 'npx',
     args: (_pn, br) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-deploy.ts'), '--app-path', path.join(br, 'app'), '--build-root', br, '--override', '--json'],
@@ -405,6 +424,7 @@ const STEP_TO_REPORTS: Record<string, string[]> = {
   'lock': ['lock-manifest'],
   'scaffold-app': ['stack-profile'],
   'build-plan': ['build-plan'],
+  'build-exec': ['build-exec'],
   'iterate': ['iteration-state', 'build-exec'],
   'test': ['test'],
   'activate': [],
@@ -745,6 +765,7 @@ export function registerRoutes(app: Express) {
     }
 
     const stagePlanId = resolveStagePlanId((req.query.stagePlan as string) || 'docs:full');
+    const startFromStep = req.query.startFromStep as string | undefined;
     const presetsData = loadPresets();
     if (!presetsData) {
       res.status(500).json({ error: 'Could not load presets.json' });
@@ -777,6 +798,12 @@ export function registerRoutes(app: Express) {
       }
     }
 
+    let skipUntilIndex = 0;
+    if (startFromStep) {
+      const idx = fullSteps.indexOf(startFromStep);
+      if (idx > 0) skipUntilIndex = idx;
+    }
+
     if (fullSteps.length === 0) {
       res.status(400).json({ error: 'No valid steps for this stage plan' });
       return;
@@ -807,7 +834,7 @@ export function registerRoutes(app: Express) {
       progress: { currentIndex: 0, totalSteps: fullSteps.length, steps: fullSteps, stagePlanId, stagePlanLabel },
     });
 
-    res.write(`event: plan\ndata: ${JSON.stringify({ assemblyId, presetId, stagePlan: stagePlanId, stagePlanLabel, steps: fullSteps, modules: presetModules, totalSteps: fullSteps.length })}\n\n`);
+    res.write(`event: plan\ndata: ${JSON.stringify({ assemblyId, presetId, stagePlan: stagePlanId, stagePlanLabel, steps: fullSteps, modules: presetModules, totalSteps: fullSteps.length, skipUntilIndex })}\n\n`);
 
     let aborted = false;
     req.on('close', () => { aborted = true; activeRuns.delete(assemblyId); });
@@ -822,6 +849,11 @@ export function registerRoutes(app: Express) {
         if (aborted) break;
         const stepId = fullSteps[i];
         const step = pipelineSteps[stepId];
+
+        if (i < skipUntilIndex) {
+          res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'Previously completed' })}\n\n`);
+          continue;
+        }
 
         await storage.updateAssembly(assemblyId as string, {
           step: stepId,
@@ -929,6 +961,14 @@ export function registerRoutes(app: Express) {
 
         if (stepId === 'scaffold-app' && result.status === 'success') {
           writeStageMarker(buildRoot, 'scaffold-app', 'success');
+        }
+
+        if (stepId === 'build-plan') {
+          writeStageMarker(buildRoot, 'build-plan', result.status === 'success' ? 'success' : 'failed');
+        }
+
+        if (stepId === 'build-exec') {
+          writeStageMarker(buildRoot, 'build-exec', result.status === 'success' ? 'success' : 'failed');
         }
 
         if (stepId === 'test') {
@@ -1058,6 +1098,30 @@ export function registerRoutes(app: Express) {
       res.json(wsInfos);
     } catch {
       res.json([]);
+    }
+  });
+
+  app.delete('/api/workspaces/:projectName', async (req: Request, res: Response) => {
+    const projectName = req.params.projectName as string;
+    if (!projectName || /[\/\\]/.test(projectName) || projectName === '.' || projectName === '..') {
+      res.status(400).json({ error: 'Invalid projectName' });
+      return;
+    }
+    const projectPath = getProjectPath(projectName);
+    const resolvedPath = path.resolve(projectPath);
+    const resolvedWsDir = path.resolve(WORKSPACES_DIR);
+    if (!resolvedPath.startsWith(resolvedWsDir + path.sep)) {
+      res.status(400).json({ error: 'Invalid workspace path' });
+      return;
+    }
+    try {
+      if (fs.existsSync(resolvedPath)) {
+        fs.rmSync(resolvedPath, { recursive: true, force: true });
+      }
+      await storage.deleteWorkspace(projectName);
+      res.json({ status: 'deleted', projectName });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to delete workspace' });
     }
   });
 
@@ -1493,6 +1557,14 @@ export function registerRoutes(app: Express) {
 
         if (stepId === 'scaffold-app' && result.status === 'success') {
           writeStageMarker(buildRoot, 'scaffold-app', 'success');
+        }
+
+        if (stepId === 'build-plan') {
+          writeStageMarker(buildRoot, 'build-plan', result.status === 'success' ? 'success' : 'failed');
+        }
+
+        if (stepId === 'build-exec') {
+          writeStageMarker(buildRoot, 'build-exec', result.status === 'success' ? 'success' : 'failed');
         }
 
         if (stepId === 'test') {
