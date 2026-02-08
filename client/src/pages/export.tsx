@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, Loader2, FolderTree } from "lucide-react";
+import { Package, Loader2, FolderTree, Download } from "lucide-react";
 import type { WorkspaceInfo } from "@shared/schema";
 
 interface EnrichedAssembly {
@@ -16,7 +17,19 @@ interface EnrichedAssembly {
   hasManifest: boolean;
 }
 
+function triggerDownload(assemblyId: string, filename?: string) {
+  const url = `/api/assemblies/${assemblyId}/download${filename ? `?file=${encodeURIComponent(filename)}` : ""}`;
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || "agent_kit.zip";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 export default function ExportPage() {
+  const [exportingId, setExportingId] = useState<string | null>(null);
+
   const { data: workspaces = [], isLoading: wsLoading } = useQuery<WorkspaceInfo[]>({
     queryKey: ["/api/workspaces"],
   });
@@ -26,17 +39,33 @@ export default function ExportPage() {
   });
 
   const exportMutation = useMutation({
-    mutationFn: (assemblyId: string) =>
-      apiRequest(`/api/assemblies/${assemblyId}/export`, {
+    mutationFn: async (assemblyId: string) => {
+      setExportingId(assemblyId);
+      const response = await apiRequest(`/api/assemblies/${assemblyId}/export`, {
         method: "POST",
         body: JSON.stringify({ format: "zip" }),
-      }),
-    onSuccess: () => {
+      });
+      return response;
+    },
+    onSuccess: async (data: any, assemblyId: string) => {
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
-      toast({ title: "Export completed successfully" });
+
+      if (data.status === "success") {
+        const zipFilename = data.zipPath ? data.zipPath.split("/").pop() : undefined;
+        toast({ title: "Export completed", description: "Starting download..." });
+        setTimeout(() => triggerDownload(assemblyId, zipFilename), 500);
+      } else {
+        toast({
+          title: "Export completed with issues",
+          description: data.stderr?.slice(0, 200) || "The package step did not succeed.",
+          variant: "destructive",
+        });
+      }
+      setExportingId(null);
     },
     onError: (err: Error) => {
       toast({ title: "Export failed", description: err.message, variant: "destructive" });
+      setExportingId(null);
     },
   });
 
@@ -70,6 +99,7 @@ export default function ExportPage() {
           {workspaces.map((ws) => {
             const assembly = getAssemblyForWorkspace(ws.projectName);
             const canExport = ws.hasApp || ws.hasManifest;
+            const isExporting = exportingId === assembly?.id && exportMutation.isPending;
 
             return (
               <Card key={ws.projectName} data-testid={`card-export-${ws.projectName}`}>
@@ -91,23 +121,34 @@ export default function ExportPage() {
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
                     {assembly?.state === "exported" && (
-                      <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-transparent" data-testid={`badge-exported-${ws.projectName}`}>Exported</Badge>
+                      <>
+                        <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-transparent" data-testid={`badge-exported-${ws.projectName}`}>Exported</Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => triggerDownload(assembly.id)}
+                          data-testid={`button-download-${ws.projectName}`}
+                        >
+                          <Download className="w-4 h-4" />
+                          Download
+                        </Button>
+                      </>
                     )}
                     {canExport && assembly?.id ? (
                       <Button
                         size="sm"
                         onClick={() => exportMutation.mutate(assembly.id)}
-                        disabled={exportMutation.isPending}
+                        disabled={isExporting}
                         data-testid={`button-export-${ws.projectName}`}
                       >
-                        {exportMutation.isPending ? (
+                        {isExporting ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <Package className="w-4 h-4" />
                         )}
-                        Export
+                        {assembly?.state === "exported" ? "Re-export" : "Export"}
                       </Button>
                     ) : !canExport ? (
                       <span className="text-xs text-muted-foreground" data-testid={`text-no-export-${ws.projectName}`}>
