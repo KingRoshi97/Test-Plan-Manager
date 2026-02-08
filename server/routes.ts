@@ -2,6 +2,8 @@ import { type Express, type Request, type Response } from 'express';
 import { spawn, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import multer from 'multer';
+import AdmZip from 'adm-zip';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly } from '../shared/schema.js';
 import { storage } from './storage.js';
 import { scanAllModulesForUnknowns, fillAllModulesUnknowns, findNextTarget, getAllTargets, generateQuestionsForTarget, fillFileWithContext, cascadeFill, upgradeDocumentWithAI, generateUpgradeSuggestions } from './ai-content-fill.js';
@@ -926,6 +928,118 @@ export function registerRoutes(app: Express) {
       });
     } catch (err: any) {
       res.status(500).json({ error: err?.message || 'Failed to fetch assembly' });
+    }
+  });
+
+  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+
+  const TEXT_EXTENSIONS = new Set([
+    '.txt', '.md', '.json', '.js', '.ts', '.jsx', '.tsx', '.css', '.scss', '.less',
+    '.html', '.htm', '.xml', '.svg', '.yaml', '.yml', '.toml', '.ini', '.cfg',
+    '.sh', '.bash', '.zsh', '.fish', '.bat', '.cmd', '.ps1',
+    '.py', '.rb', '.go', '.rs', '.java', '.kt', '.swift', '.c', '.cpp', '.h', '.hpp',
+    '.cs', '.php', '.lua', '.r', '.sql', '.graphql', '.gql',
+    '.env', '.gitignore', '.dockerignore', '.editorconfig', '.prettierrc', '.eslintrc',
+    '.lock', '.csv', '.tsv', '.log', '.conf', '.properties', '.gradle',
+    '.makefile', '.cmake', '.dockerfile',
+    '.mdx', '.astro', '.vue', '.svelte',
+  ]);
+
+  const SKIP_DIRS = new Set(['node_modules', '.git', '__pycache__', '.next', 'dist', '.cache', 'coverage', '.vscode', '.idea']);
+
+  function isTextFile(filename: string): boolean {
+    const ext = path.extname(filename).toLowerCase();
+    if (TEXT_EXTENSIONS.has(ext)) return true;
+    const base = path.basename(filename).toLowerCase();
+    return ['makefile', 'dockerfile', 'rakefile', 'gemfile', 'procfile', 'readme', 'license', 'changelog', 'contributing'].includes(base);
+  }
+
+  function shouldSkipEntry(entryPath: string): boolean {
+    const parts = entryPath.split('/');
+    return parts.some(p => SKIP_DIRS.has(p));
+  }
+
+  const MAX_TOTAL_UNCOMPRESSED = 200 * 1024 * 1024;
+  const MAX_ENTRIES = 5000;
+
+  function sanitizeEntryName(name: string): string | null {
+    const normalized = name.replace(/\\/g, '/');
+    if (normalized.includes('..') || path.isAbsolute(normalized)) return null;
+    const cleaned = normalized.replace(/^\/+/, '');
+    if (cleaned.length === 0) return null;
+    return cleaned;
+  }
+
+  app.post('/api/upload-context-zip', upload.single('zipfile'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: 'No file uploaded' });
+        return;
+      }
+
+      const zip = new AdmZip(req.file.buffer);
+      const entries = zip.getEntries();
+
+      if (entries.length > MAX_ENTRIES) {
+        res.status(400).json({ error: `Zip contains too many entries (${entries.length}). Maximum is ${MAX_ENTRIES}.` });
+        return;
+      }
+
+      const parts: string[] = [];
+      let fileCount = 0;
+      let skippedCount = 0;
+      let totalSize = 0;
+
+      for (const entry of entries) {
+        if (entry.isDirectory) continue;
+
+        const safeName = sanitizeEntryName(entry.entryName);
+        if (!safeName) {
+          skippedCount++;
+          continue;
+        }
+
+        if (shouldSkipEntry(safeName)) {
+          skippedCount++;
+          continue;
+        }
+
+        if (!isTextFile(safeName)) {
+          skippedCount++;
+          continue;
+        }
+
+        if (entry.header.size > 10 * 1024 * 1024) {
+          skippedCount++;
+          continue;
+        }
+
+        totalSize += entry.header.size;
+        if (totalSize > MAX_TOTAL_UNCOMPRESSED) {
+          res.status(400).json({ error: 'Zip contents exceed maximum uncompressed size (200MB). Please upload a smaller archive.' });
+          return;
+        }
+
+        try {
+          const content = entry.getData().toString('utf8');
+          if (content.length > 0) {
+            parts.push(`--- FILE: ${safeName} ---\n${content}`);
+            fileCount++;
+          }
+        } catch {
+          skippedCount++;
+        }
+      }
+
+      if (fileCount === 0) {
+        res.status(400).json({ error: 'No readable text files found in the zip archive.' });
+        return;
+      }
+
+      const result = parts.join('\n\n');
+      res.json({ content: result, fileCount, skippedCount });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to process zip file' });
     }
   });
 
