@@ -831,3 +831,91 @@ export async function cascadeFill(
 
   return { targetFilled: targetResult, cascadeResults, remainingScan, nextTarget };
 }
+
+export interface UpgradeResult {
+  file: string;
+  status: 'upgraded' | 'skipped' | 'error';
+  error?: string;
+}
+
+function buildUpgradePrompt(
+  fileContent: string,
+  filePath: string,
+  moduleName: string,
+): string {
+  const fileName = path.basename(filePath);
+  const docInfo = detectDocType(fileName);
+
+  return `You are an expert technical writer upgrading a ${docInfo.label} document for a software project.
+
+MODULE/DOMAIN: ${moduleName}
+
+${docInfo.guidance}
+
+Below is the current document. Your task is to UPGRADE its quality:
+1. Make vague or generic content more specific and actionable.
+2. Add missing details where sections are thin.
+3. Improve clarity, consistency, and technical precision.
+4. Ensure all sections are comprehensive and production-ready.
+5. Replace any remaining UNKNOWN placeholders with realistic, specific content.
+6. Keep the existing structure and formatting intact — improve content, not layout.
+7. Do NOT remove existing valid content — only enhance it.
+
+CURRENT DOCUMENT:
+${fileContent}
+
+Return ONLY the upgraded document. Preserve all Markdown formatting, headings, and anchors exactly.`;
+}
+
+export async function upgradeDocumentWithAI(
+  filePath: string,
+  moduleName: string,
+  onProgress?: (message: string) => void,
+): Promise<UpgradeResult> {
+  if (!fs.existsSync(filePath)) {
+    return { file: filePath, status: 'skipped', error: 'File not found' };
+  }
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  if (content.trim().length < 20) {
+    return { file: filePath, status: 'skipped', error: 'File too short to upgrade' };
+  }
+
+  onProgress?.(`Upgrading ${path.basename(filePath)}...`);
+
+  try {
+    const openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+
+    const prompt = buildUpgradePrompt(content, filePath, moduleName);
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a precise technical writer. You upgrade software documentation quality while preserving structure. Return only the upgraded document.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      max_completion_tokens: 8192,
+    });
+
+    const upgraded = response.choices[0]?.message?.content;
+    if (!upgraded) {
+      return { file: filePath, status: 'error', error: 'Empty response from AI' };
+    }
+
+    const cleaned = upgraded.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
+    fs.writeFileSync(filePath, cleaned, 'utf8');
+
+    onProgress?.(`Upgraded ${path.basename(filePath)} successfully`);
+    return { file: filePath, status: 'upgraded' };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    onProgress?.(`Error upgrading ${path.basename(filePath)}: ${msg}`);
+    return { file: filePath, status: 'error', error: msg };
+  }
+}
