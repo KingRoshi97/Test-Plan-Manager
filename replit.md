@@ -21,6 +21,8 @@ This is the first stable release of the AXION system. All core pipeline stages, 
 - **Assembly Upgrade Layers**: Iterative assembly upgrades via revision system — users can add new ideas or critiques after initial pipeline pass, bump revision, and re-run the pipeline non-destructively to produce versioned upgrade kits
 - **Dark/Light Theme**: Full theme support across the dashboard
 - **Path Traversal Protection**: Hardened workspace delete endpoint with input validation
+- **Zip Context Upload**: Paperclip icon on New Assembly form (Vision step) uploads a zip file, extracts ALL text files recursively, and populates the context textarea with full project contents. Includes zip bomb protection, path traversal sanitization, and per-file/total size limits.
+- **Document Inventory Dialogs**: UpgradeDialog (AI suggestions + custom instructions), FileViewerDialog (markdown rendering), AddDocDialog (per-section and per-domain file creation)
 
 ## Overview
 This project develops and tests the AXION documentation-first development system. AXION generates "Agent Kits" for AI-guided software development, aiming to standardize and streamline software project creation through rigorous testing and a well-defined pipeline for documentation and application scaffolding. The system focuses on robust and reliable code generation, ensuring data integrity and consistency across various stages of development. It integrates a web-based dashboard for orchestrating the development pipeline, providing a comprehensive solution for managing project ideas from conception to deployment.
