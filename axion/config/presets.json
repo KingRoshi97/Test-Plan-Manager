@@ -4,7 +4,7 @@
     "docs:full": {
       "label": "Generate Documentation",
       "description": "Create, draft, review, and verify all project documentation.",
-      "steps": ["generate", "seed", "draft", "review", "verify"]
+      "steps": ["generate", "seed", "draft", "content-fill", "review", "verify"]
     },
     "docs:release": {
       "label": "Lock Documentation",
@@ -24,7 +24,7 @@
     "system:full": {
       "label": "Full Pipeline (End-to-End)",
       "description": "Run everything: generate docs, lock them, scaffold and build the app, then deploy and package.",
-      "steps": ["generate", "seed", "draft", "review", "verify", "lock", "scaffold-app", "build", "test", "deploy", "package"]
+      "steps": ["generate", "seed", "draft", "content-fill", "review", "verify", "lock", "scaffold-app", "build", "test", "deploy", "package"]
     },
     "system:import": {
       "label": "Import Existing Project",
