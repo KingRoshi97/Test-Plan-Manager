@@ -722,7 +722,7 @@ export function registerRoutes(app: Express) {
 
   app.post('/api/assemblies', async (req: Request, res: Response) => {
     try {
-      const { projectName, idea, preset, presetId, mode, domains, context, category } = req.body;
+      const { projectName, idea, preset, presetId, mode, domains, context, category, input } = req.body;
       if (!projectName || typeof projectName !== 'string') {
         res.status(400).json({ error: 'projectName is required' });
         return;
@@ -737,6 +737,7 @@ export function registerRoutes(app: Express) {
         domains: domains || null,
         context: context || null,
         category: category || null,
+        input: input || null,
         state: 'queued',
         step: null,
         progress: null,
@@ -744,7 +745,6 @@ export function registerRoutes(app: Express) {
         kit: null,
         kitPath: null,
         logsTail: null,
-        input: null,
         projectPackageId: null,
       });
       res.json(assembly);
@@ -894,13 +894,14 @@ export function registerRoutes(app: Express) {
           try {
             const modulesToFill = presetModules.length > 0 ? presetModules : getAllModulesInWorkspace(buildRoot);
             const idea = (assembly as any).idea || projectName;
-            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Scanning ${modulesToFill.length} modules for UNKNOWN placeholders...` })}\n\n`);
+            const structuredInput = (assembly as any).input as Record<string, string> | null;
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Scanning ${modulesToFill.length} modules for UNKNOWN placeholders...${structuredInput ? ' (with detailed project context)' : ''}` })}\n\n`);
 
             const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea, (msg) => {
               if (!aborted) {
                 res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: msg })}\n\n`);
               }
-            });
+            }, structuredInput);
 
             const cfDuration = Date.now() - cfStart;
             const summary = `Content Fill complete: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
@@ -1269,7 +1270,9 @@ export function registerRoutes(app: Express) {
         try {
           const modulesToFill = getAllModulesInWorkspace(buildRoot);
           const idea = (req.body.idea as string) || projectName;
-          const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea);
+          const assemblyForFill = (await storage.getAssemblies()).find(a => a.projectName === projectName);
+          const structuredInput = (assemblyForFill as any)?.input as Record<string, string> | null;
+          const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea, undefined, structuredInput);
           const cfDuration = Date.now() - cfStart;
           const summary = `Content Fill: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
           const cfResult: RunResult = {
@@ -2349,6 +2352,7 @@ export function registerRoutes(app: Express) {
         : null;
       const projName = projectName || 'project';
       const projectIdea = assembly?.idea || projectName || 'software project';
+      const assemblyStructuredInput = (assembly as any)?.input as Record<string, string> | null;
 
       const result = await cascadeFill(
         scanRoot,
@@ -2357,6 +2361,8 @@ export function registerRoutes(app: Express) {
         projName,
         projectIdea,
         answers || {},
+        undefined,
+        assemblyStructuredInput,
       );
 
       res.json({
