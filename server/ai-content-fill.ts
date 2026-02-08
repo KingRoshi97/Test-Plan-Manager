@@ -2,12 +2,72 @@ import * as fs from 'fs';
 import * as path from 'path';
 import OpenAI from 'openai';
 
+export const DOC_PRIORITY_ORDER = [
+  'RPBS',
+  'REBS',
+  'README',
+  'DDES',
+  'UX_Foundations',
+  'UI_Constraints',
+  'DIM',
+  'SCREENMAP',
+  'TESTPLAN',
+  'COMPONENT_LIBRARY',
+  'COPY_GUIDE',
+  'BELS',
+  'OPEN_QUESTIONS',
+];
+
+function getDocPriority(fileName: string): number {
+  for (let i = 0; i < DOC_PRIORITY_ORDER.length; i++) {
+    if (fileName.startsWith(DOC_PRIORITY_ORDER[i])) return i;
+  }
+  return DOC_PRIORITY_ORDER.length;
+}
+
 export interface UnknownScanResult {
   module: string;
   file: string;
   relativePath: string;
   unknownCount: number;
   sections: string[];
+  docType?: string;
+}
+
+export interface HierarchicalUnknownTarget {
+  file: string;
+  relativePath: string;
+  module: string;
+  docType: string;
+  docTypeLabel: string;
+  priority: number;
+  unknownCount: number;
+  sections: SectionDetail[];
+}
+
+export interface SectionDetail {
+  name: string;
+  unknownCount: number;
+  snippet: string;
+}
+
+export interface GeneratedQuestion {
+  sectionName: string;
+  questions: string[];
+}
+
+export interface QuestionSet {
+  target: HierarchicalUnknownTarget;
+  questions: GeneratedQuestion[];
+  remainingUnknowns: number;
+  totalFilesWithUnknowns: number;
+}
+
+export interface CascadeFillResult {
+  targetFilled: ContentFillResult;
+  cascadeResults: ContentFillResult[];
+  remainingScan: ScanReport;
+  nextTarget: HierarchicalUnknownTarget | null;
 }
 
 export interface ScanReport {
@@ -123,6 +183,23 @@ export function scanAllModulesForUnknowns(
 }
 
 const DOC_TYPE_MAP: Record<string, { label: string; guidance: string }> = {
+  'RPBS': {
+    label: 'Requirements & Product Behavior Specification (RPBS)',
+    guidance: `For RPBS documents:
+   - Product overview should describe the application's core purpose and value proposition.
+   - Target users should define specific personas with realistic demographics and needs.
+   - Feature descriptions should be concrete and actionable, not vague.
+   - Non-functional requirements should have specific, measurable targets.
+   - Business rules should reflect real constraints for this type of application.`,
+  },
+  'REBS': {
+    label: 'Requirements & Entity Behavior Specification (REBS)',
+    guidance: `For REBS documents:
+   - Entity definitions should model the core business objects of this application.
+   - Behaviors should describe realistic state transitions and business rules.
+   - Relationships between entities should reflect actual domain logic.
+   - Validation rules should be specific and enforceable.`,
+  },
   'BELS': {
     label: 'Business Entity Logic Specification (BELS)',
     guidance: `For BELS documents:
@@ -387,4 +464,332 @@ export async function fillAllModulesUnknowns(
     totalFilesErrored: results.filter(r => r.status === 'error').length,
     results,
   };
+}
+
+function getSectionDetails(content: string): SectionDetail[] {
+  const details: SectionDetail[] = [];
+  const sectionRegex = /^## (.+)$/gm;
+  let match;
+  const positions: { name: string; start: number }[] = [];
+
+  while ((match = sectionRegex.exec(content)) !== null) {
+    positions.push({ name: match[1], start: match.index });
+  }
+
+  for (let i = 0; i < positions.length; i++) {
+    const start = positions[i].start;
+    const end = i + 1 < positions.length ? positions[i + 1].start : content.length;
+    const sectionContent = content.substring(start, end);
+    const unkCount = countUnknowns(sectionContent);
+    if (unkCount > 0) {
+      const lines = sectionContent.split('\n').slice(0, 8);
+      details.push({
+        name: positions[i].name,
+        unknownCount: unkCount,
+        snippet: lines.join('\n').substring(0, 400),
+      });
+    }
+  }
+
+  return details;
+}
+
+function discoverAllMdFiles(projectRoot: string): { file: string; module: string; relativePath: string }[] {
+  const results: { file: string; module: string; relativePath: string }[] = [];
+
+  const sourceDocsDir = path.join(projectRoot, 'axion', 'source_docs', 'product');
+  if (fs.existsSync(sourceDocsDir)) {
+    const files = fs.readdirSync(sourceDocsDir).filter(f => f.endsWith('.md'));
+    for (const f of files) {
+      const fullPath = path.join(sourceDocsDir, f);
+      results.push({
+        file: fullPath,
+        module: '_source',
+        relativePath: path.relative(projectRoot, fullPath),
+      });
+    }
+  }
+
+  const domainsDir = path.join(projectRoot, 'axion', 'domains');
+  if (fs.existsSync(domainsDir)) {
+    const modules = fs.readdirSync(domainsDir, { withFileTypes: true })
+      .filter(e => e.isDirectory() && !e.name.startsWith('.'))
+      .map(e => e.name);
+    for (const mod of modules) {
+      const moduleDir = path.join(domainsDir, mod);
+      const mdFiles = getAllMdFilesInModule(moduleDir);
+      for (const f of mdFiles) {
+        results.push({
+          file: f,
+          module: mod,
+          relativePath: path.relative(projectRoot, f),
+        });
+      }
+    }
+  }
+
+  return results;
+}
+
+export function findNextTarget(projectRoot: string): HierarchicalUnknownTarget | null {
+  const allFiles = discoverAllMdFiles(projectRoot);
+  const candidates: HierarchicalUnknownTarget[] = [];
+
+  for (const { file, module, relativePath } of allFiles) {
+    if (!fs.existsSync(file)) continue;
+    const content = fs.readFileSync(file, 'utf8');
+    const unkCount = countUnknowns(content);
+    if (unkCount === 0) continue;
+
+    const fileName = path.basename(file);
+    const docInfo = detectDocType(fileName);
+    const priority = getDocPriority(fileName);
+    const sections = getSectionDetails(content);
+
+    candidates.push({
+      file,
+      relativePath,
+      module,
+      docType: fileName.replace(/\.md$/, '').replace(/_[a-z]+$/, ''),
+      docTypeLabel: docInfo.label,
+      priority,
+      unknownCount: unkCount,
+      sections,
+    });
+  }
+
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => a.priority - b.priority);
+  return candidates[0];
+}
+
+export function getAllTargets(projectRoot: string): HierarchicalUnknownTarget[] {
+  const allFiles = discoverAllMdFiles(projectRoot);
+  const candidates: HierarchicalUnknownTarget[] = [];
+
+  for (const { file, module, relativePath } of allFiles) {
+    if (!fs.existsSync(file)) continue;
+    const content = fs.readFileSync(file, 'utf8');
+    const unkCount = countUnknowns(content);
+    if (unkCount === 0) continue;
+
+    const fileName = path.basename(file);
+    const docInfo = detectDocType(fileName);
+    const priority = getDocPriority(fileName);
+    const sections = getSectionDetails(content);
+
+    candidates.push({
+      file,
+      relativePath,
+      module,
+      docType: fileName.replace(/\.md$/, '').replace(/_[a-z]+$/, ''),
+      docTypeLabel: docInfo.label,
+      priority,
+      unknownCount: unkCount,
+      sections,
+    });
+  }
+
+  candidates.sort((a, b) => a.priority - b.priority);
+  return candidates;
+}
+
+export async function generateQuestionsForTarget(
+  target: HierarchicalUnknownTarget,
+  projectName: string,
+  projectIdea: string,
+): Promise<GeneratedQuestion[]> {
+  const content = fs.readFileSync(target.file, 'utf8');
+  const openai = new OpenAI({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  });
+
+  const sectionsInfo = target.sections
+    .map(s => `- Section "${s.name}" (${s.unknownCount} UNKNOWNs):\n${s.snippet}`)
+    .join('\n\n');
+
+  const prompt = `You are helping a user fill in missing information in a ${target.docTypeLabel} document for the project "${projectName}" (${projectIdea}).
+
+The following sections still have UNKNOWN placeholders that need real information from the user:
+
+${sectionsInfo}
+
+For each section, generate 1-3 clear, specific questions that would help gather the information needed to replace the UNKNOWNs. Questions should be non-technical and easy to understand.
+
+Respond in this exact JSON format (no code fences):
+[
+  {
+    "sectionName": "Section Name Here",
+    "questions": ["Question 1?", "Question 2?"]
+  }
+]`;
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-5-mini',
+    messages: [
+      {
+        role: 'system',
+        content: 'You generate targeted questions to gather real project information from users. Always respond with valid JSON only, no markdown code fences.',
+      },
+      { role: 'user', content: prompt },
+    ],
+    max_completion_tokens: 2048,
+  });
+
+  const raw = response.choices[0]?.message?.content || '[]';
+  const cleaned = raw.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
+  try {
+    return JSON.parse(cleaned) as GeneratedQuestion[];
+  } catch {
+    return target.sections.map(s => ({
+      sectionName: s.name,
+      questions: [`What specific information should go in the "${s.name}" section for this project?`],
+    }));
+  }
+}
+
+function buildContextAwareFillPrompt(
+  fileContent: string,
+  filePath: string,
+  projectName: string,
+  projectIdea: string,
+  moduleName: string,
+  userAnswers: Record<string, string>,
+  parentContext: string,
+): string {
+  const fileName = path.basename(filePath);
+  const docInfo = detectDocType(fileName);
+
+  const answersBlock = Object.entries(userAnswers)
+    .map(([section, answer]) => `Section "${section}": ${answer}`)
+    .join('\n');
+
+  return `You are an expert software architect filling out a ${docInfo.label} document for a software project.
+
+PROJECT NAME: ${projectName}
+PROJECT IDEA: ${projectIdea}
+MODULE/DOMAIN: ${moduleName}
+
+${parentContext ? `CONTEXT FROM HIGHER-LEVEL DOCUMENTS (use this to inform your fills):\n${parentContext}\n` : ''}
+${answersBlock ? `USER-PROVIDED CONTEXT (use this information directly):\n${answersBlock}\n` : ''}
+
+Below is the current document that has UNKNOWN placeholders. Your task is to replace every instance of "UNKNOWN" with realistic, project-specific content.
+
+Rules:
+1. Replace EVERY "UNKNOWN" with specific, meaningful content.
+2. When user-provided context is available for a section, use that information directly.
+3. Keep the exact same Markdown structure, headings, and table formatting.
+4. ${docInfo.guidance}
+5. Do NOT add new sections or remove existing ones.
+6. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+
+CURRENT DOCUMENT:
+${fileContent}
+
+Return the complete filled document with all UNKNOWNs replaced:`;
+}
+
+export async function fillFileWithContext(
+  filePath: string,
+  projectName: string,
+  projectIdea: string,
+  moduleName: string,
+  userAnswers: Record<string, string>,
+  parentContext: string,
+  onProgress?: (message: string) => void,
+): Promise<ContentFillResult> {
+  if (!fs.existsSync(filePath)) {
+    return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0, error: 'File not found' };
+  }
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  const unknownsBefore = countUnknowns(content);
+  if (unknownsBefore === 0) {
+    return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0 };
+  }
+
+  onProgress?.(`Filling ${path.basename(filePath)} with user context (${unknownsBefore} UNKNOWNs)...`);
+
+  try {
+    const openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+
+    const prompt = buildContextAwareFillPrompt(content, filePath, projectName, projectIdea, moduleName, userAnswers, parentContext);
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5-mini',
+      messages: [
+        { role: 'system', content: 'You are a precise document editor. You fill in placeholder content in software specification documents using the user-provided context. You return only the filled document, preserving all Markdown formatting exactly.' },
+        { role: 'user', content: prompt },
+      ],
+      max_completion_tokens: 4096,
+    });
+
+    const filledContent = response.choices[0]?.message?.content;
+    if (!filledContent) {
+      return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter: unknownsBefore, error: 'Empty response from AI' };
+    }
+
+    const cleaned = filledContent.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
+    const unknownsAfter = countUnknowns(cleaned);
+    fs.writeFileSync(filePath, cleaned, 'utf8');
+
+    onProgress?.(`Filled ${path.basename(filePath)}: ${unknownsBefore} → ${unknownsAfter} UNKNOWNs`);
+    return { file: filePath, module: moduleName, status: 'filled', unknownsBefore, unknownsAfter };
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    onProgress?.(`Error filling ${path.basename(filePath)}: ${errMsg}`);
+    return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter: unknownsBefore, error: errMsg };
+  }
+}
+
+export async function cascadeFill(
+  projectRoot: string,
+  targetFile: string,
+  targetModule: string,
+  projectName: string,
+  projectIdea: string,
+  userAnswers: Record<string, string>,
+  onProgress?: (message: string) => void,
+): Promise<CascadeFillResult> {
+  const filledContent = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, 'utf8') : '';
+  const parentContext = filledContent.substring(0, 3000);
+
+  const targetResult = await fillFileWithContext(
+    targetFile, projectName, projectIdea, targetModule, userAnswers, '', onProgress,
+  );
+
+  const updatedParentContent = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, 'utf8').substring(0, 3000) : '';
+
+  onProgress?.('Running cascade pass across all documents...');
+  const cascadeResults: ContentFillResult[] = [];
+  const allFiles = discoverAllMdFiles(projectRoot);
+
+  for (const { file, module } of allFiles) {
+    if (file === targetFile) continue;
+    if (!fs.existsSync(file)) continue;
+    const content = fs.readFileSync(file, 'utf8');
+    if (countUnknowns(content) === 0) continue;
+
+    const result = await fillFileWithContext(
+      file, projectName, projectIdea, module, {}, updatedParentContent, onProgress,
+    );
+    cascadeResults.push(result);
+  }
+
+  const domainsDir = path.join(projectRoot, 'axion', 'domains');
+  let moduleList: string[] = [];
+  if (fs.existsSync(domainsDir)) {
+    moduleList = fs.readdirSync(domainsDir, { withFileTypes: true })
+      .filter(e => e.isDirectory() && !e.name.startsWith('.'))
+      .map(e => e.name);
+  }
+  const remainingScan = scanAllModulesForUnknowns(projectRoot, moduleList);
+  const nextTarget = findNextTarget(projectRoot);
+
+  return { targetFilled: targetResult, cascadeResults, remainingScan, nextTarget };
 }
