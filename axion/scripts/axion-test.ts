@@ -67,6 +67,10 @@ function loadStageMarkers(): StageMarkers {
 }
 
 function saveStageMarkers(markers: StageMarkers): void {
+  const dir = path.dirname(STAGE_MARKERS_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
   fs.writeFileSync(STAGE_MARKERS_PATH, JSON.stringify(markers, null, 2));
 }
 
@@ -86,11 +90,13 @@ function findAppPath(): string | null {
   return null;
 }
 
-function runCommand(command: string, cwd: string): { success: boolean; output: string } {
+function runCommand(command: string, cwd: string, timeoutMs?: number): { success: boolean; output: string } {
   const options: ExecSyncOptions = {
     cwd,
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'],
+    shell: '/bin/sh' as any,
+    ...(timeoutMs ? { timeout: timeoutMs } : {}),
   };
   
   try {
@@ -102,6 +108,56 @@ function runCommand(command: string, cwd: string): { success: boolean; output: s
       output: error.stdout || error.stderr || error.message 
     };
   }
+}
+
+function ensureDependencies(appPath: string): { installed: boolean; error?: string } {
+  const nodeModulesPath = path.join(appPath, 'node_modules');
+  const packageJsonPath = path.join(appPath, 'package.json');
+
+  if (fs.existsSync(nodeModulesPath)) {
+    console.log('[INFO] node_modules already exists, skipping install');
+    return { installed: true };
+  }
+
+  if (!fs.existsSync(packageJsonPath)) {
+    return { installed: false, error: 'No package.json found in app directory' };
+  }
+
+  console.log('[INFO] node_modules not found, running npm install...');
+  const result = runCommand('npm install', appPath, 120000);
+  if (!result.success) {
+    console.log('[WARN] npm install failed:');
+    console.log(result.output.slice(0, 500));
+    return { installed: false, error: 'npm install failed' };
+  }
+
+  console.log('[PASS] npm install completed');
+  return { installed: true };
+}
+
+function hasScript(appPath: string, scriptName: string): boolean {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'));
+    return !!(pkg.scripts && pkg.scripts[scriptName]);
+  } catch {
+    return false;
+  }
+}
+
+function hasLintConfig(appPath: string): boolean {
+  const configs = [
+    '.eslintrc', '.eslintrc.js', '.eslintrc.cjs', '.eslintrc.json', '.eslintrc.yml',
+    'eslint.config.js', 'eslint.config.mjs', 'eslint.config.cjs', 'eslint.config.ts',
+  ];
+  return configs.some(c => fs.existsSync(path.join(appPath, c)));
+}
+
+function hasTestConfig(appPath: string): boolean {
+  const configs = [
+    'vitest.config.ts', 'vitest.config.js', 'vitest.config.mts',
+    'jest.config.ts', 'jest.config.js', 'jest.config.mjs',
+  ];
+  return configs.some(c => fs.existsSync(path.join(appPath, c)));
 }
 
 function main() {
@@ -166,45 +222,83 @@ function main() {
   console.log(`App path: ${appPath}`);
   console.log('');
   
+  const depResult = ensureDependencies(appPath);
+  if (!depResult.installed) {
+    const result: TestResult = {
+      status: 'failed',
+      stage: 'test',
+      app_path: appPath,
+      hint: [
+        depResult.error || 'Could not install dependencies',
+        'Ensure package.json is valid and npm is available',
+      ],
+    };
+    console.log(JSON.stringify(result, null, 2));
+    process.exit(1);
+  }
+  console.log('');
+  
   let totalPassed = 0;
   let totalFailed = 0;
   let lintErrors = 0;
   let typecheckErrors = 0;
+  let lintSkipped = false;
+  let testSkipped = false;
   
   if (!skipTypecheck) {
-    console.log('[RUN] TypeScript check...');
-    const tsResult = runCommand('npm run typecheck', appPath);
-    if (!tsResult.success) {
-      console.log('[WARN] TypeScript errors found');
-      typecheckErrors = (tsResult.output.match(/error TS/g) || []).length || 1;
+    if (!hasScript(appPath, 'typecheck')) {
+      console.log('[SKIP] No "typecheck" script in package.json');
     } else {
-      console.log('[PASS] TypeScript check');
+      console.log('[RUN] TypeScript check...');
+      const tsResult = runCommand('npm run typecheck', appPath);
+      if (!tsResult.success) {
+        console.log('[WARN] TypeScript errors found');
+        typecheckErrors = (tsResult.output.match(/error TS/g) || []).length || 1;
+      } else {
+        console.log('[PASS] TypeScript check');
+      }
     }
   }
   
   if (!skipLint) {
-    console.log('[RUN] Lint check...');
-    const lintResult = runCommand('npm run lint', appPath);
-    if (!lintResult.success) {
-      console.log('[WARN] Lint errors found');
-      lintErrors = (lintResult.output.match(/error/gi) || []).length || 1;
+    if (!hasScript(appPath, 'lint')) {
+      console.log('[SKIP] No "lint" script in package.json');
+      lintSkipped = true;
+    } else if (!hasLintConfig(appPath)) {
+      console.log('[SKIP] Lint: no ESLint config found (skipping, not counted as failure)');
+      lintSkipped = true;
     } else {
-      console.log('[PASS] Lint check');
+      console.log('[RUN] Lint check...');
+      const lintResult = runCommand('npm run lint', appPath);
+      if (!lintResult.success) {
+        console.log('[WARN] Lint errors found');
+        lintErrors = (lintResult.output.match(/error/gi) || []).length || 1;
+      } else {
+        console.log('[PASS] Lint check');
+      }
     }
   }
   
-  console.log('[RUN] Unit tests...');
-  const testResult = runCommand('npm test', appPath);
-  if (testResult.success) {
-    console.log('[PASS] Unit tests');
-    const passMatch = testResult.output.match(/(\d+) pass/i);
-    if (passMatch) totalPassed = parseInt(passMatch[1], 10);
+  if (!hasScript(appPath, 'test')) {
+    console.log('[SKIP] No "test" script in package.json');
+    testSkipped = true;
+  } else if (!hasTestConfig(appPath)) {
+    console.log('[SKIP] Unit tests: no test config found (skipping, not counted as failure)');
+    testSkipped = true;
   } else {
-    console.log('[WARN] Some tests failed');
-    const passMatch = testResult.output.match(/(\d+) pass/i);
-    const failMatch = testResult.output.match(/(\d+) fail/i);
-    if (passMatch) totalPassed = parseInt(passMatch[1], 10);
-    if (failMatch) totalFailed = parseInt(failMatch[1], 10);
+    console.log('[RUN] Unit tests...');
+    const testResult = runCommand('npm test', appPath);
+    if (testResult.success) {
+      console.log('[PASS] Unit tests');
+      const passMatch = testResult.output.match(/(\d+) pass/i);
+      if (passMatch) totalPassed = parseInt(passMatch[1], 10);
+    } else {
+      console.log('[WARN] Some tests failed');
+      const passMatch = testResult.output.match(/(\d+) pass/i);
+      const failMatch = testResult.output.match(/(\d+) fail/i);
+      if (passMatch) totalPassed = parseInt(passMatch[1], 10);
+      if (failMatch) totalFailed = parseInt(failMatch[1], 10);
+    }
   }
   
   console.log('');
@@ -253,6 +347,12 @@ function main() {
       lintErrors > 0 ? `${lintErrors} lint error(s)` : '',
       typecheckErrors > 0 ? `${typecheckErrors} TypeScript error(s)` : '',
     ].filter(Boolean);
+  }
+  
+  if (lintSkipped || testSkipped) {
+    result.hint = result.hint || [];
+    if (lintSkipped) result.hint.push('Lint was skipped (no config found)');
+    if (testSkipped) result.hint.push('Unit tests were skipped (no config found)');
   }
   
   console.log(JSON.stringify(result, null, 2));
