@@ -842,16 +842,28 @@ function buildUpgradePrompt(
   fileContent: string,
   filePath: string,
   moduleName: string,
+  userInstructions?: string,
 ): string {
   const fileName = path.basename(filePath);
   const docInfo = detectDocType(fileName);
+
+  let instructionBlock = '';
+  if (userInstructions && userInstructions.trim()) {
+    instructionBlock = `
+
+IMPORTANT — USER-PROVIDED UPGRADE INSTRUCTIONS:
+${userInstructions.trim()}
+
+Follow the user's instructions as the primary upgrade directive. The general guidelines below still apply but the user's instructions take priority.
+`;
+  }
 
   return `You are an expert technical writer upgrading a ${docInfo.label} document for a software project.
 
 MODULE/DOMAIN: ${moduleName}
 
 ${docInfo.guidance}
-
+${instructionBlock}
 Below is the current document. Your task is to UPGRADE its quality:
 1. Make vague or generic content more specific and actionable.
 2. Add missing details where sections are thin.
@@ -867,10 +879,69 @@ ${fileContent}
 Return ONLY the upgraded document. Preserve all Markdown formatting, headings, and anchors exactly.`;
 }
 
+export async function generateUpgradeSuggestions(
+  filePath: string,
+  moduleName: string,
+): Promise<{ suggestions: string[]; error?: string }> {
+  if (!fs.existsSync(filePath)) {
+    return { suggestions: [], error: 'File not found' };
+  }
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  if (content.trim().length < 20) {
+    return { suggestions: ['File is too short to analyze meaningfully.'] };
+  }
+
+  try {
+    const openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+
+    const fileName = path.basename(filePath);
+    const docInfo = detectDocType(fileName);
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-5-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a documentation quality analyst. You analyze technical documents and provide specific, actionable upgrade suggestions. Return a JSON array of suggestion strings.',
+        },
+        {
+          role: 'user',
+          content: `Analyze this ${docInfo.label} document for module "${moduleName}" and suggest 3-6 specific improvements.
+
+Focus on:
+- Sections that are vague, thin, or contain UNKNOWN placeholders
+- Missing details that would make the doc production-ready
+- Areas where specificity, clarity, or technical precision could improve
+- Content gaps compared to what this document type should contain
+
+DOCUMENT:
+${content.substring(0, 6000)}
+
+Return ONLY a JSON array of suggestion strings. Example: ["Add specific API endpoint details to the interface section", "Replace UNKNOWN placeholders in the data model section"]`,
+        },
+      ],
+      max_completion_tokens: 1024,
+    });
+
+    const raw = response.choices[0]?.message?.content || '[]';
+    const cleaned = raw.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '').trim();
+    const suggestions = JSON.parse(cleaned);
+    return { suggestions: Array.isArray(suggestions) ? suggestions : [] };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { suggestions: ['Could not generate AI suggestions at this time.'], error: msg };
+  }
+}
+
 export async function upgradeDocumentWithAI(
   filePath: string,
   moduleName: string,
   onProgress?: (message: string) => void,
+  userInstructions?: string,
 ): Promise<UpgradeResult> {
   if (!fs.existsSync(filePath)) {
     return { file: filePath, status: 'skipped', error: 'File not found' };
@@ -889,7 +960,7 @@ export async function upgradeDocumentWithAI(
       baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
     });
 
-    const prompt = buildUpgradePrompt(content, filePath, moduleName);
+    const prompt = buildUpgradePrompt(content, filePath, moduleName, userInstructions);
 
     const response = await openai.chat.completions.create({
       model: 'gpt-5-mini',
