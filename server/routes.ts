@@ -631,6 +631,77 @@ export function registerRoutes(app: Express) {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  app.get('/api/doc-inventory', (_req: Request, res: Response) => {
+    try {
+      const collectMdFiles = (dir: string, prefix: string): Array<{ name: string; path: string; exists: boolean }> => {
+        if (!fs.existsSync(dir)) return [];
+        const results: Array<{ name: string; path: string; exists: boolean }> = [];
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          const relPath = path.join(prefix, entry.name);
+          if (entry.isDirectory()) {
+            results.push(...collectMdFiles(fullPath, relPath));
+          } else if (entry.name.endsWith('.md')) {
+            results.push({ name: entry.name, path: relPath, exists: true });
+          }
+        }
+        return results;
+      };
+
+      const systemDocs = collectMdFiles(path.join(AXION_ROOT, 'docs'), 'axion/docs');
+      const productSourceDocs = collectMdFiles(path.join(AXION_ROOT, 'source_docs', 'product'), 'axion/source_docs/product');
+      const registrySourceDocs = collectMdFiles(path.join(AXION_ROOT, 'source_docs', 'registry'), 'axion/source_docs/registry');
+      const coreTemplates = collectMdFiles(path.join(AXION_ROOT, 'templates', 'core'), 'axion/templates/core');
+
+      const domainTemplatesDir = path.join(AXION_ROOT, 'templates');
+      const domainTemplates: Array<{ domain: string; name: string; path: string; exists: boolean }> = [];
+      if (fs.existsSync(domainTemplatesDir)) {
+        for (const entry of fs.readdirSync(domainTemplatesDir, { withFileTypes: true })) {
+          if (entry.isDirectory() && entry.name !== 'core') {
+            const domainDir = path.join(domainTemplatesDir, entry.name);
+            const files = collectMdFiles(domainDir, `axion/templates/${entry.name}`);
+            for (const f of files) {
+              domainTemplates.push({ domain: entry.name, ...f });
+            }
+          }
+        }
+      }
+
+      const generatedDomainsDir = path.join(AXION_ROOT, 'domains');
+      const generatedDomains: Array<{ domain: string; files: Array<{ name: string; path: string; exists: boolean }> }> = [];
+      if (fs.existsSync(generatedDomainsDir)) {
+        for (const entry of fs.readdirSync(generatedDomainsDir, { withFileTypes: true })) {
+          if (entry.isDirectory() && !entry.name.startsWith('.')) {
+            const domainDir = path.join(generatedDomainsDir, entry.name);
+            const files = collectMdFiles(domainDir, `axion/domains/${entry.name}`);
+            generatedDomains.push({ domain: entry.name, files });
+          }
+        }
+      }
+
+      res.json({
+        systemDocs,
+        productSourceDocs,
+        registrySourceDocs,
+        coreTemplates,
+        domainTemplates,
+        generatedDomains,
+        totals: {
+          systemDocs: systemDocs.length,
+          productSourceDocs: productSourceDocs.length,
+          registrySourceDocs: registrySourceDocs.length,
+          coreTemplates: coreTemplates.length,
+          domainTemplates: domainTemplates.length,
+          generatedDomains: generatedDomains.reduce((sum, d) => sum + d.files.length, 0),
+        },
+      });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errMsg });
+    }
+  });
+
   app.get('/api/assemblies', async (_req: Request, res: Response) => {
     try {
       const list = await storage.getAssemblies();
