@@ -103,9 +103,17 @@ function extractRulesFromRPBS(rpbsContent) {
   return rules;
 }
 
+function parseUpgradeContext() {
+  const revision = parseInt(process.env.AXION_REVISION || '1', 10);
+  const upgradeNotes = process.env.AXION_UPGRADE_NOTES || '';
+  const kitType = process.env.AXION_KIT_TYPE || 'original';
+  return { revision, upgradeNotes, kitType, isUpgrade: kitType === 'upgrade' && !!upgradeNotes };
+}
+
 function parseProjectContext() {
   const idea = process.env.AXION_PROJECT_IDEA || '';
   const name = process.env.AXION_PROJECT_NAME || 'Application';
+  const upgrade = parseUpgradeContext();
 
   const entityPatterns = [
     /\b(user|account|profile|member|person|customer|client|admin|owner)s?\b/gi,
@@ -140,7 +148,7 @@ function parseProjectContext() {
     entitiesSet.add('User');
   }
 
-  return { name, idea, entities: Array.from(entitiesSet) };
+  return { name, idea, entities: Array.from(entitiesSet), upgrade };
 }
 
 const MODULE_CONTENT = {
@@ -715,14 +723,23 @@ function generateBELSCandidates(module, ctx, rpbsRules) {
     `| ${r.code} | ${r.message} | ${r.severity} |`
   ).join('\n');
 
+  const upgradeSection = ctx.upgrade.isUpgrade ? `
+## Upgrade Context (Rev ${ctx.upgrade.revision})
+**Kit Type:** Upgrade
+**Upgrade Notes:**
+${ctx.upgrade.upgradeNotes}
+
+---
+` : '';
+
   return `# Business Entity Logic Specification (BELS) — ${module}
 
 ## Overview
 **Domain Slug:** ${module}
 **Focus:** ${modContent.focus}
-**Status:** DRAFT - Truth Candidates
+**Status:** ${ctx.upgrade.isUpgrade ? `UPGRADE - Revision ${ctx.upgrade.revision}` : 'DRAFT - Truth Candidates'}
 **Project:** ${ctx.name}
-
+${upgradeSection}
 ## Policy Rules (Candidates)
 
 | Rule ID | Description | Condition | Action | SourceRef |
@@ -825,6 +842,11 @@ try {
   const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
 
   const ctx = parseProjectContext();
+
+  if (ctx.upgrade.isUpgrade) {
+    console.log(`  Upgrade mode: revision=${ctx.upgrade.revision}, kitType=${ctx.upgrade.kitType}`);
+    console.log(`  Upgrade notes: ${ctx.upgrade.upgradeNotes.slice(0, 100)}${ctx.upgrade.upgradeNotes.length > 100 ? '...' : ''}`);
+  }
 
   let rpbsContent = '';
   let rebsContent = '';
