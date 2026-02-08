@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
   Play,
@@ -36,6 +37,9 @@ import {
   Trash2,
   BarChart3,
   Sparkles,
+  MessageSquare,
+  Send,
+  CheckCheck,
 } from "lucide-react";
 
 interface AssemblyProgress {
@@ -194,6 +198,18 @@ export default function AssemblyPage() {
   const [forceShowSelector, setForceShowSelector] = useState(false);
   const [importSourcePath, setImportSourcePath] = useState("");
   const [showActions, setShowActions] = useState(false);
+  const [reviseMode, setReviseMode] = useState(false);
+  const [reviseTarget, setReviseTarget] = useState<{
+    file: string; relativePath: string; module: string; docType: string;
+    docTypeLabel: string; priority: number; unknownCount: number;
+    sections: { name: string; unknownCount: number; snippet: string }[];
+  } | null>(null);
+  const [reviseQuestions, setReviseQuestions] = useState<{ sectionName: string; questions: string[] }[]>([]);
+  const [reviseAnswers, setReviseAnswers] = useState<Record<string, string>>({});
+  const [reviseLoading, setReviseLoading] = useState(false);
+  const [reviseFilling, setReviseFilling] = useState(false);
+  const [reviseStats, setReviseStats] = useState<{ remaining: number; files: number } | null>(null);
+  const [reviseLog, setReviseLog] = useState<string[]>([]);
   const terminalRef = useRef<HTMLPreElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -267,6 +283,104 @@ export default function AssemblyPage() {
       toast({ title: `${stepLabel(variables.stepId)} failed`, variant: "destructive" });
     },
   });
+
+  const startRevise = async () => {
+    if (!assembly?.projectName) return;
+    setReviseMode(true);
+    setReviseLoading(true);
+    setReviseLog([]);
+    setReviseAnswers({});
+    try {
+      const res = await fetch('/api/revise-unknowns/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectName: assembly.projectName }),
+      });
+      const data = await res.json();
+      if (data.done) {
+        setReviseTarget(null);
+        setReviseQuestions([]);
+        setReviseStats({ remaining: 0, files: 0 });
+        setReviseLog(prev => [...prev, 'All UNKNOWNs have been resolved.']);
+      } else {
+        setReviseTarget(data.target);
+        setReviseQuestions(data.questions);
+        setReviseStats({ remaining: data.remainingUnknowns, files: data.totalFilesWithUnknowns });
+        const initAnswers: Record<string, string> = {};
+        data.questions.forEach((q: { sectionName: string }) => { initAnswers[q.sectionName] = ''; });
+        setReviseAnswers(initAnswers);
+      }
+    } catch (err) {
+      toast({ title: 'Failed to start revision', variant: 'destructive' });
+      setReviseMode(false);
+    } finally {
+      setReviseLoading(false);
+    }
+  };
+
+  const submitReviseAnswers = async () => {
+    if (!assembly?.projectName || !reviseTarget) return;
+    setReviseFilling(true);
+    setReviseLog(prev => [...prev, `Filling ${reviseTarget.docTypeLabel} (${reviseTarget.module})...`]);
+    try {
+      const res = await fetch('/api/revise-unknowns/fill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectName: assembly.projectName,
+          targetFile: reviseTarget.file,
+          targetModule: reviseTarget.module,
+          answers: reviseAnswers,
+        }),
+      });
+      const data = await res.json();
+      const filled = data.targetFilled;
+      setReviseLog(prev => [
+        ...prev,
+        `Filled ${filled.file.split('/').pop()}: ${filled.unknownsBefore} → ${filled.unknownsAfter} UNKNOWNs`,
+        `Cascade pass: ${data.cascadeResults.filter((r: { status: string }) => r.status === 'filled').length} additional files updated`,
+        `Remaining: ${data.remainingScan.totalUnknowns} UNKNOWNs in ${data.remainingScan.filesWithUnknowns.length} files`,
+      ]);
+
+      if (data.done || !data.nextTarget) {
+        setReviseTarget(null);
+        setReviseQuestions([]);
+        setReviseStats({ remaining: 0, files: 0 });
+        setReviseLog(prev => [...prev, 'All UNKNOWNs resolved.']);
+      } else {
+        setReviseStats({
+          remaining: data.remainingScan.totalUnknowns,
+          files: data.remainingScan.filesWithUnknowns.length,
+        });
+        setReviseLoading(true);
+        const nextRes = await fetch('/api/revise-unknowns/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectName: assembly.projectName }),
+        });
+        const nextData = await nextRes.json();
+        if (nextData.done) {
+          setReviseTarget(null);
+          setReviseQuestions([]);
+          setReviseStats({ remaining: 0, files: 0 });
+          setReviseLog(prev => [...prev, 'All UNKNOWNs resolved.']);
+        } else {
+          setReviseTarget(nextData.target);
+          setReviseQuestions(nextData.questions);
+          const initAnswers: Record<string, string> = {};
+          nextData.questions.forEach((q: { sectionName: string }) => { initAnswers[q.sectionName] = ''; });
+          setReviseAnswers(initAnswers);
+          setReviseStats({ remaining: nextData.remainingUnknowns, files: nextData.totalFilesWithUnknowns });
+          setReviseLog(prev => [...prev, `Next: ${nextData.target.docTypeLabel} (${nextData.target.module})`]);
+        }
+        setReviseLoading(false);
+      }
+    } catch (err) {
+      toast({ title: 'Fill failed', variant: 'destructive' });
+    } finally {
+      setReviseFilling(false);
+    }
+  };
 
   useEffect(() => {
     if (terminalRef.current) {
@@ -731,19 +845,110 @@ export default function AssemblyPage() {
                 </div>
 
                 <div className="border-t pt-3 space-y-3">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Sparkles className="w-3.5 h-3.5" />AI Content</div>
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Sparkles className="w-3.5 h-3.5" />AI Content Revision</div>
+                    {reviseStats && reviseStats.remaining > 0 && (
+                      <Badge variant="secondary" data-testid="badge-unknowns-remaining">
+                        {reviseStats.remaining} UNKNOWNs in {reviseStats.files} files
+                      </Badge>
+                    )}
+                    {reviseStats && reviseStats.remaining === 0 && reviseMode && (
+                      <Badge variant="outline" className="text-green-600 dark:text-green-400" data-testid="badge-unknowns-done">
+                        <CheckCheck className="w-3 h-3 mr-1" /> All resolved
+                      </Badge>
+                    )}
+                  </div>
+
+                  {!reviseMode ? (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "content-fill" })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-content-fill"
+                      onClick={startRevise}
+                      disabled={reviseLoading}
+                      data-testid="button-action-revise-unknowns"
                     >
-                      {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                      Fill UNKNOWNs
+                      {reviseLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquare className="w-4 h-4" />}
+                      Revise UNKNOWNs
                     </Button>
-                  </div>
+                  ) : (
+                    <div className="space-y-3" data-testid="revise-unknowns-panel">
+                      {reviseLoading && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-md bg-muted/50">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Scanning documents and generating questions...
+                        </div>
+                      )}
+
+                      {reviseTarget && !reviseLoading && (
+                        <div className="space-y-3">
+                          <div className="p-3 rounded-md bg-muted/50 space-y-1">
+                            <div className="text-sm font-medium" data-testid="text-revise-target-label">{reviseTarget.docTypeLabel}</div>
+                            <div className="text-xs text-muted-foreground" data-testid="text-revise-target-path">
+                              {reviseTarget.relativePath} ({reviseTarget.unknownCount} UNKNOWNs in {reviseTarget.sections.length} sections)
+                            </div>
+                          </div>
+
+                          {reviseQuestions.map((qGroup, gi) => (
+                            <div key={gi} className="space-y-2" data-testid={`revise-question-group-${gi}`}>
+                              <div className="text-xs font-medium text-muted-foreground">{qGroup.sectionName}</div>
+                              {qGroup.questions.map((q, qi) => (
+                                <div key={qi} className="space-y-1">
+                                  <label className="text-sm">{q}</label>
+                                  <Textarea
+                                    placeholder="Your answer..."
+                                    value={reviseAnswers[qGroup.sectionName] || ''}
+                                    onChange={(e) => setReviseAnswers(prev => ({ ...prev, [qGroup.sectionName]: e.target.value }))}
+                                    className="text-sm min-h-16 resize-none"
+                                    data-testid={`input-revise-answer-${gi}-${qi}`}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Button
+                              size="sm"
+                              onClick={submitReviseAnswers}
+                              disabled={reviseFilling}
+                              data-testid="button-submit-revise"
+                            >
+                              {reviseFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                              Fill & Cascade
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => { setReviseMode(false); setReviseTarget(null); setReviseQuestions([]); setReviseAnswers({}); setReviseStats(null); setReviseLog([]); }}
+                              disabled={reviseFilling}
+                              data-testid="button-cancel-revise"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {!reviseTarget && !reviseLoading && reviseMode && (
+                        <div className="p-3 rounded-md bg-muted/50 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+                          <CheckCheck className="w-4 h-4" /> All UNKNOWNs have been resolved across all documents.
+                          <Button variant="outline" size="sm" onClick={() => { setReviseMode(false); setReviseStats(null); setReviseLog([]); }} data-testid="button-close-revise">
+                            Close
+                          </Button>
+                        </div>
+                      )}
+
+                      {reviseLog.length > 0 && (
+                        <ScrollArea className="max-h-32 rounded-md bg-muted/30 p-2">
+                          <div className="space-y-0.5 text-xs font-mono text-muted-foreground" data-testid="revise-log">
+                            {reviseLog.map((line, i) => (
+                              <div key={i}>{line}</div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t pt-3 space-y-3">

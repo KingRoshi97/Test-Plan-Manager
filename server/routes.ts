@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly } from '../shared/schema.js';
 import { storage } from './storage.js';
-import { scanAllModulesForUnknowns, fillAllModulesUnknowns } from './ai-content-fill.js';
+import { scanAllModulesForUnknowns, fillAllModulesUnknowns, findNextTarget, getAllTargets, generateQuestionsForTarget, fillFileWithContext, cascadeFill } from './ai-content-fill.js';
 
 const PROJECT_ROOT = process.cwd();
 const AXION_ROOT = path.join(PROJECT_ROOT, 'axion');
@@ -2303,6 +2303,73 @@ export function registerRoutes(app: Express) {
 
     const report = scanAllModulesForUnknowns(scanRoot, moduleList);
     res.json(report);
+  });
+
+  app.post('/api/revise-unknowns/start', async (req: Request, res: Response) => {
+    try {
+      const { projectName } = req.body;
+      const scanRoot = projectName ? getProjectPath(projectName) : PROJECT_ROOT;
+      const target = findNextTarget(scanRoot);
+
+      if (!target) {
+        res.json({ done: true, message: 'No UNKNOWNs remaining', target: null, questions: [], remainingUnknowns: 0, totalFilesWithUnknowns: 0 });
+        return;
+      }
+
+      const assembly = projectName
+        ? (await storage.getAssemblies()).find(a => a.projectName === projectName)
+        : null;
+      const projectIdea = assembly?.idea || projectName || 'software project';
+
+      const questions = await generateQuestionsForTarget(target, projectName || 'project', projectIdea);
+
+      const allTargets = getAllTargets(scanRoot);
+      const totalUnknowns = allTargets.reduce((s, t) => s + t.unknownCount, 0);
+
+      res.json({
+        done: false,
+        target,
+        questions,
+        remainingUnknowns: totalUnknowns,
+        totalFilesWithUnknowns: allTargets.length,
+      });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errMsg });
+    }
+  });
+
+  app.post('/api/revise-unknowns/fill', async (req: Request, res: Response) => {
+    try {
+      const { projectName, targetFile, targetModule, answers } = req.body;
+      const scanRoot = projectName ? getProjectPath(projectName) : PROJECT_ROOT;
+
+      const assembly = projectName
+        ? (await storage.getAssemblies()).find(a => a.projectName === projectName)
+        : null;
+      const projName = projectName || 'project';
+      const projectIdea = assembly?.idea || projectName || 'software project';
+
+      const result = await cascadeFill(
+        scanRoot,
+        targetFile,
+        targetModule,
+        projName,
+        projectIdea,
+        answers || {},
+      );
+
+      res.json({
+        targetFilled: result.targetFilled,
+        cascadeResults: result.cascadeResults,
+        remainingScan: result.remainingScan,
+        nextTarget: result.nextTarget,
+        done: result.nextTarget === null,
+      });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: errMsg });
+    }
   });
 
   // ── Test Suite API ──────────────────────────────────────────────

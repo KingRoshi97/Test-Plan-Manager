@@ -62,14 +62,20 @@ AXION defines a clear pipeline for kit creation and application development:
 - **`axion-reconcile`**: Deterministically compares imported facts against build-authoritative outputs to detect drift and report mismatches.
 - **`axion-iterate`**: An orchestration wrapper that chains AXION primitives, enforcing gates and producing `next_commands` for remediation. It operates deterministically, requiring explicit `--allow-apply` for changes.
 
-### UNKNOWN Detection & Agent-Driven Content Fill (Feb 2026)
-- **`server/ai-content-fill.ts`**: Scan-only module that identifies BELS and Open Questions files containing UNKNOWN placeholders. Reports file paths, UNKNOWN counts, and which sections need content.
-- **Lock Step UNKNOWN Detection**: When the lock step fails due to UNKNOWN content, the orchestrator:
-  1. Scans the failed modules to identify exactly which files and sections contain UNKNOWNs.
-  2. Reports this information via SSE stream so the dashboard and workspace agent can see what needs filling.
-  3. Does NOT call external AI APIs — content filling is handled by the workspace AI agent directly.
-- **`/api/scan-unknowns` endpoint**: Returns a JSON report of all BELS/Open Questions files with UNKNOWN placeholders, including counts and affected sections. Accepts optional `?modules=` query parameter to scope the scan.
-- **Agent-driven workflow**: The workspace AI agent reads the BELS templates, understands the project context, and writes filled content directly to the files — no external API keys needed.
+### UNKNOWN Detection & Content Fill System (Feb 2026)
+- **`server/ai-content-fill.ts`**: Full-stack content-fill module that scans ALL `.md` template files across every domain module for UNKNOWN placeholders. Supports both automated pipeline fills and interactive revision.
+- **Document Hierarchy**: Files are prioritized for fill order: RPBS → REBS → README → DDES → UX_Foundations → UI_Constraints → DIM → SCREENMAP → TESTPLAN → COMPONENT_LIBRARY → COPY_GUIDE → BELS → OPEN_QUESTIONS. Higher-level docs cascade context to downstream templates.
+- **Template-Type-Aware Prompting**: DOC_TYPE_MAP provides tailored AI guidance for each document type (13 types including RPBS, REBS, BELS, DDES, DIM, TESTPLAN, etc.).
+- **Interactive Revision Flow**: "Revise UNKNOWNs" button in Assembly Control Room:
+  1. Scans all docs, finds the highest-priority doc with UNKNOWNs.
+  2. Generates targeted questions about UNKNOWN sections for user to provide real context.
+  3. User answers questions, then "Fill & Cascade" fills the target doc with user context and runs a full pass across ALL docs using the newly-filled content.
+  4. Drops to the next highest-priority doc with remaining UNKNOWNs and repeats until all resolved.
+- **API Endpoints**:
+  - `GET /api/scan-unknowns` — Returns scan report of all .md files with UNKNOWNs.
+  - `POST /api/revise-unknowns/start` — Finds next target doc, generates questions.
+  - `POST /api/revise-unknowns/fill` — Fills target with user context, cascades to all docs, returns next target.
+- **Lock Step UNKNOWN Detection**: When the lock step fails due to UNKNOWN content, the orchestrator scans and reports via SSE stream.
 
 ### Core System Contracts and Guarantees
 - **Pipeline Guarantees**: Enforced strict stage execution order and module dependencies.
