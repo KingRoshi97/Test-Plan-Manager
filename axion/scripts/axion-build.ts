@@ -5,9 +5,13 @@
  * Invokes AI to implement code from locked documentation.
  * Gate: Blocked unless scaffold-app complete
  * 
+ * Two-Root Model Support:
+ * - System Root: <BUILD_ROOT>/axion/ (configs, templates)
+ * - Workspace Root: <BUILD_ROOT>/<PROJECT_NAME>/ (outputs, app)
+ * 
  * Usage:
- *   node --import tsx axion/scripts/axion-build.ts
- *   node --import tsx axion/scripts/axion-build.ts --app-path ./axion-app
+ *   node --import tsx axion/scripts/axion-build.ts --build-root <path> --project-name <name>
+ *   node --import tsx axion/scripts/axion-build.ts --app-path ./axion-app  (legacy mode)
  */
 
 import * as fs from 'fs';
@@ -17,9 +21,19 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
-const STAGE_MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
-const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
+let AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+let WORKSPACE_ROOT = AXION_ROOT;
+let STAGE_MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+let DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
+
+function setupTwoRootPaths(buildRoot: string, projectName: string): void {
+  AXION_ROOT = path.join(buildRoot, 'axion');
+  WORKSPACE_ROOT = path.join(buildRoot, projectName);
+  STAGE_MARKERS_PATH = path.join(WORKSPACE_ROOT, 'registry', 'stage_markers.json');
+  const wsDomainsPath = path.join(WORKSPACE_ROOT, 'domains');
+  const wsAxionDomainsPath = path.join(WORKSPACE_ROOT, 'axion', 'domains');
+  DOMAINS_PATH = fs.existsSync(wsDomainsPath) ? wsDomainsPath : wsAxionDomainsPath;
+}
 
 interface StageMarkers {
   [module: string]: {
@@ -44,17 +58,27 @@ function loadStageMarkers(): StageMarkers {
   return JSON.parse(fs.readFileSync(STAGE_MARKERS_PATH, 'utf-8'));
 }
 
+function saveStageMarkers(markers: StageMarkers): void {
+  const dir = path.dirname(STAGE_MARKERS_PATH);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  fs.writeFileSync(STAGE_MARKERS_PATH, JSON.stringify(markers, null, 2));
+}
+
 function isScaffoldComplete(): boolean {
   const markers = loadStageMarkers();
   const globalMarkers = markers['global'] || {};
   return globalMarkers['scaffold-app']?.status === 'success';
 }
 
-function findAppPath(): string | null {
+function findAppPath(workspaceRoot: string): string | null {
   const candidates = [
+    path.join(workspaceRoot, 'app'),
+    path.join(workspaceRoot, 'axion-app'),
+    path.join(workspaceRoot, 'src'),
     path.join(process.cwd(), 'axion-app'),
     path.join(process.cwd(), 'app'),
-    path.join(process.cwd(), 'src'),
   ];
   
   for (const candidate of candidates) {
@@ -111,11 +135,32 @@ function generateBuildPrompt(appPath: string, docs: string[]): string {
 function main() {
   const args = process.argv.slice(2);
   const appPathIdx = args.indexOf('--app-path');
+  const buildRootIdx = args.indexOf('--build-root');
+  const projectNameIdx = args.indexOf('--project-name');
   const overrideFlag = args.includes('--override');
-  
-  let appPath = appPathIdx !== -1 ? args[appPathIdx + 1] : null;
-  
-  console.log('\n[AXION] Build\n');
+  const jsonFlag = args.includes('--json');
+
+  const isTwoRootMode = buildRootIdx !== -1 && projectNameIdx !== -1;
+
+  let appPath: string | null = appPathIdx !== -1 ? args[appPathIdx + 1] : null;
+  let projectName: string | undefined;
+
+  if (isTwoRootMode) {
+    const buildRoot = path.resolve(args[buildRootIdx + 1]);
+    projectName = args[projectNameIdx + 1];
+    setupTwoRootPaths(buildRoot, projectName);
+
+    if (!jsonFlag) {
+      console.log('\n[AXION] Build (Two-Root Mode)\n');
+      console.log(`[INFO] Build root: ${buildRoot}`);
+      console.log(`[INFO] Project: ${projectName}`);
+      console.log(`[INFO] Workspace: ${WORKSPACE_ROOT}`);
+    }
+  } else {
+    if (!jsonFlag) {
+      console.log('\n[AXION] Build\n');
+    }
+  }
   
   if (!isScaffoldComplete() && !overrideFlag) {
     const result: BuildResult = {
@@ -124,7 +169,7 @@ function main() {
       missing: ['scaffold-app'],
       hint: [
         'build blocked unless scaffold-app complete',
-        'Run: node --import tsx axion/scripts/axion-scaffold-app.ts',
+        'Run scaffold-app first',
         'Or use --override flag',
       ],
     };
@@ -133,7 +178,7 @@ function main() {
   }
   
   if (!appPath) {
-    appPath = findAppPath();
+    appPath = findAppPath(WORKSPACE_ROOT);
   }
   
   if (!appPath || !fs.existsSync(appPath)) {
@@ -155,26 +200,34 @@ function main() {
     const result: BuildResult = {
       status: 'failed',
       stage: 'build',
-      hint: ['No locked documentation found in axion/domains/'],
+      hint: [`No locked documentation found in ${DOMAINS_PATH}`],
     };
     console.log(JSON.stringify(result, null, 2));
     process.exit(1);
   }
   
-  console.log(`App path: ${appPath}`);
-  console.log(`Docs: ${docs.length} modules`);
-  console.log('');
+  if (!jsonFlag) {
+    console.log(`App path: ${appPath}`);
+    console.log(`Docs: ${docs.length} modules`);
+    console.log('');
+  }
   
   const buildPrompt = generateBuildPrompt(appPath, docs);
-  const promptPath = path.join(AXION_ROOT, 'registry', 'build_prompt.md');
+  const registryDir = path.join(WORKSPACE_ROOT, 'registry');
+  if (!fs.existsSync(registryDir)) {
+    fs.mkdirSync(registryDir, { recursive: true });
+  }
+  const promptPath = path.join(registryDir, 'build_prompt.md');
   fs.writeFileSync(promptPath, buildPrompt);
   
-  console.log(`[INFO] Build prompt written to: ${promptPath}`);
-  console.log('');
-  console.log('[INFO] Build stage prepares the prompt for AI implementation.');
-  console.log('[INFO] The actual implementation should be done by an AI agent');
-  console.log('[INFO] reading the build_prompt.md and locked documentation.');
-  console.log('');
+  if (!jsonFlag) {
+    console.log(`[INFO] Build prompt written to: ${promptPath}`);
+    console.log('');
+    console.log('[INFO] Build stage prepares the prompt for AI implementation.');
+    console.log('[INFO] The actual implementation should be done by an AI agent');
+    console.log('[INFO] reading the build_prompt.md and locked documentation.');
+    console.log('');
+  }
   
   const markers = loadStageMarkers();
   markers['global'] = markers['global'] || {};
@@ -182,7 +235,7 @@ function main() {
     completed_at: new Date().toISOString(),
     status: 'success',
   };
-  fs.writeFileSync(STAGE_MARKERS_PATH, JSON.stringify(markers, null, 2));
+  saveStageMarkers(markers);
   
   const result: BuildResult = {
     status: 'success',
