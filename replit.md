@@ -89,7 +89,8 @@ The system includes a web-based Dashboard for interacting with the AXION pipelin
 - **Orchestration Engine**: Server-side pipeline runner for automated step chaining with SSE streaming and gate enforcement. Steps `review`, `draft`, `verify`, and `lock` use per-module iteration to satisfy dependency ordering (ensurePrereqs). The verify step is non-blocking — it sets verifyPassed=false but does not halt the pipeline.
 - **Database**: PostgreSQL for managing assemblies and pipeline runs.
 - **Storage Layer**: Provides full CRUD operations for assemblies and runs via an `IStorage` interface.
-- **Web Dashboard Pages**: Includes Assembly listing, New Assembly creation, Assembly Control Room (with pipeline stepper, step-level timing, and SSE streaming), System Health page, Pipeline Logs viewer, Kit Export page, Test Suite page (run Vitest from dashboard with color-coded results), and existing tool pages (Status, Reports, Files, Release Gate).
+- **Web Dashboard Pages**: Includes Assembly listing, New Assembly creation, Assembly Control Room (with pipeline stepper, step-level timing, and SSE streaming), System Health page, Pipeline Logs viewer, Kit Export page, Test Suite page (run Vitest from dashboard with color-coded results), Document Inventory page (interactive hierarchy map + AI upgrade system), and existing tool pages (Status, Reports, Files, Release Gate).
+- **Document Inventory & Upgrade** (`/docs`): Interactive ReactFlow node graph (`doc-hierarchy-map.tsx`) showing document cascade hierarchy (System → Source → Template → Generated). Click-to-scroll navigation. AI-powered doc upgrade at per-file, per-section, and global levels via `POST /api/doc-upgrade` SSE endpoint. Uses `upgradeDocumentWithAI()` in `ai-content-fill.ts`.
 - **Pipeline Retry**: Transient failure retry with exponential backoff for ENOENT, ETIMEDOUT, ECONNRESET, and OOM-kill (exit 137).
 - **Workspace Detection**: Detects workspaces by manifest.json, registry/, domains/, or app/ subdirectories.
 - **Theming**: Uses CSS custom properties with Tailwind v4 and Shadcn UI components.
@@ -106,3 +107,4 @@ The system includes a web-based Dashboard for interacting with the AXION pipelin
 - **TanStack Query**: For server state management and caching in the web dashboard.
 - **class-variance-authority**: Component variant management.
 - **Radix UI**: Provides accessible UI primitives used by Shadcn components.
+- **@xyflow/react (ReactFlow)**: Interactive node graph library for the Document Inventory hierarchy map.
