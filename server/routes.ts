@@ -889,6 +889,56 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.post('/api/assemblies/:id/upgrade', async (req: Request, res: Response) => {
+    try {
+      const assembly = await storage.getAssembly(req.params.id as string);
+      if (!assembly) {
+        res.status(404).json({ error: 'Assembly not found' });
+        return;
+      }
+      if (!assembly.projectName) {
+        res.status(400).json({ error: 'Assembly has no project name' });
+        return;
+      }
+
+      const allowedStates = ['completed', 'exported', 'failed'];
+      if (!allowedStates.includes(assembly.state)) {
+        res.status(400).json({ error: `Cannot upgrade assembly in state "${assembly.state}". Must be completed, exported, or failed.` });
+        return;
+      }
+
+      const { upgradeNotes } = req.body;
+      if (!upgradeNotes || typeof upgradeNotes !== 'string' || upgradeNotes.trim().length === 0) {
+        res.status(400).json({ error: 'upgradeNotes is required' });
+        return;
+      }
+      if (upgradeNotes.length > 10000) {
+        res.status(400).json({ error: 'upgradeNotes must be under 10000 characters' });
+        return;
+      }
+
+      const currentRevision = assembly.revision ?? 1;
+      const newRevision = currentRevision + 1;
+
+      const updated = await storage.updateAssembly(req.params.id as string, {
+        state: 'queued',
+        step: null,
+        progress: null,
+        errors: null,
+        kit: null,
+        kitPath: null,
+        logsTail: null,
+        revision: newRevision,
+        upgradeNotes: upgradeNotes.trim(),
+        kitType: 'upgrade',
+      });
+
+      res.json({ ok: true, assembly: updated });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to upgrade assembly' });
+    }
+  });
+
   const activeRuns = new Map<string, boolean>();
 
   app.get('/api/assemblies/:id/run/stream', async (req: Request, res: Response) => {
@@ -956,9 +1006,16 @@ export function registerRoutes(app: Express) {
     const projectName = assembly.projectName;
     const buildRoot = getProjectPath(projectName);
 
+    const assemblyRevision = assembly.revision ?? 1;
+    const assemblyUpgradeNotes = assembly.upgradeNotes || '';
+    const assemblyKitType = assembly.kitType || 'original';
+
     const assemblyEnv: Record<string, string> = {
       AXION_PROJECT_NAME: projectName,
       AXION_PROJECT_IDEA: (assembly as any).idea || '',
+      AXION_REVISION: String(assemblyRevision),
+      AXION_UPGRADE_NOTES: assemblyUpgradeNotes,
+      AXION_KIT_TYPE: assemblyKitType,
     };
 
     res.writeHead(200, {
@@ -1253,7 +1310,12 @@ export function registerRoutes(app: Express) {
       }
     }
 
-    res.json({ ...result, zipPath: zipPath || null });
+    const kitMeta = {
+      kitType: assembly.kitType || 'original',
+      revision: assembly.revision ?? 1,
+    };
+
+    res.json({ ...result, zipPath: zipPath || null, kitMeta });
   });
 
   app.get('/api/assemblies/:id/download', async (req: Request, res: Response) => {

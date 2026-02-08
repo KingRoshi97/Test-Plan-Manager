@@ -40,6 +40,8 @@ import {
   MessageSquare,
   Send,
   CheckCheck,
+  Layers,
+  ArrowUpCircle,
 } from "lucide-react";
 
 interface AssemblyProgress {
@@ -69,6 +71,9 @@ interface EnrichedAssembly {
   hasApp: boolean;
   verifyStatus: string | null;
   lockEligible: boolean;
+  revision: number;
+  upgradeNotes: string | null;
+  kitType: string;
 }
 
 interface ModuleStatusData {
@@ -210,6 +215,8 @@ export default function AssemblyPage() {
   const [reviseFilling, setReviseFilling] = useState(false);
   const [reviseStats, setReviseStats] = useState<{ remaining: number; files: number } | null>(null);
   const [reviseLog, setReviseLog] = useState<string[]>([]);
+  const [showUpgradeForm, setShowUpgradeForm] = useState(false);
+  const [upgradeNotesInput, setUpgradeNotesInput] = useState("");
   const terminalRef = useRef<HTMLPreElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -261,6 +268,29 @@ export default function AssemblyPage() {
     },
     onError: () => {
       toast({ title: "Export failed", variant: "destructive" });
+    },
+  });
+
+  const upgradeMutation = useMutation({
+    mutationFn: async (notes: string) => {
+      const res = await apiRequest(`/api/assemblies/${assemblyId}/upgrade`, {
+        method: "POST",
+        body: JSON.stringify({ upgradeNotes: notes }),
+        headers: { "Content-Type": "application/json" },
+      });
+      return res;
+    },
+    onSuccess: () => {
+      toast({ title: "Upgrade layer created", description: "Assembly is ready for a new pipeline run." });
+      setShowUpgradeForm(false);
+      setUpgradeNotesInput("");
+      setStepProgress([]);
+      setStreamOutput("");
+      setForceShowSelector(true);
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId] });
+    },
+    onError: () => {
+      toast({ title: "Failed to create upgrade layer", variant: "destructive" });
     },
   });
 
@@ -612,6 +642,26 @@ export default function AssemblyPage() {
           >
             {assembly.state}
           </Badge>
+          {assembly.revision > 1 && (
+            <Badge
+              variant="outline"
+              className="no-default-active-elevate bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-transparent"
+              data-testid="badge-revision"
+            >
+              <Layers className="w-3 h-3 mr-1" />
+              Rev {assembly.revision}
+            </Badge>
+          )}
+          {assembly.kitType === "upgrade" && (
+            <Badge
+              variant="outline"
+              className="no-default-active-elevate bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400 border-transparent"
+              data-testid="badge-kit-type"
+            >
+              <ArrowUpCircle className="w-3 h-3 mr-1" />
+              Upgrade Kit
+            </Badge>
+          )}
           {showExport && (
             <Button
               variant="outline"
@@ -628,8 +678,71 @@ export default function AssemblyPage() {
               Export Kit
             </Button>
           )}
+          {(assembly.state === "completed" || assembly.state === "exported" || assembly.state === "failed") && !isRunning && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowUpgradeForm(!showUpgradeForm)}
+              data-testid="button-upgrade-assembly"
+            >
+              <ArrowUpCircle className="w-4 h-4" />
+              Upgrade Assembly
+            </Button>
+          )}
         </div>
       </div>
+
+      {showUpgradeForm && (
+        <Card data-testid="card-upgrade-form">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <ArrowUpCircle className="w-4 h-4" />
+              Upgrade Assembly {assembly.revision > 1 ? `(Currently Rev ${assembly.revision})` : ""}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Describe what you want to change, add, or improve. The system will re-run the pipeline on the existing workspace non-destructively, incorporating your feedback to produce an upgraded Agent Kit.
+            </p>
+            {assembly.upgradeNotes && (
+              <div className="rounded-md bg-muted p-3" data-testid="text-previous-upgrade-notes">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Previous upgrade notes (Rev {assembly.revision}):</p>
+                <p className="text-xs text-muted-foreground">{assembly.upgradeNotes}</p>
+              </div>
+            )}
+            <Textarea
+              placeholder="e.g., Add a caching layer to the API routes, improve error handling in the auth module, expand the test coverage for edge cases..."
+              value={upgradeNotesInput}
+              onChange={(e) => setUpgradeNotesInput(e.target.value)}
+              className="text-sm min-h-[100px]"
+              data-testid="input-upgrade-notes"
+            />
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                size="sm"
+                onClick={() => upgradeMutation.mutate(upgradeNotesInput)}
+                disabled={upgradeMutation.isPending || upgradeNotesInput.trim().length === 0}
+                data-testid="button-submit-upgrade"
+              >
+                {upgradeMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowUpCircle className="w-4 h-4" />
+                )}
+                Create Upgrade Layer
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setShowUpgradeForm(false); setUpgradeNotesInput(""); }}
+                data-testid="button-cancel-upgrade"
+              >
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card data-testid="card-pipeline-stepper">
         <CardHeader className="pb-3">
