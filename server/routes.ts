@@ -182,14 +182,14 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'test': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', 'axion/scripts/axion-test.ts', '--build-root', br, '--project-name', pn, '--json'],
+    args: (pn, br) => ['tsx', 'axion/scripts/axion-test.ts', '--app-path', path.join(br, 'app'), '--json'],
     label: 'Test',
     group: 'build',
     desc: 'Run workspace tests',
   },
   'activate': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', 'axion/scripts/axion-activate.ts', '--build-root', br, '--project-name', pn, '--json'],
+    args: (pn) => ['tsx', 'axion/scripts/axion-activate.ts', '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'],
     label: 'Activate',
     group: 'build',
     desc: 'Set active build',
@@ -911,6 +911,10 @@ export function registerRoutes(app: Express) {
           writeStageMarker(buildRoot, 'scaffold-app', 'success');
         }
 
+        if (stepId === 'test') {
+          writeStageMarker(buildRoot, 'test', result.status === 'success' ? 'success' : 'failed');
+        }
+
         if (stepId === 'verify' && result.status !== 'success') {
           verifyPassed = false;
         }
@@ -1056,6 +1060,9 @@ export function registerRoutes(app: Express) {
       if (stepId === 'scaffold-app' && result.status === 'success') {
         writeStageMarker(buildRoot, 'scaffold-app', 'success');
       }
+      if (stepId === 'test') {
+        writeStageMarker(buildRoot, 'test', result.status === 'success' ? 'success' : 'failed');
+      }
       await persistRunResult(stepId, step, projectName, result);
       res.json(result);
     });
@@ -1136,6 +1143,9 @@ export function registerRoutes(app: Express) {
         };
         if (stepId === 'scaffold-app' && result.status === 'success') {
           writeStageMarker(buildRoot, 'scaffold-app', 'success');
+        }
+        if (stepId === 'test') {
+          writeStageMarker(buildRoot, 'test', result.status === 'success' ? 'success' : 'failed');
         }
         persistRunResult(stepId, step, projectName, result).catch(() => {});
         res.write(`event: done\ndata: ${JSON.stringify(result)}\n\n`);
@@ -1443,6 +1453,10 @@ export function registerRoutes(app: Express) {
 
         if (stepId === 'scaffold-app' && result.status === 'success') {
           writeStageMarker(buildRoot, 'scaffold-app', 'success');
+        }
+
+        if (stepId === 'test') {
+          writeStageMarker(buildRoot, 'test', result.status === 'success' ? 'success' : 'failed');
         }
 
         persistRunResult(stepId, step, projectName, result).catch(() => {});
