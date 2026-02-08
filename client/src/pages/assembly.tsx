@@ -42,6 +42,9 @@ import {
   CheckCheck,
   Layers,
   ArrowUpCircle,
+  Paperclip,
+  X,
+  FileArchive,
 } from "lucide-react";
 
 interface AssemblyProgress {
@@ -217,6 +220,45 @@ export default function AssemblyPage() {
   const [reviseLog, setReviseLog] = useState<string[]>([]);
   const [showUpgradeForm, setShowUpgradeForm] = useState(false);
   const [upgradeNotesInput, setUpgradeNotesInput] = useState("");
+  const [upgradeZipUploading, setUpgradeZipUploading] = useState(false);
+  const [upgradeZipFileName, setUpgradeZipFileName] = useState<string | null>(null);
+  const [upgradeZipFileCount, setUpgradeZipFileCount] = useState(0);
+  const [upgradeZipContent, setUpgradeZipContent] = useState("");
+  const upgradeZipInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleUpgradeZipUpload(file: File) {
+    setUpgradeZipUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('zipfile', file);
+      const resp = await fetch('/api/upload-context-zip', { method: 'POST', body: formData });
+      const data = await resp.json();
+      if (!resp.ok) {
+        toast({ title: "Upload failed", description: data.error || "Could not process zip file", variant: "destructive" });
+        return;
+      }
+      setUpgradeZipContent(data.content);
+      const existing = upgradeNotesInput.trim();
+      setUpgradeNotesInput(existing ? `${existing}\n\n${data.content}` : data.content);
+      setUpgradeZipFileName(file.name);
+      setUpgradeZipFileCount(data.fileCount);
+      toast({ title: "Context loaded", description: `${data.fileCount} files extracted from ${file.name}` });
+    } catch (err: any) {
+      toast({ title: "Upload error", description: err.message, variant: "destructive" });
+    } finally {
+      setUpgradeZipUploading(false);
+      if (upgradeZipInputRef.current) upgradeZipInputRef.current.value = '';
+    }
+  }
+
+  function clearUpgradeZipContext() {
+    if (upgradeZipContent) {
+      setUpgradeNotesInput((prev) => prev.replace(upgradeZipContent, '').trim());
+    }
+    setUpgradeZipFileName(null);
+    setUpgradeZipFileCount(0);
+    setUpgradeZipContent("");
+  }
   const terminalRef = useRef<HTMLPreElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -710,13 +752,56 @@ export default function AssemblyPage() {
                 <p className="text-xs text-muted-foreground">{assembly.upgradeNotes}</p>
               </div>
             )}
-            <Textarea
-              placeholder="e.g., Add a caching layer to the API routes, improve error handling in the auth module, expand the test coverage for edge cases..."
-              value={upgradeNotesInput}
-              onChange={(e) => setUpgradeNotesInput(e.target.value)}
-              className="text-sm min-h-[100px]"
-              data-testid="input-upgrade-notes"
-            />
+            <div className="relative">
+              <Textarea
+                placeholder="e.g., Add a caching layer to the API routes, improve error handling in the auth module, expand the test coverage for edge cases..."
+                value={upgradeNotesInput}
+                onChange={(e) => setUpgradeNotesInput(e.target.value)}
+                className="text-sm min-h-[100px]"
+                data-testid="input-upgrade-notes"
+              />
+              <input
+                ref={upgradeZipInputRef}
+                type="file"
+                accept=".zip"
+                className="hidden"
+                data-testid="input-upgrade-zip-file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleUpgradeZipUpload(file);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => upgradeZipInputRef.current?.click()}
+                disabled={upgradeZipUploading}
+                className="absolute bottom-2 right-2 flex items-center justify-center w-7 h-7 rounded-md bg-muted/80 text-muted-foreground transition-colors hover-elevate"
+                title="Upload a zip file to add full project context"
+                data-testid="button-upgrade-zip-upload"
+              >
+                {upgradeZipUploading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Paperclip className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            {upgradeZipFileName && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="secondary" className="gap-1" data-testid="badge-upgrade-zip-attached">
+                  <FileArchive className="w-3 h-3" />
+                  {upgradeZipFileName} ({upgradeZipFileCount} files)
+                </Badge>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={clearUpgradeZipContext}
+                  data-testid="button-upgrade-zip-clear"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
             <div className="flex items-center gap-2 flex-wrap">
               <Button
                 size="sm"
