@@ -164,7 +164,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'build-plan': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-build-plan.ts'), '--build-root', br, '--project-name', pn, '--json'],
+    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-build-plan.ts'), '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'],
     label: 'Build Plan',
     cwd: () => PROJECT_ROOT,
     group: 'build',
@@ -172,8 +172,8 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'iterate': {
     cmd: 'npx',
-    args: (pn, br, body) => {
-      const a = ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-iterate.ts'), '--build-root', br, '--project-name', pn, '--json'];
+    args: (pn, _br, body) => {
+      const a = ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-iterate.ts'), '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'];
       if (body.allowApply) a.push('--allow-apply');
       return a;
     },
@@ -200,7 +200,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'import': {
     cmd: 'npx',
-    args: (pn, br, body) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-import.ts'), '--source-root', String(body.sourcePath || ''), '--build-root', br, '--project-name', pn, '--json'],
+    args: (pn, _br, body) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-import.ts'), '--source-root', String(body.sourcePath || ''), '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'],
     label: 'Import',
     cwd: () => PROJECT_ROOT,
     group: 'analysis',
@@ -208,7 +208,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'reconcile': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-reconcile.ts'), '--build-root', br, '--project-name', pn, '--json'],
+    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-reconcile.ts'), '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'],
     label: 'Reconcile',
     cwd: () => PROJECT_ROOT,
     group: 'analysis',
@@ -224,7 +224,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'status': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-status.ts'), '--build-root', br, '--project-name', pn, '--json'],
+    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-status.ts'), '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'],
     label: 'Status',
     cwd: () => PROJECT_ROOT,
     group: 'analysis',
@@ -232,7 +232,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'next': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-next.ts'), '--build-root', br, '--project-name', pn, '--json'],
+    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-next.ts'), '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'],
     label: 'Next Steps',
     cwd: () => PROJECT_ROOT,
     group: 'analysis',
@@ -248,7 +248,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'clean': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-clean.ts'), '--build-root', br, '--project-name', pn, '--json'],
+    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-clean.ts'), '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'],
     label: 'Clean',
     cwd: () => PROJECT_ROOT,
     group: 'ops',
@@ -264,8 +264,8 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'build': {
     cmd: 'npx',
-    args: (pn, br, body) => {
-      const a = ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-build.ts'), '--build-root', br, '--project-name', pn, '--json'];
+    args: (pn, _br, body) => {
+      const a = ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-build.ts'), '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'];
       if (body.allowApply) a.push('--allow-apply');
       return a;
     },
@@ -452,21 +452,26 @@ async function syncReportsToDb(projectName: string, stepId: string) {
 }
 
 function writeStageMarker(buildRoot: string, stage: string, status: 'success' | 'failed'): void {
-  const markersPath = path.join(buildRoot, 'axion', 'registry', 'stage_markers.json');
-  const registryDir = path.dirname(markersPath);
-  if (!fs.existsSync(registryDir)) {
-    fs.mkdirSync(registryDir, { recursive: true });
+  const paths = [
+    path.join(buildRoot, 'registry', 'stage_markers.json'),
+    path.join(buildRoot, 'axion', 'registry', 'stage_markers.json'),
+  ];
+  for (const markersPath of paths) {
+    const registryDir = path.dirname(markersPath);
+    if (!fs.existsSync(registryDir)) {
+      fs.mkdirSync(registryDir, { recursive: true });
+    }
+    let markers: Record<string, Record<string, { completed_at: string; status: string }>> = {};
+    if (fs.existsSync(markersPath)) {
+      try { markers = JSON.parse(fs.readFileSync(markersPath, 'utf-8')); } catch { markers = {}; }
+    }
+    if (!markers['global']) markers['global'] = {};
+    markers['global'][stage] = {
+      completed_at: new Date().toISOString(),
+      status,
+    };
+    fs.writeFileSync(markersPath, JSON.stringify(markers, null, 2), 'utf-8');
   }
-  let markers: Record<string, Record<string, { completed_at: string; status: string }>> = {};
-  if (fs.existsSync(markersPath)) {
-    try { markers = JSON.parse(fs.readFileSync(markersPath, 'utf-8')); } catch { markers = {}; }
-  }
-  if (!markers['global']) markers['global'] = {};
-  markers['global'][stage] = {
-    completed_at: new Date().toISOString(),
-    status,
-  };
-  fs.writeFileSync(markersPath, JSON.stringify(markers, null, 2), 'utf-8');
 }
 
 function ensureArchitectureReadme(buildRoot: string, assembly: any): void {
