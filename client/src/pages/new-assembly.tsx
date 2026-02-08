@@ -101,8 +101,8 @@ export default function NewAssemblyPage() {
         return;
       }
       setZipContent(data.content);
-      const existing = visionProblem.trim();
-      setVisionProblem(existing ? `${existing}\n\n${data.content}` : data.content);
+      const existing = idea.trim();
+      setIdea(existing ? `${existing}\n\n${data.content}` : data.content);
       setZipFileName(file.name);
       setZipFileCount(data.fileCount);
       toast({ title: "Context loaded", description: `${data.fileCount} files extracted from ${file.name}` });
@@ -116,7 +116,7 @@ export default function NewAssemblyPage() {
 
   function clearZipContext() {
     if (zipContent) {
-      setVisionProblem((prev) => prev.replace(zipContent, '').trim());
+      setIdea((prev) => prev.replace(zipContent, '').trim());
     }
     setZipFileName(null);
     setZipFileCount(0);
@@ -288,15 +288,61 @@ export default function NewAssemblyPage() {
                   <Label htmlFor="idea">
                     Project Idea <span className="text-destructive">*</span>
                   </Label>
-                  <Textarea
-                    id="idea"
-                    value={idea}
-                    onChange={(e) => setIdea(e.target.value)}
-                    placeholder="A mobile-first note-taking app with folders, tags, rich text editing, and offline sync..."
-                    rows={4}
-                    data-testid="input-idea"
-                  />
-                  <p className="text-xs text-muted-foreground">Describe the app or system you want to build. Be as specific as possible.</p>
+                  <div className="relative">
+                    <Textarea
+                      id="idea"
+                      value={idea}
+                      onChange={(e) => setIdea(e.target.value)}
+                      placeholder="A mobile-first note-taking app with folders, tags, rich text editing, and offline sync..."
+                      rows={4}
+                      data-testid="input-idea"
+                    />
+                    <input
+                      ref={zipInputRef}
+                      type="file"
+                      accept=".zip"
+                      className="hidden"
+                      data-testid="input-zip-file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleZipUpload(file);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => zipInputRef.current?.click()}
+                      disabled={zipUploading}
+                      className="absolute bottom-2 right-2 flex items-center justify-center w-7 h-7 rounded-md bg-muted/80 text-muted-foreground transition-colors hover-elevate"
+                      title="Upload a zip file to add full project context"
+                      data-testid="button-zip-upload"
+                    >
+                      {zipUploading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Paperclip className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {zipFileName ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="secondary" className="gap-1" data-testid="badge-zip-attached">
+                        <FileArchive className="w-3 h-3" />
+                        {zipFileName} ({zipFileCount} files)
+                      </Badge>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={clearZipContext}
+                        data-testid="button-zip-clear"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Describe the app or system you want to build. Use the <Paperclip className="w-3 h-3 inline" /> to upload a zip of your project for full context.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -381,61 +427,15 @@ export default function NewAssemblyPage() {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="visionProblem">What problem does this solve?</Label>
-                  <div className="relative">
-                    <Textarea
-                      id="visionProblem"
-                      value={visionProblem}
-                      onChange={(e) => setVisionProblem(e.target.value)}
-                      placeholder="Users struggle to organize their notes across devices and need a fast, simple way to capture and retrieve information..."
-                      rows={3}
-                      data-testid="input-vision-problem"
-                    />
-                    <input
-                      ref={zipInputRef}
-                      type="file"
-                      accept=".zip"
-                      className="hidden"
-                      data-testid="input-zip-file"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleZipUpload(file);
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => zipInputRef.current?.click()}
-                      disabled={zipUploading}
-                      className="absolute bottom-2 right-2 flex items-center justify-center w-7 h-7 rounded-md bg-muted/80 text-muted-foreground transition-colors hover-elevate"
-                      title="Upload a zip file to add full project context"
-                      data-testid="button-zip-upload"
-                    >
-                      {zipUploading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Paperclip className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                  {zipFileName ? (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="secondary" className="gap-1" data-testid="badge-zip-attached">
-                        <FileArchive className="w-3 h-3" />
-                        {zipFileName} ({zipFileCount} files)
-                      </Badge>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={clearZipContext}
-                        data-testid="button-zip-clear"
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      The core pain point or opportunity your app addresses. Use the <Paperclip className="w-3 h-3 inline" /> to upload a zip of your project for full context.
-                    </p>
-                  )}
+                  <Textarea
+                    id="visionProblem"
+                    value={visionProblem}
+                    onChange={(e) => setVisionProblem(e.target.value)}
+                    placeholder="Users struggle to organize their notes across devices and need a fast, simple way to capture and retrieve information..."
+                    rows={3}
+                    data-testid="input-vision-problem"
+                  />
+                  <p className="text-xs text-muted-foreground">The core pain point or opportunity your app addresses.</p>
                 </div>
 
                 <div className="space-y-2">
