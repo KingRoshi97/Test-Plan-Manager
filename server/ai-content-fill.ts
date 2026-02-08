@@ -58,6 +58,13 @@ function findSectionsWithUnknowns(content: string): string[] {
   return sections;
 }
 
+function getAllMdFilesInModule(moduleDir: string): string[] {
+  if (!fs.existsSync(moduleDir)) return [];
+  return fs.readdirSync(moduleDir)
+    .filter(f => f.endsWith('.md'))
+    .map(f => path.join(moduleDir, f));
+}
+
 export function scanBelsFile(filePath: string, projectRoot: string): UnknownScanResult | null {
   if (!fs.existsSync(filePath)) return null;
 
@@ -80,16 +87,14 @@ export function scanModuleForUnknowns(
   projectRoot: string,
   moduleName: string
 ): UnknownScanResult[] {
-  const domainsDir = path.join(projectRoot, 'axion', 'domains', moduleName);
+  const moduleDir = path.join(projectRoot, 'axion', 'domains', moduleName);
   const results: UnknownScanResult[] = [];
 
-  const belsPath = path.join(domainsDir, `BELS_${moduleName}.md`);
-  const belsResult = scanBelsFile(belsPath, projectRoot);
-  if (belsResult) results.push(belsResult);
-
-  const oqPath = path.join(domainsDir, `OPEN_QUESTIONS_${moduleName}.md`);
-  const oqResult = scanBelsFile(oqPath, projectRoot);
-  if (oqResult) results.push(oqResult);
+  const mdFiles = getAllMdFilesInModule(moduleDir);
+  for (const filePath of mdFiles) {
+    const result = scanBelsFile(filePath, projectRoot);
+    if (result) results.push(result);
+  }
 
   return results;
 }
@@ -102,12 +107,9 @@ export function scanAllModulesForUnknowns(
   let totalFiles = 0;
 
   for (const mod of modules) {
-    const domainsDir = path.join(projectRoot, 'axion', 'domains', mod);
-    const belsPath = path.join(domainsDir, `BELS_${mod}.md`);
-    const oqPath = path.join(domainsDir, `OPEN_QUESTIONS_${mod}.md`);
-
-    if (fs.existsSync(belsPath)) totalFiles++;
-    if (fs.existsSync(oqPath)) totalFiles++;
+    const moduleDir = path.join(projectRoot, 'axion', 'domains', mod);
+    const mdFiles = getAllMdFilesInModule(moduleDir);
+    totalFiles += mdFiles.length;
 
     const results = scanModuleForUnknowns(projectRoot, mod);
     filesWithUnknowns.push(...results);
@@ -120,6 +122,106 @@ export function scanAllModulesForUnknowns(
   };
 }
 
+const DOC_TYPE_MAP: Record<string, { label: string; guidance: string }> = {
+  'BELS': {
+    label: 'Business Entity Logic Specification (BELS)',
+    guidance: `For BELS documents:
+   - Policy rules should describe real business logic for this type of application.
+   - State machines should model realistic entity lifecycles for this domain.
+   - Validation rules should cover fields that would exist in this kind of application.
+   - Reason codes should be specific SCREAMING_SNAKE_CASE identifiers.
+   - Error codes should follow the pattern: MODULE_PREFIX_SPECIFIC_ERROR.`,
+  },
+  'OPEN_QUESTIONS': {
+    label: 'Open Questions',
+    guidance: `For Open Questions documents:
+   - Questions should be specific to the project's domain and implementation challenges.
+   - Resolution tracking should have meaningful statuses and resolution notes.`,
+  },
+  'DDES': {
+    label: 'Domain-Driven Entity Specification (DDES)',
+    guidance: `For DDES documents:
+   - Entity definitions should model real data structures for this application domain.
+   - Relationships between entities should reflect actual business relationships.
+   - Attributes should have realistic types, constraints, and descriptions.
+   - Include proper primary keys, foreign keys, and indexes.`,
+  },
+  'DIM': {
+    label: 'Domain Integration Map (DIM)',
+    guidance: `For DIM documents:
+   - Integration points should reflect real external services or internal module boundaries.
+   - Data flows should model realistic input/output between systems.
+   - Protocols and authentication methods should be appropriate for the integration type.
+   - Error handling strategies should be specific to each integration point.`,
+  },
+  'TESTPLAN': {
+    label: 'Test Plan',
+    guidance: `For Test Plan documents:
+   - Test cases should cover realistic scenarios for this application domain.
+   - Include unit, integration, and end-to-end test scenarios.
+   - Acceptance criteria should be specific and measurable.
+   - Edge cases should reflect real-world usage patterns.`,
+  },
+  'COMPONENT_LIBRARY': {
+    label: 'Component Library',
+    guidance: `For Component Library documents:
+   - Components should be real UI components needed for this application.
+   - Props and variants should reflect actual component API designs.
+   - Usage examples should show realistic implementation patterns.
+   - Accessibility notes should be specific to each component type.`,
+  },
+  'COPY_GUIDE': {
+    label: 'Copy Guide',
+    guidance: `For Copy Guide documents:
+   - Tone and voice guidelines should match the application's target audience.
+   - Error messages should be user-friendly and actionable.
+   - Microcopy examples should cover real UI touchpoints in this application.
+   - Terminology should be consistent with the project's domain.`,
+  },
+  'SCREENMAP': {
+    label: 'Screen Map',
+    guidance: `For Screen Map documents:
+   - Screens should represent real views/pages needed for this application.
+   - Navigation flows should model realistic user journeys.
+   - Screen descriptions should include key components and data displayed.
+   - User actions on each screen should be specific and actionable.`,
+  },
+  'UI_Constraints': {
+    label: 'UI Constraints',
+    guidance: `For UI Constraints documents:
+   - Layout rules should reflect real responsive design requirements.
+   - Spacing and sizing constraints should be practical for the application type.
+   - Accessibility constraints should follow WCAG guidelines relevant to this domain.
+   - Performance constraints should be realistic for the target platform.`,
+  },
+  'UX_Foundations': {
+    label: 'UX Foundations',
+    guidance: `For UX Foundations documents:
+   - Design principles should align with the application's purpose and target users.
+   - Interaction patterns should be appropriate for the application type.
+   - User personas should represent realistic target users for this project.
+   - Usability heuristics should be specific and measurable.`,
+  },
+  'README': {
+    label: 'Module README',
+    guidance: `For README documents:
+   - Module purpose should clearly describe what this domain module handles.
+   - Key responsibilities should be specific to the application's needs.
+   - Dependencies on other modules should be accurate and meaningful.
+   - Setup or configuration notes should be practical.`,
+  },
+};
+
+function detectDocType(fileName: string): { label: string; guidance: string } {
+  for (const [prefix, info] of Object.entries(DOC_TYPE_MAP)) {
+    if (fileName.startsWith(prefix)) return info;
+  }
+  return {
+    label: 'Software Specification Document',
+    guidance: `Fill in all UNKNOWN placeholders with content that is specific, realistic, and appropriate for this project and domain.`,
+  };
+}
+
 function buildFillPrompt(
   fileContent: string,
   filePath: string,
@@ -127,10 +229,10 @@ function buildFillPrompt(
   projectIdea: string,
   moduleName: string
 ): string {
-  const isBELS = path.basename(filePath).startsWith('BELS_');
-  const docType = isBELS ? 'Business Entity Logic Specification (BELS)' : 'Open Questions';
+  const fileName = path.basename(filePath);
+  const docInfo = detectDocType(fileName);
 
-  return `You are an expert software architect filling out a ${docType} document for a software project.
+  return `You are an expert software architect filling out a ${docInfo.label} document for a software project.
 
 PROJECT NAME: ${projectName}
 PROJECT IDEA: ${projectIdea}
@@ -141,18 +243,10 @@ Below is the current document that has UNKNOWN placeholders. Your task is to rep
 Rules:
 1. Replace EVERY "UNKNOWN" with specific, meaningful content appropriate to this project and domain.
 2. Keep the exact same Markdown structure, headings, and table formatting.
-3. For BELS documents:
-   - Policy rules should describe real business logic for this type of application.
-   - State machines should model realistic entity lifecycles for this domain.
-   - Validation rules should cover fields that would exist in this kind of application.
-   - Reason codes should be specific SCREAMING_SNAKE_CASE identifiers.
-   - Error codes should follow the pattern: MODULE_PREFIX_SPECIFIC_ERROR.
-4. For Open Questions documents:
-   - Questions should be specific to the project's domain and implementation challenges.
-   - Resolution tracking should have meaningful statuses and resolution notes.
-5. Do NOT add new sections or remove existing ones.
-6. Do NOT wrap the output in code fences. Return ONLY the filled document content.
-7. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
+3. ${docInfo.guidance}
+4. Do NOT add new sections or remove existing ones.
+5. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+6. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
 
 CURRENT DOCUMENT:
 ${fileContent}
@@ -260,16 +354,14 @@ export async function fillModuleUnknowns(
   projectIdea: string,
   onProgress?: (message: string) => void
 ): Promise<ContentFillResult[]> {
-  const domainsDir = path.join(projectRoot, 'axion', 'domains', moduleName);
+  const moduleDir = path.join(projectRoot, 'axion', 'domains', moduleName);
   const results: ContentFillResult[] = [];
 
-  const belsPath = path.join(domainsDir, `BELS_${moduleName}.md`);
-  const belsResult = await fillFileWithAI(belsPath, projectName, projectIdea, moduleName, onProgress);
-  results.push(belsResult);
-
-  const oqPath = path.join(domainsDir, `OPEN_QUESTIONS_${moduleName}.md`);
-  const oqResult = await fillFileWithAI(oqPath, projectName, projectIdea, moduleName, onProgress);
-  results.push(oqResult);
+  const mdFiles = getAllMdFilesInModule(moduleDir);
+  for (const filePath of mdFiles) {
+    const result = await fillFileWithAI(filePath, projectName, projectIdea, moduleName, onProgress);
+    results.push(result);
+  }
 
   return results;
 }
