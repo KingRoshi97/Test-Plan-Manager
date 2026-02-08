@@ -45,7 +45,7 @@ export default function HealthPage() {
         <h2 className="text-lg font-semibold" data-testid="text-health-header">System Health</h2>
       </div>
 
-      <Card data-testid="card-api-health">
+      <Card data-testid="card-api-health" style={{ backgroundColor: health?.status === "ok" ? 'hsl(var(--success-tint))' : 'hsl(var(--error-tint))' }}>
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
           <CardTitle className="text-sm">API Status</CardTitle>
           {health?.status === "ok" ? (
@@ -96,9 +96,9 @@ export default function HealthPage() {
                   </span>
                   <div className="flex items-center gap-1 ml-auto flex-wrap">
                     {ws.hasManifest && <Badge variant="outline" className="text-xs" data-testid={`badge-manifest-${ws.projectName}`}>Manifest</Badge>}
-                    {ws.hasRegistry && <Badge variant="outline" className="text-xs" data-testid={`badge-registry-${ws.projectName}`}>Registry</Badge>}
-                    {ws.hasDomains && <Badge variant="outline" className="text-xs" data-testid={`badge-domains-${ws.projectName}`}>Domains</Badge>}
-                    {ws.hasApp && <Badge variant="outline" className="text-xs" data-testid={`badge-app-${ws.projectName}`}>App</Badge>}
+                    {ws.hasRegistry && <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-transparent text-xs" data-testid={`badge-registry-${ws.projectName}`}>Registry</Badge>}
+                    {ws.hasDomains && <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-transparent text-xs" data-testid={`badge-domains-${ws.projectName}`}>Domains</Badge>}
+                    {ws.hasApp && <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-transparent text-xs" data-testid={`badge-app-${ws.projectName}`}>App</Badge>}
                   </div>
                 </div>
               ))}
@@ -107,7 +107,7 @@ export default function HealthPage() {
         </CardContent>
       </Card>
 
-      <Card data-testid="card-release-gate">
+      <Card data-testid="card-release-gate" style={releaseGate ? (releaseGate.passed ? { backgroundColor: 'hsl(var(--success-tint))' } : { backgroundColor: 'hsl(var(--error-tint))' }) : undefined}>
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
           <CardTitle className="text-sm">Release Gate</CardTitle>
           {releaseGate ? (

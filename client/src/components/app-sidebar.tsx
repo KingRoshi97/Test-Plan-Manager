@@ -39,18 +39,22 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-3 px-2 py-1">
-          <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground text-sm font-bold" data-testid="logo">
+          <div
+            className="flex items-center justify-center w-8 h-8 rounded-md text-white text-sm font-bold shadow-[0_0_12px_rgba(99,130,255,0.4)]"
+            style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(260 80% 60%))" }}
+            data-testid="logo"
+          >
             <Zap className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-sm font-semibold" data-testid="text-title">AXION</h1>
-            <p className="text-xs text-muted-foreground">Assembler</p>
+            <h1 className="text-sm font-semibold text-sidebar-foreground" data-testid="text-title">AXION</h1>
+            <p className="text-xs text-sidebar-foreground/50">Assembler</p>
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Assemblies</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/60">Assemblies</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {assemblyNav.map((item) => (
@@ -72,7 +76,7 @@ export function AppSidebar() {
         </SidebarGroup>
         <SidebarSeparator />
         <SidebarGroup>
-          <SidebarGroupLabel>Tools</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/60">Tools</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {toolsNav.map((item) => (
@@ -99,7 +103,7 @@ export function AppSidebar() {
             variant="ghost"
             size="sm"
             onClick={toggleTheme}
-            className="w-full justify-start gap-2"
+            className="w-full justify-start gap-2 text-sidebar-foreground/70"
             data-testid="button-theme-toggle"
           >
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}

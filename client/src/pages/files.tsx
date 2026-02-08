@@ -96,7 +96,8 @@ export default function FilesPage() {
                 key={w.projectName}
                 variant="ghost"
                 onClick={() => selectWorkspace(w)}
-                className="w-full justify-start gap-3 h-auto py-3"
+                className="w-full justify-start gap-3"
+                size="lg"
                 data-testid={`button-workspace-${w.projectName}`}
               >
                 <FolderTree className="w-5 h-5 text-primary" />
@@ -139,7 +140,10 @@ export default function FilesPage() {
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>
               ) : entries.length === 0 ? (
-                <p className="text-xs text-center py-4 text-muted-foreground">Empty directory</p>
+                <div className="flex items-center justify-center gap-1.5 py-4 text-muted-foreground">
+                  <FolderTree className="w-3.5 h-3.5" />
+                  <p className="text-xs">Empty directory</p>
+                </div>
               ) : (
                 <div className="py-1">
                   {entries.map((entry) => (
@@ -147,7 +151,7 @@ export default function FilesPage() {
                       key={entry.path}
                       onClick={() => navigateTo(entry)}
                       className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left transition-colors hover-elevate ${
-                        selectedFile === entry.path ? "bg-primary/10" : ""
+                        selectedFile === entry.path ? "bg-primary/15" : ""
                       }`}
                       data-testid={`file-entry-${entry.name}`}
                     >
@@ -173,7 +177,7 @@ export default function FilesPage() {
             <>
               <CardHeader className="flex flex-row items-center gap-2 space-y-0 py-2 px-4 border-b">
                 <FileText className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium truncate" data-testid="text-filename">
+                <span className="text-sm font-medium truncate text-primary" data-testid="text-filename">
                   {selectedFile.split("/").pop()}
                 </span>
                 {fileContent && (
