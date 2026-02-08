@@ -58,7 +58,7 @@ export default function ExportPage() {
       ) : workspaces.length === 0 ? (
         <Card data-testid="empty-export">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <FolderTree className="w-12 h-12 text-muted-foreground/50 mb-4" />
+            <FolderTree className="w-12 h-12 text-primary/20 mb-4" />
             <h3 className="text-base font-medium mb-1">No workspaces available</h3>
             <p className="text-sm text-muted-foreground max-w-sm">
               Create an assembly and run a pipeline to generate workspaces for export.
@@ -93,7 +93,7 @@ export default function ExportPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {assembly?.state === "exported" && (
-                      <Badge variant="secondary" data-testid={`badge-exported-${ws.projectName}`}>Exported</Badge>
+                      <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-transparent" data-testid={`badge-exported-${ws.projectName}`}>Exported</Badge>
                     )}
                     {canExport && assembly?.id ? (
                       <Button

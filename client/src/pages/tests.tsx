@@ -360,6 +360,11 @@ export default function TestsPage() {
             <span className="text-sm text-muted-foreground">
               Running test suite...
             </span>
+            </div>
+          <div className="w-full h-0.5 bg-muted rounded-full overflow-hidden">
+            <div className="h-full w-1/3 bg-primary rounded-full animate-shimmer" />
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
             {liveFiles.length > 0 && (
               <span className="text-xs text-muted-foreground" data-testid="text-live-file-count">
                 {liveFiles.length} file{liveFiles.length !== 1 ? "s" : ""} completed
@@ -485,7 +490,7 @@ export default function TestsPage() {
                 <p className="text-2xl font-bold" data-testid="text-total-count">{result.summary.total}</p>
               </CardContent>
             </Card>
-            <Card data-testid="card-passed">
+            <Card data-testid="card-passed" style={{ backgroundColor: 'hsl(var(--success-tint))' }}>
               <CardContent className="pt-4 pb-3 px-4">
                 <p className="text-xs text-muted-foreground mb-1">Passed</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400" data-testid="text-passed-count">
@@ -493,7 +498,7 @@ export default function TestsPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card data-testid="card-failed">
+            <Card data-testid="card-failed" style={{ backgroundColor: 'hsl(var(--error-tint))' }}>
               <CardContent className="pt-4 pb-3 px-4">
                 <p className="text-xs text-muted-foreground mb-1">Failed</p>
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400" data-testid="text-failed-count">
@@ -501,7 +506,7 @@ export default function TestsPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card data-testid="card-skipped">
+            <Card data-testid="card-skipped" style={{ backgroundColor: 'hsl(var(--warning-tint))' }}>
               <CardContent className="pt-4 pb-3 px-4">
                 <p className="text-xs text-muted-foreground mb-1">Skipped</p>
                 <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400" data-testid="text-skipped-count">
@@ -509,6 +514,25 @@ export default function TestsPage() {
                 </p>
               </CardContent>
             </Card>
+          </div>
+
+          <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden flex" data-testid="progress-bar">
+            {result.summary.total > 0 && (
+              <>
+                <div
+                  className="h-full bg-green-500"
+                  style={{ width: `${(result.summary.passed / result.summary.total) * 100}%` }}
+                />
+                <div
+                  className="h-full bg-red-500"
+                  style={{ width: `${(result.summary.failed / result.summary.total) * 100}%` }}
+                />
+                <div
+                  className="h-full bg-yellow-500"
+                  style={{ width: `${(result.summary.skipped / result.summary.total) * 100}%` }}
+                />
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-3 flex-wrap" data-testid="run-summary-bar">
@@ -528,7 +552,7 @@ export default function TestsPage() {
           </div>
 
           {result.status === "error" && (result.errorOutput || result.rawOutput) && (
-            <Card data-testid="card-error-output">
+            <Card data-testid="card-error-output" style={{ backgroundColor: 'hsl(var(--error-tint))' }}>
               <CardHeader className="flex flex-row items-center gap-2 space-y-0 pb-2">
                 <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
                 <CardTitle className="text-sm">Error Output</CardTitle>
@@ -568,7 +592,8 @@ export default function TestsPage() {
                           const skipCount = tf.tests.filter((t) => t.status === "skip").length;
 
                           return (
-                            <div key={tf.file} data-testid={`test-file-${tf.file}`}>
+                            <div key={tf.file} className="relative" data-testid={`test-file-${tf.file}`}>
+                              <div className={`absolute left-0 top-0 w-[3px] h-full ${tf.status === "pass" ? "bg-green-500" : "bg-red-500"}`} />
                               <button
                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover-elevate"
                                 onClick={() => toggleFile(tf.file)}

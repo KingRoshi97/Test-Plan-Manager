@@ -17,7 +17,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
 
 interface PresetConfig {
   label: string;
@@ -114,7 +114,7 @@ export default function NewAssemblyPage() {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div>
-          <h2 className="text-lg font-semibold" data-testid="text-page-title">New Assembly</h2>
+          <h2 className="text-lg font-semibold flex items-center gap-2" data-testid="text-page-title"><Sparkles className="w-4 h-4" />New Assembly</h2>
           <p className="text-sm text-muted-foreground">Configure and create a new AXION assembly project.</p>
         </div>
       </div>
@@ -224,7 +224,7 @@ export default function NewAssemblyPage() {
                 <div className="flex flex-wrap gap-1.5 mt-1" data-testid="stage-plan-steps">
                   {getStagePlanSteps(selectedPlan).map((step, i) => (
                     <Badge key={i} variant="secondary" className="no-default-active-elevate" data-testid={`badge-stage-step-${i}`}>
-                      {stepLabel(step)}
+                      <span>{i + 1}. {stepLabel(step)}</span>
                     </Badge>
                   ))}
                 </div>

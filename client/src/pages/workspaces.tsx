@@ -73,7 +73,8 @@ export default function WorkspacesPage() {
     <div className="space-y-6 p-6 max-w-4xl mx-auto" data-testid="workspaces-page">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-lg font-semibold" data-testid="text-workspaces-title">
+          <h2 className="text-lg font-semibold flex items-center gap-2" data-testid="text-workspaces-title">
+            <FolderOpen className="w-5 h-5" />
             Workspaces
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
@@ -158,7 +159,7 @@ export default function WorkspacesPage() {
       </Card>
 
       {orphanedWorkspaces.length > 0 && (
-        <Card data-testid="card-orphaned-workspaces">
+        <Card data-testid="card-orphaned-workspaces" style={{ backgroundColor: 'hsl(var(--warning-tint))' }}>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
               <HardDrive className="w-4 h-4" />
@@ -200,11 +201,11 @@ function StatusIndicator({ label, active, testId }: { label: string; active: boo
   return (
     <div className="flex items-center gap-1" title={`${label}: ${active ? "present" : "missing"}`} data-testid={testId}>
       {active ? (
-        <CheckCircle2 className="w-3 h-3 text-green-500" />
+        <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
       ) : (
-        <XCircle className="w-3 h-3 text-gray-400" />
+        <XCircle className="w-3.5 h-3.5 text-gray-400" />
       )}
-      <span className="text-[10px] text-muted-foreground">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }

@@ -34,6 +34,7 @@ import {
   RefreshCw,
   Rocket,
   Trash2,
+  BarChart3,
 } from "lucide-react";
 
 interface AssemblyProgress {
@@ -643,7 +644,12 @@ export default function AssemblyPage() {
                     )}
                   </div>
                   {i < stepProgress.length - 1 && (
-                    <div className="w-4 h-px bg-border shrink-0 mt-[-12px]" />
+                    <div className={`w-4 h-0.5 shrink-0 mt-[-12px] ${
+                      step.status === "success" ? "bg-green-500" :
+                      step.status === "error" ? "bg-red-500" :
+                      step.status === "running" ? "bg-blue-500 animate-pulse" :
+                      "bg-border"
+                    }`} />
                   )}
                 </div>
               ))}
@@ -656,13 +662,20 @@ export default function AssemblyPage() {
                 <Terminal className="w-3.5 h-3.5" />
                 Live Output
               </div>
-              <pre
-                ref={terminalRef}
-                className="rounded-md p-3 text-xs font-mono bg-gray-950 text-gray-200 dark:bg-gray-950 dark:text-gray-200 overflow-auto max-h-80 whitespace-pre-wrap"
-                data-testid="terminal-output"
-              >
-                {streamOutput || "Waiting for output..."}
-              </pre>
+              <div className="rounded-md overflow-hidden">
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-900">
+                  <div className="rounded-full bg-red-500" style={{ width: 6, height: 6 }} />
+                  <div className="rounded-full bg-yellow-500" style={{ width: 6, height: 6 }} />
+                  <div className="rounded-full bg-green-500" style={{ width: 6, height: 6 }} />
+                </div>
+                <pre
+                  ref={terminalRef}
+                  className="p-3 text-xs font-mono bg-gray-950 text-gray-200 dark:bg-gray-950 dark:text-gray-200 overflow-auto max-h-80 whitespace-pre-wrap"
+                  data-testid="terminal-output"
+                >
+                  {streamOutput || "Waiting for output..."}
+                </pre>
+              </div>
             </div>
           )}
         </CardContent>
@@ -683,7 +696,7 @@ export default function AssemblyPage() {
             <Card>
               <CardContent className="pt-4 space-y-4">
                 <div className="space-y-3">
-                  <div className="text-xs font-medium text-muted-foreground">Import & Analysis</div>
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><FileInput className="w-3.5 h-3.5" />Import & Analysis</div>
                   <div className="flex items-end gap-2 flex-wrap">
                     <div className="flex-1 min-w-48">
                       <label className="text-xs text-muted-foreground mb-1 block">Source Repository Path</label>
@@ -717,7 +730,7 @@ export default function AssemblyPage() {
                 </div>
 
                 <div className="border-t pt-3 space-y-3">
-                  <div className="text-xs font-medium text-muted-foreground">Build & Deploy</div>
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Rocket className="w-3.5 h-3.5" />Build & Deploy</div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       variant="outline"
@@ -771,7 +784,7 @@ export default function AssemblyPage() {
                 </div>
 
                 <div className="border-t pt-3 space-y-3">
-                  <div className="text-xs font-medium text-muted-foreground">Analysis</div>
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><BarChart3 className="w-3.5 h-3.5" />Analysis</div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       variant="outline"
@@ -815,10 +828,20 @@ export default function AssemblyPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {modules.map(([name, stageStatuses]) => (
+              {modules.map(([name, stageStatuses]) => {
+                const stageValues = STAGES.map(s => stageStatuses[s] || "pending");
+                const allDone = stageValues.every(v => v === "done");
+                const hasError = stageValues.some(v => v === "error");
+                const tintStyle = allDone
+                  ? { backgroundColor: 'hsl(var(--success-tint))' }
+                  : hasError
+                  ? { backgroundColor: 'hsl(var(--error-tint))' }
+                  : undefined;
+                return (
                 <div
                   key={name}
                   className="rounded-md border p-3 space-y-2"
+                  style={tintStyle}
                   data-testid={`module-card-${name}`}
                 >
                   <span className="text-xs font-medium truncate block" data-testid={`module-name-${name}`}>
@@ -849,7 +872,8 @@ export default function AssemblyPage() {
                     ))}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -878,7 +902,7 @@ export default function AssemblyPage() {
                     {runHistory.map((run) => (
                       <div
                         key={run.id}
-                        className="flex items-center justify-between gap-2 py-1.5 px-2 rounded text-xs"
+                        className="flex items-center justify-between gap-2 py-1.5 px-2 rounded text-xs even:bg-muted/30 flex-wrap"
                         data-testid={`run-history-${run.id}`}
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
