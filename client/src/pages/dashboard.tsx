@@ -19,6 +19,13 @@ import {
   Clock,
   AlertCircle,
   ArrowUpCircle,
+  Play,
+  Download,
+  FileText,
+  CheckCircle2,
+  XCircle,
+  Activity,
+  Timer,
 } from "lucide-react";
 
 interface EnrichedAssembly {
@@ -42,6 +49,10 @@ interface EnrichedAssembly {
   revision: number;
   upgradeNotes: string | null;
   kitType: string;
+  lastRunAt: string | null;
+  totalRuns: number;
+  completedSteps: number;
+  totalDuration: number;
 }
 
 function getStateBadgeVariant(state: string) {
@@ -87,9 +98,50 @@ function formatRelativeTime(dateStr: string): string {
   return date.toLocaleDateString();
 }
 
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  const min = Math.floor(ms / 60000);
+  const sec = Math.round((ms % 60000) / 1000);
+  return `${min}m ${sec}s`;
+}
+
 function truncateText(text: string, maxLen: number): string {
   if (text.length <= maxLen) return text;
   return text.slice(0, maxLen).trimEnd() + "...";
+}
+
+function StatsBar({ assemblies }: { assemblies: EnrichedAssembly[] }) {
+  const total = assemblies.length;
+  const completed = assemblies.filter(a => a.state === "completed" || a.state === "exported").length;
+  const running = assemblies.filter(a => a.state === "running").length;
+  const failed = assemblies.filter(a => a.state === "failed").length;
+  const queued = assemblies.filter(a => a.state === "queued").length;
+  const totalDuration = assemblies.reduce((sum, a) => sum + (a.totalDuration || 0), 0);
+
+  const stats = [
+    { label: "Total", value: total, icon: Layers, color: "text-foreground" },
+    { label: "Completed", value: completed, icon: CheckCircle2, color: "text-green-600 dark:text-green-400" },
+    { label: "Running", value: running, icon: Activity, color: "text-blue-600 dark:text-blue-400" },
+    { label: "Failed", value: failed, icon: XCircle, color: "text-red-600 dark:text-red-400" },
+    { label: "Queued", value: queued, icon: Clock, color: "text-muted-foreground" },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" data-testid="stats-bar">
+      {stats.map(({ label, value, icon: Icon, color }) => (
+        <Card key={label} data-testid={`stat-${label.toLowerCase()}`}>
+          <CardContent className="flex items-center gap-3 py-3 px-4">
+            <Icon className={`w-4 h-4 shrink-0 ${color}`} />
+            <div className="min-w-0">
+              <div className="text-lg font-semibold leading-none" data-testid={`stat-value-${label.toLowerCase()}`}>{value}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -110,6 +162,17 @@ export default function DashboardPage() {
     onError: () => {
       toast({ title: "Failed to delete assembly", variant: "destructive" });
       setDeleteConfirmId(null);
+    },
+  });
+
+  const exportMutation = useMutation({
+    mutationFn: (id: string) => apiRequest(`/api/assemblies/${id}/export`, { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+      toast({ title: "Export completed" });
+    },
+    onError: () => {
+      toast({ title: "Export failed", variant: "destructive" });
     },
   });
 
@@ -151,25 +214,30 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="assemblies-grid">
-          {assemblies.map((assembly) => (
-            <AssemblyCard
-              key={assembly.id}
-              assembly={assembly}
-              onOpen={() => navigate(`/assembly/${assembly.id}`)}
-              onDelete={() => {
-                if (deleteConfirmId === assembly.id) {
-                  deleteMutation.mutate(assembly.id);
-                } else {
-                  setDeleteConfirmId(assembly.id);
-                }
-              }}
-              isDeleting={deleteMutation.isPending && deleteConfirmId === assembly.id}
-              isConfirmingDelete={deleteConfirmId === assembly.id}
-              onCancelDelete={() => setDeleteConfirmId(null)}
-            />
-          ))}
-        </div>
+        <>
+          <StatsBar assemblies={assemblies} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="assemblies-grid">
+            {assemblies.map((assembly) => (
+              <AssemblyCard
+                key={assembly.id}
+                assembly={assembly}
+                onOpen={() => navigate(`/assembly/${assembly.id}`)}
+                onDelete={() => {
+                  if (deleteConfirmId === assembly.id) {
+                    deleteMutation.mutate(assembly.id);
+                  } else {
+                    setDeleteConfirmId(assembly.id);
+                  }
+                }}
+                onExport={() => exportMutation.mutate(assembly.id)}
+                isExporting={exportMutation.isPending}
+                isDeleting={deleteMutation.isPending && deleteConfirmId === assembly.id}
+                isConfirmingDelete={deleteConfirmId === assembly.id}
+                onCancelDelete={() => setDeleteConfirmId(null)}
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -190,6 +258,8 @@ function AssemblyCard({
   assembly,
   onOpen,
   onDelete,
+  onExport,
+  isExporting,
   isDeleting,
   isConfirmingDelete,
   onCancelDelete,
@@ -197,13 +267,17 @@ function AssemblyCard({
   assembly: EnrichedAssembly;
   onOpen: () => void;
   onDelete: () => void;
+  onExport: () => void;
+  isExporting: boolean;
   isDeleting: boolean;
   isConfirmingDelete: boolean;
   onCancelDelete: () => void;
 }) {
+  const [, navigate] = useLocation();
   const stateVariant = getStateBadgeVariant(assembly.state);
   const stateClassName = getStateBadgeClassName(assembly.state);
   const tintStyle = getCardTintStyle(assembly.state);
+  const showExport = assembly.lockEligible || assembly.state === "completed";
 
   return (
     <Card
@@ -307,9 +381,23 @@ function AssemblyCard({
         </div>
 
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground" data-testid={`text-created-${assembly.id}`}>
-            <Clock className="w-3 h-3" />
-            {formatRelativeTime(assembly.createdAt)}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1" data-testid={`text-created-${assembly.id}`}>
+              <Clock className="w-3 h-3" />
+              {formatRelativeTime(assembly.createdAt)}
+            </span>
+            {assembly.totalRuns > 0 && (
+              <span className="flex items-center gap-1" data-testid={`text-runs-${assembly.id}`}>
+                <Play className="w-3 h-3" />
+                {assembly.totalRuns} run{assembly.totalRuns !== 1 ? "s" : ""}
+              </span>
+            )}
+            {assembly.totalDuration > 0 && (
+              <span className="flex items-center gap-1" data-testid={`text-duration-${assembly.id}`}>
+                <Timer className="w-3 h-3" />
+                {formatDuration(assembly.totalDuration)}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2" data-testid={`status-indicators-${assembly.id}`}>
             <StatusDot active={assembly.wsExists} label="Workspace" />
@@ -318,18 +406,49 @@ function AssemblyCard({
             <StatusDot active={assembly.hasApp} label="App" />
           </div>
         </div>
+
+        {assembly.lastRunAt && (
+          <div className="text-[10px] text-muted-foreground/70" data-testid={`text-last-run-${assembly.id}`}>
+            Last run: {formatRelativeTime(assembly.lastRunAt)}
+          </div>
+        )}
       </CardContent>
 
       <CardFooter className="flex items-center justify-between gap-2 flex-wrap">
-        <Button
-          variant="default"
-          size="sm"
-          onClick={onOpen}
-          data-testid={`button-open-${assembly.id}`}
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          Open
-        </Button>
+        <div className="flex items-center gap-1 flex-wrap">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onOpen}
+            data-testid={`button-open-${assembly.id}`}
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Open
+          </Button>
+          {assembly.wsExists && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/docs?project=${assembly.projectName}`)}
+              data-testid={`button-docs-${assembly.id}`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Docs
+            </Button>
+          )}
+          {showExport && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onExport}
+              disabled={isExporting}
+              data-testid={`button-export-${assembly.id}`}
+            >
+              {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              Export
+            </Button>
+          )}
+        </div>
 
         <div className="flex items-center gap-1">
           {isConfirmingDelete ? (
