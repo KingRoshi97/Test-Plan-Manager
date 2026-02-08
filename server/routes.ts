@@ -182,7 +182,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'test': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', 'axion/scripts/axion-test.ts', '--app-path', path.join(br, 'app'), '--json'],
+    args: (pn, br) => ['tsx', 'axion/scripts/axion-test.ts', '--build-root', WORKSPACES_DIR, '--project-name', pn, '--json'],
     label: 'Test',
     group: 'build',
     desc: 'Run workspace tests',

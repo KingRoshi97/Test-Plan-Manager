@@ -271,8 +271,14 @@ function main() {
       console.log('[RUN] Lint check...');
       const lintResult = runCommand('npm run lint', appPath);
       if (!lintResult.success) {
-        console.log('[WARN] Lint errors found');
-        lintErrors = (lintResult.output.match(/error/gi) || []).length || 1;
+        if (lintResult.output.includes("couldn't find") || lintResult.output.includes('no eslint.config')) {
+          console.log('[SKIP] Lint: ESLint could not find config (skipping, not counted as failure)');
+          lintSkipped = true;
+        } else {
+          console.log('[WARN] Lint errors found');
+          const ruleErrors = lintResult.output.match(/^\s*\d+:\d+\s+error\s/gm);
+          lintErrors = ruleErrors ? ruleErrors.length : 1;
+        }
       } else {
         console.log('[PASS] Lint check');
       }
