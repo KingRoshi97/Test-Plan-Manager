@@ -43,8 +43,12 @@ AXION employs a documentation-first approach to generate comprehensive "Agent Ki
 - **Anchor Convention**: Uses HTML comment-like anchors (`<!-- AXION:ANCHOR:<ID> -->`) for dynamic content injection during code generation.
 
 ### Script Organization
-Pipeline scripts under `axion/scripts/` are split into two categories:
-- **Pipeline scripts (`.mjs`)**: `draft`, `generate`, `init`, `lock`, `package`, `review`, `seed`, `verify` — invoked by the orchestrator and dashboard. Shared logic lives in `_axion_module_mode.mjs`, with constants loaded from `axion/config/domains.json` at runtime.
+Pipeline scripts under `axion/scripts/` are split into three categories:
+- **Pipeline scripts (`.mjs`)**: `draft`, `generate`, `init`, `lock`, `package`, `review`, `seed`, `verify` — invoked by the orchestrator and dashboard. Shared logic lives in `_axion_module_mode.mjs`, with constants loaded from `axion/config/domains.json` at runtime. The `draft` and `seed` scripts are upgrade-aware: they read `AXION_REVISION`, `AXION_UPGRADE_NOTES`, and `AXION_KIT_TYPE` env vars.
+- **System-level scripts (`.ts`)**: Core system logic extracted from the dashboard server for standalone CLI execution:
+  - **`axion-orchestrate.ts`**: Standalone pipeline orchestrator with step chaining, retry, gate enforcement, per-module iteration. Supports `--plan`, `--steps`, `--start-from`, `--modules`, `--dry-run`, `--list-plans`. Reads stage plans from `axion/config/presets.json`.
+  - **`axion-content-fill.ts`**: UNKNOWN detection, doc priority ordering (DOC_PRIORITY_ORDER), doc-type-aware AI prompting (DOC_TYPE_MAP), and cascading fills. Supports `--scan`, `--fill`, `--cascade`, `--find-next`, `--upgrade` modes.
+  - **`lib/retry.ts`**: Shared transient failure retry utility with exponential backoff for ENOENT, ETIMEDOUT, ECONNRESET, OOM errors.
 - **Auxiliary guardrail scripts (`.ts`)**: `doctor`, `preflight`, `repair`, `reconcile`, `verify-seams`, `hash-templates`, `release-check`, `status`, `next`, `iterate`, `import`, `kit-create`, `scaffold-app`, `build-plan`, `build`, `build-exec`, `activate`, `deploy`, `overhaul`, `package` (workspace mode), `clean`, `test`, `docs-check`, `run`, `run-app`, `upgrade` — invoked via `tsx` for workspace operations and system validation.
 - **`axion-package`** exists in both forms: `.mjs` creates domain-based zip bundles, `.ts` creates workspace-scoped packages (used by routes.ts).
 

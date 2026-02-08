@@ -296,6 +296,16 @@ try {
 
   const projectIdea = process.env.AXION_PROJECT_IDEA || '';
   const ctx = parseProjectIdea(projectIdea);
+
+  const revision = parseInt(process.env.AXION_REVISION || '1', 10);
+  const upgradeNotes = process.env.AXION_UPGRADE_NOTES || '';
+  const kitType = process.env.AXION_KIT_TYPE || 'original';
+  const isUpgrade = kitType === 'upgrade' && !!upgradeNotes;
+
+  if (isUpgrade) {
+    console.log(`  Upgrade mode: revision=${revision}, kitType=${kitType}`);
+    console.log(`  Upgrade notes: ${upgradeNotes.slice(0, 100)}${upgradeNotes.length > 100 ? '...' : ''}`);
+  }
   
   for (const module of modules) {
     ensurePrereqs({

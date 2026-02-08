@@ -150,8 +150,8 @@ const pipelineSteps: Record<string, PipelineStep> = {
     desc: 'Verify completeness',
   },
   'content-fill': {
-    cmd: '__inline__',
-    args: () => [],
+    cmd: 'npx',
+    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-content-fill.ts'), '--project', pn, '--fill', '--json'],
     label: 'Content Fill',
     cwd: (br) => br,
     group: 'docs',
