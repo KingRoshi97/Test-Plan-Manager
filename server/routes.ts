@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly } from '../shared/schema.js';
 import { storage } from './storage.js';
-import { scanAllModulesForUnknowns, fillAllModulesUnknowns, findNextTarget, getAllTargets, generateQuestionsForTarget, fillFileWithContext, cascadeFill } from './ai-content-fill.js';
+import { scanAllModulesForUnknowns, fillAllModulesUnknowns, findNextTarget, getAllTargets, generateQuestionsForTarget, fillFileWithContext, cascadeFill, upgradeDocumentWithAI } from './ai-content-fill.js';
 
 const PROJECT_ROOT = process.cwd();
 const AXION_ROOT = path.join(PROJECT_ROOT, 'axion');
@@ -700,6 +700,62 @@ export function registerRoutes(app: Express) {
       const errMsg = err instanceof Error ? err.message : String(err);
       res.status(500).json({ error: errMsg });
     }
+  });
+
+  app.post('/api/doc-upgrade', async (req: Request, res: Response) => {
+    const { files } = req.body as { files?: string[] };
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      res.status(400).json({ error: 'files array is required' });
+      return;
+    }
+
+    for (const f of files) {
+      if (f.includes('..') || !f.startsWith('axion/')) {
+        res.status(400).json({ error: `Invalid file path: ${f}` });
+        return;
+      }
+      const resolved = path.resolve(PROJECT_ROOT, f);
+      if (!resolved.startsWith(AXION_ROOT)) {
+        res.status(400).json({ error: `Path escapes axion root: ${f}` });
+        return;
+      }
+    }
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    const total = files.length;
+    let completed = 0;
+    let upgraded = 0;
+    let skipped = 0;
+    let errored = 0;
+
+    res.write(`event: start\ndata: ${JSON.stringify({ total })}\n\n`);
+
+    for (const relPath of files) {
+      const fullPath = path.join(PROJECT_ROOT, relPath);
+      const fileName = path.basename(relPath);
+      const parts = relPath.split('/');
+      const moduleName = parts.length >= 3 ? parts[2] : parts[parts.length - 2] || 'system';
+
+      const result = await upgradeDocumentWithAI(fullPath, moduleName, (msg) => {
+        res.write(`event: progress\ndata: ${JSON.stringify({ file: relPath, message: msg })}\n\n`);
+      });
+
+      completed++;
+      if (result.status === 'upgraded') upgraded++;
+      else if (result.status === 'skipped') skipped++;
+      else errored++;
+
+      res.write(`event: file-done\ndata: ${JSON.stringify({ file: relPath, status: result.status, error: result.error, completed, total, upgraded, skipped, errored })}\n\n`);
+    }
+
+    res.write(`event: done\ndata: ${JSON.stringify({ total, upgraded, skipped, errored })}\n\n`);
+    res.end();
   });
 
   app.get('/api/assemblies', async (_req: Request, res: Response) => {
