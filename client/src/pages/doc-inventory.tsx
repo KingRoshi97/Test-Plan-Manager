@@ -1,9 +1,21 @@
 import type { ElementType, ReactNode } from "react";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   FileText,
   ChevronDown,
@@ -19,8 +31,13 @@ import {
   CheckCircle,
   XCircle,
   ArrowUpCircle,
+  Eye,
+  Plus,
+  Lightbulb,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
+import ReactMarkdown from "react-markdown";
 import DocHierarchyMap from "@/components/doc-hierarchy-map";
 
 interface DocFile {
@@ -123,7 +140,7 @@ function useDocUpgrade() {
   const abortRef = useRef<AbortController | null>(null);
 
   const startUpgrade = useCallback(
-    (files: string[]) => {
+    (files: string[], userInstructions?: string) => {
       if (state.active) return;
 
       const controller = new AbortController();
@@ -140,10 +157,15 @@ function useDocUpgrade() {
         results: [],
       });
 
+      const body: Record<string, unknown> = { files };
+      if (userInstructions && userInstructions.trim()) {
+        body.userInstructions = userInstructions.trim();
+      }
+
       fetch("/api/doc-upgrade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ files }),
+        body: JSON.stringify(body),
         signal: controller.signal,
       })
         .then((res) => {
@@ -275,6 +297,297 @@ function UpgradeProgressBar({ state }: { state: UpgradeState }) {
   );
 }
 
+function UpgradeDialog({
+  open,
+  onOpenChange,
+  files,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  files: string[];
+  onConfirm: (files: string[], instructions: string) => void;
+}) {
+  const [instructions, setInstructions] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (open && files.length === 1) {
+      setLoadingSuggestions(true);
+      setSuggestions([]);
+      fetch("/api/doc-upgrade/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file: files[0] }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          setSuggestions(data.suggestions || []);
+        })
+        .catch(() => {
+          setSuggestions(["Could not load suggestions."]);
+        })
+        .finally(() => setLoadingSuggestions(false));
+    } else if (open && files.length > 1) {
+      setSuggestions([
+        "Review all documents for consistency across sections",
+        "Fill any remaining UNKNOWN placeholders with specific content",
+        "Strengthen thin sections with additional detail",
+        "Ensure technical precision and terminology consistency",
+      ]);
+      setLoadingSuggestions(false);
+    }
+    if (!open) {
+      setInstructions("");
+      setSuggestions([]);
+    }
+  }, [open, files]);
+
+  const isSingle = files.length === 1;
+  const fileName = isSingle ? files[0].split("/").pop() || files[0] : "";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg" data-testid="dialog-upgrade">
+        <DialogHeader>
+          <DialogTitle data-testid="text-upgrade-dialog-title">
+            {isSingle ? `Upgrade: ${getDescription(fileName)}` : `Upgrade ${files.length} Documents`}
+          </DialogTitle>
+          <DialogDescription>
+            {isSingle
+              ? "AI will analyze and improve this document. You can add custom instructions below."
+              : "AI will upgrade all selected documents. Add custom instructions to guide the upgrade."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Lightbulb className="w-4 h-4 text-muted-foreground" />
+              AI Suggestions
+            </Label>
+            <div className="rounded-md border p-3 space-y-2 max-h-40 overflow-y-auto" style={{ background: "hsl(var(--muted) / 0.3)" }}>
+              {loadingSuggestions ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-loading-suggestions">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Analyzing document...
+                </div>
+              ) : suggestions.length > 0 ? (
+                suggestions.map((s, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-2 text-sm cursor-pointer rounded-md px-2 py-1 hover-elevate"
+                    onClick={() => setInstructions((prev) => prev ? `${prev}\n${s}` : s)}
+                    data-testid={`suggestion-item-${i}`}
+                  >
+                    <Sparkles className="w-3 h-3 mt-0.5 shrink-0 text-muted-foreground" />
+                    <span>{s}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No suggestions available.</p>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">Click a suggestion to add it to your instructions.</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="upgrade-instructions">Your Instructions (optional)</Label>
+            <Textarea
+              id="upgrade-instructions"
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="e.g., Make the API section more detailed, add error handling examples, expand the security considerations..."
+              rows={4}
+              data-testid="input-upgrade-instructions"
+            />
+            <p className="text-xs text-muted-foreground">
+              Leave empty for a general quality upgrade, or write specific directions for the AI.
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="button-upgrade-cancel">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              onConfirm(files, instructions);
+              onOpenChange(false);
+            }}
+            data-testid="button-upgrade-confirm"
+          >
+            <Sparkles className="w-3 h-3 mr-1" />
+            {isSingle ? "Upgrade Document" : `Upgrade ${files.length} Documents`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FileViewerDialog({
+  open,
+  onOpenChange,
+  filePath,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  filePath: string | null;
+}) {
+  const [content, setContent] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open && filePath) {
+      setLoading(true);
+      setContent(null);
+      setError(null);
+      fetch(`/api/files/read?path=${encodeURIComponent(filePath)}`)
+        .then((r) => {
+          if (!r.ok) throw new Error("Failed to load file");
+          return r.json();
+        })
+        .then((data) => {
+          setContent(data.content || "");
+        })
+        .catch((err) => {
+          setError(err.message);
+        })
+        .finally(() => setLoading(false));
+    }
+    if (!open) {
+      setContent(null);
+      setError(null);
+    }
+  }, [open, filePath]);
+
+  const fileName = filePath ? filePath.split("/").pop() || filePath : "";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col" data-testid="dialog-file-viewer">
+        <DialogHeader>
+          <DialogTitle data-testid="text-viewer-title">{getDescription(fileName)}</DialogTitle>
+          <DialogDescription className="font-mono text-xs">{filePath}</DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className="flex-1 min-h-0 max-h-[60vh]">
+          {loading ? (
+            <div className="flex items-center justify-center py-12" data-testid="viewer-loading">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <div className="py-8 text-center text-sm text-destructive" data-testid="viewer-error">{error}</div>
+          ) : content !== null ? (
+            <div className="prose prose-sm dark:prose-invert max-w-none p-4" data-testid="viewer-content">
+              <ReactMarkdown>{content}</ReactMarkdown>
+            </div>
+          ) : null}
+        </ScrollArea>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="button-viewer-close">
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AddDocDialog({
+  open,
+  onOpenChange,
+  sectionId,
+  sectionLabel,
+  domain,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  sectionId: string;
+  sectionLabel: string;
+  domain?: string;
+}) {
+  const [filename, setFilename] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (!open) setFilename("");
+  }, [open]);
+
+  const handleCreate = async () => {
+    if (!filename.trim()) return;
+    setCreating(true);
+    try {
+      const body: Record<string, string> = { section: sectionId, filename: filename.trim() };
+      if (domain) body.domain = domain;
+
+      const res = await fetch("/api/docs/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: "Error", description: data.error || "Failed to create document", variant: "destructive" });
+        return;
+      }
+      toast({ title: "Document Created", description: `${data.name} has been created.` });
+      queryClient.invalidateQueries({ queryKey: ["/api/doc-inventory"] });
+      onOpenChange(false);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md" data-testid="dialog-add-doc">
+        <DialogHeader>
+          <DialogTitle data-testid="text-add-doc-title">Add Document</DialogTitle>
+          <DialogDescription>
+            Create a new markdown file in <span className="font-medium">{sectionLabel}</span>
+            {domain && <> under <span className="font-medium">{domain}</span></>}.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="doc-filename">Filename</Label>
+            <Input
+              id="doc-filename"
+              value={filename}
+              onChange={(e) => setFilename(e.target.value)}
+              placeholder="e.g., MY_NEW_DOC.md"
+              data-testid="input-doc-filename"
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+            />
+            <p className="text-xs text-muted-foreground">
+              The .md extension will be added automatically if not included.
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="button-add-doc-cancel">
+            Cancel
+          </Button>
+          <Button onClick={handleCreate} disabled={!filename.trim() || creating} data-testid="button-add-doc-confirm">
+            {creating ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Plus className="w-3 h-3 mr-1" />}
+            Create
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function CollapsibleSection({
   title,
   subtitle,
@@ -284,6 +597,7 @@ function CollapsibleSection({
   children,
   testId,
   onUpgrade,
+  onAddDoc,
   upgradeActive,
 }: {
   title: string;
@@ -294,6 +608,7 @@ function CollapsibleSection({
   children: ReactNode;
   testId: string;
   onUpgrade?: () => void;
+  onAddDoc?: () => void;
   upgradeActive?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -317,18 +632,30 @@ function CollapsibleSection({
               <p className="text-xs text-muted-foreground font-normal">{subtitle}</p>
             </div>
           </div>
-          {onUpgrade && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={(e) => { e.stopPropagation(); onUpgrade(); }}
-              disabled={upgradeActive}
-              data-testid={`button-upgrade-${testId}`}
-            >
-              <Sparkles className="w-3 h-3 mr-1" />
-              Upgrade All
-            </Button>
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            {onAddDoc && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={(e) => { e.stopPropagation(); onAddDoc(); }}
+                data-testid={`button-add-doc-${testId}`}
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            )}
+            {onUpgrade && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => { e.stopPropagation(); onUpgrade(); }}
+                disabled={upgradeActive}
+                data-testid={`button-upgrade-${testId}`}
+              >
+                <Sparkles className="w-3 h-3 mr-1" />
+                Upgrade All
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       {open && <CardContent className="pt-0">{children}</CardContent>}
@@ -340,21 +667,24 @@ function FileRowWithHover({
   file,
   showPath = true,
   onUpgrade,
+  onView,
   upgradeActive,
 }: {
   file: DocFile;
   showPath?: boolean;
   onUpgrade?: (filePath: string) => void;
+  onView?: (filePath: string) => void;
   upgradeActive?: boolean;
 }) {
   const desc = getDescription(file.name);
   const [hovered, setHovered] = useState(false);
   return (
     <div
-      className="flex items-center gap-3 py-2 px-3 rounded-md hover-elevate"
+      className="flex items-center gap-3 py-2 px-3 rounded-md hover-elevate cursor-pointer"
       data-testid={`file-row-${file.name}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => onView?.(file.path)}
     >
       <FileText className="w-4 h-4 shrink-0 text-muted-foreground" />
       <div className="flex flex-col gap-0.5 flex-1 min-w-0">
@@ -363,19 +693,29 @@ function FileRowWithHover({
           <span className="text-xs text-muted-foreground font-mono truncate">{file.path}</span>
         )}
       </div>
-      {onUpgrade && (
+      <div className="flex items-center gap-1 shrink-0">
         <Button
           size="icon"
           variant="ghost"
-          className="shrink-0"
           style={{ visibility: hovered ? "visible" : "hidden" }}
-          onClick={() => onUpgrade(file.path)}
-          disabled={upgradeActive}
-          data-testid={`button-upgrade-file-${file.name}`}
+          onClick={(e) => { e.stopPropagation(); onView?.(file.path); }}
+          data-testid={`button-view-file-${file.name}`}
         >
-          <Sparkles className="w-3 h-3" />
+          <Eye className="w-3 h-3" />
         </Button>
-      )}
+        {onUpgrade && (
+          <Button
+            size="icon"
+            variant="ghost"
+            style={{ visibility: hovered ? "visible" : "hidden" }}
+            onClick={(e) => { e.stopPropagation(); onUpgrade(file.path); }}
+            disabled={upgradeActive}
+            data-testid={`button-upgrade-file-${file.name}`}
+          >
+            <Sparkles className="w-3 h-3" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -385,12 +725,16 @@ function DomainGroup({
   files,
   testId,
   onUpgradeFile,
+  onViewFile,
+  onAddDoc,
   upgradeActive,
 }: {
   domain: string;
   files: DocFile[];
   testId: string;
   onUpgradeFile?: (filePath: string) => void;
+  onViewFile?: (filePath: string) => void;
+  onAddDoc?: (domain: string) => void;
   upgradeActive?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -405,7 +749,19 @@ function DomainGroup({
         {open ? <ChevronDown className="w-3 h-3 shrink-0 text-muted-foreground" /> : <ChevronRight className="w-3 h-3 shrink-0 text-muted-foreground" />}
         <FolderOpen className="w-4 h-4 shrink-0 text-muted-foreground" />
         <span className="text-sm font-medium">{domain}</span>
-        <Badge variant="outline" className="ml-auto" data-testid={`badge-count-${testId}`}>{files.length}</Badge>
+        <div className="flex items-center gap-1 ml-auto shrink-0">
+          {onAddDoc && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => { e.stopPropagation(); onAddDoc(domain); }}
+              data-testid={`button-add-doc-domain-${domain}`}
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+          )}
+          <Badge variant="outline" data-testid={`badge-count-${testId}`}>{files.length}</Badge>
+        </div>
       </div>
       {open && (
         <div className="ml-6 border-l pl-3 mt-1">
@@ -414,6 +770,7 @@ function DomainGroup({
               key={f.path}
               file={f}
               onUpgrade={onUpgradeFile}
+              onView={onViewFile}
               upgradeActive={upgradeActive}
             />
           ))}
@@ -429,6 +786,17 @@ export default function DocInventoryPage() {
   });
   const { state: upgradeState, startUpgrade, cancelUpgrade } = useDocUpgrade();
 
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [upgradeFiles, setUpgradeFiles] = useState<string[]>([]);
+
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerFilePath, setViewerFilePath] = useState<string | null>(null);
+
+  const [addDocOpen, setAddDocOpen] = useState(false);
+  const [addDocSection, setAddDocSection] = useState("");
+  const [addDocSectionLabel, setAddDocSectionLabel] = useState("");
+  const [addDocDomain, setAddDocDomain] = useState<string | undefined>(undefined);
+
   const handleNodeClick = useCallback((sectionId: string) => {
     const el = document.querySelector(`[data-testid="${sectionId}"]`);
     if (el) {
@@ -438,18 +806,23 @@ export default function DocInventoryPage() {
     }
   }, []);
 
+  const openUpgradeDialog = useCallback((files: string[]) => {
+    setUpgradeFiles(files);
+    setUpgradeDialogOpen(true);
+  }, []);
+
   const handleUpgradeFile = useCallback(
     (filePath: string) => {
-      startUpgrade([filePath]);
+      openUpgradeDialog([filePath]);
     },
-    [startUpgrade]
+    [openUpgradeDialog]
   );
 
   const handleUpgradeSection = useCallback(
     (files: DocFile[]) => {
-      startUpgrade(files.map((f) => f.path));
+      openUpgradeDialog(files.map((f) => f.path));
     },
-    [startUpgrade]
+    [openUpgradeDialog]
   );
 
   const handleUpgradeAll = useCallback(() => {
@@ -462,8 +835,27 @@ export default function DocInventoryPage() {
       ...data.domainTemplates,
       ...data.generatedDomains.flatMap((d) => d.files),
     ];
-    startUpgrade(allFiles.map((f) => f.path));
-  }, [data, startUpgrade]);
+    openUpgradeDialog(allFiles.map((f) => f.path));
+  }, [data, openUpgradeDialog]);
+
+  const handleUpgradeConfirm = useCallback(
+    (files: string[], instructions: string) => {
+      startUpgrade(files, instructions || undefined);
+    },
+    [startUpgrade]
+  );
+
+  const handleViewFile = useCallback((filePath: string) => {
+    setViewerFilePath(filePath);
+    setViewerOpen(true);
+  }, []);
+
+  const openAddDoc = useCallback((sectionId: string, label: string, domain?: string) => {
+    setAddDocSection(sectionId);
+    setAddDocSectionLabel(label);
+    setAddDocDomain(domain);
+    setAddDocOpen(true);
+  }, []);
 
   if (isLoading) {
     return (
@@ -517,7 +909,7 @@ export default function DocInventoryPage() {
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
-          Complete catalog of all AXION documents across the system. Click a node in the map to jump to its section.
+          Complete catalog of all AXION documents across the system. Click a file to view its contents.
           Use the upgrade buttons to improve document quality with AI.
         </p>
         <div className="flex items-center gap-3 flex-wrap pt-1">
@@ -540,11 +932,12 @@ export default function DocInventoryPage() {
           defaultOpen
           testId="section-system-docs"
           onUpgrade={() => handleUpgradeSection(data.systemDocs)}
+          onAddDoc={() => openAddDoc("section-system-docs", "System Docs")}
           upgradeActive={upgradeState.active}
         >
           <div className="space-y-0.5">
             {data.systemDocs.map((f) => (
-              <FileRowWithHover key={f.path} file={f} onUpgrade={handleUpgradeFile} upgradeActive={upgradeState.active} />
+              <FileRowWithHover key={f.path} file={f} onUpgrade={handleUpgradeFile} onView={handleViewFile} upgradeActive={upgradeState.active} />
             ))}
           </div>
         </CollapsibleSection>
@@ -557,11 +950,12 @@ export default function DocInventoryPage() {
           defaultOpen
           testId="section-product-docs"
           onUpgrade={() => handleUpgradeSection(data.productSourceDocs)}
+          onAddDoc={() => openAddDoc("section-product-docs", "Source Docs — Product")}
           upgradeActive={upgradeState.active}
         >
           <div className="space-y-0.5">
             {data.productSourceDocs.map((f) => (
-              <FileRowWithHover key={f.path} file={f} onUpgrade={handleUpgradeFile} upgradeActive={upgradeState.active} />
+              <FileRowWithHover key={f.path} file={f} onUpgrade={handleUpgradeFile} onView={handleViewFile} upgradeActive={upgradeState.active} />
             ))}
           </div>
         </CollapsibleSection>
@@ -574,11 +968,12 @@ export default function DocInventoryPage() {
           defaultOpen
           testId="section-registry-docs"
           onUpgrade={() => handleUpgradeSection(data.registrySourceDocs)}
+          onAddDoc={() => openAddDoc("section-registry-docs", "Source Docs — Registry")}
           upgradeActive={upgradeState.active}
         >
           <div className="space-y-0.5">
             {data.registrySourceDocs.map((f) => (
-              <FileRowWithHover key={f.path} file={f} onUpgrade={handleUpgradeFile} upgradeActive={upgradeState.active} />
+              <FileRowWithHover key={f.path} file={f} onUpgrade={handleUpgradeFile} onView={handleViewFile} upgradeActive={upgradeState.active} />
             ))}
           </div>
         </CollapsibleSection>
@@ -591,11 +986,12 @@ export default function DocInventoryPage() {
           defaultOpen
           testId="section-core-templates"
           onUpgrade={() => handleUpgradeSection(data.coreTemplates)}
+          onAddDoc={() => openAddDoc("section-core-templates", "Core Templates")}
           upgradeActive={upgradeState.active}
         >
           <div className="space-y-0.5">
             {data.coreTemplates.map((f) => (
-              <FileRowWithHover key={f.path} file={f} onUpgrade={handleUpgradeFile} upgradeActive={upgradeState.active} />
+              <FileRowWithHover key={f.path} file={f} onUpgrade={handleUpgradeFile} onView={handleViewFile} upgradeActive={upgradeState.active} />
             ))}
           </div>
         </CollapsibleSection>
@@ -619,6 +1015,8 @@ export default function DocInventoryPage() {
                   files={files}
                   testId={`domain-template-${domain}`}
                   onUpgradeFile={handleUpgradeFile}
+                  onViewFile={handleViewFile}
+                  onAddDoc={(d) => openAddDoc("section-domain-templates", "Domain Module Templates", d)}
                   upgradeActive={upgradeState.active}
                 />
               ))}
@@ -644,12 +1042,35 @@ export default function DocInventoryPage() {
                   files={d.files}
                   testId={`generated-domain-${d.domain}`}
                   onUpgradeFile={handleUpgradeFile}
+                  onViewFile={handleViewFile}
+                  onAddDoc={(dom) => openAddDoc("section-generated-output", "Generated Output", dom)}
                   upgradeActive={upgradeState.active}
                 />
               ))}
           </div>
         </CollapsibleSection>
       </div>
+
+      <UpgradeDialog
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        files={upgradeFiles}
+        onConfirm={handleUpgradeConfirm}
+      />
+
+      <FileViewerDialog
+        open={viewerOpen}
+        onOpenChange={setViewerOpen}
+        filePath={viewerFilePath}
+      />
+
+      <AddDocDialog
+        open={addDocOpen}
+        onOpenChange={setAddDocOpen}
+        sectionId={addDocSection}
+        sectionLabel={addDocSectionLabel}
+        domain={addDocDomain}
+      />
     </div>
   );
 }
