@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly } from '../shared/schema.js';
 import { storage } from './storage.js';
-import { scanAllModulesForUnknowns } from './ai-content-fill.js';
+import { scanAllModulesForUnknowns, fillAllModulesUnknowns } from './ai-content-fill.js';
 
 const PROJECT_ROOT = process.cwd();
 const AXION_ROOT = path.join(PROJECT_ROOT, 'axion');
@@ -22,6 +22,15 @@ function isProjectDir(name: string): boolean {
 
 function getProjectPath(projectName: string): string {
   return path.join(WORKSPACES_DIR, projectName);
+}
+
+function getAllModulesInWorkspace(buildRoot: string): string[] {
+  const domainsDir = path.join(buildRoot, 'axion', 'domains');
+  if (!fs.existsSync(domainsDir)) return [];
+  return fs.readdirSync(domainsDir).filter(d => {
+    const full = path.join(domainsDir, d);
+    return fs.statSync(full).isDirectory() && !d.startsWith('.');
+  });
 }
 
 function expandModulesWithDependencies(modules: string[], includeDeps: boolean): string[] {
@@ -139,6 +148,14 @@ const pipelineSteps: Record<string, PipelineStep> = {
     cwd: (br) => br,
     group: 'docs',
     desc: 'Verify completeness',
+  },
+  'content-fill': {
+    cmd: '__inline__',
+    args: () => [],
+    label: 'Content Fill',
+    cwd: (br) => br,
+    group: 'docs',
+    desc: 'AI-fill UNKNOWN placeholders',
   },
   'lock': {
     cmd: 'node',
@@ -872,6 +889,41 @@ export function registerRoutes(app: Express) {
           continue;
         }
 
+        if (stepId === 'content-fill') {
+          const cfStart = Date.now();
+          try {
+            const modulesToFill = presetModules.length > 0 ? presetModules : getAllModulesInWorkspace(buildRoot);
+            const idea = (assembly as any).idea || projectName;
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Scanning ${modulesToFill.length} modules for UNKNOWN placeholders...` })}\n\n`);
+
+            const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea, (msg) => {
+              if (!aborted) {
+                res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: msg })}\n\n`);
+              }
+            });
+
+            const cfDuration = Date.now() - cfStart;
+            const summary = `Content Fill complete: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: summary })}\n\n`);
+
+            const cfStatus = fillReport.totalFilesErrored > 0 && fillReport.totalFilesFilled === 0 ? 'error' : 'success';
+            res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: cfStatus, durationMs: cfDuration })}\n\n`);
+
+            if (cfStatus === 'error') {
+              lastError = 'Content fill failed for all files';
+              break;
+            }
+          } catch (cfErr: unknown) {
+            const cfDuration = Date.now() - cfStart;
+            const cfErrMsg = cfErr instanceof Error ? cfErr.message : String(cfErr);
+            res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: `Content fill error: ${cfErrMsg}` })}\n\n`);
+            res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: cfDuration })}\n\n`);
+            lastError = `Content fill failed: ${cfErrMsg}`;
+            break;
+          }
+          continue;
+        }
+
         const stepBody: Record<string, unknown> = { projectName };
         if (presetModules.length > 0 && presetModules.length < 19) {
           stepBody.module = presetModules.join(',');
@@ -1211,6 +1263,42 @@ export function registerRoutes(app: Express) {
         return;
       }
       const buildRoot = getProjectPath(projectName);
+
+      if (stepId === 'content-fill') {
+        const cfStart = Date.now();
+        try {
+          const modulesToFill = getAllModulesInWorkspace(buildRoot);
+          const idea = (req.body.idea as string) || projectName;
+          const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea);
+          const cfDuration = Date.now() - cfStart;
+          const summary = `Content Fill: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
+          const cfResult: RunResult = {
+            status: fillReport.totalFilesErrored > 0 && fillReport.totalFilesFilled === 0 ? 'error' : 'success',
+            command: 'Content Fill',
+            exitCode: 0,
+            stdout: summary + '\n' + fillReport.results.map(r => `  ${r.module}/${path.basename(r.file)}: ${r.status} (${r.unknownsBefore}→${r.unknownsAfter})`).join('\n'),
+            stderr: fillReport.results.filter(r => r.error).map(r => `${r.module}: ${r.error}`).join('\n'),
+            durationMs: cfDuration,
+          };
+          await persistRunResult(stepId, step, projectName, cfResult);
+          res.json(cfResult);
+        } catch (cfErr: unknown) {
+          const cfDuration = Date.now() - cfStart;
+          const cfErrMsg = cfErr instanceof Error ? cfErr.message : String(cfErr);
+          const cfResult: RunResult = {
+            status: 'error',
+            command: 'Content Fill',
+            exitCode: 1,
+            stdout: '',
+            stderr: cfErrMsg,
+            durationMs: cfDuration,
+          };
+          await persistRunResult(stepId, step, projectName, cfResult);
+          res.json(cfResult);
+        }
+        return;
+      }
+
       if (stepId === 'scaffold-app') {
         ensureArchitectureReadme(buildRoot, { projectName });
       }
@@ -1233,7 +1321,7 @@ export function registerRoutes(app: Express) {
       res.json(result);
     });
 
-    app.get(`/api/pipeline/${stepId}/stream`, (req: Request, res: Response) => {
+    app.get(`/api/pipeline/${stepId}/stream`, async (req: Request, res: Response) => {
       const bodyParam = req.query.body as string;
       if (!bodyParam) {
         res.status(400).json({ error: 'body query param required' });
@@ -1255,6 +1343,35 @@ export function registerRoutes(app: Express) {
       }
 
       const buildRoot = getProjectPath(projectName);
+
+      if (stepId === 'content-fill') {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        });
+        const cfStart = Date.now();
+        try {
+          const modulesToFill = getAllModulesInWorkspace(buildRoot);
+          const idea = (body.idea as string) || projectName;
+          res.write(`event: stdout\ndata: Scanning ${modulesToFill.length} modules for UNKNOWN placeholders...\n\n`);
+          const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea, (msg) => {
+            res.write(`event: stdout\ndata: ${msg}\n\n`);
+          });
+          const cfDuration = Date.now() - cfStart;
+          const summary = `Content Fill complete: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
+          res.write(`event: stdout\ndata: ${summary}\n\n`);
+          res.write(`event: done\ndata: ${JSON.stringify({ status: 'success', durationMs: cfDuration })}\n\n`);
+        } catch (cfErr: unknown) {
+          const cfErrMsg = cfErr instanceof Error ? cfErr.message : String(cfErr);
+          res.write(`event: stderr\ndata: ${cfErrMsg}\n\n`);
+          res.write(`event: done\ndata: ${JSON.stringify({ status: 'error', durationMs: Date.now() - cfStart })}\n\n`);
+        }
+        res.end();
+        return;
+      }
+
       if (stepId === 'scaffold-app') {
         ensureArchitectureReadme(buildRoot, { projectName });
       }
@@ -1486,6 +1603,39 @@ export function registerRoutes(app: Express) {
         if (presetGuards.lock_requires_verify_pass && stepId === 'lock' && !verifyPassed) {
           res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: 0, reason: 'Documentation must pass verification before it can be locked. Run "Generate Documentation" first.' })}\n\n`);
           guardFailures++;
+          continue;
+        }
+
+        if (stepId === 'content-fill') {
+          const cfStart2 = Date.now();
+          try {
+            const modulesToFill2 = presetModules.length > 0 ? presetModules : getAllModulesInWorkspace(buildRoot);
+            const idea2 = (body.idea as string) || projectName;
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Scanning ${modulesToFill2.length} modules for UNKNOWN placeholders...` })}\n\n`);
+
+            const fillReport2 = await fillAllModulesUnknowns(buildRoot, modulesToFill2, projectName, idea2, (msg) => {
+              if (!aborted) {
+                res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: msg })}\n\n`);
+              }
+            });
+
+            const cfDuration2 = Date.now() - cfStart2;
+            const summary2 = `Content Fill complete: ${fillReport2.totalFilesFilled} filled, ${fillReport2.totalFilesSkipped} skipped, ${fillReport2.totalFilesErrored} errors`;
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: summary2 })}\n\n`);
+
+            const cfStatus2 = fillReport2.totalFilesErrored > 0 && fillReport2.totalFilesFilled === 0 ? 'error' : 'success';
+            res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: cfStatus2, durationMs: cfDuration2 })}\n\n`);
+
+            if (cfStatus2 === 'error' && !body.continueOnError) {
+              break;
+            }
+          } catch (cfErr2: unknown) {
+            const cfDuration2 = Date.now() - cfStart2;
+            const cfErrMsg2 = cfErr2 instanceof Error ? cfErr2.message : String(cfErr2);
+            res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: `Content fill error: ${cfErrMsg2}` })}\n\n`);
+            res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: cfDuration2 })}\n\n`);
+            if (!body.continueOnError) break;
+          }
           continue;
         }
 

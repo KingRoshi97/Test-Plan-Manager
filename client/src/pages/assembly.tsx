@@ -35,6 +35,7 @@ import {
   Rocket,
   Trash2,
   BarChart3,
+  Sparkles,
 } from "lucide-react";
 
 interface AssemblyProgress {
@@ -725,6 +726,22 @@ export default function AssemblyPage() {
                     >
                       {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <GitCompare className="w-4 h-4" />}
                       Reconcile
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3 space-y-3">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Sparkles className="w-3.5 h-3.5" />AI Content</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => runSingleStep.mutate({ stepId: "content-fill" })}
+                      disabled={runSingleStep.isPending}
+                      data-testid="button-action-content-fill"
+                    >
+                      {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                      Fill UNKNOWNs
                     </Button>
                   </div>
                 </div>
