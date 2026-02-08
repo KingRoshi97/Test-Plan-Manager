@@ -15,6 +15,7 @@ import LogsPage from "@/pages/logs";
 import ExportPage from "@/pages/export";
 import TestsPage from "@/pages/tests";
 import WorkspacesPage from "@/pages/workspaces";
+import DocInventoryPage from "@/pages/doc-inventory";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/logs" component={LogsPage} />
       <Route path="/export" component={ExportPage} />
       <Route path="/tests" component={TestsPage} />
+      <Route path="/docs" component={DocInventoryPage} />
       <Route>
         <div className="flex items-center justify-center h-full">
           <p className="text-muted-foreground">Page not found</p>
