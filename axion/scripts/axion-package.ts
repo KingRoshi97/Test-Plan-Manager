@@ -15,16 +15,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import archiverPkg from 'archiver';
+import archiver from 'archiver';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
-const REGISTRY_PATH = path.join(AXION_ROOT, 'registry');
-const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
-const CONFIG_PATH = path.join(AXION_ROOT, 'config');
+let AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+let REGISTRY_PATH = path.join(AXION_ROOT, 'registry');
+let DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
+let CONFIG_PATH = path.join(AXION_ROOT, 'config');
 
 type PackageMode = 'docs' | 'scaffold' | 'full';
 
@@ -150,7 +150,7 @@ async function createZip(
   
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(outputPath);
-    const archive = (archiverPkg as any)('zip', { zlib: { level: 9 } });
+    const archive = archiver('zip', { zlib: { level: 9 } });
     
     output.on('close', () => {
       const zipBuffer = fs.readFileSync(outputPath);
@@ -266,18 +266,32 @@ async function main() {
   const modeIdx = args.indexOf('--mode');
   const appPathIdx = args.indexOf('--app-path');
   const outputIdx = args.indexOf('--output');
+  const buildRootIdx = args.indexOf('--build-root');
+  const projectNameIdx = args.indexOf('--project-name');
   
-  const mode: PackageMode = modeIdx !== -1 
+  const buildRoot = buildRootIdx !== -1 ? args[buildRootIdx + 1] : null;
+  const projectName = projectNameIdx !== -1 ? args[projectNameIdx + 1] : null;
+  
+  // --build-root points to workspace root (e.g. workspaces/<project>)
+  if (buildRoot) {
+    AXION_ROOT = path.join(buildRoot, 'axion');
+    REGISTRY_PATH = path.join(AXION_ROOT, 'registry');
+    DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
+    CONFIG_PATH = path.join(AXION_ROOT, 'config');
+  }
+  
+  let mode: PackageMode = modeIdx !== -1 
     ? (args[modeIdx + 1] as PackageMode) 
-    : 'docs';
+    : 'full';
   
   let appPath = appPathIdx !== -1 ? args[appPathIdx + 1] : null;
   
   const outputDir = outputIdx !== -1 
     ? args[outputIdx + 1] 
-    : path.join(AXION_ROOT, 'dist');
+    : path.join(buildRoot || AXION_ROOT, 'dist');
   
   console.log('\n[AXION] Package\n');
+  if (buildRoot) console.log(`[INFO] Workspace: ${buildRoot}`);
   console.log(`Mode: ${mode}`);
   
   if (!['docs', 'scaffold', 'full'].includes(mode)) {
@@ -292,10 +306,9 @@ async function main() {
   }
   
   if (mode !== 'docs' && !appPath) {
-    const candidates = [
-      path.join(process.cwd(), 'axion-app'),
-      path.join(process.cwd(), 'app'),
-    ];
+    const candidates = buildRoot
+      ? [path.join(buildRoot, 'app'), path.join(buildRoot, 'axion-app')]
+      : [path.join(process.cwd(), 'axion-app'), path.join(process.cwd(), 'app')];
     
     for (const candidate of candidates) {
       if (fs.existsSync(candidate)) {
@@ -306,6 +319,7 @@ async function main() {
     
     if (!appPath) {
       console.log(`[WARN] No app path found for ${mode} mode, falling back to docs mode`);
+      mode = 'docs';
     }
   }
   

@@ -126,6 +126,13 @@ function main() {
     setupTwoRootPaths(buildRoot, projectName);
     appPath = path.join(WORKSPACE_ROOT, 'app');
     console.log(`[INFO] Two-root mode: ${buildRoot}/${projectName}`);
+  } else if (appPath) {
+    // Legacy/--app-path mode: derive workspace root from app path
+    const appParent = path.dirname(appPath);
+    WORKSPACE_ROOT = appParent;
+    AXION_ROOT = path.join(appParent, 'axion');
+    STAGE_MARKERS_PATH = path.join(appParent, 'axion', 'registry', 'stage_markers.json');
+    console.log(`[INFO] App-path mode: ${appPath}`);
   }
   
   if (!appPath) {

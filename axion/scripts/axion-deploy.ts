@@ -18,8 +18,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
-const STAGE_MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+let AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
+let STAGE_MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
 
 interface DeployResult {
   status: 'success' | 'blocked_by' | 'failed';
@@ -124,9 +124,23 @@ PORT=5000
 function main() {
   const args = process.argv.slice(2);
   const appPathIdx = args.indexOf('--app-path');
+  const buildRootIdx = args.indexOf('--build-root');
+  const projectNameIdx = args.indexOf('--project-name');
   const overrideFlag = args.includes('--override');
   
+  const buildRoot = buildRootIdx !== -1 ? args[buildRootIdx + 1] : null;
+  const projectName = projectNameIdx !== -1 ? args[projectNameIdx + 1] : null;
   let appPath = appPathIdx !== -1 ? args[appPathIdx + 1] : null;
+  
+  // --build-root points directly to the workspace root (e.g. workspaces/<project>)
+  if (buildRoot) {
+    AXION_ROOT = path.join(buildRoot, 'axion');
+    STAGE_MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
+    if (!appPath) {
+      appPath = path.join(buildRoot, 'app');
+    }
+    console.log(`[INFO] Workspace mode: ${buildRoot}`);
+  }
   
   console.log('\n[AXION] Deploy\n');
   
