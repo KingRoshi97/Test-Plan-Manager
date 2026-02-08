@@ -1,5 +1,5 @@
 import { type Express, type Request, type Response } from 'express';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly } from '../shared/schema.js';
@@ -2142,31 +2142,46 @@ export function registerRoutes(app: Express) {
     res.json({ running: testRunning, result: lastTestResult });
   });
 
+  function killProcessTree(pid: number) {
+    try { process.kill(-pid, 'SIGTERM'); } catch {}
+    try { process.kill(pid, 'SIGTERM'); } catch {}
+    setTimeout(() => {
+      try { process.kill(-pid, 'SIGKILL'); } catch {}
+      try { process.kill(pid, 'SIGKILL'); } catch {}
+    }, 1000);
+    try {
+      const children = execSync(`pgrep -P ${pid} 2>/dev/null || true`, { encoding: 'utf-8' }).trim();
+      if (children) {
+        for (const cpid of children.split('\n').filter(Boolean)) {
+          const n = parseInt(cpid, 10);
+          if (!isNaN(n)) {
+            try { process.kill(n, 'SIGTERM'); } catch {}
+            setTimeout(() => { try { process.kill(n, 'SIGKILL'); } catch {} }, 1000);
+          }
+        }
+      }
+    } catch {}
+  }
+
   app.post('/api/tests/cancel', (_req: Request, res: Response) => {
     if (!testRunning || !testChildProcess) {
       res.status(400).json({ error: 'No test run in progress' });
       return;
     }
     testCancelled = true;
-    try {
-      const pid = testChildProcess.pid;
-      if (pid) {
-        try { process.kill(-pid, 'SIGTERM'); } catch { try { testChildProcess.kill('SIGTERM'); } catch {} }
-        setTimeout(() => {
-          try { if (pid) process.kill(-pid, 'SIGKILL'); } catch {}
-          try { testChildProcess?.kill('SIGKILL'); } catch {}
-        }, 3000);
-      } else {
-        try { testChildProcess.kill('SIGTERM'); } catch {}
-      }
-    } catch {}
+    const pid = testChildProcess.pid;
+    if (pid) {
+      killProcessTree(pid);
+    } else {
+      try { testChildProcess.kill('SIGKILL'); } catch {}
+    }
     setTimeout(() => {
       if (testRunning) {
         testRunning = false;
         testChildProcess = null;
         testCancelled = false;
       }
-    }, 15000);
+    }, 10000);
     res.json({ ok: true, message: 'Test run cancellation requested' });
   });
 
@@ -2214,12 +2229,13 @@ export function registerRoutes(app: Express) {
 
     const stripAnsi = (str: string) => str.replace(/\u001b\[[0-9;]*m/g, '');
 
-    const child = spawn('npx', ['vitest', ...args], {
+    const vitestBin = path.join(PROJECT_ROOT, 'node_modules', '.bin', 'vitest');
+    const child = spawn(vitestBin, args, {
       cwd: PROJECT_ROOT,
       env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
       timeout: 300000,
-      shell: true,
       detached: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
     testChildProcess = child;
 
