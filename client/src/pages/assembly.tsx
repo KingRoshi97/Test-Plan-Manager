@@ -307,7 +307,9 @@ export default function AssemblyPage() {
         setReviseQuestions(data.questions);
         setReviseStats({ remaining: data.remainingUnknowns, files: data.totalFilesWithUnknowns });
         const initAnswers: Record<string, string> = {};
-        data.questions.forEach((q: { sectionName: string }) => { initAnswers[q.sectionName] = ''; });
+        data.questions.forEach((q: { sectionName: string; questions: string[] }, gi: number) => {
+          q.questions.forEach((_: string, qi: number) => { initAnswers[`${gi}-${qi}`] = ''; });
+        });
         setReviseAnswers(initAnswers);
       }
     } catch (err) {
@@ -316,6 +318,23 @@ export default function AssemblyPage() {
     } finally {
       setReviseLoading(false);
     }
+  };
+
+  const buildSectionAnswers = (): Record<string, string> => {
+    const sectionAnswers: Record<string, string> = {};
+    reviseQuestions.forEach((qGroup, gi) => {
+      const parts: string[] = [];
+      qGroup.questions.forEach((q: string, qi: number) => {
+        const answer = (reviseAnswers[`${gi}-${qi}`] || '').trim();
+        if (answer) {
+          parts.push(`Q: ${q}\nA: ${answer}`);
+        }
+      });
+      if (parts.length > 0) {
+        sectionAnswers[qGroup.sectionName] = parts.join('\n\n');
+      }
+    });
+    return sectionAnswers;
   };
 
   const submitReviseAnswers = async () => {
@@ -330,7 +349,7 @@ export default function AssemblyPage() {
           projectName: assembly.projectName,
           targetFile: reviseTarget.file,
           targetModule: reviseTarget.module,
-          answers: reviseAnswers,
+          answers: buildSectionAnswers(),
         }),
       });
       const data = await res.json();
@@ -368,7 +387,9 @@ export default function AssemblyPage() {
           setReviseTarget(nextData.target);
           setReviseQuestions(nextData.questions);
           const initAnswers: Record<string, string> = {};
-          nextData.questions.forEach((q: { sectionName: string }) => { initAnswers[q.sectionName] = ''; });
+          nextData.questions.forEach((q: { sectionName: string; questions: string[] }, gi: number) => {
+            q.questions.forEach((_: string, qi: number) => { initAnswers[`${gi}-${qi}`] = ''; });
+          });
           setReviseAnswers(initAnswers);
           setReviseStats({ remaining: nextData.remainingUnknowns, files: nextData.totalFilesWithUnknowns });
           setReviseLog(prev => [...prev, `Next: ${nextData.target.docTypeLabel} (${nextData.target.module})`]);
@@ -896,8 +917,8 @@ export default function AssemblyPage() {
                                   <label className="text-sm">{q}</label>
                                   <Textarea
                                     placeholder="Your answer..."
-                                    value={reviseAnswers[qGroup.sectionName] || ''}
-                                    onChange={(e) => setReviseAnswers(prev => ({ ...prev, [qGroup.sectionName]: e.target.value }))}
+                                    value={reviseAnswers[`${gi}-${qi}`] || ''}
+                                    onChange={(e) => setReviseAnswers(prev => ({ ...prev, [`${gi}-${qi}`]: e.target.value }))}
                                     className="text-sm min-h-16 resize-none"
                                     data-testid={`input-revise-answer-${gi}-${qi}`}
                                   />
