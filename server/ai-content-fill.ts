@@ -299,31 +299,62 @@ function detectDocType(fileName: string): { label: string; guidance: string } {
   };
 }
 
+function formatStructuredInput(structuredInput?: Record<string, string> | null): string {
+  if (!structuredInput || Object.keys(structuredInput).length === 0) return '';
+
+  const fieldLabels: Record<string, string> = {
+    visionProblem: 'Problem Being Solved',
+    visionTargetUsers: 'Target Users',
+    visionSuccess: 'Success Criteria',
+    visionGoals: 'Primary Goals',
+    coreFeatures: 'Core Features (Must-Have)',
+    niceToHaveFeatures: 'Nice-to-Have Features',
+    coreEntities: 'Core Entities / Objects',
+    userJourneys: 'Key User Journeys',
+    platform: 'Platform Targets',
+    integrations: 'External Integrations',
+    techConstraints: 'Technical Constraints',
+    dataSensitivity: 'Data Sensitivity Level',
+  };
+
+  const lines: string[] = [];
+  for (const [key, value] of Object.entries(structuredInput)) {
+    if (value && value.trim()) {
+      const label = fieldLabels[key] || key;
+      lines.push(`${label}: ${value.trim()}`);
+    }
+  }
+  return lines.length > 0 ? lines.join('\n') : '';
+}
+
 function buildFillPrompt(
   fileContent: string,
   filePath: string,
   projectName: string,
   projectIdea: string,
-  moduleName: string
+  moduleName: string,
+  structuredInput?: Record<string, string> | null
 ): string {
   const fileName = path.basename(filePath);
   const docInfo = detectDocType(fileName);
+  const structuredContext = formatStructuredInput(structuredInput);
 
   return `You are an expert software architect filling out a ${docInfo.label} document for a software project.
 
 PROJECT NAME: ${projectName}
 PROJECT IDEA: ${projectIdea}
 MODULE/DOMAIN: ${moduleName}
-
+${structuredContext ? `\nDETAILED PROJECT CONTEXT (use this information directly to fill placeholders — it comes from the project creator):\n${structuredContext}\n` : ''}
 Below is the current document that has UNKNOWN placeholders. Your task is to replace every instance of "UNKNOWN" with realistic, project-specific content based on the project idea and domain module.
 
 Rules:
 1. Replace EVERY "UNKNOWN" with specific, meaningful content appropriate to this project and domain.
-2. Keep the exact same Markdown structure, headings, and table formatting.
-3. ${docInfo.guidance}
-4. Do NOT add new sections or remove existing ones.
-5. Do NOT wrap the output in code fences. Return ONLY the filled document content.
-6. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
+2. When detailed project context is provided above, use that information directly — do not invent contradicting details.
+3. Keep the exact same Markdown structure, headings, and table formatting.
+4. ${docInfo.guidance}
+5. Do NOT add new sections or remove existing ones.
+6. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+7. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
 
 CURRENT DOCUMENT:
 ${fileContent}
@@ -336,7 +367,8 @@ export async function fillFileWithAI(
   projectName: string,
   projectIdea: string,
   moduleName: string,
-  onProgress?: (message: string) => void
+  onProgress?: (message: string) => void,
+  structuredInput?: Record<string, string> | null
 ): Promise<ContentFillResult> {
   if (!fs.existsSync(filePath)) {
     return {
@@ -370,7 +402,7 @@ export async function fillFileWithAI(
       baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
     });
 
-    const prompt = buildFillPrompt(content, filePath, projectName, projectIdea, moduleName);
+    const prompt = buildFillPrompt(content, filePath, projectName, projectIdea, moduleName, structuredInput);
 
     const response = await openai.chat.completions.create({
       model: 'gpt-5-mini',
@@ -429,14 +461,15 @@ export async function fillModuleUnknowns(
   moduleName: string,
   projectName: string,
   projectIdea: string,
-  onProgress?: (message: string) => void
+  onProgress?: (message: string) => void,
+  structuredInput?: Record<string, string> | null
 ): Promise<ContentFillResult[]> {
   const moduleDir = path.join(projectRoot, 'axion', 'domains', moduleName);
   const results: ContentFillResult[] = [];
 
   const mdFiles = getAllMdFilesInModule(moduleDir);
   for (const filePath of mdFiles) {
-    const result = await fillFileWithAI(filePath, projectName, projectIdea, moduleName, onProgress);
+    const result = await fillFileWithAI(filePath, projectName, projectIdea, moduleName, onProgress, structuredInput);
     results.push(result);
   }
 
@@ -448,13 +481,14 @@ export async function fillAllModulesUnknowns(
   modules: string[],
   projectName: string,
   projectIdea: string,
-  onProgress?: (message: string) => void
+  onProgress?: (message: string) => void,
+  structuredInput?: Record<string, string> | null
 ): Promise<ContentFillReport> {
   const results: ContentFillResult[] = [];
 
   for (const mod of modules) {
     onProgress?.(`Processing module: ${mod}`);
-    const modResults = await fillModuleUnknowns(projectRoot, mod, projectName, projectIdea, onProgress);
+    const modResults = await fillModuleUnknowns(projectRoot, mod, projectName, projectIdea, onProgress, structuredInput);
     results.push(...modResults);
   }
 
@@ -658,9 +692,11 @@ function buildContextAwareFillPrompt(
   moduleName: string,
   userAnswers: Record<string, string>,
   parentContext: string,
+  structuredInput?: Record<string, string> | null,
 ): string {
   const fileName = path.basename(filePath);
   const docInfo = detectDocType(fileName);
+  const structuredContext = formatStructuredInput(structuredInput);
 
   const answersBlock = Object.entries(userAnswers)
     .map(([section, answer]) => `Section "${section}": ${answer}`)
@@ -671,15 +707,15 @@ function buildContextAwareFillPrompt(
 PROJECT NAME: ${projectName}
 PROJECT IDEA: ${projectIdea}
 MODULE/DOMAIN: ${moduleName}
-
+${structuredContext ? `\nDETAILED PROJECT CONTEXT (from the project creator — use this to inform your fills):\n${structuredContext}\n` : ''}
 ${parentContext ? `CONTEXT FROM HIGHER-LEVEL DOCUMENTS (use this to inform your fills):\n${parentContext}\n` : ''}
-${answersBlock ? `USER-PROVIDED CONTEXT (use this information directly):\n${answersBlock}\n` : ''}
+${answersBlock ? `USER-PROVIDED ANSWERS (use this information directly):\n${answersBlock}\n` : ''}
 
 Below is the current document that has UNKNOWN placeholders. Your task is to replace every instance of "UNKNOWN" with realistic, project-specific content.
 
 Rules:
 1. Replace EVERY "UNKNOWN" with specific, meaningful content.
-2. When user-provided context is available for a section, use that information directly.
+2. When user-provided context or answers are available, use that information directly — do not contradict it.
 3. Keep the exact same Markdown structure, headings, and table formatting.
 4. ${docInfo.guidance}
 5. Do NOT add new sections or remove existing ones.
@@ -699,6 +735,7 @@ export async function fillFileWithContext(
   userAnswers: Record<string, string>,
   parentContext: string,
   onProgress?: (message: string) => void,
+  structuredInput?: Record<string, string> | null,
 ): Promise<ContentFillResult> {
   if (!fs.existsSync(filePath)) {
     return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0, error: 'File not found' };
@@ -718,7 +755,7 @@ export async function fillFileWithContext(
       baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
     });
 
-    const prompt = buildContextAwareFillPrompt(content, filePath, projectName, projectIdea, moduleName, userAnswers, parentContext);
+    const prompt = buildContextAwareFillPrompt(content, filePath, projectName, projectIdea, moduleName, userAnswers, parentContext, structuredInput);
 
     const response = await openai.chat.completions.create({
       model: 'gpt-5-mini',
@@ -755,12 +792,13 @@ export async function cascadeFill(
   projectIdea: string,
   userAnswers: Record<string, string>,
   onProgress?: (message: string) => void,
+  structuredInput?: Record<string, string> | null,
 ): Promise<CascadeFillResult> {
   const filledContent = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, 'utf8') : '';
   const parentContext = filledContent.substring(0, 3000);
 
   const targetResult = await fillFileWithContext(
-    targetFile, projectName, projectIdea, targetModule, userAnswers, '', onProgress,
+    targetFile, projectName, projectIdea, targetModule, userAnswers, '', onProgress, structuredInput,
   );
 
   const updatedParentContent = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, 'utf8').substring(0, 3000) : '';
@@ -776,7 +814,7 @@ export async function cascadeFill(
     if (countUnknowns(content) === 0) continue;
 
     const result = await fillFileWithContext(
-      file, projectName, projectIdea, module, {}, updatedParentContent, onProgress,
+      file, projectName, projectIdea, module, {}, updatedParentContent, onProgress, structuredInput,
     );
     cascadeResults.push(result);
   }
