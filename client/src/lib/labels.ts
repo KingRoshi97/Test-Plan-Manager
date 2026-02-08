@@ -2,6 +2,7 @@ export const STEP_LABELS: Record<string, string> = {
   generate: "Generate Structure",
   seed: "Seed Content",
   draft: "Draft Documents",
+  "content-fill": "AI Content Fill",
   review: "Review Documents",
   verify: "Verify Quality",
   lock: "Lock Documents",
