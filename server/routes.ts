@@ -845,6 +845,13 @@ export function registerRoutes(app: Express) {
   app.get('/api/assemblies', async (_req: Request, res: Response) => {
     try {
       const list = await storage.getAssemblies();
+      const allRuns = await storage.getAllPipelineRuns(10000);
+      const runsByProject: Record<string, typeof allRuns> = {};
+      for (const run of allRuns) {
+        if (!runsByProject[run.projectName]) runsByProject[run.projectName] = [];
+        runsByProject[run.projectName].push(run);
+      }
+
       const enriched = list.map(a => {
         const projectPath = a.projectName ? getProjectPath(a.projectName) : null;
         const wsExists = projectPath ? fs.existsSync(projectPath) : false;
@@ -871,6 +878,13 @@ export function registerRoutes(app: Express) {
 
         let lockEligible = verifyStatus === 'PASS';
 
+        const projectRuns = a.projectName ? (runsByProject[a.projectName] || []) : [];
+        const lastRunAt = projectRuns.length > 0 ? projectRuns[0].createdAt.toISOString() : null;
+        const totalRuns = projectRuns.length;
+        const completedStepIds = new Set(projectRuns.filter(r => r.status === 'success').map(r => r.stepId));
+        const completedSteps = completedStepIds.size;
+        const totalDuration = projectRuns.reduce((sum, r) => sum + (r.durationMs || 0), 0);
+
         return {
           ...a,
           wsExists,
@@ -879,6 +893,10 @@ export function registerRoutes(app: Express) {
           hasApp,
           verifyStatus,
           lockEligible,
+          lastRunAt,
+          totalRuns,
+          completedSteps,
+          totalDuration,
         };
       });
       res.json(enriched);
@@ -917,6 +935,13 @@ export function registerRoutes(app: Express) {
         }
       }
 
+      const projectRuns = assembly.projectName ? await storage.getPipelineRuns(assembly.projectName, 10000) : [];
+      const lastRunAt = projectRuns.length > 0 ? projectRuns[0].createdAt.toISOString() : null;
+      const totalRuns = projectRuns.length;
+      const completedStepIds = new Set(projectRuns.filter(r => r.status === 'success').map(r => r.stepId));
+      const completedSteps = completedStepIds.size;
+      const totalDuration = projectRuns.reduce((sum, r) => sum + (r.durationMs || 0), 0);
+
       res.json({
         ...assembly,
         wsExists,
@@ -925,6 +950,10 @@ export function registerRoutes(app: Express) {
         hasApp,
         verifyStatus,
         lockEligible: verifyStatus === 'PASS',
+        lastRunAt,
+        totalRuns,
+        completedSteps,
+        totalDuration,
       });
     } catch (err: any) {
       res.status(500).json({ error: err?.message || 'Failed to fetch assembly' });
@@ -1132,6 +1161,101 @@ export function registerRoutes(app: Express) {
       res.json({ ok: true, assembly: updated });
     } catch (err: any) {
       res.status(500).json({ error: err?.message || 'Failed to upgrade assembly' });
+    }
+  });
+
+  app.patch('/api/assemblies/:id', async (req: Request, res: Response) => {
+    try {
+      const assembly = await storage.getAssembly(req.params.id as string);
+      if (!assembly) {
+        res.status(404).json({ error: 'Assembly not found' });
+        return;
+      }
+
+      const allowedStates = ['queued', 'completed', 'exported', 'failed'];
+      if (!allowedStates.includes(assembly.state)) {
+        res.status(400).json({ error: `Cannot update assembly in state '${assembly.state}'. Allowed states: ${allowedStates.join(', ')}` });
+        return;
+      }
+
+      if (!assembly.projectName) {
+        res.status(400).json({ error: 'Assembly has no projectName' });
+        return;
+      }
+
+      const { idea, context, input } = req.body;
+      const updates: Record<string, unknown> = {};
+      if (idea !== undefined) updates.idea = idea;
+      if (context !== undefined) updates.context = context;
+      if (input !== undefined) updates.input = input;
+
+      if (Object.keys(updates).length === 0) {
+        res.status(400).json({ error: 'No valid fields to update. Allowed fields: idea, context, input' });
+        return;
+      }
+
+      const updated = await storage.updateAssembly(req.params.id as string, updates);
+      res.json(updated);
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to update assembly' });
+    }
+  });
+
+  app.get('/api/workspace-tree/:projectName', async (req: Request, res: Response) => {
+    try {
+      const projectName = req.params.projectName as string;
+
+      if (projectName.includes('..') || projectName.includes('/') || projectName.includes('\\')) {
+        res.status(400).json({ error: 'Invalid project name' });
+        return;
+      }
+
+      const workspacePath = path.join(WORKSPACES_DIR, projectName);
+      if (!fs.existsSync(workspacePath) || !fs.statSync(workspacePath).isDirectory()) {
+        res.status(404).json({ error: 'Workspace not found' });
+        return;
+      }
+
+      const SKIP_TREE_DIRS = new Set(['node_modules', '.git', '__pycache__', 'dist', '.cache', 'coverage']);
+      const MAX_DEPTH = 4;
+
+      interface TreeNode {
+        name: string;
+        path: string;
+        type: 'file' | 'directory';
+        children?: TreeNode[];
+        size?: number;
+      }
+
+      function walkDir(dirPath: string, relativePath: string, depth: number): TreeNode[] {
+        if (depth > MAX_DEPTH) return [];
+        const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+        const nodes: TreeNode[] = [];
+
+        for (const entry of entries) {
+          if (SKIP_TREE_DIRS.has(entry.name) || entry.name.startsWith('.')) continue;
+          const fullPath = path.join(dirPath, entry.name);
+          const relPath = relativePath ? path.join(relativePath, entry.name) : entry.name;
+
+          if (entry.isDirectory()) {
+            const children = walkDir(fullPath, relPath, depth + 1);
+            nodes.push({ name: entry.name, path: relPath, type: 'directory', children });
+          } else if (entry.isFile()) {
+            const stat = fs.statSync(fullPath);
+            nodes.push({ name: entry.name, path: relPath, type: 'file', size: stat.size });
+          }
+        }
+
+        return nodes.sort((a, b) => {
+          if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+      }
+
+      const tree = walkDir(workspacePath, '', 0);
+      res.json({ projectName, tree });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to read workspace tree' });
     }
   });
 
