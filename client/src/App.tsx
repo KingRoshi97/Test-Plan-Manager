@@ -14,6 +14,7 @@ import HealthPage from "@/pages/health";
 import LogsPage from "@/pages/logs";
 import ExportPage from "@/pages/export";
 import TestsPage from "@/pages/tests";
+import WorkspacesPage from "@/pages/workspaces";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/" component={DashboardPage} />
       <Route path="/new" component={NewAssemblyPage} />
       <Route path="/assembly/:id" component={AssemblyPage} />
+      <Route path="/workspaces" component={WorkspacesPage} />
       <Route path="/files" component={FilesPage} />
       <Route path="/health" component={HealthPage} />
       <Route path="/logs" component={LogsPage} />

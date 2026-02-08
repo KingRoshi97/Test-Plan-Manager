@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { Layers, FolderTree, Zap, Plus, HeartPulse, ScrollText, Package, FlaskConical } from "lucide-react";
+import { Layers, FolderTree, Zap, Plus, HeartPulse, ScrollText, Package, FlaskConical, HardDrive } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +23,7 @@ const assemblyNav = [
 ];
 
 const toolsNav = [
+  { title: "Workspaces", href: "/workspaces", icon: HardDrive },
   { title: "Files", href: "/files", icon: FolderTree },
   { title: "Health", href: "/health", icon: HeartPulse },
   { title: "Logs", href: "/logs", icon: ScrollText },

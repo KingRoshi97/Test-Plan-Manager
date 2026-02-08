@@ -16,6 +16,11 @@
       "description": "Scaffold, build, and test the application from locked docs.",
       "steps": ["scaffold-app", "build", "test"]
     },
+    "app:build-exec": {
+      "label": "Build with Exec Plan",
+      "description": "Scaffold the app, generate a build plan, execute it, then test.",
+      "steps": ["scaffold-app", "build-plan", "build-exec", "test"]
+    },
     "system:full": {
       "label": "Full Pipeline (End-to-End)",
       "description": "Run everything: generate docs, lock them, scaffold and build the app, then deploy and package.",
