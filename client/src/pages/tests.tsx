@@ -20,6 +20,9 @@ import {
   WifiOff,
   Square,
   Ban,
+  Terminal,
+  FolderOpen,
+  Filter,
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
@@ -60,6 +63,12 @@ interface LiveFileProgress {
   testCount: number;
   duration: string;
   index: number;
+}
+
+interface AvailableTestFile {
+  path: string;
+  name: string;
+  dir: string;
 }
 
 function formatDuration(ms: number): string {
@@ -122,22 +131,41 @@ function groupByDirectory(files: TestFile[]): Record<string, TestFile[]> {
   return groups;
 }
 
+function groupAvailableByDir(files: AvailableTestFile[]): Record<string, AvailableTestFile[]> {
+  const groups: Record<string, AvailableTestFile[]> = {};
+  for (const f of files) {
+    if (!groups[f.dir]) groups[f.dir] = [];
+    groups[f.dir].push(f);
+  }
+  return groups;
+}
+
 export default function TestsPage() {
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [isRunning, setIsRunning] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [liveResult, setLiveResult] = useState<TestResult | null>(null);
   const [liveFiles, setLiveFiles] = useState<LiveFileProgress[]>([]);
-  const [progressLines, setProgressLines] = useState<string[]>([]);
+  const [consoleLines, setConsoleLines] = useState<string[]>([]);
   const [runError, setRunError] = useState<string | null>(null);
   const [connectionLost, setConnectionLost] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [showFilePicker, setShowFilePicker] = useState(false);
+  const [showConsole, setShowConsole] = useState(true);
+  const [currentFile, setCurrentFile] = useState<string | null>(null);
   const liveResultRef = useRef<TestResult | null>(null);
   const lastEventTimeRef = useRef<number>(Date.now());
   const liveFilesRef = useRef<LiveFileProgress[]>([]);
+  const consoleEndRef = useRef<HTMLDivElement>(null);
+  const completedFilesRef = useRef<Set<string>>(new Set());
 
   const { data, isLoading } = useQuery<LastTestResponse>({
     queryKey: ["/api/tests/last"],
     refetchInterval: isRunning ? 2000 : false,
+  });
+
+  const { data: availableFiles } = useQuery<{ files: AvailableTestFile[] }>({
+    queryKey: ["/api/tests/files"],
   });
 
   const result = liveResult || data?.result || null;
@@ -161,6 +189,12 @@ export default function TestsPage() {
     return () => clearInterval(checkInterval);
   }, [isRunning]);
 
+  useEffect(() => {
+    if (consoleEndRef.current) {
+      consoleEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [consoleLines]);
+
   const toggleFile = useCallback((file: string) => {
     setExpandedFiles((prev) => {
       const next = new Set(prev);
@@ -179,23 +213,31 @@ export default function TestsPage() {
     }
   }, []);
 
-  const runTests = useCallback(async () => {
+  const runTests = useCallback(async (fileOverride?: string | null) => {
+    const fileToRun = fileOverride !== undefined ? fileOverride : selectedFile;
     setIsRunning(true);
     setIsCancelling(false);
     setLiveResult(null);
     liveResultRef.current = null;
     setLiveFiles([]);
     liveFilesRef.current = [];
-    setProgressLines([]);
+    completedFilesRef.current = new Set();
+    setConsoleLines([]);
     setExpandedFiles(new Set());
     setRunError(null);
     setConnectionLost(false);
+    setCurrentFile(null);
+    setShowConsole(true);
     lastEventTimeRef.current = Date.now();
 
     try {
+      const body: Record<string, string> = {};
+      if (fileToRun) body.file = fileToRun;
+
       const response = await fetch("/api/tests/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -249,23 +291,35 @@ export default function TestsPage() {
                 duration: payload.duration || "",
                 index: payload.index || 0,
               };
+              completedFilesRef.current.add(payload.file);
               setLiveFiles((prev) => {
                 const next = [...prev, fp];
                 liveFilesRef.current = next;
                 return next;
               });
+              setCurrentFile(null);
             } else if (eventType === "progress" && payload.text) {
               const text = payload.text.trim();
-              if (text && !text.startsWith("stdout |")) {
-                setProgressLines((prev) => {
-                  const lines = text.split("\n").filter((l: string) => l.trim());
-                  return [...prev, ...lines].slice(-50);
-                });
+              if (text) {
+                const lines = text.split("\n").filter((l: string) => l.trim());
+                setConsoleLines((prev) => [...prev, ...lines].slice(-200));
+
+                for (const line of lines) {
+                  const runningMatch = line.match(/(?:Running|running)\s+([\w/.-]+\.(?:test|spec)\.\w+)/);
+                  if (runningMatch && !completedFilesRef.current.has(runningMatch[1])) {
+                    setCurrentFile(runningMatch[1]);
+                  }
+                  const stdoutMatch = line.match(/^stdout\s*\|\s*([\w/.-]+\.(?:test|spec)\.\w+)/);
+                  if (stdoutMatch && !completedFilesRef.current.has(stdoutMatch[1])) {
+                    setCurrentFile(stdoutMatch[1]);
+                  }
+                }
               }
             } else if (eventType === "done" || eventType === "cancelled") {
               const res = payload as TestResult;
               setLiveResult(res);
               liveResultRef.current = res;
+              setCurrentFile(null);
               if (res.testFiles) {
                 const failedFiles = res.testFiles
                   .filter((f: TestFile) => f.status === "fail")
@@ -302,6 +356,7 @@ export default function TestsPage() {
     } finally {
       setIsRunning(false);
       setIsCancelling(false);
+      setCurrentFile(null);
       queryClient.invalidateQueries({ queryKey: ["/api/tests/last"] });
       if (!liveResultRef.current) {
         try {
@@ -322,7 +377,7 @@ export default function TestsPage() {
         }
       }
     }
-  }, []);
+  }, [selectedFile]);
 
   if (isLoading) {
     return (
@@ -344,11 +399,20 @@ export default function TestsPage() {
   const livePassedCount = liveFiles.filter((f) => f.status === "pass").length;
   const liveFailedCount = liveFiles.filter((f) => f.status === "fail").length;
 
+  const availableGrouped = availableFiles?.files ? groupAvailableByDir(availableFiles.files) : {};
+  const sortedAvailableGroups = Object.entries(availableGrouped).sort(([a], [b]) => a.localeCompare(b));
+  const totalAvailable = availableFiles?.files?.length || 0;
+
   return (
-    <div className="space-y-6 p-6 max-w-5xl mx-auto" data-testid="tests-page">
+    <div className="space-y-4 p-6 max-w-5xl mx-auto" data-testid="tests-page">
       <div className="flex items-center gap-3 flex-wrap">
         <FlaskConical className="w-5 h-5" />
         <h2 className="text-lg font-semibold" data-testid="text-tests-header">Test Suite</h2>
+        {totalAvailable > 0 && (
+          <Badge variant="secondary" className="text-xs">
+            {totalAvailable} files
+          </Badge>
+        )}
         <div className="ml-auto flex items-center gap-2 flex-wrap">
           {running && <ElapsedTimer running={running} />}
           {!running && result?.timestamp && (
@@ -377,7 +441,7 @@ export default function TestsPage() {
             </Button>
           )}
           <Button
-            onClick={runTests}
+            onClick={() => runTests()}
             disabled={running}
             data-testid="button-run-tests"
           >
@@ -396,17 +460,110 @@ export default function TestsPage() {
         </div>
       </div>
 
+      {selectedFile && !running && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="text-xs">
+            <Filter className="w-3 h-3 mr-1" />
+            {selectedFile.split("/").pop()}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedFile(null)}
+            data-testid="button-clear-filter"
+          >
+            Clear filter
+          </Button>
+        </div>
+      )}
+
+      {!running && (
+        <div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilePicker(!showFilePicker)}
+            data-testid="button-toggle-file-picker"
+          >
+            <FolderOpen className="w-4 h-4" />
+            {showFilePicker ? "Hide" : "Pick"} Test File
+          </Button>
+
+          {showFilePicker && sortedAvailableGroups.length > 0 && (
+            <Card className="mt-2" data-testid="card-file-picker">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm">Select a test file to run</CardTitle>
+                {selectedFile && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedFile(null)}
+                    data-testid="button-run-all"
+                  >
+                    Run all
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="max-h-[300px]">
+                  <div className="divide-y" data-testid="file-picker-list">
+                    {sortedAvailableGroups.map(([dir, files]) => (
+                      <div key={dir}>
+                        <div className="px-4 py-1.5 bg-muted/50">
+                          <span className="text-xs font-medium text-muted-foreground">{dir}/</span>
+                        </div>
+                        {files.map((f) => {
+                          const isSelected = selectedFile === f.path;
+                          return (
+                            <button
+                              key={f.path}
+                              className={`w-full flex items-center gap-3 px-4 py-2 text-left hover-elevate ${isSelected ? "bg-primary/10" : ""}`}
+                              onClick={() => {
+                                setSelectedFile(isSelected ? null : f.path);
+                              }}
+                              data-testid={`file-pick-${f.path}`}
+                            >
+                              <FileCode2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                              <span className="text-sm truncate">{f.name}</span>
+                              {isSelected && (
+                                <Badge variant="default" className="ml-auto text-xs">
+                                  Selected
+                                </Badge>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
       {running && !liveResult && (
-        <div className="space-y-4" data-testid="section-running">
+        <div className="space-y-3" data-testid="section-running">
           <div className="flex items-center gap-3 flex-wrap">
             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              {isCancelling ? "Stopping test suite..." : "Running test suite..."}
+              {isCancelling ? "Stopping test suite..." : selectedFile ? `Running ${selectedFile.split("/").pop()}...` : "Running test suite..."}
             </span>
           </div>
           <div className="w-full h-0.5 bg-muted rounded-full overflow-hidden">
             <div className="h-full w-1/3 bg-primary rounded-full animate-shimmer" />
           </div>
+
+          {currentFile && (
+            <div className="flex items-center gap-2 flex-wrap" data-testid="text-current-file">
+              <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
+              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                Currently running: {currentFile.split("/").pop()}
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 flex-wrap">
             {liveFiles.length > 0 && (
               <span className="text-xs text-muted-foreground" data-testid="text-live-file-count">
@@ -428,13 +585,13 @@ export default function TestsPage() {
           {liveFiles.length > 0 && (
             <Card data-testid="card-live-progress">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm">Live Progress</CardTitle>
+                <CardTitle className="text-sm">Completed Files</CardTitle>
                 <span className="text-xs text-muted-foreground">
                   {livePassedCount} passed, {liveFailedCount} failed
                 </span>
               </CardHeader>
               <CardContent className="p-0">
-                <ScrollArea className="max-h-[400px]">
+                <ScrollArea className="max-h-[250px]">
                   <div className="divide-y" data-testid="live-file-list">
                     {liveFiles.map((lf, idx) => {
                       const fileName = lf.file.split("/").pop() || lf.file;
@@ -468,24 +625,32 @@ export default function TestsPage() {
             </Card>
           )}
 
-          {liveFiles.length === 0 && (
-            <Card data-testid="card-running">
-              <CardContent className="py-8">
-                <div className="flex flex-col items-center gap-4">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Waiting for test results...</p>
-                  <p className="text-xs text-muted-foreground">Individual file results will appear here as they complete.</p>
-                  {progressLines.length > 0 && (
-                    <ScrollArea className="w-full max-h-48">
-                      <pre className="text-xs text-muted-foreground bg-muted p-3 rounded-md whitespace-pre-wrap font-mono" data-testid="pre-progress">
-                        {progressLines.slice(-20).join("\n")}
-                      </pre>
-                    </ScrollArea>
-                  )}
-                </div>
+          <Card data-testid="card-console">
+            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Terminal className="w-4 h-4" />
+                Live Output
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowConsole(!showConsole)}
+                data-testid="button-toggle-console"
+              >
+                {showConsole ? "Hide" : "Show"}
+              </Button>
+            </CardHeader>
+            {showConsole && (
+              <CardContent className="p-0">
+                <ScrollArea className="h-[250px]">
+                  <pre className="text-xs p-3 font-mono whitespace-pre-wrap text-muted-foreground" data-testid="pre-console">
+                    {consoleLines.length > 0 ? consoleLines.join("\n") : "Waiting for output..."}
+                    <div ref={consoleEndRef} />
+                  </pre>
+                </ScrollArea>
               </CardContent>
-            </Card>
-          )}
+            )}
+          </Card>
         </div>
       )}
 
@@ -499,7 +664,7 @@ export default function TestsPage() {
                 The connection to the test run was lost. The tests may have finished on the server.
                 Try running again or refresh the page.
               </p>
-              <Button onClick={runTests} variant="outline" className="mt-2" data-testid="button-retry-lost">
+              <Button onClick={() => runTests()} variant="outline" className="mt-2" data-testid="button-retry-lost">
                 <RotateCcw className="w-4 h-4" />
                 Run Again
               </Button>
@@ -515,7 +680,7 @@ export default function TestsPage() {
               <AlertTriangle className="w-8 h-8 text-red-500" />
               <p className="text-sm font-medium">Test run failed</p>
               <p className="text-xs text-muted-foreground max-w-md text-center">{runError}</p>
-              <Button onClick={runTests} variant="outline" className="mt-2" data-testid="button-retry">
+              <Button onClick={() => runTests()} variant="outline" className="mt-2" data-testid="button-retry">
                 <RotateCcw className="w-4 h-4" />
                 Retry
               </Button>
@@ -539,7 +704,7 @@ export default function TestsPage() {
                         : "No test files completed before the run was stopped."}
                     </p>
                   </div>
-                  <Button onClick={runTests} variant="outline" data-testid="button-rerun-after-cancel">
+                  <Button onClick={() => runTests()} variant="outline" data-testid="button-rerun-after-cancel">
                     <RotateCcw className="w-4 h-4" />
                     Run Again
                   </Button>
@@ -627,6 +792,34 @@ export default function TestsPage() {
                   {result.errorOutput || result.rawOutput}
                 </pre>
               </CardContent>
+            </Card>
+          )}
+
+          {consoleLines.length > 0 && (
+            <Card data-testid="card-console-finished">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Terminal className="w-4 h-4" />
+                  Console Output
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowConsole(!showConsole)}
+                  data-testid="button-toggle-console-finished"
+                >
+                  {showConsole ? "Hide" : "Show"}
+                </Button>
+              </CardHeader>
+              {showConsole && (
+                <CardContent className="p-0">
+                  <ScrollArea className="max-h-[300px]">
+                    <pre className="text-xs p-3 font-mono whitespace-pre-wrap text-muted-foreground" data-testid="pre-console-finished">
+                      {consoleLines.join("\n")}
+                    </pre>
+                  </ScrollArea>
+                </CardContent>
+              )}
             </Card>
           )}
 
@@ -761,9 +954,9 @@ export default function TestsPage() {
             <FlaskConical className="w-12 h-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-base font-medium mb-1">No test runs yet</h3>
             <p className="text-sm text-muted-foreground max-w-sm mb-6">
-              Run the Vitest test suite to see results here with color-coded pass/fail status.
+              Run the Vitest test suite to see results here. You can run all tests or pick a specific file.
             </p>
-            <Button onClick={runTests} data-testid="button-run-tests-empty">
+            <Button onClick={() => runTests()} data-testid="button-run-tests-empty">
               <Play className="w-4 h-4" />
               Run Tests
             </Button>

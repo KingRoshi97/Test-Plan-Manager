@@ -2113,6 +2113,31 @@ export function registerRoutes(app: Express) {
   let testChildProcess: ReturnType<typeof spawn> | null = null;
   let testCancelled = false;
 
+  app.get('/api/tests/files', (_req: Request, res: Response) => {
+    const testsDir = path.join(PROJECT_ROOT, 'tests');
+    if (!fs.existsSync(testsDir)) {
+      res.json({ files: [] });
+      return;
+    }
+    const files: { path: string; name: string; dir: string }[] = [];
+    function walk(dir: string) {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== 'fixtures' && entry.name !== 'helpers' && entry.name !== 'temp') {
+          walk(full);
+        } else if (entry.isFile() && /\.(test|spec)\.\w+$/.test(entry.name)) {
+          const rel = path.relative(PROJECT_ROOT, full);
+          const dirPart = path.relative(PROJECT_ROOT, dir);
+          files.push({ path: rel, name: entry.name, dir: dirPart });
+        }
+      }
+    }
+    walk(testsDir);
+    files.sort((a, b) => a.path.localeCompare(b.path));
+    res.json({ files });
+  });
+
   app.get('/api/tests/last', (_req: Request, res: Response) => {
     res.json({ running: testRunning, result: lastTestResult });
   });
