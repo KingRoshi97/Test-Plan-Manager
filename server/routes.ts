@@ -2091,7 +2091,7 @@ export function registerRoutes(app: Express) {
   let lastTestResult: {
     timestamp: string;
     durationMs: number;
-    status: 'pass' | 'fail' | 'error';
+    status: 'pass' | 'fail' | 'error' | 'cancelled';
     summary: { total: number; passed: number; failed: number; skipped: number };
     testFiles: Array<{
       file: string;
@@ -2105,12 +2105,44 @@ export function registerRoutes(app: Express) {
         error?: string;
       }>;
     }>;
+    errorOutput?: string;
+    rawOutput?: string;
   } | null = null;
 
   let testRunning = false;
+  let testChildProcess: ReturnType<typeof spawn> | null = null;
+  let testCancelled = false;
 
   app.get('/api/tests/last', (_req: Request, res: Response) => {
     res.json({ running: testRunning, result: lastTestResult });
+  });
+
+  app.post('/api/tests/cancel', (_req: Request, res: Response) => {
+    if (!testRunning || !testChildProcess) {
+      res.status(400).json({ error: 'No test run in progress' });
+      return;
+    }
+    testCancelled = true;
+    try {
+      const pid = testChildProcess.pid;
+      if (pid) {
+        try { process.kill(-pid, 'SIGTERM'); } catch { try { testChildProcess.kill('SIGTERM'); } catch {} }
+        setTimeout(() => {
+          try { if (pid) process.kill(-pid, 'SIGKILL'); } catch {}
+          try { testChildProcess?.kill('SIGKILL'); } catch {}
+        }, 3000);
+      } else {
+        try { testChildProcess.kill('SIGTERM'); } catch {}
+      }
+    } catch {}
+    setTimeout(() => {
+      if (testRunning) {
+        testRunning = false;
+        testChildProcess = null;
+        testCancelled = false;
+      }
+    }, 15000);
+    res.json({ ok: true, message: 'Test run cancellation requested' });
   });
 
   app.post('/api/tests/run', (req: Request, res: Response) => {
@@ -2129,6 +2161,7 @@ export function registerRoutes(app: Express) {
     });
 
     testRunning = true;
+    testCancelled = false;
     let aborted = false;
     req.on('close', () => {
       aborted = true;
@@ -2161,7 +2194,9 @@ export function registerRoutes(app: Express) {
       env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
       timeout: 300000,
       shell: true,
+      detached: true,
     });
+    testChildProcess = child;
 
     child.stdout.on('data', (data: Buffer) => {
       const text = data.toString();
@@ -2241,6 +2276,9 @@ export function registerRoutes(app: Express) {
       clearInterval(heartbeat);
       const durationMs = Date.now() - start;
       testRunning = false;
+      testChildProcess = null;
+      const wasCancelled = testCancelled;
+      testCancelled = false;
 
       let parsed: any = null;
       try {
@@ -2287,17 +2325,35 @@ export function registerRoutes(app: Express) {
           lastTestResult = {
             timestamp: new Date().toISOString(),
             durationMs,
-            status: failed > 0 ? 'fail' : 'pass',
+            status: wasCancelled ? 'cancelled' : (failed > 0 ? 'fail' : 'pass'),
             summary: { total: passed + failed + skipped, passed, failed, skipped },
             testFiles,
           };
 
           if (!aborted) {
-            res.write(`event: done\ndata: ${JSON.stringify(lastTestResult)}\n\n`);
+            const eventName = wasCancelled ? 'cancelled' : 'done';
+            res.write(`event: ${eventName}\ndata: ${JSON.stringify(lastTestResult)}\n\n`);
             res.end();
           }
           return;
         } catch {}
+      }
+
+      if (wasCancelled) {
+        const cancelledResult = {
+          timestamp: new Date().toISOString(),
+          durationMs,
+          status: 'cancelled' as const,
+          summary: { total: 0, passed: 0, failed: 0, skipped: 0 },
+          testFiles: [] as NonNullable<typeof lastTestResult>['testFiles'],
+          rawOutput: 'Test run was cancelled by user.',
+        };
+        lastTestResult = cancelledResult;
+        if (!aborted) {
+          res.write(`event: cancelled\ndata: ${JSON.stringify(cancelledResult)}\n\n`);
+          res.end();
+        }
+        return;
       }
 
       const errorResult = {
@@ -2305,7 +2361,7 @@ export function registerRoutes(app: Express) {
         durationMs,
         status: 'error' as const,
         summary: { total: 0, passed: 0, failed: 0, skipped: 0 },
-        testFiles: [],
+        testFiles: [] as NonNullable<typeof lastTestResult>['testFiles'],
         errorOutput: stderrOutput.substring(0, 5000),
         rawOutput: stdoutBuffer.substring(0, 5000),
       };
@@ -2320,6 +2376,7 @@ export function registerRoutes(app: Express) {
     child.on('error', (err: Error) => {
       clearInterval(heartbeat);
       testRunning = false;
+      testChildProcess = null;
       if (!aborted) {
         res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`);
         res.end();

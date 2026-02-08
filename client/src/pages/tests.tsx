@@ -18,6 +18,8 @@ import {
   RotateCcw,
   AlertTriangle,
   WifiOff,
+  Square,
+  Ban,
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
@@ -40,7 +42,7 @@ interface TestFile {
 interface TestResult {
   timestamp: string;
   durationMs: number;
-  status: "pass" | "fail" | "error";
+  status: "pass" | "fail" | "error" | "cancelled";
   summary: { total: number; passed: number; failed: number; skipped: number };
   testFiles: TestFile[];
   errorOutput?: string;
@@ -123,6 +125,7 @@ function groupByDirectory(files: TestFile[]): Record<string, TestFile[]> {
 export default function TestsPage() {
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [isRunning, setIsRunning] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [liveResult, setLiveResult] = useState<TestResult | null>(null);
   const [liveFiles, setLiveFiles] = useState<LiveFileProgress[]>([]);
   const [progressLines, setProgressLines] = useState<string[]>([]);
@@ -130,6 +133,7 @@ export default function TestsPage() {
   const [connectionLost, setConnectionLost] = useState(false);
   const liveResultRef = useRef<TestResult | null>(null);
   const lastEventTimeRef = useRef<number>(Date.now());
+  const liveFilesRef = useRef<LiveFileProgress[]>([]);
 
   const { data, isLoading } = useQuery<LastTestResponse>({
     queryKey: ["/api/tests/last"],
@@ -166,11 +170,22 @@ export default function TestsPage() {
     });
   }, []);
 
+  const cancelTests = useCallback(async () => {
+    setIsCancelling(true);
+    try {
+      await fetch("/api/tests/cancel", { method: "POST" });
+    } catch {
+      toast({ title: "Cancel failed", description: "Could not cancel the test run", variant: "destructive" });
+    }
+  }, []);
+
   const runTests = useCallback(async () => {
     setIsRunning(true);
+    setIsCancelling(false);
     setLiveResult(null);
     liveResultRef.current = null;
     setLiveFiles([]);
+    liveFilesRef.current = [];
     setProgressLines([]);
     setExpandedFiles(new Set());
     setRunError(null);
@@ -234,7 +249,11 @@ export default function TestsPage() {
                 duration: payload.duration || "",
                 index: payload.index || 0,
               };
-              setLiveFiles((prev) => [...prev, fp]);
+              setLiveFiles((prev) => {
+                const next = [...prev, fp];
+                liveFilesRef.current = next;
+                return next;
+              });
             } else if (eventType === "progress" && payload.text) {
               const text = payload.text.trim();
               if (text && !text.startsWith("stdout |")) {
@@ -243,7 +262,7 @@ export default function TestsPage() {
                   return [...prev, ...lines].slice(-50);
                 });
               }
-            } else if (eventType === "done") {
+            } else if (eventType === "done" || eventType === "cancelled") {
               const res = payload as TestResult;
               setLiveResult(res);
               liveResultRef.current = res;
@@ -252,6 +271,9 @@ export default function TestsPage() {
                   .filter((f: TestFile) => f.status === "fail")
                   .map((f: TestFile) => f.file);
                 setExpandedFiles(new Set(failedFiles));
+              }
+              if (eventType === "cancelled") {
+                toast({ title: "Tests stopped", description: `Test run was cancelled. ${liveFilesRef.current.length} file(s) completed before stopping.` });
               }
             } else if (eventType === "error") {
               setRunError(payload.error || "Unknown error during test run");
@@ -279,6 +301,7 @@ export default function TestsPage() {
       toast({ title: "Test run failed", description: msg, variant: "destructive" });
     } finally {
       setIsRunning(false);
+      setIsCancelling(false);
       queryClient.invalidateQueries({ queryKey: ["/api/tests/last"] });
       if (!liveResultRef.current) {
         try {
@@ -333,6 +356,26 @@ export default function TestsPage() {
               Last run: {new Date(result.timestamp).toLocaleString()}
             </span>
           )}
+          {running && (
+            <Button
+              onClick={cancelTests}
+              disabled={isCancelling}
+              variant="destructive"
+              data-testid="button-stop-tests"
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Stopping...
+                </>
+              ) : (
+                <>
+                  <Square className="w-4 h-4" />
+                  Stop
+                </>
+              )}
+            </Button>
+          )}
           <Button
             onClick={runTests}
             disabled={running}
@@ -358,9 +401,9 @@ export default function TestsPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              Running test suite...
+              {isCancelling ? "Stopping test suite..." : "Running test suite..."}
             </span>
-            </div>
+          </div>
           <div className="w-full h-0.5 bg-muted rounded-full overflow-hidden">
             <div className="h-full w-1/3 bg-primary rounded-full animate-shimmer" />
           </div>
@@ -483,6 +526,28 @@ export default function TestsPage() {
 
       {result && !running && (
         <>
+          {result.status === "cancelled" && (
+            <Card data-testid="card-cancelled-notice" style={{ backgroundColor: 'hsl(var(--warning-tint))' }}>
+              <CardContent className="py-4 px-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Ban className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium" data-testid="text-cancelled-title">Test run was stopped</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {result.testFiles.length > 0
+                        ? `${result.testFiles.length} file(s) completed before stopping. Results shown below are partial.`
+                        : "No test files completed before the run was stopped."}
+                    </p>
+                  </div>
+                  <Button onClick={runTests} variant="outline" data-testid="button-rerun-after-cancel">
+                    <RotateCcw className="w-4 h-4" />
+                    Run Again
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4" data-testid="summary-cards">
             <Card data-testid="card-total">
               <CardContent className="pt-4 pb-3 px-4">
@@ -537,10 +602,10 @@ export default function TestsPage() {
 
           <div className="flex items-center gap-3 flex-wrap" data-testid="run-summary-bar">
             <Badge
-              variant={result.status === "pass" ? "success" : result.status === "fail" ? "error" : "warning"}
+              variant={result.status === "pass" ? "success" : result.status === "fail" ? "error" : result.status === "cancelled" ? "warning" : "warning"}
               data-testid="badge-overall-status"
             >
-              {result.status === "pass" ? "All Passed" : result.status === "fail" ? "Some Failed" : "Error"}
+              {result.status === "pass" ? "All Passed" : result.status === "fail" ? "Some Failed" : result.status === "cancelled" ? "Cancelled" : "Error"}
             </Badge>
             <span className="text-xs text-muted-foreground flex items-center gap-1" data-testid="text-duration">
               <Clock className="w-3 h-3" />
