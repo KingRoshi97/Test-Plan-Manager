@@ -28,13 +28,19 @@
   --warning: 38 92% 50%;
   --warning-foreground: 0 0% 100%;
 
-  --sidebar-background: 220 16% 93%;
-  --sidebar-foreground: 220 20% 10%;
-  --sidebar-primary: 230 80% 56%;
+  --success-tint: 142 60% 95%;
+  --error-tint: 0 60% 95%;
+  --warning-tint: 38 60% 94%;
+  --info-tint: 230 60% 95%;
+  --purple-tint: 270 60% 95%;
+
+  --sidebar-background: 228 24% 14%;
+  --sidebar-foreground: 220 10% 85%;
+  --sidebar-primary: 230 80% 62%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 14% 87%;
-  --sidebar-accent-foreground: 220 20% 10%;
-  --sidebar-border: 220 13% 87%;
+  --sidebar-accent: 228 20% 20%;
+  --sidebar-accent-foreground: 220 10% 90%;
+  --sidebar-border: 228 18% 22%;
   --sidebar-ring: 230 80% 56%;
 }
 
@@ -63,13 +69,19 @@
   --warning: 38 92% 50%;
   --warning-foreground: 0 0% 100%;
 
-  --sidebar-background: 220 20% 6%;
-  --sidebar-foreground: 220 10% 90%;
-  --sidebar-primary: 230 80% 60%;
+  --success-tint: 142 40% 14%;
+  --error-tint: 0 40% 14%;
+  --warning-tint: 38 40% 14%;
+  --info-tint: 230 40% 14%;
+  --purple-tint: 270 40% 14%;
+
+  --sidebar-background: 228 24% 8%;
+  --sidebar-foreground: 220 10% 85%;
+  --sidebar-primary: 230 80% 62%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 220 14% 14%;
+  --sidebar-accent: 228 20% 14%;
   --sidebar-accent-foreground: 220 10% 90%;
-  --sidebar-border: 220 14% 20%;
+  --sidebar-border: 228 18% 16%;
   --sidebar-ring: 230 80% 60%;
 }
 
@@ -103,6 +115,12 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  --color-success-tint: hsl(var(--success-tint));
+  --color-error-tint: hsl(var(--error-tint));
+  --color-warning-tint: hsl(var(--warning-tint));
+  --color-info-tint: hsl(var(--info-tint));
+  --color-purple-tint: hsl(var(--purple-tint));
 }
 
 @utility hover-elevate {
@@ -173,4 +191,22 @@ body {
   * {
     @apply border-border;
   }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes shimmer-bar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer-bar 2s ease-in-out infinite;
 }

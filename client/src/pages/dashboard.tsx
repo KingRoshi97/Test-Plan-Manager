@@ -57,6 +57,16 @@ function getStateBadgeClassName(state: string) {
   return "";
 }
 
+function getCardTintStyle(state: string): React.CSSProperties | undefined {
+  switch (state) {
+    case "running": return { backgroundColor: 'hsl(var(--info-tint))' };
+    case "completed": return { backgroundColor: 'hsl(var(--success-tint))' };
+    case "failed": return { backgroundColor: 'hsl(var(--error-tint))' };
+    case "exported": return { backgroundColor: 'hsl(var(--purple-tint))' };
+    default: return undefined;
+  }
+}
+
 function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
@@ -102,9 +112,12 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 p-6 max-w-5xl mx-auto" data-testid="dashboard-page">
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-lg font-semibold" data-testid="text-dashboard-header">Assemblies</h2>
-          <p className="text-sm text-muted-foreground mt-1">Manage your AXION assembly builds.</p>
+        <div className="flex items-center gap-2">
+          <Layers className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <h2 className="text-lg font-semibold" data-testid="text-dashboard-header">Assemblies</h2>
+            <p className="text-sm text-muted-foreground mt-1">Manage your AXION assembly builds.</p>
+          </div>
         </div>
         <Button onClick={() => navigate("/new")} data-testid="button-new-assembly">
           <Plus className="w-4 h-4" />
@@ -119,10 +132,13 @@ export default function DashboardPage() {
       ) : assemblies.length === 0 ? (
         <Card data-testid="empty-state">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Layers className="w-12 h-12 text-muted-foreground/50 mb-4" />
+            <Layers className="w-12 h-12 text-primary/20 mb-4" />
             <h3 className="text-base font-medium mb-1">No assemblies yet</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+            <p className="text-sm text-muted-foreground mb-2 max-w-sm">
               Create your first assembly to start building a project with AXION.
+            </p>
+            <p className="text-xs text-muted-foreground/70 mb-6">
+              From idea to deployable workspace in minutes.
             </p>
             <Button onClick={() => navigate("/new")} data-testid="button-empty-new-assembly">
               <Plus className="w-4 h-4" />
@@ -155,6 +171,17 @@ export default function DashboardPage() {
   );
 }
 
+function StatusDot({ active, label }: { active: boolean; label: string }) {
+  return (
+    <span className="flex items-center gap-1 text-xs text-muted-foreground" title={label}>
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${active ? "bg-green-500" : "bg-muted-foreground/30"}`}
+      />
+      <span className="sr-only">{label}: {active ? "yes" : "no"}</span>
+    </span>
+  );
+}
+
 function AssemblyCard({
   assembly,
   onOpen,
@@ -172,10 +199,12 @@ function AssemblyCard({
 }) {
   const stateVariant = getStateBadgeVariant(assembly.state);
   const stateClassName = getStateBadgeClassName(assembly.state);
+  const tintStyle = getCardTintStyle(assembly.state);
 
   return (
     <Card
       className="hover-elevate flex flex-col"
+      style={tintStyle}
       data-testid={`card-assembly-${assembly.id}`}
     >
       <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
@@ -197,6 +226,9 @@ function AssemblyCard({
           className={`no-default-active-elevate shrink-0 ${stateClassName}`}
           data-testid={`badge-state-${assembly.id}`}
         >
+          {assembly.state === "running" && (
+            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse-dot mr-1.5" />
+          )}
           {assembly.state}
         </Badge>
       </CardHeader>
@@ -250,9 +282,17 @@ function AssemblyCard({
           )}
         </div>
 
-        <div className="flex items-center gap-1 text-xs text-muted-foreground" data-testid={`text-created-${assembly.id}`}>
-          <Clock className="w-3 h-3" />
-          {formatRelativeTime(assembly.createdAt)}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground" data-testid={`text-created-${assembly.id}`}>
+            <Clock className="w-3 h-3" />
+            {formatRelativeTime(assembly.createdAt)}
+          </div>
+          <div className="flex items-center gap-2" data-testid={`status-indicators-${assembly.id}`}>
+            <StatusDot active={assembly.wsExists} label="Workspace" />
+            <StatusDot active={assembly.hasRegistry} label="Registry" />
+            <StatusDot active={assembly.hasDomains} label="Domains" />
+            <StatusDot active={assembly.hasApp} label="App" />
+          </div>
         </div>
       </CardContent>
 

@@ -40,7 +40,7 @@ export default function LogsPage() {
       ) : runs.length === 0 ? (
         <Card data-testid="empty-logs">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <Terminal className="w-12 h-12 text-muted-foreground/50 mb-4" />
+            <Terminal className="w-12 h-12 text-primary/20 mb-4" />
             <h3 className="text-base font-medium mb-1">No pipeline runs yet</h3>
             <p className="text-sm text-muted-foreground max-w-sm">
               Pipeline runs will appear here once you execute steps on an assembly.
@@ -71,6 +71,7 @@ export default function LogsPage() {
                       <span className="text-xs text-muted-foreground w-28 shrink-0 truncate" data-testid={`text-project-${run.id}`}>
                         {run.projectName}
                       </span>
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${run.status === "success" ? "bg-green-500" : "bg-red-500"}`} />
                       <Badge
                         variant={run.status === "success" ? "success" : "error"}
                         data-testid={`badge-status-${run.id}`}
