@@ -1,5 +1,26 @@
 # AXION Documentation System
 
+## Version
+**V1 — Released February 8, 2026**
+
+This is the first stable release of the AXION system. All core pipeline stages, the web dashboard, and workspace management are functional end-to-end.
+
+### V1 Feature Summary
+- **Full Pipeline Orchestration**: Automated chaining of all pipeline steps from project idea to packaged Agent Kit (kit-create → seed → generate → review → draft → verify → lock → build-plan → build-exec → package)
+- **Assembly Control Room**: Real-time SSE streaming of pipeline execution with step-level timing, progress tracking, and log display
+- **Retry from Failed Step**: Resume pipeline execution from the exact step that failed, skipping previously successful steps
+- **Individual Actions**: Trigger any pipeline step independently (import, reconcile, iterate, build-plan, build-exec, deploy, clean, status, next, activate) from the Assembly Control Room
+- **Workspaces Management**: Dedicated page listing all workspaces with on-disk status indicators (Registry, Domains, App), delete functionality, and orphaned record cleanup
+- **Kit Export**: Package completed Agent Kits into distributable zip bundles
+- **Test Suite Runner**: Execute Vitest test suites directly from the dashboard with color-coded results
+- **System Health Monitoring**: Health check page for system diagnostics
+- **Pipeline Logs Viewer**: Browse and inspect logs from all pipeline runs
+- **Two-Root Architecture**: Strict isolation between immutable AXION system code and generated project workspaces
+- **UNKNOWN Detection**: Automatic scanning for placeholder content in documentation with agent-driven content filling
+- **Transient Failure Retry**: Exponential backoff for ENOENT, ETIMEDOUT, ECONNRESET, and OOM-kill errors
+- **Dark/Light Theme**: Full theme support across the dashboard
+- **Path Traversal Protection**: Hardened workspace delete endpoint with input validation
+
 ## Overview
 This project develops and tests the AXION documentation-first development system. AXION generates "Agent Kits" for AI-guided software development, aiming to standardize and streamline software project creation through rigorous testing and a well-defined pipeline for documentation and application scaffolding. The system focuses on robust and reliable code generation, ensuring data integrity and consistency across various stages of development. It integrates a web-based dashboard for orchestrating the development pipeline, providing a comprehensive solution for managing project ideas from conception to deployment.
 
