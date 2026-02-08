@@ -45,6 +45,20 @@ import {
   Paperclip,
   X,
   FileArchive,
+  FolderOpen,
+  Folder,
+  FileText,
+  File,
+  Timer,
+  Activity,
+  Pencil,
+  Save,
+  Eye,
+  Target,
+  Users,
+  Lightbulb,
+  Settings2,
+  Box,
 } from "lucide-react";
 
 interface AssemblyProgress {
@@ -60,6 +74,8 @@ interface EnrichedAssembly {
   id: string;
   projectName: string | null;
   idea: string | null;
+  context: string | null;
+  input: Record<string, string> | null;
   preset: string | null;
   presetId: string | null;
   state: string;
@@ -77,6 +93,18 @@ interface EnrichedAssembly {
   revision: number;
   upgradeNotes: string | null;
   kitType: string;
+  lastRunAt: string | null;
+  totalRuns: number;
+  completedSteps: number;
+  totalDuration: number;
+}
+
+interface FileTreeNode {
+  name: string;
+  path: string;
+  type: 'file' | 'directory';
+  children?: FileTreeNode[];
+  size?: number;
 }
 
 interface ModuleStatusData {
@@ -182,6 +210,92 @@ function formatRelativeTime(dateStr: string): string {
   return date.toLocaleDateString();
 }
 
+function formatInputLabel(key: string): string {
+  const labels: Record<string, string> = {
+    visionProblem: "Problem Statement",
+    visionTargetUsers: "Target Users",
+    visionSuccess: "Success Criteria",
+    visionGoals: "Goals",
+    coreFeatures: "Core Features",
+    niceToHaveFeatures: "Nice-to-Have Features",
+    coreEntities: "Core Entities",
+    userJourneys: "User Journeys",
+    platform: "Platform",
+    integrations: "Integrations",
+    techConstraints: "Technical Constraints",
+    dataSensitivity: "Data Sensitivity",
+  };
+  return labels[key] || key.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase());
+}
+
+function getInputFieldInfo(key: string): { icon: typeof Lightbulb; label: string } {
+  const map: Record<string, { icon: typeof Lightbulb; label: string }> = {
+    visionProblem: { icon: Target, label: "Problem" },
+    visionTargetUsers: { icon: Users, label: "Target Users" },
+    visionSuccess: { icon: CheckCircle2, label: "Success Criteria" },
+    visionGoals: { icon: Lightbulb, label: "Goals" },
+    coreFeatures: { icon: Box, label: "Core Features" },
+    niceToHaveFeatures: { icon: Sparkles, label: "Nice-to-Have" },
+    coreEntities: { icon: Layers, label: "Core Entities" },
+    userJourneys: { icon: Activity, label: "User Journeys" },
+    platform: { icon: Settings2, label: "Platform" },
+    integrations: { icon: GitCompare, label: "Integrations" },
+    techConstraints: { icon: Settings2, label: "Constraints" },
+    dataSensitivity: { icon: Eye, label: "Data Sensitivity" },
+  };
+  return map[key] || { icon: FileText, label: formatInputLabel(key) };
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / 1048576).toFixed(1)}MB`;
+}
+
+function FileTreeItem({
+  node,
+  depth,
+  expandedDirs,
+  onToggle,
+}: {
+  node: FileTreeNode;
+  depth: number;
+  expandedDirs: Set<string>;
+  onToggle: (path: string) => void;
+}) {
+  const isDir = node.type === "directory";
+  const isExpanded = expandedDirs.has(node.path);
+
+  return (
+    <div>
+      <button
+        className="flex items-center gap-1.5 w-full text-left py-0.5 hover-elevate rounded-md px-1"
+        style={{ paddingLeft: `${depth * 16 + 4}px` }}
+        onClick={() => isDir && onToggle(node.path)}
+        data-testid={`tree-node-${node.path}`}
+      >
+        {isDir ? (
+          isExpanded ? <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+        ) : (
+          <span className="w-3" />
+        )}
+        {isDir ? (
+          isExpanded ? <FolderOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" /> : <Folder className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+        ) : (
+          <File className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+        )}
+        <span className="truncate text-xs">{node.name}</span>
+        {!isDir && node.size != null && (
+          <span className="text-[10px] text-muted-foreground/60 ml-auto shrink-0">{formatFileSize(node.size)}</span>
+        )}
+      </button>
+      {isDir && isExpanded && node.children?.map(child => (
+        <FileTreeItem key={child.path} node={child} depth={depth + 1} expandedDirs={expandedDirs} onToggle={onToggle} />
+      ))}
+    </div>
+  );
+}
+
 const STAGES = ["generate", "seed", "draft", "review", "verify", "lock"];
 const STAGE_SHORT_LABELS: Record<string, string> = {
   generate: "Gen",
@@ -225,6 +339,12 @@ export default function AssemblyPage() {
   const [upgradeZipFileCount, setUpgradeZipFileCount] = useState(0);
   const [upgradeZipContent, setUpgradeZipContent] = useState("");
   const upgradeZipInputRef = useRef<HTMLInputElement>(null);
+  const [showOverview, setShowOverview] = useState(true);
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [editIdea, setEditIdea] = useState("");
+  const [editInput, setEditInput] = useState<Record<string, string>>({});
+  const [showExplorer, setShowExplorer] = useState(false);
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
 
   async function handleUpgradeZipUpload(file: File) {
     setUpgradeZipUploading(true);
@@ -300,6 +420,44 @@ export default function AssemblyPage() {
       return res.json();
     },
     enabled: !!assembly?.projectName && showHistory,
+  });
+
+  const { data: activityRuns = [] } = useQuery<PipelineRunRecord[]>({
+    queryKey: ["/api/pipeline-runs", assembly?.projectName, "activity"],
+    queryFn: async () => {
+      const res = await fetch(`/api/pipeline-runs?projectName=${encodeURIComponent(assembly!.projectName!)}&limit=10`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!assembly?.projectName,
+  });
+
+  const { data: fileTree } = useQuery<FileTreeNode>({
+    queryKey: ["/api/workspace-tree", assembly?.projectName],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspace-tree/${encodeURIComponent(assembly!.projectName!)}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!assembly?.projectName && assembly?.wsExists && showExplorer,
+  });
+
+  const updateDetailsMutation = useMutation({
+    mutationFn: async (data: { idea?: string; input?: Record<string, string> }) => {
+      return apiRequest(`/api/assemblies/${assemblyId}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Assembly details updated" });
+      setEditingDetails(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId] });
+    },
+    onError: () => {
+      toast({ title: "Failed to update details", variant: "destructive" });
+    },
   });
 
   const exportMutation = useMutation({
@@ -1014,6 +1172,233 @@ export default function AssemblyPage() {
           )}
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="section-quick-stats">
+        <Card data-testid="stat-runs">
+          <CardContent className="flex items-center gap-3 py-3 px-4">
+            <Play className="w-4 h-4 text-blue-500" />
+            <div>
+              <div className="text-lg font-semibold leading-none">{assembly.totalRuns || 0}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Pipeline Runs</div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card data-testid="stat-steps">
+          <CardContent className="flex items-center gap-3 py-3 px-4">
+            <CheckCircle2 className="w-4 h-4 text-green-500" />
+            <div>
+              <div className="text-lg font-semibold leading-none">{assembly.completedSteps || 0}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Steps Completed</div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card data-testid="stat-duration">
+          <CardContent className="flex items-center gap-3 py-3 px-4">
+            <Timer className="w-4 h-4 text-amber-500" />
+            <div>
+              <div className="text-lg font-semibold leading-none">{assembly.totalDuration ? formatDuration(assembly.totalDuration) : "0s"}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">Total Duration</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card data-testid="section-overview">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Eye className="w-4 h-4" />
+            Project Overview
+          </CardTitle>
+          <div className="flex items-center gap-1">
+            {!editingDetails && (assembly.state === "queued" || assembly.state === "completed" || assembly.state === "exported" || assembly.state === "failed") && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setEditIdea(assembly.idea || "");
+                  setEditInput(assembly.input || {});
+                  setEditingDetails(true);
+                }}
+                data-testid="button-edit-details"
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            )}
+            <button
+              onClick={() => setShowOverview(!showOverview)}
+              className="text-muted-foreground"
+              data-testid="button-toggle-overview"
+            >
+              {showOverview ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
+          </div>
+        </CardHeader>
+        {showOverview && (
+          <CardContent className="space-y-4">
+            {editingDetails ? (
+              <div className="space-y-4" data-testid="edit-details-form">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Project Idea</label>
+                  <Textarea
+                    value={editIdea}
+                    onChange={(e) => setEditIdea(e.target.value)}
+                    className="text-sm min-h-[80px]"
+                    data-testid="input-edit-idea"
+                  />
+                </div>
+                {Object.keys(editInput).length > 0 && (
+                  <div className="space-y-3">
+                    {Object.entries(editInput).map(([key, value]) => (
+                      <div key={key}>
+                        <label className="text-xs font-medium text-muted-foreground block mb-1">
+                          {formatInputLabel(key)}
+                        </label>
+                        <Textarea
+                          value={value}
+                          onChange={(e) => setEditInput(prev => ({ ...prev, [key]: e.target.value }))}
+                          className="text-sm min-h-[60px]"
+                          data-testid={`input-edit-${key}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => updateDetailsMutation.mutate({ idea: editIdea, input: editInput })}
+                    disabled={updateDetailsMutation.isPending}
+                    data-testid="button-save-details"
+                  >
+                    {updateDetailsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                    Save Changes
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setEditingDetails(false)} data-testid="button-cancel-edit">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {assembly.idea && (
+                  <div>
+                    <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
+                      <Lightbulb className="w-3 h-3" /> Idea
+                    </h4>
+                    <p className="text-sm" data-testid="text-overview-idea">{assembly.idea}</p>
+                  </div>
+                )}
+                {assembly.context && (
+                  <div>
+                    <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
+                      <FileText className="w-3 h-3" /> Context
+                    </h4>
+                    <p className="text-sm whitespace-pre-wrap max-h-40 overflow-y-auto" data-testid="text-overview-context">{assembly.context}</p>
+                  </div>
+                )}
+                {assembly.input && Object.keys(assembly.input).length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" data-testid="overview-input-fields">
+                    {Object.entries(assembly.input).map(([key, value]) => {
+                      if (!value) return null;
+                      const { icon: Icon, label } = getInputFieldInfo(key);
+                      return (
+                        <div key={key} className="space-y-0.5">
+                          <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                            <Icon className="w-3 h-3" /> {label}
+                          </h4>
+                          <p className="text-sm whitespace-pre-wrap" data-testid={`text-input-${key}`}>{value}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span data-testid="text-overview-created">Created: {new Date(assembly.createdAt).toLocaleString()}</span>
+                  <span data-testid="text-overview-updated">Updated: {new Date(assembly.updatedAt).toLocaleString()}</span>
+                  {assembly.lastRunAt && <span data-testid="text-overview-last-run">Last run: {formatRelativeTime(assembly.lastRunAt)}</span>}
+                </div>
+              </>
+            )}
+          </CardContent>
+        )}
+      </Card>
+
+      {assembly.wsExists && (
+        <div data-testid="section-workspace-explorer">
+          <button
+            onClick={() => setShowExplorer(!showExplorer)}
+            className="flex items-center gap-2 text-sm text-muted-foreground mb-3"
+            data-testid="button-toggle-explorer"
+          >
+            {showExplorer ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            <FolderOpen className="w-4 h-4" />
+            Workspace Explorer
+          </button>
+          {showExplorer && (
+            <Card>
+              <CardContent className="pt-4">
+                {fileTree ? (
+                  <div className="text-sm font-mono space-y-0.5" data-testid="file-tree">
+                    {fileTree.children?.map(node => (
+                      <FileTreeItem
+                        key={node.path}
+                        node={node}
+                        depth={0}
+                        expandedDirs={expandedDirs}
+                        onToggle={(path) => {
+                          setExpandedDirs(prev => {
+                            const next = new Set(prev);
+                            if (next.has(path)) next.delete(path);
+                            else next.add(path);
+                            return next;
+                          });
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {activityRuns.length > 0 && (
+        <Card data-testid="section-activity-timeline">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Activity className="w-4 h-4" />
+              Recent Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2" data-testid="activity-list">
+              {activityRuns.slice(0, 8).map((run) => (
+                <div key={run.id} className="flex items-center gap-3 text-sm" data-testid={`activity-item-${run.id}`}>
+                  {run.status === "completed" ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                  ) : run.status === "failed" ? (
+                    <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                  ) : run.status === "running" ? (
+                    <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin shrink-0" />
+                  ) : (
+                    <Circle className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="font-medium min-w-0 truncate">{run.stepId || run.stagePlanId || "Pipeline run"}</span>
+                  {run.durationMs != null && run.durationMs > 0 && (
+                    <span className="text-xs text-muted-foreground shrink-0">{formatDuration(run.durationMs)}</span>
+                  )}
+                  <span className="text-xs text-muted-foreground ml-auto shrink-0">{formatRelativeTime(run.createdAt)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {assembly.wsExists && (
         <div data-testid="section-actions">
