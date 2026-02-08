@@ -1053,11 +1053,79 @@ export function registerRoutes(app: Express) {
     const result = await runCommand(step.cmd, args, 'Package');
     await persistRunResult('package', step, assembly.projectName, result);
 
+    let zipPath: string | null = null;
     if (result.status === 'success') {
       await storage.updateAssembly(req.params.id as string, { state: 'exported' });
+      try {
+        const jsonMatch = result.stdout.match(/\{[\s\S]*"output_path"\s*:\s*"([^"]+)"[\s\S]*\}/);
+        if (jsonMatch && jsonMatch[1]) {
+          zipPath = jsonMatch[1];
+        }
+      } catch {}
+      if (!zipPath) {
+        const distDir = path.join(projectPath, 'dist');
+        if (fs.existsSync(distDir)) {
+          const zips = fs.readdirSync(distDir).filter(f => f.endsWith('.zip')).sort().reverse();
+          if (zips.length > 0) {
+            zipPath = path.join(distDir, zips[0]);
+          }
+        }
+      }
     }
 
-    res.json(result);
+    res.json({ ...result, zipPath: zipPath || null });
+  });
+
+  app.get('/api/assemblies/:id/download', async (req: Request, res: Response) => {
+    const assembly = await storage.getAssembly(req.params.id as string);
+    if (!assembly || !assembly.projectName) {
+      res.status(404).json({ error: 'Assembly not found' });
+      return;
+    }
+
+    const projectPath = getProjectPath(assembly.projectName);
+    const distDir = path.join(projectPath, 'dist');
+
+    let zipFile: string | null = null;
+    if (req.query.file && typeof req.query.file === 'string') {
+      const requested = path.basename(req.query.file);
+      const candidate = path.join(distDir, requested);
+      if (fs.existsSync(candidate) && requested.endsWith('.zip')) {
+        zipFile = candidate;
+      }
+    }
+
+    if (!zipFile && fs.existsSync(distDir)) {
+      const zips = fs.readdirSync(distDir).filter(f => f.endsWith('.zip')).sort().reverse();
+      if (zips.length > 0) {
+        zipFile = path.join(distDir, zips[0]);
+      }
+    }
+
+    if (!zipFile || !fs.existsSync(zipFile)) {
+      res.status(404).json({ error: 'No exported zip file found. Run export first.' });
+      return;
+    }
+
+    const resolvedZip = path.resolve(zipFile);
+    const resolvedDist = path.resolve(distDir);
+    if (!resolvedZip.startsWith(resolvedDist + path.sep)) {
+      res.status(400).json({ error: 'Invalid file path' });
+      return;
+    }
+
+    const filename = path.basename(zipFile);
+    const stat = fs.statSync(zipFile);
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', stat.size);
+    const stream = fs.createReadStream(zipFile);
+    stream.pipe(res);
+    stream.on('error', () => {
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to read zip file' });
+      }
+    });
   });
 
   app.get('/api/workspaces', async (_req: Request, res: Response) => {
