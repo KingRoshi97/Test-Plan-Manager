@@ -245,7 +245,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'package': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', 'axion/scripts/axion-package.ts', '--build-root', br, '--project-name', pn, '--json'],
+    args: (_pn, br) => ['tsx', 'axion/scripts/axion-package.ts', '--build-root', br, '--mode', 'full', '--json'],
     label: 'Package',
     group: 'ops',
     desc: 'Bundle Agent Kit',
@@ -263,7 +263,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'deploy': {
     cmd: 'npx',
-    args: (pn, br) => ['tsx', 'axion/scripts/axion-deploy.ts', '--build-root', br, '--project-name', pn, '--json'],
+    args: (_pn, br) => ['tsx', 'axion/scripts/axion-deploy.ts', '--app-path', path.join(br, 'app'), '--build-root', br, '--override', '--json'],
     label: 'Deploy',
     group: 'ops',
     desc: 'Deploy application',
@@ -915,6 +915,14 @@ export function registerRoutes(app: Express) {
           writeStageMarker(buildRoot, 'test', result.status === 'success' ? 'success' : 'failed');
         }
 
+        if (stepId === 'deploy') {
+          writeStageMarker(buildRoot, 'deploy', result.status === 'success' ? 'success' : 'failed');
+        }
+
+        if (stepId === 'package') {
+          writeStageMarker(buildRoot, 'package', result.status === 'success' ? 'success' : 'failed');
+        }
+
         if (stepId === 'verify' && result.status !== 'success') {
           verifyPassed = false;
         }
@@ -1063,6 +1071,12 @@ export function registerRoutes(app: Express) {
       if (stepId === 'test') {
         writeStageMarker(buildRoot, 'test', result.status === 'success' ? 'success' : 'failed');
       }
+      if (stepId === 'deploy') {
+        writeStageMarker(buildRoot, 'deploy', result.status === 'success' ? 'success' : 'failed');
+      }
+      if (stepId === 'package') {
+        writeStageMarker(buildRoot, 'package', result.status === 'success' ? 'success' : 'failed');
+      }
       await persistRunResult(stepId, step, projectName, result);
       res.json(result);
     });
@@ -1146,6 +1160,12 @@ export function registerRoutes(app: Express) {
         }
         if (stepId === 'test') {
           writeStageMarker(buildRoot, 'test', result.status === 'success' ? 'success' : 'failed');
+        }
+        if (stepId === 'deploy') {
+          writeStageMarker(buildRoot, 'deploy', result.status === 'success' ? 'success' : 'failed');
+        }
+        if (stepId === 'package') {
+          writeStageMarker(buildRoot, 'package', result.status === 'success' ? 'success' : 'failed');
         }
         persistRunResult(stepId, step, projectName, result).catch(() => {});
         res.write(`event: done\ndata: ${JSON.stringify(result)}\n\n`);
@@ -1457,6 +1477,14 @@ export function registerRoutes(app: Express) {
 
         if (stepId === 'test') {
           writeStageMarker(buildRoot, 'test', result.status === 'success' ? 'success' : 'failed');
+        }
+
+        if (stepId === 'deploy') {
+          writeStageMarker(buildRoot, 'deploy', result.status === 'success' ? 'success' : 'failed');
+        }
+
+        if (stepId === 'package') {
+          writeStageMarker(buildRoot, 'package', result.status === 'success' ? 'success' : 'failed');
         }
 
         persistRunResult(stepId, step, projectName, result).catch(() => {});
