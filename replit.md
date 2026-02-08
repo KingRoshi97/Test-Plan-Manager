@@ -18,6 +18,7 @@ This is the first stable release of the AXION system. All core pipeline stages, 
 - **Two-Root Architecture**: Strict isolation between immutable AXION system code and generated project workspaces
 - **UNKNOWN Detection**: Automatic scanning for placeholder content in documentation with agent-driven content filling
 - **Transient Failure Retry**: Exponential backoff for ENOENT, ETIMEDOUT, ECONNRESET, and OOM-kill errors
+- **Assembly Upgrade Layers**: Iterative assembly upgrades via revision system — users can add new ideas or critiques after initial pipeline pass, bump revision, and re-run the pipeline non-destructively to produce versioned upgrade kits
 - **Dark/Light Theme**: Full theme support across the dashboard
 - **Path Traversal Protection**: Hardened workspace delete endpoint with input validation
 

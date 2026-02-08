@@ -18,6 +18,7 @@ import {
   Layers,
   Clock,
   AlertCircle,
+  ArrowUpCircle,
 } from "lucide-react";
 
 interface EnrichedAssembly {
@@ -38,6 +39,9 @@ interface EnrichedAssembly {
   hasApp: boolean;
   verifyStatus: string | null;
   lockEligible: boolean;
+  revision: number;
+  upgradeNotes: string | null;
+  kitType: string;
 }
 
 function getStateBadgeVariant(state: string) {
@@ -275,6 +279,26 @@ function AssemblyCard({
             </Badge>
           )}
 
+          {assembly.revision > 1 && (
+            <Badge
+              variant="outline"
+              className="no-default-active-elevate bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-transparent"
+              data-testid={`badge-revision-${assembly.id}`}
+            >
+              <Layers className="w-3 h-3 mr-1" />
+              Rev {assembly.revision}
+            </Badge>
+          )}
+          {assembly.kitType === "upgrade" && (
+            <Badge
+              variant="outline"
+              className="no-default-active-elevate bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400 border-transparent"
+              data-testid={`badge-kit-type-${assembly.id}`}
+            >
+              <ArrowUpCircle className="w-3 h-3 mr-1" />
+              Upgrade
+            </Badge>
+          )}
           {assembly.preset && (
             <Badge variant="secondary" className="no-default-active-elevate" data-testid={`badge-preset-${assembly.id}`}>
               {assembly.preset}

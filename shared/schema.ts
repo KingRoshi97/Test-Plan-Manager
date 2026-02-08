@@ -24,6 +24,9 @@ export const assemblies = pgTable("assemblies", {
   category: text("category"),
   mode: text("mode"),
   presetId: text("preset_id"),
+  revision: integer("revision").notNull().default(1),
+  upgradeNotes: text("upgrade_notes"),
+  kitType: text("kit_type").notNull().default("original"),
 });
 
 export const workspaces = pgTable("workspaces", {
@@ -71,7 +74,11 @@ export const reports = pgTable("reports", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertAssemblySchema = createInsertSchema(assemblies).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAssemblySchema = createInsertSchema(assemblies).omit({ id: true, createdAt: true, updatedAt: true }).extend({
+  revision: z.number().int().min(1).optional(),
+  upgradeNotes: z.string().nullable().optional(),
+  kitType: z.string().optional(),
+});
 export const insertWorkspaceSchema = createInsertSchema(workspaces).omit({ id: true, createdAt: true });
 export const insertPipelineRunSchema = createInsertSchema(pipelineRuns).omit({ id: true, createdAt: true });
 export const insertModuleStatusSchema = createInsertSchema(moduleStatuses).omit({ id: true, updatedAt: true });
