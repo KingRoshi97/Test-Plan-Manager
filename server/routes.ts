@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly } from '../shared/schema.js';
 import { storage } from './storage.js';
-import { scanAllModulesForUnknowns, fillAllModulesUnknowns, findNextTarget, getAllTargets, generateQuestionsForTarget, fillFileWithContext, cascadeFill, upgradeDocumentWithAI } from './ai-content-fill.js';
+import { scanAllModulesForUnknowns, fillAllModulesUnknowns, findNextTarget, getAllTargets, generateQuestionsForTarget, fillFileWithContext, cascadeFill, upgradeDocumentWithAI, generateUpgradeSuggestions } from './ai-content-fill.js';
 
 const PROJECT_ROOT = process.cwd();
 const AXION_ROOT = path.join(PROJECT_ROOT, 'axion');
@@ -702,8 +702,35 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.post('/api/doc-upgrade/suggest', async (req: Request, res: Response) => {
+    const { file } = req.body as { file?: string };
+    if (!file || typeof file !== 'string') {
+      res.status(400).json({ error: 'file path is required' });
+      return;
+    }
+    if (file.includes('..') || !file.startsWith('axion/')) {
+      res.status(400).json({ error: 'Invalid file path' });
+      return;
+    }
+    const resolved = path.resolve(PROJECT_ROOT, file);
+    if (!resolved.startsWith(AXION_ROOT)) {
+      res.status(400).json({ error: 'Path escapes axion root' });
+      return;
+    }
+
+    const parts = file.split('/');
+    const moduleName = parts.length >= 3 ? parts[2] : parts[parts.length - 2] || 'system';
+
+    try {
+      const result = await generateUpgradeSuggestions(resolved, moduleName);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ suggestions: [], error: err?.message || 'Failed to generate suggestions' });
+    }
+  });
+
   app.post('/api/doc-upgrade', async (req: Request, res: Response) => {
-    const { files } = req.body as { files?: string[] };
+    const { files, userInstructions } = req.body as { files?: string[]; userInstructions?: string };
     if (!files || !Array.isArray(files) || files.length === 0) {
       res.status(400).json({ error: 'files array is required' });
       return;
@@ -744,7 +771,7 @@ export function registerRoutes(app: Express) {
 
       const result = await upgradeDocumentWithAI(fullPath, moduleName, (msg) => {
         res.write(`event: progress\ndata: ${JSON.stringify({ file: relPath, message: msg })}\n\n`);
-      });
+      }, userInstructions);
 
       completed++;
       if (result.status === 'upgraded') upgraded++;
@@ -756,6 +783,61 @@ export function registerRoutes(app: Express) {
 
     res.write(`event: done\ndata: ${JSON.stringify({ total, upgraded, skipped, errored })}\n\n`);
     res.end();
+  });
+
+  app.post('/api/docs/create', (req: Request, res: Response) => {
+    const { section, filename, domain } = req.body as { section?: string; filename?: string; domain?: string };
+
+    if (!section || !filename) {
+      res.status(400).json({ error: 'section and filename are required' });
+      return;
+    }
+
+    const safeName = filename.trim().replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+    if (!safeName) {
+      res.status(400).json({ error: 'Invalid filename' });
+      return;
+    }
+
+    const finalName = safeName.endsWith('.md') ? safeName : `${safeName}.md`;
+
+    const sectionDirMap: Record<string, string> = {
+      'section-system-docs': path.join(AXION_ROOT, 'docs'),
+      'section-product-docs': path.join(AXION_ROOT, 'source_docs', 'product'),
+      'section-registry-docs': path.join(AXION_ROOT, 'source_docs', 'registry'),
+      'section-core-templates': path.join(AXION_ROOT, 'templates', 'core'),
+      'section-domain-templates': domain ? path.join(AXION_ROOT, 'templates', domain) : '',
+      'section-generated-output': domain ? path.join(AXION_ROOT, 'domains', domain) : '',
+    };
+
+    const targetDir = sectionDirMap[section];
+    if (!targetDir) {
+      res.status(400).json({ error: `Unknown section: ${section}. Domain may be required for domain sections.` });
+      return;
+    }
+
+    const resolved = path.resolve(targetDir, finalName);
+    if (!resolved.startsWith(AXION_ROOT)) {
+      res.status(400).json({ error: 'Path escapes axion root' });
+      return;
+    }
+
+    if (fs.existsSync(resolved)) {
+      res.status(409).json({ error: `File already exists: ${finalName}` });
+      return;
+    }
+
+    try {
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+      const title = finalName.replace(/\.md$/, '').replace(/[_\-]/g, ' ');
+      fs.writeFileSync(resolved, `# ${title}\n\n<!-- Add content here -->\n`, 'utf-8');
+      const relPath = path.relative(PROJECT_ROOT, resolved);
+      res.json({ path: relPath, name: finalName, created: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to create file' });
+    }
   });
 
   app.get('/api/assemblies', async (_req: Request, res: Response) => {
