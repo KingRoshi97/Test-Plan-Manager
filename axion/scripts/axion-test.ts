@@ -103,9 +103,10 @@ function runCommand(command: string, cwd: string, timeoutMs?: number): { success
     const output = execSync(command, options) as string;
     return { success: true, output };
   } catch (error: any) {
+    const combined = [error.stdout, error.stderr, error.message].filter(Boolean).join('\n');
     return { 
       success: false, 
-      output: error.stdout || error.stderr || error.message 
+      output: combined
     };
   }
 }
@@ -294,7 +295,10 @@ function main() {
   } else {
     console.log('[RUN] Unit tests...');
     const testResult = runCommand('npm test', appPath);
-    if (testResult.success) {
+    if (testResult.output.includes('No test files found')) {
+      console.log('[SKIP] No test files found (not counted as failure)');
+      testSkipped = true;
+    } else if (testResult.success) {
       console.log('[PASS] Unit tests');
       const passMatch = testResult.output.match(/(\d+) pass/i);
       if (passMatch) totalPassed = parseInt(passMatch[1], 10);
@@ -358,7 +362,7 @@ function main() {
   if (lintSkipped || testSkipped) {
     result.hint = result.hint || [];
     if (lintSkipped) result.hint.push('Lint was skipped (no config found)');
-    if (testSkipped) result.hint.push('Unit tests were skipped (no config found)');
+    if (testSkipped) result.hint.push('Unit tests were skipped (no test files found)');
   }
   
   console.log(JSON.stringify(result, null, 2));

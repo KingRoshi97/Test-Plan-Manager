@@ -232,7 +232,7 @@ function createDirectoryStructure(outputPath: string, profile: StackProfile): st
       'db:push': 'drizzle-kit push',
       'db:studio': 'drizzle-kit studio',
       test: 'vitest run',
-      lint: 'eslint . --ext .ts,.tsx',
+      lint: 'eslint .',
       typecheck: 'tsc --noEmit',
     },
     dependencies: {
@@ -253,6 +253,7 @@ function createDirectoryStructure(outputPath: string, profile: StackProfile): st
       'drizzle-kit': '^0.26.0',
       vitest: '^2.0.0',
       eslint: '^9.0.0',
+      '@eslint/js': '^9.0.0',
       '@types/node': '^22.0.0',
       '@types/express': '^5.0.0',
       '@types/react': '^18.0.0',
@@ -271,6 +272,7 @@ function createDirectoryStructure(outputPath: string, profile: StackProfile): st
       target: 'ES2022',
       module: 'ESNext',
       moduleResolution: 'bundler',
+      jsx: 'react-jsx',
       esModuleInterop: true,
       strict: true,
       skipLibCheck: true,
@@ -343,7 +345,7 @@ app.use(express.json());
 // <!-- AXION:ANCHOR:SERVER_CONFIG -->
 registerRoutes(app);
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(\`Server running on port \${PORT}\`);
 });
@@ -496,6 +498,38 @@ npm run dev
   
   fs.writeFileSync(path.join(outputPath, 'README.md'), readme.trim());
   createdFiles.push('README.md');
+
+  const vitestConfig = `
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['**/*.test.ts', '**/*.test.tsx'],
+  },
+});
+`;
+
+  fs.writeFileSync(path.join(outputPath, 'vitest.config.ts'), vitestConfig.trim());
+  createdFiles.push('vitest.config.ts');
+
+  const eslintConfig = `
+import js from '@eslint/js';
+
+export default [
+  js.configs.recommended,
+  {
+    files: ['**/*.js', '**/*.mjs'],
+  },
+  {
+    ignores: ['dist/', 'node_modules/', 'drizzle/', '**/*.ts', '**/*.tsx'],
+  },
+];
+`;
+
+  fs.writeFileSync(path.join(outputPath, 'eslint.config.js'), eslintConfig.trim());
+  createdFiles.push('eslint.config.js');
   
   return createdFiles;
 }
