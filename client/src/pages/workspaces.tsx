@@ -8,11 +8,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Loader2,
   FolderOpen,
+  Folder,
   Trash2,
   CheckCircle2,
   XCircle,
   HardDrive,
   AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  File,
 } from "lucide-react";
 
 interface WorkspaceInfo {
@@ -25,8 +29,118 @@ interface WorkspaceInfo {
   hasApp: boolean;
 }
 
+interface FileTreeNode {
+  name: string;
+  path: string;
+  type: 'file' | 'directory';
+  children?: FileTreeNode[];
+  size?: number;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / 1048576).toFixed(1)}MB`;
+}
+
+function FileTreeItem({
+  node,
+  depth,
+  expandedDirs,
+  onToggle,
+}: {
+  node: FileTreeNode;
+  depth: number;
+  expandedDirs: Set<string>;
+  onToggle: (path: string) => void;
+}) {
+  const isDir = node.type === "directory";
+  const isExpanded = expandedDirs.has(node.path);
+
+  return (
+    <div>
+      <button
+        className="flex items-center gap-1.5 w-full text-left py-0.5 hover-elevate rounded-md px-1"
+        style={{ paddingLeft: `${depth * 16 + 4}px` }}
+        onClick={() => isDir && onToggle(node.path)}
+        data-testid={`tree-node-${node.path}`}
+      >
+        {isDir ? (
+          isExpanded ? <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0" /> : <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+        ) : (
+          <span className="w-3" />
+        )}
+        {isDir ? (
+          isExpanded ? <FolderOpen className="w-3.5 h-3.5 text-amber-500 shrink-0" /> : <Folder className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+        ) : (
+          <File className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+        )}
+        <span className="truncate text-xs">{node.name}</span>
+        {!isDir && node.size != null && (
+          <span className="text-[10px] text-muted-foreground/60 ml-auto shrink-0">{formatFileSize(node.size)}</span>
+        )}
+      </button>
+      {isDir && isExpanded && node.children?.map(child => (
+        <FileTreeItem key={child.path} node={child} depth={depth + 1} expandedDirs={expandedDirs} onToggle={onToggle} />
+      ))}
+    </div>
+  );
+}
+
+function WorkspaceFileTree({ projectName }: { projectName: string }) {
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+
+  const { data: fileTree, isLoading } = useQuery<FileTreeNode[]>({
+    queryKey: ["/api/workspace-tree", projectName],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspace-tree/${encodeURIComponent(projectName)}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.tree || [];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!fileTree || fileTree.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground text-center py-4" data-testid={`ws-empty-tree-${projectName}`}>
+        No files found.
+      </p>
+    );
+  }
+
+  return (
+    <div className="text-sm font-mono space-y-0.5 pt-2 pb-1" data-testid={`ws-file-tree-${projectName}`}>
+      {fileTree.map(node => (
+        <FileTreeItem
+          key={node.path}
+          node={node}
+          depth={0}
+          expandedDirs={expandedDirs}
+          onToggle={(path) => {
+            setExpandedDirs(prev => {
+              const next = new Set(prev);
+              if (next.has(path)) next.delete(path);
+              else next.add(path);
+              return next;
+            });
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function WorkspacesPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [expandedWorkspaces, setExpandedWorkspaces] = useState<Set<string>>(new Set());
 
   const { data: workspaces = [], isLoading, isError } = useQuery<WorkspaceInfo[]>({
     queryKey: ["/api/workspaces"],
@@ -41,6 +155,11 @@ export default function WorkspacesPage() {
     onSuccess: (_data, projectName) => {
       toast({ title: "Workspace deleted", description: `${projectName} has been removed.` });
       setConfirmDelete(null);
+      setExpandedWorkspaces(prev => {
+        const next = new Set(prev);
+        next.delete(projectName);
+        return next;
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/workspaces"] });
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
     },
@@ -48,6 +167,15 @@ export default function WorkspacesPage() {
       toast({ title: "Failed to delete workspace", variant: "destructive" });
     },
   });
+
+  function toggleWorkspaceExpand(projectName: string) {
+    setExpandedWorkspaces(prev => {
+      const next = new Set(prev);
+      if (next.has(projectName)) next.delete(projectName);
+      else next.add(projectName);
+      return next;
+    });
+  }
 
   const existingWorkspaces = workspaces.filter(w => w.exists);
   const orphanedWorkspaces = workspaces.filter(w => !w.exists);
@@ -93,65 +221,85 @@ export default function WorkspacesPage() {
               No workspaces found.
             </p>
           ) : (
-            <ScrollArea className="max-h-[60vh]">
+            <ScrollArea className="max-h-[70vh]">
               <div className="space-y-2">
-                {existingWorkspaces.map((ws) => (
-                  <div
-                    key={ws.projectName}
-                    className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-md border flex-wrap"
-                    data-testid={`workspace-row-${ws.projectName}`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium truncate" data-testid={`workspace-name-${ws.projectName}`}>
-                          {ws.projectName}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {ws.path}
+                {existingWorkspaces.map((ws) => {
+                  const isExpanded = expandedWorkspaces.has(ws.projectName);
+                  return (
+                    <div
+                      key={ws.projectName}
+                      className="rounded-md border"
+                      data-testid={`workspace-row-${ws.projectName}`}
+                    >
+                      <div className="flex items-center justify-between gap-3 py-2.5 px-3 flex-wrap">
+                        <button
+                          className="flex items-center gap-3 min-w-0 flex-1 text-left hover-elevate rounded-md py-1 px-1"
+                          onClick={() => toggleWorkspaceExpand(ws.projectName)}
+                          data-testid={`button-expand-ws-${ws.projectName}`}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                          )}
+                          <FolderOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium truncate" data-testid={`workspace-name-${ws.projectName}`}>
+                              {ws.projectName}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {ws.path}
+                            </div>
+                          </div>
+                        </button>
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                          <StatusIndicator label="Registry" active={ws.hasRegistry} testId={`ws-registry-${ws.projectName}`} />
+                          <StatusIndicator label="Domains" active={ws.hasDomains} testId={`ws-domains-${ws.projectName}`} />
+                          <StatusIndicator label="App" active={ws.hasApp} testId={`ws-app-${ws.projectName}`} />
+
+                          {confirmDelete === ws.projectName ? (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="destructive"
+                                onClick={() => deleteMutation.mutate(ws.projectName)}
+                                disabled={deleteMutation.isPending}
+                                data-testid={`button-confirm-delete-ws-${ws.projectName}`}
+                              >
+                                {deleteMutation.isPending ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  "Confirm"
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                onClick={() => setConfirmDelete(null)}
+                                data-testid={`button-cancel-delete-ws-${ws.projectName}`}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setConfirmDelete(ws.projectName)}
+                              data-testid={`button-delete-ws-${ws.projectName}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                      <StatusIndicator label="Registry" active={ws.hasRegistry} testId={`ws-registry-${ws.projectName}`} />
-                      <StatusIndicator label="Domains" active={ws.hasDomains} testId={`ws-domains-${ws.projectName}`} />
-                      <StatusIndicator label="App" active={ws.hasApp} testId={`ws-app-${ws.projectName}`} />
 
-                      {confirmDelete === ws.projectName ? (
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="destructive"
-                            onClick={() => deleteMutation.mutate(ws.projectName)}
-                            disabled={deleteMutation.isPending}
-                            data-testid={`button-confirm-delete-ws-${ws.projectName}`}
-                          >
-                            {deleteMutation.isPending ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              "Confirm"
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            onClick={() => setConfirmDelete(null)}
-                            data-testid={`button-cancel-delete-ws-${ws.projectName}`}
-                          >
-                            Cancel
-                          </Button>
+                      {isExpanded && (
+                        <div className="border-t px-3 pb-2">
+                          <WorkspaceFileTree projectName={ws.projectName} />
                         </div>
-                      ) : (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setConfirmDelete(ws.projectName)}
-                          data-testid={`button-delete-ws-${ws.projectName}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
           )}
