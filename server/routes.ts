@@ -1072,6 +1072,82 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.post('/api/assembly-autofill', async (req: Request, res: Response) => {
+    try {
+      const { projectName, idea, category } = req.body;
+      if (!projectName || !idea) {
+        res.status(400).json({ error: 'projectName and idea are required' });
+        return;
+      }
+
+      const OpenAI = (await import('openai')).default;
+      const openai = new OpenAI({
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      });
+
+      const prompt = `You are helping a user set up a new software project. Based on their project name and idea, generate helpful suggestions for different aspects of the project.
+
+Project Name: ${projectName}
+Project Idea: ${idea}
+${category ? `Category: ${category}` : ''}
+
+Generate suggestions for each of the following sections. For each section, provide exactly 3 short options (each 1-3 sentences). Also provide a recommended "autofill" value that combines the best aspects into a thorough response.
+
+Sections:
+1. visionProblem - What problem does this solve?
+2. visionTargetUsers - Who is this for?
+3. visionGoals - Primary goals (what should this achieve?)
+4. visionSuccess - What does success look like?
+5. coreFeatures - Core features (must-haves), as a bulleted list
+6. niceToHaveFeatures - Nice-to-have features, as a bulleted list
+7. coreEntities - Main entities/data objects in the system, as a bulleted list with descriptions
+8. userJourneys - Key user workflows, as numbered steps
+9. platform - Platform targets (short, comma-separated)
+10. integrations - External integrations needed, as a bulleted list
+11. techConstraints - Technical constraints or preferences, as a bulleted list
+12. dataSensitivity - Data sensitivity level (respond with exactly one of: "low", "medium", or "high")
+
+Respond in this exact JSON format:
+{
+  "fields": {
+    "visionProblem": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] },
+    "visionTargetUsers": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] },
+    ...same for all 12 sections
+  }
+}
+
+IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a product planning assistant. You generate concise, practical suggestions for software project planning. Always respond with valid JSON only.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        max_completion_tokens: 4096,
+      });
+
+      const raw = response.choices[0]?.message?.content || '{}';
+      let parsed: any;
+      try {
+        const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        parsed = JSON.parse(cleaned);
+      } catch {
+        res.status(500).json({ error: 'Failed to parse AI response' });
+        return;
+      }
+
+      res.json(parsed);
+    } catch (err: any) {
+      console.error('Assembly autofill error:', err);
+      res.status(500).json({ error: err?.message || 'Failed to generate suggestions' });
+    }
+  });
+
   app.post('/api/assemblies', async (req: Request, res: Response) => {
     try {
       const { projectName, idea, preset, presetId, mode, domains, context, category, input } = req.body;
