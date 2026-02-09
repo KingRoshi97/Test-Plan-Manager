@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { Layers, FolderTree, Zap, Plus, HeartPulse, ScrollText, Package, FlaskConical, HardDrive, BookOpen, LayoutList, Terminal } from "lucide-react";
+import { Layers, FolderTree, Zap, Plus, HeartPulse, ScrollText, Package, FlaskConical, HardDrive, BookOpen, LayoutList, Terminal, Settings, Gauge } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +32,8 @@ const toolsNav = [
   { title: "Tests", href: "/tests", icon: FlaskConical },
   { title: "Features", href: "/features", icon: LayoutList },
   { title: "Scripts", href: "/scripts", icon: Terminal },
+  { title: "Presets", href: "/presets", icon: Settings },
+  { title: "Performance", href: "/performance", icon: Gauge },
 ];
 
 export function AppSidebar() {
