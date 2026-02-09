@@ -1358,7 +1358,15 @@ export function registerRoutes(app: Express) {
     res.write(`event: plan\ndata: ${JSON.stringify({ assemblyId, presetId, stagePlan: stagePlanId, stagePlanLabel, steps: fullSteps, modules: presetModules, totalSteps: fullSteps.length, skipUntilIndex })}\n\n`);
 
     let aborted = false;
-    req.on('close', () => { aborted = true; activeRuns.delete(assemblyId); });
+    let currentStepId: string | null = null;
+    req.on('close', () => {
+      aborted = true;
+      activeRuns.delete(assemblyId);
+      storage.updateAssembly(assemblyId, {
+        state: 'interrupted',
+        errors: [`Pipeline interrupted: browser connection lost during step "${currentStepId || 'unknown'}". You can retry from this step.`],
+      }).catch(() => {});
+    });
 
     const orchestrate = async () => {
       const allResults: RunResult[] = [];
@@ -1370,6 +1378,7 @@ export function registerRoutes(app: Express) {
         if (aborted) break;
         const stepId = fullSteps[i];
         const step = pipelineSteps[stepId];
+        currentStepId = stepId;
 
         if (i < skipUntilIndex) {
           res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'skipped', durationMs: 0, reason: 'Previously completed' })}\n\n`);
