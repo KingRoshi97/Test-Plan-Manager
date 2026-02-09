@@ -18,6 +18,8 @@ import WorkspacesPage from "@/pages/workspaces";
 import DocInventoryPage from "@/pages/doc-inventory";
 import FeaturesPage from "@/pages/features";
 import ScriptsPage from "@/pages/scripts";
+import PresetsPage from "@/pages/presets";
+import PerformancePage from "@/pages/performance";
 
 function Router() {
   return (
@@ -34,6 +36,8 @@ function Router() {
       <Route path="/docs" component={DocInventoryPage} />
       <Route path="/features" component={FeaturesPage} />
       <Route path="/scripts" component={ScriptsPage} />
+      <Route path="/presets" component={PresetsPage} />
+      <Route path="/performance" component={PerformancePage} />
       <Route>
         <div className="flex items-center justify-center h-full">
           <p className="text-muted-foreground">Page not found</p>
