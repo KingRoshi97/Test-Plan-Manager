@@ -1,5 +1,5 @@
 import { useLocation, Link } from "wouter";
-import { Layers, FolderTree, Zap, Plus, HeartPulse, ScrollText, Package, FlaskConical, HardDrive, BookOpen } from "lucide-react";
+import { Layers, FolderTree, Zap, Plus, HeartPulse, ScrollText, Package, FlaskConical, HardDrive, BookOpen, LayoutList } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +30,7 @@ const toolsNav = [
   { title: "Logs", href: "/logs", icon: ScrollText },
   { title: "Export", href: "/export", icon: Package },
   { title: "Tests", href: "/tests", icon: FlaskConical },
+  { title: "Features", href: "/features", icon: LayoutList },
 ];
 
 export function AppSidebar() {
