@@ -423,12 +423,13 @@ export default function AssemblyPage() {
     enabled: !!assembly?.projectName,
   });
 
-  const { data: fileTree } = useQuery<FileTreeNode>({
+  const { data: fileTree } = useQuery<FileTreeNode[]>({
     queryKey: ["/api/workspace-tree", assembly?.projectName],
     queryFn: async () => {
       const res = await fetch(`/api/workspace-tree/${encodeURIComponent(assembly!.projectName!)}`);
       if (!res.ok) return null;
-      return res.json();
+      const data = await res.json();
+      return data.tree || [];
     },
     enabled: !!assembly?.projectName && assembly?.wsExists && activeTab === "workspace",
   });
@@ -1556,9 +1557,9 @@ export default function AssemblyPage() {
         <div className="space-y-4" data-testid="section-workspace-tab">
           <Card>
             <CardContent className="pt-4">
-              {fileTree ? (
+              {fileTree && fileTree.length > 0 ? (
                 <div className="text-sm font-mono space-y-0.5" data-testid="file-tree">
-                  {fileTree.children?.map(node => (
+                  {fileTree.map(node => (
                     <FileTreeItem
                       key={node.path}
                       node={node}
