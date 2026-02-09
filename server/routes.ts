@@ -1148,6 +1148,132 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     }
   });
 
+  const AI_STEP_IDS = new Set(['draft', 'content-fill', 'generate', 'seed', 'review', 'build-plan', 'build-exec', 'build']);
+
+  app.get('/api/performance-stats', async (_req: Request, res: Response) => {
+    try {
+      const allRuns = await storage.getAllPipelineRuns(10000);
+      if (!allRuns || allRuns.length === 0) {
+        res.json({
+          totalRuns: 0,
+          successCount: 0,
+          errorCount: 0,
+          successRate: 0,
+          avgDurationMs: 0,
+          totalDurationMs: 0,
+          stepBreakdown: [],
+          failureHotspots: [],
+          aiStepMetrics: { totalAiRuns: 0, avgAiDurationMs: 0, aiSteps: [] },
+          runsOverTime: [],
+          projectBreakdown: [],
+        });
+        return;
+      }
+
+      const totalRuns = allRuns.length;
+      const successRuns = allRuns.filter(r => r.status === 'success');
+      const errorRuns = allRuns.filter(r => r.status === 'error');
+      const successCount = successRuns.length;
+      const errorCount = errorRuns.length;
+      const successRate = totalRuns > 0 ? Math.round((successCount / totalRuns) * 100) : 0;
+      const totalDurationMs = allRuns.reduce((s, r) => s + (r.durationMs || 0), 0);
+      const avgDurationMs = totalRuns > 0 ? Math.round(totalDurationMs / totalRuns) : 0;
+
+      const stepMap = new Map<string, { total: number; success: number; error: number; totalMs: number; maxMs: number }>();
+      for (const run of allRuns) {
+        const sid = run.stepId;
+        let entry = stepMap.get(sid);
+        if (!entry) { entry = { total: 0, success: 0, error: 0, totalMs: 0, maxMs: 0 }; stepMap.set(sid, entry); }
+        entry.total++;
+        if (run.status === 'success') entry.success++;
+        if (run.status === 'error') entry.error++;
+        entry.totalMs += (run.durationMs || 0);
+        entry.maxMs = Math.max(entry.maxMs, run.durationMs || 0);
+      }
+
+      const stepBreakdown = Array.from(stepMap.entries())
+        .map(([stepId, s]) => ({
+          stepId,
+          label: s.total > 0 ? (allRuns.find(r => r.stepId === stepId)?.stepLabel || stepId) : stepId,
+          totalRuns: s.total,
+          successCount: s.success,
+          errorCount: s.error,
+          successRate: s.total > 0 ? Math.round((s.success / s.total) * 100) : 0,
+          avgDurationMs: s.total > 0 ? Math.round(s.totalMs / s.total) : 0,
+          maxDurationMs: s.maxMs,
+          totalDurationMs: s.totalMs,
+          isAiStep: AI_STEP_IDS.has(stepId),
+        }))
+        .sort((a, b) => b.avgDurationMs - a.avgDurationMs);
+
+      const failureHotspots = stepBreakdown
+        .filter(s => s.errorCount > 0)
+        .sort((a, b) => b.errorCount - a.errorCount)
+        .slice(0, 10);
+
+      const aiSteps = stepBreakdown.filter(s => s.isAiStep);
+      const totalAiRuns = aiSteps.reduce((s, a) => s + a.totalRuns, 0);
+      const totalAiMs = aiSteps.reduce((s, a) => s + a.totalDurationMs, 0);
+      const aiStepMetrics = {
+        totalAiRuns,
+        avgAiDurationMs: totalAiRuns > 0 ? Math.round(totalAiMs / totalAiRuns) : 0,
+        aiSteps: aiSteps.sort((a, b) => b.totalDurationMs - a.totalDurationMs),
+      };
+
+      const dateMap = new Map<string, { total: number; success: number; error: number }>();
+      for (const run of allRuns) {
+        const d = new Date(run.createdAt).toISOString().slice(0, 10);
+        let entry = dateMap.get(d);
+        if (!entry) { entry = { total: 0, success: 0, error: 0 }; dateMap.set(d, entry); }
+        entry.total++;
+        if (run.status === 'success') entry.success++;
+        if (run.status === 'error') entry.error++;
+      }
+      const runsOverTime = Array.from(dateMap.entries())
+        .map(([date, v]) => ({ date, ...v }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      const projMap = new Map<string, { total: number; success: number; error: number; totalMs: number }>();
+      for (const run of allRuns) {
+        const p = run.projectName;
+        let entry = projMap.get(p);
+        if (!entry) { entry = { total: 0, success: 0, error: 0, totalMs: 0 }; projMap.set(p, entry); }
+        entry.total++;
+        if (run.status === 'success') entry.success++;
+        if (run.status === 'error') entry.error++;
+        entry.totalMs += (run.durationMs || 0);
+      }
+      const projectBreakdown = Array.from(projMap.entries())
+        .map(([projectName, v]) => ({
+          projectName,
+          totalRuns: v.total,
+          successCount: v.success,
+          errorCount: v.error,
+          successRate: v.total > 0 ? Math.round((v.success / v.total) * 100) : 0,
+          avgDurationMs: v.total > 0 ? Math.round(v.totalMs / v.total) : 0,
+          totalDurationMs: v.totalMs,
+        }))
+        .sort((a, b) => b.totalRuns - a.totalRuns);
+
+      res.json({
+        totalRuns,
+        successCount,
+        errorCount,
+        successRate,
+        avgDurationMs,
+        totalDurationMs,
+        stepBreakdown,
+        failureHotspots,
+        aiStepMetrics,
+        runsOverTime,
+        projectBreakdown,
+      });
+    } catch (err: any) {
+      console.error('Performance stats error:', err);
+      res.status(500).json({ error: err?.message || 'Failed to compute performance stats' });
+    }
+  });
+
   app.post('/api/assemblies', async (req: Request, res: Response) => {
     try {
       const { projectName, idea, preset, presetId, mode, domains, context, category, input } = req.body;
