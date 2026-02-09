@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { PipelineRun } from "@shared/schema";
 import {
   Select,
   SelectContent,
@@ -59,6 +60,10 @@ import {
   Lightbulb,
   Settings2,
   Box,
+  Search,
+  ScrollText,
+  Wrench,
+  LayoutGrid,
 } from "lucide-react";
 
 interface AssemblyProgress {
@@ -132,17 +137,6 @@ interface PresetsData {
   }>;
 }
 
-interface PipelineRunRecord {
-  id: number;
-  projectName: string;
-  stepId: string;
-  stepLabel: string;
-  stepGroup: string;
-  status: string;
-  exitCode: number;
-  durationMs: number;
-  createdAt: string;
-}
 
 interface StepProgress {
   index: number;
@@ -195,8 +189,8 @@ function formatDuration(ms: number): string {
   return `${sec}s`;
 }
 
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr);
+function formatRelativeTime(dateStr: string | Date): string {
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
@@ -315,11 +309,9 @@ export default function AssemblyPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [stepProgress, setStepProgress] = useState<StepProgress[]>([]);
   const [streamOutput, setStreamOutput] = useState("");
-  const [showHistory, setShowHistory] = useState(false);
   const [activePlanLabel, setActivePlanLabel] = useState<string>("");
   const [forceShowSelector, setForceShowSelector] = useState(false);
   const [importSourcePath, setImportSourcePath] = useState("");
-  const [showActions, setShowActions] = useState(false);
   const [reviseMode, setReviseMode] = useState(false);
   const [reviseTarget, setReviseTarget] = useState<{
     file: string; relativePath: string; module: string; docType: string;
@@ -343,8 +335,10 @@ export default function AssemblyPage() {
   const [editingDetails, setEditingDetails] = useState(false);
   const [editIdea, setEditIdea] = useState("");
   const [editInput, setEditInput] = useState<Record<string, string>>({});
-  const [showExplorer, setShowExplorer] = useState(false);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<"overview" | "logs" | "workspace" | "actions">("overview");
+  const [expandedLogRuns, setExpandedLogRuns] = useState<Set<number>>(new Set());
+  const [logSearchQuery, setLogSearchQuery] = useState("");
 
   async function handleUpgradeZipUpload(file: File) {
     setUpgradeZipUploading(true);
@@ -393,6 +387,12 @@ export default function AssemblyPage() {
     refetchInterval: isRunning ? 5000 : false,
   });
 
+  useEffect(() => {
+    if ((activeTab === "workspace" || activeTab === "actions") && assembly && !assembly.wsExists) {
+      setActiveTab("overview");
+    }
+  }, [activeTab, assembly]);
+
   const { data: moduleStatus } = useQuery<ModuleStatusData>({
     queryKey: ["/api/status", assembly?.projectName],
     queryFn: async () => {
@@ -412,20 +412,11 @@ export default function AssemblyPage() {
     },
   });
 
-  const { data: runHistory = [] } = useQuery<PipelineRunRecord[]>({
-    queryKey: ["/api/pipeline-runs", assembly?.projectName],
-    queryFn: async () => {
-      const res = await fetch(`/api/pipeline-runs?projectName=${encodeURIComponent(assembly!.projectName!)}&limit=20`);
-      if (!res.ok) return [];
-      return res.json();
-    },
-    enabled: !!assembly?.projectName && showHistory,
-  });
 
-  const { data: activityRuns = [] } = useQuery<PipelineRunRecord[]>({
+  const { data: activityRuns = [] } = useQuery<PipelineRun[]>({
     queryKey: ["/api/pipeline-runs", assembly?.projectName, "activity"],
     queryFn: async () => {
-      const res = await fetch(`/api/pipeline-runs?projectName=${encodeURIComponent(assembly!.projectName!)}&limit=10`);
+      const res = await fetch(`/api/pipeline-runs?projectName=${encodeURIComponent(assembly!.projectName!)}&limit=50`);
       if (!res.ok) return [];
       return res.json();
     },
@@ -439,7 +430,7 @@ export default function AssemblyPage() {
       if (!res.ok) return null;
       return res.json();
     },
-    enabled: !!assembly?.projectName && assembly?.wsExists && showExplorer,
+    enabled: !!assembly?.projectName && assembly?.wsExists && activeTab === "workspace",
   });
 
   const updateDetailsMutation = useMutation({
@@ -1173,473 +1164,274 @@ export default function AssemblyPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="section-quick-stats">
-        <Card data-testid="stat-runs">
-          <CardContent className="flex items-center gap-3 py-3 px-4">
-            <Play className="w-4 h-4 text-blue-500" />
-            <div>
-              <div className="text-lg font-semibold leading-none">{assembly.totalRuns || 0}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">Pipeline Runs</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card data-testid="stat-steps">
-          <CardContent className="flex items-center gap-3 py-3 px-4">
-            <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <div>
-              <div className="text-lg font-semibold leading-none">{assembly.completedSteps || 0}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">Steps Completed</div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card data-testid="stat-duration">
-          <CardContent className="flex items-center gap-3 py-3 px-4">
-            <Timer className="w-4 h-4 text-amber-500" />
-            <div>
-              <div className="text-lg font-semibold leading-none">{assembly.totalDuration ? formatDuration(assembly.totalDuration) : "0s"}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">Total Duration</div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="sticky top-0 z-30 bg-background border-b -mx-6 px-6" data-testid="section-tabs">
+        <div className="flex items-center gap-1 overflow-x-auto">
+          {([
+            { id: "overview" as const, label: "Overview", icon: LayoutGrid, count: undefined as number | undefined, hidden: false },
+            { id: "logs" as const, label: "Logs", icon: ScrollText, count: activityRuns.length as number | undefined, hidden: false },
+            { id: "workspace" as const, label: "Workspace", icon: FolderOpen, count: undefined as number | undefined, hidden: !assembly.wsExists },
+            { id: "actions" as const, label: "Actions", icon: Wrench, count: undefined as number | undefined, hidden: !assembly.wsExists },
+          ]).filter(t => !t.hidden).map((tab) => (
+            <button
+              key={tab.id}
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-sm border-b-2 transition-colors shrink-0 ${
+                activeTab === tab.id
+                  ? "border-primary text-foreground font-medium"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setActiveTab(tab.id)}
+              data-testid={`tab-${tab.id}`}
+            >
+              <tab.icon className="w-3.5 h-3.5" />
+              {tab.label}
+              {tab.count != null && tab.count > 0 && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 ml-0.5">{tab.count}</Badge>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <Card data-testid="section-overview">
-        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Eye className="w-4 h-4" />
-            Project Overview
-          </CardTitle>
-          <div className="flex items-center gap-1">
-            {!editingDetails && (assembly.state === "queued" || assembly.state === "completed" || assembly.state === "exported" || assembly.state === "failed") && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setEditIdea(assembly.idea || "");
-                  setEditInput(assembly.input || {});
-                  setEditingDetails(true);
-                }}
-                data-testid="button-edit-details"
-              >
-                <Pencil className="w-4 h-4" />
-              </Button>
-            )}
-            <button
-              onClick={() => setShowOverview(!showOverview)}
-              className="text-muted-foreground"
-              data-testid="button-toggle-overview"
-            >
-              {showOverview ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-          </div>
-        </CardHeader>
-        {showOverview && (
-          <CardContent className="space-y-4">
-            {editingDetails ? (
-              <div className="space-y-4" data-testid="edit-details-form">
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="section-quick-stats">
+            <Card data-testid="stat-runs">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <Play className="w-4 h-4 text-blue-500" />
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground block mb-1">Project Idea</label>
-                  <Textarea
-                    value={editIdea}
-                    onChange={(e) => setEditIdea(e.target.value)}
-                    className="text-sm min-h-[80px]"
-                    data-testid="input-edit-idea"
-                  />
+                  <div className="text-lg font-semibold leading-none">{assembly.totalRuns || 0}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Pipeline Runs</div>
                 </div>
-                {Object.keys(editInput).length > 0 && (
-                  <div className="space-y-3">
-                    {Object.entries(editInput).map(([key, value]) => (
-                      <div key={key}>
-                        <label className="text-xs font-medium text-muted-foreground block mb-1">
-                          {formatInputLabel(key)}
-                        </label>
-                        <Textarea
-                          value={value}
-                          onChange={(e) => setEditInput(prev => ({ ...prev, [key]: e.target.value }))}
-                          className="text-sm min-h-[60px]"
-                          data-testid={`input-edit-${key}`}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => updateDetailsMutation.mutate({ idea: editIdea, input: editInput })}
-                    disabled={updateDetailsMutation.isPending}
-                    data-testid="button-save-details"
-                  >
-                    {updateDetailsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                    Save Changes
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setEditingDetails(false)} data-testid="button-cancel-edit">
-                    Cancel
-                  </Button>
+              </CardContent>
+            </Card>
+            <Card data-testid="stat-steps">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <div>
+                  <div className="text-lg font-semibold leading-none">{assembly.completedSteps || 0}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Steps Completed</div>
                 </div>
-              </div>
-            ) : (
-              <>
-                {assembly.idea && (
-                  <div>
-                    <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
-                      <Lightbulb className="w-3 h-3" /> Idea
-                    </h4>
-                    <p className="text-sm" data-testid="text-overview-idea">{assembly.idea}</p>
-                  </div>
-                )}
-                {assembly.context && (
-                  <div>
-                    <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
-                      <FileText className="w-3 h-3" /> Context
-                    </h4>
-                    <p className="text-sm whitespace-pre-wrap max-h-40 overflow-y-auto" data-testid="text-overview-context">{assembly.context}</p>
-                  </div>
-                )}
-                {assembly.input && Object.keys(assembly.input).length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" data-testid="overview-input-fields">
-                    {Object.entries(assembly.input).map(([key, value]) => {
-                      if (!value) return null;
-                      const { icon: Icon, label } = getInputFieldInfo(key);
-                      return (
-                        <div key={key} className="space-y-0.5">
-                          <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                            <Icon className="w-3 h-3" /> {label}
-                          </h4>
-                          <p className="text-sm whitespace-pre-wrap" data-testid={`text-input-${key}`}>{value}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span data-testid="text-overview-created">Created: {new Date(assembly.createdAt).toLocaleString()}</span>
-                  <span data-testid="text-overview-updated">Updated: {new Date(assembly.updatedAt).toLocaleString()}</span>
-                  {assembly.lastRunAt && <span data-testid="text-overview-last-run">Last run: {formatRelativeTime(assembly.lastRunAt)}</span>}
+              </CardContent>
+            </Card>
+            <Card data-testid="stat-duration">
+              <CardContent className="flex items-center gap-3 py-3 px-4">
+                <Timer className="w-4 h-4 text-amber-500" />
+                <div>
+                  <div className="text-lg font-semibold leading-none">{assembly.totalDuration ? formatDuration(assembly.totalDuration) : "0s"}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Total Duration</div>
                 </div>
-              </>
-            )}
-          </CardContent>
-        )}
-      </Card>
+              </CardContent>
+            </Card>
+          </div>
 
-      {assembly.wsExists && (
-        <div data-testid="section-workspace-explorer">
-          <button
-            onClick={() => setShowExplorer(!showExplorer)}
-            className="flex items-center gap-2 text-sm text-muted-foreground mb-3"
-            data-testid="button-toggle-explorer"
-          >
-            {showExplorer ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            <FolderOpen className="w-4 h-4" />
-            Workspace Explorer
-          </button>
-          {showExplorer && (
-            <Card>
-              <CardContent className="pt-4">
-                {fileTree ? (
-                  <div className="text-sm font-mono space-y-0.5" data-testid="file-tree">
-                    {fileTree.children?.map(node => (
-                      <FileTreeItem
-                        key={node.path}
-                        node={node}
-                        depth={0}
-                        expandedDirs={expandedDirs}
-                        onToggle={(path) => {
-                          setExpandedDirs(prev => {
-                            const next = new Set(prev);
-                            if (next.has(path)) next.delete(path);
-                            else next.add(path);
-                            return next;
-                          });
-                        }}
+          {(() => {
+            const successRuns = activityRuns.filter(r => r.status === "success").length;
+            const totalR = activityRuns.length;
+            const rate = totalR > 0 ? Math.round((successRuns / totalR) * 100) : 0;
+            const circumference = 2 * Math.PI * 18;
+            const offset = circumference - (rate / 100) * circumference;
+            if (totalR === 0) return null;
+            return (
+              <Card data-testid="stat-success-rate">
+                <CardContent className="flex items-center gap-4 py-3 px-4">
+                  <svg width="48" height="48" viewBox="0 0 48 48" className="shrink-0">
+                    <circle cx="24" cy="24" r="18" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
+                    <circle
+                      cx="24" cy="24" r="18" fill="none"
+                      stroke={rate >= 80 ? "hsl(142 71% 45%)" : rate >= 50 ? "hsl(48 96% 53%)" : "hsl(0 84% 60%)"}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeDasharray={circumference}
+                      strokeDashoffset={offset}
+                      transform="rotate(-90 24 24)"
+                      className="transition-all duration-500"
+                    />
+                    <text x="24" y="24" textAnchor="middle" dominantBaseline="central" className="fill-foreground text-[11px] font-semibold">
+                      {rate}%
+                    </text>
+                  </svg>
+                  <div>
+                    <div className="text-sm font-medium">Success Rate</div>
+                    <div className="text-xs text-muted-foreground">{successRuns} of {totalR} runs passed</div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          <Card data-testid="section-overview">
+            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Eye className="w-4 h-4" />
+                Project Overview
+              </CardTitle>
+              <div className="flex items-center gap-1">
+                {!editingDetails && (assembly.state === "queued" || assembly.state === "completed" || assembly.state === "exported" || assembly.state === "failed") && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      setEditIdea(assembly.idea || "");
+                      setEditInput(assembly.input || {});
+                      setEditingDetails(true);
+                    }}
+                    data-testid="button-edit-details"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                )}
+                <button
+                  onClick={() => setShowOverview(!showOverview)}
+                  className="text-muted-foreground"
+                  data-testid="button-toggle-overview"
+                >
+                  {showOverview ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+              </div>
+            </CardHeader>
+            {showOverview && (
+              <CardContent className="space-y-4">
+                {editingDetails ? (
+                  <div className="space-y-4" data-testid="edit-details-form">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground block mb-1">Project Idea</label>
+                      <Textarea
+                        value={editIdea}
+                        onChange={(e) => setEditIdea(e.target.value)}
+                        className="text-sm min-h-[80px]"
+                        data-testid="input-edit-idea"
                       />
-                    ))}
+                    </div>
+                    {Object.keys(editInput).length > 0 && (
+                      <div className="space-y-3">
+                        {Object.entries(editInput).map(([key, value]) => (
+                          <div key={key}>
+                            <label className="text-xs font-medium text-muted-foreground block mb-1">
+                              {formatInputLabel(key)}
+                            </label>
+                            <Textarea
+                              value={value}
+                              onChange={(e) => setEditInput(prev => ({ ...prev, [key]: e.target.value }))}
+                              className="text-sm min-h-[60px]"
+                              data-testid={`input-edit-${key}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => updateDetailsMutation.mutate({ idea: editIdea, input: editInput })}
+                        disabled={updateDetailsMutation.isPending}
+                        data-testid="button-save-details"
+                      >
+                        {updateDetailsMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                        Save Changes
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setEditingDetails(false)} data-testid="button-cancel-edit">
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                  </div>
+                  <>
+                    {assembly.idea && (
+                      <div>
+                        <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <Lightbulb className="w-3 h-3" /> Idea
+                        </h4>
+                        <p className="text-sm" data-testid="text-overview-idea">{assembly.idea}</p>
+                      </div>
+                    )}
+                    {assembly.context && (
+                      <div>
+                        <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1.5">
+                          <FileText className="w-3 h-3" /> Context
+                        </h4>
+                        <p className="text-sm whitespace-pre-wrap max-h-40 overflow-y-auto" data-testid="text-overview-context">{assembly.context}</p>
+                      </div>
+                    )}
+                    {assembly.input && Object.keys(assembly.input).length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" data-testid="overview-input-fields">
+                        {Object.entries(assembly.input).map(([key, value]) => {
+                          if (!value) return null;
+                          const { icon: Icon, label } = getInputFieldInfo(key);
+                          return (
+                            <div key={key} className="space-y-0.5">
+                              <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                                <Icon className="w-3 h-3" /> {label}
+                              </h4>
+                              <p className="text-sm whitespace-pre-wrap" data-testid={`text-input-${key}`}>{value}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+                      <span data-testid="text-overview-created">Created: {new Date(assembly.createdAt).toLocaleString()}</span>
+                      <span data-testid="text-overview-updated">Updated: {new Date(assembly.updatedAt).toLocaleString()}</span>
+                      {assembly.lastRunAt && <span data-testid="text-overview-last-run">Last run: {formatRelativeTime(assembly.lastRunAt)}</span>}
+                    </div>
+                  </>
                 )}
               </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
+            )}
+          </Card>
 
-      {activityRuns.length > 0 && (
-        <Card data-testid="section-activity-timeline">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Activity className="w-4 h-4" />
-              Recent Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2" data-testid="activity-list">
-              {activityRuns.slice(0, 8).map((run) => (
-                <div key={run.id} className="flex items-center gap-3 text-sm" data-testid={`activity-item-${run.id}`}>
-                  {run.status === "completed" ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                  ) : run.status === "failed" ? (
-                    <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                  ) : run.status === "running" ? (
-                    <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin shrink-0" />
-                  ) : (
-                    <Circle className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  )}
-                  <span className="font-medium min-w-0 truncate">{run.stepId || run.stagePlanId || "Pipeline run"}</span>
-                  {run.durationMs != null && run.durationMs > 0 && (
-                    <span className="text-xs text-muted-foreground shrink-0">{formatDuration(run.durationMs)}</span>
-                  )}
-                  <span className="text-xs text-muted-foreground ml-auto shrink-0">{formatRelativeTime(run.createdAt)}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {assembly.wsExists && (
-        <div data-testid="section-actions">
-          <button
-            onClick={() => setShowActions(!showActions)}
-            className="flex items-center gap-2 text-sm text-muted-foreground mb-3"
-            data-testid="button-toggle-actions"
-          >
-            {showActions ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            Individual Actions
-          </button>
-
-          {showActions && (
-            <Card>
-              <CardContent className="pt-4 space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><FileInput className="w-3.5 h-3.5" />Import & Analysis</div>
-                  <div className="flex items-end gap-2 flex-wrap">
-                    <div className="flex-1 min-w-48">
-                      <label className="text-xs text-muted-foreground mb-1 block">Source Repository Path</label>
-                      <Input
-                        placeholder="/path/to/existing/repo"
-                        value={importSourcePath}
-                        onChange={(e) => setImportSourcePath(e.target.value)}
-                        data-testid="input-import-source-path"
-                      />
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "import", body: { sourcePath: importSourcePath } })}
-                      disabled={runSingleStep.isPending || !importSourcePath}
-                      data-testid="button-action-import"
-                    >
-                      {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileInput className="w-4 h-4" />}
-                      Import
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "reconcile" })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-reconcile"
-                    >
-                      {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <GitCompare className="w-4 h-4" />}
-                      Reconcile
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="border-t pt-3 space-y-3">
-                  <div className="flex items-center justify-between gap-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Sparkles className="w-3.5 h-3.5" />AI Content Revision</div>
-                    {reviseStats && reviseStats.remaining > 0 && (
-                      <Badge variant="secondary" data-testid="badge-unknowns-remaining">
-                        {reviseStats.remaining} UNKNOWNs in {reviseStats.files} files
-                      </Badge>
-                    )}
-                    {reviseStats && reviseStats.remaining === 0 && reviseMode && (
-                      <Badge variant="outline" className="text-green-600 dark:text-green-400" data-testid="badge-unknowns-done">
-                        <CheckCheck className="w-3 h-3 mr-1" /> All resolved
-                      </Badge>
-                    )}
-                  </div>
-
-                  {!reviseMode ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={startRevise}
-                      disabled={reviseLoading}
-                      data-testid="button-action-revise-unknowns"
-                    >
-                      {reviseLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquare className="w-4 h-4" />}
-                      Revise UNKNOWNs
-                    </Button>
-                  ) : (
-                    <div className="space-y-3" data-testid="revise-unknowns-panel">
-                      {reviseLoading && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-md bg-muted/50">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Scanning documents and generating questions...
+          {modules.length > 0 && (
+            <Card data-testid="card-module-grid">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Modules ({modules.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {modules.map(([name, stageStatuses]) => {
+                    const stageValues = STAGES.map(s => stageStatuses[s] || "pending");
+                    const allDone = stageValues.every(v => v === "done");
+                    const hasError = stageValues.some(v => v === "error");
+                    const tintStyle = allDone
+                      ? { backgroundColor: 'hsl(var(--success-tint))' }
+                      : hasError
+                      ? { backgroundColor: 'hsl(var(--error-tint))' }
+                      : undefined;
+                    return (
+                      <div
+                        key={name}
+                        className="rounded-md border p-3 space-y-2"
+                        style={tintStyle}
+                        data-testid={`module-card-${name}`}
+                      >
+                        <span className="text-xs font-medium truncate block" data-testid={`module-name-${name}`}>
+                          {name}
+                        </span>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {STAGES.map((stage) => {
+                            const status = stageStatuses[stage] || "pending";
+                            return (
+                              <div
+                                key={stage}
+                                className="flex items-center gap-0.5"
+                                title={`${STAGE_SHORT_LABELS[stage] || stage}: ${status}`}
+                              >
+                                <div
+                                  className={`w-2 h-2 rounded-full ${getModuleStatusColor(status)}`}
+                                  data-testid={`module-status-${name}-${stage}`}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
-                      )}
-
-                      {reviseTarget && !reviseLoading && (
-                        <div className="space-y-3">
-                          <div className="p-3 rounded-md bg-muted/50 space-y-1">
-                            <div className="text-sm font-medium" data-testid="text-revise-target-label">{reviseTarget.docTypeLabel}</div>
-                            <div className="text-xs text-muted-foreground" data-testid="text-revise-target-path">
-                              {reviseTarget.relativePath} ({reviseTarget.unknownCount} UNKNOWNs in {reviseTarget.sections.length} sections)
-                            </div>
-                          </div>
-
-                          {reviseQuestions.map((qGroup, gi) => (
-                            <div key={gi} className="space-y-2" data-testid={`revise-question-group-${gi}`}>
-                              <div className="text-xs font-medium text-muted-foreground">{qGroup.sectionName}</div>
-                              {qGroup.questions.map((q, qi) => (
-                                <div key={qi} className="space-y-1">
-                                  <label className="text-sm">{q}</label>
-                                  <Textarea
-                                    placeholder="Your answer..."
-                                    value={reviseAnswers[`${gi}-${qi}`] || ''}
-                                    onChange={(e) => setReviseAnswers(prev => ({ ...prev, [`${gi}-${qi}`]: e.target.value }))}
-                                    className="text-sm min-h-16 resize-none"
-                                    data-testid={`input-revise-answer-${gi}-${qi}`}
-                                  />
-                                </div>
-                              ))}
-                            </div>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {STAGES.map((stage) => (
+                            <span key={stage} className="text-[8px] text-muted-foreground" title={stepLabel(stage)}>
+                              {STAGE_SHORT_LABELS[stage] || stage[0].toUpperCase()}
+                            </span>
                           ))}
-
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Button
-                              size="sm"
-                              onClick={submitReviseAnswers}
-                              disabled={reviseFilling}
-                              data-testid="button-submit-revise"
-                            >
-                              {reviseFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                              Fill & Cascade
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => { setReviseMode(false); setReviseTarget(null); setReviseQuestions([]); setReviseAnswers({}); setReviseStats(null); setReviseLog([]); }}
-                              disabled={reviseFilling}
-                              data-testid="button-cancel-revise"
-                            >
-                              Cancel
-                            </Button>
-                          </div>
                         </div>
-                      )}
-
-                      {!reviseTarget && !reviseLoading && reviseMode && (
-                        <div className="p-3 rounded-md bg-muted/50 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
-                          <CheckCheck className="w-4 h-4" /> All UNKNOWNs have been resolved across all documents.
-                          <Button variant="outline" size="sm" onClick={() => { setReviseMode(false); setReviseStats(null); setReviseLog([]); }} data-testid="button-close-revise">
-                            Close
-                          </Button>
-                        </div>
-                      )}
-
-                      {reviseLog.length > 0 && (
-                        <ScrollArea className="max-h-32 rounded-md bg-muted/30 p-2">
-                          <div className="space-y-0.5 text-xs font-mono text-muted-foreground" data-testid="revise-log">
-                            {reviseLog.map((line, i) => (
-                              <div key={i}>{line}</div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="border-t pt-3 space-y-3">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Rocket className="w-3.5 h-3.5" />Build & Deploy</div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "iterate", body: { allowApply: true } })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-iterate"
-                    >
-                      {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                      Iterate
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "build-plan" })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-build-plan"
-                    >
-                      Build Plan
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "build-exec" })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-build-exec"
-                    >
-                      Build Exec
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "deploy" })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-deploy"
-                    >
-                      <Rocket className="w-4 h-4" />
-                      Deploy
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "clean" })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-clean"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Clean
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="border-t pt-3 space-y-3">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><BarChart3 className="w-3.5 h-3.5" />Analysis</div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "status" })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-status"
-                    >
-                      Status
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "next" })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-next"
-                    >
-                      Next Steps
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => runSingleStep.mutate({ stepId: "activate" })}
-                      disabled={runSingleStep.isPending}
-                      data-testid="button-action-activate"
-                    >
-                      Activate
-                    </Button>
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -1647,120 +1439,387 @@ export default function AssemblyPage() {
         </div>
       )}
 
-      {modules.length > 0 && (
-        <Card data-testid="card-module-grid">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Modules ({modules.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {modules.map(([name, stageStatuses]) => {
-                const stageValues = STAGES.map(s => stageStatuses[s] || "pending");
-                const allDone = stageValues.every(v => v === "done");
-                const hasError = stageValues.some(v => v === "error");
-                const tintStyle = allDone
-                  ? { backgroundColor: 'hsl(var(--success-tint))' }
-                  : hasError
-                  ? { backgroundColor: 'hsl(var(--error-tint))' }
-                  : undefined;
-                return (
-                <div
-                  key={name}
-                  className="rounded-md border p-3 space-y-2"
-                  style={tintStyle}
-                  data-testid={`module-card-${name}`}
-                >
-                  <span className="text-xs font-medium truncate block" data-testid={`module-name-${name}`}>
-                    {name}
-                  </span>
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {STAGES.map((stage) => {
-                      const status = stageStatuses[stage] || "pending";
+      {activeTab === "logs" && (
+        <div className="space-y-4" data-testid="section-logs-tab">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-48">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search logs by step name..."
+                value={logSearchQuery}
+                onChange={(e) => setLogSearchQuery(e.target.value)}
+                className="pl-9"
+                data-testid="input-search-assembly-logs"
+              />
+            </div>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {activityRuns.length} run{activityRuns.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          {activityRuns.length === 0 ? (
+            <Card data-testid="empty-assembly-logs">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <Terminal className="w-10 h-10 text-primary/20 mb-3" />
+                <h3 className="text-sm font-medium mb-1">No runs yet</h3>
+                <p className="text-xs text-muted-foreground">Pipeline runs for this assembly will appear here.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card data-testid="assembly-logs-card">
+              <CardContent className="p-0">
+                <div className="divide-y" data-testid="assembly-logs-list">
+                  {activityRuns
+                    .filter(run => {
+                      if (!logSearchQuery) return true;
+                      const q = logSearchQuery.toLowerCase();
+                      return run.stepLabel.toLowerCase().includes(q) || run.stepId.toLowerCase().includes(q);
+                    })
+                    .map((run) => {
+                      const isExpanded = expandedLogRuns.has(run.id);
                       return (
-                        <div
-                          key={stage}
-                          className="flex items-center gap-0.5"
-                          title={`${STAGE_SHORT_LABELS[stage] || stage}: ${status}`}
-                        >
-                          <div
-                            className={`w-2 h-2 rounded-full ${getModuleStatusColor(status)}`}
-                            data-testid={`module-status-${name}-${stage}`}
-                          />
+                        <div key={run.id} data-testid={`assembly-log-row-${run.id}`}>
+                          <button
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover-elevate"
+                            onClick={() => {
+                              setExpandedLogRuns(prev => {
+                                const next = new Set(prev);
+                                if (next.has(run.id)) next.delete(run.id);
+                                else next.add(run.id);
+                                return next;
+                              });
+                            }}
+                            data-testid={`button-expand-log-${run.id}`}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+                            )}
+                            <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${run.status === "success" ? "bg-green-500" : "bg-red-500"}`} />
+                            <span className="text-sm font-medium w-36 shrink-0 truncate" data-testid={`text-log-step-${run.id}`}>
+                              {run.stepLabel}
+                            </span>
+                            <Badge
+                              variant={run.status === "success" ? "success" : "error"}
+                              className="text-xs"
+                              data-testid={`badge-log-status-${run.id}`}
+                            >
+                              {run.status}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground" data-testid={`text-log-exit-${run.id}`}>
+                              exit: {run.exitCode}
+                            </span>
+                            <span className="text-xs text-muted-foreground" data-testid={`text-log-duration-${run.id}`}>
+                              {formatDuration(run.durationMs)}
+                            </span>
+                            <span className="text-xs text-muted-foreground ml-auto shrink-0" data-testid={`text-log-time-${run.id}`}>
+                              {formatRelativeTime(run.createdAt)}
+                            </span>
+                          </button>
+                          {isExpanded && (
+                            <div className="px-4 pb-4 space-y-2" data-testid={`log-output-${run.id}`}>
+                              {run.stdout && (
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">stdout</p>
+                                  <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap" data-testid={`pre-log-stdout-${run.id}`}>
+                                    {run.stdout}
+                                  </pre>
+                                </div>
+                              )}
+                              {run.stderr && (
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">stderr</p>
+                                  <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap text-red-600 dark:text-red-400" data-testid={`pre-log-stderr-${run.id}`}>
+                                    {run.stderr}
+                                  </pre>
+                                </div>
+                              )}
+                              {!run.stdout && !run.stderr && (
+                                <p className="text-xs text-muted-foreground py-2" data-testid={`text-log-no-output-${run.id}`}>
+                                  No output captured.
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
-                  </div>
-                  <div className="flex items-center gap-1 flex-wrap">
-                    {STAGES.map((stage) => (
-                      <span key={stage} className="text-[8px] text-muted-foreground" title={stepLabel(stage)}>
-                        {STAGE_SHORT_LABELS[stage] || stage[0].toUpperCase()}
-                      </span>
-                    ))}
-                  </div>
                 </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
-      <div data-testid="section-run-history">
-        <button
-          onClick={() => setShowHistory(!showHistory)}
-          className="flex items-center gap-2 text-sm text-muted-foreground mb-3"
-          data-testid="button-toggle-history"
-        >
-          {showHistory ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          Run History
-        </button>
-
-        {showHistory && (
+      {activeTab === "workspace" && (
+        <div className="space-y-4" data-testid="section-workspace-tab">
           <Card>
             <CardContent className="pt-4">
-              {runHistory.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-6" data-testid="text-no-history">
-                  No run history yet.
-                </p>
+              {fileTree ? (
+                <div className="text-sm font-mono space-y-0.5" data-testid="file-tree">
+                  {fileTree.children?.map(node => (
+                    <FileTreeItem
+                      key={node.path}
+                      node={node}
+                      depth={0}
+                      expandedDirs={expandedDirs}
+                      onToggle={(path) => {
+                        setExpandedDirs(prev => {
+                          const next = new Set(prev);
+                          if (next.has(path)) next.delete(path);
+                          else next.add(path);
+                          return next;
+                        });
+                      }}
+                    />
+                  ))}
+                </div>
               ) : (
-                <ScrollArea className="max-h-80">
-                  <div className="space-y-1">
-                    {runHistory.map((run) => (
-                      <div
-                        key={run.id}
-                        className="flex items-center justify-between gap-2 py-1.5 px-2 rounded text-xs even:bg-muted/30 flex-wrap"
-                        data-testid={`run-history-${run.id}`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <Badge
-                            variant={run.status === "success" ? "success" : run.status === "error" ? "error" : "secondary"}
-                            className="no-default-active-elevate text-[10px]"
-                            data-testid={`run-status-${run.id}`}
-                          >
-                            {run.status}
-                          </Badge>
-                          <span className="truncate font-medium" data-testid={`run-step-${run.id}`}>
-                            {run.stepLabel}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0 text-muted-foreground">
-                          <span data-testid={`run-duration-${run.id}`}>
-                            {formatDuration(run.durationMs)}
-                          </span>
-                          <Clock className="w-3 h-3" />
-                          <span data-testid={`run-time-${run.id}`}>
-                            {formatRelativeTime(run.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
               )}
             </CardContent>
           </Card>
-        )}
-      </div>
+        </div>
+      )}
+
+      {activeTab === "actions" && (
+        <div className="space-y-4" data-testid="section-actions-tab">
+          <Card>
+            <CardContent className="pt-4 space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><FileInput className="w-3.5 h-3.5" />Import & Analysis</div>
+                <div className="flex items-end gap-2 flex-wrap">
+                  <div className="flex-1 min-w-48">
+                    <label className="text-xs text-muted-foreground mb-1 block">Source Repository Path</label>
+                    <Input
+                      placeholder="/path/to/existing/repo"
+                      value={importSourcePath}
+                      onChange={(e) => setImportSourcePath(e.target.value)}
+                      data-testid="input-import-source-path"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "import", body: { sourcePath: importSourcePath } })}
+                    disabled={runSingleStep.isPending || !importSourcePath}
+                    data-testid="button-action-import"
+                  >
+                    {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileInput className="w-4 h-4" />}
+                    Import
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "reconcile" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-reconcile"
+                  >
+                    {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <GitCompare className="w-4 h-4" />}
+                    Reconcile
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border-t pt-3 space-y-3">
+                <div className="flex items-center justify-between gap-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Sparkles className="w-3.5 h-3.5" />AI Content Revision</div>
+                  {reviseStats && reviseStats.remaining > 0 && (
+                    <Badge variant="secondary" data-testid="badge-unknowns-remaining">
+                      {reviseStats.remaining} UNKNOWNs in {reviseStats.files} files
+                    </Badge>
+                  )}
+                  {reviseStats && reviseStats.remaining === 0 && reviseMode && (
+                    <Badge variant="outline" className="text-green-600 dark:text-green-400" data-testid="badge-unknowns-done">
+                      <CheckCheck className="w-3 h-3 mr-1" /> All resolved
+                    </Badge>
+                  )}
+                </div>
+
+                {!reviseMode ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={startRevise}
+                    disabled={reviseLoading}
+                    data-testid="button-action-revise-unknowns"
+                  >
+                    {reviseLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquare className="w-4 h-4" />}
+                    Revise UNKNOWNs
+                  </Button>
+                ) : (
+                  <div className="space-y-3" data-testid="revise-unknowns-panel">
+                    {reviseLoading && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-md bg-muted/50">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Scanning documents and generating questions...
+                      </div>
+                    )}
+
+                    {reviseTarget && !reviseLoading && (
+                      <div className="space-y-3">
+                        <div className="p-3 rounded-md bg-muted/50 space-y-1">
+                          <div className="text-sm font-medium" data-testid="text-revise-target-label">{reviseTarget.docTypeLabel}</div>
+                          <div className="text-xs text-muted-foreground" data-testid="text-revise-target-path">
+                            {reviseTarget.relativePath} ({reviseTarget.unknownCount} UNKNOWNs in {reviseTarget.sections.length} sections)
+                          </div>
+                        </div>
+
+                        {reviseQuestions.map((qGroup, gi) => (
+                          <div key={gi} className="space-y-2" data-testid={`revise-question-group-${gi}`}>
+                            <div className="text-xs font-medium text-muted-foreground">{qGroup.sectionName}</div>
+                            {qGroup.questions.map((q, qi) => (
+                              <div key={qi} className="space-y-1">
+                                <label className="text-sm">{q}</label>
+                                <Textarea
+                                  placeholder="Your answer..."
+                                  value={reviseAnswers[`${gi}-${qi}`] || ''}
+                                  onChange={(e) => setReviseAnswers(prev => ({ ...prev, [`${gi}-${qi}`]: e.target.value }))}
+                                  className="text-sm min-h-16 resize-none"
+                                  data-testid={`input-revise-answer-${gi}-${qi}`}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Button
+                            size="sm"
+                            onClick={submitReviseAnswers}
+                            disabled={reviseFilling}
+                            data-testid="button-submit-revise"
+                          >
+                            {reviseFilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            Fill & Cascade
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setReviseMode(false); setReviseTarget(null); setReviseQuestions([]); setReviseAnswers({}); setReviseStats(null); setReviseLog([]); }}
+                            disabled={reviseFilling}
+                            data-testid="button-cancel-revise"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!reviseTarget && !reviseLoading && reviseMode && (
+                      <div className="p-3 rounded-md bg-muted/50 text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
+                        <CheckCheck className="w-4 h-4" /> All UNKNOWNs have been resolved across all documents.
+                        <Button variant="outline" size="sm" onClick={() => { setReviseMode(false); setReviseStats(null); setReviseLog([]); }} data-testid="button-close-revise">
+                          Close
+                        </Button>
+                      </div>
+                    )}
+
+                    {reviseLog.length > 0 && (
+                      <ScrollArea className="max-h-32 rounded-md bg-muted/30 p-2">
+                        <div className="space-y-0.5 text-xs font-mono text-muted-foreground" data-testid="revise-log">
+                          {reviseLog.map((line, i) => (
+                            <div key={i}>{line}</div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t pt-3 space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Rocket className="w-3.5 h-3.5" />Build & Deploy</div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "iterate", body: { allowApply: true } })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-iterate"
+                  >
+                    {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    Iterate
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "build-plan" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-build-plan"
+                  >
+                    Build Plan
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "build-exec" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-build-exec"
+                  >
+                    Build Exec
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "deploy" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-deploy"
+                  >
+                    <Rocket className="w-4 h-4" />
+                    Deploy
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "clean" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-clean"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Clean
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border-t pt-3 space-y-3">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><BarChart3 className="w-3.5 h-3.5" />Analysis</div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "status" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-status"
+                  >
+                    Status
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "next" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-next"
+                  >
+                    Next Steps
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "activate" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-activate"
+                  >
+                    Activate
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
