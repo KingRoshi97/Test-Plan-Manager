@@ -163,6 +163,7 @@ function getStateBadgeVariant(state: string) {
     case "running": return "default" as const;
     case "completed": return "success" as const;
     case "failed": return "error" as const;
+    case "interrupted": return "error" as const;
     case "exported": return "outline" as const;
     default: return "secondary" as const;
   }
@@ -170,6 +171,7 @@ function getStateBadgeVariant(state: string) {
 
 function getStateBadgeClassName(state: string) {
   if (state === "running") return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-transparent";
+  if (state === "interrupted") return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-transparent";
   if (state === "exported") return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-transparent";
   return "";
 }
@@ -650,7 +652,7 @@ export default function AssemblyPage() {
         const totalSteps = progress.steps.length;
         const currentIdx = progress.currentIndex ?? totalSteps;
         const isCompleted = assembly.state === "completed" || assembly.state === "exported";
-        const isFailed = assembly.state === "failed";
+        const isFailed = assembly.state === "failed" || assembly.state === "interrupted";
 
         const failedIdx = isFailed
           ? (currentIdx >= totalSteps ? totalSteps - 1 : currentIdx)
