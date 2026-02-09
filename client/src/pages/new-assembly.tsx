@@ -527,9 +527,30 @@ export default function NewAssemblyPage() {
     techConstraints: setTechConstraints,
   };
 
+  const FIELD_GETTERS: Record<string, () => string> = {
+    visionProblem: () => visionProblem,
+    visionTargetUsers: () => visionTargetUsers,
+    visionGoals: () => visionGoals,
+    visionSuccess: () => visionSuccess,
+    coreFeatures: () => coreFeatures,
+    niceToHaveFeatures: () => niceToHaveFeatures,
+    coreEntities: () => coreEntities,
+    userJourneys: () => userJourneys,
+    platform: () => platform,
+    integrations: () => integrations,
+    techConstraints: () => techConstraints,
+  };
+
   function handleSuggestionSelect(field: string, value: string) {
     const setter = FIELD_SETTERS[field];
-    if (setter) setter(value);
+    const getter = FIELD_GETTERS[field];
+    if (!setter) return;
+    const current = getter ? getter().trim() : "";
+    if (current) {
+      setter(current + "\n" + value);
+    } else {
+      setter(value);
+    }
   }
 
   return (
