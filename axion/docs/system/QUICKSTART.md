@@ -1,279 +1,135 @@
-# AXION Quickstart Guide
+# Quickstart
 
-## What is AXION?
+Get from zero to a running AXION-generated application.
 
-AXION is a documentation-first development system that generates comprehensive "Agent Kits" for AI-guided software development. It enforces a strict pipeline: **init → generate → seed → draft → review → verify → lock**.
+## Prerequisites
 
-The output is a complete documentation package that AI coding agents can use to build your project with consistency and discipline.
-
----
-
-## Installation
-
-AXION is a folder-based system. To use it in your project:
-
-1. **Copy the `axion/` folder** into your project root
-2. **Install dependencies** (if not already present):
-   ```bash
-   npm install tsx typescript
-   ```
+- Node.js 20+
+- `tsx` installed (`npm install -g tsx`)
+- A build root directory with `axion/` in it
 
 ---
 
-## Getting Started (Fresh Project)
-
-### Step 1: Initialize Workspace
+## 1. Create a Workspace
 
 ```bash
-node axion/scripts/axion-init.mjs --mode fresh
+npx tsx axion/scripts/axion-kit-create.ts \
+  --build-root . \
+  --project-name MyApp
 ```
 
-This creates:
-- `axion/source_docs/product/attachments/START_HERE.txt` - **Start here!** Paste your project idea
-- `axion/source_docs/product/attachments/` - Drop additional docs here
-- `axion/source_docs/product/RPBS_Product.md` - Product requirements
-- `axion/source_docs/product/REBS_Product.md` - Engineering requirements
-- `axion/config/domains.json` - Module definitions
-- `axion/config/presets.json` - Pipeline presets
+This creates `MyApp/` as a sibling to `axion/` with the standard directory structure (`source_docs/`, `domains/`, `registry/`, `app/`).
 
-### Step 2: Provide Your Project Input
+## 2. Add Product Docs
 
-**Option A: Attachments Workflow (Recommended for IDE users)**
+Place your project specs in the workspace:
 
-1. Open `axion/source_docs/product/attachments/START_HERE.txt`
-2. Paste your project idea, requirements, or any existing documentation
-3. Add additional files (specs, designs, API docs) to the `attachments/` folder
-4. Run `node axion/scripts/axion-generate.mjs --all`
+```
+MyApp/source_docs/product/RPBS_Product.md    # Project brief
+MyApp/source_docs/product/REBS_Product.md    # Requirements
+```
 
-The generate stage reads ALL files from the attachments folder and saves them to `registry/attachments_content.md` for use in drafting documentation.
+These are the "Level 0" inputs that drive all downstream documentation.
 
-**Option B: Direct RPBS/REBS Edit**
+## 3. Generate Documentation
 
-Edit the source documents directly:
-
-**RPBS_Product.md** (Product):
-- Product vision and value proposition
-- Target users
-- Core features (MVP scope)
-- What's in/out of scope
-
-**REBS_Product.md** (Engineering):
-- Tech stack choices
-- Architecture pattern
-- Engineering constraints
-- Integration points
-
-### Step 3: Run the Pipeline
-
-Option A: **Use presets** (recommended for beginners):
+Run the full docs pipeline:
 
 ```bash
-# Scaffold foundation modules (architecture, systems, contracts)
-node --import tsx axion/scripts/axion-run.ts --preset foundation --plan scaffold
-
-# Check status
-node --import tsx axion/scripts/axion-status.ts
-
-# See what to do next
-node --import tsx axion/scripts/axion-next.ts
+npx tsx axion/scripts/axion-run.ts \
+  --build-root . --project-name MyApp \
+  --preset system --plan docs:full
 ```
 
-Option B: **Run stages manually**:
+This runs: `generate → seed → draft → content-fill → review → verify`
+
+## 4. Lock Documentation
+
+If verify passes, lock the docs:
 
 ```bash
-# Generate all module docs from templates
-node axion/scripts/axion-generate.mjs --all
-
-# Seed placeholders
-node axion/scripts/axion-seed.mjs --all
-
-# Draft content
-node axion/scripts/axion-draft.mjs --all
-
-# Review completeness
-node axion/scripts/axion-review.mjs --all
-
-# Verify rules
-node axion/scripts/axion-verify.mjs --all
-
-# Lock and generate ERC
-node axion/scripts/axion-lock.mjs --all
+npx tsx axion/scripts/axion-run.ts \
+  --build-root . --project-name MyApp \
+  --preset system --plan docs:release \
+  --allow-nonempty
 ```
 
----
-
-## Overhauling an Existing Project
-
-If you have an existing codebase you want to rebuild with AXION guidance:
+## 5. Scaffold the Application
 
 ```bash
-node --import tsx axion/scripts/axion-overhaul.ts
+npx tsx axion/scripts/axion-run.ts \
+  --build-root . --project-name MyApp \
+  --preset system --plan app:bootstrap \
+  --allow-nonempty
 ```
 
-This will:
-1. Archive your current project to `_axion_archive/<timestamp>/`
-2. Create a fresh workspace at `_axion_rebuild/`
-3. Write a manifest documenting what was archived
+This generates `MyApp/app/` with `client/`, `server/`, `shared/`, and `package.json`.
 
-Then follow the "Fresh Project" steps above in the new workspace.
-
----
-
-## Pipeline Stages
-
-| Stage | Purpose | How |
-|-------|---------|-----|
-| **generate** | Create module docs from templates | `axion-generate.mjs --all` |
-| **seed** | Add placeholder content structure | `axion-seed.mjs --all` |
-| **draft** | Fill in actual content | **Ask your AI Agent** (see below) |
-| **review** | Check completeness, count UNKNOWNs | `axion-review.mjs --all` |
-| **verify** | Validate rules, seams, cross-refs | `axion-verify.mjs --all` |
-| **lock** | Finalize and generate ERC | `axion-lock.mjs --all` |
-
----
-
-## AI Agent Integration
-
-AXION is designed to work with **any AI coding agent** (Replit Agent, Cursor, GitHub Copilot, Windsurf, Cline, etc.).
-
-The **draft** stage is where AI generates your documentation content. After running `seed`, a prompt file is created at `registry/AGENT_PROMPT.md` with instructions for your AI agent.
-
-### Workflow
-
-1. Add your project input to `source_docs/product/attachments/START_HERE.txt`
-2. Run: `node axion/scripts/axion-generate.mjs --all`
-3. Run: `node axion/scripts/axion-seed.mjs --all`
-4. **Ask your AI agent**: "Please draft the AXION documentation following the instructions in `axion/registry/AGENT_PROMPT.md`"
-5. Run: `node axion/scripts/axion-verify.mjs --all`
-
-The AI agent reads your input, RPBS/REBS, and the module templates, then generates appropriate content for each module's documentation.
-
-This approach works universally across any IDE with an AI coding assistant
-
----
-
-## Presets
-
-Presets let you run the pipeline on logical module groups:
-
-| Preset | Modules | Use Case |
-|--------|---------|----------|
-| `foundation` | architecture, systems, contracts | Start here |
-| `core-spec` | contracts, database, auth | Data layer |
-| `backend-api` | backend, database | Server implementation |
-| `web` | frontend, state | Web client |
-| `mobile` | mobile | Mobile client |
-| `system` | All modules | Full system |
-
-Run with:
-```bash
-node --import tsx axion/scripts/axion-run.ts --preset <name> --plan <plan>
-```
-
-Plans: `scaffold`, `docs`, `full`, `release`
-
----
-
-## Checking Progress
+## 6. Build and Test
 
 ```bash
-# View current status (all modules × stages)
-node --import tsx axion/scripts/axion-status.ts
-
-# Get next recommended steps
-node --import tsx axion/scripts/axion-next.ts
-
-# JSON output for scripts
-node --import tsx axion/scripts/axion-next.ts --json
+npx tsx axion/scripts/axion-run.ts \
+  --build-root . --project-name MyApp \
+  --preset system --plan app:full \
+  --allow-nonempty
 ```
 
----
-
-## Key Files
-
-```
-axion/
-├── config/
-│   ├── domains.json       # Module definitions
-│   ├── presets.json       # Pipeline presets
-│   └── stack_profiles.json # Tech stack options
-├── domains/               # Generated module docs
-│   ├── architecture/
-│   ├── contracts/
-│   └── ...
-├── registry/              # Pipeline state
-│   ├── stage_markers.json
-│   └── verify_report.json
-├── source_docs/           # Your inputs
-│   └── product/
-│       ├── attachments/   # Drop files here (START_HERE.txt, specs, etc.)
-│       ├── RPBS_Product.md
-│       └── REBS_Product.md
-├── templates/             # Module templates
-│   ├── architecture/
-│   ├── backend/
-│   └── ...
-└── scripts/               # Pipeline scripts
-    ├── axion-init.mjs
-    ├── axion-generate.mjs
-    ├── axion-verify.mjs
-    └── ...
-```
-
----
-
-## Tips
-
-1. **Start small** - Begin with `foundation` preset, get to verify PASS
-2. **Check status often** - Use `axion-status.ts`
-3. **Fix issues early** - Don't skip verify failures
-4. **Iterate** - Pipeline is designed for incremental progress
-5. **Use [TBD] wisely** - Replace all placeholders before locking
-
----
-
-## Governance Rules
-
-AXION enforces several rules during verify:
-
-- **Seam ownership**: Certain content is owned by specific modules
-- **Template hashing**: Tracks drift from original templates
-- **Cross-references**: Modules must link to dependencies properly
-- **UNKNOWN handling**: Must be resolved or documented in OPEN_QUESTIONS
-
----
-
-## Need Help?
-
-- Run `axion-next.ts` to see what to do
-- Check `axion/registry/verify_report.json` for detailed issues
-- Review `axion/registry/stage_markers.json` for progress
-- Read the template files to understand expected content
-
----
-
-## Example: Building a Todo App
+## 7. Activate and Run
 
 ```bash
-# 1. Initialize
-node axion/scripts/axion-init.mjs --mode fresh
+npx tsx axion/scripts/axion-activate.ts \
+  --build-root . --project-name MyApp
 
-# 2. Edit RPBS_Product.md:
-#    - Vision: "Simple todo list for personal productivity"
-#    - Users: "Individual users managing daily tasks"
-#    - Features: "Add, complete, delete tasks"
-
-# 3. Edit REBS_Product.md:
-#    - Stack: React + Node.js + PostgreSQL
-#    - Architecture: Monolith
-
-# 4. Generate foundation docs
-node --import tsx axion/scripts/axion-run.ts --preset foundation --plan scaffold
-
-# 5. Check status
-node --import tsx axion/scripts/axion-status.ts
-
-# 6. Continue filling in docs and running stages...
+npx tsx axion/scripts/axion-run-app.ts \
+  --build-root . --project-name MyApp
 ```
 
-The output is a complete documentation set that any AI coding agent can use to build your todo app consistently.
+---
+
+## Check Status Anytime
+
+```bash
+npx tsx axion/scripts/axion-status.ts --root ./MyApp
+npx tsx axion/scripts/axion-next.ts --root ./MyApp
+```
+
+---
+
+## Development Shortcuts
+
+Skip gates during rapid iteration:
+
+```bash
+npx tsx axion/scripts/axion-run.ts \
+  --build-root . --project-name MyApp \
+  --preset system --plan app:bootstrap \
+  --allow-nonempty --override
+```
+
+---
+
+## Using the Dashboard
+
+The web dashboard provides a visual interface for the entire pipeline. Start it with:
+
+```bash
+npm run dev
+```
+
+From the dashboard you can:
+
+- Create assemblies (project ideas)
+- Run the pipeline with real-time SSE streaming
+- Retry from failed steps
+- Trigger individual pipeline actions
+- View pipeline logs and performance metrics
+- Export Agent Kits as zip bundles
+
+---
+
+## Next Steps
+
+- [PIPELINE_OVERVIEW.md](PIPELINE_OVERVIEW.md) — Full stage details and plan mapping
+- [WORKSPACE_LAYOUT.md](WORKSPACE_LAYOUT.md) — File tree and two-root architecture
+- [CLI_REFERENCE.md](CLI_REFERENCE.md) — All scripts with flags
+- [RELEASE_GATES.md](RELEASE_GATES.md) — Gate enforcement rules
