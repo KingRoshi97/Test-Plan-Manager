@@ -1,56 +1,77 @@
-# AXION Documentation Index
-Version: 0.1.0  
-Last Updated: 2026-02-05
+# Documentation Index
 
-## Purpose
-Declares what each living document is for, preventing content drift and duplication.
+Version: 0.2.0
+Last Updated: 2026-02-10
 
----
+## Table of Contents
 
-## Living Documents
+### Overview
+- [README.md](README.md) — What AXION is and key principles
+- [QUICKSTART.md](QUICKSTART.md) — Zero to running application
 
-### System Development
+### Pipeline
+- [PIPELINE_OVERVIEW.md](PIPELINE_OVERVIEW.md) — Documentation and app pipeline stages, plans, outputs, full workflow
 
-| Document | Location | Purpose | Update When |
-|----------|----------|---------|-------------|
-| **System Upgrade Log** | `axion/docs/SYSTEM_UPGRADE_LOG.md` | Track system upgrades: tests, contracts, flags, schemas, hardening | New tests, doctor checks, feature flags, contract changes |
-| **Change Contract Template** | `axion/docs/CHANGE_CONTRACT_TEMPLATE.md` | Template for documenting planned/in-progress system changes with test plans | Before implementing any contracted change |
-| **Changelog** | `axion/CHANGELOG.md` | Release notes for versioned releases | Each version release |
+### Workspace
+- [WORKSPACE_LAYOUT.md](WORKSPACE_LAYOUT.md) — Two-root architecture, file tree, path resolution, safety policies
 
-### Product & Web App
+### Commands
+- [CLI_REFERENCE.md](CLI_REFERENCE.md) — All 39 scripts organized by category with flags and usage
 
-| Document | Location | Purpose | Update When |
-|----------|----------|---------|-------------|
-| **Web App Feature Mapping** | `docs/product/WEBAPP_FEATURE_MAPPING.md` | Map system capabilities to web app surfaces | New scripts, artifacts, or UI-relevant changes |
+### Quality
+- [RELEASE_GATES.md](RELEASE_GATES.md) — Gate enforcement, override policy, error codes, change contract process
 
-### Configuration
+### Support
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Common failures by phase with resolutions
 
-| Document | Location | Purpose | Update When |
-|----------|----------|---------|-------------|
-| **System Config** | `axion/config/system.json` | Feature flags, thresholds, system settings | Enabling/disabling features |
-| **Domains Config** | `axion/config/domains.json` | Module definitions and dependencies | Adding/modifying modules |
-| **Presets Config** | `axion/config/presets.json` | Preset configurations for pipelines | Adding/modifying presets |
+### Internals
+- [internals/ORCHESTRATION_ENGINE.md](internals/ORCHESTRATION_ENGINE.md) — How the orchestrator chains stages, presets, stage markers, retry, SSE streaming
 
----
-
-## Quick Reference: Where Does This Go?
-
-| Content Type | Document |
-|--------------|----------|
-| Test milestones (e.g., "45 tests pass") | System Upgrade Log |
-| New doctor check added | System Upgrade Log |
-| Feature flag added/changed | System Upgrade Log |
-| Schema/contract change | System Upgrade Log + Change Contract |
-| New script created | Web App Feature Mapping (if user-facing) |
-| Web app needs to invoke X | Web App Feature Mapping |
-| Web app needs to render Y artifact | Web App Feature Mapping |
-| Planned breaking change | Change Contract first |
+### Operations
+- [ops/SYSTEM_UPGRADE_LOG.md](ops/SYSTEM_UPGRADE_LOG.md) — Append-only record of system changes
 
 ---
 
-## Rules
+## Glossary
 
-1. **System Upgrade Log** = implementation progress, tests, internal hardening
-2. **Web App Feature Mapping** = what the web app must invoke/render (capabilities only, no dev milestones)
-3. **Change Contracts** = planned changes with scope, tests, rollout strategy (before implementation)
-4. Keep documents focused on their purpose — don't mix concerns
+| Term | Definition |
+|------|------------|
+| **Agent Kit** | The complete output of an AXION pipeline run: locked documentation + scaffolded application, packaged for AI-guided development |
+| **Assembly** | A project idea in the web dashboard, including name, description, vision, features, and technical specs |
+| **Build Root** | The parent directory containing both `axion/` (system root) and project workspaces. Passed via `--build-root` |
+| **Cascade** | When filling UNKNOWN content, propagating newly-filled content from higher-priority docs to downstream docs that depend on them |
+| **Content-Fill** | The process of scanning documentation for UNKNOWN placeholders and replacing them with AI-generated or user-provided content |
+| **Domain / Module** | One of the 19 documentation categories (architecture, backend, frontend, etc.). Each module gets its own folder under `domains/` |
+| **Gate** | A checkpoint that blocks pipeline progression until prerequisites are met. Gates can be strict (no override) or soft (allow `--override`) |
+| **Gate Guard** | An additional constraint defined per-preset (e.g., `lock_requires_verify_pass`, `disallow_lock`). Guards layer on top of per-stage gates |
+| **Kit** | Short for Agent Kit |
+| **Lock** | Freezing documentation by recording checksums. Locked docs cannot be modified without re-running verify |
+| **Override** | The `--override` flag that bypasses soft gates during development. Only `scaffold-app` and `deploy` support it |
+| **Plan** | A named sequence of pipeline stages (e.g., `docs:full`, `app:bootstrap`). Defined in `config/presets.json` |
+| **Preset** | A named set of modules to process (e.g., `system` = all 19, `web` = frontend + state + deps). Defined in `config/presets.json` |
+| **RPBS** | Requirements and Product Brief Specification — the Level 0 product truth document |
+| **REBS** | Requirements and Engineering Brief Specification — the Level 0 requirements document |
+| **Reconcile** | Comparing imported facts against build outputs to detect drift between reality and documentation |
+| **Run Lock** | A file-based lock (`registry/.run_lock`) preventing concurrent pipeline runs on the same workspace. Stale after 30 minutes |
+| **Scaffold** | Generating a directory structure (either docs or app code) from templates and locked content |
+| **Seed** | Populating generated module templates with content from RPBS/REBS product documents |
+| **Stage Marker** | A JSON record in `registry/stage_markers.json` tracking which stages have completed for which modules |
+| **System Root** | The `axion/` directory containing immutable system code, scripts, templates, and configuration |
+| **Two-Root Model** | The architectural separation between the system root (`axion/`) and workspace roots (project directories) |
+| **Verify** | Automated validation of documentation against contracts and quality rules. Produces a verify report |
+| **Workspace** | A project directory created as a sibling to `axion/`. Contains `source_docs/`, `domains/`, `registry/`, and `app/` |
+
+---
+
+## Related Documentation
+
+### Product Docs (`docs/product/`)
+- `RPBS_Product.md` — Project brief specification
+- `REBS_Product.md` — Requirements specification
+
+### Registry Docs (`docs/registry/`)
+- Glossary, reason codes, action vocabulary — guardrails that prevent agent drift
+
+### Templates (`templates/core/`)
+- Base document templates used by the generate/seed stages
+- `CHANGE_CONTRACT_TEMPLATE.md` — Template for proposing system changes
