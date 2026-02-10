@@ -60,7 +60,7 @@ describe('AXION Pipeline Integration', () => {
         'axion/scripts',
         'axion/templates',
         'axion/config',
-        'axion/source_docs'
+        'axion/docs'
       ];
       
       for (const dir of expectedDirs) {

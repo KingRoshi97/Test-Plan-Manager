@@ -128,7 +128,7 @@ export function markerPath(stage, module) {
 
 /**
  * Check if a stage is done for a module.
- * Checks both axion/registry/ and axion/source_docs/registry/ for backward compat.
+ * Checks both axion/registry/ and axion/docs/registry/ for backward compat.
  * @param {string} stage - Stage name
  * @param {string} module - Module name
  * @returns {boolean}
@@ -136,7 +136,7 @@ export function markerPath(stage, module) {
 export function isStageDone(stage, module) {
   const paths = [
     markerPath(stage, module),
-    path.join("axion", "source_docs", "registry", "stage_markers", stage, `${module}.json`),
+    path.join("axion", "docs", "registry", "stage_markers", stage, `${module}.json`),
   ];
   for (const p of paths) {
     if (!fs.existsSync(p)) continue;
@@ -213,13 +213,13 @@ export function writeVerifyStatus(payload) {
 
 /**
  * Read the global verify status file.
- * Checks both axion/registry/ and axion/source_docs/registry/ for backward compat.
+ * Checks both axion/registry/ and axion/docs/registry/ for backward compat.
  * @returns {object|null}
  */
 export function readVerifyStatus() {
   const paths = [
     path.join("axion", "registry", "verify_status.json"),
-    path.join("axion", "source_docs", "registry", "verify_status.json"),
+    path.join("axion", "docs", "registry", "verify_status.json"),
   ];
   for (const p of paths) {
     if (!fs.existsSync(p)) continue;

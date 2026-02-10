@@ -29,7 +29,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { execSync } from 'child_process';
-import { writeJsonAtomic } from '../lib/atomic-writer.js';
+import { writeJsonAtomic } from './lib/atomic-writer.js';
 
 type StepName = 'doctor' | 'reconcile' | 'plan' | 'manifest' | 'apply' | 'test' | 'activate';
 type StepStatus = 'PASSED' | 'FAILED' | 'SKIPPED' | 'STOPPED';

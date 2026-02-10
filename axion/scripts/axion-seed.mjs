@@ -318,8 +318,8 @@ try {
     
     if (module === 'architecture' || modules[0] === module) {
       const registryDocs = {
-        [`${axionRoot}/source_docs/product/RPBS_Product.md`]: generateRPBS(ctx),
-        [`${axionRoot}/source_docs/product/REBS_Product.md`]: generateREBS(ctx),
+        [`${axionRoot}/docs/product/RPBS_Product.md`]: generateRPBS(ctx),
+        [`${axionRoot}/docs/product/REBS_Product.md`]: generateREBS(ctx),
       };
       
       for (const [filePath, content] of Object.entries(registryDocs)) {

@@ -292,7 +292,7 @@ function getSectionDetails(content: string): SectionDetail[] {
 export function discoverAllMdFiles(projectRoot: string): { file: string; module: string; relativePath: string }[] {
   const results: { file: string; module: string; relativePath: string }[] = [];
 
-  const sourceDocsDir = path.join(projectRoot, 'axion', 'source_docs', 'product');
+  const sourceDocsDir = path.join(projectRoot, 'axion', 'docs', 'product');
   if (fs.existsSync(sourceDocsDir)) {
     const files = fs.readdirSync(sourceDocsDir).filter(f => f.endsWith('.md'));
     for (const f of files) {

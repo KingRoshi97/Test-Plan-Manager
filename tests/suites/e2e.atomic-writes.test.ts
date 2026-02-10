@@ -255,7 +255,7 @@ Standard web application architecture.
     // Let's use a direct test by calling cleanup function
     
     // Import and call cleanup directly
-    const { cleanupOrphanTmp } = await import('../../axion/lib/atomic-writer.js');
+    const { cleanupOrphanTmp } = await import('../../axion/scripts/lib/atomic-writer.js');
     const cleanup = cleanupOrphanTmp(ctx.registryDir);
     console.log(`    ✓ Cleanup removed ${cleanup.removed.length} files`);
     
@@ -310,7 +310,7 @@ Standard web application architecture.
     
     // Step 4: Cleanup should remove corrupt .tmp
     console.log('  Step 4: Cleanup corrupt .tmp');
-    const { cleanupOrphanTmp } = await import('../../axion/lib/atomic-writer.js');
+    const { cleanupOrphanTmp } = await import('../../axion/scripts/lib/atomic-writer.js');
     const cleanup = cleanupOrphanTmp(ctx.registryDir);
     expect(cleanup.removed.length, 'should remove corrupt .tmp').toBeGreaterThanOrEqual(1);
     expect(fs.existsSync(corruptTmpPath), 'corrupt .tmp should be removed').toBe(false);

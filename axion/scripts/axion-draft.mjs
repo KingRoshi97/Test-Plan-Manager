@@ -850,8 +850,8 @@ try {
 
   let rpbsContent = '';
   let rebsContent = '';
-  const rpbsPath = path.join(axionRoot, 'source_docs/product/RPBS_Product.md');
-  const rebsPath = path.join(axionRoot, 'source_docs/product/REBS_Product.md');
+  const rpbsPath = path.join(axionRoot, 'docs/product/RPBS_Product.md');
+  const rebsPath = path.join(axionRoot, 'docs/product/REBS_Product.md');
   if (fs.existsSync(rpbsPath)) rpbsContent = fs.readFileSync(rpbsPath, 'utf8');
   if (fs.existsSync(rebsPath)) rebsContent = fs.readFileSync(rebsPath, 'utf8');
 

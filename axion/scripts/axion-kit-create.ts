@@ -92,12 +92,12 @@ const AXION_SNAPSHOT_DIRS = [
   'config',
   'scripts',
   'templates',
-  'source_docs',
+  'docs',
   'domains'
 ];
 
 const AXION_SNAPSHOT_FILES = [
-  'QUICKSTART.md'
+  'docs/system/QUICKSTART.md'
 ];
 
 function parseArgs(args: string[]): KitCreateOptions {
@@ -182,7 +182,7 @@ function copyDirRecursive(src: string, dest: string, dryRun: boolean): number {
 }
 
 function seedRPBS(targetAxion: string, projectName: string, projectDesc: string, dryRun: boolean): void {
-  const rpbsDir = path.join(targetAxion, 'source_docs', 'product');
+  const rpbsDir = path.join(targetAxion, 'docs', 'product');
   const rpbsPath = path.join(rpbsDir, 'RPBS_Product.md');
   
   if (!dryRun) {
@@ -238,7 +238,7 @@ UNKNOWN — Q-06: How will success be measured?
 }
 
 function seedREBS(targetAxion: string, stackProfile: string, dryRun: boolean): void {
-  const rebsDir = path.join(targetAxion, 'source_docs', 'product');
+  const rebsDir = path.join(targetAxion, 'docs', 'product');
   const rebsPath = path.join(rebsDir, 'REBS_Product.md');
   
   if (!dryRun) {
