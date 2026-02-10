@@ -1,0 +1,165 @@
+AXION Assembler — New Assembly Wizard
+
+This document describes how a new project assembly is created in the AXION system. An Assembly represents a single software project idea that AXION will transform into a complete Agent Kit through its documentation-first pipeline.
+
+The New Assembly form is a 4-step wizard. Only the first step has required fields — all other steps are optional but produce significantly richer documentation output when provided.
+
+After submission, the assembly is saved to the database in a "queued" state. The pipeline does not auto-run; the user navigates to the Assembly Control Room and triggers execution from there.
+
+────────────────────────────────────────
+Step 1: Basics
+────────────────────────────────────────
+
+  Project Name *  (required)
+    A short, slug-friendly name for the workspace directory.
+    Example: "my-awesome-project"
+    This becomes the folder name under the workspace root.
+
+  Project Idea *  (required)
+    Describe the app or system you want to build — what it does, who it's for, and what makes it interesting.
+    Example: "A mobile-first recipe sharing app where home cooks can share family recipes with step-by-step photos and cooking timers."
+
+  Category  (optional)
+    A label to organize assemblies. Free-text.
+    Example: "productivity", "e-commerce", "internal-tool"
+
+  Preset  (optional)
+    Select a predefined module configuration from config/presets.json. Each preset defines which domain modules are included in the kit.
+    The selected preset's label and associated module list are stored with the assembly.
+
+  Stage Plan  (optional)
+    Select the pipeline plan to execute. Defines which stages will run and in what order. Plans are loaded from config/presets.json stage_plans.
+    Common plans:
+      - docs:scaffold — Generate and seed module documentation structures
+      - docs:content  — Fill documentation with AI-generated content
+      - docs:full     — Scaffold + content in one pass
+      - app:bootstrap — Generate application boilerplate
+      - build-exec    — Execute the build plan
+
+────────────────────────────────────────
+Step 2: Vision & Users
+────────────────────────────────────────
+
+All fields in this step are optional. They feed into the RPBS (Requirements & Product Brief Specification) and shape how the AI generates documentation.
+
+  What problem does this solve?
+    The core pain point or opportunity the app addresses.
+    Example: "Users struggle to organize their notes across devices and need a fast, simple way to capture and retrieve information."
+
+  Who is this for?
+    Description of the target users — their role, technical level, and context.
+    Example: "Home cooks aged 25-55 who want to preserve and share family recipes digitally."
+
+  Primary goals
+    Top 3-5 outcomes the project should achieve.
+    Example: "1. Fast recipe entry under 2 minutes. 2. Searchable recipe library. 3. Shareable recipe links."
+
+  What does success look like?
+    Metrics or outcomes that define whether the project has achieved its purpose.
+    Example: "50% of users create at least 5 recipes in their first week."
+
+────────────────────────────────────────
+Step 3: Features
+────────────────────────────────────────
+
+All fields in this step are optional. They feed into module-level documentation generation and help the AI understand scope.
+
+  Core features (must-haves)
+    The features that must ship for the product to be useful. List up to 10.
+    Example:
+      - Create, edit, and delete notes
+      - Organize notes into folders
+      - Tag notes with multiple labels
+      - Full-text search across all notes
+
+  Nice-to-have features
+    Desirable features that aren't essential for launch.
+    Example:
+      - AI-powered note summarization
+      - Shared workspaces for team collaboration
+
+  Main things in the system (entities)
+    The nouns — the core data objects the app manages.
+    Example: "Users, Recipes, Ingredients, CookingSteps, Collections"
+
+  Key user workflows
+    Typical paths users take through the app.
+    Example: "User signs up → creates first recipe → adds ingredients and steps → shares recipe link → receives feedback comments"
+
+────────────────────────────────────────
+Step 4: Technical
+────────────────────────────────────────
+
+All fields in this step are optional. They inform the stack profile and technical constraints in generated documentation.
+
+  Platform targets
+    Where the app will run.
+    Example: "Web (responsive), iOS, Android, Desktop (Electron)"
+
+  External integrations
+    Third-party services the app needs to connect to.
+    Example: "Stripe for payments, SendGrid for email, AWS S3 for image storage, Google OAuth"
+
+  Technical constraints or preferences
+    Stack requirements, compliance needs, or hard boundaries.
+    Example: "Must use PostgreSQL, needs HIPAA compliance, prefer React + Node.js stack"
+
+  Data sensitivity
+    The level of sensitivity of the data the app will handle.
+    Example: "Contains PII (names, emails). Payment data handled by Stripe (no card numbers stored)."
+
+────────────────────────────────────────
+What Happens After Submission
+────────────────────────────────────────
+
+1. The form validates that Project Name and Project Idea are filled in.
+2. All non-empty fields from steps 2-4 are bundled into a structured input object.
+3. The project name is slugified (lowercased, special chars replaced with hyphens).
+4. A new assembly record is created in the database with state "queued".
+5. The user is redirected to the Assembly Control Room for that assembly.
+6. From the Control Room, the user triggers pipeline execution — either the full selected stage plan or individual steps.
+7. The pipeline runs the stages defined by the selected stage plan (loaded from config/presets.json), using the assembly's idea and structured input as context. The exact steps and their order depend on the plan chosen.
+8. Each step's output is streamed in real-time via SSE to the Control Room.
+
+Note: The stage plan is used at execution time but is not persisted as a separate column in the database. It is passed as a parameter when triggering a pipeline run.
+
+────────────────────────────────────────
+Database Fields (assemblies table)
+────────────────────────────────────────
+
+Fields populated at creation:
+
+  id              — Auto-generated UUID primary key
+  projectName     — Slugified project name (workspace directory name)
+  idea            — The project idea text
+  preset          — Selected preset label
+  presetId        — Selected preset identifier
+  category        — Project category label
+  mode            — Execution mode (typically null at creation)
+  domains         — Module list from preset (text array)
+  context         — Additional context
+  input           — Structured JSON object containing all Step 2-4 fields:
+                      visionProblem, visionTargetUsers, visionGoals, visionSuccess,
+                      coreFeatures, niceToHaveFeatures, coreEntities, userJourneys,
+                      platform, integrations, techConstraints, dataSensitivity
+  state           — Pipeline state, initialized to "queued"
+  revision        — Version number, defaults to 1
+  kitType         — Kit type, defaults to "original"
+  createdAt       — Timestamp of creation
+  updatedAt       — Timestamp of last update
+
+Fields populated during pipeline execution:
+
+  step            — Current pipeline step being executed
+  progress        — Execution progress (JSON object)
+  errors          — Error details (text array, if any)
+  kit             — Completed kit metadata (JSON)
+  kitPath         — Path to the generated kit on disk
+  logsTail        — Tail of execution logs
+  projectPackageId — ID of the exported package (if packaged)
+
+Fields populated during upgrades:
+
+  revision        — Bumped when an upgrade pass is triggered
+  upgradeNotes    — User-provided notes for the upgrade iteration
+  kitType         — Changes to "upgrade" for upgrade-layer kits
