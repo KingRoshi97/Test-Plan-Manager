@@ -11,6 +11,21 @@
       "description": "Verify and lock docs so they're ready for app scaffolding or handoff.",
       "steps": ["verify", "lock"]
     },
+    "app:bootstrap": {
+      "label": "Scaffold Application",
+      "description": "Generate the application skeleton from locked docs.",
+      "steps": ["scaffold-app"]
+    },
+    "app:build": {
+      "label": "Compile Application",
+      "description": "Compile the scaffolded application.",
+      "steps": ["build"]
+    },
+    "app:test": {
+      "label": "Run Tests",
+      "description": "Execute the application test suite.",
+      "steps": ["test"]
+    },
     "app:full": {
       "label": "Build Application",
       "description": "Scaffold, build, and test the application from locked docs.",
@@ -20,6 +35,11 @@
       "label": "Build with Exec Plan",
       "description": "Scaffold the app, generate a build plan, execute it, then test.",
       "steps": ["scaffold-app", "build-plan", "build-exec", "test"]
+    },
+    "app:ship": {
+      "label": "Deploy Application",
+      "description": "Deploy the application to the target environment.",
+      "steps": ["deploy"]
     },
     "system:full": {
       "label": "Full Pipeline (End-to-End)",
