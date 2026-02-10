@@ -1,6 +1,25 @@
 # Requirements & Product Boundaries Specification (RPBS)
 
+> **Level 0 — Product Truth.** This is the single authoritative source for *what* the product does, who it serves, and what is in/out of scope. Every downstream document (REBS, SCHEMA_SPEC, COMPONENT_SPEC, domain templates) derives from this file.
+
+## How to Use This Template
+
+1. **Fill placeholders.** Replace every `{{PLACEHOLDER}}` with real product data. If the answer is unknown, write `UNKNOWN` and add an entry to §34 OPEN_QUESTIONS.
+2. **Pick one per choice field.** Where you see `Yes | No | UNKNOWN` or `low | medium | high`, delete the options you don't need and keep the one that applies.
+3. **Delete unused rows.** Tables show minimum example rows. Add more rows as needed; delete rows that don't apply.
+4. **Respect the rules.** Each section ends with a `> **Rule:**` block. These are enforced by the verify step — violations will block the lock gate.
+5. **Cross-reference REBS.** Sections here map 1:1 to REBS engineering policies (§1–§34). After filling RPBS, the seed step propagates your choices into REBS.
+6. **Cascade order.** RPBS is filled first. Content-fill uses it to populate all downstream module templates.
+
+### Placeholder Format
+
+- `{{PLACEHOLDER_NAME}}` — must be replaced with real content or `UNKNOWN`
+- `Y/N/UNKNOWN` — pick exactly one
+- `low | medium | high | UNKNOWN` — pick exactly one
+- Table rows with `{{...}}` — fill or delete; do not leave raw placeholders
+
 ## Document Info
+
 **Project:** {{PROJECT_NAME}}
 **Version:** {{VERSION}}
 **Last Updated:** {{DATE}}
