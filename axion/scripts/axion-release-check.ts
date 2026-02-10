@@ -19,7 +19,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
-import { writeJsonAtomic } from '../lib/atomic-writer.js';
+import { writeJsonAtomic } from './lib/atomic-writer.js';
 
 const SCRIPT_VERSION = 1;
 const SYSTEM_ROOT = path.resolve(__dirname, '../..');

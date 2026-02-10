@@ -652,8 +652,8 @@ export function registerRoutes(app: Express) {
       };
 
       const systemDocs = collectMdFiles(path.join(AXION_ROOT, 'docs'), 'axion/docs');
-      const productSourceDocs = collectMdFiles(path.join(AXION_ROOT, 'source_docs', 'product'), 'axion/source_docs/product');
-      const registrySourceDocs = collectMdFiles(path.join(AXION_ROOT, 'source_docs', 'registry'), 'axion/source_docs/registry');
+      const productSourceDocs = collectMdFiles(path.join(AXION_ROOT, 'docs', 'product'), 'axion/docs/product');
+      const registrySourceDocs = collectMdFiles(path.join(AXION_ROOT, 'docs', 'registry'), 'axion/docs/registry');
       const coreTemplates = collectMdFiles(path.join(AXION_ROOT, 'templates', 'core'), 'axion/templates/core');
 
       const domainTemplatesDir = path.join(AXION_ROOT, 'templates');
@@ -805,8 +805,8 @@ export function registerRoutes(app: Express) {
 
     const sectionDirMap: Record<string, string> = {
       'section-system-docs': path.join(AXION_ROOT, 'docs'),
-      'section-product-docs': path.join(AXION_ROOT, 'source_docs', 'product'),
-      'section-registry-docs': path.join(AXION_ROOT, 'source_docs', 'registry'),
+      'section-product-docs': path.join(AXION_ROOT, 'docs', 'product'),
+      'section-registry-docs': path.join(AXION_ROOT, 'docs', 'registry'),
       'section-core-templates': path.join(AXION_ROOT, 'templates', 'core'),
       'section-domain-templates': domain ? path.join(AXION_ROOT, 'templates', domain) : '',
       'section-generated-output': domain ? path.join(AXION_ROOT, 'domains', domain) : '',

@@ -69,11 +69,11 @@ describe('AXION End-to-End Workflow', () => {
       expect(manifest2?.project_name).toBe('Project2');
       
       const rpbs1 = fs.readFileSync(
-        path.join(kit1Dir, 'axion', 'source_docs', 'product', 'RPBS_Product.md'),
+        path.join(kit1Dir, 'axion', 'docs', 'product', 'RPBS_Product.md'),
         'utf-8'
       );
       const rpbs2 = fs.readFileSync(
-        path.join(kit2Dir, 'axion', 'source_docs', 'product', 'RPBS_Product.md'),
+        path.join(kit2Dir, 'axion', 'docs', 'product', 'RPBS_Product.md'),
         'utf-8'
       );
       

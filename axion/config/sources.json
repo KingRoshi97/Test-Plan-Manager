@@ -1,13 +1,13 @@
 {
   "axion_root": "axion",
   "sources": [
-    "source_docs/product/RPBS_Product.md",
-    "source_docs/product/REBS_Product.md",
-    "source_docs/product/PROJECT_OVERVIEW.md",
-    "source_docs/registry/domain-map.md",
-    "source_docs/registry/reason-codes.md",
-    "source_docs/registry/action-vocabulary.md",
-    "source_docs/registry/glossary.md"
+    "docs/product/RPBS_Product.md",
+    "docs/product/REBS_Product.md",
+    "docs/product/PROJECT_OVERVIEW.md",
+    "docs/registry/domain-map.md",
+    "docs/registry/reason-codes.md",
+    "docs/registry/action-vocabulary.md",
+    "docs/registry/glossary.md"
   ],
   "module_notes": {
     "enabled": true,

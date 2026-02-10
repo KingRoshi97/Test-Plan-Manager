@@ -108,7 +108,7 @@ describe('axion-kit-create', () => {
         '--project-desc', 'A test project description'
       ]);
       
-      const rpbsPath = path.join(targetDir, 'axion', 'source_docs', 'product', 'RPBS_Product.md');
+      const rpbsPath = path.join(targetDir, 'axion', 'docs', 'product', 'RPBS_Product.md');
       expect(fileExists(rpbsPath)).toBe(true);
       
       const rpbsContent = fs.readFileSync(rpbsPath, 'utf-8');
@@ -126,7 +126,7 @@ describe('axion-kit-create', () => {
       const json = parseJsonOutput(result.stdout);
       expect(json?.files_copied).toBeGreaterThan(0);
       
-      const snapshotDirs = ['config', 'scripts', 'templates', 'source_docs'];
+      const snapshotDirs = ['config', 'scripts', 'templates', 'docs'];
       for (const dir of snapshotDirs) {
         const dirPath = path.join(targetDir, 'axion', dir);
         expect(fileExists(dirPath)).toBe(true);

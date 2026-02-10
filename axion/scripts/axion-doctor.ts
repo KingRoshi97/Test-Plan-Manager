@@ -370,9 +370,9 @@ const BLD_AXION_SNAPSHOT: Check = {
       return { id: 'BLD_AXION_SNAPSHOT', status: 'FAIL', details: 'axion/ snapshot not found', path: p, reason_code: 'BLD_SNAPSHOT_MISSING' };
     }
     
-    const sourceDocs = path.join(p, 'source_docs');
+    const sourceDocs = path.join(p, 'docs');
     if (!fileExists(sourceDocs)) {
-      return { id: 'BLD_AXION_SNAPSHOT', status: 'WARN', details: 'source_docs/ not found in snapshot', path: sourceDocs };
+      return { id: 'BLD_AXION_SNAPSHOT', status: 'WARN', details: 'docs/ not found in snapshot', path: sourceDocs };
     }
     
     return { id: 'BLD_AXION_SNAPSHOT', status: 'PASS', path: p };
@@ -613,7 +613,7 @@ const ACTIVE_BUILD_GATES: Check = {
     
     // Derive project name
     const projectName = data.project_name || (() => {
-      const rpbsPath = path.join(buildRoot, 'axion', 'source_docs', 'product', 'RPBS_Product.md');
+      const rpbsPath = path.join(buildRoot, 'axion', 'docs', 'product', 'RPBS_Product.md');
       if (fileExists(rpbsPath)) {
         try {
           const content = fs.readFileSync(rpbsPath, 'utf-8');

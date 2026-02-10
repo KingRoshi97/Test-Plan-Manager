@@ -150,7 +150,7 @@ describe('AXION Core System Contract', () => {
 
   describe('Reason Codes (Diagnostic Guarantees)', () => {
     describe('reason code registry', () => {
-      const reasonCodesPath = path.join(AXION_ROOT, 'source_docs', 'registry', 'reason-codes.md');
+      const reasonCodesPath = path.join(AXION_ROOT, 'docs', 'registry', 'reason-codes.md');
       
       it('should have reason codes registry file', () => {
         expect(fileExists(reasonCodesPath)).toBe(true);
@@ -400,7 +400,7 @@ describe('AXION Core System Contract', () => {
         expect(fileExists(path.join(targetDir, 'manifest.json'))).toBe(true);
       });
 
-      it('should create source_docs in axion snapshot', () => {
+      it('should create docs in axion snapshot', () => {
         const targetDir = path.join(ctx.tempDir, 'docs-loc-test');
         
         runAxionCommand('axion-kit-create.ts', [
@@ -408,8 +408,8 @@ describe('AXION Core System Contract', () => {
           '--project-name', 'DocsLocTest'
         ]);
 
-        expect(fileExists(path.join(targetDir, 'axion', 'source_docs'))).toBe(true);
-        expect(fileExists(path.join(targetDir, 'axion', 'source_docs', 'product'))).toBe(true);
+        expect(fileExists(path.join(targetDir, 'axion', 'docs'))).toBe(true);
+        expect(fileExists(path.join(targetDir, 'axion', 'docs', 'product'))).toBe(true);
       });
     });
   });

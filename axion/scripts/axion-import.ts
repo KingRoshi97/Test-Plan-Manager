@@ -25,7 +25,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { writeJsonAtomic, writeTextAtomic } from '../lib/atomic-writer.js';
+import { writeJsonAtomic, writeTextAtomic } from './lib/atomic-writer.js';
 
 interface ImportOptions {
   sourceRoot: string;

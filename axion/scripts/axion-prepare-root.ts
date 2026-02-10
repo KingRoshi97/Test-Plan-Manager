@@ -3,7 +3,7 @@
  * AXION Prepare Root
  * 
  * Stage 0: Creates the project workspace root before any other stage runs.
- * Reads project name from axion/source_docs/product/RPBS_Product.md and creates
+ * Reads project name from axion/docs/product/RPBS_Product.md and creates
  * the workspace at <BUILD_ROOT>/<PROJECT_NAME>/ with required subdirectories.
  * 
  * Two-Root Model:
@@ -56,7 +56,7 @@ interface PrepareRootOptions {
 }
 
 const REQUIRED_SUBDIRS = [
-  'source_docs',
+  'docs',
   'domains',
   'registry',
   'app'
@@ -106,7 +106,7 @@ function parseArgs(args: string[]): PrepareRootOptions {
 }
 
 function extractProjectName(buildRoot: string): string | null {
-  const rpbsPath = path.join(buildRoot, 'axion', 'source_docs', 'product', 'RPBS_Product.md');
+  const rpbsPath = path.join(buildRoot, 'axion', 'docs', 'product', 'RPBS_Product.md');
   
   if (!fs.existsSync(rpbsPath)) {
     return null;
@@ -219,7 +219,7 @@ function main(): void {
         stage: 'prepare-root',
         reason_codes: ['PROJECT_NAME_MISSING'],
         hint: [
-          'Could not extract project name from axion/source_docs/product/RPBS_Product.md',
+          'Could not extract project name from axion/docs/product/RPBS_Product.md',
           'Ensure **Project:** field is populated (not a placeholder)',
           'Or provide --project-name <name> explicitly'
         ]
