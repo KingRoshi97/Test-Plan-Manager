@@ -282,8 +282,8 @@ function main(): void {
     files_excluded: excluded,
     next_commands: [
       `cd ${newRootPath}`,
-      'Edit axion/source_docs/product/RPBS_Product.md',
-      'Edit axion/source_docs/product/REBS_Product.md',
+      'Edit axion/docs/product/RPBS_Product.md',
+      'Edit axion/docs/product/REBS_Product.md',
       'node --import tsx axion/scripts/axion-run.ts --preset foundation --plan scaffold',
     ],
   };

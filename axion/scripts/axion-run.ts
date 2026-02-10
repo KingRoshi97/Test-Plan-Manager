@@ -24,7 +24,7 @@ import * as path from 'path';
 import { spawn, SpawnOptions } from 'child_process';
 import { fileURLToPath } from 'url';
 import * as crypto from 'crypto';
-import { writeJsonAtomic, cleanupOrphanTmp } from '../lib/atomic-writer.js';
+import { writeJsonAtomic, cleanupOrphanTmp } from './lib/atomic-writer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -243,7 +243,7 @@ function resolveWorkspaceContext(
   
   if (!projectName) {
     // Read from RPBS_Product.md - same logic as axion-prepare-root.ts
-    const rpbsPath = path.join(resolvedBuildRoot, 'axion', 'source_docs', 'product', 'RPBS_Product.md');
+    const rpbsPath = path.join(resolvedBuildRoot, 'axion', 'docs', 'product', 'RPBS_Product.md');
     
     if (fs.existsSync(rpbsPath)) {
       const content = fs.readFileSync(rpbsPath, 'utf-8');
@@ -876,7 +876,7 @@ Examples:
           reason_codes: ['MISSING_WORKSPACE_CONTEXT'],
           hint: [
             'Provide --project-name <name> or ensure RPBS_Product.md contains a project name',
-            `Expected RPBS at: ${path.join(buildRoot, 'axion', 'source_docs', 'product', 'RPBS_Product.md')}`
+            `Expected RPBS at: ${path.join(buildRoot, 'axion', 'docs', 'product', 'RPBS_Product.md')}`
           ]
         }, null, 2));
         process.exit(1);

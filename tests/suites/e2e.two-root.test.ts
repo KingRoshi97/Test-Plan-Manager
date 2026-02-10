@@ -136,7 +136,7 @@ describe('E2E Two-Root Golden Path', () => {
     expect(fs.existsSync(path.join(ctx.buildRoot, 'manifest.json')), 'manifest.json should exist').toBe(true);
     
     // Verify RPBS exists in snapshot
-    const rpbsPath = path.join(ctx.buildRoot, 'axion', 'source_docs', 'product', 'RPBS_Product.md');
+    const rpbsPath = path.join(ctx.buildRoot, 'axion', 'docs', 'product', 'RPBS_Product.md');
     expect(fs.existsSync(rpbsPath), 'RPBS_Product.md should exist in snapshot').toBe(true);
     
     const rpbsContent = fs.readFileSync(rpbsPath, 'utf-8');

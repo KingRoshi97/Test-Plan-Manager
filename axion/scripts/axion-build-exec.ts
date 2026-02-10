@@ -26,7 +26,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { writeJsonAtomic } from '../lib/atomic-writer.js';
+import { writeJsonAtomic } from './lib/atomic-writer.js';
 
 interface BuildExecOptions {
   buildRoot: string;

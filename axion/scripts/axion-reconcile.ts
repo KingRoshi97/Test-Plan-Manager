@@ -29,7 +29,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { writeJsonAtomic } from '../lib/atomic-writer.js';
+import { writeJsonAtomic } from './lib/atomic-writer.js';
 
 interface ReconcileOptions {
   buildRoot: string;
