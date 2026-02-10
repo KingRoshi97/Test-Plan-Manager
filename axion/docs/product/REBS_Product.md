@@ -1,6 +1,23 @@
 # Requirements & Engineering Boundaries Specification (REBS)
 
+> **Level 0 — Engineering Truth.** This is the single authoritative source for *how* the product is built. It translates every RPBS product decision into deterministic engineering rules, defaults, and policies. When RPBS is silent, REBS provides the default.
+
+## How to Use This Template
+
+1. **Fill after RPBS.** The seed step reads RPBS choices and populates the `{{PLACEHOLDER}}` fields below. Manual edits are allowed but must not contradict RPBS.
+2. **Sections mirror RPBS.** §1–§34 here map 1:1 to RPBS §1–§34. If a RPBS section is marked N/A, the corresponding REBS section is also N/A.
+3. **Defaults are binding.** Where this document says "Default: X," the agent must use X unless RPBS provides an explicit override.
+4. **Decision escalation.** §2 defines when the agent must stop and ask instead of guessing. This is enforced by the verify step.
+5. **Universal defaults.** §33 provides fallback values for any RPBS capability left unspecified.
+6. **Definition of Done.** §34 defines what "complete" means — the lock gate checks these criteria.
+
+### Placeholder Format
+
+- `{{PLACEHOLDER_NAME}}` — populated from RPBS during the seed step
+- Defaults and decision rules are pre-filled and should not contain `{{...}}` placeholders
+
 ## Document Info
+
 **Project:** {{PROJECT_NAME}}
 **Version:** {{VERSION}}
 **Last Updated:** {{DATE}}
