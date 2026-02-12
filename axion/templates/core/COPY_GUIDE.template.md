@@ -1,5 +1,6 @@
 # Copy Guide — {{DOMAIN_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:CORE_DOC:COPY_GUIDE -->
 
 ## Overview
@@ -26,6 +27,11 @@ RULES:
 - Never use technical jargon in user-facing messages
 - If RPBS §10 Copywriting Toggles say "No" for a surface, leave those entries as [TBD]
 - Use {{PRODUCT_NAME}} placeholder for product name references
+
+CASCADE POSITION (fill priority 11 of 13):
+- Upstream (read from): RPBS (§10 copywriting & content strategy, §15 error handling), BELS (reason codes → error messages), SCREENMAP (screens → page titles, empty states), UX_Foundations (interaction patterns → feedback messaging)
+- Downstream (feeds into): ERC (locked copy at lock time), frontend code generation (string constants, i18n keys, error messages)
+- COPY_GUIDE is filled late because it depends on knowing all screens (SCREENMAP), all error codes (BELS), and the voice/tone rules (RPBS) before writing user-facing text
 -->
 
 > Define all user-facing copy, labels, and messaging for this domain.

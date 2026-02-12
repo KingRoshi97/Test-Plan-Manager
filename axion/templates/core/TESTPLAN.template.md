@@ -1,5 +1,6 @@
 # Test Plan — {{DOMAIN_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:CORE_DOC:TESTPLAN -->
 
 ## Overview
@@ -28,6 +29,11 @@ RULES:
 - Coverage target: Every RPBS §5 journey step should have at least one happy-path and one error-path test
 - Test types: unit, integration, e2e, contract, performance, accessibility
 - Tests should be concrete enough that an agent can generate executable test code from them
+
+CASCADE POSITION (fill priority 9 of 13):
+- Upstream (read from): RPBS (§5 journeys, §2 features, §7 non-functional, §15 errors, §33 metrics), BELS (policy rules, state machines, validation rules), DIM (interface contracts), SCREENMAP (screen-level acceptance tests)
+- Downstream (feeds into): ERC (P0 acceptance scenarios locked at lock time), test file generation (executable test code from scenarios)
+- TESTPLAN consolidates testing requirements from all upstream docs — every rule, interface, and journey step should be reflected here
 -->
 
 > Define testing strategy, scenarios, and acceptance criteria for this domain.

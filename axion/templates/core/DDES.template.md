@@ -1,5 +1,6 @@
 # Domain Design & Entity Specification (DDES) — {{DOMAIN_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:CORE_DOC:DDES -->
 
 ## Overview
@@ -23,6 +24,11 @@ RULES:
 - The "Owner" column identifies which domain is the single source of truth for that entity
 - Only ONE domain can own an entity — if this domain consumes it, mark Owner as the source domain
 - Dependencies MUST match what's declared in domains.json
+
+CASCADE POSITION (fill priority 4 of 13):
+- Upstream (read from): RPBS (§2 features, §3 actors, §4 core objects), REBS (technical baseline), domains.json
+- Downstream (feeds into): UX_Foundations (entity context), UI_Constraints (data display rules), DIM (entity ownership drives interfaces), BELS (entity lifecycle → state machines), SCREENMAP (entities displayed per screen), COMPONENT_LIBRARY (entity display components), TESTPLAN (entity CRUD tests), ERC (locked at lock time)
+- DDES is filled early because nearly every downstream doc depends on knowing what entities exist and who owns them
 -->
 
 ---

@@ -1,5 +1,6 @@
 # Domain Interface Map (DIM) — {{DOMAIN_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:CORE_DOC:DIM -->
 
 ## Overview
@@ -30,6 +31,11 @@ RULES:
 - Contract Ref should point to the contracts module document or schema where the full spec lives
 - For REST APIs: define method, path, request/response shape
 - For events: define event name, payload schema, delivery guarantee
+
+CASCADE POSITION (fill priority 7 of 13):
+- Upstream (read from): DDES (entity ownership determines exposed interfaces), RPBS (§5 journey steps crossing domain boundaries, §9 integrations), BELS (state machine events → cross-domain notifications), domains.json (dependency graph)
+- Downstream (feeds into): TESTPLAN (API contract tests), ERC (locked interfaces at lock time), contracts module (TypeScript types and Zod schemas), backend module (route implementation), frontend module (API client calls)
+- DIM is the contract surface — it defines how domains communicate and is critical for code generation accuracy
 -->
 
 > Define all interfaces this domain exposes and consumes.
