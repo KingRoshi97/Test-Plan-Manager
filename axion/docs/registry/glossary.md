@@ -1,25 +1,117 @@
 # Glossary
 
-## Overview
-This document defines key terms used throughout the Axiom Assembler system.
+> **Registry Guardrail.** Canonical definitions for every term used across the AXION system. Pipeline scripts, documentation templates, and the dashboard all reference these definitions. When a term appears in generated docs, its meaning must match this glossary.
 
-## Terms
+---
+
+## Pipeline & Orchestration
 
 | Term | Definition |
 |------|------------|
-| BELS | Business Entity Logic Specification - defines business rules and state machines |
-| DIM | Domain Interface Map - defines interfaces between domains |
-| DDES | Domain Design & Entity Specification - defines domain entities |
-| ERC | Execution Readiness Contract - locked specification for implementation |
-| RPBS | Requirements & Policy Baseline Specification - product-level rules |
-| REBS | Requirements & Entity Baseline Specification - product-level entities |
-| SourceRef | Citation to an authoritative source document |
-| Domain Pack | Set of generated documentation for a single domain |
-| UNKNOWN | Placeholder for missing information that needs resolution |
-| Open Questions | List of unresolved questions requiring answers |
-| Pipeline | Sequence of assembler commands: init, gen, seed, draft, review, verify, lock |
-| Agent Kit | Zip file containing all generated artifacts for handoff |
-| Vibecoding Agent | AI agent that consumes Agent Kits to implement code |
+| Pipeline | The ordered sequence of steps that transforms a project idea into a deployable Agent Kit. Default full sequence: `generate → seed → draft → content-fill → review → verify → lock → scaffold-app → build → test → deploy → package`. |
+| Stage | A single executable step within the pipeline (e.g., `seed`, `draft`, `verify`). Each stage reads input artifacts and produces output artifacts. |
+| Stage Plan | A named subset of pipeline stages defined in `presets.json`. Examples: `docs:full`, `app:bootstrap`, `system:full`. Stage plans control which stages the orchestrator chains together. |
+| Gate | A precondition check that must pass before a stage can execute. Gates are defined in `presets.json` under `gates`. Example: the `lock` gate requires `verify` to have passed. |
+| Gate Guard | The enforcement mechanism that evaluates gate conditions at runtime. If a guard fails, the pipeline halts with a SCREAMING_SNAKE_CASE reason code. |
+| Run | A single execution of a stage plan against a workspace. Each run produces a JSON record in `registry/run_history/`. |
+| Run Lock | A mutex mechanism preventing concurrent pipeline runs against the same workspace. Stale locks (reason code `RUN_LOCK_STALE`) are detected and reported. |
+| Orchestrator | The server-side engine (`axion-orchestrate.ts`) that chains stages, enforces gates, manages retries, and streams progress via SSE. |
+| Retry | Automatic re-execution of a failed stage with exponential backoff. Triggered by transient failures: ENOENT, ETIMEDOUT, ECONNRESET, OOM-kill (exit 137). Managed by `lib/retry.ts`. |
+| Retry from Failed Step | Resume pipeline execution from the exact step that failed, skipping previously successful steps. |
 
-## Open Questions
-- UNKNOWN
+## Documents & Content
+
+| Term | Definition |
+|------|------------|
+| RPBS | Requirements & Product Boundaries Specification. Level 0 product truth — defines *what* the product does, who it serves, and scope boundaries. |
+| REBS | Requirements & Engineering Boundaries Specification. Level 0 engineering truth — translates RPBS decisions into deterministic engineering rules, defaults, and policies. |
+| SCHEMA_SPEC | Schema Specification. Defines every persistent entity, field, relationship, and constraint. Derived from RPBS §4. |
+| COMPONENT_SPEC | Component Specification. Defines every page, component, form, and interaction. Derived from RPBS §5/§6. |
+| IMPLEMENTATION_GUIDE | Implementation Guide. Defines build sequence, repository structure, and development conventions. Derived from REBS. |
+| BELS | Business Entity Logic Specification. Defines business rules, state machines, and entity lifecycle for a domain module. |
+| DDES | Domain Design & Entity Specification. Defines domain entities, their attributes, and structural decisions. |
+| DIM | Domain Interface Map. Defines interfaces, contracts, and communication patterns between domain modules. |
+| UX_Foundations | UX patterns, interaction models, and user experience guidelines for a domain module. |
+| UI_Constraints | UI constraints, design system rules, and visual standards for a domain module. |
+| SCREENMAP | Screen map defining page layouts, navigation flows, and wireframe specifications. |
+| TESTPLAN | Test plan defining test strategy, coverage targets, and test case inventory for a domain module. |
+| COMPONENT_LIBRARY | Component library specification listing reusable UI components, props, and variants. |
+| COPY_GUIDE | Copywriting guide defining voice, tone, terminology, and content standards. |
+| ERC | Execution Readiness Contract. The locked, immutable specification that the build-exec step consumes. Generated by the `lock` stage. |
+| ALRP | Agent Loop Response Protocol. Defines how the AI agent should structure its responses during code generation. |
+| SROL | System Roles & Ownership Ledger. Maps system components to their owning domains and responsible actors. |
+| TIES | Technical Integration & Extension Specification. Defines integration points, extension mechanisms, and third-party boundaries. |
+| OPEN_QUESTIONS | A mandatory section in every document listing unresolved questions with impact analysis. Items here block the `lock` gate. |
+| SourceRef | A citation to an authoritative source document. Used to trace generated content back to its origin. |
+
+## Workspaces & Structure
+
+| Term | Definition |
+|------|------------|
+| Two-Root Architecture | Strict separation between the immutable AXION system directory (`axion/`) and generated project workspaces (sibling directories at repo root). Prevents system pollution. |
+| Workspace | A project directory created by `kit-create` as a sibling to `axion/`. Contains `manifest.json`, `registry/`, `domains/`, and optionally `app/`. |
+| Agent Kit | The final deliverable — a zip bundle containing all locked documentation, the ERC, and build artifacts. Consumed by a vibecoding agent to implement code. |
+| Domain Pack | The set of generated documentation files for a single domain module within a workspace (BELS, DDES, DIM, etc.). |
+| Manifest | `manifest.json` in a workspace root. Tracks project metadata, pipeline state, and per-module stage completion. |
+| Stack Profile | `registry/stack_profile.json`. The authoritative source for stack configuration (frontend, backend, database, hosting) within a kit workspace. |
+
+## Domains & Modules
+
+| Term | Definition |
+|------|------------|
+| Domain | A bounded area of responsibility in the generated project (e.g., `auth`, `backend`, `frontend`). Each domain has its own folder under `domains/` with a complete set of template-derived documents. |
+| Module | Synonymous with domain in AXION context. The unit of pipeline execution — stages run per-module in dependency order. |
+| Domain Type | Classification of a domain's role: `foundation`, `data`, `security`, `core`, `frontend`, `integration`, `quality`, `crosscutting`, `operations`, `platform`. |
+| Canonical Order | The deterministic ordering of all 19 modules defined in `domains.json`. Used by the orchestrator to ensure dependency-safe execution. |
+| Dependency | A module that must be processed before the current module. Defined in `domains.json` per module. |
+| Preset | A named module selection defined in `presets.json`. Controls which modules a pipeline run targets. Examples: `foundation`, `fullstack-web`, `release`. |
+
+## Content & Quality
+
+| Term | Definition |
+|------|------------|
+| UNKNOWN | A placeholder marker indicating missing information that requires resolution. Blocks the `lock` gate. Must have a corresponding entry in OPEN_QUESTIONS. |
+| Placeholder | A `{{PLACEHOLDER_NAME}}` token in a template that gets replaced with real project data during the seed/draft/content-fill stages. |
+| Anchor | An HTML comment marker (`<!-- AXION:ANCHOR:<ID> -->`) used for dynamic content injection during code generation. |
+| Cascade | The process where filling a higher-priority document propagates context to lower-priority documents. Fill order: RPBS → REBS → README → DDES → UX_Foundations → UI_Constraints → DIM → SCREENMAP → TESTPLAN → COMPONENT_LIBRARY → COPY_GUIDE → BELS → OPEN_QUESTIONS. |
+| Content Fill | The AI-driven process (`axion-content-fill.ts`) that scans documents for UNKNOWNs and fills them using context from higher-priority documents. |
+| Revision | A versioned iteration of the Assembly pipeline. Users can add new ideas or critiques, bump the revision number, and re-run the pipeline non-destructively to produce upgrade kits. |
+| Upgrade Layer | An iterative assembly upgrade produced by the revision system. Each layer is additive — it does not destroy previous work. |
+| DOC_PRIORITY_ORDER | The ordered list of document types used by content-fill to determine which files to fill first. Higher-priority docs cascade context downward. |
+| DOC_TYPE_MAP | A mapping of document types to tailored AI prompts. Ensures content-fill generates contextually appropriate content for each doc type (13 types). |
+
+## Build & Deploy
+
+| Term | Definition |
+|------|------------|
+| Build Plan | A structured execution plan generated by `build-plan` that defines the sequence of file operations needed to scaffold the application. |
+| Build Exec | The execution engine (`build-exec`) that reads the build plan and performs file operations (create, modify, delete) to produce the application. |
+| Scaffold | The initial application skeleton generated by `scaffold-app` from locked documentation. |
+| Activate | Makes a specific build the "active" build for a workspace, enabling `run-app` to start it. |
+| Package | Bundles the completed Agent Kit into a distributable zip file. Exists in two forms: `.mjs` (domain-based bundles) and `.ts` (workspace-scoped packages). |
+| Vibecoding Agent | The downstream AI agent that consumes Agent Kits and implements the actual application code. |
+
+## System Operations
+
+| Term | Definition |
+|------|------------|
+| Doctor | Diagnostic script (`axion-doctor.ts`) that checks system health: Node version, tsx availability, file permissions, config validity. |
+| Preflight | Pre-execution validation (`axion-preflight.ts`) that verifies workspace integrity before running pipeline stages. |
+| Reconcile | Deterministic comparison (`axion-reconcile.ts`) of imported facts against build-authoritative outputs to detect drift and report mismatches. |
+| Import | Read-only analysis (`axion-import.ts`) of existing repositories. Produces import reports and documentation seeds without modifying source code. |
+| Iterate | Orchestration wrapper (`axion-iterate.ts`) that chains AXION primitives, enforces gates, and produces `next_commands` for remediation. Requires explicit `--allow-apply` for changes. |
+| Seam | A defined interface point between two domain modules. Tracked in `registry/seams.json` and validated by `verify-seams`. |
+| Atomic Writer | The crash-resilient file writing pattern: write to temp file, then atomic rename. Ensures data integrity during pipeline execution. |
+| Transient Failure | A temporary error (ENOENT, ETIMEDOUT, ECONNRESET, OOM-kill) that can be automatically retried with exponential backoff. |
+| Release Gate | The final quality check before a kit is considered shippable. Verified by `release-check.ts`. |
+| Override | An explicit flag that bypasses a gate check. Must be logged. Example: `dev_build` overrides the `scaffold-app` docs-locked requirement. |
+
+---
+
+## Cross-References
+
+- **Domain list and dependencies:** See `domain-map.md` and `domain-build-order.md`
+- **Reason codes:** See `reason-codes.md`
+- **Action verbs:** See `action-vocabulary.md`
+- **Stage plans and presets:** See `run-sequences.md`
+- **Module templates per domain:** See `module-index.md`
