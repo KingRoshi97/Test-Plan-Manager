@@ -1,10 +1,38 @@
 # System Refinement & Optimization Loop (SROL) — {{PROJECT_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
+<!-- AXION:CORE_DOC:SROL -->
+
 ## Overview
 **Project:** {{PROJECT_NAME}}
 **Version:** {{VERSION}}
 **Last Updated:** {{DATE}}
 **Loop Iteration:** {{ITERATION}}
+
+<!-- AXION:AGENT_GUIDANCE
+PURPOSE: SROL defines the post-deployment improvement cycle. After TIES Phase 12
+completes and the application is live, the system enters SROL for continuous refinement.
+This is a PROJECT-LEVEL document (one per kit, not per domain).
+
+SOURCES TO DERIVE FROM:
+1. TIES — completion of all 12 phases is the entry condition for SROL
+2. RPBS §33 Success Metrics — KPIs define what to observe and measure
+3. RPBS §7 Non-Functional Profile — performance targets define acceptable thresholds
+4. TESTPLAN — test coverage baseline informs regression detection
+5. Live system telemetry — analytics, error logs, user feedback
+
+RULES:
+- SROL operates as a repeating 5-step loop: OBSERVE → ANALYZE → PLAN → EXECUTE → VERIFY
+- Each iteration MUST have a defined focus area and measurable success criteria
+- Changes MUST NOT break existing test suites (no regressions)
+- Escalation criteria define when to exit SROL and return to TIES for major work
+- Each iteration produces a before/after metrics comparison
+
+CASCADE POSITION (project-level — post-deployment continuous improvement):
+- Upstream (read from): TIES (completed build), RPBS (success metrics), TESTPLAN (baseline coverage), live system data
+- Downstream (feeds into): Future TIES iterations (major feature requests), documentation updates (if behavior changes)
+- SROL is the terminal phase of the AXION lifecycle — it loops indefinitely until the product is retired or a major re-architecture triggers a return to TIES
+-->
 
 ## Purpose
 This document defines the post-build improvement cycle. After initial deployment (TIES Phase 12), the system enters SROL for continuous refinement. Each loop iteration addresses feedback, optimizes performance, and evolves the product.
@@ -194,6 +222,12 @@ This document defines the post-build improvement cycle. After initial deployment
 2. **Medium issues** → Expand iteration scope
 3. **Major issues** → Pause SROL, escalate to product
 4. **Critical issues** → Emergency response protocol
+
+---
+
+## Open Questions
+<!-- AGENT: Refinement questions that need clarification for the current iteration. -->
+- UNKNOWN
 
 ---
 

@@ -1,9 +1,40 @@
 # Technical Implementation Execution Specification (TIES) — {{PROJECT_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
+<!-- AXION:CORE_DOC:TIES -->
+
 ## Overview
 **Project:** {{PROJECT_NAME}}
 **Version:** {{VERSION}}
 **Last Updated:** {{DATE}}
+
+<!-- AXION:AGENT_GUIDANCE
+PURPOSE: TIES defines the 12-phase implementation discipline for building a project.
+It is the execution roadmap — each phase has inputs, outputs, and verification gates.
+This is a PROJECT-LEVEL document (one per kit, not per domain).
+
+SOURCES TO DERIVE FROM:
+1. RPBS — product requirements inform what gets built in each phase
+2. REBS — technical architecture determines tooling and environment setup
+3. DDES — entity specifications drive Phase 2 (Schema) and Phase 3 (Contracts)
+4. DIM — interface definitions drive Phase 5 (Backend Core)
+5. SCREENMAP — screen inventory drives Phase 7 (Frontend Shell)
+6. COMPONENT_LIBRARY — component catalog drives Phase 8 (Components)
+7. TESTPLAN — testing strategy drives Phase 10 (Testing)
+8. ERC — locked contracts are the gate for code generation phases
+
+RULES:
+- Phases MUST execute in order (1 → 12); each gate must pass before proceeding
+- Each phase gate defines concrete, verifiable completion criteria
+- If a phase fails, log the failure reason and revert to the previous state
+- Partial completion is allowed with explicit WIP status
+- All verification gates reference upstream documents by name
+
+CASCADE POSITION (project-level — post-lock execution guide):
+- Upstream (read from): ALL locked domain docs via ERC, RPBS, REBS
+- Downstream (feeds into): Agent execution (tells the agent what to build and in what order)
+- TIES is consumed by build agents after the documentation pipeline completes and ERC is locked
+-->
 
 ## Purpose
 This document defines the 12-phase implementation discipline for building the project. Each phase has specific inputs, outputs, and verification gates. Agents and developers must follow these phases in order.
@@ -360,3 +391,9 @@ Project is complete when:
 - [ ] All 12 phases pass verification
 - [ ] ERC signed off
 - [ ] Production deployment verified
+
+---
+
+## Open Questions
+<!-- AGENT: Implementation questions that need clarification before or during execution. -->
+- UNKNOWN

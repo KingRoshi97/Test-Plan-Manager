@@ -1,9 +1,38 @@
 # Agent Launch & Reasoning Protocol (ALRP) — {{PROJECT_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
+<!-- AXION:CORE_DOC:ALRP -->
+
 ## Overview
 **Project:** {{PROJECT_NAME}}
 **Version:** {{VERSION}}
 **Last Updated:** {{DATE}}
+
+<!-- AXION:AGENT_GUIDANCE
+PURPOSE: ALRP defines the behavioral contract for AI agents working on this project.
+It establishes reasoning protocols, execution rules, communication formats, and guardrails.
+This is a PROJECT-LEVEL document (one per kit, not per domain).
+
+SOURCES TO DERIVE FROM:
+1. RPBS — product requirements define what the agent is building toward
+2. REBS — technical architecture defines the agent's tooling constraints
+3. ERC — locked contracts define what the agent must implement
+4. TIES — phase structure defines the agent's execution order
+5. domain-map — domain boundaries define the agent's scope
+
+RULES:
+- The agent MUST follow the Read → Reason → Reference → Restrict protocol before any action
+- The agent MUST NOT invent information not grounded in source documents
+- The agent MUST NOT modify locked artifacts (ERC, locked registry files)
+- The agent MUST log all actions to ASSEMBLER_REPORT
+- Every decision MUST cite its source document
+- Missing information MUST be marked as UNKNOWN and logged to Open Questions
+
+CASCADE POSITION (project-level — agent behavioral contract):
+- Upstream (read from): RPBS (product goals), REBS (tech constraints), ERC (locked specs), TIES (execution order), domain-map (scope boundaries)
+- Downstream (feeds into): Agent execution behavior (how the agent reasons and acts)
+- ALRP is consumed by agents at the start of every session to establish behavioral boundaries
+-->
 
 ## Purpose
 This document defines how AI agents should reason, operate, and make decisions when building or modifying this project. It establishes the behavioral contract between human intent and agent execution.
@@ -133,6 +162,12 @@ This document defines how AI agents should reason, operate, and make decisions w
 1. Save partial progress
 2. Log checkpoint
 3. Report timeout with resume instructions
+
+---
+
+## Open Questions
+<!-- AGENT: Agent behavioral questions that need clarification. -->
+- UNKNOWN
 
 ---
 

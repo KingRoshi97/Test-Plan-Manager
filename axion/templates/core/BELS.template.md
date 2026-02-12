@@ -29,6 +29,11 @@ RULES:
 - SourceRef MUST point to the upstream RPBS section or DDES the rule derives from
 - If business logic is genuinely unknown, write UNKNOWN and add to Open Questions
 - Do NOT invent business rules that aren't grounded in RPBS or user intent
+
+CASCADE POSITION (fill priority 12 of 13):
+- Upstream (read from): RPBS, REBS, DDES
+- Downstream (feeds into): DIM (interface contracts), COPY_GUIDE (error messages), TESTPLAN (business rule tests), ERC (locked at lock time)
+- BELS is filled late because it needs entity definitions (DDES) and product requirements (RPBS) as input before business rules can be specified
 -->
 
 ---

@@ -1,5 +1,6 @@
 # Component Library — {{DOMAIN_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:CORE_DOC:COMPONENT_LIBRARY -->
 
 ## Overview
@@ -25,6 +26,11 @@ RULES:
 - Shared/reusable components vs page-specific components should be distinguished
 - Props should be typed (string, number, boolean, enum, callback)
 - Accessibility requirements are NOT optional for interactive components
+
+CASCADE POSITION (fill priority 10 of 13):
+- Upstream (read from): SCREENMAP (Screen-to-Component Mapping defines which components exist), UI_Constraints (visual design rules constrain styling), UX_Foundations (interaction patterns define behavior), RPBS (§4 core objects → entity display patterns)
+- Downstream (feeds into): TESTPLAN (component-level tests), ERC (locked component spec at lock time), frontend code generation (component files, props, imports)
+- COMPONENT_LIBRARY catalogs every reusable UI component — the agent uses it to know what to build and how components compose together
 -->
 
 > Catalog all reusable UI components owned by this domain.

@@ -1,5 +1,6 @@
 # UX Foundations — {{DOMAIN_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:CORE_DOC:UX_FOUNDATIONS -->
 
 ## Overview
@@ -21,6 +22,11 @@ RULES:
 - Every user type here MUST map to an Actor in RPBS §3
 - Every user journey MUST trace to a Journey in RPBS §5
 - Accessibility requirements are not optional — state them explicitly or mark N/A with reason
+
+CASCADE POSITION (fill priority 5 of 13):
+- Upstream (read from): RPBS (§3 actors, §5 journeys, §6 navigation, §16 onboarding, §18 accessibility), DDES (entity context)
+- Downstream (feeds into): UI_Constraints (responsive strategy, interaction patterns), SCREENMAP (journey steps → screens), COMPONENT_LIBRARY (interaction patterns → component behavior), COPY_GUIDE (UX patterns → feedback messaging)
+- UX_Foundations defines the human-centered design layer that constrains all visual/interactive decisions downstream
 -->
 
 ---

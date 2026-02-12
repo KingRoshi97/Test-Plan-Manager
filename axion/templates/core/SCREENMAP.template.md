@@ -1,5 +1,6 @@
 # Screen Map — {{DOMAIN_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:CORE_DOC:SCREENMAP -->
 
 ## Overview
@@ -25,6 +26,11 @@ RULES:
 - Every RPBS §5 journey step should map to a screen
 - Every RPBS §2 feature should appear on at least one screen
 - Parent Screen column enables the agent to build the component tree
+
+CASCADE POSITION (fill priority 8 of 13):
+- Upstream (read from): RPBS (§2 features, §5 journeys, §6 navigation), UX_Foundations (responsive strategy, user journey flows), DDES (entity details → data displayed per screen), UI_Constraints (layout rules)
+- Downstream (feeds into): COMPONENT_LIBRARY (screens define which components are needed), COPY_GUIDE (screens need page titles, headings, empty states), TESTPLAN (screen-level acceptance tests), frontend code generation (routing config, page components)
+- SCREENMAP is the complete screen inventory — the agent uses it to generate routing, page structure, and layout code
 -->
 
 > Map all screens, views, and navigation flows for this domain.
