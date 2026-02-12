@@ -70,6 +70,112 @@ function ensureFile(filePath, content) {
   return true;
 }
 
+function parseSections(markdown) {
+  const lines = markdown.split('\n');
+  const sections = [];
+  let preamble = '';
+  let currentSection = null;
+
+  for (const line of lines) {
+    if (/^## /.test(line)) {
+      if (currentSection) {
+        sections.push(currentSection);
+      }
+      currentSection = { name: line.replace(/^## /, '').trim(), header: line, body: '' };
+    } else if (currentSection) {
+      currentSection.body += line + '\n';
+    } else {
+      preamble += line + '\n';
+    }
+  }
+  if (currentSection) {
+    sections.push(currentSection);
+  }
+  return { preamble, sections };
+}
+
+function mergeIntoTemplate(existingContent, draftContent, sectionMap) {
+  const template = parseSections(existingContent);
+  const draft = parseSections(draftContent);
+
+  const draftByName = {};
+  for (const s of draft.sections) {
+    draftByName[s.name] = s;
+  }
+
+  let result = template.preamble;
+
+  for (const tSection of template.sections) {
+    const draftSectionName = sectionMap[tSection.name];
+    const draftSection = draftSectionName ? draftByName[draftSectionName] : null;
+
+    if (draftSection) {
+      result += `## ${tSection.name}\n${draftSection.body}`;
+    } else {
+      result += `## ${tSection.name}\n${tSection.body}`;
+    }
+  }
+
+  return result.replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
+}
+
+const BELS_SECTION_MAP = {
+  'Policy Rules (Candidates)': 'Policy Rules (Candidates)',
+  'State Machines (Candidates)': 'State Machines (Candidates)',
+  'Validation Rules (Candidates)': 'Validation Rules (Candidates)',
+  'Reason Codes Referenced': 'Reason Codes Referenced',
+  'Open Questions': 'Open Questions',
+};
+
+const DDES_SECTION_MAP = {
+  'Purpose': 'Purpose',
+  'Entities': 'Entities',
+  'Key Responsibilities': 'Key Responsibilities',
+  'Domain Boundaries': 'Domain Boundaries',
+  'Dependencies': 'Dependencies',
+  'Open Questions': 'Open Questions',
+};
+
+const DIM_SECTION_MAP = {
+  'Exposed Interfaces': 'Exposed Interfaces',
+  'Consumed Interfaces': 'Consumed Interfaces',
+  'Event Contracts': 'Event Contracts',
+  'Data Flow Summary': 'Data Flow Summary',
+  'Open Questions': 'Open Questions',
+};
+
+function ensureFileWithMerge(filePath, draftContent, sectionMap) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    if (!dryRun) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  }
+
+  if (fs.existsSync(filePath)) {
+    const existing = fs.readFileSync(filePath, 'utf8');
+    if (existing.includes('AXION:TEMPLATE_CONTRACT:v1')) {
+      const merged = mergeIntoTemplate(existing, draftContent, sectionMap);
+      if (!dryRun) {
+        fs.writeFileSync(filePath, merged, 'utf8');
+      }
+      report.modified.push(filePath + ' (merged)');
+      return true;
+    }
+    if (!dryRun) {
+      fs.writeFileSync(filePath, draftContent, 'utf8');
+    }
+    report.modified.push(filePath);
+    return true;
+  }
+
+  if (!dryRun) {
+    fs.writeFileSync(filePath, draftContent, 'utf8');
+  }
+  report.created.push(filePath);
+  return true;
+}
+
 function readSourceDoc(axionRoot, relPath) {
   const fullPath = path.join(axionRoot, relPath);
   if (fs.existsSync(fullPath)) {
@@ -877,15 +983,15 @@ try {
     
     const belsContent = generateBELSCandidates(module, ctx, rpbsRules);
     const belsPath = path.join(domainDir, `BELS_${module}.md`);
-    ensureFile(belsPath, belsContent);
+    ensureFileWithMerge(belsPath, belsContent, BELS_SECTION_MAP);
     
     const ddesContent = generateDDES(module, ctx);
     const ddesPath = path.join(domainDir, `DDES_${module}.md`);
-    ensureFile(ddesPath, ddesContent);
+    ensureFileWithMerge(ddesPath, ddesContent, DDES_SECTION_MAP);
     
     const dimContent = generateDIM(module, ctx);
     const dimPath = path.join(domainDir, `DIM_${module}.md`);
-    ensureFile(dimPath, dimContent);
+    ensureFileWithMerge(dimPath, dimContent, DIM_SECTION_MAP);
     
     const openQuestionsContent = generateOpenQuestions(module, ctx);
     const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
