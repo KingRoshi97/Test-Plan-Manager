@@ -1,5 +1,6 @@
 # Execution Readiness Contract (ERC) — {{DOMAIN_NAME}} v{{VERSION}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:CORE_DOC:ERC -->
 
 ## Overview
@@ -29,6 +30,11 @@ DOWNSTREAM CONSUMERS:
 - scaffold-app: Uses ERC to generate application code (routes, models, validation)
 - build-exec: Reads ERC for file operations and code patterns
 - verify step: Compares generated code against ERC to ensure compliance
+
+CASCADE POSITION (terminal — auto-generated at lock time):
+- Upstream (copied from): BELS (policy rules, state machines, validation, reason codes, auth rules, computed values), DDES (entity specs), DIM (interfaces), TESTPLAN (P0 acceptance scenarios), COPY_GUIDE (user-facing messages)
+- Downstream (feeds into): scaffold-app (application code generation), build-exec (file operations), verify step (compliance checking)
+- ERC is NOT manually edited — it is the locked snapshot of all upstream docs, assembled by the lock step after verification passes
 -->
 
 ---
@@ -142,3 +148,9 @@ that helps the implementing agent. They might include:
   - UNKNOWNs found: UNKNOWN
   - UNKNOWNs resolved: UNKNOWN
   - Open Questions remaining: UNKNOWN
+
+---
+
+## Open Questions
+<!-- AGENT: Lock-blocking issues discovered during the lock process. Auto-populated by the lock step. -->
+- UNKNOWN

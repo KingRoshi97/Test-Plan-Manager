@@ -1,5 +1,6 @@
 # UI Constraints — {{DOMAIN_NAME}}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
 <!-- AXION:CORE_DOC:UI_CONSTRAINTS -->
 
 ## Overview
@@ -21,6 +22,11 @@ RULES:
 - If a constraint seems too restrictive, add an Open Question rather than ignoring it
 - All color values should support dark mode (define both light and dark variants)
 - Reference the selected UI library/framework from the architecture module
+
+CASCADE POSITION (fill priority 6 of 13):
+- Upstream (read from): RPBS (§18 accessibility, §30 branding), UX_Foundations (responsive strategy, interaction patterns), architecture module (tech stack)
+- Downstream (feeds into): SCREENMAP (layout constraints per screen), COMPONENT_LIBRARY (component styling rules, allowed patterns), COPY_GUIDE (typography constraints for copy), frontend code generation (CSS variables, theme config)
+- UI_Constraints sets the visual design system that ALL UI code must respect — violations here cause inconsistent output
 -->
 
 ---
