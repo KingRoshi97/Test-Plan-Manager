@@ -39,6 +39,12 @@ function loadConfig() {
   return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
 
+function getDomainPrefix(config, moduleSlug) {
+  const moduleDef = (config.modules || []).find(m => m.slug === moduleSlug);
+  if (moduleDef && moduleDef.prefix) return moduleDef.prefix;
+  return moduleSlug.substring(0, 2).toLowerCase();
+}
+
 function loadSourcesConfig() {
   const configPath = 'axion/config/sources.json';
   if (!fs.existsSync(configPath)) {
@@ -725,9 +731,9 @@ ${responsibilities}
 `;
 }
 
-function generateDIM(module, ctx) {
+function generateDIM(module, ctx, _rpbsRules, prefix) {
   const modDim = MODULE_DIM_CONTENT[module] || { exposedType: 'REST', consumedFrom: 'contracts' };
-  const prefix = module.substring(0, 2).toLowerCase();
+  if (!prefix) prefix = module.substring(0, 2).toLowerCase();
 
   const exposedRows = ctx.entities.slice(0, 3).map((e, i) => {
     const ifId = `${prefix}_IF_${String(i + 1).padStart(3, '0')}`;
@@ -923,6 +929,855 @@ ${domainQuestions.join('\n')}
 `;
 }
 
+const UX_FOUNDATIONS_SECTION_MAP = {
+  'User Types': 'User Types',
+  'User Journeys': 'User Journeys',
+  'Information Architecture': 'Information Architecture',
+  'Interaction Patterns': 'Interaction Patterns',
+  'Responsive Strategy': 'Responsive Strategy',
+  'Open Questions': 'Open Questions',
+};
+
+const UI_CONSTRAINTS_SECTION_MAP = {
+  'Visual Design Constraints': 'Visual Design Constraints',
+  'Layout Constraints': 'Layout Constraints',
+  'Component Constraints': 'Component Constraints',
+  'Responsive Behavior': 'Responsive Behavior',
+  'Animation & Motion Constraints': 'Animation & Motion Constraints',
+  'Dark Mode Requirements': 'Dark Mode Requirements',
+  'Performance Constraints': 'Performance Constraints',
+  'Open Questions': 'Open Questions',
+};
+
+const SCREENMAP_SECTION_MAP = {
+  'Screen Inventory': 'Screen Inventory',
+  'Navigation Flows': 'Navigation Flows',
+  'Screen-to-Component Mapping': 'Screen-to-Component Mapping',
+  'State Requirements Per Screen': 'State Requirements Per Screen',
+  'Open Questions': 'Open Questions',
+};
+
+const TESTPLAN_SECTION_MAP = {
+  'Test Strategy': 'Test Strategy',
+  'Acceptance Scenarios': 'Acceptance Scenarios',
+  'Business Rule Tests': 'Business Rule Tests',
+  'Edge Cases': 'Edge Cases',
+  'Error Scenarios': 'Error Scenarios',
+  'API Contract Tests': 'API Contract Tests',
+  'Performance Criteria': 'Performance Criteria',
+  'Test Data Requirements': 'Test Data Requirements',
+  'Coverage Goals': 'Coverage Goals',
+  'Open Questions': 'Open Questions',
+};
+
+const COMPONENT_LIBRARY_SECTION_MAP = {
+  'Component Inventory': 'Component Inventory',
+  'Component Variants': 'Component Variants',
+  'Component Composition': 'Component Composition',
+  'Component Dependencies': 'Component Dependencies',
+  'Component State': 'Component State',
+  'Component Sizing': 'Component Sizing',
+  'Open Questions': 'Open Questions',
+};
+
+const COPY_GUIDE_SECTION_MAP = {
+  'Tone & Voice': 'Tone & Voice',
+  'Page Titles & Headings': 'Page Titles & Headings',
+  'Labels & Headings': 'Labels & Headings',
+  'Error Messages': 'Error Messages',
+  'Success Messages': 'Success Messages',
+  'Empty States': 'Empty States',
+  'Confirmation Dialogs': 'Confirmation Dialogs',
+  'Placeholder Text': 'Placeholder Text',
+  'Loading & Progress Messages': 'Loading & Progress Messages',
+  'Open Questions': 'Open Questions',
+};
+
+const MODULE_UX_CONTENT = {
+  frontend: {
+    userTypes: (entities) => entities.slice(0, 3).map((e, i) => ({
+      type: `${e} User`, actor: `ACTOR_${String(i + 1).padStart(3, '0')}`,
+      desc: `User who interacts with ${e.toLowerCase()} features`, goals: `Create, view, and manage ${e.toLowerCase()}s`,
+      frequency: 'Daily', savvy: 'Low-Medium',
+    })),
+    journeyGen: (entities) => entities.slice(0, 2).map(e => ({
+      name: `Create ${e}`, userType: `${e} User`, trigger: `User wants to create a new ${e.toLowerCase()}`,
+      entry: `/${e.toLowerCase()}s`, steps: [
+        { name: 'Navigate', sees: `${e} list page`, does: 'Clicks "Create New" button', responds: `Shows ${e.toLowerCase()} creation form` },
+        { name: 'Fill Form', sees: 'Empty form with required fields', does: 'Enters all required information', responds: 'Validates input in real-time' },
+        { name: 'Submit', sees: 'Completed form', does: 'Clicks "Save" button', responds: `Creates ${e.toLowerCase()} and redirects to detail view` },
+      ],
+      success: `${e} successfully created and visible in list`, emotion: 'curious → focused → satisfied',
+    })),
+    interactionPatterns: { validation: 'On blur', errorDisplay: 'Inline', autoSave: 'No', pagination: 'Load more', nav: 'Sidebar', feedback: 'Toast' },
+  },
+  backend: {
+    userTypes: (entities) => [{ type: 'API Consumer', actor: 'ACTOR_001', desc: 'Frontend client or external service calling APIs', goals: 'Execute CRUD operations via REST endpoints', frequency: 'Continuous', savvy: 'High' }],
+    journeyGen: (entities) => entities.slice(0, 2).map(e => ({
+      name: `${e} CRUD Flow`, userType: 'API Consumer', trigger: `Client needs to manage ${e.toLowerCase()} data`,
+      entry: `/api/${e.toLowerCase()}s`, steps: [
+        { name: 'Request', sees: 'API endpoint', does: `Sends HTTP request to /api/${e.toLowerCase()}s`, responds: 'Validates request and processes' },
+        { name: 'Process', sees: 'Processing confirmation', does: 'Awaits response', responds: 'Returns JSON response with data or error' },
+      ],
+      success: 'API returns correct status code and response body', emotion: 'request → processing → response',
+    })),
+    interactionPatterns: { validation: 'On request', errorDisplay: 'JSON error response', autoSave: 'N/A', pagination: 'Cursor-based', nav: 'N/A', feedback: 'HTTP status codes' },
+  },
+  auth: {
+    userTypes: () => [
+      { type: 'Unauthenticated Visitor', actor: 'ACTOR_001', desc: 'Anonymous user without active session', goals: 'Register or log in', frequency: 'Occasional', savvy: 'Low-Medium' },
+      { type: 'Authenticated User', actor: 'ACTOR_002', desc: 'User with active session and valid token', goals: 'Access protected resources', frequency: 'Daily', savvy: 'Low-Medium' },
+    ],
+    journeyGen: () => [
+      { name: 'Login', userType: 'Unauthenticated Visitor', trigger: 'User wants to access protected content', entry: '/login', steps: [
+        { name: 'Enter Credentials', sees: 'Login form', does: 'Enters email and password', responds: 'Validates format' },
+        { name: 'Authenticate', sees: 'Loading state', does: 'Clicks "Log in"', responds: 'Validates credentials, creates session, redirects to dashboard' },
+      ], success: 'User is logged in and redirected to their dashboard', emotion: 'intent → anxious → relieved' },
+    ],
+    interactionPatterns: { validation: 'On submit', errorDisplay: 'Inline + toast', autoSave: 'No', pagination: 'N/A', nav: 'Minimal (auth pages)', feedback: 'Toast + redirect' },
+  },
+};
+
+function getDefaultUXContent(moduleName) {
+  return {
+    userTypes: (entities) => entities.slice(0, 2).map((e, i) => ({
+      type: `${e} Operator`, actor: `ACTOR_${String(i + 1).padStart(3, '0')}`,
+      desc: `User interacting with ${moduleName} ${e.toLowerCase()} features`, goals: `Manage ${e.toLowerCase()} within ${moduleName}`,
+      frequency: 'Regular', savvy: 'Medium',
+    })),
+    journeyGen: (entities) => entities.slice(0, 1).map(e => ({
+      name: `${moduleName} ${e} Workflow`, userType: `${e} Operator`, trigger: `User initiates ${e.toLowerCase()} operation in ${moduleName}`,
+      entry: `/${moduleName}`, steps: [
+        { name: 'Navigate', sees: `${moduleName} dashboard`, does: `Selects ${e.toLowerCase()} section`, responds: `Displays ${e.toLowerCase()} interface` },
+        { name: 'Operate', sees: `${e} management view`, does: `Performs ${e.toLowerCase()} operations`, responds: 'Confirms action completion' },
+      ],
+      success: `${e} operation completed successfully`, emotion: 'intent → focused → satisfied',
+    })),
+    interactionPatterns: { validation: 'On blur', errorDisplay: 'Inline', autoSave: 'No', pagination: 'Page numbers', nav: 'Sidebar', feedback: 'Toast' },
+  };
+}
+
+function generateUXFoundations(module, ctx) {
+  const modUx = MODULE_UX_CONTENT[module] || getDefaultUXContent(module);
+  const userTypes = modUx.userTypes(ctx.entities);
+  const journeys = modUx.journeyGen(ctx.entities);
+  const ip = modUx.interactionPatterns;
+
+  const userTypeRows = userTypes.map(u =>
+    `| ${u.type} | ${u.actor} | ${u.desc} | ${u.goals} | ${u.frequency} | ${u.savvy} |`
+  ).join('\n');
+
+  const journeySections = journeys.map(j => {
+    const steps = j.steps.map((s, i) =>
+      `  ${i + 1}. **${s.name}** — User sees: ${s.sees} → User does: ${s.does} → System responds: ${s.responds}`
+    ).join('\n');
+    return `### Journey: ${j.name}
+- **User Type:** ${j.userType}
+- **Trigger:** ${j.trigger}
+- **Entry Point:** ${j.entry}
+- **Steps:**
+${steps}
+- **Success State:** ${j.success}
+- **Emotional Arc:** ${j.emotion}
+`;
+  }).join('\n');
+
+  return `# UX Foundations — ${module}
+
+## Overview
+**Domain Slug:** ${module}
+**Project:** ${ctx.name}
+
+---
+
+## User Types
+
+| User Type | RPBS Actor | Description | Primary Goals | Usage Frequency | Tech Savviness |
+|-----------|-----------|-------------|---------------|----------------|---------------|
+${userTypeRows}
+
+---
+
+## User Journeys
+
+${journeySections}
+
+---
+
+## Information Architecture
+
+### Content Hierarchy
+- **Primary content:** ${ctx.entities.slice(0, 2).map(e => `${e} management`).join(', ')}
+- **Secondary content:** Settings, preferences, metadata
+- **Tertiary content:** Admin tools, system info
+
+### Grouping Strategy
+| Group | Contains | Rationale |
+|-------|---------|-----------|
+${ctx.entities.slice(0, 3).map(e => `| ${e} Management | ${e} CRUD, ${e} search, ${e} details | Groups all ${e.toLowerCase()}-related features |`).join('\n')}
+
+---
+
+## Interaction Patterns
+
+### Form Patterns
+- Validation timing: ${ip.validation}
+- Error display: ${ip.errorDisplay}
+- Auto-save: ${ip.autoSave}
+
+### List/Collection Patterns
+- Pagination: ${ip.pagination}
+- Empty state behavior: Illustration + descriptive message + CTA
+- Loading state behavior: Skeleton placeholders
+
+### Navigation Patterns
+- Primary navigation: ${ip.nav}
+- Breadcrumbs: Yes for nested views
+- Back button behavior: Return to parent list
+
+### Feedback Patterns
+- Success feedback: ${ip.feedback}
+- Error feedback: ${ip.errorDisplay}
+- Loading feedback: Skeleton / spinner
+- Destructive action confirmation: Modal dialog
+
+---
+
+## Responsive Strategy
+
+| Breakpoint | Target Devices | Layout Changes |
+|-----------|---------------|----------------|
+| Mobile (<640px) | Phones | Single column, bottom nav, stacked cards |
+| Tablet (640-1024px) | Tablets | Two columns, collapsible sidebar |
+| Desktop (>1024px) | Desktop | Full sidebar, multi-column grid |
+
+---
+
+## Open Questions
+- Specific ${module} user journey steps need further detail from RPBS
+- Accessibility requirements need review against RPBS §18
+`;
+}
+
+const MODULE_UI_CONTENT = {
+  frontend: {
+    colorSystem: [
+      { token: 'Primary', light: 'hsl(222, 47%, 51%)', dark: 'hsl(217, 91%, 60%)', usage: 'CTAs, links, active states' },
+      { token: 'Background', light: 'hsl(0, 0%, 100%)', dark: 'hsl(222, 47%, 11%)', usage: 'Page backgrounds' },
+      { token: 'Surface', light: 'hsl(210, 40%, 96%)', dark: 'hsl(217, 33%, 17%)', usage: 'Card/panel backgrounds' },
+      { token: 'Foreground', light: 'hsl(222, 47%, 11%)', dark: 'hsl(210, 40%, 98%)', usage: 'Primary text' },
+      { token: 'Destructive', light: 'hsl(0, 84%, 60%)', dark: 'hsl(0, 63%, 31%)', usage: 'Error states, delete actions' },
+    ],
+    iconLib: 'Lucide React', componentLib: 'Shadcn UI', darkMode: 'Required',
+    containerStyle: 'B: Background color elevation',
+  },
+  backend: {
+    colorSystem: [{ token: 'N/A', light: 'N/A', dark: 'N/A', usage: 'Backend has no UI — constraints apply to API response formatting' }],
+    iconLib: 'N/A', componentLib: 'N/A', darkMode: 'N/A', containerStyle: 'N/A',
+  },
+};
+
+function generateUIConstraints(module, ctx) {
+  const modUi = MODULE_UI_CONTENT[module] || MODULE_UI_CONTENT.frontend;
+
+  const colorRows = modUi.colorSystem.map(c =>
+    `| ${c.token} | ${c.light} | ${c.dark} | ${c.usage} |`
+  ).join('\n');
+
+  return `# UI Constraints — ${module}
+
+## Overview
+**Domain Slug:** ${module}
+**Project:** ${ctx.name}
+
+---
+
+## Visual Design Constraints
+
+### Color System
+| Token | Light Mode | Dark Mode | Usage |
+|-------|-----------|-----------|-------|
+${colorRows}
+
+### Typography
+| Element | Font Family | Size | Weight | Line Height |
+|---------|-----------|------|--------|-------------|
+| Heading 1 | System sans-serif | 2rem | 700 | 1.2 |
+| Heading 2 | System sans-serif | 1.5rem | 600 | 1.3 |
+| Heading 3 | System sans-serif | 1.25rem | 600 | 1.4 |
+| Body | System sans-serif | 1rem | 400 | 1.5 |
+| Small/Caption | System sans-serif | 0.875rem | 400 | 1.4 |
+| Code/Mono | System monospace | 0.875rem | 400 | 1.5 |
+
+### Iconography
+- Icon library: ${modUi.iconLib}
+- Icon size standard: 16px (sm), 20px (default), 24px (lg)
+- Icon color rules: Inherit text color by default
+
+---
+
+## Layout Constraints
+
+### Spacing Scale
+| Token | Value | Usage |
+|-------|-------|-------|
+| xs | 0.25rem (4px) | Tight spacing (icon padding, badge padding) |
+| sm | 0.5rem (8px) | Compact spacing (between related items) |
+| md | 1rem (16px) | Standard spacing (card padding, section gaps) |
+| lg | 1.5rem (24px) | Generous spacing (section separation) |
+| xl | 2rem (32px) | Maximum spacing (page-level margins) |
+
+### Container Rules
+- Container styling approach: ${modUi.containerStyle}
+- Nesting depth limit: Max 2 levels
+- Card inside card: Never allowed
+
+---
+
+## Component Constraints
+
+### Allowed Component Library
+- Primary library: ${modUi.componentLib}
+- Icon library: ${modUi.iconLib}
+- Custom components allowed: Only when library insufficient
+
+### Component Usage Rules
+| Component | Allowed | Constraints | Notes |
+|-----------|---------|------------|-------|
+| Button | Yes | Use library variants only | Never custom hover states |
+| Card | Yes | Never nest cards inside cards | Use for content grouping |
+| Badge | Yes | Always single-line | Sufficient width required |
+| Modal/Dialog | Yes | Confirmation for destructive actions | Max 1 visible at a time |
+| Toast | Yes | Auto-dismiss, max 3 visible | Success/error feedback |
+
+---
+
+## Responsive Behavior
+
+| Breakpoint | Sidebar | Navigation | Cards/Grid | Tables | Modals |
+|-----------|---------|-----------|------------|--------|--------|
+| Mobile | Hidden | Bottom nav / hamburger | 1 column | Horizontal scroll | Full screen |
+| Tablet | Collapsible | Top bar | 2 columns | Responsive | Centered overlay |
+| Desktop | Visible | Sidebar | 3+ columns | Full width | Centered overlay |
+
+---
+
+## Animation & Motion Constraints
+
+- Transitions allowed: Minimal
+- Duration standard: 150ms for micro-interactions, 300ms for page transitions
+- Easing standard: ease-out
+- prefers-reduced-motion handling: Required
+- Layout-shifting animations: Never allowed on hover
+
+---
+
+## Dark Mode Requirements
+
+- Dark mode support: ${modUi.darkMode}
+- Implementation: CSS variables + Tailwind dark: prefix
+- Default theme: System preference
+- User toggle: Yes
+
+---
+
+## Performance Constraints
+
+- Max bundle size target: < 200KB initial JS
+- Lazy loading required for: Route-level code splitting, images below fold
+- Image optimization: WebP with fallback, responsive srcset
+- Font loading strategy: swap
+- Initial render target: < 1.5s FCP
+
+---
+
+## Open Questions
+- Exact brand color palette pending RPBS §30 definition
+- ${module}-specific component constraints need further specification
+`;
+}
+
+function generateScreenmap(module, ctx, prefix) {
+
+  const screenRows = ctx.entities.slice(0, 4).map((e, i) => {
+    const scrId = `${prefix}_SCR_${String(i + 1).padStart(3, '0')}`;
+    const routes = [
+      { route: `/${e.toLowerCase()}s`, purpose: `Browse and search all ${e.toLowerCase()} records`, auth: 'No' },
+      { route: `/${e.toLowerCase()}s/:id`, purpose: `View ${e.toLowerCase()} detail`, auth: 'No' },
+      { route: `/${e.toLowerCase()}s/new`, purpose: `Create new ${e.toLowerCase()}`, auth: 'Yes' },
+      { route: `/${e.toLowerCase()}s/:id/edit`, purpose: `Edit existing ${e.toLowerCase()}`, auth: 'Yes' },
+    ];
+    const r = routes[i] || routes[0];
+    return `| ${scrId} | ${e} ${i === 0 ? 'List' : i === 1 ? 'Detail' : i === 2 ? 'Create' : 'Edit'} | ${r.route} | ${r.purpose} | — (top-level) | ${r.auth} | FEAT_${String(i + 1).padStart(3, '0')} |`;
+  }).join('\n');
+
+  const navRows = ctx.entities.slice(0, 2).map((e, i) => {
+    const navId = `${prefix}_NAV_${String(i + 1).padStart(3, '0')}`;
+    return `| ${navId} | ${e} browse-to-detail | List → Detail | ${e} List | ${e} Detail | Click ${e.toLowerCase()} card |`;
+  }).join('\n');
+
+  const componentRows = ctx.entities.slice(0, 3).map((e, i) => {
+    const scrId = `${prefix}_SCR_${String(i + 1).padStart(3, '0')}`;
+    return `| ${scrId} | ${i === 0 ? 'List + Sidebar' : i === 1 ? 'Detail + Actions' : 'Form'} | ${e}Card, SearchBar, Pagination | Search, filter, click actions |`;
+  }).join('\n');
+
+  const stateRows = ctx.entities.slice(0, 3).map((e, i) => {
+    const scrId = `${prefix}_SCR_${String(i + 1).padStart(3, '0')}`;
+    return `| ${scrId} | ${e} list data | GET /api/${e.toLowerCase()}s | Skeleton | Cache 5min |`;
+  }).join('\n');
+
+  return `# Screen Map — ${module}
+
+## Overview
+**Domain Slug:** ${module}
+**Prefix:** ${prefix}
+**Project:** ${ctx.name}
+
+---
+
+## Screen Inventory
+
+| Screen ID | Name | Route/Path | Purpose | Parent Screen | Auth Required? | RPBS Feature Ref |
+|----------|------|-----------|---------|--------------|---------------|-----------------|
+${screenRows}
+
+---
+
+## Navigation Flows
+
+| Flow ID | Description | Steps | Entry Point | Exit Point | Trigger |
+|---------|-------------|-------|------------|-----------|---------|
+${navRows}
+
+---
+
+## Screen-to-Component Mapping
+
+| Screen ID | Layout Type | Components Used | Key Interactive Elements |
+|----------|------------|----------------|------------------------|
+${componentRows}
+
+---
+
+## State Requirements Per Screen
+
+| Screen ID | Required Data | Data Source | Loading Strategy | Cache Strategy |
+|----------|---------------|-----------|-----------------|---------------|
+${stateRows}
+
+---
+
+## Open Questions
+- Screen wireframe details need visual design input
+- Navigation flow edge cases need RPBS §5 journey mapping
+`;
+}
+
+function generateTestplan(module, ctx, rpbsRules, prefix) {
+
+  const acceptanceRows = ctx.entities.slice(0, 3).map((e, i) => {
+    const testId = `${prefix}_TEST_${String(i + 1).padStart(3, '0')}`;
+    return `| ${testId} | ${e} creation happy path | User on /${e.toLowerCase()}s/new | Fills all required fields and submits | ${e} created, redirected to detail page, success toast shown | P0 | RPBS §5 |`;
+  }).join('\n');
+
+  const bizRuleRows = ctx.entities.slice(0, 2).map((e, i) => {
+    const testId = `${prefix}_TEST_${String(100 + i + 1).padStart(3, '0')}`;
+    return `| ${testId} | ${prefix}_RULE_${String(i + 1).padStart(3, '0')} | unit | ${e} validation enforced | Invalid ${e.toLowerCase()} data submitted | Validation error returned with correct error code | P0 |`;
+  }).join('\n');
+
+  const edgeCaseRows = ctx.entities.slice(0, 2).map((e, i) => {
+    const edgeId = `${prefix}_EDGE_${String(i + 1).padStart(3, '0')}`;
+    return `| ${edgeId} | Empty ${e.toLowerCase()} list renders empty state correctly | Empty state illustration and CTA displayed | Medium |`;
+  }).join('\n');
+
+  const errorRows = ctx.entities.slice(0, 2).map((e, i) => {
+    const errId = `${prefix}_ERR_${String(i + 1).padStart(3, '0')}`;
+    return `| ${errId} | Invalid ${e.toLowerCase()} data submitted | VALIDATION_${e.toUpperCase()}_INVALID | Please check your ${e.toLowerCase()} details | Highlight invalid fields | BELS |`;
+  }).join('\n');
+
+  const apiRows = ctx.entities.slice(0, 2).map((e, i) => {
+    const testId = `${prefix}_TEST_${String(200 + i + 1).padStart(3, '0')}`;
+    return `| ${testId} | /api/${e.toLowerCase()}s | GET | ?page=1&limit=10 | 200 | { items: ${e}[], total: number } | P0 |`;
+  }).join('\n');
+
+  return `# Test Plan — ${module}
+
+## Overview
+**Domain Slug:** ${module}
+**Prefix:** ${prefix}
+**Project:** ${ctx.name}
+
+---
+
+## Test Strategy
+
+### Testing Priorities
+- **P0 (Critical):** Core ${module} CRUD operations, authentication gates, data validation
+- **P1 (Important):** Edge cases, error handling, cross-module interactions
+- **P2 (Nice-to-have):** Performance benchmarks, accessibility audits, visual regression
+
+### Test Types in Scope
+| Type | In Scope? | Tool/Framework | Coverage Target |
+|------|----------|---------------|----------------|
+| Unit | Yes | Vitest | 80% of business logic |
+| Integration | Yes | Vitest + supertest | Key API flows |
+| E2E | Yes | Playwright | Critical user journeys |
+| Contract | Yes | Vitest | All DIM interfaces |
+| Performance | Yes | Lighthouse / custom | P1 targets |
+| Accessibility | Yes | axe-core | WCAG 2.1 AA |
+
+---
+
+## Acceptance Scenarios
+
+| Scenario ID | Description | Given | When | Then | Priority | Source |
+|------------|-------------|-------|------|------|----------|--------|
+${acceptanceRows}
+
+---
+
+## Business Rule Tests
+
+| Test ID | Rule Ref | Type | Description | Input/Setup | Expected Result | Priority |
+|---------|---------|------|-------------|-------------|----------------|----------|
+${bizRuleRows}
+
+---
+
+## Edge Cases
+
+| Edge Case ID | Description | Expected Behavior | Risk Level |
+|-------------|-------------|-------------------|-----------|
+${edgeCaseRows}
+
+---
+
+## Error Scenarios
+
+| Error ID | Trigger | Expected Error Code | User-Facing Message | Recovery | Source |
+|---------|---------|-------------------|-------------------|----------|--------|
+${errorRows}
+
+---
+
+## API Contract Tests
+
+| Test ID | Endpoint | Method | Input | Expected Status | Expected Body Shape | Priority |
+|---------|---------|--------|-------|----------------|--------------------|---------| 
+${apiRows}
+
+---
+
+## Performance Criteria
+
+| Metric | Target | Measurement Method | Priority |
+|--------|--------|-------------------|----------|
+| API response time (p95) | < 200ms | Load test with k6 | P1 |
+| Page load (FCP) | < 1.5s | Lighthouse CI | P1 |
+| Bundle size (initial) | < 200KB | Bundler analysis | P2 |
+
+---
+
+## Test Data Requirements
+
+| Fixture | Description | Fields | Notes |
+|---------|-------------|--------|-------|
+${ctx.entities.slice(0, 3).map(e => `| test${e} | Sample ${e.toLowerCase()} for testing | id, name, status, createdAt | Auto-generated per test run |`).join('\n')}
+
+### Test Environment
+- Database: Test database (isolated from production)
+- External services: Mocked where possible
+- Auth: Test tokens with configurable roles
+
+---
+
+## Coverage Goals
+
+| Area | Target Coverage | Notes |
+|------|----------------|-------|
+| Unit tests | 80% | Business logic and validators |
+| Integration tests | 70% | API routes and data flows |
+| E2E tests | Critical paths | All P0 user journeys |
+
+---
+
+## Open Questions
+- Exact performance targets need RPBS §7 non-functional profile
+- Test data seeding strategy needs finalization
+`;
+}
+
+function generateComponentLibrary(module, ctx, prefix) {
+
+  const componentRows = ctx.entities.slice(0, 4).map((e, i) => {
+    const cmpId = `${prefix}_CMP_${String(i + 1).padStart(3, '0')}`;
+    const categories = ['Data Display', 'Input/Form', 'Data Display', 'Layout'];
+    const descs = [
+      `Displays a ${e.toLowerCase()} summary in list/grid views`,
+      `Form for creating/editing ${e.toLowerCase()} records`,
+      `Detailed view of a single ${e.toLowerCase()}`,
+      `Container layout for ${e.toLowerCase()} sections`,
+    ];
+    return `| ${cmpId} | ${e}Card | ${categories[i] || 'Data Display'} | ${descs[i] || `${e} display component`} | Yes | ${e.toLowerCase()}: ${e}, onClick: () => void |`;
+  }).join('\n');
+
+  const variantRows = ctx.entities.slice(0, 2).map((e, i) => {
+    const cmpId = `${prefix}_CMP_${String(i + 1).padStart(3, '0')}`;
+    return `| ${cmpId} | default | Standard list/grid display | Full card with image, title, meta |\n| ${cmpId} | compact | Search results, sidebar | Title + meta inline, no image |`;
+  }).join('\n');
+
+  const compositionRows = ctx.entities.slice(0, 2).map(e =>
+    `| ${e}Card | Avatar, Badge, ActionButton | Horizontal header + vertical body |`
+  ).join('\n');
+
+  const depRows = ctx.entities.slice(0, 3).map((e, i) => {
+    const cmpId = `${prefix}_CMP_${String(i + 1).padStart(3, '0')}`;
+    return `| ${cmpId} | Button, Badge, Avatar | Shadcn UI, Lucide React |`;
+  }).join('\n');
+
+  const stateRows = ctx.entities.slice(0, 2).map((e, i) => {
+    const cmpId = `${prefix}_CMP_${String(i + 1).padStart(3, '0')}`;
+    return `| ${cmpId} | ${i === 0 ? 'expanded: boolean' : 'formValues: FormData'} | ${i === 0 ? 'Uncontrolled' : 'Controlled'} | ${i === 0 ? 'false' : 'empty'} |`;
+  }).join('\n');
+
+  const sizingRows = ctx.entities.slice(0, 2).map(e =>
+    `| ${e}Card | 200px | 400px | Auto | Stack vertically on mobile |`
+  ).join('\n');
+
+  return `# Component Library — ${module}
+
+## Overview
+**Domain Slug:** ${module}
+**Prefix:** ${prefix}
+**Project:** ${ctx.name}
+
+---
+
+## Component Inventory
+
+| Component ID | Name | Category | Description | Reusable? | Props/Inputs |
+|-------------|------|----------|-------------|----------|-------------|
+${componentRows}
+
+---
+
+## Component Variants
+
+| Component ID | Variant | When to Use | Visual Difference |
+|-------------|---------|-------------|-------------------|
+${variantRows}
+
+---
+
+## Component Composition
+
+| Parent Component | Child Components | Composition Pattern |
+|-----------------|-----------------|-------------------|
+${compositionRows}
+
+---
+
+## Component Dependencies
+
+| Component ID | Depends On | External Libraries |
+|-------------|-----------|-------------------|
+${depRows}
+
+---
+
+## Component State
+
+| Component ID | Internal State | Controlled/Uncontrolled | Default |
+|-------------|---------------|------------------------|---------|
+${stateRows}
+
+---
+
+## Component Sizing
+
+| Component | Min Width | Max Width | Height | Responsive Behavior |
+|-----------|----------|----------|--------|-------------------|
+${sizingRows}
+
+---
+
+## Open Questions
+- Component prop types need refinement from DDES entity field definitions
+- Accessibility requirements per component pending UX_Foundations review
+`;
+}
+
+function generateCopyGuide(module, ctx, prefix) {
+
+  const titleRows = ctx.entities.slice(0, 3).map(e =>
+    `| ${prefix}_SCR_${e.toLowerCase()} | ${e}s — ${ctx.name} | ${e}s | Browse and manage your ${e.toLowerCase()}s |`
+  ).join('\n');
+
+  const labelRows = ctx.entities.slice(0, 3).map((e, i) => {
+    const lblId = `${prefix}_LBL_${String(i + 1).padStart(3, '0')}`;
+    return `| ${lblId} | Nav item | ${e}s | Primary navigation |`;
+  }).join('\n');
+
+  const errorMsgRows = ctx.entities.slice(0, 3).map(e => [
+    `| ${e.toUpperCase()}_NOT_FOUND | We couldn't find that ${e.toLowerCase()}. It may have been removed. | Browse other ${e.toLowerCase()}s | error |`,
+    `| ${e.toUpperCase()}_VALIDATION_FAILED | Please check your ${e.toLowerCase()} details and try again. | Review highlighted fields | validation |`,
+  ]).flat().join('\n');
+
+  const successRows = ctx.entities.slice(0, 3).map(e =>
+    `| ${e} created | ${e} created successfully! | Toast | 3s auto-dismiss |`
+  ).join('\n');
+
+  const emptyStateRows = ctx.entities.slice(0, 3).map(e =>
+    `| ${e} List | No ${e.toLowerCase()}s yet | Create your first ${e.toLowerCase()} | /${e.toLowerCase()}s/new |`
+  ).join('\n');
+
+  const confirmRows = ctx.entities.slice(0, 2).map(e =>
+    `| Delete ${e.toLowerCase()} | Delete this ${e.toLowerCase()}? | This action cannot be undone. | Delete ${e.toLowerCase()} | Keep ${e.toLowerCase()} |`
+  ).join('\n');
+
+  const placeholderRows = ctx.entities.slice(0, 3).map(e =>
+    `| ${e} search | Search ${e.toLowerCase()}s... |`
+  ).join('\n');
+
+  const loadingRows = ctx.entities.slice(0, 2).map(e =>
+    `| ${e} list load | — (show skeleton) | Still loading — hang tight! |`
+  ).join('\n');
+
+  return `# Copy Guide — ${module}
+
+## Overview
+**Domain Slug:** ${module}
+**Prefix:** ${prefix}
+**Project:** ${ctx.name}
+
+---
+
+## Tone & Voice
+
+- **Voice characteristics:** Friendly and encouraging, professional but approachable
+- **Formality level:** Casual — use contractions, avoid jargon
+- **Target reading level:** General audience (8th grade level)
+- **Brand personality:** Helpful expert who speaks plainly
+
+### Forbidden Patterns
+- Technical error codes shown to users
+- Passive voice in CTAs (use "Create" not "can be created")
+- ALL CAPS for emphasis (use bold instead)
+
+### Writing Rules
+- Sentence case for all headings (not Title Case)
+- Use "you/your" for user-facing copy
+- Keep error messages under 20 words
+
+---
+
+## Page Titles & Headings
+
+| Screen Ref | Page Title (browser tab) | Main Heading | Subheading |
+|-----------|------------------------|-------------|-----------|
+${titleRows}
+
+---
+
+## Labels & Headings
+
+| Element ID | Context | Copy Text | Notes |
+|-----------|---------|-----------|-------|
+${labelRows}
+
+---
+
+## Error Messages
+
+| Error Code | User-Facing Message | Recovery Action Text | Severity |
+|-----------|-------------------|---------------------|----------|
+${errorMsgRows}
+
+---
+
+## Success Messages
+
+| Action | Message | Display Method | Duration |
+|--------|---------|---------------|----------|
+${successRows}
+
+---
+
+## Empty States
+
+| Screen/Component | Empty State Message | Call to Action | CTA Target |
+|-----------------|-------------------|---------------|-----------|
+${emptyStateRows}
+
+---
+
+## Confirmation Dialogs
+
+| Action | Dialog Title | Dialog Message | Confirm Button | Cancel Button |
+|--------|-------------|---------------|---------------|--------------|
+${confirmRows}
+
+---
+
+## Placeholder Text
+
+| Input | Placeholder Text |
+|-------|-----------------|
+${placeholderRows}
+
+---
+
+## Loading & Progress Messages
+
+| Action | Loading Message | Long Wait Message (>5s) |
+|--------|----------------|----------------------|
+${loadingRows}
+
+---
+
+## Open Questions
+- Brand voice specifics pending RPBS §10 definition
+- Error message copy needs review against BELS reason codes
+`;
+}
+
+function generateDomainReadme(module, ctx) {
+  const modDdes = MODULE_DDES_CONTENT[module] || {
+    purpose: `Manages ${module} domain concerns for ${ctx.name}`,
+    responsibilities: [`Handle ${module}-specific operations`, `Validate ${module} domain data`, `Coordinate with dependent modules`],
+  };
+
+  const responsibilities = modDdes.responsibilities.map(r => `- ${r}`).join('\n');
+  const entityList = ctx.entities.slice(0, 5).map(e => `- ${e}`).join('\n');
+
+  return `# ${module} Domain — ${ctx.name}
+
+## Purpose
+${modDdes.purpose}
+
+## Key Responsibilities
+${responsibilities}
+
+## Core Entities
+${entityList}
+
+## Documents in This Domain
+- **BELS** — Business Entity Logic Specification (policy rules, state machines, validation)
+- **DDES** — Domain Design & Entity Specification (entities, responsibilities, boundaries)
+- **DIM** — Domain Interface Map (exposed/consumed interfaces, event contracts)
+- **UX_Foundations** — User experience patterns and journeys
+- **UI_Constraints** — Visual design rules and component constraints
+- **SCREENMAP** — Screen inventory and navigation flows
+- **TESTPLAN** — Test strategy and acceptance scenarios
+- **COMPONENT_LIBRARY** — Reusable UI component catalog
+- **COPY_GUIDE** — User-facing text, labels, and messaging
+- **OPEN_QUESTIONS** — Unresolved questions blocking lock step
+
+## Status
+DRAFT — Generated by axion:draft pipeline step
+`;
+}
+
 function printReport(hasFailed = false) {
   console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: axion:draft`);
@@ -980,6 +1835,7 @@ try {
     console.log(`Drafting module: ${module}`);
     
     const domainDir = path.join(domainsDir, module);
+    const domainPrefix = getDomainPrefix(config, module);
     
     const belsContent = generateBELSCandidates(module, ctx, rpbsRules);
     const belsPath = path.join(domainDir, `BELS_${module}.md`);
@@ -989,10 +1845,38 @@ try {
     const ddesPath = path.join(domainDir, `DDES_${module}.md`);
     ensureFileWithMerge(ddesPath, ddesContent, DDES_SECTION_MAP);
     
-    const dimContent = generateDIM(module, ctx);
+    const dimContent = generateDIM(module, ctx, rpbsRules, domainPrefix);
     const dimPath = path.join(domainDir, `DIM_${module}.md`);
     ensureFileWithMerge(dimPath, dimContent, DIM_SECTION_MAP);
     
+    const uxContent = generateUXFoundations(module, ctx);
+    const uxPath = path.join(domainDir, `UX_Foundations_${module}.md`);
+    ensureFileWithMerge(uxPath, uxContent, UX_FOUNDATIONS_SECTION_MAP);
+
+    const uiContent = generateUIConstraints(module, ctx);
+    const uiPath = path.join(domainDir, `UI_Constraints_${module}.md`);
+    ensureFileWithMerge(uiPath, uiContent, UI_CONSTRAINTS_SECTION_MAP);
+
+    const screenmapContent = generateScreenmap(module, ctx, domainPrefix);
+    const screenmapPath = path.join(domainDir, `SCREENMAP_${module}.md`);
+    ensureFileWithMerge(screenmapPath, screenmapContent, SCREENMAP_SECTION_MAP);
+
+    const testplanContent = generateTestplan(module, ctx, rpbsRules, domainPrefix);
+    const testplanPath = path.join(domainDir, `TESTPLAN_${module}.md`);
+    ensureFileWithMerge(testplanPath, testplanContent, TESTPLAN_SECTION_MAP);
+
+    const componentContent = generateComponentLibrary(module, ctx, domainPrefix);
+    const componentPath = path.join(domainDir, `COMPONENT_LIBRARY_${module}.md`);
+    ensureFileWithMerge(componentPath, componentContent, COMPONENT_LIBRARY_SECTION_MAP);
+
+    const copyContent = generateCopyGuide(module, ctx, domainPrefix);
+    const copyPath = path.join(domainDir, `COPY_GUIDE_${module}.md`);
+    ensureFileWithMerge(copyPath, copyContent, COPY_GUIDE_SECTION_MAP);
+
+    const readmeContent = generateDomainReadme(module, ctx);
+    const readmePath = path.join(domainDir, `README_${module}.md`);
+    ensureFile(readmePath, readmeContent);
+
     const openQuestionsContent = generateOpenQuestions(module, ctx);
     const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
     ensureFile(openQuestionsPath, openQuestionsContent);
