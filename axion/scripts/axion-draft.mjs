@@ -931,6 +931,14 @@ ${domainQuestions.join('\n')}
 
 const UX_FOUNDATIONS_SECTION_MAP = {
   'User Types': 'User Types',
+  'Primary User Mental Model': 'Primary User Mental Model',
+  'Primary User Intent Loop': 'Primary User Intent Loop',
+  'Cognitive Load Strategy': 'Cognitive Load Strategy',
+  'Feedback & Visibility Laws': 'Feedback & Visibility Laws',
+  'Error & Failure Experience': 'Error & Failure Experience',
+  'Trust & Safety Signals': 'Trust & Safety Signals',
+  'Flow Stability Rules': 'Flow Stability Rules',
+  'UX Non-Goals': 'UX Non-Goals',
   'User Journeys': 'User Journeys',
   'Information Architecture': 'Information Architecture',
   'Interaction Patterns': 'Interaction Patterns',
@@ -939,9 +947,16 @@ const UX_FOUNDATIONS_SECTION_MAP = {
 };
 
 const UI_CONSTRAINTS_SECTION_MAP = {
+  'Structural Grouping Rules': 'Structural Grouping Rules',
+  'Navigation Constraints': 'Navigation Constraints',
+  'Interaction Pattern Limits': 'Interaction Pattern Limits',
+  'State Visibility Rules': 'State Visibility Rules',
+  'Timing & Feedback Constraints': 'Timing & Feedback Constraints',
   'Visual Design Constraints': 'Visual Design Constraints',
   'Layout Constraints': 'Layout Constraints',
   'Component Constraints': 'Component Constraints',
+  'UI Structural Non-Goals': 'UI Structural Non-Goals',
+  'Platform-Agnostic Rule': 'Platform-Agnostic Rule',
   'Responsive Behavior': 'Responsive Behavior',
   'Animation & Motion Constraints': 'Animation & Motion Constraints',
   'Dark Mode Requirements': 'Dark Mode Requirements',
@@ -990,6 +1005,85 @@ const COPY_GUIDE_SECTION_MAP = {
   'Confirmation Dialogs': 'Confirmation Dialogs',
   'Placeholder Text': 'Placeholder Text',
   'Loading & Progress Messages': 'Loading & Progress Messages',
+  'Open Questions': 'Open Questions',
+};
+
+const ERC_SECTION_MAP = {
+  'ERC State': 'ERC State',
+  'Verification Status': 'Verification Status',
+  'Bound Input Documents': 'Bound Input Documents',
+  'Locked Primary Outcomes': 'Locked Primary Outcomes',
+  'Locked Non-Goals and Exclusions': 'Locked Non-Goals and Exclusions',
+  'Locked Domain Boundaries': 'Locked Domain Boundaries',
+  'Locked Core Flows': 'Locked Core Flows',
+  'Locked UX and UI Laws': 'Locked UX and UI Laws',
+  'Permitted Implementation Freedoms': 'Permitted Implementation Freedoms',
+  'Forbidden Changes During Execution': 'Forbidden Changes During Execution',
+  'Escalation and Rollback Triggers': 'Escalation and Rollback Triggers',
+  'Locked Data Sections': 'Locked Data Sections',
+  'ERC Success Conditions': 'ERC Success Conditions',
+  'Implementation Notes': 'Implementation Notes',
+  'Computed Values (from BELS)': 'Computed Values (from BELS)',
+  'Cross-Domain Dependencies': 'Cross-Domain Dependencies',
+  'Lock Metadata': 'Lock Metadata',
+  'Agent Ingestion Instructions': 'Agent Ingestion Instructions',
+  'Open Questions': 'Open Questions',
+};
+
+const ALRP_SECTION_MAP = {
+  'Purpose': 'Purpose',
+  '1) Agent Identity & Role': '1) Agent Identity & Role',
+  '2) Input Authority Hierarchy': '2) Input Authority Hierarchy',
+  '3) Initial Ingestion Sequence': '3) Initial Ingestion Sequence',
+  '4) Phase Behavior Rules': '4) Phase Behavior Rules',
+  '5) Default Action Rule': '5) Default Action Rule',
+  '6) Assumption Prohibition': '6) Assumption Prohibition',
+  '7) Reasoning Protocol': '7) Reasoning Protocol',
+  '8) Stopping Conditions': '8) Stopping Conditions',
+  '9) Execution Rules': '9) Execution Rules',
+  '10) Communication Protocol': '10) Communication Protocol',
+  '11) Source Document References': '11) Source Document References',
+  '12) Guardrails & Constraints': '12) Guardrails & Constraints',
+  '13) Recovery Protocol': '13) Recovery Protocol',
+  'Agent Ingestion Instructions': 'Agent Ingestion Instructions',
+  'Open Questions': 'Open Questions',
+};
+
+const SROL_SECTION_MAP = {
+  'Purpose': 'Purpose',
+  'SROL State': 'SROL State',
+  'Inputs and Source of Truth': 'Inputs and Source of Truth',
+  'Current Snapshot': 'Current Snapshot',
+  'Optimization Mode': 'Optimization Mode',
+  'Non-Negotiables': 'Non-Negotiables',
+  'Diagnostic Lenses': 'Diagnostic Lenses',
+  'Refinement Plan': 'Refinement Plan',
+  'Execution Rules': 'Execution Rules',
+  'Loop Structure': 'Loop Structure',
+  'Execute — Implement Changes': 'Execute — Implement Changes',
+  'Verify — Confirm Improvements': 'Verify — Confirm Improvements',
+  'Stop Conditions': 'Stop Conditions',
+  'Loop State': 'Loop State',
+  'Agent Ingestion Instructions': 'Agent Ingestion Instructions',
+  'Open Questions': 'Open Questions',
+};
+
+const TIES_SECTION_MAP = {
+  'Purpose': 'Purpose',
+  'Discipline Summary': 'Discipline Summary',
+  'Discipline 1: Code Architecture Principles': 'Discipline 1: Code Architecture Principles',
+  'Discipline 2: Functional Core / Imperative Shell': 'Discipline 2: Functional Core / Imperative Shell',
+  'Discipline 3: Data Flow Engineering': 'Discipline 3: Data Flow Engineering',
+  'Discipline 4: State Architecture': 'Discipline 4: State Architecture',
+  'Discipline 5: Component Architecture': 'Discipline 5: Component Architecture',
+  'Discipline 6: API & Service Architecture': 'Discipline 6: API & Service Architecture',
+  'Discipline 7: Contract-Driven Development': 'Discipline 7: Contract-Driven Development',
+  'Discipline 8: Error, Failure & Recovery Patterns': 'Discipline 8: Error, Failure & Recovery Patterns',
+  'Discipline 9: Idempotency, Determinism & Side Effects': 'Discipline 9: Idempotency, Determinism & Side Effects',
+  'Discipline 10: Performance & Optimization Patterns': 'Discipline 10: Performance & Optimization Patterns',
+  'Discipline 11: Debugging & Diagnosis Engineering': 'Discipline 11: Debugging & Diagnosis Engineering',
+  'Discipline 12: Refactoring Mastery': 'Discipline 12: Refactoring Mastery',
+  'Build Execution Plan': 'Build Execution Plan',
   'Open Questions': 'Open Questions',
 };
 
@@ -1082,6 +1176,9 @@ ${steps}
 `;
   }).join('\n');
 
+  const primaryEntity = ctx.entities[0] || 'item';
+  const primaryEntityLower = primaryEntity.toLowerCase();
+
   return `# UX Foundations — ${module}
 
 ## Overview
@@ -1095,6 +1192,92 @@ ${steps}
 | User Type | RPBS Actor | Description | Primary Goals | Usage Frequency | Tech Savviness |
 |-----------|-----------|-------------|---------------|----------------|---------------|
 ${userTypeRows}
+
+---
+
+## Primary User Mental Model
+
+- **The user believes the system is:** A tool for managing ${ctx.entities.slice(0, 3).map(e => e.toLowerCase() + 's').join(', ')}
+- **The user expects actions to result in:** Immediate, visible changes to their ${primaryEntityLower} data
+- **The user expects feedback to be:** Clear and immediate — success or failure explained in plain language
+- **Real-world metaphor:** Like a well-organized workspace for ${primaryEntityLower} management
+
+**Rule:** The system must never behave in ways that violate this mental model.
+
+---
+
+## Primary User Intent Loop
+
+1. **User enters with intent:** Manage or view ${primaryEntityLower}s
+2. **User performs action:** Creates, reads, updates, or deletes a ${primaryEntityLower}
+3. **System responds:** Confirms action with visible feedback
+4. **User understands outcome:** Sees updated state reflecting their action
+
+**Rule:** This loop must remain intact across all features and changes.
+
+---
+
+## Cognitive Load Strategy
+
+- One primary decision at a time — forms and flows focus the user on one task
+- Progressive disclosure only — advanced options hidden until needed
+- No simultaneous critical choices — destructive actions isolated from creation flows
+- No hidden system state — user always knows what is happening and what they can do next
+
+**Rule:** Complexity must be earned, not assumed.
+
+---
+
+## Feedback & Visibility Laws
+
+- Every meaningful action produces visible feedback (toast, inline update, or redirect)
+- State changes are observable immediately — no silent background updates
+- Errors are explicit, not silent — every failure has a user-facing message
+- Success is acknowledged clearly — user never wonders if their action worked
+
+**Rule:** Users must never guess whether something worked.
+
+---
+
+## Error & Failure Experience
+
+- Errors are recoverable where possible — user can retry or correct input
+- Blame is never placed on the user — messages explain what went wrong, not what the user did wrong
+- System explains what happened in plain language — no technical jargon in error messages
+- Failure does not destroy progress — partial input is preserved when possible
+
+**Rule:** Failure should not punish exploration.
+
+---
+
+## Trust & Safety Signals
+
+- Predictable behavior — same actions produce same results every time
+- No surprise actions — system never does something the user didn't ask for
+- Clear consequences before irreversible actions — destructive actions show what will happen
+- Explicit confirmation for destructive actions — delete, remove, and discard require confirmation
+
+**Rule:** The system must never feel deceptive.
+
+---
+
+## Flow Stability Rules
+
+- Core flows do not change meaning between visits — ${primaryEntityLower} CRUD always works the same way
+- Similar actions behave similarly across ${module} — consistency across all entity types
+- Navigation does not break mental continuity — back button and breadcrumbs preserve context
+
+**Rule:** Users should feel oriented at all times.
+
+---
+
+## UX Non-Goals
+
+- Not gamified — no points, badges, or achievements
+- Not exploratory — the product has a clear purpose, not a discovery experience
+- Not dense — information is presented at a comfortable reading density
+
+**Rule:** Avoiding non-goals is as important as hitting goals.
 
 ---
 
@@ -1156,6 +1339,7 @@ ${ctx.entities.slice(0, 3).map(e => `| ${e} Management | ${e} CRUD, ${e} search,
 ## Open Questions
 - Specific ${module} user journey steps need further detail from RPBS
 - Accessibility requirements need review against RPBS §18
+- Mental model metaphor needs validation against RPBS product identity
 `;
 }
 
@@ -1184,11 +1368,69 @@ function generateUIConstraints(module, ctx) {
     `| ${c.token} | ${c.light} | ${c.dark} | ${c.usage} |`
   ).join('\n');
 
+  const primaryEntity = ctx.entities[0] || 'item';
+  const primaryEntityLower = primaryEntity.toLowerCase();
+
   return `# UI Constraints — ${module}
 
 ## Overview
 **Domain Slug:** ${module}
 **Project:** ${ctx.name}
+
+---
+
+## Structural Grouping Rules
+
+- Actions related to the same ${primaryEntityLower} must be co-located on the same view
+- Configuration and settings must not interrupt ${primaryEntityLower} management flows
+- Review and execution contexts must be visually separable
+- Primary actions are always visible, secondary actions are progressive
+
+**Rule:** UI structure must reinforce user intent.
+
+---
+
+## Navigation Constraints
+
+- Maximum navigation depth: 3 levels deep
+- Modal vs full-context rules: Modals for confirmations and quick edits only, full pages for creation and detail views
+- Always accessible elements: Main nav, user menu, back button
+- Core flow interruption: Notifications must never interrupt a ${primaryEntityLower} creation or edit flow
+
+**Rule:** Navigation must not fracture mental continuity.
+
+---
+
+## Interaction Pattern Limits
+
+- One primary action per view — create, edit, or review, not all at once
+- Secondary actions must not steal focus from primary
+- Destructive actions require friction — confirmation step before delete/remove
+- Drag-and-drop only as enhancement, never sole interaction method
+
+**Rule:** Patterns must be consistent and limited.
+
+---
+
+## State Visibility Rules
+
+- Current state of the active ${primaryEntityLower} is always visible
+- Progress indicators shown for multi-step processes
+- Pending actions are surfaced, not hidden
+- Errors and warnings are always visible until explicitly dismissed
+
+**Rule:** Critical state must never be hidden.
+
+---
+
+## Timing & Feedback Constraints
+
+- Immediate visual acknowledgement of user input — < 100ms
+- Loading states shown for any async action > 200ms
+- Clear completion signals for all operations
+- Optimistic updates where safe, with rollback on failure
+
+**Rule:** Silence is not feedback.
 
 ---
 
@@ -1249,6 +1491,27 @@ ${colorRows}
 | Badge | Yes | Always single-line | Sufficient width required |
 | Modal/Dialog | Yes | Confirmation for destructive actions | Max 1 visible at a time |
 | Toast | Yes | Auto-dismiss, max 3 visible | Success/error feedback |
+
+---
+
+## UI Structural Non-Goals
+
+- Deep nested navigation beyond 3 levels
+- Overloaded views with multiple competing primary actions
+- Hidden critical actions that require discovery
+- Gesture-only critical actions with no visible alternative
+
+**Rule:** Forbidden structures must not be introduced.
+
+---
+
+## Platform-Agnostic Rule
+
+- Web, mobile, and desktop must share mental structure for ${primaryEntityLower} management
+- Platform-specific optimizations allowed for: Touch targets on mobile, keyboard shortcuts on desktop
+- Platform must NOT redefine: Flow meaning, core interactions, state visibility
+
+**Rule:** Platform must not redefine experience.
 
 ---
 
@@ -1765,13 +2028,19 @@ ${entityList}
 - **BELS** — Business Entity Logic Specification (policy rules, state machines, validation)
 - **DDES** — Domain Design & Entity Specification (entities, responsibilities, boundaries)
 - **DIM** — Domain Interface Map (exposed/consumed interfaces, event contracts)
-- **UX_Foundations** — User experience patterns and journeys
-- **UI_Constraints** — Visual design rules and component constraints
+- **UX_Foundations** — User experience laws, mental model, intent loop, cognitive load, feedback, error, trust, flow
+- **UI_Constraints** — Structural grouping, navigation constraints, interaction limits, state visibility, timing rules
 - **SCREENMAP** — Screen inventory and navigation flows
 - **TESTPLAN** — Test strategy and acceptance scenarios
 - **COMPONENT_LIBRARY** — Reusable UI component catalog
 - **COPY_GUIDE** — User-facing text, labels, and messaging
 - **OPEN_QUESTIONS** — Unresolved questions blocking lock step
+
+## System-Level Documents (Kit-Wide)
+- **ERC** — Execution Readiness Contract (auto-generated at lock time — frozen meaning contract)
+- **ALRP** — Agent Lifecycle & Reasoning Protocol (cognitive discipline, phase behavior, input authority)
+- **SROL** — Structured Refinement & Optimization Loop (diagnostic-first refinement with 4 lenses)
+- **TIES** — Technical Implementation & Engineering Standards (12 engineering disciplines)
 
 ## Status
 DRAFT — Generated by axion:draft pipeline step

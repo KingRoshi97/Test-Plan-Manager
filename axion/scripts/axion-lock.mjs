@@ -76,32 +76,174 @@ function createERC(module, belsContent, version) {
   
   return `# Execution Readiness Contract (ERC) — ${module} ${version}
 
+<!-- AXION:TEMPLATE_CONTRACT:v1 -->
+<!-- AXION:CORE_DOC:ERC -->
+
 ## Overview
-**Module:** ${module}
+**Domain Slug:** ${module}
 **Version:** ${version}
 **Lock Date:** ${lockDate}
-**Content Hash:** ${hash}
+
+<!-- AXION:AGENT_GUIDANCE
+PURPOSE: The ERC freezes meaning, intent, and structure before execution begins.
+Once locked, execution may proceed, but reinterpretation may not.
+THIS DOCUMENT IS AUTO-GENERATED AT LOCK TIME. Do not manually edit it.
+CORE ERC RULE: ERC freezes meaning, not mechanics.
+-->
+
+---
+
+## ERC State
+
+- **ERC State:** Locked
+- **Prepared by:** axion:lock script
+- **Date Created:** ${lockDate}
+- **Date Locked:** ${lockDate}
+
+**Rule:** Execution must NOT begin unless ERC State is LOCKED.
+
+---
 
 ## Verification Status
+
 - [x] No critical UNKNOWNs in BELS (verified at lock time)
 - [x] Policy rules have reason codes + messages
-- [x] State machines have deny codes
-- [x] Minimum acceptance scenarios defined
+- [x] State machines have deny codes for invalid transitions
+- [x] Minimum acceptance scenarios exist
+- [x] All RPBS cross-references resolve
 
-## Locked Content
+**Content Hash:** ${hash}
+
+---
+
+## Bound Input Documents
+
+| Document | Status | Source |
+|----------|--------|--------|
+| BELS_${module}.md | Locked | domains/${module}/ |
+
+---
+
+## Locked Primary Outcomes
+
+Extracted from BELS at lock time. Implementation must achieve these exact outcomes.
+
+---
+
+## Locked Non-Goals and Exclusions
+
+To be populated from BELS non-goal sections if present.
+
+---
+
+## Locked Domain Boundaries
+
+To be populated from DDES domain boundary definitions if present.
+
+---
+
+## Locked Core Flows
+
+To be populated from UX_Foundations user journeys if present.
+
+---
+
+## Locked UX and UI Laws
+
+To be populated from UX_Foundations experience laws and UI_Constraints structural rules if present.
+
+---
+
+## Permitted Implementation Freedoms
+
+- Internal variable naming
+- Private function signatures (not exposed in DIM)
+- Performance optimizations that do not change observable behavior
+- Refactoring that preserves all locked outcomes
+
+**Rule:** Freedom applies to HOW, never to WHAT or WHY.
+
+---
+
+## Forbidden Changes During Execution
+
+- Entity structures locked in DDES
+- State machines locked in BELS
+- Policy rules and reason codes locked in BELS
+- UI structural rules locked in UI_Constraints
+- Experience laws locked in UX_Foundations
+
+**Rule:** Any change to these items requires a new ERC version.
+
+---
+
+## Escalation and Rollback Triggers
+
+- Ambiguity in a locked outcome: STOP and escalate
+- Conflict between locked docs: STOP and escalate
+- New requirement contradicts ERC: Requires new version
+- Implementation cannot satisfy a locked outcome: STOP and report
+
+---
+
+## Locked Data Sections
 
 ### From BELS at Lock Time
 ${belsContent}
 
+---
+
+## ERC Success Conditions
+
+- All locked primary outcomes are implemented
+- All forbidden changes are avoided
+- All state machines match locked specifications
+- All policy rules produce correct reason codes
+
+---
+
 ## Implementation Notes
+
 - This ERC was generated from the BELS document at lock time
-- Any changes to business logic must go through a new version
+- Any changes to business logic must go through a new ERC version
 - Implementation must match exactly what is specified here
 
-## Sign-off
+---
+
+## Computed Values (from BELS)
+
+Extracted from BELS computed value rules if present.
+
+---
+
+## Cross-Domain Dependencies
+
+To be populated from DIM interface contracts if present.
+
+---
+
+## Lock Metadata
+
 - **Locked by:** axion:lock script
 - **Lock date:** ${lockDate}
 - **Hash:** ${hash}
+- **Version:** ${version}
+
+---
+
+## Agent Ingestion Instructions
+
+1. Read ERC State — if not LOCKED, do not proceed
+2. Read Locked Primary Outcomes — these are the non-negotiable goals
+3. Read Forbidden Changes — these are absolute constraints
+4. Read Locked Data Sections — this is the authoritative specification
+5. Read Permitted Implementation Freedoms — these define your latitude
+6. If any ambiguity: STOP and escalate before proceeding
+
+---
+
+## Open Questions
+- None (resolved at lock time)
 `;
 }
 

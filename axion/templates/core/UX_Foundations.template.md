@@ -7,9 +7,10 @@
 **Domain Slug:** {{DOMAIN_SLUG}}
 
 <!-- AXION:AGENT_GUIDANCE
-PURPOSE: UX Foundations defines WHO uses the product and HOW they experience it.
-This is the human-centered design layer — it translates RPBS requirements into
-user-centric patterns that drive SCREENMAP, UI_Constraints, and frontend implementation.
+PURPOSE: UX Foundations defines the psychological, behavioral, and experiential LAWS of the system.
+It describes how interaction must feel and behave regardless of UI implementation.
+UX Foundations defines truth — these are not optional and are not stylistic.
+This is the human-centered design layer that constrains all visual/interactive decisions downstream.
 
 SOURCES TO DERIVE FROM:
 1. RPBS §3 Actors & Permission Intents — map actors to user types
@@ -17,10 +18,13 @@ SOURCES TO DERIVE FROM:
 3. RPBS §16 Onboarding — first-run experience design
 4. RPBS §18 Accessibility — a11y requirements
 5. RPBS §6 Navigation & Information Architecture — IA structure
+6. RPBS §2 Feature Taxonomy — product identity informs non-goals
 
 RULES:
 - Every user type here MUST map to an Actor in RPBS §3
 - Every user journey MUST trace to a Journey in RPBS §5
+- Experience laws are IMMUTABLE — UI and code must obey them
+- If UX Foundations are Active, no UI or implementation may contradict them
 - Accessibility requirements are not optional — state them explicitly or mark N/A with reason
 
 CASCADE POSITION (fill priority 5 of 13):
@@ -46,6 +50,137 @@ EXAMPLE:
 | User Type | RPBS Actor | Description | Primary Goals | Usage Frequency | Tech Savviness |
 |-----------|-----------|-------------|---------------|----------------|---------------|
 | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+
+---
+
+## Primary User Mental Model
+
+<!-- AGENT: Describe how the user conceptually understands the system.
+This is not about UI — it's about how the user THINKS the system works.
+The system must never behave in ways that violate this mental model.
+
+Derive from RPBS §3 (who the user is) and §5 (how they expect to interact).
+Think: what real-world analogy does the user carry when using this product? -->
+
+- **The user believes the system is:** UNKNOWN
+- **The user expects actions to result in:** UNKNOWN
+- **The user expects feedback to be:** UNKNOWN
+- **Real-world metaphor:** UNKNOWN (e.g., "like a recipe book with chapters", "like a project management board")
+
+**Rule:** The system must never behave in ways that violate this mental model.
+
+---
+
+## Primary User Intent Loop
+
+<!-- AGENT: Define the core repeating loop that the user performs.
+This is the fundamental interaction cycle — if this loop breaks, the product fails.
+Every feature and change must preserve this loop.
+
+Derive from RPBS §5 User Journeys — identify the most common, repeated action pattern. -->
+
+1. **User enters with intent:** UNKNOWN
+2. **User performs action:** UNKNOWN
+3. **System responds:** UNKNOWN
+4. **User understands outcome:** UNKNOWN
+
+**Rule:** This loop must remain intact across all features and changes.
+
+---
+
+## Cognitive Load Strategy
+
+<!-- AGENT: Define how much thinking the system demands from the user.
+These are rules that govern complexity — the system must earn the right to be complex.
+
+Derive from RPBS §5 journey complexity and §6 navigation depth. -->
+
+- UNKNOWN (e.g., one primary decision at a time)
+- UNKNOWN (e.g., progressive disclosure only — never show everything at once)
+- UNKNOWN (e.g., no simultaneous critical choices)
+- UNKNOWN (e.g., no hidden system state — user always knows what's happening)
+
+**Rule:** Complexity must be earned, not assumed.
+
+---
+
+## Feedback & Visibility Laws
+
+<!-- AGENT: Define how the system communicates state to the user.
+These are non-negotiable laws — users must NEVER have to guess whether something worked.
+
+Derive from RPBS §15 Error Handling and §5 journey feedback expectations. -->
+
+- UNKNOWN (e.g., every meaningful action produces visible feedback)
+- UNKNOWN (e.g., state changes are observable immediately)
+- UNKNOWN (e.g., errors are explicit, not silent)
+- UNKNOWN (e.g., success is acknowledged clearly)
+
+**Rule:** Users must never guess whether something worked.
+
+---
+
+## Error & Failure Experience
+
+<!-- AGENT: Define how failure should FEEL to the user.
+This is about the emotional experience of errors, not the technical implementation.
+Errors should not punish exploration.
+
+Derive from RPBS §15 Error Handling. -->
+
+- UNKNOWN (e.g., errors are recoverable where possible)
+- UNKNOWN (e.g., blame is never placed on the user)
+- UNKNOWN (e.g., system explains what happened in plain language)
+- UNKNOWN (e.g., failure does not destroy progress)
+
+**Rule:** Failure should not punish exploration.
+
+---
+
+## Trust & Safety Signals
+
+<!-- AGENT: Define how the system earns and maintains user trust.
+These signals prevent the system from feeling deceptive or unpredictable.
+
+Derive from RPBS §5 journey confidence points and §15 error recovery. -->
+
+- UNKNOWN (e.g., predictable behavior — same actions produce same results)
+- UNKNOWN (e.g., no surprise actions — system never does something the user didn't ask for)
+- UNKNOWN (e.g., clear consequences before irreversible actions)
+- UNKNOWN (e.g., explicit confirmation for destructive actions)
+
+**Rule:** The system must never feel deceptive.
+
+---
+
+## Flow Stability Rules
+
+<!-- AGENT: Define what must remain consistent across the product.
+These rules ensure users feel oriented at all times and prevent disorientation.
+
+Derive from RPBS §5 journey flows and §6 navigation structure. -->
+
+- UNKNOWN (e.g., core flows do not change meaning between visits)
+- UNKNOWN (e.g., similar actions behave similarly across domains)
+- UNKNOWN (e.g., navigation does not break mental continuity)
+
+**Rule:** Users should feel oriented at all times.
+
+---
+
+## UX Non-Goals
+
+<!-- AGENT: Explicitly define what this experience is NOT trying to be.
+Avoiding non-goals is as important as hitting goals.
+This prevents feature creep and identity drift in the UX layer.
+
+Derive from RPBS §2 product identity and boundaries. -->
+
+- Not UNKNOWN (e.g., not playful, not gamified, not dense, not flashy, not exploratory)
+- Not UNKNOWN
+- Not UNKNOWN
+
+**Rule:** Avoiding non-goals is as important as hitting goals.
 
 ---
 
@@ -113,10 +248,6 @@ Consider:
 | Group | Contains | Rationale |
 |-------|---------|-----------|
 | UNKNOWN | UNKNOWN | UNKNOWN |
-
-### Mental Model
-<!-- AGENT: What real-world metaphor does the product follow? e.g., "Like a recipe book with chapters" or "Like a project management board" -->
-- UNKNOWN
 
 ---
 
