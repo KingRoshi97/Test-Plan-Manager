@@ -72,10 +72,15 @@ export const DOC_TYPE_MAP: Record<string, { label: string; guidance: string }> =
     label: 'Business Entity Logic Specification (BELS)',
     guidance: `For BELS documents:
    - Policy rules should describe real business logic for this type of application.
+   - Invariant guarantees should define conditions that must always be true regardless of state.
    - State machines should model realistic entity lifecycles for this domain.
    - Validation rules should cover fields that would exist in this kind of application.
+   - Side effect rules should define what happens after a business event succeeds (notifications, cascades, sync).
    - Reason codes should be specific SCREAMING_SNAKE_CASE identifiers.
-   - Error codes should follow the pattern: MODULE_PREFIX_SPECIFIC_ERROR.`,
+   - Error codes should follow the pattern: MODULE_PREFIX_SPECIFIC_ERROR.
+   - Computed/derived values should specify formulas and where computation happens (server/client/both).
+   - Authorization rules should define who can perform what actions, derived from actors and permissions.
+   - Rate limits and quotas should specify throttling rules per resource, scope, and exceeded behavior.`,
   },
   'OPEN_QUESTIONS': {
     label: 'Open Questions',
@@ -86,10 +91,14 @@ export const DOC_TYPE_MAP: Record<string, { label: string; guidance: string }> =
   'DDES': {
     label: 'Domain-Driven Entity Specification (DDES)',
     guidance: `For DDES documents:
+   - Purpose should explain why the domain exists and what value it provides.
    - Entity definitions should model real data structures for this application domain.
    - Relationships between entities should reflect actual business relationships.
    - Attributes should have realistic types, constraints, and descriptions.
-   - Include proper primary keys, foreign keys, and indexes.`,
+   - Include proper primary keys, foreign keys, and indexes.
+   - Entity lifecycle rules should define creation, update, and deletion policies for each owned entity.
+   - Data retention and archival should specify how long data is kept and what happens to old data.
+   - Domain events should list events emitted and consumed, with payload summaries and consumer lists.`,
   },
   'DIM': {
     label: 'Domain Integration Map (DIM)',
@@ -97,7 +106,10 @@ export const DOC_TYPE_MAP: Record<string, { label: string; guidance: string }> =
    - Integration points should reflect real external services or internal module boundaries.
    - Data flows should model realistic input/output between systems.
    - Protocols and authentication methods should be appropriate for the integration type.
-   - Error handling strategies should be specific to each integration point.`,
+   - Error handling strategies should be specific to each integration point.
+   - Standard error response contract should define the JSON shape all error responses use.
+   - API versioning strategy should specify the versioning mechanism and deprecation policy.
+   - Interface dependencies graph should summarize data flow between domains as a text diagram.`,
   },
   'TESTPLAN': {
     label: 'Test Plan',
@@ -105,7 +117,10 @@ export const DOC_TYPE_MAP: Record<string, { label: string; guidance: string }> =
    - Test cases should cover realistic scenarios for this application domain.
    - Include unit, integration, and end-to-end test scenarios.
    - Acceptance criteria should be specific and measurable.
-   - Edge cases should reflect real-world usage patterns.`,
+   - Edge cases should reflect real-world usage patterns.
+   - Accessibility tests should verify WCAG 2.1 AA compliance for keyboard nav, screen readers, and focus management.
+   - Security tests should cover authentication bypass, authorization bypass, input sanitization, and rate limiting.
+   - Regression test strategy should define CI gate tests, merge gate tests, and bug fix policies.`,
   },
   'COMPONENT_LIBRARY': {
     label: 'Component Library',
@@ -113,7 +128,9 @@ export const DOC_TYPE_MAP: Record<string, { label: string; guidance: string }> =
    - Components should be real UI components needed for this application.
    - Props and variants should reflect actual component API designs.
    - Usage examples should show realistic implementation patterns.
-   - Accessibility notes should be specific to each component type.`,
+   - Accessibility requirements should define ARIA roles, keyboard navigation, screen reader support, and focus management for each interactive component.
+   - Component theming should specify light/dark mode adaptations and semantic color tokens used.
+   - Animation and transition specs should define subtle motion (150-300ms), triggers, and reduced-motion fallbacks.`,
   },
   'COPY_GUIDE': {
     label: 'Copy Guide',
@@ -121,7 +138,10 @@ export const DOC_TYPE_MAP: Record<string, { label: string; guidance: string }> =
    - Tone and voice guidelines should match the application's target audience.
    - Error messages should be user-friendly and actionable.
    - Microcopy examples should cover real UI touchpoints in this application.
-   - Terminology should be consistent with the project's domain.`,
+   - Terminology should be consistent with the project's domain.
+   - Notification copy should define text for in-app, email, and push notifications triggered by business events.
+   - Accessibility copy should define ARIA labels, alt text patterns, and screen reader announcements for all interactive elements.
+   - Localization notes should specify string concatenation policy, plural handling, and date/number format rules.`,
   },
   'SCREENMAP': {
     label: 'Screen Map',
@@ -129,7 +149,10 @@ export const DOC_TYPE_MAP: Record<string, { label: string; guidance: string }> =
    - Screens should represent real views/pages needed for this application.
    - Navigation flows should model realistic user journeys.
    - Screen descriptions should include key components and data displayed.
-   - User actions on each screen should be specific and actionable.`,
+   - User actions on each screen should be specific and actionable.
+   - Loading and error states should define what the user sees during data fetching and when errors occur for each screen.
+   - Responsive breakpoint behavior should specify layout adaptations at mobile, tablet, and desktop breakpoints.
+   - Deep linking requirements should define which screens support direct URL access and auth redirect behavior.`,
   },
   'UI_Constraints': {
     label: 'UI Constraints',
