@@ -218,5 +218,74 @@ EXAMPLE:
 
 ---
 
+## Notification Copy
+
+<!-- AGENT: Text for push notifications, email subjects, and in-app notification items.
+Derive from BELS side effects that generate user-visible notifications.
+
+RULES:
+- Push notification titles should be under 50 characters
+- Email subjects should be under 60 characters
+- In-app notifications should include a verb and the relevant entity name
+- All notification copy must follow the voice/tone rules above
+
+EXAMPLE:
+| Trigger Event | Channel | Title/Subject | Body | CTA |
+| New follower | In-app | {{User}} started following you | — | View profile |
+| Recipe published | Email | Your recipe "{{Title}}" is live! | Your recipe has been published and is now visible... | View recipe |
+| Comment reply | Push | {{User}} replied to your comment | "{{Preview}}..." | View comment |
+-->
+
+| Trigger Event | Channel | Title/Subject | Body | CTA |
+|--------------|---------|--------------|------|-----|
+| UNKNOWN | In-app/Email/Push | UNKNOWN | UNKNOWN | UNKNOWN |
+
+---
+
+## Accessibility Copy
+
+<!-- AGENT: Text specifically for screen readers, ARIA labels, and alt text patterns.
+These are NOT visible to sighted users but are critical for accessibility compliance.
+
+RULES:
+- Every interactive element without visible text needs an aria-label
+- Every image needs an alt text pattern (can include dynamic values)
+- Status changes must have aria-live region announcements
+- Form errors must be announced to screen readers
+
+EXAMPLE:
+| Element | ARIA Label / Alt Text | Context |
+| Close button (X icon) | Close dialog | Modal close button |
+| User avatar | Profile picture of {{username}} | Comment thread |
+| Sort button | Sort by {{column}}, currently {{direction}} | Data table header |
+| Loading spinner | Loading content, please wait | Page load |
+-->
+
+| Element | ARIA Label / Alt Text | Context |
+|---------|---------------------|---------|
+| UNKNOWN | UNKNOWN | UNKNOWN |
+
+---
+
+## Localization Notes
+
+<!-- AGENT: Guidelines for future internationalization (i18n) even if not launching multi-language.
+These rules help the agent write copy that is easy to localize later.
+
+RULES:
+- Avoid concatenating strings with variables in the middle (hard to translate)
+- Use ICU MessageFormat for plurals: "{count, plural, one {# item} other {# items}}"
+- Date/time formats should use the user's locale, not hardcoded formats
+- Currency display should use Intl.NumberFormat, not manual formatting
+- Avoid idioms and cultural references that don't translate -->
+
+- **Primary language:** UNKNOWN
+- **Plural-sensitive strings:** UNKNOWN (list any strings that change based on count)
+- **Date/time format:** UNKNOWN (e.g., user locale via Intl.DateTimeFormat)
+- **Number format:** UNKNOWN (e.g., user locale via Intl.NumberFormat)
+- **String concatenation policy:** UNKNOWN (e.g., use template literals with full sentences, avoid fragment concatenation)
+
+---
+
 ## Open Questions
 - UNKNOWN

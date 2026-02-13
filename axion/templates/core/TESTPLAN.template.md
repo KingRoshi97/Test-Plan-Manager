@@ -140,6 +140,56 @@ EXAMPLE:
 
 ---
 
+## Accessibility Tests
+
+<!-- AGENT: Define test cases for WCAG 2.1 AA compliance. Every interactive screen
+from SCREENMAP needs accessibility verification.
+
+RULES:
+- Test keyboard navigation for all interactive flows
+- Test screen reader announcements for dynamic content changes
+- Test color contrast ratios (4.5:1 for normal text, 3:1 for large text)
+- Test focus management on page transitions and modal open/close
+- Test form error announcements
+
+EXAMPLE:
+| Test ID | Screen/Component | WCAG Criterion | Description | Expected Behavior | Priority |
+| fe_TEST_A01 | Recipe Form | 1.3.1 Info & Relationships | All form fields have associated labels | Every input has a visible or aria-label | P0 |
+| fe_TEST_A02 | Recipe List | 2.1.1 Keyboard | Navigate recipe grid by keyboard | Tab moves between cards, Enter opens detail | P1 |
+| fe_TEST_A03 | Delete Dialog | 4.1.3 Status Messages | Deletion confirmation announced | Screen reader announces "Recipe deleted" after action | P1 |
+-->
+
+| Test ID | Screen/Component | WCAG Criterion | Description | Expected Behavior | Priority |
+|---------|-----------------|----------------|-------------|-------------------|----------|
+| {{DOMAIN_PREFIX}}_TEST_A01 | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | P0/P1/P2 |
+
+---
+
+## Security Tests
+
+<!-- AGENT: Define test cases for common security vulnerabilities relevant to this domain.
+Derive from RPBS §12 Security Requirements and BELS authorization rules.
+
+RULES:
+- Test authentication bypass (accessing protected routes without auth)
+- Test authorization bypass (accessing other users' data)
+- Test input sanitization (XSS, SQL injection, path traversal)
+- Test rate limiting enforcement
+- Test CSRF protection on state-changing endpoints
+
+EXAMPLE:
+| Test ID | Category | Description | Input/Setup | Expected Result | Priority |
+| sec_TEST_001 | AuthZ | Access other user's recipe for edit | User A sends PUT /api/recipes/:id owned by User B | 403 Forbidden | P0 |
+| sec_TEST_002 | Input | XSS in recipe title | Title: "<script>alert(1)</script>" | Sanitized output, no script execution | P0 |
+| sec_TEST_003 | AuthN | Access protected endpoint without token | GET /api/me without Authorization header | 401 Unauthorized | P0 |
+-->
+
+| Test ID | Category | Description | Input/Setup | Expected Result | Priority |
+|---------|----------|-------------|-------------|----------------|----------|
+| {{DOMAIN_PREFIX}}_TEST_S01 | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | P0/P1/P2 |
+
+---
+
 ## Performance Criteria
 
 <!-- AGENT: Derive from RPBS §7 Non-Functional Profile. These become benchmark tests. -->
@@ -162,6 +212,30 @@ EXAMPLE:
 - Database: UNKNOWN (in-memory / test database / mock)
 - External services: UNKNOWN (mock / sandbox)
 - Auth: UNKNOWN (mock user / test tokens)
+
+---
+
+## Regression Test Strategy
+
+<!-- AGENT: Define how tests prevent regressions as the codebase evolves.
+
+RULES:
+- Specify which tests run on every commit (CI gate)
+- Specify which tests run on merge to main (full suite)
+- Define the policy for adding regression tests when bugs are found
+- Specify test isolation requirements (parallel-safe, independent setup/teardown)
+
+EXAMPLE:
+- CI gate (every commit): All P0 unit tests + contract tests (~30s target)
+- Merge gate (PR merge): Full P0 + P1 suite including integration tests (~5min target)
+- Bug fix policy: Every bug fix must include a regression test that would have caught the bug
+- Isolation: Each test creates its own data, no shared state between tests
+-->
+
+- **CI gate tests:** UNKNOWN
+- **Merge gate tests:** UNKNOWN
+- **Bug fix policy:** UNKNOWN
+- **Test isolation:** UNKNOWN
 
 ---
 

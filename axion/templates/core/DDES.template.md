@@ -102,6 +102,54 @@ Example — for a "backend" domain:
 
 ---
 
+## Entity Lifecycle Rules
+
+<!-- AGENT: For each entity this domain owns, define the lifecycle policies that govern
+creation, modification, and deletion. These rules become the foundation for BELS state
+machines and inform the agent about data retention behavior.
+
+RULES:
+- Every owned entity must have creation, update, and deletion policies defined
+- Soft delete vs hard delete must be explicit
+- Archival policies (if any) must specify the trigger and retention period
+- Cascade behavior (what happens to related entities) must be specified
+
+EXAMPLE:
+| Entity | Creation Policy | Update Policy | Deletion Policy | Cascade Behavior |
+| Recipe | Any authenticated user | Owner only | Soft delete (set deleted_at) | Comments orphaned, ingredients deleted |
+| Comment | Any authenticated user on published recipes | Author within 15 min | Hard delete | Replies re-parented to parent comment |
+-->
+
+| Entity | Creation Policy | Update Policy | Deletion Policy | Cascade Behavior |
+|--------|----------------|---------------|-----------------|------------------|
+| UNKNOWN | UNKNOWN | UNKNOWN | Soft/Hard delete | UNKNOWN |
+
+---
+
+## Data Retention & Archival
+
+<!-- AGENT: Define what happens to data over time. This informs database design,
+background job scheduling, and compliance requirements.
+
+RULES:
+- Specify retention periods for each data category (user data, logs, analytics, etc.)
+- Specify archival strategy (move to cold storage, compress, aggregate, or delete)
+- Note any regulatory requirements (GDPR right-to-erasure, data residency, etc.)
+- If no retention policy applies, state "Retained indefinitely" explicitly
+
+EXAMPLE:
+| Data Category | Retention Period | Archival Strategy | Regulatory Notes |
+| User accounts | Indefinite (until user requests deletion) | — | GDPR: must support account deletion |
+| Activity logs | 90 days | Aggregate into monthly summaries, delete raw logs | — |
+| Deleted recipes | 30 days (grace period for recovery) | Hard delete after 30 days | — |
+-->
+
+| Data Category | Retention Period | Archival Strategy | Regulatory Notes |
+|--------------|-----------------|-------------------|------------------|
+| UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+
+---
+
 ## Dependencies
 
 <!-- AGENT: What other domains does this domain depend on? Must match domains.json dependencies.
