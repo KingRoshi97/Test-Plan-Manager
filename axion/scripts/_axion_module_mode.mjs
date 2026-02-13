@@ -56,7 +56,7 @@ export const AXION_REQUIRED_DOC_TYPES = [
  */
 export const AXION_REVIEWED_DOC_TYPES = {
   BELS: ["Policy Rules", "State Machines", "Validation Rules", "Reason Codes"],
-  DDES: ["Overview", "Entities", "Key Responsibilities"],
+  DDES: ["Purpose", "Entities", "Key Responsibilities"],
   DIM: ["Exposed Interfaces", "Consumed Interfaces"],
 };
 
