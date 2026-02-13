@@ -9,42 +9,287 @@
 **Last Updated:** {{DATE}}
 
 <!-- AXION:AGENT_GUIDANCE
-PURPOSE: TIES defines the 12-phase implementation discipline for building a project.
-It is the execution roadmap — each phase has inputs, outputs, and verification gates.
+PURPOSE: TIES defines the 12 engineering disciplines that govern HOW code is written.
+These are quality rules and structural principles — not a build sequence.
+Each discipline describes patterns, constraints, and non-negotiable practices
+that must be followed during execution (TIES Phase 5 in ALRP terms).
+
+The build execution ORDER is determined by the Build Execution Plan (build-plan step),
+not by the discipline numbering here. These disciplines apply simultaneously
+throughout all build phases.
+
 This is a PROJECT-LEVEL document (one per kit, not per domain).
 
 SOURCES TO DERIVE FROM:
-1. RPBS — product requirements inform what gets built in each phase
-2. REBS — technical architecture determines tooling and environment setup
-3. DDES — entity specifications drive Phase 2 (Schema) and Phase 3 (Contracts)
-4. DIM — interface definitions drive Phase 5 (Backend Core)
-5. SCREENMAP — screen inventory drives Phase 7 (Frontend Shell)
-6. COMPONENT_LIBRARY — component catalog drives Phase 8 (Components)
-7. TESTPLAN — testing strategy drives Phase 10 (Testing)
-8. ERC — locked contracts are the gate for code generation phases
+1. RPBS — product requirements inform architectural constraints
+2. REBS — technical architecture determines tooling, stack, and patterns
+3. DDES — entity specifications inform data flow and state disciplines
+4. DIM — interface definitions inform API and contract disciplines
+5. ERC — locked contracts define the execution scope
+6. UX_Foundations — experience laws inform component and state disciplines
+7. UI_Constraints — structural rules inform component architecture
 
 RULES:
-- Phases MUST execute in order (1 → 12); each gate must pass before proceeding
-- Each phase gate defines concrete, verifiable completion criteria
-- If a phase fails, log the failure reason and revert to the previous state
-- Partial completion is allowed with explicit WIP status
-- All verification gates reference upstream documents by name
+- Disciplines are NOT phases to be executed in order — they are principles applied continuously
+- All disciplines apply simultaneously during execution
+- Each discipline defines both REQUIRED practices and FORBIDDEN patterns
+- Violation of any discipline during execution is a TIES violation
+- Build execution order is separate (see Build Execution Plan section)
 
 CASCADE POSITION (project-level — post-lock execution guide):
 - Upstream (read from): ALL locked domain docs via ERC, RPBS, REBS
-- Downstream (feeds into): Agent execution (tells the agent what to build and in what order)
+- Downstream (feeds into): Agent execution (tells the agent HOW to write code)
 - TIES is consumed by build agents after the documentation pipeline completes and ERC is locked
 -->
 
 ## Purpose
-This document defines the 12-phase implementation discipline for building the project. Each phase has specific inputs, outputs, and verification gates. Agents and developers must follow these phases in order.
+This document defines the 12 engineering disciplines that govern how code is written. These are simultaneous quality rules — not sequential build phases. The agent must apply all disciplines throughout execution.
 
 ---
 
-## Phase Summary
+## Discipline Summary
 
-| # | Phase | Input | Output | Gate |
-|---|-------|-------|--------|------|
+| # | Discipline | Focus | Core Principle |
+|---|-----------|-------|----------------|
+| 1 | Code Architecture | Structure | Separation of concerns |
+| 2 | Functional Core | Logic isolation | Pure logic, impure shell |
+| 3 | Data Flow | Data movement | Explicit, traceable data paths |
+| 4 | State Architecture | State management | Predictable, minimal state |
+| 5 | Component Architecture | UI structure | Composable, isolated components |
+| 6 | API & Service Architecture | Backend structure | Contract-first, minimal surface |
+| 7 | Contract-Driven Development | Agreements | Types as truth, validate at boundaries |
+| 8 | Error, Failure & Recovery | Resilience | Fail explicitly, recover gracefully |
+| 9 | Idempotency & Determinism | Predictability | Same input, same output |
+| 10 | Performance & Optimization | Efficiency | Measure first, optimize second |
+| 11 | Debugging & Diagnosis | Observability | Every failure tells its story |
+| 12 | Refactoring Mastery | Evolution | Change structure without changing behavior |
+
+---
+
+## Discipline 1: Code Architecture Principles
+
+<!-- AGENT: Define the structural rules for how code is organized.
+Derive from REBS (tech stack, architecture style) and RPBS (product complexity). -->
+
+### Required Practices
+- UNKNOWN (e.g., separate concerns by responsibility — UI, logic, data, infrastructure)
+- UNKNOWN (e.g., single responsibility per module/file)
+- UNKNOWN (e.g., explicit dependency direction — no circular imports)
+- UNKNOWN (e.g., co-locate related code — tests near implementations)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., god files that combine multiple responsibilities)
+- UNKNOWN (e.g., circular dependencies between modules)
+- UNKNOWN (e.g., business logic in UI components)
+
+---
+
+## Discipline 2: Functional Core / Imperative Shell
+
+<!-- AGENT: Define how to separate pure logic from side effects.
+Business rules should be pure functions. Side effects live at the edges. -->
+
+### Required Practices
+- UNKNOWN (e.g., business rules as pure functions — no database calls, no API calls)
+- UNKNOWN (e.g., side effects at the edges only — controllers, event handlers, middleware)
+- UNKNOWN (e.g., transformations are pure — input in, output out, no mutations)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., database calls inside business rule functions)
+- UNKNOWN (e.g., API calls inside validation logic)
+- UNKNOWN (e.g., mutating shared state inside pure functions)
+
+---
+
+## Discipline 3: Data Flow Engineering
+
+<!-- AGENT: Define how data moves through the system.
+Data flow must be explicit and traceable — no hidden transformations. -->
+
+### Required Practices
+- UNKNOWN (e.g., data flows in one direction — request → validate → process → respond)
+- UNKNOWN (e.g., transformations are explicit functions, not inline mutations)
+- UNKNOWN (e.g., data shape is documented at each boundary)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., implicit data transformations in transit)
+- UNKNOWN (e.g., modifying request objects in place)
+- UNKNOWN (e.g., relying on side effects for data propagation)
+
+---
+
+## Discipline 4: State Architecture
+
+<!-- AGENT: Define how state is managed throughout the system.
+State should be predictable, minimal, and derived where possible. -->
+
+### Required Practices
+- UNKNOWN (e.g., single source of truth for each piece of state)
+- UNKNOWN (e.g., derived state computed, not stored)
+- UNKNOWN (e.g., state transitions are explicit and traceable)
+- UNKNOWN (e.g., UI state separate from server/domain state)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., duplicated state across components)
+- UNKNOWN (e.g., storing derived values that can be computed)
+- UNKNOWN (e.g., implicit state transitions)
+
+---
+
+## Discipline 5: Component Architecture
+
+<!-- AGENT: Define how UI components are structured.
+Components should be composable, isolated, and predictable.
+Derive from UI_Constraints and COMPONENT_LIBRARY. -->
+
+### Required Practices
+- UNKNOWN (e.g., components receive data via props, not by reaching into global state)
+- UNKNOWN (e.g., presentational and container patterns separated)
+- UNKNOWN (e.g., components are self-contained with clear public APIs)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., components that directly call APIs)
+- UNKNOWN (e.g., deeply nested prop drilling without composition)
+- UNKNOWN (e.g., components that know about siblings)
+
+---
+
+## Discipline 6: API & Service Architecture
+
+<!-- AGENT: Define how backend services and APIs are structured.
+APIs are contracts — predictable, minimal, versioned where needed.
+Derive from DIM and BELS. -->
+
+### Required Practices
+- UNKNOWN (e.g., contract-first — define the shape before implementing)
+- UNKNOWN (e.g., consistent response envelope — success/error structure)
+- UNKNOWN (e.g., validate all input at the boundary)
+- UNKNOWN (e.g., thin controllers — delegate to service layer)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., business logic in route handlers)
+- UNKNOWN (e.g., inconsistent error response formats)
+- UNKNOWN (e.g., exposing internal data structures in API responses)
+
+---
+
+## Discipline 7: Contract-Driven Development
+
+<!-- AGENT: Define how contracts (types, schemas, interfaces) govern development.
+Types are truth. Validate at boundaries. Trust types internally. -->
+
+### Required Practices
+- UNKNOWN (e.g., shared type definitions between frontend and backend)
+- UNKNOWN (e.g., runtime validation at system boundaries — API input, user input, external data)
+- UNKNOWN (e.g., internal code trusts type system — no defensive checks inside trusted boundaries)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., using `any` type)
+- UNKNOWN (e.g., validating data at every layer instead of at boundaries)
+- UNKNOWN (e.g., type definitions that diverge between client and server)
+
+---
+
+## Discipline 8: Error, Failure & Recovery Patterns
+
+<!-- AGENT: Define how errors and failures are handled.
+Fail explicitly. Recover gracefully. Never swallow errors.
+Derive from BELS reason codes and COPY_GUIDE error messaging. -->
+
+### Required Practices
+- UNKNOWN (e.g., every error has a reason code from BELS)
+- UNKNOWN (e.g., errors bubble up with context — never lose the stack)
+- UNKNOWN (e.g., user-facing errors use COPY_GUIDE messages)
+- UNKNOWN (e.g., partial failure does not corrupt state)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., empty catch blocks)
+- UNKNOWN (e.g., generic "Something went wrong" without reason codes)
+- UNKNOWN (e.g., swallowing errors silently)
+- UNKNOWN (e.g., error handling that loses context)
+
+---
+
+## Discipline 9: Idempotency, Determinism & Side Effects
+
+<!-- AGENT: Define rules for predictable behavior.
+Same input, same output. Side effects are declared, not hidden. -->
+
+### Required Practices
+- UNKNOWN (e.g., API mutations are idempotent where possible)
+- UNKNOWN (e.g., retrying an operation does not cause duplicate effects)
+- UNKNOWN (e.g., side effects are explicit and documented)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., operations that produce different results on retry)
+- UNKNOWN (e.g., hidden side effects inside pure-looking functions)
+- UNKNOWN (e.g., relying on execution order for correctness)
+
+---
+
+## Discipline 10: Performance & Optimization Patterns
+
+<!-- AGENT: Define performance rules.
+Measure first, optimize second. Never optimize without a measurement.
+Derive from RPBS §7 Non-Functional Profile. -->
+
+### Required Practices
+- UNKNOWN (e.g., define performance budgets before building)
+- UNKNOWN (e.g., measure before optimizing — no premature optimization)
+- UNKNOWN (e.g., lazy load non-critical resources)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., premature optimization without measurements)
+- UNKNOWN (e.g., loading all data upfront when pagination is available)
+- UNKNOWN (e.g., blocking the main thread with synchronous operations)
+
+---
+
+## Discipline 11: Debugging & Diagnosis Engineering
+
+<!-- AGENT: Define how the system supports debugging and diagnosis.
+Every failure must tell its story. Observability is not optional. -->
+
+### Required Practices
+- UNKNOWN (e.g., structured logging with context — request ID, user, action)
+- UNKNOWN (e.g., error responses include enough info to diagnose without access to logs)
+- UNKNOWN (e.g., health check endpoints for system status)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., logging without context)
+- UNKNOWN (e.g., production errors that require code reading to understand)
+- UNKNOWN (e.g., suppressing warnings or errors)
+
+---
+
+## Discipline 12: Refactoring Mastery
+
+<!-- AGENT: Define rules for safe structural changes.
+Change structure without changing behavior. Tests prove equivalence. -->
+
+### Required Practices
+- UNKNOWN (e.g., refactor only when tests exist to verify behavior preservation)
+- UNKNOWN (e.g., one structural change at a time — never combine refactor with feature)
+- UNKNOWN (e.g., run full test suite before and after every refactor)
+
+### Forbidden Patterns
+- UNKNOWN (e.g., refactoring and adding features in the same commit)
+- UNKNOWN (e.g., refactoring without test coverage)
+- UNKNOWN (e.g., renaming/moving without updating all references)
+
+---
+
+## Build Execution Plan
+
+<!-- AGENT: The build execution plan defines the ORDER in which code is built.
+This is separate from the disciplines above, which apply simultaneously.
+The plan is generated by the build-plan step from ERC, DDES, and DIM.
+Each build step must follow ALL 12 disciplines above. -->
+
+### Build Sequence
+
+| # | Step | Inputs | Outputs | Gate |
+|---|------|--------|---------|------|
 | 1 | Foundation | RPBS, REBS | Project scaffold | Structure verified |
 | 2 | Schema | DDES, domain-map | Database schema | Schema validated |
 | 3 | Contracts | DIM, BELS | API contracts | Contracts typed |
@@ -58,337 +303,24 @@ This document defines the 12-phase implementation discipline for building the pr
 | 11 | Security | Security review | Hardened app | Security audit pass |
 | 12 | Deploy | DevOps docs | Production build | Deployment verified |
 
----
-
-## Phase 1: Foundation
-
-### Inputs Required
-- [ ] RPBS_Product.md (product requirements)
-- [ ] REBS_Product.md (technical architecture)
-- [ ] domain-map.md (domain boundaries)
-
-### Actions
-1. Initialize project structure
-2. Set up build tooling
-3. Configure environment
-4. Create folder hierarchy per domain-map
-
-### Outputs
-- [ ] Project scaffold created
-- [ ] Package manager configured
-- [ ] Dev environment working
-- [ ] README with setup instructions
-
-### Verification Gate
-- [ ] `npm install` succeeds
-- [ ] Dev server starts
-- [ ] Folder structure matches domain-map
-
----
-
-## Phase 2: Schema
-
-### Inputs Required
-- [ ] DDES for database module
-- [ ] SCHEMA docs per entity
-- [ ] domain-map.md
-
-### Actions
-1. Define database tables from SCHEMA docs
-2. Set up ORM/migrations
-3. Create seed data scripts
-4. Document relationships
-
-### Outputs
-- [ ] Schema files created
-- [ ] Migrations generated
-- [ ] Seed scripts ready
-- [ ] ERD documented
-
-### Verification Gate
-- [ ] Migrations run cleanly
-- [ ] Seed data loads
-- [ ] All entities have CRUD
-
----
-
-## Phase 3: Contracts
-
-### Inputs Required
-- [ ] DIM (Domain Interface Map)
-- [ ] BELS (Business Entity Logic Spec)
-- [ ] Route specs
-
-### Actions
-1. Define TypeScript interfaces
-2. Create Zod schemas for validation
-3. Document API contract shapes
-4. Set up shared types
-
-### Outputs
-- [ ] Type definitions
-- [ ] Validation schemas
-- [ ] Shared contract package
-- [ ] API documentation stubs
-
-### Verification Gate
-- [ ] Types compile
-- [ ] Schemas validate test data
-- [ ] No `any` types in contracts
-
----
-
-## Phase 4: Auth
-
-### Inputs Required
-- [ ] Security DDES
-- [ ] Auth workflow docs
-- [ ] User schema
-
-### Actions
-1. Implement auth provider
-2. Set up session/token management
-3. Create auth middleware
-4. Build login/logout flows
-
-### Outputs
-- [ ] Auth system integrated
-- [ ] Protected route middleware
-- [ ] User session management
-- [ ] Auth error handling
-
-### Verification Gate
-- [ ] Login flow works
-- [ ] Protected routes block unauthorized
-- [ ] Session persists correctly
-
----
-
-## Phase 5: Backend Core
-
-### Inputs Required
-- [ ] Route specs
-- [ ] Contracts from Phase 3
-- [ ] BELS for business logic
-
-### Actions
-1. Implement API routes
-2. Wire up controllers
-3. Connect to database
-4. Add validation middleware
-
-### Outputs
-- [ ] All routes implemented
-- [ ] Request validation working
-- [ ] Database queries functional
-- [ ] Error handling consistent
-
-### Verification Gate
-- [ ] All endpoints return expected shapes
-- [ ] Validation rejects bad input
-- [ ] No unhandled errors
-
----
-
-## Phase 6: State
-
-### Inputs Required
-- [ ] State machine docs
-- [ ] Frontend state requirements
-- [ ] Contracts for state shapes
-
-### Actions
-1. Set up state management
-2. Implement state machines
-3. Connect to API layer
-4. Add persistence where needed
-
-### Outputs
-- [ ] State store configured
-- [ ] State machines implemented
-- [ ] API integration layer
-- [ ] State persistence working
-
-### Verification Gate
-- [ ] State transitions correct
-- [ ] API data flows to state
-- [ ] No state race conditions
-
----
-
-## Phase 7: Frontend Shell
-
-### Inputs Required
-- [ ] Screenmap
-- [ ] UI Constraints
-- [ ] UX Foundations
-
-### Actions
-1. Create app shell/layout
-2. Set up routing
-3. Implement navigation
-4. Apply base styling/theme
-
-### Outputs
-- [ ] App shell renders
-- [ ] All routes accessible
-- [ ] Navigation working
-- [ ] Theme applied
-
-### Verification Gate
-- [ ] All pages reachable
-- [ ] Layout consistent
-- [ ] Responsive basics working
-
----
-
-## Phase 8: Components
-
-### Inputs Required
-- [ ] Component library spec
-- [ ] Page specs
-- [ ] UI Constraints
-
-### Actions
-1. Build component library
-2. Implement page-specific components
-3. Wire up to state
-4. Add interactions
-
-### Outputs
-- [ ] All components built
-- [ ] Components connected to state
-- [ ] Interactions working
-- [ ] Accessibility basics
-
-### Verification Gate
-- [ ] Components render correctly
-- [ ] State bindings work
-- [ ] No console errors
-
----
-
-## Phase 9: Integration
-
-### Inputs Required
-- [ ] Workflow docs
-- [ ] All previous phase outputs
-
-### Actions
-1. Connect all features end-to-end
-2. Implement multi-step flows
-3. Add loading/error states
-4. Polish UX
-
-### Outputs
-- [ ] All workflows functional
-- [ ] Error handling complete
-- [ ] Loading states present
-- [ ] UX polish applied
-
-### Verification Gate
-- [ ] Core user journeys complete
-- [ ] No broken flows
-- [ ] Error recovery works
-
----
-
-## Phase 10: Testing
-
-### Inputs Required
-- [ ] Test plan
-- [ ] Test strategy
-- [ ] All feature outputs
-
-### Actions
-1. Write unit tests
-2. Write integration tests
-3. Write E2E tests
-4. Set up CI pipeline
-
-### Outputs
-- [ ] Test suite complete
-- [ ] CI pipeline configured
-- [ ] Coverage report
-- [ ] Test documentation
-
-### Verification Gate
-- [ ] Coverage targets met
-- [ ] All tests pass
-- [ ] CI runs green
-
----
-
-## Phase 11: Security
-
-### Inputs Required
-- [ ] Security review doc
-- [ ] Auth implementation
-- [ ] API implementation
-
-### Actions
-1. Run security audit
-2. Fix vulnerabilities
-3. Add security headers
-4. Review auth flows
-
-### Outputs
-- [ ] Audit report
-- [ ] Vulnerabilities fixed
-- [ ] Security hardening applied
-- [ ] Penetration test results
-
-### Verification Gate
-- [ ] No critical vulnerabilities
-- [ ] Security checklist complete
-- [ ] Auth audit passed
-
----
-
-## Phase 12: Deploy
-
-### Inputs Required
-- [ ] DevOps docs
-- [ ] Perf budget
-- [ ] All previous outputs
-
-### Actions
-1. Configure production build
-2. Set up hosting
-3. Configure monitoring
-4. Create deployment pipeline
-
-### Outputs
-- [ ] Production build working
-- [ ] Deployment automated
-- [ ] Monitoring configured
-- [ ] Runbook documented
-
-### Verification Gate
-- [ ] Deployment succeeds
-- [ ] Health checks pass
-- [ ] Monitoring alerts working
-- [ ] Rollback tested
-
----
-
-## Execution Notes
-
-### Phase Dependencies
-- Phases must execute in order (1 → 12)
-- Each phase gate must pass before proceeding
-- Partial phases allowed with explicit `WIP` status
+### Build Rules
+- Build steps execute in order (1 → 12); each gate must pass before proceeding
+- ALL 12 engineering disciplines apply to EVERY build step
+- Each gate defines concrete, verifiable completion criteria
+- If a step fails, log the failure reason and revert to the previous step state
+- Partial completion is allowed with explicit WIP status
 
 ### Rollback Protocol
-If a phase fails:
+If a build step fails:
 1. Document failure reason
-2. Revert to previous phase state
+2. Revert to previous step state
 3. Fix blockers
-4. Re-run failed phase
+4. Re-run failed step
 
 ### Completion Criteria
 Project is complete when:
-- [ ] All 12 phases pass verification
+- [ ] All 12 build steps pass verification
+- [ ] All 12 engineering disciplines honored throughout
 - [ ] ERC signed off
 - [ ] Production deployment verified
 
