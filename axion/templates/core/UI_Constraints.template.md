@@ -7,27 +7,102 @@
 **Domain Slug:** {{DOMAIN_SLUG}}
 
 <!-- AXION:AGENT_GUIDANCE
-PURPOSE: UI Constraints defines the visual and technical rules that ALL UI components
-must follow. This is the design system specification that ensures consistency across
-the entire product. It constrains what the agent CAN and CANNOT do when generating UI code.
+PURPOSE: UI Constraints translates UX Foundations into structural and visual rules
+without designing UI. It defines HOW experience law may be expressed structurally,
+plus the visual design system that ALL UI components must follow.
+UI structure must obey UX Foundations at all times.
 
 SOURCES TO DERIVE FROM:
 1. RPBS §30 Branding & Visual Identity — brand colors, typography, style direction
 2. RPBS §18 Accessibility — color contrast, motion, font size requirements
 3. Architecture module — tech stack (React, Vue, etc.) determines component patterns
-4. UX_Foundations — responsive strategy and interaction patterns
+4. UX_Foundations — experience laws, responsive strategy, interaction patterns
 
 RULES:
 - Constraints are HARD rules — the agent must NOT violate them during code generation
+- UI structure must reinforce user intent (from UX_Foundations)
 - If a constraint seems too restrictive, add an Open Question rather than ignoring it
 - All color values should support dark mode (define both light and dark variants)
 - Reference the selected UI library/framework from the architecture module
 
 CASCADE POSITION (fill priority 6 of 13):
-- Upstream (read from): RPBS (§18 accessibility, §30 branding), UX_Foundations (responsive strategy, interaction patterns), architecture module (tech stack)
+- Upstream (read from): RPBS (§18 accessibility, §30 branding), UX_Foundations (experience laws, responsive strategy, interaction patterns), architecture module (tech stack)
 - Downstream (feeds into): SCREENMAP (layout constraints per screen), COMPONENT_LIBRARY (component styling rules, allowed patterns), COPY_GUIDE (typography constraints for copy), frontend code generation (CSS variables, theme config)
 - UI_Constraints sets the visual design system that ALL UI code must respect — violations here cause inconsistent output
 -->
+
+---
+
+## Structural Grouping Rules
+
+<!-- AGENT: Define what belongs together in the UI.
+These rules ensure that UI structure reinforces user intent from UX_Foundations.
+Derive from UX_Foundations Information Architecture and RPBS §6 Navigation. -->
+
+- UNKNOWN (e.g., actions related to the same intent must be co-located)
+- UNKNOWN (e.g., configuration must not interrupt execution flows)
+- UNKNOWN (e.g., review and execution must be visually separable)
+- UNKNOWN (e.g., primary actions are always visible, secondary actions are progressive)
+
+**Rule:** UI structure must reinforce user intent.
+
+---
+
+## Navigation Constraints
+
+<!-- AGENT: Define allowed navigation behavior.
+Navigation must not fracture mental continuity (from UX_Foundations Flow Stability Rules).
+Derive from UX_Foundations navigation patterns and RPBS §6. -->
+
+- Maximum navigation depth: UNKNOWN (e.g., max 3 levels deep)
+- Modal vs full-context rules: UNKNOWN (e.g., modals for confirmations only, full pages for creation)
+- Always accessible elements: UNKNOWN (e.g., main nav, user menu, back button)
+- Core flow interruption: UNKNOWN (e.g., notifications must never interrupt a core flow)
+
+**Rule:** Navigation must not fracture mental continuity.
+
+---
+
+## Interaction Pattern Limits
+
+<!-- AGENT: Define allowed interaction patterns and limits.
+Patterns must be consistent and limited — one primary action per view.
+Derive from UX_Foundations Cognitive Load Strategy and Interaction Patterns. -->
+
+- UNKNOWN (e.g., one primary action per view)
+- UNKNOWN (e.g., secondary actions must not steal focus from primary)
+- UNKNOWN (e.g., destructive actions require friction — confirmation step)
+- UNKNOWN (e.g., drag-and-drop only as enhancement, never sole interaction method)
+
+**Rule:** Patterns must be consistent and limited.
+
+---
+
+## State Visibility Rules
+
+<!-- AGENT: Define what the user must ALWAYS be able to see.
+Critical state must never be hidden — derive from UX_Foundations Feedback & Visibility Laws. -->
+
+- UNKNOWN (e.g., current state of the active entity is always visible)
+- UNKNOWN (e.g., progress indicators shown for multi-step processes)
+- UNKNOWN (e.g., pending actions are surfaced, not hidden)
+- UNKNOWN (e.g., errors and warnings are always visible until dismissed)
+
+**Rule:** Critical state must never be hidden.
+
+---
+
+## Timing & Feedback Constraints
+
+<!-- AGENT: Define response expectations and feedback timing.
+Silence is not feedback — derive from UX_Foundations Feedback & Visibility Laws. -->
+
+- UNKNOWN (e.g., immediate visual acknowledgement of user input — < 100ms)
+- UNKNOWN (e.g., loading states shown for any async action > 200ms)
+- UNKNOWN (e.g., clear completion signals for all operations)
+- UNKNOWN (e.g., optimistic updates where safe, with rollback on failure)
+
+**Rule:** Silence is not feedback.
 
 ---
 
@@ -121,6 +196,35 @@ choices during code generation to maintain consistency. -->
 ### Forbidden Patterns
 <!-- AGENT: Patterns the agent must NEVER use in this product. -->
 - UNKNOWN
+
+---
+
+## UI Structural Non-Goals
+
+<!-- AGENT: Explicitly forbid structural behaviors that violate UX Foundations.
+These are hard boundaries on what UI structures are never acceptable.
+Derive from UX_Foundations UX Non-Goals — translate experience non-goals into structural prohibitions. -->
+
+- UNKNOWN (e.g., deep nested navigation beyond stated max depth)
+- UNKNOWN (e.g., overloaded views with multiple competing primary actions)
+- UNKNOWN (e.g., hidden critical actions that require discovery)
+- UNKNOWN (e.g., gesture-only critical actions with no visible alternative)
+
+**Rule:** Forbidden structures must not be introduced.
+
+---
+
+## Platform-Agnostic Rule
+
+<!-- AGENT: Define how UI rules hold across platforms.
+Platform differences may optimize ergonomics but must not redefine experience meaning.
+Derive from UX_Foundations and RPBS deployment targets. -->
+
+- Web, mobile, and desktop must share mental structure: UNKNOWN
+- Platform-specific optimizations allowed for: UNKNOWN (e.g., touch targets on mobile, keyboard shortcuts on desktop)
+- Platform must NOT redefine: UNKNOWN (e.g., flow meaning, core interactions, state visibility)
+
+**Rule:** Platform must not redefine experience.
 
 ---
 
