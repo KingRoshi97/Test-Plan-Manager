@@ -123,6 +123,69 @@ EXAMPLE:
 
 ---
 
+## Standard Error Response Contract
+
+<!-- AGENT: Define the standard error response shape that ALL interfaces in this domain use.
+This ensures consistent error handling across the entire API surface.
+
+RULES:
+- All error responses must use the same JSON structure
+- Error codes must reference BELS Reason Codes
+- Include a machine-readable code AND a human-readable message
+- Include a request ID for debugging (if applicable)
+
+EXAMPLE:
+```json
+{
+  "error": {
+    "code": "RECIPE_NOT_FOUND",
+    "message": "The requested recipe could not be found.",
+    "status": 404,
+    "details": {},
+    "requestId": "req_abc123"
+  }
+}
+```
+-->
+
+```json
+UNKNOWN
+```
+
+### Error Response Fields
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| error.code | string | Yes | SCREAMING_SNAKE_CASE reason code from BELS |
+| error.message | string | Yes | Human-readable description |
+| error.status | number | Yes | HTTP status code |
+| error.details | object | No | Additional context (field errors, limits, etc.) |
+| error.requestId | string | No | Unique request identifier for debugging |
+
+---
+
+## API Versioning Strategy
+
+<!-- AGENT: Define how this domain's interfaces evolve over time without breaking consumers.
+
+RULES:
+- Specify the versioning mechanism (URL path, header, query param, or none)
+- Define what constitutes a breaking change
+- Specify the deprecation policy (how long old versions are supported)
+- If no versioning is needed (MVP), state that explicitly
+
+EXAMPLE:
+- Versioning mechanism: URL path prefix (/api/v1/...)
+- Breaking changes: Removing a field, changing a field type, removing an endpoint
+- Non-breaking changes: Adding optional fields, adding new endpoints
+- Deprecation policy: Old versions supported for 6 months after new version release
+-->
+
+- **Versioning mechanism:** UNKNOWN
+- **Breaking change definition:** UNKNOWN
+- **Deprecation policy:** UNKNOWN
+
+---
+
 ## Data Flow Summary
 
 <!-- AGENT: Describe how data flows through this domain at a high level.

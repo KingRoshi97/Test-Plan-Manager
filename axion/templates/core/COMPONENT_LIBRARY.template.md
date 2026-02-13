@@ -135,6 +135,52 @@ EXAMPLE:
 
 ---
 
+## Component Theming
+
+<!-- AGENT: Define how components adapt to light/dark mode and theme variations.
+This ensures the agent generates proper theme-aware styling for every component.
+
+RULES:
+- Every component that has background color, text color, or border color MUST define both light and dark variants
+- Use semantic color tokens (e.g., --card, --card-foreground) not literal colors
+- Components that appear on non-standard backgrounds (hero images, colored panels) need explicit contrast rules
+
+EXAMPLE:
+| Component ID | Light Mode | Dark Mode | Theme Tokens Used | Special Cases |
+| fe_CMP_001 | White card, dark text | Dark card, light text | bg-card, text-card-foreground | On hero: use semi-transparent bg |
+| fe_CMP_005 | Gray borders between steps | Lighter gray borders | border-border | Active step: border-primary |
+-->
+
+| Component ID | Light Mode | Dark Mode | Theme Tokens Used | Special Cases |
+|-------------|-----------|----------|------------------|---------------|
+| {{DOMAIN_PREFIX}}_CMP_001 | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+
+---
+
+## Animation & Transition Specs
+
+<!-- AGENT: Define component-level animations and transitions. This tells the agent
+exactly what motion to implement and prevents over-animation.
+
+RULES:
+- Transitions should be subtle — prefer 150-300ms ease durations
+- Respect prefers-reduced-motion media query for all animations
+- Only animate properties that don't cause layout reflow (transform, opacity)
+- Entrance/exit animations for dynamically added/removed components
+
+EXAMPLE:
+| Component ID | Trigger | Property | Duration | Easing | Reduced Motion |
+| fe_CMP_001 | hover | transform: scale(1.02) | 150ms | ease-out | No transform |
+| fe_CMP_007 | mount | opacity: 0 → 1 | 200ms | ease-in | Instant appear |
+| fe_CMP_003 | expand | max-height: 0 → auto | 250ms | ease-in-out | Instant expand |
+-->
+
+| Component ID | Trigger | Property | Duration | Easing | Reduced Motion |
+|-------------|---------|----------|----------|--------|----------------|
+| {{DOMAIN_PREFIX}}_CMP_001 | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN |
+
+---
+
 ## Component Sizing
 
 <!-- AGENT: Define size constraints for components to maintain visual consistency. -->
