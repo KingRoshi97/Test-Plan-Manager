@@ -62,6 +62,30 @@ For each rule, think: WHO is trying to do WHAT, under WHAT conditions, and what 
 
 ---
 
+## Invariant Guarantees
+
+<!-- AGENT: Invariants are conditions that MUST always be true regardless of entity state or
+user action. Unlike policy rules (which guard specific actions), invariants are system-wide
+truths that the codebase must never violate.
+
+EXAMPLES:
+- "Every order must have at least one line item" — structural invariant
+- "A user's email must be unique across all accounts" — uniqueness invariant
+- "Account balance can never go negative" — value boundary invariant
+- "Every entity must have a created_by reference to a valid user" — referential invariant
+
+RULES:
+- Invariant IDs use format: {{DOMAIN_SLUG}}_INV_NNN
+- Every invariant must specify WHERE it is enforced (database constraint, application logic, or both)
+- Invariants are non-negotiable — they cannot be overridden by any policy rule or user action -->
+
+| Invariant ID | Description | Enforcement Layer | Violation Behavior | SourceRef |
+|-------------|-------------|-------------------|-------------------|-----------|
+| {{DOMAIN_SLUG}}_INV_001 | UNKNOWN | DB/App/Both | UNKNOWN | RPBS §_ |
+| {{DOMAIN_SLUG}}_INV_002 | UNKNOWN | DB/App/Both | UNKNOWN | RPBS §_ |
+
+---
+
 ## State Machines (Candidates)
 
 <!-- AGENT: State machines define how entities change state over time. Every core object
@@ -129,6 +153,31 @@ For each rule: What field? What rule? What error code shows to the user? Where d
 
 ---
 
+## Side Effect Rules
+
+<!-- AGENT: Side effects are actions that MUST happen as a consequence of a business event.
+Unlike policy rules (which decide IF something can happen), side effect rules define
+WHAT ELSE must happen AFTER something succeeds.
+
+EXAMPLES:
+- "When a recipe is published, notify all followers of the author" — notification side effect
+- "When a user is deleted, anonymize all their comments" — cascade side effect
+- "When an order is placed, decrement inventory count" — state synchronization side effect
+- "When a payment succeeds, generate an invoice PDF" — artifact generation side effect
+
+RULES:
+- Side effect IDs use format: {{DOMAIN_SLUG}}_SE_NNN
+- Every side effect must specify whether it is synchronous (blocks the action) or asynchronous (fire-and-forget)
+- Failure behavior must be defined — does the original action roll back, or does the side effect retry?
+- Side effects that cross domain boundaries should also appear in DIM as events -->
+
+| Side Effect ID | Trigger Event | Action | Sync/Async | Failure Behavior | SourceRef |
+|---------------|--------------|--------|------------|-----------------|-----------|
+| {{DOMAIN_SLUG}}_SE_001 | UNKNOWN | UNKNOWN | Sync/Async | Rollback/Retry/Ignore | RPBS §_ |
+| {{DOMAIN_SLUG}}_SE_002 | UNKNOWN | UNKNOWN | Sync/Async | Rollback/Retry/Ignore | RPBS §_ |
+
+---
+
 ## Reason Codes Referenced
 
 <!-- AGENT: This is the master list of all error/deny codes used in this domain's rules.
@@ -168,6 +217,27 @@ These become middleware checks and route guards. -->
 | Action | Actor(s) Allowed | Condition | Deny Code | SourceRef |
 |--------|-----------------|-----------|-----------|-----------|
 | UNKNOWN | UNKNOWN | UNKNOWN | UNKNOWN | RPBS §3 |
+
+---
+
+## Rate Limits & Quotas
+
+<!-- AGENT: Any throttling or quota rules that apply to actions in this domain.
+Derive from RPBS §7 Non-Functional Profile and §14 Billing/Entitlements.
+
+EXAMPLES:
+- "API calls limited to 100/minute per user" — rate limit
+- "Free tier limited to 5 projects" — entitlement quota
+- "File uploads limited to 10MB per file" — resource constraint
+
+RULES:
+- Specify the scope (per-user, per-account, global)
+- Specify what happens when the limit is hit (429 response, queue, degrade gracefully)
+- Reference the billing tier if the limit varies by plan -->
+
+| Resource | Limit | Scope | Exceeded Behavior | Deny Code | SourceRef |
+|----------|-------|-------|-------------------|-----------|-----------|
+| UNKNOWN | UNKNOWN | Per-User/Per-Account/Global | UNKNOWN | UNKNOWN | RPBS §7/§14 |
 
 ---
 

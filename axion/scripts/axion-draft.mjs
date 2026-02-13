@@ -127,9 +127,14 @@ function mergeIntoTemplate(existingContent, draftContent, sectionMap) {
 
 const BELS_SECTION_MAP = {
   'Policy Rules (Candidates)': 'Policy Rules (Candidates)',
+  'Invariant Guarantees': 'Invariant Guarantees',
   'State Machines (Candidates)': 'State Machines (Candidates)',
   'Validation Rules (Candidates)': 'Validation Rules (Candidates)',
+  'Side Effect Rules': 'Side Effect Rules',
   'Reason Codes Referenced': 'Reason Codes Referenced',
+  'Computed / Derived Values': 'Computed / Derived Values',
+  'Authorization Rules': 'Authorization Rules',
+  'Rate Limits & Quotas': 'Rate Limits & Quotas',
   'Open Questions': 'Open Questions',
 };
 
@@ -138,7 +143,10 @@ const DDES_SECTION_MAP = {
   'Entities': 'Entities',
   'Key Responsibilities': 'Key Responsibilities',
   'Domain Boundaries': 'Domain Boundaries',
+  'Entity Lifecycle Rules': 'Entity Lifecycle Rules',
+  'Data Retention & Archival': 'Data Retention & Archival',
   'Dependencies': 'Dependencies',
+  'Domain Events': 'Domain Events',
   'Open Questions': 'Open Questions',
 };
 
@@ -146,7 +154,10 @@ const DIM_SECTION_MAP = {
   'Exposed Interfaces': 'Exposed Interfaces',
   'Consumed Interfaces': 'Consumed Interfaces',
   'Event Contracts': 'Event Contracts',
+  'Standard Error Response Contract': 'Standard Error Response Contract',
+  'API Versioning Strategy': 'API Versioning Strategy',
   'Data Flow Summary': 'Data Flow Summary',
+  'Interface Dependencies Graph': 'Interface Dependencies Graph',
   'Open Questions': 'Open Questions',
 };
 
@@ -969,6 +980,10 @@ const SCREENMAP_SECTION_MAP = {
   'Navigation Flows': 'Navigation Flows',
   'Screen-to-Component Mapping': 'Screen-to-Component Mapping',
   'State Requirements Per Screen': 'State Requirements Per Screen',
+  'Loading & Error States Per Screen': 'Loading & Error States Per Screen',
+  'Responsive Breakpoint Behavior': 'Responsive Breakpoint Behavior',
+  'Deep Linking Requirements': 'Deep Linking Requirements',
+  'Screen Wireframe Notes': 'Screen Wireframe Notes',
   'Open Questions': 'Open Questions',
 };
 
@@ -979,8 +994,11 @@ const TESTPLAN_SECTION_MAP = {
   'Edge Cases': 'Edge Cases',
   'Error Scenarios': 'Error Scenarios',
   'API Contract Tests': 'API Contract Tests',
+  'Accessibility Tests': 'Accessibility Tests',
+  'Security Tests': 'Security Tests',
   'Performance Criteria': 'Performance Criteria',
   'Test Data Requirements': 'Test Data Requirements',
+  'Regression Test Strategy': 'Regression Test Strategy',
   'Coverage Goals': 'Coverage Goals',
   'Open Questions': 'Open Questions',
 };
@@ -991,6 +1009,9 @@ const COMPONENT_LIBRARY_SECTION_MAP = {
   'Component Composition': 'Component Composition',
   'Component Dependencies': 'Component Dependencies',
   'Component State': 'Component State',
+  'Accessibility Requirements': 'Accessibility Requirements',
+  'Component Theming': 'Component Theming',
+  'Animation & Transition Specs': 'Animation & Transition Specs',
   'Component Sizing': 'Component Sizing',
   'Open Questions': 'Open Questions',
 };
@@ -1003,8 +1024,12 @@ const COPY_GUIDE_SECTION_MAP = {
   'Success Messages': 'Success Messages',
   'Empty States': 'Empty States',
   'Confirmation Dialogs': 'Confirmation Dialogs',
+  'Tooltips & Help Text': 'Tooltips & Help Text',
   'Placeholder Text': 'Placeholder Text',
   'Loading & Progress Messages': 'Loading & Progress Messages',
+  'Notification Copy': 'Notification Copy',
+  'Accessibility Copy': 'Accessibility Copy',
+  'Localization Notes': 'Localization Notes',
   'Open Questions': 'Open Questions',
 };
 

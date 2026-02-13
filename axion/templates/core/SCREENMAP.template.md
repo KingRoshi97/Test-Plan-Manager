@@ -113,6 +113,78 @@ EXAMPLE:
 
 ---
 
+## Loading & Error States Per Screen
+
+<!-- AGENT: For each screen, define what the user sees during loading and when errors occur.
+This ensures the agent generates appropriate loading skeletons, error boundaries, and retry UI.
+
+RULES:
+- Every screen must define a loading state (skeleton, spinner, or placeholder)
+- Every screen must define an error state (error message, retry button, fallback content)
+- Screens that load data from multiple sources may have partial loading states
+- Error states should use copy from COPY_GUIDE error messages
+
+EXAMPLE:
+| Screen ID | Loading State | Error State | Partial Load Behavior | Retry Available? |
+| fe_SCR_001 | Grid of skeleton cards (6 cards) | "Unable to load recipes" + retry button | — | Yes |
+| fe_SCR_002 | Skeleton layout matching detail structure | "Recipe not found" or "Something went wrong" | Comments load independently | Yes (data), No (404) |
+| fe_SCR_003 | Spinner on form submit button | Inline field errors + toast for server errors | — | No (fix and resubmit) |
+-->
+
+| Screen ID | Loading State | Error State | Partial Load Behavior | Retry Available? |
+|----------|--------------|------------|----------------------|-----------------|
+| {{DOMAIN_PREFIX}}_SCR_001 | UNKNOWN | UNKNOWN | UNKNOWN | Yes/No |
+
+---
+
+## Responsive Breakpoint Behavior
+
+<!-- AGENT: For each screen, define how the layout adapts at different viewport sizes.
+This tells the agent exactly how to implement responsive layouts.
+
+RULES:
+- Define behavior at standard breakpoints: mobile (<640px), tablet (640-1024px), desktop (>1024px)
+- Specify what elements hide, stack, or rearrange at each breakpoint
+- Note any screens that are mobile-only or desktop-only
+- Reference UI_Constraints responsive rules for global constraints
+
+EXAMPLE:
+| Screen ID | Mobile (<640px) | Tablet (640-1024px) | Desktop (>1024px) |
+| fe_SCR_001 | Single column, no sidebar, cards stack vertically | 2-column grid, sidebar as collapsible drawer | 3-column grid + persistent sidebar |
+| fe_SCR_002 | Full width, action bar fixed bottom | Full width, action bar in header | Max-width container, action bar in header |
+| fe_SCR_006 | Tabs for settings sections | Tabs for settings sections | Left nav + content area |
+-->
+
+| Screen ID | Mobile (<640px) | Tablet (640-1024px) | Desktop (>1024px) |
+|----------|----------------|--------------------|--------------------|
+| {{DOMAIN_PREFIX}}_SCR_001 | UNKNOWN | UNKNOWN | UNKNOWN |
+
+---
+
+## Deep Linking Requirements
+
+<!-- AGENT: Define which screens support direct URL access and what happens when
+a user navigates directly to a deep link (vs arriving via in-app navigation).
+
+RULES:
+- Screens behind auth should redirect to login and return after authentication
+- Screens that require data context (e.g., recipe detail) should handle 404 gracefully
+- Modal/drawer screens may need to render their parent screen as background
+- Share-friendly URLs should be human-readable where possible
+
+EXAMPLE:
+| Screen ID | Deep Link URL | Auth Redirect? | Missing Data Behavior | Shareable? |
+| fe_SCR_002 | /recipes/:slug | No (public) | 404 page with "Recipe not found" | Yes |
+| fe_SCR_004 | /recipes/:slug/edit | Yes → login → return | 404 or 403 depending on ownership | No |
+| fe_SCR_007 | — (modal, no URL) | — | — | No |
+-->
+
+| Screen ID | Deep Link URL | Auth Redirect? | Missing Data Behavior | Shareable? |
+|----------|--------------|---------------|----------------------|-----------|
+| {{DOMAIN_PREFIX}}_SCR_001 | UNKNOWN | Yes/No | UNKNOWN | Yes/No |
+
+---
+
 ## Screen Wireframe Notes
 
 <!-- AGENT: For key screens, describe the layout structure in enough detail
