@@ -82,6 +82,12 @@ a working, production-ready application by following the documentation in this A
 │   │   ├── COPY_GUIDE_{{DOMAIN_SLUG}}.md  # User-facing copy (UI domains)
 │   │   └── TESTPLAN_{{DOMAIN_SLUG}}.md  # Test cases
 │   └── ...
+├── knowledge/
+│   ├── INDEX.md                     # Knowledge map — which files to read per domain
+│   ├── api-design.md                # API design patterns and best practices
+│   ├── database.md                  # Database schema and query patterns
+│   ├── security.md                  # Security best practices
+│   └── ...                          # 30 curated knowledge files
 ├── registry/
 │   ├── manifest.json                # Kit manifest
 │   ├── stack_profile.json           # Tech stack configuration
@@ -150,6 +156,17 @@ Build each domain completely before moving to the next. "Completely" means:
 | ALRP | Agent lifecycle rules — phase behavior, input authority |
 | SROL | Scope refinement — optimization modes, diagnostic lenses |
 | TIES | Engineering disciplines — 12 quality dimensions |
+
+### Knowledge Base (Best Practice References)
+
+<!-- AGENT: The knowledge/ directory contains curated industry best practices.
+Consult knowledge/INDEX.md for a map of which files are relevant to each domain and task.
+These files ground your implementation in proven patterns and standards. -->
+
+- **INDEX.md** — Start here. Maps each domain to the knowledge files you should read before building it.
+- Knowledge files cover: API design, database patterns, security, state management, testing, accessibility, performance, error handling, and more.
+- **When to read**: Before implementing any domain, check the INDEX for primary knowledge files.
+- **How to use**: Follow the patterns and recommendations in knowledge files unless the project docs explicitly specify a different approach.
 
 ---
 
