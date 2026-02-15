@@ -25,6 +25,10 @@ export const STEP_LABELS: Record<string, string> = {
   "docs-check": "Docs Check",
   doctor: "System Doctor",
   init: "Initialize Workspace",
+  "validate-templates": "Validate Templates",
+  "knowledge-coverage": "Knowledge Coverage",
+  "kit-preview": "Kit Preview",
+  "kit-validate": "Kit Validate",
 };
 
 export function stepLabel(stepId: string): string {

@@ -553,6 +553,58 @@ const scripts: Script[] = [
     relatedScripts: ["hash-templates", "verify-seams"],
   },
   {
+    name: "validate-templates",
+    file: "axion/scripts/axion-validate-templates.ts",
+    description:
+      "Template validation guardrail. Scans all template files for orphaned anchors, duplicate anchor IDs, surviving UNKNOWN placeholders, and missing required document types. Outputs a structured JSON report with per-check PASS/FAIL status. Supports --strict mode to promote warnings to failures.",
+    icon: ShieldCheck,
+    tag: "Diagnostics",
+    type: "system",
+    flags: ["--json", "--strict"],
+    usage: "npx tsx axion/scripts/axion-validate-templates.ts --json",
+    relatedScripts: ["knowledge-coverage", "docs-check", "verify"],
+    pipelineStage: "validate-templates",
+  },
+  {
+    name: "knowledge-coverage",
+    file: "axion/scripts/axion-knowledge-coverage.ts",
+    description:
+      "Cross-references knowledge-map.json against actual knowledge files. Reports dead references (mapped but missing), unmapped files, coverage percentages by domain, stack, and stage. Supports --stack filtering for stack-specific analysis.",
+    icon: BookOpen,
+    tag: "Diagnostics",
+    type: "system",
+    flags: ["--json", "--stack"],
+    usage: "npx tsx axion/scripts/axion-knowledge-coverage.ts --json --stack default-web-saas",
+    relatedScripts: ["validate-templates", "kit-preview", "docs-check"],
+    pipelineStage: "knowledge-coverage",
+  },
+  {
+    name: "kit-preview",
+    file: "axion/scripts/axion-kit-preview.ts",
+    description:
+      "Simulates kit packaging without writing files. Outputs the projected file tree, per-domain completeness percentages, a knowledge INDEX.md preview, missing required docs, and an overall readiness status (READY / READY_WITH_WARNINGS / NOT_READY).",
+    icon: Eye,
+    tag: "Distribution",
+    type: "system",
+    flags: ["--json"],
+    usage: "npx tsx axion/scripts/axion-kit-preview.ts --json",
+    relatedScripts: ["kit-validate", "package (.ts)", "knowledge-coverage"],
+    pipelineStage: "kit-preview",
+  },
+  {
+    name: "kit-validate",
+    file: "axion/scripts/axion-kit-validate.ts",
+    description:
+      "Post-package integrity validator. Checks required directory structure, domain document completeness (including empty files and surviving UNKNOWNs), cross-references, knowledge INDEX link validity, stack profile consistency, and manifest integrity.",
+    icon: CheckCircle2,
+    tag: "Distribution",
+    type: "system",
+    flags: ["--kit", "--json", "--strict"],
+    usage: "npx tsx axion/scripts/axion-kit-validate.ts --kit ./workspace --json",
+    relatedScripts: ["kit-preview", "package (.ts)", "validate-templates"],
+    pipelineStage: "kit-validate",
+  },
+  {
     name: "_axion_module_mode",
     file: "axion/scripts/_axion_module_mode.mjs",
     description:
@@ -581,6 +633,16 @@ const scripts: Script[] = [
     tag: "Library",
     type: "library",
     relatedScripts: ["hash-templates", "verify-seams"],
+  },
+  {
+    name: "lib/knowledge-resolver",
+    file: "axion/scripts/lib/knowledge-resolver.ts",
+    description:
+      "Knowledge base resolution engine. Resolves domain, stack, stage, and doc-type knowledge mappings from knowledge-map.json. Builds prompt context for AI content generation and generates per-kit INDEX.md files mapping knowledge files to domains and tasks.",
+    icon: BookOpen,
+    tag: "Library",
+    type: "library",
+    relatedScripts: ["knowledge-coverage", "kit-preview", "content-fill"],
   },
 ];
 
