@@ -24,7 +24,7 @@ describe('AXION Scripts Validation', () => {
       'axion-review.mjs',
       'axion-verify.mjs',
       'axion-lock.mjs',
-      'axion-package.mjs',
+      'axion-package.ts',
       '_axion_module_mode.mjs',
     ];
     
@@ -81,7 +81,7 @@ describe('AXION Scripts Validation', () => {
           expect(content).not.toMatch(/^={7}$/m);
         });
 
-        const standaloneScripts = ['_axion_module_mode.mjs', 'axion-init.mjs', 'axion-package.mjs', 'axion-package-workspace.mjs'];
+        const standaloneScripts = ['_axion_module_mode.mjs', 'axion-init.mjs', 'axion-package-workspace.mjs'];
         if (!standaloneScripts.includes(script)) {
           it('should import shared module _axion_module_mode.mjs', () => {
             expect(content).toContain('_axion_module_mode.mjs');
