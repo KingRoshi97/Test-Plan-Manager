@@ -250,8 +250,23 @@ export interface CascadeFillResult {
 
 // ─── Core Functions ─────────────────────────────────────────────────────────
 
+const UNKNOWN_FALSE_POSITIVE_PATTERNS = [
+  /write\s+[`"']UNKNOWN[`"']/,
+  /\[TBD\]\s+or\s+[`"']?UNKNOWN[`"']?/,
+  /No raw.*UNKNOWN.*markers/,
+  /UNKNOWN_DETECTION/,
+  /PLACEHOLDER_POLICY/,
+];
+
 export function countUnknowns(content: string): number {
-  return (content.match(/UNKNOWN/g) || []).length;
+  const lines = content.split('\n');
+  let count = 0;
+  for (const line of lines) {
+    if (UNKNOWN_FALSE_POSITIVE_PATTERNS.some(p => p.test(line))) continue;
+    const matches = line.match(/UNKNOWN/g);
+    if (matches) count += matches.length;
+  }
+  return count;
 }
 
 export function findSectionsWithUnknowns(content: string): string[] {
@@ -268,7 +283,7 @@ export function findSectionsWithUnknowns(content: string): string[] {
     const start = sectionPositions[i].start;
     const end = i + 1 < sectionPositions.length ? sectionPositions[i + 1].start : content.length;
     const sectionContent = content.substring(start, end);
-    if (sectionContent.includes('UNKNOWN')) {
+    if (countUnknowns(sectionContent) > 0) {
       sections.push(sectionPositions[i].name);
     }
   }

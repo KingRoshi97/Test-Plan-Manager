@@ -89,7 +89,15 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'generate': {
     cmd: 'node',
-    args: () => ['axion/scripts/axion-generate.mjs', '--all'],
+    args: (_pn, _br, body) => {
+      const a = ['axion/scripts/axion-generate.mjs'];
+      if (body.module && typeof body.module === 'string') {
+        a.push('--module', body.module);
+      } else {
+        a.push('--all');
+      }
+      return a;
+    },
     label: 'Generate',
     cwd: (br) => br,
     group: 'setup',
@@ -97,7 +105,15 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'seed': {
     cmd: 'node',
-    args: () => ['axion/scripts/axion-seed.mjs', '--all'],
+    args: (_pn, _br, body) => {
+      const a = ['axion/scripts/axion-seed.mjs'];
+      if (body.module && typeof body.module === 'string') {
+        a.push('--module', body.module);
+      } else {
+        a.push('--all');
+      }
+      return a;
+    },
     label: 'Seed',
     cwd: (br) => br,
     group: 'setup',
@@ -1600,14 +1616,17 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     res.write(`event: plan\ndata: ${JSON.stringify({ assemblyId, presetId, stagePlan: stagePlanId, stagePlanLabel, steps: fullSteps, modules: presetModules, totalSteps: fullSteps.length, skipUntilIndex })}\n\n`);
 
     let aborted = false;
+    let finished = false;
     let currentStepId: string | null = null;
     req.on('close', () => {
       aborted = true;
       activeRuns.delete(assemblyId);
-      storage.updateAssembly(assemblyId, {
-        state: 'interrupted',
-        errors: [`Pipeline interrupted: browser connection lost during step "${currentStepId || 'unknown'}". You can retry from this step.`],
-      }).catch(() => {});
+      if (!finished) {
+        storage.updateAssembly(assemblyId, {
+          state: 'interrupted',
+          errors: [`Pipeline interrupted: browser connection lost during step "${currentStepId || 'unknown'}". You can retry from this step.`],
+        }).catch(() => {});
+      }
     });
 
     const orchestrate = async () => {
@@ -1685,8 +1704,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           stepBody.module = presetModules.join(',');
         }
 
-        const perModuleSteps = ['review', 'draft', 'verify', 'lock'];
-        if (perModuleSteps.includes(stepId) && presetModules.length > 0) {
+        const perModuleSteps = ['generate', 'seed', 'review', 'draft', 'verify', 'lock'];
+        if (perModuleSteps.includes(stepId) && presetModules.length > 0 && presetModules.length < 19) {
           const perModStart = Date.now();
           let modSucceeded = 0;
           let modFailed = 0;
@@ -1809,6 +1828,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         }
       }
 
+      finished = true;
       activeRuns.delete(assemblyId);
 
       if (!aborted) {
@@ -1829,6 +1849,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     };
 
     orchestrate().catch((err) => {
+      finished = true;
       activeRuns.delete(assemblyId);
       if (!aborted) {
         storage.updateAssembly(assemblyId, { state: 'failed', errors: [err?.message || 'Unknown error'] }).catch(() => {});
@@ -2402,8 +2423,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           continue;
         }
 
-        const perModuleSteps2 = ['review', 'draft', 'verify', 'lock'];
-        if (perModuleSteps2.includes(stepId) && presetModules.length > 0) {
+        const perModuleSteps2 = ['generate', 'seed', 'review', 'draft', 'verify', 'lock'];
+        if (perModuleSteps2.includes(stepId) && presetModules.length > 0 && presetModules.length < 19) {
           const perModStart = Date.now();
           let modSucceeded = 0;
           let modFailed = 0;
