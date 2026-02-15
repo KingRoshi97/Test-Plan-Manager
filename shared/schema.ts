@@ -27,6 +27,8 @@ export const assemblies = pgTable("assemblies", {
   revision: integer("revision").notNull().default(1),
   upgradeNotes: text("upgrade_notes"),
   kitType: text("kit_type").notNull().default("original"),
+  sourceFiles: jsonb("source_files"),
+  archiveUrl: text("archive_url"),
 });
 
 export const workspaces = pgTable("workspaces", {
@@ -172,4 +174,29 @@ export interface ReleaseGateReport {
     log_path: string;
   }>;
   next_commands: string[];
+}
+
+export interface SourceFile {
+  path: string;
+  language: string;
+  content: string;
+  size: number;
+}
+
+export interface SkipBreakdown {
+  binary: number;
+  tooLarge: number;
+  excludedDir: number;
+  traversal: number;
+  readError: number;
+  empty: number;
+}
+
+export interface UploadResult {
+  files: SourceFile[];
+  skipped: SkipBreakdown;
+  totalExtracted: number;
+  totalSkipped: number;
+  archiveType: 'zip' | 'tar.gz' | 'github';
+  originalName: string;
 }

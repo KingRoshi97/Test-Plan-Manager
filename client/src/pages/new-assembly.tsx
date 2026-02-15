@@ -24,6 +24,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ArrowLeft,
   ArrowRight,
@@ -37,7 +40,13 @@ import {
   Info,
   Wand2,
   RefreshCw,
+  Globe,
+  FolderTree,
+  AlertTriangle,
+  FileCode,
+  ChevronDown,
 } from "lucide-react";
+import type { SourceFile, SkipBreakdown, UploadResult } from "@shared/schema";
 
 interface PresetConfig {
   label: string;
@@ -271,49 +280,131 @@ export default function NewAssemblyPage() {
   const [techConstraints, setTechConstraints] = useState("");
   const [dataSensitivity, setDataSensitivity] = useState("");
 
-  const [zipUploading, setZipUploading] = useState(false);
-  const [zipFileName, setZipFileName] = useState<string | null>(null);
-  const [zipFileCount, setZipFileCount] = useState(0);
-  const [zipContent, setZipContent] = useState("");
-  const zipInputRef = useRef<HTMLInputElement>(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [confirmedFiles, setConfirmedFiles] = useState<SourceFile[]>([]);
+  const [confirmedArchiveName, setConfirmedArchiveName] = useState<string | null>(null);
+  const [githubUrl, setGithubUrl] = useState("");
+  const [githubLoading, setGithubLoading] = useState(false);
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  const archiveInputRef = useRef<HTMLInputElement>(null);
 
   const [autofillData, setAutofillData] = useState<AutofillResponse | null>(null);
   const [autofillLoading, setAutofillLoading] = useState(false);
   const [autofillApplied, setAutofillApplied] = useState(false);
   const [detailField, setDetailField] = useState<string | null>(null);
 
-  async function handleZipUpload(file: File) {
-    setZipUploading(true);
+  async function handleArchiveUpload(file: File) {
+    setUploadLoading(true);
     try {
       const formData = new FormData();
-      formData.append('zipfile', file);
-      const resp = await fetch('/api/upload-context-zip', { method: 'POST', body: formData });
+      formData.append('archive', file);
+      const resp = await fetch('/api/upload-context', { method: 'POST', body: formData });
       const data = await resp.json();
       if (!resp.ok) {
-        toast({ title: "Upload failed", description: data.error || "Could not process zip file", variant: "destructive" });
+        toast({ title: "Upload failed", description: data.error || "Could not process archive", variant: "destructive" });
         return;
       }
-      setZipContent(data.content);
-      const existing = idea.trim();
-      setIdea(existing ? `${existing}\n\n${data.content}` : data.content);
-      setZipFileName(file.name);
-      setZipFileCount(data.fileCount);
-      toast({ title: "Context loaded", description: `${data.fileCount} files extracted from ${file.name}` });
+      const result = data as UploadResult;
+      setUploadResult(result);
+      setSelectedFiles(new Set(result.files.map(f => f.path)));
+      setExpandedDirs(new Set());
+      setPreviewOpen(true);
     } catch (err: any) {
       toast({ title: "Upload error", description: err.message, variant: "destructive" });
     } finally {
-      setZipUploading(false);
-      if (zipInputRef.current) zipInputRef.current.value = '';
+      setUploadLoading(false);
+      if (archiveInputRef.current) archiveInputRef.current.value = '';
     }
   }
 
-  function clearZipContext() {
-    if (zipContent) {
-      setIdea((prev) => prev.replace(zipContent, '').trim());
+  async function handleGithubFetch() {
+    if (!githubUrl.trim()) return;
+    setGithubLoading(true);
+    try {
+      const resp = await fetch('/api/upload-context-github', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: githubUrl.trim() }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        toast({ title: "Fetch failed", description: data.error || "Could not fetch repository", variant: "destructive" });
+        return;
+      }
+      const result = data as UploadResult;
+      setUploadResult(result);
+      setSelectedFiles(new Set(result.files.map(f => f.path)));
+      setExpandedDirs(new Set());
+      setPreviewOpen(true);
+    } catch (err: any) {
+      toast({ title: "Fetch error", description: err.message, variant: "destructive" });
+    } finally {
+      setGithubLoading(false);
     }
-    setZipFileName(null);
-    setZipFileCount(0);
-    setZipContent("");
+  }
+
+  function confirmFileSelection() {
+    if (!uploadResult) return;
+    const selected = uploadResult.files.filter(f => selectedFiles.has(f.path));
+    setConfirmedFiles(selected);
+    setConfirmedArchiveName(uploadResult.originalName);
+    const contextBlock = selected.map(f => `--- FILE: ${f.path} ---\n${f.content}`).join('\n\n');
+    const existing = idea.trim();
+    setIdea(existing ? `${existing}\n\n${contextBlock}` : contextBlock);
+    setPreviewOpen(false);
+    toast({ title: "Context loaded", description: `${selected.length} files included from ${uploadResult.originalName}` });
+  }
+
+  function clearUploadContext() {
+    if (confirmedFiles.length > 0) {
+      const contextBlock = confirmedFiles.map(f => `--- FILE: ${f.path} ---\n${f.content}`).join('\n\n');
+      setIdea((prev) => prev.replace(contextBlock, '').trim());
+    }
+    setConfirmedFiles([]);
+    setConfirmedArchiveName(null);
+    setUploadResult(null);
+    setSelectedFiles(new Set());
+    setGithubUrl("");
+  }
+
+  function toggleAllFiles(checked: boolean) {
+    if (!uploadResult) return;
+    setSelectedFiles(checked ? new Set(uploadResult.files.map(f => f.path)) : new Set());
+  }
+
+  function toggleDir(dir: string, checked: boolean) {
+    if (!uploadResult) return;
+    const next = new Set(selectedFiles);
+    for (const f of uploadResult.files) {
+      if (f.path.startsWith(dir + '/') || f.path === dir) {
+        if (checked) next.add(f.path); else next.delete(f.path);
+      }
+    }
+    setSelectedFiles(next);
+  }
+
+  function buildFileTree(files: SourceFile[]): Map<string, SourceFile[]> {
+    const tree = new Map<string, SourceFile[]>();
+    for (const f of files) {
+      const dir = f.path.includes('/') ? f.path.substring(0, f.path.lastIndexOf('/')) : '.';
+      if (!tree.has(dir)) tree.set(dir, []);
+      tree.get(dir)!.push(f);
+    }
+    return tree;
+  }
+
+  function formatSkipBreakdown(s: SkipBreakdown): string[] {
+    const parts: string[] = [];
+    if (s.binary > 0) parts.push(`${s.binary} binary`);
+    if (s.tooLarge > 0) parts.push(`${s.tooLarge} too large (>10MB)`);
+    if (s.excludedDir > 0) parts.push(`${s.excludedDir} in excluded dirs`);
+    if (s.traversal > 0) parts.push(`${s.traversal} unsafe paths`);
+    if (s.readError > 0) parts.push(`${s.readError} read errors`);
+    if (s.empty > 0) parts.push(`${s.empty} empty`);
+    return parts;
   }
 
   const { data: presetsData, isLoading: presetsLoading } = useQuery<PresetsResponse>({
@@ -482,6 +573,10 @@ export default function NewAssemblyPage() {
     if (dataSensitivity.trim()) contextParts.push(`Data Sensitivity: ${dataSensitivity.trim()}`);
     const context = contextParts.length > 0 ? contextParts.join('\n') : undefined;
 
+    const sourceFilesForStorage = confirmedFiles.length > 0
+      ? confirmedFiles.map(f => ({ path: f.path, language: f.language, content: f.content, size: f.size }))
+      : undefined;
+
     createMutation.mutate({
       projectName: projectName.trim(),
       idea: idea.trim(),
@@ -492,6 +587,7 @@ export default function NewAssemblyPage() {
       domains: selectedPreset?.modules || [],
       stagePlan,
       input: structuredInput,
+      sourceFiles: sourceFilesForStorage,
     });
   }
 
@@ -669,50 +765,86 @@ export default function NewAssemblyPage() {
                       data-testid="input-idea"
                     />
                     <input
-                      ref={zipInputRef}
+                      ref={archiveInputRef}
                       type="file"
-                      accept=".zip"
+                      accept=".zip,.tar.gz,.tgz"
                       className="hidden"
-                      data-testid="input-zip-file"
+                      data-testid="input-archive-file"
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handleZipUpload(file);
+                        if (file) handleArchiveUpload(file);
                       }}
                     />
                     <button
                       type="button"
-                      onClick={() => zipInputRef.current?.click()}
-                      disabled={zipUploading}
+                      onClick={() => archiveInputRef.current?.click()}
+                      disabled={uploadLoading || githubLoading}
                       className="absolute bottom-2 right-2 flex items-center justify-center w-7 h-7 rounded-md bg-muted/80 text-muted-foreground transition-colors hover-elevate"
-                      title="Upload a zip file to add full project context"
-                      data-testid="button-zip-upload"
+                      title="Upload .zip or .tar.gz to add project context"
+                      data-testid="button-archive-upload"
                     >
-                      {zipUploading ? (
+                      {uploadLoading ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <Paperclip className="w-4 h-4" />
                       )}
                     </button>
                   </div>
-                  {zipFileName ? (
+
+                  {confirmedFiles.length > 0 ? (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="secondary" className="gap-1" data-testid="badge-zip-attached">
+                      <Badge variant="secondary" className="gap-1" data-testid="badge-archive-attached">
                         <FileArchive className="w-3 h-3" />
-                        {zipFileName} ({zipFileCount} files)
+                        {confirmedArchiveName} ({confirmedFiles.length} files)
                       </Badge>
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={clearZipContext}
-                        data-testid="button-zip-clear"
+                        onClick={() => {
+                          if (uploadResult) {
+                            setSelectedFiles(new Set(uploadResult.files.map(f => f.path)));
+                            setPreviewOpen(true);
+                          }
+                        }}
+                        data-testid="button-archive-preview"
+                        title="Review selected files"
+                      >
+                        <FolderTree className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={clearUploadContext}
+                        data-testid="button-archive-clear"
                       >
                         <X className="w-3 h-3" />
                       </Button>
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Describe the app or system you want to build. Use the <Paperclip className="w-3 h-3 inline" /> to upload a zip of your project for full context.
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Describe the app or system you want to build. Use <Paperclip className="w-3 h-3 inline" /> to upload an archive (.zip, .tar.gz), or paste a GitHub URL below.
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={githubUrl}
+                          onChange={(e) => setGithubUrl(e.target.value)}
+                          placeholder="https://github.com/owner/repo"
+                          className="flex-1 text-xs"
+                          data-testid="input-github-url"
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleGithubFetch(); } }}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleGithubFetch}
+                          disabled={!githubUrl.trim() || githubLoading || uploadLoading}
+                          data-testid="button-github-fetch"
+                        >
+                          {githubLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Globe className="w-3 h-3" />}
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -1057,6 +1189,127 @@ export default function NewAssemblyPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FolderTree className="w-4 h-4" />
+              File Preview
+            </DialogTitle>
+            <DialogDescription>
+              {uploadResult && (
+                <span>
+                  {uploadResult.originalName} — {uploadResult.files.length} extractable files
+                  {uploadResult.totalSkipped > 0 && `, ${uploadResult.totalSkipped} skipped`}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {uploadResult && uploadResult.totalSkipped > 0 && (
+            <div className="flex items-start gap-2 rounded-md bg-muted p-3 text-xs text-muted-foreground" data-testid="text-skip-breakdown">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-medium">Skipped {uploadResult.totalSkipped} files:</span>{' '}
+                {formatSkipBreakdown(uploadResult.skipped).join(', ')}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 border-b pb-2">
+            <Checkbox
+              checked={uploadResult ? selectedFiles.size === uploadResult.files.length : false}
+              onCheckedChange={(checked) => toggleAllFiles(!!checked)}
+              data-testid="checkbox-select-all"
+            />
+            <span className="text-sm font-medium">
+              {selectedFiles.size} of {uploadResult?.files.length ?? 0} selected
+            </span>
+          </div>
+
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="space-y-0.5 pr-3">
+              {uploadResult && (() => {
+                const tree = buildFileTree(uploadResult.files);
+                const sortedDirs = Array.from(tree.keys()).sort();
+                return sortedDirs.map(dir => {
+                  const files = tree.get(dir)!;
+                  const isExpanded = expandedDirs.has(dir);
+                  const allSelected = files.every(f => selectedFiles.has(f.path));
+                  const someSelected = files.some(f => selectedFiles.has(f.path));
+                  return (
+                    <div key={dir}>
+                      <div
+                        className="flex items-center gap-2 py-1 px-1 rounded-md hover-elevate cursor-pointer"
+                        onClick={() => {
+                          const next = new Set(expandedDirs);
+                          if (isExpanded) next.delete(dir); else next.add(dir);
+                          setExpandedDirs(next);
+                        }}
+                        data-testid={`dir-toggle-${dir}`}
+                      >
+                        <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+                        <Checkbox
+                          checked={allSelected}
+                          className={someSelected && !allSelected ? 'opacity-50' : ''}
+                          onCheckedChange={(checked) => { toggleDir(dir, !!checked); }}
+                          onClick={(e) => e.stopPropagation()}
+                          data-testid={`checkbox-dir-${dir}`}
+                        />
+                        <span className="text-sm font-medium truncate">{dir === '.' ? '(root)' : dir}/</span>
+                        <span className="text-xs text-muted-foreground ml-auto">{files.length}</span>
+                      </div>
+                      {isExpanded && (
+                        <div className="ml-6 space-y-0.5">
+                          {files.map(f => {
+                            const fileName = f.path.includes('/') ? f.path.split('/').pop()! : f.path;
+                            return (
+                              <div
+                                key={f.path}
+                                className="flex items-center gap-2 py-0.5 px-1 rounded-md text-sm"
+                                data-testid={`file-row-${f.path}`}
+                              >
+                                <Checkbox
+                                  checked={selectedFiles.has(f.path)}
+                                  onCheckedChange={(checked) => {
+                                    const next = new Set(selectedFiles);
+                                    if (checked) next.add(f.path); else next.delete(f.path);
+                                    setSelectedFiles(next);
+                                  }}
+                                  data-testid={`checkbox-file-${f.path}`}
+                                />
+                                <FileCode className="w-3 h-3 text-muted-foreground shrink-0" />
+                                <span className="truncate">{fileName}</span>
+                                <Badge variant="outline" className="ml-auto text-[10px] no-default-active-elevate">
+                                  {f.language}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {f.size < 1024 ? `${f.size}B` : `${(f.size / 1024).toFixed(1)}KB`}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </ScrollArea>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPreviewOpen(false)} data-testid="button-preview-cancel">
+              Cancel
+            </Button>
+            <Button onClick={confirmFileSelection} disabled={selectedFiles.size === 0} data-testid="button-preview-confirm">
+              <Check className="w-4 h-4" />
+              Include {selectedFiles.size} files
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <FieldDetailDialog
         fieldKey={detailField}
