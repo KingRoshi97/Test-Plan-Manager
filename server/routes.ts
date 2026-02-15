@@ -4,7 +4,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import multer from 'multer';
 import AdmZip from 'adm-zip';
-import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly } from '../shared/schema.js';
+import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly, SourceFile, SkipBreakdown, UploadResult } from '../shared/schema.js';
+import * as tarStream from 'tar-stream';
+import { createGunzip } from 'zlib';
 import { storage } from './storage.js';
 import { scanAllModulesForUnknowns, fillAllModulesUnknowns, findNextTarget, getAllTargets, generateQuestionsForTarget, fillFileWithContext, cascadeFill, upgradeDocumentWithAI, generateUpgradeSuggestions } from './ai-content-fill.js';
 
@@ -1032,6 +1034,29 @@ export function registerRoutes(app: Express) {
 
   const SKIP_DIRS = new Set(['node_modules', '.git', '__pycache__', '.next', 'dist', '.cache', 'coverage', '.vscode', '.idea']);
 
+  const EXT_LANGUAGE_MAP: Record<string, string> = {
+    '.ts': 'typescript', '.tsx': 'typescript', '.js': 'javascript', '.jsx': 'javascript', '.mjs': 'javascript',
+    '.py': 'python', '.rb': 'ruby', '.go': 'go', '.rs': 'rust', '.java': 'java', '.kt': 'kotlin',
+    '.swift': 'swift', '.c': 'c', '.cpp': 'cpp', '.h': 'c', '.hpp': 'cpp', '.cs': 'csharp',
+    '.php': 'php', '.lua': 'lua', '.r': 'r', '.sql': 'sql', '.graphql': 'graphql', '.gql': 'graphql',
+    '.css': 'css', '.scss': 'scss', '.less': 'less', '.html': 'html', '.htm': 'html',
+    '.xml': 'xml', '.svg': 'svg', '.json': 'json', '.yaml': 'yaml', '.yml': 'yaml',
+    '.toml': 'toml', '.ini': 'ini', '.md': 'markdown', '.mdx': 'mdx',
+    '.sh': 'shell', '.bash': 'shell', '.zsh': 'shell', '.bat': 'batch', '.ps1': 'powershell',
+    '.vue': 'vue', '.svelte': 'svelte', '.astro': 'astro',
+    '.dockerfile': 'dockerfile', '.makefile': 'makefile',
+  };
+
+  function detectLanguage(filename: string): string {
+    const ext = path.extname(filename).toLowerCase();
+    if (EXT_LANGUAGE_MAP[ext]) return EXT_LANGUAGE_MAP[ext];
+    const base = path.basename(filename).toLowerCase();
+    if (base === 'dockerfile') return 'dockerfile';
+    if (base === 'makefile') return 'makefile';
+    if (base === 'gemfile' || base === 'rakefile') return 'ruby';
+    return 'text';
+  }
+
   function isTextFile(filename: string): boolean {
     const ext = path.extname(filename).toLowerCase();
     if (TEXT_EXTENSIONS.has(ext)) return true;
@@ -1046,6 +1071,7 @@ export function registerRoutes(app: Express) {
 
   const MAX_TOTAL_UNCOMPRESSED = 200 * 1024 * 1024;
   const MAX_ENTRIES = 5000;
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
   function sanitizeEntryName(name: string): string | null {
     const normalized = name.replace(/\\/g, '/');
@@ -1055,6 +1081,156 @@ export function registerRoutes(app: Express) {
     return cleaned;
   }
 
+  function processExtractedEntry(
+    entryName: string,
+    rawSize: number,
+    getData: () => Buffer,
+    files: SourceFile[],
+    skipped: SkipBreakdown,
+    totalSizeRef: { value: number }
+  ): 'ok' | 'size_limit' {
+    const safeName = sanitizeEntryName(entryName);
+    if (!safeName) { skipped.traversal++; return 'ok'; }
+    if (shouldSkipEntry(safeName)) { skipped.excludedDir++; return 'ok'; }
+    if (!isTextFile(safeName)) { skipped.binary++; return 'ok'; }
+    if (rawSize > MAX_FILE_SIZE) { skipped.tooLarge++; return 'ok'; }
+
+    totalSizeRef.value += rawSize;
+    if (totalSizeRef.value > MAX_TOTAL_UNCOMPRESSED) return 'size_limit';
+
+    try {
+      const content = getData().toString('utf8');
+      if (content.length === 0) { skipped.empty++; return 'ok'; }
+      files.push({
+        path: safeName,
+        language: detectLanguage(safeName),
+        content,
+        size: content.length,
+      });
+    } catch {
+      skipped.readError++;
+    }
+    return 'ok';
+  }
+
+  function extractZipFiles(buffer: Buffer): { files: SourceFile[]; skipped: SkipBreakdown } {
+    const zip = new AdmZip(buffer);
+    const entries = zip.getEntries();
+    if (entries.length > MAX_ENTRIES) {
+      throw new Error(`Archive contains too many entries (${entries.length}). Maximum is ${MAX_ENTRIES}.`);
+    }
+
+    const files: SourceFile[] = [];
+    const skipped: SkipBreakdown = { binary: 0, tooLarge: 0, excludedDir: 0, traversal: 0, readError: 0, empty: 0 };
+    const totalSizeRef = { value: 0 };
+
+    for (const entry of entries) {
+      if (entry.isDirectory) continue;
+      const result = processExtractedEntry(
+        entry.entryName, entry.header.size,
+        () => entry.getData(), files, skipped, totalSizeRef
+      );
+      if (result === 'size_limit') {
+        throw new Error('Archive contents exceed maximum uncompressed size (200MB).');
+      }
+    }
+    return { files, skipped };
+  }
+
+  function extractTarGzFiles(buffer: Buffer): Promise<{ files: SourceFile[]; skipped: SkipBreakdown }> {
+    return new Promise((resolve, reject) => {
+      const files: SourceFile[] = [];
+      const skipped: SkipBreakdown = { binary: 0, tooLarge: 0, excludedDir: 0, traversal: 0, readError: 0, empty: 0 };
+      const totalSizeRef = { value: 0 };
+      let entryCount = 0;
+
+      const extract = tarStream.extract();
+
+      extract.on('entry', (header, stream, next) => {
+        entryCount++;
+        if (entryCount > MAX_ENTRIES) {
+          stream.resume();
+          reject(new Error(`Archive contains too many entries (>${MAX_ENTRIES}).`));
+          return;
+        }
+
+        if (header.type !== 'file') {
+          stream.resume();
+          next();
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+        stream.on('end', () => {
+          const buf = Buffer.concat(chunks);
+          const result = processExtractedEntry(
+            header.name, header.size || buf.length,
+            () => buf, files, skipped, totalSizeRef
+          );
+          if (result === 'size_limit') {
+            reject(new Error('Archive contents exceed maximum uncompressed size (200MB).'));
+            return;
+          }
+          next();
+        });
+        stream.on('error', () => { skipped.readError++; next(); });
+      });
+
+      extract.on('finish', () => resolve({ files, skipped }));
+      extract.on('error', (err) => reject(err));
+
+      const { Readable } = require('stream');
+      const readable = Readable.from(buffer);
+      readable.pipe(createGunzip()).pipe(extract);
+    });
+  }
+
+  app.post('/api/upload-context', upload.single('archive'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        res.status(400).json({ error: 'No file uploaded' });
+        return;
+      }
+
+      const originalName = req.file.originalname || 'unknown';
+      const lowerName = originalName.toLowerCase();
+      let archiveType: 'zip' | 'tar.gz';
+      let extracted: { files: SourceFile[]; skipped: SkipBreakdown };
+
+      if (lowerName.endsWith('.tar.gz') || lowerName.endsWith('.tgz')) {
+        archiveType = 'tar.gz';
+        extracted = await extractTarGzFiles(req.file.buffer);
+      } else if (lowerName.endsWith('.zip')) {
+        archiveType = 'zip';
+        extracted = extractZipFiles(req.file.buffer);
+      } else {
+        res.status(400).json({ error: 'Unsupported archive format. Please upload a .zip, .tar.gz, or .tgz file.' });
+        return;
+      }
+
+      if (extracted.files.length === 0) {
+        res.status(400).json({ error: 'No readable text files found in the archive.' });
+        return;
+      }
+
+      const totalSkipped = Object.values(extracted.skipped).reduce((a, b) => a + b, 0);
+
+      const result: UploadResult = {
+        files: extracted.files,
+        skipped: extracted.skipped,
+        totalExtracted: extracted.files.length,
+        totalSkipped,
+        archiveType,
+        originalName,
+      };
+
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to process archive' });
+    }
+  });
+
   app.post('/api/upload-context-zip', upload.single('zipfile'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
@@ -1062,69 +1238,85 @@ export function registerRoutes(app: Express) {
         return;
       }
 
-      const zip = new AdmZip(req.file.buffer);
-      const entries = zip.getEntries();
+      const extracted = extractZipFiles(req.file.buffer);
 
-      if (entries.length > MAX_ENTRIES) {
-        res.status(400).json({ error: `Zip contains too many entries (${entries.length}). Maximum is ${MAX_ENTRIES}.` });
-        return;
-      }
-
-      const parts: string[] = [];
-      let fileCount = 0;
-      let skippedCount = 0;
-      let totalSize = 0;
-
-      for (const entry of entries) {
-        if (entry.isDirectory) continue;
-
-        const safeName = sanitizeEntryName(entry.entryName);
-        if (!safeName) {
-          skippedCount++;
-          continue;
-        }
-
-        if (shouldSkipEntry(safeName)) {
-          skippedCount++;
-          continue;
-        }
-
-        if (!isTextFile(safeName)) {
-          skippedCount++;
-          continue;
-        }
-
-        if (entry.header.size > 10 * 1024 * 1024) {
-          skippedCount++;
-          continue;
-        }
-
-        totalSize += entry.header.size;
-        if (totalSize > MAX_TOTAL_UNCOMPRESSED) {
-          res.status(400).json({ error: 'Zip contents exceed maximum uncompressed size (200MB). Please upload a smaller archive.' });
-          return;
-        }
-
-        try {
-          const content = entry.getData().toString('utf8');
-          if (content.length > 0) {
-            parts.push(`--- FILE: ${safeName} ---\n${content}`);
-            fileCount++;
-          }
-        } catch {
-          skippedCount++;
-        }
-      }
-
-      if (fileCount === 0) {
+      if (extracted.files.length === 0) {
         res.status(400).json({ error: 'No readable text files found in the zip archive.' });
         return;
       }
 
-      const result = parts.join('\n\n');
-      res.json({ content: result, fileCount, skippedCount });
+      const content = extracted.files.map(f => `--- FILE: ${f.path} ---\n${f.content}`).join('\n\n');
+      const totalSkipped = Object.values(extracted.skipped).reduce((a, b) => a + b, 0);
+      res.json({ content, fileCount: extracted.files.length, skippedCount: totalSkipped });
     } catch (err: any) {
       res.status(500).json({ error: err?.message || 'Failed to process zip file' });
+    }
+  });
+
+  app.post('/api/upload-context-github', async (req: Request, res: Response) => {
+    try {
+      const { url } = req.body;
+      if (!url || typeof url !== 'string') {
+        res.status(400).json({ error: 'A GitHub repository URL is required.' });
+        return;
+      }
+
+      const ghMatch = url.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/|$)/);
+      if (!ghMatch) {
+        res.status(400).json({ error: 'Invalid GitHub URL. Expected format: https://github.com/owner/repo' });
+        return;
+      }
+
+      const [, owner, repo] = ghMatch;
+      let branch = 'main';
+      const branchMatch = url.match(/\/tree\/([^/]+)/);
+      if (branchMatch) branch = branchMatch[1];
+
+      const tarballUrl = `https://github.com/${owner}/${repo}/archive/refs/heads/${branch}.tar.gz`;
+      const resp = await fetch(tarballUrl);
+      if (!resp.ok) {
+        if (resp.status === 404) {
+          const fallbackUrl = `https://github.com/${owner}/${repo}/archive/refs/heads/master.tar.gz`;
+          const fallbackResp = await fetch(fallbackUrl);
+          if (!fallbackResp.ok) {
+            res.status(404).json({ error: `Repository not found or not public: ${owner}/${repo}` });
+            return;
+          }
+          const buf = Buffer.from(await fallbackResp.arrayBuffer());
+          const extracted = await extractTarGzFiles(buf);
+          if (extracted.files.length === 0) {
+            res.status(400).json({ error: 'No readable text files found in the repository.' });
+            return;
+          }
+          const totalSkipped = Object.values(extracted.skipped).reduce((a, b) => a + b, 0);
+          const result: UploadResult = {
+            files: extracted.files, skipped: extracted.skipped,
+            totalExtracted: extracted.files.length, totalSkipped,
+            archiveType: 'github', originalName: `${owner}/${repo}`,
+          };
+          res.json(result);
+          return;
+        }
+        res.status(resp.status).json({ error: `Failed to fetch repository: ${resp.statusText}` });
+        return;
+      }
+
+      const buf = Buffer.from(await resp.arrayBuffer());
+      const extracted = await extractTarGzFiles(buf);
+      if (extracted.files.length === 0) {
+        res.status(400).json({ error: 'No readable text files found in the repository.' });
+        return;
+      }
+
+      const totalSkipped = Object.values(extracted.skipped).reduce((a, b) => a + b, 0);
+      const result: UploadResult = {
+        files: extracted.files, skipped: extracted.skipped,
+        totalExtracted: extracted.files.length, totalSkipped,
+        archiveType: 'github', originalName: `${owner}/${repo}`,
+      };
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || 'Failed to fetch GitHub repository' });
     }
   });
 
@@ -1332,7 +1524,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
   app.post('/api/assemblies', async (req: Request, res: Response) => {
     try {
-      const { projectName, idea, preset, presetId, mode, domains, context, category, input } = req.body;
+      const { projectName, idea, preset, presetId, mode, domains, context, category, input, sourceFiles, archiveUrl } = req.body;
       if (!projectName || typeof projectName !== 'string') {
         res.status(400).json({ error: 'projectName is required' });
         return;
@@ -1348,6 +1540,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         context: context || null,
         category: category || null,
         input: input || null,
+        sourceFiles: sourceFiles || null,
+        archiveUrl: archiveUrl || null,
         state: 'queued',
         step: null,
         progress: null,
