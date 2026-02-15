@@ -1,0 +1,179 @@
+{
+  "version": "1.0.0",
+  "description": "Maps stack profiles, pipeline domains, and pipeline stages to relevant knowledge files. Used by the knowledge resolver to inject best-practice context into AI prompts and to generate per-kit INDEX.md files.",
+
+  "domain_knowledge": {
+    "architecture": {
+      "primary": ["software-architecture.md", "stacks.md"],
+      "secondary": ["performance.md", "security.md"],
+      "purpose": "Patterns, domain modeling, stack selection, scalability, reliability"
+    },
+    "systems": {
+      "primary": ["systems-engineering.md", "software-architecture.md"],
+      "secondary": ["performance.md", "cloud-engineering.md"],
+      "purpose": "System components, concurrency, memory, networking, fault tolerance"
+    },
+    "contracts": {
+      "primary": ["api-design.md", "fullstack-integration.md"],
+      "secondary": ["error-handling.md", "security.md"],
+      "purpose": "API contracts, interfaces, data schemas, validation"
+    },
+    "database": {
+      "primary": ["database.md"],
+      "secondary": ["performance.md", "security.md", "data-intelligence.md"],
+      "purpose": "Schema design, indexing, migrations, query patterns, data integrity"
+    },
+    "data": {
+      "primary": ["data-intelligence.md", "database.md"],
+      "secondary": ["performance.md", "error-handling.md"],
+      "purpose": "Data flows, transformations, validation, pipelines"
+    },
+    "auth": {
+      "primary": ["security.md", "backend-development.md"],
+      "secondary": ["frontend-security.md", "api-design.md"],
+      "purpose": "Authentication, authorization, identity, sessions, RBAC/ABAC"
+    },
+    "backend": {
+      "primary": ["backend-development.md", "api-design.md"],
+      "secondary": ["error-handling.md", "security.md", "performance.md", "database.md"],
+      "purpose": "Server-side logic, APIs, business rules, reliability"
+    },
+    "integrations": {
+      "primary": ["backend-development.md", "api-design.md"],
+      "secondary": ["error-handling.md", "security.md", "fullstack-integration.md"],
+      "purpose": "Third-party services, webhooks, external APIs"
+    },
+    "state": {
+      "primary": ["state-management.md"],
+      "secondary": ["performance.md", "forms-validation.md", "fullstack-integration.md"],
+      "purpose": "Client-side state, stores, server state, caching"
+    },
+    "frontend": {
+      "primary": ["navigation-ui.md", "user-interaction.md", "accessibility.md", "design-systems.md"],
+      "secondary": ["forms-validation.md", "performance.md", "frontend-security.md", "i18n-localization.md"],
+      "purpose": "UI components, pages, interactions, accessibility, design tokens"
+    },
+    "fullstack": {
+      "primary": ["fullstack-integration.md"],
+      "secondary": ["api-design.md", "error-handling.md", "state-management.md", "testing.md"],
+      "purpose": "End-to-end flows, data sync, auth-aware UI, feature ownership"
+    },
+    "testing": {
+      "primary": ["testing.md", "quality-assurance.md"],
+      "secondary": ["error-handling.md", "performance.md"],
+      "purpose": "Test pyramid, automation, visual regression, CI/CD integration"
+    },
+    "quality": {
+      "primary": ["quality-assurance.md", "testing.md"],
+      "secondary": ["developer-experience.md"],
+      "purpose": "Code quality, linting, standards, governance"
+    },
+    "security": {
+      "primary": ["security.md", "security-functions.md"],
+      "secondary": ["frontend-security.md", "api-design.md", "backend-development.md"],
+      "purpose": "Security policies, audits, OWASP, vulnerability management"
+    },
+    "devops": {
+      "primary": ["devops.md", "release-engineering.md"],
+      "secondary": ["cloud-engineering.md", "platform-engineering.md", "testing.md"],
+      "purpose": "CI/CD, deployment strategies, monitoring, observability"
+    },
+    "cloud": {
+      "primary": ["cloud-engineering.md"],
+      "secondary": ["platform-engineering.md", "devops.md", "security-functions.md"],
+      "purpose": "Infrastructure, compute, networking, IAM, IaC, scaling"
+    },
+    "devex": {
+      "primary": ["developer-experience.md"],
+      "secondary": ["platform-engineering.md", "quality-assurance.md"],
+      "purpose": "Developer tooling, build systems, documentation, productivity"
+    },
+    "mobile": {
+      "primary": ["mobile-development.md"],
+      "secondary": ["state-management.md", "user-interaction.md", "accessibility.md", "performance.md", "security.md"],
+      "purpose": "iOS/Android native, cross-platform, mobile UX, offline-first"
+    },
+    "desktop": {
+      "primary": ["desktop-apps.md"],
+      "secondary": ["state-management.md", "user-interaction.md", "performance.md", "security.md"],
+      "purpose": "Electron, Tauri, native, window management, system integration"
+    }
+  },
+
+  "stack_knowledge": {
+    "default-web-saas": {
+      "always": ["backend-development.md", "api-design.md", "database.md", "state-management.md", "navigation-ui.md", "security.md", "testing.md", "error-handling.md"],
+      "recommended": ["forms-validation.md", "accessibility.md", "user-interaction.md", "fullstack-integration.md", "performance.md", "devops.md"],
+      "optional": ["design-systems.md", "i18n-localization.md", "frontend-security.md", "developer-experience.md"]
+    },
+    "serverless-node": {
+      "always": ["backend-development.md", "api-design.md", "cloud-engineering.md", "database.md", "security.md", "error-handling.md", "testing.md"],
+      "recommended": ["state-management.md", "performance.md", "devops.md", "platform-engineering.md"],
+      "optional": ["fullstack-integration.md", "navigation-ui.md", "release-engineering.md"]
+    },
+    "enterprise-java": {
+      "always": ["backend-development.md", "api-design.md", "database.md", "software-architecture.md", "security.md", "security-functions.md", "testing.md", "quality-assurance.md"],
+      "recommended": ["error-handling.md", "devops.md", "release-engineering.md", "cloud-engineering.md", "performance.md"],
+      "optional": ["state-management.md", "navigation-ui.md", "platform-engineering.md", "developer-experience.md"]
+    },
+    "python-data": {
+      "always": ["backend-development.md", "api-design.md", "database.md", "data-intelligence.md", "security.md", "testing.md", "error-handling.md"],
+      "recommended": ["performance.md", "devops.md", "cloud-engineering.md", "quality-assurance.md"],
+      "optional": ["state-management.md", "navigation-ui.md", "fullstack-integration.md"]
+    },
+    "go-microservices": {
+      "always": ["backend-development.md", "api-design.md", "systems-engineering.md", "software-architecture.md", "database.md", "security.md", "testing.md"],
+      "recommended": ["error-handling.md", "devops.md", "cloud-engineering.md", "platform-engineering.md", "performance.md", "release-engineering.md"],
+      "optional": ["state-management.md", "navigation-ui.md", "quality-assurance.md"]
+    }
+  },
+
+  "stage_knowledge": {
+    "seed": {
+      "description": "Initial document scaffolding — needs broad awareness of what goes into each domain",
+      "inject": ["software-architecture.md", "stacks.md"]
+    },
+    "draft": {
+      "description": "AI fills document content — needs domain-specific best practices",
+      "inject_from_domain": true,
+      "inject_global": ["error-handling.md"]
+    },
+    "review": {
+      "description": "Consistency and completeness checks — needs quality and architecture context",
+      "inject": ["quality-assurance.md", "software-architecture.md"]
+    },
+    "verify": {
+      "description": "Cross-domain seam verification — needs integration and contract awareness",
+      "inject": ["fullstack-integration.md", "api-design.md"]
+    },
+    "build-plan": {
+      "description": "Generates build manifest — needs stack and architecture awareness",
+      "inject": ["stacks.md", "software-architecture.md"]
+    },
+    "build-exec": {
+      "description": "Executes code generation — needs domain-specific implementation patterns",
+      "inject_from_domain": true,
+      "inject_from_stack": true
+    },
+    "content-fill": {
+      "description": "Fills UNKNOWN placeholders — needs domain-specific expertise",
+      "inject_from_domain": true,
+      "inject_global": ["software-architecture.md"]
+    }
+  },
+
+  "doc_type_knowledge": {
+    "RPBS": ["software-architecture.md", "stacks.md"],
+    "REBS": ["software-architecture.md", "developer-experience.md", "quality-assurance.md"],
+    "DDES": ["database.md", "api-design.md", "software-architecture.md"],
+    "BELS": ["backend-development.md", "error-handling.md", "security.md"],
+    "DIM": ["api-design.md", "fullstack-integration.md"],
+    "SCREENMAP": ["navigation-ui.md", "user-interaction.md", "accessibility.md"],
+    "COMPONENT_LIBRARY": ["design-systems.md", "accessibility.md", "user-interaction.md"],
+    "COPY_GUIDE": ["i18n-localization.md", "accessibility.md"],
+    "TESTPLAN": ["testing.md", "quality-assurance.md"],
+    "UX_Foundations": ["user-interaction.md", "accessibility.md", "navigation-ui.md"],
+    "UI_Constraints": ["design-systems.md", "performance.md", "accessibility.md"],
+    "README": ["software-architecture.md"]
+  }
+}

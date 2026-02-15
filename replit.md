@@ -1,35 +1,7 @@
 # AXION Documentation System
 
-## Version
-**V1 — Released February 8, 2026**
-
-This is the first stable release of the AXION system. All core pipeline stages, the web dashboard, and workspace management are functional end-to-end.
-
-### V1 Feature Summary
-- **Full Pipeline Orchestration**: Automated chaining of all pipeline steps from project idea to packaged Agent Kit (kit-create → seed → generate → review → draft → verify → lock → build-plan → build-exec → package)
-- **Assembly Control Room**: Real-time SSE streaming of pipeline execution with step-level timing, progress tracking, and log display
-- **Retry from Failed Step**: Resume pipeline execution from the exact step that failed, skipping previously successful steps
-- **Individual Actions**: Trigger any pipeline step independently (import, reconcile, iterate, build-plan, build-exec, deploy, clean, status, next, activate) from the Assembly Control Room
-- **Workspaces Management**: Dedicated page listing all workspaces with on-disk status indicators (Registry, Domains, App), delete functionality, and orphaned record cleanup
-- **Kit Export**: Package completed Agent Kits into distributable zip bundles
-- **Test Suite Runner**: Execute Vitest test suites directly from the dashboard with color-coded results
-- **System Health Monitoring**: Health check page for system diagnostics
-- **Pipeline Logs Viewer**: Browse and inspect logs from all pipeline runs
-- **Two-Root Architecture**: Strict isolation between immutable AXION system code and generated project workspaces
-- **UNKNOWN Detection**: Automatic scanning for placeholder content in documentation with agent-driven content filling
-- **Transient Failure Retry**: Exponential backoff for ENOENT, ETIMEDOUT, ECONNRESET, and OOM-kill errors
-- **Assembly Upgrade Layers**: Iterative assembly upgrades via revision system — users can add new ideas or critiques after initial pipeline pass, bump revision, and re-run the pipeline non-destructively to produce versioned upgrade kits
-- **Dark/Light Theme**: Full theme support across the dashboard
-- **Path Traversal Protection**: Hardened workspace delete endpoint with input validation
-- **Zip Context Upload**: Paperclip icon on New Assembly form (Vision step) uploads a zip file, extracts ALL text files recursively, and populates the context textarea with full project contents. Includes zip bomb protection, path traversal sanitization, and per-file/total size limits.
-- **Document Inventory Dialogs**: UpgradeDialog (AI suggestions + custom instructions), FileViewerDialog (markdown rendering), AddDocDialog (per-section and per-domain file creation)
-- **Assembly Form AI Auto-fill**: When advancing past Step 1 (Basics), AI automatically generates and pre-fills all remaining form sections (Vision, Features, Technical) based on project name and idea. Includes suggestion chips per field for alternative options, "More Detail" info buttons with contextual help, and regenerate capability. Backend endpoint: POST /api/assembly-autofill.
-- **Scripts Reference Page**: Interactive /scripts page listing all 42 AXION CLI scripts organized into 12 tag-based categories with click-to-detail dialogs showing description, file path, CLI usage, flags, and related scripts.
-- **Presets Reference Page**: Interactive /presets page showing all pipeline module presets, stage plans, and pipeline gates from presets.json with search, card layout, and click-to-detail dialogs.
-- **System Performance Dashboard**: Analytics page at /performance showing pipeline execution metrics from real pipeline_runs data. Displays total runs, success rate, avg duration, AI call counts, step timing breakdown (sorted slowest first), failure hotspots, AI step performance details, daily run trends, and per-project breakdown. Backend endpoint: GET /api/performance-stats.
-
 ## Overview
-This project develops and tests the AXION documentation-first development system. AXION generates "Agent Kits" for AI-guided software development, aiming to standardize and streamline software project creation through rigorous testing and a well-defined pipeline for documentation and application scaffolding. The system focuses on robust and reliable code generation, ensuring data integrity and consistency across various stages of development. It integrates a web-based dashboard for orchestrating the development pipeline, providing a comprehensive solution for managing project ideas from conception to deployment.
+This project develops and tests the AXION documentation-first development system, generating "Agent Kits" for AI-guided software development. Its purpose is to standardize and streamline software project creation through rigorous testing and a well-defined pipeline for documentation and application scaffolding. AXION aims for robust and reliable code generation, ensuring data integrity and consistency across various development stages, and includes a web-based dashboard for orchestrating the development pipeline from conception to deployment. The system supports iterative assembly upgrades, allowing users to add new ideas or critiques and re-run the pipeline non-destructively to produce versioned upgrade kits.
 
 ## User Preferences
 - I want iterative development.
@@ -39,83 +11,54 @@ This project develops and tests the AXION documentation-first development system
 - Do not make changes to the file `axion/registry/release_gate_report.json`.
 
 ## System Architecture
-AXION employs a documentation-first approach to generate comprehensive "Agent Kits," structured around a pipeline with atomic operations and a robust module system. The architecture is designed for crash resilience and data integrity, ensuring reliable software generation.
+AXION employs a documentation-first approach to generate comprehensive "Agent Kits," structured around a pipeline with atomic operations and a robust module system designed for crash resilience and data integrity. It follows a Two-Root Architecture, strictly isolating immutable AXION system code from generated project workspaces.
 
 ### Core Components and Structure
 - **AXION System Code (`axion/`)**: Manages configuration, TypeScript CLI, document templates, and system documentation.
-- **Test Suite (`tests/`)**: A Vitest-based suite for unit, integration, validation, core contracts, and end-to-end testing.
-- **Atomic Writer Library**: Ensures data integrity through crash-resilient file writing using a write-to-tmp then atomic rename pattern.
+- **Atomic Writer Library**: Ensures data integrity through crash-resilient file writing.
 - **Stack Profile Contract (`registry/stack_profile.json`)**: Authoritative source for stack configuration within a kit workspace.
-- **Anchor Convention**: Uses HTML comment-like anchors (`<!-- AXION:ANCHOR:<ID> -->`) for dynamic content injection during code generation.
-
-### Script Organization
-Pipeline scripts under `axion/scripts/` are split into three categories:
-- **Pipeline scripts (`.mjs`)**: `draft`, `generate`, `init`, `lock`, `package`, `review`, `seed`, `verify` — invoked by the orchestrator and dashboard. Shared logic lives in `_axion_module_mode.mjs`, with constants loaded from `axion/config/domains.json` at runtime. The `draft` and `seed` scripts are upgrade-aware: they read `AXION_REVISION`, `AXION_UPGRADE_NOTES`, and `AXION_KIT_TYPE` env vars.
-- **System-level scripts (`.ts`)**: Core system logic extracted from the dashboard server for standalone CLI execution:
-  - **`axion-orchestrate.ts`**: Standalone pipeline orchestrator with step chaining, retry, gate enforcement, per-module iteration. Supports `--plan`, `--steps`, `--start-from`, `--modules`, `--dry-run`, `--list-plans`. Reads stage plans from `axion/config/presets.json`.
-  - **`axion-content-fill.ts`**: UNKNOWN detection, doc priority ordering (DOC_PRIORITY_ORDER), doc-type-aware AI prompting (DOC_TYPE_MAP), and cascading fills. Supports `--scan`, `--fill`, `--cascade`, `--find-next`, `--upgrade` modes.
-  - **`lib/retry.ts`**: Shared transient failure retry utility with exponential backoff for ENOENT, ETIMEDOUT, ECONNRESET, OOM errors.
-- **Auxiliary guardrail scripts (`.ts`)**: `doctor`, `preflight`, `repair`, `reconcile`, `verify-seams`, `hash-templates`, `release-check`, `status`, `next`, `iterate`, `import`, `kit-create`, `scaffold-app`, `build-plan`, `build`, `build-exec`, `activate`, `deploy`, `overhaul`, `package` (workspace mode), `clean`, `test`, `docs-check`, `run`, `run-app`, `upgrade` — invoked via `tsx` for workspace operations and system validation.
-- **`axion-package`** exists in both forms: `.mjs` creates domain-based zip bundles, `.ts` creates workspace-scoped packages (used by routes.ts).
+- **Anchor Convention**: Uses HTML comment-like anchors (`<!-- AXION:ANCHOR:<ID> -->`) for dynamic content injection.
+- **Script Organization**: Pipeline scripts (`.mjs`) for orchestration, system-level scripts (`.ts`) for core logic, and auxiliary guardrail scripts (`.ts`) for workspace operations and validation.
+- **UNKNOWN Detection & Content Fill System**: Scans `.md` template files for `UNKNOWN` placeholders, using AI for content generation based on document hierarchy and type-aware prompting. It supports interactive revision and cascading fills.
 
 ### Pipeline Stages
-AXION defines a clear pipeline for kit creation and application development:
-- **import**: Analyzes existing repositories to produce import reports and documentation seeds.
-- **kit-create**: Initializes new Agent Kit workspaces.
-- **docs:scaffold**: Generates and seeds module documentation structures.
-- **docs:content**: Fills documentation with AI-generated content.
-- **docs:full**: Combines scaffolding and content generation for documentation.
-- **app:bootstrap**: Generates application boilerplate.
-- **build-exec**: Executes the build plan, generating a manifest and applying file operations.
+AXION defines a clear pipeline for kit creation and application development, including:
+- **`import`**: Analyzes existing repositories.
+- **`kit-create`**: Initializes new Agent Kit workspaces.
+- **`docs:scaffold`**: Generates documentation structures.
+- **`docs:content`**: Fills documentation with AI-generated content.
+- **`docs:full`**: Combines scaffolding and content generation.
+- **`app:bootstrap`**: Generates application boilerplate.
+- **`build-exec`**: Executes the build plan, generating a manifest and applying file operations.
 
 ### Key Tools & Processes
-- **`axion-import`**: A read-only analysis tool for existing repositories, producing artifacts for the documentation pipeline without modifying source code.
-- **`axion-reconcile`**: Deterministically compares imported facts against build-authoritative outputs to detect drift and report mismatches.
-- **`axion-iterate`**: An orchestration wrapper that chains AXION primitives, enforcing gates and producing `next_commands` for remediation. It operates deterministically, requiring explicit `--allow-apply` for changes.
-
-### UNKNOWN Detection & Content Fill System (Feb 2026)
-- **`server/ai-content-fill.ts`**: Full-stack content-fill module that scans ALL `.md` template files across every domain module for UNKNOWN placeholders. Supports both automated pipeline fills and interactive revision.
-- **Document Hierarchy**: Files are prioritized for fill order: RPBS → REBS → README → DDES → UX_Foundations → UI_Constraints → DIM → SCREENMAP → TESTPLAN → COMPONENT_LIBRARY → COPY_GUIDE → BELS → OPEN_QUESTIONS. Higher-level docs cascade context to downstream templates.
-- **Template-Type-Aware Prompting**: DOC_TYPE_MAP provides tailored AI guidance for each document type (13 types including RPBS, REBS, BELS, DDES, DIM, TESTPLAN, etc.).
-- **Interactive Revision Flow**: "Revise UNKNOWNs" button in Assembly Control Room:
-  1. Scans all docs, finds the highest-priority doc with UNKNOWNs.
-  2. Generates targeted questions about UNKNOWN sections for user to provide real context.
-  3. User answers questions, then "Fill & Cascade" fills the target doc with user context and runs a full pass across ALL docs using the newly-filled content.
-  4. Drops to the next highest-priority doc with remaining UNKNOWNs and repeats until all resolved.
-- **API Endpoints**:
-  - `GET /api/scan-unknowns` — Returns scan report of all .md files with UNKNOWNs.
-  - `POST /api/revise-unknowns/start` — Finds next target doc, generates questions.
-  - `POST /api/revise-unknowns/fill` — Fills target with user context, cascades to all docs, returns next target.
-- **Lock Step UNKNOWN Detection**: When the lock step fails due to UNKNOWN content, the orchestrator scans and reports via SSE stream.
+- **`axion-import`**: Read-only analysis of existing repositories.
+- **`axion-reconcile`**: Compares imported facts against build outputs to detect drift.
+- **`axion-iterate`**: Orchestration wrapper for chaining AXION primitives, enforcing gates.
+- **Transient Failure Retry**: Implements exponential backoff for network and system errors (ENOENT, ETIMEDOUT, ECONNRESET, OOM-kill).
 
 ### Core System Contracts and Guarantees
 - **Pipeline Guarantees**: Enforced strict stage execution order and module dependencies.
-- **Diagnostic Guarantees**: Standardized SCREAMING_SNAKE_CASE reason codes and detailed `blocked_by` responses.
-- **Interface Guarantees**: Predictable JSON outputs for commands and consistent artifact storage.
-- **Two-Root Safety**: Ensures isolation between the AXION system root and generated kits, preventing system pollution.
+- **Diagnostic Guarantees**: Standardized reason codes and detailed `blocked_by` responses.
+- **Interface Guarantees**: Predictable JSON outputs and consistent artifact storage.
+- **Two-Root Safety**: Ensures isolation between the AXION system root and generated kits.
 
 ### UI/UX Decisions (Web Dashboard)
-The system includes a web-based Dashboard for interacting with the AXION pipeline, built with Express, Vite, and React.
-- **Assembly-Driven Architecture**: Transforms the dashboard into an Assembly-centric automation engine, where an "Assembly" represents a project idea.
-- **Orchestration Engine**: Server-side pipeline runner for automated step chaining with SSE streaming and gate enforcement. Steps `review`, `draft`, `verify`, and `lock` use per-module iteration to satisfy dependency ordering (ensurePrereqs). The verify step is non-blocking — it sets verifyPassed=false but does not halt the pipeline.
-- **Database**: PostgreSQL for managing assemblies and pipeline runs.
-- **Storage Layer**: Provides full CRUD operations for assemblies and runs via an `IStorage` interface.
-- **Web Dashboard Pages**: Includes Assembly listing, New Assembly creation, Assembly Control Room (with pipeline stepper, step-level timing, and SSE streaming), System Health page, Pipeline Logs viewer, Kit Export page, Test Suite page (run Vitest from dashboard with color-coded results), Document Inventory page (interactive hierarchy map + AI upgrade system), and existing tool pages (Status, Reports, Files, Release Gate).
-- **Document Inventory & Upgrade** (`/docs`): Interactive ReactFlow node graph (`doc-hierarchy-map.tsx`) showing document cascade hierarchy (System → Source → Template → Generated). Click-to-scroll navigation. AI-powered doc upgrade at per-file, per-section, and global levels via `POST /api/doc-upgrade` SSE endpoint. Uses `upgradeDocumentWithAI()` in `ai-content-fill.ts`.
-- **Pipeline Retry**: Transient failure retry with exponential backoff for ENOENT, ETIMEDOUT, ECONNRESET, and OOM-kill (exit 137).
-- **Workspace Detection**: Detects workspaces by manifest.json, registry/, domains/, or app/ subdirectories.
-- **Theming**: Uses CSS custom properties with Tailwind v4 and Shadcn UI components.
-- **State Management**: TanStack Query for server state and React for UI state.
-- **Two-Root Model**: Project workspaces are created as siblings to the `axion/` directory at the repository root.
+The web-based Dashboard, built with Express, Vite, and React, provides an Assembly-centric automation engine.
+- **Orchestration Engine**: Server-side pipeline runner with SSE streaming and gate enforcement.
+- **Web Dashboard Pages**: Includes Assembly management, New Assembly creation, Assembly Control Room (pipeline stepper, real-time streaming), System Health, Pipeline Logs, Kit Export, Test Suite Runner, Document Inventory (interactive hierarchy map + AI upgrade system), Scripts Reference, Presets Reference, and System Performance Dashboard.
+- **Theming**: Supports Dark/Light themes using CSS custom properties with Tailwind v4 and Shadcn UI.
+- **State Management**: Utilizes TanStack Query for server state and React for UI state.
 
 ## External Dependencies
-- **Vitest**: Primary testing framework.
-- **tsx**: Executes TypeScript files directly.
-- **TypeScript**: Provides type-checking and language features.
-- **npm**: Package manager for generated application kits and project dependencies.
-- **Shadcn UI**: Component library (Card, Button, Badge, Input, ScrollArea, Sidebar, Tooltip).
-- **wouter**: Lightweight client-side routing for the web dashboard.
-- **TanStack Query**: For server state management and caching in the web dashboard.
+- **Vitest**: Testing framework.
+- **tsx**: TypeScript execution.
+- **TypeScript**: Language support.
+- **npm**: Package manager.
+- **Shadcn UI**: Component library.
+- **wouter**: Client-side routing.
+- **TanStack Query**: Server state management and caching.
 - **class-variance-authority**: Component variant management.
-- **Radix UI**: Provides accessible UI primitives used by Shadcn components.
-- **@xyflow/react (ReactFlow)**: Interactive node graph library for the Document Inventory hierarchy map.
+- **Radix UI**: Accessible UI primitives.
+- **@xyflow/react (ReactFlow)**: Interactive node graph library.
+- **PostgreSQL**: Database for managing assemblies and pipeline runs.
