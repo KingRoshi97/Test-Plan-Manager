@@ -1817,6 +1817,42 @@ export default function AssemblyPage() {
                   >
                     Activate
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "validate-templates" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-validate-templates"
+                  >
+                    Validate Templates
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "knowledge-coverage" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-knowledge-coverage"
+                  >
+                    Knowledge Coverage
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "kit-preview" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-kit-preview"
+                  >
+                    Kit Preview
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runSingleStep.mutate({ stepId: "kit-validate" })}
+                    disabled={runSingleStep.isPending}
+                    data-testid="button-action-kit-validate"
+                  >
+                    Kit Validate
+                  </Button>
                 </div>
               </div>
             </CardContent>

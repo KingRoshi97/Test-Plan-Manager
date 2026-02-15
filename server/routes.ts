@@ -328,6 +328,42 @@ const pipelineSteps: Record<string, PipelineStep> = {
     group: 'ops',
     desc: 'System overhaul',
   },
+  'validate-templates': {
+    cmd: 'npx',
+    args: () => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-validate-templates.ts'), '--json'],
+    label: 'Validate Templates',
+    cwd: () => PROJECT_ROOT,
+    group: 'analysis',
+    desc: 'Check template integrity',
+  },
+  'knowledge-coverage': {
+    cmd: 'npx',
+    args: (_pn, _br, body) => {
+      const a = ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-knowledge-coverage.ts'), '--json'];
+      if (body.stack && typeof body.stack === 'string') a.push('--stack', body.stack);
+      return a;
+    },
+    label: 'Knowledge Coverage',
+    cwd: () => PROJECT_ROOT,
+    group: 'analysis',
+    desc: 'Analyze knowledge map coverage',
+  },
+  'kit-preview': {
+    cmd: 'npx',
+    args: () => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-kit-preview.ts'), '--json'],
+    label: 'Kit Preview',
+    cwd: () => PROJECT_ROOT,
+    group: 'analysis',
+    desc: 'Dry-run kit packaging',
+  },
+  'kit-validate': {
+    cmd: 'npx',
+    args: (_pn, br) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-kit-validate.ts'), '--kit', br || PROJECT_ROOT, '--json'],
+    label: 'Kit Validate',
+    cwd: () => PROJECT_ROOT,
+    group: 'analysis',
+    desc: 'Post-package integrity check',
+  },
 };
 
 function tryParseJson(text: string): Record<string, unknown> | null {
@@ -455,6 +491,10 @@ const STEP_TO_REPORTS: Record<string, string[]> = {
   'docs-check': [],
   'clean': [],
   'package': [],
+  'validate-templates': [],
+  'knowledge-coverage': [],
+  'kit-preview': [],
+  'kit-validate': [],
 };
 
 async function syncReportsToDb(projectName: string, stepId: string) {

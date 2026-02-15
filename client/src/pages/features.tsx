@@ -272,6 +272,62 @@ const axionSystemFeatures: Feature[] = [
     ],
     relatedFeatures: ["Workspaces Management", "Two-Root Architecture"],
   },
+  {
+    title: "Knowledge Base Mapping",
+    description:
+      "Comprehensive knowledge-map.json maps stack profiles, domains, pipeline stages, and doc types to curated knowledge files. The knowledge resolver injects relevant context into AI prompts during content-fill and draft stages. Each kit gets a custom knowledge/INDEX.md tailored to its stack and active domains.",
+    icon: BookOpen,
+    tag: "AI",
+    source: "system",
+    keyFiles: [
+      "axion/config/knowledge-map.json",
+      "axion/scripts/lib/knowledge-resolver.ts",
+      "axion/knowledge/",
+    ],
+    pipelineSteps: ["content-fill", "draft"],
+    relatedFeatures: ["UNKNOWN Detection & Content Fill", "Knowledge Coverage Analysis", "Kit Preview & Validation"],
+  },
+  {
+    title: "Knowledge Coverage Analysis",
+    description:
+      "Cross-references knowledge-map.json against actual knowledge files. Reports dead references (mapped but missing), unmapped files, and coverage percentages broken down by domain, stack, and stage. Ensures the knowledge base stays consistent as new files are added or removed.",
+    icon: Search,
+    tag: "Reliability",
+    source: "system",
+    keyFiles: [
+      "axion/scripts/axion-knowledge-coverage.ts",
+      "axion/config/knowledge-map.json",
+    ],
+    pipelineSteps: ["knowledge-coverage"],
+    relatedFeatures: ["Knowledge Base Mapping", "Template Validation Guardrail"],
+  },
+  {
+    title: "Template Validation Guardrail",
+    description:
+      "Scans all template files for orphaned anchors, duplicate anchor IDs, surviving UNKNOWN placeholders, and missing required document types. Produces a structured JSON report with per-check PASS/FAIL status. Supports --strict mode to promote warnings to failures.",
+    icon: ShieldCheck,
+    tag: "Reliability",
+    source: "system",
+    keyFiles: [
+      "axion/scripts/axion-validate-templates.ts",
+    ],
+    pipelineSteps: ["validate-templates"],
+    relatedFeatures: ["Knowledge Coverage Analysis", "Doctor & Preflight Checks"],
+  },
+  {
+    title: "Kit Preview & Validation",
+    description:
+      "Pre-package dry-run and post-package integrity validation. Kit preview simulates packaging to show projected file trees, domain completeness, and readiness status. Kit validate inspects packaged kits for required docs, cross-references, knowledge INDEX validity, and stack profile consistency.",
+    icon: Eye,
+    tag: "Pipeline",
+    source: "system",
+    keyFiles: [
+      "axion/scripts/axion-kit-preview.ts",
+      "axion/scripts/axion-kit-validate.ts",
+    ],
+    pipelineSteps: ["kit-preview", "kit-validate"],
+    relatedFeatures: ["Kit Packaging", "Knowledge Base Mapping", "Template Validation Guardrail"],
+  },
 ];
 
 const dashboardUIFeatures: Feature[] = [
@@ -335,7 +391,7 @@ const dashboardUIFeatures: Feature[] = [
   {
     title: "Individual Pipeline Actions",
     description:
-      "Trigger any pipeline step independently from the Assembly Control Room: import, reconcile, iterate, build-plan, build-exec, deploy, clean, status, next, and activate. Each action runs as a standalone operation with SSE streaming output.",
+      "Trigger any pipeline step independently from the Assembly Control Room: import, reconcile, iterate, build-plan, build-exec, deploy, clean, status, next, activate, validate-templates, knowledge-coverage, kit-preview, and kit-validate. Each action runs as a standalone operation with SSE streaming output.",
     icon: Zap,
     tag: "Orchestration",
     source: "dashboard",
