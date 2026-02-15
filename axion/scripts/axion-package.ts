@@ -30,6 +30,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import archiver from 'archiver';
 import { fileURLToPath } from 'url';
+import { generateKitIndex } from './lib/knowledge-resolver';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -408,6 +409,18 @@ async function createZip(
         const fullPath = path.join(KNOWLEDGE_PATH, file);
         appendFile(fs.readFileSync(fullPath), `knowledge/${file}`);
         knowledgeFiles.push(`knowledge/${file}`);
+      }
+
+      try {
+        const stackId = stackProfile?.stack_id as string || 'default-web-saas';
+        const activeDomains = Object.keys(dependencies).length > 0
+          ? Object.keys(dependencies)
+          : getLockedModules();
+        const indexMd = generateKitIndex(stackId, activeDomains);
+        appendFile(indexMd, 'knowledge/INDEX.md');
+        knowledgeFiles.push('knowledge/INDEX.md');
+      } catch (e) {
+        // Non-fatal: INDEX.md generation failed, knowledge files still included
       }
     }
 

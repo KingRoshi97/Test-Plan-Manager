@@ -24,6 +24,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { resolveForDomain, resolveForDocType, buildPromptContext, type ResolvedKnowledge } from './lib/knowledge-resolver';
 
 // ─── Document Priority & Type System ────────────────────────────────────────
 
@@ -478,6 +479,30 @@ export function getAllTargets(projectRoot: string): HierarchicalUnknownTarget[] 
 
 // ─── Prompt Building ────────────────────────────────────────────────────────
 
+function resolveKnowledgeContext(moduleName: string, fileName: string): string {
+  try {
+    const domainKnowledge = resolveForDomain(moduleName);
+    const docType = fileName.replace(/\.md$/, '').replace(/_[a-z]+$/i, '');
+    const docTypeKnowledge = resolveForDocType(docType);
+
+    const merged: ResolvedKnowledge = {
+      files: [],
+      summary: `Knowledge for domain "${moduleName}" + doc type "${docType}"`,
+    };
+    const seen = new Set<string>();
+    for (const f of [...domainKnowledge.files, ...docTypeKnowledge.files]) {
+      if (seen.has(f.filename)) continue;
+      seen.add(f.filename);
+      merged.files.push(f);
+    }
+
+    if (merged.files.length === 0) return '';
+    return '\n' + buildPromptContext(merged, 6000) + '\n';
+  } catch {
+    return '';
+  }
+}
+
 function formatStructuredInput(structuredInput?: Record<string, string> | null): string {
   if (!structuredInput || Object.keys(structuredInput).length === 0) return '';
 
@@ -533,22 +558,25 @@ function buildFillPrompt(
   const structuredContext = formatStructuredInput(structuredInput);
   const upgradeContext = buildUpgradeContext();
 
+  const knowledgeContext = resolveKnowledgeContext(moduleName, fileName);
+
   return `You are an expert software architect filling out a ${docInfo.label} document for a software project.
 
 PROJECT NAME: ${projectName}
 PROJECT IDEA: ${projectIdea}
 MODULE/DOMAIN: ${moduleName}
-${structuredContext ? `\nDETAILED PROJECT CONTEXT (from the project creator — use this to inform your fills):\n${structuredContext}\n` : ''}${upgradeContext}
+${structuredContext ? `\nDETAILED PROJECT CONTEXT (from the project creator — use this to inform your fills):\n${structuredContext}\n` : ''}${upgradeContext}${knowledgeContext}
 Below is the current document that has UNKNOWN placeholders. Your task is to replace every instance of "UNKNOWN" with realistic, project-specific content based on the project idea and domain module.
 
 Rules:
 1. Replace EVERY "UNKNOWN" with specific, meaningful content appropriate to this project and domain.
 2. When detailed project context is provided above, use that information directly — do not invent contradicting details.
-3. Keep the exact same Markdown structure, headings, and table formatting.
-4. ${docInfo.guidance}
-5. Do NOT add new sections or remove existing ones.
-6. Do NOT wrap the output in code fences. Return ONLY the filled document content.
-7. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
+3. When KNOWLEDGE BASE CONTEXT is provided, follow its best practices and patterns — these are curated industry standards.
+4. Keep the exact same Markdown structure, headings, and table formatting.
+5. ${docInfo.guidance}
+6. Do NOT add new sections or remove existing ones.
+7. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+8. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
 
 CURRENT DOCUMENT:
 ${fileContent}
@@ -575,23 +603,25 @@ function buildContextAwareFillPrompt(
     .map(([section, answer]) => `Section "${section}": ${answer}`)
     .join('\n');
 
+  const knowledgeContext = resolveKnowledgeContext(moduleName, fileName);
+
   return `You are an expert software architect filling out a ${docInfo.label} document for a software project.
 
 PROJECT NAME: ${projectName}
 PROJECT IDEA: ${projectIdea}
 MODULE/DOMAIN: ${moduleName}
 ${structuredContext ? `\nDETAILED PROJECT CONTEXT (from the project creator — use this to inform your fills):\n${structuredContext}\n` : ''}${upgradeContext}${parentContext ? `CONTEXT FROM HIGHER-LEVEL DOCUMENTS (use this to inform your fills):\n${parentContext}\n` : ''}
-${answersBlock ? `USER-PROVIDED ANSWERS (use this information directly):\n${answersBlock}\n` : ''}
-
+${answersBlock ? `USER-PROVIDED ANSWERS (use this information directly):\n${answersBlock}\n` : ''}${knowledgeContext}
 Below is the current document that has UNKNOWN placeholders. Your task is to replace every instance of "UNKNOWN" with realistic, project-specific content.
 
 Rules:
 1. Replace EVERY "UNKNOWN" with specific, meaningful content.
 2. When user-provided context or answers are available, use that information directly — do not contradict it.
-3. Keep the exact same Markdown structure, headings, and table formatting.
-4. ${docInfo.guidance}
-5. Do NOT add new sections or remove existing ones.
-6. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+3. When KNOWLEDGE BASE CONTEXT is provided, follow its best practices and patterns — these are curated industry standards.
+4. Keep the exact same Markdown structure, headings, and table formatting.
+5. ${docInfo.guidance}
+6. Do NOT add new sections or remove existing ones.
+7. Do NOT wrap the output in code fences. Return ONLY the filled document content.
 
 CURRENT DOCUMENT:
 ${fileContent}
@@ -608,12 +638,14 @@ function buildUpgradePrompt(
   const docInfo = detectDocType(fileName);
   const upgradeContext = buildUpgradeContext();
 
+  const knowledgeContext = resolveKnowledgeContext(moduleName, fileName);
+
   return `You are an expert technical writer upgrading a ${docInfo.label} document for a software project.
 
 MODULE/DOMAIN: ${moduleName}
 
 ${docInfo.guidance}
-${upgradeContext}
+${upgradeContext}${knowledgeContext}
 Below is the current document. Your task is to UPGRADE its quality:
 1. Make vague or generic content more specific and actionable.
 2. Add missing details where sections are thin.
