@@ -96,9 +96,9 @@ const axionSystemFeatures: Feature[] = [
     tag: "Core",
     source: "system",
     keyFiles: [
-      "axion/scripts/draft.mjs",
-      "axion/scripts/seed.mjs",
-      "axion/scripts/upgrade.ts",
+      "axion/scripts/axion-draft.mjs",
+      "axion/scripts/axion-seed.mjs",
+      "axion/scripts/axion-upgrade.ts",
     ],
     pipelineSteps: ["draft", "seed"],
     relatedFeatures: ["Full Pipeline Orchestration", "UNKNOWN Revision Flow"],
@@ -111,8 +111,8 @@ const axionSystemFeatures: Feature[] = [
     tag: "Pipeline",
     source: "system",
     keyFiles: [
-      "axion/scripts/import.ts",
-      "axion/scripts/reconcile.ts",
+      "axion/scripts/axion-import.ts",
+      "axion/scripts/axion-reconcile.ts",
     ],
     pipelineSteps: ["import", "reconcile"],
     relatedFeatures: ["Full Pipeline Orchestration", "Individual Pipeline Actions"],
@@ -138,7 +138,7 @@ const axionSystemFeatures: Feature[] = [
     tag: "Pipeline",
     source: "system",
     keyFiles: [
-      "axion/scripts/iterate.ts",
+      "axion/scripts/axion-iterate.ts",
       "axion/scripts/axion-orchestrate.ts",
     ],
     pipelineSteps: ["review", "draft", "verify", "lock"],
@@ -152,9 +152,9 @@ const axionSystemFeatures: Feature[] = [
     tag: "Pipeline",
     source: "system",
     keyFiles: [
-      "axion/scripts/build-plan.ts",
-      "axion/scripts/build-exec.ts",
-      "axion/scripts/build.ts",
+      "axion/scripts/axion-build-plan.ts",
+      "axion/scripts/axion-build-exec.ts",
+      "axion/scripts/axion-build.ts",
     ],
     pipelineSteps: ["build-plan", "build-exec"],
     relatedFeatures: ["Full Pipeline Orchestration", "Kit Packaging"],
@@ -162,13 +162,13 @@ const axionSystemFeatures: Feature[] = [
   {
     title: "Kit Packaging",
     description:
-      "Package completed Agent Kits into distributable zip bundles. axion-package.mjs creates domain-based zip bundles while axion-package.ts creates workspace-scoped packages used by the dashboard routes.",
+      "Package completed Agent Kits into distributable zip bundles. axion-package-workspace.mjs creates domain-based workspace zip bundles while axion-package.ts creates workspace-scoped packages used by the dashboard routes.",
     icon: Package,
     tag: "Pipeline",
     source: "system",
     keyFiles: [
-      "axion/scripts/axion-package.mjs",
-      "axion/scripts/package.ts",
+      "axion/scripts/axion-package.ts",
+      "axion/scripts/axion-package-workspace.mjs",
     ],
     pipelineSteps: ["package"],
     relatedFeatures: ["Build Plan & Execution", "Kit Export"],
@@ -193,7 +193,7 @@ const axionSystemFeatures: Feature[] = [
     tag: "Architecture",
     source: "system",
     keyFiles: [
-      "axion/templates/registry/stack_profile.json",
+      "axion/config/stack_profiles.json",
     ],
     relatedFeatures: ["Build Plan & Execution", "Two-Root Architecture"],
   },
@@ -255,8 +255,8 @@ const axionSystemFeatures: Feature[] = [
     tag: "Reliability",
     source: "system",
     keyFiles: [
-      "axion/scripts/doctor.ts",
-      "axion/scripts/preflight.ts",
+      "axion/scripts/axion-doctor.ts",
+      "axion/scripts/axion-preflight.ts",
     ],
     relatedFeatures: ["System Health Monitoring", "Full Pipeline Orchestration"],
   },
