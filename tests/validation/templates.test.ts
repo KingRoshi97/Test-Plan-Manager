@@ -22,6 +22,10 @@ describe('AXION Templates Validation', () => {
   describe('module templates', () => {
     const moduleDirs = templateDirs.filter(d => !d.startsWith('_') && d !== 'core');
     
+    it('should have module template directories or only core', () => {
+      expect(templateDirs.length).toBeGreaterThan(0);
+    });
+
     for (const dir of moduleDirs) {
       describe(`${dir} template`, () => {
         const templateDir = path.join(TEMPLATES_DIR, dir);
