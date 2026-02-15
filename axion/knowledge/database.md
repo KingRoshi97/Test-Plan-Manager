@@ -55,6 +55,8 @@ Every table should consider:
 - **GIN**: JSONB fields, full-text search, array columns
 - **Partial index**: `WHERE is_active = true` — index only relevant rows
 - **Composite index**: Multiple columns (order matters — leftmost prefix rule)
+- **Covering index**: `INCLUDE` additional columns to enable index-only scans
+- **BRIN**: Very large tables with naturally ordered data (timestamps)
 
 ## Query Patterns
 
@@ -76,6 +78,20 @@ Every table should consider:
 - Use appropriate isolation level (READ COMMITTED is default and usually correct)
 - Handle deadlocks with retry logic
 
+### Optimistic Concurrency
+- Use a `version` column (integer) or `updated_at` timestamp for optimistic locking
+- Pattern: `UPDATE ... SET version = version + 1 WHERE id = :id AND version = :expected_version`
+- If zero rows updated, the record was modified by another process — return 409 Conflict
+- Optimistic locking avoids holding database locks during user think time
+- Preferred for web applications where conflicts are rare
+
+### Distributed Transactions Awareness
+- Avoid distributed transactions when possible — prefer eventual consistency
+- Use the Saga pattern for multi-service operations (compensating actions on failure)
+- Use the Outbox pattern to reliably publish events alongside database writes
+- If two-phase commit is needed, understand its performance and availability trade-offs
+- Document which operations span services and their consistency guarantees
+
 ## Migration Best Practices
 
 ### Safe Migrations
@@ -91,6 +107,14 @@ Every table should consider:
 - Each migration should be atomic and idempotent
 - Document breaking changes in migration files
 
+### Multi-Phase Migration Pattern
+```
+Phase 1: Add new column (nullable), deploy code that writes to both old and new
+Phase 2: Backfill new column from old column data
+Phase 3: Deploy code that reads from new column only
+Phase 4: Drop old column in a separate migration
+```
+
 ## Data Integrity
 
 ### Constraints
@@ -104,6 +128,45 @@ Every table should consider:
 - **Hard delete**: When data must be removed (GDPR), when table size is a concern
 - If using soft deletes: add `deleted_at` to all unique constraints, filter in all queries
 
+## Read/Write Patterns
+
+### Read Replicas
+- Route read-heavy queries to read replicas to reduce primary load
+- Understand replication lag — replicas may be seconds behind primary
+- Never read from replica immediately after a write (use primary for read-after-write consistency)
+- Use connection-level routing (application-level or proxy like PgBouncer)
+
+### Read Models / CQRS Patterns
+- For complex read queries, consider materialized views or denormalized read tables
+- Update read models asynchronously via events or triggers
+- Use materialized views for expensive aggregations refreshed on schedule
+- CQRS (Command Query Responsibility Segregation): separate write model from read model when complexity justifies it
+
+### Write Patterns
+- Batch inserts for bulk data loading (use `INSERT ... VALUES` with multiple rows)
+- Use `UPSERT` (`INSERT ... ON CONFLICT DO UPDATE`) for idempotent writes
+- Use advisory locks for application-level mutual exclusion
+- Partition large tables by date or tenant for write scalability
+
+## Data Access Layer Patterns
+
+### ORM and Query Builder Conventions
+- Use a single ORM/query builder consistently across the project
+- Define models/schemas in one place (single source of truth for table structure)
+- Use repository or service pattern to encapsulate data access logic
+- Never write raw SQL in route handlers — always go through the data access layer
+
+### Query Builder Best Practices
+- Use parameterized queries for all user input (ORMs do this automatically)
+- Select only needed columns (`select('id', 'name')` not `select('*')`)
+- Use query scopes/helpers for common filters (active users, published posts)
+- Log slow queries in development for optimization
+
+### Connection-Level Patterns
+- Use a single shared pool across the application
+- Do not create new connections per request
+- Use middleware to manage transaction lifecycle (begin on request, commit/rollback on response)
+
 ## Connection Management
 
 ### Connection Pooling
@@ -113,8 +176,76 @@ Every table should consider:
 - Set query timeout: 30 seconds (longer for batch jobs)
 - Close idle connections after 10 minutes
 
+### Pool Tuning
+- Pool size = (number of CPU cores * 2) + number of disks (as starting point)
+- Monitor pool utilization: high wait times indicate pool is too small
+- Monitor active connections: near max indicates pool is too large or queries too slow
+- Use PgBouncer in transaction mode for serverless/high-connection environments
+
+### Database Performance Monitoring
+- Track query duration (p50, p95, p99) and alert on regressions
+- Monitor active connections, idle connections, and waiting queries
+- Use `pg_stat_statements` for query performance analysis
+- Set up slow query logging (threshold: 100ms for web apps)
+- Monitor table sizes, index sizes, and bloat
+- Track cache hit ratio — should be > 99% for well-tuned databases
+
+## Data Lifecycle
+
+### Data Archival
+- Define retention policies per table/data type (e.g., logs: 90 days, orders: 7 years)
+- Move old data to archive tables or cold storage on schedule
+- Partition tables by date for efficient archival and pruning
+- Ensure archived data is still queryable if needed (separate connection, read-only)
+
+### Data Deletion and GDPR
+- Implement hard delete for user data on account deletion request (GDPR right to erasure)
+- Cascade delete or nullify references when deleting user data
+- Log deletion requests and completions for compliance audit
+- Anonymize data instead of deleting when analytics require historical records
+- Provide data export functionality (GDPR right to data portability)
+
+### Retention Automation
+- Schedule automated cleanup jobs for expired data (cron or job queue)
+- Use `pg_partman` or similar for automated partition management
+- Monitor table sizes and set alerts for unexpected growth
+- Test data deletion scripts against production-like data before running
+
 ## Backup and Recovery
 - Automated daily backups with point-in-time recovery
-- Test backup restoration regularly
+- Test backup restoration regularly (at least monthly)
 - Keep backups for 30 days minimum
 - Store backups in a different region than the primary database
+- Document and practice the recovery procedure
+- Measure and document Recovery Time Objective (RTO) and Recovery Point Objective (RPO)
+
+## Performance Optimization
+
+### Query Optimization
+- Use `EXPLAIN ANALYZE` to understand query execution plans
+- Identify sequential scans on large tables and add indexes
+- Avoid `SELECT *` — select only needed columns
+- Use CTEs (WITH queries) for readability but be aware of optimization barriers in older PostgreSQL
+- Prefer `EXISTS` over `IN` for large subquery result sets
+- Use `UNION ALL` instead of `UNION` when duplicates are acceptable
+
+### Table Design for Performance
+- Normalize to 3NF by default, denormalize only when queries are proven slow
+- Partition large tables by date range, tenant, or other natural boundaries
+- Use materialized views for expensive aggregation queries (refresh on schedule)
+- Archive old data to separate tables to keep active tables small
+- Consider column ordering: frequently accessed columns first (cache line optimization)
+
+### Monitoring and Alerting
+- Monitor active connections vs pool size — alert at 80% capacity
+- Track long-running queries (> 5 seconds) and investigate
+- Monitor table bloat and schedule `VACUUM` appropriately
+- Track index usage — drop unused indexes to reduce write overhead
+- Set up alerts for: replication lag, connection exhaustion, disk usage > 80%
+
+### Caching Strategies
+- Use application-level caching (Redis) for frequently read, rarely written data
+- Set appropriate TTLs based on data freshness requirements
+- Implement cache invalidation on writes (write-through or write-behind)
+- Use database query result caching for expensive reports
+- Consider read-through cache pattern for simple key-value lookups

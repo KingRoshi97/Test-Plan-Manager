@@ -56,7 +56,7 @@
 - Response envelope:
 ```json
 {
-  "data": [...],
+  "data": [],
   "pagination": {
     "total": 150,
     "page": 1,
@@ -121,15 +121,140 @@
 - Never expose internal IDs, database errors, or stack traces to clients
 - Strip sensitive fields (password hashes, internal notes) from responses
 
-## Webhooks (Outbound)
+## Idempotency
 
-### Design
+### Idempotency Keys for Write Endpoints
+- Accept `Idempotency-Key` header on POST/PATCH requests
+- Store the key + response for a retention window (24-48 hours)
+- On duplicate key, return the original response without re-executing the operation
+- Use UUIDv4 for idempotency keys (client-generated)
+- Required for payment endpoints, critical writes, and any operation with side effects
+
+### Implementation Pattern
+```
+1. Client generates Idempotency-Key (UUIDv4)
+2. Server checks if key exists in idempotency store
+3. If exists: return stored response (200 with original body)
+4. If not: execute operation, store key + response, return result
+5. Keys expire after 24-48 hours
+```
+
+### Retry Safety
+- GET, PUT, DELETE are inherently idempotent — no key needed
+- POST and PATCH need idempotency keys for safe retries
+- Document which endpoints support idempotency keys
+
+## GraphQL API Design
+
+### Schema Design
+- Use a schema-first or code-first approach consistently (code-first recommended for TypeScript)
+- Define clear types for all entities — avoid generic `JSON` scalar
+- Use input types for mutations: `input CreateUserInput { name: String!, email: String! }`
+- Nullable by default in GraphQL — use `!` (non-null) intentionally
+- Prefer specific fields over generic blobs
+
+### Resolvers
+- Keep resolvers thin — delegate to service/data layer
+- Use DataLoader for batching and caching to prevent N+1 queries
+- Implement field-level resolvers only for computed or expensive fields
+- Handle errors by returning union types: `type Result = Success | Error`
+
+### Pagination (Relay-Style)
+- Use connection pattern: `edges { node, cursor }` + `pageInfo { hasNextPage, endCursor }`
+- Support `first` / `after` (forward) and `last` / `before` (backward) pagination
+- Return `totalCount` only if the underlying query is cheap
+
+### Security
+- Implement query depth limiting (max 10 levels)
+- Implement query complexity analysis and reject expensive queries
+- Disable introspection in production
+- Apply field-level authorization on sensitive fields
+- Rate limit by query complexity, not just request count
+
+### Performance
+- Enable automatic persisted queries (APQ) to reduce payload size
+- Use response caching where appropriate (CDN, in-memory)
+- Avoid over-fetching by designing precise query patterns
+
+## gRPC and Service APIs
+
+### Protobuf Contracts
+- Define service contracts in `.proto` files as the source of truth
+- Use versioned packages: `package myapp.v1;`
+- Follow protobuf style guide: PascalCase for messages, snake_case for fields
+- Generate client and server stubs from proto definitions
+
+### When to Use gRPC
+- Internal service-to-service communication (high throughput, low latency)
+- Streaming use cases (bidirectional streaming, server push)
+- Strongly typed contracts across multiple languages
+- Not suitable for browser clients without grpc-web proxy
+
+### Design Patterns
+- Use unary RPCs for request-response, streaming for real-time or large data
+- Define clear error codes using gRPC status codes (NOT_FOUND, INVALID_ARGUMENT, etc.)
+- Implement health check service for load balancer integration
+- Use interceptors for cross-cutting concerns (auth, logging, tracing)
+
+## Webhooks
+
+### Outbound Webhooks (Sending)
 - Use POST with JSON body
 - Include event type in body: `{ "event": "order.created", "data": {...} }`
 - Sign payloads with HMAC-SHA256 for verification
 - Include timestamp and idempotency key
 - Implement retry with exponential backoff (1s, 5s, 30s, 5m, 30m)
 - Allow subscribers to configure URL and which events they receive
+
+### Inbound Webhooks (Consuming)
+- Verify webhook signatures before processing (HMAC-SHA256 or similar)
+- Respond with 200 immediately, process asynchronously (queue the work)
+- Implement idempotency: deduplicate by event ID to handle retries
+- Log all received webhooks for debugging and auditing
+- Set up dead letter queue for failed webhook processing
+- Handle out-of-order delivery gracefully
+
+### Credential Rotation for Webhooks
+- Support rotating webhook signing secrets without downtime
+- Accept both old and new secrets during rotation window
+- Provide API to regenerate webhook secrets
+- Notify subscribers when secrets are rotated
+
+## API Documentation
+
+### OpenAPI / Swagger
+- Maintain an OpenAPI 3.1 spec as the source of truth for REST APIs
+- Auto-generate from code annotations or Zod schemas where possible
+- Include examples for all request/response schemas
+- Document error responses for every endpoint
+- Keep documentation in sync with implementation (CI validation)
+
+### Documentation Requirements
+- Every endpoint must document: method, path, description, request body, response body, errors
+- Include authentication requirements for each endpoint
+- Document rate limits and pagination behavior
+- Provide runnable examples (cURL, JavaScript, Python)
+- Version documentation alongside API versions
+
+### Interactive Documentation
+- Serve Swagger UI or Redoc for interactive API exploration
+- Enable "Try it out" functionality in non-production environments
+- Include authentication helpers in interactive docs
+
+## Client SDKs
+
+### Best Practices (When Provided)
+- Auto-generate SDKs from OpenAPI spec (openapi-generator, orval)
+- Provide TypeScript types for all request/response shapes
+- Handle authentication, retries, and error mapping in the SDK
+- Version SDKs alongside the API
+- Publish to package registries (npm, PyPI) for easy consumption
+
+### SDK Design Principles
+- Thin wrapper: SDK should be a convenience layer, not a framework
+- Expose underlying HTTP client for advanced use cases
+- Provide sensible defaults (timeout, retry, base URL)
+- Include request/response interceptors for customization
 
 ## Rate Limiting
 

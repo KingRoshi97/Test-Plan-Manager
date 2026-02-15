@@ -53,6 +53,24 @@
 - **Gap**: 16-24px between cards
 - **Card height**: Let content determine height (avoid fixed heights that cause overflow)
 
+## Layout Systems
+
+### Flexbox Patterns
+- Use for one-dimensional layouts (rows or columns)
+- Common patterns: centering, space-between, equal-height columns
+- Avoid deeply nested flex containers — use grid instead
+
+### Grid Patterns
+- Use for two-dimensional layouts (rows and columns simultaneously)
+- `auto-fill` + `minmax()` for responsive card grids without media queries
+- Named grid areas for complex page layouts
+- `subgrid` for aligned nested grids (growing browser support)
+
+### Constraint-Based Layout
+- Set `max-width` on content containers for readability (65-75ch for prose)
+- Use `min-width: 0` on flex children to prevent overflow
+- Use `aspect-ratio` for media containers to maintain proportions
+
 ## Responsive Breakpoints
 
 ### Standard Breakpoints
@@ -98,6 +116,156 @@
 - **Skeleton screens**: Preferred over spinners for content areas (matches layout, reduces perceived load time)
 - **Spinners**: Only for actions (button loading, form submission)
 - **Progress bars**: For operations with known duration (file uploads, multi-step processes)
+
+## Rendering and View Architecture
+
+### Component Architecture Patterns
+- **Composition over inheritance**: Build complex UI from small, focused components
+- **Props-based configuration**: Pass data and callbacks down, emit events up
+- **Slots/children pattern**: Allow parent to inject content into component layout regions
+- **Render props**: For components that need to share rendering logic with flexible output
+- **Compound components**: Related components that work together (Tabs → Tab → TabPanel)
+
+### Design System Consumption
+- Use a shared component library for consistent UI across the application
+- Override design tokens (colors, spacing, typography) not component internals
+- Extend components via composition (wrapper components) not modification
+- Keep custom components API-compatible with design system conventions
+
+### Conditional Rendering Patterns
+- Use ternary for two-state toggles: `{isLoading ? <Skeleton /> : <Content />}`
+- Use early return for guard clauses: `if (!data) return <EmptyState />`
+- Use lookup objects/maps for multi-state rendering (avoid nested ternaries)
+- Extract complex conditional logic into custom hooks or helper functions
+
+### List Rendering and Virtualization
+- Use stable, unique keys for list items (database IDs, not array indices)
+- Virtualize lists with > 100 items (TanStack Virtual, react-window)
+- Implement pagination or "load more" for very large datasets
+- Show loading indicator at the bottom when fetching more items
+
+### Dynamic Component Loading
+- Use `React.lazy` + `Suspense` for route-level code splitting
+- Load heavy components on demand (rich text editor, chart library)
+- Show meaningful fallback UI during component loading
+- Preload components on hover/focus for perceived performance
+
+## Business Rules in UI Layer
+
+### Feature Visibility Rules
+- Control "who sees what" via feature flags and user role/permissions
+- Hide features the user cannot access (don't show disabled buttons for unauthorized actions)
+- Use a central permission check utility: `canAccess(user, feature) → boolean`
+- Render placeholder or upgrade CTA for features behind a paywall
+
+### Pricing and Plan Gating
+- Show feature availability based on user's plan/tier
+- Provide clear upgrade path when users encounter gated features
+- Use plan comparison tables to communicate value
+- Never hide the existence of premium features — tease them to drive upgrades
+
+### Permission-Aware UI States
+- **Full access**: Show all controls, allow all actions
+- **Read-only**: Show data but disable editing controls (with visual indication)
+- **Hidden**: Don't render the feature at all (user doesn't know it exists)
+- **Teaser**: Show feature preview with upgrade CTA overlay
+- Check permissions at render time, not just at API call time
+
+### Workflow Logic in UI
+- **Wizards**: Multi-step flows with progress indicator, back/next navigation, step validation
+- **Onboarding flows**: Progressive user setup with ability to skip/resume later
+- **Approval workflows**: Show current status, pending actions, approval history
+- **State machines**: Model complex UI flows (draft → review → published) explicitly
+
+## UI Composition Patterns
+
+### Slot and Portal Patterns
+- Use React portals for rendering modals, tooltips, and dropdowns outside the DOM hierarchy
+- Use children/slot patterns for flexible layout composition
+- Named slots (via props): `header`, `footer`, `sidebar` for complex layout components
+- Avoid deep prop drilling — use context or composition instead
+
+### Layout Shells
+- Define distinct layout shells: auth layout, public layout, dashboard layout, minimal layout
+- Each shell provides consistent chrome (header, sidebar, footer) for its context
+- Route-level layout selection: match routes to their appropriate shell
+- Shared layout state (sidebar open/closed, theme) managed at shell level
+
+### Content Projection
+- Allow parent components to project content into child layout slots
+- Use render props or children for maximum flexibility
+- Maintain consistent spacing and styling regardless of projected content
+- Document slot APIs clearly for component consumers
+
+## Cross-Cutting UI Concerns
+
+### Global Notification State
+- Centralize notification/toast state in a global store or context
+- Provide a single API for showing notifications: `notify({ type, message, duration })`
+- Handle notification queue and stacking automatically
+- Ensure notifications are accessible (aria-live regions)
+
+### Global Modal Management
+- Use a modal manager/stack to coordinate multiple modals
+- Prevent background scroll when modal is open
+- Only one modal visible at a time (or clearly stacked)
+- Centralize modal state to avoid scattered isOpen booleans
+
+### Global Loading Coordination
+- Track loading state globally for route transitions and data fetching
+- Show a top-level progress bar or loading indicator for page-level loads
+- Avoid multiple independent loading spinners competing for attention
+- Coordinate loading states when multiple data sources load in parallel
+
+### Breadcrumb and Nav State
+- Derive breadcrumbs from route structure automatically
+- Highlight active navigation items based on current route
+- Persist navigation collapse state across page navigations
+- Update page title dynamically based on current route and content
+
+### Unsaved Changes Guards
+- Detect unsaved form changes and warn before navigation
+- Use `beforeunload` event for browser tab close/refresh
+- Use router navigation guards for in-app navigation
+- Provide "Save and continue" and "Discard changes" options
+- Track dirty state at the form level, not globally
+
+## Onboarding, Help, and Learnability
+
+### Tooltips and Coach Marks
+- Use tooltips for brief explanations of UI elements (triggered on hover/focus)
+- Use coach marks/spotlights for first-time feature introduction
+- Show coach marks sequentially, not all at once (overwhelm)
+- Allow users to dismiss and not see again (persist preference)
+
+### Progressive Disclosure
+- Show essential information first, reveal details on demand
+- Use expandable sections, "Show more" links, and detail panels
+- Don't hide critical actions behind progressive disclosure
+- Balance information density with cognitive load
+
+### Inline Help
+- Provide contextual help text near complex form fields
+- Use info icons with tooltip/popover for supplementary explanations
+- Link to documentation for in-depth topics
+- Keep inline help concise — one sentence maximum
+
+### Error Education
+- Turn errors into learning opportunities: explain why and how to fix
+- Provide links to relevant help articles from error messages
+- Track common user errors to improve UI design and reduce error frequency
+
+### First-Time User Experience (FTUE)
+- Guide new users through key features with an onboarding flow
+- Allow users to skip onboarding and access it later
+- Show empty states with clear calls to action for new accounts
+- Track onboarding completion to identify drop-off points
+
+### Guided Tutorials
+- Implement interactive tutorials for complex features
+- Use step-by-step walkthroughs with highlighted UI elements
+- Allow users to exit tutorials at any point
+- Provide a way to restart tutorials from settings/help menu
 
 ## Theming
 
