@@ -25,6 +25,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { resolveForDomain, resolveForDocType, buildPromptContext, type ResolvedKnowledge } from './lib/knowledge-resolver';
+// @ts-ignore — .mjs module, types inferred at runtime
+import { isStageDone, markStageDone, markStageFailed, ensurePrereqs } from './_axion_module_mode.mjs';
 
 // ─── Document Priority & Type System ────────────────────────────────────────
 
@@ -976,19 +978,85 @@ Respond in this exact JSON format (no code fences):
 
 // ─── CLI Entry Point ────────────────────────────────────────────────────────
 
+const cliArgs = process.argv.slice(2);
+const jsonMode = cliArgs.includes('--json');
+const dryRun = cliArgs.includes('--dry-run');
+const startTime = Date.now();
+
+interface Receipt {
+  stage: string;
+  subCommand: string;
+  ok: boolean;
+  modulesProcessed: string[];
+  createdFiles: string[];
+  modifiedFiles: string[];
+  skippedFiles: string[];
+  warnings: string[];
+  errors: string[];
+  elapsedMs: number;
+  dryRun: boolean;
+  data?: unknown;
+}
+
+const receipt: Receipt = {
+  stage: 'content-fill',
+  subCommand: '',
+  ok: true,
+  modulesProcessed: [],
+  createdFiles: [],
+  modifiedFiles: [],
+  skippedFiles: [],
+  warnings: [],
+  errors: [],
+  elapsedMs: 0,
+  dryRun,
+};
+
+function emitOutput() {
+  receipt.elapsedMs = Date.now() - startTime;
+
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    return;
+  }
+
+  console.log('\n========== ASSEMBLER_REPORT ==========');
+  console.log(`Script: axion:content-fill (${receipt.subCommand})`);
+  console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
+  console.log(`Modules: ${receipt.modulesProcessed.join(', ') || '(none)'}`);
+  if (receipt.modifiedFiles.length) {
+    console.log(`\nModified (${receipt.modifiedFiles.length}):`);
+    receipt.modifiedFiles.forEach(f => console.log(`  ~ ${f}`));
+  }
+  if (receipt.skippedFiles.length) {
+    console.log(`\nSkipped (${receipt.skippedFiles.length}):`);
+    receipt.skippedFiles.forEach(f => console.log(`  - ${f}`));
+  }
+  if (receipt.warnings.length) {
+    console.log(`\nWarnings (${receipt.warnings.length}):`);
+    receipt.warnings.forEach(w => console.log(`  ? ${w}`));
+  }
+  if (receipt.errors.length) {
+    console.log(`\nErrors (${receipt.errors.length}):`);
+    receipt.errors.forEach(e => console.log(`  ! ${e}`));
+  }
+  console.log(`\nResult: ${receipt.ok ? 'OK' : 'FAILED'}`);
+  console.log('===================================');
+}
+
 function fail(msg: string): never {
-  console.error(`[ERROR] ${msg}`);
+  receipt.ok = false;
+  receipt.errors.push(msg);
+  emitOutput();
   process.exit(1);
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-
   const getArg = (flag: string): string | undefined => {
-    const idx = args.indexOf(flag);
-    return idx >= 0 && idx + 1 < args.length ? args[idx + 1] : undefined;
+    const idx = cliArgs.indexOf(flag);
+    return idx >= 0 && idx + 1 < cliArgs.length ? cliArgs[idx + 1] : undefined;
   };
-  const hasFlag = (flag: string) => args.includes(flag);
+  const hasFlag = (flag: string) => cliArgs.includes(flag);
 
   const projectName = getArg('--project') || process.env.AXION_PROJECT_NAME;
   if (!projectName) fail('--project <name> or AXION_PROJECT_NAME is required');
@@ -1000,55 +1068,202 @@ async function main() {
     fail(`Project root not found: ${projectRoot}`);
   }
 
-  const log = (msg: string) => console.log(`[AXION] ${msg}`);
+  const log = jsonMode ? () => {} : (msg: string) => console.log(`[AXION] ${msg}`);
 
   if (hasFlag('--scan')) {
+    receipt.subCommand = 'scan';
     log(`Scanning ${projectName} for UNKNOWN placeholders...`);
     const modules = getAllModulesInWorkspace(projectRoot);
+    receipt.modulesProcessed.push(...modules);
     const report = scanAllModulesForUnknowns(projectRoot, modules);
-    console.log(JSON.stringify(report, null, 2));
+    receipt.data = report;
+    emitOutput();
     return;
   }
 
   if (hasFlag('--find-next')) {
+    receipt.subCommand = 'find-next';
     log(`Finding next fill target in ${projectName}...`);
     const target = findNextTarget(projectRoot);
-    console.log(JSON.stringify(target, null, 2));
+    receipt.data = target;
+    emitOutput();
     return;
   }
 
   if (hasFlag('--fill')) {
+    receipt.subCommand = 'fill';
     const moduleName = getArg('--module');
+
     if (moduleName) {
+      if (!isStageDone('draft', moduleName)) {
+        const msg = `Module '${moduleName}' has not completed 'draft'. Run: node axion/scripts/axion-draft.mjs --module ${moduleName}`;
+        receipt.errors.push(msg);
+        receipt.ok = false;
+        if (!dryRun) markStageFailed('content-fill', moduleName, { reason: msg });
+        emitOutput();
+        process.exit(1);
+      }
+
+      try {
+        ensurePrereqs({
+          stageName: 'content-fill',
+          module: moduleName,
+          stagePrereq: (m: string) => isStageDone('draft', m),
+        });
+      } catch (prereqErr: unknown) {
+        const errMsg = prereqErr instanceof Error ? prereqErr.message : String(prereqErr);
+        receipt.errors.push(`Prerequisite failed for module '${moduleName}': ${errMsg}`);
+        receipt.ok = false;
+        if (!dryRun) markStageFailed('content-fill', moduleName, { reason: errMsg });
+        emitOutput();
+        process.exit(1);
+      }
+
+      receipt.modulesProcessed.push(moduleName);
       log(`Filling UNKNOWNs in module: ${moduleName}`);
-      const results = await fillModuleUnknowns(projectRoot, moduleName, projectName!, projectIdea, log);
-      console.log(JSON.stringify(results, null, 2));
+
+      if (dryRun) {
+        const moduleDir = path.join(projectRoot, 'axion', 'domains', moduleName);
+        const mdFiles = getAllMdFilesInModule(moduleDir);
+        for (const f of mdFiles) {
+          const content = fs.readFileSync(f, 'utf8');
+          if (countUnknowns(content) > 0) {
+            receipt.modifiedFiles.push(f + ' (would fill)');
+          } else {
+            receipt.skippedFiles.push(f);
+          }
+        }
+      } else {
+        const results = await fillModuleUnknowns(projectRoot, moduleName, projectName!, projectIdea, log);
+        for (const r of results) {
+          if (r.status === 'filled') receipt.modifiedFiles.push(r.file);
+          else if (r.status === 'skipped') receipt.skippedFiles.push(r.file);
+          else if (r.status === 'error') {
+            receipt.errors.push(`${r.file}: ${r.error}`);
+            receipt.ok = false;
+          }
+        }
+        receipt.data = results;
+        if (receipt.ok) {
+          markStageDone('content-fill', moduleName);
+        } else {
+          markStageFailed('content-fill', moduleName, { reason: 'One or more files failed AI fill' });
+        }
+      }
     } else {
       log(`Filling all UNKNOWNs in ${projectName}...`);
       const modules = getAllModulesInWorkspace(projectRoot);
-      const report = await fillAllModulesUnknowns(projectRoot, modules, projectName!, projectIdea, log);
-      console.log(JSON.stringify(report, null, 2));
+
+      for (const mod of modules) {
+        if (!isStageDone('draft', mod)) {
+          const msg = `Module '${mod}' has not completed 'draft'. Skipping.`;
+          receipt.warnings.push(msg);
+          if (!dryRun) markStageFailed('content-fill', mod, { reason: msg });
+          continue;
+        }
+
+        try {
+          ensurePrereqs({
+            stageName: 'content-fill',
+            module: mod,
+            stagePrereq: (m: string) => isStageDone('draft', m),
+          });
+        } catch (prereqErr: unknown) {
+          const errMsg = prereqErr instanceof Error ? prereqErr.message : String(prereqErr);
+          receipt.errors.push(`Prerequisite failed for module '${mod}': ${errMsg}`);
+          receipt.ok = false;
+          if (!dryRun) markStageFailed('content-fill', mod, { reason: errMsg });
+          continue;
+        }
+
+        receipt.modulesProcessed.push(mod);
+
+        try {
+          if (dryRun) {
+            const moduleDir = path.join(projectRoot, 'axion', 'domains', mod);
+            const mdFiles = getAllMdFilesInModule(moduleDir);
+            for (const f of mdFiles) {
+              const content = fs.readFileSync(f, 'utf8');
+              if (countUnknowns(content) > 0) {
+                receipt.modifiedFiles.push(f + ' (would fill)');
+              } else {
+                receipt.skippedFiles.push(f);
+              }
+            }
+          } else {
+            log(`Processing module: ${mod}`);
+            const modResults = await fillModuleUnknowns(projectRoot, mod, projectName!, projectIdea, log);
+            for (const r of modResults) {
+              if (r.status === 'filled') receipt.modifiedFiles.push(r.file);
+              else if (r.status === 'skipped') receipt.skippedFiles.push(r.file);
+              else if (r.status === 'error') {
+                receipt.errors.push(`${r.file}: ${r.error}`);
+              }
+            }
+            const hadErrors = modResults.some(r => r.status === 'error');
+            if (hadErrors) {
+              receipt.ok = false;
+              markStageFailed('content-fill', mod, { reason: 'One or more files failed AI fill' });
+            } else {
+              markStageDone('content-fill', mod);
+            }
+          }
+        } catch (moduleErr: unknown) {
+          const errMsg = moduleErr instanceof Error ? moduleErr.message : String(moduleErr);
+          receipt.errors.push(`Module '${mod}' failed: ${errMsg}`);
+          receipt.ok = false;
+          if (!dryRun) markStageFailed('content-fill', mod, { reason: errMsg });
+        }
+      }
     }
+
+    emitOutput();
+    if (!receipt.ok) process.exit(1);
     return;
   }
 
   if (hasFlag('--cascade')) {
+    receipt.subCommand = 'cascade';
     const targetFile = getArg('--target');
     const targetModule = getArg('--target-module');
     if (!targetFile || !targetModule) fail('--cascade requires --target <file> and --target-module <mod>');
     log(`Running cascade fill from ${targetFile}...`);
-    const result = await cascadeFill(projectRoot, targetFile!, targetModule!, projectName!, projectIdea, {}, log);
-    console.log(JSON.stringify(result, null, 2));
+    if (!dryRun) {
+      const result = await cascadeFill(projectRoot, targetFile!, targetModule!, projectName!, projectIdea, {}, log);
+      receipt.data = result;
+      receipt.modulesProcessed.push(targetModule!);
+      if (result.targetFilled.status === 'filled') receipt.modifiedFiles.push(result.targetFilled.file);
+      for (const r of result.cascadeResults) {
+        if (r.status === 'filled') receipt.modifiedFiles.push(r.file);
+        else if (r.status === 'error') {
+          receipt.errors.push(`${r.file}: ${r.error}`);
+          receipt.ok = false;
+        }
+      }
+    }
+    emitOutput();
+    if (!receipt.ok) process.exit(1);
     return;
   }
 
   if (hasFlag('--upgrade')) {
+    receipt.subCommand = 'upgrade';
     const targetFile = getArg('--target');
     const targetModule = getArg('--target-module');
     if (!targetFile || !targetModule) fail('--upgrade requires --target <file> and --target-module <mod>');
     log(`Upgrading document: ${targetFile}`);
-    const result = await upgradeDocumentWithAI(targetFile!, targetModule!, log);
-    console.log(JSON.stringify(result, null, 2));
+    if (!dryRun) {
+      const result = await upgradeDocumentWithAI(targetFile!, targetModule!, log);
+      receipt.data = result;
+      receipt.modulesProcessed.push(targetModule!);
+      if (result.status === 'upgraded') receipt.modifiedFiles.push(result.file);
+      else if (result.status === 'error') {
+        receipt.errors.push(`${result.file}: ${result.error}`);
+        receipt.ok = false;
+      }
+    }
+    emitOutput();
+    if (!receipt.ok) process.exit(1);
     return;
   }
 
@@ -1056,6 +1271,8 @@ async function main() {
 }
 
 main().catch(err => {
-  console.error(`[FATAL] ${err.message || err}`);
+  receipt.ok = false;
+  receipt.errors.push(err.message || String(err));
+  emitOutput();
   process.exit(1);
 });
