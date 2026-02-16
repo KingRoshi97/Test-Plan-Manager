@@ -1,0 +1,7 @@
+{
+  "status": "FAILED",
+  "stage": "content-fill",
+  "module": "quality",
+  "timestamp": "2026-02-16T03:30:36.973Z",
+  "reason": "Module 'quality' has not completed 'draft'. Run: node axion/scripts/axion-draft.mjs --module quality"
+}

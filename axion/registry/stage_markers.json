@@ -228,6 +228,11 @@
         "status": "failed",
         "completed_at": "2026-02-16T03:03:31.220Z",
         "reason": "Module 'quality' has not completed 'seed'. Run: node axion/scripts/axion-seed.mjs --module quality"
+      },
+      "content-fill": {
+        "status": "failed",
+        "completed_at": "2026-02-16T03:30:36.973Z",
+        "reason": "Module 'quality' has not completed 'draft'. Run: node axion/scripts/axion-draft.mjs --module quality"
       }
     },
     "security": {
