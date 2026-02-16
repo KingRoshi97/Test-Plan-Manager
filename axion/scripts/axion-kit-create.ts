@@ -103,6 +103,9 @@ interface KitCreateOptions {
   source: string;
   projectName?: string;
   projectDesc?: string;
+  projectContext?: string;
+  projectMode?: string;
+  projectCategory?: string;
   stackProfile: string;
   refuseIfExists: boolean;
   dryRun: boolean;
@@ -114,6 +117,7 @@ interface KitManifest {
   created_at: string;
   source_axion: string;
   project_name?: string;
+  project_mode?: string;
   stack_profile: string;
   status: 'created' | 'docs_locked' | 'app_built' | 'activated';
   snapshot_revision?: {
@@ -154,6 +158,9 @@ function parseArgs(args: string[]): KitCreateOptions {
     source: path.resolve(process.cwd(), 'axion'),
     projectName: undefined,
     projectDesc: undefined,
+    projectContext: undefined,
+    projectMode: undefined,
+    projectCategory: undefined,
     stackProfile: 'default-web-saas',
     refuseIfExists: false,
     dryRun: false,
@@ -174,6 +181,15 @@ function parseArgs(args: string[]): KitCreateOptions {
         break;
       case '--project-desc':
         options.projectDesc = args[++i];
+        break;
+      case '--project-context':
+        options.projectContext = args[++i];
+        break;
+      case '--project-mode':
+        options.projectMode = args[++i];
+        break;
+      case '--project-category':
+        options.projectCategory = args[++i];
         break;
       case '--stack-profile':
         options.stackProfile = args[++i] || options.stackProfile;
@@ -229,8 +245,16 @@ function copyDirRecursive(src: string, dest: string, isDryRun: boolean): number 
   return count;
 }
 
-function seedRPBS(targetAxion: string, projectName: string, projectDesc: string, isDryRun: boolean): void {
+interface SeedContext {
+  projectDesc?: string;
+  projectContext?: string;
+  projectMode?: string;
+  projectCategory?: string;
+}
+
+function seedRPBS(targetAxion: string, projectName: string, seedCtx: SeedContext, isDryRun: boolean): void {
   const rpbsDir = path.join(targetAxion, 'docs', 'product');
+  const sourceDocsDir = path.join(targetAxion, 'source_docs', 'product');
   const rpbsPath = path.join(rpbsDir, 'RPBS_Product.md');
   
   if (!isDryRun) {
@@ -243,28 +267,36 @@ function seedRPBS(targetAxion: string, projectName: string, projectDesc: string,
       return;
     }
   }
+
+  const hasIdea = !!seedCtx.projectDesc;
+  const hasContext = !!seedCtx.projectContext;
+  const modeLabel = seedCtx.projectMode || 'not specified';
+  const categoryLabel = seedCtx.projectCategory || 'not specified';
   
   const rpbsContent = `# Requirements and Product Behavior Specification (RPBS)
 
 **Project:** ${projectName}
 **Version:** 0.1.0
 **Status:** DRAFT
+**Mode:** ${modeLabel}
+**Category:** ${categoryLabel}
 
 ## Product Overview
 
-${projectDesc || 'UNKNOWN — Q-01: What is the core purpose of this product?'}
+${hasIdea ? seedCtx.projectDesc : 'UNKNOWN — Q-01: What is the core purpose of this product?'}
 
+${hasContext ? `## Additional Context\n\n${seedCtx.projectContext}\n` : ''}
 ## Target Users
 
-UNKNOWN — Q-02: Who are the primary users of this product?
+${hasIdea ? `Derive from the product overview above.` : 'UNKNOWN — Q-02: Who are the primary users of this product?'}
 
 ## Core Features
 
-UNKNOWN — Q-03: What are the essential features for MVP?
+${hasIdea ? `Derive from the product overview above.` : 'UNKNOWN — Q-03: What are the essential features for MVP?'}
 
 ## User Stories
 
-UNKNOWN — Q-04: What are the key user journeys?
+${hasIdea ? `Derive from the product overview and core features above.` : 'UNKNOWN — Q-04: What are the key user journeys?'}
 
 ## Business Rules
 
@@ -280,11 +312,14 @@ UNKNOWN — Q-06: How will success be measured?
 
   if (!isDryRun) {
     fs.writeFileSync(rpbsPath, rpbsContent, 'utf-8');
+    fs.mkdirSync(sourceDocsDir, { recursive: true });
+    fs.writeFileSync(path.join(sourceDocsDir, 'RPBS_Product.md'), rpbsContent, 'utf-8');
   }
 }
 
 function seedREBS(targetAxion: string, stackProfile: string, isDryRun: boolean): void {
   const rebsDir = path.join(targetAxion, 'docs', 'product');
+  const sourceDocsDir = path.join(targetAxion, 'source_docs', 'product');
   const rebsPath = path.join(rebsDir, 'REBS_Product.md');
   
   if (!isDryRun) {
@@ -294,6 +329,10 @@ function seedREBS(targetAxion: string, stackProfile: string, isDryRun: boolean):
   if (fs.existsSync(rebsPath)) {
     const content = fs.readFileSync(rebsPath, 'utf-8');
     if (!content.includes('{{STACK_PROFILE}}')) {
+      if (!isDryRun) {
+        fs.mkdirSync(sourceDocsDir, { recursive: true });
+        fs.copyFileSync(rebsPath, path.join(sourceDocsDir, 'REBS_Product.md'));
+      }
       return;
     }
   }
@@ -335,6 +374,46 @@ UNKNOWN — Q-11: What infrastructure requirements exist?
 
   if (!isDryRun) {
     fs.writeFileSync(rebsPath, rebsContent, 'utf-8');
+    fs.mkdirSync(sourceDocsDir, { recursive: true });
+    fs.writeFileSync(path.join(sourceDocsDir, 'REBS_Product.md'), rebsContent, 'utf-8');
+  }
+}
+
+function writeProjectOverview(kitRoot: string, projectName: string, seedCtx: SeedContext, stackProfile: string, isDryRun: boolean): void {
+  const overviewPath = path.join(kitRoot, 'PROJECT_OVERVIEW.md');
+
+  const sections: string[] = [];
+  sections.push(`# Project Overview: ${projectName}\n`);
+  sections.push(`*Generated by AXION kit-create on ${new Date().toISOString()}*\n`);
+
+  if (seedCtx.projectMode) {
+    sections.push(`**Mode:** ${seedCtx.projectMode}`);
+  }
+  if (seedCtx.projectCategory) {
+    sections.push(`**Category:** ${seedCtx.projectCategory}`);
+  }
+  sections.push(`**Stack Profile:** ${stackProfile}\n`);
+
+  sections.push(`## What This Project Is\n`);
+  if (seedCtx.projectDesc) {
+    sections.push(seedCtx.projectDesc + '\n');
+  } else {
+    sections.push('No project description was provided at assembly time.\n');
+  }
+
+  if (seedCtx.projectContext) {
+    sections.push(`## Additional Context\n`);
+    sections.push(seedCtx.projectContext + '\n');
+  }
+
+  sections.push(`## Reading Guide\n`);
+  sections.push(`1. Read this file first to understand what the project is about.`);
+  sections.push(`2. Read \`axion/source_docs/product/RPBS_Product.md\` for the product brief.`);
+  sections.push(`3. Read \`axion/source_docs/product/REBS_Product.md\` for engineering constraints.`);
+  sections.push(`4. Then follow the domain reading order in \`AGENT_PROMPT.md\`.\n`);
+
+  if (!isDryRun) {
+    fs.writeFileSync(overviewPath, sections.join('\n'), 'utf-8');
   }
 }
 
@@ -509,8 +588,17 @@ function main(): void {
   }
 
   if (options.projectName) {
-    seedRPBS(targetAxion, options.projectName, options.projectDesc || '', options.dryRun);
+    const seedCtx: SeedContext = {
+      projectDesc: options.projectDesc,
+      projectContext: options.projectContext,
+      projectMode: options.projectMode,
+      projectCategory: options.projectCategory,
+    };
+    seedRPBS(targetAxion, options.projectName, seedCtx, options.dryRun);
     log(`[INFO] Seeded RPBS_Product.md with project: ${options.projectName}`);
+
+    writeProjectOverview(targetPath, options.projectName, seedCtx, options.stackProfile, options.dryRun);
+    log(`[INFO] Generated PROJECT_OVERVIEW.md`);
   }
 
   seedREBS(targetAxion, options.stackProfile, options.dryRun);
@@ -534,6 +622,7 @@ function main(): void {
     created_at: new Date().toISOString(),
     source_axion: sourcePath,
     project_name: options.projectName,
+    project_mode: options.projectMode,
     stack_profile: options.stackProfile,
     status: 'created',
     snapshot_revision: {
