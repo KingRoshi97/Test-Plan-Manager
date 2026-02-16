@@ -2,10 +2,13 @@
 /**
  * axion:generate - Generate per-module doc packs
  * Creates domain folder structure and doc files from templates.
- * 
+ *
  * Usage:
  *   node axion/scripts/axion-generate.mjs --all
  *   node axion/scripts/axion-generate.mjs --module <name>
+ *   node axion/scripts/axion-generate.mjs --all --json
+ *   node axion/scripts/axion-generate.mjs --all --allow-template-fallback
+ *   node axion/scripts/axion-generate.mjs --all --dry-run
  */
 
 import fs from 'fs';
@@ -13,18 +16,27 @@ import path from 'path';
 import {
   parseModuleArgs,
   markStageDone,
+  markStageFailed,
   AXION_DOC_TYPES,
 } from './_axion_module_mode.mjs';
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const jsonMode = args.includes('--json');
+const allowTemplateFallback = args.includes('--allow-template-fallback');
 const { modules } = parseModuleArgs(process.argv);
 
+const startTime = Date.now();
+
 const report = {
-  created: [],
-  modified: [],
-  skipped: [],
-  failed: []
+  stage: 'generate',
+  modulesProcessed: [],
+  createdFiles: [],
+  skippedFiles: [],
+  missingTemplates: [],
+  warnings: [],
+  errors: [],
+  ok: true,
 };
 
 function loadConfig() {
@@ -53,13 +65,13 @@ function ensureDir(dirPath) {
   if (!dryRun) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
-  report.created.push(dirPath);
+  report.createdFiles.push(dirPath);
   return true;
 }
 
 function ensureFile(filePath, content) {
   if (fs.existsSync(filePath)) {
-    report.skipped.push(filePath);
+    report.skippedFiles.push(filePath);
     return false;
   }
   if (!dryRun) {
@@ -69,7 +81,7 @@ function ensureFile(filePath, content) {
     }
     fs.writeFileSync(filePath, content, 'utf8');
   }
-  report.created.push(filePath);
+  report.createdFiles.push(filePath);
   return true;
 }
 
@@ -80,10 +92,23 @@ function loadTemplate(templateName, axionRoot) {
   ];
   for (const templatePath of searchPaths) {
     if (fs.existsSync(templatePath)) {
-      return fs.readFileSync(templatePath, 'utf8');
+      return { content: fs.readFileSync(templatePath, 'utf8'), found: true };
     }
   }
-  return `# ${templateName} — {{DOMAIN_NAME}}
+
+  report.missingTemplates.push(templateName);
+
+  if (!allowTemplateFallback) {
+    return { content: null, found: false };
+  }
+
+  const msg = `Template '${templateName}' not found (searched: ${searchPaths.join(', ')}). Using fallback.`;
+  report.warnings.push(msg);
+  if (!jsonMode) {
+    console.error(`[WARN] ${msg}`);
+  }
+
+  const fallback = `# ${templateName} — {{DOMAIN_NAME}}
 
 ## Overview
 **Domain Slug:** {{DOMAIN_SLUG}}
@@ -95,6 +120,7 @@ function loadTemplate(templateName, axionRoot) {
 ## Open Questions
 - UNKNOWN
 `;
+  return { content: fallback, found: false };
 }
 
 function applyTemplate(template, domain) {
@@ -105,55 +131,120 @@ function applyTemplate(template, domain) {
     .replace(/\{\{DOMAIN_TYPE\}\}/g, domain.type || 'business');
 }
 
-function printReport() {
+function printHumanReport() {
   console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: axion:generate`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
-  console.log(`Modules: ${modules.join(', ')}`);
+  console.log(`Modules: ${report.modulesProcessed.join(', ')}`);
   console.log(`Doc Types: ${AXION_DOC_TYPES.join(', ')}`);
-  console.log(`\nCreated (${report.created.length}):`);
-  report.created.forEach(f => console.log(`  + ${f}`));
-  console.log(`\nModified (${report.modified.length}):`);
-  report.modified.forEach(f => console.log(`  ~ ${f}`));
-  console.log(`\nSkipped (${report.skipped.length}):`);
-  report.skipped.forEach(f => console.log(`  - ${f}`));
-  console.log(`\nFailed (${report.failed.length}):`);
-  report.failed.forEach(f => console.log(`  ! ${f}`));
-  console.log('\n===================================');
+  console.log(`\nCreated (${report.createdFiles.length}):`);
+  report.createdFiles.forEach(f => console.log(`  + ${f}`));
+  console.log(`\nSkipped (${report.skippedFiles.length}):`);
+  report.skippedFiles.forEach(f => console.log(`  - ${f}`));
+  if (report.missingTemplates.length) {
+    console.log(`\nMissing Templates (${report.missingTemplates.length}):`);
+    report.missingTemplates.forEach(t => console.log(`  ! ${t}`));
+  }
+  if (report.warnings.length) {
+    console.log(`\nWarnings (${report.warnings.length}):`);
+    report.warnings.forEach(w => console.log(`  [WARN] ${w}`));
+  }
+  if (report.errors.length) {
+    console.log(`\nErrors (${report.errors.length}):`);
+    report.errors.forEach(e => console.log(`  [ERROR] ${e}`));
+  }
+  console.log(`\nResult: ${report.ok ? 'OK' : 'FAILED'}`);
+  console.log('===================================');
+}
+
+function printJsonReport() {
+  const output = {
+    stage: report.stage,
+    ok: report.ok,
+    modulesProcessed: report.modulesProcessed,
+    createdFiles: report.createdFiles,
+    skippedFiles: report.skippedFiles,
+    missingTemplates: report.missingTemplates,
+    warnings: report.warnings,
+    errors: report.errors,
+    elapsedMs: Date.now() - startTime,
+    dryRun,
+  };
+  process.stdout.write(JSON.stringify(output, null, 2) + '\n');
+}
+
+function emitReport() {
+  if (jsonMode) {
+    printJsonReport();
+  } else {
+    printHumanReport();
+  }
 }
 
 try {
-  console.log('Running axion:generate...');
-  
+  if (!jsonMode) {
+    console.log('Running axion:generate...');
+  }
+
   const config = loadConfig();
   const axionRoot = config.axion_root || 'axion';
   const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
-  
+
   for (const module of modules) {
-    console.log(`Generating module: ${module}`);
-    
+    if (!jsonMode) {
+      console.log(`Generating module: ${module}`);
+    }
+
     const domainDir = path.join(domainsDir, module);
     ensureDir(domainDir);
-    
+
     const moduleConfig = getModuleConfig(config, module);
-    
+    let moduleFailed = false;
+
     for (const templateName of AXION_DOC_TYPES) {
-      const template = loadTemplate(templateName, axionRoot);
-      const content = applyTemplate(template, moduleConfig);
-      const fileName = `${templateName}_${module}.md`;
-      const filePath = path.join(domainDir, fileName);
-      ensureFile(filePath, content);
+      const { content, found } = loadTemplate(templateName, axionRoot);
+
+      if (!found && !allowTemplateFallback) {
+        const errorMsg = `Missing template '${templateName}' for module '${module}'. ` +
+          `Expected at: ${axionRoot}/templates/core/${templateName}.template.md. ` +
+          `Use --allow-template-fallback to generate with placeholder content.`;
+        report.errors.push(errorMsg);
+        report.ok = false;
+        moduleFailed = true;
+        if (!jsonMode) {
+          console.error(`[ERROR] ${errorMsg}`);
+        }
+        continue;
+      }
+
+      if (content) {
+        const rendered = applyTemplate(content, moduleConfig);
+        const fileName = `${templateName}_${module}.md`;
+        const filePath = path.join(domainDir, fileName);
+        ensureFile(filePath, rendered);
+      }
     }
-    
-    if (!dryRun) {
+
+    report.modulesProcessed.push(module);
+
+    if (!dryRun && !moduleFailed) {
       markStageDone('generate', module);
+    } else if (!dryRun && moduleFailed) {
+      markStageFailed('generate', module, {
+        error: `Missing templates: ${report.missingTemplates.join(', ')}`,
+      });
     }
   }
-  
-  printReport();
-  
+
+  emitReport();
+
+  if (!report.ok) {
+    process.exit(1);
+  }
+
 } catch (error) {
-  report.failed.push(error.message);
-  printReport();
+  report.errors.push(error.message);
+  report.ok = false;
+  emitReport();
   process.exit(1);
 }

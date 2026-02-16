@@ -3,10 +3,8 @@
   "markers": {
     "architecture": {
       "generate": {
-        "completed_at": "2026-02-03T09:57:16.753Z",
-        "files": [
-          "domains/architecture/README.md"
-        ]
+        "status": "success",
+        "completed_at": "2026-02-16T02:40:51.281Z"
       },
       "seed": {
         "completed_at": "2026-02-03T09:57:22.865Z"
@@ -312,16 +310,6 @@
         "completed_at": "2026-02-03T10:06:01.814Z",
         "status": "FAIL"
       }
-    }
-  },
-  "architecture": {
-    "generate": {
-      "completed_at": "2026-02-03T17:41:53.669Z",
-      "status": "success"
-    },
-    "seed": {
-      "completed_at": "2026-02-03T17:41:54.133Z",
-      "status": "success"
     }
   }
 }

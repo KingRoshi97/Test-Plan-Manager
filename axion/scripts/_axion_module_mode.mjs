@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const AXION_MODULE_ORDER = [
+const DOMAINS_CONFIG_PATH = "axion/config/domains.json";
+
+const FALLBACK_MODULE_ORDER = [
   "architecture",
   "systems",
   "contracts",
@@ -22,6 +24,79 @@ export const AXION_MODULE_ORDER = [
   "mobile",
   "desktop",
 ];
+
+/**
+ * Load modules from domains.json and return them topologically sorted
+ * by dependency order with slug as stable tiebreaker.
+ * Falls back to FALLBACK_MODULE_ORDER with a warning if domains.json
+ * cannot be read.
+ * @returns {string[]}
+ */
+function loadModuleOrder() {
+  try {
+    const config = JSON.parse(fs.readFileSync(DOMAINS_CONFIG_PATH, "utf8"));
+    const modules = config.modules || [];
+    if (!modules.length) {
+      console.error("[WARN] domains.json has no modules, using fallback order");
+      return FALLBACK_MODULE_ORDER.slice();
+    }
+    return topoSort(modules);
+  } catch (err) {
+    console.error(`[WARN] Could not load ${DOMAINS_CONFIG_PATH}: ${err.message}. Using fallback module order.`);
+    return FALLBACK_MODULE_ORDER.slice();
+  }
+}
+
+/**
+ * Topological sort of modules respecting dependencies.
+ * Uses Kahn's algorithm with slug as stable tiebreaker for deterministic ordering.
+ * @param {{ slug: string, dependencies?: string[] }[]} modules
+ * @returns {string[]}
+ */
+function topoSort(modules) {
+  const slugs = new Set(modules.map((m) => m.slug));
+  const deps = {};
+  const inDegree = {};
+  for (const m of modules) {
+    deps[m.slug] = (m.dependencies || []).filter((d) => slugs.has(d));
+    inDegree[m.slug] = deps[m.slug].length;
+  }
+
+  const queue = Object.keys(inDegree)
+    .filter((s) => inDegree[s] === 0)
+    .sort();
+
+  const sorted = [];
+  while (queue.length) {
+    queue.sort();
+    const current = queue.shift();
+    sorted.push(current);
+
+    for (const m of modules) {
+      if (deps[m.slug]?.includes(current)) {
+        inDegree[m.slug]--;
+        if (inDegree[m.slug] === 0) {
+          queue.push(m.slug);
+        }
+      }
+    }
+  }
+
+  if (sorted.length !== modules.length) {
+    const missing = modules.map((m) => m.slug).filter((s) => !sorted.includes(s));
+    console.error(`[WARN] Circular dependency detected for modules: ${missing.join(", ")}. Appending in slug order.`);
+    missing.sort();
+    sorted.push(...missing);
+  }
+
+  return sorted;
+}
+
+/**
+ * Module order derived from domains.json at runtime.
+ * Topologically sorted by dependencies with slug as stable tiebreaker.
+ */
+export const AXION_MODULE_ORDER = loadModuleOrder();
 
 /**
  * Authoritative list of document types generated per module.
@@ -66,9 +141,8 @@ export const AXION_REVIEWED_DOC_TYPES = {
  * @returns {Record<string, string[]>}
  */
 export function loadPrereqs() {
-  const configPath = "axion/config/domains.json";
   try {
-    const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    const config = JSON.parse(fs.readFileSync(DOMAINS_CONFIG_PATH, "utf8"));
     const prereqs = {};
     for (const mod of config.modules || []) {
       prereqs[mod.slug] = mod.dependencies || [];
@@ -109,14 +183,21 @@ export function parseModuleArgs(argv) {
 }
 
 /**
- * Get the path for a stage marker file.
- * Writes to axion/registry/stage_markers/{stage}/{module}.json
- * which is where the server/routes.ts orchestrator reads from.
- * @param {string} stage - Stage name (generate, seed, draft, review, verify)
+ * Canonical path for the flat stage markers file.
+ * This is the single source of truth for pipeline state.
+ * @returns {string}
+ */
+export function stageMarkersPath() {
+  return path.join("axion", "registry", "stage_markers.json");
+}
+
+/**
+ * Legacy per-file marker path (backward compat, mirror-write only).
+ * @param {string} stage - Stage name
  * @param {string} module - Module name
  * @returns {string}
  */
-export function markerPath(stage, module) {
+export function legacyMarkerPath(stage, module) {
   return path.join(
     "axion",
     "registry",
@@ -127,22 +208,82 @@ export function markerPath(stage, module) {
 }
 
 /**
+ * @deprecated Use stageMarkersPath() instead. Kept for any external callers.
+ */
+export function markerPath(stage, module) {
+  return legacyMarkerPath(stage, module);
+}
+
+/**
+ * Read the canonical flat stage markers file.
+ * Handles both wrapped format ({ version, markers: { ... } }) and
+ * flat format ({ module: { stage: { ... } } }).
+ * @returns {Record<string, Record<string, { completed_at: string, status: string }>>}
+ */
+function readMarkers() {
+  const p = stageMarkersPath();
+  if (!fs.existsSync(p)) return {};
+  try {
+    const raw = JSON.parse(fs.readFileSync(p, "utf8"));
+    if (raw.markers && typeof raw.markers === "object") {
+      return raw.markers;
+    }
+    return raw;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Write the canonical flat stage markers file (atomic).
+ * Preserves the wrapped format if it was previously used.
+ * @param {Record<string, Record<string, object>>} markers
+ */
+function writeMarkers(markers) {
+  const p = stageMarkersPath();
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+
+  let hasWrapper = false;
+  if (fs.existsSync(p)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(p, "utf8"));
+      if (existing.markers && typeof existing.markers === "object") {
+        hasWrapper = true;
+      }
+    } catch {}
+  }
+
+  const output = hasWrapper
+    ? { version: "1.0.0", markers }
+    : markers;
+
+  fs.writeFileSync(p, JSON.stringify(output, null, 2), "utf8");
+}
+
+/**
  * Check if a stage is done for a module.
- * Checks both axion/registry/ and axion/docs/registry/ for backward compat.
+ * Reads from the canonical flat stage_markers.json first.
+ * Falls back to legacy per-file markers for backward compat.
  * @param {string} stage - Stage name
  * @param {string} module - Module name
  * @returns {boolean}
  */
 export function isStageDone(stage, module) {
-  const paths = [
-    markerPath(stage, module),
+  const markers = readMarkers();
+  const entry = markers?.[module]?.[stage];
+  if (entry) {
+    return entry.status === "success" || entry.status === "pass";
+  }
+
+  const legacyPaths = [
+    legacyMarkerPath(stage, module),
     path.join("axion", "docs", "registry", "stage_markers", stage, `${module}.json`),
   ];
-  for (const p of paths) {
+  for (const p of legacyPaths) {
     if (!fs.existsSync(p)) continue;
     try {
       const data = JSON.parse(fs.readFileSync(p, "utf8"));
-      if (data?.status === "DONE") return true;
+      if (data?.status === "DONE" || data?.status === "success") return true;
     } catch {
       continue;
     }
@@ -152,21 +293,67 @@ export function isStageDone(stage, module) {
 
 /**
  * Mark a stage as done for a module.
+ * Writes to canonical flat stage_markers.json with documented schema.
+ * Mirror-writes legacy per-file marker for backward compat.
  * @param {string} stage - Stage name
  * @param {string} module - Module name
- * @param {object} extra - Additional data to include
+ * @param {object} extra - Additional data to include (e.g., { report: ... })
  */
 export function markStageDone(stage, module, extra = {}) {
-  const p = markerPath(stage, module);
-  fs.mkdirSync(path.dirname(p), { recursive: true });
+  const status = extra.status || "success";
+  const completed_at = new Date().toISOString();
+
+  const markers = readMarkers();
+  if (!markers[module]) markers[module] = {};
+  markers[module][stage] = { status, completed_at, ...extra };
+  writeMarkers(markers);
+
+  const legacyPath = legacyMarkerPath(stage, module);
+  fs.mkdirSync(path.dirname(legacyPath), { recursive: true });
   fs.writeFileSync(
-    p,
+    legacyPath,
     JSON.stringify(
       {
         status: "DONE",
         stage,
         module,
-        timestamp: new Date().toISOString(),
+        timestamp: completed_at,
+        ...extra,
+      },
+      null,
+      2
+    )
+  );
+}
+
+/**
+ * Mark a stage as failed for a module.
+ * @param {string} stage - Stage name
+ * @param {string} module - Module name
+ * @param {object} extra - Additional data (e.g., { error: "..." })
+ */
+export function markStageFailed(stage, module, extra = {}) {
+  const completed_at = new Date().toISOString();
+
+  const markers = readMarkers();
+  if (!markers[module]) markers[module] = {};
+  markers[module][stage] = {
+    status: "failed",
+    completed_at,
+    ...extra,
+  };
+  writeMarkers(markers);
+
+  const legacyPath = legacyMarkerPath(stage, module);
+  fs.mkdirSync(path.dirname(legacyPath), { recursive: true });
+  fs.writeFileSync(
+    legacyPath,
+    JSON.stringify(
+      {
+        status: "FAILED",
+        stage,
+        module,
+        timestamp: completed_at,
         ...extra,
       },
       null,
