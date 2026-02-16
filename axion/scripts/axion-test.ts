@@ -17,7 +17,9 @@
  *   --project-name <name>     Project name (two-root mode)
  *   --app-path <path>         App path (legacy mode)
  *   --dry-run                 Show what would be done without running
- *   --json                    Output only JSON
+ *   --json                    Output only JSON receipt
+ *   --skip-lint               Skip lint checks
+ *   --skip-typecheck          Skip typecheck
  */
 
 import * as fs from 'fs';
@@ -28,28 +30,65 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Default paths (legacy mode) - will be overridden by two-root mode
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+const receipt: Record<string, any> = {
+  ok: true,
+  stage: 'test',
+  dryRun,
+  errors: [] as string[],
+  warnings: [] as string[],
+  testsRun: 0,
+  testsPassed: 0,
+  testsFailed: 0,
+  lintErrors: 0,
+  typecheckErrors: 0,
+  lintSkipped: false,
+  testSkipped: false,
+  appPath: null as string | null,
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  } else {
+    const result: Record<string, any> = {
+      status: receipt.ok ? 'success' : 'failed',
+      stage: receipt.stage,
+    };
+    if (receipt.appPath) result.app_path = receipt.appPath;
+    if (receipt.testsPassed > 0) result.tests_passed = receipt.testsPassed;
+    if (receipt.testsFailed > 0) result.tests_failed = receipt.testsFailed;
+    if (receipt.lintErrors > 0) result.lint_errors = receipt.lintErrors;
+    if (receipt.typecheckErrors > 0) result.typecheck_errors = receipt.typecheckErrors;
+    const hints: string[] = [];
+    if (!receipt.ok) {
+      hints.push('Some checks failed. Review the output above.');
+      if (receipt.testsFailed > 0) hints.push(`${receipt.testsFailed} test(s) failed`);
+      if (receipt.lintErrors > 0) hints.push(`${receipt.lintErrors} lint error(s)`);
+      if (receipt.typecheckErrors > 0) hints.push(`${receipt.typecheckErrors} TypeScript error(s)`);
+    }
+    if (receipt.lintSkipped) hints.push('Lint was skipped (no config found)');
+    if (receipt.testSkipped) hints.push('Unit tests were skipped (no test files found)');
+    if (receipt.dryRun) hints.push('Dry run - would run tests');
+    if (receipt.errors.length > 0) hints.push(...receipt.errors);
+    if (hints.length > 0) result.hint = hints;
+    console.log(JSON.stringify(result, null, 2));
+  }
+}
+
 let AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
 let WORKSPACE_ROOT = AXION_ROOT;
 let STAGE_MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
 
-// Setup paths for two-root mode
 function setupTwoRootPaths(buildRoot: string, projectName: string): void {
   AXION_ROOT = path.join(buildRoot, 'axion');
   WORKSPACE_ROOT = path.join(buildRoot, projectName);
   STAGE_MARKERS_PATH = path.join(WORKSPACE_ROOT, 'registry', 'stage_markers.json');
-}
-
-interface TestResult {
-  status: 'success' | 'blocked_by' | 'failed';
-  stage: string;
-  app_path?: string;
-  tests_passed?: number;
-  tests_failed?: number;
-  lint_errors?: number;
-  typecheck_errors?: number;
-  missing?: string[];
-  hint?: string[];
 }
 
 interface StageMarkers {
@@ -116,7 +155,7 @@ function ensureDependencies(appPath: string): { installed: boolean; error?: stri
   const packageJsonPath = path.join(appPath, 'package.json');
 
   if (fs.existsSync(nodeModulesPath)) {
-    console.log('[INFO] node_modules already exists, skipping install');
+    if (!jsonMode) console.log('[INFO] node_modules already exists, skipping install');
     return { installed: true };
   }
 
@@ -124,15 +163,17 @@ function ensureDependencies(appPath: string): { installed: boolean; error?: stri
     return { installed: false, error: 'No package.json found in app directory' };
   }
 
-  console.log('[INFO] node_modules not found, running npm install...');
+  if (!jsonMode) console.log('[INFO] node_modules not found, running npm install...');
   const result = runCommand('npm install', appPath, 120000);
   if (!result.success) {
-    console.log('[WARN] npm install failed:');
-    console.log(result.output.slice(0, 500));
+    if (!jsonMode) {
+      console.log('[WARN] npm install failed:');
+      console.log(result.output.slice(0, 500));
+    }
     return { installed: false, error: 'npm install failed' };
   }
 
-  console.log('[PASS] npm install completed');
+  if (!jsonMode) console.log('[PASS] npm install completed');
   return { installed: true };
 }
 
@@ -168,28 +209,24 @@ function main() {
   const projectNameIdx = args.indexOf('--project-name');
   const skipLint = args.includes('--skip-lint');
   const skipTypecheck = args.includes('--skip-typecheck');
-  const dryRun = args.includes('--dry-run');
   
-  // Two-root mode takes precedence
   const buildRoot = buildRootIdx !== -1 ? args[buildRootIdx + 1] : null;
   const projectName = projectNameIdx !== -1 ? args[projectNameIdx + 1] : null;
   
   let appPath = appPathIdx !== -1 ? args[appPathIdx + 1] : null;
   
-  console.log('\n[AXION] Test\n');
+  if (!jsonMode) console.log('\n[AXION] Test\n');
   
-  // If two-root mode, set up paths accordingly
   if (buildRoot && projectName) {
     setupTwoRootPaths(buildRoot, projectName);
     appPath = path.join(WORKSPACE_ROOT, 'app');
-    console.log(`[INFO] Two-root mode: ${buildRoot}/${projectName}`);
+    if (!jsonMode) console.log(`[INFO] Two-root mode: ${buildRoot}/${projectName}`);
   } else if (appPath) {
-    // Legacy/--app-path mode: derive workspace root from app path
     const appParent = path.dirname(appPath);
     WORKSPACE_ROOT = appParent;
     AXION_ROOT = path.join(appParent, 'axion');
     STAGE_MARKERS_PATH = path.join(appParent, 'axion', 'registry', 'stage_markers.json');
-    console.log(`[INFO] App-path mode: ${appPath}`);
+    if (!jsonMode) console.log(`[INFO] App-path mode: ${appPath}`);
   }
   
   if (!appPath) {
@@ -197,47 +234,35 @@ function main() {
   }
   
   if (!appPath || !fs.existsSync(appPath)) {
-    const result: TestResult = {
-      status: 'failed',
-      stage: 'test',
-      hint: [
-        'Could not find app directory',
-        'Use --app-path to specify location, or --build-root and --project-name',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.errors.push('Could not find app directory');
+    receipt.errors.push('Use --app-path to specify location, or --build-root and --project-name');
+    emitOutput();
     process.exit(1);
   }
   
+  receipt.appPath = appPath;
+  
   if (dryRun) {
-    const result: TestResult = {
-      status: 'success',
-      stage: 'test',
-      app_path: appPath,
-      hint: ['Dry run - would run tests']
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = true;
+    emitOutput();
     return;
   }
   
-  console.log(`App path: ${appPath}`);
-  console.log('');
+  if (!jsonMode) {
+    console.log(`App path: ${appPath}`);
+    console.log('');
+  }
   
   const depResult = ensureDependencies(appPath);
   if (!depResult.installed) {
-    const result: TestResult = {
-      status: 'failed',
-      stage: 'test',
-      app_path: appPath,
-      hint: [
-        depResult.error || 'Could not install dependencies',
-        'Ensure package.json is valid and npm is available',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.errors.push(depResult.error || 'Could not install dependencies');
+    receipt.errors.push('Ensure package.json is valid and npm is available');
+    emitOutput();
     process.exit(1);
   }
-  console.log('');
+  if (!jsonMode) console.log('');
   
   let totalPassed = 0;
   let totalFailed = 0;
@@ -248,62 +273,62 @@ function main() {
   
   if (!skipTypecheck) {
     if (!hasScript(appPath, 'typecheck')) {
-      console.log('[SKIP] No "typecheck" script in package.json');
+      if (!jsonMode) console.log('[SKIP] No "typecheck" script in package.json');
     } else {
-      console.log('[RUN] TypeScript check...');
+      if (!jsonMode) console.log('[RUN] TypeScript check...');
       const tsResult = runCommand('npm run typecheck', appPath);
       if (!tsResult.success) {
-        console.log('[WARN] TypeScript errors found');
+        if (!jsonMode) console.log('[WARN] TypeScript errors found');
         typecheckErrors = (tsResult.output.match(/error TS/g) || []).length || 1;
       } else {
-        console.log('[PASS] TypeScript check');
+        if (!jsonMode) console.log('[PASS] TypeScript check');
       }
     }
   }
   
   if (!skipLint) {
     if (!hasScript(appPath, 'lint')) {
-      console.log('[SKIP] No "lint" script in package.json');
+      if (!jsonMode) console.log('[SKIP] No "lint" script in package.json');
       lintSkipped = true;
     } else if (!hasLintConfig(appPath)) {
-      console.log('[SKIP] Lint: no ESLint config found (skipping, not counted as failure)');
+      if (!jsonMode) console.log('[SKIP] Lint: no ESLint config found (skipping, not counted as failure)');
       lintSkipped = true;
     } else {
-      console.log('[RUN] Lint check...');
+      if (!jsonMode) console.log('[RUN] Lint check...');
       const lintResult = runCommand('npm run lint', appPath);
       if (!lintResult.success) {
         if (lintResult.output.includes("couldn't find") || lintResult.output.includes('no eslint.config')) {
-          console.log('[SKIP] Lint: ESLint could not find config (skipping, not counted as failure)');
+          if (!jsonMode) console.log('[SKIP] Lint: ESLint could not find config (skipping, not counted as failure)');
           lintSkipped = true;
         } else {
-          console.log('[WARN] Lint errors found');
+          if (!jsonMode) console.log('[WARN] Lint errors found');
           const ruleErrors = lintResult.output.match(/^\s*\d+:\d+\s+error\s/gm);
           lintErrors = ruleErrors ? ruleErrors.length : 1;
         }
       } else {
-        console.log('[PASS] Lint check');
+        if (!jsonMode) console.log('[PASS] Lint check');
       }
     }
   }
   
   if (!hasScript(appPath, 'test')) {
-    console.log('[SKIP] No "test" script in package.json');
+    if (!jsonMode) console.log('[SKIP] No "test" script in package.json');
     testSkipped = true;
   } else if (!hasTestConfig(appPath)) {
-    console.log('[SKIP] Unit tests: no test config found (skipping, not counted as failure)');
+    if (!jsonMode) console.log('[SKIP] Unit tests: no test config found (skipping, not counted as failure)');
     testSkipped = true;
   } else {
-    console.log('[RUN] Unit tests...');
+    if (!jsonMode) console.log('[RUN] Unit tests...');
     const testResult = runCommand('npm test', appPath);
     if (testResult.output.includes('No test files found')) {
-      console.log('[SKIP] No test files found (not counted as failure)');
+      if (!jsonMode) console.log('[SKIP] No test files found (not counted as failure)');
       testSkipped = true;
     } else if (testResult.success) {
-      console.log('[PASS] Unit tests');
+      if (!jsonMode) console.log('[PASS] Unit tests');
       const passMatch = testResult.output.match(/(\d+) pass/i);
       if (passMatch) totalPassed = parseInt(passMatch[1], 10);
     } else {
-      console.log('[WARN] Some tests failed');
+      if (!jsonMode) console.log('[WARN] Some tests failed');
       const passMatch = testResult.output.match(/(\d+) pass/i);
       const failMatch = testResult.output.match(/(\d+) fail/i);
       if (passMatch) totalPassed = parseInt(passMatch[1], 10);
@@ -311,7 +336,7 @@ function main() {
     }
   }
   
-  console.log('');
+  if (!jsonMode) console.log('');
   
   const markers = loadStageMarkers();
   markers['global'] = markers['global'] || {};
@@ -324,7 +349,6 @@ function main() {
   };
   saveStageMarkers(markers);
   
-  // Write test_report.json for activation gate (critical for two-root mode)
   const testReport = {
     generated_at: new Date().toISOString(),
     status: overallSuccess ? 'PASS' : 'FAIL',
@@ -332,7 +356,7 @@ function main() {
     tests_failed: totalFailed,
     lint_errors: lintErrors,
     typecheck_errors: typecheckErrors,
-    duration_ms: 0
+    duration_ms: Date.now() - startTime
   };
   const reportDir = path.join(WORKSPACE_ROOT, 'registry');
   if (!fs.existsSync(reportDir)) {
@@ -340,36 +364,32 @@ function main() {
   }
   fs.writeFileSync(path.join(reportDir, 'test_report.json'), JSON.stringify(testReport, null, 2));
   
-  const result: TestResult = {
-    status: overallSuccess ? 'success' : 'failed',
-    stage: 'test',
-    app_path: appPath,
-    tests_passed: totalPassed,
-    tests_failed: totalFailed,
-    lint_errors: lintErrors,
-    typecheck_errors: typecheckErrors,
-  };
+  receipt.ok = overallSuccess;
+  receipt.testsPassed = totalPassed;
+  receipt.testsFailed = totalFailed;
+  receipt.lintErrors = lintErrors;
+  receipt.typecheckErrors = typecheckErrors;
+  receipt.lintSkipped = lintSkipped;
+  receipt.testSkipped = testSkipped;
   
   if (!overallSuccess) {
-    result.hint = [
-      'Some checks failed. Review the output above.',
-      totalFailed > 0 ? `${totalFailed} test(s) failed` : '',
-      lintErrors > 0 ? `${lintErrors} lint error(s)` : '',
-      typecheckErrors > 0 ? `${typecheckErrors} TypeScript error(s)` : '',
-    ].filter(Boolean);
+    if (totalFailed > 0) receipt.warnings.push(`${totalFailed} test(s) failed`);
+    if (lintErrors > 0) receipt.warnings.push(`${lintErrors} lint error(s)`);
+    if (typecheckErrors > 0) receipt.warnings.push(`${typecheckErrors} TypeScript error(s)`);
   }
   
-  if (lintSkipped || testSkipped) {
-    result.hint = result.hint || [];
-    if (lintSkipped) result.hint.push('Lint was skipped (no config found)');
-    if (testSkipped) result.hint.push('Unit tests were skipped (no test files found)');
-  }
-  
-  console.log(JSON.stringify(result, null, 2));
+  emitOutput();
   
   if (!overallSuccess) {
     process.exit(1);
   }
 }
 
-main();
+try {
+  main();
+} catch (err: any) {
+  receipt.ok = false;
+  receipt.errors.push(err?.message || String(err));
+  emitOutput();
+  process.exit(1);
+}

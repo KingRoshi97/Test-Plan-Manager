@@ -29,6 +29,33 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { isTransientError, type ProcessResult } from './lib/retry';
 
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+const receipt: Record<string, unknown> = {
+  script: 'axion-orchestrate',
+  ok: true,
+  dryRun,
+  plan: '',
+  project: '',
+  totalSteps: 0,
+  succeeded: 0,
+  failed: 0,
+  skipped: 0,
+  state: 'pending',
+  steps: [] as StepResult[],
+  errors: [] as string[],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
+
 const PROJECT_ROOT = process.cwd();
 
 interface StepDef {
@@ -455,13 +482,16 @@ async function main() {
 
   if (opts.listPlans) {
     if (!presetsData) {
-      console.error('No presets.json found');
+      (receipt.errors as string[]).push('No presets.json found');
+      receipt.ok = false;
+      if (!jsonMode) console.error('No presets.json found');
+      emitOutput();
       process.exit(1);
     }
     const plans = presetsData.stage_plans as Record<string, StagePlan>;
-    if (opts.json) {
-      console.log(JSON.stringify({ plans }, null, 2));
-    } else {
+    receipt.plans = plans;
+    receipt.ok = true;
+    if (!jsonMode) {
       console.log('\nAvailable Stage Plans:');
       console.log('='.repeat(60));
       for (const [id, plan] of Object.entries(plans)) {
@@ -472,11 +502,15 @@ async function main() {
         console.log();
       }
     }
+    emitOutput();
     process.exit(0);
   }
 
   if (!opts.project) {
-    console.error('Error: --project <name> or AXION_PROJECT_NAME required');
+    (receipt.errors as string[]).push('--project <name> or AXION_PROJECT_NAME required');
+    receipt.ok = false;
+    if (!jsonMode) console.error('Error: --project <name> or AXION_PROJECT_NAME required');
+    emitOutput();
     process.exit(1);
   }
 
@@ -491,25 +525,37 @@ async function main() {
   } else if (opts.plan) {
     const resolvedPlan = resolvePlanId(opts.plan);
     if (!presetsData) {
-      console.error('Error: presets.json not found');
+      (receipt.errors as string[]).push('presets.json not found');
+      receipt.ok = false;
+      if (!jsonMode) console.error('Error: presets.json not found');
+      emitOutput();
       process.exit(1);
     }
     const plans = presetsData.stage_plans as Record<string, StagePlan>;
     const plan = plans[resolvedPlan];
     if (!plan) {
-      console.error(`Error: Unknown plan '${resolvedPlan}'`);
+      (receipt.errors as string[]).push(`Unknown plan '${resolvedPlan}'`);
+      receipt.ok = false;
+      if (!jsonMode) console.error(`Error: Unknown plan '${resolvedPlan}'`);
+      emitOutput();
       process.exit(1);
     }
     fullSteps = plan.steps.filter((s) => stepDefs[s]);
   } else {
-    console.error('Error: --plan <id> or --steps <step1,step2,...> required');
+    (receipt.errors as string[]).push('--plan <id> or --steps <step1,step2,...> required');
+    receipt.ok = false;
+    if (!jsonMode) console.error('Error: --plan <id> or --steps <step1,step2,...> required');
+    emitOutput();
     process.exit(1);
   }
 
   if (opts.startFrom) {
     const idx = fullSteps.indexOf(opts.startFrom);
     if (idx === -1) {
-      console.error(`Error: --start-from step '${opts.startFrom}' not in plan`);
+      (receipt.errors as string[]).push(`--start-from step '${opts.startFrom}' not in plan`);
+      receipt.ok = false;
+      if (!jsonMode) console.error(`Error: --start-from step '${opts.startFrom}' not in plan`);
+      emitOutput();
       process.exit(1);
     }
     const skippedSteps = fullSteps.slice(0, idx);
@@ -542,13 +588,22 @@ async function main() {
   process.stderr.write(`${'='.repeat(50)}\n\n`);
 
   if (opts.dryRun) {
-    console.log(JSON.stringify({
-      dryRun: true,
-      project: opts.project,
-      plan: opts.plan || 'custom',
-      steps: fullSteps.map((s) => ({ id: s, label: stepDefs[s]?.label, desc: stepDefs[s]?.desc })),
-      modules,
-    }, null, 2));
+    receipt.dryRun = true;
+    receipt.project = opts.project;
+    receipt.plan = opts.plan || 'custom';
+    receipt.steps = fullSteps.map((s) => ({ id: s, label: stepDefs[s]?.label, desc: stepDefs[s]?.desc }));
+    receipt.modules = modules;
+    receipt.ok = true;
+    if (!jsonMode) {
+      console.log(JSON.stringify({
+        dryRun: true,
+        project: opts.project,
+        plan: opts.plan || 'custom',
+        steps: fullSteps.map((s) => ({ id: s, label: stepDefs[s]?.label, desc: stepDefs[s]?.desc })),
+        modules,
+      }, null, 2));
+    }
+    emitOutput();
     process.exit(0);
   }
 
@@ -659,14 +714,28 @@ async function main() {
   if (lastError) process.stderr.write(`  Last error: ${lastError}\n`);
   process.stderr.write(`${'='.repeat(50)}\n`);
 
-  if (opts.json) {
-    console.log(JSON.stringify(result, null, 2));
-  }
+  receipt.plan = result.plan;
+  receipt.project = result.project;
+  receipt.totalSteps = result.totalSteps;
+  receipt.succeeded = result.succeeded;
+  receipt.failed = result.failed;
+  receipt.skipped = result.skipped;
+  receipt.state = result.state;
+  receipt.steps = result.steps;
+  receipt.ok = failed === 0;
+  if (lastError) (receipt.errors as string[]).push(lastError);
+
+  emitOutput();
 
   process.exit(failed > 0 ? 1 : 0);
 }
 
 main().catch((err) => {
-  console.error('Orchestrator fatal error:', err);
+  const msg = err instanceof Error ? err.message : String(err);
+  (receipt.errors as string[]).push(msg);
+  receipt.ok = false;
+  receipt.state = 'failed';
+  if (!jsonMode) console.error('Orchestrator fatal error:', err);
+  emitOutput();
   process.exit(1);
 });

@@ -95,11 +95,12 @@ interface DoctorOutput {
 // Utility Functions
 // ─────────────────────────────────────────────────────────────────────────────
 
-function parseArgs(): { root?: string; strict: boolean; json: boolean } {
+function parseArgs(): { root?: string; strict: boolean; json: boolean; dryRun: boolean } {
   const args = process.argv.slice(2);
   let root: string | undefined;
   let strict = false;
   let json = false;
+  let dryRun = false;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--root' && args[i + 1]) {
@@ -108,10 +109,12 @@ function parseArgs(): { root?: string; strict: boolean; json: boolean } {
       strict = true;
     } else if (args[i] === '--json') {
       json = true;
+    } else if (args[i] === '--dry-run') {
+      dryRun = true;
     }
   }
 
-  return { root, strict, json };
+  return { root, strict, json, dryRun };
 }
 
 function fileExists(p: string): boolean {
@@ -971,116 +974,170 @@ function getFeatureFlags(axionRoot: string): Record<string, boolean> {
 }
 
 function main(): void {
-  const { root, strict, json } = parseArgs();
+  const startTime = Date.now();
+  const { root, strict, json, dryRun } = parseArgs();
+  const jsonMode = json;
   const mode = root ? 'build' : 'system';
-  
-  const ctx: CheckContext = {
-    root: root ? path.resolve(root) : undefined,
-    strict,
-    axionRoot: AXION_ROOT
-  };
 
-  if (!json) {
-    console.error('\n╔════════════════════════════════════════════════════════════════╗');
-    console.error('║                     AXION DOCTOR                               ║');
-    console.error('╚════════════════════════════════════════════════════════════════╝');
-    console.error(`Mode: ${mode}${root ? ` (${root})` : ''}`);
-    console.error('');
-  }
-
-  const results: CheckResult[] = [];
-  const failures: CheckResult[] = [];
-  const nextCommands: string[] = [];
-
-  for (const check of ALL_CHECKS) {
-    // Skip build-only checks in system mode
-    if (check.appliesTo === 'build' && mode === 'system') {
-      continue;
-    }
-
-    const result = check.fn(ctx);
-    results.push(result);
-
-    if (!json) {
-      log(result.status, result.id, result.details);
-    }
-
-    if (result.status === 'FAIL' || (strict && result.status === 'WARN')) {
-      failures.push(result);
-      if (result.hint) {
-        nextCommands.push(result.hint);
-      }
-    }
-  }
-
-  const summary = {
-    pass: results.filter(r => r.status === 'PASS').length,
-    warn: results.filter(r => r.status === 'WARN').length,
-    fail: results.filter(r => r.status === 'FAIL').length
-  };
-
-  const flags = getFeatureFlags(AXION_ROOT);
-
-  const output: DoctorOutput = {
-    status: failures.length === 0 ? 'success' : 'failed',
+  const receipt: {
+    ok: boolean;
+    stage: string;
+    dryRun: boolean;
+    mode: string;
+    root: string | null;
+    summary: { pass: number; warn: number; fail: number };
+    checks: CheckResult[];
+    failures: CheckResult[];
+    flags: Record<string, boolean>;
+    next_commands: string[];
+    active_build?: ActiveBuildInfo;
+    pollution?: PollutionInfo;
+    run_lock?: RunLockInfo;
+    errors: string[];
+    elapsedMs: number;
+  } = {
+    ok: true,
     stage: 'doctor',
+    dryRun,
     mode,
-    root: ctx.root || null,
-    summary,
-    checks: results,
-    flags,
-    next_commands: nextCommands
+    root: root ? path.resolve(root) : null,
+    summary: { pass: 0, warn: 0, fail: 0 },
+    checks: [],
+    failures: [],
+    flags: {},
+    next_commands: [],
+    errors: [],
+    elapsedMs: 0,
   };
 
-  if (failures.length > 0) {
-    output.failures = failures;
+  function emitOutput(): void {
+    receipt.elapsedMs = Date.now() - startTime;
+    if (jsonMode) {
+      process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    } else {
+      console.log(JSON.stringify({
+        status: receipt.ok ? 'success' : 'failed',
+        stage: receipt.stage,
+        mode: receipt.mode,
+        root: receipt.root,
+        summary: receipt.summary,
+        checks: receipt.checks,
+        ...(receipt.failures.length > 0 ? { failures: receipt.failures } : {}),
+        flags: receipt.flags,
+        next_commands: receipt.next_commands,
+        ...(receipt.active_build ? { active_build: receipt.active_build } : {}),
+        ...(receipt.pollution ? { pollution: receipt.pollution } : {}),
+        ...(receipt.run_lock ? { run_lock: receipt.run_lock } : {}),
+      }));
+    }
   }
 
-  // Add extended output sections
-  if (activeBuildCache.path || activeBuildCache.data) {
-    output.active_build = {
-      path: activeBuildCache.path,
-      active_build_root: activeBuildCache.data?.active_build_root || null,
-      project_name: activeBuildCache.data?.project_name || null,
-      gates: (ctx as any)._activeBuildGates || {
-        verify_passed: null,
-        lock_exists: null,
-        tests_passed: null
+  try {
+    const ctx: CheckContext = {
+      root: root ? path.resolve(root) : undefined,
+      strict,
+      axionRoot: AXION_ROOT
+    };
+
+    if (!jsonMode) {
+      console.error('\n╔════════════════════════════════════════════════════════════════╗');
+      console.error('║                     AXION DOCTOR                               ║');
+      console.error('╚════════════════════════════════════════════════════════════════╝');
+      console.error(`Mode: ${mode}${root ? ` (${root})` : ''}`);
+      if (dryRun) {
+        console.error('(dry-run mode — no side-effects)');
       }
-    };
-  }
-
-  if ((ctx as any)._pollutionViolations) {
-    const violations = (ctx as any)._pollutionViolations as string[];
-    output.pollution = {
-      status: violations.length === 0 ? 'clean' : 'polluted',
-      violations
-    };
-  }
-
-  if ((ctx as any)._runLockInfo) {
-    output.run_lock = (ctx as any)._runLockInfo;
-  }
-
-  if (!json) {
-    console.error('');
-    console.error('────────────────────────────────────────────────────────────────');
-    console.error(`Summary: ${summary.pass} pass, ${summary.warn} warn, ${summary.fail} fail`);
-    console.error(`Status: ${output.status.toUpperCase()}`);
-    if (nextCommands.length > 0) {
       console.error('');
-      console.error('Recommended next commands:');
-      for (const cmd of nextCommands) {
-        console.error(`  ${cmd}`);
+    }
+
+    const results: CheckResult[] = [];
+    const failures: CheckResult[] = [];
+    const nextCommands: string[] = [];
+
+    for (const check of ALL_CHECKS) {
+      if (check.appliesTo === 'build' && mode === 'system') {
+        continue;
+      }
+
+      const result = check.fn(ctx);
+      results.push(result);
+
+      if (!jsonMode) {
+        log(result.status, result.id, result.details);
+      }
+
+      if (result.status === 'FAIL' || (strict && result.status === 'WARN')) {
+        failures.push(result);
+        if (result.hint) {
+          nextCommands.push(result.hint);
+        }
       }
     }
-    console.error('');
+
+    const summary = {
+      pass: results.filter(r => r.status === 'PASS').length,
+      warn: results.filter(r => r.status === 'WARN').length,
+      fail: results.filter(r => r.status === 'FAIL').length
+    };
+
+    const flags = getFeatureFlags(AXION_ROOT);
+
+    receipt.ok = failures.length === 0;
+    receipt.summary = summary;
+    receipt.checks = results;
+    receipt.failures = failures;
+    receipt.flags = flags;
+    receipt.next_commands = nextCommands;
+
+    if (activeBuildCache.path || activeBuildCache.data) {
+      receipt.active_build = {
+        path: activeBuildCache.path,
+        active_build_root: activeBuildCache.data?.active_build_root || null,
+        project_name: activeBuildCache.data?.project_name || null,
+        gates: (ctx as any)._activeBuildGates || {
+          verify_passed: null,
+          lock_exists: null,
+          tests_passed: null
+        }
+      };
+    }
+
+    if ((ctx as any)._pollutionViolations) {
+      const violations = (ctx as any)._pollutionViolations as string[];
+      receipt.pollution = {
+        status: violations.length === 0 ? 'clean' : 'polluted',
+        violations
+      };
+    }
+
+    if ((ctx as any)._runLockInfo) {
+      receipt.run_lock = (ctx as any)._runLockInfo;
+    }
+
+    if (!jsonMode) {
+      console.error('');
+      console.error('────────────────────────────────────────────────────────────────');
+      console.error(`Summary: ${summary.pass} pass, ${summary.warn} warn, ${summary.fail} fail`);
+      console.error(`Status: ${receipt.ok ? 'SUCCESS' : 'FAILED'}`);
+      if (nextCommands.length > 0) {
+        console.error('');
+        console.error('Recommended next commands:');
+        for (const cmd of nextCommands) {
+          console.error(`  ${cmd}`);
+        }
+      }
+      console.error('');
+    }
+
+    emitOutput();
+    process.exit(failures.length === 0 ? 0 : 1);
+
+  } catch (err: any) {
+    receipt.ok = false;
+    receipt.errors.push(err?.message || String(err));
+    emitOutput();
+    process.exit(1);
   }
-
-  // Final JSON output (always last line)
-  console.log(JSON.stringify(output));
-
-  process.exit(failures.length === 0 ? 0 : 1);
 }
 
 main();

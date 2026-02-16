@@ -22,6 +22,7 @@
  *   --allow-nonempty        Allow building on existing non-empty workspace
  *   --archive-existing      Archive existing workspace contents
  *   --dry-run               Show what would be done without changes
+ *   --json                  Emit structured JSON receipt to stdout
  */
 
 import * as fs from 'fs';
@@ -31,9 +32,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface PrepareRootResult {
-  status: 'success' | 'failed' | 'blocked_by';
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+interface PrepareRootReceipt {
+  ok: boolean;
   stage: 'prepare-root';
+  status: 'success' | 'failed' | 'blocked_by';
   root?: string;
   project_name?: string;
   created?: boolean;
@@ -43,6 +49,46 @@ interface PrepareRootResult {
   dry_run?: boolean;
   reason_codes?: string[];
   hint?: string[];
+  errors: string[];
+  elapsedMs?: number;
+}
+
+const receipt: PrepareRootReceipt = {
+  ok: true,
+  stage: 'prepare-root',
+  status: 'success',
+  errors: [],
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  } else {
+    if (receipt.ok) {
+      console.log(JSON.stringify({
+        status: receipt.status,
+        stage: receipt.stage,
+        root: receipt.root,
+        project_name: receipt.project_name,
+        created: receipt.created,
+        dirs_created: receipt.dirs_created,
+        archived: receipt.archived,
+        archive_path: receipt.archive_path,
+        dry_run: receipt.dry_run,
+        reason_codes: receipt.reason_codes,
+        hint: receipt.hint,
+      }, null, 2));
+    } else {
+      console.log(JSON.stringify({
+        status: receipt.status,
+        stage: receipt.stage,
+        reason_codes: receipt.reason_codes,
+        hint: receipt.hint,
+        errors: receipt.errors,
+      }, null, 2));
+    }
+  }
 }
 
 interface PrepareRootOptions {
@@ -67,7 +113,7 @@ function parseArgs(args: string[]): PrepareRootOptions {
     buildRoot: process.cwd(),
     projectName: undefined,
     refuseIfExists: false,
-    refuseIfNonempty: true,  // Default: fail if non-empty
+    refuseIfNonempty: true,
     allowNonempty: false,
     archiveExisting: false,
     dryRun: false
@@ -114,15 +160,12 @@ function extractProjectName(buildRoot: string): string | null {
 
   const content = fs.readFileSync(rpbsPath, 'utf-8');
   
-  // Look for **Project:** field
   const projectMatch = content.match(/\*\*Project:\*\*\s*(.+)/);
   if (projectMatch) {
     const name = projectMatch[1].trim();
-    // If it's a placeholder, return null
     if (name.startsWith('{{') && name.endsWith('}}')) {
       return null;
     }
-    // Sanitize: lowercase, replace spaces/special chars with dashes
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
@@ -133,7 +176,6 @@ function isUnsafeRoot(workspaceRoot: string, buildRoot: string): boolean {
   const axionSystemPath = path.resolve(buildRoot, 'axion');
   const resolvedWorkspace = path.resolve(workspaceRoot);
   
-  // Workspace must not be inside axion/ or equal to axion/
   return resolvedWorkspace.startsWith(axionSystemPath);
 }
 
@@ -152,7 +194,6 @@ function archiveDirectory(srcPath: string, buildRoot: string): string | null {
   try {
     fs.mkdirSync(archiveDir, { recursive: true });
     
-    // Move contents
     const entries = fs.readdirSync(srcPath);
     for (const entry of entries) {
       const srcEntry = path.join(srcPath, entry);
@@ -166,13 +207,13 @@ function archiveDirectory(srcPath: string, buildRoot: string): string | null {
   }
 }
 
-function createWorkspaceStructure(workspaceRoot: string, dryRun: boolean): string[] {
+function createWorkspaceStructure(workspaceRoot: string, isDryRun: boolean): string[] {
   const created: string[] = [];
   
   for (const subdir of REQUIRED_SUBDIRS) {
     const fullPath = path.join(workspaceRoot, subdir);
     if (!fs.existsSync(fullPath)) {
-      if (!dryRun) {
+      if (!isDryRun) {
         fs.mkdirSync(fullPath, { recursive: true });
       }
       created.push(subdir);
@@ -182,181 +223,164 @@ function createWorkspaceStructure(workspaceRoot: string, dryRun: boolean): strin
   return created;
 }
 
-function outputJson(result: PrepareRootResult): void {
-  console.log(JSON.stringify(result, null, 2));
+function failWithReceipt(reasonCodes: string[], hints: string[]): never {
+  receipt.ok = false;
+  receipt.status = 'failed';
+  receipt.reason_codes = reasonCodes;
+  receipt.hint = hints;
+  receipt.errors.push(reasonCodes.join(', '));
+  emitOutput();
+  process.exit(1);
 }
 
 function main(): void {
   const args = process.argv.slice(2);
   const options = parseArgs(args);
   
-  console.log('\n[AXION] Prepare Root\n');
+  if (!jsonMode) console.log('\n[AXION] Prepare Root\n');
   
   const buildRoot = path.resolve(options.buildRoot);
   
-  // Check axion system folder exists
   const axionSystemPath = path.join(buildRoot, 'axion');
   if (!fs.existsSync(axionSystemPath)) {
-    outputJson({
-      status: 'failed',
-      stage: 'prepare-root',
-      reason_codes: ['AXION_SYSTEM_NOT_FOUND'],
-      hint: [
+    failWithReceipt(
+      ['AXION_SYSTEM_NOT_FOUND'],
+      [
         `axion/ system folder not found at ${buildRoot}`,
         'Ensure --build-root points to the directory containing axion/'
       ]
-    });
-    process.exit(1);
+    );
   }
   
-  // Determine project name
   let projectName: string | undefined = options.projectName;
   if (!projectName) {
     const extracted = extractProjectName(buildRoot);
     if (!extracted) {
-      outputJson({
-        status: 'failed',
-        stage: 'prepare-root',
-        reason_codes: ['PROJECT_NAME_MISSING'],
-        hint: [
+      failWithReceipt(
+        ['PROJECT_NAME_MISSING'],
+        [
           'Could not extract project name from axion/docs/product/RPBS_Product.md',
           'Ensure **Project:** field is populated (not a placeholder)',
           'Or provide --project-name <name> explicitly'
         ]
-      });
-      process.exit(1);
+      );
     }
     projectName = extracted;
   }
   
   const workspaceRoot = path.join(buildRoot, projectName);
   
-  console.log(`[INFO] Build root: ${buildRoot}`);
-  console.log(`[INFO] Project name: ${projectName}`);
-  console.log(`[INFO] Workspace root: ${workspaceRoot}`);
+  if (!jsonMode) console.log(`[INFO] Build root: ${buildRoot}`);
+  if (!jsonMode) console.log(`[INFO] Project name: ${projectName}`);
+  if (!jsonMode) console.log(`[INFO] Workspace root: ${workspaceRoot}`);
   
-  // Safety check: workspace must not be inside axion/
   if (isUnsafeRoot(workspaceRoot, buildRoot)) {
-    outputJson({
-      status: 'failed',
-      stage: 'prepare-root',
-      reason_codes: ['UNSAFE_ROOT'],
-      hint: [
+    failWithReceipt(
+      ['UNSAFE_ROOT'],
+      [
         'Workspace root cannot be inside axion/ system folder',
         'Choose a different project name or build root'
       ]
-    });
-    process.exit(1);
+    );
   }
   
   const workspaceExists = fs.existsSync(workspaceRoot);
   const isEmpty = isDirectoryEmpty(workspaceRoot);
   
-  // Check refuse-if-exists
   if (options.refuseIfExists && workspaceExists) {
-    outputJson({
-      status: 'failed',
-      stage: 'prepare-root',
-      reason_codes: ['ROOT_EXISTS_REFUSED'],
-      hint: [
+    failWithReceipt(
+      ['ROOT_EXISTS_REFUSED'],
+      [
         `Workspace root already exists at ${workspaceRoot}`,
         'Remove --refuse-if-exists to proceed',
         'Or use --archive-existing to move existing contents'
       ]
-    });
-    process.exit(1);
+    );
   }
   
-  // Check refuse-if-nonempty
   if (options.refuseIfNonempty && workspaceExists && !isEmpty && !options.allowNonempty && !options.archiveExisting) {
-    outputJson({
-      status: 'failed',
-      stage: 'prepare-root',
-      reason_codes: ['ROOT_EXISTS_NONEMPTY'],
-      hint: [
+    failWithReceipt(
+      ['ROOT_EXISTS_NONEMPTY'],
+      [
         `Workspace root exists and is not empty: ${workspaceRoot}`,
         'Use --archive-existing to move existing contents to archive',
         'Or use --allow-nonempty to build on top of existing files'
       ]
-    });
-    process.exit(1);
+    );
   }
   
-  // Archive existing if requested
   let archivedPath: string | null = null;
   if (options.archiveExisting && workspaceExists && !isEmpty) {
-    console.log('[INFO] Archiving existing workspace contents...');
+    if (!jsonMode) console.log('[INFO] Archiving existing workspace contents...');
     if (!options.dryRun) {
       archivedPath = archiveDirectory(workspaceRoot, buildRoot);
       if (!archivedPath) {
-        outputJson({
-          status: 'failed',
-          stage: 'prepare-root',
-          reason_codes: ['ARCHIVE_FAILED'],
-          hint: ['Failed to archive existing workspace contents']
-        });
-        process.exit(1);
+        failWithReceipt(
+          ['ARCHIVE_FAILED'],
+          ['Failed to archive existing workspace contents']
+        );
       }
-      console.log(`[INFO] Archived to: ${archivedPath}`);
+      if (!jsonMode) console.log(`[INFO] Archived to: ${archivedPath}`);
     } else {
-      console.log('[DRY-RUN] Would archive existing contents');
+      if (!jsonMode) console.log('[DRY-RUN] Would archive existing contents');
     }
   }
   
-  // Create workspace root if needed
   let created = false;
   if (!fs.existsSync(workspaceRoot)) {
     if (!options.dryRun) {
       fs.mkdirSync(workspaceRoot, { recursive: true });
     }
     created = true;
-    console.log(`[INFO] Created workspace root: ${workspaceRoot}`);
+    if (!jsonMode) console.log(`[INFO] Created workspace root: ${workspaceRoot}`);
   }
   
-  // Check writable
   if (!options.dryRun) {
     try {
       const testFile = path.join(workspaceRoot, '.axion_write_test');
       fs.writeFileSync(testFile, 'test');
       fs.unlinkSync(testFile);
     } catch (err) {
-      outputJson({
-        status: 'failed',
-        stage: 'prepare-root',
-        reason_codes: ['ROOT_NOT_WRITABLE'],
-        hint: [`Workspace root is not writable: ${workspaceRoot}`]
-      });
-      process.exit(1);
+      failWithReceipt(
+        ['ROOT_NOT_WRITABLE'],
+        [`Workspace root is not writable: ${workspaceRoot}`]
+      );
     }
   }
   
-  // Create subdirectories
   const dirsCreated = createWorkspaceStructure(workspaceRoot, options.dryRun);
   if (dirsCreated.length > 0) {
-    console.log(`[INFO] Created subdirectories: ${dirsCreated.join(', ')}`);
+    if (!jsonMode) console.log(`[INFO] Created subdirectories: ${dirsCreated.join(', ')}`);
   }
   
-  console.log('\n[PASS] Workspace root prepared\n');
+  if (!jsonMode) console.log('\n[PASS] Workspace root prepared\n');
   
-  const result: PrepareRootResult = {
-    status: 'success',
-    stage: 'prepare-root',
-    root: workspaceRoot,
-    project_name: projectName,
-    created,
-    dirs_created: dirsCreated,
-    archived: archivedPath !== null,
-  };
+  receipt.ok = true;
+  receipt.status = 'success';
+  receipt.root = workspaceRoot;
+  receipt.project_name = projectName;
+  receipt.created = created;
+  receipt.dirs_created = dirsCreated;
+  receipt.archived = archivedPath !== null;
   
   if (archivedPath) {
-    result.archive_path = archivedPath;
+    receipt.archive_path = archivedPath;
   }
   
   if (options.dryRun) {
-    result.dry_run = true;
+    receipt.dry_run = true;
   }
   
-  outputJson(result);
+  emitOutput();
 }
 
-main();
+try {
+  main();
+} catch (err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  receipt.ok = false;
+  receipt.status = 'failed';
+  receipt.errors.push(message);
+  emitOutput();
+  process.exit(1);
+}

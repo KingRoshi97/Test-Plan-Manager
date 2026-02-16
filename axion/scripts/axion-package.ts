@@ -23,6 +23,7 @@
  *   --stack-profile <id>            Stack profile ID to include (e.g. default-web-saas)
  *   --skip-validation               Skip pre-packaging validation
  *   --json                          Output result as JSON
+ *   --dry-run                       Validate without writing zip
  */
 
 import * as fs from 'fs';
@@ -465,6 +466,8 @@ async function createZip(
 }
 
 async function main() {
+  const startTime = Date.now();
+
   const args = process.argv.slice(2);
   const getArg = (flag: string): string | null => {
     const idx = args.indexOf(flag);
@@ -476,7 +479,57 @@ async function main() {
   const projectName = getArg('--project-name') || undefined;
   const stackProfileId = getArg('--stack-profile') || undefined;
   const skipValidation = hasFlag('--skip-validation');
-  const jsonOutput = hasFlag('--json');
+  const jsonMode = hasFlag('--json');
+  const dryRun = hasFlag('--dry-run');
+
+  const receipt: {
+    ok: boolean;
+    script: string;
+    stage: string;
+    dryRun: boolean;
+    errors: string[];
+    warnings: string[];
+    elapsedMs: number;
+    mode: PackageMode;
+    output_path?: string;
+    files_included?: number;
+    zip_size_bytes?: number;
+    zip_sha256?: string;
+    hint?: string[];
+  } = {
+    ok: true,
+    script: 'axion-package',
+    stage: 'package',
+    dryRun,
+    errors: [],
+    warnings: [],
+    elapsedMs: 0,
+    mode: 'full',
+  };
+
+  function emitOutput() {
+    receipt.elapsedMs = Date.now() - startTime;
+    if (jsonMode) {
+      process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    } else {
+      if (receipt.ok) {
+        console.log(`\n[SUCCESS] Created Agent Kit (v2.1)`);
+        if (receipt.output_path) console.log(`Output: ${receipt.output_path}`);
+        if (receipt.files_included != null) console.log(`Files: ${receipt.files_included}`);
+        if (receipt.zip_size_bytes != null) console.log(`Size: ${(receipt.zip_size_bytes / 1024).toFixed(2)} KB`);
+        if (receipt.zip_sha256) console.log(`SHA256: ${receipt.zip_sha256.slice(0, 16)}...`);
+        if (receipt.warnings.length > 0) console.log(`Warnings: ${receipt.warnings.length}`);
+        if (dryRun) console.log(`[DRY-RUN] No zip was written.`);
+        console.log(`Elapsed: ${receipt.elapsedMs}ms`);
+        console.log('');
+      } else {
+        console.error(`\n[FAILED] axion-package`);
+        for (const e of receipt.errors) console.error(`  ERROR: ${e}`);
+        if (receipt.hint) for (const h of receipt.hint) console.error(`  HINT: ${h}`);
+        console.error(`Elapsed: ${receipt.elapsedMs}ms\n`);
+      }
+    }
+  }
 
   if (buildRoot) {
     AXION_ROOT = path.join(buildRoot, 'axion');
@@ -491,20 +544,23 @@ async function main() {
 
   const outputDir = getArg('--output') || path.join(buildRoot || AXION_ROOT, 'dist');
 
-  if (!jsonOutput) {
+  if (!jsonMode) {
     console.log('\n[AXION] Package (v2.1 — Consolidated)\n');
     if (buildRoot) console.log(`[INFO] Workspace: ${buildRoot}`);
     console.log(`Mode: ${mode}`);
+    if (dryRun) console.log(`[DRY-RUN] enabled`);
   }
 
   if (!['docs', 'scaffold', 'full'].includes(mode)) {
-    const result: PackageResult = {
-      status: 'failed', stage: 'package', mode,
-      hint: ['Invalid mode. Use: docs, scaffold, or full'],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.mode = mode;
+    receipt.errors.push('Invalid mode. Use: docs, scaffold, or full');
+    receipt.hint = ['Invalid mode. Use: docs, scaffold, or full'];
+    emitOutput();
     process.exit(1);
   }
+
+  receipt.mode = mode;
 
   if (mode !== 'docs' && !appPath) {
     const candidates = buildRoot
@@ -514,18 +570,26 @@ async function main() {
       if (fs.existsSync(candidate)) { appPath = candidate; break; }
     }
     if (!appPath) {
-      if (!jsonOutput) console.log(`[WARN] No app path found for ${mode} mode, falling back to docs mode`);
+      if (!jsonMode) console.log(`[WARN] No app path found for ${mode} mode, falling back to docs mode`);
+      receipt.warnings.push(`No app path found for ${mode} mode, falling back to docs mode`);
       mode = 'docs';
+      receipt.mode = mode;
     }
   }
 
-  if (!jsonOutput && appPath) console.log(`App: ${appPath}`);
+  if (!jsonMode && appPath) console.log(`App: ${appPath}`);
 
   const validation = skipValidation
-    ? { warnings: [], unknownCount: 0, emptyCount: 0 }
+    ? { warnings: [] as ValidationWarning[], unknownCount: 0, emptyCount: 0 }
     : validateKit();
 
-  if (!skipValidation && !jsonOutput && validation.warnings.length > 0) {
+  if (validation.warnings.length > 0) {
+    for (const w of validation.warnings) {
+      receipt.warnings.push(w.message);
+    }
+  }
+
+  if (!skipValidation && !jsonMode && validation.warnings.length > 0) {
     console.log(`\n[VALIDATION] ${validation.warnings.length} warning(s):`);
     const grouped = {
       unknowns: validation.warnings.filter(w => w.type === 'unknown_content').length,
@@ -542,13 +606,20 @@ async function main() {
   const readingOrder = computeReadingOrder();
   const dependencies = getDomainDependencies();
 
+  if (dryRun) {
+    receipt.ok = true;
+    if (!jsonMode) console.log(`\n[DRY-RUN] Would package mode=${mode}, outputDir=${outputDir}`);
+    emitOutput();
+    return;
+  }
+
   fs.mkdirSync(outputDir, { recursive: true });
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const zipFilename = `agent_kit_${mode}_${timestamp}.zip`;
   const zipPath = path.join(outputDir, zipFilename);
 
-  if (!jsonOutput) {
+  if (!jsonMode) {
     console.log(`Output: ${zipPath}`);
     console.log('');
   }
@@ -559,39 +630,32 @@ async function main() {
       readingOrder, dependencies, validation
     );
 
-    if (!jsonOutput) {
-      console.log(`\n[SUCCESS] Created Agent Kit (v2.1)\n`);
-      console.log(`Files: ${files.length}`);
-      console.log(`Size: ${(size / 1024).toFixed(2)} KB`);
-      console.log(`SHA256: ${hash.slice(0, 16)}...`);
-      if (validation.unknownCount > 0) console.log(`Warnings: ${validation.unknownCount} UNKNOWN(s), ${validation.emptyCount} empty file(s)`);
-      console.log('');
-    }
+    receipt.ok = true;
+    receipt.output_path = zipPath;
+    receipt.files_included = files.length;
+    receipt.zip_size_bytes = size;
+    receipt.zip_sha256 = hash;
 
-    const result: PackageResult = {
-      status: 'success',
-      stage: 'package',
-      mode,
-      output_path: zipPath,
-      files_included: files.length,
-      zip_size_bytes: size,
-      zip_sha256: hash,
-      warnings: validation.warnings.length > 0
-        ? validation.warnings.map(w => w.message)
-        : undefined,
-    };
-
-    console.log(JSON.stringify(result, null, 2));
+    emitOutput();
   } catch (error) {
-    const result: PackageResult = {
-      status: 'failed',
-      stage: 'package',
-      mode,
-      hint: [error instanceof Error ? error.message : 'Unknown error'],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.errors.push(error instanceof Error ? error.message : 'Unknown error');
+    receipt.hint = [error instanceof Error ? error.message : 'Unknown error'];
+    emitOutput();
     process.exit(1);
   }
 }
 
-main();
+main().catch((err) => {
+  const fallback = {
+    ok: false,
+    script: 'axion-package',
+    stage: 'package',
+    dryRun: false,
+    errors: [err instanceof Error ? err.message : String(err)],
+    warnings: [],
+    elapsedMs: 0,
+  };
+  process.stdout.write(JSON.stringify(fallback, null, 2) + '\n');
+  process.exit(1);
+});

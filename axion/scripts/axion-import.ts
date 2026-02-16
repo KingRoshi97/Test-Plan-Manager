@@ -33,6 +33,7 @@ interface ImportOptions {
   projectName: string;
   emitManifest: boolean;
   jsonOutput: boolean;
+  dryRun: boolean;
 }
 
 interface ImportResult {
@@ -134,6 +135,7 @@ function parseArgs(args: string[]): ImportOptions {
     projectName: '',
     emitManifest: false,
     jsonOutput: false,
+    dryRun: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -155,6 +157,9 @@ function parseArgs(args: string[]): ImportOptions {
         break;
       case '--json':
         options.jsonOutput = true;
+        break;
+      case '--dry-run':
+        options.dryRun = true;
         break;
     }
   }
@@ -1030,149 +1035,189 @@ function generateBackendSeed(report: ImportReport, facts: ImportFacts, sourceHas
 }
 
 function main(): void {
+  const startTime = Date.now();
   const args = process.argv.slice(2);
   const options = parseArgs(args);
 
-  if (!options.sourceRoot) {
-    const result: ImportResult = {
-      status: 'failed',
-      stage: 'import',
-      reason_codes: ['MISSING_SOURCE_ROOT'],
-      hint: ['Provide --source-root <path> pointing to the existing project'],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
-  }
+  const jsonMode = options.jsonOutput;
+  const dryRun = options.dryRun;
 
-  if (!options.buildRoot || !options.projectName) {
-    const result: ImportResult = {
-      status: 'failed',
-      stage: 'import',
-      reason_codes: ['MISSING_BUILD_CONTEXT'],
-      hint: ['Provide --build-root <path> and --project-name <name>'],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
-  }
-
-  const sourceRoot = path.resolve(options.sourceRoot);
-  const workspaceRoot = path.resolve(options.buildRoot, options.projectName);
-
-  if (!fs.existsSync(sourceRoot)) {
-    const result: ImportResult = {
-      status: 'failed',
-      stage: 'import',
-      reason_codes: ['SOURCE_NOT_FOUND'],
-      hint: [`Source root does not exist: ${sourceRoot}`],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
-  }
-
-  if (!fs.existsSync(workspaceRoot)) {
-    const result: ImportResult = {
-      status: 'blocked_by',
-      stage: 'import',
-      reason_codes: ['WORKSPACE_NOT_FOUND'],
-      hint: [
-        `Workspace does not exist: ${workspaceRoot}`,
-        'Run kit-create first to initialize the workspace',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
-  }
-
-  const resolvedSource = fs.realpathSync(sourceRoot);
-  const resolvedWorkspace = fs.realpathSync(workspaceRoot);
-
-  if (resolvedWorkspace.startsWith(resolvedSource + path.sep) || resolvedWorkspace === resolvedSource) {
-    const result: ImportResult = {
-      status: 'failed',
-      stage: 'import',
-      reason_codes: ['WORKSPACE_INSIDE_SOURCE'],
-      hint: [
-        'Workspace must not be inside or equal to source-root',
-        'Use a separate build-root to ensure source safety',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
-  }
-
-  if (resolvedSource.startsWith(resolvedWorkspace + path.sep)) {
-    const result: ImportResult = {
-      status: 'failed',
-      stage: 'import',
-      reason_codes: ['SOURCE_INSIDE_WORKSPACE'],
-      hint: [
-        'Source-root must not be inside workspace',
-        'Use separate directories for source and workspace',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
-  }
-
-  const scan = scanDirectory(sourceRoot);
-
-  const pkg = detectPackageJson(sourceRoot);
-  const lockfile = detectLockfile(sourceRoot);
-  const languages = detectLanguages(scan.extensions, scan.files);
-  const frameworks = detectFrameworks(pkg, scan.files, scan.dirs);
-  const entrypoints = detectEntrypoints(scan.files, pkg);
-  const routes = detectRoutes(sourceRoot, scan.files);
-  const health = detectHealth(sourceRoot, scan.files);
-  const stackCandidate = inferStackCandidate(frameworks, languages, scan.files, scan.dirs, entrypoints);
-  const anchorSuggestions = suggestAnchors(stackCandidate, scan.files, entrypoints);
-  const warnings = generateWarnings(health, routes, pkg, scan.files, frameworks);
-
-  const report = buildImportReport(
-    sourceRoot, workspaceRoot, scan, pkg, lockfile,
-    languages, frameworks, entrypoints, routes, health,
-    stackCandidate, anchorSuggestions, warnings,
-  );
-
-  const facts = buildImportFacts(report, scan.files, scan.dirs, entrypoints, health, anchorSuggestions);
-
-  const registryDir = path.join(workspaceRoot, 'registry');
-  fs.mkdirSync(registryDir, { recursive: true });
-
-  const reportPath = path.join(registryDir, 'import_report.json');
-  writeJsonAtomic(reportPath, report);
-
-  const factsPath = path.join(registryDir, 'import_facts.json');
-  writeJsonAtomic(factsPath, facts);
-
-  const artifactsWritten = [
-    path.relative(workspaceRoot, reportPath),
-    path.relative(workspaceRoot, factsPath),
-  ];
-
-  const seedFiles = generateDocSeeds(workspaceRoot, sourceRoot, report, facts);
-  artifactsWritten.push(...seedFiles);
-
-  if (options.emitManifest) {
-    const manifest = buildPatchManifest(
-      workspaceRoot, options.projectName, sourceRoot,
-      report, anchorSuggestions, health, stackCandidate,
-    );
-    const manifestPath = path.join(registryDir, 'import_patch_manifest.json');
-    writeJsonAtomic(manifestPath, manifest);
-    artifactsWritten.push(path.relative(workspaceRoot, manifestPath));
-  }
-
-  const result: ImportResult = {
-    status: 'success',
+  const receipt: Record<string, any> = {
+    ok: true,
+    script: 'axion-import',
     stage: 'import',
-    workspace_root: workspaceRoot,
-    source_root: sourceRoot,
-    stack_id_candidate: stackCandidate.stack_id,
-    signals: scan.files.length,
-    artifacts_written: artifactsWritten,
+    dryRun,
+    errors: [] as string[],
+    warnings: [] as string[],
+    artifacts_written: [] as string[],
+    elapsedMs: 0,
   };
 
-  console.log(JSON.stringify(result, null, 2));
+  function emitOutput(): void {
+    receipt.elapsedMs = Date.now() - startTime;
+    if (jsonMode) {
+      process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    } else {
+      if (receipt.ok) {
+        console.log(`[axion-import] completed in ${receipt.elapsedMs}ms`);
+        if (receipt.artifacts_written.length > 0) {
+          console.log(`  artifacts: ${receipt.artifacts_written.join(', ')}`);
+        }
+        if (receipt.warnings.length > 0) {
+          console.log(`  warnings: ${receipt.warnings.join('; ')}`);
+        }
+      } else {
+        console.error(`[axion-import] failed in ${receipt.elapsedMs}ms`);
+        for (const e of receipt.errors) {
+          console.error(`  error: ${e}`);
+        }
+      }
+    }
+  }
+
+  try {
+    if (!options.sourceRoot) {
+      receipt.ok = false;
+      receipt.reason_codes = ['MISSING_SOURCE_ROOT'];
+      receipt.errors.push('Missing --source-root argument');
+      receipt.hint = ['Provide --source-root <path> pointing to the existing project'];
+      emitOutput();
+      process.exit(1);
+    }
+
+    if (!options.buildRoot || !options.projectName) {
+      receipt.ok = false;
+      receipt.reason_codes = ['MISSING_BUILD_CONTEXT'];
+      receipt.errors.push('Missing --build-root or --project-name argument');
+      receipt.hint = ['Provide --build-root <path> and --project-name <name>'];
+      emitOutput();
+      process.exit(1);
+    }
+
+    const sourceRoot = path.resolve(options.sourceRoot);
+    const workspaceRoot = path.resolve(options.buildRoot, options.projectName);
+
+    receipt.source_root = sourceRoot;
+    receipt.workspace_root = workspaceRoot;
+
+    if (!fs.existsSync(sourceRoot)) {
+      receipt.ok = false;
+      receipt.reason_codes = ['SOURCE_NOT_FOUND'];
+      receipt.errors.push(`Source root does not exist: ${sourceRoot}`);
+      receipt.hint = [`Source root does not exist: ${sourceRoot}`];
+      emitOutput();
+      process.exit(1);
+    }
+
+    if (!fs.existsSync(workspaceRoot)) {
+      receipt.ok = false;
+      receipt.status = 'blocked_by';
+      receipt.reason_codes = ['WORKSPACE_NOT_FOUND'];
+      receipt.errors.push(`Workspace does not exist: ${workspaceRoot}`);
+      receipt.hint = [
+        `Workspace does not exist: ${workspaceRoot}`,
+        'Run kit-create first to initialize the workspace',
+      ];
+      emitOutput();
+      process.exit(1);
+    }
+
+    const resolvedSource = fs.realpathSync(sourceRoot);
+    const resolvedWorkspace = fs.realpathSync(workspaceRoot);
+
+    if (resolvedWorkspace.startsWith(resolvedSource + path.sep) || resolvedWorkspace === resolvedSource) {
+      receipt.ok = false;
+      receipt.reason_codes = ['WORKSPACE_INSIDE_SOURCE'];
+      receipt.errors.push('Workspace must not be inside or equal to source-root');
+      receipt.hint = [
+        'Workspace must not be inside or equal to source-root',
+        'Use a separate build-root to ensure source safety',
+      ];
+      emitOutput();
+      process.exit(1);
+    }
+
+    if (resolvedSource.startsWith(resolvedWorkspace + path.sep)) {
+      receipt.ok = false;
+      receipt.reason_codes = ['SOURCE_INSIDE_WORKSPACE'];
+      receipt.errors.push('Source-root must not be inside workspace');
+      receipt.hint = [
+        'Source-root must not be inside workspace',
+        'Use separate directories for source and workspace',
+      ];
+      emitOutput();
+      process.exit(1);
+    }
+
+    if (!jsonMode) console.log(`[axion-import] scanning source: ${sourceRoot}`);
+
+    const scan = scanDirectory(sourceRoot);
+
+    const pkg = detectPackageJson(sourceRoot);
+    const lockfile = detectLockfile(sourceRoot);
+    const languages = detectLanguages(scan.extensions, scan.files);
+    const frameworks = detectFrameworks(pkg, scan.files, scan.dirs);
+    const entrypoints = detectEntrypoints(scan.files, pkg);
+    const routes = detectRoutes(sourceRoot, scan.files);
+    const health = detectHealth(sourceRoot, scan.files);
+    const stackCandidate = inferStackCandidate(frameworks, languages, scan.files, scan.dirs, entrypoints);
+    const anchorSuggestions = suggestAnchors(stackCandidate, scan.files, entrypoints);
+    const importWarnings = generateWarnings(health, routes, pkg, scan.files, frameworks);
+
+    receipt.stack_id_candidate = stackCandidate.stack_id;
+    receipt.signals = scan.files.length;
+    receipt.warnings = importWarnings;
+
+    const report = buildImportReport(
+      sourceRoot, workspaceRoot, scan, pkg, lockfile,
+      languages, frameworks, entrypoints, routes, health,
+      stackCandidate, anchorSuggestions, importWarnings,
+    );
+
+    const facts = buildImportFacts(report, scan.files, scan.dirs, entrypoints, health, anchorSuggestions);
+
+    if (dryRun) {
+      if (!jsonMode) console.log('[axion-import] dry-run mode — no files written');
+      receipt.artifacts_written = [];
+      emitOutput();
+      return;
+    }
+
+    const registryDir = path.join(workspaceRoot, 'registry');
+    fs.mkdirSync(registryDir, { recursive: true });
+
+    const reportPath = path.join(registryDir, 'import_report.json');
+    writeJsonAtomic(reportPath, report);
+
+    const factsPath = path.join(registryDir, 'import_facts.json');
+    writeJsonAtomic(factsPath, facts);
+
+    const artifactsWritten = [
+      path.relative(workspaceRoot, reportPath),
+      path.relative(workspaceRoot, factsPath),
+    ];
+
+    const seedFiles = generateDocSeeds(workspaceRoot, sourceRoot, report, facts);
+    artifactsWritten.push(...seedFiles);
+
+    if (options.emitManifest) {
+      const manifest = buildPatchManifest(
+        workspaceRoot, options.projectName, sourceRoot,
+        report, anchorSuggestions, health, stackCandidate,
+      );
+      const manifestPath = path.join(registryDir, 'import_patch_manifest.json');
+      writeJsonAtomic(manifestPath, manifest);
+      artifactsWritten.push(path.relative(workspaceRoot, manifestPath));
+    }
+
+    receipt.artifacts_written = artifactsWritten;
+    emitOutput();
+  } catch (err: any) {
+    receipt.ok = false;
+    receipt.errors.push(err?.message || String(err));
+    emitOutput();
+    process.exit(1);
+  }
 }
 
 main();

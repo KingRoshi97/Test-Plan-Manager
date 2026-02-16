@@ -8,14 +8,54 @@
  *   node --import tsx axion/scripts/axion-status.ts
  *   node --import tsx axion/scripts/axion-status.ts --module backend
  *   node --import tsx axion/scripts/axion-status.ts --json
+ *   node --import tsx axion/scripts/axion-status.ts --dry-run
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+// @ts-ignore
+import { markStageFailed } from './_axion_module_mode.mjs';
+
+const startTime = Date.now();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const args = process.argv.slice(2);
+const jsonMode = args.includes('--json');
+const dryRun = args.includes('--dry-run');
+
+const receipt: {
+  stage: string;
+  ok: boolean;
+  modulesProcessed: string[];
+  createdFiles: string[];
+  modifiedFiles: string[];
+  skippedFiles: string[];
+  warnings: string[];
+  errors: string[];
+  elapsedMs: number;
+  dryRun: boolean;
+  statusSummary: {
+    timestamp: string;
+    overall_status: string;
+    template_drift: any;
+    modules: ModuleSummary[];
+  } | null;
+} = {
+  stage: 'status',
+  ok: true,
+  modulesProcessed: [] as string[],
+  createdFiles: [] as string[],
+  modifiedFiles: [] as string[],
+  skippedFiles: [] as string[],
+  warnings: [] as string[],
+  errors: [] as string[],
+  elapsedMs: 0,
+  dryRun,
+  statusSummary: null,
+};
 
 const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
 const REGISTRY_PATH = path.join(AXION_ROOT, 'registry');
@@ -140,7 +180,7 @@ function formatTable(summaries: ModuleSummary[], config: Config): string {
       if (stageData && stageData.status) {
         row.push(stageData.status === 'completed' ? '✓' : stageData.status.charAt(0).toUpperCase());
       } else if (stageData) {
-        row.push('✓'); // Has data but no explicit status = completed
+        row.push('✓');
       } else {
         row.push('·');
       }
@@ -171,9 +211,15 @@ function formatTable(summaries: ModuleSummary[], config: Config): string {
   return output;
 }
 
+function emitOutput() {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    return;
+  }
+}
+
 function main() {
-  const args = process.argv.slice(2);
-  const jsonMode = args.includes('--json');
   const moduleIdx = args.indexOf('--module');
   const filterModule = moduleIdx !== -1 ? args[moduleIdx + 1] : null;
   
@@ -184,19 +230,25 @@ function main() {
   if (filterModule) {
     summaries = summaries.filter(s => s.module === filterModule);
     if (summaries.length === 0) {
-      console.error(`[FAIL] Module "${filterModule}" not found`);
+      if (!jsonMode) console.error(`[FAIL] Module "${filterModule}" not found`);
+      receipt.errors.push(`Module "${filterModule}" not found`);
+      receipt.ok = false;
+      emitOutput();
       process.exit(1);
     }
   }
   
+  receipt.modulesProcessed = summaries.map(s => s.module);
+  
+  receipt.statusSummary = {
+    timestamp: new Date().toISOString(),
+    overall_status: report?.overall_status || 'unknown',
+    template_drift: report?.template_drift || null,
+    modules: summaries,
+  };
+  
   if (jsonMode) {
-    const output = {
-      timestamp: new Date().toISOString(),
-      overall_status: report?.overall_status || 'unknown',
-      template_drift: report?.template_drift || null,
-      modules: summaries,
-    };
-    console.log(JSON.stringify(output, null, 2));
+    emitOutput();
     return;
   }
   
@@ -228,6 +280,18 @@ function main() {
       console.log(`  ... and ${report.seam_violations.length - 5} more`);
     }
   }
+  
+  emitOutput();
 }
 
-main();
+try {
+  main();
+} catch (err: any) {
+  receipt.errors.push(err?.message || String(err));
+  receipt.ok = false;
+  try {
+    markStageFailed('status', 'all', { error: err?.message || String(err) });
+  } catch {}
+  emitOutput();
+  process.exit(1);
+}

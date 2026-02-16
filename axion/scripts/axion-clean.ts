@@ -37,21 +37,40 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface CleanResult {
-  status: 'success' | 'failed';
-  stage: 'clean';
-  paths_deleted?: string[];
-  bytes_freed?: number;
-  items_count?: number;
-  dry_run?: boolean;
-  reason_codes?: string[];
-  hint?: string[];
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+const receipt: Record<string, any> = {
+  ok: true,
+  script: 'axion-clean',
+  stage: 'clean',
+  dryRun,
+  paths_deleted: [] as string[],
+  bytes_freed: 0,
+  items_count: 0,
+  errors: [] as string[],
+  warnings: [] as string[],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  } else {
+    if (receipt.ok) {
+      console.log(`\nClean complete: ${receipt.items_count} items, ${formatBytes(receipt.bytes_freed)} ${receipt.dryRun ? 'would be ' : ''}freed (${receipt.elapsedMs}ms)`);
+    } else {
+      console.log(`\nClean failed: ${receipt.errors.join('; ')} (${receipt.elapsedMs}ms)`);
+    }
+  }
 }
 
 interface CleanOptions {
   buildsDir?: string;
   buildRoot?: string;
-  olderThan?: number;  // milliseconds
+  olderThan?: number;
   aggressive: boolean;
   dryRun: boolean;
   jsonOutput: boolean;
@@ -138,8 +157,8 @@ function parseDuration(duration: string): number {
   }
 }
 
-function log(msg: string, jsonOutput: boolean): void {
-  if (!jsonOutput) {
+function log(msg: string): void {
+  if (!jsonMode) {
     console.log(msg);
   }
 }
@@ -200,15 +219,13 @@ function findCleanableItems(rootPath: string, options: CleanOptions): { dirs: st
         const fullPath = path.join(currentPath, entry.name);
         
         if (entry.isDirectory()) {
-          // Check if this is a safe-delete directory
           if (SAFE_DELETE_DIRS.includes(entry.name)) {
             if (isOlderThan(fullPath, options.olderThan || 0)) {
               dirs.push(fullPath);
             }
-            continue; // Don't recurse into these
+            continue;
           }
           
-          // Check aggressive patterns
           if (options.aggressive && AGGRESSIVE_DELETE_PATTERNS.some(p => entry.name === p || entry.name.match(new RegExp(p.replace('*', '.*'))))) {
             if (isOlderThan(fullPath, options.olderThan || 0)) {
               dirs.push(fullPath);
@@ -216,17 +233,14 @@ function findCleanableItems(rootPath: string, options: CleanOptions): { dirs: st
             continue;
           }
           
-          // Recurse into subdirectories
           walkDir(fullPath);
         } else {
-          // Check if this is a safe-delete file
           if (SAFE_DELETE_FILES.includes(entry.name)) {
             if (isOlderThan(fullPath, options.olderThan || 0)) {
               files.push(fullPath);
             }
           }
           
-          // Check aggressive patterns
           if (options.aggressive) {
             for (const pattern of AGGRESSIVE_DELETE_PATTERNS) {
               if (pattern.includes('*')) {
@@ -248,37 +262,35 @@ function findCleanableItems(rootPath: string, options: CleanOptions): { dirs: st
   return { dirs, files };
 }
 
-function deleteItems(dirs: string[], files: string[], dryRun: boolean, jsonOutput: boolean): number {
+function deleteItems(dirs: string[], files: string[], isDryRun: boolean): number {
   let bytesFreed = 0;
   
-  // Delete directories first
   for (const dir of dirs) {
     const size = getDirectorySize(dir);
     bytesFreed += size;
     
-    if (!dryRun) {
+    if (!isDryRun) {
       try {
         fs.rmSync(dir, { recursive: true, force: true });
-        log(`  [DEL] ${dir} (${formatBytes(size)})`, jsonOutput);
+        log(`  [DEL] ${dir} (${formatBytes(size)})`);
       } catch (err) {
-        log(`  [ERR] Could not delete ${dir}`, jsonOutput);
+        log(`  [ERR] Could not delete ${dir}`);
       }
     } else {
-      log(`  [DRY] Would delete ${dir} (${formatBytes(size)})`, jsonOutput);
+      log(`  [DRY] Would delete ${dir} (${formatBytes(size)})`);
     }
   }
   
-  // Delete files
   for (const file of files) {
     try {
       const stats = fs.statSync(file);
       bytesFreed += stats.size;
       
-      if (!dryRun) {
+      if (!isDryRun) {
         fs.unlinkSync(file);
-        log(`  [DEL] ${file} (${formatBytes(stats.size)})`, jsonOutput);
+        log(`  [DEL] ${file} (${formatBytes(stats.size)})`);
       } else {
-        log(`  [DRY] Would delete ${file} (${formatBytes(stats.size)})`, jsonOutput);
+        log(`  [DRY] Would delete ${file} (${formatBytes(stats.size)})`);
       }
     } catch {
       // Skip
@@ -292,43 +304,34 @@ function main(): void {
   const args = process.argv.slice(2);
   const options = parseArgs(args);
 
-  log('\n[AXION] Clean\n', options.jsonOutput);
+  log('\n[AXION] Clean\n');
 
-  // Determine what to clean
   let rootsToClean: string[] = [];
   
   if (options.buildRoot) {
     const buildRoot = path.resolve(options.buildRoot);
     if (!fs.existsSync(buildRoot)) {
-      const result: CleanResult = {
-        status: 'failed',
-        stage: 'clean',
-        reason_codes: ['BUILD_ROOT_NOT_FOUND'],
-        hint: [`Build root not found: ${buildRoot}`]
-      };
-      console.log(JSON.stringify(result, null, 2));
+      receipt.ok = false;
+      receipt.errors.push(`Build root not found: ${buildRoot}`);
+      receipt.reason_codes = ['BUILD_ROOT_NOT_FOUND'];
+      emitOutput();
       process.exit(1);
     }
     rootsToClean.push(buildRoot);
   } else if (options.buildsDir) {
     const buildsDir = path.resolve(options.buildsDir);
     if (!fs.existsSync(buildsDir)) {
-      const result: CleanResult = {
-        status: 'failed',
-        stage: 'clean',
-        reason_codes: ['BUILDS_DIR_NOT_FOUND'],
-        hint: [`Builds directory not found: ${buildsDir}`]
-      };
-      console.log(JSON.stringify(result, null, 2));
+      receipt.ok = false;
+      receipt.errors.push(`Builds directory not found: ${buildsDir}`);
+      receipt.reason_codes = ['BUILDS_DIR_NOT_FOUND'];
+      emitOutput();
       process.exit(1);
     }
     
-    // Find all subdirectories that look like build roots
     const entries = fs.readdirSync(buildsDir, { withFileTypes: true });
     for (const entry of entries) {
       if (entry.isDirectory()) {
         const potentialRoot = path.join(buildsDir, entry.name);
-        // Check if it has axion/ or manifest.json
         if (fs.existsSync(path.join(potentialRoot, 'axion')) || 
             fs.existsSync(path.join(potentialRoot, 'manifest.json'))) {
           rootsToClean.push(potentialRoot);
@@ -337,28 +340,23 @@ function main(): void {
     }
     
     if (rootsToClean.length === 0) {
-      log('[INFO] No build roots found to clean', options.jsonOutput);
-      const result: CleanResult = {
-        status: 'success',
-        stage: 'clean',
-        paths_deleted: [],
-        bytes_freed: 0,
-        items_count: 0
-      };
-      console.log(JSON.stringify(result, null, 2));
+      log('[INFO] No build roots found to clean');
+      receipt.paths_deleted = [];
+      receipt.bytes_freed = 0;
+      receipt.items_count = 0;
+      emitOutput();
       return;
     }
   } else {
-    // Default: clean current directory
     rootsToClean.push(process.cwd());
   }
 
-  log(`[INFO] Cleaning ${rootsToClean.length} build root(s)`, options.jsonOutput);
+  log(`[INFO] Cleaning ${rootsToClean.length} build root(s)`);
   if (options.dryRun) {
-    log('[INFO] Dry run mode - no changes will be made', options.jsonOutput);
+    log('[INFO] Dry run mode - no changes will be made');
   }
   if (options.aggressive) {
-    log('[WARN] Aggressive mode - may delete docs artifacts', options.jsonOutput);
+    log('[WARN] Aggressive mode - may delete docs artifacts');
   }
 
   let totalBytesFreed = 0;
@@ -366,42 +364,44 @@ function main(): void {
   const allDeletedPaths: string[] = [];
 
   for (const root of rootsToClean) {
-    log(`\n[INFO] Scanning: ${root}`, options.jsonOutput);
+    log(`\n[INFO] Scanning: ${root}`);
     
     const { dirs, files } = findCleanableItems(root, options);
     const itemCount = dirs.length + files.length;
     
     if (itemCount === 0) {
-      log('  Nothing to clean', options.jsonOutput);
+      log('  Nothing to clean');
       continue;
     }
     
-    log(`  Found ${dirs.length} directories, ${files.length} files to clean`, options.jsonOutput);
+    log(`  Found ${dirs.length} directories, ${files.length} files to clean`);
     
-    const bytesFreed = deleteItems(dirs, files, options.dryRun, options.jsonOutput);
+    const bytesFreed = deleteItems(dirs, files, options.dryRun);
     totalBytesFreed += bytesFreed;
     totalItemsDeleted += itemCount;
     allDeletedPaths.push(...dirs, ...files);
   }
 
-  log('\n' + '─'.repeat(50), options.jsonOutput);
-  log(`Total: ${totalItemsDeleted} items, ${formatBytes(totalBytesFreed)} ${options.dryRun ? 'would be ' : ''}freed`, options.jsonOutput);
-  log('', options.jsonOutput);
+  log('\n' + '─'.repeat(50));
+  log(`Total: ${totalItemsDeleted} items, ${formatBytes(totalBytesFreed)} ${options.dryRun ? 'would be ' : ''}freed`);
+  log('');
 
-  const result: CleanResult = {
-    status: 'success',
-    stage: 'clean',
-    paths_deleted: options.dryRun ? [] : allDeletedPaths,
-    bytes_freed: totalBytesFreed,
-    items_count: totalItemsDeleted
-  };
+  receipt.paths_deleted = options.dryRun ? [] : allDeletedPaths;
+  receipt.bytes_freed = totalBytesFreed;
+  receipt.items_count = totalItemsDeleted;
 
   if (options.dryRun) {
-    result.dry_run = true;
-    result.hint = [`Would delete ${totalItemsDeleted} items, freeing ${formatBytes(totalBytesFreed)}`];
+    receipt.hint = [`Would delete ${totalItemsDeleted} items, freeing ${formatBytes(totalBytesFreed)}`];
   }
 
-  console.log(JSON.stringify(result, null, 2));
+  emitOutput();
 }
 
-main();
+try {
+  main();
+} catch (err: any) {
+  receipt.ok = false;
+  receipt.errors.push(err?.message ?? String(err));
+  emitOutput();
+  process.exit(1);
+}

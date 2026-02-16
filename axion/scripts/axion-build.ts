@@ -21,6 +21,45 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+const receipt = {
+  stage: 'build',
+  ok: true,
+  modulesProcessed: [] as string[],
+  createdFiles: [] as string[],
+  modifiedFiles: [] as string[],
+  skippedFiles: [] as string[],
+  warnings: [] as string[],
+  errors: [] as string[],
+  elapsedMs: 0,
+  dryRun,
+};
+
+function emitOutput() {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    return;
+  }
+  if (receipt.ok) {
+    console.log(JSON.stringify({
+      status: 'success',
+      stage: 'build',
+      app_path: receipt.createdFiles[0] || undefined,
+      modules_implemented: receipt.modulesProcessed,
+    }, null, 2));
+  } else {
+    console.log(JSON.stringify({
+      status: 'failed',
+      stage: 'build',
+      errors: receipt.errors,
+    }, null, 2));
+  }
+}
+
 let AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
 let WORKSPACE_ROOT = AXION_ROOT;
 let STAGE_MARKERS_PATH = path.join(AXION_ROOT, 'registry', 'stage_markers.json');
@@ -138,7 +177,6 @@ function main() {
   const buildRootIdx = args.indexOf('--build-root');
   const projectNameIdx = args.indexOf('--project-name');
   const overrideFlag = args.includes('--override');
-  const jsonFlag = args.includes('--json');
 
   const isTwoRootMode = buildRootIdx !== -1 && projectNameIdx !== -1;
 
@@ -150,30 +188,37 @@ function main() {
     projectName = args[projectNameIdx + 1];
     setupTwoRootPaths(buildRoot, projectName);
 
-    if (!jsonFlag) {
+    if (!jsonMode) {
       console.log('\n[AXION] Build (Two-Root Mode)\n');
       console.log(`[INFO] Build root: ${buildRoot}`);
       console.log(`[INFO] Project: ${projectName}`);
       console.log(`[INFO] Workspace: ${WORKSPACE_ROOT}`);
     }
   } else {
-    if (!jsonFlag) {
+    if (!jsonMode) {
       console.log('\n[AXION] Build\n');
     }
   }
   
   if (!isScaffoldComplete() && !overrideFlag) {
-    const result: BuildResult = {
-      status: 'blocked_by',
-      stage: 'build',
-      missing: ['scaffold-app'],
-      hint: [
-        'build blocked unless scaffold-app complete',
-        'Run scaffold-app first',
-        'Or use --override flag',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.errors.push('build blocked unless scaffold-app complete');
+    receipt.warnings.push('Run scaffold-app first', 'Or use --override flag');
+    if (!jsonMode) {
+      const result: BuildResult = {
+        status: 'blocked_by',
+        stage: 'build',
+        missing: ['scaffold-app'],
+        hint: [
+          'build blocked unless scaffold-app complete',
+          'Run scaffold-app first',
+          'Or use --override flag',
+        ],
+      };
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      emitOutput();
+    }
     process.exit(1);
   }
   
@@ -182,34 +227,58 @@ function main() {
   }
   
   if (!appPath || !fs.existsSync(appPath)) {
-    const result: BuildResult = {
-      status: 'failed',
-      stage: 'build',
-      hint: [
-        'Could not find app directory',
-        'Use --app-path to specify location',
-        'Or run scaffold-app first',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.errors.push('Could not find app directory');
+    receipt.warnings.push('Use --app-path to specify location', 'Or run scaffold-app first');
+    if (!jsonMode) {
+      const result: BuildResult = {
+        status: 'failed',
+        stage: 'build',
+        hint: [
+          'Could not find app directory',
+          'Use --app-path to specify location',
+          'Or run scaffold-app first',
+        ],
+      };
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      emitOutput();
+    }
     process.exit(1);
   }
   
   const docs = getLockedDocs();
   if (docs.length === 0) {
-    const result: BuildResult = {
-      status: 'failed',
-      stage: 'build',
-      hint: [`No locked documentation found in ${DOMAINS_PATH}`],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.errors.push(`No locked documentation found in ${DOMAINS_PATH}`);
+    if (!jsonMode) {
+      const result: BuildResult = {
+        status: 'failed',
+        stage: 'build',
+        hint: [`No locked documentation found in ${DOMAINS_PATH}`],
+      };
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      emitOutput();
+    }
     process.exit(1);
   }
+
+  receipt.modulesProcessed = docs.map(d => path.basename(path.dirname(d)));
   
-  if (!jsonFlag) {
+  if (!jsonMode) {
     console.log(`App path: ${appPath}`);
     console.log(`Docs: ${docs.length} modules`);
     console.log('');
+  }
+
+  if (dryRun) {
+    if (!jsonMode) {
+      console.log('[DRY-RUN] Would generate build prompt and write stage markers.');
+      console.log(`[DRY-RUN] Modules: ${receipt.modulesProcessed.join(', ')}`);
+    }
+    emitOutput();
+    return;
   }
   
   const buildPrompt = generateBuildPrompt(appPath, docs);
@@ -219,8 +288,9 @@ function main() {
   }
   const promptPath = path.join(registryDir, 'build_prompt.md');
   fs.writeFileSync(promptPath, buildPrompt);
+  receipt.createdFiles.push(promptPath);
   
-  if (!jsonFlag) {
+  if (!jsonMode) {
     console.log(`[INFO] Build prompt written to: ${promptPath}`);
     console.log('');
     console.log('[INFO] Build stage prepares the prompt for AI implementation.');
@@ -237,14 +307,14 @@ function main() {
   };
   saveStageMarkers(markers);
   
-  const result: BuildResult = {
-    status: 'success',
-    stage: 'build',
-    app_path: appPath,
-    modules_implemented: docs.map(d => path.basename(path.dirname(d))),
-  };
-  
-  console.log(JSON.stringify(result, null, 2));
+  emitOutput();
 }
 
-main();
+try {
+  main();
+} catch (err: any) {
+  receipt.ok = false;
+  receipt.errors.push(err?.message || String(err));
+  emitOutput();
+  process.exit(1);
+}

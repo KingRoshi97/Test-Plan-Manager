@@ -9,6 +9,7 @@
  *   node --import tsx axion/scripts/axion-validate-templates.ts
  *   node --import tsx axion/scripts/axion-validate-templates.ts --root ./my-workspace
  *   node --import tsx axion/scripts/axion-validate-templates.ts --strict --json
+ *   node --import tsx axion/scripts/axion-validate-templates.ts --dry-run
  */
 
 import * as fs from 'fs';
@@ -19,6 +20,45 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const AXION_ROOT = path.resolve(__dirname, '..');
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLI Flags
+// ─────────────────────────────────────────────────────────────────────────────
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Standard Receipt
+// ─────────────────────────────────────────────────────────────────────────────
+
+const receipt: {
+  ok: boolean;
+  script: string;
+  errors: string[];
+  warnings: string[];
+  elapsedMs: number;
+  dryRun: boolean;
+  summary: string;
+  validationResult: any;
+} = {
+  ok: true,
+  script: 'axion-validate-templates',
+  errors: [],
+  warnings: [],
+  elapsedMs: 0,
+  dryRun,
+  summary: '',
+  validationResult: null,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -65,23 +105,20 @@ interface TemplateValidationResult {
 // Utility Functions
 // ─────────────────────────────────────────────────────────────────────────────
 
-function parseArgs(): { root?: string; strict: boolean; json: boolean } {
+function parseArgs(): { root?: string; strict: boolean } {
   const args = process.argv.slice(2);
   let root: string | undefined;
   let strict = false;
-  let json = false;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--root' && args[i + 1]) {
       root = args[++i];
     } else if (args[i] === '--strict') {
       strict = true;
-    } else if (args[i] === '--json') {
-      json = true;
     }
   }
 
-  return { root, strict, json };
+  return { root, strict };
 }
 
 function log(status: CheckStatus | 'SKIP', message: string): void {
@@ -353,7 +390,14 @@ function checkMissingDocTypes(domainsDir: string): { status: CheckStatus; domain
 // ─────────────────────────────────────────────────────────────────────────────
 
 function main(): void {
-  const { root, strict, json } = parseArgs();
+  const { root, strict } = parseArgs();
+
+  if (dryRun) {
+    if (!jsonMode) console.log('[DRY-RUN] axion-validate-templates would run validation checks.');
+    receipt.summary = 'Dry-run mode — no validation performed.';
+    emitOutput();
+    process.exit(0);
+  }
 
   const workspaceRoot = root ? path.resolve(root) : undefined;
 
@@ -365,7 +409,6 @@ function main(): void {
 
   const hints: string[] = [];
 
-  // Scan template files and domain docs for anchors
   const templateFiles = dirExists(templatesDir)
     ? collectFiles(templatesDir, /\.template\.md$/)
     : [];
@@ -376,12 +419,12 @@ function main(): void {
   const allMdFiles = [...templateFiles, ...domainMdFiles];
 
   if (!dirExists(templatesDir)) {
-    if (!json) log('SKIP', 'Templates directory not found — skipping anchor checks');
+    if (!jsonMode) log('SKIP', 'Templates directory not found — skipping anchor checks');
     hints.push('Create axion/templates/ with .template.md files');
   }
 
   if (!dirExists(domainsDir)) {
-    if (!json) log('SKIP', 'Domains directory not found — skipping domain checks');
+    if (!jsonMode) log('SKIP', 'Domains directory not found — skipping domain checks');
     hints.push('Create domains/ directory or use --root to specify workspace');
   }
 
@@ -389,7 +432,7 @@ function main(): void {
   const anchors = scanAnchors(allMdFiles);
   const duplicateResult = checkDuplicateAnchors(anchors);
 
-  if (!json) {
+  if (!jsonMode) {
     if (duplicateResult.status === 'PASS') {
       log('PASS', 'No duplicate anchors found');
     } else {
@@ -403,7 +446,7 @@ function main(): void {
   // 2. Check orphaned anchors
   const orphanResult = checkOrphanedAnchors(anchors, scriptsDir);
 
-  if (!json) {
+  if (!jsonMode) {
     if (orphanResult.status === 'PASS') {
       log('PASS', 'No orphaned anchors found');
     } else {
@@ -418,7 +461,7 @@ function main(): void {
   // 3. Check UNKNOWN placeholders
   const unknownResult = checkUnknownPlaceholders(domainsDir);
 
-  if (!json) {
+  if (!jsonMode) {
     if (unknownResult.status === 'PASS') {
       log('PASS', 'No surviving UNKNOWN placeholders');
     } else {
@@ -433,7 +476,7 @@ function main(): void {
   // 4. Check missing doc types
   const missingDocsResult = checkMissingDocTypes(domainsDir);
 
-  if (!json) {
+  if (!jsonMode) {
     if (missingDocsResult.status === 'PASS') {
       log('PASS', 'All domains have required doc types');
     } else {
@@ -488,15 +531,41 @@ function main(): void {
     result.hint = hints;
   }
 
-  if (!json) {
+  if (!jsonMode) {
     console.error('');
     console.error(`Overall: ${overallStatus}${strict ? ' (strict mode)' : ''}`);
     console.error('');
   }
 
-  console.log(JSON.stringify(result, null, 2));
+  // Populate receipt
+  receipt.ok = overallStatus !== 'FAIL';
+  receipt.summary = summary;
+  receipt.validationResult = result;
 
+  if (overallStatus === 'FAIL') {
+    receipt.errors.push(summary);
+  }
+  if (checkStatuses.includes('WARN')) {
+    receipt.warnings.push(...parts.filter(p => p.includes('orphaned') || p.includes('missing docs')));
+  }
+
+  if (!jsonMode) {
+    console.log(JSON.stringify(result, null, 2));
+  }
+
+  emitOutput();
   process.exit(overallStatus === 'FAIL' ? 1 : 0);
 }
 
-main();
+try {
+  main();
+} catch (err: any) {
+  receipt.ok = false;
+  receipt.errors.push(err?.message || String(err));
+  receipt.summary = `Fatal error: ${err?.message || String(err)}`;
+  emitOutput();
+  if (!jsonMode) {
+    console.error(`[FATAL] ${err?.message || err}`);
+  }
+  process.exit(1);
+}

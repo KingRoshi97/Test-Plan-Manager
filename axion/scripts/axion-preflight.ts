@@ -8,6 +8,8 @@
  * Usage:
  *   node --import tsx axion/scripts/axion-preflight.ts
  *   node --import tsx axion/scripts/axion-preflight.ts --root <path>
+ *   node --import tsx axion/scripts/axion-preflight.ts --json
+ *   node --import tsx axion/scripts/axion-preflight.ts --dry-run
  */
 
 import * as fs from 'fs';
@@ -18,7 +20,26 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Reason codes for preflight failures
+const args = process.argv.slice(2);
+const jsonMode = args.includes('--json');
+const dryRun = args.includes('--dry-run');
+const startTime = Date.now();
+
+const receipt: Record<string, any> = {
+  script: 'axion-preflight',
+  ok: true,
+  dryRun,
+  stage: 'preflight',
+  root: '',
+  checks: {} as Record<string, string>,
+  passed: 0,
+  failed: 0,
+  reason_codes: [] as string[],
+  hints: [] as string[],
+  errors: [] as string[],
+  elapsedMs: 0,
+};
+
 const REASON_CODES = {
   BAD_WORKDIR: 'Working directory is not a valid AXION workspace',
   MISSING_DEPENDENCY: 'Required runtime dependency is missing',
@@ -48,7 +69,14 @@ interface PreflightResult {
 }
 
 function log(level: 'PASS' | 'FAIL' | 'INFO' | 'WARN', message: string): void {
-  console.log(`[${level}] ${message}`);
+  if (!jsonMode) console.log(`[${level}] ${message}`);
+}
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
 }
 
 function checkNodeRuntime(): CheckResult {
@@ -69,14 +97,10 @@ function checkNodeRuntime(): CheckResult {
 }
 
 function checkTsxAvailable(_root: string): CheckResult {
-  // Check if tsx is available in the host environment (via npx or PATH)
-  // This is more flexible than checking local node_modules since kits
-  // don't need tsx installed locally - they rely on the host environment
   try {
     execSync('npx tsx --version', { stdio: 'pipe', timeout: 10000 });
     return { name: 'tsx', status: 'ok' };
   } catch {
-    // Fallback: check if tsx is in PATH
     try {
       execSync('which tsx', { stdio: 'pipe' });
       return { name: 'tsx', status: 'ok' };
@@ -151,7 +175,6 @@ function checkDomainsJson(root: string): CheckResult {
     const content = fs.readFileSync(domainsPath, 'utf-8');
     const data = JSON.parse(content);
     
-    // Validate required fields
     if (!data.modules || !Array.isArray(data.modules)) {
       return {
         name: 'domains_json',
@@ -191,7 +214,6 @@ function checkPresetsJson(root: string): CheckResult {
     const content = fs.readFileSync(presetsPath, 'utf-8');
     const data = JSON.parse(content);
     
-    // Validate required fields
     if (!data.stage_plans || typeof data.stage_plans !== 'object') {
       return {
         name: 'presets_json',
@@ -269,7 +291,6 @@ function checkTemplatesDirectory(root: string): CheckResult {
 function checkOutputDirWritable(root: string, dirName: string): CheckResult {
   const dirPath = path.join(root, dirName);
   
-  // Check if directory exists
   if (!fs.existsSync(dirPath)) {
     return {
       name: `${dirName}_writable`,
@@ -280,7 +301,6 @@ function checkOutputDirWritable(root: string, dirName: string): CheckResult {
     };
   }
   
-  // Check if writable by attempting to create a temp file
   const testFile = path.join(dirPath, `.preflight_test_${Date.now()}`);
   try {
     fs.writeFileSync(testFile, 'test');
@@ -319,44 +339,39 @@ function checkDomainsDir(root: string, twoRootMode: boolean): CheckResult {
  */
 function runAllChecks(systemRoot: string, workspaceRoot: string, twoRootMode: boolean): CheckResult[] {
   return [
-    // Runtime checks (don't depend on paths)
     checkNodeRuntime(),
     checkTsxAvailable(systemRoot),
     
-    // System folder checks (always against systemRoot)
     checkAxionDirectory(systemRoot),
     checkConfigDirectory(systemRoot),
     checkDomainsJson(systemRoot),
     checkPresetsJson(systemRoot),
     checkTemplatesDirectory(systemRoot),
     
-    // Output directory checks (against workspaceRoot)
     checkRegistryDir(workspaceRoot, twoRootMode),
     checkDomainsDir(workspaceRoot, twoRootMode),
   ];
 }
 
 function main(): void {
-  const args = process.argv.slice(2);
-  
-  // Parse --root argument (workspace root for outputs)
-  const rootIdx = args.indexOf('--root');
-  let root = process.cwd();
-  if (rootIdx !== -1 && args[rootIdx + 1]) {
-    root = path.resolve(args[rootIdx + 1]);
-  }
-  
-  // Parse --build-root argument (contains axion/ system folder)
-  // If not provided, we assume legacy mode where root contains axion/
-  const buildRootIdx = args.indexOf('--build-root');
-  let buildRoot: string | null = null;
-  if (buildRootIdx !== -1 && args[buildRootIdx + 1]) {
-    buildRoot = path.resolve(args[buildRootIdx + 1]);
-  }
-  
-  // Handle help
-  if (args.includes('--help') || args.includes('-h')) {
-    console.log(`
+  try {
+    const rootIdx = args.indexOf('--root');
+    let root = process.cwd();
+    if (rootIdx !== -1 && args[rootIdx + 1]) {
+      root = path.resolve(args[rootIdx + 1]);
+    }
+    
+    const buildRootIdx = args.indexOf('--build-root');
+    let buildRoot: string | null = null;
+    if (buildRootIdx !== -1 && args[buildRootIdx + 1]) {
+      buildRoot = path.resolve(args[buildRootIdx + 1]);
+    }
+    
+    receipt.root = root;
+    
+    if (args.includes('--help') || args.includes('-h')) {
+      if (!jsonMode) {
+        console.log(`
 AXION Preflight Validation
 
 Usage:
@@ -369,6 +384,8 @@ Usage:
 Options:
   --root <path>         Workspace root for outputs (default: current directory)
   --build-root <path>   Build root containing axion/ system folder (two-root mode)
+  --json                Output structured JSON receipt only
+  --dry-run             Run checks without side effects
   --help                Show this help
 
 Checks performed:
@@ -382,67 +399,89 @@ Checks performed:
   - registry/ writable (in workspace root)
   - domains/ writable (in workspace root)
 `);
-    process.exit(0);
-  }
-  
-  console.log('\n[AXION] Preflight Validation\n');
-  
-  // Determine system root and workspace root
-  const twoRootMode = buildRoot !== null;
-  const systemRoot = twoRootMode ? buildRoot! : root;
-  const workspaceRoot = root;
-  
-  if (twoRootMode) {
-    log('INFO', `Mode: Two-root`);
-    log('INFO', `System root: ${systemRoot}`);
-    log('INFO', `Workspace root: ${workspaceRoot}`);
-  } else {
-    log('INFO', `Mode: Legacy (single root)`);
-    log('INFO', `Root: ${root}`);
-  }
-  console.log('');
-  
-  const checks = runAllChecks(systemRoot, workspaceRoot, twoRootMode);
-  const failed = checks.filter(c => c.status === 'fail');
-  const passed = checks.filter(c => c.status === 'ok');
-  
-  // Print results
-  for (const check of checks) {
-    if (check.status === 'ok') {
-      log('PASS', `${check.name}${check.message ? ` (${check.message})` : ''}`);
+      }
+      process.exit(0);
+    }
+    
+    if (!jsonMode) console.log('\n[AXION] Preflight Validation\n');
+    
+    const twoRootMode = buildRoot !== null;
+    const systemRoot = twoRootMode ? buildRoot! : root;
+    const workspaceRoot = root;
+    
+    if (twoRootMode) {
+      log('INFO', `Mode: Two-root`);
+      log('INFO', `System root: ${systemRoot}`);
+      log('INFO', `Workspace root: ${workspaceRoot}`);
     } else {
-      log('FAIL', `${check.name}: ${check.message}`);
-      if (check.hint) {
-        log('INFO', `  Hint: ${check.hint}`);
+      log('INFO', `Mode: Legacy (single root)`);
+      log('INFO', `Root: ${root}`);
+    }
+    if (!jsonMode) console.log('');
+    
+    if (dryRun) {
+      log('INFO', 'Dry-run mode: checks will run but no side effects');
+      if (!jsonMode) console.log('');
+    }
+    
+    const checks = runAllChecks(systemRoot, workspaceRoot, twoRootMode);
+    const failed = checks.filter(c => c.status === 'fail');
+    const passed = checks.filter(c => c.status === 'ok');
+    
+    for (const check of checks) {
+      if (check.status === 'ok') {
+        log('PASS', `${check.name}${check.message ? ` (${check.message})` : ''}`);
+        receipt.checks[check.name] = 'ok';
+      } else {
+        log('FAIL', `${check.name}: ${check.message}`);
+        if (check.hint) {
+          log('INFO', `  Hint: ${check.hint}`);
+        }
+        receipt.checks[check.name] = 'fail';
       }
     }
-  }
-  
-  console.log('');
-  
-  // Build result
-  const result: PreflightResult = {
-    status: failed.length === 0 ? 'success' : 'failed',
-    stage: 'preflight',
-    root,
-  };
-  
-  if (failed.length === 0) {
-    result.checks = {};
-    for (const check of passed) {
-      result.checks[check.name] = 'ok';
+    
+    if (!jsonMode) console.log('');
+    
+    receipt.passed = passed.length;
+    receipt.failed = failed.length;
+    
+    const result: PreflightResult = {
+      status: failed.length === 0 ? 'success' : 'failed',
+      stage: 'preflight',
+      root,
+    };
+    
+    if (failed.length === 0) {
+      result.checks = {};
+      for (const check of passed) {
+        result.checks[check.name] = 'ok';
+      }
+      log('PASS', 'All preflight checks passed');
+      receipt.ok = true;
+    } else {
+      result.reason_codes = [...new Set(failed.map(f => f.reason_code!))];
+      result.hint = failed.map(f => f.hint).filter((h): h is string => !!h);
+      receipt.reason_codes = result.reason_codes;
+      receipt.hints = result.hint;
+      receipt.ok = false;
+      log('FAIL', `${failed.length} preflight check(s) failed`);
     }
-    log('PASS', 'All preflight checks passed');
-  } else {
-    result.reason_codes = [...new Set(failed.map(f => f.reason_code!))];
-    result.hint = failed.map(f => f.hint).filter((h): h is string => !!h);
-    log('FAIL', `${failed.length} preflight check(s) failed`);
+    
+    if (!jsonMode) {
+      console.log('');
+      console.log(JSON.stringify(result, null, 2));
+    }
+    
+    emitOutput();
+    process.exit(failed.length === 0 ? 0 : 1);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    receipt.errors.push(msg);
+    receipt.ok = false;
+    emitOutput();
+    process.exit(1);
   }
-  
-  console.log('');
-  console.log(JSON.stringify(result, null, 2));
-  
-  process.exit(failed.length === 0 ? 0 : 1);
 }
 
 main();

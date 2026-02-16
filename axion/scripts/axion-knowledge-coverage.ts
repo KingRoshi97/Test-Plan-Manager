@@ -9,6 +9,7 @@
  *   node --import tsx axion/scripts/axion-knowledge-coverage.ts
  *   node --import tsx axion/scripts/axion-knowledge-coverage.ts --stack default-web-saas
  *   node --import tsx axion/scripts/axion-knowledge-coverage.ts --strict --json
+ *   node --import tsx axion/scripts/axion-knowledge-coverage.ts --dry-run
  */
 
 import * as fs from 'fs';
@@ -21,6 +22,26 @@ const __dirname = path.dirname(__filename);
 const AXION_ROOT = path.resolve(__dirname, '..');
 
 const EXCLUDED_FILES = ['README.md', 'INDEX.md'];
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+const receipt: Record<string, any> = {
+  script: 'axion-knowledge-coverage',
+  ok: true,
+  dryRun,
+  errors: [] as string[],
+  result: null as any,
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
 
 type CheckStatus = 'PASS' | 'FAIL' | 'WARN';
 
@@ -68,23 +89,20 @@ interface KnowledgeCoverageResult {
   hint?: string[];
 }
 
-function parseArgs(): { stack?: string; strict: boolean; json: boolean } {
+function parseArgs(): { stack?: string; strict: boolean } {
   const args = process.argv.slice(2);
   let stack: string | undefined;
   let strict = false;
-  let json = false;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--stack' && args[i + 1]) {
       stack = args[++i];
     } else if (args[i] === '--strict') {
       strict = true;
-    } else if (args[i] === '--json') {
-      json = true;
     }
   }
 
-  return { stack, strict, json };
+  return { stack, strict };
 }
 
 function log(status: CheckStatus | 'INFO', msg: string): void {
@@ -132,12 +150,21 @@ function collectAllReferencedFiles(knowledgeMap: any): Set<string> {
 }
 
 function main(): void {
-  const { stack, strict, json } = parseArgs();
+  const { stack, strict } = parseArgs();
   const knowledgeMapPath = path.join(AXION_ROOT, 'config', 'knowledge-map.json');
   const knowledgeDir = path.join(AXION_ROOT, 'knowledge');
   const hints: string[] = [];
 
-  if (!json) {
+  if (dryRun) {
+    receipt.result = { wouldCheck: knowledgeMapPath, knowledgeDir };
+    if (!jsonMode) {
+      console.log(`[DRY-RUN] Would analyze knowledge coverage from ${knowledgeMapPath}`);
+    }
+    emitOutput();
+    return;
+  }
+
+  if (!jsonMode) {
     console.error('\n\x1b[1m[AXION] Knowledge Coverage Analysis\x1b[0m\n');
   }
 
@@ -159,8 +186,12 @@ function main(): void {
       summary: 'knowledge-map.json not found — cannot perform coverage analysis',
       hint: [`Expected at: ${knowledgeMapPath}`],
     };
-    if (!json) log('FAIL', result.summary);
-    console.log(JSON.stringify(result, null, 2));
+    if (!jsonMode) log('FAIL', result.summary);
+    receipt.ok = false;
+    receipt.result = result;
+    receipt.errors.push(result.summary);
+    if (!jsonMode) console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
@@ -185,8 +216,12 @@ function main(): void {
       summary: `knowledge-map.json is invalid JSON: ${e.message}`,
       hint: ['Fix JSON syntax in axion/config/knowledge-map.json'],
     };
-    if (!json) log('FAIL', result.summary);
-    console.log(JSON.stringify(result, null, 2));
+    if (!jsonMode) log('FAIL', result.summary);
+    receipt.ok = false;
+    receipt.result = result;
+    receipt.errors.push(result.summary);
+    if (!jsonMode) console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
@@ -208,8 +243,12 @@ function main(): void {
       summary: 'axion/knowledge/ directory not found',
       hint: [`Expected at: ${knowledgeDir}`],
     };
-    if (!json) log('FAIL', result.summary);
-    console.log(JSON.stringify(result, null, 2));
+    if (!jsonMode) log('FAIL', result.summary);
+    receipt.ok = false;
+    receipt.result = result;
+    receipt.errors.push(result.summary);
+    if (!jsonMode) console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
@@ -220,13 +259,13 @@ function main(): void {
 
   const allReferencedFiles = collectAllReferencedFiles(knowledgeMap);
 
-  if (!json) log('INFO', `Found ${allKnowledgeFiles.length} knowledge files`);
-  if (!json) log('INFO', `Found ${allReferencedFiles.size} unique references in knowledge-map.json`);
+  if (!jsonMode) log('INFO', `Found ${allKnowledgeFiles.length} knowledge files`);
+  if (!jsonMode) log('INFO', `Found ${allReferencedFiles.size} unique references in knowledge-map.json`);
 
   // 1. Dead references
   const deadRefs = [...allReferencedFiles].filter((f) => !knowledgeFileSet.has(f)).sort();
   const deadRefStatus: CheckStatus = deadRefs.length > 0 ? 'FAIL' : 'PASS';
-  if (!json) {
+  if (!jsonMode) {
     if (deadRefs.length > 0) {
       log('FAIL', `Dead references: ${deadRefs.join(', ')}`);
     } else {
@@ -237,7 +276,7 @@ function main(): void {
   // 2. Unmapped files
   const unmappedFiles = allKnowledgeFiles.filter((f) => !allReferencedFiles.has(f)).sort();
   const unmappedStatus: CheckStatus = unmappedFiles.length > 0 ? 'WARN' : 'PASS';
-  if (!json) {
+  if (!jsonMode) {
     if (unmappedFiles.length > 0) {
       log('WARN', `Unmapped files: ${unmappedFiles.join(', ')}`);
       hints.push('Add unmapped files to knowledge-map.json or remove them from axion/knowledge/');
@@ -271,7 +310,7 @@ function main(): void {
       missing,
     });
   }
-  if (!json) {
+  if (!jsonMode) {
     for (const entry of domainEntries) {
       if (entry.missing.length > 0) {
         log('FAIL', `Domain "${entry.domain}": missing ${entry.missing.join(', ')}`);
@@ -293,7 +332,7 @@ function main(): void {
         missing_recommended: [],
         missing_optional: [],
       };
-      if (!json) log('FAIL', `Stack "${stack}" not found in knowledge-map.json`);
+      if (!jsonMode) log('FAIL', `Stack "${stack}" not found in knowledge-map.json`);
       hints.push(`Available stacks: ${Object.keys(stackKnowledge).join(', ')}`);
     } else {
       const stackConfig = stackKnowledge[stack];
@@ -313,7 +352,7 @@ function main(): void {
         missing_optional: missingOptional,
       };
 
-      if (!json) {
+      if (!jsonMode) {
         if (missingAlways.length > 0) {
           log('FAIL', `Stack "${stack}" missing always: ${missingAlways.join(', ')}`);
         }
@@ -346,7 +385,7 @@ function main(): void {
 
     stageEntries.push({ stage, missing });
   }
-  if (!json) {
+  if (!jsonMode) {
     for (const entry of stageEntries) {
       if (entry.missing.length > 0) {
         log('WARN', `Stage "${entry.stage}": missing ${entry.missing.join(', ')}`);
@@ -370,7 +409,7 @@ function main(): void {
 
     docTypeEntries.push({ doc_type: docType, missing });
   }
-  if (!json) {
+  if (!jsonMode) {
     for (const entry of docTypeEntries) {
       if (entry.missing.length > 0) {
         log('WARN', `Doc type "${entry.doc_type}": missing ${entry.missing.join(', ')}`);
@@ -387,7 +426,6 @@ function main(): void {
   const totalUnmapped = totalFiles - totalMapped;
   const coveragePct = totalFiles > 0 ? Math.round((totalMapped / totalFiles) * 10000) / 100 : 0;
 
-  // Determine overall status
   let overallStatus: CheckStatus = 'PASS';
   if (deadRefStatus === 'FAIL' || domainStatus === 'FAIL' || stackCoverage?.status === 'FAIL') {
     overallStatus = 'FAIL';
@@ -412,7 +450,7 @@ function main(): void {
   if (unmappedFiles.length > 0) summaryParts.push(`${unmappedFiles.length} unmapped file(s)`);
   const summary = summaryParts.join(', ');
 
-  if (!json) {
+  if (!jsonMode) {
     console.error('');
     log(overallStatus, summary);
     console.error('');
@@ -443,8 +481,22 @@ function main(): void {
     result.hint = hints;
   }
 
-  console.log(JSON.stringify(result, null, 2));
+  receipt.ok = overallStatus !== 'FAIL';
+  receipt.result = result;
+
+  if (!jsonMode) console.log(JSON.stringify(result, null, 2));
+  emitOutput();
   process.exit(overallStatus === 'FAIL' ? 1 : 0);
 }
 
-main();
+try {
+  main();
+} catch (err: any) {
+  receipt.ok = false;
+  receipt.errors.push(err?.message ?? String(err));
+  emitOutput();
+  if (!jsonMode) {
+    console.error(`[FATAL] ${err?.message ?? err}`);
+  }
+  process.exit(1);
+}

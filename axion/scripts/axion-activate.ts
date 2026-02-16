@@ -35,19 +35,67 @@ import { writeJsonAtomic } from './lib/atomic-writer.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface ActivateResult {
-  status: 'success' | 'failed' | 'blocked_by';
-  stage: 'activate';
-  active_build_root?: string;
-  project_name?: string;
-  app_path?: string;
-  pointer_path?: string;
-  activated_at?: string;
-  dry_run?: boolean;
-  reason_codes?: string[];
-  hint?: string[];
-  gates_passed?: string[];
-  gates_failed?: string[];
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+interface ActivateReceipt {
+  stage: string;
+  ok: boolean;
+  modulesProcessed: number;
+  createdFiles: string[];
+  modifiedFiles: string[];
+  skippedFiles: string[];
+  warnings: string[];
+  errors: string[];
+  elapsedMs: number;
+  dryRun: boolean;
+  summary: {
+    status: 'success' | 'failed' | 'blocked_by';
+    active_build_root?: string;
+    project_name?: string;
+    app_path?: string;
+    pointer_path?: string;
+    activated_at?: string;
+    reason_codes?: string[];
+    hint?: string[];
+    gates_passed?: string[];
+    gates_failed?: string[];
+  };
+}
+
+const receipt: ActivateReceipt = {
+  stage: 'activate',
+  ok: false,
+  modulesProcessed: 0,
+  createdFiles: [],
+  modifiedFiles: [],
+  skippedFiles: [],
+  warnings: [],
+  errors: [],
+  elapsedMs: 0,
+  dryRun,
+  summary: {
+    status: 'failed'
+  }
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  } else {
+    if (receipt.ok) {
+      console.log(`\n[PASS] Build activated successfully (${receipt.elapsedMs}ms)\n`);
+    }
+    if (receipt.summary.status === 'blocked_by') {
+      console.log(JSON.stringify(receipt.summary, null, 2));
+    } else if (!receipt.ok) {
+      console.log(JSON.stringify(receipt.summary, null, 2));
+    } else {
+      console.log(JSON.stringify(receipt.summary, null, 2));
+    }
+  }
 }
 
 interface ActivateOptions {
@@ -119,8 +167,8 @@ function parseArgs(args: string[]): ActivateOptions {
   return options;
 }
 
-function log(msg: string, jsonOutput: boolean): void {
-  if (!jsonOutput) {
+function log(msg: string): void {
+  if (!jsonMode) {
     console.log(msg);
   }
 }
@@ -148,7 +196,7 @@ function checkVerifyPass(workspaceRoot: string): boolean {
 function checkTestsPass(workspaceRoot: string): boolean | null {
   const testReportPath = path.join(workspaceRoot, 'registry', 'test_report.json');
   if (!fs.existsSync(testReportPath)) {
-    return null; // No test report means tests haven't run
+    return null;
   }
   
   try {
@@ -160,8 +208,8 @@ function checkTestsPass(workspaceRoot: string): boolean | null {
   }
 }
 
-function writeActiveBuildPointer(pointerPath: string, pointer: ActiveBuildPointer, dryRun: boolean): void {
-  if (!dryRun) {
+function writeActiveBuildPointer(pointerPath: string, pointer: ActiveBuildPointer, isDryRun: boolean): void {
+  if (!isDryRun) {
     const dir = path.dirname(pointerPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -174,28 +222,29 @@ function main(): void {
   const args = process.argv.slice(2);
   const options = parseArgs(args);
 
-  log('\n[AXION] Activate\n', options.jsonOutput);
+  log('\n[AXION] Activate\n');
 
-  // Validate required args
   if (!options.buildRoot) {
-    const result: ActivateResult = {
+    receipt.ok = false;
+    receipt.errors.push('BUILD_ROOT_MISSING');
+    receipt.summary = {
       status: 'failed',
-      stage: 'activate',
       reason_codes: ['BUILD_ROOT_MISSING'],
       hint: ['Provide --build-root <path> to specify the kit to activate']
     };
-    console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
   if (!options.projectName) {
-    const result: ActivateResult = {
+    receipt.ok = false;
+    receipt.errors.push('PROJECT_NAME_MISSING');
+    receipt.summary = {
       status: 'failed',
-      stage: 'activate',
       reason_codes: ['PROJECT_NAME_MISSING'],
       hint: ['Provide --project-name <name> to specify the project workspace']
     };
-    console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
@@ -204,103 +253,97 @@ function main(): void {
   const workspaceRoot = path.join(buildRoot, projectName);
   const appPath = path.join(workspaceRoot, 'app');
   
-  // Default pointer path is inside the build root
   const pointerPath = options.pointerPath 
     ? path.resolve(options.pointerPath)
     : path.join(buildRoot, 'ACTIVE_BUILD.json');
 
-  log(`[INFO] Build root: ${buildRoot}`, options.jsonOutput);
-  log(`[INFO] Project name: ${projectName}`, options.jsonOutput);
-  log(`[INFO] Workspace root: ${workspaceRoot}`, options.jsonOutput);
-  log(`[INFO] App path: ${appPath}`, options.jsonOutput);
-  log(`[INFO] Pointer path: ${pointerPath}`, options.jsonOutput);
+  log(`[INFO] Build root: ${buildRoot}`);
+  log(`[INFO] Project name: ${projectName}`);
+  log(`[INFO] Workspace root: ${workspaceRoot}`);
+  log(`[INFO] App path: ${appPath}`);
+  log(`[INFO] Pointer path: ${pointerPath}`);
 
-  // Check workspace exists
   if (!fs.existsSync(workspaceRoot)) {
-    const result: ActivateResult = {
+    receipt.ok = false;
+    receipt.errors.push('WORKSPACE_NOT_FOUND');
+    receipt.summary = {
       status: 'failed',
-      stage: 'activate',
       reason_codes: ['WORKSPACE_NOT_FOUND'],
       hint: [
         `Workspace not found at ${workspaceRoot}`,
         'Run workspace-create or prepare-root first'
       ]
     };
-    console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
-  // Gate checks
   const gatesPassed: string[] = [];
   const gatesFailed: string[] = [];
   const hints: string[] = [];
 
-  // Gate 1: Lock exists
   const lockExists = checkLockExists(workspaceRoot);
   if (lockExists) {
     gatesPassed.push('docs_locked');
-    log('[PASS] Docs are locked', options.jsonOutput);
+    log('[PASS] Docs are locked');
   } else {
     gatesFailed.push('docs_locked');
     hints.push('Run lock stage to lock docs before activation');
-    log('[FAIL] Docs are not locked', options.jsonOutput);
+    log('[FAIL] Docs are not locked');
   }
 
-  // Gate 2: Verify PASS
   const verifyPass = checkVerifyPass(workspaceRoot);
   if (verifyPass) {
     gatesPassed.push('verify_pass');
-    log('[PASS] Verify passed', options.jsonOutput);
+    log('[PASS] Verify passed');
   } else {
     gatesFailed.push('verify_pass');
     hints.push('Run verify stage and ensure all checks pass');
-    log('[FAIL] Verify did not pass', options.jsonOutput);
+    log('[FAIL] Verify did not pass');
   }
 
-  // Gate 3: Tests PASS (if test_report.json exists, tests must pass unless --allow-no-tests)
   let testsPass: boolean | null = checkTestsPass(workspaceRoot);
   if (testsPass === null) {
-    // No test report exists
     if (options.allowNoTests) {
-      log('[SKIP] Tests not run (--allow-no-tests)', options.jsonOutput);
+      log('[SKIP] Tests not run (--allow-no-tests)');
     } else {
       gatesFailed.push('tests_not_run');
       hints.push('Run test stage before activation, or use --allow-no-tests to skip');
-      log('[FAIL] Tests have not run', options.jsonOutput);
+      log('[FAIL] Tests have not run');
     }
   } else if (testsPass === true) {
     gatesPassed.push('tests_pass');
-    log('[PASS] Tests passed', options.jsonOutput);
+    log('[PASS] Tests passed');
   } else {
-    // Tests ran but failed
     if (options.allowNoTests) {
-      log('[WARN] Tests failed (--allow-no-tests, continuing)', options.jsonOutput);
+      receipt.warnings.push('Tests failed but --allow-no-tests is set, continuing');
+      log('[WARN] Tests failed (--allow-no-tests, continuing)');
     } else {
       gatesFailed.push('tests_fail');
       hints.push('Fix failing tests before activation');
-      log('[FAIL] Tests failed', options.jsonOutput);
+      log('[FAIL] Tests failed');
     }
   }
 
-  // Check gates
   if (gatesFailed.length > 0 && !options.force) {
-    const result: ActivateResult = {
+    receipt.ok = false;
+    receipt.warnings.push(...gatesFailed.map(g => `Gate failed: ${g}`));
+    receipt.summary = {
       status: 'blocked_by',
-      stage: 'activate',
       reason_codes: gatesFailed.map(g => g.toUpperCase() + '_FAILED'),
       hint: hints,
       gates_passed: gatesPassed,
       gates_failed: gatesFailed
     };
-    console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
   if (options.force && gatesFailed.length > 0) {
-    log(`[WARN] Forcing activation despite failed gates: ${gatesFailed.join(', ')}`, options.jsonOutput);
+    receipt.warnings.push(`Forcing activation despite failed gates: ${gatesFailed.join(', ')}`);
+    log(`[WARN] Forcing activation despite failed gates: ${gatesFailed.join(', ')}`);
   }
 
-  // Create pointer
   const activatedAt = new Date().toISOString();
   const pointer: ActiveBuildPointer = {
     active_build_root: buildRoot,
@@ -315,11 +358,21 @@ function main(): void {
 
   writeActiveBuildPointer(pointerPath, pointer, options.dryRun);
 
-  log('\n[PASS] Build activated successfully\n', options.jsonOutput);
+  if (!options.dryRun) {
+    const pointerExists = fs.existsSync(pointerPath);
+    if (pointerExists) {
+      receipt.modifiedFiles.push(pointerPath);
+    } else {
+      receipt.createdFiles.push(pointerPath);
+    }
+  } else {
+    receipt.skippedFiles.push(pointerPath);
+  }
 
-  const result: ActivateResult = {
+  receipt.ok = true;
+  receipt.modulesProcessed = 1;
+  receipt.summary = {
     status: 'success',
-    stage: 'activate',
     active_build_root: buildRoot,
     project_name: projectName,
     app_path: appPath,
@@ -329,11 +382,15 @@ function main(): void {
     gates_failed: gatesFailed.length > 0 ? gatesFailed : undefined
   };
 
-  if (options.dryRun) {
-    result.dry_run = true;
-  }
-
-  console.log(JSON.stringify(result, null, 2));
+  emitOutput();
 }
 
-main();
+try {
+  main();
+} catch (err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  receipt.ok = false;
+  receipt.errors.push(message);
+  emitOutput();
+  process.exit(1);
+}

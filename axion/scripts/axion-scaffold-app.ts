@@ -29,6 +29,49 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const startTime = Date.now();
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+
+interface ScaffoldReceipt {
+  ok: boolean;
+  script: string;
+  stage: string;
+  dryRun: boolean;
+  output_path: string | null;
+  files_created: string[];
+  stack_profile: string | null;
+  errors: string[];
+  warnings: string[];
+  elapsedMs: number;
+}
+
+const receipt: ScaffoldReceipt = {
+  ok: true,
+  script: 'axion-scaffold-app',
+  stage: 'scaffold-app',
+  dryRun,
+  output_path: null,
+  files_created: [],
+  stack_profile: null,
+  errors: [],
+  warnings: [],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  } else {
+    if (receipt.ok) {
+      console.log(`\n[RECEIPT] ok=${receipt.ok} files=${receipt.files_created.length} elapsed=${receipt.elapsedMs}ms`);
+    } else {
+      console.log(`\n[RECEIPT] ok=${receipt.ok} errors=${receipt.errors.length} elapsed=${receipt.elapsedMs}ms`);
+    }
+  }
+}
+
 // Default paths (legacy mode) - will be overridden by two-root mode flags
 let AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
 let WORKSPACE_ROOT = AXION_ROOT;  // In legacy mode, same as AXION_ROOT
@@ -561,15 +604,11 @@ function writeScaffoldReport(
 function main() {
   const args = process.argv.slice(2);
   
-  // Parse flags
   const outputIdx = args.indexOf('--output');
   const buildRootIdx = args.indexOf('--build-root');
   const projectNameIdx = args.indexOf('--project-name');
   const overrideFlag = args.includes('--override');
-  const dryRunFlag = args.includes('--dry-run');
-  const jsonFlag = args.includes('--json');
   
-  // Determine mode: two-root or legacy
   const isTwoRootMode = buildRootIdx !== -1 && projectNameIdx !== -1;
   
   let outputPath: string;
@@ -579,84 +618,72 @@ function main() {
     const buildRoot = path.resolve(args[buildRootIdx + 1]);
     projectName = args[projectNameIdx + 1];
     
-    // Setup two-root paths
     setupTwoRootPaths(buildRoot, projectName);
     
-    // Output goes to workspace/app
     outputPath = path.join(WORKSPACE_ROOT, 'app');
     
-    if (!jsonFlag) {
+    if (!jsonMode) {
       console.log('\n[AXION] App Scaffolder (Two-Root Mode)\n');
       console.log(`[INFO] Build root: ${buildRoot}`);
       console.log(`[INFO] Project: ${projectName}`);
       console.log(`[INFO] Workspace: ${WORKSPACE_ROOT}`);
     }
   } else {
-    // Legacy mode
     outputPath = outputIdx !== -1 
       ? args[outputIdx + 1] 
       : path.join(process.cwd(), 'axion-app');
     
-    if (!jsonFlag) {
+    if (!jsonMode) {
       console.log('\n[AXION] App Scaffolder\n');
     }
   }
   
-  // Create workspace directory in two-root mode if it doesn't exist
+  receipt.output_path = outputPath;
+  
   if (isTwoRootMode && !fs.existsSync(WORKSPACE_ROOT)) {
     fs.mkdirSync(WORKSPACE_ROOT, { recursive: true });
-    if (!jsonFlag) {
+    if (!jsonMode) {
       console.log(`[INFO] Created workspace directory: ${WORKSPACE_ROOT}`);
     }
   }
   
   if (!isDocsLocked() && !overrideFlag) {
-    const result: ScaffoldResult = {
-      status: 'blocked_by',
-      stage: 'scaffold-app',
-      missing: ['locked docs'],
-      hint: [
-        'scaffold-app blocked unless docs are locked',
-        'Run: node --import tsx axion/scripts/axion-run.ts --preset system --plan docs:release',
-        'Or use --override flag for dev builds',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.errors.push('scaffold-app blocked unless docs are locked');
+    emitOutput();
     process.exit(1);
   }
   
   if (!isDocsLocked() && overrideFlag) {
-    if (!jsonFlag) console.log('[WARN] Running in dev_build mode (docs not locked)');
+    receipt.warnings.push('Running in dev_build mode (docs not locked)');
+    if (!jsonMode) console.log('[WARN] Running in dev_build mode (docs not locked)');
   }
   
   const profile = detectStackFromDocs();
   if (!profile) {
-    const result: ScaffoldResult = {
-      status: 'failed',
-      stage: 'scaffold-app',
-      hint: ['Could not detect stack profile from architecture docs'],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.errors.push('Could not detect stack profile from architecture docs');
+    emitOutput();
     process.exit(1);
   }
   
-  if (!jsonFlag) {
+  receipt.stack_profile = profile.id;
+  
+  if (!jsonMode) {
     console.log(`Stack: ${profile.frontend.framework} + ${profile.backend.framework} + ${profile.database.engine}`);
     console.log(`Output: ${outputPath}`);
     console.log('');
   }
   
   if (fs.existsSync(outputPath)) {
-    if (!jsonFlag) console.log('[INFO] Output directory exists, will merge/overwrite files');
+    if (!jsonMode) console.log('[INFO] Output directory exists, will merge/overwrite files');
   }
   
-  // Create the scaffold (unless dry-run)
   let filesCreated: string[] = [];
-  if (!dryRunFlag) {
+  if (!dryRun) {
     filesCreated = createDirectoryStructure(outputPath, profile);
   } else {
-    if (!jsonFlag) console.log('[DRY-RUN] Would create directory structure');
-    // Simulate what would be created
+    if (!jsonMode) console.log('[DRY-RUN] Would create directory structure');
     filesCreated = [
       'package.json', 'tsconfig.json', 'drizzle.config.ts', 'vite.config.ts',
       'tailwind.config.ts', 'postcss.config.js', 'theme.json', '.replit',
@@ -666,26 +693,28 @@ function main() {
     ];
   }
   
-  // Write scaffold report and stack profile in two-root mode
+  receipt.files_created = filesCreated;
+  
   if (isTwoRootMode) {
-    writeScaffoldReport(WORKSPACE_ROOT, filesCreated, profile, dryRunFlag);
-    if (!jsonFlag) console.log('[INFO] Created app_scaffold_report.json');
+    writeScaffoldReport(WORKSPACE_ROOT, filesCreated, profile, dryRun);
+    if (!jsonMode) console.log('[INFO] Created app_scaffold_report.json');
 
     const resolved = buildResolvedProfile(profile);
-    writeStackProfile(WORKSPACE_ROOT, resolved, dryRunFlag);
-    if (!jsonFlag) console.log('[INFO] Created registry/stack_profile.json');
+    writeStackProfile(WORKSPACE_ROOT, resolved, dryRun);
+    if (!jsonMode) console.log('[INFO] Created registry/stack_profile.json');
   }
   
-  if (!jsonFlag) console.log(`\n[SUCCESS] Created ${filesCreated.length} files\n`);
+  if (!jsonMode) console.log(`\n[SUCCESS] Created ${filesCreated.length} files\n`);
   
-  const result: ScaffoldResult = {
-    status: 'success',
-    stage: 'scaffold-app',
-    output_path: outputPath,
-    files_created: filesCreated,
-  };
-  
-  console.log(JSON.stringify(result, null, 2));
+  emitOutput();
 }
 
-main();
+try {
+  main();
+} catch (err: unknown) {
+  const msg = err instanceof Error ? err.message : String(err);
+  receipt.ok = false;
+  receipt.errors.push(msg);
+  emitOutput();
+  process.exit(1);
+}

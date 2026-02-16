@@ -13,6 +13,7 @@
  *   --strategy <type>      Archive strategy: copy (default)
  *   --force                Overwrite existing directories
  *   --dry-run              Show what would happen without making changes
+ *   --json                 Output structured JSON receipt instead of human-readable text
  */
 
 import * as fs from 'fs';
@@ -20,6 +21,31 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 
 const args = process.argv.slice(2);
+const jsonMode = args.includes('--json');
+const startTime = Date.now();
+
+const receipt: Record<string, any> = {
+  script: 'axion-overhaul',
+  ok: true,
+  dryRun: false,
+  errors: [] as string[],
+  warnings: [] as string[],
+  filesArchived: 0,
+  filesExcluded: 0,
+  archiveDir: '',
+  newRoot: '',
+  strategy: '',
+  status: '',
+  nextCommands: [] as string[],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
 
 interface OverhaulOptions {
   archiveDir: string;
@@ -114,6 +140,7 @@ Options:
   --strategy <type>      Archive strategy: copy (default)
   --force                Overwrite existing directories
   --dry-run              Show what would happen without making changes
+  --json                 Output structured JSON receipt
   --help                 Show this help message
 
 What this does:
@@ -188,7 +215,7 @@ function copyDir(src: string, dest: string, dryRun: boolean): { copied: number; 
 
 function createFreshWorkspace(newRoot: string, dryRun: boolean): void {
   if (dryRun) {
-    console.log(`  [DRY-RUN] Would create workspace at: ${newRoot}`);
+    if (!jsonMode) console.log(`  [DRY-RUN] Would create workspace at: ${newRoot}`);
     return;
   }
   
@@ -200,11 +227,12 @@ function createFreshWorkspace(newRoot: string, dryRun: boolean): void {
   if (fs.existsSync(initScript)) {
     try {
       execSync(`node ${initScript} --mode fresh --target ${newRoot}`, {
-        stdio: 'inherit',
+        stdio: jsonMode ? 'pipe' : 'inherit',
         cwd: process.cwd(),
       });
     } catch (e) {
-      console.log('  [WARN] Init script failed, creating minimal structure');
+      if (!jsonMode) console.log('  [WARN] Init script failed, creating minimal structure');
+      receipt.warnings.push('Init script failed, creating minimal structure');
       fs.mkdirSync(path.join(newRoot, 'axion', 'config'), { recursive: true });
       fs.mkdirSync(path.join(newRoot, 'axion', 'domains'), { recursive: true });
       fs.mkdirSync(path.join(newRoot, 'axion', 'templates'), { recursive: true });
@@ -215,41 +243,63 @@ function createFreshWorkspace(newRoot: string, dryRun: boolean): void {
 
 function main(): void {
   const options = parseArgs();
+  receipt.dryRun = options.dryRun;
   
-  console.log('\n[AXION] Overhaul Mode\n');
-  console.log(`  Source:      ${options.sourceDir}`);
-  console.log(`  Archive:     ${options.archiveDir}`);
-  console.log(`  New Root:    ${options.newRoot}`);
-  console.log(`  Strategy:    ${options.strategy}`);
-  console.log(`  Dry Run:     ${options.dryRun}`);
-  console.log('');
+  if (!jsonMode) console.log('\n[AXION] Overhaul Mode\n');
+  if (!jsonMode) console.log(`  Source:      ${options.sourceDir}`);
+  if (!jsonMode) console.log(`  Archive:     ${options.archiveDir}`);
+  if (!jsonMode) console.log(`  New Root:    ${options.newRoot}`);
+  if (!jsonMode) console.log(`  Strategy:    ${options.strategy}`);
+  if (!jsonMode) console.log(`  Dry Run:     ${options.dryRun}`);
+  if (!jsonMode) console.log('');
   
   const archivePath = path.resolve(options.sourceDir, options.archiveDir);
   const newRootPath = path.resolve(options.sourceDir, options.newRoot);
   
+  receipt.archiveDir = archivePath;
+  receipt.newRoot = newRootPath;
+  receipt.strategy = options.strategy;
+  
   if (fs.existsSync(archivePath) && !options.force) {
-    console.error(`[ERROR] Archive directory already exists: ${archivePath}`);
-    console.error('        Use --force to overwrite');
+    const msg = `Archive directory already exists: ${archivePath}. Use --force to overwrite`;
+    if (!jsonMode) {
+      console.error(`[ERROR] Archive directory already exists: ${archivePath}`);
+      console.error('        Use --force to overwrite');
+    }
+    receipt.ok = false;
+    receipt.errors.push(msg);
+    receipt.status = 'ERROR';
+    emitOutput();
     process.exit(1);
   }
   
   if (fs.existsSync(newRootPath) && !options.force) {
-    console.error(`[ERROR] New root already exists: ${newRootPath}`);
-    console.error('        Use --force to overwrite');
+    const msg = `New root already exists: ${newRootPath}. Use --force to overwrite`;
+    if (!jsonMode) {
+      console.error(`[ERROR] New root already exists: ${newRootPath}`);
+      console.error('        Use --force to overwrite');
+    }
+    receipt.ok = false;
+    receipt.errors.push(msg);
+    receipt.status = 'ERROR';
+    emitOutput();
     process.exit(1);
   }
   
-  console.log('[1/4] Preflight checks passed\n');
+  if (!jsonMode) console.log('[1/4] Preflight checks passed\n');
   
-  console.log('[2/4] Archiving current project...');
+  if (!jsonMode) console.log('[2/4] Archiving current project...');
   const { copied, excluded, checksums } = copyDir(options.sourceDir, archivePath, options.dryRun);
-  console.log(`      Copied: ${copied} files, Excluded: ${excluded} items\n`);
+  if (!jsonMode) console.log(`      Copied: ${copied} files, Excluded: ${excluded} items\n`);
   
-  console.log('[3/4] Creating fresh workspace...');
+  receipt.filesArchived = copied;
+  receipt.filesExcluded = excluded;
+  
+  if (!jsonMode) console.log('[3/4] Creating fresh workspace...');
   createFreshWorkspace(newRootPath, options.dryRun);
-  console.log('');
+  if (!jsonMode) console.log('');
   
-  console.log('[4/4] Writing manifest...');
+  if (!jsonMode) console.log('[4/4] Writing manifest...');
   const manifest: OverhaulManifest = {
     version: '1.0.0',
     created_at: new Date().toISOString(),
@@ -267,28 +317,47 @@ function main(): void {
     const manifestPath = path.join(newRootPath, 'AXION_OVERHAUL_MANIFEST.json');
     fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-    console.log(`      Saved: ${manifestPath}`);
+    if (!jsonMode) console.log(`      Saved: ${manifestPath}`);
   } else {
-    console.log('      [DRY-RUN] Would write manifest');
+    if (!jsonMode) console.log('      [DRY-RUN] Would write manifest');
   }
   
-  console.log('\n[AXION] Overhaul complete!\n');
+  if (!jsonMode) console.log('\n[AXION] Overhaul complete!\n');
   
-  const result = {
-    status: options.dryRun ? 'DRY_RUN' : 'SUCCESS',
-    archive_dir: archivePath,
-    new_root: newRootPath,
-    files_archived: copied,
-    files_excluded: excluded,
-    next_commands: [
-      `cd ${newRootPath}`,
-      'Edit axion/docs/product/RPBS_Product.md',
-      'Edit axion/docs/product/REBS_Product.md',
-      'node --import tsx axion/scripts/axion-run.ts --preset foundation --plan scaffold',
-    ],
-  };
+  const nextCommands = [
+    `cd ${newRootPath}`,
+    'Edit axion/docs/product/RPBS_Product.md',
+    'Edit axion/docs/product/REBS_Product.md',
+    'node --import tsx axion/scripts/axion-run.ts --preset foundation --plan scaffold',
+  ];
   
-  console.log(JSON.stringify(result, null, 2));
+  receipt.status = options.dryRun ? 'DRY_RUN' : 'SUCCESS';
+  receipt.nextCommands = nextCommands;
+  
+  if (!jsonMode) {
+    const result = {
+      status: options.dryRun ? 'DRY_RUN' : 'SUCCESS',
+      archive_dir: archivePath,
+      new_root: newRootPath,
+      files_archived: copied,
+      files_excluded: excluded,
+      next_commands: nextCommands,
+    };
+    console.log(JSON.stringify(result, null, 2));
+  }
+  
+  emitOutput();
 }
 
-main();
+try {
+  main();
+} catch (err: any) {
+  receipt.ok = false;
+  receipt.errors.push(err?.message ?? String(err));
+  receipt.status = 'ERROR';
+  emitOutput();
+  if (!jsonMode) {
+    console.error('[FATAL]', err);
+  }
+  process.exit(1);
+}

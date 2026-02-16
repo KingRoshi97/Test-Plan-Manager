@@ -16,10 +16,12 @@
  *   node --import tsx axion/scripts/axion-active.ts
  *   node --import tsx axion/scripts/axion-active.ts --pointer ./ACTIVE_BUILD.json
  *   node --import tsx axion/scripts/axion-active.ts --json
+ *   node --import tsx axion/scripts/axion-active.ts --dry-run
  * 
  * Flags:
  *   --pointer <path>     Path to ACTIVE_BUILD.json (default: ./ACTIVE_BUILD.json)
  *   --json               Output only JSON (no human-readable text)
+ *   --dry-run            Preview what would be reported without side-effects
  */
 
 import * as fs from 'fs';
@@ -28,6 +30,23 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const startTime = Date.now();
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+
+const receipt = {
+  stage: 'active',
+  ok: true,
+  modulesProcessed: [] as string[],
+  createdFiles: [] as string[],
+  modifiedFiles: [] as string[],
+  skippedFiles: [] as string[],
+  warnings: [] as string[],
+  errors: [] as string[],
+  elapsedMs: 0,
+  dryRun,
+};
 
 interface ActiveBuildPointer {
   active_build_root: string;
@@ -59,12 +78,14 @@ interface ActiveResult {
 interface ActiveOptions {
   pointerPath: string;
   jsonOutput: boolean;
+  dryRun: boolean;
 }
 
 function parseArgs(args: string[]): ActiveOptions {
   const options: ActiveOptions = {
     pointerPath: path.join(process.cwd(), 'ACTIVE_BUILD.json'),
-    jsonOutput: false
+    jsonOutput: false,
+    dryRun: false
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -75,6 +96,9 @@ function parseArgs(args: string[]): ActiveOptions {
         break;
       case '--json':
         options.jsonOutput = true;
+        break;
+      case '--dry-run':
+        options.dryRun = true;
         break;
     }
   }
@@ -109,70 +133,25 @@ function formatTimeSince(isoString: string): string {
   }
 }
 
-function main(): void {
-  const args = process.argv.slice(2);
-  const options = parseArgs(args);
+function emitOutput(result?: ActiveResult, pointer?: ActiveBuildPointer, pointerPath?: string) {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify({ ...receipt, result }, null, 2) + '\n');
+    return;
+  }
+  if (!result || !pointerPath) return;
 
-  const pointerPath = path.resolve(options.pointerPath);
-
-  if (!fs.existsSync(pointerPath)) {
-    if (options.jsonOutput) {
-      const result: ActiveResult = {
-        status: 'no_active_build',
-        pointer_path: pointerPath,
-        hint: [
-          `No active build found at ${pointerPath}`,
-          'Run axion-activate to set the active build'
-        ]
-      };
-      console.log(JSON.stringify(result, null, 2));
-    } else {
-      console.log('\n[AXION] Active Build Status\n');
-      console.log('Status: No active build');
-      console.log(`Pointer: ${pointerPath}`);
-      console.log('\nRun axion-activate to set the active build.\n');
+  if (result.status === 'no_active_build') {
+    console.log('\n[AXION] Active Build Status\n');
+    console.log('Status: No active build');
+    console.log(`Pointer: ${pointerPath}`);
+    if (result.hint) {
+      console.log(`\n${result.hint.join('\n')}\n`);
     }
-    process.exit(1);
+    return;
   }
 
-  let pointer: ActiveBuildPointer;
-  try {
-    const content = fs.readFileSync(pointerPath, 'utf-8');
-    pointer = JSON.parse(content);
-  } catch (err) {
-    if (options.jsonOutput) {
-      const result: ActiveResult = {
-        status: 'no_active_build',
-        pointer_path: pointerPath,
-        hint: ['Failed to parse ACTIVE_BUILD.json']
-      };
-      console.log(JSON.stringify(result, null, 2));
-    } else {
-      console.log('\n[AXION] Active Build Status\n');
-      console.log('Status: Error reading active build pointer');
-      console.log(`Pointer: ${pointerPath}`);
-    }
-    process.exit(1);
-  }
-
-  const result: ActiveResult = {
-    status: 'success',
-    active_build_root: pointer.active_build_root,
-    project_name: pointer.project_name,
-    app_path: pointer.app_path,
-    activated_at: pointer.activated_at,
-    activated_by: pointer.activated_by,
-    gates_satisfied: {
-      docs_locked: pointer.docs_locked,
-      verify_passed: pointer.verify_passed,
-      tests_passed: pointer.tests_passed
-    },
-    pointer_path: pointerPath
-  };
-
-  if (options.jsonOutput) {
-    console.log(JSON.stringify(result, null, 2));
-  } else {
+  if (pointer) {
     console.log('\n[AXION] Active Build Status\n');
     console.log('═'.repeat(50));
     console.log(`Project:     ${pointer.project_name}`);
@@ -191,4 +170,67 @@ function main(): void {
   }
 }
 
-main();
+function main(): void {
+  const args = process.argv.slice(2);
+  const options = parseArgs(args);
+
+  const pointerPath = path.resolve(options.pointerPath);
+
+  if (!fs.existsSync(pointerPath)) {
+    const result: ActiveResult = {
+      status: 'no_active_build',
+      pointer_path: pointerPath,
+      hint: [
+        `No active build found at ${pointerPath}`,
+        'Run axion-activate to set the active build'
+      ]
+    };
+    receipt.ok = false;
+    receipt.warnings.push(`No active build found at ${pointerPath}`);
+    emitOutput(result, undefined, pointerPath);
+    process.exit(1);
+  }
+
+  let pointer: ActiveBuildPointer;
+  try {
+    const content = fs.readFileSync(pointerPath, 'utf-8');
+    pointer = JSON.parse(content);
+  } catch (err) {
+    const result: ActiveResult = {
+      status: 'no_active_build',
+      pointer_path: pointerPath,
+      hint: ['Failed to parse ACTIVE_BUILD.json']
+    };
+    receipt.ok = false;
+    receipt.errors.push(`Failed to parse ACTIVE_BUILD.json at ${pointerPath}`);
+    emitOutput(result, undefined, pointerPath);
+    process.exit(1);
+  }
+
+  const result: ActiveResult = {
+    status: 'success',
+    active_build_root: pointer.active_build_root,
+    project_name: pointer.project_name,
+    app_path: pointer.app_path,
+    activated_at: pointer.activated_at,
+    activated_by: pointer.activated_by,
+    gates_satisfied: {
+      docs_locked: pointer.docs_locked,
+      verify_passed: pointer.verify_passed,
+      tests_passed: pointer.tests_passed
+    },
+    pointer_path: pointerPath
+  };
+
+  emitOutput(result, pointer, pointerPath);
+}
+
+try {
+  main();
+} catch (err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  receipt.ok = false;
+  receipt.errors.push(message);
+  emitOutput();
+  process.exit(1);
+}

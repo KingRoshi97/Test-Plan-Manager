@@ -11,6 +11,7 @@
  * Options:
  *   --strict           Treat warnings as failures (default: true)
  *   --json             Output only JSON to stdout (logs to stderr)
+ *   --dry-run          Validate args and print receipt without running checks
  *   --timeout-ms <n>   Timeout per check in ms (default: 120000)
  *   --include-optional Run optional checks (e.g., real-results)
  *   --filter <id>      Run only specific check(s), comma-separated
@@ -25,6 +26,53 @@ const SCRIPT_VERSION = 1;
 const SYSTEM_ROOT = path.resolve(__dirname, '../..');
 const REGISTRY_DIR = path.join(SYSTEM_ROOT, 'axion/registry');
 const REPORT_PATH = path.join(REGISTRY_DIR, 'release_gate_report.json');
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+interface Receipt {
+  ok: boolean;
+  script: string;
+  dryRun: boolean;
+  elapsedMs: number;
+  runId: string | null;
+  passed: boolean | null;
+  checksRun: number;
+  checksPassed: number;
+  checksFailed: number;
+  checksSkipped: number;
+  reportPath: string | null;
+  logsDir: string | null;
+  failures: FailureEntry[];
+  nextCommands: string[];
+  errors: string[];
+}
+
+const receipt: Receipt = {
+  ok: true,
+  script: 'axion-release-check',
+  dryRun,
+  elapsedMs: 0,
+  runId: null,
+  passed: null,
+  checksRun: 0,
+  checksPassed: 0,
+  checksFailed: 0,
+  checksSkipped: 0,
+  reportPath: null,
+  logsDir: null,
+  failures: [],
+  nextCommands: [],
+  errors: [],
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
 
 interface CheckResult {
   id: string;
@@ -254,6 +302,7 @@ const CHECK_REGISTRY: ReleaseCheck[] = [
 interface CLIOptions {
   strict: boolean;
   jsonOnly: boolean;
+  dryRun: boolean;
   timeoutMs: number;
   includeOptional: boolean;
   filter: string[];
@@ -264,6 +313,7 @@ function parseArgs(): CLIOptions {
   const options: CLIOptions = {
     strict: true,
     jsonOnly: false,
+    dryRun: false,
     timeoutMs: 120000,
     includeOptional: false,
     filter: [],
@@ -277,6 +327,8 @@ function parseArgs(): CLIOptions {
       options.strict = false;
     } else if (arg === '--json') {
       options.jsonOnly = true;
+    } else if (arg === '--dry-run') {
+      options.dryRun = true;
     } else if (arg === '--timeout-ms' && args[i + 1]) {
       options.timeoutMs = parseInt(args[++i], 10);
     } else if (arg === '--include-optional') {
@@ -289,8 +341,8 @@ function parseArgs(): CLIOptions {
   return options;
 }
 
-function log(message: string, jsonOnly: boolean): void {
-  if (jsonOnly) {
+function log(message: string): void {
+  if (jsonMode) {
     process.stderr.write(message + '\n');
   } else {
     console.log(message);
@@ -454,18 +506,32 @@ async function runCheck(
 async function main(): Promise<void> {
   const options = parseArgs();
   const runId = generateRunId();
+  receipt.runId = runId;
+
+  if (dryRun) {
+    if (!jsonMode) {
+      console.log(`[dry-run] axion-release-check would run ${CHECK_REGISTRY.length} checks`);
+      console.log(`[dry-run] Run ID: ${runId}`);
+      console.log(`[dry-run] No checks executed.`);
+    }
+    receipt.ok = true;
+    emitOutput();
+    process.exit(0);
+  }
+
   const logsDir = path.join(REGISTRY_DIR, 'release_gate_logs', runId);
+  receipt.logsDir = logsDir;
   
   fs.mkdirSync(logsDir, { recursive: true });
   fs.mkdirSync(REGISTRY_DIR, { recursive: true });
 
-  log('============================================', options.jsonOnly);
-  log('        AXION RELEASE GATE', options.jsonOnly);
-  log('============================================', options.jsonOnly);
-  log('', options.jsonOnly);
-  log(`Run ID: ${runId}`, options.jsonOnly);
-  log(`Logs: ${logsDir}`, options.jsonOnly);
-  log('', options.jsonOnly);
+  log('============================================');
+  log('        AXION RELEASE GATE');
+  log('============================================');
+  log('');
+  log(`Run ID: ${runId}`);
+  log(`Logs: ${logsDir}`);
+  log('');
 
   const checksToRun = CHECK_REGISTRY.filter(check => {
     if (options.filter.length > 0) {
@@ -479,20 +545,19 @@ async function main(): Promise<void> {
 
   const results: CheckResult[] = [];
   const failures: FailureEntry[] = [];
-  const startTime = Date.now();
 
   for (const check of checksToRun) {
-    log(`[${check.id}] ${check.name}...`, options.jsonOnly);
-    log(`  ${check.description}`, options.jsonOnly);
+    log(`[${check.id}] ${check.name}...`);
+    log(`  ${check.description}`);
 
     const result = await runCheck(check, logsDir, options);
     results.push(result);
 
     if (result.passed) {
-      log(`  ✅ PASS (${result.duration_ms}ms)${result.test_count ? ` - ${result.test_count} tests` : ''}`, options.jsonOnly);
+      log(`  PASS (${result.duration_ms}ms)${result.test_count ? ` - ${result.test_count} tests` : ''}`);
     } else {
-      log(`  ❌ FAIL (${result.duration_ms}ms)`, options.jsonOnly);
-      log(`  Log: ${result.log_path}`, options.jsonOnly);
+      log(`  FAIL (${result.duration_ms}ms)`);
+      log(`  Log: ${result.log_path}`);
       
       failures.push({
         check_id: check.id,
@@ -501,7 +566,7 @@ async function main(): Promise<void> {
         log_path: result.log_path,
       });
     }
-    log('', options.jsonOnly);
+    log('');
   }
 
   const skippedChecks = CHECK_REGISTRY.filter(check => {
@@ -552,47 +617,60 @@ async function main(): Promise<void> {
   };
 
   writeJsonAtomic(REPORT_PATH, report);
+  receipt.reportPath = REPORT_PATH;
 
-  log('============================================', options.jsonOnly);
-  log('        RELEASE GATE SUMMARY', options.jsonOnly);
-  log('============================================', options.jsonOnly);
-  log('', options.jsonOnly);
-  
   const passedCount = results.filter(r => r.passed && !r.skipped).length;
   const failedCount = results.filter(r => !r.passed && !r.skipped).length;
   const skippedCount = results.filter(r => r.skipped).length;
+
+  receipt.checksRun = passedCount + failedCount;
+  receipt.checksPassed = passedCount;
+  receipt.checksFailed = failedCount;
+  receipt.checksSkipped = skippedCount;
+  receipt.passed = passed;
+  receipt.ok = passed;
+  receipt.failures = failures;
+  receipt.nextCommands = nextCommands;
+
+  log('============================================');
+  log('        RELEASE GATE SUMMARY');
+  log('============================================');
+  log('');
   
-  log(`  Passed:  ${passedCount}`, options.jsonOnly);
-  log(`  Failed:  ${failedCount}`, options.jsonOnly);
-  log(`  Skipped: ${skippedCount}`, options.jsonOnly);
-  log(`  Duration: ${(totalDuration / 1000).toFixed(1)}s`, options.jsonOnly);
-  log(`  Report: ${REPORT_PATH}`, options.jsonOnly);
-  log('', options.jsonOnly);
+  log(`  Passed:  ${passedCount}`);
+  log(`  Failed:  ${failedCount}`);
+  log(`  Skipped: ${skippedCount}`);
+  log(`  Duration: ${(totalDuration / 1000).toFixed(1)}s`);
+  log(`  Report: ${REPORT_PATH}`);
+  log('');
 
   if (passed) {
-    log('✅ RELEASE GATE PASSED', options.jsonOnly);
-    log('', options.jsonOnly);
-    log('Safe to proceed with:', options.jsonOnly);
-    log('  - Flip feature flags on', options.jsonOnly);
-    log('  - Update CHANGELOG.md', options.jsonOnly);
-    log('  - Mark change contract as Implemented', options.jsonOnly);
+    log('RELEASE GATE PASSED');
+    log('');
+    log('Safe to proceed with:');
+    log('  - Flip feature flags on');
+    log('  - Update CHANGELOG.md');
+    log('  - Mark change contract as Implemented');
   } else {
-    log('❌ RELEASE GATE FAILED', options.jsonOnly);
-    log('', options.jsonOnly);
-    log('Next commands:', options.jsonOnly);
+    log('RELEASE GATE FAILED');
+    log('');
+    log('Next commands:');
     for (const cmd of nextCommands) {
-      log(`  ${cmd}`, options.jsonOnly);
+      log(`  ${cmd}`);
     }
   }
 
-  if (options.jsonOnly) {
-    console.log(JSON.stringify(report, null, 2));
-  }
+  emitOutput();
 
   process.exit(passed ? 0 : 1);
 }
 
 main().catch(err => {
-  console.error('Release check failed:', err);
+  receipt.errors.push(String(err));
+  receipt.ok = false;
+  if (!jsonMode) {
+    console.error('Release check failed:', err);
+  }
+  emitOutput();
   process.exit(1);
 });

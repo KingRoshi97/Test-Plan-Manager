@@ -9,11 +9,13 @@
  *   node --import tsx axion/scripts/axion-kit-validate.ts --kit <path>
  *   node --import tsx axion/scripts/axion-kit-validate.ts --kit <path> --strict
  *   node --import tsx axion/scripts/axion-kit-validate.ts --kit <path> --json
+ *   node --import tsx axion/scripts/axion-kit-validate.ts --kit <path> --dry-run
  * 
  * Flags:
  *   --kit <path>    Path to unpacked kit directory (REQUIRED)
  *   --strict        Warnings become failures
  *   --json          JSON-only output (suppress human-readable logs)
+ *   --dry-run       Preview what would be validated without running checks
  */
 
 import * as fs from 'fs';
@@ -23,6 +25,41 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const AXION_ROOT = path.resolve(__dirname, '..');
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+interface Receipt {
+  ok: boolean;
+  stage: string;
+  dryRun: boolean;
+  errors: string[];
+  warnings: string[];
+  elapsedMs: number;
+  result: KitValidationResult | null;
+}
+
+const receipt: Receipt = {
+  ok: true,
+  stage: 'kit-validate',
+  dryRun,
+  errors: [],
+  warnings: [],
+  elapsedMs: 0,
+  result: null,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    console.log(JSON.stringify(receipt, null, 2));
+  } else {
+    if (receipt.result) {
+      console.log(JSON.stringify(receipt.result, null, 2));
+    }
+  }
+}
 
 type CheckStatus = 'PASS' | 'FAIL' | 'WARN';
 
@@ -50,11 +87,12 @@ interface KitValidationResult {
   hint?: string[];
 }
 
-function parseArgs(): { kit: string | null; strict: boolean; json: boolean } {
+function parseArgs(): { kit: string | null; strict: boolean; json: boolean; dryRun: boolean } {
   const args = process.argv.slice(2);
   let kit: string | null = null;
   let strict = false;
   let json = false;
+  let dry = false;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--kit' && args[i + 1]) {
@@ -63,10 +101,12 @@ function parseArgs(): { kit: string | null; strict: boolean; json: boolean } {
       strict = true;
     } else if (args[i] === '--json') {
       json = true;
+    } else if (args[i] === '--dry-run') {
+      dry = true;
     }
   }
 
-  return { kit, strict, json };
+  return { kit, strict, json, dryRun: dry };
 }
 
 function log(status: CheckStatus | 'INFO', message: string, jsonOnly: boolean): void {
@@ -434,109 +474,152 @@ function buildHints(result: KitValidationResult): string[] {
 }
 
 function main(): void {
-  const { kit, strict, json: jsonOnly } = parseArgs();
+  try {
+    const { kit, strict, json: jsonOnly } = parseArgs();
 
-  if (!kit) {
-    const errorResult: KitValidationResult = {
-      status: 'FAIL',
-      stage: 'kit-validate',
-      kit_path: '',
-      checks: {
-        required_structure: { status: 'FAIL', present: [], missing: [] },
-        domain_completeness: { status: 'FAIL', domains: [] },
-        cross_references: { status: 'FAIL', orphan_dirs: [], orphan_slugs: [], broken_deps: [] },
-        knowledge_index: { status: 'FAIL', total_refs: 0, broken_refs: [] },
-        stack_profile: { status: 'FAIL', issues: ['No kit path provided'] },
-        manifest_integrity: { status: 'FAIL', total_listed: 0, missing_files: [] },
-      },
-      summary: 'No --kit path provided',
-      hint: ['Usage: node --import tsx axion/scripts/axion-kit-validate.ts --kit <path>'],
+    if (dryRun) {
+      if (!jsonMode) {
+        console.error('[INFO] --dry-run mode: previewing configuration only');
+        console.error(`[INFO] Kit path argument: ${kit ?? '(not provided)'}`);
+        console.error(`[INFO] Strict mode: ${strict}`);
+        console.error(`[INFO] JSON mode: ${jsonOnly}`);
+      }
+      receipt.ok = true;
+      receipt.result = null;
+      emitOutput();
+      process.exit(0);
+    }
+
+    if (!kit) {
+      const errorResult: KitValidationResult = {
+        status: 'FAIL',
+        stage: 'kit-validate',
+        kit_path: '',
+        checks: {
+          required_structure: { status: 'FAIL', present: [], missing: [] },
+          domain_completeness: { status: 'FAIL', domains: [] },
+          cross_references: { status: 'FAIL', orphan_dirs: [], orphan_slugs: [], broken_deps: [] },
+          knowledge_index: { status: 'FAIL', total_refs: 0, broken_refs: [] },
+          stack_profile: { status: 'FAIL', issues: ['No kit path provided'] },
+          manifest_integrity: { status: 'FAIL', total_listed: 0, missing_files: [] },
+        },
+        summary: 'No --kit path provided',
+        hint: ['Usage: node --import tsx axion/scripts/axion-kit-validate.ts --kit <path>'],
+      };
+      receipt.ok = false;
+      receipt.errors.push('No --kit path provided');
+      receipt.result = errorResult;
+      emitOutput();
+      process.exit(1);
+    }
+
+    const kitPath = path.resolve(kit);
+
+    if (!fs.existsSync(kitPath)) {
+      const errorResult: KitValidationResult = {
+        status: 'FAIL',
+        stage: 'kit-validate',
+        kit_path: kitPath,
+        checks: {
+          required_structure: { status: 'FAIL', present: [], missing: [] },
+          domain_completeness: { status: 'FAIL', domains: [] },
+          cross_references: { status: 'FAIL', orphan_dirs: [], orphan_slugs: [], broken_deps: [] },
+          knowledge_index: { status: 'FAIL', total_refs: 0, broken_refs: [] },
+          stack_profile: { status: 'FAIL', issues: ['Kit path does not exist'] },
+          manifest_integrity: { status: 'FAIL', total_listed: 0, missing_files: [] },
+        },
+        summary: `Kit path does not exist: ${kitPath}`,
+        hint: ['Verify the --kit path points to an unpacked kit directory'],
+      };
+      receipt.ok = false;
+      receipt.errors.push(`Kit path does not exist: ${kitPath}`);
+      receipt.result = errorResult;
+      emitOutput();
+      process.exit(1);
+    }
+
+    log('INFO', `AXION Kit Validate`, jsonOnly);
+    log('INFO', `Kit path: ${kitPath}`, jsonOnly);
+    if (strict) log('INFO', 'Strict mode: warnings become failures', jsonOnly);
+    if (!jsonOnly) console.error('');
+
+    log('INFO', '--- Required Structure ---', jsonOnly);
+    const requiredStructure = checkRequiredStructure(kitPath, jsonOnly);
+
+    if (!jsonOnly) console.error('');
+    log('INFO', '--- Domain Completeness ---', jsonOnly);
+    const domainCompleteness = checkDomainCompleteness(kitPath, jsonOnly);
+
+    if (!jsonOnly) console.error('');
+    log('INFO', '--- Cross-Reference Validation ---', jsonOnly);
+    const crossReferences = checkCrossReferences(kitPath, jsonOnly);
+
+    if (!jsonOnly) console.error('');
+    log('INFO', '--- Knowledge INDEX ---', jsonOnly);
+    const knowledgeIndex = checkKnowledgeIndex(kitPath, jsonOnly);
+
+    if (!jsonOnly) console.error('');
+    log('INFO', '--- Stack Profile ---', jsonOnly);
+    const stackProfile = checkStackProfile(kitPath, jsonOnly);
+
+    if (!jsonOnly) console.error('');
+    log('INFO', '--- Manifest Integrity ---', jsonOnly);
+    const manifestIntegrity = checkManifestIntegrity(kitPath, jsonOnly);
+
+    const checks = {
+      required_structure: requiredStructure,
+      domain_completeness: domainCompleteness,
+      cross_references: crossReferences,
+      knowledge_index: knowledgeIndex,
+      stack_profile: stackProfile,
+      manifest_integrity: manifestIntegrity,
     };
-    console.log(JSON.stringify(errorResult, null, 2));
-    process.exit(1);
-  }
 
-  const kitPath = path.resolve(kit);
+    const overallStatus = resolveOverallStatus(checks, strict);
 
-  if (!fs.existsSync(kitPath)) {
-    const errorResult: KitValidationResult = {
-      status: 'FAIL',
+    const result: KitValidationResult = {
+      status: overallStatus,
       stage: 'kit-validate',
       kit_path: kitPath,
-      checks: {
-        required_structure: { status: 'FAIL', present: [], missing: [] },
-        domain_completeness: { status: 'FAIL', domains: [] },
-        cross_references: { status: 'FAIL', orphan_dirs: [], orphan_slugs: [], broken_deps: [] },
-        knowledge_index: { status: 'FAIL', total_refs: 0, broken_refs: [] },
-        stack_profile: { status: 'FAIL', issues: ['Kit path does not exist'] },
-        manifest_integrity: { status: 'FAIL', total_listed: 0, missing_files: [] },
-      },
-      summary: `Kit path does not exist: ${kitPath}`,
-      hint: ['Verify the --kit path points to an unpacked kit directory'],
+      checks,
+      summary: '',
     };
-    console.log(JSON.stringify(errorResult, null, 2));
+
+    result.summary = buildSummary(result);
+    const hints = buildHints(result);
+    if (hints.length > 0) result.hint = hints;
+
+    if (!jsonOnly) {
+      console.error('');
+      log(overallStatus, `Overall: ${result.summary}`, false);
+      console.error('');
+    }
+
+    receipt.ok = overallStatus !== 'FAIL';
+    receipt.result = result;
+
+    if (overallStatus === 'WARN') {
+      const warnMessages = Object.entries(checks)
+        .filter(([, v]) => v.status === 'WARN')
+        .map(([k]) => k);
+      receipt.warnings.push(...warnMessages);
+    }
+
+    if (overallStatus === 'FAIL') {
+      const failMessages = Object.entries(checks)
+        .filter(([, v]) => v.status === 'FAIL')
+        .map(([k]) => k);
+      receipt.errors.push(...failMessages);
+    }
+
+    emitOutput();
+    process.exit(overallStatus === 'FAIL' ? 1 : 0);
+  } catch (err: any) {
+    receipt.ok = false;
+    receipt.errors.push(err?.message ?? String(err));
+    emitOutput();
     process.exit(1);
   }
-
-  log('INFO', `AXION Kit Validate`, jsonOnly);
-  log('INFO', `Kit path: ${kitPath}`, jsonOnly);
-  if (strict) log('INFO', 'Strict mode: warnings become failures', jsonOnly);
-  if (!jsonOnly) console.error('');
-
-  log('INFO', '--- Required Structure ---', jsonOnly);
-  const requiredStructure = checkRequiredStructure(kitPath, jsonOnly);
-
-  if (!jsonOnly) console.error('');
-  log('INFO', '--- Domain Completeness ---', jsonOnly);
-  const domainCompleteness = checkDomainCompleteness(kitPath, jsonOnly);
-
-  if (!jsonOnly) console.error('');
-  log('INFO', '--- Cross-Reference Validation ---', jsonOnly);
-  const crossReferences = checkCrossReferences(kitPath, jsonOnly);
-
-  if (!jsonOnly) console.error('');
-  log('INFO', '--- Knowledge INDEX ---', jsonOnly);
-  const knowledgeIndex = checkKnowledgeIndex(kitPath, jsonOnly);
-
-  if (!jsonOnly) console.error('');
-  log('INFO', '--- Stack Profile ---', jsonOnly);
-  const stackProfile = checkStackProfile(kitPath, jsonOnly);
-
-  if (!jsonOnly) console.error('');
-  log('INFO', '--- Manifest Integrity ---', jsonOnly);
-  const manifestIntegrity = checkManifestIntegrity(kitPath, jsonOnly);
-
-  const checks = {
-    required_structure: requiredStructure,
-    domain_completeness: domainCompleteness,
-    cross_references: crossReferences,
-    knowledge_index: knowledgeIndex,
-    stack_profile: stackProfile,
-    manifest_integrity: manifestIntegrity,
-  };
-
-  const overallStatus = resolveOverallStatus(checks, strict);
-
-  const result: KitValidationResult = {
-    status: overallStatus,
-    stage: 'kit-validate',
-    kit_path: kitPath,
-    checks,
-    summary: '',
-  };
-
-  result.summary = buildSummary(result);
-  const hints = buildHints(result);
-  if (hints.length > 0) result.hint = hints;
-
-  if (!jsonOnly) {
-    console.error('');
-    log(overallStatus, `Overall: ${result.summary}`, false);
-    console.error('');
-  }
-
-  console.log(JSON.stringify(result, null, 2));
-  process.exit(overallStatus === 'FAIL' ? 1 : 0);
 }
 
 main();

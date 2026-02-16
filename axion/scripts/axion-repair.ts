@@ -9,6 +9,8 @@
  *   npx ts-node axion/scripts/axion-repair.ts --module <name>
  *   npx ts-node axion/scripts/axion-repair.ts --all
  *   npx ts-node axion/scripts/axion-repair.ts --module <name> --save
+ *   npx ts-node axion/scripts/axion-repair.ts --json
+ *   npx ts-node axion/scripts/axion-repair.ts --dry-run
  */
 
 import * as fs from 'fs';
@@ -17,6 +19,30 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+const receipt: Record<string, any> = {
+  script: 'axion-repair',
+  ok: true,
+  dryRun,
+  plans: [] as any[],
+  modulesProcessed: 0,
+  totalCritical: 0,
+  totalWarning: 0,
+  totalInfo: 0,
+  errors: [] as string[],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
 
 interface RepairIssue {
   reason_code: string;
@@ -45,7 +71,6 @@ const AXION_ROOT = path.resolve(__dirname, '..');
 const TEMPLATES_PATH = path.join(AXION_ROOT, 'templates');
 const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
 
-// Reason codes and their severities
 const REASON_CODES: Record<string, { severity: 'critical' | 'warning' | 'info'; description: string }> = {
   MISSING_SECTION: { severity: 'critical', description: 'Required section is missing from document' },
   EMPTY_SECTION: { severity: 'critical', description: 'Section exists but has no content' },
@@ -88,7 +113,6 @@ function extractSections(content: string): Map<string, { start: number; end: num
   for (let i = 0; i < lines.length; i++) {
     const match = lines[i].match(sectionRegex);
     if (match) {
-      // Save previous section
       if (currentSection) {
         sections.set(currentSection, {
           start: currentStart,
@@ -104,7 +128,6 @@ function extractSections(content: string): Map<string, { start: number; end: num
     }
   }
   
-  // Save last section
   if (currentSection) {
     sections.set(currentSection, {
       start: currentStart,
@@ -149,7 +172,6 @@ function repairModule(moduleName: string): RepairPlan {
   const doc = loadDomainDoc(moduleName);
   const docPath = `domains/${moduleName}/README.md`;
   
-  // Check if domain doc exists
   if (!doc) {
     issues.push({
       reason_code: 'MISSING_SECTION',
@@ -164,11 +186,9 @@ function repairModule(moduleName: string): RepairPlan {
     return createPlan(moduleName, issues);
   }
   
-  // Extract sections from template and doc
   const templateSections = template ? extractSections(template) : new Map();
   const docSections = extractSections(doc);
   
-  // Check for missing required sections
   for (const [sectionKey] of templateSections) {
     if (!docSections.has(sectionKey)) {
       issues.push({
@@ -183,9 +203,7 @@ function repairModule(moduleName: string): RepairPlan {
     }
   }
   
-  // Check each section for issues
   for (const [sectionKey, sectionData] of docSections) {
-    // Check for empty sections
     const contentWithoutHeading = sectionData.content.replace(/^##.*$/m, '').trim();
     if (contentWithoutHeading.length < 10) {
       issues.push({
@@ -200,7 +218,6 @@ function repairModule(moduleName: string): RepairPlan {
       });
     }
     
-    // Check for [TBD] in sections
     const tbdCheck = checkForTBD(sectionData.content);
     if (tbdCheck.found) {
       issues.push({
@@ -216,7 +233,6 @@ function repairModule(moduleName: string): RepairPlan {
     }
   }
   
-  // Check for UNKNOWN without Open Questions
   const unknownCheck = checkForUnknownWithoutQuestion(doc);
   if (unknownCheck.found) {
     issues.push({
@@ -230,7 +246,6 @@ function repairModule(moduleName: string): RepairPlan {
     });
   }
   
-  // Check for acceptance criteria
   if (!/_ACCEPTANCE/.test(doc)) {
     issues.push({
       reason_code: 'MISSING_ACCEPTANCE',
@@ -242,7 +257,6 @@ function repairModule(moduleName: string): RepairPlan {
     });
   }
   
-  // Check for incomplete checklists
   const uncheckedItems = (doc.match(/- \[ \]/g) || []).length;
   if (uncheckedItems > 0) {
     issues.push({
@@ -263,7 +277,6 @@ function createPlan(moduleName: string, issues: RepairIssue[]): RepairPlan {
   const warningCount = issues.filter(i => i.severity === 'warning').length;
   const infoCount = issues.filter(i => i.severity === 'info').length;
   
-  // Generate next commands based on issues
   const nextCommands: string[] = [];
   
   if (criticalCount > 0) {
@@ -305,6 +318,8 @@ function createPlan(moduleName: string, issues: RepairIssue[]): RepairPlan {
 }
 
 function printPlan(plan: RepairPlan): void {
+  if (jsonMode) return;
+
   console.log(`\n${'═'.repeat(60)}`);
   console.log(`AXION REPAIR PLAN: ${plan.module}`);
   console.log(`Generated: ${plan.generated_at}`);
@@ -315,7 +330,6 @@ function printPlan(plan: RepairPlan): void {
     return;
   }
   
-  // Summary
   console.log(`SUMMARY:`);
   console.log(`  Total issues: ${plan.total_issues}`);
   if (plan.critical_count > 0) console.log(`  [CRITICAL] ${plan.critical_count}`);
@@ -323,7 +337,6 @@ function printPlan(plan: RepairPlan): void {
   if (plan.info_count > 0) console.log(`  [INFO] ${plan.info_count}`);
   console.log('');
   
-  // Group issues by severity
   const grouped = {
     critical: plan.issues.filter(i => i.severity === 'critical'),
     warning: plan.issues.filter(i => i.severity === 'warning'),
@@ -345,7 +358,6 @@ function printPlan(plan: RepairPlan): void {
     }
   }
   
-  // Next commands
   console.log(`${'─'.repeat(60)}`);
   console.log(`NEXT STEPS:\n`);
   for (const cmd of plan.next_commands) {
@@ -362,7 +374,7 @@ function savePlan(plan: RepairPlan): void {
   
   const outPath = path.join(outDir, `${plan.module}_repair.json`);
   fs.writeFileSync(outPath, JSON.stringify(plan, null, 2));
-  console.log(`[INFO] Repair plan saved to: ${path.relative(process.cwd(), outPath)}\n`);
+  if (!jsonMode) console.log(`[INFO] Repair plan saved to: ${path.relative(process.cwd(), outPath)}\n`);
 }
 
 function getAllModules(): string[] {
@@ -375,39 +387,74 @@ function getAllModules(): string[] {
   });
 }
 
-// Main execution
 function main() {
-  const args = process.argv.slice(2);
-  const moduleArg = args.indexOf('--module');
-  const targetModule = moduleArg !== -1 ? args[moduleArg + 1] : null;
-  const runAll = args.includes('--all');
-  const saveOutput = args.includes('--save');
-  
-  console.log('\n[AXION] Repair Mode\n');
-  
-  if (!targetModule && !runAll) {
-    console.log('Usage:');
-    console.log('  npx ts-node axion/scripts/axion-repair.ts --module <name>');
-    console.log('  npx ts-node axion/scripts/axion-repair.ts --all');
-    console.log('  npx ts-node axion/scripts/axion-repair.ts --module <name> --save');
-    process.exit(1);
-  }
-  
-  const modules = runAll ? getAllModules() : [targetModule!];
-  let totalCritical = 0;
-  
-  for (const mod of modules) {
-    const plan = repairModule(mod);
-    printPlan(plan);
+  try {
+    const args = process.argv.slice(2);
+    const moduleArg = args.indexOf('--module');
+    const targetModule = moduleArg !== -1 ? args[moduleArg + 1] : null;
+    const runAll = args.includes('--all');
+    const saveOutput = args.includes('--save');
     
-    if (saveOutput) {
-      savePlan(plan);
+    if (!jsonMode) console.log('\n[AXION] Repair Mode\n');
+    
+    if (dryRun && !targetModule && !runAll) {
+      if (!jsonMode) console.log('[DRY-RUN] Would process modules, no side-effects.\n');
+      receipt.ok = true;
+      emitOutput();
+      process.exit(0);
     }
     
-    totalCritical += plan.critical_count;
+    if (!targetModule && !runAll) {
+      if (!jsonMode) {
+        console.log('Usage:');
+        console.log('  npx ts-node axion/scripts/axion-repair.ts --module <name>');
+        console.log('  npx ts-node axion/scripts/axion-repair.ts --all');
+        console.log('  npx ts-node axion/scripts/axion-repair.ts --module <name> --save');
+        console.log('  npx ts-node axion/scripts/axion-repair.ts --json');
+        console.log('  npx ts-node axion/scripts/axion-repair.ts --dry-run');
+      }
+      receipt.ok = false;
+      receipt.errors.push('No --module or --all flag provided');
+      emitOutput();
+      process.exit(1);
+    }
+    
+    const modules = runAll ? getAllModules() : [targetModule!];
+    
+    if (dryRun) {
+      if (!jsonMode) console.log(`[DRY-RUN] Would process ${modules.length} module(s), no side-effects.\n`);
+      receipt.ok = true;
+      emitOutput();
+      process.exit(0);
+    }
+    
+    let totalCritical = 0;
+    
+    for (const mod of modules) {
+      const plan = repairModule(mod);
+      printPlan(plan);
+      
+      if (saveOutput) {
+        savePlan(plan);
+      }
+      
+      receipt.plans.push(plan);
+      receipt.modulesProcessed++;
+      totalCritical += plan.critical_count;
+      receipt.totalCritical += plan.critical_count;
+      receipt.totalWarning += plan.warning_count;
+      receipt.totalInfo += plan.info_count;
+    }
+    
+    receipt.ok = totalCritical === 0;
+    emitOutput();
+    process.exit(totalCritical > 0 ? 1 : 0);
+  } catch (err: any) {
+    receipt.ok = false;
+    receipt.errors.push(err?.message ?? String(err));
+    emitOutput();
+    process.exit(1);
   }
-  
-  process.exit(totalCritical > 0 ? 1 : 0);
 }
 
 main();
