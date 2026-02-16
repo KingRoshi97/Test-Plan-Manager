@@ -1,79 +1,109 @@
 #!/usr/bin/env node
 /**
- * assembler:init - Initialize Axiom Assembler workspace
+ * axion:init - Initialize AXION workspace
  * Creates the folder tree and baseline files if missing.
+ *
+ * Usage:
+ *   node axion/scripts/axion-init.mjs
+ *   node axion/scripts/axion-init.mjs --json
+ *   node axion/scripts/axion-init.mjs --dry-run
  */
 
 import fs from 'fs';
 import path from 'path';
 
-// Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const jsonMode = args.includes('--json');
 
-// Report tracking
-const report = {
-  created: [],
-  modified: [],
-  skipped: [],
-  failed: []
+const startTime = Date.now();
+
+const receipt = {
+  stage: 'init',
+  ok: true,
+  createdFiles: [],
+  modifiedFiles: [],
+  skippedFiles: [],
+  warnings: [],
+  errors: [],
+  elapsedMs: 0,
+  dryRun,
 };
 
 function ensureDir(dirPath) {
   if (fs.existsSync(dirPath)) {
-    report.skipped.push(dirPath);
+    receipt.skippedFiles.push(dirPath);
     return false;
   }
   if (!dryRun) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
-  report.created.push(dirPath);
+  receipt.createdFiles.push(dirPath);
   return true;
 }
 
 function ensureFile(filePath, content) {
   if (fs.existsSync(filePath)) {
-    report.skipped.push(filePath);
+    receipt.skippedFiles.push(filePath);
     return false;
   }
   if (!dryRun) {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, content, 'utf8');
   }
-  report.created.push(filePath);
+  receipt.createdFiles.push(filePath);
   return true;
 }
 
-function printReport() {
+function emitOutput() {
+  receipt.elapsedMs = Date.now() - startTime;
+
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    return;
+  }
+
   console.log('\n========== ASSEMBLER_REPORT ==========');
-  console.log(`Script: assembler:init`);
+  console.log(`Script: axion:init`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
-  console.log(`\nCreated (${report.created.length}):`);
-  report.created.forEach(f => console.log(`  + ${f}`));
-  console.log(`\nModified (${report.modified.length}):`);
-  report.modified.forEach(f => console.log(`  ~ ${f}`));
-  console.log(`\nSkipped (${report.skipped.length}):`);
-  report.skipped.forEach(f => console.log(`  - ${f}`));
-  console.log(`\nFailed (${report.failed.length}):`);
-  report.failed.forEach(f => console.log(`  ! ${f}`));
-  console.log('\n===================================');
+
+  if (receipt.createdFiles.length) {
+    console.log(`\nCreated (${receipt.createdFiles.length}):`);
+    receipt.createdFiles.forEach(f => console.log(`  + ${f}`));
+  }
+
+  if (receipt.skippedFiles.length) {
+    console.log(`\nSkipped (${receipt.skippedFiles.length}):`);
+    receipt.skippedFiles.forEach(f => console.log(`  - ${f}`));
+  }
+
+  if (receipt.warnings.length) {
+    console.log(`\nWarnings (${receipt.warnings.length}):`);
+    receipt.warnings.forEach(w => console.log(`  ? ${w}`));
+  }
+  if (receipt.errors.length) {
+    console.log(`\nErrors (${receipt.errors.length}):`);
+    receipt.errors.forEach(e => console.log(`  ! ${e}`));
+  }
+
+  console.log(`\nResult: ${receipt.ok ? 'OK' : 'FAILED'}`);
+  console.log('===================================');
 }
 
 try {
-  console.log('Running assembler:init...');
-  
-  // Create directory structure
+  if (!jsonMode) console.log('Running axion:init...');
+
   const dirs = [
     'docs/assembler_v1/00_product',
     'docs/assembler_v1/00_registry',
     'docs/assembler_v1/01_templates',
     'docs/assembler_v1/02_domains',
     'docs/assembler_v1/03_workflows',
-    'roshi'
+    'roshi',
   ];
-  
+
   dirs.forEach(dir => ensureDir(dir));
-  
-  // Create README.md
+
   const readmePath = 'docs/assembler_v1/README.md';
   const readmeContent = `# Axiom Assembler Documentation Workspace
 
@@ -103,53 +133,52 @@ npm run assembler:lock    # Lock a domain
 \`\`\`
 `;
   ensureFile(readmePath, readmeContent);
-  
-  // Create domains.json
+
   const domainsJsonPath = 'assembler/domains.json';
   const domainsContent = JSON.stringify({
-    roshi_root: "docs/assembler_v1",
-    domains_dir: "02_domains",
-    templates_dir: "01_templates",
+    roshi_root: 'docs/assembler_v1',
+    domains_dir: '02_domains',
+    templates_dir: '01_templates',
     domains: [
-      { name: "Platform", slug: "platform", prefix: "platform", type: "business" },
-      { name: "API", slug: "api", prefix: "api", type: "business" },
-      { name: "Web", slug: "web", prefix: "web", type: "business" },
-      { name: "Infrastructure", slug: "infra", prefix: "infra", type: "crosscutting" },
-      { name: "Security", slug: "security", prefix: "security", type: "crosscutting" },
-      { name: "UX/UI Pack", slug: "uxui", prefix: "uxui", type: "business", description: "Information architecture, journeys, screen specs, design system tokens, component contracts, brand rules.", default: true }
-    ]
+      { name: 'Platform', slug: 'platform', prefix: 'platform', type: 'business' },
+      { name: 'API', slug: 'api', prefix: 'api', type: 'business' },
+      { name: 'Web', slug: 'web', prefix: 'web', type: 'business' },
+      { name: 'Infrastructure', slug: 'infra', prefix: 'infra', type: 'crosscutting' },
+      { name: 'Security', slug: 'security', prefix: 'security', type: 'crosscutting' },
+      { name: 'UX/UI Pack', slug: 'uxui', prefix: 'uxui', type: 'business', description: 'Information architecture, journeys, screen specs, design system tokens, component contracts, brand rules.', default: true },
+    ],
   }, null, 2);
   ensureFile(domainsJsonPath, domainsContent);
-  
-  // Create sources.json
+
   const sourcesJsonPath = 'assembler/sources.json';
   const sourcesContent = JSON.stringify({
-    roshi_root: "docs/assembler_v1",
+    roshi_root: 'docs/assembler_v1',
     sources: [
-      "00_product/RPBS_Product.md",
-      "00_product/REBS_Product.md",
-      "00_registry/domain-map.md",
-      "00_registry/reason-codes.md",
-      "00_registry/action-vocabulary.md",
-      "00_registry/glossary.md"
+      '00_product/RPBS_Product.md',
+      '00_product/REBS_Product.md',
+      '00_registry/domain-map.md',
+      '00_registry/reason-codes.md',
+      '00_registry/action-vocabulary.md',
+      '00_registry/glossary.md',
     ],
     domain_notes: {
       enabled: true,
-      dir: "notes/domains",
-      pattern: "{slug}.md"
+      dir: 'notes/domains',
+      pattern: '{slug}.md',
     },
     sourceref: {
       required: true,
-      format: "HeadingPath",
-      example: "RPBS > Hard Rules Catalog > Permissions / AccessControl"
-    }
+      format: 'HeadingPath',
+      example: 'RPBS > Hard Rules Catalog > Permissions / AccessControl',
+    },
   }, null, 2);
   ensureFile(sourcesJsonPath, sourcesContent);
-  
-  printReport();
-  
+
+  emitOutput();
+
 } catch (error) {
-  report.failed.push(error.message);
-  printReport();
+  receipt.ok = false;
+  receipt.errors.push(error.message);
+  emitOutput();
   process.exit(1);
 }
