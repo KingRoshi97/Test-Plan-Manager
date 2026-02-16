@@ -4,10 +4,12 @@
  * Creates baseline registry docs if missing. Safe prefill only.
  * Reads AXION_PROJECT_IDEA and AXION_PROJECT_NAME from env to generate
  * project-aware RPBS and REBS content.
- * 
+ *
  * Usage:
  *   node axion/scripts/axion-seed.mjs --all
  *   node axion/scripts/axion-seed.mjs --module <name>
+ *   node axion/scripts/axion-seed.mjs --all --json
+ *   node axion/scripts/axion-seed.mjs --all --dry-run
  */
 
 import fs from 'fs';
@@ -17,18 +19,27 @@ import {
   ensurePrereqs,
   isStageDone,
   markStageDone,
+  markStageFailed,
   failJson,
 } from './_axion_module_mode.mjs';
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const jsonMode = args.includes('--json');
 const { modules } = parseModuleArgs(process.argv);
 
-const report = {
-  created: [],
-  modified: [],
-  skipped: [],
-  failed: []
+const startTime = Date.now();
+
+const receipt = {
+  stage: 'seed',
+  ok: true,
+  modulesProcessed: [],
+  createdFiles: [],
+  skippedFiles: [],
+  warnings: [],
+  errors: [],
+  elapsedMs: 0,
+  dryRun,
 };
 
 function loadConfig() {
@@ -41,7 +52,7 @@ function loadConfig() {
 
 function ensureFile(filePath, content) {
   if (fs.existsSync(filePath)) {
-    report.skipped.push(filePath);
+    receipt.skippedFiles.push(filePath);
     return false;
   }
   if (!dryRun) {
@@ -51,30 +62,41 @@ function ensureFile(filePath, content) {
     }
     fs.writeFileSync(filePath, content, 'utf8');
   }
-  report.created.push(filePath);
+  receipt.createdFiles.push(filePath);
   return true;
 }
 
-function printReport() {
+function emitOutput() {
+  receipt.elapsedMs = Date.now() - startTime;
+
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    return;
+  }
+
   console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: axion:seed`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
-  console.log(`Modules: ${modules.join(', ')}`);
-  console.log(`\nCreated (${report.created.length}):`);
-  report.created.forEach(f => console.log(`  + ${f}`));
-  console.log(`\nModified (${report.modified.length}):`);
-  report.modified.forEach(f => console.log(`  ~ ${f}`));
-  console.log(`\nSkipped (${report.skipped.length}):`);
-  report.skipped.forEach(f => console.log(`  - ${f}`));
-  console.log(`\nFailed (${report.failed.length}):`);
-  report.failed.forEach(f => console.log(`  ! ${f}`));
-  console.log('\n===================================');
+  console.log(`Modules: ${receipt.modulesProcessed.join(', ') || '(none)'}`);
+  console.log(`\nCreated (${receipt.createdFiles.length}):`);
+  receipt.createdFiles.forEach(f => console.log(`  + ${f}`));
+  console.log(`\nSkipped (${receipt.skippedFiles.length}):`);
+  receipt.skippedFiles.forEach(f => console.log(`  - ${f}`));
+  if (receipt.warnings.length) {
+    console.log(`\nWarnings (${receipt.warnings.length}):`);
+    receipt.warnings.forEach(w => console.log(`  ? ${w}`));
+  }
+  if (receipt.errors.length) {
+    console.log(`\nErrors (${receipt.errors.length}):`);
+    receipt.errors.forEach(e => console.log(`  ! ${e}`));
+  }
+  console.log(`\nResult: ${receipt.ok ? 'OK' : 'FAILED'}`);
+  console.log('===================================');
 }
 
 function parseProjectIdea(idea) {
   if (!idea) return { name: 'Application', entities: [], features: [], actions: [] };
 
-  const words = idea.split(/[\s,;.!?]+/).filter(Boolean);
   const name = process.env.AXION_PROJECT_NAME || 'Application';
 
   const entityPatterns = [
@@ -154,7 +176,7 @@ function parseProjectIdea(idea) {
   return { name, entities, features, actions };
 }
 
-function generateRPBS(ctx) {
+function generateRPBS(ctx, { isUpgrade, revision, upgradeNotes } = {}) {
   const ruleRows = [];
   let ruleId = 1;
 
@@ -180,6 +202,19 @@ function generateRPBS(ctx) {
     policyRows.push(`| P${String(polId++).padStart(3, '0')} | ${entity} access policy | Only authorized users can modify ${entity.toLowerCase()} data | auth |`);
   }
 
+  let upgradeSection = '';
+  if (isUpgrade && upgradeNotes) {
+    upgradeSection = `
+## Upgrade Context (Revision ${revision})
+
+This RPBS was seeded during an upgrade iteration. The following notes informed rule generation:
+
+> ${upgradeNotes.replace(/\n/g, '\n> ')}
+
+Rules above incorporate constraints from this upgrade cycle. Review and refine as needed.
+`;
+  }
+
   return `# Requirements & Policy Baseline Specification (RPBS)
 
 ## Overview
@@ -199,7 +234,7 @@ ${ruleRows.join('\n')}
 | Policy ID | Description | Default Value | Domain |
 |-----------|-------------|---------------|--------|
 ${policyRows.join('\n')}
-
+${upgradeSection}
 ## Open Questions
 - Specific performance thresholds need to be defined
 - Rate limiting policies need stakeholder input
@@ -207,7 +242,7 @@ ${policyRows.join('\n')}
 `;
 }
 
-function generateREBS(ctx) {
+function generateREBS(ctx, { isUpgrade, revision, upgradeNotes } = {}) {
   const entityRows = [];
   const domainMap = {
     'User': { domain: 'auth', fields: 'id, email, name, role, createdAt' },
@@ -264,6 +299,19 @@ function generateREBS(ctx) {
     }
   }
 
+  let upgradeSection = '';
+  if (isUpgrade && upgradeNotes) {
+    upgradeSection = `
+## Upgrade Context (Revision ${revision})
+
+This REBS was seeded during an upgrade iteration. The following notes informed entity generation:
+
+> ${upgradeNotes.replace(/\n/g, '\n> ')}
+
+Entity definitions above incorporate context from this upgrade cycle. Review and refine as needed.
+`;
+  }
+
   return `# Requirements & Entity Baseline Specification (REBS)
 
 ## Overview
@@ -280,7 +328,7 @@ ${entityRows.join('\n')}
 
 ## Entity Relationships
 ${relationships.join('\n') || '- Entities are independent'}
-
+${upgradeSection}
 ## Open Questions
 - Entity lifecycle management needs further definition
 - Cross-entity validation rules need to be specified
@@ -289,8 +337,8 @@ ${relationships.join('\n') || '- Entities are independent'}
 }
 
 try {
-  console.log('Running axion:seed...');
-  
+  if (!jsonMode) console.log('Running axion:seed...');
+
   const config = loadConfig();
   const axionRoot = config.axion_root || 'axion';
 
@@ -302,40 +350,61 @@ try {
   const kitType = process.env.AXION_KIT_TYPE || 'original';
   const isUpgrade = kitType === 'upgrade' && !!upgradeNotes;
 
-  if (isUpgrade) {
+  if (isUpgrade && !jsonMode) {
     console.log(`  Upgrade mode: revision=${revision}, kitType=${kitType}`);
     console.log(`  Upgrade notes: ${upgradeNotes.slice(0, 100)}${upgradeNotes.length > 100 ? '...' : ''}`);
   }
-  
+
+  const upgradeCtx = { isUpgrade, revision, upgradeNotes };
+
   for (const module of modules) {
-    ensurePrereqs({
-      stageName: 'seed',
-      module,
-      stagePrereq: (m) => isStageDone('generate', m),
-    });
-    
-    console.log(`Seeding module: ${module}`);
-    
+    if (!isStageDone('generate', module)) {
+      const msg = `Module '${module}' has not completed 'generate'. Run: node axion/scripts/axion-generate.mjs --module ${module}`;
+      receipt.errors.push(msg);
+      receipt.ok = false;
+      if (!dryRun) markStageFailed('seed', module, { reason: msg });
+      continue;
+    }
+
+    try {
+      ensurePrereqs({
+        stageName: 'seed',
+        module,
+        stagePrereq: (m) => isStageDone('generate', m),
+      });
+    } catch (prereqErr) {
+      receipt.errors.push(`Prerequisite failed for module '${module}': ${prereqErr.message}`);
+      receipt.ok = false;
+      if (!dryRun) markStageFailed('seed', module, { reason: prereqErr.message });
+      continue;
+    }
+
+    if (!jsonMode) console.log(`Seeding module: ${module}`);
+    receipt.modulesProcessed.push(module);
+
     if (module === 'architecture' || modules[0] === module) {
       const registryDocs = {
-        [`${axionRoot}/docs/product/RPBS_Product.md`]: generateRPBS(ctx),
-        [`${axionRoot}/docs/product/REBS_Product.md`]: generateREBS(ctx),
+        [`${axionRoot}/docs/product/RPBS_Product.md`]: generateRPBS(ctx, upgradeCtx),
+        [`${axionRoot}/docs/product/REBS_Product.md`]: generateREBS(ctx, upgradeCtx),
       };
-      
+
       for (const [filePath, content] of Object.entries(registryDocs)) {
         ensureFile(filePath, content);
       }
     }
-    
+
     if (!dryRun) {
       markStageDone('seed', module);
     }
   }
-  
-  printReport();
-  
+
+  emitOutput();
+
+  if (!receipt.ok) process.exit(1);
+
 } catch (error) {
-  report.failed.push(error.message);
-  printReport();
+  receipt.ok = false;
+  receipt.errors.push(error.message);
+  emitOutput();
   process.exit(1);
 }

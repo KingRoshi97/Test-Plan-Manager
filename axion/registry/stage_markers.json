@@ -7,7 +7,8 @@
         "completed_at": "2026-02-16T02:40:51.281Z"
       },
       "seed": {
-        "completed_at": "2026-02-03T09:57:22.865Z"
+        "status": "success",
+        "completed_at": "2026-02-16T02:47:26.193Z"
       },
       "draft": {
         "completed_at": "2026-02-03T09:29:19.025Z"
@@ -214,7 +215,9 @@
         ]
       },
       "seed": {
-        "completed_at": "2026-02-03T09:57:22.883Z"
+        "status": "failed",
+        "completed_at": "2026-02-16T02:47:25.038Z",
+        "reason": "Module 'quality' has not completed 'generate'. Run: node axion/scripts/axion-generate.mjs --module quality"
       },
       "verify": {
         "completed_at": "2026-02-03T10:06:01.809Z",
