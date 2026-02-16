@@ -11,7 +11,8 @@
         "completed_at": "2026-02-16T02:47:26.193Z"
       },
       "draft": {
-        "completed_at": "2026-02-03T09:29:19.025Z"
+        "status": "success",
+        "completed_at": "2026-02-16T03:03:24.382Z"
       },
       "review": {
         "completed_at": "2026-02-03T09:29:19.644Z",
@@ -222,6 +223,11 @@
       "verify": {
         "completed_at": "2026-02-03T10:06:01.809Z",
         "status": "FAIL"
+      },
+      "draft": {
+        "status": "failed",
+        "completed_at": "2026-02-16T03:03:31.220Z",
+        "reason": "Module 'quality' has not completed 'seed'. Run: node axion/scripts/axion-seed.mjs --module quality"
       }
     },
     "security": {

@@ -1,6 +1,7 @@
 {
-  "status": "DONE",
+  "status": "FAILED",
   "stage": "draft",
   "module": "quality",
-  "timestamp": "2026-02-07T17:15:36.697Z"
+  "timestamp": "2026-02-16T03:03:31.220Z",
+  "reason": "Module 'quality' has not completed 'seed'. Run: node axion/scripts/axion-seed.mjs --module quality"
 }
