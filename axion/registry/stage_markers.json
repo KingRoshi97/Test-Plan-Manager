@@ -26,6 +26,12 @@
       "content-fill": {
         "status": "success",
         "completed_at": "2026-02-16T03:33:52.155Z"
+      },
+      "lock": {
+        "status": "success",
+        "completed_at": "2026-02-16T03:55:27.541Z",
+        "version": "v1",
+        "hash": "e2b0087128c93970"
       }
     },
     "systems": {
@@ -242,6 +248,11 @@
         "status": "failed",
         "completed_at": "2026-02-16T03:33:41.417Z",
         "reason": "Module 'quality' has not completed 'content-fill'. Run content-fill first."
+      },
+      "lock": {
+        "status": "failed",
+        "completed_at": "2026-02-16T03:55:28.744Z",
+        "reason": "Module 'quality' has not completed 'verify'. Run verify first."
       }
     },
     "security": {
