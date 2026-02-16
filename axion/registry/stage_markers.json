@@ -15,14 +15,16 @@
         "completed_at": "2026-02-16T03:03:24.382Z"
       },
       "review": {
-        "completed_at": "2026-02-03T09:29:19.644Z",
-        "unknown_count": 2,
-        "tbd_count": 40,
-        "issues": []
+        "status": "success",
+        "completed_at": "2026-02-16T03:33:52.256Z"
       },
       "verify": {
         "completed_at": "2026-02-03T10:06:01.799Z",
         "status": "FAIL"
+      },
+      "content-fill": {
+        "status": "success",
+        "completed_at": "2026-02-16T03:33:52.155Z"
       }
     },
     "systems": {
@@ -233,6 +235,11 @@
         "status": "failed",
         "completed_at": "2026-02-16T03:30:36.973Z",
         "reason": "Module 'quality' has not completed 'draft'. Run: node axion/scripts/axion-draft.mjs --module quality"
+      },
+      "review": {
+        "status": "failed",
+        "completed_at": "2026-02-16T03:33:41.417Z",
+        "reason": "Module 'quality' has not completed 'content-fill'. Run content-fill first."
       }
     },
     "security": {
