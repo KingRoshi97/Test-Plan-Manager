@@ -1,0 +1,21 @@
+{
+  "roshi_root": "docs/assembler_v1",
+  "sources": [
+    "00_product/RPBS_Product.md",
+    "00_product/REBS_Product.md",
+    "00_registry/domain-map.md",
+    "00_registry/reason-codes.md",
+    "00_registry/action-vocabulary.md",
+    "00_registry/glossary.md"
+  ],
+  "domain_notes": {
+    "enabled": true,
+    "dir": "notes/domains",
+    "pattern": "{slug}.md"
+  },
+  "sourceref": {
+    "required": true,
+    "format": "HeadingPath",
+    "example": "RPBS > Hard Rules Catalog > Permissions / AccessControl"
+  }
+}
