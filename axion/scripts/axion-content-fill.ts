@@ -494,6 +494,36 @@ export function getAllTargets(projectRoot: string): HierarchicalUnknownTarget[] 
   return candidates;
 }
 
+// ─── Stack Profile Resolution ────────────────────────────────────────────────
+
+function resolveStackProfile(projectRoot: string): string {
+  const registryPath = path.join(projectRoot, 'registry', 'stack_profile.json');
+  const axionRegistryPath = path.join(projectRoot, 'axion', 'registry', 'stack_profile.json');
+  const catalogPath = path.join(projectRoot, 'axion', 'config', 'stack_profiles.json');
+
+  for (const p of [registryPath, axionRegistryPath]) {
+    if (fs.existsSync(p)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+        return `TECHNOLOGY STACK (MANDATORY — do not contradict this):\n${JSON.stringify(data, null, 2)}`;
+      } catch { /* ignore parse errors */ }
+    }
+  }
+
+  if (fs.existsSync(catalogPath)) {
+    try {
+      const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
+      const profiles = catalog.profiles || catalog;
+      const defaultKey = Object.keys(profiles)[0];
+      if (defaultKey && profiles[defaultKey]) {
+        return `TECHNOLOGY STACK (from default profile "${defaultKey}" — do not contradict this):\n${JSON.stringify(profiles[defaultKey], null, 2)}`;
+      }
+    } catch { /* ignore parse errors */ }
+  }
+
+  return '';
+}
+
 // ─── Prompt Building ────────────────────────────────────────────────────────
 
 function resolveKnowledgeContext(moduleName: string, fileName: string): string {
@@ -568,7 +598,8 @@ function buildFillPrompt(
   projectName: string,
   projectIdea: string,
   moduleName: string,
-  structuredInput?: Record<string, string> | null
+  structuredInput?: Record<string, string> | null,
+  stackProfileContext?: string
 ): string {
   const fileName = path.basename(filePath);
   const docInfo = detectDocType(fileName);
@@ -582,18 +613,20 @@ function buildFillPrompt(
 PROJECT NAME: ${projectName}
 PROJECT IDEA: ${projectIdea}
 MODULE/DOMAIN: ${moduleName}
-${structuredContext ? `\nDETAILED PROJECT CONTEXT (from the project creator — use this to inform your fills):\n${structuredContext}\n` : ''}${upgradeContext}${knowledgeContext}
+${stackProfileContext ? `\n${stackProfileContext}\n\nYou MUST use the technologies listed above. Do NOT suggest or specify alternative frameworks, languages, or tools that contradict the stack profile.\n` : ''}${structuredContext ? `\nDETAILED PROJECT CONTEXT (from the project creator — use this to inform your fills):\n${structuredContext}\n` : ''}${upgradeContext}${knowledgeContext}
 Below is the current document that has UNKNOWN placeholders. Your task is to replace every instance of "UNKNOWN" with realistic, project-specific content based on the project idea and domain module.
 
 Rules:
 1. Replace EVERY "UNKNOWN" with specific, meaningful content appropriate to this project and domain.
-2. When detailed project context is provided above, use that information directly — do not invent contradicting details.
-3. When KNOWLEDGE BASE CONTEXT is provided, follow its best practices and patterns — these are curated industry standards.
-4. Keep the exact same Markdown structure, headings, and table formatting.
-5. ${docInfo.guidance}
-6. Do NOT add new sections or remove existing ones.
-7. Do NOT wrap the output in code fences. Return ONLY the filled document content.
-8. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
+2. When a TECHNOLOGY STACK is specified above, all technical decisions MUST align with it. Never suggest technologies that contradict the stack profile.
+3. When detailed project context is provided above, use that information directly — do not invent contradicting details.
+4. When KNOWLEDGE BASE CONTEXT is provided, follow its best practices and patterns — these are curated industry standards.
+5. Keep the exact same Markdown structure, headings, and table formatting.
+6. ${docInfo.guidance}
+7. Do NOT add new sections or remove existing ones.
+8. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+9. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
+10. Return the COMPLETE document — do not truncate or abbreviate any sections.
 
 CURRENT DOCUMENT:
 ${fileContent}
@@ -610,6 +643,7 @@ function buildContextAwareFillPrompt(
   userAnswers: Record<string, string>,
   parentContext: string,
   structuredInput?: Record<string, string> | null,
+  stackProfileContext?: string,
 ): string {
   const fileName = path.basename(filePath);
   const docInfo = detectDocType(fileName);
@@ -627,18 +661,20 @@ function buildContextAwareFillPrompt(
 PROJECT NAME: ${projectName}
 PROJECT IDEA: ${projectIdea}
 MODULE/DOMAIN: ${moduleName}
-${structuredContext ? `\nDETAILED PROJECT CONTEXT (from the project creator — use this to inform your fills):\n${structuredContext}\n` : ''}${upgradeContext}${parentContext ? `CONTEXT FROM HIGHER-LEVEL DOCUMENTS (use this to inform your fills):\n${parentContext}\n` : ''}
+${stackProfileContext ? `\n${stackProfileContext}\n\nYou MUST use the technologies listed above. Do NOT suggest or specify alternative frameworks, languages, or tools that contradict the stack profile.\n` : ''}${structuredContext ? `\nDETAILED PROJECT CONTEXT (from the project creator — use this to inform your fills):\n${structuredContext}\n` : ''}${upgradeContext}${parentContext ? `CONTEXT FROM HIGHER-LEVEL DOCUMENTS (use this to inform your fills):\n${parentContext}\n` : ''}
 ${answersBlock ? `USER-PROVIDED ANSWERS (use this information directly):\n${answersBlock}\n` : ''}${knowledgeContext}
 Below is the current document that has UNKNOWN placeholders. Your task is to replace every instance of "UNKNOWN" with realistic, project-specific content.
 
 Rules:
 1. Replace EVERY "UNKNOWN" with specific, meaningful content.
-2. When user-provided context or answers are available, use that information directly — do not contradict it.
-3. When KNOWLEDGE BASE CONTEXT is provided, follow its best practices and patterns — these are curated industry standards.
-4. Keep the exact same Markdown structure, headings, and table formatting.
-5. ${docInfo.guidance}
-6. Do NOT add new sections or remove existing ones.
-7. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+2. When a TECHNOLOGY STACK is specified above, all technical decisions MUST align with it. Never suggest technologies that contradict the stack profile.
+3. When user-provided context or answers are available, use that information directly — do not contradict it.
+4. When KNOWLEDGE BASE CONTEXT is provided, follow its best practices and patterns — these are curated industry standards.
+5. Keep the exact same Markdown structure, headings, and table formatting.
+6. ${docInfo.guidance}
+7. Do NOT add new sections or remove existing ones.
+8. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+9. Return the COMPLETE document — do not truncate or abbreviate any sections.
 
 CURRENT DOCUMENT:
 ${fileContent}
@@ -688,6 +724,10 @@ async function getOpenAI() {
   });
 }
 
+const MAX_FILL_ATTEMPTS = 3;
+const MAX_COMPLETION_TOKENS = 16384;
+const MAX_UNKNOWNS_PER_FILE = 3;
+
 export async function fillFileWithAI(
   filePath: string,
   projectName: string,
@@ -695,13 +735,14 @@ export async function fillFileWithAI(
   moduleName: string,
   onProgress?: (message: string) => void,
   structuredInput?: Record<string, string> | null,
+  stackProfileContext?: string,
 ): Promise<ContentFillResult> {
   if (!fs.existsSync(filePath)) {
     return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0, error: 'File not found' };
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
-  const unknownsBefore = countUnknowns(content);
+  let currentContent = fs.readFileSync(filePath, 'utf8');
+  const unknownsBefore = countUnknowns(currentContent);
 
   if (unknownsBefore === 0) {
     return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0 };
@@ -709,35 +750,53 @@ export async function fillFileWithAI(
 
   onProgress?.(`Filling ${path.basename(filePath)} (${unknownsBefore} UNKNOWNs)...`);
 
-  try {
-    const openai = await getOpenAI();
-    const prompt = buildFillPrompt(content, filePath, projectName, projectIdea, moduleName, structuredInput);
+  let lastError: string | undefined;
+  let unknownsAfter = unknownsBefore;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
-      messages: [
-        { role: 'system', content: 'You are a precise document editor. You fill in placeholder content in software specification documents. You return only the filled document, preserving all Markdown formatting exactly.' },
-        { role: 'user', content: prompt },
-      ],
-      max_completion_tokens: 4096,
-    });
+  for (let attempt = 1; attempt <= MAX_FILL_ATTEMPTS; attempt++) {
+    try {
+      const openai = await getOpenAI();
+      const prompt = buildFillPrompt(currentContent, filePath, projectName, projectIdea, moduleName, structuredInput, stackProfileContext);
 
-    const filledContent = response.choices[0]?.message?.content;
-    if (!filledContent) {
-      return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter: unknownsBefore, error: 'Empty response from AI' };
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5-mini',
+        messages: [
+          { role: 'system', content: 'You are a precise document editor. You fill in placeholder content in software specification documents. You return only the filled document, preserving all Markdown formatting exactly. You MUST return the COMPLETE document — never truncate.' },
+          { role: 'user', content: prompt },
+        ],
+        max_completion_tokens: MAX_COMPLETION_TOKENS,
+      });
+
+      const filledContent = response.choices[0]?.message?.content;
+      if (!filledContent) {
+        lastError = `Empty response from AI (attempt ${attempt})`;
+        onProgress?.(`  Attempt ${attempt}: empty response, retrying...`);
+        continue;
+      }
+
+      const cleaned = filledContent.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
+      unknownsAfter = countUnknowns(cleaned);
+
+      if (unknownsAfter < countUnknowns(currentContent)) {
+        currentContent = cleaned;
+        fs.writeFileSync(filePath, cleaned, 'utf8');
+        onProgress?.(`  Attempt ${attempt}: ${countUnknowns(cleaned) === 0 ? 'all' : unknownsAfter} UNKNOWNs ${unknownsAfter === 0 ? 'resolved' : 'remaining'}`);
+      } else {
+        onProgress?.(`  Attempt ${attempt}: no improvement (${unknownsAfter} UNKNOWNs remain)`);
+      }
+
+      if (unknownsAfter === 0) break;
+    } catch (err: unknown) {
+      lastError = err instanceof Error ? err.message : String(err);
+      onProgress?.(`  Attempt ${attempt} error: ${lastError}`);
+      if (attempt === MAX_FILL_ATTEMPTS) {
+        return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter, error: lastError };
+      }
     }
-
-    const cleaned = filledContent.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
-    const unknownsAfter = countUnknowns(cleaned);
-    fs.writeFileSync(filePath, cleaned, 'utf8');
-
-    onProgress?.(`Filled ${path.basename(filePath)}: ${unknownsBefore} → ${unknownsAfter} UNKNOWNs`);
-    return { file: filePath, module: moduleName, status: 'filled', unknownsBefore, unknownsAfter };
-  } catch (err: unknown) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    onProgress?.(`Error filling ${path.basename(filePath)}: ${errMsg}`);
-    return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter: unknownsBefore, error: errMsg };
   }
+
+  onProgress?.(`Filled ${path.basename(filePath)}: ${unknownsBefore} → ${unknownsAfter} UNKNOWNs`);
+  return { file: filePath, module: moduleName, status: 'filled', unknownsBefore, unknownsAfter };
 }
 
 export async function fillFileWithContext(
@@ -749,48 +808,67 @@ export async function fillFileWithContext(
   parentContext: string,
   onProgress?: (message: string) => void,
   structuredInput?: Record<string, string> | null,
+  stackProfileContext?: string,
 ): Promise<ContentFillResult> {
   if (!fs.existsSync(filePath)) {
     return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0, error: 'File not found' };
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
-  const unknownsBefore = countUnknowns(content);
+  let currentContent = fs.readFileSync(filePath, 'utf8');
+  const unknownsBefore = countUnknowns(currentContent);
   if (unknownsBefore === 0) {
     return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0 };
   }
 
   onProgress?.(`Filling ${path.basename(filePath)} with user context (${unknownsBefore} UNKNOWNs)...`);
 
-  try {
-    const openai = await getOpenAI();
-    const prompt = buildContextAwareFillPrompt(content, filePath, projectName, projectIdea, moduleName, userAnswers, parentContext, structuredInput);
+  let lastError: string | undefined;
+  let unknownsAfter = unknownsBefore;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
-      messages: [
-        { role: 'system', content: 'You are a precise document editor. You fill in placeholder content in software specification documents using the user-provided context. You return only the filled document, preserving all Markdown formatting exactly.' },
-        { role: 'user', content: prompt },
-      ],
-      max_completion_tokens: 4096,
-    });
+  for (let attempt = 1; attempt <= MAX_FILL_ATTEMPTS; attempt++) {
+    try {
+      const openai = await getOpenAI();
+      const prompt = buildContextAwareFillPrompt(currentContent, filePath, projectName, projectIdea, moduleName, userAnswers, parentContext, structuredInput, stackProfileContext);
 
-    const filledContent = response.choices[0]?.message?.content;
-    if (!filledContent) {
-      return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter: unknownsBefore, error: 'Empty response from AI' };
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5-mini',
+        messages: [
+          { role: 'system', content: 'You are a precise document editor. You fill in placeholder content in software specification documents using the user-provided context. You return only the filled document, preserving all Markdown formatting exactly. You MUST return the COMPLETE document — never truncate.' },
+          { role: 'user', content: prompt },
+        ],
+        max_completion_tokens: MAX_COMPLETION_TOKENS,
+      });
+
+      const filledContent = response.choices[0]?.message?.content;
+      if (!filledContent) {
+        lastError = `Empty response from AI (attempt ${attempt})`;
+        onProgress?.(`  Attempt ${attempt}: empty response, retrying...`);
+        continue;
+      }
+
+      const cleaned = filledContent.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
+      unknownsAfter = countUnknowns(cleaned);
+
+      if (unknownsAfter < countUnknowns(currentContent)) {
+        currentContent = cleaned;
+        fs.writeFileSync(filePath, cleaned, 'utf8');
+        onProgress?.(`  Attempt ${attempt}: ${unknownsAfter === 0 ? 'all' : unknownsAfter} UNKNOWNs ${unknownsAfter === 0 ? 'resolved' : 'remaining'}`);
+      } else {
+        onProgress?.(`  Attempt ${attempt}: no improvement (${unknownsAfter} UNKNOWNs remain)`);
+      }
+
+      if (unknownsAfter === 0) break;
+    } catch (err: unknown) {
+      lastError = err instanceof Error ? err.message : String(err);
+      onProgress?.(`  Attempt ${attempt} error: ${lastError}`);
+      if (attempt === MAX_FILL_ATTEMPTS) {
+        return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter, error: lastError };
+      }
     }
-
-    const cleaned = filledContent.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
-    const unknownsAfter = countUnknowns(cleaned);
-    fs.writeFileSync(filePath, cleaned, 'utf8');
-
-    onProgress?.(`Filled ${path.basename(filePath)}: ${unknownsBefore} → ${unknownsAfter} UNKNOWNs`);
-    return { file: filePath, module: moduleName, status: 'filled', unknownsBefore, unknownsAfter };
-  } catch (err: unknown) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    onProgress?.(`Error filling ${path.basename(filePath)}: ${errMsg}`);
-    return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter: unknownsBefore, error: errMsg };
   }
+
+  onProgress?.(`Filled ${path.basename(filePath)}: ${unknownsBefore} → ${unknownsAfter} UNKNOWNs`);
+  return { file: filePath, module: moduleName, status: 'filled', unknownsBefore, unknownsAfter };
 }
 
 export async function fillModuleUnknowns(
@@ -800,13 +878,14 @@ export async function fillModuleUnknowns(
   projectIdea: string,
   onProgress?: (message: string) => void,
   structuredInput?: Record<string, string> | null,
+  stackProfileContext?: string,
 ): Promise<ContentFillResult[]> {
   const moduleDir = path.join(projectRoot, 'axion', 'domains', moduleName);
   const results: ContentFillResult[] = [];
 
   const mdFiles = getAllMdFilesInModule(moduleDir);
   for (const filePath of mdFiles) {
-    const result = await fillFileWithAI(filePath, projectName, projectIdea, moduleName, onProgress, structuredInput);
+    const result = await fillFileWithAI(filePath, projectName, projectIdea, moduleName, onProgress, structuredInput, stackProfileContext);
     results.push(result);
   }
 
@@ -820,12 +899,13 @@ export async function fillAllModulesUnknowns(
   projectIdea: string,
   onProgress?: (message: string) => void,
   structuredInput?: Record<string, string> | null,
+  stackProfileContext?: string,
 ): Promise<ContentFillReport> {
   const results: ContentFillResult[] = [];
 
   for (const mod of modules) {
     onProgress?.(`Processing module: ${mod}`);
-    const modResults = await fillModuleUnknowns(projectRoot, mod, projectName, projectIdea, onProgress, structuredInput);
+    const modResults = await fillModuleUnknowns(projectRoot, mod, projectName, projectIdea, onProgress, structuredInput, stackProfileContext);
     results.push(...modResults);
   }
 
@@ -848,9 +928,10 @@ export async function cascadeFill(
   userAnswers: Record<string, string>,
   onProgress?: (message: string) => void,
   structuredInput?: Record<string, string> | null,
+  stackProfileContext?: string,
 ): Promise<CascadeFillResult> {
   const targetResult = await fillFileWithContext(
-    targetFile, projectName, projectIdea, targetModule, userAnswers, '', onProgress, structuredInput,
+    targetFile, projectName, projectIdea, targetModule, userAnswers, '', onProgress, structuredInput, stackProfileContext,
   );
 
   const updatedParentContent = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, 'utf8').substring(0, 3000) : '';
@@ -866,7 +947,7 @@ export async function cascadeFill(
     if (countUnknowns(content) === 0) continue;
 
     const result = await fillFileWithContext(
-      file, projectName, projectIdea, module, {}, updatedParentContent, onProgress, structuredInput,
+      file, projectName, projectIdea, module, {}, updatedParentContent, onProgress, structuredInput, stackProfileContext,
     );
     cascadeResults.push(result);
   }
@@ -1068,6 +1149,8 @@ async function main() {
     fail(`Project root not found: ${projectRoot}`);
   }
 
+  const stackProfileContext = resolveStackProfile(projectRoot);
+
   const log = jsonMode ? () => {} : (msg: string) => console.log(`[AXION] ${msg}`);
 
   if (hasFlag('--scan')) {
@@ -1134,20 +1217,34 @@ async function main() {
           }
         }
       } else {
-        const results = await fillModuleUnknowns(projectRoot, moduleName, projectName!, projectIdea, log);
+        const results = await fillModuleUnknowns(projectRoot, moduleName, projectName!, projectIdea, log, undefined, stackProfileContext);
+        let totalRemainingUnknowns = 0;
         for (const r of results) {
-          if (r.status === 'filled') receipt.modifiedFiles.push(r.file);
+          if (r.status === 'filled') {
+            receipt.modifiedFiles.push(r.file);
+            totalRemainingUnknowns += r.unknownsAfter;
+          }
           else if (r.status === 'skipped') receipt.skippedFiles.push(r.file);
           else if (r.status === 'error') {
             receipt.errors.push(`${r.file}: ${r.error}`);
             receipt.ok = false;
           }
         }
+        const filesExceedingGate = results.filter(r => r.status === 'filled' && r.unknownsAfter > MAX_UNKNOWNS_PER_FILE);
+        if (filesExceedingGate.length > 0) {
+          for (const f of filesExceedingGate) {
+            receipt.errors.push(`UNKNOWN gate failed: ${path.basename(f.file)} has ${f.unknownsAfter} UNKNOWNs (max ${MAX_UNKNOWNS_PER_FILE})`);
+          }
+          receipt.ok = false;
+        }
+        if (totalRemainingUnknowns > 0) {
+          receipt.warnings.push(`Module '${moduleName}' still has ${totalRemainingUnknowns} UNKNOWN(s) after ${MAX_FILL_ATTEMPTS} fill attempts`);
+        }
         receipt.data = results;
         if (receipt.ok) {
           markStageDone('content-fill', moduleName);
         } else {
-          markStageFailed('content-fill', moduleName, { reason: 'One or more files failed AI fill' });
+          markStageFailed('content-fill', moduleName, { reason: 'UNKNOWN gate failed or files had errors' });
         }
       }
     } else {
@@ -1192,18 +1289,32 @@ async function main() {
             }
           } else {
             log(`Processing module: ${mod}`);
-            const modResults = await fillModuleUnknowns(projectRoot, mod, projectName!, projectIdea, log);
+            const modResults = await fillModuleUnknowns(projectRoot, mod, projectName!, projectIdea, log, undefined, stackProfileContext);
+            let modRemainingUnknowns = 0;
             for (const r of modResults) {
-              if (r.status === 'filled') receipt.modifiedFiles.push(r.file);
+              if (r.status === 'filled') {
+                receipt.modifiedFiles.push(r.file);
+                modRemainingUnknowns += r.unknownsAfter;
+              }
               else if (r.status === 'skipped') receipt.skippedFiles.push(r.file);
               else if (r.status === 'error') {
                 receipt.errors.push(`${r.file}: ${r.error}`);
               }
             }
+            const modFilesExceedingGate = modResults.filter(r => r.status === 'filled' && r.unknownsAfter > MAX_UNKNOWNS_PER_FILE);
+            if (modFilesExceedingGate.length > 0) {
+              for (const f of modFilesExceedingGate) {
+                receipt.errors.push(`UNKNOWN gate failed: ${path.basename(f.file)} has ${f.unknownsAfter} UNKNOWNs (max ${MAX_UNKNOWNS_PER_FILE})`);
+              }
+            }
+            if (modRemainingUnknowns > 0) {
+              receipt.warnings.push(`Module '${mod}' still has ${modRemainingUnknowns} UNKNOWN(s) after ${MAX_FILL_ATTEMPTS} fill attempts`);
+            }
             const hadErrors = modResults.some(r => r.status === 'error');
-            if (hadErrors) {
+            const gateViolation = modFilesExceedingGate.length > 0;
+            if (hadErrors || gateViolation) {
               receipt.ok = false;
-              markStageFailed('content-fill', mod, { reason: 'One or more files failed AI fill' });
+              markStageFailed('content-fill', mod, { reason: gateViolation ? 'UNKNOWN gate failed' : 'One or more files failed AI fill' });
             } else {
               markStageDone('content-fill', mod);
             }
@@ -1229,7 +1340,7 @@ async function main() {
     if (!targetFile || !targetModule) fail('--cascade requires --target <file> and --target-module <mod>');
     log(`Running cascade fill from ${targetFile}...`);
     if (!dryRun) {
-      const result = await cascadeFill(projectRoot, targetFile!, targetModule!, projectName!, projectIdea, {}, log);
+      const result = await cascadeFill(projectRoot, targetFile!, targetModule!, projectName!, projectIdea, {}, log, undefined, stackProfileContext);
       receipt.data = result;
       receipt.modulesProcessed.push(targetModule!);
       if (result.targetFilled.status === 'filled') receipt.modifiedFiles.push(result.targetFilled.file);

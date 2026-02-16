@@ -101,6 +101,45 @@ function checkLockedDomainsForUnknowns(axionRoot, module, domainsDir) {
   return results;
 }
 
+const MAX_UNKNOWNS_PER_FILE = 3;
+
+function checkAllDocsForExcessiveUnknowns(axionRoot, module, domainsDir) {
+  const results = [];
+  const domainDir = path.join(axionRoot, domainsDir, module);
+
+  if (!fs.existsSync(domainDir)) {
+    return results;
+  }
+
+  const files = fs.readdirSync(domainDir).filter(f => f.endsWith('.md'));
+  let totalUnknowns = 0;
+
+  for (const mdFile of files) {
+    const filePath = path.join(domainDir, mdFile);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const unknownCount = (content.match(/\bUNKNOWN\b/g) || []).length;
+    totalUnknowns += unknownCount;
+
+    if (unknownCount > MAX_UNKNOWNS_PER_FILE) {
+      results.push({
+        file: filePath,
+        passed: false,
+        message: `${unknownCount} UNKNOWNs in ${mdFile} (max ${MAX_UNKNOWNS_PER_FILE} per file)`,
+      });
+    }
+  }
+
+  if (totalUnknowns > 0 && results.length === 0) {
+    results.push({
+      file: domainDir,
+      passed: true,
+      message: `${totalUnknowns} total UNKNOWN(s) across ${files.length} files (within per-file threshold)`,
+    });
+  }
+
+  return results;
+}
+
 function emitOutput() {
   receipt.elapsedMs = Date.now() - startTime;
   receipt.verifySummary.passed = receipt.verifySummary.failedModules.length === 0 && receipt.ok;
@@ -189,7 +228,8 @@ try {
 
       const fileChecks = checkDomainFiles(axionRoot, module, domainsDir);
       const unknownChecks = checkLockedDomainsForUnknowns(axionRoot, module, domainsDir);
-      const allChecks = [...fileChecks, ...unknownChecks];
+      const excessiveUnknownChecks = checkAllDocsForExcessiveUnknowns(axionRoot, module, domainsDir);
+      const allChecks = [...fileChecks, ...unknownChecks, ...excessiveUnknownChecks];
 
       vs.checks.push(...allChecks);
 
