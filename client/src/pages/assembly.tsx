@@ -33,9 +33,7 @@ import {
   RotateCcw,
   FileInput,
   GitCompare,
-  RefreshCw,
   Rocket,
-  Trash2,
   BarChart3,
   Sparkles,
   MessageSquare,
@@ -1733,62 +1731,54 @@ export default function AssemblyPage() {
                 )}
               </div>
 
-              <div className="border-t pt-3 space-y-3">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Rocket className="w-3.5 h-3.5" />Build & Deploy</div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runSingleStep.mutate({ stepId: "iterate", body: { allowApply: true } })}
-                    disabled={runSingleStep.isPending}
-                    data-testid="button-action-iterate"
-                  >
-                    {runSingleStep.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                    Iterate
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runSingleStep.mutate({ stepId: "build-plan" })}
-                    disabled={runSingleStep.isPending}
-                    data-testid="button-action-build-plan"
-                  >
-                    Build Plan
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runSingleStep.mutate({ stepId: "build-exec" })}
-                    disabled={runSingleStep.isPending}
-                    data-testid="button-action-build-exec"
-                  >
-                    Build Exec
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runSingleStep.mutate({ stepId: "deploy" })}
-                    disabled={runSingleStep.isPending}
-                    data-testid="button-action-deploy"
-                  >
-                    <Rocket className="w-4 h-4" />
-                    Deploy
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runSingleStep.mutate({ stepId: "clean" })}
-                    disabled={runSingleStep.isPending}
-                    data-testid="button-action-clean"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Clean
-                  </Button>
-                </div>
-              </div>
+              {(() => {
+                const docsLocked = moduleStatus?.modules && Object.values(moduleStatus.modules).some(m => m.lock === 'done');
+                return (
+                  <div className="border-t pt-3 space-y-3">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Rocket className="w-3.5 h-3.5" />Build & Ship</div>
+                      {!docsLocked && (
+                        <Badge variant="outline" className="text-muted-foreground no-default-active-elevate" data-testid="badge-docs-not-locked">
+                          Docs not locked yet
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => runSingleStep.mutate({ stepId: "scaffold-app" })}
+                        disabled={runSingleStep.isPending || !docsLocked}
+                        data-testid="button-action-scaffold-app"
+                      >
+                        Scaffold App
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => runSingleStep.mutate({ stepId: "deploy" })}
+                        disabled={runSingleStep.isPending || !docsLocked}
+                        data-testid="button-action-deploy"
+                      >
+                        <Rocket className="w-4 h-4" />
+                        Deploy
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => runSingleStep.mutate({ stepId: "package" })}
+                        disabled={runSingleStep.isPending || !docsLocked}
+                        data-testid="button-action-package"
+                      >
+                        Export Kit
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="border-t pt-3 space-y-3">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><BarChart3 className="w-3.5 h-3.5" />Analysis</div>
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><BarChart3 className="w-3.5 h-3.5" />Diagnostics</div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Button
                     variant="outline"
@@ -1807,42 +1797,6 @@ export default function AssemblyPage() {
                     data-testid="button-action-next"
                   >
                     Next Steps
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runSingleStep.mutate({ stepId: "activate" })}
-                    disabled={runSingleStep.isPending}
-                    data-testid="button-action-activate"
-                  >
-                    Activate
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runSingleStep.mutate({ stepId: "validate-templates" })}
-                    disabled={runSingleStep.isPending}
-                    data-testid="button-action-validate-templates"
-                  >
-                    Validate Templates
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runSingleStep.mutate({ stepId: "knowledge-coverage" })}
-                    disabled={runSingleStep.isPending}
-                    data-testid="button-action-knowledge-coverage"
-                  >
-                    Knowledge Coverage
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runSingleStep.mutate({ stepId: "kit-preview" })}
-                    disabled={runSingleStep.isPending}
-                    data-testid="button-action-kit-preview"
-                  >
-                    Kit Preview
                   </Button>
                   <Button
                     variant="outline"
