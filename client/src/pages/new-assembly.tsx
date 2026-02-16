@@ -45,13 +45,82 @@ import {
   AlertTriangle,
   FileCode,
   ChevronDown,
+  Monitor,
+  Smartphone,
+  Gamepad2,
+  Terminal,
+  Server,
+  Network,
+  GitBranch,
+  Clock,
+  Cloud,
+  GitMerge,
+  Package,
+  Library,
+  Puzzle,
+  Layers,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { SourceFile, SkipBreakdown, UploadResult } from "@shared/schema";
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  monitor: Monitor,
+  globe: Globe,
+  smartphone: Smartphone,
+  "gamepad-2": Gamepad2,
+  terminal: Terminal,
+  server: Server,
+  network: Network,
+  "git-branch": GitBranch,
+  clock: Clock,
+  cloud: Cloud,
+  "git-merge": GitMerge,
+  package: Package,
+  library: Library,
+  puzzle: Puzzle,
+  layers: Layers,
+};
+
+interface ProjectTypeField {
+  key: string;
+  label: string;
+  placeholder: string;
+}
+
+interface ProjectType {
+  id: string;
+  label: string;
+  description: string;
+  icon: string;
+  presetId: string;
+  fields: ProjectTypeField[];
+}
+
+interface ProjectTypeCategory {
+  id: string;
+  label: string;
+  description: string;
+  icon: string;
+  types: ProjectType[];
+}
+
+interface FullProductModifier {
+  label: string;
+  description: string;
+  extra_modules: string[];
+  fields: ProjectTypeField[];
+}
+
+interface ProjectTypesConfig {
+  categories: ProjectTypeCategory[];
+  full_product_modifier: FullProductModifier;
+}
 
 interface PresetConfig {
   label: string;
   description: string;
   modules: string[];
+  _legacy?: boolean;
 }
 
 interface StagePlanConfig {
@@ -63,6 +132,7 @@ interface StagePlanConfig {
 interface PresetsResponse {
   presets: Record<string, PresetConfig>;
   stage_plans: Record<string, StagePlanConfig | string[]>;
+  project_types: ProjectTypesConfig;
 }
 
 interface FieldSuggestions {
@@ -89,10 +159,14 @@ function getStagePlanSteps(plan: StagePlanConfig | string[]): string[] {
   return plan.steps || [];
 }
 
+function getIcon(name: string): LucideIcon {
+  return ICON_MAP[name] || Package;
+}
+
 const WIZARD_STEPS = [
-  { id: "basics", label: "Basics", description: "Name and pipeline settings" },
-  { id: "vision", label: "Vision & Users", description: "Problem, audience, and goals" },
-  { id: "features", label: "Features", description: "What the app does" },
+  { id: "basics", label: "Basics", description: "Name, idea, and project type" },
+  { id: "details", label: "Details", description: "Project-specific questions" },
+  { id: "product", label: "Full Product", description: "Infrastructure and ops" },
   { id: "technical", label: "Technical", description: "Stack and constraints" },
 ];
 
@@ -261,19 +335,13 @@ export default function NewAssemblyPage() {
 
   const [projectName, setProjectName] = useState("");
   const [idea, setIdea] = useState("");
-  const [presetId, setPresetId] = useState("system");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [fullProduct, setFullProduct] = useState(false);
   const [stagePlan, setStagePlan] = useState("docs:full");
-  const [category, setCategory] = useState("");
 
-  const [visionProblem, setVisionProblem] = useState("");
-  const [visionTargetUsers, setVisionTargetUsers] = useState("");
-  const [visionSuccess, setVisionSuccess] = useState("");
-  const [visionGoals, setVisionGoals] = useState("");
-
-  const [coreFeatures, setCoreFeatures] = useState("");
-  const [niceToHaveFeatures, setNiceToHaveFeatures] = useState("");
-  const [coreEntities, setCoreEntities] = useState("");
-  const [userJourneys, setUserJourneys] = useState("");
+  const [typeFields, setTypeFields] = useState<Record<string, string>>({});
+  const [fullProductFields, setFullProductFields] = useState<Record<string, string>>({});
 
   const [platform, setPlatform] = useState("");
   const [integrations, setIntegrations] = useState("");
@@ -427,7 +495,13 @@ export default function NewAssemblyPage() {
     },
   });
 
-  const selectedPreset = presetsData?.presets?.[presetId];
+  const categories = presetsData?.project_types?.categories || [];
+  const fullProductModifier = presetsData?.project_types?.full_product_modifier;
+
+  const selectedCategoryObj = categories.find(c => c.id === selectedCategory);
+  const selectedTypeObj = selectedCategoryObj?.types.find(t => t.id === selectedType);
+  const derivedPresetId = selectedTypeObj?.presetId || "system";
+  const selectedPreset = presetsData?.presets?.[derivedPresetId];
   const selectedPlan = presetsData?.stage_plans?.[stagePlan];
 
   const triggerAutofill = useCallback(async () => {
@@ -442,7 +516,7 @@ export default function NewAssemblyPage() {
         body: JSON.stringify({
           projectName: projectName.trim(),
           idea: idea.trim(),
-          category: category.trim() || undefined,
+          category: selectedCategory || undefined,
         }),
       });
       if (!resp.ok) {
@@ -455,14 +529,6 @@ export default function NewAssemblyPage() {
 
       if (data.fields) {
         const f = data.fields;
-        if (f.visionProblem?.autofill && !visionProblem.trim()) setVisionProblem(f.visionProblem.autofill);
-        if (f.visionTargetUsers?.autofill && !visionTargetUsers.trim()) setVisionTargetUsers(f.visionTargetUsers.autofill);
-        if (f.visionGoals?.autofill && !visionGoals.trim()) setVisionGoals(f.visionGoals.autofill);
-        if (f.visionSuccess?.autofill && !visionSuccess.trim()) setVisionSuccess(f.visionSuccess.autofill);
-        if (f.coreFeatures?.autofill && !coreFeatures.trim()) setCoreFeatures(f.coreFeatures.autofill);
-        if (f.niceToHaveFeatures?.autofill && !niceToHaveFeatures.trim()) setNiceToHaveFeatures(f.niceToHaveFeatures.autofill);
-        if (f.coreEntities?.autofill && !coreEntities.trim()) setCoreEntities(f.coreEntities.autofill);
-        if (f.userJourneys?.autofill && !userJourneys.trim()) setUserJourneys(f.userJourneys.autofill);
         if (f.platform?.autofill && !platform.trim()) setPlatform(f.platform.autofill);
         if (f.integrations?.autofill && !integrations.trim()) setIntegrations(f.integrations.autofill);
         if (f.techConstraints?.autofill && !techConstraints.trim()) setTechConstraints(f.techConstraints.autofill);
@@ -478,7 +544,7 @@ export default function NewAssemblyPage() {
     } finally {
       setAutofillLoading(false);
     }
-  }, [projectName, idea, category, autofillData, visionProblem, visionTargetUsers, visionGoals, visionSuccess, coreFeatures, niceToHaveFeatures, coreEntities, userJourneys, platform, integrations, techConstraints, dataSensitivity]);
+  }, [projectName, idea, selectedCategory, autofillData, platform, integrations, techConstraints, dataSensitivity]);
 
   const regenerateAutofill = useCallback(async () => {
     setAutofillData(null);
@@ -491,7 +557,7 @@ export default function NewAssemblyPage() {
         body: JSON.stringify({
           projectName: projectName.trim(),
           idea: idea.trim(),
-          category: category.trim() || undefined,
+          category: selectedCategory || undefined,
         }),
       });
       if (!resp.ok) {
@@ -503,14 +569,6 @@ export default function NewAssemblyPage() {
 
       if (data.fields) {
         const f = data.fields;
-        if (f.visionProblem?.autofill) setVisionProblem(f.visionProblem.autofill);
-        if (f.visionTargetUsers?.autofill) setVisionTargetUsers(f.visionTargetUsers.autofill);
-        if (f.visionGoals?.autofill) setVisionGoals(f.visionGoals.autofill);
-        if (f.visionSuccess?.autofill) setVisionSuccess(f.visionSuccess.autofill);
-        if (f.coreFeatures?.autofill) setCoreFeatures(f.coreFeatures.autofill);
-        if (f.niceToHaveFeatures?.autofill) setNiceToHaveFeatures(f.niceToHaveFeatures.autofill);
-        if (f.coreEntities?.autofill) setCoreEntities(f.coreEntities.autofill);
-        if (f.userJourneys?.autofill) setUserJourneys(f.userJourneys.autofill);
         if (f.platform?.autofill) setPlatform(f.platform.autofill);
         if (f.integrations?.autofill) setIntegrations(f.integrations.autofill);
         if (f.techConstraints?.autofill) setTechConstraints(f.techConstraints.autofill);
@@ -526,7 +584,7 @@ export default function NewAssemblyPage() {
     } finally {
       setAutofillLoading(false);
     }
-  }, [projectName, idea, category]);
+  }, [projectName, idea, selectedCategory]);
 
   function handleNextStep() {
     const nextStep = currentStep + 1;
@@ -538,14 +596,12 @@ export default function NewAssemblyPage() {
 
   function buildStructuredInput() {
     const input: Record<string, string> = {};
-    if (visionProblem.trim()) input.visionProblem = visionProblem.trim();
-    if (visionTargetUsers.trim()) input.visionTargetUsers = visionTargetUsers.trim();
-    if (visionSuccess.trim()) input.visionSuccess = visionSuccess.trim();
-    if (visionGoals.trim()) input.visionGoals = visionGoals.trim();
-    if (coreFeatures.trim()) input.coreFeatures = coreFeatures.trim();
-    if (niceToHaveFeatures.trim()) input.niceToHaveFeatures = niceToHaveFeatures.trim();
-    if (coreEntities.trim()) input.coreEntities = coreEntities.trim();
-    if (userJourneys.trim()) input.userJourneys = userJourneys.trim();
+    for (const [k, v] of Object.entries(typeFields)) {
+      if (v.trim()) input[k] = v.trim();
+    }
+    for (const [k, v] of Object.entries(fullProductFields)) {
+      if (v.trim()) input[k] = v.trim();
+    }
     if (platform.trim()) input.platform = platform.trim();
     if (integrations.trim()) input.integrations = integrations.trim();
     if (techConstraints.trim()) input.techConstraints = techConstraints.trim();
@@ -559,14 +615,14 @@ export default function NewAssemblyPage() {
     const structuredInput = buildStructuredInput();
 
     const contextParts: string[] = [];
-    if (visionProblem.trim()) contextParts.push(`Problem: ${visionProblem.trim()}`);
-    if (visionTargetUsers.trim()) contextParts.push(`Target Users: ${visionTargetUsers.trim()}`);
-    if (visionSuccess.trim()) contextParts.push(`Success Criteria: ${visionSuccess.trim()}`);
-    if (visionGoals.trim()) contextParts.push(`Goals: ${visionGoals.trim()}`);
-    if (coreFeatures.trim()) contextParts.push(`Core Features: ${coreFeatures.trim()}`);
-    if (niceToHaveFeatures.trim()) contextParts.push(`Nice-to-Have Features: ${niceToHaveFeatures.trim()}`);
-    if (coreEntities.trim()) contextParts.push(`Core Entities: ${coreEntities.trim()}`);
-    if (userJourneys.trim()) contextParts.push(`User Journeys: ${userJourneys.trim()}`);
+    for (const [k, v] of Object.entries(typeFields)) {
+      if (v.trim()) contextParts.push(`${k}: ${v.trim()}`);
+    }
+    if (fullProduct) {
+      for (const [k, v] of Object.entries(fullProductFields)) {
+        if (v.trim()) contextParts.push(`${k}: ${v.trim()}`);
+      }
+    }
     if (platform.trim()) contextParts.push(`Platform: ${platform.trim()}`);
     if (integrations.trim()) contextParts.push(`Integrations: ${integrations.trim()}`);
     if (techConstraints.trim()) contextParts.push(`Tech Constraints: ${techConstraints.trim()}`);
@@ -577,29 +633,37 @@ export default function NewAssemblyPage() {
       ? confirmedFiles.map(f => ({ path: f.path, language: f.language, content: f.content, size: f.size }))
       : undefined;
 
+    let domains = selectedPreset?.modules || [];
+    if (fullProduct && fullProductModifier) {
+      const combined = new Set([...domains, ...fullProductModifier.extra_modules]);
+      domains = Array.from(combined);
+    }
+
     createMutation.mutate({
       projectName: projectName.trim(),
       idea: idea.trim(),
       context,
-      presetId,
-      preset: selectedPreset?.label || presetId,
-      category: category.trim() || undefined,
-      domains: selectedPreset?.modules || [],
+      presetId: derivedPresetId,
+      preset: selectedPreset?.label || derivedPresetId,
+      category: selectedCategory || undefined,
+      domains,
       stagePlan,
       input: structuredInput,
+      typeFields,
+      fullProductFields: fullProduct ? fullProductFields : undefined,
+      fullProduct,
       sourceFiles: sourceFilesForStorage,
     });
   }
 
   const canProceedFromBasics = projectName.trim().length > 0 && idea.trim().length > 0;
-  const presetEntries = presetsData?.presets ? Object.entries(presetsData.presets) : [];
   const stagePlanEntries = presetsData?.stage_plans ? Object.entries(presetsData.stage_plans) : [];
 
   const stepHasContent = (stepIndex: number): boolean => {
     switch (stepIndex) {
       case 0: return canProceedFromBasics;
-      case 1: return !!(visionProblem.trim() || visionTargetUsers.trim() || visionSuccess.trim() || visionGoals.trim());
-      case 2: return !!(coreFeatures.trim() || niceToHaveFeatures.trim() || coreEntities.trim() || userJourneys.trim());
+      case 1: return Object.values(typeFields).some(v => v.trim());
+      case 2: return fullProduct && Object.values(fullProductFields).some(v => v.trim());
       case 3: return !!(platform.trim() || integrations.trim() || techConstraints.trim() || dataSensitivity.trim());
       default: return false;
     }
@@ -610,28 +674,12 @@ export default function NewAssemblyPage() {
   };
 
   const FIELD_SETTERS: Record<string, (val: string) => void> = {
-    visionProblem: setVisionProblem,
-    visionTargetUsers: setVisionTargetUsers,
-    visionGoals: setVisionGoals,
-    visionSuccess: setVisionSuccess,
-    coreFeatures: setCoreFeatures,
-    niceToHaveFeatures: setNiceToHaveFeatures,
-    coreEntities: setCoreEntities,
-    userJourneys: setUserJourneys,
     platform: setPlatform,
     integrations: setIntegrations,
     techConstraints: setTechConstraints,
   };
 
   const FIELD_GETTERS: Record<string, () => string> = {
-    visionProblem: () => visionProblem,
-    visionTargetUsers: () => visionTargetUsers,
-    visionGoals: () => visionGoals,
-    visionSuccess: () => visionSuccess,
-    coreFeatures: () => coreFeatures,
-    niceToHaveFeatures: () => niceToHaveFeatures,
-    coreEntities: () => coreEntities,
-    userJourneys: () => userJourneys,
     platform: () => platform,
     integrations: () => integrations,
     techConstraints: () => techConstraints,
@@ -848,44 +896,96 @@ export default function NewAssemblyPage() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    placeholder="e.g. web-app, cli-tool, library, mobile-app"
-                    data-testid="input-category"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="preset">Preset</Label>
+                <div className="space-y-3">
+                  <Label>Project Category</Label>
                   {presetsLoading ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Loading presets...
+                      Loading project types...
                     </div>
                   ) : (
-                    <Select value={presetId} onValueChange={setPresetId} data-testid="select-preset">
-                      <SelectTrigger data-testid="select-preset-trigger">
-                        <SelectValue placeholder="Select a preset" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {presetEntries.map(([key, preset]) => (
-                          <SelectItem key={key} value={key} data-testid={`select-preset-option-${key}`}>
-                            {preset.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {selectedPreset?.description && (
-                    <p className="text-xs text-muted-foreground" data-testid="text-preset-description">
-                      {selectedPreset.description}
-                    </p>
+                    <div className="grid grid-cols-2 gap-2" data-testid="category-selection">
+                      {categories.map((cat) => {
+                        const IconComp = getIcon(cat.icon);
+                        const isSelected = selectedCategory === cat.id;
+                        return (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedCategory(cat.id);
+                              setSelectedType("");
+                              setTypeFields({});
+                            }}
+                            className={`flex items-start gap-3 p-3 rounded-md border text-left transition-colors ${
+                              isSelected
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover-elevate"
+                            }`}
+                            data-testid={`category-card-${cat.id}`}
+                          >
+                            <IconComp className="w-5 h-5 mt-0.5 shrink-0" />
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium">{cat.label}</div>
+                              <div className="text-xs text-muted-foreground">{cat.description}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
+
+                {selectedCategoryObj && (
+                  <div className="space-y-3">
+                    <Label>Project Type</Label>
+                    <div className="grid grid-cols-2 gap-2" data-testid="type-selection">
+                      {selectedCategoryObj.types.map((t) => {
+                        const IconComp = getIcon(t.icon);
+                        const isSelected = selectedType === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedType(t.id);
+                              setTypeFields({});
+                            }}
+                            className={`flex items-start gap-3 p-3 rounded-md border text-left transition-colors ${
+                              isSelected
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover-elevate"
+                            }`}
+                            data-testid={`type-card-${t.id}`}
+                          >
+                            <IconComp className="w-4 h-4 mt-0.5 shrink-0" />
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium">{t.label}</div>
+                              <div className="text-xs text-muted-foreground">{t.description}</div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {selectedTypeObj && fullProductModifier && (
+                  <div className="flex items-start gap-3 p-3 rounded-md border border-border" data-testid="full-product-toggle">
+                    <Checkbox
+                      id="fullProduct"
+                      checked={fullProduct}
+                      onCheckedChange={(checked) => setFullProduct(!!checked)}
+                      data-testid="checkbox-full-product"
+                    />
+                    <div className="space-y-0.5">
+                      <Label htmlFor="fullProduct" className="text-sm font-medium cursor-pointer">
+                        {fullProductModifier.label}
+                      </Label>
+                      <p className="text-xs text-muted-foreground">{fullProductModifier.description}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="stagePlan">What do you want to do?</Label>
@@ -928,129 +1028,49 @@ export default function NewAssemblyPage() {
 
             {currentStep === 1 && (
               <>
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="visionProblem" fieldKey="visionProblem" onDetailOpen={setDetailField}>
-                    What problem does this solve?
-                  </FieldLabel>
-                  <Textarea
-                    id="visionProblem"
-                    value={visionProblem}
-                    onChange={(e) => setVisionProblem(e.target.value)}
-                    placeholder="Users struggle to organize their notes across devices and need a fast, simple way to capture and retrieve information..."
-                    rows={3}
-                    data-testid="input-vision-problem"
-                  />
-                  <SuggestionChips suggestions={getSuggestions("visionProblem")} onSelect={(v) => handleSuggestionSelect("visionProblem", v)} fieldKey="visionProblem" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="visionTargetUsers" fieldKey="visionTargetUsers" onDetailOpen={setDetailField}>
-                    Who is this for?
-                  </FieldLabel>
-                  <Textarea
-                    id="visionTargetUsers"
-                    value={visionTargetUsers}
-                    onChange={(e) => setVisionTargetUsers(e.target.value)}
-                    placeholder="Students who need quick lecture notes, professionals tracking meeting action items, parents managing household lists..."
-                    rows={3}
-                    data-testid="input-vision-target-users"
-                  />
-                  <SuggestionChips suggestions={getSuggestions("visionTargetUsers")} onSelect={(v) => handleSuggestionSelect("visionTargetUsers", v)} fieldKey="visionTargetUsers" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="visionGoals" fieldKey="visionGoals" onDetailOpen={setDetailField}>
-                    Primary goals (what should this achieve?)
-                  </FieldLabel>
-                  <Textarea
-                    id="visionGoals"
-                    value={visionGoals}
-                    onChange={(e) => setVisionGoals(e.target.value)}
-                    placeholder="1. Let users create and organize notes instantly&#10;2. Sync across all devices in real-time&#10;3. Support rich text formatting and attachments"
-                    rows={3}
-                    data-testid="input-vision-goals"
-                  />
-                  <SuggestionChips suggestions={getSuggestions("visionGoals")} onSelect={(v) => handleSuggestionSelect("visionGoals", v)} fieldKey="visionGoals" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="visionSuccess" fieldKey="visionSuccess" onDetailOpen={setDetailField}>
-                    What does success look like?
-                  </FieldLabel>
-                  <Textarea
-                    id="visionSuccess"
-                    value={visionSuccess}
-                    onChange={(e) => setVisionSuccess(e.target.value)}
-                    placeholder="Users can find any note within 3 seconds, daily active usage of 60%+, positive app store ratings..."
-                    rows={2}
-                    data-testid="input-vision-success"
-                  />
-                  <SuggestionChips suggestions={getSuggestions("visionSuccess")} onSelect={(v) => handleSuggestionSelect("visionSuccess", v)} fieldKey="visionSuccess" />
-                </div>
+                {selectedTypeObj ? (
+                  selectedTypeObj.fields.map((field) => (
+                    <div key={field.key} className="space-y-2">
+                      <Label htmlFor={`type-field-${field.key}`}>{field.label}</Label>
+                      <Textarea
+                        id={`type-field-${field.key}`}
+                        value={typeFields[field.key] || ""}
+                        onChange={(e) => setTypeFields(prev => ({ ...prev, [field.key]: e.target.value }))}
+                        placeholder={field.placeholder}
+                        rows={2}
+                        data-testid={`input-type-field-${field.key}`}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground py-4 text-center" data-testid="text-no-type-selected">
+                    Select a project category and type in the Basics step to see project-specific questions.
+                  </div>
+                )}
               </>
             )}
 
             {currentStep === 2 && (
               <>
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="coreFeatures" fieldKey="coreFeatures" onDetailOpen={setDetailField}>
-                    Core features (must-haves)
-                  </FieldLabel>
-                  <Textarea
-                    id="coreFeatures"
-                    value={coreFeatures}
-                    onChange={(e) => setCoreFeatures(e.target.value)}
-                    placeholder="- Create, edit, and delete notes&#10;- Organize notes into folders&#10;- Tag notes with multiple labels&#10;- Full-text search across all notes&#10;- Rich text editor with markdown support"
-                    rows={5}
-                    data-testid="input-core-features"
-                  />
-                  <SuggestionChips suggestions={getSuggestions("coreFeatures")} onSelect={(v) => handleSuggestionSelect("coreFeatures", v)} fieldKey="coreFeatures" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="niceToHaveFeatures" fieldKey="niceToHaveFeatures" onDetailOpen={setDetailField}>
-                    Nice-to-have features
-                  </FieldLabel>
-                  <Textarea
-                    id="niceToHaveFeatures"
-                    value={niceToHaveFeatures}
-                    onChange={(e) => setNiceToHaveFeatures(e.target.value)}
-                    placeholder="- Image and file attachments&#10;- Collaborative editing&#10;- Export to PDF&#10;- Dark mode"
-                    rows={3}
-                    data-testid="input-nice-to-have-features"
-                  />
-                  <SuggestionChips suggestions={getSuggestions("niceToHaveFeatures")} onSelect={(v) => handleSuggestionSelect("niceToHaveFeatures", v)} fieldKey="niceToHaveFeatures" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="coreEntities" fieldKey="coreEntities" onDetailOpen={setDetailField}>
-                    Main things in the system (entities)
-                  </FieldLabel>
-                  <Textarea
-                    id="coreEntities"
-                    value={coreEntities}
-                    onChange={(e) => setCoreEntities(e.target.value)}
-                    placeholder="- Note: has title, body, tags, created/updated dates&#10;- Folder: contains notes, can be nested&#10;- Tag: label applied to notes for filtering&#10;- User: owns notes and folders"
-                    rows={4}
-                    data-testid="input-core-entities"
-                  />
-                  <SuggestionChips suggestions={getSuggestions("coreEntities")} onSelect={(v) => handleSuggestionSelect("coreEntities", v)} fieldKey="coreEntities" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="userJourneys" fieldKey="userJourneys" onDetailOpen={setDetailField}>
-                    Key user workflows
-                  </FieldLabel>
-                  <Textarea
-                    id="userJourneys"
-                    value={userJourneys}
-                    onChange={(e) => setUserJourneys(e.target.value)}
-                    placeholder="1. User signs up, creates their first note, organizes it into a folder&#10;2. User searches for a note by keyword, finds it, edits it&#10;3. User shares a note link with a colleague"
-                    rows={4}
-                    data-testid="input-user-journeys"
-                  />
-                  <SuggestionChips suggestions={getSuggestions("userJourneys")} onSelect={(v) => handleSuggestionSelect("userJourneys", v)} fieldKey="userJourneys" />
-                </div>
+                {fullProduct && fullProductModifier ? (
+                  fullProductModifier.fields.map((field) => (
+                    <div key={field.key} className="space-y-2">
+                      <Label htmlFor={`fp-field-${field.key}`}>{field.label}</Label>
+                      <Textarea
+                        id={`fp-field-${field.key}`}
+                        value={fullProductFields[field.key] || ""}
+                        onChange={(e) => setFullProductFields(prev => ({ ...prev, [field.key]: e.target.value }))}
+                        placeholder={field.placeholder}
+                        rows={2}
+                        data-testid={`input-fp-field-${field.key}`}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground py-4 text-center" data-testid="text-full-product-disabled">
+                    Full Product is not enabled. Toggle it on in the Basics step to configure database, auth, security, integrations, DevOps, and monitoring.
+                  </div>
+                )}
               </>
             )}
 
