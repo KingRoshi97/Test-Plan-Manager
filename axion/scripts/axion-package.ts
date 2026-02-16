@@ -223,6 +223,40 @@ function validateKit(): { warnings: ValidationWarning[]; unknownCount: number; e
     warnings.push({ type: 'missing_stack_profile', message: 'No stack_profiles.json found in config' });
   }
 
+  const workspaceRoot = path.dirname(AXION_ROOT);
+  const overviewPath = path.join(workspaceRoot, 'PROJECT_OVERVIEW.md');
+  if (!fs.existsSync(overviewPath)) {
+    warnings.push({ type: 'missing_overview', message: 'PROJECT_OVERVIEW.md not found — agent kit will lack project context' });
+  }
+
+  const seedFiles = ['RPBS_Product.md', 'REBS_Product.md'];
+  const seedSearchDirs = [
+    path.join(AXION_ROOT, 'source_docs', 'product'),
+    path.join(AXION_ROOT, 'docs', 'product'),
+  ];
+  for (const sf of seedFiles) {
+    let sfFound = false;
+    for (const dir of seedSearchDirs) {
+      const sfPath = path.join(dir, sf);
+      if (fs.existsSync(sfPath)) {
+        sfFound = true;
+        const sfContent = fs.readFileSync(sfPath, 'utf-8');
+        const sfMatches = sfContent.match(/UNKNOWN/g);
+        if (sfMatches && sfMatches.length > 10) {
+          warnings.push({
+            type: 'seed_unfilled',
+            message: `Seed doc ${sf} has ${sfMatches.length} UNKNOWN placeholders — assembly data may not have been injected`,
+            file: `source_docs/${sf}`,
+          });
+        }
+        break;
+      }
+    }
+    if (!sfFound) {
+      warnings.push({ type: 'missing_seed', message: `Seed doc ${sf} not found in source_docs/ or docs/product/` });
+    }
+  }
+
   return { warnings, unknownCount, emptyCount };
 }
 
@@ -242,6 +276,13 @@ function generateAgentPrompt(
 
   p += `## How to Use This Kit\n\n`;
   p += `This document is your entry point. Follow it step by step.\n\n`;
+
+  p += `### Step 0: Project Context\n\n`;
+  p += `Before reading any domain documentation, start with these files for essential project context:\n\n`;
+  p += `- **\`PROJECT_OVERVIEW.md\`** — What this project is, its mode (e.g. mobile-pwa, web-saas), target audience, and core requirements\n`;
+  p += `- **\`source_docs/RPBS_Product.md\`** — Requirements & Product Backlog Specification (the product vision)\n`;
+  p += `- **\`source_docs/REBS_Product.md\`** — Requirements & Engineering Backlog Specification (technical approach)\n\n`;
+  p += `These establish the project identity and constraints that all domain documentation builds upon.\n\n`;
 
   p += `### Step 1: Understand the Mode\n\n`;
   if (mode === 'docs') {
@@ -376,6 +417,29 @@ async function createZip(
       const buf = typeof content === 'string' ? Buffer.from(content) : content;
       files.push({ path: archivePath, size: buf.length, sha256: sha256(buf) });
     };
+
+    const workspaceRoot = path.dirname(AXION_ROOT);
+    const projectOverviewPath = path.join(workspaceRoot, 'PROJECT_OVERVIEW.md');
+    if (fs.existsSync(projectOverviewPath)) {
+      appendFile(fs.readFileSync(projectOverviewPath), 'PROJECT_OVERVIEW.md');
+    }
+
+    const seedDocDirs = [
+      path.join(AXION_ROOT, 'source_docs', 'product'),
+      path.join(AXION_ROOT, 'docs', 'product'),
+    ];
+    const seedDocFiles = ['RPBS_Product.md', 'REBS_Product.md'];
+    for (const file of seedDocFiles) {
+      let found = false;
+      for (const dir of seedDocDirs) {
+        const fullPath = path.join(dir, file);
+        if (fs.existsSync(fullPath)) {
+          appendFile(fs.readFileSync(fullPath), `source_docs/${file}`);
+          found = true;
+          break;
+        }
+      }
+    }
 
     if (fs.existsSync(DOMAINS_PATH)) {
       const domainFiles = walkDir(DOMAINS_PATH);

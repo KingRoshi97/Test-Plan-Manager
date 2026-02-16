@@ -83,7 +83,14 @@ interface PipelineStep {
 const pipelineSteps: Record<string, PipelineStep> = {
   'kit-create': {
     cmd: 'npx',
-    args: (pn) => ['tsx', 'axion/scripts/axion-kit-create.ts', '--target', path.join(WORKSPACES_DIR, pn), '--project-name', pn, '--source', path.join(PROJECT_ROOT, 'axion'), '--force', '--json'],
+    args: (pn, _br, body) => {
+      const a = ['tsx', 'axion/scripts/axion-kit-create.ts', '--target', path.join(WORKSPACES_DIR, pn), '--project-name', pn, '--source', path.join(PROJECT_ROOT, 'axion'), '--force', '--json'];
+      if (body.idea) a.push('--project-context', String(body.idea));
+      if (body.context) a.push('--project-desc', String(body.context));
+      if (body.mode) a.push('--project-mode', String(body.mode));
+      if (body.category) a.push('--project-category', String(body.category));
+      return a;
+    },
     label: 'Kit Create',
     cwd: () => PROJECT_ROOT,
     group: 'setup',
@@ -1893,7 +1900,13 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           continue;
         }
 
-        const stepBody: Record<string, unknown> = { projectName };
+        const stepBody: Record<string, unknown> = {
+          projectName,
+          idea: (assembly as any).idea || '',
+          context: (assembly as any).context || '',
+          mode: (assembly as any).mode || '',
+          category: (assembly as any).category || '',
+        };
         if (presetModules.length > 0 && presetModules.length < 19) {
           stepBody.module = presetModules.join(',');
         }
