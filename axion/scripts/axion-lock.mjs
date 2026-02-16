@@ -3,29 +3,50 @@
  * axion:lock - Lock a domain (ERC creation)
  * Creates an Execution Readiness Contract when domain is ready.
  * REQUIRES verify to have passed first.
- * 
+ *
  * Usage:
  *   node axion/scripts/axion-lock.mjs --module <name>
  *   node axion/scripts/axion-lock.mjs --module <name> --version v2
+ *   node axion/scripts/axion-lock.mjs --all
+ *   node axion/scripts/axion-lock.mjs --module <name> --json
+ *   node axion/scripts/axion-lock.mjs --module <name> --dry-run
  */
 
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { readVerifyStatus, failJson } from './_axion_module_mode.mjs';
+import {
+  parseModuleArgs,
+  isStageDone,
+  markStageDone,
+  markStageFailed,
+} from './_axion_module_mode.mjs';
 
-// Parse command line arguments
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
-const moduleArg = args.find((_, i, arr) => arr[i - 1] === '--module');
+const jsonMode = args.includes('--json');
 const versionArg = args.find((_, i, arr) => arr[i - 1] === '--version') || 'v1';
+const { modules } = parseModuleArgs(process.argv);
 
-// Report tracking
-const report = {
-  created: [],
-  modified: [],
-  skipped: [],
-  failed: []
+const startTime = Date.now();
+
+const receipt = {
+  stage: 'lock',
+  ok: true,
+  modulesProcessed: [],
+  createdFiles: [],
+  modifiedFiles: [],
+  skippedFiles: [],
+  warnings: [],
+  errors: [],
+  elapsedMs: 0,
+  dryRun,
+  lockSummary: {
+    version: versionArg,
+    lockedModules: [],
+    hashes: {},
+    ercPaths: [],
+  },
 };
 
 function loadConfig() {
@@ -38,16 +59,16 @@ function loadConfig() {
 
 function checkForCriticalUnknowns(belsContent) {
   const criticalSections = ['Policy Rules', 'State Machines', 'Validation Rules'];
-  
+
   const conceptPatterns = [
     /Write UNKNOWN/i,
     /log.*UNKNOWN/i,
     /UNKNOWN.*log/i,
     /mark.*UNKNOWN/i,
     /UNKNOWNs exist/i,
-    /contains.*UNKNOWN/i
+    /contains.*UNKNOWN/i,
   ];
-  
+
   for (const section of criticalSections) {
     const sectionRegex = new RegExp(`## ${section}[\\s\\S]*?(?=##|$)`, 'i');
     const match = belsContent.match(sectionRegex);
@@ -73,7 +94,7 @@ function generateHash(content) {
 function createERC(module, belsContent, version) {
   const lockDate = new Date().toISOString();
   const hash = generateHash(belsContent);
-  
+
   return `# Execution Readiness Contract (ERC) — ${module} ${version}
 
 <!-- AXION:TEMPLATE_CONTRACT:v1 -->
@@ -247,103 +268,151 @@ To be populated from DIM interface contracts if present.
 `;
 }
 
-function printReport(hasWarning = false) {
+function emitOutput() {
+  receipt.elapsedMs = Date.now() - startTime;
+
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    return;
+  }
+
+  const ls = receipt.lockSummary;
+
   console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: axion:lock`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
-  console.log(`Status: ${report.failed.length > 0 ? 'FAILED' : hasWarning ? 'WARNING' : 'SUCCESS'}`);
-  if (moduleArg) console.log(`Module: ${moduleArg}`);
-  console.log(`Version: ${versionArg}`);
-  console.log(`\nCreated (${report.created.length}):`);
-  report.created.forEach(f => console.log(`  + ${f}`));
-  console.log(`\nModified (${report.modified.length}):`);
-  report.modified.forEach(f => console.log(`  ~ ${f}`));
-  console.log(`\nSkipped (${report.skipped.length}):`);
-  report.skipped.forEach(f => console.log(`  - ${f}`));
-  console.log(`\nFailed (${report.failed.length}):`);
-  report.failed.forEach(f => console.log(`  ! ${f}`));
-  console.log('\n===================================');
+  console.log(`Version: ${ls.version}`);
+  console.log(`Modules: ${receipt.modulesProcessed.join(', ') || '(none)'}`);
+
+  if (ls.lockedModules.length) {
+    console.log(`\nLocked (${ls.lockedModules.length}):`);
+    ls.lockedModules.forEach(m => console.log(`  + ${m}`));
+  }
+
+  if (ls.ercPaths.length) {
+    console.log(`\nERC Files Created (${ls.ercPaths.length}):`);
+    ls.ercPaths.forEach(p => console.log(`  + ${p}`));
+  }
+
+  if (receipt.createdFiles.length) {
+    console.log(`\nAll Created Files (${receipt.createdFiles.length}):`);
+    receipt.createdFiles.forEach(f => console.log(`  + ${f}`));
+  }
+
+  if (receipt.skippedFiles.length) {
+    console.log(`\nSkipped (${receipt.skippedFiles.length}):`);
+    receipt.skippedFiles.forEach(f => console.log(`  - ${f}`));
+  }
+
+  if (receipt.warnings.length) {
+    console.log(`\nWarnings (${receipt.warnings.length}):`);
+    receipt.warnings.forEach(w => console.log(`  ? ${w}`));
+  }
+  if (receipt.errors.length) {
+    console.log(`\nErrors (${receipt.errors.length}):`);
+    receipt.errors.forEach(e => console.log(`  ! ${e}`));
+  }
+
+  console.log(`\nResult: ${receipt.ok ? 'OK' : 'FAILED'}`);
+  console.log('===================================');
 }
 
 try {
-  console.log('Running axion:lock...');
-  
-  // Check verify status first
-  const status = readVerifyStatus();
-  if (!status || status.status !== 'PASS') {
-    failJson({
-      status: 'blocked_by',
-      stage: 'lock',
-      missing: ['verify_pass'],
-      hint: ['run: node axion/scripts/axion-verify.mjs --all'],
-    });
-  }
-  
-  if (!moduleArg) {
-    throw new Error('--module <slug> is required for axion:lock');
-  }
-  
+  if (!jsonMode) console.log('Running axion:lock...');
+
   const config = loadConfig();
   const axionRoot = config.axion_root || 'axion';
   const domainsDir = config.domains_dir || 'domains';
-  
-  const domainDir = path.join(axionRoot, domainsDir, moduleArg);
-  const belsPath = path.join(domainDir, `BELS_${moduleArg}.md`);
-  
-  // Check BELS exists
-  if (!fs.existsSync(belsPath)) {
-    throw new Error(`BELS file not found: ${belsPath}`);
+
+  const ls = receipt.lockSummary;
+
+  for (const module of modules) {
+    if (!isStageDone('verify', module)) {
+      const msg = `Module '${module}' has not completed 'verify'. Run verify first.`;
+      receipt.warnings.push(msg);
+      if (!dryRun) markStageFailed('lock', module, { reason: msg });
+      continue;
+    }
+
+    try {
+      if (!jsonMode) console.log(`Locking module: ${module}`);
+      receipt.modulesProcessed.push(module);
+
+      const domainDir = path.join(axionRoot, domainsDir, module);
+      const belsPath = path.join(domainDir, `BELS_${module}.md`);
+
+      if (!fs.existsSync(belsPath)) {
+        const msg = `BELS file not found: ${belsPath}`;
+        receipt.errors.push(msg);
+        receipt.ok = false;
+        if (!dryRun) markStageFailed('lock', module, { reason: msg });
+        continue;
+      }
+
+      const belsContent = fs.readFileSync(belsPath, 'utf8');
+
+      if (checkForCriticalUnknowns(belsContent)) {
+        const msg = `Module '${module}' contains UNKNOWN in critical BELS sections. Run content-fill or review first.`;
+        receipt.errors.push(msg);
+        receipt.ok = false;
+        if (!dryRun) markStageFailed('lock', module, { reason: msg });
+        continue;
+      }
+
+      const ercPath = path.join(domainDir, `ERC_${module}_${versionArg}.md`);
+      if (fs.existsSync(ercPath)) {
+        const msg = `ERC ${versionArg} already exists for '${module}' at ${ercPath}. Use a different --version.`;
+        receipt.warnings.push(msg);
+        receipt.skippedFiles.push(ercPath);
+        continue;
+      }
+
+      const ercContent = createERC(module, belsContent, versionArg);
+      const hash = generateHash(belsContent);
+
+      if (!dryRun) {
+        fs.mkdirSync(path.dirname(ercPath), { recursive: true });
+        fs.writeFileSync(ercPath, ercContent, 'utf8');
+      }
+      receipt.createdFiles.push(ercPath);
+      ls.ercPaths.push(ercPath);
+
+      const hashesPath = path.join(domainDir, 'LOCK_HASHES.json');
+      const hashes = fs.existsSync(hashesPath)
+        ? JSON.parse(fs.readFileSync(hashesPath, 'utf8'))
+        : {};
+
+      hashes[versionArg] = {
+        locked: new Date().toISOString(),
+        hash,
+      };
+
+      if (!dryRun) {
+        fs.writeFileSync(hashesPath, JSON.stringify(hashes, null, 2), 'utf8');
+      }
+      receipt.createdFiles.push(hashesPath);
+
+      ls.lockedModules.push(module);
+      ls.hashes[module] = hash;
+
+      if (!dryRun) {
+        markStageDone('lock', module, { version: versionArg, hash });
+      }
+
+    } catch (moduleErr) {
+      receipt.errors.push(`Module '${module}' failed: ${moduleErr.message}`);
+      receipt.ok = false;
+      if (!dryRun) markStageFailed('lock', module, { reason: moduleErr.message });
+    }
   }
-  
-  const belsContent = fs.readFileSync(belsPath, 'utf8');
-  
-  // Check for critical UNKNOWNs
-  if (checkForCriticalUnknowns(belsContent)) {
-    report.failed.push('Cannot lock - module contains UNKNOWN in critical sections');
-    report.failed.push('Run axion:review to see details');
-    printReport();
-    process.exit(1);
-  }
-  
-  // Check if ERC already exists
-  const ercPath = path.join(domainDir, `ERC_${moduleArg}_${versionArg}.md`);
-  if (fs.existsSync(ercPath)) {
-    report.skipped.push(`${ercPath} (already exists)`);
-    console.log(`ERC ${versionArg} already exists for ${moduleArg}. Use a different version.`);
-    printReport(true);
-    process.exit(0);
-  }
-  
-  // Create ERC
-  const ercContent = createERC(moduleArg, belsContent, versionArg);
-  
-  if (!dryRun) {
-    fs.mkdirSync(path.dirname(ercPath), { recursive: true });
-    fs.writeFileSync(ercPath, ercContent, 'utf8');
-  }
-  report.created.push(ercPath);
-  
-  // Create lock hashes file
-  const hashesPath = path.join(domainDir, 'LOCK_HASHES.json');
-  const hashes = fs.existsSync(hashesPath) 
-    ? JSON.parse(fs.readFileSync(hashesPath, 'utf8'))
-    : {};
-  
-  hashes[versionArg] = {
-    locked: new Date().toISOString(),
-    hash: generateHash(belsContent)
-  };
-  
-  if (!dryRun) {
-    fs.writeFileSync(hashesPath, JSON.stringify(hashes, null, 2), 'utf8');
-  }
-  report.created.push(hashesPath);
-  
-  console.log(`\nModule "${moduleArg}" locked as ${versionArg}`);
-  printReport();
-  
+
+  emitOutput();
+
+  if (!receipt.ok) process.exit(1);
+
 } catch (error) {
-  report.failed.push(error.message);
-  printReport();
+  receipt.ok = false;
+  receipt.errors.push(error.message);
+  emitOutput();
   process.exit(1);
 }

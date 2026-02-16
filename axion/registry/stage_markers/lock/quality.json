@@ -1,0 +1,7 @@
+{
+  "status": "FAILED",
+  "stage": "lock",
+  "module": "quality",
+  "timestamp": "2026-02-16T03:55:28.744Z",
+  "reason": "Module 'quality' has not completed 'verify'. Run verify first."
+}
