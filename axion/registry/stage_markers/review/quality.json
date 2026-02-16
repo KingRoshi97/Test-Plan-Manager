@@ -1,6 +1,7 @@
 {
-  "status": "DONE",
+  "status": "FAILED",
   "stage": "review",
   "module": "quality",
-  "timestamp": "2026-02-07T17:15:44.496Z"
+  "timestamp": "2026-02-16T03:33:41.417Z",
+  "reason": "Module 'quality' has not completed 'content-fill'. Run content-fill first."
 }

@@ -2,10 +2,12 @@
 /**
  * axion:review - Review packet
  * Summarizes UNKNOWNs, conflicts, missing reason codes, and missing sections.
- * 
+ *
  * Usage:
  *   node axion/scripts/axion-review.mjs --all
  *   node axion/scripts/axion-review.mjs --module <name>
+ *   node axion/scripts/axion-review.mjs --all --json
+ *   node axion/scripts/axion-review.mjs --all --dry-run
  */
 
 import fs from 'fs';
@@ -15,6 +17,7 @@ import {
   ensurePrereqs,
   isStageDone,
   markStageDone,
+  markStageFailed,
   failJson,
   AXION_DOC_TYPES,
   AXION_REVIEWED_DOC_TYPES,
@@ -22,20 +25,28 @@ import {
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const jsonMode = args.includes('--json');
 const { modules } = parseModuleArgs(process.argv);
 
-const report = {
-  created: [],
-  modified: [],
-  skipped: [],
-  failed: []
-};
+const startTime = Date.now();
 
-const review = {
-  unknownCounts: {},
-  conflicts: [],
-  missingReasonCodes: [],
-  missingSections: []
+const receipt = {
+  stage: 'review',
+  ok: true,
+  modulesProcessed: [],
+  createdFiles: [],
+  modifiedFiles: [],
+  skippedFiles: [],
+  warnings: [],
+  errors: [],
+  elapsedMs: 0,
+  dryRun,
+  reviewSummary: {
+    unknownCounts: {},
+    conflicts: [],
+    missingReasonCodes: [],
+    missingSections: [],
+  },
 };
 
 function loadConfig() {
@@ -54,51 +65,61 @@ function countUnknowns(content) {
 function checkRequiredSections(content, docType) {
   const sections = AXION_REVIEWED_DOC_TYPES[docType] || [];
   const missing = [];
-  
+
   for (const section of sections) {
     if (!content.includes(`## ${section}`)) {
       missing.push(section);
     }
   }
-  
+
   return missing;
 }
 
-function printReport() {
+function emitOutput() {
+  receipt.elapsedMs = Date.now() - startTime;
+
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    return;
+  }
+
+  const rv = receipt.reviewSummary;
+
   console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: axion:review`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
-  console.log(`Modules: ${modules.join(', ')}`);
-  
+  console.log(`Modules: ${receipt.modulesProcessed.join(', ') || '(none)'}`);
+
   console.log('\n--- REVIEW SUMMARY ---');
-  
+
   console.log('\nUNKNOWN Counts by Module:');
-  for (const [module, count] of Object.entries(review.unknownCounts)) {
-    console.log(`  ${module}: ${count} UNKNOWNs`);
+  for (const [mod, count] of Object.entries(rv.unknownCounts)) {
+    console.log(`  ${mod}: ${count} UNKNOWNs`);
   }
-  
-  console.log(`\nConflicts Detected: ${review.conflicts.length}`);
-  review.conflicts.forEach(c => console.log(`  ! ${c}`));
-  
-  console.log(`\nMissing Reason Codes: ${review.missingReasonCodes.length}`);
-  review.missingReasonCodes.forEach(c => console.log(`  ! ${c}`));
-  
-  console.log(`\nMissing Required Sections: ${review.missingSections.length}`);
-  review.missingSections.forEach(s => console.log(`  ! ${s}`));
-  
-  console.log('\n--- FILE OPERATIONS ---');
-  console.log(`Created (${report.created.length}):`);
-  report.created.forEach(f => console.log(`  + ${f}`));
-  console.log(`Modified (${report.modified.length}):`);
-  report.modified.forEach(f => console.log(`  ~ ${f}`));
-  console.log(`Skipped (${report.skipped.length}):`);
-  report.skipped.forEach(f => console.log(`  - ${f}`));
-  console.log(`Failed (${report.failed.length}):`);
-  report.failed.forEach(f => console.log(`  ! ${f}`));
-  console.log('\n===================================');
-  
-  const totalUnknowns = Object.values(review.unknownCounts).reduce((a, b) => a + b, 0);
-  if (totalUnknowns > 0 || review.conflicts.length > 0 || review.missingReasonCodes.length > 0) {
+
+  console.log(`\nConflicts Detected: ${rv.conflicts.length}`);
+  rv.conflicts.forEach(c => console.log(`  ! ${c}`));
+
+  console.log(`\nMissing Reason Codes: ${rv.missingReasonCodes.length}`);
+  rv.missingReasonCodes.forEach(c => console.log(`  ! ${c}`));
+
+  console.log(`\nMissing Required Sections: ${rv.missingSections.length}`);
+  rv.missingSections.forEach(s => console.log(`  ! ${s}`));
+
+  if (receipt.warnings.length) {
+    console.log(`\nWarnings (${receipt.warnings.length}):`);
+    receipt.warnings.forEach(w => console.log(`  ? ${w}`));
+  }
+  if (receipt.errors.length) {
+    console.log(`\nErrors (${receipt.errors.length}):`);
+    receipt.errors.forEach(e => console.log(`  ! ${e}`));
+  }
+
+  console.log(`\nResult: ${receipt.ok ? 'OK' : 'FAILED'}`);
+  console.log('===================================');
+
+  const totalUnknowns = Object.values(rv.unknownCounts).reduce((a, b) => a + b, 0);
+  if (totalUnknowns > 0 || rv.conflicts.length > 0 || rv.missingReasonCodes.length > 0) {
     console.log('\nRECOMMENDATION: Do not lock modules until issues are resolved.');
   } else {
     console.log('\nAll modules ready for verify.');
@@ -106,61 +127,87 @@ function printReport() {
 }
 
 try {
-  console.log('Running axion:review...');
-  
+  if (!jsonMode) console.log('Running axion:review...');
+
   const config = loadConfig();
   const axionRoot = config.axion_root || 'axion';
   const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
-  
+
+  const rv = receipt.reviewSummary;
+
   for (const module of modules) {
-    ensurePrereqs({
-      stageName: 'review',
-      module,
-      stagePrereq: (m) => isStageDone('draft', m),
-    });
-    
-    console.log(`Reviewing module: ${module}`);
-    
-    const domainDir = path.join(domainsDir, module);
-    let totalUnknowns = 0;
-    
-    const belsPath = path.join(domainDir, `BELS_${module}.md`);
-    if (fs.existsSync(belsPath)) {
-      const content = fs.readFileSync(belsPath, 'utf8');
-      totalUnknowns += countUnknowns(content);
-      
-      const missingSections = checkRequiredSections(content, 'BELS');
-      missingSections.forEach(s => {
-        review.missingSections.push(`${module}/BELS: Missing section "${s}"`);
+    if (!isStageDone('content-fill', module)) {
+      const msg = `Module '${module}' has not completed 'content-fill'. Run content-fill first.`;
+      receipt.warnings.push(msg);
+      if (!dryRun) markStageFailed('review', module, { reason: msg });
+      continue;
+    }
+
+    try {
+      ensurePrereqs({
+        stageName: 'review',
+        module,
+        stagePrereq: (m) => isStageDone('content-fill', m),
       });
-    } else {
-      review.missingSections.push(`${module}: BELS file missing`);
+    } catch (prereqErr) {
+      receipt.errors.push(`Prerequisite failed for module '${module}': ${prereqErr.message}`);
+      receipt.ok = false;
+      if (!dryRun) markStageFailed('review', module, { reason: prereqErr.message });
+      continue;
     }
-    
-    for (const docType of AXION_DOC_TYPES) {
-      const docPath = path.join(domainDir, `${docType}_${module}.md`);
-      if (fs.existsSync(docPath)) {
-        const content = fs.readFileSync(docPath, 'utf8');
+
+    try {
+      if (!jsonMode) console.log(`Reviewing module: ${module}`);
+      receipt.modulesProcessed.push(module);
+
+      const domainDir = path.join(domainsDir, module);
+      let totalUnknowns = 0;
+
+      const belsPath = path.join(domainDir, `BELS_${module}.md`);
+      if (fs.existsSync(belsPath)) {
+        const content = fs.readFileSync(belsPath, 'utf8');
         totalUnknowns += countUnknowns(content);
-        
-        const missingSections = checkRequiredSections(content, docType);
+
+        const missingSections = checkRequiredSections(content, 'BELS');
         missingSections.forEach(s => {
-          review.missingSections.push(`${module}/${docType}: Missing section "${s}"`);
+          rv.missingSections.push(`${module}/BELS: Missing section "${s}"`);
         });
+      } else {
+        rv.missingSections.push(`${module}: BELS file missing`);
       }
-    }
-    
-    review.unknownCounts[module] = totalUnknowns;
-    
-    if (!dryRun) {
-      markStageDone('review', module);
+
+      for (const docType of AXION_DOC_TYPES) {
+        const docPath = path.join(domainDir, `${docType}_${module}.md`);
+        if (fs.existsSync(docPath)) {
+          const content = fs.readFileSync(docPath, 'utf8');
+          totalUnknowns += countUnknowns(content);
+
+          const missingSections = checkRequiredSections(content, docType);
+          missingSections.forEach(s => {
+            rv.missingSections.push(`${module}/${docType}: Missing section "${s}"`);
+          });
+        }
+      }
+
+      rv.unknownCounts[module] = totalUnknowns;
+
+      if (!dryRun) {
+        markStageDone('review', module);
+      }
+    } catch (moduleErr) {
+      receipt.errors.push(`Module '${module}' failed: ${moduleErr.message}`);
+      receipt.ok = false;
+      if (!dryRun) markStageFailed('review', module, { reason: moduleErr.message });
     }
   }
-  
-  printReport();
-  
+
+  emitOutput();
+
+  if (!receipt.ok) process.exit(1);
+
 } catch (error) {
-  report.failed.push(error.message);
-  printReport();
+  receipt.ok = false;
+  receipt.errors.push(error.message);
+  emitOutput();
   process.exit(1);
 }
