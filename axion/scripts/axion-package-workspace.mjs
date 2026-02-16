@@ -7,11 +7,12 @@ import crypto from "node:crypto";
 import archiver from "archiver";
 
 function parseArgs(argv) {
-  const args = { workspace: null, dryRun: false, force: true };
+  const args = { workspace: null, dryRun: false, force: true, json: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--dry-run") args.dryRun = true;
     else if (a === "--force") args.force = true;
+    else if (a === "--json") args.json = true;
     else if (a === "--workspace") args.workspace = argv[++i] ?? null;
   }
   return args;
@@ -108,46 +109,81 @@ function countUnknownsInDocs(workspaceRoot) {
   return count;
 }
 
-function printAssemblerReport(report) {
-  console.log("\n========== ASSEMBLER_REPORT ==========");
-  console.log(`Script: assembler:package-workspace`);
-  console.log(`Mode: ${report.dryRun ? "DRY-RUN" : "EXECUTE"}`);
-  console.log(`Workspace: ${report.workspace}`);
-  console.log(`Status: ${report.ok ? "SUCCESS" : "FAILED"}`);
-  console.log("");
-  console.log(`Created (${report.created.length}):`);
-  for (const c of report.created) console.log(`  + ${c}`);
-  console.log("");
-  if (report.outputs.zipSha256) {
-    console.log(`Zip SHA256: ${report.outputs.zipSha256}`);
-  }
-  if (report.outputs.fileCount !== undefined) {
-    console.log(`Files in bundle: ${report.outputs.fileCount}`);
-  }
-  if (report.outputs.unknownCount !== undefined) {
-    console.log(`UNKNOWN tokens: ${report.outputs.unknownCount}`);
-  }
-  console.log("===================================\n");
-}
-
 (async function main() {
   const args = parseArgs(process.argv);
+  const jsonMode = args.json;
+  const startTime = Date.now();
   
   const workspaceRoot = args.workspace || process.env.ASSEMBLER_WORKSPACE;
   
   if (!workspaceRoot) {
-    console.error("Error: --workspace path or ASSEMBLER_WORKSPACE env var required");
+    if (jsonMode) {
+      const errReceipt = {
+        stage: 'package-workspace',
+        ok: false,
+        createdFiles: [],
+        modifiedFiles: [],
+        skippedFiles: [],
+        warnings: [],
+        errors: ['--workspace path or ASSEMBLER_WORKSPACE env var required'],
+        elapsedMs: Date.now() - startTime,
+        dryRun: args.dryRun,
+        packageSummary: { workspace: null, fileCount: 0, unknownCount: 0, zipSha256: null },
+      };
+      process.stdout.write(JSON.stringify(errReceipt, null, 2) + '\n');
+    } else {
+      console.error("Error: --workspace path or ASSEMBLER_WORKSPACE env var required");
+    }
     process.exit(1);
   }
 
-  const report = {
-    command: "assembler:package-workspace",
-    ok: false,
-    created: [],
+  const receipt = {
+    stage: 'package-workspace',
+    ok: true,
+    createdFiles: [],
+    modifiedFiles: [],
+    skippedFiles: [],
+    warnings: [],
+    errors: [],
+    elapsedMs: 0,
     dryRun: args.dryRun,
-    workspace: workspaceRoot,
-    outputs: {}
+    packageSummary: {
+      workspace: workspaceRoot,
+      fileCount: 0,
+      unknownCount: 0,
+      zipSha256: null,
+    },
   };
+
+  function emitOutput() {
+    receipt.elapsedMs = Date.now() - startTime;
+    if (jsonMode) {
+      process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    } else {
+      console.log("\n========== ASSEMBLER_REPORT ==========");
+      console.log(`Script: assembler:package-workspace`);
+      console.log(`Mode: ${receipt.dryRun ? "DRY-RUN" : "EXECUTE"}`);
+      console.log(`Workspace: ${receipt.packageSummary.workspace}`);
+      console.log(`Status: ${receipt.ok ? "SUCCESS" : "FAILED"}`);
+      console.log("");
+      console.log(`Created (${receipt.createdFiles.length}):`);
+      for (const c of receipt.createdFiles) console.log(`  + ${c}`);
+      console.log("");
+      if (receipt.packageSummary.zipSha256) {
+        console.log(`Zip SHA256: ${receipt.packageSummary.zipSha256}`);
+      }
+      if (receipt.packageSummary.fileCount !== undefined) {
+        console.log(`Files in bundle: ${receipt.packageSummary.fileCount}`);
+      }
+      if (receipt.packageSummary.unknownCount !== undefined) {
+        console.log(`UNKNOWN tokens: ${receipt.packageSummary.unknownCount}`);
+      }
+      if (receipt.errors.length > 0) {
+        console.log(`Errors: ${receipt.errors.join(', ')}`);
+      }
+      console.log("===================================\n");
+    }
+  }
 
   try {
     if (!exists(workspaceRoot)) {
@@ -360,17 +396,17 @@ ${domainSlugs.map(d => `- ${d}`).join("\n") || "- (none defined yet)"}
 `;
 
     const files = collectFiles(workspaceRoot);
-    report.outputs.fileCount = files.length;
-    report.outputs.unknownCount = unknownCount;
+    receipt.packageSummary.fileCount = files.length;
+    receipt.packageSummary.unknownCount = unknownCount;
 
     if (args.dryRun) {
-      report.ok = true;
-      report.outputs.wouldWrite = [
+      receipt.ok = true;
+      receipt.skippedFiles = [
         path.join(bundleDir, "manifest.json"),
         path.join(bundleDir, "agent_prompt.md"),
         zipOut
       ];
-      printAssemblerReport(report);
+      emitOutput();
       return;
     }
 
@@ -382,7 +418,7 @@ ${domainSlugs.map(d => `- ${d}`).join("\n") || "- (none defined yet)"}
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
     fs.writeFileSync(promptPath, agentPrompt);
 
-    report.created.push(rel(workspaceRoot, manifestPath), rel(workspaceRoot, promptPath));
+    receipt.createdFiles.push(rel(workspaceRoot, manifestPath), rel(workspaceRoot, promptPath));
 
     const output = fs.createWriteStream(zipOut);
     const archive = archiver("zip", { zlib: { level: 9 } });
@@ -407,15 +443,18 @@ ${domainSlugs.map(d => `- ${d}`).join("\n") || "- (none defined yet)"}
     await archive.finalize();
     await done;
 
-    report.created.push(rel(workspaceRoot, zipOut));
-    report.outputs.zipSha256 = sha256(fs.readFileSync(zipOut));
-    report.ok = true;
+    receipt.createdFiles.push(rel(workspaceRoot, zipOut));
+    receipt.packageSummary.zipSha256 = sha256(fs.readFileSync(zipOut));
+    receipt.ok = true;
 
-    printAssemblerReport(report);
+    emitOutput();
   } catch (e) {
-    report.ok = false;
-    console.error("Package error:", e?.message || e);
-    printAssemblerReport(report);
+    receipt.ok = false;
+    receipt.errors.push(e?.message || String(e));
+    if (!jsonMode) {
+      console.error("Package error:", e?.message || e);
+    }
+    emitOutput();
     process.exit(1);
   }
 })();

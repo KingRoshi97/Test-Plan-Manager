@@ -28,6 +28,37 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import { writeJsonAtomic } from './lib/atomic-writer.js';
 
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+const receipt: Record<string, any> = {
+  ok: true,
+  script: 'axion-build-exec',
+  stage: 'build-exec',
+  errors: [] as string[],
+  warnings: [] as string[],
+  elapsedMs: 0,
+  dryRun,
+  summary: {
+    attempted: 0,
+    succeeded: 0,
+    failed: 0,
+  },
+  ops_count: 0,
+  manifest_path: null as string | null,
+  report_path: null as string | null,
+  reason_codes: [] as string[],
+  hint: [] as string[],
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
+
 interface BuildExecOptions {
   buildRoot: string;
   projectName: string;
@@ -464,6 +495,24 @@ function executePatchFile(op: ManifestOp, absoluteTarget: string): OpResult {
   };
 }
 
+function failWithReceipt(reasonCode: string, hint: string[], status: 'failed' | 'blocked_by' = 'failed'): never {
+  receipt.ok = false;
+  receipt.reason_codes.push(reasonCode);
+  receipt.hint.push(...hint);
+  receipt.errors.push(`${reasonCode}: ${hint[0]}`);
+  emitOutput();
+  if (!jsonMode) {
+    const result: BuildExecResult = {
+      status,
+      stage: 'build-exec',
+      reason_codes: [reasonCode],
+      hint,
+    };
+    console.log(JSON.stringify(result, null, 2));
+  }
+  process.exit(1);
+}
+
 function main(): void {
   const args = process.argv.slice(2);
   const options = parseArgs(args);
@@ -471,25 +520,11 @@ function main(): void {
   log('\n[AXION] Build Executor\n', options.jsonOutput);
 
   if (!options.projectName) {
-    const result: BuildExecResult = {
-      status: 'failed',
-      stage: 'build-exec',
-      reason_codes: ['PROJECT_NAME_MISSING'],
-      hint: ['Provide --project-name <name> to specify the project workspace'],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    failWithReceipt('PROJECT_NAME_MISSING', ['Provide --project-name <name> to specify the project workspace']);
   }
 
   if (!options.dryRun && !options.apply) {
-    const result: BuildExecResult = {
-      status: 'failed',
-      stage: 'build-exec',
-      reason_codes: ['MODE_NOT_SPECIFIED'],
-      hint: ['Specify --dry-run or --apply'],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    failWithReceipt('MODE_NOT_SPECIFIED', ['Specify --dry-run or --apply']);
   }
 
   const buildRoot = path.resolve(options.buildRoot);
@@ -501,59 +536,31 @@ function main(): void {
   log(`[INFO] Workspace: ${workspaceRoot}`, options.jsonOutput);
 
   if (!fs.existsSync(workspaceRoot)) {
-    const result: BuildExecResult = {
-      status: 'failed',
-      stage: 'build-exec',
-      reason_codes: ['WORKSPACE_NOT_FOUND'],
-      hint: [`Workspace not found at ${workspaceRoot}`, 'Run kit-create and scaffold-app first'],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    failWithReceipt('WORKSPACE_NOT_FOUND', [`Workspace not found at ${workspaceRoot}`, 'Run kit-create and scaffold-app first']);
   }
 
   const lockManifestPath = path.join(workspaceRoot, 'registry', 'lock_manifest.json');
   if (!fs.existsSync(lockManifestPath)) {
-    const result: BuildExecResult = {
-      status: 'blocked_by',
-      stage: 'build-exec',
-      reason_codes: ['DOCS_NOT_LOCKED'],
-      hint: [
-        'Documentation must be locked before executing build',
-        'Run docs pipeline to completion, then lock',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    failWithReceipt('DOCS_NOT_LOCKED', [
+      'Documentation must be locked before executing build',
+      'Run docs pipeline to completion, then lock',
+    ], 'blocked_by');
   }
 
   const verifyReportPath = path.join(workspaceRoot, 'registry', 'verify_report.json');
   if (!fs.existsSync(verifyReportPath)) {
-    const result: BuildExecResult = {
-      status: 'blocked_by',
-      stage: 'build-exec',
-      reason_codes: ['VERIFY_NOT_PASSED'],
-      hint: [
-        'Verification report not found',
-        'Run verify to produce verify_report.json with PASS status',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    failWithReceipt('VERIFY_NOT_PASSED', [
+      'Verification report not found',
+      'Run verify to produce verify_report.json with PASS status',
+    ], 'blocked_by');
   }
 
   const verifyReport = JSON.parse(fs.readFileSync(verifyReportPath, 'utf-8'));
   if (verifyReport.overall_status !== 'PASS' && verifyReport.status !== 'PASS') {
-    const result: BuildExecResult = {
-      status: 'blocked_by',
-      stage: 'build-exec',
-      reason_codes: ['VERIFY_NOT_PASSED'],
-      hint: [
-        `Verification status: ${verifyReport.overall_status || verifyReport.status}`,
-        'All modules must pass verification before build execution',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    failWithReceipt('VERIFY_NOT_PASSED', [
+      `Verification status: ${verifyReport.overall_status || verifyReport.status}`,
+      'All modules must pass verification before build execution',
+    ], 'blocked_by');
   }
 
   log('[INFO] Pre-flight gates passed (docs locked, verify PASS)', options.jsonOutput);
@@ -577,14 +584,7 @@ function handleDryRun(
   const planPath = path.join(workspaceRoot, 'registry', 'build_plan.json');
 
   if (!fs.existsSync(planPath)) {
-    const result: BuildExecResult = {
-      status: 'failed',
-      stage: 'build-exec',
-      reason_codes: ['BUILD_PLAN_NOT_FOUND'],
-      hint: ['Run build-plan to generate build_plan.json first'],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    failWithReceipt('BUILD_PLAN_NOT_FOUND', ['Run build-plan to generate build_plan.json first']);
   }
 
   const plan: BuildPlan = JSON.parse(fs.readFileSync(planPath, 'utf-8'));
@@ -594,20 +594,20 @@ function handleDryRun(
 
   const validation = validateManifest(manifest);
   if (!validation.valid) {
-    const result: BuildExecResult = {
-      status: 'failed',
-      stage: 'build-exec',
-      reason_codes: [validation.reason_code!],
-      hint: [validation.details!],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    failWithReceipt(validation.reason_code!, [validation.details!]);
   }
 
   log(`[INFO] Manifest generated: ${manifest.ops.length} ops`, options.jsonOutput);
   log('[PASS] Dry run complete - manifest emitted to stdout\n', options.jsonOutput);
 
-  console.log(JSON.stringify(manifest, null, 2));
+  receipt.ok = true;
+  receipt.ops_count = manifest.ops.length;
+  receipt.summary.attempted = manifest.ops.length;
+  emitOutput();
+
+  if (!jsonMode) {
+    console.log(JSON.stringify(manifest, null, 2));
+  }
 }
 
 function handleApply(
@@ -621,27 +621,13 @@ function handleApply(
   if (options.manifestPath) {
     const absManifestPath = path.resolve(options.manifestPath);
     if (!fs.existsSync(absManifestPath)) {
-      const result: BuildExecResult = {
-        status: 'failed',
-        stage: 'build-exec',
-        reason_codes: ['MANIFEST_NOT_FOUND'],
-        hint: [`Manifest file not found at ${absManifestPath}`],
-      };
-      console.log(JSON.stringify(result, null, 2));
-      process.exit(1);
+      failWithReceipt('MANIFEST_NOT_FOUND', [`Manifest file not found at ${absManifestPath}`]);
     }
     manifest = JSON.parse(fs.readFileSync(absManifestPath, 'utf-8'));
   } else {
     const planPath = path.join(workspaceRoot, 'registry', 'build_plan.json');
     if (!fs.existsSync(planPath)) {
-      const result: BuildExecResult = {
-        status: 'failed',
-        stage: 'build-exec',
-        reason_codes: ['BUILD_PLAN_NOT_FOUND'],
-        hint: ['Provide --manifest <path> or ensure build_plan.json exists'],
-      };
-      console.log(JSON.stringify(result, null, 2));
-      process.exit(1);
+      failWithReceipt('BUILD_PLAN_NOT_FOUND', ['Provide --manifest <path> or ensure build_plan.json exists']);
     }
     const plan: BuildPlan = JSON.parse(fs.readFileSync(planPath, 'utf-8'));
     manifest = generateManifestFromPlan(workspaceRoot, projectName, stackData.stack_id, plan, planPath);
@@ -651,19 +637,12 @@ function handleApply(
 
   const validation = validateManifest(manifest);
   if (!validation.valid) {
-    const result: BuildExecResult = {
-      status: 'failed',
-      stage: 'build-exec',
-      reason_codes: [validation.reason_code!],
-      hint: [validation.details!],
-    };
-    console.log(JSON.stringify(result, null, 2));
-    process.exit(1);
+    failWithReceipt(validation.reason_code!, [validation.details!]);
   }
 
   log(`[INFO] Applying ${manifest.ops.length} ops`, options.jsonOutput);
 
-  const startTime = Date.now();
+  const applyStartTime = Date.now();
   const opResults: OpResult[] = [];
 
   for (const op of manifest.ops) {
@@ -673,7 +652,7 @@ function handleApply(
     log(`  [${icon}] ${op.op_id}: ${op.type} → ${op.target_path}`, options.jsonOutput);
   }
 
-  const duration = Date.now() - startTime;
+  const duration = Date.now() - applyStartTime;
   const succeeded = opResults.filter(r => r.status === 'SUCCESS').length;
   const failed = opResults.filter(r => r.status === 'FAILED').length;
 
@@ -706,27 +685,49 @@ function handleApply(
 
   if (failed > 0) {
     log('[WARN] Some operations failed - check report for details\n', options.jsonOutput);
+    receipt.warnings.push(`${failed} operations failed`);
   } else {
     log('[PASS] All operations applied successfully\n', options.jsonOutput);
   }
 
-  const result: BuildExecResult = {
-    status: failed > 0 ? 'failed' : 'success',
-    stage: 'build-exec',
-    report_path: reportPath,
-    ops_count: opResults.length,
-    summary: {
-      attempted: opResults.length,
-      succeeded,
-      failed,
-    },
+  receipt.ok = failed === 0;
+  receipt.report_path = reportPath;
+  receipt.ops_count = opResults.length;
+  receipt.summary = {
+    attempted: opResults.length,
+    succeeded,
+    failed,
   };
+  emitOutput();
 
-  console.log(JSON.stringify(result, null, 2));
+  if (!jsonMode) {
+    const result: BuildExecResult = {
+      status: failed > 0 ? 'failed' : 'success',
+      stage: 'build-exec',
+      report_path: reportPath,
+      ops_count: opResults.length,
+      summary: {
+        attempted: opResults.length,
+        succeeded,
+        failed,
+      },
+    };
+    console.log(JSON.stringify(result, null, 2));
+  }
 
   if (failed > 0) {
     process.exit(1);
   }
 }
 
-main();
+try {
+  main();
+} catch (err: any) {
+  receipt.ok = false;
+  receipt.errors.push(err?.message || String(err));
+  emitOutput();
+  if (!jsonMode) {
+    console.error(`[FATAL] ${err?.message || err}`);
+  }
+  process.exit(1);
+}

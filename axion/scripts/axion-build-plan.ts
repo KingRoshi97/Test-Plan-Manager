@@ -33,15 +33,73 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface BuildPlanResult {
-  status: 'success' | 'failed' | 'blocked_by';
-  stage: 'build-plan';
-  plan_path?: string;
-  task_count?: number;
-  phases?: string[];
-  dry_run?: boolean;
-  reason_codes?: string[];
-  hint?: string[];
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+const startTime = Date.now();
+
+interface BuildPlanReceipt {
+  ok: boolean;
+  stage: string;
+  errors: string[];
+  warnings: string[];
+  elapsedMs: number;
+  dryRun: boolean;
+  summary: {
+    status: 'success' | 'failed' | 'blocked_by';
+    plan_path?: string;
+    task_count?: number;
+    phases?: string[];
+    reason_codes?: string[];
+    hint?: string[];
+  };
+}
+
+const receipt: BuildPlanReceipt = {
+  ok: false,
+  stage: 'build-plan',
+  errors: [],
+  warnings: [],
+  elapsedMs: 0,
+  dryRun,
+  summary: {
+    status: 'failed'
+  }
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  } else {
+    if (receipt.ok) {
+      console.log(`\n[PASS] Build plan generated successfully (${receipt.elapsedMs}ms)\n`);
+      if (receipt.summary.plan_path) {
+        console.log(`  Plan: ${receipt.summary.plan_path}`);
+      }
+      if (receipt.summary.task_count !== undefined) {
+        console.log(`  Tasks: ${receipt.summary.task_count}`);
+      }
+      if (receipt.summary.phases) {
+        console.log(`  Phases: ${receipt.summary.phases.join(', ')}`);
+      }
+      if (receipt.dryRun) {
+        console.log('  (dry-run — no files written)');
+      }
+    } else {
+      console.log(`\n[FAIL] Build plan failed (${receipt.elapsedMs}ms)`);
+      for (const e of receipt.errors) {
+        console.log(`  ERROR: ${e}`);
+      }
+      if (receipt.summary.hint) {
+        for (const h of receipt.summary.hint) {
+          console.log(`  HINT: ${h}`);
+        }
+      }
+    }
+    for (const w of receipt.warnings) {
+      console.log(`  WARN: ${w}`);
+    }
+  }
 }
 
 interface BuildTask {
@@ -105,12 +163,6 @@ function parseArgs(args: string[]): BuildPlanOptions {
   }
 
   return options;
-}
-
-function log(msg: string, jsonOutput: boolean): void {
-  if (!jsonOutput) {
-    console.log(msg);
-  }
 }
 
 function checkScaffoldExists(workspaceRoot: string): boolean {
@@ -323,10 +375,10 @@ function generateBuildPlan(projectName: string, moduleDocs: Map<string, string>,
   return plan;
 }
 
-function writeBuildPlan(workspaceRoot: string, plan: BuildPlan, dryRun: boolean): string {
+function writeBuildPlan(workspaceRoot: string, plan: BuildPlan, isDryRun: boolean): string {
   const planPath = path.join(workspaceRoot, 'registry', 'build_plan.json');
   
-  if (!dryRun) {
+  if (!isDryRun) {
     const dir = path.dirname(planPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -341,17 +393,17 @@ function main(): void {
   const args = process.argv.slice(2);
   const options = parseArgs(args);
 
-  log('\n[AXION] Build Plan\n', options.jsonOutput);
+  if (!jsonMode) console.log('\n[AXION] Build Plan\n');
 
-  // Validate
   if (!options.projectName) {
-    const result: BuildPlanResult = {
+    receipt.ok = false;
+    receipt.errors.push('PROJECT_NAME_MISSING');
+    receipt.summary = {
       status: 'failed',
-      stage: 'build-plan',
       reason_codes: ['PROJECT_NAME_MISSING'],
       hint: ['Provide --project-name <name> to specify the project workspace']
     };
-    console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
@@ -359,70 +411,69 @@ function main(): void {
   const projectName = options.projectName;
   const workspaceRoot = path.join(buildRoot, projectName);
 
-  log(`[INFO] Build root: ${buildRoot}`, options.jsonOutput);
-  log(`[INFO] Project name: ${projectName}`, options.jsonOutput);
-  log(`[INFO] Workspace: ${workspaceRoot}`, options.jsonOutput);
+  if (!jsonMode) console.log(`[INFO] Build root: ${buildRoot}`);
+  if (!jsonMode) console.log(`[INFO] Project name: ${projectName}`);
+  if (!jsonMode) console.log(`[INFO] Workspace: ${workspaceRoot}`);
 
-  // Check workspace exists
   if (!fs.existsSync(workspaceRoot)) {
-    const result: BuildPlanResult = {
+    receipt.ok = false;
+    receipt.errors.push('WORKSPACE_NOT_FOUND');
+    receipt.summary = {
       status: 'failed',
-      stage: 'build-plan',
       reason_codes: ['WORKSPACE_NOT_FOUND'],
       hint: [
         `Workspace not found at ${workspaceRoot}`,
         'Run prepare-root first'
       ]
     };
-    console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
-  // Gate: Check scaffold exists
   if (!options.force && !checkScaffoldExists(workspaceRoot)) {
-    const result: BuildPlanResult = {
+    receipt.ok = false;
+    receipt.errors.push('SCAFFOLD_NOT_FOUND');
+    receipt.summary = {
       status: 'blocked_by',
-      stage: 'build-plan',
       reason_codes: ['SCAFFOLD_NOT_FOUND'],
       hint: [
         'App must be scaffolded before generating build plan',
         'Run scaffold-app first, or use --force to skip this gate'
       ]
     };
-    console.log(JSON.stringify(result, null, 2));
+    emitOutput();
     process.exit(1);
   }
 
-  // Read module docs and stack profile
   const moduleDocs = readModuleDocs(workspaceRoot);
-  log(`[INFO] Found ${moduleDocs.size} module docs`, options.jsonOutput);
+  if (!jsonMode) console.log(`[INFO] Found ${moduleDocs.size} module docs`);
 
   const stackInfo = readStackProfile(workspaceRoot);
-  log(`[INFO] Stack profile: ${stackInfo.stack_id}`, options.jsonOutput);
+  if (!jsonMode) console.log(`[INFO] Stack profile: ${stackInfo.stack_id}`);
 
-  // Generate build plan
   const plan = generateBuildPlan(projectName, moduleDocs, stackInfo);
-  log(`[INFO] Generated ${plan.total_tasks} tasks across ${plan.phases.length} phases`, options.jsonOutput);
+  if (!jsonMode) console.log(`[INFO] Generated ${plan.total_tasks} tasks across ${plan.phases.length} phases`);
 
-  // Write plan
   const planPath = writeBuildPlan(workspaceRoot, plan, options.dryRun);
-  log(`[INFO] Build plan written to: ${planPath}`, options.jsonOutput);
+  if (!jsonMode) console.log(`[INFO] Build plan written to: ${planPath}`);
 
-  log('\n[PASS] Build plan generated successfully\n', options.jsonOutput);
-
-  const result: BuildPlanResult = {
+  receipt.ok = true;
+  receipt.summary = {
     status: 'success',
-    stage: 'build-plan',
     plan_path: planPath,
     task_count: plan.total_tasks,
     phases: plan.phases
   };
 
-  if (options.dryRun) {
-    result.dry_run = true;
-  }
-
-  console.log(JSON.stringify(result, null, 2));
+  emitOutput();
 }
 
-main();
+try {
+  main();
+} catch (err: unknown) {
+  receipt.ok = false;
+  receipt.errors.push(err instanceof Error ? err.message : String(err));
+  receipt.summary.status = 'failed';
+  emitOutput();
+  process.exit(1);
+}

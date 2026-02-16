@@ -9,10 +9,13 @@
  *   node --import tsx axion/scripts/axion-upgrade.ts
  *   node --import tsx axion/scripts/axion-upgrade.ts --dry-run
  *   node --import tsx axion/scripts/axion-upgrade.ts --force
+ *   node --import tsx axion/scripts/axion-upgrade.ts --json
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
+
+const startTime = Date.now();
 
 const AXION_ROOT = process.env.AXION_WORKSPACE || path.join(process.cwd(), 'axion');
 const VERSION_PATH = path.join(AXION_ROOT, 'registry', 'system_version.json');
@@ -48,6 +51,31 @@ interface UpgradeLogEntry {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const force = args.includes('--force');
+const jsonMode = args.includes('--json');
+
+const receipt: Record<string, any> = {
+  script: 'axion-upgrade',
+  ok: true,
+  dryRun,
+  force,
+  status: 'UP_TO_DATE',
+  from_version: null as string | null,
+  to_version: null as string | null,
+  migrations_found: 0,
+  migrations_applied: [] as string[],
+  changes: [] as string[],
+  errors: [] as string[],
+  warnings: [] as string[],
+  backup_path: null as string | null,
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
 
 function loadVersion(): SystemVersion {
   if (!fs.existsSync(VERSION_PATH)) {
@@ -129,18 +157,20 @@ async function loadMigrations(): Promise<MigrationModule[]> {
 }
 
 async function main(): Promise<void> {
-  console.log('\n[AXION] Upgrade System\n');
+  if (!jsonMode) console.log('\n[AXION] Upgrade System\n');
   
   if (dryRun) {
-    console.log('[MODE] Dry run - no changes will be made\n');
+    if (!jsonMode) console.log('[MODE] Dry run - no changes will be made\n');
   }
   
   const currentVersion = loadVersion();
-  console.log(`[INFO] Current version: ${currentVersion.axion_version}`);
-  console.log(`[INFO] Upgrade count: ${currentVersion.upgrade_count}`);
+  receipt.from_version = currentVersion.axion_version;
+  if (!jsonMode) console.log(`[INFO] Current version: ${currentVersion.axion_version}`);
+  if (!jsonMode) console.log(`[INFO] Upgrade count: ${currentVersion.upgrade_count}`);
   
   const migrations = await loadMigrations();
-  console.log(`[INFO] Found ${migrations.length} migration(s)\n`);
+  receipt.migrations_found = migrations.length;
+  if (!jsonMode) console.log(`[INFO] Found ${migrations.length} migration(s)\n`);
   
   const toApply = migrations.filter(m => {
     if (force) return true;
@@ -152,30 +182,40 @@ async function main(): Promise<void> {
   });
   
   if (toApply.length === 0) {
-    console.log('[INFO] No migrations to apply - system is up to date\n');
-    const result = {
-      status: 'UP_TO_DATE',
-      version: currentVersion.axion_version,
-      upgrade_count: currentVersion.upgrade_count,
-    };
-    console.log(JSON.stringify(result, null, 2));
+    if (!jsonMode) console.log('[INFO] No migrations to apply - system is up to date\n');
+    receipt.status = 'UP_TO_DATE';
+    receipt.to_version = currentVersion.axion_version;
+    if (!jsonMode) {
+      const result = {
+        status: 'UP_TO_DATE',
+        version: currentVersion.axion_version,
+        upgrade_count: currentVersion.upgrade_count,
+      };
+      console.log(JSON.stringify(result, null, 2));
+    }
+    emitOutput();
     return;
   }
   
-  console.log(`[INFO] Migrations to apply: ${toApply.length}`);
+  if (!jsonMode) console.log(`[INFO] Migrations to apply: ${toApply.length}`);
   for (const m of toApply) {
-    console.log(`  - ${m.id}: ${m.description}`);
+    if (!jsonMode) console.log(`  - ${m.id}: ${m.description}`);
   }
-  console.log('');
+  if (!jsonMode) console.log('');
   
   if (dryRun) {
-    console.log('[DRY-RUN] Would apply the above migrations\n');
+    if (!jsonMode) console.log('[DRY-RUN] Would apply the above migrations\n');
+    receipt.status = 'DRY_RUN';
+    receipt.to_version = currentVersion.axion_version;
+    receipt.migrations_applied = toApply.map(m => m.id);
+    emitOutput();
     return;
   }
   
-  console.log('[INFO] Creating backup...');
+  if (!jsonMode) console.log('[INFO] Creating backup...');
   const backupPath = createBackup();
-  console.log(`[INFO] Backup created at: ${backupPath}\n`);
+  receipt.backup_path = backupPath;
+  if (!jsonMode) console.log(`[INFO] Backup created at: ${backupPath}\n`);
   
   const allChanges: string[] = [];
   const allErrors: string[] = [];
@@ -183,7 +223,7 @@ async function main(): Promise<void> {
   let overallStatus: 'PASS' | 'FAIL' = 'PASS';
   
   for (const migration of toApply) {
-    console.log(`[APPLY] ${migration.id}...`);
+    if (!jsonMode) console.log(`[APPLY] ${migration.id}...`);
     
     try {
       const result = migration.apply(AXION_ROOT);
@@ -194,21 +234,21 @@ async function main(): Promise<void> {
         
         if (result.errors.length > 0) {
           allErrors.push(...result.errors.map(e => `${migration.id}: ${e}`));
-          console.log(`  [WARN] Applied with ${result.errors.length} warning(s)`);
+          if (!jsonMode) console.log(`  [WARN] Applied with ${result.errors.length} warning(s)`);
         } else {
-          console.log('  [OK] Applied successfully');
+          if (!jsonMode) console.log('  [OK] Applied successfully');
         }
         
         for (const change of result.changes) {
-          console.log(`    - ${change}`);
+          if (!jsonMode) console.log(`    - ${change}`);
         }
       } else {
-        console.log('  [SKIP] Already applied');
+        if (!jsonMode) console.log('  [SKIP] Already applied');
       }
     } catch (e) {
       overallStatus = 'FAIL';
       allErrors.push(`${migration.id}: ${e}`);
-      console.log(`  [FAIL] ${e}`);
+      if (!jsonMode) console.log(`  [FAIL] ${e}`);
     }
   }
   
@@ -226,31 +266,45 @@ async function main(): Promise<void> {
   
   appendLog(logEntry);
   
-  console.log('\n[INFO] Upgrade complete');
-  console.log(`[INFO] Applied ${appliedMigrations.length} migration(s)`);
-  console.log(`[INFO] Status: ${overallStatus}`);
+  if (!jsonMode) console.log('\n[INFO] Upgrade complete');
+  if (!jsonMode) console.log(`[INFO] Applied ${appliedMigrations.length} migration(s)`);
+  if (!jsonMode) console.log(`[INFO] Status: ${overallStatus}`);
   
   if (allErrors.length > 0) {
-    console.log(`\n[WARN] ${allErrors.length} warning(s):`);
+    if (!jsonMode) console.log(`\n[WARN] ${allErrors.length} warning(s):`);
     for (const err of allErrors) {
-      console.log(`  - ${err}`);
+      if (!jsonMode) console.log(`  - ${err}`);
     }
   }
   
-  const result = {
-    status: overallStatus,
-    from_version: currentVersion.axion_version,
-    to_version: newVersion.axion_version,
-    migrations_applied: appliedMigrations,
-    backup_path: backupPath,
-    changes_count: allChanges.length,
-    errors_count: allErrors.length,
-  };
+  receipt.status = overallStatus;
+  receipt.to_version = newVersion.axion_version;
+  receipt.migrations_applied = appliedMigrations;
+  receipt.changes = allChanges;
+  receipt.errors = allErrors;
+  receipt.ok = overallStatus === 'PASS';
+
+  if (!jsonMode) {
+    const result = {
+      status: overallStatus,
+      from_version: currentVersion.axion_version,
+      to_version: newVersion.axion_version,
+      migrations_applied: appliedMigrations,
+      backup_path: backupPath,
+      changes_count: allChanges.length,
+      errors_count: allErrors.length,
+    };
+    console.log('\n' + JSON.stringify(result, null, 2) + '\n');
+  }
   
-  console.log('\n' + JSON.stringify(result, null, 2) + '\n');
+  emitOutput();
 }
 
 main().catch(e => {
-  console.error('[ERROR]', e);
+  receipt.errors.push(String(e));
+  receipt.ok = false;
+  receipt.status = 'FATAL';
+  emitOutput();
+  if (!jsonMode) console.error('[ERROR]', e);
   process.exit(1);
 });

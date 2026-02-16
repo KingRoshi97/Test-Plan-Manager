@@ -26,6 +26,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const startTime = Date.now();
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+
 interface RunAppResult {
   status: 'success' | 'failed' | 'blocked_by';
   stage: 'run-app';
@@ -56,6 +61,59 @@ interface RunAppOptions {
   install: boolean;
   dryRun: boolean;
   jsonOutput: boolean;
+}
+
+interface Receipt {
+  ok: boolean;
+  script: string;
+  stage: string;
+  dryRun: boolean;
+  pointer_path: string | null;
+  active_build_root: string | null;
+  resolved_app_path: string | null;
+  app_path: string | null;
+  project_name: string | null;
+  command: string | null;
+  reason_codes: string[];
+  hints: string[];
+  errors: string[];
+  elapsedMs: number;
+}
+
+const receipt: Receipt = {
+  ok: true,
+  script: 'axion-run-app',
+  stage: 'run-app',
+  dryRun,
+  pointer_path: null,
+  active_build_root: null,
+  resolved_app_path: null,
+  app_path: null,
+  project_name: null,
+  command: null,
+  reason_codes: [],
+  hints: [],
+  errors: [],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  } else {
+    if (receipt.ok) {
+      console.log(`\n[DONE] axion-run-app completed successfully (${receipt.elapsedMs}ms)`);
+    } else {
+      console.log(`\n[FAIL] axion-run-app failed (${receipt.elapsedMs}ms)`);
+      for (const e of receipt.errors) {
+        console.log(`  ERROR: ${e}`);
+      }
+      for (const h of receipt.hints) {
+        console.log(`  HINT: ${h}`);
+      }
+    }
+  }
 }
 
 function parseArgs(args: string[]): RunAppOptions {
@@ -155,24 +213,21 @@ async function main(): Promise<void> {
 
   log('\n[AXION] Run App\n', options.jsonOutput);
 
-  // Load active build pointer
   const pointer = loadActivePointer(options.pointerPath);
   
   const absPointerPath = path.resolve(options.pointerPath);
+  receipt.pointer_path = absPointerPath;
 
   if (!pointer) {
-    const result: RunAppResult = {
-      status: 'blocked_by',
-      stage: 'run-app',
-      pointer_path: absPointerPath,
-      reason_codes: ['NO_ACTIVE_BUILD'],
-      hint: [
-        `No active build found at ${absPointerPath}`,
-        'Run axion-activate to set the active build first',
-        'Or provide --pointer <path> to specify ACTIVE_BUILD.json location'
-      ]
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.reason_codes.push('NO_ACTIVE_BUILD');
+    receipt.hints.push(
+      `No active build found at ${absPointerPath}`,
+      'Run axion-activate to set the active build first',
+      'Or provide --pointer <path> to specify ACTIVE_BUILD.json location'
+    );
+    receipt.errors.push(`No active build found at ${absPointerPath}`);
+    emitOutput();
     process.exit(1);
   }
 
@@ -182,6 +237,11 @@ async function main(): Promise<void> {
   const resolvedAppPath = path.resolve(
     path.isAbsolute(appPath) ? appPath : path.resolve(activeBuildRoot, appPath)
   );
+
+  receipt.active_build_root = activeBuildRoot;
+  receipt.app_path = appPath;
+  receipt.project_name = projectName;
+  receipt.resolved_app_path = resolvedAppPath;
 
   log(`[INFO] Pointer: ${absPointerPath}`, options.jsonOutput);
   log(`[INFO] Active build: ${activeBuildRoot}`, options.jsonOutput);
@@ -193,41 +253,32 @@ async function main(): Promise<void> {
     ? activeBuildRoot
     : activeBuildRoot + path.sep;
   if (resolvedAppPath !== activeBuildRoot && !resolvedAppPath.startsWith(rootPrefix)) {
-    const result: RunAppResult = {
-      status: 'failed',
-      stage: 'run-app',
-      pointer_path: absPointerPath,
-      active_build_root: activeBuildRoot,
-      resolved_app_path: resolvedAppPath,
-      reason_codes: ['APP_PATH_OUTSIDE_BUILD_ROOT'],
-      hint: [
-        `Resolved app path escapes build root: ${resolvedAppPath}`,
-        `Build root: ${activeBuildRoot}`,
-        'This is a path traversal safety violation'
-      ]
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.reason_codes.push('APP_PATH_OUTSIDE_BUILD_ROOT');
+    receipt.hints.push(
+      `Resolved app path escapes build root: ${resolvedAppPath}`,
+      `Build root: ${activeBuildRoot}`,
+      'This is a path traversal safety violation'
+    );
+    receipt.errors.push(`App path escapes build root: ${resolvedAppPath}`);
+    emitOutput();
     process.exit(1);
   }
 
   if (!fs.existsSync(resolvedAppPath)) {
-    const result: RunAppResult = {
-      status: 'failed',
-      stage: 'run-app',
-      pointer_path: absPointerPath,
-      active_build_root: activeBuildRoot,
-      resolved_app_path: resolvedAppPath,
-      reason_codes: ['APP_PATH_NOT_FOUND'],
-      hint: [
-        `App path not found: ${resolvedAppPath}`,
-        'Run scaffold-app and build-exec to create the app'
-      ]
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.reason_codes.push('APP_PATH_NOT_FOUND');
+    receipt.hints.push(
+      `App path not found: ${resolvedAppPath}`,
+      'Run scaffold-app and build-exec to create the app'
+    );
+    receipt.errors.push(`App path not found: ${resolvedAppPath}`);
+    emitOutput();
     process.exit(1);
   }
 
   const startCommand = detectStartCommand(resolvedAppPath);
+  receipt.command = startCommand;
   log(`[INFO] Start command: ${startCommand}`, options.jsonOutput);
 
   if (options.dryRun) {
@@ -237,18 +288,8 @@ async function main(): Promise<void> {
     }
     log(`  cd ${resolvedAppPath} && ${startCommand}`, options.jsonOutput);
     
-    const result: RunAppResult = {
-      status: 'success',
-      stage: 'run-app',
-      pointer_path: absPointerPath,
-      active_build_root: activeBuildRoot,
-      resolved_app_path: resolvedAppPath,
-      app_path: appPath,
-      project_name: projectName,
-      command: startCommand,
-      dry_run: true
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.dryRun = true;
+    emitOutput();
     return;
   }
 
@@ -257,16 +298,11 @@ async function main(): Promise<void> {
     try {
       await runCommand('npm install', resolvedAppPath);
     } catch (err: any) {
-      const result: RunAppResult = {
-        status: 'failed',
-        stage: 'run-app',
-        pointer_path: absPointerPath,
-        active_build_root: activeBuildRoot,
-        resolved_app_path: resolvedAppPath,
-        reason_codes: ['INSTALL_FAILED'],
-        hint: ['npm install failed', err.message]
-      };
-      console.log(JSON.stringify(result, null, 2));
+      receipt.ok = false;
+      receipt.reason_codes.push('INSTALL_FAILED');
+      receipt.hints.push('npm install failed', err.message);
+      receipt.errors.push(`npm install failed: ${err.message}`);
+      emitOutput();
       process.exit(1);
     }
   }
@@ -276,34 +312,20 @@ async function main(): Promise<void> {
 
   try {
     await runCommand(startCommand, resolvedAppPath);
-    
-    const result: RunAppResult = {
-      status: 'success',
-      stage: 'run-app',
-      pointer_path: absPointerPath,
-      active_build_root: activeBuildRoot,
-      resolved_app_path: resolvedAppPath,
-      app_path: appPath,
-      project_name: projectName,
-      command: startCommand
-    };
-    console.log(JSON.stringify(result, null, 2));
+    emitOutput();
   } catch (err: any) {
-    const result: RunAppResult = {
-      status: 'failed',
-      stage: 'run-app',
-      pointer_path: absPointerPath,
-      active_build_root: activeBuildRoot,
-      resolved_app_path: resolvedAppPath,
-      reason_codes: ['START_FAILED'],
-      hint: ['Failed to start app', err.message]
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.reason_codes.push('START_FAILED');
+    receipt.hints.push('Failed to start app', err.message);
+    receipt.errors.push(`Failed to start app: ${err.message}`);
+    emitOutput();
     process.exit(1);
   }
 }
 
 main().catch((err) => {
-  console.error('[FATAL]', err.message);
+  receipt.ok = false;
+  receipt.errors.push(err.message || String(err));
+  emitOutput();
   process.exit(1);
 });

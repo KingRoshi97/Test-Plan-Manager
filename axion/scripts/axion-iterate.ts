@@ -22,7 +22,7 @@
  *   - Atomic writes for iteration_state.json via tmp + rename
  *
  * Usage:
- *   npx tsx axion/scripts/axion-iterate.ts --build-root <path> --project-name <name> [--allow-apply] [--stop-after <step>] [--json] [--timeout-ms <n>]
+ *   npx tsx axion/scripts/axion-iterate.ts --build-root <path> --project-name <name> [--allow-apply] [--stop-after <step>] [--json] [--dry-run] [--timeout-ms <n>]
  */
 
 import * as fs from 'fs';
@@ -44,6 +44,7 @@ interface IterateOptions {
   allowApply: boolean;
   stopAfter: StepName | null;
   jsonOutput: boolean;
+  dryRun: boolean;
   timeoutMs: number;
 }
 
@@ -98,6 +99,7 @@ function parseArgs(args: string[]): IterateOptions {
     allowApply: false,
     stopAfter: null,
     jsonOutput: false,
+    dryRun: false,
     timeoutMs: 120000,
   };
 
@@ -122,6 +124,9 @@ function parseArgs(args: string[]): IterateOptions {
       }
       case '--json':
         options.jsonOutput = true;
+        break;
+      case '--dry-run':
+        options.dryRun = true;
         break;
       case '--timeout-ms':
         options.timeoutMs = parseInt(args[++i], 10) || 120000;
@@ -203,36 +208,73 @@ function loadPreviousState(statePath: string): IterationState | null {
 }
 
 function main(): void {
+  const startTime = Date.now();
   const args = process.argv.slice(2);
   const options = parseArgs(args);
 
-  log('\n[AXION] Iterate v1\n', options.jsonOutput);
+  const jsonMode = options.jsonOutput;
+  const dryRun = options.dryRun;
+
+  const receipt: Record<string, unknown> = {
+    ok: true,
+    script: 'axion-iterate',
+    stage: 'iterate',
+    dryRun,
+    errors: [] as string[],
+    warnings: [] as string[],
+    status: 'success' as string,
+    iteration_state_path: '' as string,
+    overall_status: 'completed' as string,
+    stopped_at: null as { step: StepName; reason: string } | null,
+    steps_count: 0,
+    next_commands: [] as string[],
+    elapsedMs: 0,
+  };
+
+  function emitOutput(): void {
+    receipt.elapsedMs = Date.now() - startTime;
+    if (jsonMode) {
+      process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    } else {
+      if (!receipt.ok) {
+        console.log(`[FAIL] axion-iterate finished with errors (${receipt.elapsedMs}ms)`);
+        for (const e of receipt.errors as string[]) {
+          console.log(`  ERROR: ${e}`);
+        }
+      } else {
+        console.log(`[OK] axion-iterate finished (${receipt.elapsedMs}ms)`);
+      }
+      console.log(JSON.stringify(receipt, null, 2));
+    }
+  }
+
+  try {
+
+  log('\n[AXION] Iterate v1\n', jsonMode);
+
+  if (dryRun) {
+    if (!jsonMode) console.log('[DRY-RUN] Would iterate AXION pipeline steps — no side effects.');
+    receipt.status = 'dry-run';
+    receipt.overall_status = 'dry-run';
+    emitOutput();
+    return;
+  }
 
   if (!options.buildRoot) {
-    const result: IterateResult = {
-      status: 'failed',
-      stage: 'iterate',
-      iteration_state_path: '',
-      overall_status: 'error',
-      stopped_at: null,
-      steps_count: 0,
-      next_commands: [],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.status = 'failed';
+    receipt.overall_status = 'error';
+    (receipt.errors as string[]).push('Missing required --build-root argument');
+    emitOutput();
     process.exit(1);
   }
 
   if (!options.projectName) {
-    const result: IterateResult = {
-      status: 'failed',
-      stage: 'iterate',
-      iteration_state_path: '',
-      overall_status: 'error',
-      stopped_at: null,
-      steps_count: 0,
-      next_commands: [],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.status = 'failed';
+    receipt.overall_status = 'error';
+    (receipt.errors as string[]).push('Missing required --project-name argument');
+    emitOutput();
     process.exit(1);
   }
 
@@ -249,12 +291,14 @@ function main(): void {
 
   const projectRoot = path.resolve(__dirname, '../..');
 
-  log(`[INFO] Build root: ${buildRoot}`, options.jsonOutput);
-  log(`[INFO] Project name: ${projectName}`, options.jsonOutput);
-  log(`[INFO] Workspace: ${workspaceRoot}`, options.jsonOutput);
-  log(`[INFO] Allow apply: ${options.allowApply}`, options.jsonOutput);
+  receipt.iteration_state_path = iterationStatePath;
+
+  log(`[INFO] Build root: ${buildRoot}`, jsonMode);
+  log(`[INFO] Project name: ${projectName}`, jsonMode);
+  log(`[INFO] Workspace: ${workspaceRoot}`, jsonMode);
+  log(`[INFO] Allow apply: ${options.allowApply}`, jsonMode);
   if (options.stopAfter) {
-    log(`[INFO] Stop after: ${options.stopAfter}`, options.jsonOutput);
+    log(`[INFO] Stop after: ${options.stopAfter}`, jsonMode);
   }
 
   if (!fs.existsSync(registryDir)) {
@@ -301,7 +345,7 @@ function main(): void {
       }
 
       if (!isStale) {
-        log('[BLOCKED] Active run lock detected — cannot iterate', options.jsonOutput);
+        log('[BLOCKED] Active run lock detected — cannot iterate', jsonMode);
         overallStatus = 'stopped_at_gate';
         stoppedAt = { step: 'doctor', reason: 'RUN_LOCK_ACTIVE' };
         finalNextCommands = [
@@ -314,22 +358,19 @@ function main(): void {
           lastManifestPath, lastManifestHash, reports, finalNextCommands,
         );
 
-        const result: IterateResult = {
-          status: 'stopped_at_gate',
-          stage: 'iterate',
-          iteration_state_path: iterationStatePath,
-          overall_status: overallStatus,
-          stopped_at: stoppedAt,
-          steps_count: 0,
-          next_commands: finalNextCommands,
-        };
-        console.log(JSON.stringify(result, null, 2));
+        receipt.ok = false;
+        receipt.status = 'stopped_at_gate';
+        receipt.overall_status = overallStatus;
+        receipt.stopped_at = stoppedAt;
+        receipt.steps_count = 0;
+        receipt.next_commands = finalNextCommands;
+        emitOutput();
         process.exit(1);
       } else {
-        log('[WARN] Stale run lock detected — continuing (doctor will also report)', options.jsonOutput);
+        log('[WARN] Stale run lock detected — continuing (doctor will also report)', jsonMode);
       }
     } catch {
-      log('[WARN] Could not parse run_lock.json — continuing', options.jsonOutput);
+      log('[WARN] Could not parse run_lock.json — continuing', jsonMode);
     }
   }
 
@@ -351,13 +392,13 @@ function main(): void {
   };
 
   for (const stepName of STEP_ORDER) {
-    log(`\n[STEP] ${stepName}`, options.jsonOutput);
-    const startTime = Date.now();
+    log(`\n[STEP] ${stepName}`, jsonMode);
+    const stepStart = Date.now();
 
     const record = stepFns[stepName]();
     stepsExecuted.push(record);
 
-    log(`  [${record.status}] ${stepName} (${record.duration_ms}ms)`, options.jsonOutput);
+    log(`  [${record.status}] ${stepName} (${record.duration_ms}ms)`, jsonMode);
 
     if (record.output_ref) {
       const reportKey = stepName === 'manifest' ? 'manifest' : stepName;
@@ -400,7 +441,7 @@ function main(): void {
     lastManifestPath, lastManifestHash, reports, finalNextCommands,
   );
 
-  log(`\n[INFO] Iteration state written to: ${iterationStatePath}`, options.jsonOutput);
+  log(`\n[INFO] Iteration state written to: ${iterationStatePath}`, jsonMode);
 
   const resultStatus = overallStatus === 'completed'
     ? 'success'
@@ -408,19 +449,27 @@ function main(): void {
       ? 'stopped_at_gate'
       : 'failed';
 
-  const result: IterateResult = {
-    status: resultStatus,
-    stage: 'iterate',
-    iteration_state_path: iterationStatePath,
-    overall_status: overallStatus,
-    stopped_at: stoppedAt,
-    steps_count: stepsExecuted.length,
-    next_commands: finalNextCommands,
-  };
+  receipt.ok = overallStatus === 'completed';
+  receipt.status = resultStatus;
+  receipt.iteration_state_path = iterationStatePath;
+  receipt.overall_status = overallStatus;
+  receipt.stopped_at = stoppedAt;
+  receipt.steps_count = stepsExecuted.length;
+  receipt.next_commands = finalNextCommands;
 
-  console.log(JSON.stringify(result, null, 2));
+  emitOutput();
 
   if (overallStatus !== 'completed') {
+    process.exit(1);
+  }
+
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    (receipt.errors as string[]).push(message);
+    receipt.ok = false;
+    receipt.status = 'failed';
+    receipt.overall_status = 'error';
+    emitOutput();
     process.exit(1);
   }
 }

@@ -25,16 +25,58 @@
  * Usage:
  *   npx tsx axion/scripts/axion-reconcile.ts --build-root <path> --project-name <name>
  *   npx tsx axion/scripts/axion-reconcile.ts --build-root <path> --project-name <name> --json
+ *   npx tsx axion/scripts/axion-reconcile.ts --build-root <path> --project-name <name> --dry-run
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { writeJsonAtomic } from './lib/atomic-writer.js';
 
+const startTime = Date.now();
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+
+interface Receipt {
+  ok: boolean;
+  stage: string;
+  dryRun: boolean;
+  errors: string[];
+  warnings: string[];
+  elapsedMs: number;
+  status?: 'success' | 'failed' | 'blocked_by';
+  workspace_root?: string;
+  report_path?: string;
+  summary?: {
+    mismatches: number;
+    critical: number;
+    warning: number;
+    info: number;
+  };
+  reason_codes?: string[];
+  hint?: string[];
+  [key: string]: unknown;
+}
+
+const receipt: Receipt = {
+  ok: true,
+  stage: 'reconcile',
+  dryRun,
+  errors: [],
+  warnings: [],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
+
 interface ReconcileOptions {
   buildRoot: string;
   projectName: string;
-  jsonOutput: boolean;
 }
 
 interface ReconcileResult {
@@ -137,7 +179,6 @@ function parseArgs(args: string[]): ReconcileOptions {
   const options: ReconcileOptions = {
     buildRoot: process.cwd(),
     projectName: '',
-    jsonOutput: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -149,19 +190,10 @@ function parseArgs(args: string[]): ReconcileOptions {
       case '--project-name':
         options.projectName = args[++i] || '';
         break;
-      case '--json':
-        options.jsonOutput = true;
-        break;
     }
   }
 
   return options;
-}
-
-function log(msg: string, jsonOutput: boolean): void {
-  if (!jsonOutput) {
-    console.log(msg);
-  }
 }
 
 function loadJson<T>(filePath: string): T | null {
@@ -423,16 +455,23 @@ function main(): void {
   const args = process.argv.slice(2);
   const options = parseArgs(args);
 
-  log('\n[AXION] Reconcile\n', options.jsonOutput);
+  if (!jsonMode) console.log('\n[AXION] Reconcile\n');
 
   if (!options.projectName) {
-    const result: ReconcileResult = {
-      status: 'failed',
-      stage: 'reconcile',
-      reason_codes: ['PROJECT_NAME_MISSING'],
-      hint: ['Provide --project-name <name> to specify the project workspace'],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.status = 'failed';
+    receipt.reason_codes = ['PROJECT_NAME_MISSING'];
+    receipt.hint = ['Provide --project-name <name> to specify the project workspace'];
+    receipt.errors.push('PROJECT_NAME_MISSING');
+    emitOutput();
+    if (!jsonMode) {
+      console.log(JSON.stringify({
+        status: 'failed',
+        stage: 'reconcile',
+        reason_codes: receipt.reason_codes,
+        hint: receipt.hint,
+      }, null, 2));
+    }
     process.exit(1);
   }
 
@@ -440,16 +479,23 @@ function main(): void {
   const workspaceRoot = path.join(buildRoot, options.projectName);
 
   if (!fs.existsSync(workspaceRoot)) {
-    const result: ReconcileResult = {
-      status: 'failed',
-      stage: 'reconcile',
-      reason_codes: ['WORKSPACE_NOT_FOUND'],
-      hint: [
-        `Workspace not found at ${workspaceRoot}`,
-        'Run kit-create first to initialize the workspace',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.status = 'failed';
+    receipt.reason_codes = ['WORKSPACE_NOT_FOUND'];
+    receipt.hint = [
+      `Workspace not found at ${workspaceRoot}`,
+      'Run kit-create first to initialize the workspace',
+    ];
+    receipt.errors.push('WORKSPACE_NOT_FOUND');
+    emitOutput();
+    if (!jsonMode) {
+      console.log(JSON.stringify({
+        status: 'failed',
+        stage: 'reconcile',
+        reason_codes: receipt.reason_codes,
+        hint: receipt.hint,
+      }, null, 2));
+    }
     process.exit(1);
   }
 
@@ -457,46 +503,67 @@ function main(): void {
 
   const factsPath = path.join(registryDir, 'import_facts.json');
   if (!fs.existsSync(factsPath)) {
-    const result: ReconcileResult = {
-      status: 'blocked_by',
-      stage: 'reconcile',
-      reason_codes: ['MISSING_IMPORT_FACTS'],
-      hint: [
-        `import_facts.json not found at ${factsPath}`,
-        `Run: npx tsx axion/scripts/axion-import.ts --source-root <path> --build-root ${buildRoot} --project-name ${options.projectName}`,
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.status = 'blocked_by';
+    receipt.reason_codes = ['MISSING_IMPORT_FACTS'];
+    receipt.hint = [
+      `import_facts.json not found at ${factsPath}`,
+      `Run: npx tsx axion/scripts/axion-import.ts --source-root <path> --build-root ${buildRoot} --project-name ${options.projectName}`,
+    ];
+    receipt.errors.push('MISSING_IMPORT_FACTS');
+    emitOutput();
+    if (!jsonMode) {
+      console.log(JSON.stringify({
+        status: 'blocked_by',
+        stage: 'reconcile',
+        reason_codes: receipt.reason_codes,
+        hint: receipt.hint,
+      }, null, 2));
+    }
     process.exit(1);
   }
 
   const profilePath = path.join(registryDir, 'stack_profile.json');
   if (!fs.existsSync(profilePath)) {
-    const result: ReconcileResult = {
-      status: 'blocked_by',
-      stage: 'reconcile',
-      reason_codes: ['MISSING_STACK_PROFILE'],
-      hint: [
-        `stack_profile.json not found at ${profilePath}`,
-        `Run: npx tsx axion/scripts/axion-scaffold-app.ts --build-root ${buildRoot} --project-name ${options.projectName}`,
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.status = 'blocked_by';
+    receipt.reason_codes = ['MISSING_STACK_PROFILE'];
+    receipt.hint = [
+      `stack_profile.json not found at ${profilePath}`,
+      `Run: npx tsx axion/scripts/axion-scaffold-app.ts --build-root ${buildRoot} --project-name ${options.projectName}`,
+    ];
+    receipt.errors.push('MISSING_STACK_PROFILE');
+    emitOutput();
+    if (!jsonMode) {
+      console.log(JSON.stringify({
+        status: 'blocked_by',
+        stage: 'reconcile',
+        reason_codes: receipt.reason_codes,
+        hint: receipt.hint,
+      }, null, 2));
+    }
     process.exit(1);
   }
 
   const planPath = path.join(registryDir, 'build_plan.json');
   if (!fs.existsSync(planPath)) {
-    const result: ReconcileResult = {
-      status: 'blocked_by',
-      stage: 'reconcile',
-      reason_codes: ['MISSING_BUILD_PLAN'],
-      hint: [
-        `build_plan.json not found at ${planPath}`,
-        `Run: npx tsx axion/scripts/axion-build-plan.ts --build-root ${buildRoot} --project-name ${options.projectName}`,
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.status = 'blocked_by';
+    receipt.reason_codes = ['MISSING_BUILD_PLAN'];
+    receipt.hint = [
+      `build_plan.json not found at ${planPath}`,
+      `Run: npx tsx axion/scripts/axion-build-plan.ts --build-root ${buildRoot} --project-name ${options.projectName}`,
+    ];
+    receipt.errors.push('MISSING_BUILD_PLAN');
+    emitOutput();
+    if (!jsonMode) {
+      console.log(JSON.stringify({
+        status: 'blocked_by',
+        stage: 'reconcile',
+        reason_codes: receipt.reason_codes,
+        hint: receipt.hint,
+      }, null, 2));
+    }
     process.exit(1);
   }
 
@@ -505,21 +572,45 @@ function main(): void {
   const plan = loadJson<BuildPlan>(planPath);
 
   if (!facts || !profile || !plan) {
-    const result: ReconcileResult = {
-      status: 'failed',
-      stage: 'reconcile',
-      reason_codes: ['CORRUPT_INPUT_ARTIFACTS'],
-      hint: ['One or more input files could not be parsed as valid JSON'],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.status = 'failed';
+    receipt.reason_codes = ['CORRUPT_INPUT_ARTIFACTS'];
+    receipt.hint = ['One or more input files could not be parsed as valid JSON'];
+    receipt.errors.push('CORRUPT_INPUT_ARTIFACTS');
+    emitOutput();
+    if (!jsonMode) {
+      console.log(JSON.stringify({
+        status: 'failed',
+        stage: 'reconcile',
+        reason_codes: receipt.reason_codes,
+        hint: receipt.hint,
+      }, null, 2));
+    }
     process.exit(1);
   }
 
-  log(`[INFO] Build root: ${buildRoot}`, options.jsonOutput);
-  log(`[INFO] Workspace: ${workspaceRoot}`, options.jsonOutput);
-  log(`[INFO] Stack profile: ${profile.stack_id}`, options.jsonOutput);
-  log(`[INFO] Import facts: stack=${facts.stack_id_candidate}`, options.jsonOutput);
-  log(`[INFO] Build plan: ${plan.total_tasks} tasks`, options.jsonOutput);
+  if (!jsonMode) console.log(`[INFO] Build root: ${buildRoot}`);
+  if (!jsonMode) console.log(`[INFO] Workspace: ${workspaceRoot}`);
+  if (!jsonMode) console.log(`[INFO] Stack profile: ${profile.stack_id}`);
+  if (!jsonMode) console.log(`[INFO] Import facts: stack=${facts.stack_id_candidate}`);
+  if (!jsonMode) console.log(`[INFO] Build plan: ${plan.total_tasks} tasks`);
+
+  if (dryRun) {
+    if (!jsonMode) console.log('\n[DRY-RUN] Would reconcile but no writes performed.\n');
+    receipt.ok = true;
+    receipt.status = 'success';
+    receipt.workspace_root = workspaceRoot;
+    emitOutput();
+    if (!jsonMode) {
+      console.log(JSON.stringify({
+        status: 'success',
+        stage: 'reconcile',
+        dryRun: true,
+        workspace_root: workspaceRoot,
+      }, null, 2));
+    }
+    return;
+  }
 
   const docsLocked = fs.existsSync(path.join(registryDir, 'lock_manifest.json'));
   const docsVerified = fs.existsSync(path.join(registryDir, 'verify_report.json'));
@@ -586,25 +677,43 @@ function main(): void {
   const reconcileReportPath = path.join(registryDir, 'reconcile_report.json');
   writeJsonAtomic(reconcileReportPath, report);
 
-  log(`\n[INFO] Reconcile report written to: ${reconcileReportPath}`, options.jsonOutput);
-  log(`[INFO] Status: ${report.status}`, options.jsonOutput);
-  log(`[INFO] Mismatches: ${mismatches.length} (${critical} critical, ${warning} warning, ${info} info)`, options.jsonOutput);
+  if (!jsonMode) console.log(`\n[INFO] Reconcile report written to: ${reconcileReportPath}`);
+  if (!jsonMode) console.log(`[INFO] Status: ${report.status}`);
+  if (!jsonMode) console.log(`[INFO] Mismatches: ${mismatches.length} (${critical} critical, ${warning} warning, ${info} info)`);
 
   if (report.status === 'PASS') {
-    log('\n[PASS] Reconcile completed - no critical mismatches\n', options.jsonOutput);
+    if (!jsonMode) console.log('\n[PASS] Reconcile completed - no critical mismatches\n');
   } else {
-    log('\n[FAIL] Reconcile completed - critical mismatches found\n', options.jsonOutput);
+    if (!jsonMode) console.log('\n[FAIL] Reconcile completed - critical mismatches found\n');
   }
 
-  const result: ReconcileResult = {
-    status: 'success',
-    stage: 'reconcile',
-    workspace_root: workspaceRoot,
-    report_path: reconcileReportPath,
-    summary: report.summary,
-  };
+  receipt.ok = true;
+  receipt.status = 'success';
+  receipt.workspace_root = workspaceRoot;
+  receipt.report_path = reconcileReportPath;
+  receipt.summary = report.summary;
+  emitOutput();
 
-  console.log(JSON.stringify(result, null, 2));
+  if (!jsonMode) {
+    console.log(JSON.stringify({
+      status: 'success',
+      stage: 'reconcile',
+      workspace_root: workspaceRoot,
+      report_path: reconcileReportPath,
+      summary: report.summary,
+    } as ReconcileResult, null, 2));
+  }
 }
 
-main();
+try {
+  main();
+} catch (err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  receipt.ok = false;
+  receipt.errors.push(message);
+  emitOutput();
+  if (!jsonMode) {
+    console.error(`[FATAL] ${message}`);
+  }
+  process.exit(1);
+}

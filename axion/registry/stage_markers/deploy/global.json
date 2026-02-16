@@ -1,0 +1,7 @@
+{
+  "status": "FAILED",
+  "stage": "deploy",
+  "module": "global",
+  "timestamp": "2026-02-16T04:14:02.076Z",
+  "error": "Could not find app directory"
+}

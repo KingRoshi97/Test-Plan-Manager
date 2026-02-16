@@ -9,11 +9,18 @@
  *   npx ts-node axion/scripts/axion-hash-templates.ts --generate
  *   npx ts-node axion/scripts/axion-hash-templates.ts --verify
  *   npx ts-node axion/scripts/axion-hash-templates.ts --diff
+ *   npx ts-node axion/scripts/axion-hash-templates.ts --json
+ *   npx ts-node axion/scripts/axion-hash-templates.ts --dry-run
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
+
+const startTime = Date.now();
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
 
 interface FileHash {
   path: string;
@@ -42,6 +49,43 @@ interface DriftReport {
     modified: string[];
   };
   message: string;
+}
+
+interface Receipt {
+  script: string;
+  ok: boolean;
+  dryRun: boolean;
+  action: string | null;
+  totalFiles: number;
+  templateCount: number;
+  registryCount: number;
+  revision: number | null;
+  driftStatus: string | null;
+  changes: { added: string[]; removed: string[]; modified: string[] } | null;
+  errors: string[];
+  elapsedMs: number;
+}
+
+const receipt: Receipt = {
+  script: 'axion-hash-templates',
+  ok: true,
+  dryRun,
+  action: null,
+  totalFiles: 0,
+  templateCount: 0,
+  registryCount: 0,
+  revision: null,
+  driftStatus: null,
+  changes: null,
+  errors: [],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
 }
 
 const AXION_ROOT = path.resolve(__dirname, '..');
@@ -110,7 +154,6 @@ function generateHashes(): HashRegistry {
   const templates = findTemplates().map(getFileStats);
   const registries = findRegistryDocs().map(getFileStats);
   
-  // Load existing registry to get revision
   let currentRevision = 0;
   if (fs.existsSync(HASH_FILE)) {
     const existing = JSON.parse(fs.readFileSync(HASH_FILE, 'utf-8'));
@@ -128,6 +171,10 @@ function generateHashes(): HashRegistry {
 }
 
 function saveHashes(registry: HashRegistry): void {
+  if (dryRun) {
+    if (!jsonMode) console.log('[DRY-RUN] Would save hashes but skipping write.');
+    return;
+  }
   if (!fs.existsSync(REGISTRY_PATH)) {
     fs.mkdirSync(REGISTRY_PATH, { recursive: true });
   }
@@ -161,7 +208,6 @@ function verifyHashes(): DriftReport {
     modified: [] as string[],
   };
   
-  // Create lookup maps
   const storedMap = new Map<string, FileHash>();
   for (const f of [...stored.templates, ...stored.registries]) {
     storedMap.set(f.path, f);
@@ -172,20 +218,18 @@ function verifyHashes(): DriftReport {
     currentMap.set(f.path, f);
   }
   
-  // Check for added and modified files
-  for (const [path, file] of currentMap) {
-    const storedFile = storedMap.get(path);
+  for (const [filePath, file] of currentMap) {
+    const storedFile = storedMap.get(filePath);
     if (!storedFile) {
-      changes.added.push(path);
+      changes.added.push(filePath);
     } else if (storedFile.hash !== file.hash) {
-      changes.modified.push(path);
+      changes.modified.push(filePath);
     }
   }
   
-  // Check for removed files
-  for (const [path] of storedMap) {
-    if (!currentMap.has(path)) {
-      changes.removed.push(path);
+  for (const [filePath] of storedMap) {
+    if (!currentMap.has(filePath)) {
+      changes.removed.push(filePath);
     }
   }
   
@@ -203,6 +247,7 @@ function verifyHashes(): DriftReport {
 }
 
 function printReport(report: DriftReport): void {
+  if (jsonMode) return;
   console.log(`\n${'═'.repeat(60)}`);
   console.log(`AXION TEMPLATE DRIFT VERIFICATION`);
   console.log(`${'═'.repeat(60)}\n`);
@@ -248,13 +293,15 @@ function printDiff(): void {
   const current = generateHashes();
   
   if (!stored) {
-    console.log('No stored hashes to diff against. Run --generate first.');
+    if (!jsonMode) console.log('No stored hashes to diff against. Run --generate first.');
     return;
   }
   
-  console.log(`\n${'═'.repeat(60)}`);
-  console.log(`AXION TEMPLATE DIFF (revision ${stored.revision})`);
-  console.log(`${'═'.repeat(60)}\n`);
+  if (!jsonMode) {
+    console.log(`\n${'═'.repeat(60)}`);
+    console.log(`AXION TEMPLATE DIFF (revision ${stored.revision})`);
+    console.log(`${'═'.repeat(60)}\n`);
+  }
   
   const storedMap = new Map<string, FileHash>();
   for (const f of [...stored.templates, ...stored.registries]) {
@@ -264,25 +311,26 @@ function printDiff(): void {
   for (const f of [...current.templates, ...current.registries]) {
     const storedFile = storedMap.get(f.path);
     if (!storedFile) {
-      console.log(`+ ${f.path} (new)`);
+      if (!jsonMode) console.log(`+ ${f.path} (new)`);
     } else if (storedFile.hash !== f.hash) {
-      console.log(`~ ${f.path}`);
-      console.log(`    old: ${storedFile.hash} (${storedFile.size} bytes)`);
-      console.log(`    new: ${f.hash} (${f.size} bytes)`);
+      if (!jsonMode) {
+        console.log(`~ ${f.path}`);
+        console.log(`    old: ${storedFile.hash} (${storedFile.size} bytes)`);
+        console.log(`    new: ${f.hash} (${f.size} bytes)`);
+      }
     }
   }
   
-  for (const [path] of storedMap) {
-    const exists = [...current.templates, ...current.registries].some(f => f.path === path);
+  for (const [filePath] of storedMap) {
+    const exists = [...current.templates, ...current.registries].some(f => f.path === filePath);
     if (!exists) {
-      console.log(`- ${path} (removed)`);
+      if (!jsonMode) console.log(`- ${filePath} (removed)`);
     }
   }
   
-  console.log('');
+  if (!jsonMode) console.log('');
 }
 
-// Main execution
 function main() {
   const args = process.argv.slice(2);
   const generate = args.includes('--generate');
@@ -292,16 +340,19 @@ function main() {
   const noteArg = args.indexOf('--note');
   const note = noteArg !== -1 ? args[noteArg + 1] : undefined;
   
-  if (!generate && !verify && !diff) {
+  if (!generate && !verify && !diff && !jsonMode && !dryRun) {
     console.log('Usage:');
     console.log('  npx ts-node axion/scripts/axion-hash-templates.ts --generate');
     console.log('  npx ts-node axion/scripts/axion-hash-templates.ts --generate --bump --note "description"');
     console.log('  npx ts-node axion/scripts/axion-hash-templates.ts --verify');
     console.log('  npx ts-node axion/scripts/axion-hash-templates.ts --diff');
+    console.log('  npx ts-node axion/scripts/axion-hash-templates.ts --json');
+    console.log('  npx ts-node axion/scripts/axion-hash-templates.ts --dry-run');
     process.exit(1);
   }
   
   if (generate) {
+    receipt.action = 'generate';
     const registry = generateHashes();
     
     if (bump) {
@@ -310,25 +361,62 @@ function main() {
     }
     
     saveHashes(registry);
-    console.log(`\n[DONE] Generated hashes for ${registry.total_files} files`);
-    console.log(`   Templates: ${registry.templates.length}`);
-    console.log(`   Registries: ${registry.registries.length}`);
-    console.log(`   Revision: ${registry.revision}`);
-    if (registry.revision_note) {
-      console.log(`   Note: ${registry.revision_note}`);
+
+    receipt.totalFiles = registry.total_files;
+    receipt.templateCount = registry.templates.length;
+    receipt.registryCount = registry.registries.length;
+    receipt.revision = registry.revision;
+
+    if (!jsonMode) {
+      console.log(`\n[DONE] Generated hashes for ${registry.total_files} files`);
+      console.log(`   Templates: ${registry.templates.length}`);
+      console.log(`   Registries: ${registry.registries.length}`);
+      console.log(`   Revision: ${registry.revision}`);
+      if (registry.revision_note) {
+        console.log(`   Note: ${registry.revision_note}`);
+      }
+      console.log(`   Saved to: ${path.relative(process.cwd(), HASH_FILE)}\n`);
     }
-    console.log(`   Saved to: ${path.relative(process.cwd(), HASH_FILE)}\n`);
   }
   
   if (verify) {
+    receipt.action = receipt.action ? `${receipt.action}+verify` : 'verify';
     const report = verifyHashes();
+    receipt.driftStatus = report.status;
+    receipt.revision = report.current_revision;
+    receipt.changes = report.changes;
+    receipt.totalFiles = report.changes.added.length + report.changes.removed.length + report.changes.modified.length;
+    if (report.status === 'fail') {
+      receipt.ok = false;
+    }
     printReport(report);
+    emitOutput();
     process.exit(report.status === 'pass' ? 0 : 1);
   }
   
   if (diff) {
+    receipt.action = receipt.action ? `${receipt.action}+diff` : 'diff';
     printDiff();
   }
+
+  if (!generate && !verify && !diff) {
+    receipt.action = 'status';
+    const registry = generateHashes();
+    receipt.totalFiles = registry.total_files;
+    receipt.templateCount = registry.templates.length;
+    receipt.registryCount = registry.registries.length;
+    receipt.revision = registry.revision;
+  }
+
+  emitOutput();
 }
 
-main();
+try {
+  main();
+} catch (err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  receipt.errors.push(message);
+  receipt.ok = false;
+  emitOutput();
+  process.exit(1);
+}

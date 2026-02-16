@@ -9,10 +9,17 @@
  *   npx ts-node axion/scripts/axion-verify-seams.ts --module <name>
  *   npx ts-node axion/scripts/axion-verify-seams.ts --all
  *   npx ts-node axion/scripts/axion-verify-seams.ts --all --fix
+ *   npx ts-node axion/scripts/axion-verify-seams.ts --all --json
+ *   npx ts-node axion/scripts/axion-verify-seams.ts --all --dry-run
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
+
+const startTime = Date.now();
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
 
 interface Seam {
   owner: string;
@@ -39,11 +46,41 @@ interface Violation {
   fix_action: string;
 }
 
+interface Receipt {
+  script: string;
+  ok: boolean;
+  dryRun: boolean;
+  modulesChecked: string[];
+  totalViolations: number;
+  violations: Violation[];
+  repairPlanWritten: boolean;
+  errors: string[];
+  elapsedMs: number;
+}
+
+const receipt: Receipt = {
+  script: 'axion-verify-seams',
+  ok: true,
+  dryRun,
+  modulesChecked: [],
+  totalViolations: 0,
+  violations: [],
+  repairPlanWritten: false,
+  errors: [],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  }
+}
+
 const AXION_ROOT = path.resolve(__dirname, '..');
 const REGISTRY_PATH = path.join(AXION_ROOT, 'registry', 'seams.json');
 const DOMAINS_PATH = path.join(AXION_ROOT, 'domains');
 
-// Keywords that indicate a module is defining rather than linking
 const DEFINITION_PATTERNS: Record<string, RegExp[]> = {
   error_model: [
     /error\s*codes?:\s*\[/i,
@@ -86,7 +123,6 @@ const DEFINITION_PATTERNS: Record<string, RegExp[]> = {
   ],
 };
 
-// Link patterns that indicate proper referencing
 const LINK_PATTERNS = [
   /see\s+\[.*?\]\(.*?\/README\.md\)/i,
   /refer\s+to\s+\[.*?\]/i,
@@ -97,7 +133,11 @@ const LINK_PATTERNS = [
 
 function loadSeamRegistry(): SeamRegistry {
   if (!fs.existsSync(REGISTRY_PATH)) {
-    console.error(`ERROR: Seam registry not found at ${REGISTRY_PATH}`);
+    const msg = `ERROR: Seam registry not found at ${REGISTRY_PATH}`;
+    if (!jsonMode) console.error(msg);
+    receipt.errors.push(msg);
+    receipt.ok = false;
+    emitOutput();
     process.exit(1);
   }
   return JSON.parse(fs.readFileSync(REGISTRY_PATH, 'utf-8'));
@@ -134,11 +174,9 @@ function checkForDefinitions(content: string, seamName: string): { found: boolea
 }
 
 function hasProperLink(content: string, seam: Seam): boolean {
-  // Check if content links to the owner's canonical doc
   const ownerRef = new RegExp(seam.owner, 'i');
   const hasOwnerRef = ownerRef.test(content);
   
-  // Check for link patterns
   const hasLinkPattern = LINK_PATTERNS.some(pattern => pattern.test(content));
   
   return hasOwnerRef && hasLinkPattern;
@@ -149,23 +187,19 @@ function verifyModule(moduleName: string, registry: SeamRegistry): Violation[] {
   const docs = getModuleDocs(moduleName);
   
   for (const [seamName, seam] of Object.entries(registry.seams)) {
-    // Skip if this module is the owner
     if (seam.owner === moduleName) {
       continue;
     }
     
-    // Skip if this module is not related to the seam
     if (!seam.related_modules.includes(moduleName)) {
       continue;
     }
     
-    // Check each doc in this module
     for (const docPath of docs) {
       const content = fs.readFileSync(docPath, 'utf-8');
       const defCheck = checkForDefinitions(content, seamName);
       
       if (defCheck.found) {
-        // Found a definition - check if it also has a proper link
         if (!hasProperLink(content, seam)) {
           violations.push({
             module: moduleName,
@@ -195,6 +229,8 @@ function getAllModules(): string[] {
 }
 
 function printViolations(violations: Violation[]): void {
+  if (jsonMode) return;
+
   if (violations.length === 0) {
     console.log('\n[PASS] No seam ownership violations found.\n');
     return;
@@ -228,12 +264,13 @@ function generateRepairPlan(violations: Violation[]): void {
     })),
   };
   
-  fs.writeFileSync(planPath, JSON.stringify(plan, null, 2));
-  console.log(`[INFO] Repair plan written to: ${path.relative(process.cwd(), planPath)}\n`);
+  if (!dryRun) {
+    fs.writeFileSync(planPath, JSON.stringify(plan, null, 2));
+    receipt.repairPlanWritten = true;
+  }
+  if (!jsonMode) console.log(`[INFO] Repair plan written to: ${path.relative(process.cwd(), planPath)}\n`);
 }
 
-// Topic mention patterns - lighter touch than definition patterns
-// These detect when a module references a seam topic (not necessarily defining it)
 const MENTION_PATTERNS: Record<string, RegExp[]> = {
   error_model: [
     /error\s*handling/i,
@@ -281,12 +318,11 @@ const MENTION_PATTERNS: Record<string, RegExp[]> = {
 };
 
 function checkForMissingLink(content: string, seamName: string, seam: Seam): boolean {
-  // Check if content mentions seam topic but doesn't link to owner
   const mentionPatterns = MENTION_PATTERNS[seamName] || [];
   const mentionsTopic = mentionPatterns.some(pattern => pattern.test(content));
   
   if (!mentionsTopic) {
-    return false; // Doesn't mention the topic, no link needed
+    return false;
   }
   
   return !hasProperLink(content, seam);
@@ -303,7 +339,6 @@ function checkForDuplicateDefinition(content: string, seamName: string, ownerCon
   for (let i = 0; i < lines.length; i++) {
     for (const pattern of patterns) {
       if (pattern.test(lines[i])) {
-        // Check if similar definition exists in owner
         if (pattern.test(ownerContent)) {
           return { found: true, line: i + 1 };
         }
@@ -326,25 +361,21 @@ function verifyModuleEnhanced(moduleName: string, registry: SeamRegistry): Viola
   const docs = getModuleDocs(moduleName);
   
   for (const [seamName, seam] of Object.entries(registry.seams)) {
-    // Skip if this module is the owner
     if (seam.owner === moduleName) {
       continue;
     }
     
-    // Skip if this module is not related to the seam
     if (!seam.related_modules.includes(moduleName)) {
       continue;
     }
     
     const ownerContent = loadOwnerContent(seam);
     
-    // Check each doc in this module
     for (const docPath of docs) {
       const content = fs.readFileSync(docPath, 'utf-8');
       const defCheck = checkForDefinitions(content, seamName);
       
       if (defCheck.found) {
-        // Check if it also has a proper link
         if (!hasProperLink(content, seam)) {
           violations.push({
             module: moduleName,
@@ -357,7 +388,6 @@ function verifyModuleEnhanced(moduleName: string, registry: SeamRegistry): Viola
           });
         }
         
-        // Check for duplicate definitions
         const dupCheck = checkForDuplicateDefinition(content, seamName, ownerContent);
         if (dupCheck.found) {
           violations.push({
@@ -371,7 +401,6 @@ function verifyModuleEnhanced(moduleName: string, registry: SeamRegistry): Viola
           });
         }
       } else {
-        // Check if content mentions seam topic but lacks proper link
         if (checkForMissingLink(content, seamName, seam)) {
           violations.push({
             module: moduleName,
@@ -390,29 +419,39 @@ function verifyModuleEnhanced(moduleName: string, registry: SeamRegistry): Viola
 }
 
 // Main execution
-function main() {
+try {
   const args = process.argv.slice(2);
   const moduleArg = args.indexOf('--module');
   const targetModule = moduleArg !== -1 ? args[moduleArg + 1] : null;
   const runAll = args.includes('--all');
   const generatePlan = args.includes('--fix');
   
-  console.log('\n[AXION] Seam Ownership Verification\n');
+  if (!jsonMode) console.log('\n[AXION] Seam Ownership Verification\n');
   
   if (!targetModule && !runAll) {
-    console.log('Usage:');
-    console.log('  npx ts-node axion/scripts/axion-verify-seams.ts --module <name>');
-    console.log('  npx ts-node axion/scripts/axion-verify-seams.ts --all');
-    console.log('  npx ts-node axion/scripts/axion-verify-seams.ts --all --fix');
+    if (!jsonMode) {
+      console.log('Usage:');
+      console.log('  npx ts-node axion/scripts/axion-verify-seams.ts --module <name>');
+      console.log('  npx ts-node axion/scripts/axion-verify-seams.ts --all');
+      console.log('  npx ts-node axion/scripts/axion-verify-seams.ts --all --fix');
+      console.log('  npx ts-node axion/scripts/axion-verify-seams.ts --all --json');
+      console.log('  npx ts-node axion/scripts/axion-verify-seams.ts --all --dry-run');
+    }
+    receipt.ok = false;
+    receipt.errors.push('No --module or --all flag provided');
+    emitOutput();
     process.exit(1);
   }
   
   const registry = loadSeamRegistry();
-  console.log(`Loaded seam registry v${registry.version}`);
-  console.log(`Registered seams: ${Object.keys(registry.seams).join(', ')}\n`);
+  if (!jsonMode) {
+    console.log(`Loaded seam registry v${registry.version}`);
+    console.log(`Registered seams: ${Object.keys(registry.seams).join(', ')}\n`);
+  }
   
   const modulesToCheck = runAll ? getAllModules() : [targetModule!];
-  console.log(`Checking modules: ${modulesToCheck.join(', ')}\n`);
+  receipt.modulesChecked = modulesToCheck;
+  if (!jsonMode) console.log(`Checking modules: ${modulesToCheck.join(', ')}\n`);
   
   const allViolations: Violation[] = [];
   
@@ -421,13 +460,22 @@ function main() {
     allViolations.push(...violations);
   }
   
+  receipt.totalViolations = allViolations.length;
+  receipt.violations = allViolations;
+  receipt.ok = allViolations.length === 0;
+  
   printViolations(allViolations);
   
   if (generatePlan && allViolations.length > 0) {
     generateRepairPlan(allViolations);
   }
   
+  emitOutput();
   process.exit(allViolations.length > 0 ? 1 : 0);
+} catch (err: any) {
+  const msg = err?.message || String(err);
+  receipt.errors.push(msg);
+  receipt.ok = false;
+  emitOutput();
+  process.exit(1);
 }
-
-main();

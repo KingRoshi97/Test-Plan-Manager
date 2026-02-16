@@ -154,8 +154,12 @@ function generateRunId(): string {
   return `run_${timestamp}_${random}`;
 }
 
+let _suppressConsole = false;
+
 function log(level: 'PASS' | 'FAIL' | 'INFO' | 'WARN' | 'RUN' | 'DONE' | 'SKIP' | 'BLOCKED', message: string): void {
-  console.log(`[${level}] ${message}`);
+  if (!_suppressConsole) {
+    console.log(`[${level}] ${message}`);
+  }
 }
 
 function tailLines(text: string, n: number): string {
@@ -771,6 +775,7 @@ async function runPrepareRoot(
 }
 
 async function main(): Promise<void> {
+  const startTime = Date.now();
   const args = process.argv.slice(2);
   
   // Parse arguments
@@ -789,6 +794,34 @@ async function main(): Promise<void> {
   const archiveExistingFlag = args.includes('--archive-existing');
   const jsonFlag = args.includes('--json');
   const helpFlag = args.includes('--help') || args.includes('-h');
+  
+  const jsonMode = jsonFlag;
+  const dryRun = dryRunFlag;
+  _suppressConsole = jsonMode;
+  
+  const receipt: Record<string, any> = {
+    ok: true,
+    script: 'axion-run',
+    stage: 'run',
+    dryRun,
+    errors: [] as string[],
+    warnings: [] as string[],
+    run_id: null as string | null,
+    plan: null as string | null,
+    mode: null as string | null,
+    modules: [] as string[],
+    stages_executed: [] as string[],
+    overall_status: 'success',
+    run_history_path: null as string | null,
+    elapsedMs: 0,
+  };
+  
+  function emitOutput(): void {
+    receipt.elapsedMs = Date.now() - startTime;
+    if (jsonMode) {
+      process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    }
+  }
   
   const presetName = presetIdx !== -1 ? args[presetIdx + 1] : null;
   const planName = planIdx !== -1 ? args[planIdx + 1] : 'docs:full';
@@ -901,15 +934,25 @@ Examples:
   
   // Validate target specified
   if (!presetName && !allFlag && !targetModule) {
-    console.error('[FAIL] Must specify --preset, --all, or --module');
-    console.log('Run with --help for usage');
-    console.log(JSON.stringify({ status: 'failed', stage: 'run', reason_codes: ['MISSING_TARGET'] }));
+    if (!jsonMode) {
+      console.error('[FAIL] Must specify --preset, --all, or --module');
+      console.log('Run with --help for usage');
+    }
+    receipt.ok = false;
+    receipt.overall_status = 'failed';
+    receipt.errors.push('Must specify --preset, --all, or --module');
+    emitOutput();
+    if (!jsonMode) {
+      console.log(JSON.stringify({ status: 'failed', stage: 'run', reason_codes: ['MISSING_TARGET'] }));
+    }
     process.exit(1);
   }
   
   const runId = generateRunId();
+  receipt.run_id = runId;
+  receipt.plan = planName;
   
-  if (!jsonFlag) {
+  if (!jsonMode) {
     console.log('\n[AXION] Run\n');
     log('INFO', `Run ID: ${runId}`);
     if (buildRoot) {
@@ -938,14 +981,20 @@ Examples:
     );
     
     if (!prepareResult.success) {
-      const result = {
-        status: 'failed',
-        stage: 'run',
-        run_id: runId,
-        reason_codes: ['PREPARE_ROOT_FAILED'],
-        hint: ['Fix prepare-root errors before running'],
-      };
-      console.log(JSON.stringify(result, null, 2));
+      receipt.ok = false;
+      receipt.overall_status = 'failed';
+      receipt.errors.push('PREPARE_ROOT_FAILED: Fix prepare-root errors before running');
+      emitOutput();
+      if (!jsonMode) {
+        const result = {
+          status: 'failed',
+          stage: 'run',
+          run_id: runId,
+          reason_codes: ['PREPARE_ROOT_FAILED'],
+          hint: ['Fix prepare-root errors before running'],
+        };
+        console.log(JSON.stringify(result, null, 2));
+      }
       process.exit(1);
     }
     
@@ -984,17 +1033,23 @@ Examples:
   
   const preflight = await runPreflight(root, buildRoot);
   if (!preflight.success) {
-    const result = {
-      status: 'failed',
-      stage: 'run',
-      run_id: runId,
-      reason_codes: ['PRECHECK_FAILED'],
-      hint: ['Fix preflight errors before running'],
-    };
-    if (!jsonFlag) {
+    if (!jsonMode) {
       console.log(preflight.output);
     }
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.overall_status = 'failed';
+    receipt.errors.push('PRECHECK_FAILED: Fix preflight errors before running');
+    emitOutput();
+    if (!jsonMode) {
+      const result = {
+        status: 'failed',
+        stage: 'run',
+        run_id: runId,
+        reason_codes: ['PRECHECK_FAILED'],
+        hint: ['Fix preflight errors before running'],
+      };
+      console.log(JSON.stringify(result, null, 2));
+    }
     process.exit(1);
   }
   
@@ -1008,17 +1063,23 @@ Examples:
   
   const lockResult = acquireLock(paths, runId, args);
   if (!lockResult.acquired) {
-    const result = {
-      status: 'blocked_by',
-      stage: 'run',
-      run_id: runId,
-      missing: ['RUN_LOCK_ACTIVE'],
-      hint: [
-        lockResult.reason || 'Another run is in progress',
-        'If stale, run: node --import tsx axion/scripts/axion-run.ts --unlock-if-stale',
-      ],
-    };
-    console.log(JSON.stringify(result, null, 2));
+    receipt.ok = false;
+    receipt.overall_status = 'blocked_by';
+    receipt.errors.push(lockResult.reason || 'Another run is in progress');
+    emitOutput();
+    if (!jsonMode) {
+      const result = {
+        status: 'blocked_by',
+        stage: 'run',
+        run_id: runId,
+        missing: ['RUN_LOCK_ACTIVE'],
+        hint: [
+          lockResult.reason || 'Another run is in progress',
+          'If stale, run: node --import tsx axion/scripts/axion-run.ts --unlock-if-stale',
+        ],
+      };
+      console.log(JSON.stringify(result, null, 2));
+    }
     process.exit(1);
   }
   
@@ -1050,14 +1111,20 @@ Examples:
     // Resolve plan
     const plan = presetsConfig.stage_plans[planName];
     if (!plan) {
-      const result = {
-        status: 'failed',
-        stage: 'run',
-        run_id: runId,
-        reason_codes: ['PLAN_NOT_FOUND'],
-        hint: [`Available plans: ${Object.keys(presetsConfig.stage_plans).join(', ')}`],
-      };
-      console.log(JSON.stringify(result, null, 2));
+      receipt.ok = false;
+      receipt.overall_status = 'failed';
+      receipt.errors.push(`PLAN_NOT_FOUND: Available plans: ${Object.keys(presetsConfig.stage_plans).join(', ')}`);
+      emitOutput();
+      if (!jsonMode) {
+        const result = {
+          status: 'failed',
+          stage: 'run',
+          run_id: runId,
+          reason_codes: ['PLAN_NOT_FOUND'],
+          hint: [`Available plans: ${Object.keys(presetsConfig.stage_plans).join(', ')}`],
+        };
+        console.log(JSON.stringify(result, null, 2));
+      }
       process.exit(1);
     }
     
@@ -1068,14 +1135,20 @@ Examples:
     if (presetName) {
       const preset = presetsConfig.presets[presetName];
       if (!preset) {
-        const result = {
-          status: 'failed',
-          stage: 'run',
-          run_id: runId,
-          reason_codes: ['PRESET_NOT_FOUND'],
-          hint: [`Available presets: ${Object.keys(presetsConfig.presets).join(', ')}`],
-        };
-        console.log(JSON.stringify(result, null, 2));
+        receipt.ok = false;
+        receipt.overall_status = 'failed';
+        receipt.errors.push(`PRESET_NOT_FOUND: Available presets: ${Object.keys(presetsConfig.presets).join(', ')}`);
+        emitOutput();
+        if (!jsonMode) {
+          const result = {
+            status: 'failed',
+            stage: 'run',
+            run_id: runId,
+            reason_codes: ['PRESET_NOT_FOUND'],
+            hint: [`Available presets: ${Object.keys(presetsConfig.presets).join(', ')}`],
+          };
+          console.log(JSON.stringify(result, null, 2));
+        }
         process.exit(1);
       }
       resolvedModules = resolveModules(preset, config);
@@ -1087,14 +1160,20 @@ Examples:
     } else if (targetModule) {
       const canonicalOrder = config.canonical_order || config.modules.map(m => m.slug);
       if (!canonicalOrder.includes(targetModule)) {
-        const result = {
-          status: 'failed',
-          stage: 'run',
-          run_id: runId,
-          reason_codes: ['MODULE_NOT_FOUND'],
-          hint: [`Available modules: ${canonicalOrder.join(', ')}`],
-        };
-        console.log(JSON.stringify(result, null, 2));
+        receipt.ok = false;
+        receipt.overall_status = 'failed';
+        receipt.errors.push(`MODULE_NOT_FOUND: Available modules: ${canonicalOrder.join(', ')}`);
+        emitOutput();
+        if (!jsonMode) {
+          const result = {
+            status: 'failed',
+            stage: 'run',
+            run_id: runId,
+            reason_codes: ['MODULE_NOT_FOUND'],
+            hint: [`Available modules: ${canonicalOrder.join(', ')}`],
+          };
+          console.log(JSON.stringify(result, null, 2));
+        }
         process.exit(1);
       }
       resolvedModules = [targetModule];
@@ -1115,18 +1194,25 @@ Examples:
     }
     
     // Dry run
-    if (dryRunFlag) {
-      const result = {
-        status: 'success',
-        stage: 'run',
-        run_id: runId,
-        dry_run: true,
-        plan: planName,
-        stages: plan,
-        mode,
-        modules: resolvedModules,
-      };
-      console.log(JSON.stringify(result, null, 2));
+    if (dryRun) {
+      receipt.mode = mode;
+      receipt.modules = resolvedModules;
+      receipt.stages_executed = plan;
+      receipt.dry_run = true;
+      emitOutput();
+      if (!jsonMode) {
+        const result = {
+          status: 'success',
+          stage: 'run',
+          run_id: runId,
+          dry_run: true,
+          plan: planName,
+          stages: plan,
+          mode,
+          modules: resolvedModules,
+        };
+        console.log(JSON.stringify(result, null, 2));
+      }
       process.exit(0);
     }
     
@@ -1286,47 +1372,65 @@ Examples:
     
     const historyPath = path.relative(root, path.join(paths.runHistory, `${runId}.json`));
     
+    receipt.mode = mode;
+    receipt.modules = resolvedModules;
+    receipt.stages_executed = plan;
+    receipt.run_history_path = historyPath;
+    
     if (history.overall_status === 'success') {
-      if (!jsonFlag) {
+      if (!jsonMode) {
         console.log(`\n${'═'.repeat(50)}`);
         log('PASS', `Run completed successfully`);
         console.log(`${'═'.repeat(50)}\n`);
       }
       
-      const result = {
-        status: 'success',
-        stage: 'run',
-        run_id: runId,
-        root,
-        plan: planName,
-        mode,
-        modules: resolvedModules,
-        stages_executed: plan,
-        overall_status: 'success',
-        run_history_path: historyPath,
-      };
-      console.log(JSON.stringify(result, null, 2));
+      receipt.overall_status = 'success';
+      emitOutput();
+      if (!jsonMode) {
+        const result = {
+          status: 'success',
+          stage: 'run',
+          run_id: runId,
+          root,
+          plan: planName,
+          mode,
+          modules: resolvedModules,
+          stages_executed: plan,
+          overall_status: 'success',
+          run_history_path: historyPath,
+        };
+        console.log(JSON.stringify(result, null, 2));
+      }
     } else {
-      if (!jsonFlag) {
+      if (!jsonMode) {
         console.log(`\n${'═'.repeat(50)}`);
         log('FAIL', `Run ${history.overall_status}`);
         console.log(`${'═'.repeat(50)}\n`);
       }
       
-      const result = {
-        status: history.overall_status,
-        stage: 'run',
-        run_id: runId,
-        root,
-        plan: planName,
-        mode,
-        blocked_stage: blockedResult?.stage,
-        module: blockedResult?.module,
-        missing: blockedResult?.missing,
-        hint: blockedResult?.hint || history.next_commands,
-        run_history_path: historyPath,
-      };
-      console.log(JSON.stringify(result, null, 2));
+      receipt.ok = false;
+      receipt.overall_status = history.overall_status;
+      if (blockedResult?.stage) receipt.blocked_stage = blockedResult.stage;
+      if (blockedResult?.module) receipt.blocked_module = blockedResult.module;
+      if (blockedResult?.missing) receipt.missing = blockedResult.missing;
+      if (blockedResult?.hint) receipt.hint = blockedResult.hint;
+      emitOutput();
+      if (!jsonMode) {
+        const result = {
+          status: history.overall_status,
+          stage: 'run',
+          run_id: runId,
+          root,
+          plan: planName,
+          mode,
+          blocked_stage: blockedResult?.stage,
+          module: blockedResult?.module,
+          missing: blockedResult?.missing,
+          hint: blockedResult?.hint || history.next_commands,
+          run_history_path: historyPath,
+        };
+        console.log(JSON.stringify(result, null, 2));
+      }
       process.exit(1);
     }
     
@@ -1336,7 +1440,17 @@ Examples:
 }
 
 main().catch((err) => {
-  console.error('[FAIL] Unexpected error:', err.message);
-  console.log(JSON.stringify({ status: 'failed', stage: 'run', error: err.message }));
+  const jsonMode = process.argv.includes('--json');
+  if (!jsonMode) {
+    console.error('[FAIL] Unexpected error:', err.message);
+  }
+  const errorReceipt = {
+    ok: false,
+    script: 'axion-run',
+    stage: 'run',
+    errors: [err.message || String(err)],
+    elapsedMs: 0,
+  };
+  process.stdout.write(JSON.stringify(errorReceipt, null, 2) + '\n');
   process.exit(1);
 });

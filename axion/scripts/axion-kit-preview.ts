@@ -9,6 +9,11 @@ const __dirname = path.dirname(__filename);
 
 const AXION_ROOT = path.resolve(__dirname, '..');
 
+const startTime = Date.now();
+
+const jsonMode = process.argv.includes('--json');
+const dryRun = process.argv.includes('--dry-run');
+
 type PreviewMode = 'docs' | 'scaffold' | 'full';
 type ReadinessStatus = 'READY' | 'READY_WITH_WARNINGS' | 'NOT_READY';
 
@@ -39,6 +44,39 @@ interface KitPreviewResult {
   hint?: string[];
 }
 
+interface Receipt {
+  ok: boolean;
+  script: string;
+  stage: string;
+  dryRun: boolean;
+  result: KitPreviewResult | null;
+  errors: string[];
+  warnings: string[];
+  elapsedMs: number;
+}
+
+const receipt: Receipt = {
+  ok: true,
+  script: 'axion-kit-preview',
+  stage: 'kit-preview',
+  dryRun,
+  result: null,
+  errors: [],
+  warnings: [],
+  elapsedMs: 0,
+};
+
+function emitOutput(): void {
+  receipt.elapsedMs = Date.now() - startTime;
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+  } else {
+    if (receipt.result) {
+      console.log(JSON.stringify(receipt.result, null, 2));
+    }
+  }
+}
+
 const ALL_DOC_TYPES = [
   'README', 'DDES', 'BELS', 'DIM', 'SCREENMAP',
   'COMPONENT_LIBRARY', 'COPY_GUIDE', 'TESTPLAN', 'OPEN_QUESTIONS',
@@ -48,12 +86,11 @@ const REQUIRED_DOC_TYPES = [
   'README', 'DDES', 'BELS', 'DIM', 'SCREENMAP', 'TESTPLAN',
 ];
 
-function parseArgs(): { root: string; mode: PreviewMode; stackProfile?: string; json: boolean } {
+function parseArgs(): { root: string; mode: PreviewMode; stackProfile?: string } {
   const args = process.argv.slice(2);
   let root: string | undefined;
   let mode: PreviewMode = 'docs';
   let stackProfile: string | undefined;
-  let json = false;
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--root' && args[i + 1]) {
@@ -62,13 +99,11 @@ function parseArgs(): { root: string; mode: PreviewMode; stackProfile?: string; 
       mode = args[++i] as PreviewMode;
     } else if (args[i] === '--stack-profile' && args[i + 1]) {
       stackProfile = args[++i];
-    } else if (args[i] === '--json') {
-      json = true;
     }
   }
 
   const resolvedRoot = root ? path.resolve(root) : AXION_ROOT;
-  return { root: resolvedRoot, mode, stackProfile, json };
+  return { root: resolvedRoot, mode, stackProfile };
 }
 
 function log(msg: string): void {
@@ -264,17 +299,18 @@ function getDomainSlugs(rootDir: string): string[] {
 }
 
 function main() {
-  const { root, mode, stackProfile, json } = parseArgs();
+  const { root, mode, stackProfile } = parseArgs();
 
   const domainsDir = path.join(root, 'domains');
   const configDir = path.join(root, 'config');
   const knowledgeDir = path.join(root, 'knowledge');
   const registryDir = path.join(root, 'registry');
 
-  if (!json) {
+  if (!jsonMode) {
     log('\n[AXION] Kit Preview (dry-run)\n');
     log(`Workspace: ${root}`);
     log(`Mode: ${mode}`);
+    if (dryRun) log('[DRY-RUN] No changes will be made.');
   }
 
   if (!fs.existsSync(root)) {
@@ -291,15 +327,17 @@ function main() {
       summary: 'Kit preview failed: workspace directory does not exist.',
       hint: ['Verify the --root path points to a valid AXION workspace'],
     };
-    if (!json) log(`\n[NOT_READY] Workspace directory does not exist: ${root}`);
-    console.log(JSON.stringify(result, null, 2));
+    if (!jsonMode) log(`\n[NOT_READY] Workspace directory does not exist: ${root}`);
+    receipt.result = result;
+    receipt.warnings.push(`Workspace directory not found: ${root}`);
+    emitOutput();
     return;
   }
 
   const missingRequired: string[] = [];
   const warnings: string[] = [];
 
-  if (!json) log('\n── Required Files ──');
+  if (!jsonMode) log('\n── Required Files ──');
 
   const requiredFiles: Array<{ rel: string; required: boolean }> = [
     { rel: 'config/domains.json', required: true },
@@ -312,25 +350,25 @@ function main() {
     if (!fs.existsSync(full)) {
       if (required) {
         missingRequired.push(rel);
-        if (!json) log(`  [MISSING] ${rel}`);
+        if (!jsonMode) log(`  [MISSING] ${rel}`);
       } else {
         warnings.push(`Optional file missing: ${rel}`);
-        if (!json) log(`  [WARN]    ${rel} (optional)`);
+        if (!jsonMode) log(`  [WARN]    ${rel} (optional)`);
       }
     } else {
-      if (!json) log(`  [OK]      ${rel}`);
+      if (!jsonMode) log(`  [OK]      ${rel}`);
     }
   }
 
   const domainSlugs = getDomainSlugs(root);
   if (domainSlugs.length === 0) {
     missingRequired.push('At least one domain directory');
-    if (!json) log('  [MISSING] At least one domain directory in domains/');
+    if (!jsonMode) log('  [MISSING] At least one domain directory in domains/');
   } else {
-    if (!json) log(`  [OK]      ${domainSlugs.length} domain(s) found`);
+    if (!jsonMode) log(`  [OK]      ${domainSlugs.length} domain(s) found`);
   }
 
-  if (!json) {
+  if (!jsonMode) {
     log('\n── Projected File Tree ──');
     const treeLines = buildIndentedTree(root);
     for (const line of treeLines) {
@@ -340,7 +378,7 @@ function main() {
 
   const flatTree = buildFileTree(root);
 
-  if (!json) log('\n── Domain Completeness ──');
+  if (!jsonMode) log('\n── Domain Completeness ──');
 
   const domainResults: KitPreviewResult['domains'] = [];
   let totalUnknowns = 0;
@@ -351,7 +389,7 @@ function main() {
     domainResults.push(analysis);
     totalUnknowns += analysis.unknown_count;
 
-    if (!json) {
+    if (!jsonMode) {
       const statusIcon = analysis.docs_missing.length === 0 && analysis.unknown_count === 0 ? '✓' : '!';
       log(`  [${statusIcon}] ${slug} — ${analysis.completeness_pct}% complete`);
       if (analysis.docs_present.length > 0) {
@@ -397,7 +435,7 @@ function main() {
   }
 
   let knowledgeIndexPreview = '';
-  if (!json) log('\n── Knowledge INDEX Preview ──');
+  if (!jsonMode) log('\n── Knowledge INDEX Preview ──');
 
   try {
     const stackId = getStackProfileId(root, stackProfile);
@@ -406,7 +444,7 @@ function main() {
     const previewLines = indexContent.split('\n').slice(0, 30);
     knowledgeIndexPreview = previewLines.join('\n');
 
-    if (!json) {
+    if (!jsonMode) {
       for (const line of previewLines) {
         log(`  ${line}`);
       }
@@ -418,7 +456,7 @@ function main() {
     const errMsg = e instanceof Error ? e.message : 'Unknown error';
     knowledgeIndexPreview = `(Failed to generate: ${errMsg})`;
     warnings.push(`Knowledge INDEX generation failed: ${errMsg}`);
-    if (!json) log(`  [WARN] Failed to generate INDEX: ${errMsg}`);
+    if (!jsonMode) log(`  [WARN] Failed to generate INDEX: ${errMsg}`);
   }
 
   let status: ReadinessStatus;
@@ -452,7 +490,7 @@ function main() {
     summary = `Kit is READY. ${domainResults.length} domain(s) complete, ${totalFiles} file(s), ${(totalSize / 1024).toFixed(1)} KB.`;
   }
 
-  if (!json) {
+  if (!jsonMode) {
     log('\n── Kit Statistics ──');
     log(`  Total files:       ${totalFiles}`);
     log(`  Total size:        ${(totalSize / 1024).toFixed(2)} KB (${totalSize} bytes)`);
@@ -495,15 +533,20 @@ function main() {
     result.hint = hints;
   }
 
-  console.log(JSON.stringify(result, null, 2));
+  receipt.ok = status !== 'NOT_READY';
+  receipt.result = result;
+  receipt.warnings = warnings;
+  emitOutput();
 }
 
 try {
   main();
 } catch (e) {
   const errMsg = e instanceof Error ? e.message : 'Unknown error';
-  console.error(`[FATAL] Kit preview crashed: ${errMsg}`);
-  const result: KitPreviewResult = {
+  if (!jsonMode) console.error(`[FATAL] Kit preview crashed: ${errMsg}`);
+  receipt.ok = false;
+  receipt.errors.push(errMsg);
+  receipt.result = {
     status: 'NOT_READY',
     stage: 'kit-preview',
     mode: 'docs',
@@ -516,5 +559,6 @@ try {
     summary: `Kit preview failed with error: ${errMsg}`,
     hint: ['Check the workspace path and try again'],
   };
-  console.log(JSON.stringify(result, null, 2));
+  emitOutput();
+  process.exit(1);
 }
