@@ -3,7 +3,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
-import { stepLabel } from "@/lib/labels";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,15 +122,8 @@ interface PresetConfig {
   _legacy?: boolean;
 }
 
-interface StagePlanConfig {
-  label: string;
-  description: string;
-  steps: string[];
-}
-
 interface PresetsResponse {
   presets: Record<string, PresetConfig>;
-  stage_plans: Record<string, StagePlanConfig | string[]>;
   project_types: ProjectTypesConfig;
 }
 
@@ -142,21 +134,6 @@ interface FieldSuggestions {
 
 interface AutofillResponse {
   fields: Record<string, FieldSuggestions>;
-}
-
-function getStagePlanLabel(key: string, plan: StagePlanConfig | string[]): string {
-  if (!Array.isArray(plan) && plan.label) return plan.label;
-  return key;
-}
-
-function getStagePlanDescription(plan: StagePlanConfig | string[]): string | null {
-  if (!Array.isArray(plan) && plan.description) return plan.description;
-  return null;
-}
-
-function getStagePlanSteps(plan: StagePlanConfig | string[]): string[] {
-  if (Array.isArray(plan)) return plan;
-  return plan.steps || [];
 }
 
 function getIcon(name: string): LucideIcon {
@@ -338,7 +315,6 @@ export default function NewAssemblyPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [fullProduct, setFullProduct] = useState(false);
-  const [stagePlan, setStagePlan] = useState("docs:full");
 
   const [typeFields, setTypeFields] = useState<Record<string, string>>({});
   const [fullProductFields, setFullProductFields] = useState<Record<string, string>>({});
@@ -502,7 +478,6 @@ export default function NewAssemblyPage() {
   const selectedTypeObj = selectedCategoryObj?.types.find(t => t.id === selectedType);
   const derivedPresetId = selectedTypeObj?.presetId || "system";
   const selectedPreset = presetsData?.presets?.[derivedPresetId];
-  const selectedPlan = presetsData?.stage_plans?.[stagePlan];
 
   const triggerAutofill = useCallback(async () => {
     if (!projectName.trim() || !idea.trim()) return;
@@ -647,7 +622,7 @@ export default function NewAssemblyPage() {
       preset: selectedPreset?.label || derivedPresetId,
       category: selectedCategory || undefined,
       domains,
-      stagePlan,
+      stagePlan: "docs:full",
       input: structuredInput,
       typeFields,
       fullProductFields: fullProduct ? fullProductFields : undefined,
@@ -657,7 +632,6 @@ export default function NewAssemblyPage() {
   }
 
   const canProceedFromBasics = projectName.trim().length > 0 && idea.trim().length > 0;
-  const stagePlanEntries = presetsData?.stage_plans ? Object.entries(presetsData.stage_plans) : [];
 
   const stepHasContent = (stepIndex: number): boolean => {
     switch (stepIndex) {
@@ -987,42 +961,6 @@ export default function NewAssemblyPage() {
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="stagePlan">What do you want to do?</Label>
-                  {presetsLoading ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Loading...
-                    </div>
-                  ) : (
-                    <Select value={stagePlan} onValueChange={setStagePlan} data-testid="select-stage-plan">
-                      <SelectTrigger data-testid="select-stage-plan-trigger">
-                        <SelectValue placeholder="Select what to run" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stagePlanEntries.map(([key, plan]) => (
-                          <SelectItem key={key} value={key} data-testid={`select-stage-plan-option-${key}`}>
-                            {getStagePlanLabel(key, plan)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {selectedPlan && getStagePlanDescription(selectedPlan) && (
-                    <p className="text-xs text-muted-foreground" data-testid="text-stage-plan-description">
-                      {getStagePlanDescription(selectedPlan)}
-                    </p>
-                  )}
-                  {selectedPlan && getStagePlanSteps(selectedPlan).length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-1" data-testid="stage-plan-steps">
-                      {getStagePlanSteps(selectedPlan).map((step, i) => (
-                        <Badge key={i} variant="secondary" className="no-default-active-elevate" data-testid={`badge-stage-step-${i}`}>
-                          <span>{i + 1}. {stepLabel(step)}</span>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </>
             )}
 
