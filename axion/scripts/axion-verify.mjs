@@ -3,10 +3,12 @@
  * axion:verify - Verify the system (gate check)
  * Fails if required files are missing, undefined reason codes referenced,
  * UNKNOWNs in locked sections, or required template sections absent.
- * 
+ *
  * Usage:
  *   node axion/scripts/axion-verify.mjs --all
  *   node axion/scripts/axion-verify.mjs --module <name>
+ *   node axion/scripts/axion-verify.mjs --all --json
+ *   node axion/scripts/axion-verify.mjs --all --dry-run
  */
 
 import fs from 'fs';
@@ -16,6 +18,7 @@ import {
   ensurePrereqs,
   isStageDone,
   markStageDone,
+  markStageFailed,
   writeVerifyStatus,
   failJson,
   AXION_REQUIRED_DOC_TYPES,
@@ -23,18 +26,27 @@ import {
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const jsonMode = args.includes('--json');
 const { modules, all } = parseModuleArgs(process.argv);
 
-const report = {
-  created: [],
-  modified: [],
-  skipped: [],
-  failed: []
-};
+const startTime = Date.now();
 
-const verify = {
-  passed: true,
-  checks: []
+const receipt = {
+  stage: 'verify',
+  ok: true,
+  modulesProcessed: [],
+  createdFiles: [],
+  modifiedFiles: [],
+  skippedFiles: [],
+  warnings: [],
+  errors: [],
+  elapsedMs: 0,
+  dryRun,
+  verifySummary: {
+    passed: true,
+    checks: [],
+    failedModules: [],
+  },
 };
 
 function loadConfig() {
@@ -47,82 +59,94 @@ function loadConfig() {
 
 function checkDomainFiles(axionRoot, module, domainsDir) {
   const results = [];
-  
   const domainDir = path.join(axionRoot, domainsDir, module);
-  
+
   for (const docType of AXION_REQUIRED_DOC_TYPES) {
     const filePath = path.join(domainDir, `${docType}_${module}.md`);
     const exists = fs.existsSync(filePath);
     results.push({
       file: filePath,
       passed: exists,
-      message: exists ? 'File exists' : 'File missing'
+      message: exists ? 'File exists' : 'File missing',
     });
-    if (!exists) verify.passed = false;
   }
-  
+
   return results;
 }
 
 function checkLockedDomainsForUnknowns(axionRoot, module, domainsDir) {
   const results = [];
   const domainDir = path.join(axionRoot, domainsDir, module);
-  
+
   if (!fs.existsSync(domainDir)) {
     return results;
   }
-  
+
   const files = fs.readdirSync(domainDir);
   const ercFiles = files.filter(f => f.startsWith('ERC_'));
-  
+
   for (const ercFile of ercFiles) {
     const ercPath = path.join(domainDir, ercFile);
     const content = fs.readFileSync(ercPath, 'utf8');
     const unknownCount = (content.match(/\bUNKNOWN\b/g) || []).length;
-    
+
     const passed = unknownCount === 0;
     results.push({
       file: ercPath,
       passed,
-      message: passed ? 'No UNKNOWNs in locked ERC' : `${unknownCount} UNKNOWNs found in locked ERC`
+      message: passed ? 'No UNKNOWNs in locked ERC' : `${unknownCount} UNKNOWNs found in locked ERC`,
     });
-    if (!passed) verify.passed = false;
   }
-  
+
   return results;
 }
 
-function printReport() {
+function emitOutput() {
+  receipt.elapsedMs = Date.now() - startTime;
+  receipt.verifySummary.passed = receipt.verifySummary.failedModules.length === 0 && receipt.ok;
+
+  if (jsonMode) {
+    process.stdout.write(JSON.stringify(receipt, null, 2) + '\n');
+    return;
+  }
+
+  const vs = receipt.verifySummary;
+
   console.log('\n========== ASSEMBLER_REPORT ==========');
   console.log(`Script: axion:verify`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
-  console.log(`Status: ${verify.passed ? 'PASS' : 'FAIL'}`);
-  console.log(`Modules: ${modules.join(', ')}`);
+  console.log(`Status: ${vs.passed ? 'PASS' : 'FAIL'}`);
+  console.log(`Modules: ${receipt.modulesProcessed.join(', ') || '(none)'}`);
   console.log(`Required Doc Types: ${AXION_REQUIRED_DOC_TYPES.join(', ')}`);
-  
+
   console.log('\n--- VERIFICATION RESULTS ---');
-  
-  const passedChecks = verify.checks.filter(c => c.passed);
-  const failedChecks = verify.checks.filter(c => !c.passed);
-  
+
+  const passedChecks = vs.checks.filter(c => c.passed);
+  const failedChecks = vs.checks.filter(c => !c.passed);
+
   console.log(`\nPassed (${passedChecks.length}):`);
   passedChecks.forEach(c => console.log(`  + ${c.file}: ${c.message}`));
-  
+
   console.log(`\nFailed (${failedChecks.length}):`);
   failedChecks.forEach(c => console.log(`  - ${c.file}: ${c.message}`));
-  
-  console.log('\n--- FILE OPERATIONS ---');
-  console.log(`Created (${report.created.length}):`);
-  report.created.forEach(f => console.log(`  + ${f}`));
-  console.log(`Modified (${report.modified.length}):`);
-  report.modified.forEach(f => console.log(`  ~ ${f}`));
-  console.log(`Skipped (${report.skipped.length}):`);
-  report.skipped.forEach(f => console.log(`  - ${f}`));
-  console.log(`Failed (${report.failed.length}):`);
-  report.failed.forEach(f => console.log(`  ! ${f}`));
-  console.log('\n===================================');
-  
-  if (!verify.passed) {
+
+  if (vs.failedModules.length) {
+    console.log(`\nFailed Modules: ${vs.failedModules.join(', ')}`);
+  }
+
+  if (receipt.warnings.length) {
+    console.log(`\nWarnings (${receipt.warnings.length}):`);
+    receipt.warnings.forEach(w => console.log(`  ? ${w}`));
+  }
+  if (receipt.errors.length) {
+    console.log(`\nErrors (${receipt.errors.length}):`);
+    receipt.errors.forEach(e => console.log(`  ! ${e}`));
+  }
+
+  console.log(`\nResult: ${receipt.ok ? 'OK' : 'FAILED'}`);
+  console.log('===================================');
+
+  if (!vs.passed) {
     console.log('\nVERIFICATION FAILED - Do not proceed with lock.');
   } else {
     console.log('\nVERIFICATION PASSED - Modules ready for lock.');
@@ -130,53 +154,82 @@ function printReport() {
 }
 
 try {
-  console.log('Running axion:verify...');
-  
+  if (!jsonMode) console.log('Running axion:verify...');
+
   const config = loadConfig();
   const axionRoot = config.axion_root || 'axion';
   const domainsDir = config.domains_dir || 'domains';
-  
+
+  const vs = receipt.verifySummary;
+
   for (const module of modules) {
-    ensurePrereqs({
-      stageName: 'verify',
-      module,
-      stagePrereq: (m) => isStageDone('review', m),
-    });
-    
-    console.log(`Verifying module: ${module}`);
-    
-    verify.checks.push(...checkDomainFiles(axionRoot, module, domainsDir));
-    verify.checks.push(...checkLockedDomainsForUnknowns(axionRoot, module, domainsDir));
-    
-    if (!verify.passed) {
-      failJson({
-        status: 'FAIL',
-        stage: 'verify',
-        module,
-        reason: 'verification_failed',
-        details: verify.checks.filter(c => !c.passed).map(c => c.message),
-      });
+    if (!isStageDone('review', module)) {
+      const msg = `Module '${module}' has not completed 'review'. Run review first.`;
+      receipt.warnings.push(msg);
+      if (!dryRun) markStageFailed('verify', module, { reason: msg });
+      continue;
     }
-    
-    if (!dryRun) {
-      markStageDone('verify', module, { result: 'PASS' });
+
+    try {
+      ensurePrereqs({
+        stageName: 'verify',
+        module,
+        stagePrereq: (m) => isStageDone('review', m),
+      });
+    } catch (prereqErr) {
+      receipt.errors.push(`Prerequisite failed for module '${module}': ${prereqErr.message}`);
+      receipt.ok = false;
+      if (!dryRun) markStageFailed('verify', module, { reason: prereqErr.message });
+      continue;
+    }
+
+    try {
+      if (!jsonMode) console.log(`Verifying module: ${module}`);
+      receipt.modulesProcessed.push(module);
+
+      const fileChecks = checkDomainFiles(axionRoot, module, domainsDir);
+      const unknownChecks = checkLockedDomainsForUnknowns(axionRoot, module, domainsDir);
+      const allChecks = [...fileChecks, ...unknownChecks];
+
+      vs.checks.push(...allChecks);
+
+      const moduleFailed = allChecks.some(c => !c.passed);
+
+      if (moduleFailed) {
+        vs.failedModules.push(module);
+        const failedDetails = allChecks.filter(c => !c.passed).map(c => c.message);
+        receipt.errors.push(`Module '${module}' verification failed: ${failedDetails.join('; ')}`);
+        receipt.ok = false;
+        if (!dryRun) markStageFailed('verify', module, { reason: 'verification_failed', details: failedDetails });
+      } else {
+        if (!dryRun) {
+          markStageDone('verify', module, { result: 'PASS' });
+        }
+      }
+    } catch (moduleErr) {
+      receipt.errors.push(`Module '${module}' failed: ${moduleErr.message}`);
+      receipt.ok = false;
+      vs.failedModules.push(module);
+      if (!dryRun) markStageFailed('verify', module, { reason: moduleErr.message });
     }
   }
-  
-  if (!dryRun) {
+
+  if (!dryRun && vs.passed && receipt.modulesProcessed.length > 0) {
     writeVerifyStatus({
       status: 'PASS',
       timestamp: new Date().toISOString(),
       mode: all ? 'all' : 'module',
-      modules,
+      modules: receipt.modulesProcessed,
     });
   }
-  
-  printReport();
-  
+
+  emitOutput();
+
+  if (!receipt.ok) process.exit(1);
+
 } catch (error) {
-  report.failed.push(error.message);
-  verify.passed = false;
-  printReport();
+  receipt.ok = false;
+  receipt.errors.push(error.message);
+  emitOutput();
   process.exit(1);
 }
