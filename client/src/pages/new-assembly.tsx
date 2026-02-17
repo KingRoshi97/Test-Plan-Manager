@@ -495,6 +495,9 @@ export default function NewAssemblyPage() {
         ideaForAutofill = projectName.trim();
       }
 
+      const typeFieldDefs = selectedTypeObj?.fields.map(f => ({ key: f.key, label: f.label })) || [];
+      const fullProductFieldDefs = fullProductModifier?.fields.map(f => ({ key: f.key, label: f.label })) || [];
+
       const resp = await fetch("/api/assembly-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -502,6 +505,9 @@ export default function NewAssemblyPage() {
           projectName: projectName.trim(),
           idea: ideaForAutofill,
           category: selectedCategory || undefined,
+          typeName: selectedTypeObj?.label || undefined,
+          typeFields: typeFieldDefs.length > 0 ? typeFieldDefs : undefined,
+          fullProductFields: fullProductFieldDefs.length > 0 ? fullProductFieldDefs : undefined,
         }),
       });
       if (!resp.ok) {
@@ -521,6 +527,31 @@ export default function NewAssemblyPage() {
           const val = f.dataSensitivity.autofill.toLowerCase();
           if (["low", "medium", "high"].includes(val)) setDataSensitivity(val);
         }
+
+        if (fullProductModifier) {
+          setFullProductFields(prev => {
+            const updated = { ...prev };
+            for (const field of fullProductModifier.fields) {
+              if (f[field.key]?.autofill && !(prev[field.key] || "").trim()) {
+                updated[field.key] = f[field.key].autofill;
+              }
+            }
+            return updated;
+          });
+        }
+
+        if (selectedTypeObj) {
+          setTypeFields(prev => {
+            const updated = { ...prev };
+            for (const field of selectedTypeObj.fields) {
+              if (f[field.key]?.autofill && !(prev[field.key] || "").trim()) {
+                updated[field.key] = f[field.key].autofill;
+              }
+            }
+            return updated;
+          });
+        }
+
         setAutofillApplied(true);
         toast({ title: "AI suggestions applied", description: "All sections have been pre-filled. Review and edit as needed." });
       }
@@ -529,7 +560,7 @@ export default function NewAssemblyPage() {
     } finally {
       setAutofillLoading(false);
     }
-  }, [projectName, idea, selectedCategory, autofillData, platform, integrations, techConstraints, dataSensitivity]);
+  }, [projectName, idea, selectedCategory, autofillData, platform, integrations, techConstraints, dataSensitivity, fullProductModifier, selectedTypeObj]);
 
   const regenerateAutofill = useCallback(async () => {
     setAutofillData(null);
@@ -546,6 +577,9 @@ export default function NewAssemblyPage() {
         ideaForRegen = projectName.trim();
       }
 
+      const typeFieldDefs = selectedTypeObj?.fields.map(f => ({ key: f.key, label: f.label })) || [];
+      const fullProductFieldDefs = fullProductModifier?.fields.map(f => ({ key: f.key, label: f.label })) || [];
+
       const resp = await fetch("/api/assembly-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -553,6 +587,9 @@ export default function NewAssemblyPage() {
           projectName: projectName.trim(),
           idea: ideaForRegen,
           category: selectedCategory || undefined,
+          typeName: selectedTypeObj?.label || undefined,
+          typeFields: typeFieldDefs.length > 0 ? typeFieldDefs : undefined,
+          fullProductFields: fullProductFieldDefs.length > 0 ? fullProductFieldDefs : undefined,
         }),
       });
       if (!resp.ok) {
@@ -571,6 +608,27 @@ export default function NewAssemblyPage() {
           const val = f.dataSensitivity.autofill.toLowerCase();
           if (["low", "medium", "high"].includes(val)) setDataSensitivity(val);
         }
+
+        if (fullProductModifier) {
+          const updated: Record<string, string> = {};
+          for (const field of fullProductModifier.fields) {
+            if (f[field.key]?.autofill) {
+              updated[field.key] = f[field.key].autofill;
+            }
+          }
+          setFullProductFields(prev => ({ ...prev, ...updated }));
+        }
+
+        if (selectedTypeObj) {
+          const updated: Record<string, string> = {};
+          for (const field of selectedTypeObj.fields) {
+            if (f[field.key]?.autofill) {
+              updated[field.key] = f[field.key].autofill;
+            }
+          }
+          setTypeFields(prev => ({ ...prev, ...updated }));
+        }
+
         setAutofillApplied(true);
         toast({ title: "Regenerated", description: "New AI suggestions have been applied." });
       }
@@ -579,7 +637,7 @@ export default function NewAssemblyPage() {
     } finally {
       setAutofillLoading(false);
     }
-  }, [projectName, idea, selectedCategory]);
+  }, [projectName, idea, selectedCategory, fullProductModifier, selectedTypeObj]);
 
   function handleNextStep() {
     const nextStep = currentStep + 1;
@@ -682,12 +740,15 @@ export default function NewAssemblyPage() {
   function handleSuggestionSelect(field: string, value: string) {
     const setter = FIELD_SETTERS[field];
     const getter = FIELD_GETTERS[field];
-    if (!setter) return;
-    const current = getter ? getter().trim() : "";
-    if (current) {
-      setter(current + "\n" + value);
+    if (setter) {
+      const current = getter ? getter().trim() : "";
+      setter(current ? current + "\n" + value : value);
+    } else if (fullProductFields.hasOwnProperty(field) || fullProductModifier?.fields.some(f => f.key === field)) {
+      const current = (fullProductFields[field] || "").trim();
+      setFullProductFields(prev => ({ ...prev, [field]: current ? current + "\n" + value : value }));
     } else {
-      setter(value);
+      const current = (typeFields[field] || "").trim();
+      setTypeFields(prev => ({ ...prev, [field]: current ? current + "\n" + value : value }));
     }
   }
 
@@ -998,6 +1059,7 @@ export default function NewAssemblyPage() {
                         rows={2}
                         data-testid={`input-type-field-${field.key}`}
                       />
+                      <SuggestionChips suggestions={getSuggestions(field.key)} onSelect={(v) => handleSuggestionSelect(field.key, v)} fieldKey={field.key} />
                     </div>
                   ))
                 ) : (
@@ -1022,6 +1084,7 @@ export default function NewAssemblyPage() {
                         rows={2}
                         data-testid={`input-fp-field-${field.key}`}
                       />
+                      <SuggestionChips suggestions={getSuggestions(field.key)} onSelect={(v) => handleSuggestionSelect(field.key, v)} fieldKey={field.key} />
                     </div>
                   ))
                 ) : (

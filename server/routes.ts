@@ -1329,7 +1329,7 @@ export function registerRoutes(app: Express) {
 
   app.post('/api/assembly-autofill', async (req: Request, res: Response) => {
     try {
-      const { projectName, idea, category } = req.body;
+      const { projectName, idea, category, typeName, typeFields: typeFieldDefs, fullProductFields: fpFieldDefs } = req.body;
       if (!projectName || !idea) {
         res.status(400).json({ error: 'projectName and idea are required' });
         return;
@@ -1353,34 +1353,68 @@ export function registerRoutes(app: Express) {
         baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
       });
 
+      let sectionNumber = 0;
+      const sectionLines: string[] = [];
+      const sectionKeys: string[] = [];
+
+      if (Array.isArray(typeFieldDefs) && typeFieldDefs.length > 0) {
+        for (const f of typeFieldDefs) {
+          sectionNumber++;
+          sectionLines.push(`${sectionNumber}. ${f.key} - ${f.label}`);
+          sectionKeys.push(f.key);
+        }
+      }
+
+      if (Array.isArray(fpFieldDefs) && fpFieldDefs.length > 0) {
+        for (const f of fpFieldDefs) {
+          sectionNumber++;
+          sectionLines.push(`${sectionNumber}. ${f.key} - ${f.label}`);
+          sectionKeys.push(f.key);
+        }
+      }
+
+      const standardSections = [
+        { key: 'visionProblem', label: 'What problem does this solve?' },
+        { key: 'visionTargetUsers', label: 'Who is this for?' },
+        { key: 'visionGoals', label: 'Primary goals (what should this achieve?)' },
+        { key: 'visionSuccess', label: 'What does success look like?' },
+        { key: 'coreFeatures', label: 'Core features (must-haves), as a bulleted list' },
+        { key: 'niceToHaveFeatures', label: 'Nice-to-have features, as a bulleted list' },
+        { key: 'coreEntities', label: 'Main entities/data objects in the system, as a bulleted list with descriptions' },
+        { key: 'userJourneys', label: 'Key user workflows, as numbered steps' },
+        { key: 'platform', label: 'Platform targets (short, comma-separated)' },
+        { key: 'integrations', label: 'External integrations needed, as a bulleted list' },
+        { key: 'techConstraints', label: 'Technical constraints or preferences, as a bulleted list' },
+        { key: 'dataSensitivity', label: 'Data sensitivity level (respond with exactly one of: "low", "medium", or "high")' },
+      ];
+
+      for (const s of standardSections) {
+        if (!sectionKeys.includes(s.key)) {
+          sectionNumber++;
+          sectionLines.push(`${sectionNumber}. ${s.key} - ${s.label}`);
+          sectionKeys.push(s.key);
+        }
+      }
+
+      const exampleKeys = sectionKeys.slice(0, 3).map(k => `    "${k}": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] }`).join(',\n');
+
       const prompt = `You are helping a user set up a new software project. Based on their project name and idea, generate helpful suggestions for different aspects of the project.
 
 Project Name: ${projectName}
 Project Idea: ${truncatedIdea}
 ${category ? `Category: ${category}` : ''}
+${typeName ? `Project Type: ${typeName}` : ''}
 
 Generate suggestions for each of the following sections. For each section, provide exactly 3 short options (each 1-3 sentences). Also provide a recommended "autofill" value that combines the best aspects into a thorough response.
 
 Sections:
-1. visionProblem - What problem does this solve?
-2. visionTargetUsers - Who is this for?
-3. visionGoals - Primary goals (what should this achieve?)
-4. visionSuccess - What does success look like?
-5. coreFeatures - Core features (must-haves), as a bulleted list
-6. niceToHaveFeatures - Nice-to-have features, as a bulleted list
-7. coreEntities - Main entities/data objects in the system, as a bulleted list with descriptions
-8. userJourneys - Key user workflows, as numbered steps
-9. platform - Platform targets (short, comma-separated)
-10. integrations - External integrations needed, as a bulleted list
-11. techConstraints - Technical constraints or preferences, as a bulleted list
-12. dataSensitivity - Data sensitivity level (respond with exactly one of: "low", "medium", or "high")
+${sectionLines.join('\n')}
 
 Respond in this exact JSON format:
 {
   "fields": {
-    "visionProblem": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] },
-    "visionTargetUsers": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] },
-    ...same for all 12 sections
+${exampleKeys},
+    ...same for all ${sectionKeys.length} sections
   }
 }
 
@@ -1395,7 +1429,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           },
           { role: 'user', content: prompt },
         ],
-        max_completion_tokens: 4096,
+        max_completion_tokens: 8192,
       });
 
       const raw = response.choices[0]?.message?.content || '{}';
