@@ -1329,7 +1329,7 @@ export function registerRoutes(app: Express) {
 
   app.post('/api/assembly-autofill', async (req: Request, res: Response) => {
     try {
-      const { projectName, idea, category } = req.body;
+      const { projectName, idea, category, detailFields, fullProductFields: fpFields } = req.body;
       if (!projectName || !idea) {
         res.status(400).json({ error: 'projectName and idea are required' });
         return;
@@ -1341,6 +1341,39 @@ export function registerRoutes(app: Express) {
         baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
       });
 
+      const baseSections = [
+        'visionProblem - What problem does this solve?',
+        'visionTargetUsers - Who is this for?',
+        'visionGoals - Primary goals (what should this achieve?)',
+        'visionSuccess - What does success look like?',
+        'coreFeatures - Core features (must-haves), as a bulleted list',
+        'niceToHaveFeatures - Nice-to-have features, as a bulleted list',
+        'coreEntities - Main entities/data objects in the system, as a bulleted list with descriptions',
+        'userJourneys - Key user workflows, as numbered steps',
+        'platform - Platform targets (short, comma-separated)',
+        'integrations - External integrations needed, as a bulleted list',
+        'techConstraints - Technical constraints or preferences, as a bulleted list',
+        'dataSensitivity - Data sensitivity level (respond with exactly one of: "low", "medium", or "high")',
+      ];
+
+      const extraSections: string[] = [];
+      const dynamicFieldList = Array.isArray(detailFields) ? detailFields as { key: string; label: string }[] : [];
+      for (const df of dynamicFieldList) {
+        if (!baseSections.some(s => s.startsWith(df.key + ' '))) {
+          extraSections.push(`${df.key} - ${df.label}`);
+        }
+      }
+      const fpFieldList = Array.isArray(fpFields) ? fpFields as { key: string; label: string }[] : [];
+      for (const fp of fpFieldList) {
+        if (!baseSections.some(s => s.startsWith(fp.key + ' ')) && !extraSections.some(s => s.startsWith(fp.key + ' '))) {
+          extraSections.push(`${fp.key} - ${fp.label}`);
+        }
+      }
+
+      const allSections = [...baseSections, ...extraSections];
+      const numberedSections = allSections.map((s, i) => `${i + 1}. ${s}`).join('\n');
+      const allKeys = allSections.map(s => s.split(' - ')[0].trim());
+
       const prompt = `You are helping a user set up a new software project. Based on their project name and idea, generate helpful suggestions for different aspects of the project.
 
 Project Name: ${projectName}
@@ -1350,25 +1383,12 @@ ${category ? `Category: ${category}` : ''}
 Generate suggestions for each of the following sections. For each section, provide exactly 3 short options (each 1-3 sentences). Also provide a recommended "autofill" value that combines the best aspects into a thorough response.
 
 Sections:
-1. visionProblem - What problem does this solve?
-2. visionTargetUsers - Who is this for?
-3. visionGoals - Primary goals (what should this achieve?)
-4. visionSuccess - What does success look like?
-5. coreFeatures - Core features (must-haves), as a bulleted list
-6. niceToHaveFeatures - Nice-to-have features, as a bulleted list
-7. coreEntities - Main entities/data objects in the system, as a bulleted list with descriptions
-8. userJourneys - Key user workflows, as numbered steps
-9. platform - Platform targets (short, comma-separated)
-10. integrations - External integrations needed, as a bulleted list
-11. techConstraints - Technical constraints or preferences, as a bulleted list
-12. dataSensitivity - Data sensitivity level (respond with exactly one of: "low", "medium", or "high")
+${numberedSections}
 
 Respond in this exact JSON format:
 {
   "fields": {
-    "visionProblem": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] },
-    "visionTargetUsers": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] },
-    ...same for all 12 sections
+${allKeys.map(k => `    "${k}": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] }`).join(',\n')}
   }
 }
 
@@ -1383,7 +1403,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           },
           { role: 'user', content: prompt },
         ],
-        max_completion_tokens: 4096,
+        max_completion_tokens: 8192,
       });
 
       const raw = response.choices[0]?.message?.content || '{}';
