@@ -22,7 +22,24 @@ const DEFAULT_ESTIMATES: Record<string, number> = {
   package: 5000,
 };
 
-const DEFAULT_MODULE_COUNT = 19;
+function getModuleCount(buildRoot: string): number {
+  const cfgPath = path.join(buildRoot, "axion", "config", "domains.json");
+  try {
+    const raw = fs.readFileSync(cfgPath, "utf-8");
+    const config = JSON.parse(raw);
+    if (Array.isArray(config.modules)) return config.modules.length;
+  } catch {
+    // fall through
+  }
+  const domainsDir = path.join(buildRoot, "axion", "domains");
+  try {
+    return fs
+      .readdirSync(domainsDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && !e.name.startsWith(".")).length;
+  } catch {
+    return 1;
+  }
+}
 
 function median(values: number[]): number {
   if (values.length === 0) return 0;
@@ -121,6 +138,7 @@ export function getEstimatedTotalMs(
   buildRoot: string
 ): { totalMs: number; perStep: Record<string, number> } {
   const estimates = getStageEstimates(buildRoot);
+  const moduleCount = getModuleCount(buildRoot);
   const perStep: Record<string, number> = {};
   let totalMs = 0;
 
@@ -130,7 +148,7 @@ export function getEstimatedTotalMs(
       ? estimate.medianMs
       : DEFAULT_ESTIMATES[step] ?? 5000;
 
-    const stepMs = perModuleMs * DEFAULT_MODULE_COUNT;
+    const stepMs = perModuleMs * moduleCount;
     perStep[step] = stepMs;
     totalMs += stepMs;
   }
