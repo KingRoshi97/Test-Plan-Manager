@@ -479,6 +479,59 @@ export default function NewAssemblyPage() {
   const derivedPresetId = selectedTypeObj?.presetId || "system";
   const selectedPreset = presetsData?.presets?.[derivedPresetId];
 
+  function buildAutofillBody() {
+    const body: Record<string, unknown> = {
+      projectName: projectName.trim(),
+      idea: idea.trim(),
+      category: selectedCategory || undefined,
+    };
+    if (selectedTypeObj?.fields?.length) {
+      body.detailFields = selectedTypeObj.fields.map(f => ({ key: f.key, label: f.label }));
+    }
+    if (fullProduct && fullProductModifier?.fields?.length) {
+      body.fullProductFields = fullProductModifier.fields.map(f => ({ key: f.key, label: f.label }));
+    }
+    return body;
+  }
+
+  function applyAutofillData(data: AutofillResponse, overwrite: boolean) {
+    if (!data.fields) return;
+    const f = data.fields;
+
+    if (selectedTypeObj?.fields) {
+      setTypeFields(prev => {
+        const next = { ...prev };
+        for (const field of selectedTypeObj!.fields) {
+          if (f[field.key]?.autofill && (overwrite || !next[field.key]?.trim())) {
+            next[field.key] = f[field.key].autofill;
+          }
+        }
+        return next;
+      });
+    }
+
+    if (fullProduct && fullProductModifier?.fields) {
+      setFullProductFields(prev => {
+        const next = { ...prev };
+        for (const field of fullProductModifier!.fields) {
+          if (f[field.key]?.autofill && (overwrite || !next[field.key]?.trim())) {
+            next[field.key] = f[field.key].autofill;
+          }
+        }
+        return next;
+      });
+    }
+
+    if (f.platform?.autofill && (overwrite || !platform.trim())) setPlatform(f.platform.autofill);
+    if (f.integrations?.autofill && (overwrite || !integrations.trim())) setIntegrations(f.integrations.autofill);
+    if (f.techConstraints?.autofill && (overwrite || !techConstraints.trim())) setTechConstraints(f.techConstraints.autofill);
+    if (f.dataSensitivity?.autofill) {
+      const val = f.dataSensitivity.autofill.toLowerCase();
+      if (["low", "medium", "high"].includes(val) && (overwrite || !dataSensitivity)) setDataSensitivity(val);
+    }
+    setAutofillApplied(true);
+  }
+
   const triggerAutofill = useCallback(async () => {
     if (!projectName.trim() || !idea.trim()) return;
     if (autofillData) return;
@@ -488,11 +541,7 @@ export default function NewAssemblyPage() {
       const resp = await fetch("/api/assembly-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectName: projectName.trim(),
-          idea: idea.trim(),
-          category: selectedCategory || undefined,
-        }),
+        body: JSON.stringify(buildAutofillBody()),
       });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
@@ -501,25 +550,14 @@ export default function NewAssemblyPage() {
       }
       const data: AutofillResponse = await resp.json();
       setAutofillData(data);
-
-      if (data.fields) {
-        const f = data.fields;
-        if (f.platform?.autofill && !platform.trim()) setPlatform(f.platform.autofill);
-        if (f.integrations?.autofill && !integrations.trim()) setIntegrations(f.integrations.autofill);
-        if (f.techConstraints?.autofill && !techConstraints.trim()) setTechConstraints(f.techConstraints.autofill);
-        if (f.dataSensitivity?.autofill && !dataSensitivity) {
-          const val = f.dataSensitivity.autofill.toLowerCase();
-          if (["low", "medium", "high"].includes(val)) setDataSensitivity(val);
-        }
-        setAutofillApplied(true);
-        toast({ title: "AI suggestions applied", description: "All sections have been pre-filled. Review and edit as needed." });
-      }
+      applyAutofillData(data, false);
+      toast({ title: "AI suggestions applied", description: "All sections have been pre-filled. Review and edit as needed." });
     } catch (err: any) {
       toast({ title: "Auto-fill error", description: err.message, variant: "destructive" });
     } finally {
       setAutofillLoading(false);
     }
-  }, [projectName, idea, selectedCategory, autofillData, platform, integrations, techConstraints, dataSensitivity]);
+  }, [projectName, idea, selectedCategory, autofillData, platform, integrations, techConstraints, dataSensitivity, selectedTypeObj, fullProduct, fullProductModifier]);
 
   const regenerateAutofill = useCallback(async () => {
     setAutofillData(null);
@@ -529,11 +567,7 @@ export default function NewAssemblyPage() {
       const resp = await fetch("/api/assembly-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectName: projectName.trim(),
-          idea: idea.trim(),
-          category: selectedCategory || undefined,
-        }),
+        body: JSON.stringify(buildAutofillBody()),
       });
       if (!resp.ok) {
         toast({ title: "Regeneration failed", variant: "destructive" });
@@ -541,25 +575,14 @@ export default function NewAssemblyPage() {
       }
       const data: AutofillResponse = await resp.json();
       setAutofillData(data);
-
-      if (data.fields) {
-        const f = data.fields;
-        if (f.platform?.autofill) setPlatform(f.platform.autofill);
-        if (f.integrations?.autofill) setIntegrations(f.integrations.autofill);
-        if (f.techConstraints?.autofill) setTechConstraints(f.techConstraints.autofill);
-        if (f.dataSensitivity?.autofill) {
-          const val = f.dataSensitivity.autofill.toLowerCase();
-          if (["low", "medium", "high"].includes(val)) setDataSensitivity(val);
-        }
-        setAutofillApplied(true);
-        toast({ title: "Regenerated", description: "New AI suggestions have been applied." });
-      }
+      applyAutofillData(data, true);
+      toast({ title: "Regenerated", description: "New AI suggestions have been applied." });
     } catch (err: any) {
       toast({ title: "Regeneration error", description: err.message, variant: "destructive" });
     } finally {
       setAutofillLoading(false);
     }
-  }, [projectName, idea, selectedCategory]);
+  }, [projectName, idea, selectedCategory, selectedTypeObj, fullProduct, fullProductModifier]);
 
   function handleNextStep() {
     const nextStep = currentStep + 1;
@@ -662,12 +685,25 @@ export default function NewAssemblyPage() {
   function handleSuggestionSelect(field: string, value: string) {
     const setter = FIELD_SETTERS[field];
     const getter = FIELD_GETTERS[field];
-    if (!setter) return;
-    const current = getter ? getter().trim() : "";
-    if (current) {
-      setter(current + "\n" + value);
-    } else {
-      setter(value);
+    if (setter) {
+      const current = getter ? getter().trim() : "";
+      setter(current ? current + "\n" + value : value);
+      return;
+    }
+
+    if (selectedTypeObj?.fields.some(f => f.key === field)) {
+      setTypeFields(prev => {
+        const current = (prev[field] || "").trim();
+        return { ...prev, [field]: current ? current + "\n" + value : value };
+      });
+      return;
+    }
+
+    if (fullProductModifier?.fields?.some(f => f.key === field)) {
+      setFullProductFields(prev => {
+        const current = (prev[field] || "").trim();
+        return { ...prev, [field]: current ? current + "\n" + value : value };
+      });
     }
   }
 
@@ -969,7 +1005,12 @@ export default function NewAssemblyPage() {
                 {selectedTypeObj ? (
                   selectedTypeObj.fields.map((field) => (
                     <div key={field.key} className="space-y-2">
-                      <Label htmlFor={`type-field-${field.key}`}>{field.label}</Label>
+                      <div className="flex items-center gap-1.5">
+                        <Label htmlFor={`type-field-${field.key}`}>{field.label}</Label>
+                        {FIELD_DETAILS[field.key] && (
+                          <MoreDetailButton fieldKey={field.key} onOpen={setDetailField} />
+                        )}
+                      </div>
                       <Textarea
                         id={`type-field-${field.key}`}
                         value={typeFields[field.key] || ""}
@@ -978,6 +1019,7 @@ export default function NewAssemblyPage() {
                         rows={2}
                         data-testid={`input-type-field-${field.key}`}
                       />
+                      <SuggestionChips suggestions={getSuggestions(field.key)} onSelect={(v) => handleSuggestionSelect(field.key, v)} fieldKey={field.key} />
                     </div>
                   ))
                 ) : (
@@ -993,7 +1035,12 @@ export default function NewAssemblyPage() {
                 {fullProduct && fullProductModifier ? (
                   fullProductModifier.fields.map((field) => (
                     <div key={field.key} className="space-y-2">
-                      <Label htmlFor={`fp-field-${field.key}`}>{field.label}</Label>
+                      <div className="flex items-center gap-1.5">
+                        <Label htmlFor={`fp-field-${field.key}`}>{field.label}</Label>
+                        {FIELD_DETAILS[field.key] && (
+                          <MoreDetailButton fieldKey={field.key} onOpen={setDetailField} />
+                        )}
+                      </div>
                       <Textarea
                         id={`fp-field-${field.key}`}
                         value={fullProductFields[field.key] || ""}
@@ -1002,6 +1049,7 @@ export default function NewAssemblyPage() {
                         rows={2}
                         data-testid={`input-fp-field-${field.key}`}
                       />
+                      <SuggestionChips suggestions={getSuggestions(field.key)} onSelect={(v) => handleSuggestionSelect(field.key, v)} fieldKey={field.key} />
                     </div>
                   ))
                 ) : (
