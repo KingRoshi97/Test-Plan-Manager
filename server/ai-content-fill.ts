@@ -476,47 +476,6 @@ export async function fillModuleUnknowns(
   return results;
 }
 
-function computeContentFillBatchesServer(projectRoot: string, targetModules: string[]): string[][] {
-  const configPath = path.join(projectRoot, 'axion', 'config', 'domains.json');
-  if (!fs.existsSync(configPath)) return [targetModules];
-  try {
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    const allModules = config.modules || [];
-    const depMap: Record<string, string[]> = {};
-    for (const m of allModules) {
-      depMap[m.slug] = ((m.dependencies || []) as string[]).filter((d: string) => targetModules.includes(d));
-    }
-
-    const targetSet = new Set(targetModules);
-    const placed = new Set<string>();
-    const batches: string[][] = [];
-
-    while (placed.size < targetSet.size) {
-      const batch: string[] = [];
-      for (const slug of targetModules) {
-        if (placed.has(slug)) continue;
-        const deps = depMap[slug] || [];
-        if (deps.every((d: string) => placed.has(d))) {
-          batch.push(slug);
-        }
-      }
-      if (batch.length === 0) {
-        const remaining = targetModules.filter(m => !placed.has(m));
-        console.warn(`[content-fill] Warning: circular dependencies detected, skipping modules: ${remaining.join(', ')}`);
-        break;
-      }
-      batches.push(batch);
-      for (const slug of batch) placed.add(slug);
-    }
-
-    return batches;
-  } catch {
-    return [targetModules];
-  }
-}
-
-const CONTENT_FILL_CONCURRENCY = 3;
-
 export async function fillAllModulesUnknowns(
   projectRoot: string,
   modules: string[],
@@ -528,33 +487,10 @@ export async function fillAllModulesUnknowns(
 ): Promise<ContentFillReport> {
   const results: ContentFillResult[] = [];
 
-  if (modules.length > 1) {
-    const batches = computeContentFillBatchesServer(projectRoot, modules);
-    onProgress?.(`Batch mode: ${batches.length} batch(es), concurrency=${CONTENT_FILL_CONCURRENCY}`);
-
-    for (let bi = 0; bi < batches.length; bi++) {
-      const batch = batches[bi];
-      onProgress?.(`  Batch ${bi + 1}/${batches.length}: [${batch.join(', ')}]`);
-
-      for (let i = 0; i < batch.length; i += CONTENT_FILL_CONCURRENCY) {
-        const chunk = batch.slice(i, i + CONTENT_FILL_CONCURRENCY);
-        const chunkResults = await Promise.all(
-          chunk.map(async (mod) => {
-            onProgress?.(`Processing module: ${mod}`);
-            return fillModuleUnknowns(projectRoot, mod, projectName, projectIdea, onProgress, structuredInput);
-          })
-        );
-        for (const modResults of chunkResults) {
-          results.push(...modResults);
-        }
-      }
-    }
-  } else {
-    for (const mod of modules) {
-      onProgress?.(`Processing module: ${mod}`);
-      const modResults = await fillModuleUnknowns(projectRoot, mod, projectName, projectIdea, onProgress, structuredInput);
-      results.push(...modResults);
-    }
+  for (const mod of modules) {
+    onProgress?.(`Processing module: ${mod}`);
+    const modResults = await fillModuleUnknowns(projectRoot, mod, projectName, projectIdea, onProgress, structuredInput);
+    results.push(...modResults);
   }
 
   if (includeProductDocs) {
