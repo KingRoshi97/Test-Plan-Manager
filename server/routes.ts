@@ -1812,12 +1812,14 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     const assemblyUpgradeNotes = assembly.upgradeNotes || '';
     const assemblyKitType = assembly.kitType || 'original';
 
+    const assemblyStructuredInput = (assembly as any).input;
     const assemblyEnv: Record<string, string> = {
       AXION_PROJECT_NAME: projectName,
       AXION_PROJECT_IDEA: (assembly as any).idea || '',
       AXION_REVISION: String(assemblyRevision),
       AXION_UPGRADE_NOTES: assemblyUpgradeNotes,
       AXION_KIT_TYPE: assemblyKitType,
+      ...(assemblyStructuredInput ? { AXION_STRUCTURED_INPUT: JSON.stringify(assemblyStructuredInput) } : {}),
     };
 
     res.writeHead(200, {
@@ -2581,9 +2583,11 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
     const buildRoot = getProjectPath(projectName);
 
+    const bodyStructuredInput = body.input as Record<string, string> | undefined;
     const assemblyEnv2: Record<string, string> = {
       AXION_PROJECT_NAME: projectName,
       AXION_PROJECT_IDEA: (body.idea as string) || '',
+      ...(bodyStructuredInput ? { AXION_STRUCTURED_INPUT: JSON.stringify(bodyStructuredInput) } : {}),
     };
 
     res.writeHead(200, {

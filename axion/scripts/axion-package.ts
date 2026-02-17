@@ -63,7 +63,7 @@ interface ManifestEntry {
 }
 
 interface ValidationWarning {
-  type: 'unknown_content' | 'empty_file' | 'missing_stack_profile';
+  type: 'unknown_content' | 'empty_file' | 'missing_stack_profile' | 'missing_overview' | 'seed_unfilled' | 'missing_seed';
   message: string;
   file?: string;
 }
@@ -121,6 +121,49 @@ function getLockedModules(): string[] {
   return fs.readdirSync(DOMAINS_PATH, { withFileTypes: true })
     .filter(d => d.isDirectory())
     .map(d => d.name);
+}
+
+function getProcessedModules(): string[] {
+  const processed = new Set<string>();
+
+  const consolidatedPath = path.join(REGISTRY_PATH, 'stage_markers.json');
+  if (fs.existsSync(consolidatedPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(consolidatedPath, 'utf-8'));
+      const markers = data.markers || data;
+      for (const mod of Object.keys(markers)) {
+        const stages = markers[mod];
+        if (stages && typeof stages === 'object') {
+          const hasSuccess = Object.values(stages).some((s: any) =>
+            s && (s.status === 'success' || s.status === 'DONE' || s.status === 'pass')
+          );
+          if (hasSuccess) processed.add(mod);
+        }
+      }
+    } catch {}
+  }
+
+  const markersDir = path.join(REGISTRY_PATH, 'stage_markers');
+  if (fs.existsSync(markersDir)) {
+    try {
+      const stageDirs = fs.readdirSync(markersDir, { withFileTypes: true })
+        .filter(d => d.isDirectory());
+      for (const stageDir of stageDirs) {
+        const stagePath = path.join(markersDir, stageDir.name);
+        const moduleFiles = fs.readdirSync(stagePath).filter(f => f.endsWith('.json'));
+        for (const mf of moduleFiles) {
+          try {
+            const marker = JSON.parse(fs.readFileSync(path.join(stagePath, mf), 'utf-8'));
+            if (marker.status === 'DONE' || marker.status === 'success' || marker.status === 'pass') {
+              processed.add(mf.replace(/\.json$/, ''));
+            }
+          } catch {}
+        }
+      }
+    } catch {}
+  }
+
+  return [...processed];
 }
 
 function getDomainDependencies(): Record<string, string[]> {
@@ -442,10 +485,30 @@ async function createZip(
     }
 
     if (fs.existsSync(DOMAINS_PATH)) {
+      const lockedModules = getLockedModules();
+      const processedModules = getProcessedModules();
+      const activeModules = new Set([...lockedModules, ...processedModules]);
+
       const domainFiles = walkDir(DOMAINS_PATH);
+
+      const readmeModuleVariants = new Set<string>();
       for (const file of domainFiles) {
+        const match = file.match(/^([^/]+)\/README_\w+\.md$/);
+        if (match) readmeModuleVariants.add(match[1]);
+      }
+
+      for (const file of domainFiles) {
+        const moduleName = file.split('/')[0];
+
+        if (activeModules.size > 0 && !activeModules.has(moduleName)) continue;
+
+        if (file.endsWith('/README.md') && readmeModuleVariants.has(moduleName)) continue;
+
         const fullPath = path.join(DOMAINS_PATH, file);
-        appendFile(fs.readFileSync(fullPath), `domains/${file}`);
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        if (content.trim().length === 0) continue;
+
+        appendFile(Buffer.from(content), `domains/${file}`);
       }
     }
 
