@@ -136,7 +136,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
       } else {
-        a.push('--all', '--batch');
+        a.push('--all');
       }
       return a;
     },
@@ -179,7 +179,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'content-fill': {
     cmd: 'npx',
-    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-content-fill.ts'), '--project', pn, '--fill', '--batch', '--json'],
+    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-content-fill.ts'), '--project', pn, '--fill', '--json'],
     label: 'Content Fill',
     cwd: (br) => br,
     group: 'docs',
@@ -577,6 +577,44 @@ function writeStageMarker(buildRoot: string, stage: string, status: 'success' | 
     };
     fs.writeFileSync(markersPath, JSON.stringify(markers, null, 2), 'utf-8');
   }
+}
+
+function writeModuleStageMarker(buildRoot: string, stage: string, moduleName: string, status: 'success' | 'failed', extra?: Record<string, unknown>): void {
+  const markersPath = path.join(buildRoot, 'axion', 'registry', 'stage_markers.json');
+  const registryDir = path.dirname(markersPath);
+  if (!fs.existsSync(registryDir)) {
+    fs.mkdirSync(registryDir, { recursive: true });
+  }
+  let raw: Record<string, unknown> = {};
+  let hasWrapper = false;
+  let markers: Record<string, Record<string, unknown>> = {};
+  if (fs.existsSync(markersPath)) {
+    try {
+      raw = JSON.parse(fs.readFileSync(markersPath, 'utf-8'));
+      if (raw.markers && typeof raw.markers === 'object') {
+        hasWrapper = true;
+        markers = raw.markers as Record<string, Record<string, unknown>>;
+      } else {
+        markers = raw as Record<string, Record<string, unknown>>;
+      }
+    } catch { markers = {}; }
+  }
+  if (!markers[moduleName]) markers[moduleName] = {};
+  markers[moduleName][stage] = {
+    status,
+    completed_at: new Date().toISOString(),
+    ...(extra || {}),
+  };
+  const output = hasWrapper ? { version: '1.0.0', markers } : markers;
+  fs.writeFileSync(markersPath, JSON.stringify(output, null, 2), 'utf-8');
+
+  const legacyDir = path.join(buildRoot, 'axion', 'registry', 'stage_markers', stage);
+  fs.mkdirSync(legacyDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(legacyDir, `${moduleName}.json`),
+    JSON.stringify({ status: 'DONE', stage, module: moduleName, timestamp: new Date().toISOString(), ...(extra || {}) }, null, 2),
+    'utf-8'
+  );
 }
 
 function ensureArchitectureReadme(buildRoot: string, assembly: any): void {
@@ -1928,6 +1966,11 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             const cfStatus = fillReport.totalFilesErrored > 0 && fillReport.totalFilesFilled === 0 ? 'error' : 'success';
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: cfStatus, durationMs: cfDuration })}\n\n`);
 
+            for (const mod of modulesToFill) {
+              const modHasErrors = fillReport.results.some(r => r.module === mod && r.status === 'error');
+              writeModuleStageMarker(buildRoot, 'content-fill', mod, modHasErrors ? 'failed' : 'success');
+            }
+
             const cfResult: RunResult = {
               status: cfStatus,
               command: 'Content Fill',
@@ -1947,6 +1990,11 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             const cfErrMsg = cfErr instanceof Error ? cfErr.message : String(cfErr);
             res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: `Content fill error: ${cfErrMsg}` })}\n\n`);
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: cfDuration })}\n\n`);
+
+            const cfErrModules = presetModules.length > 0 ? presetModules : getAllModulesInWorkspace(buildRoot);
+            for (const mod of cfErrModules) {
+              writeModuleStageMarker(buildRoot, 'content-fill', mod, 'failed', { reason: cfErrMsg });
+            }
 
             const cfErrResult: RunResult = {
               status: 'error',
@@ -1976,8 +2024,6 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         }
 
         const perModuleSteps = ['generate', 'seed', 'review', 'draft', 'verify', 'lock'];
-        const BATCH_CAPABLE_STEPS = new Set(['draft']);
-        const PIPELINE_BATCH_CONCURRENCY = 3;
         if (perModuleSteps.includes(stepId) && presetModules.length > 0 && presetModules.length < 19) {
           const perModStart = Date.now();
           let modSucceeded = 0;
@@ -1986,8 +2032,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           let modStderr = '';
           const failedModules: string[] = [];
 
-          async function runOneModule(mod: string) {
-            if (aborted) return;
+          for (const mod of presetModules) {
+            if (aborted) break;
             const modBody = { ...stepBody, module: mod };
             const modArgs = step.args(projectName, buildRoot, modBody);
             const modCwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
@@ -2012,36 +2058,6 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
                 }
               }
               modFailed++;
-            }
-          }
-
-          if (BATCH_CAPABLE_STEPS.has(stepId) && presetModules.length > 1) {
-            const depBatches = computeBatchesFromBuildRoot(buildRoot);
-            const presetSet = new Set(presetModules);
-            const filteredBatches: string[][] = [];
-            for (const db of depBatches) {
-              const filtered = db.modules.filter(m => presetSet.has(m));
-              if (filtered.length > 0) filteredBatches.push(filtered);
-            }
-            const batchesToUse = filteredBatches.length > 0 ? filteredBatches : [presetModules];
-
-            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Batch mode: ${batchesToUse.length} batch(es), concurrency=${PIPELINE_BATCH_CONCURRENCY}` })}\n\n`);
-
-            for (let bi = 0; bi < batchesToUse.length; bi++) {
-              if (aborted) break;
-              const batch = batchesToUse[bi];
-              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `  Batch ${bi + 1}/${batchesToUse.length}: [${batch.join(', ')}]` })}\n\n`);
-
-              for (let ci = 0; ci < batch.length; ci += PIPELINE_BATCH_CONCURRENCY) {
-                if (aborted) break;
-                const chunk = batch.slice(ci, ci + PIPELINE_BATCH_CONCURRENCY);
-                await Promise.all(chunk.map(mod => runOneModule(mod)));
-              }
-            }
-          } else {
-            for (const mod of presetModules) {
-              if (aborted) break;
-              await runOneModule(mod);
             }
           }
 
@@ -2359,6 +2375,12 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea, undefined, structuredInput, true);
           const cfDuration = Date.now() - cfStart;
           const summary = `Content Fill: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
+
+          for (const mod of modulesToFill) {
+            const modHasErrors = fillReport.results.some(r => r.module === mod && r.status === 'error');
+            writeModuleStageMarker(buildRoot, 'content-fill', mod, modHasErrors ? 'failed' : 'success');
+          }
+
           const cfResult: RunResult = {
             status: fillReport.totalFilesErrored > 0 && fillReport.totalFilesFilled === 0 ? 'error' : 'success',
             command: 'Content Fill',
@@ -2372,6 +2394,12 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         } catch (cfErr: unknown) {
           const cfDuration = Date.now() - cfStart;
           const cfErrMsg = cfErr instanceof Error ? cfErr.message : String(cfErr);
+
+          const cfErrModules = getAllModulesInWorkspace(buildRoot);
+          for (const mod of cfErrModules) {
+            writeModuleStageMarker(buildRoot, 'content-fill', mod, 'failed', { reason: cfErrMsg });
+          }
+
           const cfResult: RunResult = {
             status: 'error',
             command: 'Content Fill',
@@ -2449,10 +2477,22 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           const cfDuration = Date.now() - cfStart;
           const summary = `Content Fill complete: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
           res.write(`event: stdout\ndata: ${summary}\n\n`);
+
+          for (const mod of modulesToFill) {
+            const modHasErrors = fillReport.results.some(r => r.module === mod && r.status === 'error');
+            writeModuleStageMarker(buildRoot, 'content-fill', mod, modHasErrors ? 'failed' : 'success');
+          }
+
           res.write(`event: done\ndata: ${JSON.stringify({ status: 'success', durationMs: cfDuration })}\n\n`);
         } catch (cfErr: unknown) {
           const cfErrMsg = cfErr instanceof Error ? cfErr.message : String(cfErr);
           res.write(`event: stderr\ndata: ${cfErrMsg}\n\n`);
+
+          const cfErrModules = getAllModulesInWorkspace(buildRoot);
+          for (const mod of cfErrModules) {
+            writeModuleStageMarker(buildRoot, 'content-fill', mod, 'failed', { reason: cfErrMsg });
+          }
+
           res.write(`event: done\ndata: ${JSON.stringify({ status: 'error', durationMs: Date.now() - cfStart })}\n\n`);
         }
         res.end();
@@ -2720,6 +2760,11 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             const cfStatus2 = fillReport2.totalFilesErrored > 0 && fillReport2.totalFilesFilled === 0 ? 'error' : 'success';
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: cfStatus2, durationMs: cfDuration2 })}\n\n`);
 
+            for (const mod of modulesToFill2) {
+              const modHasErrors = fillReport2.results.some(r => r.module === mod && r.status === 'error');
+              writeModuleStageMarker(buildRoot, 'content-fill', mod, modHasErrors ? 'failed' : 'success');
+            }
+
             if (cfStatus2 === 'error' && !body.continueOnError) {
               break;
             }
@@ -2728,14 +2773,18 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             const cfErrMsg2 = cfErr2 instanceof Error ? cfErr2.message : String(cfErr2);
             res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: `Content fill error: ${cfErrMsg2}` })}\n\n`);
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: cfDuration2 })}\n\n`);
+
+            const cfErrModules2 = presetModules.length > 0 ? presetModules : getAllModulesInWorkspace(buildRoot);
+            for (const mod of cfErrModules2) {
+              writeModuleStageMarker(buildRoot, 'content-fill', mod, 'failed', { reason: cfErrMsg2 });
+            }
+
             if (!body.continueOnError) break;
           }
           continue;
         }
 
         const perModuleSteps2 = ['generate', 'seed', 'review', 'draft', 'verify', 'lock'];
-        const BATCH_CAPABLE_STEPS2 = new Set(['draft']);
-        const PIPELINE_BATCH_CONCURRENCY2 = 3;
         if (perModuleSteps2.includes(stepId) && presetModules.length > 0 && presetModules.length < 19) {
           const perModStart = Date.now();
           let modSucceeded = 0;
@@ -2744,8 +2793,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           let modStderr = '';
           const failedModules2: string[] = [];
 
-          async function runOneModule2(mod: string) {
-            if (aborted) return;
+          for (const mod of presetModules) {
+            if (aborted) break;
             const modBody = { ...stepBody, module: mod };
             const modArgs = step.args(projectName, buildRoot, modBody);
             const modCwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
@@ -2773,36 +2822,6 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
               if (!aborted) {
                 res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `${step.label} for ${mod}: failed (exit ${modResult.exitCode})` })}\n\n`);
               }
-            }
-          }
-
-          if (BATCH_CAPABLE_STEPS2.has(stepId) && presetModules.length > 1) {
-            const depBatches2 = computeBatchesFromBuildRoot(buildRoot);
-            const presetSet2 = new Set(presetModules);
-            const filteredBatches2: string[][] = [];
-            for (const db of depBatches2) {
-              const filtered = db.modules.filter(m => presetSet2.has(m));
-              if (filtered.length > 0) filteredBatches2.push(filtered);
-            }
-            const batchesToUse2 = filteredBatches2.length > 0 ? filteredBatches2 : [presetModules];
-
-            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Batch mode: ${batchesToUse2.length} batch(es), concurrency=${PIPELINE_BATCH_CONCURRENCY2}` })}\n\n`);
-
-            for (let bi = 0; bi < batchesToUse2.length; bi++) {
-              if (aborted) break;
-              const batch = batchesToUse2[bi];
-              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `  Batch ${bi + 1}/${batchesToUse2.length}: [${batch.join(', ')}]` })}\n\n`);
-
-              for (let ci = 0; ci < batch.length; ci += PIPELINE_BATCH_CONCURRENCY2) {
-                if (aborted) break;
-                const chunk = batch.slice(ci, ci + PIPELINE_BATCH_CONCURRENCY2);
-                await Promise.all(chunk.map(mod => runOneModule2(mod)));
-              }
-            }
-          } else {
-            for (const mod of presetModules) {
-              if (aborted) break;
-              await runOneModule2(mod);
             }
           }
 
