@@ -485,12 +485,22 @@ export default function NewAssemblyPage() {
 
     setAutofillLoading(true);
     try {
+      const FILE_MARKER = "--- FILE:";
+      let ideaForAutofill = idea.trim();
+      const markerIdx = ideaForAutofill.indexOf(FILE_MARKER);
+      if (markerIdx >= 0) {
+        ideaForAutofill = ideaForAutofill.substring(0, markerIdx).trim();
+      }
+      if (!ideaForAutofill) {
+        ideaForAutofill = projectName.trim();
+      }
+
       const resp = await fetch("/api/assembly-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           projectName: projectName.trim(),
-          idea: idea.trim(),
+          idea: ideaForAutofill,
           category: selectedCategory || undefined,
         }),
       });
@@ -526,12 +536,22 @@ export default function NewAssemblyPage() {
     setAutofillApplied(false);
     setAutofillLoading(true);
     try {
+      const FILE_MARKER = "--- FILE:";
+      let ideaForRegen = idea.trim();
+      const markerIdx = ideaForRegen.indexOf(FILE_MARKER);
+      if (markerIdx >= 0) {
+        ideaForRegen = ideaForRegen.substring(0, markerIdx).trim();
+      }
+      if (!ideaForRegen) {
+        ideaForRegen = projectName.trim();
+      }
+
       const resp = await fetch("/api/assembly-autofill", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           projectName: projectName.trim(),
-          idea: idea.trim(),
+          idea: ideaForRegen,
           category: selectedCategory || undefined,
         }),
       });

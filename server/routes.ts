@@ -1335,6 +1335,18 @@ export function registerRoutes(app: Express) {
         return;
       }
 
+      let cleanIdea = typeof idea === 'string' ? idea : '';
+      const fileMarkerIdx = cleanIdea.indexOf('--- FILE:');
+      if (fileMarkerIdx >= 0) {
+        cleanIdea = cleanIdea.substring(0, fileMarkerIdx).trim();
+      }
+      if (!cleanIdea) {
+        cleanIdea = projectName;
+      }
+      const truncatedIdea = cleanIdea.length > 3000
+        ? cleanIdea.substring(0, 3000) + '...'
+        : cleanIdea;
+
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({
         apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -1344,7 +1356,7 @@ export function registerRoutes(app: Express) {
       const prompt = `You are helping a user set up a new software project. Based on their project name and idea, generate helpful suggestions for different aspects of the project.
 
 Project Name: ${projectName}
-Project Idea: ${idea}
+Project Idea: ${truncatedIdea}
 ${category ? `Category: ${category}` : ''}
 
 Generate suggestions for each of the following sections. For each section, provide exactly 3 short options (each 1-3 sentences). Also provide a recommended "autofill" value that combines the best aspects into a thorough response.
