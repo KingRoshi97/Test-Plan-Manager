@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 /**
- * axion:draft - Draft truth candidates
- * Reads from sources (RPBS/REBS) and produces initial domain logic candidates.
+ * axion:draft - Draft truth candidates with AI enhancement
+ * Reads from sources (RPBS/REBS), produces initial domain logic candidates via
+ * template generation, then enhances each file with AI to produce project-specific
+ * documentation content.
+ *
  * Uses AXION_PROJECT_IDEA and AXION_PROJECT_NAME from env for project context.
+ * Uses AI_INTEGRATIONS_OPENAI_API_KEY for AI enhancement.
  * FAILS if required input files are missing.
  *
  * Usage:
@@ -10,6 +14,7 @@
  *   node axion/scripts/axion-draft.mjs --module <name>
  *   node axion/scripts/axion-draft.mjs --all --json
  *   node axion/scripts/axion-draft.mjs --all --dry-run
+ *   node axion/scripts/axion-draft.mjs --all --no-ai   (skip AI enhancement)
  */
 
 import fs from 'fs';
@@ -26,6 +31,7 @@ import {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const jsonMode = args.includes('--json');
+const noAI = args.includes('--no-ai');
 const { modules } = parseModuleArgs(process.argv);
 
 const startTime = Date.now();
@@ -42,6 +48,201 @@ const receipt = {
   elapsedMs: 0,
   dryRun,
 };
+
+// ─── AI Enhancement ─────────────────────────────────────────────────────────
+
+const DOC_TYPE_GUIDANCE = {
+  'BELS': 'Policy rules should describe real business logic. State machines should model realistic entity lifecycles. Validation rules should cover actual fields. Reason codes should be specific SCREAMING_SNAKE_CASE identifiers.',
+  'DDES': 'Entity definitions should model real data structures. Relationships should reflect actual business relationships. Fields should have realistic types and constraints.',
+  'DIM': 'Interfaces should represent real API endpoints this module exposes or consumes. Event contracts should describe actual domain events with realistic payloads.',
+  'UX_Foundations': 'User types should match realistic personas. Mental models should reflect how real users think about this application. User journeys should describe actual workflows.',
+  'UI_Constraints': 'Constraints should reflect real UI/UX requirements. Navigation patterns should match the application type. Responsive behavior should be practical.',
+  'SCREENMAP': 'Screens should represent actual pages/views in the application. Navigation flows should be realistic. Component mappings should reference actual UI components.',
+  'TESTPLAN': 'Test scenarios should cover real user workflows. Edge cases should be specific to this domain. Performance criteria should have measurable targets.',
+  'COMPONENT_LIBRARY': 'Components should match what this application actually needs. Variants should serve real use cases. Accessibility requirements should be concrete.',
+  'COPY_GUIDE': 'Tone should match the application audience. Labels and messages should be realistic. Error messages should be helpful and specific.',
+  'OPEN_QUESTIONS': 'Questions should surface real architectural decisions. Resolution tracking should reflect actual project timeline concerns.',
+  'README': 'Overview should accurately describe the module purpose. Document inventory should list actual generated files.',
+};
+
+const AI_MAX_COMPLETION_TOKENS = 8192;
+const AI_MAX_ATTEMPTS = 2;
+
+async function getOpenAIClient() {
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  if (!apiKey) return null;
+  const OpenAI = (await import('openai')).default;
+  return new OpenAI({ apiKey, baseURL });
+}
+
+function resolveStackProfileForDraft() {
+  const paths = [
+    'axion/registry/stack_profile.json',
+    'registry/stack_profile.json',
+  ];
+  for (const p of paths) {
+    if (fs.existsSync(p)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+        return `TECHNOLOGY STACK (MANDATORY — do not contradict this):\n${JSON.stringify(data, null, 2)}`;
+      } catch { /* ignore */ }
+    }
+  }
+  const catalogPath = 'axion/config/stack_profiles.json';
+  if (fs.existsSync(catalogPath)) {
+    try {
+      const catalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
+      const profiles = catalog.profiles || catalog;
+      const defaultKey = Object.keys(profiles)[0];
+      if (defaultKey && profiles[defaultKey]) {
+        return `TECHNOLOGY STACK (from default profile "${defaultKey}"):\n${JSON.stringify(profiles[defaultKey], null, 2)}`;
+      }
+    } catch { /* ignore */ }
+  }
+  return '';
+}
+
+function detectDocTypeFromFilename(fileName) {
+  for (const prefix of Object.keys(DOC_TYPE_GUIDANCE)) {
+    if (fileName.startsWith(prefix)) return prefix;
+  }
+  return null;
+}
+
+function buildDraftEnhancePrompt(fileContent, fileName, projectName, projectIdea, moduleName, rpbsContent, rebsContent, stackProfile, structuredInput) {
+  const docType = detectDocTypeFromFilename(fileName);
+  const typeGuidance = docType ? DOC_TYPE_GUIDANCE[docType] : 'Make the content specific, actionable, and project-relevant.';
+
+  let structuredBlock = '';
+  if (structuredInput && Object.keys(structuredInput).length > 0) {
+    const fieldLabels = {
+      visionProblem: 'Problem Being Solved',
+      visionTargetUsers: 'Target Users',
+      visionSuccess: 'Success Criteria',
+      visionGoals: 'Primary Goals',
+      coreFeatures: 'Core Features (Must-Have)',
+      niceToHaveFeatures: 'Nice-to-Have Features',
+      coreEntities: 'Core Entities / Objects',
+      userJourneys: 'Key User Journeys',
+      platform: 'Platform Targets',
+      integrations: 'External Integrations',
+      techConstraints: 'Technical Constraints',
+      dataSensitivity: 'Data Sensitivity Level',
+    };
+    const lines = [];
+    for (const [key, value] of Object.entries(structuredInput)) {
+      if (value && value.trim()) {
+        const label = fieldLabels[key] || key;
+        lines.push(`${label}: ${value.trim()}`);
+      }
+    }
+    if (lines.length > 0) {
+      structuredBlock = `\nDETAILED PROJECT CONTEXT (from the project creator):\n${lines.join('\n')}\n`;
+    }
+  }
+
+  const rpbsBlock = rpbsContent ? `\nRPBS (Requirements & Product Behavior Specification) — source of truth for features and rules:\n${rpbsContent.slice(0, 4000)}\n` : '';
+  const rebsBlock = rebsContent ? `\nREBS (Requirements & Entity Behavior Specification) — source of truth for entities:\n${rebsContent.slice(0, 3000)}\n` : '';
+
+  return `You are an expert software architect upgrading a draft documentation template into project-specific content.
+
+PROJECT NAME: ${projectName}
+PROJECT IDEA: ${projectIdea}
+MODULE/DOMAIN: ${moduleName}
+${stackProfile ? `\n${stackProfile}\n` : ''}${structuredBlock}${rpbsBlock}${rebsBlock}
+Below is a TEMPLATE-GENERATED draft document. The structure and formatting are correct, but the content is generic.
+Your task is to UPGRADE every section with project-specific, realistic content:
+
+1. Replace generic descriptions with specific ones tailored to "${projectIdea}".
+2. ${typeGuidance}
+3. Make entity names, fields, API paths, state machines, and rules reflect this specific project.
+4. Add missing details where sections are thin — fill them out with realistic content.
+5. Keep the exact same Markdown structure, headings, tables, and anchors.
+6. Do NOT remove or rename sections. Do NOT add new top-level sections.
+7. Do NOT wrap the output in code fences.
+8. Return the COMPLETE upgraded document — never truncate.
+
+CURRENT TEMPLATE DOCUMENT:
+${fileContent}
+
+Return ONLY the upgraded document:`;
+}
+
+async function enhanceFileWithAI(openai, filePath, projectName, projectIdea, moduleName, rpbsContent, rebsContent, stackProfile, structuredInput) {
+  const fileContent = fs.readFileSync(filePath, 'utf8');
+  const fileName = path.basename(filePath).replace('.md', '');
+
+  for (let attempt = 1; attempt <= AI_MAX_ATTEMPTS; attempt++) {
+    try {
+      const prompt = buildDraftEnhancePrompt(fileContent, fileName, projectName, projectIdea, moduleName, rpbsContent, rebsContent, stackProfile, structuredInput);
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5-mini',
+        messages: [
+          { role: 'system', content: 'You are a precise technical writer. You upgrade template-generated software documentation into project-specific, actionable specifications. You return only the complete document, preserving all Markdown formatting exactly. You MUST return the COMPLETE document — never truncate.' },
+          { role: 'user', content: prompt },
+        ],
+        max_completion_tokens: AI_MAX_COMPLETION_TOKENS,
+      });
+
+      const enhanced = response.choices[0]?.message?.content;
+      if (!enhanced) {
+        if (!jsonMode) console.log(`    AI attempt ${attempt}: empty response, ${attempt < AI_MAX_ATTEMPTS ? 'retrying...' : 'keeping template'}`);
+        continue;
+      }
+
+      const cleaned = enhanced.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
+
+      if (cleaned.length < fileContent.length * 0.5) {
+        if (!jsonMode) console.log(`    AI attempt ${attempt}: response too short (${cleaned.length} vs ${fileContent.length}), ${attempt < AI_MAX_ATTEMPTS ? 'retrying...' : 'keeping template'}`);
+        continue;
+      }
+
+      fs.writeFileSync(filePath, cleaned, 'utf8');
+      receipt.modifiedFiles.push(filePath + ' (AI-enhanced)');
+      return true;
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (!jsonMode) console.log(`    AI attempt ${attempt} error: ${errMsg}`);
+      if (attempt === AI_MAX_ATTEMPTS) {
+        receipt.warnings.push(`AI enhancement failed for ${filePath}: ${errMsg}`);
+      }
+    }
+  }
+  return false;
+}
+
+async function enhanceModuleWithAI(openai, domainDir, moduleName, ctx, rpbsContent, rebsContent, stackProfile, structuredInput) {
+  const docFiles = [
+    `BELS_${moduleName}.md`,
+    `DDES_${moduleName}.md`,
+    `DIM_${moduleName}.md`,
+    `UX_Foundations_${moduleName}.md`,
+    `UI_Constraints_${moduleName}.md`,
+    `SCREENMAP_${moduleName}.md`,
+    `TESTPLAN_${moduleName}.md`,
+    `COMPONENT_LIBRARY_${moduleName}.md`,
+    `COPY_GUIDE_${moduleName}.md`,
+  ];
+
+  let enhanced = 0;
+  let failed = 0;
+
+  for (const docFile of docFiles) {
+    const filePath = path.join(domainDir, docFile);
+    if (!fs.existsSync(filePath)) continue;
+
+    if (!jsonMode) console.log(`  AI-enhancing: ${docFile}`);
+    const ok = await enhanceFileWithAI(openai, filePath, ctx.name, ctx.idea, moduleName, rpbsContent, rebsContent, stackProfile, structuredInput);
+    if (ok) enhanced++;
+    else failed++;
+  }
+
+  return { enhanced, failed };
+}
+
+// ─── Config Loading ─────────────────────────────────────────────────────────
 
 function loadConfig() {
   const configPath = 'axion/config/domains.json';
@@ -2143,126 +2344,157 @@ function emitOutput() {
   console.log('===================================');
 }
 
-try {
-  if (!jsonMode) console.log('Running axion:draft...');
+async function main() {
+  try {
+    if (!jsonMode) console.log('Running axion:draft...');
 
-  const config = loadConfig();
-  const axionRoot = config.axion_root || 'axion';
-  const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
+    const config = loadConfig();
+    const axionRoot = config.axion_root || 'axion';
+    const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
 
-  const ctx = parseProjectContext();
+    const ctx = parseProjectContext();
 
-  if (ctx.upgrade.isUpgrade && !jsonMode) {
-    console.log(`  Upgrade mode: revision=${ctx.upgrade.revision}, kitType=${ctx.upgrade.kitType}`);
-    console.log(`  Upgrade notes: ${ctx.upgrade.upgradeNotes.slice(0, 100)}${ctx.upgrade.upgradeNotes.length > 100 ? '...' : ''}`);
-  }
-
-  let rpbsContent = '';
-  let rebsContent = '';
-  const rpbsPath = path.join(axionRoot, 'docs/product/RPBS_Product.md');
-  const rebsPath = path.join(axionRoot, 'docs/product/REBS_Product.md');
-  if (fs.existsSync(rpbsPath)) rpbsContent = fs.readFileSync(rpbsPath, 'utf8');
-  if (fs.existsSync(rebsPath)) rebsContent = fs.readFileSync(rebsPath, 'utf8');
-
-  const rebsEntities = extractEntitiesFromREBS(rebsContent);
-  if (rebsEntities.length > 0 && ctx.entities.length < rebsEntities.length) {
-    for (const e of rebsEntities) {
-      if (!ctx.entities.includes(e)) ctx.entities.push(e);
-    }
-  }
-
-  const rpbsRules = extractRulesFromRPBS(rpbsContent);
-
-  for (const module of modules) {
-    if (!isStageDone('seed', module)) {
-      const msg = `Module '${module}' has not completed 'seed'. Run: node axion/scripts/axion-seed.mjs --module ${module}`;
-      receipt.errors.push(msg);
-      receipt.ok = false;
-      if (!dryRun) markStageFailed('draft', module, { reason: msg });
-      continue;
+    if (ctx.upgrade.isUpgrade && !jsonMode) {
+      console.log(`  Upgrade mode: revision=${ctx.upgrade.revision}, kitType=${ctx.upgrade.kitType}`);
+      console.log(`  Upgrade notes: ${ctx.upgrade.upgradeNotes.slice(0, 100)}${ctx.upgrade.upgradeNotes.length > 100 ? '...' : ''}`);
     }
 
-    try {
-      ensurePrereqs({
-        stageName: 'draft',
-        module,
-        stagePrereq: (m) => isStageDone('seed', m),
-      });
-    } catch (prereqErr) {
-      receipt.errors.push(`Prerequisite failed for module '${module}': ${prereqErr.message}`);
-      receipt.ok = false;
-      if (!dryRun) markStageFailed('draft', module, { reason: prereqErr.message });
-      continue;
-    }
+    let rpbsContent = '';
+    let rebsContent = '';
+    const rpbsPath = path.join(axionRoot, 'docs/product/RPBS_Product.md');
+    const rebsPath = path.join(axionRoot, 'docs/product/REBS_Product.md');
+    if (fs.existsSync(rpbsPath)) rpbsContent = fs.readFileSync(rpbsPath, 'utf8');
+    if (fs.existsSync(rebsPath)) rebsContent = fs.readFileSync(rebsPath, 'utf8');
 
-    try {
-      if (!jsonMode) console.log(`Drafting module: ${module}`);
-      receipt.modulesProcessed.push(module);
-
-      const domainDir = path.join(domainsDir, module);
-      const domainPrefix = getDomainPrefix(config, module);
-
-      const belsContent = generateBELSCandidates(module, ctx, rpbsRules);
-      const belsPath = path.join(domainDir, `BELS_${module}.md`);
-      ensureFileWithMerge(belsPath, belsContent, BELS_SECTION_MAP);
-
-      const ddesContent = generateDDES(module, ctx);
-      const ddesPath = path.join(domainDir, `DDES_${module}.md`);
-      ensureFileWithMerge(ddesPath, ddesContent, DDES_SECTION_MAP);
-
-      const dimContent = generateDIM(module, ctx, rpbsRules, domainPrefix);
-      const dimPath = path.join(domainDir, `DIM_${module}.md`);
-      ensureFileWithMerge(dimPath, dimContent, DIM_SECTION_MAP);
-
-      const uxContent = generateUXFoundations(module, ctx);
-      const uxPath = path.join(domainDir, `UX_Foundations_${module}.md`);
-      ensureFileWithMerge(uxPath, uxContent, UX_FOUNDATIONS_SECTION_MAP);
-
-      const uiContent = generateUIConstraints(module, ctx);
-      const uiPath = path.join(domainDir, `UI_Constraints_${module}.md`);
-      ensureFileWithMerge(uiPath, uiContent, UI_CONSTRAINTS_SECTION_MAP);
-
-      const screenmapContent = generateScreenmap(module, ctx, domainPrefix);
-      const screenmapPath = path.join(domainDir, `SCREENMAP_${module}.md`);
-      ensureFileWithMerge(screenmapPath, screenmapContent, SCREENMAP_SECTION_MAP);
-
-      const testplanContent = generateTestplan(module, ctx, rpbsRules, domainPrefix);
-      const testplanPath = path.join(domainDir, `TESTPLAN_${module}.md`);
-      ensureFileWithMerge(testplanPath, testplanContent, TESTPLAN_SECTION_MAP);
-
-      const componentContent = generateComponentLibrary(module, ctx, domainPrefix);
-      const componentPath = path.join(domainDir, `COMPONENT_LIBRARY_${module}.md`);
-      ensureFileWithMerge(componentPath, componentContent, COMPONENT_LIBRARY_SECTION_MAP);
-
-      const copyContent = generateCopyGuide(module, ctx, domainPrefix);
-      const copyPath = path.join(domainDir, `COPY_GUIDE_${module}.md`);
-      ensureFileWithMerge(copyPath, copyContent, COPY_GUIDE_SECTION_MAP);
-
-      const readmeContent = generateDomainReadme(module, ctx);
-      const readmePath = path.join(domainDir, `README_${module}.md`);
-      ensureFile(readmePath, readmeContent);
-
-      const openQuestionsContent = generateOpenQuestions(module, ctx);
-      const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
-      ensureFile(openQuestionsPath, openQuestionsContent);
-
-      if (!dryRun) {
-        markStageDone('draft', module);
+    const rebsEntities = extractEntitiesFromREBS(rebsContent);
+    if (rebsEntities.length > 0 && ctx.entities.length < rebsEntities.length) {
+      for (const e of rebsEntities) {
+        if (!ctx.entities.includes(e)) ctx.entities.push(e);
       }
-    } catch (moduleErr) {
-      receipt.errors.push(`Module '${module}' failed: ${moduleErr.message}`);
-      receipt.ok = false;
-      if (!dryRun) markStageFailed('draft', module, { reason: moduleErr.message });
     }
+
+    const rpbsRules = extractRulesFromRPBS(rpbsContent);
+
+    let openai = null;
+    let stackProfile = '';
+    let structuredInput = null;
+    const aiEnabled = !noAI && !dryRun;
+
+    if (aiEnabled) {
+      openai = await getOpenAIClient();
+      if (openai) {
+        stackProfile = resolveStackProfileForDraft();
+        try {
+          const inputEnv = process.env.AXION_STRUCTURED_INPUT;
+          if (inputEnv) structuredInput = JSON.parse(inputEnv);
+        } catch { /* ignore parse errors */ }
+        if (!jsonMode) console.log('  AI enhancement enabled');
+      } else {
+        if (!jsonMode) console.log('  AI enhancement skipped (no API key)');
+      }
+    } else if (!dryRun) {
+      if (!jsonMode) console.log('  AI enhancement disabled (--no-ai flag)');
+    }
+
+    for (const module of modules) {
+      if (!isStageDone('seed', module)) {
+        const msg = `Module '${module}' has not completed 'seed'. Run: node axion/scripts/axion-seed.mjs --module ${module}`;
+        receipt.errors.push(msg);
+        receipt.ok = false;
+        if (!dryRun) markStageFailed('draft', module, { reason: msg });
+        continue;
+      }
+
+      try {
+        ensurePrereqs({
+          stageName: 'draft',
+          module,
+          stagePrereq: (m) => isStageDone('seed', m),
+        });
+      } catch (prereqErr) {
+        receipt.errors.push(`Prerequisite failed for module '${module}': ${prereqErr.message}`);
+        receipt.ok = false;
+        if (!dryRun) markStageFailed('draft', module, { reason: prereqErr.message });
+        continue;
+      }
+
+      try {
+        if (!jsonMode) console.log(`Drafting module: ${module}`);
+        receipt.modulesProcessed.push(module);
+
+        const domainDir = path.join(domainsDir, module);
+        const domainPrefix = getDomainPrefix(config, module);
+
+        const belsContent = generateBELSCandidates(module, ctx, rpbsRules);
+        const belsPath = path.join(domainDir, `BELS_${module}.md`);
+        ensureFileWithMerge(belsPath, belsContent, BELS_SECTION_MAP);
+
+        const ddesContent = generateDDES(module, ctx);
+        const ddesPath = path.join(domainDir, `DDES_${module}.md`);
+        ensureFileWithMerge(ddesPath, ddesContent, DDES_SECTION_MAP);
+
+        const dimContent = generateDIM(module, ctx, rpbsRules, domainPrefix);
+        const dimPath = path.join(domainDir, `DIM_${module}.md`);
+        ensureFileWithMerge(dimPath, dimContent, DIM_SECTION_MAP);
+
+        const uxContent = generateUXFoundations(module, ctx);
+        const uxPath = path.join(domainDir, `UX_Foundations_${module}.md`);
+        ensureFileWithMerge(uxPath, uxContent, UX_FOUNDATIONS_SECTION_MAP);
+
+        const uiContent = generateUIConstraints(module, ctx);
+        const uiPath = path.join(domainDir, `UI_Constraints_${module}.md`);
+        ensureFileWithMerge(uiPath, uiContent, UI_CONSTRAINTS_SECTION_MAP);
+
+        const screenmapContent = generateScreenmap(module, ctx, domainPrefix);
+        const screenmapPath = path.join(domainDir, `SCREENMAP_${module}.md`);
+        ensureFileWithMerge(screenmapPath, screenmapContent, SCREENMAP_SECTION_MAP);
+
+        const testplanContent = generateTestplan(module, ctx, rpbsRules, domainPrefix);
+        const testplanPath = path.join(domainDir, `TESTPLAN_${module}.md`);
+        ensureFileWithMerge(testplanPath, testplanContent, TESTPLAN_SECTION_MAP);
+
+        const componentContent = generateComponentLibrary(module, ctx, domainPrefix);
+        const componentPath = path.join(domainDir, `COMPONENT_LIBRARY_${module}.md`);
+        ensureFileWithMerge(componentPath, componentContent, COMPONENT_LIBRARY_SECTION_MAP);
+
+        const copyContent = generateCopyGuide(module, ctx, domainPrefix);
+        const copyPath = path.join(domainDir, `COPY_GUIDE_${module}.md`);
+        ensureFileWithMerge(copyPath, copyContent, COPY_GUIDE_SECTION_MAP);
+
+        const readmeContent = generateDomainReadme(module, ctx);
+        const readmePath = path.join(domainDir, `README_${module}.md`);
+        ensureFile(readmePath, readmeContent);
+
+        const openQuestionsContent = generateOpenQuestions(module, ctx);
+        const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
+        ensureFile(openQuestionsPath, openQuestionsContent);
+
+        if (openai && aiEnabled) {
+          if (!jsonMode) console.log(`  AI-enhancing module: ${module}`);
+          const aiResult = await enhanceModuleWithAI(openai, domainDir, module, ctx, rpbsContent, rebsContent, stackProfile, structuredInput);
+          if (!jsonMode) console.log(`  AI enhancement: ${aiResult.enhanced} files enhanced, ${aiResult.failed} kept as template`);
+        }
+
+        if (!dryRun) {
+          markStageDone('draft', module);
+        }
+      } catch (moduleErr) {
+        receipt.errors.push(`Module '${module}' failed: ${moduleErr.message}`);
+        receipt.ok = false;
+        if (!dryRun) markStageFailed('draft', module, { reason: moduleErr.message });
+      }
+    }
+
+    emitOutput();
+
+    if (!receipt.ok) process.exit(1);
+
+  } catch (error) {
+    receipt.ok = false;
+    receipt.errors.push(error.message);
+    emitOutput();
+    process.exit(1);
   }
-
-  emitOutput();
-
-  if (!receipt.ok) process.exit(1);
-
-} catch (error) {
-  receipt.ok = false;
-  receipt.errors.push(error.message);
-  emitOutput();
-  process.exit(1);
 }
+
+main();
