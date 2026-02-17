@@ -1777,7 +1777,10 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
     const presetId = assembly.presetId || assembly.preset || 'system';
     const preset = presets[presetId] || presets['system'];
-    const presetModules = expandModulesWithDependencies(preset?.modules || [], preset?.include_dependencies ?? false);
+    const assemblyDomains = Array.isArray(assembly.domains) && assembly.domains.length > 0 ? assembly.domains as string[] : null;
+    const presetModules = assemblyDomains
+      ? expandModulesWithDependencies(assemblyDomains, preset?.include_dependencies ?? false)
+      : expandModulesWithDependencies(preset?.modules || [], preset?.include_dependencies ?? false);
     const presetGuards = preset?.guards || {};
 
     const needsInit = !fs.existsSync(getProjectPath(assembly.projectName));
@@ -2570,7 +2573,10 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
       return;
     }
 
-    const presetModules = expandModulesWithDependencies(preset.modules || [], preset.include_dependencies ?? false);
+    const bodyDomains = Array.isArray(body.domains) && (body.domains as string[]).length > 0 ? body.domains as string[] : null;
+    const presetModules = bodyDomains
+      ? expandModulesWithDependencies(bodyDomains, preset.include_dependencies ?? false)
+      : expandModulesWithDependencies(preset.modules || [], preset.include_dependencies ?? false);
     const presetGuards = preset.guards || {};
 
     const buildRoot = getProjectPath(projectName);
