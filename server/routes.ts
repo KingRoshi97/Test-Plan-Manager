@@ -623,7 +623,7 @@ function runSingleStep(
       cwd,
       env: { ...process.env, ...(extraEnv || {}) },
       timeout: 300000,
-      shell: true,
+      shell: false,
     });
 
     child.stdout.on('data', (data: Buffer) => {
@@ -2409,7 +2409,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         cwd,
         env: { ...process.env },
         timeout: 300000,
-        shell: true,
+        shell: false,
       });
 
       const sendEvent = (event: string, data: string) => {
@@ -2750,7 +2750,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             cwd,
             env: { ...process.env, ...assemblyEnv2 },
             timeout: 300000,
-            shell: true,
+            shell: false,
           });
 
           child.stdout.on('data', (data: Buffer) => {
@@ -3765,7 +3765,7 @@ function runCommand(cmd: string, args: string[], label: string, cwd?: string): P
       cwd: cwd || PROJECT_ROOT,
       env: { ...process.env },
       timeout: 300000,
-      shell: true,
+      shell: false,
     });
 
     child.stdout.on('data', (data: Buffer) => {
