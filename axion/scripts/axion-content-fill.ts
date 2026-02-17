@@ -375,6 +375,45 @@ export function getAllModulesInWorkspace(projectRoot: string): string[] {
     .map(e => e.name);
 }
 
+function computeContentFillBatches(projectRoot: string, targetModules: string[]): string[][] {
+  const configPath = path.join(projectRoot, 'axion', 'config', 'domains.json');
+  if (!fs.existsSync(configPath)) return [targetModules];
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const allModules = config.modules || [];
+    const depMap: Record<string, string[]> = {};
+    for (const m of allModules) {
+      depMap[m.slug] = ((m.dependencies || []) as string[]).filter((d: string) => targetModules.includes(d));
+    }
+
+    const targetSet = new Set(targetModules);
+    const placed = new Set<string>();
+    const batches: string[][] = [];
+
+    while (placed.size < targetSet.size) {
+      const batch: string[] = [];
+      for (const slug of targetModules) {
+        if (placed.has(slug)) continue;
+        const deps = depMap[slug] || [];
+        if (deps.every((d: string) => placed.has(d))) {
+          batch.push(slug);
+        }
+      }
+      if (batch.length === 0) {
+        const remaining = targetModules.filter(m => !placed.has(m));
+        batches.push(remaining);
+        break;
+      }
+      batches.push(batch);
+      for (const slug of batch) placed.add(slug);
+    }
+
+    return batches;
+  } catch {
+    return [targetModules];
+  }
+}
+
 // ─── Scanning ───────────────────────────────────────────────────────────────
 
 export function scanFile(filePath: string, projectRoot: string): UnknownScanResult | null {
@@ -1251,12 +1290,12 @@ async function main() {
       log(`Filling all UNKNOWNs in ${projectName}...`);
       const modules = getAllModulesInWorkspace(projectRoot);
 
-      for (const mod of modules) {
+      async function processOneContentFillModule(mod: string) {
         if (!isStageDone('draft', mod)) {
           const msg = `Module '${mod}' has not completed 'draft'. Skipping.`;
           receipt.warnings.push(msg);
           if (!dryRun) markStageFailed('content-fill', mod, { reason: msg });
-          continue;
+          return;
         }
 
         try {
@@ -1270,7 +1309,7 @@ async function main() {
           receipt.errors.push(`Prerequisite failed for module '${mod}': ${errMsg}`);
           receipt.ok = false;
           if (!dryRun) markStageFailed('content-fill', mod, { reason: errMsg });
-          continue;
+          return;
         }
 
         receipt.modulesProcessed.push(mod);
@@ -1324,6 +1363,27 @@ async function main() {
           receipt.errors.push(`Module '${mod}' failed: ${errMsg}`);
           receipt.ok = false;
           if (!dryRun) markStageFailed('content-fill', mod, { reason: errMsg });
+        }
+      }
+
+      const BATCH_CONCURRENCY = 3;
+      if (hasFlag('--batch') && modules.length > 1) {
+        const batches = computeContentFillBatches(projectRoot, modules);
+        log(`Batch mode: ${batches.length} batch(es), concurrency=${BATCH_CONCURRENCY}`);
+        for (let bi = 0; bi < batches.length; bi++) {
+          const batch = batches[bi];
+          log(`  Batch ${bi + 1}/${batches.length}: [${batch.join(', ')}]`);
+          const chunks: string[][] = [];
+          for (let i = 0; i < batch.length; i += BATCH_CONCURRENCY) {
+            chunks.push(batch.slice(i, i + BATCH_CONCURRENCY));
+          }
+          for (const chunk of chunks) {
+            await Promise.all(chunk.map(m => processOneContentFillModule(m)));
+          }
+        }
+      } else {
+        for (const mod of modules) {
+          await processOneContentFillModule(mod);
         }
       }
     }

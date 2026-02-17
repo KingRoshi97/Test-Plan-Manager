@@ -32,6 +32,8 @@ const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const jsonMode = args.includes('--json');
 const noAI = args.includes('--no-ai');
+const batchMode = args.includes('--batch');
+const BATCH_CONCURRENCY = 3;
 const { modules } = parseModuleArgs(process.argv);
 
 const startTime = Date.now();
@@ -240,6 +242,40 @@ async function enhanceModuleWithAI(openai, domainDir, moduleName, ctx, rpbsConte
   }
 
   return { enhanced, failed };
+}
+
+// ─── Batch Processing ────────────────────────────────────────────────────────
+
+function computeDependencyBatches(config, targetModules) {
+  const allModules = config.modules || [];
+  const depMap = {};
+  for (const m of allModules) {
+    depMap[m.slug] = (m.dependencies || []).filter(d => targetModules.includes(d));
+  }
+
+  const targetSet = new Set(targetModules);
+  const placed = new Set();
+  const batches = [];
+
+  while (placed.size < targetSet.size) {
+    const batch = [];
+    for (const slug of targetModules) {
+      if (placed.has(slug)) continue;
+      const deps = depMap[slug] || [];
+      if (deps.every(d => placed.has(d))) {
+        batch.push(slug);
+      }
+    }
+    if (batch.length === 0) {
+      const remaining = targetModules.filter(m => !placed.has(m));
+      batches.push(remaining);
+      break;
+    }
+    batches.push(batch);
+    for (const slug of batch) placed.add(slug);
+  }
+
+  return batches;
 }
 
 // ─── Config Loading ─────────────────────────────────────────────────────────
@@ -2396,13 +2432,13 @@ async function main() {
       if (!jsonMode) console.log('  AI enhancement disabled (--no-ai flag)');
     }
 
-    for (const module of modules) {
+    async function processOneModule(module) {
       if (!isStageDone('seed', module)) {
         const msg = `Module '${module}' has not completed 'seed'. Run: node axion/scripts/axion-seed.mjs --module ${module}`;
         receipt.errors.push(msg);
         receipt.ok = false;
         if (!dryRun) markStageFailed('draft', module, { reason: msg });
-        continue;
+        return;
       }
 
       try {
@@ -2415,7 +2451,7 @@ async function main() {
         receipt.errors.push(`Prerequisite failed for module '${module}': ${prereqErr.message}`);
         receipt.ok = false;
         if (!dryRun) markStageFailed('draft', module, { reason: prereqErr.message });
-        continue;
+        return;
       }
 
       try {
@@ -2482,6 +2518,26 @@ async function main() {
         receipt.errors.push(`Module '${module}' failed: ${moduleErr.message}`);
         receipt.ok = false;
         if (!dryRun) markStageFailed('draft', module, { reason: moduleErr.message });
+      }
+    }
+
+    if (batchMode && modules.length > 1) {
+      const batches = computeDependencyBatches(config, modules);
+      if (!jsonMode) console.log(`Batch mode: ${batches.length} batch(es), concurrency=${BATCH_CONCURRENCY}`);
+      for (let bi = 0; bi < batches.length; bi++) {
+        const batch = batches[bi];
+        if (!jsonMode) console.log(`  Batch ${bi + 1}/${batches.length}: [${batch.join(', ')}]`);
+        const chunks = [];
+        for (let i = 0; i < batch.length; i += BATCH_CONCURRENCY) {
+          chunks.push(batch.slice(i, i + BATCH_CONCURRENCY));
+        }
+        for (const chunk of chunks) {
+          await Promise.all(chunk.map(m => processOneModule(m)));
+        }
+      }
+    } else {
+      for (const module of modules) {
+        await processOneModule(module);
       }
     }
 
