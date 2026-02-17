@@ -9,6 +9,7 @@ import * as tarStream from 'tar-stream';
 import { createGunzip } from 'zlib';
 import { storage } from './storage.js';
 import { scanAllModulesForUnknowns, fillAllModulesUnknowns, findNextTarget, getAllTargets, generateQuestionsForTarget, fillFileWithContext, cascadeFill, upgradeDocumentWithAI, generateUpgradeSuggestions } from './ai-content-fill.js';
+import { getStageEstimates, getEstimatedTotalMs, computeBatchesFromBuildRoot } from './pipeline-timing.js';
 
 const PROJECT_ROOT = process.cwd();
 const AXION_ROOT = path.join(PROJECT_ROOT, 'axion');
@@ -135,7 +136,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
       } else {
-        a.push('--all');
+        a.push('--all', '--batch');
       }
       return a;
     },
@@ -178,7 +179,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   },
   'content-fill': {
     cmd: 'npx',
-    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-content-fill.ts'), '--project', pn, '--fill', '--json'],
+    args: (pn) => ['tsx', path.join(PROJECT_ROOT, 'axion/scripts/axion-content-fill.ts'), '--project', pn, '--fill', '--batch', '--json'],
     label: 'Content Fill',
     cwd: (br) => br,
     group: 'docs',
@@ -696,6 +697,21 @@ async function runSingleStepWithRetry(
 export function registerRoutes(app: Express) {
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  app.get('/api/pipeline-estimates', (req: Request, res: Response) => {
+    try {
+      const projectName = req.query.project as string;
+      const stepsParam = req.query.steps as string;
+      const buildRoot = projectName ? getProjectPath(projectName) : PROJECT_ROOT;
+      const steps = stepsParam ? stepsParam.split(',') : [];
+      const estimates = getStageEstimates(buildRoot);
+      const total = steps.length > 0 ? getEstimatedTotalMs(steps, buildRoot) : null;
+      const batches = computeBatchesFromBuildRoot(buildRoot);
+      res.json({ estimates, total, batches });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
   });
 
   app.get('/api/doc-inventory', (_req: Request, res: Response) => {
@@ -1839,7 +1855,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
       progress: { currentIndex: 0, totalSteps: fullSteps.length, steps: fullSteps, stagePlanId, stagePlanLabel },
     });
 
-    res.write(`event: plan\ndata: ${JSON.stringify({ assemblyId, presetId, stagePlan: stagePlanId, stagePlanLabel, steps: fullSteps, modules: presetModules, totalSteps: fullSteps.length, skipUntilIndex })}\n\n`);
+    const timingEstimates = getEstimatedTotalMs(fullSteps, buildRoot);
+    res.write(`event: plan\ndata: ${JSON.stringify({ assemblyId, presetId, stagePlan: stagePlanId, stagePlanLabel, steps: fullSteps, modules: presetModules, totalSteps: fullSteps.length, skipUntilIndex, estimates: timingEstimates })}\n\n`);
 
     let aborted = false;
     let finished = false;
@@ -2597,7 +2614,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
       'X-Accel-Buffering': 'no',
     });
 
-    res.write(`event: plan\ndata: ${JSON.stringify({ presetId, presetLabel: preset.label, stagePlan: stagePlanId, steps: validSteps, skippedSteps, modules: presetModules, totalSteps: validSteps.length })}\n\n`);
+    const timingEstimates2 = getEstimatedTotalMs(validSteps, buildRoot);
+    res.write(`event: plan\ndata: ${JSON.stringify({ presetId, presetLabel: preset.label, stagePlan: stagePlanId, steps: validSteps, skippedSteps, modules: presetModules, totalSteps: validSteps.length, estimates: timingEstimates2 })}\n\n`);
 
     let aborted = false;
     req.on('close', () => { aborted = true; });

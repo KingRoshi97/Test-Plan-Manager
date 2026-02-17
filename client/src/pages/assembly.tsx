@@ -142,7 +142,9 @@ interface StepProgress {
   label: string;
   status: "pending" | "running" | "success" | "error" | "skipped";
   durationMs?: number;
+  estimatedMs?: number;
   reason?: string;
+  startedAt?: number;
 }
 
 function getStagePlanLabel(key: string, plan: StagePlanConfig | string[]): string {
@@ -187,6 +189,22 @@ function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
   const sec = (ms / 1000).toFixed(1);
   return `${sec}s`;
+}
+
+function ElapsedTimer({ startedAt, isActive }: { startedAt: number; isActive: boolean }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!isActive) return;
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - startedAt);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startedAt, isActive]);
+  return (
+    <span className="text-xs tabular-nums" data-testid="elapsed-timer">
+      Elapsed: {formatDuration(elapsed)}
+    </span>
+  );
 }
 
 function formatRelativeTime(dateStr: string | Date): string {
@@ -310,6 +328,8 @@ export default function AssemblyPage() {
   const [stepProgress, setStepProgress] = useState<StepProgress[]>([]);
   const [streamOutput, setStreamOutput] = useState("");
   const [activePlanLabel, setActivePlanLabel] = useState<string>("");
+  const [pipelineEstimate, setPipelineEstimate] = useState<{ totalMs: number; perStep: Record<string, number> } | null>(null);
+  const [pipelineStartedAt, setPipelineStartedAt] = useState<number | null>(null);
   const [forceShowSelector, setForceShowSelector] = useState(false);
   const [importSourcePath, setImportSourcePath] = useState("");
   const [reviseMode, setReviseMode] = useState(false);
@@ -696,13 +716,19 @@ export default function AssemblyPage() {
     es.addEventListener("plan", (e) => {
       try {
         const data = JSON.parse(e.data);
+        const perStep = data.estimates?.perStep as Record<string, number> | undefined;
         const steps = (data.steps as string[]).map((stepId: string, i: number) => ({
           index: i,
           stepId,
           label: stepLabel(stepId),
           status: "pending" as const,
+          estimatedMs: perStep?.[stepId],
         }));
         setStepProgress(steps);
+        setPipelineStartedAt(Date.now());
+        if (data.estimates) {
+          setPipelineEstimate(data.estimates);
+        }
         if (data.stagePlanLabel) {
           setActivePlanLabel(data.stagePlanLabel);
         }
@@ -715,7 +741,7 @@ export default function AssemblyPage() {
         setStepProgress((prev) =>
           prev.map((s) =>
             s.index === data.index
-              ? { ...s, label: data.label || stepLabel(s.stepId), status: "running" }
+              ? { ...s, label: data.label || stepLabel(s.stepId), status: "running", startedAt: Date.now() }
               : s
           )
         );
@@ -1094,7 +1120,17 @@ export default function AssemblyPage() {
           })()}
 
           {stepProgress.length > 0 && (
-            <div className="flex items-center gap-1 overflow-x-auto py-2" data-testid="pipeline-stepper">
+            <div data-testid="pipeline-stepper">
+              {pipelineEstimate && isRunning && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1" data-testid="pipeline-total-estimate">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Estimated total: {formatDuration(pipelineEstimate.totalMs)}</span>
+                  {pipelineStartedAt && (
+                    <ElapsedTimer startedAt={pipelineStartedAt} isActive={isRunning} />
+                  )}
+                </div>
+              )}
+              <div className="flex items-center gap-1 overflow-x-auto py-2">
               {stepProgress.map((step, i) => (
                 <div key={step.index} className="flex items-center gap-1 shrink-0">
                   <div className="flex flex-col items-center gap-1" title={step.reason || undefined}>
@@ -1116,9 +1152,24 @@ export default function AssemblyPage() {
                     <span className="text-[10px] text-muted-foreground max-w-20 truncate text-center">
                       {step.label}
                     </span>
+                    {step.status === "running" && step.estimatedMs != null && (
+                      <span className="text-[9px] text-blue-500" data-testid={`step-estimate-${i}`}>
+                        ~{formatDuration(step.estimatedMs)}
+                      </span>
+                    )}
                     {step.durationMs != null && step.durationMs > 0 && step.status !== "pending" && step.status !== "running" && (
                       <span className="text-[9px] text-muted-foreground" data-testid={`step-duration-${i}`}>
                         {formatDuration(step.durationMs)}
+                        {step.estimatedMs != null && step.estimatedMs > 0 && (
+                          <span className={step.durationMs <= step.estimatedMs * 1.1 ? " text-green-500" : " text-yellow-500"}>
+                            {" "}({step.durationMs <= step.estimatedMs ? "-" : "+"}{formatDuration(Math.abs(step.durationMs - step.estimatedMs))})
+                          </span>
+                        )}
+                      </span>
+                    )}
+                    {step.status === "pending" && step.estimatedMs != null && (
+                      <span className="text-[9px] text-muted-foreground/60" data-testid={`step-estimate-pending-${i}`}>
+                        ~{formatDuration(step.estimatedMs)}
                       </span>
                     )}
                     {step.reason && (step.status === "error" || step.status === "skipped") && (
@@ -1137,6 +1188,7 @@ export default function AssemblyPage() {
                   )}
                 </div>
               ))}
+              </div>
             </div>
           )}
 
