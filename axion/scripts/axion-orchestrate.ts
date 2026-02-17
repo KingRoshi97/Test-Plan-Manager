@@ -571,7 +571,6 @@ async function main() {
 
   const upgradeEnv: Record<string, string> = {};
   if (process.env.AXION_PROJECT_IDEA) upgradeEnv.AXION_PROJECT_IDEA = process.env.AXION_PROJECT_IDEA;
-  if (process.env.AXION_PROJECT_IDEA_FILE) upgradeEnv.AXION_PROJECT_IDEA_FILE = process.env.AXION_PROJECT_IDEA_FILE;
   if (process.env.AXION_PROJECT_NAME) upgradeEnv.AXION_PROJECT_NAME = process.env.AXION_PROJECT_NAME;
   if (process.env.AXION_REVISION) upgradeEnv.AXION_REVISION = process.env.AXION_REVISION;
   if (process.env.AXION_UPGRADE_NOTES) upgradeEnv.AXION_UPGRADE_NOTES = process.env.AXION_UPGRADE_NOTES;

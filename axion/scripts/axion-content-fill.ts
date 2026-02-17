@@ -1143,10 +1143,7 @@ async function main() {
   if (!projectName) fail('--project <name> or AXION_PROJECT_NAME is required');
 
   const projectRoot = path.resolve(projectName!);
-  let projectIdea = process.env.AXION_PROJECT_IDEA || projectName!;
-  if (process.env.AXION_PROJECT_IDEA_FILE && fs.existsSync(process.env.AXION_PROJECT_IDEA_FILE)) {
-    projectIdea = fs.readFileSync(process.env.AXION_PROJECT_IDEA_FILE, 'utf-8');
-  }
+  const projectIdea = process.env.AXION_PROJECT_IDEA || projectName!;
 
   if (!fs.existsSync(projectRoot)) {
     fail(`Project root not found: ${projectRoot}`);
