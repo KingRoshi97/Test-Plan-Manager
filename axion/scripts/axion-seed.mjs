@@ -342,7 +342,10 @@ try {
   const config = loadConfig();
   const axionRoot = config.axion_root || 'axion';
 
-  const projectIdea = process.env.AXION_PROJECT_IDEA || '';
+  let projectIdea = process.env.AXION_PROJECT_IDEA || '';
+  if (process.env.AXION_PROJECT_IDEA_FILE) {
+    try { projectIdea = fs.readFileSync(process.env.AXION_PROJECT_IDEA_FILE, 'utf-8'); } catch {}
+  }
   const ctx = parseProjectIdea(projectIdea);
 
   const revision = parseInt(process.env.AXION_REVISION || '1', 10);
