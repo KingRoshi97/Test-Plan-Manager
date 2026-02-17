@@ -1914,11 +1914,12 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             const structuredInput = (assembly as any).input as Record<string, string> | null;
             res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Scanning ${modulesToFill.length} modules for UNKNOWN placeholders...${structuredInput ? ' (with detailed project context)' : ''}` })}\n\n`);
 
+            const includeProductDocs = presetModules.length === 0;
             const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea, (msg) => {
               if (!aborted) {
                 res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: msg })}\n\n`);
               }
-            }, structuredInput);
+            }, structuredInput, includeProductDocs);
 
             const cfDuration = Date.now() - cfStart;
             const summary = `Content Fill complete: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
@@ -1926,6 +1927,16 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
             const cfStatus = fillReport.totalFilesErrored > 0 && fillReport.totalFilesFilled === 0 ? 'error' : 'success';
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: cfStatus, durationMs: cfDuration })}\n\n`);
+
+            const cfResult: RunResult = {
+              status: cfStatus,
+              command: 'Content Fill',
+              exitCode: 0,
+              stdout: summary + '\n' + fillReport.results.map(r => `  ${r.module}/${path.basename(r.file)}: ${r.status} (${r.unknownsBefore}→${r.unknownsAfter})`).join('\n'),
+              stderr: fillReport.results.filter(r => r.error).map(r => `${r.module}: ${r.error}`).join('\n'),
+              durationMs: cfDuration,
+            };
+            await persistRunResult(stepId, step, projectName, cfResult);
 
             if (cfStatus === 'error') {
               lastError = 'Content fill failed for all files';
@@ -1936,6 +1947,17 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             const cfErrMsg = cfErr instanceof Error ? cfErr.message : String(cfErr);
             res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: `Content fill error: ${cfErrMsg}` })}\n\n`);
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: cfDuration })}\n\n`);
+
+            const cfErrResult: RunResult = {
+              status: 'error',
+              command: 'Content Fill',
+              exitCode: 1,
+              stdout: '',
+              stderr: cfErrMsg,
+              durationMs: cfDuration,
+            };
+            await persistRunResult(stepId, step, projectName, cfErrResult);
+
             lastError = `Content fill failed: ${cfErrMsg}`;
             break;
           }
@@ -2334,7 +2356,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           const idea = (req.body.idea as string) || projectName;
           const assemblyForFill = (await storage.getAssemblies()).find(a => a.projectName === projectName);
           const structuredInput = (assemblyForFill as any)?.input as Record<string, string> | null;
-          const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea, undefined, structuredInput);
+          const fillReport = await fillAllModulesUnknowns(buildRoot, modulesToFill, projectName, idea, undefined, structuredInput, true);
           const cfDuration = Date.now() - cfStart;
           const summary = `Content Fill: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
           const cfResult: RunResult = {
@@ -2684,11 +2706,12 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             const idea2 = (body.idea as string) || projectName;
             res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Scanning ${modulesToFill2.length} modules for UNKNOWN placeholders...` })}\n\n`);
 
+            const includeProductDocs2 = presetModules.length === 0;
             const fillReport2 = await fillAllModulesUnknowns(buildRoot, modulesToFill2, projectName, idea2, (msg) => {
               if (!aborted) {
                 res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: msg })}\n\n`);
               }
-            });
+            }, undefined, includeProductDocs2);
 
             const cfDuration2 = Date.now() - cfStart2;
             const summary2 = `Content Fill complete: ${fillReport2.totalFilesFilled} filled, ${fillReport2.totalFilesSkipped} skipped, ${fillReport2.totalFilesErrored} errors`;
