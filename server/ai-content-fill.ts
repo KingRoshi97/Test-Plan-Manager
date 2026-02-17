@@ -523,7 +523,8 @@ export async function fillAllModulesUnknowns(
   projectName: string,
   projectIdea: string,
   onProgress?: (message: string) => void,
-  structuredInput?: Record<string, string> | null
+  structuredInput?: Record<string, string> | null,
+  includeProductDocs: boolean = true
 ): Promise<ContentFillReport> {
   const results: ContentFillResult[] = [];
 
@@ -556,12 +557,63 @@ export async function fillAllModulesUnknowns(
     }
   }
 
+  if (includeProductDocs) {
+    onProgress?.(`Scanning product/system/registry docs for UNKNOWNs...`);
+    const productDocsResults = await fillProductDocsUnknowns(projectRoot, projectName, projectIdea, onProgress, structuredInput);
+    results.push(...productDocsResults);
+  }
+
   return {
     totalFilesFilled: results.filter(r => r.status === 'filled').length,
     totalFilesSkipped: results.filter(r => r.status === 'skipped').length,
     totalFilesErrored: results.filter(r => r.status === 'error').length,
     results,
   };
+}
+
+async function fillProductDocsUnknowns(
+  projectRoot: string,
+  projectName: string,
+  projectIdea: string,
+  onProgress?: (message: string) => void,
+  structuredInput?: Record<string, string> | null
+): Promise<ContentFillResult[]> {
+  const results: ContentFillResult[] = [];
+  const docDirs = [
+    path.join(projectRoot, 'axion', 'docs', 'product'),
+    path.join(projectRoot, 'axion', 'docs', 'system'),
+    path.join(projectRoot, 'axion', 'docs', 'registry'),
+  ];
+
+  for (const dir of docDirs) {
+    if (!fs.existsSync(dir)) continue;
+    const mdFiles = getAllMdFilesRecursive(dir);
+    for (const filePath of mdFiles) {
+      const relPath = path.relative(dir, filePath);
+      const dirName = path.basename(dir);
+      onProgress?.(`Processing ${dirName}/${relPath}`);
+      const result = await fillFileWithAI(filePath, projectName, projectIdea, `_${dirName}`, onProgress, structuredInput);
+      results.push(result);
+    }
+  }
+
+  return results;
+}
+
+function getAllMdFilesRecursive(dir: string): string[] {
+  const results: string[] = [];
+  if (!fs.existsSync(dir)) return results;
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue;
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...getAllMdFilesRecursive(fullPath));
+    } else if (entry.name.endsWith('.md')) {
+      results.push(fullPath);
+    }
+  }
+  return results;
 }
 
 function getSectionDetails(content: string): SectionDetail[] {
