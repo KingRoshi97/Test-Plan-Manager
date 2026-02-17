@@ -1954,6 +1954,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         }
 
         const perModuleSteps = ['generate', 'seed', 'review', 'draft', 'verify', 'lock'];
+        const BATCH_CAPABLE_STEPS = new Set(['draft']);
+        const PIPELINE_BATCH_CONCURRENCY = 3;
         if (perModuleSteps.includes(stepId) && presetModules.length > 0 && presetModules.length < 19) {
           const perModStart = Date.now();
           let modSucceeded = 0;
@@ -1962,8 +1964,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           let modStderr = '';
           const failedModules: string[] = [];
 
-          for (const mod of presetModules) {
-            if (aborted) break;
+          async function runOneModule(mod: string) {
+            if (aborted) return;
             const modBody = { ...stepBody, module: mod };
             const modArgs = step.args(projectName, buildRoot, modBody);
             const modCwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
@@ -1988,6 +1990,36 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
                 }
               }
               modFailed++;
+            }
+          }
+
+          if (BATCH_CAPABLE_STEPS.has(stepId) && presetModules.length > 1) {
+            const depBatches = computeBatchesFromBuildRoot(buildRoot);
+            const presetSet = new Set(presetModules);
+            const filteredBatches: string[][] = [];
+            for (const db of depBatches) {
+              const filtered = db.modules.filter(m => presetSet.has(m));
+              if (filtered.length > 0) filteredBatches.push(filtered);
+            }
+            const batchesToUse = filteredBatches.length > 0 ? filteredBatches : [presetModules];
+
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Batch mode: ${batchesToUse.length} batch(es), concurrency=${PIPELINE_BATCH_CONCURRENCY}` })}\n\n`);
+
+            for (let bi = 0; bi < batchesToUse.length; bi++) {
+              if (aborted) break;
+              const batch = batchesToUse[bi];
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `  Batch ${bi + 1}/${batchesToUse.length}: [${batch.join(', ')}]` })}\n\n`);
+
+              for (let ci = 0; ci < batch.length; ci += PIPELINE_BATCH_CONCURRENCY) {
+                if (aborted) break;
+                const chunk = batch.slice(ci, ci + PIPELINE_BATCH_CONCURRENCY);
+                await Promise.all(chunk.map(mod => runOneModule(mod)));
+              }
+            }
+          } else {
+            for (const mod of presetModules) {
+              if (aborted) break;
+              await runOneModule(mod);
             }
           }
 
@@ -2679,6 +2711,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         }
 
         const perModuleSteps2 = ['generate', 'seed', 'review', 'draft', 'verify', 'lock'];
+        const BATCH_CAPABLE_STEPS2 = new Set(['draft']);
+        const PIPELINE_BATCH_CONCURRENCY2 = 3;
         if (perModuleSteps2.includes(stepId) && presetModules.length > 0 && presetModules.length < 19) {
           const perModStart = Date.now();
           let modSucceeded = 0;
@@ -2687,8 +2721,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           let modStderr = '';
           const failedModules2: string[] = [];
 
-          for (const mod of presetModules) {
-            if (aborted) break;
+          async function runOneModule2(mod: string) {
+            if (aborted) return;
             const modBody = { ...stepBody, module: mod };
             const modArgs = step.args(projectName, buildRoot, modBody);
             const modCwd = step.cwd ? step.cwd(buildRoot) : buildRoot;
@@ -2716,6 +2750,36 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
               if (!aborted) {
                 res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `${step.label} for ${mod}: failed (exit ${modResult.exitCode})` })}\n\n`);
               }
+            }
+          }
+
+          if (BATCH_CAPABLE_STEPS2.has(stepId) && presetModules.length > 1) {
+            const depBatches2 = computeBatchesFromBuildRoot(buildRoot);
+            const presetSet2 = new Set(presetModules);
+            const filteredBatches2: string[][] = [];
+            for (const db of depBatches2) {
+              const filtered = db.modules.filter(m => presetSet2.has(m));
+              if (filtered.length > 0) filteredBatches2.push(filtered);
+            }
+            const batchesToUse2 = filteredBatches2.length > 0 ? filteredBatches2 : [presetModules];
+
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Batch mode: ${batchesToUse2.length} batch(es), concurrency=${PIPELINE_BATCH_CONCURRENCY2}` })}\n\n`);
+
+            for (let bi = 0; bi < batchesToUse2.length; bi++) {
+              if (aborted) break;
+              const batch = batchesToUse2[bi];
+              res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `  Batch ${bi + 1}/${batchesToUse2.length}: [${batch.join(', ')}]` })}\n\n`);
+
+              for (let ci = 0; ci < batch.length; ci += PIPELINE_BATCH_CONCURRENCY2) {
+                if (aborted) break;
+                const chunk = batch.slice(ci, ci + PIPELINE_BATCH_CONCURRENCY2);
+                await Promise.all(chunk.map(mod => runOneModule2(mod)));
+              }
+            }
+          } else {
+            for (const mod of presetModules) {
+              if (aborted) break;
+              await runOneModule2(mod);
             }
           }
 
