@@ -401,7 +401,7 @@ function computeContentFillBatches(projectRoot: string, targetModules: string[])
       }
       if (batch.length === 0) {
         const remaining = targetModules.filter(m => !placed.has(m));
-        batches.push(remaining);
+        process.stderr.write(`[content-fill] Warning: circular dependencies detected, skipping modules: ${remaining.join(', ')}\n`);
         break;
       }
       batches.push(batch);
