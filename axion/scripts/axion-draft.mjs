@@ -246,7 +246,10 @@ function parseUpgradeContext() {
 }
 
 function parseProjectContext() {
-  const idea = process.env.AXION_PROJECT_IDEA || '';
+  let idea = process.env.AXION_PROJECT_IDEA || '';
+  if (process.env.AXION_PROJECT_IDEA_FILE) {
+    try { idea = fs.readFileSync(process.env.AXION_PROJECT_IDEA_FILE, 'utf-8'); } catch {}
+  }
   const name = process.env.AXION_PROJECT_NAME || 'Application';
   const upgrade = parseUpgradeContext();
 

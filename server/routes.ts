@@ -2,6 +2,7 @@ import { type Express, type Request, type Response } from 'express';
 import { spawn, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import multer from 'multer';
 import AdmZip from 'adm-zip';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly, SourceFile, SkipBreakdown, UploadResult } from '../shared/schema.js';
@@ -26,6 +27,36 @@ function isProjectDir(name: string): boolean {
 
 function getProjectPath(projectName: string): string {
   return path.join(WORKSPACES_DIR, projectName);
+}
+
+const IDEA_MAX_ENV_LENGTH = 500;
+
+function writeIdeaToTempFile(idea: string, projectName: string): { envVars: Record<string, string>, cleanup: () => void } {
+  const truncated = idea.length > IDEA_MAX_ENV_LENGTH
+    ? idea.substring(0, IDEA_MAX_ENV_LENGTH) + '...[truncated, see AXION_PROJECT_IDEA_FILE]'
+    : idea;
+
+  if (idea.length <= IDEA_MAX_ENV_LENGTH) {
+    return {
+      envVars: { AXION_PROJECT_IDEA: idea },
+      cleanup: () => {},
+    };
+  }
+
+  const tmpDir = path.join(os.tmpdir(), 'axion-ideas');
+  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+  const tmpFile = path.join(tmpDir, `${projectName}-${Date.now()}.txt`);
+  fs.writeFileSync(tmpFile, idea, 'utf-8');
+
+  return {
+    envVars: {
+      AXION_PROJECT_IDEA: truncated,
+      AXION_PROJECT_IDEA_FILE: tmpFile,
+    },
+    cleanup: () => {
+      try { fs.unlinkSync(tmpFile); } catch {}
+    },
+  };
 }
 
 function getAllModulesInWorkspace(buildRoot: string): string[] {
@@ -85,7 +116,6 @@ const pipelineSteps: Record<string, PipelineStep> = {
     cmd: 'npx',
     args: (pn, _br, body) => {
       const a = ['tsx', 'axion/scripts/axion-kit-create.ts', '--target', path.join(WORKSPACES_DIR, pn), '--project-name', pn, '--source', path.join(PROJECT_ROOT, 'axion'), '--force', '--json'];
-      if (body.idea) a.push('--project-context', String(body.idea));
       if (body.context) a.push('--project-desc', String(body.context));
       if (body.mode) a.push('--project-mode', String(body.mode));
       if (body.category) a.push('--project-category', String(body.category));
@@ -1835,9 +1865,12 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     const assemblyUpgradeNotes = assembly.upgradeNotes || '';
     const assemblyKitType = assembly.kitType || 'original';
 
+    const ideaText = (assembly as any).idea || '';
+    const ideaTmp = writeIdeaToTempFile(ideaText, projectName);
+
     const assemblyEnv: Record<string, string> = {
       AXION_PROJECT_NAME: projectName,
-      AXION_PROJECT_IDEA: (assembly as any).idea || '',
+      ...ideaTmp.envVars,
       AXION_REVISION: String(assemblyRevision),
       AXION_UPGRADE_NOTES: assemblyUpgradeNotes,
       AXION_KIT_TYPE: assemblyKitType,
@@ -2097,6 +2130,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         });
 
         res.write(`event: done\ndata: ${JSON.stringify({ assemblyId, totalSteps: fullSteps.length, succeeded, failed, state: finalState })}\n\n`);
+        ideaTmp.cleanup();
         res.end();
       }
     };
@@ -2104,6 +2138,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     orchestrate().catch((err) => {
       finished = true;
       activeRuns.delete(assemblyId);
+      ideaTmp.cleanup();
       if (!aborted) {
         storage.updateAssembly(assemblyId, { state: 'failed', errors: [err?.message || 'Unknown error'] }).catch(() => {});
         res.write(`event: error\ndata: ${JSON.stringify({ error: err?.message || 'Unknown error' })}\n\n`);
@@ -2601,9 +2636,12 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
     const buildRoot = getProjectPath(projectName);
 
+    const ideaText2 = (body.idea as string) || '';
+    const ideaTmp2 = writeIdeaToTempFile(ideaText2, projectName);
+
     const assemblyEnv2: Record<string, string> = {
       AXION_PROJECT_NAME: projectName,
-      AXION_PROJECT_IDEA: (body.idea as string) || '',
+      ...ideaTmp2.envVars,
     };
 
     res.writeHead(200, {
@@ -2850,6 +2888,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         }
       }
 
+      ideaTmp2.cleanup();
       if (!aborted) {
         const succeeded = allResults.filter(r => r.status === 'success').length;
         const failed = allResults.filter(r => r.status === 'error').length;
@@ -2859,6 +2898,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     };
 
     runStepsSequentially().catch((err) => {
+      ideaTmp2.cleanup();
       if (!aborted) {
         res.write(`event: error\ndata: ${JSON.stringify({ error: err?.message || 'Unknown error' })}\n\n`);
         res.end();

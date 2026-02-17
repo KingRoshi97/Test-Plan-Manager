@@ -588,9 +588,16 @@ function main(): void {
   }
 
   if (options.projectName) {
+    let resolvedContext = options.projectContext;
+    if (!resolvedContext && process.env.AXION_PROJECT_IDEA_FILE) {
+      try { resolvedContext = fs.readFileSync(process.env.AXION_PROJECT_IDEA_FILE, 'utf-8'); } catch {}
+    }
+    if (!resolvedContext && process.env.AXION_PROJECT_IDEA) {
+      resolvedContext = process.env.AXION_PROJECT_IDEA;
+    }
     const seedCtx: SeedContext = {
       projectDesc: options.projectDesc,
-      projectContext: options.projectContext,
+      projectContext: resolvedContext,
       projectMode: options.projectMode,
       projectCategory: options.projectCategory,
     };
