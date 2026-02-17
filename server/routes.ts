@@ -2,7 +2,6 @@ import { type Express, type Request, type Response } from 'express';
 import { spawn, execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import multer from 'multer';
 import AdmZip from 'adm-zip';
 import type { RunResult, FileEntry, FileContent, WorkspaceInfo, Assembly, SourceFile, SkipBreakdown, UploadResult } from '../shared/schema.js';
@@ -27,36 +26,6 @@ function isProjectDir(name: string): boolean {
 
 function getProjectPath(projectName: string): string {
   return path.join(WORKSPACES_DIR, projectName);
-}
-
-const IDEA_MAX_ENV_LENGTH = 500;
-
-function writeIdeaToTempFile(idea: string, projectName: string): { envVars: Record<string, string>, cleanup: () => void } {
-  const truncated = idea.length > IDEA_MAX_ENV_LENGTH
-    ? idea.substring(0, IDEA_MAX_ENV_LENGTH) + '...[truncated, see AXION_PROJECT_IDEA_FILE]'
-    : idea;
-
-  if (idea.length <= IDEA_MAX_ENV_LENGTH) {
-    return {
-      envVars: { AXION_PROJECT_IDEA: idea },
-      cleanup: () => {},
-    };
-  }
-
-  const tmpDir = path.join(os.tmpdir(), 'axion-ideas');
-  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-  const tmpFile = path.join(tmpDir, `${projectName}-${Date.now()}.txt`);
-  fs.writeFileSync(tmpFile, idea, 'utf-8');
-
-  return {
-    envVars: {
-      AXION_PROJECT_IDEA: truncated,
-      AXION_PROJECT_IDEA_FILE: tmpFile,
-    },
-    cleanup: () => {
-      try { fs.unlinkSync(tmpFile); } catch {}
-    },
-  };
 }
 
 function getAllModulesInWorkspace(buildRoot: string): string[] {
@@ -116,6 +85,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
     cmd: 'npx',
     args: (pn, _br, body) => {
       const a = ['tsx', 'axion/scripts/axion-kit-create.ts', '--target', path.join(WORKSPACES_DIR, pn), '--project-name', pn, '--source', path.join(PROJECT_ROOT, 'axion'), '--force', '--json'];
+      if (body.idea) a.push('--project-context', String(body.idea));
       if (body.context) a.push('--project-desc', String(body.context));
       if (body.mode) a.push('--project-mode', String(body.mode));
       if (body.category) a.push('--project-category', String(body.category));
@@ -1359,23 +1329,11 @@ export function registerRoutes(app: Express) {
 
   app.post('/api/assembly-autofill', async (req: Request, res: Response) => {
     try {
-      const { projectName, idea, category, typeName, typeFields: typeFieldDefs, fullProductFields: fpFieldDefs } = req.body;
+      const { projectName, idea, category } = req.body;
       if (!projectName || !idea) {
         res.status(400).json({ error: 'projectName and idea are required' });
         return;
       }
-
-      let cleanIdea = typeof idea === 'string' ? idea : '';
-      const fileMarkerIdx = cleanIdea.indexOf('--- FILE:');
-      if (fileMarkerIdx >= 0) {
-        cleanIdea = cleanIdea.substring(0, fileMarkerIdx).trim();
-      }
-      if (!cleanIdea) {
-        cleanIdea = projectName;
-      }
-      const truncatedIdea = cleanIdea.length > 3000
-        ? cleanIdea.substring(0, 3000) + '...'
-        : cleanIdea;
 
       const OpenAI = (await import('openai')).default;
       const openai = new OpenAI({
@@ -1383,68 +1341,34 @@ export function registerRoutes(app: Express) {
         baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
       });
 
-      let sectionNumber = 0;
-      const sectionLines: string[] = [];
-      const sectionKeys: string[] = [];
-
-      if (Array.isArray(typeFieldDefs) && typeFieldDefs.length > 0) {
-        for (const f of typeFieldDefs) {
-          sectionNumber++;
-          sectionLines.push(`${sectionNumber}. ${f.key} - ${f.label}`);
-          sectionKeys.push(f.key);
-        }
-      }
-
-      if (Array.isArray(fpFieldDefs) && fpFieldDefs.length > 0) {
-        for (const f of fpFieldDefs) {
-          sectionNumber++;
-          sectionLines.push(`${sectionNumber}. ${f.key} - ${f.label}`);
-          sectionKeys.push(f.key);
-        }
-      }
-
-      const standardSections = [
-        { key: 'visionProblem', label: 'What problem does this solve?' },
-        { key: 'visionTargetUsers', label: 'Who is this for?' },
-        { key: 'visionGoals', label: 'Primary goals (what should this achieve?)' },
-        { key: 'visionSuccess', label: 'What does success look like?' },
-        { key: 'coreFeatures', label: 'Core features (must-haves), as a bulleted list' },
-        { key: 'niceToHaveFeatures', label: 'Nice-to-have features, as a bulleted list' },
-        { key: 'coreEntities', label: 'Main entities/data objects in the system, as a bulleted list with descriptions' },
-        { key: 'userJourneys', label: 'Key user workflows, as numbered steps' },
-        { key: 'platform', label: 'Platform targets (short, comma-separated)' },
-        { key: 'integrations', label: 'External integrations needed, as a bulleted list' },
-        { key: 'techConstraints', label: 'Technical constraints or preferences, as a bulleted list' },
-        { key: 'dataSensitivity', label: 'Data sensitivity level (respond with exactly one of: "low", "medium", or "high")' },
-      ];
-
-      for (const s of standardSections) {
-        if (!sectionKeys.includes(s.key)) {
-          sectionNumber++;
-          sectionLines.push(`${sectionNumber}. ${s.key} - ${s.label}`);
-          sectionKeys.push(s.key);
-        }
-      }
-
-      const exampleKeys = sectionKeys.slice(0, 3).map(k => `    "${k}": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] }`).join(',\n');
-
       const prompt = `You are helping a user set up a new software project. Based on their project name and idea, generate helpful suggestions for different aspects of the project.
 
 Project Name: ${projectName}
-Project Idea: ${truncatedIdea}
+Project Idea: ${idea}
 ${category ? `Category: ${category}` : ''}
-${typeName ? `Project Type: ${typeName}` : ''}
 
 Generate suggestions for each of the following sections. For each section, provide exactly 3 short options (each 1-3 sentences). Also provide a recommended "autofill" value that combines the best aspects into a thorough response.
 
 Sections:
-${sectionLines.join('\n')}
+1. visionProblem - What problem does this solve?
+2. visionTargetUsers - Who is this for?
+3. visionGoals - Primary goals (what should this achieve?)
+4. visionSuccess - What does success look like?
+5. coreFeatures - Core features (must-haves), as a bulleted list
+6. niceToHaveFeatures - Nice-to-have features, as a bulleted list
+7. coreEntities - Main entities/data objects in the system, as a bulleted list with descriptions
+8. userJourneys - Key user workflows, as numbered steps
+9. platform - Platform targets (short, comma-separated)
+10. integrations - External integrations needed, as a bulleted list
+11. techConstraints - Technical constraints or preferences, as a bulleted list
+12. dataSensitivity - Data sensitivity level (respond with exactly one of: "low", "medium", or "high")
 
 Respond in this exact JSON format:
 {
   "fields": {
-${exampleKeys},
-    ...same for all ${sectionKeys.length} sections
+    "visionProblem": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] },
+    "visionTargetUsers": { "autofill": "...", "suggestions": ["option1", "option2", "option3"] },
+    ...same for all 12 sections
   }
 }
 
@@ -1459,7 +1383,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           },
           { role: 'user', content: prompt },
         ],
-        max_completion_tokens: 8192,
+        max_completion_tokens: 4096,
       });
 
       const raw = response.choices[0]?.message?.content || '{}';
@@ -1865,12 +1789,9 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     const assemblyUpgradeNotes = assembly.upgradeNotes || '';
     const assemblyKitType = assembly.kitType || 'original';
 
-    const ideaText = (assembly as any).idea || '';
-    const ideaTmp = writeIdeaToTempFile(ideaText, projectName);
-
     const assemblyEnv: Record<string, string> = {
       AXION_PROJECT_NAME: projectName,
-      ...ideaTmp.envVars,
+      AXION_PROJECT_IDEA: (assembly as any).idea || '',
       AXION_REVISION: String(assemblyRevision),
       AXION_UPGRADE_NOTES: assemblyUpgradeNotes,
       AXION_KIT_TYPE: assemblyKitType,
@@ -2130,7 +2051,6 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         });
 
         res.write(`event: done\ndata: ${JSON.stringify({ assemblyId, totalSteps: fullSteps.length, succeeded, failed, state: finalState })}\n\n`);
-        ideaTmp.cleanup();
         res.end();
       }
     };
@@ -2138,7 +2058,6 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     orchestrate().catch((err) => {
       finished = true;
       activeRuns.delete(assemblyId);
-      ideaTmp.cleanup();
       if (!aborted) {
         storage.updateAssembly(assemblyId, { state: 'failed', errors: [err?.message || 'Unknown error'] }).catch(() => {});
         res.write(`event: error\ndata: ${JSON.stringify({ error: err?.message || 'Unknown error' })}\n\n`);
@@ -2636,12 +2555,9 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
     const buildRoot = getProjectPath(projectName);
 
-    const ideaText2 = (body.idea as string) || '';
-    const ideaTmp2 = writeIdeaToTempFile(ideaText2, projectName);
-
     const assemblyEnv2: Record<string, string> = {
       AXION_PROJECT_NAME: projectName,
-      ...ideaTmp2.envVars,
+      AXION_PROJECT_IDEA: (body.idea as string) || '',
     };
 
     res.writeHead(200, {
@@ -2888,7 +2804,6 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         }
       }
 
-      ideaTmp2.cleanup();
       if (!aborted) {
         const succeeded = allResults.filter(r => r.status === 'success').length;
         const failed = allResults.filter(r => r.status === 'error').length;
@@ -2898,7 +2813,6 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     };
 
     runStepsSequentially().catch((err) => {
-      ideaTmp2.cleanup();
       if (!aborted) {
         res.write(`event: error\ndata: ${JSON.stringify({ error: err?.message || 'Unknown error' })}\n\n`);
         res.end();

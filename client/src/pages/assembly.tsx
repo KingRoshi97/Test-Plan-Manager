@@ -772,24 +772,11 @@ export default function AssemblyPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/pipeline-runs", assembly?.projectName] });
     });
 
-    es.addEventListener("error", (e: Event) => {
-      const me = e as MessageEvent;
-      let errorMsg = "Pipeline connection lost";
-      if (me.data) {
-        try {
-          const data = JSON.parse(me.data);
-          errorMsg = data.error || errorMsg;
-        } catch {
-          errorMsg = me.data;
-        }
-      }
-      if (es.readyState === EventSource.CLOSED || es.readyState === EventSource.CONNECTING) {
-        es.close();
-        eventSourceRef.current = null;
-        setIsRunning(false);
-        toast({ title: "Pipeline error", description: errorMsg, variant: "destructive" });
-        queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId] });
-      }
+    es.addEventListener("error", () => {
+      es.close();
+      eventSourceRef.current = null;
+      setIsRunning(false);
+      toast({ title: "Pipeline connection lost", variant: "destructive" });
     });
   };
 
