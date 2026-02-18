@@ -27,6 +27,7 @@ import {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const jsonMode = args.includes('--json');
+const forceRebuild = args.includes('--force');
 const { modules, all } = parseModuleArgs(process.argv);
 
 const startTime = Date.now();
@@ -202,6 +203,12 @@ try {
   const vs = receipt.verifySummary;
 
   for (const module of modules) {
+    if (!forceRebuild && isStageDone('verify', module)) {
+      if (!jsonMode) console.log(`Skipping module (verify already done): ${module}`);
+      receipt.skippedFiles.push(`${module} (stage already complete)`);
+      continue;
+    }
+
     if (!isStageDone('review', module)) {
       const msg = `Module '${module}' has not completed 'review'. Run review first.`;
       receipt.warnings.push(msg);
