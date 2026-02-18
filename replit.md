@@ -20,6 +20,7 @@ AXION employs a documentation-first approach to generate comprehensive "Agent Ki
 - **Anchor Convention**: Uses HTML comment-like anchors (`<!-- AXION:ANCHOR:<ID> -->`) for dynamic content injection.
 - **Script Organization**: Pipeline scripts (`.mjs`) for orchestration, system-level scripts (`.ts`) for core logic, and auxiliary guardrail scripts (`.ts`) for workspace operations and validation.
 - **UNKNOWN Detection & Content Fill System**: Scans `.md` template files for `UNKNOWN` placeholders, using AI for content generation based on document hierarchy and type-aware prompting. It supports interactive revision and cascading fills.
+- **Context Assembly System**: Both CLI (`axion/scripts/axion-content-fill.ts`) and Dashboard (`server/ai-content-fill.ts`) implementations read template AGENT_GUIDANCE blocks, resolve upstream document references (RPBS, REBS, DDES, etc.), and load knowledge files from `axion/knowledge/` via `axion/config/knowledge-map.json` before AI fills. Section-level fill optimization parses documents by ## headings and only sends sections with UNKNOWNs to AI when the document has 10+ sections and <50% contain UNKNOWNs.
 
 ### Pipeline Stages
 AXION defines a clear pipeline for kit creation and application development, including:
