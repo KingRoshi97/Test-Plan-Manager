@@ -306,7 +306,7 @@ export default function AssemblyPage() {
   const assemblyId = params?.id;
   const [, navigate] = useLocation();
 
-  const selectedStagePlan = "docs:full";
+  const selectedStagePlan = "system:full";
   const [isRunning, setIsRunning] = useState(false);
   const [stepProgress, setStepProgress] = useState<StepProgress[]>([]);
   const [streamOutput, setStreamOutput] = useState("");
