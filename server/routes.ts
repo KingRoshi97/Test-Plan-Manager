@@ -50,25 +50,27 @@ function expandModulesWithDependencies(modules: string[], includeDeps: boolean):
   }
 
   const allDomains = domainsConfig.modules || [];
+  const canonicalOrder = allDomains.map(m => m.slug);
+
+  const needed = new Set<string>();
   const depMap: Record<string, string[]> = {};
   for (const mod of allDomains) {
     depMap[mod.slug] = mod.dependencies || [];
   }
 
-  const expanded = new Set<string>();
   function collectDeps(slug: string) {
-    if (expanded.has(slug)) return;
+    if (needed.has(slug)) return;
+    needed.add(slug);
     for (const dep of depMap[slug] || []) {
       collectDeps(dep);
     }
-    expanded.add(slug);
   }
 
   for (const mod of modules) {
     collectDeps(mod);
   }
 
-  return Array.from(expanded);
+  return canonicalOrder.filter(slug => needed.has(slug));
 }
 
 interface PipelineStep {
