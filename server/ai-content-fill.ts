@@ -728,6 +728,19 @@ export async function fillFileWithAI(
   }
 }
 
+function isModuleAlreadyFilled(projectRoot: string, moduleName: string): boolean {
+  const moduleDir = path.join(projectRoot, 'axion', 'domains', moduleName);
+  const moduleTemplates = getModuleTemplatesFromConfig(projectRoot, moduleName);
+  const mdFiles = getAllMdFilesInModule(moduleDir, moduleTemplates);
+  if (mdFiles.length === 0) return false;
+  for (const filePath of mdFiles) {
+    if (!fs.existsSync(filePath)) return false;
+    const content = fs.readFileSync(filePath, 'utf8');
+    if (countUnknowns(content) > 0) return false;
+  }
+  return true;
+}
+
 export async function fillModuleUnknowns(
   projectRoot: string,
   moduleName: string,
@@ -738,6 +751,11 @@ export async function fillModuleUnknowns(
 ): Promise<ContentFillResult[]> {
   const moduleDir = path.join(projectRoot, 'axion', 'domains', moduleName);
   const results: ContentFillResult[] = [];
+
+  if (isModuleAlreadyFilled(projectRoot, moduleName)) {
+    onProgress?.(`Skipping module ${moduleName} (no UNKNOWNs remaining)`);
+    return results;
+  }
 
   const moduleTemplates = getModuleTemplatesFromConfig(projectRoot, moduleName);
   const mdFiles = getAllMdFilesInModule(moduleDir, moduleTemplates);

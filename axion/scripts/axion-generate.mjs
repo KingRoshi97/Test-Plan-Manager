@@ -15,6 +15,7 @@ import fs from 'fs';
 import path from 'path';
 import {
   parseModuleArgs,
+  isStageDone,
   markStageDone,
   markStageFailed,
   AXION_DOC_TYPES,
@@ -25,6 +26,7 @@ const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const jsonMode = args.includes('--json');
 const allowTemplateFallback = args.includes('--allow-template-fallback');
+const forceRebuild = args.includes('--force');
 const { modules } = parseModuleArgs(process.argv);
 
 const startTime = Date.now();
@@ -192,6 +194,12 @@ try {
   const domainsDir = path.join(axionRoot, config.domains_dir || 'domains');
 
   for (const module of modules) {
+    if (!forceRebuild && isStageDone('generate', module)) {
+      if (!jsonMode) console.log(`Skipping module (generate already done): ${module}`);
+      report.skippedFiles.push(`${module} (stage already complete)`);
+      continue;
+    }
+
     if (!jsonMode) {
       console.log(`Generating module: ${module}`);
     }

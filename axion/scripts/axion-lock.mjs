@@ -25,6 +25,7 @@ import {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const jsonMode = args.includes('--json');
+const forceRebuild = args.includes('--force');
 const versionArg = args.find((_, i, arr) => arr[i - 1] === '--version') || 'v1';
 const { modules } = parseModuleArgs(process.argv);
 
@@ -327,6 +328,12 @@ try {
   const ls = receipt.lockSummary;
 
   for (const module of modules) {
+    if (!forceRebuild && isStageDone('lock', module)) {
+      if (!jsonMode) console.log(`Skipping module (lock already done): ${module}`);
+      receipt.skippedFiles.push(`${module} (stage already complete)`);
+      continue;
+    }
+
     if (!isStageDone('verify', module)) {
       const msg = `Module '${module}' has not completed 'verify'. Run verify first.`;
       receipt.warnings.push(msg);

@@ -26,6 +26,7 @@ import {
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const jsonMode = args.includes('--json');
+const forceRebuild = args.includes('--force');
 const { modules } = parseModuleArgs(process.argv);
 
 const startTime = Date.now();
@@ -358,6 +359,12 @@ try {
   const upgradeCtx = { isUpgrade, revision, upgradeNotes };
 
   for (const module of modules) {
+    if (!forceRebuild && isStageDone('seed', module)) {
+      if (!jsonMode) console.log(`Skipping module (seed already done): ${module}`);
+      receipt.skippedFiles.push(`${module} (stage already complete)`);
+      continue;
+    }
+
     if (!isStageDone('generate', module)) {
       const msg = `Module '${module}' has not completed 'generate'. Run: node axion/scripts/axion-generate.mjs --module ${module}`;
       receipt.errors.push(msg);

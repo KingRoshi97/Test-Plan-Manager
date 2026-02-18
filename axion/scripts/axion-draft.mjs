@@ -33,6 +33,7 @@ const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const jsonMode = args.includes('--json');
 const noAI = args.includes('--no-ai');
+const forceRebuild = args.includes('--force');
 const { modules } = parseModuleArgs(process.argv);
 
 const startTime = Date.now();
@@ -2426,7 +2427,28 @@ async function main() {
       if (!jsonMode) console.log('  AI enhancement disabled (--no-ai flag)');
     }
 
+    function isModuleFullyComplete(domainDir, module) {
+      const moduleTemplates = getModuleAllDocTypes(module);
+      const allDocFiles = [
+        ...moduleTemplates.map(dt => `${dt}_${module}.md`),
+        `README_${module}.md`,
+        `OPEN_QUESTIONS_${module}.md`,
+      ];
+      for (const docFile of allDocFiles) {
+        const filePath = path.join(domainDir, docFile);
+        if (!fs.existsSync(filePath)) return false;
+        if (!fileIsAlreadyComplete(filePath)) return false;
+      }
+      return true;
+    }
+
     async function processOneModule(module) {
+      if (!forceRebuild && isStageDone('draft', module)) {
+        if (!jsonMode) console.log(`Skipping module (draft already done): ${module}`);
+        receipt.skippedFiles.push(`${module} (stage already complete)`);
+        return;
+      }
+
       if (!isStageDone('seed', module)) {
         const msg = `Module '${module}' has not completed 'seed'. Run: node axion/scripts/axion-seed.mjs --module ${module}`;
         receipt.errors.push(msg);
@@ -2448,11 +2470,19 @@ async function main() {
         return;
       }
 
+      const domainDir = path.join(domainsDir, module);
+
+      if (!forceRebuild && isModuleFullyComplete(domainDir, module)) {
+        if (!jsonMode) console.log(`Skipping module (all files already complete): ${module}`);
+        receipt.skippedFiles.push(`${module} (all files complete)`);
+        if (!dryRun) markStageDone('draft', module);
+        return;
+      }
+
       try {
         if (!jsonMode) console.log(`Drafting module: ${module}`);
         receipt.modulesProcessed.push(module);
 
-        const domainDir = path.join(domainsDir, module);
         const domainPrefix = getDomainPrefix(config, module);
         const moduleTemplates = getModuleAllDocTypes(module);
 
