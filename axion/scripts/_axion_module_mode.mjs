@@ -99,8 +99,8 @@ function topoSort(modules) {
 export const AXION_MODULE_ORDER = loadModuleOrder();
 
 /**
- * Authoritative list of document types generated per module.
- * Generate, review, and verify scripts all use this same list.
+ * Authoritative list of ALL document types that can be generated per module.
+ * Used as fallback when a module does not specify its own templates in domains.json.
  * BELS is excluded because it is created by the draft stage, not generate.
  */
 export const AXION_DOC_TYPES = [
@@ -115,8 +115,44 @@ export const AXION_DOC_TYPES = [
 ];
 
 /**
+ * Get the list of doc types applicable to a specific module.
+ * Reads the module's `templates` array from domains.json.
+ * Falls back to AXION_DOC_TYPES if no templates field is defined.
+ * @param {string} slug - Module slug
+ * @param {object} [options] - Options
+ * @param {boolean} [options.excludeBels=true] - Exclude BELS (created by draft, not generate)
+ * @returns {string[]}
+ */
+export function getModuleDocTypes(slug, options = {}) {
+  const { excludeBels = true } = options;
+  const configPath = path.join("axion", "config", "domains.json");
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    const mod = (config.modules || []).find(m => m.slug === slug);
+    if (mod && Array.isArray(mod.templates) && mod.templates.length > 0) {
+      const templates = excludeBels
+        ? mod.templates.filter(t => t !== "BELS")
+        : mod.templates;
+      return templates;
+    }
+  } catch {}
+  return [...AXION_DOC_TYPES];
+}
+
+/**
+ * Get the FULL list of doc types for a module, including BELS.
+ * Used by review, verify, and content-fill to check all expected files.
+ * @param {string} slug - Module slug
+ * @returns {string[]}
+ */
+export function getModuleAllDocTypes(slug) {
+  return getModuleDocTypes(slug, { excludeBels: false });
+}
+
+/**
  * Subset of doc types that are required for verify to pass.
  * These are the critical docs without which a module cannot be locked.
+ * Filtered against the module's templates list if available.
  */
 export const AXION_REQUIRED_DOC_TYPES = [
   "BELS",
@@ -125,6 +161,17 @@ export const AXION_REQUIRED_DOC_TYPES = [
   "SCREENMAP",
   "TESTPLAN",
 ];
+
+/**
+ * Get the required doc types for a specific module.
+ * Intersects AXION_REQUIRED_DOC_TYPES with the module's templates list.
+ * @param {string} slug - Module slug
+ * @returns {string[]}
+ */
+export function getModuleRequiredDocTypes(slug) {
+  const moduleTemplates = getModuleAllDocTypes(slug);
+  return AXION_REQUIRED_DOC_TYPES.filter(t => moduleTemplates.includes(t));
+}
 
 /**
  * Doc types that the review script checks for required sections.

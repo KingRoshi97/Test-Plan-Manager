@@ -18,6 +18,7 @@ import {
   markStageDone,
   markStageFailed,
   AXION_DOC_TYPES,
+  getModuleDocTypes,
 } from './_axion_module_mode.mjs';
 
 const args = process.argv.slice(2);
@@ -201,7 +202,8 @@ try {
     const moduleConfig = getModuleConfig(config, module);
     let moduleFailed = false;
 
-    for (const templateName of AXION_DOC_TYPES) {
+    const moduleDocTypes = getModuleDocTypes(module);
+    for (const templateName of moduleDocTypes) {
       const { content, found } = loadTemplate(templateName, axionRoot);
 
       if (!found && !allowTemplateFallback) {
