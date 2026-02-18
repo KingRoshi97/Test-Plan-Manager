@@ -295,6 +295,11 @@ function ensureFile(filePath, content) {
   }
 
   if (fs.existsSync(filePath)) {
+    if (fileIsAlreadyComplete(filePath)) {
+      if (!jsonMode) console.log(`  Skipping (already complete): ${path.basename(filePath)}`);
+      receipt.skippedFiles.push(filePath + ' (already complete)');
+      return true;
+    }
     if (!dryRun) {
       fs.writeFileSync(filePath, content, 'utf8');
     }
@@ -403,6 +408,11 @@ function ensureFileWithMerge(filePath, draftContent, sectionMap) {
   }
 
   if (fs.existsSync(filePath)) {
+    if (fileIsAlreadyComplete(filePath)) {
+      if (!jsonMode) console.log(`  Skipping (already complete): ${path.basename(filePath)}`);
+      receipt.skippedFiles.push(filePath + ' (already complete)');
+      return true;
+    }
     const existing = fs.readFileSync(filePath, 'utf8');
     if (existing.includes('AXION:TEMPLATE_CONTRACT:v1')) {
       const merged = mergeIntoTemplate(existing, draftContent, sectionMap);
