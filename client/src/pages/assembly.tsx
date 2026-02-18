@@ -55,6 +55,7 @@ import {
   ScrollText,
   Wrench,
   LayoutGrid,
+  Square,
 } from "lucide-react";
 
 interface AssemblyProgress {
@@ -377,6 +378,7 @@ export default function AssemblyPage() {
   }
   const terminalRef = useRef<HTMLPreElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const manualStopRef = useRef(false);
 
   const { data: assembly, isLoading: assemblyLoading } = useQuery<EnrichedAssembly>({
     queryKey: ["/api/assemblies", assemblyId],
@@ -671,6 +673,7 @@ export default function AssemblyPage() {
   const runPipeline = (startFromStep?: string) => {
     if (!assemblyId || isRunning) return;
 
+    manualStopRef.current = false;
     setIsRunning(true);
     setStreamOutput("");
     setStepProgress([]);
@@ -775,7 +778,10 @@ export default function AssemblyPage() {
       es.close();
       eventSourceRef.current = null;
       setIsRunning(false);
-      toast({ title: "Pipeline connection lost", variant: "destructive" });
+      if (!manualStopRef.current) {
+        toast({ title: "Pipeline connection lost", variant: "destructive" });
+      }
+      manualStopRef.current = false;
     });
   };
 
@@ -1003,10 +1009,41 @@ export default function AssemblyPage() {
                   </Button>
                 )}
                 {isRunning && (
-                  <Badge variant="default" className="no-default-active-elevate bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-transparent text-xs" data-testid="badge-pipeline-running">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Running
-                  </Badge>
+                  <>
+                    <Badge variant="default" className="no-default-active-elevate bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-transparent text-xs" data-testid="badge-pipeline-running">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Running
+                    </Badge>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        manualStopRef.current = true;
+                        if (eventSourceRef.current) {
+                          eventSourceRef.current.close();
+                          eventSourceRef.current = null;
+                        }
+                        setIsRunning(false);
+                        setStepProgress((prev) =>
+                          prev.map((s) =>
+                            s.status === "running"
+                              ? { ...s, status: "error", reason: "Manually stopped" }
+                              : s.status === "pending"
+                              ? s
+                              : s
+                          )
+                        );
+                        toast({ title: "Pipeline stopped", variant: "destructive" });
+                        queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/status", assembly?.projectName] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/pipeline-runs", assembly?.projectName] });
+                      }}
+                      data-testid="button-stop-pipeline"
+                    >
+                      <Square className="w-4 h-4" />
+                      Stop
+                    </Button>
+                  </>
                 )}
                 {pipelineFailed && failedStep && (
                   <>
