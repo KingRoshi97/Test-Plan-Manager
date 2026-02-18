@@ -9,13 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { PipelineRun } from "@shared/schema";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -145,16 +138,6 @@ interface StepProgress {
   estimatedMs?: number;
   reason?: string;
   startedAt?: number;
-}
-
-function getStagePlanLabel(key: string, plan: StagePlanConfig | string[]): string {
-  if (!Array.isArray(plan) && plan.label) return plan.label;
-  return key;
-}
-
-function getStagePlanSteps(plan: StagePlanConfig | string[]): string[] {
-  if (Array.isArray(plan)) return plan;
-  return plan.steps || [];
 }
 
 function getStateBadgeVariant(state: string) {
@@ -323,14 +306,13 @@ export default function AssemblyPage() {
   const assemblyId = params?.id;
   const [, navigate] = useLocation();
 
-  const [selectedStagePlan, setSelectedStagePlan] = useState<string>("");
+  const selectedStagePlan = "docs:full";
   const [isRunning, setIsRunning] = useState(false);
   const [stepProgress, setStepProgress] = useState<StepProgress[]>([]);
   const [streamOutput, setStreamOutput] = useState("");
   const [activePlanLabel, setActivePlanLabel] = useState<string>("");
   const [pipelineEstimate, setPipelineEstimate] = useState<{ totalMs: number; perStep: Record<string, number> } | null>(null);
   const [pipelineStartedAt, setPipelineStartedAt] = useState<number | null>(null);
-  const [forceShowSelector, setForceShowSelector] = useState(false);
   const [importSourcePath, setImportSourcePath] = useState("");
   const [reviseMode, setReviseMode] = useState(false);
   const [reviseTarget, setReviseTarget] = useState<{
@@ -498,7 +480,6 @@ export default function AssemblyPage() {
       setUpgradeNotesInput("");
       setStepProgress([]);
       setStreamOutput("");
-      setForceShowSelector(true);
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId] });
     },
     onError: () => {
@@ -658,11 +639,8 @@ export default function AssemblyPage() {
   }, []);
 
   useEffect(() => {
-    if (assembly && !isRunning && stepProgress.length === 0 && !forceShowSelector) {
+    if (assembly && !isRunning && stepProgress.length === 0) {
       const progress = assembly.progress as AssemblyProgress | null;
-      if (progress?.stagePlanId && !selectedStagePlan) {
-        setSelectedStagePlan(progress.stagePlanId);
-      }
       if (progress?.stagePlanLabel && !activePlanLabel) {
         setActivePlanLabel(progress.stagePlanLabel);
       }
@@ -690,17 +668,12 @@ export default function AssemblyPage() {
     }
   }, [assembly]);
 
-  const stagePlans = presetsData?.stage_plans
-    ? Object.entries(presetsData.stage_plans)
-    : [];
-
   const runPipeline = (startFromStep?: string) => {
-    if (!assemblyId || !selectedStagePlan || isRunning) return;
+    if (!assemblyId || isRunning) return;
 
     setIsRunning(true);
     setStreamOutput("");
     setStepProgress([]);
-    setForceShowSelector(false);
 
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
@@ -1011,107 +984,79 @@ export default function AssemblyPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {(() => {
-            const hasRun = stepProgress.length > 0 || (!forceShowSelector && assembly.state !== "queued" && assembly.progress?.steps);
-            const resolvedPlanLabel = activePlanLabel || (assembly.progress as AssemblyProgress)?.stagePlanLabel || selectedStagePlan;
+            const hasRun = stepProgress.length > 0 || (assembly.state !== "queued" && assembly.progress?.steps);
             const failedStep = stepProgress.find(s => s.status === "error");
             const pipelineFinished = !isRunning && stepProgress.length > 0 && stepProgress.every(s => s.status !== "pending" && s.status !== "running");
             const pipelineSucceeded = pipelineFinished && !failedStep;
             const pipelineFailed = pipelineFinished && !!failedStep;
-            const showSelector = !hasRun && !isRunning;
 
             return (
               <div className="flex items-center gap-3 flex-wrap">
-                {showSelector ? (
+                {!hasRun && !isRunning && (
+                  <Button
+                    onClick={() => runPipeline()}
+                    data-testid="button-run-pipeline"
+                  >
+                    <Play className="w-4 h-4" />
+                    Run Pipeline
+                  </Button>
+                )}
+                {isRunning && (
+                  <Badge variant="default" className="no-default-active-elevate bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-transparent text-xs" data-testid="badge-pipeline-running">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Running
+                  </Badge>
+                )}
+                {pipelineFailed && failedStep && (
                   <>
-                    <Select
-                      value={selectedStagePlan}
-                      onValueChange={setSelectedStagePlan}
-                    >
-                      <SelectTrigger className="w-72" data-testid="select-stage-plan">
-                        <SelectValue placeholder="What do you want to run?" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stagePlans.map(([id, plan]) => (
-                          <SelectItem key={id} value={id} data-testid={`select-item-plan-${id}`}>
-                            {getStagePlanLabel(id, plan)} ({getStagePlanSteps(plan).length} steps)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                     <Button
-                      onClick={() => runPipeline()}
-                      disabled={!selectedStagePlan}
-                      data-testid="button-run-pipeline"
+                      size="sm"
+                      onClick={() => {
+                        setIsRunning(false);
+                        setStepProgress([]);
+                        setStreamOutput("");
+                        setTimeout(() => runPipeline(failedStep.stepId), 0);
+                      }}
+                      data-testid="button-retry-from-failed"
                     >
-                      <Play className="w-4 h-4" />
-                      Run Pipeline
+                      <RotateCcw className="w-4 h-4" />
+                      Retry from {failedStep.label}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setIsRunning(false);
+                        setStepProgress([]);
+                        setStreamOutput("");
+                        setTimeout(() => runPipeline(), 0);
+                      }}
+                      data-testid="button-retry-pipeline"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Restart All
                     </Button>
                   </>
-                ) : (
+                )}
+                {pipelineSucceeded && (
                   <>
-                    <Badge variant="secondary" className="no-default-active-elevate text-xs" data-testid="badge-pipeline-plan">
-                      {resolvedPlanLabel || "Pipeline"}
+                    <Badge variant="success" className="no-default-active-elevate text-xs" data-testid="badge-pipeline-success">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Completed
                     </Badge>
-                    {isRunning && (
-                      <Badge variant="default" className="no-default-active-elevate bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-transparent text-xs" data-testid="badge-pipeline-running">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        Running
-                      </Badge>
-                    )}
-                    {pipelineFailed && failedStep && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setIsRunning(false);
-                            setStepProgress([]);
-                            setStreamOutput("");
-                            setTimeout(() => runPipeline(failedStep.stepId), 0);
-                          }}
-                          disabled={!selectedStagePlan}
-                          data-testid="button-retry-from-failed"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          Retry from {failedStep.label}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setIsRunning(false);
-                            setStepProgress([]);
-                            setStreamOutput("");
-                            setTimeout(() => runPipeline(), 0);
-                          }}
-                          disabled={!selectedStagePlan}
-                          data-testid="button-retry-pipeline"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          Restart All
-                        </Button>
-                      </>
-                    )}
-                    {pipelineSucceeded && (
-                      <Badge variant="success" className="no-default-active-elevate text-xs" data-testid="badge-pipeline-success">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Completed
-                      </Badge>
-                    )}
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => {
                         setStepProgress([]);
                         setStreamOutput("");
                         setActivePlanLabel("");
-                        setSelectedStagePlan("");
-                        setForceShowSelector(true);
+                        setTimeout(() => runPipeline(), 0);
                       }}
-                      className="text-xs text-muted-foreground"
-                      disabled={isRunning}
-                      data-testid="button-change-pipeline"
+                      data-testid="button-run-again"
                     >
-                      Change Pipeline
+                      <RotateCcw className="w-4 h-4" />
+                      Run Again
                     </Button>
                   </>
                 )}
