@@ -187,6 +187,22 @@ const pipelineSteps: Record<string, PipelineStep> = {
     group: 'docs',
     desc: 'AI-fill UNKNOWN placeholders',
   },
+  'draft-fill': {
+    cmd: 'node',
+    args: (_pn, _br, body) => {
+      const a = ['axion/scripts/axion-draft.mjs'];
+      if (body.module && typeof body.module === 'string') {
+        a.push('--module', body.module);
+      } else {
+        a.push('--all');
+      }
+      return a;
+    },
+    label: 'Draft & Fill',
+    cwd: (br) => br,
+    group: 'docs',
+    desc: 'Draft docs then AI-fill UNKNOWNs in one pass',
+  },
   'lock': {
     cmd: 'node',
     args: (_pn, _br, body) => {
@@ -1479,7 +1495,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     }
   });
 
-  const AI_STEP_IDS = new Set(['draft', 'content-fill', 'generate', 'seed', 'review', 'build-plan', 'build-exec', 'build']);
+  const AI_STEP_IDS = new Set(['draft', 'content-fill', 'draft-fill', 'generate', 'seed', 'review', 'build-plan', 'build-exec', 'build']);
 
   app.get('/api/performance-stats', async (_req: Request, res: Response) => {
     try {
@@ -1946,7 +1962,36 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           continue;
         }
 
-        if (stepId === 'content-fill') {
+        if (stepId === 'content-fill' || stepId === 'draft-fill') {
+          const isDraftFill = stepId === 'draft-fill';
+
+          if (isDraftFill) {
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: 'Phase 1: Drafting documentation...' })}\n\n`);
+            const draftStep = pipelineSteps['draft'];
+            const draftModules = presetModules.length > 0 && presetModules.length < 19 ? presetModules : [];
+
+            if (draftModules.length > 0) {
+              for (const mod of draftModules) {
+                if (aborted) break;
+                const modBody = { projectName, idea: (assembly as any).idea || '', context: (assembly as any).context || '', mode: (assembly as any).mode || '', category: (assembly as any).category || '', module: mod };
+                const modArgs = draftStep.args(projectName, buildRoot, modBody);
+                const modCwd = draftStep.cwd ? draftStep.cwd(buildRoot) : buildRoot;
+                res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Drafting module: ${mod}` })}\n\n`);
+                await runSingleStep(draftStep, modArgs, modCwd, aborted, (event, data) => {
+                  if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
+                }, assemblyEnv);
+              }
+            } else {
+              const allArgs = draftStep.args(projectName, buildRoot, { projectName, idea: (assembly as any).idea || '', context: (assembly as any).context || '', mode: (assembly as any).mode || '', category: (assembly as any).category || '' });
+              const draftCwd = draftStep.cwd ? draftStep.cwd(buildRoot) : buildRoot;
+              await runSingleStep(draftStep, allArgs, draftCwd, aborted, (event, data) => {
+                if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
+              }, assemblyEnv);
+            }
+            if (aborted) break;
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: 'Phase 2: AI-filling remaining UNKNOWNs...' })}\n\n`);
+          }
+
           const cfStart = Date.now();
           try {
             const modulesToFill = presetModules.length > 0 ? presetModules : getAllModulesInWorkspace(buildRoot);
@@ -1962,20 +2007,25 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             }, structuredInput, includeProductDocs);
 
             const cfDuration = Date.now() - cfStart;
-            const summary = `Content Fill complete: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
+            const summary = `${isDraftFill ? 'Draft & Fill' : 'Content Fill'} complete: ${fillReport.totalFilesFilled} filled, ${fillReport.totalFilesSkipped} skipped, ${fillReport.totalFilesErrored} errors`;
             res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: summary })}\n\n`);
 
             const cfStatus = fillReport.totalFilesErrored > 0 && fillReport.totalFilesFilled === 0 ? 'error' : 'success';
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: cfStatus, durationMs: cfDuration })}\n\n`);
 
+            const markerStage = isDraftFill ? 'draft-fill' : 'content-fill';
             for (const mod of modulesToFill) {
               const modHasErrors = fillReport.results.some(r => r.module === mod && r.status === 'error');
-              writeModuleStageMarker(buildRoot, 'content-fill', mod, modHasErrors ? 'failed' : 'success');
+              writeModuleStageMarker(buildRoot, markerStage, mod, modHasErrors ? 'failed' : 'success');
+              if (isDraftFill) {
+                writeModuleStageMarker(buildRoot, 'draft', mod, modHasErrors ? 'failed' : 'success');
+                writeModuleStageMarker(buildRoot, 'content-fill', mod, modHasErrors ? 'failed' : 'success');
+              }
             }
 
             const cfResult: RunResult = {
               status: cfStatus,
-              command: 'Content Fill',
+              command: isDraftFill ? 'Draft & Fill' : 'Content Fill',
               exitCode: 0,
               stdout: summary + '\n' + fillReport.results.map(r => `  ${r.module}/${path.basename(r.file)}: ${r.status} (${r.unknownsBefore}→${r.unknownsAfter})`).join('\n'),
               stderr: fillReport.results.filter(r => r.error).map(r => `${r.module}: ${r.error}`).join('\n'),
@@ -1984,23 +2034,23 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             await persistRunResult(stepId, step, projectName, cfResult);
 
             if (cfStatus === 'error') {
-              lastError = 'Content fill failed for all files';
+              lastError = `${isDraftFill ? 'Draft & fill' : 'Content fill'} failed for all files`;
               break;
             }
           } catch (cfErr: unknown) {
             const cfDuration = Date.now() - cfStart;
             const cfErrMsg = cfErr instanceof Error ? cfErr.message : String(cfErr);
-            res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: `Content fill error: ${cfErrMsg}` })}\n\n`);
+            res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: `${isDraftFill ? 'Draft & fill' : 'Content fill'} error: ${cfErrMsg}` })}\n\n`);
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: cfDuration })}\n\n`);
 
             const cfErrModules = presetModules.length > 0 ? presetModules : getAllModulesInWorkspace(buildRoot);
             for (const mod of cfErrModules) {
-              writeModuleStageMarker(buildRoot, 'content-fill', mod, 'failed', { reason: cfErrMsg });
+              writeModuleStageMarker(buildRoot, isDraftFill ? 'draft-fill' : 'content-fill', mod, 'failed', { reason: cfErrMsg });
             }
 
             const cfErrResult: RunResult = {
               status: 'error',
-              command: 'Content Fill',
+              command: isDraftFill ? 'Draft & Fill' : 'Content Fill',
               exitCode: 1,
               stdout: '',
               stderr: cfErrMsg,
@@ -2008,7 +2058,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             };
             await persistRunResult(stepId, step, projectName, cfErrResult);
 
-            lastError = `Content fill failed: ${cfErrMsg}`;
+            lastError = `${isDraftFill ? 'Draft & fill' : 'Content fill'} failed: ${cfErrMsg}`;
             break;
           }
           continue;
@@ -2741,7 +2791,36 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           continue;
         }
 
-        if (stepId === 'content-fill') {
+        if (stepId === 'content-fill' || stepId === 'draft-fill') {
+          const isDraftFill2 = stepId === 'draft-fill';
+
+          if (isDraftFill2) {
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: 'Phase 1: Drafting documentation...' })}\n\n`);
+            const draftStep2 = pipelineSteps['draft'];
+            const draftModules2 = presetModules.length > 0 && presetModules.length < 19 ? presetModules : [];
+
+            if (draftModules2.length > 0) {
+              for (const mod of draftModules2) {
+                if (aborted) break;
+                const modBody2 = { ...stepBody, module: mod };
+                const modArgs2 = draftStep2.args(projectName, buildRoot, modBody2);
+                const modCwd2 = draftStep2.cwd ? draftStep2.cwd(buildRoot) : buildRoot;
+                res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: `Drafting module: ${mod}` })}\n\n`);
+                await runSingleStep(draftStep2, modArgs2, modCwd2, aborted, (event, data) => {
+                  if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
+                }, assemblyEnv2);
+              }
+            } else {
+              const allArgs2 = draftStep2.args(projectName, buildRoot, { ...stepBody });
+              const draftCwd2 = draftStep2.cwd ? draftStep2.cwd(buildRoot) : buildRoot;
+              await runSingleStep(draftStep2, allArgs2, draftCwd2, aborted, (event, data) => {
+                if (!aborted) res.write(`event: ${event}\ndata: ${JSON.stringify({ index: i, stepId, text: data })}\n\n`);
+              }, assemblyEnv2);
+            }
+            if (aborted) break;
+            res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: 'Phase 2: AI-filling remaining UNKNOWNs...' })}\n\n`);
+          }
+
           const cfStart2 = Date.now();
           try {
             const modulesToFill2 = presetModules.length > 0 ? presetModules : getAllModulesInWorkspace(buildRoot);
@@ -2756,15 +2835,20 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
             }, undefined, includeProductDocs2);
 
             const cfDuration2 = Date.now() - cfStart2;
-            const summary2 = `Content Fill complete: ${fillReport2.totalFilesFilled} filled, ${fillReport2.totalFilesSkipped} skipped, ${fillReport2.totalFilesErrored} errors`;
+            const summary2 = `${isDraftFill2 ? 'Draft & Fill' : 'Content Fill'} complete: ${fillReport2.totalFilesFilled} filled, ${fillReport2.totalFilesSkipped} skipped, ${fillReport2.totalFilesErrored} errors`;
             res.write(`event: stdout\ndata: ${JSON.stringify({ index: i, stepId, text: summary2 })}\n\n`);
 
             const cfStatus2 = fillReport2.totalFilesErrored > 0 && fillReport2.totalFilesFilled === 0 ? 'error' : 'success';
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: cfStatus2, durationMs: cfDuration2 })}\n\n`);
 
+            const markerStage2 = isDraftFill2 ? 'draft-fill' : 'content-fill';
             for (const mod of modulesToFill2) {
               const modHasErrors = fillReport2.results.some(r => r.module === mod && r.status === 'error');
-              writeModuleStageMarker(buildRoot, 'content-fill', mod, modHasErrors ? 'failed' : 'success');
+              writeModuleStageMarker(buildRoot, markerStage2, mod, modHasErrors ? 'failed' : 'success');
+              if (isDraftFill2) {
+                writeModuleStageMarker(buildRoot, 'draft', mod, modHasErrors ? 'failed' : 'success');
+                writeModuleStageMarker(buildRoot, 'content-fill', mod, modHasErrors ? 'failed' : 'success');
+              }
             }
 
             if (cfStatus2 === 'error' && !body.continueOnError) {
@@ -2773,12 +2857,12 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           } catch (cfErr2: unknown) {
             const cfDuration2 = Date.now() - cfStart2;
             const cfErrMsg2 = cfErr2 instanceof Error ? cfErr2.message : String(cfErr2);
-            res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: `Content fill error: ${cfErrMsg2}` })}\n\n`);
+            res.write(`event: stderr\ndata: ${JSON.stringify({ index: i, stepId, text: `${isDraftFill2 ? 'Draft & fill' : 'Content fill'} error: ${cfErrMsg2}` })}\n\n`);
             res.write(`event: step-done\ndata: ${JSON.stringify({ index: i, stepId, label: step.label, status: 'error', durationMs: cfDuration2 })}\n\n`);
 
             const cfErrModules2 = presetModules.length > 0 ? presetModules : getAllModulesInWorkspace(buildRoot);
             for (const mod of cfErrModules2) {
-              writeModuleStageMarker(buildRoot, 'content-fill', mod, 'failed', { reason: cfErrMsg2 });
+              writeModuleStageMarker(buildRoot, isDraftFill2 ? 'draft-fill' : 'content-fill', mod, 'failed', { reason: cfErrMsg2 });
             }
 
             if (!body.continueOnError) break;

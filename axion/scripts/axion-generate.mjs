@@ -137,7 +137,7 @@ function printHumanReport() {
   console.log(`Script: axion:generate`);
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`Modules: ${report.modulesProcessed.join(', ')}`);
-  console.log(`Doc Types (global): ${AXION_DOC_TYPES.join(', ')}`);
+  console.log(`Doc Types (available): ${AXION_DOC_TYPES.join(', ')} (per-module filtering applied via domains.json)`);
   console.log(`\nCreated (${report.createdFiles.length}):`);
   report.createdFiles.forEach(f => console.log(`  + ${f}`));
   console.log(`\nSkipped (${report.skippedFiles.length}):`);

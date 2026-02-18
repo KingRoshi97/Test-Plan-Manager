@@ -17,6 +17,7 @@ const DEFAULT_ESTIMATES: Record<string, number> = {
   draft: 45000,
   review: 30000,
   "content-fill": 60000,
+  "draft-fill": 90000,
   verify: 5000,
   lock: 2000,
   package: 5000,
