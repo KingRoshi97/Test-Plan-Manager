@@ -196,6 +196,19 @@
     "mobile",
     "desktop"
   ],
+  "build_phase_map": {
+    "foundation": 2,
+    "data": 2,
+    "security": 2,
+    "core": 3,
+    "frontend": 3,
+    "integration": 3,
+    "platform": 3,
+    "quality": 4,
+    "crosscutting": 4,
+    "operations": 4,
+    "developer": 4
+  },
   "stages": ["generate", "seed", "draft", "review", "verify", "lock"],
   "roshi_docs": {
     "RPBS": {
