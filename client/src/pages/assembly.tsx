@@ -986,7 +986,8 @@ export default function AssemblyPage() {
           {(() => {
             const hasRun = stepProgress.length > 0 || (assembly.state !== "queued" && assembly.progress?.steps);
             const failedStep = stepProgress.find(s => s.status === "error");
-            const pipelineFinished = !isRunning && stepProgress.length > 0 && stepProgress.every(s => s.status !== "pending" && s.status !== "running");
+            const allDone = stepProgress.length > 0 && stepProgress.every(s => s.status !== "pending" && s.status !== "running");
+            const pipelineFinished = !isRunning && stepProgress.length > 0 && (allDone || !!failedStep);
             const pipelineSucceeded = pipelineFinished && !failedStep;
             const pipelineFailed = pipelineFinished && !!failedStep;
 
