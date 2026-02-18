@@ -214,25 +214,44 @@ async function enhanceFileWithAI(openai, filePath, projectName, projectIdea, mod
   return false;
 }
 
+function fileHasUnknowns(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    return /\bUNKNOWN\b/i.test(content);
+  } catch { return false; }
+}
+
+function fileIsAlreadyComplete(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    if (/\bUNKNOWN\b/i.test(content)) return false;
+    const lines = content.split('\n').filter(l => l.trim().length > 0);
+    if (lines.length < 10) return false;
+    const templateMarkers = ['AXION:TEMPLATE_CONTRACT:v1', 'Truth Candidates', 'DRAFT - Truth'];
+    const hasTemplateMarker = templateMarkers.some(m => content.includes(m));
+    if (hasTemplateMarker) return false;
+    return true;
+  } catch { return false; }
+}
+
 async function enhanceModuleWithAI(openai, domainDir, moduleName, ctx, rpbsContent, rebsContent, stackProfile, structuredInput) {
-  const docFiles = [
-    `BELS_${moduleName}.md`,
-    `DDES_${moduleName}.md`,
-    `DIM_${moduleName}.md`,
-    `UX_Foundations_${moduleName}.md`,
-    `UI_Constraints_${moduleName}.md`,
-    `SCREENMAP_${moduleName}.md`,
-    `TESTPLAN_${moduleName}.md`,
-    `COMPONENT_LIBRARY_${moduleName}.md`,
-    `COPY_GUIDE_${moduleName}.md`,
-  ];
+  const moduleDocTypes = getModuleAllDocTypes(moduleName);
+  const docFiles = moduleDocTypes.map(dt => `${dt}_${moduleName}.md`);
 
   let enhanced = 0;
   let failed = 0;
+  let skipped = 0;
 
   for (const docFile of docFiles) {
     const filePath = path.join(domainDir, docFile);
     if (!fs.existsSync(filePath)) continue;
+
+    if (fileIsAlreadyComplete(filePath)) {
+      if (!jsonMode) console.log(`  Skipping (already complete): ${docFile}`);
+      receipt.skippedFiles.push(filePath + ' (already complete)');
+      skipped++;
+      continue;
+    }
 
     if (!jsonMode) console.log(`  AI-enhancing: ${docFile}`);
     const ok = await enhanceFileWithAI(openai, filePath, ctx.name, ctx.idea, moduleName, rpbsContent, rebsContent, stackProfile, structuredInput);
@@ -240,7 +259,7 @@ async function enhanceModuleWithAI(openai, domainDir, moduleName, ctx, rpbsConte
     else failed++;
   }
 
-  return { enhanced, failed };
+  return { enhanced, failed, skipped };
 }
 
 // ─── Config Loading ─────────────────────────────────────────────────────────
@@ -2492,7 +2511,7 @@ async function main() {
         if (openai && aiEnabled) {
           if (!jsonMode) console.log(`  AI-enhancing module: ${module}`);
           const aiResult = await enhanceModuleWithAI(openai, domainDir, module, ctx, rpbsContent, rebsContent, stackProfile, structuredInput);
-          if (!jsonMode) console.log(`  AI enhancement: ${aiResult.enhanced} files enhanced, ${aiResult.failed} kept as template`);
+          if (!jsonMode) console.log(`  AI enhancement: ${aiResult.enhanced} enhanced, ${aiResult.skipped || 0} skipped (already complete), ${aiResult.failed} kept as template`);
         }
 
         if (!dryRun) {
