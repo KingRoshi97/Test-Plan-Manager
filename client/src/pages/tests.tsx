@@ -5,6 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   FlaskConical,
   Loader2,
   Play,
@@ -23,6 +30,7 @@ import {
   Terminal,
   FolderOpen,
   Filter,
+  FolderGit2,
 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
@@ -69,6 +77,13 @@ interface AvailableTestFile {
   path: string;
   name: string;
   dir: string;
+}
+
+interface TestWorkspace {
+  name: string;
+  label: string;
+  hasTests: boolean;
+  hasVitest: boolean;
 }
 
 function formatDuration(ms: number): string {
@@ -141,6 +156,7 @@ function groupAvailableByDir(files: AvailableTestFile[]): Record<string, Availab
 }
 
 export default function TestsPage() {
+  const [workspace, setWorkspace] = useState<string>("__axion__");
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [isRunning, setIsRunning] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -159,13 +175,19 @@ export default function TestsPage() {
   const consoleEndRef = useRef<HTMLDivElement>(null);
   const completedFilesRef = useRef<Set<string>>(new Set());
 
+  const { data: workspaces } = useQuery<TestWorkspace[]>({
+    queryKey: ["/api/tests/workspaces"],
+  });
+
   const { data, isLoading } = useQuery<LastTestResponse>({
-    queryKey: ["/api/tests/last"],
+    queryKey: ["/api/tests/last", workspace],
+    queryFn: () => fetch(`/api/tests/last?workspace=${encodeURIComponent(workspace)}`).then(r => r.json()),
     refetchInterval: isRunning ? 2000 : false,
   });
 
   const { data: availableFiles } = useQuery<{ files: AvailableTestFile[] }>({
-    queryKey: ["/api/tests/files"],
+    queryKey: ["/api/tests/files", workspace],
+    queryFn: () => fetch(`/api/tests/files?workspace=${encodeURIComponent(workspace)}`).then(r => r.json()),
   });
 
   const result = liveResult || data?.result || null;
@@ -231,7 +253,7 @@ export default function TestsPage() {
     lastEventTimeRef.current = Date.now();
 
     try {
-      const body: Record<string, string> = {};
+      const body: Record<string, string> = { workspace };
       if (fileToRun) body.file = fileToRun;
 
       const response = await fetch("/api/tests/run", {
@@ -357,10 +379,10 @@ export default function TestsPage() {
       setIsRunning(false);
       setIsCancelling(false);
       setCurrentFile(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/tests/last"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tests/last", workspace] });
       if (!liveResultRef.current) {
         try {
-          const lastRes = await fetch("/api/tests/last");
+          const lastRes = await fetch(`/api/tests/last?workspace=${encodeURIComponent(workspace)}`);
           if (lastRes.ok) {
             const lastData = await lastRes.json() as LastTestResponse;
             if (lastData.result) {
@@ -377,7 +399,7 @@ export default function TestsPage() {
         }
       }
     }
-  }, [selectedFile]);
+  }, [selectedFile, workspace]);
 
   if (isLoading) {
     return (
@@ -408,6 +430,36 @@ export default function TestsPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <FlaskConical className="w-5 h-5" />
         <h2 className="text-lg font-semibold" data-testid="text-tests-header">Test Suite</h2>
+        <Select
+          value={workspace}
+          onValueChange={(val) => {
+            setWorkspace(val);
+            setSelectedFile(null);
+            setLiveResult(null);
+            setLiveFiles([]);
+            setConsoleLines([]);
+            setRunError(null);
+            setShowFilePicker(false);
+          }}
+          disabled={running}
+        >
+          <SelectTrigger className="w-[220px]" data-testid="select-workspace">
+            <FolderGit2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+            <SelectValue placeholder="Select workspace" />
+          </SelectTrigger>
+          <SelectContent>
+            {workspaces?.map((ws) => (
+              <SelectItem key={ws.name} value={ws.name} data-testid={`workspace-option-${ws.name}`}>
+                <span className="flex items-center gap-2">
+                  {ws.label}
+                  {!ws.hasTests && (
+                    <Badge variant="outline" className="text-xs">no tests</Badge>
+                  )}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {totalAvailable > 0 && (
           <Badge variant="secondary" className="text-xs">
             {totalAvailable} files
@@ -541,6 +593,20 @@ export default function TestsPage() {
             </Card>
           )}
         </div>
+      )}
+
+      {!running && !result && totalAvailable === 0 && (
+        <Card data-testid="card-no-tests">
+          <CardContent className="flex flex-col items-center justify-center py-12 gap-3">
+            <FlaskConical className="w-8 h-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground text-center">
+              No test files found in this workspace.
+            </p>
+            <p className="text-xs text-muted-foreground text-center max-w-md">
+              Test files should be in a <code className="bg-muted px-1 rounded">tests/</code> directory and match <code className="bg-muted px-1 rounded">*.test.*</code> or <code className="bg-muted px-1 rounded">*.spec.*</code> patterns.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {running && !liveResult && (
