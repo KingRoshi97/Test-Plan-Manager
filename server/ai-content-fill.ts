@@ -320,6 +320,175 @@ function detectDocType(fileName: string): { label: string; guidance: string } {
   };
 }
 
+const AXION_TEMPLATES_DIR = path.resolve(__dirname, '..', 'axion', 'templates', 'core');
+const AXION_KNOWLEDGE_DIR = path.resolve(__dirname, '..', 'axion', 'knowledge');
+
+interface DashboardSystemContext {
+  templateGuidance: string;
+  knowledgeContext: string;
+  upstreamDocsContext: string;
+}
+
+function extractTemplateGuidance(docType: string): string {
+  const templateMap: Record<string, string> = {
+    'BELS': 'BELS.template.md', 'DDES': 'DDES.template.md', 'DIM': 'DIM.template.md',
+    'SCREENMAP': 'SCREENMAP.template.md', 'TESTPLAN': 'TESTPLAN.template.md',
+    'COMPONENT_LIBRARY': 'COMPONENT_LIBRARY.template.md', 'COPY_GUIDE': 'COPY_GUIDE.template.md',
+    'UI_Constraints': 'UI_Constraints.template.md', 'UX_Foundations': 'UX_Foundations.template.md',
+    'ALRP': 'ALRP.template.md', 'SROL': 'SROL.template.md', 'TIES': 'TIES.template.md', 'ERC': 'ERC.template.md',
+  };
+
+  const templateFile = templateMap[docType];
+  if (!templateFile) return '';
+  const templatePath = path.join(AXION_TEMPLATES_DIR, templateFile);
+  if (!fs.existsSync(templatePath)) return '';
+
+  try {
+    const content = fs.readFileSync(templatePath, 'utf8');
+    const guidanceMatch = content.match(/<!-- AXION:AGENT_GUIDANCE\n([\s\S]*?)-->/);
+    if (!guidanceMatch) return '';
+    return `--- TEMPLATE GUIDANCE (from ${templateFile}) ---\n${guidanceMatch[1].trim()}\n--- END TEMPLATE GUIDANCE ---`;
+  } catch { return ''; }
+}
+
+function parseUpstreamDocRefs(guidanceBlock: string): string[] {
+  const refs: string[] = [];
+  const sourcesMatch = guidanceBlock.match(/SOURCES TO DERIVE FROM:\n([\s\S]*?)(?=\n(?:RULES|CASCADE|$))/);
+  if (!sourcesMatch) return refs;
+
+  const lines = sourcesMatch[1].split('\n');
+  for (const line of lines) {
+    if (/RPBS/i.test(line) && !refs.includes('RPBS')) refs.push('RPBS');
+    if (/REBS/i.test(line) && !refs.includes('REBS')) refs.push('REBS');
+    if (/DDES/i.test(line) && !refs.includes('DDES')) refs.push('DDES');
+    if (/BELS/i.test(line) && !refs.includes('BELS')) refs.push('BELS');
+    if (/DIM/i.test(line) && !refs.includes('DIM')) refs.push('DIM');
+    if (/SCREENMAP/i.test(line) && !refs.includes('SCREENMAP')) refs.push('SCREENMAP');
+    if (/UX_Foundations/i.test(line) && !refs.includes('UX_Foundations')) refs.push('UX_Foundations');
+    if (/UI_Constraints/i.test(line) && !refs.includes('UI_Constraints')) refs.push('UI_Constraints');
+    if (/ERC/i.test(line) && !refs.includes('ERC')) refs.push('ERC');
+    if (/TIES/i.test(line) && !refs.includes('TIES')) refs.push('TIES');
+    if (/domain.?map|domains\.json/i.test(line) && !refs.includes('domains.json')) refs.push('domains.json');
+  }
+  return refs;
+}
+
+function resolveUpstreamDocs(projectRoot: string, moduleName: string, docRefs: string[], maxCharsPerDoc = 6000): string {
+  if (docRefs.length === 0) return '';
+  const chunks: string[] = [];
+
+  for (const ref of docRefs) {
+    let docContent = '', docLabel = ref;
+    const tryRead = (p: string, label: string) => {
+      if (fs.existsSync(p)) { docContent = fs.readFileSync(p, 'utf8'); docLabel = label; }
+    };
+
+    if (ref === 'RPBS') tryRead(path.join(projectRoot, 'axion', 'docs', 'product', 'RPBS_Product.md'), 'RPBS_Product.md');
+    else if (ref === 'REBS') tryRead(path.join(projectRoot, 'axion', 'docs', 'product', 'REBS_Product.md'), 'REBS_Product.md');
+    else if (ref === 'DDES') tryRead(path.join(projectRoot, 'axion', 'domains', moduleName, `DDES_${moduleName}.md`), `DDES_${moduleName}.md`);
+    else if (ref === 'BELS') tryRead(path.join(projectRoot, 'axion', 'domains', moduleName, `BELS_${moduleName}.md`), `BELS_${moduleName}.md`);
+    else if (ref === 'DIM') tryRead(path.join(projectRoot, 'axion', 'domains', moduleName, `DIM_${moduleName}.md`), `DIM_${moduleName}.md`);
+    else if (ref === 'SCREENMAP') tryRead(path.join(projectRoot, 'axion', 'domains', moduleName, `SCREENMAP_${moduleName}.md`), `SCREENMAP_${moduleName}.md`);
+    else if (ref === 'UX_Foundations') tryRead(path.join(projectRoot, 'axion', 'domains', moduleName, `UX_Foundations_${moduleName}.md`), `UX_Foundations_${moduleName}.md`);
+    else if (ref === 'UI_Constraints') tryRead(path.join(projectRoot, 'axion', 'domains', moduleName, `UI_Constraints_${moduleName}.md`), `UI_Constraints_${moduleName}.md`);
+    else if (ref === 'ERC') {
+      for (const p of [path.join(projectRoot, 'registry', 'ERC.md'), path.join(projectRoot, 'axion', 'registry', 'ERC.md')]) {
+        if (fs.existsSync(p)) { docContent = fs.readFileSync(p, 'utf8'); docLabel = 'ERC.md'; break; }
+      }
+    }
+    else if (ref === 'TIES') tryRead(path.join(projectRoot, 'axion', 'domains', moduleName, `TIES_${moduleName}.md`), `TIES_${moduleName}.md`);
+    else if (ref === 'domains.json') tryRead(path.join(projectRoot, 'axion', 'config', 'domains.json'), 'domains.json');
+
+    if (docContent) {
+      const trimmed = docContent.length > maxCharsPerDoc ? docContent.substring(0, maxCharsPerDoc) + '\n... [truncated]' : docContent;
+      chunks.push(`### ${docLabel}\n${trimmed}`);
+    }
+  }
+
+  if (chunks.length === 0) return '';
+  return `--- UPSTREAM DOCUMENTS (derive content from these) ---\n\n${chunks.join('\n\n')}\n\n--- END UPSTREAM DOCUMENTS ---`;
+}
+
+function resolveKnowledgeFiles(docType: string): string {
+  const knowledgeMapPath = path.resolve(__dirname, '..', 'axion', 'config', 'knowledge-map.json');
+  if (!fs.existsSync(knowledgeMapPath) || !fs.existsSync(AXION_KNOWLEDGE_DIR)) return '';
+
+  try {
+    const knowledgeMap = JSON.parse(fs.readFileSync(knowledgeMapPath, 'utf8'));
+    const docTypeKnowledge = knowledgeMap.doc_type_knowledge?.[docType];
+    if (!docTypeKnowledge) return '';
+
+    const files = [...(docTypeKnowledge.primary || []), ...(docTypeKnowledge.secondary || [])];
+    const chunks: string[] = [];
+    const seen = new Set<string>();
+
+    for (const filename of files) {
+      if (seen.has(filename)) continue;
+      seen.add(filename);
+      const filePath = path.join(AXION_KNOWLEDGE_DIR, filename);
+      if (!fs.existsSync(filePath)) continue;
+      const content = fs.readFileSync(filePath, 'utf8');
+      const trimmed = content.length > 8000 ? content.substring(0, 8000) + '\n... [truncated]' : content;
+      chunks.push(`### ${filename}\n${trimmed}`);
+    }
+
+    if (chunks.length === 0) return '';
+    return `--- KNOWLEDGE BASE ---\n\n${chunks.join('\n\n')}\n\n--- END KNOWLEDGE BASE ---`;
+  } catch { return ''; }
+}
+
+function assembleSystemContext(projectRoot: string, moduleName: string, fileName: string): DashboardSystemContext {
+  const baseName = path.basename(fileName);
+  const docType = baseName.replace(/\.md$/, '').replace(/_[a-z]+$/i, '');
+
+  const templateGuidance = extractTemplateGuidance(docType);
+  const upstreamRefs = templateGuidance ? parseUpstreamDocRefs(templateGuidance) : [];
+  const upstreamDocsContext = resolveUpstreamDocs(projectRoot, moduleName, upstreamRefs);
+  const knowledgeContext = resolveKnowledgeFiles(docType);
+
+  return { templateGuidance, knowledgeContext, upstreamDocsContext };
+}
+
+function formatSystemContext(ctx: DashboardSystemContext): string {
+  const parts: string[] = [];
+  if (ctx.templateGuidance) parts.push(ctx.templateGuidance);
+  if (ctx.upstreamDocsContext) parts.push(ctx.upstreamDocsContext);
+  if (ctx.knowledgeContext) parts.push(ctx.knowledgeContext);
+  if (parts.length === 0) return '';
+  return '\n' + parts.join('\n\n') + '\n';
+}
+
+interface DashboardDocSection {
+  heading: string;
+  content: string;
+  hasUnknowns: boolean;
+  unknownCount: number;
+}
+
+function parseDocSections(content: string): DashboardDocSection[] {
+  const lines = content.split('\n');
+  const sections: DashboardDocSection[] = [];
+  let currentHeading = '(preamble)';
+  const sectionLines: string[] = [];
+
+  function flush() {
+    const sc = sectionLines.join('\n');
+    const uc = countUnknowns(sc);
+    sections.push({ heading: currentHeading, content: sc, hasUnknowns: uc > 0, unknownCount: uc });
+    sectionLines.length = 0;
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    if (/^#{1,3}\s/.test(lines[i]) && i > 0) {
+      flush();
+      currentHeading = lines[i].replace(/^#+\s*/, '').trim();
+    }
+    sectionLines.push(lines[i]);
+  }
+  if (sectionLines.length > 0) flush();
+  return sections;
+}
+
 function formatStructuredInput(structuredInput?: Record<string, string> | null): string {
   if (!structuredInput || Object.keys(structuredInput).length === 0) return '';
 
@@ -354,33 +523,105 @@ function buildFillPrompt(
   projectName: string,
   projectIdea: string,
   moduleName: string,
-  structuredInput?: Record<string, string> | null
+  structuredInput?: Record<string, string> | null,
+  systemCtx?: DashboardSystemContext,
 ): string {
   const fileName = path.basename(filePath);
   const docInfo = detectDocType(fileName);
   const structuredContext = formatStructuredInput(structuredInput);
+  const systemContextBlock = systemCtx ? formatSystemContext(systemCtx) : '';
 
   return `You are an expert software architect filling out a ${docInfo.label} document for a software project.
 
 PROJECT NAME: ${projectName}
 PROJECT IDEA: ${projectIdea}
 MODULE/DOMAIN: ${moduleName}
-${structuredContext ? `\nDETAILED PROJECT CONTEXT (use this information directly to fill placeholders — it comes from the project creator):\n${structuredContext}\n` : ''}
+${structuredContext ? `\nDETAILED PROJECT CONTEXT (use this information directly to fill placeholders — it comes from the project creator):\n${structuredContext}\n` : ''}${systemContextBlock}
 Below is the current document that has UNKNOWN placeholders. Your task is to replace every instance of "UNKNOWN" with realistic, project-specific content based on the project idea and domain module.
 
 Rules:
 1. Replace EVERY "UNKNOWN" with specific, meaningful content appropriate to this project and domain.
-2. When detailed project context is provided above, use that information directly — do not invent contradicting details.
-3. Keep the exact same Markdown structure, headings, and table formatting.
-4. ${docInfo.guidance}
-5. Do NOT add new sections or remove existing ones.
-6. Do NOT wrap the output in code fences. Return ONLY the filled document content.
-7. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
+2. When TEMPLATE GUIDANCE is provided above, follow its SOURCES TO DERIVE FROM and RULES exactly.
+3. When UPSTREAM DOCUMENTS are provided, derive your fills from those documents — do not invent contradicting details.
+4. When detailed project context is provided above, use that information directly.
+5. When KNOWLEDGE BASE best practices are provided, follow their patterns.
+6. Keep the exact same Markdown structure, headings, and table formatting.
+7. ${docInfo.guidance}
+8. Do NOT add new sections or remove existing ones.
+9. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+10. Make the content realistic and specific to a "${projectIdea}" application in the "${moduleName}" domain.
+11. Return the COMPLETE document — do not truncate or abbreviate any sections.
 
 CURRENT DOCUMENT:
 ${fileContent}
 
 Return the complete filled document with all UNKNOWNs replaced:`;
+}
+
+const SECTION_FILL_THRESHOLD = 10;
+
+function buildSectionFillPrompt(
+  sections: DashboardDocSection[],
+  filePath: string,
+  projectName: string,
+  projectIdea: string,
+  moduleName: string,
+  structuredInput?: Record<string, string> | null,
+  systemCtx?: DashboardSystemContext,
+): string {
+  const fileName = path.basename(filePath);
+  const docInfo = detectDocType(fileName);
+  const structuredContext = formatStructuredInput(structuredInput);
+  const systemContextBlock = systemCtx ? formatSystemContext(systemCtx) : '';
+
+  const sectionsBlock = sections.map((s, i) =>
+    `=== SECTION ${i + 1}: "${s.heading}" (${s.unknownCount} UNKNOWNs) ===\n${s.content}\n=== END SECTION ${i + 1} ===`
+  ).join('\n\n');
+
+  return `You are an expert software architect filling UNKNOWN placeholders in specific sections of a ${docInfo.label} document.
+
+PROJECT NAME: ${projectName}
+PROJECT IDEA: ${projectIdea}
+MODULE/DOMAIN: ${moduleName}
+${structuredContext ? `\nDETAILED PROJECT CONTEXT:\n${structuredContext}\n` : ''}${systemContextBlock}
+
+Below are ONLY the sections that contain UNKNOWN placeholders. Replace every UNKNOWN with specific, project-appropriate content.
+
+Rules:
+1. Replace EVERY "UNKNOWN" with specific, meaningful content.
+2. When TEMPLATE GUIDANCE is provided above, follow its SOURCES TO DERIVE FROM and RULES exactly.
+3. When UPSTREAM DOCUMENTS are provided, derive your fills from those documents.
+4. Keep the exact same Markdown structure, headings, and table formatting.
+5. ${docInfo.guidance}
+6. Return EACH section with the same === SECTION N ... === delimiters so I can splice them back.
+7. Do NOT add new sections or remove existing ones.
+8. Do NOT wrap the output in code fences.
+
+SECTIONS TO FILL:
+
+${sectionsBlock}
+
+Return the filled sections with the same === SECTION N === delimiters:`;
+}
+
+function parseSectionFillResponse(response: string, sectionCount: number): Map<number, string> {
+  const filled = new Map<number, string>();
+  const pattern = /=== SECTION (\d+):[^=]*===\n([\s\S]*?)(?==== END SECTION \1 ===)/g;
+  let match;
+  while ((match = pattern.exec(response)) !== null) {
+    const idx = parseInt(match[1], 10) - 1;
+    if (idx >= 0 && idx < sectionCount) filled.set(idx, match[2].trimEnd());
+  }
+  if (filled.size === 0 && sectionCount === 1) {
+    const cleaned = response.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '').trim();
+    const s = cleaned.replace(/^=== SECTION \d+:[^=]*===\n/, '').replace(/\n=== END SECTION \d+ ===$/, '');
+    filled.set(0, s.trimEnd());
+  }
+  return filled;
+}
+
+function reassembleDocument(allSections: DashboardDocSection[], filledSections: Map<number, string>): string {
+  return allSections.map((s, i) => filledSections.has(i) ? filledSections.get(i)! : s.content).join('\n');
 }
 
 export async function fillFileWithAI(
@@ -389,33 +630,27 @@ export async function fillFileWithAI(
   projectIdea: string,
   moduleName: string,
   onProgress?: (message: string) => void,
-  structuredInput?: Record<string, string> | null
+  structuredInput?: Record<string, string> | null,
+  projectRoot?: string,
 ): Promise<ContentFillResult> {
   if (!fs.existsSync(filePath)) {
-    return {
-      file: filePath,
-      module: moduleName,
-      status: 'skipped',
-      unknownsBefore: 0,
-      unknownsAfter: 0,
-      error: 'File not found',
-    };
+    return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0, error: 'File not found' };
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
-  const unknownsBefore = countUnknowns(content);
+  let currentContent = fs.readFileSync(filePath, 'utf8');
+  const unknownsBefore = countUnknowns(currentContent);
 
   if (unknownsBefore === 0) {
-    return {
-      file: filePath,
-      module: moduleName,
-      status: 'skipped',
-      unknownsBefore: 0,
-      unknownsAfter: 0,
-    };
+    return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0 };
   }
 
-  onProgress?.(`Filling ${path.basename(filePath)} (${unknownsBefore} UNKNOWNs)...`);
+  const systemCtx = projectRoot ? assembleSystemContext(projectRoot, moduleName, filePath) : undefined;
+
+  const allSections = parseDocSections(currentContent);
+  const sectionsWithUnknowns = allSections.filter(s => s.hasUnknowns);
+  const useSectionFill = allSections.length >= SECTION_FILL_THRESHOLD && sectionsWithUnknowns.length < allSections.length * 0.5;
+
+  onProgress?.(`Filling ${path.basename(filePath)} (${unknownsBefore} UNKNOWNs, mode=${useSectionFill ? 'section' : 'full'}, sections=${sectionsWithUnknowns.length}/${allSections.length})...`);
 
   try {
     const openai = new OpenAI({
@@ -423,57 +658,73 @@ export async function fillFileWithAI(
       baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
     });
 
-    const prompt = buildFillPrompt(content, filePath, projectName, projectIdea, moduleName, structuredInput);
+    if (useSectionFill) {
+      const targetSections = allSections.filter(s => s.hasUnknowns);
+      const prompt = buildSectionFillPrompt(targetSections, filePath, projectName, projectIdea, moduleName, structuredInput, systemCtx);
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-5-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a precise document editor. You fill in placeholder content in software specification documents. You return only the filled document, preserving all Markdown formatting exactly.',
-        },
-        { role: 'user', content: prompt },
-      ],
-      max_completion_tokens: 4096,
-    });
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5-mini',
+        messages: [
+          { role: 'system', content: 'You are a precise document editor. You fill UNKNOWN placeholders in specific sections. Return each section with the same === SECTION N === delimiters. Preserve all Markdown formatting exactly.' },
+          { role: 'user', content: prompt },
+        ],
+        max_completion_tokens: 16384,
+      });
 
-    const filledContent = response.choices[0]?.message?.content;
-    if (!filledContent) {
-      return {
-        file: filePath,
-        module: moduleName,
-        status: 'error',
-        unknownsBefore,
-        unknownsAfter: unknownsBefore,
-        error: 'Empty response from AI',
-      };
+      const filledContent = response.choices[0]?.message?.content;
+      if (!filledContent) {
+        return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter: unknownsBefore, error: 'Empty response from AI' };
+      }
+
+      const cleaned = filledContent.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
+      const filledMap = parseSectionFillResponse(cleaned, targetSections.length);
+
+      const sectionIndexMap = new Map<number, string>();
+      let targetIdx = 0;
+      for (let i = 0; i < allSections.length; i++) {
+        if (allSections[i].hasUnknowns) {
+          if (filledMap.has(targetIdx)) sectionIndexMap.set(i, filledMap.get(targetIdx)!);
+          targetIdx++;
+        }
+      }
+
+      const reassembled = reassembleDocument(allSections, sectionIndexMap);
+      const unknownsAfter = countUnknowns(reassembled);
+
+      if (unknownsAfter < unknownsBefore) {
+        fs.writeFileSync(filePath, reassembled, 'utf8');
+      }
+
+      onProgress?.(`Filled ${path.basename(filePath)}: ${unknownsBefore} → ${unknownsAfter} UNKNOWNs (section mode)`);
+      return { file: filePath, module: moduleName, status: 'filled', unknownsBefore, unknownsAfter };
+    } else {
+      const prompt = buildFillPrompt(currentContent, filePath, projectName, projectIdea, moduleName, structuredInput, systemCtx);
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-5-mini',
+        messages: [
+          { role: 'system', content: 'You are a precise document editor. You fill in placeholder content in software specification documents. You return only the filled document, preserving all Markdown formatting exactly. You MUST return the COMPLETE document — never truncate.' },
+          { role: 'user', content: prompt },
+        ],
+        max_completion_tokens: 16384,
+      });
+
+      const filledContent = response.choices[0]?.message?.content;
+      if (!filledContent) {
+        return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter: unknownsBefore, error: 'Empty response from AI' };
+      }
+
+      const cleaned = filledContent.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
+      const unknownsAfter = countUnknowns(cleaned);
+      fs.writeFileSync(filePath, cleaned, 'utf8');
+
+      onProgress?.(`Filled ${path.basename(filePath)}: ${unknownsBefore} → ${unknownsAfter} UNKNOWNs`);
+      return { file: filePath, module: moduleName, status: 'filled', unknownsBefore, unknownsAfter };
     }
-
-    const cleaned = filledContent.replace(/^```[\w]*\n/, '').replace(/\n```\s*$/, '');
-    const unknownsAfter = countUnknowns(cleaned);
-
-    fs.writeFileSync(filePath, cleaned, 'utf8');
-
-    onProgress?.(`Filled ${path.basename(filePath)}: ${unknownsBefore} → ${unknownsAfter} UNKNOWNs`);
-
-    return {
-      file: filePath,
-      module: moduleName,
-      status: 'filled',
-      unknownsBefore,
-      unknownsAfter,
-    };
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : String(err);
     onProgress?.(`Error filling ${path.basename(filePath)}: ${errMsg}`);
-    return {
-      file: filePath,
-      module: moduleName,
-      status: 'error',
-      unknownsBefore,
-      unknownsAfter: unknownsBefore,
-      error: errMsg,
-    };
+    return { file: filePath, module: moduleName, status: 'error', unknownsBefore, unknownsAfter: unknownsBefore, error: errMsg };
   }
 }
 
@@ -491,7 +742,7 @@ export async function fillModuleUnknowns(
   const moduleTemplates = getModuleTemplatesFromConfig(projectRoot, moduleName);
   const mdFiles = getAllMdFilesInModule(moduleDir, moduleTemplates);
   for (const filePath of mdFiles) {
-    const result = await fillFileWithAI(filePath, projectName, projectIdea, moduleName, onProgress, structuredInput);
+    const result = await fillFileWithAI(filePath, projectName, projectIdea, moduleName, onProgress, structuredInput, projectRoot);
     results.push(result);
   }
 
@@ -550,7 +801,7 @@ async function fillProductDocsUnknowns(
       const relPath = path.relative(dir, filePath);
       const dirName = path.basename(dir);
       onProgress?.(`Processing ${dirName}/${relPath}`);
-      const result = await fillFileWithAI(filePath, projectName, projectIdea, `_${dirName}`, onProgress, structuredInput);
+      const result = await fillFileWithAI(filePath, projectName, projectIdea, `_${dirName}`, onProgress, structuredInput, projectRoot);
       results.push(result);
     }
   }
@@ -768,10 +1019,12 @@ function buildContextAwareFillPrompt(
   userAnswers: Record<string, string>,
   parentContext: string,
   structuredInput?: Record<string, string> | null,
+  systemCtx?: DashboardSystemContext,
 ): string {
   const fileName = path.basename(filePath);
   const docInfo = detectDocType(fileName);
   const structuredContext = formatStructuredInput(structuredInput);
+  const systemContextBlock = systemCtx ? formatSystemContext(systemCtx) : '';
 
   const answersBlock = Object.entries(userAnswers)
     .map(([section, answer]) => `Section "${section}": ${answer}`)
@@ -784,17 +1037,21 @@ PROJECT IDEA: ${projectIdea}
 MODULE/DOMAIN: ${moduleName}
 ${structuredContext ? `\nDETAILED PROJECT CONTEXT (from the project creator — use this to inform your fills):\n${structuredContext}\n` : ''}
 ${parentContext ? `CONTEXT FROM HIGHER-LEVEL DOCUMENTS (use this to inform your fills):\n${parentContext}\n` : ''}
-${answersBlock ? `USER-PROVIDED ANSWERS (use this information directly):\n${answersBlock}\n` : ''}
+${answersBlock ? `USER-PROVIDED ANSWERS (use this information directly):\n${answersBlock}\n` : ''}${systemContextBlock}
 
 Below is the current document that has UNKNOWN placeholders. Your task is to replace every instance of "UNKNOWN" with realistic, project-specific content.
 
 Rules:
 1. Replace EVERY "UNKNOWN" with specific, meaningful content.
-2. When user-provided context or answers are available, use that information directly — do not contradict it.
-3. Keep the exact same Markdown structure, headings, and table formatting.
-4. ${docInfo.guidance}
-5. Do NOT add new sections or remove existing ones.
-6. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+2. When TEMPLATE GUIDANCE is provided above, follow its SOURCES TO DERIVE FROM and RULES exactly.
+3. When UPSTREAM DOCUMENTS are provided, derive your fills from those documents.
+4. When user-provided context or answers are available, use that information directly — do not contradict it.
+5. When KNOWLEDGE BASE best practices are provided, follow their patterns.
+6. Keep the exact same Markdown structure, headings, and table formatting.
+7. ${docInfo.guidance}
+8. Do NOT add new sections or remove existing ones.
+9. Do NOT wrap the output in code fences. Return ONLY the filled document content.
+10. Return the COMPLETE document — do not truncate or abbreviate any sections.
 
 CURRENT DOCUMENT:
 ${fileContent}
@@ -811,6 +1068,7 @@ export async function fillFileWithContext(
   parentContext: string,
   onProgress?: (message: string) => void,
   structuredInput?: Record<string, string> | null,
+  projectRoot?: string,
 ): Promise<ContentFillResult> {
   if (!fs.existsSync(filePath)) {
     return { file: filePath, module: moduleName, status: 'skipped', unknownsBefore: 0, unknownsAfter: 0, error: 'File not found' };
@@ -830,15 +1088,16 @@ export async function fillFileWithContext(
       baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
     });
 
-    const prompt = buildContextAwareFillPrompt(content, filePath, projectName, projectIdea, moduleName, userAnswers, parentContext, structuredInput);
+    const systemCtx = projectRoot ? assembleSystemContext(projectRoot, moduleName, filePath) : undefined;
+    const prompt = buildContextAwareFillPrompt(content, filePath, projectName, projectIdea, moduleName, userAnswers, parentContext, structuredInput, systemCtx);
 
     const response = await openai.chat.completions.create({
       model: 'gpt-5-mini',
       messages: [
-        { role: 'system', content: 'You are a precise document editor. You fill in placeholder content in software specification documents using the user-provided context. You return only the filled document, preserving all Markdown formatting exactly.' },
+        { role: 'system', content: 'You are a precise document editor. You fill in placeholder content in software specification documents using the user-provided context. You return only the filled document, preserving all Markdown formatting exactly. You MUST return the COMPLETE document — never truncate.' },
         { role: 'user', content: prompt },
       ],
-      max_completion_tokens: 4096,
+      max_completion_tokens: 16384,
     });
 
     const filledContent = response.choices[0]?.message?.content;
@@ -873,7 +1132,7 @@ export async function cascadeFill(
   const parentContext = filledContent.substring(0, 3000);
 
   const targetResult = await fillFileWithContext(
-    targetFile, projectName, projectIdea, targetModule, userAnswers, '', onProgress, structuredInput,
+    targetFile, projectName, projectIdea, targetModule, userAnswers, '', onProgress, structuredInput, projectRoot,
   );
 
   const updatedParentContent = fs.existsSync(targetFile) ? fs.readFileSync(targetFile, 'utf8').substring(0, 3000) : '';
@@ -889,7 +1148,7 @@ export async function cascadeFill(
     if (countUnknowns(content) === 0) continue;
 
     const result = await fillFileWithContext(
-      file, projectName, projectIdea, module, {}, updatedParentContent, onProgress, structuredInput,
+      file, projectName, projectIdea, module, {}, updatedParentContent, onProgress, structuredInput, projectRoot,
     );
     cascadeResults.push(result);
   }
