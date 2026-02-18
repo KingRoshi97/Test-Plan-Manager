@@ -3523,7 +3523,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
   });
 
   // ── Test Suite API ──────────────────────────────────────────────
-  let lastTestResult: {
+  type TestResultData = {
     timestamp: string;
     durationMs: number;
     status: 'pass' | 'fail' | 'error' | 'cancelled';
@@ -3542,16 +3542,67 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     }>;
     errorOutput?: string;
     rawOutput?: string;
-  } | null = null;
+  };
 
+  const lastTestResults: Record<string, TestResultData> = {};
   let testRunning = false;
+  let testRunningWorkspace: string | null = null;
   let testChildProcess: ReturnType<typeof spawn> | null = null;
   let testCancelled = false;
 
-  app.get('/api/tests/files', (_req: Request, res: Response) => {
-    const testsDir = path.join(PROJECT_ROOT, 'tests');
-    if (!fs.existsSync(testsDir)) {
-      res.json({ files: [] });
+  function resolveTestWorkspace(workspace: string | undefined): { rootDir: string; key: string } | null {
+    if (!workspace || workspace === '__axion__') {
+      return { rootDir: PROJECT_ROOT, key: '__axion__' };
+    }
+    if (/[\/\\]/.test(workspace) || workspace === '.' || workspace === '..') return null;
+    const wsPath = path.join(WORKSPACES_DIR, workspace);
+    if (!fs.existsSync(wsPath)) return null;
+    return { rootDir: wsPath, key: workspace };
+  }
+
+  app.get('/api/tests/workspaces', (_req: Request, res: Response) => {
+    const result: Array<{ name: string; label: string; hasTests: boolean; hasVitest: boolean }> = [];
+    result.push({
+      name: '__axion__',
+      label: 'AXION (system tests)',
+      hasTests: fs.existsSync(path.join(PROJECT_ROOT, 'tests')),
+      hasVitest: fs.existsSync(path.join(PROJECT_ROOT, 'node_modules', '.bin', 'vitest')),
+    });
+    if (fs.existsSync(WORKSPACES_DIR)) {
+      const entries = fs.readdirSync(WORKSPACES_DIR, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const wsPath = path.join(WORKSPACES_DIR, entry.name);
+        const testDirs = ['tests', 'test', '__tests__', 'spec'];
+        const hasTests = testDirs.some(d => fs.existsSync(path.join(wsPath, d)));
+        const hasVitest = fs.existsSync(path.join(wsPath, 'node_modules', '.bin', 'vitest'))
+          || fs.existsSync(path.join(PROJECT_ROOT, 'node_modules', '.bin', 'vitest'));
+        result.push({
+          name: entry.name,
+          label: entry.name,
+          hasTests,
+          hasVitest,
+        });
+      }
+    }
+    res.json(result);
+  });
+
+  app.get('/api/tests/files', (req: Request, res: Response) => {
+    const ws = resolveTestWorkspace(req.query.workspace as string | undefined);
+    if (!ws) {
+      res.status(400).json({ error: 'Invalid workspace' });
+      return;
+    }
+    const wsRoot = ws.rootDir;
+    const testDirNames = ['tests', 'test', '__tests__', 'spec'];
+    let testsDir: string | null = null;
+    for (const d of testDirNames) {
+      const candidate = path.join(wsRoot, d);
+      if (fs.existsSync(candidate)) { testsDir = candidate; break; }
+    }
+    if (!testsDir) {
+      res.json({ files: [], workspace: ws.key });
       return;
     }
     const files: { path: string; name: string; dir: string }[] = [];
@@ -3562,19 +3613,25 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== 'fixtures' && entry.name !== 'helpers' && entry.name !== 'temp') {
           walk(full);
         } else if (entry.isFile() && /\.(test|spec)\.\w+$/.test(entry.name)) {
-          const rel = path.relative(PROJECT_ROOT, full);
-          const dirPart = path.relative(PROJECT_ROOT, dir);
+          const rel = path.relative(wsRoot, full);
+          const dirPart = path.relative(wsRoot, dir);
           files.push({ path: rel, name: entry.name, dir: dirPart });
         }
       }
     }
     walk(testsDir);
     files.sort((a, b) => a.path.localeCompare(b.path));
-    res.json({ files });
+    res.json({ files, workspace: ws.key });
   });
 
-  app.get('/api/tests/last', (_req: Request, res: Response) => {
-    res.json({ running: testRunning, result: lastTestResult });
+  app.get('/api/tests/last', (req: Request, res: Response) => {
+    const ws = resolveTestWorkspace(req.query.workspace as string | undefined);
+    if (!ws) {
+      res.status(400).json({ error: 'Invalid workspace' });
+      return;
+    }
+    const isRunningThis = testRunning && testRunningWorkspace === ws.key;
+    res.json({ running: isRunningThis, result: lastTestResults[ws.key] || null, workspace: ws.key });
   });
 
   function killProcessTree(pid: number) {
@@ -3613,6 +3670,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     setTimeout(() => {
       if (testRunning) {
         testRunning = false;
+        testRunningWorkspace = null;
         testChildProcess = null;
         testCancelled = false;
       }
@@ -3626,7 +3684,22 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
       return;
     }
 
+    const ws = resolveTestWorkspace(req.body?.workspace as string | undefined);
+    if (!ws) {
+      res.status(400).json({ error: 'Invalid workspace' });
+      return;
+    }
+
     const filterFile = req.body?.file as string | undefined;
+
+    const wsVitestBin = path.join(ws.rootDir, 'node_modules', '.bin', 'vitest');
+    const fallbackVitestBin = path.join(PROJECT_ROOT, 'node_modules', '.bin', 'vitest');
+    const vitestBin = fs.existsSync(wsVitestBin) ? wsVitestBin : fallbackVitestBin;
+
+    if (!fs.existsSync(vitestBin)) {
+      res.status(400).json({ error: 'vitest not found. Install vitest in the workspace or ensure it is available in the project.' });
+      return;
+    }
 
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -3636,6 +3709,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     });
 
     testRunning = true;
+    testRunningWorkspace = ws.key;
     testCancelled = false;
     let aborted = false;
     req.on('close', () => {
@@ -3643,7 +3717,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
       clearInterval(heartbeat);
     });
 
-    res.write(`event: start\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
+    res.write(`event: start\ndata: ${JSON.stringify({ timestamp: new Date().toISOString(), workspace: ws.key })}\n\n`);
 
     const heartbeat = setInterval(() => {
       if (!aborted) {
@@ -3664,9 +3738,8 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
     const stripAnsi = (str: string) => str.replace(/\u001b\[[0-9;]*m/g, '');
 
-    const vitestBin = path.join(PROJECT_ROOT, 'node_modules', '.bin', 'vitest');
     const child = spawn(vitestBin, args, {
-      cwd: PROJECT_ROOT,
+      cwd: ws.rootDir,
       env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
       timeout: 300000,
       detached: true,
@@ -3752,6 +3825,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
       clearInterval(heartbeat);
       const durationMs = Date.now() - start;
       testRunning = false;
+      testRunningWorkspace = null;
       testChildProcess = null;
       const wasCancelled = testCancelled;
       testCancelled = false;
@@ -3765,10 +3839,10 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
       if (parsed && parsed.testResults && Array.isArray(parsed.testResults)) {
         try {
-          const testFiles: typeof lastTestResult extends null ? never : NonNullable<typeof lastTestResult>['testFiles'] = [];
+          const testFiles: TestResultData['testFiles'] = [];
 
           for (const fileResult of parsed.testResults) {
-            const relFile = (fileResult.name as string).replace(PROJECT_ROOT + '/', '');
+            const relFile = (fileResult.name as string).replace(ws.rootDir + '/', '');
             const tests: Array<{ name: string; fullName: string; status: 'pass' | 'fail' | 'skip'; durationMs: number; error?: string }> = [];
 
             if (fileResult.assertionResults && Array.isArray(fileResult.assertionResults)) {
@@ -3798,17 +3872,18 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
           const failed = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'fail').length, 0);
           const skipped = testFiles.reduce((sum, f) => sum + f.tests.filter(t => t.status === 'skip').length, 0);
 
-          lastTestResult = {
+          const result: TestResultData = {
             timestamp: new Date().toISOString(),
             durationMs,
             status: wasCancelled ? 'cancelled' : (failed > 0 ? 'fail' : 'pass'),
             summary: { total: passed + failed + skipped, passed, failed, skipped },
             testFiles,
           };
+          lastTestResults[ws.key] = result;
 
           if (!aborted) {
             const eventName = wasCancelled ? 'cancelled' : 'done';
-            res.write(`event: ${eventName}\ndata: ${JSON.stringify(lastTestResult)}\n\n`);
+            res.write(`event: ${eventName}\ndata: ${JSON.stringify(result)}\n\n`);
             res.end();
           }
           return;
@@ -3816,15 +3891,15 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
       }
 
       if (wasCancelled) {
-        const cancelledResult = {
+        const cancelledResult: TestResultData = {
           timestamp: new Date().toISOString(),
           durationMs,
-          status: 'cancelled' as const,
+          status: 'cancelled',
           summary: { total: 0, passed: 0, failed: 0, skipped: 0 },
-          testFiles: [] as NonNullable<typeof lastTestResult>['testFiles'],
+          testFiles: [],
           rawOutput: 'Test run was cancelled by user.',
         };
-        lastTestResult = cancelledResult;
+        lastTestResults[ws.key] = cancelledResult;
         if (!aborted) {
           res.write(`event: cancelled\ndata: ${JSON.stringify(cancelledResult)}\n\n`);
           res.end();
@@ -3832,16 +3907,16 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         return;
       }
 
-      const errorResult = {
+      const errorResult: TestResultData = {
         timestamp: new Date().toISOString(),
         durationMs,
-        status: 'error' as const,
+        status: 'error',
         summary: { total: 0, passed: 0, failed: 0, skipped: 0 },
-        testFiles: [] as NonNullable<typeof lastTestResult>['testFiles'],
+        testFiles: [],
         errorOutput: stderrOutput.substring(0, 5000),
         rawOutput: stdoutBuffer.substring(0, 5000),
       };
-      lastTestResult = errorResult;
+      lastTestResults[ws.key] = errorResult;
 
       if (!aborted) {
         res.write(`event: done\ndata: ${JSON.stringify(errorResult)}\n\n`);
@@ -3852,6 +3927,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
     child.on('error', (err: Error) => {
       clearInterval(heartbeat);
       testRunning = false;
+      testRunningWorkspace = null;
       testChildProcess = null;
       if (!aborted) {
         res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`);
