@@ -751,6 +751,19 @@ async function runSingleStepWithRetry(
 }
 
 export function registerRoutes(app: Express) {
+  const activeRuns = new Map<string, boolean>();
+
+  async function fixStaleRunningState(assembly: any): Promise<any> {
+    if (assembly && assembly.state === 'running' && !activeRuns.has(assembly.id)) {
+      await storage.updateAssembly(assembly.id, {
+        state: 'interrupted',
+        errors: ['Pipeline interrupted: no active connection found. You can retry from where it left off.'],
+      });
+      return { ...assembly, state: 'interrupted', errors: ['Pipeline interrupted: no active connection found. You can retry from where it left off.'] };
+    }
+    return assembly;
+  }
+
   app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
@@ -989,6 +1002,17 @@ export function registerRoutes(app: Express) {
         runsByProject[run.projectName].push(run);
       }
 
+      for (const a of list) {
+        if (a.state === 'running' && !activeRuns.has(a.id)) {
+          await storage.updateAssembly(a.id, {
+            state: 'interrupted',
+            errors: ['Pipeline interrupted: no active connection found. You can retry from where it left off.'],
+          });
+          a.state = 'interrupted';
+          a.errors = ['Pipeline interrupted: no active connection found. You can retry from where it left off.'];
+        }
+      }
+
       const enriched = list.map(a => {
         const projectPath = a.projectName ? getProjectPath(a.projectName) : null;
         const wsExists = projectPath ? fs.existsSync(projectPath) : false;
@@ -1044,11 +1068,12 @@ export function registerRoutes(app: Express) {
 
   app.get('/api/assemblies/:id', async (req: Request, res: Response) => {
     try {
-      const assembly = await storage.getAssembly(req.params.id as string);
+      let assembly = await storage.getAssembly(req.params.id as string);
       if (!assembly) {
         res.status(404).json({ error: 'Assembly not found' });
         return;
       }
+      assembly = await fixStaleRunningState(assembly) as NonNullable<typeof assembly>;
       const projectPath = assembly.projectName ? getProjectPath(assembly.projectName) : null;
       const wsExists = projectPath ? fs.existsSync(projectPath) : false;
       const hasRegistry = projectPath ? (fs.existsSync(path.join(projectPath, 'axion', 'registry')) || fs.existsSync(path.join(projectPath, 'registry'))) : false;
@@ -1809,8 +1834,6 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
       res.status(500).json({ error: err?.message || 'Failed to read workspace tree' });
     }
   });
-
-  const activeRuns = new Map<string, boolean>();
 
   app.get('/api/assemblies/:id/run/stream', async (req: Request, res: Response) => {
     const assemblyId = req.params.id as string;
