@@ -10,7 +10,7 @@
       "type": "foundation",
       "description": "System architecture, patterns, and structural decisions",
       "dependencies": [],
-      "templates": ["BELS", "DDES", "DIM", "OPEN_QUESTIONS", "TESTPLAN"]
+      "templates": ["BELS", "DDES", "DIM", "TESTPLAN"]
     },
     {
       "name": "Systems",
@@ -19,7 +19,7 @@
       "type": "foundation",
       "description": "System components, services, and their interactions",
       "dependencies": ["architecture"],
-      "templates": ["BELS", "DDES", "DIM", "OPEN_QUESTIONS"]
+      "templates": ["BELS", "DDES", "DIM"]
     },
     {
       "name": "Contracts",
@@ -28,7 +28,7 @@
       "type": "foundation",
       "description": "API contracts, interfaces, and data schemas",
       "dependencies": ["architecture", "systems"],
-      "templates": ["BELS", "DDES", "DIM", "OPEN_QUESTIONS"]
+      "templates": ["BELS", "DDES", "DIM"]
     },
     {
       "name": "Database",

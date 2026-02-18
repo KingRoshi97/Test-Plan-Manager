@@ -2521,11 +2521,9 @@ async function main() {
         const readmePath = path.join(domainDir, `README_${module}.md`);
         ensureFile(readmePath, readmeContent);
 
-        if (moduleTemplates.includes('OPEN_QUESTIONS')) {
-          const openQuestionsContent = generateOpenQuestions(module, ctx);
-          const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
-          ensureFile(openQuestionsPath, openQuestionsContent);
-        }
+        const openQuestionsContent = generateOpenQuestions(module, ctx);
+        const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
+        ensureFile(openQuestionsPath, openQuestionsContent);
 
         if (openai && aiEnabled) {
           if (!jsonMode) console.log(`  AI-enhancing module: ${module}`);
