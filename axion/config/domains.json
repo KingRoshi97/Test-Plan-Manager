@@ -9,7 +9,8 @@
       "prefix": "arch",
       "type": "foundation",
       "description": "System architecture, patterns, and structural decisions",
-      "dependencies": []
+      "dependencies": [],
+      "templates": ["BELS", "DDES", "DIM", "OPEN_QUESTIONS", "TESTPLAN"]
     },
     {
       "name": "Systems",
@@ -17,7 +18,8 @@
       "prefix": "sys",
       "type": "foundation",
       "description": "System components, services, and their interactions",
-      "dependencies": ["architecture"]
+      "dependencies": ["architecture"],
+      "templates": ["BELS", "DDES", "DIM", "OPEN_QUESTIONS"]
     },
     {
       "name": "Contracts",
@@ -25,7 +27,8 @@
       "prefix": "contract",
       "type": "foundation",
       "description": "API contracts, interfaces, and data schemas",
-      "dependencies": ["architecture", "systems"]
+      "dependencies": ["architecture", "systems"],
+      "templates": ["BELS", "DDES", "DIM", "OPEN_QUESTIONS"]
     },
     {
       "name": "Database",
@@ -33,7 +36,8 @@
       "prefix": "db",
       "type": "data",
       "description": "Database schema, migrations, and data models",
-      "dependencies": ["contracts"]
+      "dependencies": ["contracts"],
+      "templates": ["BELS", "DDES", "DIM", "TESTPLAN"]
     },
     {
       "name": "Data",
@@ -41,7 +45,8 @@
       "prefix": "data",
       "type": "data",
       "description": "Data flows, transformations, and validation",
-      "dependencies": ["database", "contracts"]
+      "dependencies": ["database", "contracts"],
+      "templates": ["BELS", "DDES", "DIM", "TESTPLAN"]
     },
     {
       "name": "Auth",
@@ -49,7 +54,8 @@
       "prefix": "auth",
       "type": "security",
       "description": "Authentication, authorization, and identity management",
-      "dependencies": ["contracts", "database"]
+      "dependencies": ["contracts", "database"],
+      "templates": ["BELS", "DDES", "DIM", "SCREENMAP", "TESTPLAN"]
     },
     {
       "name": "Backend",
@@ -57,7 +63,8 @@
       "prefix": "be",
       "type": "core",
       "description": "Server-side logic, APIs, and business rules",
-      "dependencies": ["contracts", "database", "auth"]
+      "dependencies": ["contracts", "database", "auth"],
+      "templates": ["BELS", "DDES", "DIM", "TESTPLAN"]
     },
     {
       "name": "Integrations",
@@ -65,7 +72,8 @@
       "prefix": "integ",
       "type": "core",
       "description": "Third-party integrations and external services",
-      "dependencies": ["backend", "contracts"]
+      "dependencies": ["backend", "contracts"],
+      "templates": ["BELS", "DDES", "DIM", "TESTPLAN"]
     },
     {
       "name": "State",
@@ -73,7 +81,8 @@
       "prefix": "state",
       "type": "frontend",
       "description": "State management, stores, and client-side data",
-      "dependencies": ["contracts"]
+      "dependencies": ["contracts"],
+      "templates": ["BELS", "DDES", "DIM"]
     },
     {
       "name": "Frontend",
@@ -81,7 +90,8 @@
       "prefix": "fe",
       "type": "frontend",
       "description": "UI components, pages, and user interactions",
-      "dependencies": ["state", "contracts"]
+      "dependencies": ["state", "contracts"],
+      "templates": ["BELS", "DDES", "DIM", "SCREENMAP", "UX_Foundations", "UI_Constraints", "COMPONENT_LIBRARY", "COPY_GUIDE", "TESTPLAN"]
     },
     {
       "name": "Fullstack",
@@ -89,7 +99,8 @@
       "prefix": "fs",
       "type": "integration",
       "description": "End-to-end flows connecting frontend and backend",
-      "dependencies": ["frontend", "backend"]
+      "dependencies": ["frontend", "backend"],
+      "templates": ["BELS", "DDES", "DIM", "TESTPLAN"]
     },
     {
       "name": "Testing",
@@ -97,7 +108,8 @@
       "prefix": "test",
       "type": "quality",
       "description": "Test strategies, coverage, and automation",
-      "dependencies": ["backend", "frontend"]
+      "dependencies": ["backend", "frontend"],
+      "templates": ["BELS", "DDES", "TESTPLAN"]
     },
     {
       "name": "Quality",
@@ -105,7 +117,8 @@
       "prefix": "qa",
       "type": "quality",
       "description": "Code quality, linting, and standards",
-      "dependencies": []
+      "dependencies": [],
+      "templates": ["BELS", "DDES", "TESTPLAN"]
     },
     {
       "name": "Security",
@@ -113,7 +126,8 @@
       "prefix": "sec",
       "type": "crosscutting",
       "description": "Security policies, audits, and vulnerability management",
-      "dependencies": ["auth", "backend"]
+      "dependencies": ["auth", "backend"],
+      "templates": ["BELS", "DDES", "DIM", "TESTPLAN"]
     },
     {
       "name": "DevOps",
@@ -121,7 +135,8 @@
       "prefix": "devops",
       "type": "operations",
       "description": "CI/CD, deployment, and infrastructure automation",
-      "dependencies": ["backend", "testing"]
+      "dependencies": ["backend", "testing"],
+      "templates": ["BELS", "DDES", "TESTPLAN"]
     },
     {
       "name": "Cloud",
@@ -129,7 +144,8 @@
       "prefix": "cloud",
       "type": "operations",
       "description": "Cloud infrastructure, scaling, and hosting",
-      "dependencies": ["devops"]
+      "dependencies": ["devops"],
+      "templates": ["BELS", "DDES", "TESTPLAN"]
     },
     {
       "name": "DevEx",
@@ -137,7 +153,8 @@
       "prefix": "dx",
       "type": "operations",
       "description": "Developer experience, tooling, and workflows",
-      "dependencies": ["quality"]
+      "dependencies": ["quality"],
+      "templates": ["BELS", "DDES"]
     },
     {
       "name": "Mobile",
@@ -145,7 +162,8 @@
       "prefix": "mobile",
       "type": "platform",
       "description": "Mobile app development (iOS, Android, React Native)",
-      "dependencies": ["frontend", "state"]
+      "dependencies": ["frontend", "state"],
+      "templates": ["BELS", "DDES", "DIM", "SCREENMAP", "UX_Foundations", "UI_Constraints", "COMPONENT_LIBRARY", "COPY_GUIDE", "TESTPLAN"]
     },
     {
       "name": "Desktop",
@@ -153,7 +171,8 @@
       "prefix": "desktop",
       "type": "platform",
       "description": "Desktop app development (Electron, Tauri)",
-      "dependencies": ["frontend", "state"]
+      "dependencies": ["frontend", "state"],
+      "templates": ["BELS", "DDES", "DIM", "SCREENMAP", "UX_Foundations", "UI_Constraints", "COMPONENT_LIBRARY", "COPY_GUIDE", "TESTPLAN"]
     }
   ],
   "canonical_order": [

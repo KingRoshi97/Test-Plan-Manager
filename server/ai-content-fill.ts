@@ -118,11 +118,30 @@ function findSectionsWithUnknowns(content: string): string[] {
   return sections;
 }
 
-function getAllMdFilesInModule(moduleDir: string): string[] {
+function getModuleTemplatesFromConfig(projectRoot: string, moduleName: string): string[] | null {
+  const configPath = path.join(projectRoot, 'axion', 'config', 'domains.json');
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const mod = (config.modules || []).find((m: { slug: string }) => m.slug === moduleName);
+    if (mod && Array.isArray(mod.templates) && mod.templates.length > 0) {
+      return mod.templates;
+    }
+  } catch {}
+  return null;
+}
+
+function getAllMdFilesInModule(moduleDir: string, moduleTemplates?: string[] | null): string[] {
   if (!fs.existsSync(moduleDir)) return [];
-  return fs.readdirSync(moduleDir)
+  const allFiles = fs.readdirSync(moduleDir)
     .filter(f => f.endsWith('.md'))
     .map(f => path.join(moduleDir, f));
+
+  if (!moduleTemplates || moduleTemplates.length === 0) return allFiles;
+
+  return allFiles.filter(f => {
+    const fileName = path.basename(f, '.md');
+    return moduleTemplates.some(t => fileName.startsWith(t + '_')) || fileName.startsWith('README');
+  });
 }
 
 export function scanBelsFile(filePath: string, projectRoot: string): UnknownScanResult | null {
@@ -150,7 +169,8 @@ export function scanModuleForUnknowns(
   const moduleDir = path.join(projectRoot, 'axion', 'domains', moduleName);
   const results: UnknownScanResult[] = [];
 
-  const mdFiles = getAllMdFilesInModule(moduleDir);
+  const moduleTemplates = getModuleTemplatesFromConfig(projectRoot, moduleName);
+  const mdFiles = getAllMdFilesInModule(moduleDir, moduleTemplates);
   for (const filePath of mdFiles) {
     const result = scanBelsFile(filePath, projectRoot);
     if (result) results.push(result);
@@ -168,7 +188,8 @@ export function scanAllModulesForUnknowns(
 
   for (const mod of modules) {
     const moduleDir = path.join(projectRoot, 'axion', 'domains', mod);
-    const mdFiles = getAllMdFilesInModule(moduleDir);
+    const moduleTemplates = getModuleTemplatesFromConfig(projectRoot, mod);
+    const mdFiles = getAllMdFilesInModule(moduleDir, moduleTemplates);
     totalFiles += mdFiles.length;
 
     const results = scanModuleForUnknowns(projectRoot, mod);
@@ -467,7 +488,8 @@ export async function fillModuleUnknowns(
   const moduleDir = path.join(projectRoot, 'axion', 'domains', moduleName);
   const results: ContentFillResult[] = [];
 
-  const mdFiles = getAllMdFilesInModule(moduleDir);
+  const moduleTemplates = getModuleTemplatesFromConfig(projectRoot, moduleName);
+  const mdFiles = getAllMdFilesInModule(moduleDir, moduleTemplates);
   for (const filePath of mdFiles) {
     const result = await fillFileWithAI(filePath, projectName, projectIdea, moduleName, onProgress, structuredInput);
     results.push(result);
@@ -603,7 +625,8 @@ function discoverAllMdFiles(projectRoot: string): { file: string; module: string
       .map(e => e.name);
     for (const mod of modules) {
       const moduleDir = path.join(domainsDir, mod);
-      const mdFiles = getAllMdFilesInModule(moduleDir);
+      const modTemplates = getModuleTemplatesFromConfig(projectRoot, mod);
+      const mdFiles = getAllMdFilesInModule(moduleDir, modTemplates);
       for (const f of mdFiles) {
         results.push({
           file: f,

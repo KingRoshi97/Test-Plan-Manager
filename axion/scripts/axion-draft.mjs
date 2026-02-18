@@ -26,6 +26,7 @@ import {
   markStageDone,
   markStageFailed,
   failJson,
+  getModuleAllDocTypes,
 } from './_axion_module_mode.mjs';
 
 const args = process.argv.slice(2);
@@ -2460,50 +2461,71 @@ async function main() {
 
         const domainDir = path.join(domainsDir, module);
         const domainPrefix = getDomainPrefix(config, module);
+        const moduleTemplates = getModuleAllDocTypes(module);
 
-        const belsContent = generateBELSCandidates(module, ctx, rpbsRules);
-        const belsPath = path.join(domainDir, `BELS_${module}.md`);
-        ensureFileWithMerge(belsPath, belsContent, BELS_SECTION_MAP);
+        if (moduleTemplates.includes('BELS')) {
+          const belsContent = generateBELSCandidates(module, ctx, rpbsRules);
+          const belsPath = path.join(domainDir, `BELS_${module}.md`);
+          ensureFileWithMerge(belsPath, belsContent, BELS_SECTION_MAP);
+        }
 
-        const ddesContent = generateDDES(module, ctx);
-        const ddesPath = path.join(domainDir, `DDES_${module}.md`);
-        ensureFileWithMerge(ddesPath, ddesContent, DDES_SECTION_MAP);
+        if (moduleTemplates.includes('DDES')) {
+          const ddesContent = generateDDES(module, ctx);
+          const ddesPath = path.join(domainDir, `DDES_${module}.md`);
+          ensureFileWithMerge(ddesPath, ddesContent, DDES_SECTION_MAP);
+        }
 
-        const dimContent = generateDIM(module, ctx, rpbsRules, domainPrefix);
-        const dimPath = path.join(domainDir, `DIM_${module}.md`);
-        ensureFileWithMerge(dimPath, dimContent, DIM_SECTION_MAP);
+        if (moduleTemplates.includes('DIM')) {
+          const dimContent = generateDIM(module, ctx, rpbsRules, domainPrefix);
+          const dimPath = path.join(domainDir, `DIM_${module}.md`);
+          ensureFileWithMerge(dimPath, dimContent, DIM_SECTION_MAP);
+        }
 
-        const uxContent = generateUXFoundations(module, ctx);
-        const uxPath = path.join(domainDir, `UX_Foundations_${module}.md`);
-        ensureFileWithMerge(uxPath, uxContent, UX_FOUNDATIONS_SECTION_MAP);
+        if (moduleTemplates.includes('UX_Foundations')) {
+          const uxContent = generateUXFoundations(module, ctx);
+          const uxPath = path.join(domainDir, `UX_Foundations_${module}.md`);
+          ensureFileWithMerge(uxPath, uxContent, UX_FOUNDATIONS_SECTION_MAP);
+        }
 
-        const uiContent = generateUIConstraints(module, ctx);
-        const uiPath = path.join(domainDir, `UI_Constraints_${module}.md`);
-        ensureFileWithMerge(uiPath, uiContent, UI_CONSTRAINTS_SECTION_MAP);
+        if (moduleTemplates.includes('UI_Constraints')) {
+          const uiContent = generateUIConstraints(module, ctx);
+          const uiPath = path.join(domainDir, `UI_Constraints_${module}.md`);
+          ensureFileWithMerge(uiPath, uiContent, UI_CONSTRAINTS_SECTION_MAP);
+        }
 
-        const screenmapContent = generateScreenmap(module, ctx, domainPrefix);
-        const screenmapPath = path.join(domainDir, `SCREENMAP_${module}.md`);
-        ensureFileWithMerge(screenmapPath, screenmapContent, SCREENMAP_SECTION_MAP);
+        if (moduleTemplates.includes('SCREENMAP')) {
+          const screenmapContent = generateScreenmap(module, ctx, domainPrefix);
+          const screenmapPath = path.join(domainDir, `SCREENMAP_${module}.md`);
+          ensureFileWithMerge(screenmapPath, screenmapContent, SCREENMAP_SECTION_MAP);
+        }
 
-        const testplanContent = generateTestplan(module, ctx, rpbsRules, domainPrefix);
-        const testplanPath = path.join(domainDir, `TESTPLAN_${module}.md`);
-        ensureFileWithMerge(testplanPath, testplanContent, TESTPLAN_SECTION_MAP);
+        if (moduleTemplates.includes('TESTPLAN')) {
+          const testplanContent = generateTestplan(module, ctx, rpbsRules, domainPrefix);
+          const testplanPath = path.join(domainDir, `TESTPLAN_${module}.md`);
+          ensureFileWithMerge(testplanPath, testplanContent, TESTPLAN_SECTION_MAP);
+        }
 
-        const componentContent = generateComponentLibrary(module, ctx, domainPrefix);
-        const componentPath = path.join(domainDir, `COMPONENT_LIBRARY_${module}.md`);
-        ensureFileWithMerge(componentPath, componentContent, COMPONENT_LIBRARY_SECTION_MAP);
+        if (moduleTemplates.includes('COMPONENT_LIBRARY')) {
+          const componentContent = generateComponentLibrary(module, ctx, domainPrefix);
+          const componentPath = path.join(domainDir, `COMPONENT_LIBRARY_${module}.md`);
+          ensureFileWithMerge(componentPath, componentContent, COMPONENT_LIBRARY_SECTION_MAP);
+        }
 
-        const copyContent = generateCopyGuide(module, ctx, domainPrefix);
-        const copyPath = path.join(domainDir, `COPY_GUIDE_${module}.md`);
-        ensureFileWithMerge(copyPath, copyContent, COPY_GUIDE_SECTION_MAP);
+        if (moduleTemplates.includes('COPY_GUIDE')) {
+          const copyContent = generateCopyGuide(module, ctx, domainPrefix);
+          const copyPath = path.join(domainDir, `COPY_GUIDE_${module}.md`);
+          ensureFileWithMerge(copyPath, copyContent, COPY_GUIDE_SECTION_MAP);
+        }
 
         const readmeContent = generateDomainReadme(module, ctx);
         const readmePath = path.join(domainDir, `README_${module}.md`);
         ensureFile(readmePath, readmeContent);
 
-        const openQuestionsContent = generateOpenQuestions(module, ctx);
-        const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
-        ensureFile(openQuestionsPath, openQuestionsContent);
+        if (moduleTemplates.includes('OPEN_QUESTIONS')) {
+          const openQuestionsContent = generateOpenQuestions(module, ctx);
+          const openQuestionsPath = path.join(domainDir, `OPEN_QUESTIONS_${module}.md`);
+          ensureFile(openQuestionsPath, openQuestionsContent);
+        }
 
         if (openai && aiEnabled) {
           if (!jsonMode) console.log(`  AI-enhancing module: ${module}`);

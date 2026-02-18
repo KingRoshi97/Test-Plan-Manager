@@ -21,6 +21,7 @@ import {
   failJson,
   AXION_DOC_TYPES,
   AXION_REVIEWED_DOC_TYPES,
+  getModuleDocTypes,
 } from './_axion_module_mode.mjs';
 
 const args = process.argv.slice(2);
@@ -163,20 +164,8 @@ try {
       const domainDir = path.join(domainsDir, module);
       let totalUnknowns = 0;
 
-      const belsPath = path.join(domainDir, `BELS_${module}.md`);
-      if (fs.existsSync(belsPath)) {
-        const content = fs.readFileSync(belsPath, 'utf8');
-        totalUnknowns += countUnknowns(content);
-
-        const missingSections = checkRequiredSections(content, 'BELS');
-        missingSections.forEach(s => {
-          rv.missingSections.push(`${module}/BELS: Missing section "${s}"`);
-        });
-      } else {
-        rv.missingSections.push(`${module}: BELS file missing`);
-      }
-
-      for (const docType of AXION_DOC_TYPES) {
+      const moduleDocTypes = getModuleDocTypes(module);
+      for (const docType of moduleDocTypes) {
         const docPath = path.join(domainDir, `${docType}_${module}.md`);
         if (fs.existsSync(docPath)) {
           const content = fs.readFileSync(docPath, 'utf8');
@@ -186,6 +175,8 @@ try {
           missingSections.forEach(s => {
             rv.missingSections.push(`${module}/${docType}: Missing section "${s}"`);
           });
+        } else if (docType === 'BELS') {
+          rv.missingSections.push(`${module}: BELS file missing`);
         }
       }
 
