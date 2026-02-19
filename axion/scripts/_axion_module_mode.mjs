@@ -1,7 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const DOMAINS_CONFIG_PATH = "axion/config/domains.json";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const AXION_ROOT = path.resolve(__dirname, "..", "..");
+const DOMAINS_CONFIG_PATH = path.join(AXION_ROOT, "axion", "config", "domains.json");
 
 const FALLBACK_MODULE_ORDER = [
   "architecture",
@@ -125,7 +129,7 @@ export const AXION_DOC_TYPES = [
  */
 export function getModuleDocTypes(slug, options = {}) {
   const { excludeBels = true } = options;
-  const configPath = path.join("axion", "config", "domains.json");
+  const configPath = DOMAINS_CONFIG_PATH;
   try {
     const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
     const mod = (config.modules || []).find(m => m.slug === slug);

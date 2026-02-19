@@ -13,6 +13,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import {
   parseModuleArgs,
   ensurePrereqs,
@@ -24,6 +25,9 @@ import {
   AXION_REQUIRED_DOC_TYPES,
   getModuleRequiredDocTypes,
 } from './_axion_module_mode.mjs';
+
+const __verify_dirname = path.dirname(fileURLToPath(import.meta.url));
+const AXION_PROJECT_ROOT = path.resolve(__verify_dirname, '..', '..');
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
@@ -52,7 +56,7 @@ const receipt = {
 };
 
 function loadConfig() {
-  const configPath = 'axion/config/domains.json';
+  const configPath = path.join(AXION_PROJECT_ROOT, 'axion', 'config', 'domains.json');
   if (!fs.existsSync(configPath)) {
     throw new Error('axion/config/domains.json not found. Run axion:init first.');
   }
