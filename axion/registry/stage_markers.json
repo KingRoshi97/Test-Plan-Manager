@@ -231,7 +231,7 @@
       },
       "verify": {
         "status": "failed",
-        "completed_at": "2026-02-16T03:48:51.089Z",
+        "completed_at": "2026-02-19T04:24:46.395Z",
         "reason": "Module 'quality' has not completed 'review'. Run review first."
       },
       "draft": {

@@ -90,12 +90,16 @@ instructs a contract change for the current task:
 - **Event names and message shapes** (WebSocket, pub/sub, queues)
 - **Navigation contracts** (screen names, linking routes, deep links)
 
-If a contract change is required but not specified in the docs:
-1. STOP — do not implement the change
-2. State which contract needs to change
-3. Cite the doc and section that creates the conflict
-4. Propose the minimal change needed
-5. Wait for user approval before proceeding
+If a contract change is required but not specified in the docs, you MUST:
+
+1. **State which contract type** would change (one of the 7 types listed above)
+2. **Output an exact diff plan** — list every file that would change and a one-line summary of the minimal modification
+3. **Cite the doc and section** (file path + section heading) that creates the conflict or justifies the change
+
+Then output this exact statement: **"Stopping here. No code changes made."**
+
+Do NOT continue coding. Do NOT implement the change. Do NOT make partial progress.
+Wait for explicit user approval before writing any code that touches a locked contract.
 
 ### Minimal Diffs
 

@@ -70,6 +70,7 @@ interface ValidationWarning {
 
 interface AgentKitManifest {
   version: string;
+  kit_prompt_version: string;
   created_at: string;
   mode: PackageMode;
   project_name?: string;
@@ -85,6 +86,8 @@ interface AgentKitManifest {
     warnings: string[];
   };
 }
+
+const KIT_PROMPT_VERSION = '2.0.0';
 
 function sha256(data: Buffer | string): string {
   return crypto.createHash('sha256').update(data).digest('hex');
@@ -559,6 +562,95 @@ function generateAgentPrompt(
   return template;
 }
 
+interface PromptIntegrityError {
+  check: string;
+  message: string;
+  excerpt?: string;
+}
+
+function assertPromptIntegrity(
+  resolvedPrompt: string,
+  context: { mode: PackageMode; stackProfileId?: string }
+): PromptIntegrityError[] {
+  const errors: PromptIntegrityError[] = [];
+
+  const unresolvedRegex = /\{\{\s*[A-Z0-9_]+\s*\}\}/g;
+  const unresolvedMatches = resolvedPrompt.match(unresolvedRegex);
+  if (unresolvedMatches) {
+    const unique = [...new Set(unresolvedMatches)];
+    errors.push({
+      check: 'unresolved_placeholders',
+      message: `${unique.length} unresolved placeholder(s): ${unique.join(', ')}`,
+      excerpt: unique.slice(0, 5).join(', '),
+    });
+  }
+
+  const criticalBlocks: Array<{ name: string; minLines: number; pattern: RegExp }> = [
+    { name: 'ALLOWED_PATHS', minLines: 3, pattern: /\*\*Allowed edit paths:\*\*\n([\s\S]*?)(?=\n\*\*Forbidden)/ },
+    { name: 'FORBIDDEN_PATHS', minLines: 5, pattern: /\*\*Forbidden paths \(do not modify\):\*\*\n([\s\S]*?)(?=\nIf you need to edit)/ },
+    { name: 'VERIFICATION_COMMANDS', minLines: 8, pattern: /## Verification Gates[\s\S]*?\n(\|[\s\S]*?\|)(?=\n\nPolicy)/ },
+  ];
+
+  for (const block of criticalBlocks) {
+    const match = resolvedPrompt.match(block.pattern);
+    if (!match || !match[1]) {
+      errors.push({
+        check: `empty_${block.name.toLowerCase()}`,
+        message: `Critical block ${block.name} not found or empty (mode=${context.mode}, stack=${context.stackProfileId || 'default'})`,
+      });
+      continue;
+    }
+    const content = match[1].trim();
+    const lineCount = content.split('\n').filter(l => l.trim().length > 0).length;
+    if (lineCount < block.minLines) {
+      errors.push({
+        check: `insufficient_${block.name.toLowerCase()}`,
+        message: `${block.name} has ${lineCount} lines, requires at least ${block.minLines} (mode=${context.mode})`,
+        excerpt: content.slice(0, 120),
+      });
+    }
+  }
+
+  const requiredVerificationRows = ['Install', 'Typecheck', 'Lint', 'Unit Tests', 'Build', 'Smoke Test'];
+  for (const row of requiredVerificationRows) {
+    if (!resolvedPrompt.includes(`| ${row} |`)) {
+      errors.push({
+        check: 'missing_verification_row',
+        message: `Verification gate table missing required row: "${row}" (mode=${context.mode})`,
+      });
+    }
+  }
+
+  const requiredSections = [
+    { heading: '## Operating Contract', label: 'Operating Contract' },
+    { heading: '### File Sandboxing', label: 'File Sandboxing' },
+    { heading: '### Contract Locks', label: 'Contract Locks' },
+    { heading: '## Verification Gates', label: 'Verification Gates' },
+    { heading: '## Drift Report', label: 'Drift Report' },
+    { heading: '## Output Discipline', label: 'Output Discipline' },
+  ];
+
+  let lastIdx = -1;
+  for (const section of requiredSections) {
+    const idx = resolvedPrompt.indexOf(section.heading);
+    if (idx === -1) {
+      errors.push({
+        check: 'missing_section',
+        message: `Required section "${section.label}" not found in resolved prompt`,
+      });
+    } else if (idx < lastIdx) {
+      errors.push({
+        check: 'section_order',
+        message: `Section "${section.label}" appears before a preceding required section — wrong order`,
+      });
+    } else {
+      lastIdx = idx;
+    }
+  }
+
+  return errors;
+}
+
 function generateAgentPromptFallback(
   mode: PackageMode,
   modules: string[],
@@ -727,10 +819,29 @@ async function createZip(
       mode, modules, readingOrder, dependencies, stackProfile, projectName,
       { unknownCount: validation.unknownCount, emptyCount: validation.emptyCount }
     );
+
+    const integrityErrors = assertPromptIntegrity(agentPrompt, {
+      mode,
+      stackProfileId: stackProfile?.stack_id as string | undefined,
+    });
+    if (integrityErrors.length > 0) {
+      const errorMessages = integrityErrors.map(e =>
+        e.excerpt ? `[${e.check}] ${e.message} — excerpt: "${e.excerpt}"` : `[${e.check}] ${e.message}`
+      );
+      reject(new Error(`Prompt integrity check failed (${integrityErrors.length} error(s)):\n  ${errorMessages.join('\n  ')}`));
+      return;
+    }
+
     appendFile(agentPrompt, 'AGENT_PROMPT.md');
+
+    const changelogPath = path.join(AXION_ROOT, 'templates', 'PROMPT_CHANGELOG.md');
+    if (fs.existsSync(changelogPath)) {
+      appendFile(fs.readFileSync(changelogPath), 'PROMPT_CHANGELOG.md');
+    }
 
     const manifest: AgentKitManifest = {
       version: '2.1',
+      kit_prompt_version: KIT_PROMPT_VERSION,
       created_at: new Date().toISOString(),
       mode,
       project_name: projectName,
