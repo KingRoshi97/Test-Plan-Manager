@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, Loader2, FolderTree, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Package, Loader2, FolderTree, Download, Pencil, Check, X } from "lucide-react";
 import type { WorkspaceInfo } from "@shared/schema";
 
 interface EnrichedAssembly {
@@ -15,6 +16,8 @@ interface EnrichedAssembly {
   kitPath: string | null;
   hasApp: boolean;
   hasManifest: boolean;
+  exportName: string | null;
+  revision: number;
 }
 
 function triggerDownload(assemblyId: string, filename?: string) {
@@ -25,6 +28,126 @@ function triggerDownload(assemblyId: string, filename?: string) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+}
+
+function InlineRename({
+  assemblyId,
+  currentName,
+  fallbackName,
+}: {
+  assemblyId: string;
+  currentName: string | null;
+  fallbackName: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(currentName || fallbackName);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editing]);
+
+  const renameMutation = useMutation({
+    mutationFn: async (newName: string) => {
+      return apiRequest(`/api/assemblies/${assemblyId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ exportName: newName }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+      toast({ title: "Renamed", description: "Export name updated." });
+      setEditing(false);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Rename failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const displayName = currentName || fallbackName;
+
+  const handleSave = () => {
+    const trimmed = draft.trim();
+    if (!trimmed || trimmed === displayName) {
+      setEditing(false);
+      setDraft(displayName);
+      return;
+    }
+    renameMutation.mutate(trimmed);
+  };
+
+  const handleCancel = () => {
+    setEditing(false);
+    setDraft(displayName);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleSave();
+    if (e.key === "Escape") handleCancel();
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        <Input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="text-sm max-w-[260px]"
+          disabled={renameMutation.isPending}
+          data-testid={`input-rename-${assemblyId}`}
+        />
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={handleSave}
+          disabled={renameMutation.isPending}
+          data-testid={`button-save-rename-${assemblyId}`}
+        >
+          {renameMutation.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Check className="w-3.5 h-3.5" />
+          )}
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={handleCancel}
+          disabled={renameMutation.isPending}
+          data-testid={`button-cancel-rename-${assemblyId}`}
+        >
+          <X className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-sm font-medium" data-testid={`text-export-display-name-${assemblyId}`}>
+        {displayName}
+      </span>
+      {!currentName && (
+        <span className="text-xs text-muted-foreground" data-testid={`text-auto-indicator-${assemblyId}`}>(auto)</span>
+      )}
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={() => {
+          setDraft(displayName);
+          setEditing(true);
+        }}
+        data-testid={`button-edit-name-${assemblyId}`}
+      >
+        <Pencil className="w-3.5 h-3.5" />
+      </Button>
+    </div>
+  );
 }
 
 export default function ExportPage() {
@@ -106,8 +229,22 @@ export default function ExportPage() {
                 <CardContent className="flex items-center gap-3 flex-wrap py-4">
                   <FolderTree className="w-5 h-5 text-primary shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium" data-testid={`text-export-name-${ws.projectName}`}>
+                    {assembly ? (
+                      <InlineRename
+                        assemblyId={assembly.id}
+                        currentName={assembly.exportName}
+                        fallbackName={ws.projectName}
+                      />
+                    ) : (
+                      <p className="text-sm font-medium" data-testid={`text-export-name-${ws.projectName}`}>
+                        {ws.projectName}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-0.5" data-testid={`text-project-name-${ws.projectName}`}>
                       {ws.projectName}
+                      {assembly && assembly.revision > 1 && (
+                        <span className="ml-1">rev {assembly.revision}</span>
+                      )}
                     </p>
                     <div className="flex items-center gap-1 mt-1 flex-wrap">
                       {ws.hasManifest && <Badge variant="outline" className="text-xs">Manifest</Badge>}
