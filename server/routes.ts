@@ -1683,6 +1683,15 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
   app.delete('/api/assemblies/:id', async (req: Request, res: Response) => {
     try {
+      const assembly = await storage.getAssembly(req.params.id as string);
+      if (assembly?.projectName) {
+        const projectPath = getProjectPath(assembly.projectName);
+        const resolvedPath = path.resolve(projectPath);
+        const resolvedWsDir = path.resolve(WORKSPACES_DIR);
+        if (resolvedPath.startsWith(resolvedWsDir + path.sep) && fs.existsSync(resolvedPath)) {
+          fs.rmSync(resolvedPath, { recursive: true, force: true });
+        }
+      }
       await storage.deleteAssembly(req.params.id as string);
       res.json({ ok: true });
     } catch (err: any) {
@@ -2413,7 +2422,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
       if (fs.existsSync(resolvedPath)) {
         fs.rmSync(resolvedPath, { recursive: true, force: true });
       }
-      await storage.deleteWorkspace(projectName);
+      await storage.deleteProjectData(projectName);
       res.json({ status: 'deleted', projectName });
     } catch (err: any) {
       res.status(500).json({ error: err?.message || 'Failed to delete workspace' });

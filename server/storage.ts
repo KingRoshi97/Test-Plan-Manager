@@ -12,6 +12,7 @@ export interface IStorage {
   getAssembly(id: string): Promise<Assembly | undefined>;
   updateAssembly(id: string, data: Partial<InsertAssembly & { state: string; step: string | null; progress: unknown; errors: string[] | null; logsTail: string | null; updatedAt: Date; revision: number; upgradeNotes: string | null; kitType: string }>): Promise<Assembly | undefined>;
   deleteAssembly(id: string): Promise<void>;
+  deleteProjectData(projectName: string): Promise<void>;
 
   getWorkspaces(): Promise<Workspace[]>;
   getWorkspace(projectName: string): Promise<Workspace | undefined>;
@@ -55,7 +56,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteAssembly(id: string): Promise<void> {
-    await db.delete(assemblies).where(eq(assemblies.id, id));
+    const assembly = await this.getAssembly(id);
+    if (assembly?.projectName) {
+      await this.deleteProjectData(assembly.projectName);
+    } else {
+      await db.delete(assemblies).where(eq(assemblies.id, id));
+    }
+  }
+
+  async deleteProjectData(projectName: string): Promise<void> {
+    await db.delete(moduleStatuses).where(eq(moduleStatuses.projectName, projectName));
+    await db.delete(pipelineRuns).where(eq(pipelineRuns.projectName, projectName));
+    await db.delete(reports).where(eq(reports.projectName, projectName));
+    await db.delete(workspaces).where(eq(workspaces.projectName, projectName));
+    await db.delete(assemblies).where(eq(assemblies.projectName, projectName));
   }
 
   async getWorkspaces(): Promise<Workspace[]> {
