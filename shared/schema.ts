@@ -29,6 +29,7 @@ export const assemblies = pgTable("assemblies", {
   kitType: text("kit_type").notNull().default("original"),
   sourceFiles: jsonb("source_files"),
   archiveUrl: text("archive_url"),
+  exportName: text("export_name"),
 });
 
 export const workspaces = pgTable("workspaces", {

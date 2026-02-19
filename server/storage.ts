@@ -10,7 +10,7 @@ export interface IStorage {
   createAssembly(data: InsertAssembly): Promise<Assembly>;
   getAssemblies(): Promise<Assembly[]>;
   getAssembly(id: string): Promise<Assembly | undefined>;
-  updateAssembly(id: string, data: Partial<InsertAssembly & { state: string; step: string | null; progress: unknown; errors: string[] | null; logsTail: string | null; updatedAt: Date; revision: number; upgradeNotes: string | null; kitType: string }>): Promise<Assembly | undefined>;
+  updateAssembly(id: string, data: Partial<InsertAssembly & { state: string; step: string | null; progress: unknown; errors: string[] | null; logsTail: string | null; updatedAt: Date; revision: number; upgradeNotes: string | null; kitType: string; exportName: string | null }>): Promise<Assembly | undefined>;
   deleteAssembly(id: string): Promise<void>;
   deleteProjectData(projectName: string): Promise<void>;
 
@@ -47,7 +47,7 @@ export class DatabaseStorage implements IStorage {
     return assembly;
   }
 
-  async updateAssembly(id: string, data: Partial<InsertAssembly & { state: string; step: string | null; progress: unknown; errors: string[] | null; logsTail: string | null; updatedAt: Date; revision: number; upgradeNotes: string | null; kitType: string }>): Promise<Assembly | undefined> {
+  async updateAssembly(id: string, data: Partial<InsertAssembly & { state: string; step: string | null; progress: unknown; errors: string[] | null; logsTail: string | null; updatedAt: Date; revision: number; upgradeNotes: string | null; kitType: string; exportName: string | null }>): Promise<Assembly | undefined> {
     const [updated] = await db.update(assemblies)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(assemblies.id, id))

@@ -1803,14 +1803,21 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
         return;
       }
 
-      const { idea, context, input } = req.body;
+      const { idea, context, input, exportName } = req.body;
       const updates: Record<string, unknown> = {};
       if (idea !== undefined) updates.idea = idea;
       if (context !== undefined) updates.context = context;
       if (input !== undefined) updates.input = input;
+      if (exportName !== undefined) {
+        if (typeof exportName === 'string') {
+          updates.exportName = exportName.trim().slice(0, 200) || null;
+        } else {
+          updates.exportName = null;
+        }
+      }
 
       if (Object.keys(updates).length === 0) {
-        res.status(400).json({ error: 'No valid fields to update. Allowed fields: idea, context, input' });
+        res.status(400).json({ error: 'No valid fields to update. Allowed fields: idea, context, input, exportName' });
         return;
       }
 
@@ -2321,7 +2328,13 @@ IMPORTANT: Return ONLY valid JSON, no markdown fences.`;
 
     let zipPath: string | null = null;
     if (result.status === 'success') {
-      await storage.updateAssembly(req.params.id as string, { state: 'exported' });
+      const exportUpdates: Record<string, unknown> = { state: 'exported' };
+      if (!assembly.exportName) {
+        const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const revPart = assembly.revision > 1 ? `-v${assembly.revision}` : '';
+        exportUpdates.exportName = `${assembly.projectName}-${datePart}${revPart}`;
+      }
+      await storage.updateAssembly(req.params.id as string, exportUpdates);
       try {
         const jsonMatch = result.stdout.match(/\{[\s\S]*"output_path"\s*:\s*"([^"]+)"[\s\S]*\}/);
         if (jsonMatch && jsonMatch[1]) {
