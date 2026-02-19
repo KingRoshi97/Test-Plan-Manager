@@ -303,6 +303,69 @@ function validateKit(): { warnings: ValidationWarning[]; unknownCount: number; e
   return { warnings, unknownCount, emptyCount };
 }
 
+function getModulesByType(): Record<string, Array<{ slug: string; dependencies: string[] }>> {
+  const domainsJsonPath = path.join(CONFIG_PATH, 'domains.json');
+  if (!fs.existsSync(domainsJsonPath)) return {};
+  try {
+    const config = JSON.parse(fs.readFileSync(domainsJsonPath, 'utf-8'));
+    const byType: Record<string, Array<{ slug: string; dependencies: string[] }>> = {};
+    if (Array.isArray(config.modules)) {
+      for (const mod of config.modules) {
+        const t = mod.type || 'core';
+        if (!byType[t]) byType[t] = [];
+        byType[t].push({ slug: mod.slug, dependencies: mod.dependencies || [] });
+      }
+    }
+    return byType;
+  } catch {
+    return {};
+  }
+}
+
+function extractErcSection(sectionName: string): string {
+  const ercPaths = [
+    path.join(REGISTRY_PATH, 'ERC.md'),
+    path.join(DOMAINS_PATH, 'contracts', 'ERC.md'),
+  ];
+  for (const ercPath of ercPaths) {
+    if (!fs.existsSync(ercPath)) continue;
+    try {
+      const content = fs.readFileSync(ercPath, 'utf-8');
+      const regex = new RegExp(`^##\\s+.*${sectionName}.*$`, 'im');
+      const match = content.match(regex);
+      if (!match || match.index === undefined) continue;
+      const startIdx = match.index + match[0].length;
+      const nextSection = content.slice(startIdx).match(/^##\s+/m);
+      const sectionContent = nextSection && nextSection.index !== undefined
+        ? content.slice(startIdx, startIdx + nextSection.index).trim()
+        : content.slice(startIdx).trim();
+      if (sectionContent.length > 0) return sectionContent;
+    } catch {}
+  }
+  return '';
+}
+
+function collectOpenQuestions(): string {
+  const questions: string[] = [];
+  if (fs.existsSync(DOMAINS_PATH)) {
+    const files = walkDir(DOMAINS_PATH).filter(f => f.includes('OPEN_QUESTIONS'));
+    for (const file of files) {
+      const fullPath = path.join(DOMAINS_PATH, file);
+      try {
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        const lines = content.split('\n').filter(l => l.trim().startsWith('- ') || l.trim().startsWith('* '));
+        for (const line of lines) {
+          const cleaned = line.trim().replace(/^[-*]\s+/, '');
+          if (cleaned.length > 0 && !cleaned.includes('UNKNOWN')) {
+            questions.push(cleaned);
+          }
+        }
+      } catch {}
+    }
+  }
+  return questions.length > 0 ? questions.map(q => `- ${q}`).join('\n') : 'No open questions identified.';
+}
+
 function generateAgentPrompt(
   mode: PackageMode,
   modules: string[],
@@ -312,118 +375,160 @@ function generateAgentPrompt(
   projectName?: string,
   validation?: { unknownCount: number; emptyCount: number }
 ): string {
-  let p = '';
+  const TEMPLATES_DIR = path.join(path.dirname(__dirname), 'templates');
+  const templatePath = path.join(TEMPLATES_DIR, 'AGENT_PROMPT.template.md');
 
+  if (!fs.existsSync(templatePath)) {
+    return generateAgentPromptFallback(mode, modules, readingOrder, dependencies, stackProfile, projectName, validation);
+  }
+
+  let template = fs.readFileSync(templatePath, 'utf-8');
+
+  template = template.replace(/<!--\s*AXION:AGENT_GUIDANCE[\s\S]*?-->/g, '');
+  template = template.replace(/<!--\s*AXION:TEMPLATE_CONTRACT:\w+\s*-->/g, '');
+  template = template.replace(/<!--\s*AXION:CORE_DOC:\w+\s*-->/g, '');
+  template = template.replace(/<!-- AGENT:.*?-->/g, '');
+
+  const sp = (stackProfile || {}) as Record<string, unknown>;
+  const fe = (sp.frontend || {}) as Record<string, string>;
+  const be = (sp.backend || {}) as Record<string, string>;
+  const db = (sp.database || {}) as Record<string, string>;
+
+  const modulesByType = getModulesByType();
+  const phase2Types = ['foundation', 'data', 'security'];
+  const phase2Modules = readingOrder.filter(slug => {
+    const typeEntry = Object.entries(modulesByType).find(([, mods]) => mods.some(m => m.slug === slug));
+    return typeEntry && phase2Types.includes(typeEntry[0]);
+  });
+  const phase2Order = phase2Modules.map((slug, i) => {
+    const deps = dependencies[slug] || [];
+    const depStr = deps.length > 0 ? ` (depends on: ${deps.join(', ')})` : '';
+    return `${i + 1}. \`${slug}/\`${depStr}`;
+  }).join('\n');
+
+  const buildOrder = readingOrder.map((slug, i) => {
+    const deps = dependencies[slug] || [];
+    const typeEntry = Object.entries(modulesByType).find(([, mods]) => mods.some(m => m.slug === slug));
+    const domainType = typeEntry ? typeEntry[0] : 'core';
+    let phase = 'Phase 3';
+    if (phase2Types.includes(domainType)) phase = 'Phase 2';
+    else if (['quality', 'crosscutting', 'operations', 'developer'].includes(domainType)) phase = 'Phase 4';
+    const depStr = deps.length > 0 ? ` → depends on: ${deps.join(', ')}` : '';
+    return `${i + 1}. **${slug}** (${domainType}, ${phase})${depStr}`;
+  }).join('\n');
+
+  const acceptanceCriteria = extractErcSection('Acceptance') || 'Refer to `registry/ERC.md` for acceptance criteria.';
+  const inScope = extractErcSection('Scope') || extractErcSection('In Scope') || 'Refer to `registry/ERC.md` for scope boundaries.';
+  const forbidden = extractErcSection('Forbidden') || 'Refer to `registry/ERC.md` for forbidden changes.';
+  const openQuestions = collectOpenQuestions();
+
+  let upgradeNotes = '';
+  if (mode === 'full') {
+    const lockManifestPath = path.join(REGISTRY_PATH, 'lock_manifest.json');
+    if (fs.existsSync(lockManifestPath)) {
+      try {
+        const manifest = JSON.parse(fs.readFileSync(lockManifestPath, 'utf-8'));
+        if (manifest.upgrade_notes) upgradeNotes = manifest.upgrade_notes;
+      } catch {}
+    }
+  }
+  if (!upgradeNotes) {
+    upgradeNotes = 'This is the initial version. No upgrade notes.';
+  }
+
+  let kitVersion = '1.0';
+  const lockManifestPath = path.join(REGISTRY_PATH, 'lock_manifest.json');
+  if (fs.existsSync(lockManifestPath)) {
+    try {
+      const manifest = JSON.parse(fs.readFileSync(lockManifestPath, 'utf-8'));
+      if (manifest.version) kitVersion = manifest.version;
+      if (manifest.revision) kitVersion = `${kitVersion} (rev ${manifest.revision})`;
+    } catch {}
+  }
+
+  const kitType = mode === 'docs' ? 'documentation-only' : mode === 'scaffold' ? 'scaffold' : 'full';
+
+  const purpose = projectName
+    ? `Build and deploy the ${projectName} application according to its specification documents.`
+    : 'Build and deploy the application according to its specification documents.';
+
+  const replacements: Record<string, string> = {
+    '{{PROJECT_NAME}}': projectName || 'Untitled Project',
+    '{{PROJECT_PURPOSE}}': purpose,
+    '{{KIT_VERSION}}': kitVersion,
+    '{{KIT_TYPE}}': kitType,
+    '{{KIT_ROOT}}': projectName || 'agent_kit',
+    '{{RUNTIME}}': be.runtime || 'N/A',
+    '{{FRAMEWORK}}': be.framework || fe.framework || 'N/A',
+    '{{LANGUAGE}}': fe.language || 'TypeScript',
+    '{{DATABASE}}': db.engine || 'N/A',
+    '{{ORM}}': db.orm || 'N/A',
+    '{{UI_LIBRARY}}': fe.framework || fe.styling || 'N/A',
+    '{{STATE_MANAGEMENT}}': fe.state || 'N/A',
+    '{{TEST_FRAMEWORK}}': (sp.testing as Record<string, string>)?.framework || 'N/A',
+    '{{PACKAGE_MANAGER}}': (sp.tooling as Record<string, string>)?.package_manager || 'npm',
+    '{{BUILD_ORDER}}': buildOrder || 'No domain modules found.',
+    '{{PHASE_2_DOMAIN_ORDER}}': phase2Order || 'No foundation domains found.',
+    '{{ACCEPTANCE_CRITERIA}}': acceptanceCriteria,
+    '{{IN_SCOPE}}': inScope,
+    '{{FORBIDDEN_CHANGES}}': forbidden,
+    '{{UPGRADE_NOTES}}': upgradeNotes,
+    '{{OPEN_QUESTIONS}}': openQuestions,
+    '{{DOMAIN_SLUG}}': '{slug}',
+  };
+
+  for (const [placeholder, value] of Object.entries(replacements)) {
+    template = template.split(placeholder).join(value);
+  }
+
+  if (validation && (validation.unknownCount > 0 || validation.emptyCount > 0)) {
+    let warningsBlock = '\n## Validation Warnings\n\n';
+    if (validation.unknownCount > 0) {
+      warningsBlock += `- **${validation.unknownCount} UNKNOWN placeholder(s)** remain in the documentation. These represent gaps that need human input before implementation.\n`;
+    }
+    if (validation.emptyCount > 0) {
+      warningsBlock += `- **${validation.emptyCount} empty file(s)** exist in domains. These documents have not been filled yet.\n`;
+    }
+    const openQIdx = template.indexOf('## Open Questions');
+    if (openQIdx !== -1) {
+      template = template.slice(0, openQIdx) + warningsBlock + '\n' + template.slice(openQIdx);
+    } else {
+      template += warningsBlock;
+    }
+  }
+
+  template = template.replace(/\n{4,}/g, '\n\n\n');
+
+  return template;
+}
+
+function generateAgentPromptFallback(
+  mode: PackageMode,
+  modules: string[],
+  readingOrder: string[],
+  dependencies: Record<string, string[]>,
+  stackProfile?: Record<string, unknown>,
+  projectName?: string,
+  validation?: { unknownCount: number; emptyCount: number }
+): string {
+  let p = '';
   p += `# AXION Agent Kit${projectName ? `: ${projectName}` : ''}\n\n`;
   p += `Generated by AXION on ${new Date().toISOString()} in **${mode}** mode.\n\n`;
-
-  p += `## How to Use This Kit\n\n`;
-  p += `This document is your entry point. Follow it step by step.\n\n`;
-
-  p += `### Step 0: Project Context\n\n`;
-  p += `Before reading any domain documentation, start with these files for essential project context:\n\n`;
-  p += `- **\`PROJECT_OVERVIEW.md\`** — What this project is, its mode (e.g. mobile-pwa, web-saas), target audience, and core requirements\n`;
-  p += `- **\`source_docs/RPBS_Product.md\`** — Requirements & Product Backlog Specification (the product vision)\n`;
-  p += `- **\`source_docs/REBS_Product.md\`** — Requirements & Engineering Backlog Specification (technical approach)\n\n`;
-  p += `These establish the project identity and constraints that all domain documentation builds upon.\n\n`;
-
-  p += `### Step 1: Understand the Mode\n\n`;
-  if (mode === 'docs') {
-    p += `This kit contains **documentation only**. Your job is to read these docs and build the entire application from scratch based on them. Do not invent features that aren't documented.\n\n`;
-  } else if (mode === 'scaffold') {
-    p += `This kit contains **documentation + an application skeleton** in the \`app/\` directory. Your job is to read the docs and implement the features within the existing scaffold. Do not restructure the scaffold or invent undocumented features.\n\n`;
-  } else {
-    p += `This kit contains **documentation + a complete application** in the \`app/\` directory. Your job is to review the implementation against the docs, run tests, fix issues, and prepare for deployment.\n\n`;
-  }
-
-  if (stackProfile) {
-    p += `### Step 2: Technology Stack\n\n`;
-    p += `This project uses the following stack (from \`config/stack_profiles.json\`):\n\n`;
-    const sp = stackProfile as Record<string, unknown>;
-    if (sp.frontend) {
-      const fe = sp.frontend as Record<string, string>;
-      p += `**Frontend**: ${fe.framework || 'N/A'} + ${fe.language || 'N/A'} + ${fe.styling || 'N/A'}\n`;
-      if (fe.state) p += `**State Management**: ${fe.state}\n`;
-    }
-    if (sp.backend) {
-      const be = sp.backend as Record<string, string>;
-      p += `**Backend**: ${be.runtime || 'N/A'} + ${be.framework || 'N/A'} (${be.api_style || 'REST'})\n`;
-    }
-    if (sp.database) {
-      const db = sp.database as Record<string, string>;
-      p += `**Database**: ${db.engine || 'N/A'} + ${db.orm || 'N/A'}\n`;
-    }
-    p += `\n`;
-  }
-
-  p += `### Step ${stackProfile ? '3' : '2'}: Reading Order\n\n`;
-  p += `Read the domain documentation in this order. Each domain builds on the ones before it (dependencies are resolved):\n\n`;
+  p += `> **Note:** The AGENT_PROMPT template was not found. This is a simplified fallback prompt.\n\n`;
+  p += `## Reading Order\n\n`;
   for (let i = 0; i < readingOrder.length; i++) {
     const slug = readingOrder[i];
     const deps = dependencies[slug] || [];
-    const depStr = deps.length > 0 ? ` (depends on: ${deps.join(', ')})` : ' (no dependencies)';
+    const depStr = deps.length > 0 ? ` (depends on: ${deps.join(', ')})` : '';
     p += `${i + 1}. **${slug}/**${depStr}\n`;
   }
-  p += `\n`;
-
-  const nextStep = stackProfile ? 4 : 3;
-  p += `### Step ${nextStep}: Document Types\n\n`;
-  p += `Each domain contains these document types. Here's what each one tells you:\n\n`;
-  p += `| Document | What It Contains | What You Build From It |\n`;
-  p += `|----------|-----------------|------------------------|\n`;
-  p += `| **README.md** | Domain overview and purpose | Understanding of scope |\n`;
-  p += `| **DDES** | Entity definitions, relationships, attributes | Database schemas, models, migrations |\n`;
-  p += `| **BELS** | Business rules, state machines, validation | Backend logic, middleware, validators |\n`;
-  p += `| **DIM** | API contracts, integrations, error models | API routes, service clients, error handling |\n`;
-  p += `| **SCREENMAP** | Pages, navigation flows, user actions | Frontend routes, pages, navigation |\n`;
-  p += `| **COMPONENT_LIBRARY** | UI components, props, variants | Reusable frontend components |\n`;
-  p += `| **UI_Constraints** | Layout rules, spacing, responsive behavior | CSS/styling, layout structure |\n`;
-  p += `| **UX_Foundations** | Interaction patterns, design principles | UX decisions, interaction handlers |\n`;
-  p += `| **COPY_GUIDE** | Text, labels, error messages, tone | All user-facing copy |\n`;
-  p += `| **TESTPLAN** | Test cases, acceptance criteria | Test files, test data |\n`;
-  p += `| **OPEN_QUESTIONS** | Unresolved decisions | Areas needing clarification |\n`;
-  p += `\n`;
-
-  p += `### Step ${nextStep + 1}: Key Rules\n\n`;
-  p += `1. **Do NOT invent features** not documented in the domain files\n`;
-  p += `2. **Follow the stack profile** — use the specified technologies, not alternatives\n`;
-  p += `3. **Use the error model** defined in the contracts domain DIM\n`;
-  p += `4. **Respect domain boundaries** — each domain owns its entities and logic\n`;
-  p += `5. **Mark unknowns** — if information is missing, use the UNKNOWN placeholder and log to OPEN_QUESTIONS\n`;
-  p += `6. **Follow the cascade** — changes to foundation domains (architecture, systems, contracts) affect all downstream domains\n`;
-  p += `\n`;
-
+  p += `\n## Locked Modules\n\n`;
+  for (const mod of modules) p += `- ${mod}\n`;
   if (validation && (validation.unknownCount > 0 || validation.emptyCount > 0)) {
-    p += `### Warnings\n\n`;
-    if (validation.unknownCount > 0) {
-      p += `- **${validation.unknownCount} UNKNOWN placeholder(s)** remain in the documentation. These represent gaps that need human input before implementation.\n`;
-    }
-    if (validation.emptyCount > 0) {
-      p += `- **${validation.emptyCount} empty file(s)** exist in domains. These documents have not been filled yet.\n`;
-    }
-    p += `\n`;
+    p += `\n## Warnings\n\n`;
+    if (validation.unknownCount > 0) p += `- ${validation.unknownCount} UNKNOWN placeholder(s) remain.\n`;
+    if (validation.emptyCount > 0) p += `- ${validation.emptyCount} empty file(s) exist.\n`;
   }
-
-  p += `### Additional Resources\n\n`;
-  p += `- \`config/domains.json\` — Module definitions and dependency graph\n`;
-  p += `- \`config/stack_profiles.json\` — Available technology stacks\n`;
-  p += `- \`config/presets.json\` — Pipeline configuration and stage plans\n`;
-  p += `- \`knowledge/\` — Industry best practices for stacks, security, accessibility, UI patterns, and more\n`;
-  p += `- \`registry/\` — Pipeline state (verify reports, lock manifest)\n`;
-  if (mode !== 'docs') {
-    p += `- \`app/\` — Application code\n`;
-  }
-  p += `\n`;
-
-  p += `## Locked Modules\n\n`;
-  if (modules.length > 0) {
-    for (const mod of modules) {
-      p += `- ${mod}\n`;
-    }
-  } else {
-    p += `No modules locked yet. All domain documents are available for review.\n`;
-  }
-
   return p;
 }
 
