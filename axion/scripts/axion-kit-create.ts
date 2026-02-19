@@ -215,7 +215,7 @@ function log(msg: string): void {
   }
 }
 
-function copyDirRecursive(src: string, dest: string, isDryRun: boolean): number {
+function copyDirRecursive(src: string, dest: string, isDryRun: boolean, structureOnly = false): number {
   let count = 0;
   
   if (!fs.existsSync(src)) {
@@ -233,8 +233,11 @@ function copyDirRecursive(src: string, dest: string, isDryRun: boolean): number 
     const destPath = path.join(dest, entry.name);
     
     if (entry.isDirectory()) {
-      count += copyDirRecursive(srcPath, destPath, isDryRun);
+      count += copyDirRecursive(srcPath, destPath, isDryRun, structureOnly);
     } else if (entry.isFile()) {
+      if (structureOnly && entry.name.endsWith('.md')) {
+        continue;
+      }
       if (!isDryRun) {
         fs.copyFileSync(srcPath, destPath);
       }
@@ -569,9 +572,14 @@ function main(): void {
     const srcDir = path.join(sourcePath, dir);
     const destDir = path.join(targetAxion, dir);
     if (fs.existsSync(srcDir)) {
-      const count = copyDirRecursive(srcDir, destDir, options.dryRun);
+      const structureOnly = dir === 'domains';
+      const count = copyDirRecursive(srcDir, destDir, options.dryRun, structureOnly);
       totalFiles += count;
-      log(`[INFO] Copied ${dir}/ (${count} files)`);
+      if (structureOnly) {
+        log(`[INFO] Copied ${dir}/ structure only — ${count} non-doc files (generate step will create doc files)`);
+      } else {
+        log(`[INFO] Copied ${dir}/ (${count} files)`);
+      }
     }
   }
 
