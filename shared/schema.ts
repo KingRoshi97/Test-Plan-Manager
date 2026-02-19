@@ -197,6 +197,6 @@ export interface UploadResult {
   skipped: SkipBreakdown;
   totalExtracted: number;
   totalSkipped: number;
-  archiveType: 'zip' | 'tar.gz' | 'github';
+  archiveType: 'zip' | 'tar.gz' | 'github' | 'pdf';
   originalName: string;
 }

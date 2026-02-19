@@ -36,6 +36,7 @@ import {
   Paperclip,
   X,
   FileArchive,
+  FileText,
   Info,
   Wand2,
   RefreshCw,
@@ -825,7 +826,7 @@ export default function NewAssemblyPage() {
                     <input
                       ref={archiveInputRef}
                       type="file"
-                      accept=".zip,.tar.gz,.tgz"
+                      accept=".zip,.tar.gz,.tgz,.pdf"
                       className="hidden"
                       data-testid="input-archive-file"
                       onChange={(e) => {
@@ -838,7 +839,7 @@ export default function NewAssemblyPage() {
                       onClick={() => archiveInputRef.current?.click()}
                       disabled={uploadLoading || githubLoading}
                       className="absolute bottom-2 right-2 flex items-center justify-center w-7 h-7 rounded-md bg-muted/80 text-muted-foreground transition-colors hover-elevate"
-                      title="Upload .zip or .tar.gz to add project context"
+                      title="Upload a .pdf, .zip, or .tar.gz to add project context"
                       data-testid="button-archive-upload"
                     >
                       {uploadLoading ? (
@@ -852,8 +853,8 @@ export default function NewAssemblyPage() {
                   {confirmedFiles.length > 0 ? (
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="secondary" className="gap-1" data-testid="badge-archive-attached">
-                        <FileArchive className="w-3 h-3" />
-                        {confirmedArchiveName} ({confirmedFiles.length} files)
+                        {confirmedArchiveName?.toLowerCase().endsWith('.pdf') ? <FileText className="w-3 h-3" /> : <FileArchive className="w-3 h-3" />}
+                        {confirmedArchiveName} ({confirmedFiles.length} {confirmedFiles.length === 1 ? 'file' : 'files'})
                       </Badge>
                       <Button
                         size="icon"
@@ -881,7 +882,7 @@ export default function NewAssemblyPage() {
                   ) : (
                     <div className="space-y-2">
                       <p className="text-xs text-muted-foreground">
-                        Describe the app or system you want to build. Use <Paperclip className="w-3 h-3 inline" /> to upload an archive (.zip, .tar.gz), or paste a GitHub URL below.
+                        Describe the app or system you want to build. Use <Paperclip className="w-3 h-3 inline" /> to upload a PDF, archive (.zip, .tar.gz), or paste a GitHub URL below.
                       </p>
                       <div className="flex items-center gap-2">
                         <Input
