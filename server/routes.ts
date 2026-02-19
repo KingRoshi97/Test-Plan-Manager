@@ -1299,6 +1299,41 @@ export function registerRoutes(app: Express) {
 
       const originalName = req.file.originalname || 'unknown';
       const lowerName = originalName.toLowerCase();
+
+      if (lowerName.endsWith('.pdf')) {
+        const { PDFParse } = await import('pdf-parse');
+        const uint8 = new Uint8Array(req.file.buffer.buffer, req.file.buffer.byteOffset, req.file.buffer.byteLength);
+        const parser = new PDFParse(uint8 as any);
+        let text: string;
+        try {
+          await parser.load();
+          const textResult = await parser.getText();
+          const rawText = (textResult?.text || '');
+          text = rawText.replace(/\n\n-- \d+ of \d+ --\n?/g, '\n').trim();
+        } finally {
+          try { parser.destroy(); } catch {}
+        }
+        if (!text) {
+          res.status(400).json({ error: 'No readable text found in the PDF. It may be image-only or empty.' });
+          return;
+        }
+        const result: UploadResult = {
+          files: [{
+            path: originalName,
+            content: text,
+            language: 'plaintext',
+            size: Buffer.byteLength(text, 'utf8'),
+          }],
+          skipped: { binary: 0, tooLarge: 0, excludedDir: 0, traversal: 0, readError: 0, empty: 0 },
+          totalExtracted: 1,
+          totalSkipped: 0,
+          archiveType: 'pdf',
+          originalName,
+        };
+        res.json(result);
+        return;
+      }
+
       let archiveType: 'zip' | 'tar.gz';
       let extracted: { files: SourceFile[]; skipped: SkipBreakdown };
 
@@ -1309,7 +1344,7 @@ export function registerRoutes(app: Express) {
         archiveType = 'zip';
         extracted = extractZipFiles(req.file.buffer);
       } else {
-        res.status(400).json({ error: 'Unsupported archive format. Please upload a .zip, .tar.gz, or .tgz file.' });
+        res.status(400).json({ error: 'Unsupported file format. Please upload a .pdf, .zip, .tar.gz, or .tgz file.' });
         return;
       }
 
