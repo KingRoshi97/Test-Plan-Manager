@@ -22,6 +22,7 @@ import {
   writeVerifyStatus,
   failJson,
   AXION_REQUIRED_DOC_TYPES,
+  getModuleRequiredDocTypes,
 } from './_axion_module_mode.mjs';
 
 const args = process.argv.slice(2);
@@ -61,8 +62,9 @@ function loadConfig() {
 function checkDomainFiles(axionRoot, module, domainsDir) {
   const results = [];
   const domainDir = path.join(axionRoot, domainsDir, module);
+  const requiredDocTypes = getModuleRequiredDocTypes(module);
 
-  for (const docType of AXION_REQUIRED_DOC_TYPES) {
+  for (const docType of requiredDocTypes) {
     const filePath = path.join(domainDir, `${docType}_${module}.md`);
     const exists = fs.existsSync(filePath);
     results.push({
@@ -157,7 +159,10 @@ function emitOutput() {
   console.log(`Mode: ${dryRun ? 'DRY RUN' : 'EXECUTE'}`);
   console.log(`Status: ${vs.passed ? 'PASS' : 'FAIL'}`);
   console.log(`Modules: ${receipt.modulesProcessed.join(', ') || '(none)'}`);
-  console.log(`Required Doc Types: ${AXION_REQUIRED_DOC_TYPES.join(', ')}`);
+  const modulesStr = receipt.modulesProcessed.join(', ') || '(none)';
+  const perModuleTypes = receipt.modulesProcessed.map(m => getModuleRequiredDocTypes(m));
+  const uniqueTypes = [...new Set(perModuleTypes.flat())];
+  console.log(`Required Doc Types: ${uniqueTypes.join(', ')} (per-module filtering applied via domains.json)`);
 
   console.log('\n--- VERIFICATION RESULTS ---');
 
