@@ -366,6 +366,55 @@ function collectOpenQuestions(): string {
   return questions.length > 0 ? questions.map(q => `- ${q}`).join('\n') : 'No open questions identified.';
 }
 
+function generateAllowedPaths(mode: PackageMode, kitRoot: string): string {
+  const paths: string[] = [];
+  if (mode === 'docs') {
+    paths.push(`- \`${kitRoot}/app/**\` — Application code (you create this)`);
+    paths.push(`- \`${kitRoot}/tests/**\` — Test files`);
+  } else if (mode === 'scaffold') {
+    paths.push(`- \`${kitRoot}/app/**\` — Application code (extend the scaffold)`);
+    paths.push(`- \`${kitRoot}/tests/**\` — Test files`);
+  } else {
+    paths.push(`- \`${kitRoot}/app/**\` — Application code`);
+    paths.push(`- \`${kitRoot}/tests/**\` — Test files`);
+  }
+  paths.push(`- \`${kitRoot}/app/src/**\` — Source code`);
+  paths.push(`- \`${kitRoot}/app/public/**\` — Static assets`);
+  paths.push(`- Project configuration files (\`package.json\`, \`tsconfig.json\`, etc.) — only when required by the task`);
+  return paths.join('\n');
+}
+
+function generateForbiddenPaths(kitRoot: string): string {
+  const paths: string[] = [];
+  paths.push(`- \`${kitRoot}/docs/**\` — Locked documentation (read-only)`);
+  paths.push(`- \`${kitRoot}/domains/**\` — Domain specifications (read-only)`);
+  paths.push(`- \`${kitRoot}/registry/**\` — Pipeline state and contracts (read-only)`);
+  paths.push(`- \`${kitRoot}/knowledge/**\` — Knowledge base (read-only)`);
+  paths.push(`- \`${kitRoot}/config/**\` — Kit configuration (read-only)`);
+  paths.push(`- \`${kitRoot}/AGENT_PROMPT.md\` — This file (read-only)`);
+  paths.push(`- Any files outside the workspace root`);
+  return paths.join('\n');
+}
+
+function generateVerificationCommands(stackProfile: Record<string, unknown>): string {
+  const tooling = (stackProfile.tooling || {}) as Record<string, string>;
+  const testing = (stackProfile.testing || {}) as Record<string, string>;
+  const pkgMgr = tooling.package_manager || 'npm';
+  const installCmd = pkgMgr === 'pnpm' ? 'pnpm install --frozen-lockfile' : pkgMgr === 'yarn' ? 'yarn install --frozen-lockfile' : 'npm ci';
+  const testFramework = testing.framework || 'vitest';
+
+  const commands: string[] = [];
+  commands.push(`| Gate | Command | Required |`);
+  commands.push(`|------|---------|----------|`);
+  commands.push(`| Install | \`${installCmd}\` | All phases |`);
+  commands.push(`| Typecheck | \`${pkgMgr} run typecheck\` | Phase 2+ |`);
+  commands.push(`| Lint | \`${pkgMgr} run lint\` | Phase 2+ |`);
+  commands.push(`| Unit Tests | \`${pkgMgr} run test\` (${testFramework}) | Phase 3+ |`);
+  commands.push(`| Build | \`${pkgMgr} run build\` | Phase 4 |`);
+  commands.push(`| Smoke Test | Start the app and verify core screens load | Phase 3+ |`);
+  return commands.join('\n');
+}
+
 function generateAgentPrompt(
   mode: PackageMode,
   modules: string[],
@@ -452,12 +501,17 @@ function generateAgentPrompt(
     ? `Build and deploy the ${projectName} application according to its specification documents.`
     : 'Build and deploy the application according to its specification documents.';
 
+  const kitRoot = projectName || 'agent_kit';
+  const allowedPaths = generateAllowedPaths(mode, kitRoot);
+  const forbiddenPaths = generateForbiddenPaths(kitRoot);
+  const verificationCommands = generateVerificationCommands(sp);
+
   const replacements: Record<string, string> = {
     '{{PROJECT_NAME}}': projectName || 'Untitled Project',
     '{{PROJECT_PURPOSE}}': purpose,
     '{{KIT_VERSION}}': kitVersion,
     '{{KIT_TYPE}}': kitType,
-    '{{KIT_ROOT}}': projectName || 'agent_kit',
+    '{{KIT_ROOT}}': kitRoot,
     '{{RUNTIME}}': be.runtime || 'N/A',
     '{{FRAMEWORK}}': be.framework || fe.framework || 'N/A',
     '{{LANGUAGE}}': fe.language || 'TypeScript',
@@ -475,6 +529,9 @@ function generateAgentPrompt(
     '{{UPGRADE_NOTES}}': upgradeNotes,
     '{{OPEN_QUESTIONS}}': openQuestions,
     '{{DOMAIN_SLUG}}': '{slug}',
+    '{{ALLOWED_PATHS}}': allowedPaths,
+    '{{FORBIDDEN_PATHS}}': forbiddenPaths,
+    '{{VERIFICATION_COMMANDS}}': verificationCommands,
   };
 
   for (const [placeholder, value] of Object.entries(replacements)) {
