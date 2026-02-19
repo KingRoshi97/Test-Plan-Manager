@@ -102,7 +102,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   'generate': {
     cmd: 'node',
     args: (_pn, _br, body) => {
-      const a = ['axion/scripts/axion-generate.mjs'];
+      const a = [path.join(PROJECT_ROOT, 'axion/scripts/axion-generate.mjs')];
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
       } else {
@@ -118,7 +118,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   'seed': {
     cmd: 'node',
     args: (_pn, _br, body) => {
-      const a = ['axion/scripts/axion-seed.mjs'];
+      const a = [path.join(PROJECT_ROOT, 'axion/scripts/axion-seed.mjs')];
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
       } else {
@@ -134,7 +134,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   'draft': {
     cmd: 'node',
     args: (_pn, _br, body) => {
-      const a = ['axion/scripts/axion-draft.mjs'];
+      const a = [path.join(PROJECT_ROOT, 'axion/scripts/axion-draft.mjs')];
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
       } else {
@@ -150,7 +150,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   'review': {
     cmd: 'node',
     args: (_pn, _br, body) => {
-      const a = ['axion/scripts/axion-review.mjs'];
+      const a = [path.join(PROJECT_ROOT, 'axion/scripts/axion-review.mjs')];
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
       } else {
@@ -166,7 +166,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   'verify': {
     cmd: 'node',
     args: (_pn, _br, body) => {
-      const a = ['axion/scripts/axion-verify.mjs'];
+      const a = [path.join(PROJECT_ROOT, 'axion/scripts/axion-verify.mjs')];
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
       } else {
@@ -190,7 +190,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   'draft-fill': {
     cmd: 'node',
     args: (_pn, _br, body) => {
-      const a = ['axion/scripts/axion-draft.mjs'];
+      const a = [path.join(PROJECT_ROOT, 'axion/scripts/axion-draft.mjs')];
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
       } else {
@@ -206,7 +206,7 @@ const pipelineSteps: Record<string, PipelineStep> = {
   'lock': {
     cmd: 'node',
     args: (_pn, _br, body) => {
-      const a = ['axion/scripts/axion-lock.mjs'];
+      const a = [path.join(PROJECT_ROOT, 'axion/scripts/axion-lock.mjs')];
       if (body.module && typeof body.module === 'string') {
         a.push('--module', body.module);
       }
