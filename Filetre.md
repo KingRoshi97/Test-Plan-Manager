@@ -2,110 +2,83 @@ axion/
 ├── README.md
 ├── LICENSE
 ├── package.json
-├── pnpm-lock.yaml              # or package-lock.json
+├── pnpm-lock.yaml
 ├── tsconfig.json
-├── vitest.config.ts            # or jest.config.ts
+├── vitest.config.ts
 ├── .gitignore
 ├── .env.example
 │
-├── docs_system/                # the umbrella Axion system docs (SYS/INT/CAN/STD/TMP/ORD/PLAN/VER/KIT/STATE/GOV/EXEC)
-│   ├── SYS/
-│   │   ├── SYS-01_System_Purpose_&_Guarantees.md
-│   │   ├── SYS-02_Operating_Principles.md
-│   │   ├── SYS-03_End-to-End_Architecture.md
-│   │   ├── SYS-04_Artifact_Taxonomy.md
-│   │   ├── SYS-05_Roles_&_Responsibilities.md
-│   │   ├── SYS-06_Data_&_Traceability_Model.md
-│   │   ├── SYS-07_Compliance_&_Gate_Model.md
-│   │   ├── SYS-08_Configuration_Model.md
-│   │   ├── SYS-09_Terminology_&_Definitions.md
-│   │   └── SYS-10_System_Boundaries.md
-│   ├── INT/
-│   │   ├── INT-01_Intake_Form_Spec.md
-│   │   ├── INT-02_Intake_Schema_Spec.md
-│   │   ├── INT-03_Intake_Validation_Rules.md
-│   │   ├── INT-04_Submission_Record_Format.md
-│   │   └── INT-05_Validator_Output_Format.md
-│   ├── CAN/
-│   │   ├── CAN-01_Canonical_Spec_Model.md
-│   │   ├── CAN-02_ID_&_Reference_Rules.md
-│   │   └── CAN-03_Unknowns_Model.md
-│   ├── STD/
-│   │   ├── STD-01_Standards_Library_Structure.md
-│   │   ├── STD-02_Standards_Resolution_Rules.md
-│   │   └── STD-03_Standards_Snapshot_Format.md
-│   ├── TMP/
-│   │   ├── TMP-01_Template_Index_Registry.md
-│   │   ├── TMP-02_Template_File_Contract.md
-│   │   ├── TMP-03_Template_Selection_Rules.md
-│   │   ├── TMP-04_Template_Fill_Rules.md
-│   │   └── TMP-05_Template_Completeness_Rules.md
-│   ├── ORD/
-│   │   ├── ORD-01_Build_Order_Graph.md
-│   │   ├── ORD-02_Gate_DSL_&_Gate_Rules.md
-│   │   └── ORD-03_Per-Doc_Gate_Checklist_Format.md
-│   ├── PLAN/
-│   │   ├── PLAN-01_Work_Breakdown_Rules.md
-│   │   ├── PLAN-02_Acceptance_Map_Rules.md
-│   │   └── PLAN-03_Sequencing_Heuristics.md
-│   ├── VER/
-│   │   ├── VER-01_Proof_Types_&_Evidence_Rules.md
-│   │   ├── VER-02_Verification_Command_Policy.md
-│   │   └── VER-03_Completion_Criteria.md
-│   ├── KIT/
-│   │   ├── KIT-01_Kit_Folder_Structure_Contract.md
-│   │   ├── KIT-02_Manifest_&_Index_Format.md
-│   │   ├── KIT-03_Entrypoint_Contract.md
-│   │   └── KIT-04_Version_Stamping_Rules.md
-│   ├── STATE/
-│   │   ├── STATE-01_State_Snapshot_Format.md
-│   │   ├── STATE-02_Resume_Rules.md
-│   │   └── STATE-03_Handoff_Rules.md
-│   ├── GOV/
-│   │   ├── GOV-01_Versioning_Policy.md
-│   │   ├── GOV-02_Change_Control_Rules.md
-│   │   ├── GOV-03_Deprecation_&_Migration_Rules.md
-│   │   └── GOV-04_Audit_&_Traceability_Rules.md
-│   └── EXEC/
-│       ├── EXEC-01_Internal_Agent_Runbook.md
-│       ├── EXEC-02_External_Agent_Prompt_Template.md
-│       └── EXEC-03_Failure_Handling_Playbook.md
+├── docs_system/
+│   └── ... (unchanged)
 │
-├── libraries/                  # persistent system assets (what the runner consumes)
-│   ├── intake/
-│   │   ├── enums.v1.json        # SkillLevel, Category, TypePreset, etc.
-│   │   ├── schema.v1.json       # machine schema mirror of INT-02 (optional but useful)
-│   │   └── rules.v1.json        # machine rules mirror of INT-03 (optional but useful)
-│   ├── standards/
-│   │   ├── standards_index.json # STD-01 registry (packs + applies_when + priority)
-│   │   └── packs/
-│   │       ├── eng_core@1.0.0.json
-│   │       ├── sec_baseline@1.0.0.json
-│   │       ├── qa_baseline@1.0.0.json
-│   │       └── ...more packs...
-│   └── templates/
-│       ├── template_index.json  # TMP-01 registry
-│       └── templates/
-│           ├── product/
-│           │   ├── PRD-01@1.0.0.md
-│           │   ├── PRD-02@1.0.0.md
-│           │   └── ...
-│           ├── design/
-│           ├── architecture/
-│           ├── implementation/
-│           ├── security/
-│           ├── quality/
-│           ├── ops/
-│           ├── data/
-│           ├── api_contracts/
-│           ├── release/
-│           ├── governance/
-│           └── analytics/
+├── libraries/
+│   └── ... (unchanged)
 │
-├── src/                         # Axion runner/toolchain (minimal code, but enough to enforce contracts)
+├── registries/                           # NEW: compiled global views (built from /features + libraries)
+│   ├── FEATURE_REGISTRY.json             # all FEAT entries (id, deps, status, owner, category)
+│   ├── ERROR_CODE_REGISTRY.json          # all error codes (domain, severity, retryability, action)
+│   ├── GATE_REGISTRY.json                # all gates (gate_id, version, applies_when, required evidence)
+│   ├── PROOF_TYPE_REGISTRY.json          # all proof types (schema versions + required fields)
+│   ├── OBJECT_MODEL.json                 # canonical object types (Run, StageRun, Artifact, etc.)
+│   ├── POLICY_REGISTRY.json              # policy definitions + versions (if stored centrally)
+│   └── PACKAGING_PROFILES.json           # bundle profiles (thin/full/audit/public/internal/repro)
+│
+├── features/                             # NEW: per-feature "artifact packs" (source of truth)
+│   ├── FEAT-001_control_plane_core/
+│   │   ├── 00_registry.json
+│   │   ├── 01_contract.md
+│   │   ├── 02_errors.md
+│   │   ├── 03_security.md
+│   │   ├── 04_gates_and_proofs.md
+│   │   ├── 05_tests.md
+│   │   ├── 06_observability.md
+│   │   ├── 07_docs.md
+│   │   └── 08_api.md
+│   ├── FEAT-002_operator_ui_core/
+│   │   ├── 00_registry.json
+│   │   ├── 01_contract.md
+│   │   ├── 02_errors.md
+│   │   ├── 03_security.md
+│   │   ├── 04_gates_and_proofs.md
+│   │   ├── 05_tests.md
+│   │   ├── 06_observability.md
+│   │   ├── 07_docs.md
+│   │   └── 08_api.md
+│   ├── FEAT-003_gate_engine_core/
+│   │   └── (same 8+ files)
+│   ├── FEAT-004_artifact_store_registry/
+│   │   └── (same 8+ files)
+│   ├── FEAT-005_cache_incremental_planner/
+│   │   └── (same 8+ files)
+│   ├── FEAT-006_standards_resolution_engine/
+│   │   └── (same 8+ files)
+│   ├── FEAT-007_template_registry_renderer/
+│   │   └── (same 8+ files)
+│   ├── FEAT-008_proof_ledger/
+│   │   └── (same 8+ files)
+│   ├── FEAT-009_export_bundles/
+│   │   └── (same 8+ files)
+│   ├── FEAT-010_release_objects_signing/
+│   │   └── (same 8+ files)
+│   ├── FEAT-011_policy_engine_core/
+│   │   └── (same 8+ files)
+│   ├── FEAT-012_secrets_pii_scanner_quarantine/
+│   │   └── (same 8+ files)
+│   ├── FEAT-013_ref_integrity_engine/
+│   │   └── (same 8+ files)
+│   ├── FEAT-014_coverage_scoring_engine/
+│   │   └── (same 8+ files)
+│   ├── FEAT-015_run_diff_engine/
+│   │   └── (same 8+ files)
+│   ├── FEAT-016_minimal_repro_exporter/
+│   │   └── (same 8+ files)
+│   └── FEAT-017_error_taxonomy_registry/
+│       └── (same 8+ files)
+│
+├── src/
 │   ├── index.ts
 │   ├── cli/
-│   │   ├── axion.ts             # CLI entry (generate-kit, validate, run-gates, etc.)
+│   │   ├── axion.ts
 │   │   └── commands/
 │   │       ├── generateKit.ts
 │   │       ├── validateIntake.ts
@@ -114,87 +87,80 @@ axion/
 │   │       ├── planWork.ts
 │   │       ├── fillTemplates.ts
 │   │       ├── packageKit.ts
-│   │       └── runGates.ts
+│   │       ├── runGates.ts
+│   │       ├── runControlPlane.ts         # NEW (FEAT-001): CP service/daemon start
+│   │       ├── exportBundle.ts            # NEW (FEAT-009)
+│   │       ├── release.ts                 # NEW (FEAT-010)
+│   │       └── repro.ts                   # NEW (FEAT-016)
 │   ├── core/
 │   │   ├── ids/
-│   │   │   ├── slugify.ts
-│   │   │   └── idRules.ts        # CAN-02 implementation helpers
 │   │   ├── intake/
-│   │   │   ├── submissionRecord.ts  # INT-04
-│   │   │   ├── validator.ts         # INT-02/03 -> INT-05
-│   │   │   └── normalizer.ts        # Normalized Input Record
 │   │   ├── standards/
-│   │   │   ├── selector.ts          # STD-02 step 2-3
-│   │   │   ├── resolver.ts          # STD-02 merge + overrides
-│   │   │   └── snapshot.ts          # STD-03 emitter
 │   │   ├── canonical/
-│   │   │   ├── specBuilder.ts       # CAN-01 build
-│   │   │   └── unknowns.ts          # CAN-03
 │   │   ├── planning/
-│   │   │   ├── workBreakdown.ts     # PLAN-01
-│   │   │   ├── acceptanceMap.ts     # PLAN-02
-│   │   │   └── sequencing.ts        # PLAN-03
 │   │   ├── templates/
-│   │   │   ├── index.ts             # TMP-01 loader
-│   │   │   ├── selector.ts          # TMP-03
-│   │   │   ├── filler.ts            # TMP-04
-│   │   │   └── completenessGate.ts  # TMP-05
 │   │   ├── kit/
-│   │   │   ├── layout.ts            # KIT-01 structure + N/A stubs
-│   │   │   ├── manifest.ts          # KIT-02
-│   │   │   ├── entrypoint.ts        # KIT-03
-│   │   │   ├── versions.ts          # KIT-04
-│   │   │   └── packager.ts          # zip + filesystem output
 │   │   ├── state/
-│   │   │   ├── stateSnapshot.ts     # STATE-01 writer/updater
-│   │   │   ├── resume.ts            # STATE-02
-│   │   │   └── handoff.ts           # STATE-03
-│   │   └── gates/
-│   │       ├── dsl.ts               # ORD-02
-│   │       ├── runner.ts            # evaluates gate rules
-│   │       └── reports.ts           # gate report output contract
+│   │   ├── gates/
+│   │   ├── controlPlane/                  # NEW (FEAT-001)
+│   │   │   ├── api.ts                     # request/response shapes (internal)
+│   │   │   ├── model.ts                   # core CP types (Run, StageRun, Artifact, Proof...)
+│   │   │   ├── store.ts                   # persistence adapter (sqlite/json first)
+│   │   │   ├── audit.ts                   # audit log hash chain
+│   │   │   ├── pins.ts
+│   │   │   ├── releases.ts
+│   │   │   └── policies.ts
+│   │   ├── artifactStore/                 # NEW (FEAT-004)
+│   │   │   ├── cas.ts
+│   │   │   ├── refs.ts                    # storage_ref format parsing
+│   │   │   └── gc.ts
+│   │   ├── cache/                         # NEW (FEAT-005)
+│   │   │   ├── keys.ts
+│   │   │   ├── planner.ts
+│   │   │   └── integrity.ts
+│   │   ├── diff/                          # NEW (FEAT-015)
+│   │   │   ├── runDiff.ts
+│   │   │   └── classify.ts
+│   │   ├── repro/                         # NEW (FEAT-016)
+│   │   │   ├── selector.ts
+│   │   │   └── builder.ts
+│   │   ├── refs/                          # NEW (FEAT-013)
+│   │   │   ├── extractor.ts
+│   │   │   ├── resolver.ts
+│   │   │   └── graph.ts
+│   │   ├── coverage/                      # NEW (FEAT-014)
+│   │   │   ├── scorer.ts
+│   │   │   └── rules.ts
+│   │   ├── proofLedger/                   # NEW (FEAT-008)
+│   │   │   ├── registry.ts
+│   │   │   └── validate.ts
+│   │   ├── scanner/                       # NEW (FEAT-012)
+│   │   │   ├── packs.ts
+│   │   │   ├── scan.ts
+│   │   │   └── quarantine.ts
+│   │   └── taxonomy/                      # NEW (FEAT-017)
+│   │       ├── errors.ts                  # registry loader + validator
+│   │       └── normalize.ts               # normalized error object builder
 │   ├── types/
-│   │   ├── intake.ts
-│   │   ├── canonical.ts
-│   │   ├── standards.ts
-│   │   ├── templates.ts
-│   │   ├── planning.ts
-│   │   ├── kit.ts
-│   │   └── state.ts
 │   └── utils/
-│       ├── hash.ts
-│       ├── io.ts
-│       └── errors.ts
 │
-├── test/                        # test suite (unit + integration + golden outputs)
+├── test/
 │   ├── fixtures/
-│   │   ├── intake_submissions/
-│   │   │   ├── consumer_new_beginner.json
-│   │   │   ├── internal_existing_expert.json
-│   │   │   └── ...
-│   │   ├── standards_expected/
-│   │   ├── canonical_expected/
-│   │   └── templates_expected/
-│   ├── golden_kits/             # expected full kit outputs (snapshotted)
-│   │   ├── planner_app_minimal/
-│   │   │   └── agent_kit/...
-│   │   └── ...
+│   │   ├── ... (existing)
+│   │   ├── control_plane_expected/        # NEW: CP object fixtures + snapshots
+│   │   ├── bundles_expected/              # NEW: bundle manifests + verify reports
+│   │   ├── diff_expected/                 # NEW: run diff report fixtures
+│   │   ├── repro_expected/                # NEW: repro selection + manifest fixtures
+│   │   └── scan_expected/                 # NEW: scanner findings + quarantine fixtures
+│   ├── golden_kits/
 │   ├── unit/
-│   │   ├── intake.validator.test.ts
-│   │   ├── standards.resolver.test.ts
-│   │   ├── canonical.specBuilder.test.ts
-│   │   ├── planning.workBreakdown.test.ts
-│   │   ├── templates.filler.test.ts
-│   │   └── gates.runner.test.ts
 │   ├── integration/
-│   │   ├── generateKit.test.ts    # end-to-end: submission -> kit
-│   │   └── resume.test.ts         # state snapshot resume behavior
 │   └── helpers/
-│       ├── loadFixture.ts
-│       ├── diffTree.ts
-│       └── assertManifest.ts
 │
 └── scripts/
     ├── dev_generate_kit.sh
     ├── dev_run_gates.sh
-    └── dev_run_tests.sh
+    ├── dev_run_tests.sh
+    ├── dev_run_cp.sh                       # NEW: run control plane locally
+    ├── dev_export_bundle.sh                # NEW
+    └── dev_verify_bundle.sh                # NEW
