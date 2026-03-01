@@ -1,0 +1,12 @@
+{
+  "$schema": "policy_registry/v1",
+  "description": "Policy definitions and versions.",
+  "entries": [
+    {
+      "policy_id": "POL-EXAMPLE",
+      "version": "1.0.0",
+      "description": "Example policy — replace or remove.",
+      "rules": []
+    }
+  ]
+}

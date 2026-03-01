@@ -1,0 +1,11 @@
+{
+  "$schema": "packaging_profiles/v1",
+  "description": "Bundle profiles: thin, full, audit, public, internal, repro.",
+  "profiles": [
+    {
+      "profile_id": "full",
+      "description": "Full bundle with all artifacts.",
+      "includes": ["manifest", "artifacts", "proofs", "reports", "state"]
+    }
+  ]
+}

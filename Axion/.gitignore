@@ -1,0 +1,4 @@
+.axion/
+node_modules/
+dist/
+*.tsbuildinfo

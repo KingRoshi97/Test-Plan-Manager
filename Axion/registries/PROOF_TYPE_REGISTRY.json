@@ -1,0 +1,12 @@
+{
+  "$schema": "proof_type_registry/v1",
+  "description": "All proof types: schema versions, required fields, and validation rules.",
+  "entries": [
+    {
+      "proof_type": "test_result",
+      "version": "1.0.0",
+      "required_fields": ["test_suite", "passed", "failed", "total"],
+      "description": "Example proof type — replace or remove."
+    }
+  ]
+}

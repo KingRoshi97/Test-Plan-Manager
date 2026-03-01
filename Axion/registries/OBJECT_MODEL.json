@@ -1,0 +1,11 @@
+{
+  "$schema": "object_model/v1",
+  "description": "Canonical object types: Run, StageRun, Artifact, Proof, and their relationships.",
+  "types": [
+    {
+      "type": "Run",
+      "fields": ["run_id", "status", "created_at", "updated_at", "stages", "config"],
+      "description": "Top-level execution unit."
+    }
+  ]
+}

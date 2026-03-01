@@ -1,0 +1,14 @@
+{
+  "$schema": "gate_registry/v1",
+  "description": "All gate definitions: gate_id, version, applies_when conditions, and required evidence.",
+  "entries": [
+    {
+      "gate_id": "GATE-EXAMPLE",
+      "version": "1.0.0",
+      "description": "Example gate entry — replace or remove.",
+      "applies_when": { "stage": "pre_release" },
+      "required_evidence": ["test_result", "review_approval"],
+      "condition": { "operator": "AND", "operands": ["test_result", "review_approval"] }
+    }
+  ]
+}

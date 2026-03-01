@@ -1,0 +1,19 @@
+{
+  "name": "axion",
+  "version": "0.1.0",
+  "description": "Axion — document-generation and compliance-enforcement system",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "axion": "dist/cli/axion.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli/axion.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "private": true
+}

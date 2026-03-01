@@ -1,0 +1,14 @@
+{
+  "$schema": "feature_registry/v1",
+  "description": "All FEAT entries: id, deps, status, owner, and category.",
+  "entries": [
+    {
+      "id": "FEAT-001",
+      "name": "Control Plane Core",
+      "category": "infrastructure",
+      "status": "scaffolded",
+      "owner": "core-team",
+      "deps": []
+    }
+  ]
+}

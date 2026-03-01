@@ -1,0 +1,14 @@
+{
+  "$schema": "error_code_registry/v1",
+  "description": "All error codes: domain, severity, retryability, and recommended action.",
+  "entries": [
+    {
+      "code": "ERR-EXAMPLE-001",
+      "domain": "example",
+      "severity": "error",
+      "retryable": false,
+      "message": "Example error — replace or remove.",
+      "action": "Contact support."
+    }
+  ]
+}

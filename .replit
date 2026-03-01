@@ -1,5 +1,6 @@
 run = "cowsay Configure me!"
 entrypoint = "README.md"
+modules = ["nodejs-20"]
 
 [nix]
 channel = "stable-24_11"
@@ -7,3 +8,26 @@ packages = ["cowsay"]
 
 [agent]
 expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd Axion && npx tsx src/cli/axion.ts run"
+
+[workflows.workflow.metadata]
+outputType = "console"

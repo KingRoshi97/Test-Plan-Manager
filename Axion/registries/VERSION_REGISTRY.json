@@ -1,0 +1,12 @@
+{
+  "$schema": "version_registry/v1",
+  "description": "Version stamps for all artifacts: artifact_id, version, hash, timestamp.",
+  "entries": [
+    {
+      "artifact_id": "ART-EXAMPLE",
+      "version": "0.0.0",
+      "hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "timestamp": "1970-01-01T00:00:00.000Z"
+    }
+  ]
+}
