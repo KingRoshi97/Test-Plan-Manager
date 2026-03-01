@@ -12,7 +12,158 @@ axion/
 │   └── ... (unchanged)
 │
 ├── libraries/
-│   └── ... (unchanged)
+│   ├── intake/
+│   │   ├── enums.v1.json
+│   │   ├── schema.v1.json
+│   │   └── rules.v1.json
+│   ├── standards/
+│   │   ├── standards_index.json
+│   │   └── packs/
+│   │       ├── eng_core@1.0.0.json
+│   │       ├── sec_baseline@1.0.0.json
+│   │       ├── qa_baseline@1.0.0.json
+│   │       └── ...more packs...
+│   └── templates/
+│       ├── template_index.json
+│       │
+│       ├── Product Definition/                    # Group 1
+│       │   ├── PRD/                               # Product & Requirements
+│       │   │   ├── PRD-01.md ... PRD-09.md
+│       │   ├── URD/                               # User Research & Discovery
+│       │   │   ├── URD-01.md ... URD-05.md
+│       │   ├── STK/                               # Stakeholders & Governance
+│       │   │   ├── STK-01.md ... STK-04.md
+│       │   ├── DMG/                               # Domain Model & Glossary
+│       │   │   ├── DMG-01.md ... DMG-04.md
+│       │   ├── RSC/                               # Roadmap & Scope Control
+│       │   │   ├── RSC-01.md ... RSC-04.md
+│       │   ├── RISK/                              # Risk & Assumptions
+│       │   │   ├── RISK-01.md ... RISK-04.md
+│       │   ├── BRP/                               # Business Rules & Policy
+│       │   │   ├── BRP-01.md ... BRP-04.md
+│       │   └── SMIP/                              # Success Metrics & Instrumentation Plan
+│       │       ├── SMIP-01.md ... SMIP-04.md
+│       │
+│       ├── Experience Design/                     # Group 2
+│       │   ├── DES/                               # Design & UX/UI
+│       │   │   ├── DES-01.md ... DES-08.md
+│       │   ├── IXD/                               # Interaction Design & Motion
+│       │   │   ├── IXD-01.md ... IXD-05.md
+│       │   ├── CDX/                               # Content Design & UX Writing
+│       │   │   ├── CDX-01.md ... CDX-05.md
+│       │   ├── DSYS/                              # Design System & UI Tokens
+│       │   │   ├── DSYS-01.md ... DSYS-05.md
+│       │   ├── IAN/                               # Information Architecture & Navigation
+│       │   │   ├── IAN-01.md ... IAN-05.md
+│       │   ├── A11YD/                             # Accessibility Design
+│       │   │   ├── A11YD-01.md ... A11YD-05.md
+│       │   ├── RLB/                               # Responsive Layout & Breakpoints
+│       │   │   ├── RLB-01.md ... RLB-05.md
+│       │   └── VAP/                               # Visual Asset Production
+│       │       ├── VAP-01.md ... VAP-05.md
+│       │
+│       ├── System Architecture/                   # Group 3
+│       │   ├── ARC/                               # Architecture & Contracts
+│       │   │   ├── ARC-01.md ... ARC-10.md
+│       │   ├── SIC/                               # System Interfaces & Integration Contracts
+│       │   │   ├── SIC-01.md ... SIC-06.md
+│       │   ├── SBDT/                              # Service Boundaries & Deployment Topology
+│       │   │   ├── SBDT-01.md ... SBDT-06.md
+│       │   ├── PMAD/                              # Permission Model & Authorization Design
+│       │   │   ├── PMAD-01.md ... PMAD-06.md
+│       │   ├── ERR/                               # Error Model & Reason Codes
+│       │   │   ├── ERR-01.md ... ERR-06.md
+│       │   ├── RTM/                               # Realtime & Messaging Architecture
+│       │   │   ├── RTM-01.md ... RTM-06.md
+│       │   ├── WFO/                               # Workflow & Orchestration Design
+│       │   │   ├── WFO-01.md ... WFO-06.md
+│       │   └── APIG/                              # API Governance & Versioning
+│       │       ├── APIG-01.md ... APIG-06.md
+│       │
+│       ├── Data & Information/                    # Group 4
+│       │   ├── DATA/                              # Data Model & Schema
+│       │   │   ├── DATA-01.md ... DATA-08.md
+│       │   ├── DLR/                               # Data Lifecycle & Retention
+│       │   │   ├── DLR-01.md ... DLR-06.md
+│       │   ├── DGL/                               # Data Governance & Lineage
+│       │   │   ├── DGL-01.md ... DGL-06.md
+│       │   ├── DQV/                               # Data Quality & Validation
+│       │   │   ├── DQV-01.md ... DQV-06.md
+│       │   ├── SRCH/                              # Search & Indexing
+│       │   │   ├── SRCH-01.md ... SRCH-06.md
+│       │   ├── CACHE/                             # Caching & Data Access Patterns
+│       │   │   ├── CACHE-01.md ... CACHE-06.md
+│       │   └── RPT/                               # Reporting & Aggregations
+│       │       ├── RPT-01.md ... RPT-06.md
+│       │
+│       ├── Application Build/                     # Group 5 (subcategory folders only, templates TBD)
+│       │   ├── API/                               # Backend/API
+│       │   ├── JBS/                               # Background Jobs & Scheduling
+│       │   ├── EVT/                               # Eventing & Webhooks
+│       │   ├── RLIM/                              # Rate Limits & Abuse Controls
+│       │   ├── FFCFG/                             # Feature Flags & Config
+│       │   ├── PFS/                               # API Pagination/Filtering/Sorting
+│       │   ├── FPMP/                              # File Processing & Media Pipelines
+│       │   ├── ADMIN/                             # Admin & Internal Tools APIs
+│       │   ├── FE/                                # Frontend/UI Implementation
+│       │   ├── SMD/                               # State Management & Data Fetching
+│       │   ├── CPR/                               # Client Performance & Rendering
+│       │   ├── FORM/                              # Forms & Validation
+│       │   ├── ROUTE/                             # Client Routing & Deep Links
+│       │   ├── UICP/                              # UI Composition & Layout Patterns
+│       │   ├── CER/                               # Client Error Handling & Recovery
+│       │   ├── CSec/                              # Client Security
+│       │   ├── MOB/                               # Mobile Implementation
+│       │   ├── MDC/                               # Mobile Device Capabilities
+│       │   ├── OFS/                               # Offline & Sync
+│       │   ├── MBAT/                              # Mobile Performance & Battery
+│       │   ├── MDL/                               # Mobile Deep Links & Universal Links
+│       │   ├── MPUSH/                             # Push Notifications
+│       │   └── SIGN/                              # App Store Release & Signing
+│       │
+│       ├── Integrations & External Services/      # Group 6 (subcategory folders only, templates TBD)
+│       │   ├── INT/                               # Integration & External Systems
+│       │   ├── SSO/                               # Third-Party Auth & SSO
+│       │   ├── CRMERP/                            # CRM/ERP Integrations
+│       │   ├── WHCP/                              # Webhooks Consumers & Providers
+│       │   ├── PAY/                               # Payments & Billing
+│       │   ├── NOTIF/                             # Notifications & Comms
+│       │   └── FMS/                               # Files/Media & Storage
+│       │
+│       ├── Security, Privacy & Compliance/        # Group 7 (subcategory folders only, templates TBD)
+│       │   ├── SEC/                               # Security & Privacy
+│       │   ├── IAM/                               # Identity & Access
+│       │   ├── TMA/                               # Threat Modeling & Abuse Prevention
+│       │   ├── SKM/                               # Secrets & Key Management
+│       │   ├── PRIV/                              # Privacy Modeling & Data Minimization
+│       │   ├── AUDIT/                             # Audit Logging & Forensics
+│       │   └── COMP/                              # Compliance & Risk
+│       │
+│       └── Operations & Reliability/              # Group 8 (subcategory folders only, templates TBD)
+│           ├── OBS/                               # Observability
+│           ├── ANL/                               # Analytics & Telemetry
+│           ├── LTS/                               # Logging & Tracing Standards
+│           ├── ALRT/                              # Monitoring & Alerting
+│           ├── SLO/                               # SLOs/SLAs & Error Budgets
+│           ├── PERF/                              # Performance & Scalability
+│           ├── LOAD/                              # Load/Stress Planning
+│           ├── COST/                              # Capacity & Cost Modeling
+│           ├── PBP/                               # Performance Budgets & Profiling
+│           ├── QA/                                # Quality & Testing
+│           ├── QAH/                               # QA Automation & Harnesses
+│           ├── RJT/                               # Regression & Journey Tests
+│           ├── TDE/                               # Test Data & Environments
+│           ├── RELIA/                             # Reliability & Resilience
+│           ├── IRP/                               # Incident Response & Postmortems
+│           ├── OPS/                               # DevOps & Deployment
+│           ├── IAC/                               # Infrastructure as Code
+│           ├── CICD/                              # CI/CD Pipelines
+│           ├── REL/                               # Release & Change Management
+│           ├── ENV/                               # Environment Management
+│           ├── SDR/                               # Secrets Deployment & Rotation
+│           ├── BDR/                               # Backup/Restore & DR
+│           ├── DOC/                               # Documentation & Runbooks
+│           └── L10N_A11Y/                         # Localization & Accessibility
 │
 ├── registries/                           # NEW: compiled global views (built from /features + libraries)
 │   ├── FEATURE_REGISTRY.json             # all FEAT entries (id, deps, status, owner, category)
