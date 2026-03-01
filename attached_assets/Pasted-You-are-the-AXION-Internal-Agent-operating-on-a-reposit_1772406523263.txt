@@ -1,0 +1,125 @@
+You are the AXION Internal Agent operating on a repository that is currently mostly empty scaffolding (files may exist but are blank). Your task is a BLANK-STATE SCAFFOLDING UPDATE ONLY.
+
+GOAL
+- Make the repo structurally ready for Axion enforcement (ORD/PLAN/VER/KIT/STATE/GOV) WITHOUT implementing logic.
+- Create minimal stubs + types + placeholder exports so the project builds/compiles and future steps can fill in enforcement logic deterministically.
+- Do not add application/business features. Do not implement real evaluation logic. Only scaffolding.
+
+NON-NEGOTIABLES
+- Keep existing folders if present; only add what is missing.
+- Add a runtime output root ".axion/" (gitignored) for run artifacts.
+- Add "src/core/verification/" as first-class module (policy, runner, completion).
+- Add canonical on-disk artifact path conventions under ".axion/runs/<run_id>/..." as README + placeholder directory structure.
+- Add registries placeholders needed for enforcement: GATE_REGISTRY.json, TEMPLATE_INDEX.json, VERSION_REGISTRY.json, ERROR_CODE_REGISTRY.json (if not present).
+- All new code must be TypeScript.
+- Provide minimal interfaces/types so other modules can import and compile.
+- Use strict, deterministic naming (no random naming).
+- No tests required yet (optional placeholders OK).
+
+DELIVERABLES
+1) Update / create these repository files and directories (only if missing):
+   - .gitignore: ignore ".axion/"
+   - .axion/README.md: describes runtime artifact structure (no logic)
+   - registries/
+     - GATE_REGISTRY.json (empty structure with schema-like example)
+     - TEMPLATE_INDEX.json (empty structure with schema-like example)
+     - VERSION_REGISTRY.json (empty structure with schema-like example)
+     - ERROR_CODE_REGISTRY.json (empty structure with schema-like example)
+   - src/core/verification/
+     - policy.ts
+     - runner.ts
+     - completion.ts
+     - index.ts
+   - src/core/controlPlane/
+     - model.ts (types only)
+     - store.ts (interface + JSONStore stub)
+     - audit.ts (append-only logger stub)
+     - api.ts (RunController stub)
+   - src/core/gates/
+     - dsl.ts (AST types + parse/eval placeholders)
+     - registry.ts (load registry stub)
+     - report.ts (GateReport type + writer stub)
+     - run.ts (orchestrator stub)
+     - index.ts
+   - src/core/planning/
+     - plan.ts (stubs)
+     - outputs.ts (types for work_breakdown, acceptance_map, sequencing_report)
+     - index.ts
+   - src/core/proofLedger/
+     - ledger.ts (append/read stub)
+     - types.ts
+     - index.ts
+   - src/core/kit/
+     - build.ts (stub)
+     - validate.ts (stub)
+     - schemas.ts (types only)
+     - index.ts
+   - src/core/state/
+     - snapshot.ts (stub)
+     - resume.ts (stub)
+     - handoff.ts (stub)
+     - index.ts
+   - src/utils/
+     - fs.ts (safe read/write helpers, no fancy logic)
+     - hash.ts (hash stub or simple sha256 helper)
+     - time.ts (timestamp helpers)
+     - index.ts
+   - src/types/
+     - artifacts.ts (ArtifactRef, ArtifactRecord, core artifact path types)
+     - run.ts (RunManifest, StageRun, RunStatus)
+     - index.ts
+   - src/cli/commands/
+     - initAxion.ts (creates .axion folders for local dev)
+     - runControlPlane.ts (stub command: create run manifest)
+     - runGates.ts (stub: writes placeholder gate report)
+     - planWork.ts (stub: writes empty planning artifacts)
+     - packageKit.ts (stub: writes placeholder kit manifests)
+     - verify.ts (stub: writes empty completion report)
+   - src/cli/index.ts (wires commands with placeholders)
+   - README.md: short “what exists” overview + how to run the stub CLI.
+
+2) All stubs must:
+   - Export types and functions with correct names but throw "NotImplementedError" (custom error) OR write placeholder JSON artifacts.
+   - Prefer writing placeholder artifacts to ".axion/runs/<run_id>/..." so the skeleton demonstrates file outputs.
+   - Never silently succeed without producing the expected placeholder files.
+
+3) Implement a small, consistent file-output helper:
+   - writeJson(path, data)
+   - appendJsonl(path, entry)
+   - ensureDir(path)
+   - These may be real implementations (basic fs).
+
+ARTIFACT PATH CONVENTIONS (must be documented in .axion/README.md and used by stub commands)
+- .axion/runs/<run_id>/run_manifest.json
+- .axion/runs/<run_id>/standards/resolved_standards_snapshot.json
+- .axion/runs/<run_id>/canonical/canonical_spec.json
+- .axion/runs/<run_id>/planning/work_breakdown.json
+- .axion/runs/<run_id>/planning/acceptance_map.json
+- .axion/runs/<run_id>/planning/sequencing_report.json
+- .axion/runs/<run_id>/gates/<gate_id>.gate_report.json
+- .axion/runs/<run_id>/proof/proof_ledger.jsonl
+- .axion/runs/<run_id>/verification/completion_report.json
+- .axion/runs/<run_id>/kit/kit_manifest.json
+- .axion/runs/<run_id>/kit/entrypoint.json
+- .axion/runs/<run_id>/kit/version_stamp.json
+- .axion/runs/<run_id>/state/state_snapshot.json
+- .axion/runs/<run_id>/state/resume_plan.json
+- .axion/runs/<run_id>/state/handoff_packet/ (folder)
+
+OUTPUT FORMAT RULES
+- JSON files must be valid JSON with minimal required fields present (even if empty arrays).
+- JSONL must be one JSON object per line.
+- Use ISO timestamps.
+
+EXECUTION
+- Make the changes directly in the repo.
+- Do not ask questions.
+- At the end, print:
+  (a) the updated file tree
+  (b) a short note listing what was added vs what already existed
+  (c) exact commands to run the stub CLI to generate a sample run_id folder under .axion/
+
+SUCCESS CRITERIA
+- Repo compiles (or at least has coherent TS module structure).
+- Running the stub CLI produces the full placeholder artifact spine under .axion/runs/<run_id>/...
+- No real enforcement logic implemented yet.
