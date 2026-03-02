@@ -1,0 +1,171 @@
+Here’s the exact stage list you should use, aligned to Axion Mechanics PIPELINE_DEFINITION.v1.0.0.json (so your run spine matches the spec from day one).
+
+Stage order (authoritative)
+
+Use this exact stage order in your run manifest and stage reports: 
+
+Axion Mechanics
+
+S1_INGEST_NORMALIZE 
+
+Axion Mechanics
+
+S2_VALIDATE_INTAKE 
+
+Axion Mechanics
+
+S3_BUILD_CANONICAL 
+
+Axion Mechanics
+
+S4_VALIDATE_CANONICAL 
+
+Axion Mechanics
+
+S5_RESOLVE_STANDARDS 
+
+Axion Mechanics
+
+S6_SELECT_TEMPLATES 
+
+Axion Mechanics
+
+S7_RENDER_DOCS 
+
+Axion Mechanics
+
+S8_BUILD_PLAN 
+
+Axion Mechanics
+
+S9_VERIFY_PROOF 
+
+Axion Mechanics
+
+S10_PACKAGE 
+
+Axion Mechanics
+
+That’s your canonical stage list for milestone #1.
+
+What each stage report must eventually say it consumes/produces (IO contracts)
+
+Even during “blank” scaffolding, your stage report should have the correct stage_id, and later you’ll fill the IO lists to match these contracts.
+
+From STAGE_IO_CONTRACTS.v1.0.0.json: 
+
+Axion Mechanics
+
+S1_INGEST_NORMALIZE
+
+consumes: INTAKE_SUBMISSION
+
+produces: INTAKE_SUBMISSION_RECORD, NORMALIZED_INPUT_RECORD 
+
+Axion Mechanics
+
+S2_VALIDATE_INTAKE
+
+consumes: NORMALIZED_INPUT_RECORD, INTAKE_SCHEMA, INTAKE_RULESET, ENUM_REGISTRY
+
+produces: INTAKE_VALIDATION_RESULT 
+
+Axion Mechanics
+
+S3_BUILD_CANONICAL
+
+consumes: NORMALIZED_INPUT_RECORD, INTAKE_VALIDATION_RESULT, CANONICAL_SPEC_SCHEMA
+
+produces: CANONICAL_SPEC 
+
+Axion Mechanics
+
+S4_VALIDATE_CANONICAL
+
+consumes: CANONICAL_SPEC, CANONICAL_VALIDATION_RULES
+
+produces: GATE_REPORT 
+
+Axion Mechanics
+
+S5_RESOLVE_STANDARDS
+
+consumes: CANONICAL_SPEC, STANDARDS_INDEX, APPLICABILITY_MAP, CONSTRAINT_PACKS
+
+produces: RESOLVED_STANDARDS_SNAPSHOT 
+
+Axion Mechanics
+
+S6_SELECT_TEMPLATES
+
+consumes: CANONICAL_SPEC, RESOLVED_STANDARDS_SNAPSHOT, TEMPLATE_INDEX_REGISTRY
+
+produces: TEMPLATE_SELECTION_RESULT 
+
+Axion Mechanics
+
+S7_RENDER_DOCS
+
+consumes: TEMPLATE_SELECTION_RESULT, CANONICAL_SPEC, RESOLVED_STANDARDS_SNAPSHOT, PLACEHOLDER_DERIVE_SYNTAX_RULES
+
+produces: RENDERED_DOCS_SET 
+
+Axion Mechanics
+
+S8_BUILD_PLAN
+
+consumes: CANONICAL_SPEC, RENDERED_DOCS_SET, COVERAGE_RULES
+
+produces: WORK_BREAKDOWN, ACCEPTANCE_MAP, BUILD_PLAN 
+
+Axion Mechanics
+
+S9_VERIFY_PROOF
+
+consumes: BUILD_PLAN, ACCEPTANCE_MAP, VERIFICATION_COMMAND_POLICY, PROOF_TYPES_RULES
+
+produces: GATE_REPORTS, PROOF_LEDGER 
+
+Axion Mechanics
+
+S10_PACKAGE
+
+consumes: FOLDER_TREE_SPEC, KIT_MANIFEST_FORMAT, PACKAGING_MANIFEST_FORMAT, RUN_MANIFEST
+
+produces: PACKAGING_MANIFEST, BUNDLE_OUTPUT 
+
+Axion Mechanics
+
+Which gates are attached to which stages (for later)
+
+This is also in PIPELINE_DEFINITION: 
+
+Axion Mechanics
+
+ 
+
+Axion Mechanics
+
+S2_VALIDATE_INTAKE → G1_INTAKE_VALIDITY
+
+S4_VALIDATE_CANONICAL → G2_CANONICAL_INTEGRITY
+
+S5_RESOLVE_STANDARDS → G3_STANDARDS_RESOLVED
+
+S6_SELECT_TEMPLATES → G4_TEMPLATE_SELECTION
+
+S7_RENDER_DOCS → G5_TEMPLATE_COMPLETENESS
+
+S8_BUILD_PLAN → G6_PLAN_COVERAGE
+
+S9_VERIFY_PROOF → G7_VERIFICATION
+
+S10_PACKAGE → G8_PACKAGE_INTEGRITY
+
+What to do right now for milestone #1 (run spine)
+
+Implement your run-spine writer so it can:
+
+create stage reports for these exact 10 stage_ids (even as stub “pass”)
+
+write run_manifest.json with stage_order set to this list 

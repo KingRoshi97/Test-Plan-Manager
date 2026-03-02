@@ -1,0 +1,101 @@
+1) stage_order array (exact, in order)
+
+Use this verbatim in run_manifest.json:
+
+{
+  "stage_order": [
+    "S1_INGEST_NORMALIZE",
+    "S2_VALIDATE_INTAKE",
+    "S3_BUILD_CANONICAL",
+    "S4_VALIDATE_CANONICAL",
+    "S5_RESOLVE_STANDARDS",
+    "S6_SELECT_TEMPLATES",
+    "S7_RENDER_DOCS",
+    "S8_BUILD_PLAN",
+    "S9_VERIFY_PROOF",
+    "S10_PACKAGE"
+  ]
+}
+
+This matches the Mechanics pipeline order. 
+
+Axion Mechanics
+
+2) Minimal StageReport template (reuse for all 10 stages)
+
+Make one JSON template and generate per stage by swapping stage_id, timestamps, and status.
+
+{
+  "run_id": "RUN-000001",
+  "stage_id": "S1_INGEST_NORMALIZE",
+  "status": "pass",
+  "started_at": "2026-03-01T00:00:00.000Z",
+  "finished_at": "2026-03-01T00:00:00.000Z",
+
+  "consumed": [],
+  "produced": [],
+  "gate_reports": [],
+
+  "notes": [
+    {
+      "level": "info",
+      "message": "stub stage report (spine-only milestone)"
+    }
+  ]
+}
+
+When you write each file, save it as:
+
+.axion/runs/<run_id>/stage_reports/<stage_id>.json
+
+3) Minimal run_manifest.json template (spine-only milestone)
+
+This includes the stage order and stage report refs.
+
+{
+  "run_id": "RUN-000001",
+  "status": "running",
+  "created_at": "2026-03-01T00:00:00.000Z",
+  "updated_at": "2026-03-01T00:00:00.000Z",
+
+  "pipeline": {
+    "pipeline_id": "PIPELINE_DEFAULT",
+    "pipeline_version": "1.0.0"
+  },
+
+  "profile": {
+    "profile_id": "default"
+  },
+
+  "stage_order": [
+    "S1_INGEST_NORMALIZE",
+    "S2_VALIDATE_INTAKE",
+    "S3_BUILD_CANONICAL",
+    "S4_VALIDATE_CANONICAL",
+    "S5_RESOLVE_STANDARDS",
+    "S6_SELECT_TEMPLATES",
+    "S7_RENDER_DOCS",
+    "S8_BUILD_PLAN",
+    "S9_VERIFY_PROOF",
+    "S10_PACKAGE"
+  ],
+
+  "stages": [
+    { "stage_id": "S1_INGEST_NORMALIZE", "status": "queued", "stage_report_ref": "stage_reports/S1_INGEST_NORMALIZE.json" },
+    { "stage_id": "S2_VALIDATE_INTAKE", "status": "queued", "stage_report_ref": "stage_reports/S2_VALIDATE_INTAKE.json" },
+    { "stage_id": "S3_BUILD_CANONICAL", "status": "queued", "stage_report_ref": "stage_reports/S3_BUILD_CANONICAL.json" },
+    { "stage_id": "S4_VALIDATE_CANONICAL", "status": "queued", "stage_report_ref": "stage_reports/S4_VALIDATE_CANONICAL.json" },
+    { "stage_id": "S5_RESOLVE_STANDARDS", "status": "queued", "stage_report_ref": "stage_reports/S5_RESOLVE_STANDARDS.json" },
+    { "stage_id": "S6_SELECT_TEMPLATES", "status": "queued", "stage_report_ref": "stage_reports/S6_SELECT_TEMPLATES.json" },
+    { "stage_id": "S7_RENDER_DOCS", "status": "queued", "stage_report_ref": "stage_reports/S7_RENDER_DOCS.json" },
+    { "stage_id": "S8_BUILD_PLAN", "status": "queued", "stage_report_ref": "stage_reports/S8_BUILD_PLAN.json" },
+    { "stage_id": "S9_VERIFY_PROOF", "status": "queued", "stage_report_ref": "stage_reports/S9_VERIFY_PROOF.json" },
+    { "stage_id": "S10_PACKAGE", "status": "queued", "stage_report_ref": "stage_reports/S10_PACKAGE.json" }
+  ],
+
+  "gate_reports": [],
+  "gates_required": [],
+
+  "artifact_index_ref": "artifact_index.json",
+  "errors": []
+}

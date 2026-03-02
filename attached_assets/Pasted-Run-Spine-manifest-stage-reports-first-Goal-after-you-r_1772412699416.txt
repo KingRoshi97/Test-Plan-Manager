@@ -1,0 +1,183 @@
+Run Spine (manifest + stage reports) first.
+
+Goal: after you run one command, you get a real .axion/runs/<run_id>/... folder with:
+
+run_manifest.json (authoritative run truth)
+
+stage_reports/<stage_id>.json for every stage executed
+
+a predictable place to write artifacts later (even if empty now)
+
+No gates, no planning, no templates yet — just the spine.
+
+1) Spine folder contract (what must be created on run start)
+
+When a run starts, create:
+
+.axion/
+  runs/
+    <run_id>/
+      run_manifest.json
+      stage_reports/
+      gates/
+      intake/
+      standards/
+      canonical/
+      planning/
+      templates/
+      proof/
+      verification/
+      kit/
+      state/
+
+Even if most folders are empty at first, you want them there so later stages can write deterministically.
+
+2) run_id format (keep it dead simple)
+
+Pick one deterministic format and never change it. Example:
+
+RUN-000001 (increment)
+or
+
+RUN-2026-03-01-0001 (date + increment)
+
+For MVP, increment-only is easiest.
+
+You’ll need a counter file:
+
+.axion/run_counter.json → { "next": 1 }
+
+3) run_manifest.json minimal schema (MVP)
+
+This is enough to support enforcement later without reformatting.
+
+{
+  "run_id": "RUN-000001",
+  "status": "running",
+  "created_at": "2026-03-01T19:23:11.000Z",
+  "updated_at": "2026-03-01T19:23:11.000Z",
+
+  "pipeline": {
+    "pipeline_id": "PIPELINE_DEFAULT",
+    "pipeline_version": "0.1.0"
+  },
+
+  "profile": {
+    "profile_id": "default"
+  },
+
+  "policy_snapshot_ref": null,
+
+  "stages": [
+    {
+      "stage_id": "S0_INIT",
+      "status": "running",
+      "stage_report_ref": "stage_reports/S0_INIT.json"
+    }
+  ],
+
+  "gates_required": [],
+  "gate_reports": [],
+
+  "artifacts_index_ref": "artifact_index.json",
+  "errors": []
+}
+
+Also create:
+
+.axion/runs/<run_id>/artifact_index.json (empty list at first)
+
+4) stage_reports/<stage_id>.json minimal schema (MVP)
+{
+  "run_id": "RUN-000001",
+  "stage_id": "S0_INIT",
+  "status": "pass",
+  "started_at": "2026-03-01T19:23:11.000Z",
+  "finished_at": "2026-03-01T19:23:11.500Z",
+
+  "consumed": [],
+  "produced": [],
+  "gate_reports": [],
+
+  "notes": []
+}
+
+Important: every stage report must explicitly list:
+
+what it consumed
+
+what it produced
+
+what gate reports it ran
+Even if those are empty for MVP.
+
+5) Artifact indexing (MVP rules)
+
+Every time any file is produced (even the stage report itself), register it into:
+
+.axion/runs/<run_id>/artifact_index.json
+
+Minimal record:
+
+{
+  "artifact_id": "ART-000001",
+  "type": "stage_report",
+  "path": "stage_reports/S0_INIT.json",
+  "sha256": "<hash>",
+  "created_at": "<iso>",
+  "producer": { "stage_id": "S0_INIT" }
+}
+
+This is what later gates will use to verify “it exists and hasn’t changed.”
+
+6) The 3 CLI commands you need for this milestone
+
+Keep it simple.
+
+axion init
+
+create .axion/ if missing
+
+create .axion/run_counter.json if missing
+
+axion run start
+
+allocates run_id
+
+creates run folder + subfolders
+
+writes run_manifest.json + empty artifact_index.json
+
+writes stage report for S0_INIT (pass)
+
+updates manifest status to running or ready
+
+axion run stage <run_id> <stage_id>
+
+creates a stage report (even if it’s a stub “pass” right now)
+
+updates manifest stages[]
+
+That’s enough to generate a run spine repeatedly.
+
+7) “Done” definition for milestone #1
+
+You’re done with Run Spine when you can run:
+
+axion init
+
+axion run start
+
+axion run stage RUN-000001 S1_INTAKE_VALIDATE
+
+axion run stage RUN-000001 S2_CANONICAL_BUILD
+
+…and your .axion/runs/RUN-000001/ contains:
+
+run_manifest.json with those stages referenced
+
+stage_reports/S0_INIT.json, S1_INTAKE_VALIDATE.json, S2_CANONICAL_BUILD.json
+
+artifact_index.json containing entries for each created artifact
+
+No gates needed yet.
