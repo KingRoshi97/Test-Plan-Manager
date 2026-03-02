@@ -1,5 +1,10 @@
-export { loadTemplateIndex, selectTemplates } from "./selector.js";
-export type { TemplateEntry, TemplateIndex, TemplateSelection } from "./selector.js";
+export { selectTemplates } from "./selector.js";
+export type { TemplateIndexEntry, TemplateIndex, SelectedTemplate } from "./selector.js";
+
+export { renderTemplate, countPlaceholders, scanUnresolvedPlaceholders, buildAutoContext } from "./renderer.js";
+export type { UnresolvedEntry } from "./renderer.js";
+
+export { writeSelectionResult, writeRenderedDocs } from "./evidence.js";
 
 export { fillTemplate, parsePlaceholder, resolvePlaceholder } from "./filler.js";
 export type { FillContext, FilledTemplate, PlaceholderSyntax } from "./filler.js";

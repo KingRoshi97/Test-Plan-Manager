@@ -147,6 +147,45 @@ function evalCoverageGte(check: GateCheck): CheckResult {
   };
 }
 
+function evalJsonEq(check: GateCheck): CheckResult {
+  const filePath = check.path!;
+  const pointer = check.pointer!;
+  const expected = check.expected;
+  if (!existsSync(filePath)) {
+    return {
+      pass: false,
+      failure_code: "E_FILE_MISSING",
+      evidence: [{ path: filePath, pointer, details: { error: "file not found" } }],
+    };
+  }
+  const { data, error } = readAndParse(filePath);
+  if (error) {
+    return {
+      pass: false,
+      failure_code: "E_JSON_INVALID",
+      evidence: [{ path: filePath, pointer, details: { error } }],
+    };
+  }
+  const { found, value } = resolvePointer(data, pointer);
+  if (!found) {
+    return {
+      pass: false,
+      failure_code: "E_REQUIRED_FIELD_MISSING",
+      evidence: [{ path: filePath, pointer, details: { error: "field not found" } }],
+    };
+  }
+  const passes = value === expected;
+  return {
+    pass: passes,
+    failure_code: passes ? null : "E_VALUE_MISMATCH",
+    evidence: [{
+      path: filePath,
+      pointer,
+      details: { expected, actual: value },
+    }],
+  };
+}
+
 function isPathSafe(p: string): boolean {
   if (isAbsolute(p)) return false;
   if (p.includes("..")) return false;
@@ -332,6 +371,8 @@ export function evalCheck(check: GateCheck): CheckResult {
       return evalJsonHas(check);
     case "coverage_gte":
       return evalCoverageGte(check);
+    case "json_eq":
+      return evalJsonEq(check);
     case "verify_hash_manifest":
       return evalVerifyHashManifest(check);
     default:

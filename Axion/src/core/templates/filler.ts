@@ -1,5 +1,5 @@
 import { NotImplementedError } from "../../utils/errors.js";
-import type { TemplateEntry } from "./selector.js";
+import type { SelectedTemplate } from "./selector.js";
 
 export interface FillContext {
   spec: unknown;
@@ -40,6 +40,6 @@ export function resolvePlaceholder(_syntax: PlaceholderSyntax, _context: FillCon
   throw new NotImplementedError("resolvePlaceholder");
 }
 
-export function fillTemplate(_templateEntry: TemplateEntry, _templateContent: string, _context: FillContext): FilledTemplate {
+export function fillTemplate(_templateEntry: SelectedTemplate, _templateContent: string, _context: FillContext): FilledTemplate {
   throw new NotImplementedError("fillTemplate");
 }

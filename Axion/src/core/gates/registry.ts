@@ -5,6 +5,7 @@ export interface GateCheck {
   path?: string;
   pointer?: string;
   min?: number;
+  expected?: unknown;
   manifest_path?: string;
   bundle_root?: string;
 }

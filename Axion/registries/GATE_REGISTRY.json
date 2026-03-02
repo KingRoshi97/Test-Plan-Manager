@@ -30,6 +30,26 @@
       ]
     },
     {
+      "gate_id": "G4_TEMPLATE_SELECTION",
+      "stage_id": "S6_SELECT_TEMPLATES",
+      "severity": "hard",
+      "checks": [
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/templates/selection_result.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/templates/selection_result.json" },
+        { "op": "json_has", "path": ".axion/runs/{{run_id}}/templates/selection_result.json", "pointer": "/selected_templates" }
+      ]
+    },
+    {
+      "gate_id": "G5_TEMPLATE_COMPLETENESS",
+      "stage_id": "S7_RENDER_DOCS",
+      "severity": "hard",
+      "checks": [
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/templates/render_report.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/templates/render_report.json" },
+        { "op": "json_eq", "path": ".axion/runs/{{run_id}}/templates/render_report.json", "pointer": "/unresolved_placeholders_count", "expected": 0 }
+      ]
+    },
+    {
       "gate_id": "G6_PLAN_COVERAGE",
       "stage_id": "S8_BUILD_PLAN",
       "severity": "hard",

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { writeJson, readJson, ensureDir } from "../../utils/fs.js";
 import { isoNow } from "../../utils/time.js";
 import { sha256 } from "../../utils/hash.js";
-import type { RunManifest, StageRun, StageReport } from "../../types/run.js";
+import type { RunManifest, StageRun } from "../../types/run.js";
 import { STAGE_ORDER, STAGE_GATES, GATES_REQUIRED } from "../../types/run.js";
 import type { ArtifactIndexEntry } from "../../types/artifacts.js";
 
@@ -71,12 +71,12 @@ export function cmdRunStart(baseDir: string = "."): string {
 
   const manifest: RunManifest = {
     run_id: runId,
-    status: "created",
+    status: "running",
     created_at: now,
     updated_at: now,
     pipeline: {
       pipeline_id: "axion_default",
-      pipeline_version: "0.1.0",
+      pipeline_version: "0.2.0",
     },
     profile: {
       profile_id: "default",
@@ -92,38 +92,17 @@ export function cmdRunStart(baseDir: string = "."): string {
     config: {},
   };
 
-  const s0Stage = manifest.stages.find((s) => s.stage_id === "S0_INIT")!;
-  s0Stage.status = "pass";
-  s0Stage.stage_report_ref = "stage_reports/S0_INIT.json";
-  manifest.status = "running";
-  manifest.updated_at = isoNow();
-
-  const s0Report: StageReport = {
-    run_id: runId,
-    stage_id: "S0_INIT",
-    status: "pass",
-    started_at: now,
-    finished_at: isoNow(),
-    consumed: [],
-    produced: ["run_manifest.json", "artifact_index.json"],
-    gate_reports: [],
-    notes: [{ level: "info", message: "Run initialized successfully" }],
-  };
-
   const manifestPath = join(runDir, "run_manifest.json");
-  const s0Path = join(runDir, "stage_reports", "S0_INIT.json");
   const indexPath = join(runDir, "artifact_index.json");
 
   writeJson(manifestPath, manifest);
-  writeJson(s0Path, s0Report);
 
   const index: ArtifactIndexEntry[] = [
-    artifactEntry("manifest_001", "run_manifest", "run_manifest.json", hashFile(manifestPath), "S0_INIT", now),
-    artifactEntry("stage_report_S0_INIT", "stage_report", "stage_reports/S0_INIT.json", hashFile(s0Path), "S0_INIT", now),
+    artifactEntry("manifest_001", "run_manifest", "run_manifest.json", hashFile(manifestPath), "S1_INGEST_NORMALIZE", now),
   ];
 
   writeJson(indexPath, index);
-  index.push(artifactEntry("artifact_index_001", "artifact_index", "artifact_index.json", hashFile(indexPath), "S0_INIT", now));
+  index.push(artifactEntry("artifact_index_001", "artifact_index", "artifact_index.json", hashFile(indexPath), "S1_INGEST_NORMALIZE", now));
   writeJson(indexPath, index);
 
   console.log(`Created run: ${runId}`);

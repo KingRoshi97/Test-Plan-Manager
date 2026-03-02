@@ -14,18 +14,23 @@ Usage:
   axion run                                   Full run: init + start + all stages
   axion run start                             Create a new run (allocate RUN-NNNNNN)
   axion run stage <run_id> <stage_id>         Execute a single stage for a run
-  axion run gates <run_id> <stage_id>         Run gates for a stage (gate registry stage_id)
+  axion run gates <run_id> <stage_id>         Run gates for a stage
   axion help                                  Show this help message
 
-Pipeline Stages (in order):
-  S0_INIT, S1_INGEST_NORMALIZE, S2_INTAKE_VALIDATION,
-  S3_STANDARDS_RESOLUTION, S4_CANONICAL_BUILD, S5_TEMPLATE_SELECTION,
-  S6_PLAN_GENERATION, S7_TEMPLATE_FILL, S8_GATE_EVALUATION,
-  S9_KIT_PACKAGE, S10_CLOSE
+Pipeline Stages (Mechanics order):
+  S1_INGEST_NORMALIZE, S2_VALIDATE_INTAKE, S3_BUILD_CANONICAL,
+  S4_VALIDATE_CANONICAL, S5_RESOLVE_STANDARDS, S6_SELECT_TEMPLATES,
+  S7_RENDER_DOCS, S8_BUILD_PLAN, S9_VERIFY_PROOF, S10_PACKAGE
 
-Gate Registry Stages:
-  S2_VALIDATE_INTAKE, S4_VALIDATE_CANONICAL, S5_RESOLVE_STANDARDS,
-  S8_BUILD_PLAN, S10_PACKAGE
+Gate Registry (stage → gate):
+  S2_VALIDATE_INTAKE      → G1_INTAKE_VALIDITY
+  S4_VALIDATE_CANONICAL   → G2_CANONICAL_INTEGRITY
+  S5_RESOLVE_STANDARDS    → G3_STANDARDS_RESOLVED
+  S6_SELECT_TEMPLATES     → G4_TEMPLATE_SELECTION
+  S7_RENDER_DOCS          → G5_TEMPLATE_COMPLETENESS
+  S8_BUILD_PLAN           → G6_PLAN_COVERAGE
+  S9_VERIFY_PROOF         → G7_VERIFICATION (not enforced yet)
+  S10_PACKAGE             → G8_PACKAGE_INTEGRITY
 `;
 
 function walk(base: string, current: string): string[] {
@@ -87,9 +92,8 @@ function main(): void {
         const runId = cmdRunStart(baseDir);
         const runDir = join(baseDir, ".axion", "runs", runId);
 
-        const runnableStages = STAGE_ORDER.filter((s) => s !== "S0_INIT");
-        console.log(`\n[2/2] Executing ${runnableStages.length} stages...`);
-        for (const stageId of runnableStages) {
+        console.log(`\n[2/2] Executing ${STAGE_ORDER.length} stages...`);
+        for (const stageId of STAGE_ORDER) {
           cmdRunStage(baseDir, runId, stageId);
         }
 

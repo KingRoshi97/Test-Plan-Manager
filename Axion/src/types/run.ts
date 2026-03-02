@@ -11,17 +11,16 @@ export type RunStatus =
 export type StageStatus = "queued" | "running" | "pass" | "fail" | "skipped";
 
 export type StageId =
-  | "S0_INIT"
   | "S1_INGEST_NORMALIZE"
-  | "S2_INTAKE_VALIDATION"
-  | "S3_STANDARDS_RESOLUTION"
-  | "S4_CANONICAL_BUILD"
-  | "S5_TEMPLATE_SELECTION"
-  | "S6_PLAN_GENERATION"
-  | "S7_TEMPLATE_FILL"
-  | "S8_GATE_EVALUATION"
-  | "S9_KIT_PACKAGE"
-  | "S10_CLOSE";
+  | "S2_VALIDATE_INTAKE"
+  | "S3_BUILD_CANONICAL"
+  | "S4_VALIDATE_CANONICAL"
+  | "S5_RESOLVE_STANDARDS"
+  | "S6_SELECT_TEMPLATES"
+  | "S7_RENDER_DOCS"
+  | "S8_BUILD_PLAN"
+  | "S9_VERIFY_PROOF"
+  | "S10_PACKAGE";
 
 export interface StageRun {
   stage_id: StageId;
@@ -82,48 +81,70 @@ export interface RunManifest {
 }
 
 export const STAGE_ORDER: StageId[] = [
-  "S0_INIT",
   "S1_INGEST_NORMALIZE",
-  "S2_INTAKE_VALIDATION",
-  "S3_STANDARDS_RESOLUTION",
-  "S4_CANONICAL_BUILD",
-  "S5_TEMPLATE_SELECTION",
-  "S6_PLAN_GENERATION",
-  "S7_TEMPLATE_FILL",
-  "S8_GATE_EVALUATION",
-  "S9_KIT_PACKAGE",
-  "S10_CLOSE",
+  "S2_VALIDATE_INTAKE",
+  "S3_BUILD_CANONICAL",
+  "S4_VALIDATE_CANONICAL",
+  "S5_RESOLVE_STANDARDS",
+  "S6_SELECT_TEMPLATES",
+  "S7_RENDER_DOCS",
+  "S8_BUILD_PLAN",
+  "S9_VERIFY_PROOF",
+  "S10_PACKAGE",
 ];
 
 export const STAGE_GATES: Record<string, string> = {
-  S2_INTAKE_VALIDATION: "G1_INTAKE_VALIDITY",
-  S4_CANONICAL_BUILD: "G2_CANONICAL_INTEGRITY",
-  S3_STANDARDS_RESOLUTION: "G3_STANDARDS_RESOLVED",
-  S5_TEMPLATE_SELECTION: "G4_TEMPLATE_SELECTION",
-  S7_TEMPLATE_FILL: "G5_TEMPLATE_COMPLETENESS",
-  S6_PLAN_GENERATION: "G6_PLAN_COVERAGE",
-  S8_GATE_EVALUATION: "G7_VERIFICATION",
-  S9_KIT_PACKAGE: "G8_PACKAGE_INTEGRITY",
+  S2_VALIDATE_INTAKE: "G1_INTAKE_VALIDITY",
+  S4_VALIDATE_CANONICAL: "G2_CANONICAL_INTEGRITY",
+  S5_RESOLVE_STANDARDS: "G3_STANDARDS_RESOLVED",
+  S6_SELECT_TEMPLATES: "G4_TEMPLATE_SELECTION",
+  S7_RENDER_DOCS: "G5_TEMPLATE_COMPLETENESS",
+  S8_BUILD_PLAN: "G6_PLAN_COVERAGE",
+  S9_VERIFY_PROOF: "G7_VERIFICATION",
+  S10_PACKAGE: "G8_PACKAGE_INTEGRITY",
 };
 
 export const GATES_REQUIRED: string[] = [
   "G1_INTAKE_VALIDITY",
   "G2_CANONICAL_INTEGRITY",
   "G3_STANDARDS_RESOLVED",
+  "G4_TEMPLATE_SELECTION",
+  "G5_TEMPLATE_COMPLETENESS",
   "G6_PLAN_COVERAGE",
   "G8_PACKAGE_INTEGRITY",
 ];
 
 export const STAGE_NAMES: Record<StageId, string> = {
-  S0_INIT: "Initialize Run",
   S1_INGEST_NORMALIZE: "Ingest & Normalize",
-  S2_INTAKE_VALIDATION: "Intake Validation",
-  S3_STANDARDS_RESOLUTION: "Standards Resolution",
-  S4_CANONICAL_BUILD: "Canonical Build",
-  S5_TEMPLATE_SELECTION: "Template Selection",
-  S6_PLAN_GENERATION: "Plan Generation",
-  S7_TEMPLATE_FILL: "Template Fill",
-  S8_GATE_EVALUATION: "Gate Evaluation",
-  S9_KIT_PACKAGE: "Kit Package",
-  S10_CLOSE: "Close",
+  S2_VALIDATE_INTAKE: "Validate Intake",
+  S3_BUILD_CANONICAL: "Build Canonical Spec",
+  S4_VALIDATE_CANONICAL: "Validate Canonical Spec",
+  S5_RESOLVE_STANDARDS: "Resolve Standards",
+  S6_SELECT_TEMPLATES: "Select Templates",
+  S7_RENDER_DOCS: "Render Docs",
+  S8_BUILD_PLAN: "Build Plan",
+  S9_VERIFY_PROOF: "Verify Proof",
+  S10_PACKAGE: "Package Kit",
 };
+
+/** @deprecated Remove after one release. Temporary aliases for old stage IDs so existing run folders/commands still work. */
+export const STAGE_ID_ALIASES: Record<string, StageId> = {
+  S2_INTAKE_VALIDATION: "S2_VALIDATE_INTAKE",
+  S3_STANDARDS_RESOLUTION: "S5_RESOLVE_STANDARDS",
+  S4_CANONICAL_BUILD: "S3_BUILD_CANONICAL",
+  S5_TEMPLATE_SELECTION: "S6_SELECT_TEMPLATES",
+  S6_PLAN_GENERATION: "S8_BUILD_PLAN",
+  S7_TEMPLATE_FILL: "S7_RENDER_DOCS",
+  S9_KIT_PACKAGE: "S10_PACKAGE",
+};
+
+/** @deprecated Remove after one release. Resolves a raw stage ID string to the current StageId. Returns null for dropped stages (S0_INIT, S8_GATE_EVALUATION, S10_CLOSE). */
+export function resolveStageId(raw: string): StageId | null {
+  if ((STAGE_ORDER as readonly string[]).includes(raw)) {
+    return raw as StageId;
+  }
+  if (raw in STAGE_ID_ALIASES) {
+    return STAGE_ID_ALIASES[raw];
+  }
+  return null;
+}
