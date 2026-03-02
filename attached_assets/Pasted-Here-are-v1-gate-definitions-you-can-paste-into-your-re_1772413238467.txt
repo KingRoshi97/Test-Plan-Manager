@@ -1,0 +1,102 @@
+Here are v1 gate definitions you can paste into your registry (adjust field names if your registries/GATE_REGISTRY.json schema differs — the important part is the structure: gate_id, stage_id, and a list of primitive checks).
+
+Gate definitions (MVP set)
+{
+  "version": "1.0.0",
+  "gates": [
+    {
+      "gate_id": "G1_INTAKE_VALIDITY",
+      "stage_id": "S2_VALIDATE_INTAKE",
+      "severity": "hard",
+      "checks": [
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/intake/validation_result.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/intake/validation_result.json" }
+      ]
+    },
+    {
+      "gate_id": "G2_CANONICAL_INTEGRITY",
+      "stage_id": "S4_VALIDATE_CANONICAL",
+      "severity": "hard",
+      "checks": [
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/canonical/canonical_spec.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/canonical/canonical_spec.json" },
+        { "op": "json_has", "path": ".axion/runs/{{run_id}}/canonical/canonical_spec.json", "pointer": "/run_id" }
+      ]
+    },
+    {
+      "gate_id": "G3_STANDARDS_RESOLVED",
+      "stage_id": "S5_RESOLVE_STANDARDS",
+      "severity": "hard",
+      "checks": [
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/standards/resolved_standards_snapshot.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/standards/resolved_standards_snapshot.json" }
+      ]
+    },
+    {
+      "gate_id": "G6_PLAN_COVERAGE",
+      "stage_id": "S8_BUILD_PLAN",
+      "severity": "hard",
+      "checks": [
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/planning/coverage_report.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/planning/coverage_report.json" },
+        { "op": "coverage_gte", "path": ".axion/runs/{{run_id}}/planning/coverage_report.json", "pointer": "/coverage_percent", "min": 100 }
+      ]
+    },
+    {
+      "gate_id": "G8_PACKAGE_INTEGRITY",
+      "stage_id": "S10_PACKAGE",
+      "severity": "hard",
+      "checks": [
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/kit/packaging_manifest.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/kit/packaging_manifest.json" },
+        {
+          "op": "verify_hash_manifest",
+          "manifest_path": ".axion/runs/{{run_id}}/kit/packaging_manifest.json",
+          "bundle_root": ".axion/runs/{{run_id}}/kit/bundle"
+        }
+      ]
+    }
+  ]
+}
+The only evaluator ops you need to implement right now
+
+Implement these 5 ops in your gate engine:
+
+file_exists(path)
+
+json_valid(path)
+
+json_has(path, pointer)
+
+coverage_gte(path, pointer, min)
+
+verify_hash_manifest(manifest_path, bundle_root)
+
+Gate report output (per gate)
+
+Your gate runner should always write:
+
+.axion/runs/<run_id>/gates/<gate_id>.gate_report.json
+
+Minimum structure:
+
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G3_STANDARDS_RESOLVED",
+  "stage_id": "S5_RESOLVE_STANDARDS",
+  "status": "pass",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+  "failure_codes": [],
+  "evidence": [
+    { "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json", "pointer": "" }
+  ]
+}
+Immediate “blocking behavior” rule
+
+When running gates for a stage:
+
+evaluate in order
+
+write each gate report
+
+on first fail: stop and mark stage/run as blocked/failed in the manifest

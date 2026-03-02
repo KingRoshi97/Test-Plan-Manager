@@ -1,4 +1,4 @@
-import { writeFileSync, appendFileSync, mkdirSync, existsSync } from "node:fs";
+import { writeFileSync, readFileSync, appendFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname } from "node:path";
 
 export function ensureDir(dirPath: string): void {
@@ -10,6 +10,10 @@ export function ensureDir(dirPath: string): void {
 export function writeJson(filePath: string, data: unknown): void {
   ensureDir(dirname(filePath));
   writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n", "utf-8");
+}
+
+export function readJson<T = unknown>(filePath: string): T {
+  return JSON.parse(readFileSync(filePath, "utf-8")) as T;
 }
 
 export function appendJsonl(filePath: string, entry: unknown): void {

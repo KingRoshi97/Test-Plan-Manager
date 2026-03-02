@@ -1,5 +1,6 @@
 export { cmdInit } from "./commands/initAxion.js";
-export { cmdRunControlPlane } from "./commands/runControlPlane.js";
+export { cmdRunStart } from "./commands/runControlPlane.js";
+export { cmdRunStage } from "./commands/runStage.js";
 export { cmdRunGates } from "./commands/runGates.js";
 export { cmdPlanWork } from "./commands/planWork.js";
 export { cmdPackageKit } from "./commands/packageKit.js";

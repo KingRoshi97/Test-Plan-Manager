@@ -16,13 +16,26 @@ export interface ArtifactRecord {
   metadata?: Record<string, unknown>;
 }
 
+export interface ArtifactIndexEntry {
+  artifact_id: string;
+  type: string;
+  path: string;
+  sha256: string;
+  created_at: string;
+  producer: {
+    stage_id: string;
+  };
+}
+
 export type ArtifactPath =
   | "run_manifest.json"
+  | "artifact_index.json"
   | "standards/resolved_standards_snapshot.json"
   | "canonical/canonical_spec.json"
   | "planning/work_breakdown.json"
   | "planning/acceptance_map.json"
   | "planning/sequencing_report.json"
+  | `stage_reports/${string}.json`
   | `gates/${string}.gate_report.json`
   | "proof/proof_ledger.jsonl"
   | "verification/completion_report.json"

@@ -1,0 +1,118 @@
+planning/coverage_report.json (for G6_PLAN_COVERAGE)
+
+Path
+
+.axion/runs/<run_id>/planning/coverage_report.json
+
+Minimal JSON
+
+{
+  "run_id": "RUN-000001",
+  "generated_at": "2026-03-01T00:00:00.000Z",
+
+  "coverage_percent": 100,
+
+  "summary": {
+    "spec_items_total": 0,
+    "spec_items_covered": 0,
+    "units_total": 0,
+    "acceptance_total": 0
+  },
+
+  "uncovered": []
+}
+Gate behavior
+
+Your gate op:
+
+reads JSON pointer /coverage_percent
+
+passes if >= 100
+
+(You can start with 100 to make the gate pass, then later compute real coverage.)
+
+2) kit/packaging_manifest.json (for G8_PACKAGE_INTEGRITY)
+
+Paths
+
+Manifest: .axion/runs/<run_id>/kit/packaging_manifest.json
+
+Bundle root: .axion/runs/<run_id>/kit/bundle/
+
+Minimal JSON
+
+{
+  "run_id": "RUN-000001",
+  "generated_at": "2026-03-01T00:00:00.000Z",
+
+  "algorithm": "sha256",
+  "root": "kit/bundle",
+
+  "files": [
+    {
+      "path": "kit_manifest.json",
+      "sha256": "PUT_SHA256_OF_FILE_BYTES_HERE"
+    },
+    {
+      "path": "entrypoint.json",
+      "sha256": "PUT_SHA256_OF_FILE_BYTES_HERE"
+    },
+    {
+      "path": "version_stamp.json",
+      "sha256": "PUT_SHA256_OF_FILE_BYTES_HERE"
+    }
+  ]
+}
+How verify_hash_manifest should interpret this
+
+Bundle root absolute path = .axion/runs/<run_id>/kit/bundle
+
+For each files[i].path:
+
+read file bytes at: <bundle_root>/<path>
+
+compute sha256 hex string
+
+compare to files[i].sha256
+
+Fail if:
+
+any file missing
+
+hash mismatch
+
+manifest invalid JSON
+
+Minimal bundle content to start
+
+Create these files inside the bundle folder:
+
+.axion/runs/<run_id>/kit/bundle/kit_manifest.json
+
+.axion/runs/<run_id>/kit/bundle/entrypoint.json
+
+.axion/runs/<run_id>/kit/bundle/version_stamp.json
+
+They can be copies of the kit metadata you already produce at:
+
+.axion/runs/<run_id>/kit/kit_manifest.json
+
+.axion/runs/<run_id>/kit/entrypoint.json
+
+.axion/runs/<run_id>/kit/version_stamp.json
+
+Then compute hashes and populate the manifest.
+
+Quick sanity test sequence (what you should see)
+
+Add planning/coverage_report.json with coverage_percent: 100
+
+Create kit/bundle/ with the 3 JSON files
+
+Write kit/packaging_manifest.json with correct sha256s
+
+Then:
+
+axion run gates <run_id> S8_BUILD_PLAN → PASS
+
+axion run gates <run_id> S10_PACKAGE → PASS

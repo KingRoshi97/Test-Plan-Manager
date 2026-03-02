@@ -1,0 +1,160 @@
+Here’s the exact pass/fail logic for verify_hash_manifest, plus a stable set of failure codes you can emit in the gate report. This is v1-tight and deterministic.
+
+verify_hash_manifest(manifest_path, bundle_root) — evaluation logic
+Inputs
+
+manifest_path: path to packaging_manifest.json
+
+bundle_root: path to bundle directory (e.g. .axion/runs/<run_id>/kit/bundle)
+
+Expected manifest fields (v1)
+
+algorithm must equal "sha256"
+
+files must be an array of objects with:
+
+path (string, relative path)
+
+sha256 (string, lowercase hex 64 chars)
+
+Pass criteria (ALL must be true)
+
+Manifest exists and is readable
+
+Manifest parses as JSON
+
+algorithm == "sha256"
+
+files is a non-empty array (you can allow empty for early dev, but for enforcement MVP I recommend non-empty)
+
+For each entry in files[]:
+
+path is a relative path (no leading /, no .., no drive letters)
+
+The file exists at: bundle_root/<path>
+
+Read raw bytes, compute sha256 hex lowercase
+
+Computed hash equals manifest sha256
+
+If all entries match → PASS
+
+Fail conditions + failure codes (stable)
+
+Use these failure codes in this order (stop early on first failure for determinism):
+
+Manifest-level failures
+
+E_PACK_MANIFEST_MISSING
+
+manifest_path does not exist
+
+E_PACK_MANIFEST_UNREADABLE
+
+exists but cannot read
+
+E_PACK_MANIFEST_INVALID_JSON
+
+JSON parse fails
+
+E_PACK_MANIFEST_BAD_ALGORITHM
+
+algorithm missing or not "sha256"
+
+E_PACK_MANIFEST_FILES_INVALID
+
+files missing, not an array, or (if enforced) empty
+
+Entry-level failures (validate entries in manifest order)
+
+E_PACK_ENTRY_INVALID
+
+entry missing path or sha256, wrong types
+
+E_PACK_ENTRY_PATH_INVALID
+
+path is absolute, contains .., contains \ (optional: normalize), or resolves outside bundle_root
+
+E_PACK_ENTRY_HASH_INVALID
+
+sha256 not exactly 64 lowercase hex characters
+
+E_PACK_BUNDLE_FILE_MISSING
+
+bundle_root/<path> doesn’t exist
+
+E_PACK_BUNDLE_FILE_UNREADABLE
+
+exists but cannot read
+
+E_PACK_HASH_MISMATCH
+
+computed sha256 != expected sha256
+
+Evidence payload to include in gate report
+
+When failing, include evidence[] entries like:
+
+path: manifest_path
+
+pointer: JSON pointer to the failing field (if applicable)
+
+details: small object describing expected vs actual (not huge)
+
+Examples:
+
+If invalid JSON:
+
+evidence: { path: "<manifest_path>", pointer: "", details: { error: "JSON_PARSE_ERROR" } }
+
+If bad algorithm:
+
+pointer: /algorithm
+
+details: { expected: "sha256", actual: "<value>" }
+
+If entry path invalid:
+
+pointer: /files/2/path
+
+details: { path: "../secrets.txt" }
+
+If hash mismatch:
+
+pointer: /files/0/sha256
+
+details: { expected: "<expected>", actual: "<computed>", file: "<bundle_root>/<path>" }
+
+Determinism rules (important)
+
+To keep results stable:
+
+Evaluate in fixed order:
+
+manifest-level checks first
+
+then entries in the exact array order (do not reorder at runtime)
+
+Stop on first failure
+
+Hash raw file bytes
+
+Compare hashes lowercase
+
+Reject any path that can escape bundle_root (prevents “valid hash” for files outside bundle)
+
+Gate report mapping for G8_PACKAGE_INTEGRITY
+
+For this gate, the gate report should include:
+
+status: "pass" if verify_hash_manifest passes
+
+status: "fail" with:
+
+failure_codes: ["E_PACK_HASH_MISMATCH"] (or whichever first failure)
+
+evidence pointing to the exact manifest entry
+
+This matches the spirit of Mechanics’ “verify_hashes(package/manifest) == true” integrity gate. 
+
+Axion Mechanics
