@@ -1,0 +1,63 @@
+Cool — paste these two blocks from Axion/src/types/run.ts (just the blocks, nothing else):
+
+export const STAGE_ORDER = ...
+
+export const STAGE_GATES = ... (or whatever you named the stage→gates map)
+
+Once you paste them, I’ll rewrite them 1:1 in your style.
+
+In the meantime, here is the corrected drop-in target you should be aiming for (Mechanics-aligned, no reordering of S5/S8, and includes G4/G5).
+
+Target STAGE_ORDER (Mechanics-aligned)
+
+Use this exact stage progression:
+
+export const STAGE_ORDER = [
+  "S1_INGEST_NORMALIZE",
+  "S2_VALIDATE_INTAKE",
+  "S3_BUILD_CANONICAL",
+  "S4_VALIDATE_CANONICAL",
+  "S5_RESOLVE_STANDARDS",
+  "S6_SELECT_TEMPLATES",
+  "S7_RENDER_DOCS",
+  "S8_BUILD_PLAN",
+  "S9_VERIFY_PROOF",
+  "S10_PACKAGE",
+] as const;
+Target STAGE_GATES (adds G4 + G5)
+export const STAGE_GATES: Record<(typeof STAGE_ORDER)[number], string[]> = {
+  S1_INGEST_NORMALIZE: [],
+  S2_VALIDATE_INTAKE: ["G1_INTAKE_VALIDITY"],
+  S3_BUILD_CANONICAL: [],
+  S4_VALIDATE_CANONICAL: ["G2_CANONICAL_INTEGRITY"],
+  S5_RESOLVE_STANDARDS: ["G3_STANDARDS_RESOLVED"],
+  S6_SELECT_TEMPLATES: ["G4_TEMPLATE_SELECTION"],
+  S7_RENDER_DOCS: ["G5_TEMPLATE_COMPLETENESS"],
+  S8_BUILD_PLAN: ["G6_PLAN_COVERAGE"],
+  S9_VERIFY_PROOF: ["G7_VERIFICATION"], // keep if you want full Mechanics; remove if you haven't implemented it
+  S10_PACKAGE: ["G8_PACKAGE_INTEGRITY"],
+};
+If your registry currently only has 7 gates (no G7 yet)
+
+Then set S9 to empty for now:
+
+S9_VERIFY_PROOF: [],
+
+…and keep GATES_REQUIRED as the 7 you actually enforce.
+
+Target GATES_REQUIRED (7-gate mode)
+
+If you’re enforcing 7 gates right now (G1,G2,G3,G4,G5,G6,G8):
+
+export const GATES_REQUIRED = [
+  "G1_INTAKE_VALIDITY",
+  "G2_CANONICAL_INTEGRITY",
+  "G3_STANDARDS_RESOLVED",
+  "G4_TEMPLATE_SELECTION",
+  "G5_TEMPLATE_COMPLETENESS",
+  "G6_PLAN_COVERAGE",
+  "G8_PACKAGE_INTEGRITY",
+] as const;
+Now paste your current STAGE_ORDER + STAGE_GATES
+
+…and I’ll return the exact corrected versions in your file’s conventions (types, enums, naming, and any extra fields like STAGE_NAMES if you have them).

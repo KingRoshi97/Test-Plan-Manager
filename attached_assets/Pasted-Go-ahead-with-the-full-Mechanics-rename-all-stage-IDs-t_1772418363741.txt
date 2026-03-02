@@ -1,0 +1,107 @@
+Go ahead with the full Mechanics rename (all stage IDs to match the spec), and treat S0_INIT / S10_CLOSE as wrapper/driver steps in the CLI, not pipeline stages.
+
+That gives you one clean, stable truth going forward and prevents you from accruing “alias debt” across every file.
+
+What to change in Axion/src/types/run.ts
+1) Replace STAGE_ORDER with Mechanics stage IDs
+
+Keep your pipeline stages as S1–S10 only:
+
+export const STAGE_ORDER: StageId[] = [
+  "S1_INGEST_NORMALIZE",
+  "S2_VALIDATE_INTAKE",
+  "S3_BUILD_CANONICAL",
+  "S4_VALIDATE_CANONICAL",
+  "S5_RESOLVE_STANDARDS",
+  "S6_SELECT_TEMPLATES",
+  "S7_RENDER_DOCS",
+  "S8_BUILD_PLAN",
+  "S9_VERIFY_PROOF",
+  "S10_PACKAGE",
+];
+2) Replace STAGE_GATES
+
+Also: don’t use Record<string,string> anymore—use Record<StageId, string | null> or Partial<Record<StageId, string>> since not every stage has a gate. If you want minimal change, keep your current shape but only include gated stages.
+
+Minimal change (matches your current pattern):
+
+export const STAGE_GATES: Record<string, string> = {
+  S2_VALIDATE_INTAKE: "G1_INTAKE_VALIDITY",
+  S4_VALIDATE_CANONICAL: "G2_CANONICAL_INTEGRITY",
+  S5_RESOLVE_STANDARDS: "G3_STANDARDS_RESOLVED",
+  S6_SELECT_TEMPLATES: "G4_TEMPLATE_SELECTION",
+  S7_RENDER_DOCS: "G5_TEMPLATE_COMPLETENESS",
+  S8_BUILD_PLAN: "G6_PLAN_COVERAGE",
+  S9_VERIFY_PROOF: "G7_VERIFICATION",
+  S10_PACKAGE: "G8_PACKAGE_INTEGRITY",
+};
+3) Update GATES_REQUIRED
+
+If you’re enforcing 7 gates in registry (G1,G2,G3,G4,G5,G6,G8) and not ready for G7, set:
+
+export const GATES_REQUIRED: string[] = [
+  "G1_INTAKE_VALIDITY",
+  "G2_CANONICAL_INTEGRITY",
+  "G3_STANDARDS_RESOLVED",
+  "G4_TEMPLATE_SELECTION",
+  "G5_TEMPLATE_COMPLETENESS",
+  "G6_PLAN_COVERAGE",
+  "G8_PACKAGE_INTEGRITY",
+];
+
+If you are ready for G7, add it back.
+
+4) Replace STAGE_NAMES
+export const STAGE_NAMES: Record<StageId, string> = {
+  S1_INGEST_NORMALIZE: "Ingest & Normalize",
+  S2_VALIDATE_INTAKE: "Validate Intake",
+  S3_BUILD_CANONICAL: "Build Canonical Spec",
+  S4_VALIDATE_CANONICAL: "Validate Canonical Spec",
+  S5_RESOLVE_STANDARDS: "Resolve Standards",
+  S6_SELECT_TEMPLATES: "Select Templates",
+  S7_RENDER_DOCS: "Render Docs",
+  S8_BUILD_PLAN: "Build Plan",
+  S9_VERIFY_PROOF: "Verify Proof",
+  S10_PACKAGE: "Package Kit",
+};
+What to do about S0_INIT, S8_GATE_EVALUATION, and S10_CLOSE
+
+Remove them as StageIds (they’re not in Mechanics).
+
+Implement them as CLI orchestration steps:
+
+“init” (create run dir, manifest, etc.)
+
+“evaluate gates” is not a stage—gates run within the stage they’re attached to (S2/S4/S5/S6/S7/S8/S9/S10).
+
+Required follow-through changes (so it compiles)
+
+You must update:
+
+runStage.ts switch/case stage names
+
+any evidence writers keyed off old stage IDs
+
+any files that reference old stage strings (S2_INTAKE_VALIDATION, S9_KIT_PACKAGE, etc.)
+
+Simple alias rule for migration (no ambiguity)
+
+Old → New mapping:
+
+S2_INTAKE_VALIDATION → S2_VALIDATE_INTAKE
+
+S3_STANDARDS_RESOLUTION → S5_RESOLVE_STANDARDS (note: stage number shifts)
+
+S4_CANONICAL_BUILD → S3_BUILD_CANONICAL
+
+S5_TEMPLATE_SELECTION → S6_SELECT_TEMPLATES
+
+S6_PLAN_GENERATION → S8_BUILD_PLAN
+
+S7_TEMPLATE_FILL → S7_RENDER_DOCS
+
+S9_KIT_PACKAGE → S10_PACKAGE
+
+Drop: S0_INIT, S8_GATE_EVALUATION, S10_CLOSE
+
+That’s the clean mechanical rename.

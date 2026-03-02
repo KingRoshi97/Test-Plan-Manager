@@ -1,0 +1,145 @@
+Perfect — single placeholder form {{...}} with dotted paths makes S7_RENDER_DOCS very straightforward.
+
+Next step: implement S7_RENDER_DOCS (render + completeness)
+What S7 must produce per run
+
+Under:
+
+.axion/runs/<run_id>/templates/
+
+Create:
+
+Rendered docs folder
+
+.axion/runs/<run_id>/templates/rendered_docs/**
+
+one rendered .md per selected template
+
+Render report
+
+.axion/runs/<run_id>/templates/render_report.json
+
+This is what G5_TEMPLATE_COMPLETENESS will read.
+
+Rendering rules (v1, deterministic)
+
+Given a selected template file and a “render context” object:
+
+Find placeholders matching {{...}}
+
+For each placeholder {{path.to.value}}:
+
+resolve the dotted path against the context object
+
+if value exists:
+
+replace with string value
+
+if missing:
+
+leave placeholder unchanged (don’t delete it)
+
+record it as unresolved in the report
+
+Determinism rules
+
+Replace placeholders left-to-right in the file
+
+Do not reorder anything
+
+Write output markdown with LF newlines
+
+Write the render report with your canonical JSON rules (deep-sort keys, etc.)
+
+Completeness scanner (v1)
+
+Use a single regex:
+
+Regex: \{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}
+
+That captures the placeholder key inside.
+
+What counts as unresolved
+
+A placeholder is unresolved if, after rendering, the output still contains a {{...}} token.
+
+render_report.json (minimal schema)
+
+Path
+
+.axion/runs/<run_id>/templates/render_report.json
+
+PASS example
+{
+  "run_id": "RUN-000001",
+  "generated_at": "2026-03-01T00:00:00.000Z",
+  "templates_rendered": 3,
+  "unresolved_placeholders_count": 0,
+  "unresolved_placeholders": [],
+  "files": [
+    {
+      "template_id": "PD-01",
+      "source_path": "libraries/templates/Product Definition/PD-01.md",
+      "output_path": ".axion/runs/RUN-000001/templates/rendered_docs/PD-01.md",
+      "placeholders_total": 12,
+      "placeholders_unresolved": 0,
+      "unresolved": []
+    }
+  ]
+}
+FAIL example (what G5 should block on)
+{
+  "run_id": "RUN-000001",
+  "generated_at": "2026-03-01T00:00:00.000Z",
+  "templates_rendered": 1,
+  "unresolved_placeholders_count": 2,
+  "unresolved_placeholders": [
+    {
+      "template_id": "PD-01",
+      "output_path": ".axion/runs/RUN-000001/templates/rendered_docs/PD-01.md",
+      "key": "spec.features",
+      "occurrences": 1
+    },
+    {
+      "template_id": "PD-01",
+      "output_path": ".axion/runs/RUN-000001/templates/rendered_docs/PD-01.md",
+      "key": "a11y.level",
+      "occurrences": 1
+    }
+  ],
+  "files": [
+    {
+      "template_id": "PD-01",
+      "source_path": "libraries/templates/Product Definition/PD-01.md",
+      "output_path": ".axion/runs/RUN-000001/templates/rendered_docs/PD-01.md",
+      "placeholders_total": 12,
+      "placeholders_unresolved": 2,
+      "unresolved": ["spec.features", "a11y.level"]
+    }
+  ]
+}
+Gate definition for G5_TEMPLATE_COMPLETENESS (v1)
+
+Pass if:
+
+render_report.json exists + valid JSON
+
+/unresolved_placeholders_count == 0
+
+That’s enough for now.
+
+One decision you should lock right now
+
+When a placeholder resolves to:
+
+number / boolean → stringify as-is (true, 42)
+
+array/object → JSON stringify (recommended) OR join arrays with ,
+
+For MVP, safest is:
+
+primitives → string
+
+arrays/objects → JSON.stringify(value)
+
+If you want, paste one real template snippet and a sample of what you consider the render context (even rough), and I’ll give you a “context object shape” that covers the common keys across your templates so you don’t paint yourself into a corner.

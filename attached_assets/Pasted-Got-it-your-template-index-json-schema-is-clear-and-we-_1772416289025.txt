@@ -1,0 +1,140 @@
+Got it — your template_index.json schema is clear and we can wire S6/S7 cleanly without guessing.
+
+Key fields we’ll rely on:
+
+top-level versions: template_library_version, template_index_version 
+
+template_index
+
+per-template: template_id, template_version, file_path, status, requiredness, required_by_skill_level, inputs_required, output_path 
+
+template_index
+
+Now here’s what I’d change in your plan so it matches the spec and your actual index exactly.
+
+1) Stage IDs: rename to match Mechanics (no collisions)
+
+Use:
+
+S6_SELECT_TEMPLATES (not S5_TEMPLATE_SELECTION)
+
+S7_RENDER_DOCS (not S7_TEMPLATE_FILL)
+
+And the gates stay:
+
+G4_TEMPLATE_SELECTION attached to S6_SELECT_TEMPLATES
+
+G5_TEMPLATE_COMPLETENESS attached to S7_RENDER_DOCS
+
+(You already have S5 reserved for standards.)
+
+2) Selector (S6) should use your real index fields
+Selection logic (MVP “default”)
+
+Select templates where:
+
+status == "active" 
+
+template_index
+
+AND requiredness == "always" 
+
+template_index
+
+That’s deterministic and uses the exact fields you have.
+
+Resolve the source template path
+
+Your index stores file_path like:
+
+"Product Definition/PRD/PRD-01.md" 
+
+template_index
+
+So the full path in repo terms is:
+
+libraries/templates/<file_path>
+
+3) Outputs (what S6 writes)
+
+Write exactly these per run:
+
+.axion/runs/<run_id>/templates/selection_result.json
+
+.axion/runs/<run_id>/templates/selection_report.json
+
+selection_result.json (match your index versions)
+
+Use:
+
+template_library_version and template_index_version from the index 
+
+template_index
+
+selected_templates[] entries include:
+
+template_id
+
+template_version
+
+source_file_path (the index file_path)
+
+source_abs_path (the repo resolved libraries/templates/...)
+
+output_path (from index; where it will land in the kit later) 
+
+template_index
+
+4) Renderer (S7) should render to a run-local folder (not kit yet)
+
+For MVP, write rendered markdown to:
+
+.axion/runs/<run_id>/templates/rendered_docs/<template_id>.md
+
+Later, packaging will place them into kit paths using the template output_path.
+
+5) Render context: easiest MVP that guarantees G5 passes
+
+Your index includes inputs_required[] like spec.features, spec.roles, etc. 
+
+template_index
+
+MVP context strategy (deterministic, zero guessing):
+
+Scan all selected templates for placeholder keys {{...}}
+
+Create a context object with every key resolved:
+
+For each key, set "__AXION_VALUE__" (or "")
+
+Override a few obvious ones if you want:
+
+run_id, generated_at
+
+This guarantees unresolved_placeholders_count == 0 and makes G5 pass without building a full spec-mapper.
+
+6) Gate definitions for G4/G5 (match your new stage ids)
+
+G4_TEMPLATE_SELECTION checks selection_result exists + valid + has /selected_templates
+
+G5_TEMPLATE_COMPLETENESS checks render_report exists + valid + json_eq(/unresolved_placeholders_count, 0)
+
+Your new json_eq op is correct for this.
+
+7) One small naming cleanup in your task list
+
+Rename tasks:
+
+“Implement S5…” → Implement S6_SELECT_TEMPLATES
+
+“Implement S7…” → Implement S7_RENDER_DOCS
+
+Everything else can remain.
+
+If you want, I can now rewrite your entire task block (T001–T008) verbatim in the same structure you posted, but corrected to:
+
+the right stage IDs (S6/S7),
+
+the right template index path usage (file_path + versions),
+
+and the output fields aligned to this index.

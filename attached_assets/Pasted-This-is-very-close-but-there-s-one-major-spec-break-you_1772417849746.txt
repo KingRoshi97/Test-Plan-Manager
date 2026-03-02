@@ -1,0 +1,120 @@
+This is very close, but there’s one major spec-break you need to fix before you implement it:
+
+🚨 Critical issue: your T001 “pipeline reorder” conflicts with the Mechanics pipeline
+
+In Mechanics, S5 is standards and S8 is plan. You can’t move “plan generation” into S5.
+
+Correct Mechanics order is:
+
+S5_RESOLVE_STANDARDS
+
+S6_SELECT_TEMPLATES
+
+S7_RENDER_DOCS
+
+S8_BUILD_PLAN
+
+S9_VERIFY_PROOF
+
+S10_PACKAGE
+
+So this line in your Locked Decisions is wrong:
+
+“Pipeline reorder: S5 becomes plan generation (was S6)”
+
+You should not rename/reorder S5/S8 at all. Your work here only needs to add/implement S6 + S7 + gates G4/G5.
+
+What to change in your plan (minimal edits)
+✅ Keep as-is
+
+T002 json_eq op + expected field
+
+T003 add G4/G5 gate definitions (stage IDs correct)
+
+T004 selector logic (based on your template_index.json fields)
+
+T005 renderer + scanner + auto-context
+
+T006/T007 write S6/S7 outputs under .axion/runs/<run_id>/templates/...
+
+T008 wire S6/S7 into runStage.ts
+
+❌ Fix T001 completely
+
+Replace T001 with:
+
+T001 (corrected): Align stage IDs to Mechanics without reordering anything
+
+Details
+
+Ensure your stage IDs include:
+
+S6_SELECT_TEMPLATES
+
+S7_RENDER_DOCS
+
+Ensure the stage order remains Mechanics:
+
+... S5_RESOLVE_STANDARDS, S6_SELECT_TEMPLATES, S7_RENDER_DOCS, S8_BUILD_PLAN, S9_VERIFY_PROOF, S10_PACKAGE ...
+
+Do not rename S5 or S8.
+
+Update any old internal names:
+
+S5_TEMPLATE_SELECTION → S6_SELECT_TEMPLATES
+
+S7_TEMPLATE_FILL → S7_RENDER_DOCS
+
+Update STAGE_GATES so:
+
+S6_SELECT_TEMPLATES → G4_TEMPLATE_SELECTION
+
+S7_RENDER_DOCS → G5_TEMPLATE_COMPLETENESS
+
+Acceptance
+
+tsc --noEmit clean
+
+existing axion run still executes with unchanged stage order
+
+Two more small corrections I recommend
+1) Your “all 7 gates pass” target is fine — but be explicit
+
+If your gate registry contains exactly:
+
+G1, G2, G3, G4, G5, G6, G8
+then “7 gates pass” = those seven.
+
+Just don’t imply you’re passing the full Mechanics set (which includes G7) yet.
+
+2) Index source: choose one and lock it
+
+You currently say:
+
+Index source: libraries/templates/template_index.json
+
+That’s fine if that file truly exists in your repo and is the authoritative one.
+
+If you also have registries/TEMPLATE_INDEX.json, don’t duplicate sources. Pick one:
+
+Recommended for runtime: keep it in registries/ (compiled/consumed by runtime)
+
+If you insist on keeping it in libraries/templates/, treat it as authoritative and don’t maintain a second copy.
+
+What I would do next (sequencing)
+
+Build in this order (fastest path to “green”):
+
+T002 (json_eq)
+
+T003 (add G4/G5)
+
+T004 + T006 (S6 selection artifacts)
+
+T005 + T007 (S7 render artifacts, unresolved=0)
+
+T008 (wire stages)
+
+T009 (tests + docs)
+
+If you want, paste your current STAGE_ORDER and STAGE_GATES from src/types/run.ts and I’ll rewrite just that block with the corrected ordering + the two new stages/gates, so you can drop it in without hunting references.
