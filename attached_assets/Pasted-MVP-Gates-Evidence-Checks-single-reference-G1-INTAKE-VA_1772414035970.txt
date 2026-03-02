@@ -1,0 +1,158 @@
+MVP Gates — Evidence + Checks (single reference)
+G1_INTAKE_VALIDITY (Stage: S2_VALIDATE_INTAKE)
+
+Evidence file
+
+.axion/runs/<run_id>/intake/validation_result.json
+
+Checks (v1)
+
+file exists
+
+valid JSON
+
+hard_failures == 0 at:
+
+pointer: /summary/hard_failures
+
+Minimal evidence shape (starter)
+
+{
+  "run_id": "RUN-000001",
+  "summary": { "hard_failures": 0 },
+  "results": []
+}
+G2_CANONICAL_INTEGRITY (Stage: S4_VALIDATE_CANONICAL)
+
+Evidence file
+
+.axion/runs/<run_id>/canonical/canonical_spec.json
+
+Checks (v1)
+
+file exists
+
+valid JSON
+
+has required pointer /run_id
+
+Minimal evidence shape (starter)
+
+{
+  "run_id": "RUN-000001",
+  "spec": {}
+}
+G3_STANDARDS_RESOLVED (Stage: S5_RESOLVE_STANDARDS)
+
+Evidence file
+
+.axion/runs/<run_id>/standards/resolved_standards_snapshot.json
+
+Checks (v1)
+
+file exists
+
+valid JSON
+
+has /run_id
+
+has /resolved (array)
+
+Minimal evidence shape (starter)
+
+{
+  "run_id": "RUN-000001",
+  "resolved": []
+}
+G6_PLAN_COVERAGE (Stage: S8_BUILD_PLAN)
+
+Evidence file
+
+.axion/runs/<run_id>/planning/coverage_report.json
+
+Checks (v1)
+
+file exists
+
+valid JSON
+
+/coverage_percent >= 100
+
+Minimal evidence shape (starter)
+
+{
+  "run_id": "RUN-000001",
+  "coverage_percent": 100,
+  "uncovered": []
+}
+G8_PACKAGE_INTEGRITY (Stage: S10_PACKAGE)
+
+Evidence files
+
+.axion/runs/<run_id>/kit/packaging_manifest.json
+
+.axion/runs/<run_id>/kit/bundle/** (the files referenced in the manifest)
+
+Checks (v1)
+
+packaging manifest exists
+
+valid JSON
+
+algorithm == "sha256"
+
+for each files[] entry:
+
+safe relative path
+
+file exists in bundle root
+
+sha256(file bytes) matches manifest
+
+Minimal packaging manifest shape (starter)
+
+{
+  "run_id": "RUN-000001",
+  "algorithm": "sha256",
+  "root": "kit/bundle",
+  "files": [
+    { "path": "kit_manifest.json", "sha256": "<sha256>" },
+    { "path": "entrypoint.json", "sha256": "<sha256>" },
+    { "path": "version_stamp.json", "sha256": "<sha256>" }
+  ]
+}
+
+Minimal bundle files (starter)
+
+.axion/runs/<run_id>/kit/bundle/kit_manifest.json
+
+.axion/runs/<run_id>/kit/bundle/entrypoint.json
+
+.axion/runs/<run_id>/kit/bundle/version_stamp.json
+
+(You already have starter JSON for these.)
+
+One “MVP Evidence Matrix” (all paths together)
+G1 -> .axion/runs/<run_id>/intake/validation_result.json
+G2 -> .axion/runs/<run_id>/canonical/canonical_spec.json
+G3 -> .axion/runs/<run_id>/standards/resolved_standards_snapshot.json
+G6 -> .axion/runs/<run_id>/planning/coverage_report.json
+G8 -> .axion/runs/<run_id>/kit/packaging_manifest.json
+      .axion/runs/<run_id>/kit/bundle/<each manifest file>
+Implementation hint (keeps everything uniform)
+
+Implement gates as ordered check lists with these primitive ops:
+
+file_exists(path)
+
+json_valid(path)
+
+json_has(path, pointer)
+
+equals(path, pointer, value) (for algorithm / hard_failures)
+
+gte(path, pointer, min) (coverage)
+
+verify_hash_manifest(manifest_path, bundle_root)
+
+This is enough to make the system block correctly without a full DSL.

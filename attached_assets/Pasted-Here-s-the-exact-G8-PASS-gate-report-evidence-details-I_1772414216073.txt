@@ -1,0 +1,98 @@
+Here’s the exact G8 PASS gate report evidence details I recommend for MVP (clean, stable, and matches the report format we locked).
+
+File
+
+.axion/runs/<run_id>/gates/G8_PACKAGE_INTEGRITY.gate_report.json
+
+G8 PASS report (MVP: 3-file bundle)
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G8_PACKAGE_INTEGRITY",
+  "stage_id": "S10_PACKAGE",
+
+  "status": "pass",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": {
+    "name": "axion-gates",
+    "version": "0.1.0"
+  },
+
+  "checks": [
+    {
+      "check_id": "file_exists",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/kit/packaging_manifest.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "json_valid",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/kit/packaging_manifest.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "verify_hash_manifest",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/kit/packaging_manifest.json",
+          "pointer": "",
+          "details": {
+            "algorithm": "sha256",
+            "bundle_root": ".axion/runs/RUN-000001/kit/bundle",
+            "files_expected": 3,
+            "files_verified": 3,
+            "files": [
+              {
+                "path": "entrypoint.json",
+                "sha256": "PUT_SHA256_HERE"
+              },
+              {
+                "path": "kit_manifest.json",
+                "sha256": "PUT_SHA256_HERE"
+              },
+              {
+                "path": "version_stamp.json",
+                "sha256": "PUT_SHA256_HERE"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": [],
+  "evidence": []
+}
+Notes on what to fill
+
+In the files[] block inside details, you can either:
+
+copy the manifest entries exactly (recommended), or
+
+omit the files[] list entirely and only keep files_verified counters (more minimal).
+
+If you keep the list, keep it sorted by path to match determinism.
+
+Why this is a good MVP PASS report
+
+It proves what was verified (algorithm, root, count)
+
+It doesn’t dump unnecessary data
+
+It’s deterministic (stable order + stable fields)

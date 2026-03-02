@@ -1,0 +1,158 @@
+Here’s the exact Gate Report v1 for G6_PLAN_COVERAGE using the same structure, with the evidence pointing to /coverage_percent.
+
+File path
+
+.axion/runs/<run_id>/gates/G6_PLAN_COVERAGE.gate_report.json
+
+1) PASS example (coverage_percent >= 100)
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G6_PLAN_COVERAGE",
+  "stage_id": "S8_BUILD_PLAN",
+
+  "status": "pass",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": {
+    "name": "axion-gates",
+    "version": "0.1.0"
+  },
+
+  "checks": [
+    {
+      "check_id": "file_exists",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/planning/coverage_report.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "json_valid",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/planning/coverage_report.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "coverage_gte",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/planning/coverage_report.json",
+          "pointer": "/coverage_percent",
+          "details": {
+            "min_required": 100,
+            "actual": 100
+          }
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": [],
+  "evidence": []
+}
+2) FAIL example (coverage_percent < 100)
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G6_PLAN_COVERAGE",
+  "stage_id": "S8_BUILD_PLAN",
+
+  "status": "fail",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": {
+    "name": "axion-gates",
+    "version": "0.1.0"
+  },
+
+  "checks": [
+    {
+      "check_id": "file_exists",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/planning/coverage_report.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "json_valid",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/planning/coverage_report.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "coverage_gte",
+      "status": "fail",
+      "failure_code": "E_PLAN_COVERAGE_BELOW_MIN",
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/planning/coverage_report.json",
+          "pointer": "/coverage_percent",
+          "details": {
+            "min_required": 100,
+            "actual": 87
+          }
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": ["E_PLAN_COVERAGE_BELOW_MIN"],
+  "evidence": [
+    {
+      "path": ".axion/runs/RUN-000001/planning/coverage_report.json",
+      "pointer": "/coverage_percent",
+      "details": {
+        "min_required": 100,
+        "actual": 87
+      }
+    }
+  ]
+}
+Recommended failure codes for planning gates (v1 set)
+
+Use these stable codes (same idea as packaging):
+
+E_PLAN_COVERAGE_REPORT_MISSING
+
+E_PLAN_COVERAGE_REPORT_INVALID_JSON
+
+E_PLAN_COVERAGE_FIELD_MISSING
+
+E_PLAN_COVERAGE_FIELD_INVALID
+
+E_PLAN_COVERAGE_BELOW_MIN
+
+Deterministic mapping
+
+missing file → E_PLAN_COVERAGE_REPORT_MISSING
+
+JSON parse fail → E_PLAN_COVERAGE_REPORT_INVALID_JSON
+
+missing /coverage_percent → E_PLAN_COVERAGE_FIELD_MISSING
+
+/coverage_percent not a number → E_PLAN_COVERAGE_FIELD_INVALID
+
+value < min → E_PLAN_COVERAGE_BELOW_MIN

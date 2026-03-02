@@ -1,0 +1,170 @@
+Here’s G3_STANDARDS_RESOLVED in the same Gate Report v1 format, plus a tight failure-code set.
+
+Gate: G3_STANDARDS_RESOLVED
+Stage: S5_RESOLVE_STANDARDS
+Evidence file: .axion/runs/<run_id>/standards/resolved_standards_snapshot.json
+
+PASS example
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G3_STANDARDS_RESOLVED",
+  "stage_id": "S5_RESOLVE_STANDARDS",
+
+  "status": "pass",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": { "name": "axion-gates", "version": "0.1.0" },
+
+  "checks": [
+    {
+      "check_id": "file_exists",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "json_valid",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "json_has",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json",
+          "pointer": "/run_id",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "json_has",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json",
+          "pointer": "/resolved",
+          "details": {}
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": [],
+  "evidence": []
+}
+FAIL example (missing /resolved)
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G3_STANDARDS_RESOLVED",
+  "stage_id": "S5_RESOLVE_STANDARDS",
+
+  "status": "fail",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": { "name": "axion-gates", "version": "0.1.0" },
+
+  "checks": [
+    {
+      "check_id": "file_exists",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "json_valid",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json",
+          "pointer": "",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "json_has",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json",
+          "pointer": "/run_id",
+          "details": {}
+        }
+      ]
+    },
+    {
+      "check_id": "json_has",
+      "status": "fail",
+      "failure_code": "E_STANDARDS_REQUIRED_FIELD_MISSING",
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json",
+          "pointer": "/resolved",
+          "details": { "required": true }
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": ["E_STANDARDS_REQUIRED_FIELD_MISSING"],
+  "evidence": [
+    {
+      "path": ".axion/runs/RUN-000001/standards/resolved_standards_snapshot.json",
+      "pointer": "/resolved",
+      "details": { "required": true }
+    }
+  ]
+}
+Recommended failure codes (v1)
+
+E_STANDARDS_SNAPSHOT_MISSING
+
+E_STANDARDS_SNAPSHOT_INVALID_JSON
+
+E_STANDARDS_REQUIRED_FIELD_MISSING
+
+E_STANDARDS_REQUIRED_FIELD_INVALID
+
+Deterministic mapping
+
+missing file → E_STANDARDS_SNAPSHOT_MISSING
+
+JSON parse fail → E_STANDARDS_SNAPSHOT_INVALID_JSON
+
+missing required pointer (ex /run_id, /resolved) → E_STANDARDS_REQUIRED_FIELD_MISSING
+
+wrong type (if enforced) → E_STANDARDS_REQUIRED_FIELD_INVALID
+
+What should /resolved be?
+
+For v1 gating, keep it simple:
+
+/resolved should be an array (even if empty), or an object that contains at least one list of resolved standard IDs.
+If you want strictness, enforce:
+
+/resolved is an array of strings (standard IDs).

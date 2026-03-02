@@ -1,0 +1,257 @@
+Below are Gate Report v1 templates + failure codes for:
+
+G1_INTAKE_VALIDITY (stage: S2_VALIDATE_INTAKE)
+
+G2_CANONICAL_INTEGRITY (stage: S4_VALIDATE_CANONICAL)
+
+Same structure as the G6/G8 examples.
+
+G1 — INTAKE validity
+
+Gate: G1_INTAKE_VALIDITY
+Stage: S2_VALIDATE_INTAKE
+Primary evidence file: .axion/runs/<run_id>/intake/validation_result.json
+
+PASS example
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G1_INTAKE_VALIDITY",
+  "stage_id": "S2_VALIDATE_INTAKE",
+
+  "status": "pass",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": { "name": "axion-gates", "version": "0.1.0" },
+
+  "checks": [
+    {
+      "check_id": "file_exists",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        { "path": ".axion/runs/RUN-000001/intake/validation_result.json", "pointer": "", "details": {} }
+      ]
+    },
+    {
+      "check_id": "json_valid",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        { "path": ".axion/runs/RUN-000001/intake/validation_result.json", "pointer": "", "details": {} }
+      ]
+    },
+    {
+      "check_id": "intake_no_hard_failures",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/intake/validation_result.json",
+          "pointer": "/summary",
+          "details": { "hard_failures": 0 }
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": [],
+  "evidence": []
+}
+FAIL example (hard failures exist)
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G1_INTAKE_VALIDITY",
+  "stage_id": "S2_VALIDATE_INTAKE",
+
+  "status": "fail",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": { "name": "axion-gates", "version": "0.1.0" },
+
+  "checks": [
+    {
+      "check_id": "file_exists",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        { "path": ".axion/runs/RUN-000001/intake/validation_result.json", "pointer": "", "details": {} }
+      ]
+    },
+    {
+      "check_id": "json_valid",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        { "path": ".axion/runs/RUN-000001/intake/validation_result.json", "pointer": "", "details": {} }
+      ]
+    },
+    {
+      "check_id": "intake_no_hard_failures",
+      "status": "fail",
+      "failure_code": "E_INTAKE_HARD_FAILURES_PRESENT",
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/intake/validation_result.json",
+          "pointer": "/summary/hard_failures",
+          "details": { "hard_failures": 2 }
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": ["E_INTAKE_HARD_FAILURES_PRESENT"],
+  "evidence": [
+    {
+      "path": ".axion/runs/RUN-000001/intake/validation_result.json",
+      "pointer": "/summary/hard_failures",
+      "details": { "hard_failures": 2 }
+    }
+  ]
+}
+Recommended failure codes (v1)
+
+E_INTAKE_VALIDATION_RESULT_MISSING
+
+E_INTAKE_VALIDATION_RESULT_INVALID_JSON
+
+E_INTAKE_SUMMARY_MISSING
+
+E_INTAKE_HARD_FAILURES_FIELD_INVALID
+
+E_INTAKE_HARD_FAILURES_PRESENT
+
+Deterministic mapping
+
+missing file → E_INTAKE_VALIDATION_RESULT_MISSING
+
+JSON parse fail → E_INTAKE_VALIDATION_RESULT_INVALID_JSON
+
+missing /summary → E_INTAKE_SUMMARY_MISSING
+
+/summary/hard_failures not a number → E_INTAKE_HARD_FAILURES_FIELD_INVALID
+
+hard_failures > 0 → E_INTAKE_HARD_FAILURES_PRESENT
+
+Note: This assumes your validation_result.json has a summary with hard_failures. If your current schema differs, keep the same logic but point to the correct field.
+
+G2 — CANONICAL integrity
+
+Gate: G2_CANONICAL_INTEGRITY
+Stage: S4_VALIDATE_CANONICAL
+Primary evidence file: .axion/runs/<run_id>/canonical/canonical_spec.json
+
+PASS example
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G2_CANONICAL_INTEGRITY",
+  "stage_id": "S4_VALIDATE_CANONICAL",
+
+  "status": "pass",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": { "name": "axion-gates", "version": "0.1.0" },
+
+  "checks": [
+    {
+      "check_id": "file_exists",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        { "path": ".axion/runs/RUN-000001/canonical/canonical_spec.json", "pointer": "", "details": {} }
+      ]
+    },
+    {
+      "check_id": "json_valid",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        { "path": ".axion/runs/RUN-000001/canonical/canonical_spec.json", "pointer": "", "details": {} }
+      ]
+    },
+    {
+      "check_id": "json_has",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/canonical/canonical_spec.json",
+          "pointer": "/run_id",
+          "details": {}
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": [],
+  "evidence": []
+}
+FAIL example (missing /run_id)
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G2_CANONICAL_INTEGRITY",
+  "stage_id": "S4_VALIDATE_CANONICAL",
+
+  "status": "fail",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": { "name": "axion-gates", "version": "0.1.0" },
+
+  "checks": [
+    {
+      "check_id": "file_exists",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        { "path": ".axion/runs/RUN-000001/canonical/canonical_spec.json", "pointer": "", "details": {} }
+      ]
+    },
+    {
+      "check_id": "json_valid",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        { "path": ".axion/runs/RUN-000001/canonical/canonical_spec.json", "pointer": "", "details": {} }
+      ]
+    },
+    {
+      "check_id": "json_has",
+      "status": "fail",
+      "failure_code": "E_CANONICAL_REQUIRED_FIELD_MISSING",
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/canonical/canonical_spec.json",
+          "pointer": "/run_id",
+          "details": { "required": true }
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": ["E_CANONICAL_REQUIRED_FIELD_MISSING"],
+  "evidence": [
+    {
+      "path": ".axion/runs/RUN-000001/canonical/canonical_spec.json",
+      "pointer": "/run_id",
+      "details": { "required": true }
+    }
+  ]
+}
+Recommended failure codes (v1)
+
+E_CANONICAL_SPEC_MISSING
+
+E_CANONICAL_SPEC_INVALID_JSON
+
+E_CANONICAL_REQUIRED_FIELD_MISSING
+
+E_CANONICAL_REQUIRED_FIELD_INVALID
+
+Deterministic mapping
+
+missing file → E_CANONICAL_SPEC_MISSING
+
+JSON parse fail → E_CANONICAL_SPEC_INVALID_JSON
+
+required pointer missing (ex /run_id) → E_CANONICAL_REQUIRED_FIELD_MISSING
+
+required pointer wrong type (if you enforce types) → E_CANONICAL_REQUIRED_FIELD_INVALID

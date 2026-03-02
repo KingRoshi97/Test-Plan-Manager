@@ -1,0 +1,157 @@
+This aligns with the idea of a standardized gate report artifact in Mechanics (a gate emits a report with pass/fail + evidence). 
+
+Axion Mechanics
+
+Gate Report v1 (JSON)
+
+File path
+
+.axion/runs/<run_id>/gates/<gate_id>.gate_report.json
+
+1) PASS example
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G8_PACKAGE_INTEGRITY",
+  "stage_id": "S10_PACKAGE",
+
+  "status": "pass",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": {
+    "name": "axion-gates",
+    "version": "0.1.0"
+  },
+
+  "checks": [
+    {
+      "check_id": "verify_hash_manifest",
+      "status": "pass",
+      "failure_code": null,
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/kit/packaging_manifest.json",
+          "pointer": "",
+          "details": {
+            "algorithm": "sha256",
+            "files_verified": 3
+          }
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": [],
+  "evidence": []
+}
+2) FAIL example (hash mismatch)
+{
+  "run_id": "RUN-000001",
+  "gate_id": "G8_PACKAGE_INTEGRITY",
+  "stage_id": "S10_PACKAGE",
+
+  "status": "fail",
+  "evaluated_at": "2026-03-01T00:00:00.000Z",
+
+  "engine": {
+    "name": "axion-gates",
+    "version": "0.1.0"
+  },
+
+  "checks": [
+    {
+      "check_id": "verify_hash_manifest",
+      "status": "fail",
+      "failure_code": "E_PACK_HASH_MISMATCH",
+      "evidence": [
+        {
+          "path": ".axion/runs/RUN-000001/kit/packaging_manifest.json",
+          "pointer": "/files/0/sha256",
+          "details": {
+            "bundle_file": ".axion/runs/RUN-000001/kit/bundle/kit_manifest.json",
+            "expected_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "actual_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      ]
+    }
+  ],
+
+  "failure_codes": ["E_PACK_HASH_MISMATCH"],
+  "evidence": [
+    {
+      "path": ".axion/runs/RUN-000001/kit/packaging_manifest.json",
+      "pointer": "/files/0/sha256",
+      "details": {
+        "bundle_file": ".axion/runs/RUN-000001/kit/bundle/kit_manifest.json",
+        "expected_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "actual_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  ]
+}
+Field rules (so the report is deterministic)
+Required top-level fields
+
+run_id (string)
+
+gate_id (string)
+
+stage_id (string)
+
+status = "pass" or "fail"
+
+evaluated_at (ISO timestamp)
+
+engine.name, engine.version
+
+checks[] (array)
+
+failure_codes[] (array of strings)
+
+evidence[] (array)
+
+checks[] rules
+
+Each gate contains 1+ checks; each check entry must have:
+
+check_id (string; stable name like file_exists, json_valid, verify_hash_manifest)
+
+status pass/fail
+
+failure_code (string or null)
+
+evidence[] (array)
+
+failure_codes[] rules
+
+If status == "pass" → must be empty []
+
+If status == "fail" → must contain:
+
+the first failing check’s failure_code (at minimum)
+
+optionally additional codes if you choose to accumulate (v1 recommendation: only first for determinism)
+
+evidence[] rules (top-level)
+
+If pass → can be [] (keep it clean)
+
+If fail → include the exact evidence object(s) from the failing check
+
+Evidence object:
+
+path: file path involved
+
+pointer: JSON pointer string ("" allowed)
+
+details: small JSON object (keep it minimal and stable)
+
+Failure behavior recommendation (v1)
+
+To stay deterministic:
+
+Evaluate checks in listed order
+
+Stop on first failure
+
+Write one failure code + evidence set
