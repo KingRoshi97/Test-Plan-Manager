@@ -1,8 +1,10 @@
 export { parseGate, evalGate } from "./dsl.js";
 export type { GateAST, GateCondition, GateOperator } from "./dsl.js";
-export { loadGateRegistry, resolveGatesForRun } from "./registry.js";
-export type { GateRegistryEntry } from "./registry.js";
-export { createPlaceholderGateReport, writeGateReport } from "./report.js";
-export type { GateReport, GateVerdict } from "./report.js";
-export { runAllGates } from "./run.js";
+export { loadGateRegistry, filterGatesByStage, templateGatePaths } from "./registry.js";
+export type { GateDefinition, GateCheck, GateRegistryFile } from "./registry.js";
+export { evalCheck } from "./evaluator.js";
+export type { CheckResult, EvidenceEntry } from "./evaluator.js";
+export { writeGateReport } from "./report.js";
+export type { GateReportV1, CheckReport, GateVerdict } from "./report.js";
+export { runGatesForStage } from "./run.js";
 export type { GateRunResult } from "./run.js";

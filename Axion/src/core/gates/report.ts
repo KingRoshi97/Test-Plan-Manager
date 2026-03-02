@@ -1,32 +1,30 @@
-import { writeJson } from "../../utils/fs.js";
-import { isoNow } from "../../utils/time.js";
+import { writeCanonicalJson } from "../../utils/canonicalJson.js";
+import type { EvidenceEntry } from "./evaluator.js";
 
-export type GateVerdict = "pass" | "fail" | "skip" | "error";
+export type GateVerdict = "pass" | "fail";
 
-export interface GateReport {
-  gate_id: string;
-  version: string;
+export interface CheckReport {
+  check_id: string;
+  status: GateVerdict;
+  failure_code: string | null;
+  evidence: EvidenceEntry[];
+}
+
+export interface GateReportV1 {
   run_id: string;
-  verdict: GateVerdict;
+  gate_id: string;
+  stage_id: string;
+  status: GateVerdict;
   evaluated_at: string;
-  evidence_refs: string[];
-  failures: string[];
-  notes: string[];
-}
-
-export function createPlaceholderGateReport(gateId: string, runId: string): GateReport {
-  return {
-    gate_id: gateId,
-    version: "0.0.0",
-    run_id: runId,
-    verdict: "skip",
-    evaluated_at: isoNow(),
-    evidence_refs: [],
-    failures: [],
-    notes: ["Placeholder — gate evaluation not yet implemented."],
+  engine: {
+    name: string;
+    version: string;
   };
+  checks: CheckReport[];
+  failure_codes: string[];
+  evidence: EvidenceEntry[];
 }
 
-export function writeGateReport(outputPath: string, report: GateReport): void {
-  writeJson(outputPath, report);
+export function writeGateReport(outputPath: string, report: GateReportV1): void {
+  writeCanonicalJson(outputPath, report);
 }

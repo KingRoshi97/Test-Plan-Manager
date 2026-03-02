@@ -4,7 +4,7 @@
 Axion is a document-generation and compliance-enforcement system. It takes intake submissions, resolves standards, builds canonical specs, plans work, fills templates, runs gates, and packages everything into versioned "kits" for agent consumption.
 
 ## Current State
-Run spine implemented — 11-stage pipeline (S0–S10) with stage→gate mapping, sequential run_id allocation (RUN-NNNNNN), stage reports, and artifact indexing. CLI supports `axion init`, `axion run start`, `axion run stage`, and full `axion run`. All stubs throw `NotImplementedError` or write placeholder JSON artifacts. Zero TypeScript errors.
+Run spine + Gate Engine v1 implemented. 11-stage pipeline (S0–S10) with stage→gate mapping, sequential run_id allocation (RUN-NNNNNN), stage reports, artifact indexing, and real gate evaluation. CLI supports `axion init`, `axion run start`, `axion run stage`, `axion run gates`, and full `axion run`. Gate engine loads definitions from GATE_REGISTRY.json, evaluates 5 primitive ops, writes v1 gate reports, and blocks runs on failure. All MVP evidence artifacts are generated during `axion run` so all 5 gates pass. Zero TypeScript errors.
 
 ### File Counts
 - **105 non-empty .ts source files** (including new `runStage.ts`)
@@ -31,7 +31,7 @@ All source code lives under `Axion/`:
     - Enforcement: controlPlane, gates, verification, proofLedger
     - Extended: artifactStore, cache, diff, repro, refs, coverage, scanner, taxonomy, ids
   - `types/` — Shared type definitions (RunManifest, StageRun, StageReport, StageId, ArtifactIndexEntry, etc.)
-  - `utils/` — Utilities (writeJson, readJson, appendJsonl, ensureDir, sha256, isoNow, NotImplementedError)
+  - `utils/` — Utilities (writeJson, readJson, appendJsonl, ensureDir, sha256, isoNow, NotImplementedError, canonicalJson)
 - `Axion/.axion/` — Runtime artifact root (gitignored, created by `axion init`)
 - `Axion/docs_system/` — 50 system docs across 12 domains (SYS, INT, CAN, STD, TMP, ORD, PLAN, VER, KIT, STATE, GOV, EXEC)
 - `Axion/libraries/` — Persistent system assets:
@@ -50,8 +50,51 @@ npx tsx src/cli/axion.ts init                                  # Initialize .axi
 npx tsx src/cli/axion.ts run start                             # Allocate RUN-NNNNNN, write manifest + S0_INIT
 npx tsx src/cli/axion.ts run stage <run_id> <stage_id>         # Execute a single stage
 npx tsx src/cli/axion.ts run                                   # Full run: init + start + all 10 stages
+npx tsx src/cli/axion.ts run gates <run_id> <stage_id>         # Run gates for a stage
 npx tsc --noEmit                                               # Type check (zero errors)
 ```
+
+## Gate Engine v1
+Architecture: GATE_REGISTRY.json → registry loader → path templating → evaluator (5 ops) → gate report writer → manifest update
+
+### Gate Registry (registries/GATE_REGISTRY.json)
+5 gates mapped to pipeline stages via gate namespace stage IDs:
+- G1_INTAKE_VALIDITY → S2_VALIDATE_INTAKE
+- G2_CANONICAL_INTEGRITY → S4_VALIDATE_CANONICAL
+- G3_STANDARDS_RESOLVED → S5_RESOLVE_STANDARDS
+- G6_PLAN_COVERAGE → S8_BUILD_PLAN
+- G8_PACKAGE_INTEGRITY → S10_PACKAGE
+
+### Evaluator Ops (5 primitives)
+- `file_exists(path)` → E_FILE_MISSING
+- `json_valid(path)` → E_JSON_INVALID
+- `json_has(path, pointer)` → E_REQUIRED_FIELD_MISSING
+- `coverage_gte(path, pointer, min)` → E_COVERAGE_BELOW_MIN
+- `verify_hash_manifest(manifest_path, bundle_root)` → E_PACK_MANIFEST_MISSING, E_PACK_MANIFEST_INVALID_JSON, E_PACK_MANIFEST_BAD_ALGORITHM, E_PACK_MANIFEST_FILES_INVALID, E_PACK_ENTRY_INVALID, E_PACK_ENTRY_PATH_INVALID, E_PACK_ENTRY_HASH_INVALID, E_PACK_BUNDLE_FILE_MISSING, E_PACK_HASH_MISMATCH
+
+### Gate Report v1 Format
+Written to `gates/<gate_id>.gate_report.json` using canonical JSON (deep-sorted keys, 2-space indent, LF, trailing newline).
+Fields: run_id, gate_id, stage_id, status (pass/fail), evaluated_at, engine {name, version}, checks[] {check_id, status, failure_code, evidence[]}, failure_codes[], evidence[]
+
+### MVP Evidence Artifacts (generated during `axion run`)
+- S1: intake/validation_result.json
+- S3: standards/resolved_standards_snapshot.json
+- S4: canonical/canonical_spec.json
+- S6: planning/coverage_report.json
+- S9: kit/bundle/{kit_manifest,entrypoint,version_stamp}.json + kit/packaging_manifest.json
+
+### Canonical JSON (src/utils/canonicalJson.ts)
+- deepSortKeys: recursively sort object keys lexicographically, arrays keep order
+- canonicalJsonString: deep-sort + JSON.stringify(null, 2) + "\n"
+- writeCanonicalJson: write canonical JSON to file
+- canonicalHash: sha256 of canonical JSON bytes
+
+### Gate Files
+- `src/core/gates/registry.ts` — GateDefinition types, loadGateRegistry, filterGatesByStage, templateGatePaths
+- `src/core/gates/evaluator.ts` — CheckResult/EvidenceEntry types, evalCheck (5 ops)
+- `src/core/gates/run.ts` — runGatesForStage (orchestrator)
+- `src/core/gates/report.ts` — GateReportV1 type, writeGateReport
+- `src/core/gates/evidence.ts` — MVP evidence generators
 
 ## Run Spine (output of `axion run`)
 Run IDs: `RUN-NNNNNN` (sequential, from `.axion/run_counter.json`)

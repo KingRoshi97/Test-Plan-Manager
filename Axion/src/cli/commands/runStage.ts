@@ -6,6 +6,14 @@ import { sha256 } from "../../utils/hash.js";
 import type { RunManifest, StageReport, StageId } from "../../types/run.js";
 import { STAGE_ORDER } from "../../types/run.js";
 import type { ArtifactIndexEntry } from "../../types/artifacts.js";
+import {
+  writeIntakeValidationResult,
+  writeCanonicalSpecEvidence,
+  writeResolvedStandardsSnapshot,
+  writeCoverageReport,
+  writeBundleAndPackagingManifest,
+} from "../../core/gates/evidence.js";
+import { runGatesForStage } from "../../core/gates/run.js";
 
 const STAGE_IO: Record<string, { consumed: string[]; produced: string[] }> = {
   S1_INGEST_NORMALIZE: {
@@ -81,6 +89,66 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
 
   const io = STAGE_IO[stageId] ?? { consumed: [], produced: [] };
   const now = isoNow();
+  const generatedAt = manifest.created_at;
+
+  if (stageId === "S1_INGEST_NORMALIZE") {
+    writeIntakeValidationResult(runDir, runId, generatedAt);
+  } else if (stageId === "S3_STANDARDS_RESOLUTION") {
+    writeResolvedStandardsSnapshot(runDir, runId, generatedAt);
+  } else if (stageId === "S4_CANONICAL_BUILD") {
+    writeCanonicalSpecEvidence(runDir, runId, generatedAt);
+  } else if (stageId === "S6_PLAN_GENERATION") {
+    writeCoverageReport(runDir, runId, generatedAt);
+  } else if (stageId === "S9_KIT_PACKAGE") {
+    writeBundleAndPackagingManifest(runDir, runId, generatedAt);
+  }
+
+  const GATE_STAGE_MAP: Record<string, string> = {
+    S2_INTAKE_VALIDATION: "S2_VALIDATE_INTAKE",
+    S4_CANONICAL_BUILD: "S4_VALIDATE_CANONICAL",
+    S3_STANDARDS_RESOLUTION: "S5_RESOLVE_STANDARDS",
+    S6_PLAN_GENERATION: "S8_BUILD_PLAN",
+    S9_KIT_PACKAGE: "S10_PACKAGE",
+  };
+
+  const gateStageId = GATE_STAGE_MAP[stageId];
+  let gatesPassed = true;
+  if (gateStageId) {
+    const gateResult = runGatesForStage(baseDir, runId, gateStageId);
+    if (!gateResult.all_passed) {
+      gatesPassed = false;
+    }
+  }
+
+  if (gateStageId) {
+    manifest = readJson<RunManifest>(manifestPath);
+  }
+
+  if (!gatesPassed) {
+    const failReport: StageReport = {
+      run_id: runId,
+      stage_id: stageId,
+      status: "fail",
+      started_at: now,
+      finished_at: isoNow(),
+      consumed: io.consumed,
+      produced: io.produced,
+      gate_reports: [],
+      notes: [{ level: "error", message: `Stage ${stageId} failed: gate ${gateStageId} did not pass` }],
+    };
+
+    const failReportRelPath = `stage_reports/${stageId}.json`;
+    writeJson(join(runDir, failReportRelPath), failReport);
+
+    stageEntry.status = "fail";
+    stageEntry.stage_report_ref = failReportRelPath;
+    manifest.status = "failed";
+    manifest.updated_at = isoNow();
+    writeJson(manifestPath, manifest);
+
+    console.log(`  Stage ${stageId}: FAIL (gate ${gateStageId} blocked)`);
+    process.exit(1);
+  }
 
   const report: StageReport = {
     run_id: runId,
@@ -98,8 +166,11 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
   const reportPath = join(runDir, reportRelPath);
   writeJson(reportPath, report);
 
-  stageEntry.status = "pass";
-  stageEntry.stage_report_ref = reportRelPath;
+  const currentStageEntry = manifest.stages.find((s) => s.stage_id === stageId);
+  if (currentStageEntry) {
+    currentStageEntry.status = "pass";
+    currentStageEntry.stage_report_ref = reportRelPath;
+  }
   manifest.updated_at = isoNow();
 
   const allDone = manifest.stages.every((s) => s.status === "pass" || s.status === "skipped");
