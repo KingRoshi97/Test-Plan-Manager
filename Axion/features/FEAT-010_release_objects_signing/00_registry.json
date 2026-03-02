@@ -1,0 +1,17 @@
+{
+  "feature_id": "FEAT-010",
+  "title": "Release Objects & Signing",
+  "description": "Release lifecycle management including version tagging, release object creation, and artifact signing for distribution integrity.",
+  "category": "core-logic",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-004",
+    "FEAT-009"
+  ],
+  "src_modules": [
+    "src/core/controlPlane/releases.ts",
+    "src/cli/commands/release.ts"
+  ],
+  "gates": []
+}

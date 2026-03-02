@@ -1,0 +1,17 @@
+{
+  "feature_id": "FEAT-016",
+  "title": "Minimal Repro Exporter",
+  "description": "Selects the minimal set of artifacts needed to reproduce a pipeline issue and packages them into a self-contained repro bundle.",
+  "category": "infrastructure",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-004"
+  ],
+  "src_modules": [
+    "src/core/repro/selector.ts",
+    "src/core/repro/builder.ts",
+    "src/cli/commands/repro.ts"
+  ],
+  "gates": []
+}

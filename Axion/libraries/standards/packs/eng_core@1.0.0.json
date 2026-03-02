@@ -1,0 +1,88 @@
+{
+  "$schema": "standards/pack/v1",
+  "pack_id": "eng_core",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-01",
+  "description": "Engineering core standards — language, tooling, repo structure, coding conventions, dependency policy.",
+  "applies_when": {
+    "routing": {},
+    "gates": {}
+  },
+  "priority": 100,
+  "fixed_rules": [
+    {
+      "rule_id": "ENG-001",
+      "name": "TypeScript Required",
+      "description": "All source code must be written in TypeScript with strict mode enabled.",
+      "rule_type": "requirement",
+      "value": { "language": "typescript", "strict": true },
+      "fixed": true,
+      "source_pack": "eng_core@1.0.0"
+    },
+    {
+      "rule_id": "ENG-002",
+      "name": "Source Directory Structure",
+      "description": "Source code must follow the canonical directory structure: src/core/, src/cli/, src/types/, src/utils/.",
+      "rule_type": "requirement",
+      "value": { "directories": ["src/core", "src/cli", "src/types", "src/utils"] },
+      "fixed": true,
+      "source_pack": "eng_core@1.0.0"
+    },
+    {
+      "rule_id": "ENG-003",
+      "name": "No Default Exports",
+      "description": "All modules must use named exports. Default exports are prohibited.",
+      "rule_type": "prohibition",
+      "value": { "pattern": "no_default_exports" },
+      "fixed": true,
+      "source_pack": "eng_core@1.0.0"
+    },
+    {
+      "rule_id": "ENG-004",
+      "name": "Error Handling Discipline",
+      "description": "All errors must use typed error classes. Generic throw statements are prohibited.",
+      "rule_type": "requirement",
+      "value": { "pattern": "typed_errors_only" },
+      "fixed": true,
+      "source_pack": "eng_core@1.0.0"
+    },
+    {
+      "rule_id": "ENG-005",
+      "name": "Dependency Allowlist Enforcement",
+      "description": "Only dependencies listed in the approved allowlist may be used. New dependencies require review.",
+      "rule_type": "constraint",
+      "value": { "policy": "allowlist_required" },
+      "fixed": true,
+      "source_pack": "eng_core@1.0.0"
+    }
+  ],
+  "configurable_rules": [
+    {
+      "rule_id": "ENG-006",
+      "name": "Naming Convention",
+      "description": "Naming convention for files, functions, and types.",
+      "rule_type": "default",
+      "value": { "files": "kebab-case", "functions": "camelCase", "types": "PascalCase", "constants": "UPPER_SNAKE_CASE" },
+      "fixed": false,
+      "source_pack": "eng_core@1.0.0"
+    },
+    {
+      "rule_id": "ENG-007",
+      "name": "Max File Length",
+      "description": "Maximum recommended lines per source file.",
+      "rule_type": "default",
+      "value": { "max_lines": 500 },
+      "fixed": false,
+      "source_pack": "eng_core@1.0.0"
+    },
+    {
+      "rule_id": "ENG-008",
+      "name": "Import Order",
+      "description": "Import ordering convention: node builtins, external packages, internal modules, relative imports.",
+      "rule_type": "default",
+      "value": { "order": ["builtin", "external", "internal", "relative"] },
+      "fixed": false,
+      "source_pack": "eng_core@1.0.0"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "standards/pack/v1",
+  "pack_id": "qa_baseline",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-04",
+  "description": "Quality baseline standards — verification checks, coverage expectations, acceptance/proof discipline, performance checks.",
+  "applies_when": {
+    "routing": {},
+    "gates": {}
+  },
+  "priority": 100,
+  "fixed_rules": [
+    {
+      "rule_id": "QA-001",
+      "name": "Build Must Pass",
+      "description": "TypeScript compilation (tsc --noEmit) must pass with zero errors before any gate can be satisfied.",
+      "rule_type": "requirement",
+      "value": { "check": "tsc_no_emit", "errors": 0 },
+      "fixed": true,
+      "source_pack": "qa_baseline@1.0.0"
+    },
+    {
+      "rule_id": "QA-002",
+      "name": "Lint Must Pass",
+      "description": "Linting must pass with zero errors. Warnings are tracked but do not block.",
+      "rule_type": "requirement",
+      "value": { "check": "lint", "max_errors": 0 },
+      "fixed": true,
+      "source_pack": "qa_baseline@1.0.0"
+    },
+    {
+      "rule_id": "QA-003",
+      "name": "Unit Tests Required",
+      "description": "Every core module must have corresponding unit tests. All tests must pass.",
+      "rule_type": "requirement",
+      "value": { "check": "unit_tests", "pass_rate": 1.0 },
+      "fixed": true,
+      "source_pack": "qa_baseline@1.0.0"
+    },
+    {
+      "rule_id": "QA-004",
+      "name": "Proof-Based Acceptance",
+      "description": "Acceptance criteria must be verified with concrete proof artifacts, not self-attestation.",
+      "rule_type": "requirement",
+      "value": { "pattern": "proof_based_verification" },
+      "fixed": true,
+      "source_pack": "qa_baseline@1.0.0"
+    }
+  ],
+  "configurable_rules": [
+    {
+      "rule_id": "QA-005",
+      "name": "Minimum Test Coverage",
+      "description": "Minimum code coverage percentage for core modules.",
+      "rule_type": "default",
+      "value": { "min_coverage_percent": 80 },
+      "fixed": false,
+      "source_pack": "qa_baseline@1.0.0"
+    },
+    {
+      "rule_id": "QA-006",
+      "name": "Integration Test Requirement",
+      "description": "Integration tests must cover critical path workflows.",
+      "rule_type": "default",
+      "value": { "required_for": "critical_workflows" },
+      "fixed": false,
+      "source_pack": "qa_baseline@1.0.0"
+    },
+    {
+      "rule_id": "QA-007",
+      "name": "Performance Baseline",
+      "description": "Performance checks are required when NFR performance targets are defined.",
+      "rule_type": "default",
+      "value": { "triggered_by": "nfr.performance_targets", "check": "performance_benchmarks" },
+      "fixed": false,
+      "source_pack": "qa_baseline@1.0.0"
+    }
+  ]
+}

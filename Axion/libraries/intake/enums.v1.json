@@ -1,0 +1,108 @@
+{
+  "$schema": "intake/enums/v1",
+  "schema_version": "1.0.0",
+  "description": "Enum definitions for the Axion intake submission schema (INT-02 Section 7).",
+  "enums": {
+    "SkillLevel": {
+      "values": ["beginner", "intermediate", "expert"],
+      "description": "User self-assessed skill level for routing and threshold enforcement."
+    },
+    "ProjectCategory": {
+      "values": ["application", "service", "infrastructure", "library_sdk"],
+      "description": "Top-level project classification determining type presets and conditional pages."
+    },
+    "TypePreset": {
+      "values_by_category": {
+        "application": ["web_app", "mobile_app", "desktop_app", "pwa", "hybrid_app"],
+        "service": ["rest_api", "graphql_api", "grpc_service", "event_processor", "background_worker"],
+        "infrastructure": ["cloud_infra", "ci_cd_pipeline", "monitoring_stack", "data_pipeline", "container_platform"],
+        "library_sdk": ["npm_package", "python_package", "cli_tool", "sdk", "shared_library"]
+      },
+      "description": "Category-scoped project type preset. Must be valid for the selected category (INT3-ROUTING-01)."
+    },
+    "BuildTarget": {
+      "values": ["new", "existing"],
+      "description": "Whether the project is a new build or enhancement of an existing system."
+    },
+    "AudienceContext": {
+      "values": ["consumer", "internal", "developer"],
+      "description": "Primary audience context driving conditional brand/design sections."
+    },
+    "DesiredScope": {
+      "values": ["mvp", "full", "unsure"],
+      "description": "Desired delivery scope for the project."
+    },
+    "PriorityBias": {
+      "values": ["speed", "balanced", "quality"],
+      "description": "Priority bias for delivery trade-offs."
+    },
+    "StatusSignal": {
+      "values": ["luxury", "premium", "mainstream", "accessible", "underground"],
+      "description": "Brand status signal positioning (consumer-facing only)."
+    },
+    "ContentMaturity": {
+      "values": ["none", "early", "established", "mature"],
+      "description": "Content maturity level for brand voice calibration."
+    },
+    "VisualPreset": {
+      "values": ["minimal", "bold", "playful", "corporate", "editorial", "brutalist", "organic", "tech", "custom"],
+      "description": "Visual design direction preset."
+    },
+    "FontUseCase": {
+      "values": ["heading", "body", "accent", "monospace", "ui"],
+      "description": "Intended use case for a specified font."
+    },
+    "UIDensity": {
+      "values": ["compact", "comfortable", "spacious"],
+      "description": "UI information density preference."
+    },
+    "NavPreference": {
+      "values": ["top_bar", "side_nav", "bottom_tabs", "hamburger", "hybrid", "minimal"],
+      "description": "Navigation pattern preference."
+    },
+    "MotionPreference": {
+      "values": ["none", "subtle", "moderate", "rich"],
+      "description": "Motion and animation intensity preference."
+    },
+    "ContentPresentation": {
+      "values": ["text_heavy", "visual_heavy", "balanced", "data_dense", "conversational"],
+      "description": "Content presentation style preference."
+    },
+    "ShowcasePriority": {
+      "values": ["hero", "primary", "secondary", "supporting"],
+      "description": "Visual priority for showcase screens."
+    },
+    "WorkflowPriority": {
+      "values": ["critical", "high", "medium", "low"],
+      "description": "Priority classification for workflows."
+    },
+    "AuthMethod": {
+      "values": ["email_password", "social_oauth", "sso_saml", "sso_oidc", "magic_link", "passkey", "api_key"],
+      "description": "Supported authentication methods."
+    },
+    "AccountLifecycle": {
+      "values": ["registration", "email_verification", "password_reset", "account_deactivation", "account_deletion", "profile_update"],
+      "description": "Account lifecycle stages."
+    },
+    "SessionRule": {
+      "values": ["session_timeout", "concurrent_session_limit", "remember_me", "force_logout", "ip_binding"],
+      "description": "Session management rules."
+    },
+    "AuthorizationModel": {
+      "values": ["rbac", "abac", "acl", "custom", "none"],
+      "description": "Authorization enforcement model."
+    },
+    "IntegrationTrigger": {
+      "values": ["on_create", "on_update", "on_delete", "on_schedule", "on_event", "manual"],
+      "description": "Trigger types for external integrations."
+    },
+    "ReliabilityLevel": {
+      "values": ["best_effort", "standard", "high", "mission_critical"],
+      "description": "Reliability expectation level."
+    },
+    "ComplianceFlag": {
+      "values": ["gdpr", "hipaa", "sox", "pci_dss", "ccpa", "ferpa", "iso27001", "none"],
+      "description": "Applicable compliance frameworks."
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "feature_id": "FEAT-014",
+  "title": "Coverage Scoring Engine",
+  "description": "Computes coverage scores across spec items, acceptance criteria, and proof artifacts to measure completeness and identify gaps.",
+  "category": "core-logic",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-008",
+    "FEAT-013"
+  ],
+  "src_modules": [
+    "src/core/coverage/scorer.ts",
+    "src/core/coverage/rules.ts"
+  ],
+  "gates": []
+}

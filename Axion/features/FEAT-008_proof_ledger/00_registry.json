@@ -1,0 +1,21 @@
+{
+  "feature_id": "FEAT-008",
+  "title": "Proof Ledger",
+  "description": "Immutable ledger recording proof artifacts, linking acceptance criteria to evidence, and validating proof completeness for gate compliance.",
+  "category": "core-logic",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-003"
+  ],
+  "src_modules": [
+    "src/core/proofLedger/index.ts",
+    "src/core/proofLedger/ledger.ts",
+    "src/core/proofLedger/registry.ts",
+    "src/core/proofLedger/types.ts",
+    "src/core/proofLedger/validate.ts"
+  ],
+  "gates": [
+    "GATE-09"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "feature_id": "FEAT-017",
+  "title": "Error Taxonomy & Registry",
+  "description": "Centralized error code registry with domain-scoped error definitions, severity classification, and normalized error object construction.",
+  "category": "infrastructure",
+  "status": "draft",
+  "dependencies": [],
+  "src_modules": [
+    "src/core/taxonomy/errors.ts",
+    "src/core/taxonomy/normalize.ts"
+  ],
+  "gates": []
+}

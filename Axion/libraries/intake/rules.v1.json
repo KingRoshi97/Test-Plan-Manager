@@ -1,0 +1,235 @@
+{
+  "$schema": "intake/rules/v1",
+  "rules_version": "1.0.0",
+  "description": "Validation rules for intake submissions — dependency logic, thresholds, and referential integrity (INT-03).",
+  "rule_format": {
+    "fields": ["rule_id", "description", "when", "then", "error_code", "pointer_paths", "severity", "notes"]
+  },
+  "rules": [
+    {
+      "rule_id": "INT3-ROUTING-01",
+      "description": "Type preset must be valid for the selected category.",
+      "when": "always",
+      "then": "routing.type_preset must be a valid value for routing.category per TypePreset enum",
+      "error_code": "INVALID_ENUM_FOR_CONTEXT",
+      "pointer_paths": ["routing.category", "routing.type_preset"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-EXIST-01",
+      "description": "Existing project requires repo link and state summary.",
+      "when": "routing.build_target == 'existing'",
+      "then": "existing.existing_repo_link must be present and valid URL; existing.current_state_summary must be present",
+      "error_code": "DEPENDENCY_MISSING",
+      "pointer_paths": ["existing.existing_repo_link", "existing.current_state_summary"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-CONS-01",
+      "description": "Consumer-facing projects require brand foundation fields.",
+      "when": "routing.audience_context == 'consumer'",
+      "then": "brand.stands_for must be present; brand.brand_promise must be present; brand.voice_adjectives[] length >= 1",
+      "error_code": "DEPENDENCY_MISSING",
+      "pointer_paths": ["brand.stands_for", "brand.brand_promise", "brand.voice_adjectives"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-CONS-02",
+      "description": "Consumer-facing projects require design style adjectives.",
+      "when": "routing.audience_context == 'consumer'",
+      "then": "design.style_adjectives[] length >= 1",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["design.style_adjectives"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-DATA-01",
+      "description": "When data is enabled, at least one data object must be defined.",
+      "when": "data.enabled == true",
+      "then": "data.objects[] length >= 1",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["data.objects"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-AUTH-01",
+      "description": "When auth is required, at least one auth method must be specified.",
+      "when": "auth.required == true",
+      "then": "auth.methods[] length >= 1",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["auth.methods"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-AUTH-02",
+      "description": "When approval flows are needed, a description must be provided.",
+      "when": "auth.approval_flows_needed == true",
+      "then": "auth.approval_flows_description must be present",
+      "error_code": "DEPENDENCY_MISSING",
+      "pointer_paths": ["auth.approval_flows_description"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-INTEG-01",
+      "description": "When integrations are enabled, at least one integration must be defined.",
+      "when": "integrations.enabled == true",
+      "then": "integrations.items[] length >= 1",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["integrations.items"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-REF-01",
+      "description": "Role names must be unique across spec.roles[].",
+      "when": "spec.roles[] present",
+      "then": "all spec.roles[].name values must be unique",
+      "error_code": "DUPLICATE_VALUE",
+      "pointer_paths": ["spec.roles"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-REF-02",
+      "description": "Role permissions must reference valid role names.",
+      "when": "spec.role_permissions[] present",
+      "then": "each spec.role_permissions[].role_name must exist in spec.roles[].name",
+      "error_code": "INVALID_REFERENCE",
+      "pointer_paths": ["spec.role_permissions", "spec.roles"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-REF-03",
+      "description": "Workflow actor roles must reference valid role names.",
+      "when": "spec.workflows[] present",
+      "then": "each spec.workflows[].actor_role must exist in spec.roles[].name",
+      "error_code": "INVALID_REFERENCE",
+      "pointer_paths": ["spec.workflows", "spec.roles"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-REF-04",
+      "description": "Feature priority rank entries must reference must-have feature names.",
+      "when": "spec.feature_priority_rank[] present",
+      "then": "every entry must exist in spec.must_have_features[].name",
+      "error_code": "INVALID_REFERENCE",
+      "pointer_paths": ["spec.feature_priority_rank", "spec.must_have_features"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-RULES-01",
+      "description": "When business rules are enabled, at least one must-always rule is required.",
+      "when": "spec.business_rules_enabled == true",
+      "then": "spec.must_always_rules[] length >= 1",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["spec.must_always_rules"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-FMT-01",
+      "description": "Uploaded zip must have .zip file extension.",
+      "when": "inputs.zip_upload present",
+      "then": "file type must be .zip",
+      "error_code": "INVALID_FILETYPE",
+      "pointer_paths": ["inputs.zip_upload"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-FMT-02",
+      "description": "Reference link URLs must be valid.",
+      "when": "inputs.reference_links[] present",
+      "then": "each url must be a valid URL",
+      "error_code": "INVALID_URL",
+      "pointer_paths": ["inputs.reference_links"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-FMT-03",
+      "description": "Brand color hex values must be valid hex color format.",
+      "when": "design.brand_colors[] present",
+      "then": "each hex must be a valid hex color format",
+      "error_code": "INVALID_FORMAT",
+      "pointer_paths": ["design.brand_colors"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-SKILL-01",
+      "description": "Beginner requires at least 1 must-have feature.",
+      "when": "routing.skill_level == 'beginner'",
+      "then": "spec.must_have_features.length >= 1",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["spec.must_have_features"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-SKILL-02",
+      "description": "Intermediate requires at least 3 must-have features.",
+      "when": "routing.skill_level == 'intermediate'",
+      "then": "spec.must_have_features.length >= 3",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["spec.must_have_features"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-SKILL-03",
+      "description": "Expert requires at least 5 must-have features.",
+      "when": "routing.skill_level == 'expert'",
+      "then": "spec.must_have_features.length >= 5",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["spec.must_have_features"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-SKILL-04",
+      "description": "Beginner and intermediate require at least 3 workflows.",
+      "when": "routing.skill_level == 'beginner' OR routing.skill_level == 'intermediate'",
+      "then": "spec.workflows.length >= 3",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["spec.workflows"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-SKILL-05",
+      "description": "Expert requires at least 5 workflows, or 3 core + 2 edge.",
+      "when": "routing.skill_level == 'expert'",
+      "then": "spec.workflows.length >= 5 OR (spec.workflows.length >= 3 AND spec.edge_workflows.length >= 2)",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["spec.workflows", "spec.edge_workflows"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-SKILL-06",
+      "description": "Beginner requires at least 1 out-of-scope item.",
+      "when": "routing.skill_level == 'beginner'",
+      "then": "intent.out_of_scope.length >= 1",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["intent.out_of_scope"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-SKILL-07",
+      "description": "Intermediate requires at least 2 out-of-scope items.",
+      "when": "routing.skill_level == 'intermediate'",
+      "then": "intent.out_of_scope.length >= 2",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["intent.out_of_scope"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-SKILL-08",
+      "description": "Expert requires at least 3 out-of-scope items.",
+      "when": "routing.skill_level == 'expert'",
+      "then": "intent.out_of_scope.length >= 3",
+      "error_code": "MIN_ITEMS",
+      "pointer_paths": ["intent.out_of_scope"],
+      "severity": "error"
+    },
+    {
+      "rule_id": "INT3-FINAL-01",
+      "description": "All three final confirmation checkboxes must be true.",
+      "when": "always",
+      "then": "final.confirm_priorities == true AND final.confirm_out_of_scope == true AND final.confirm_constraints == true",
+      "error_code": "REQUIRED",
+      "pointer_paths": ["final.confirm_priorities", "final.confirm_out_of_scope", "final.confirm_constraints"],
+      "severity": "error"
+    }
+  ]
+}

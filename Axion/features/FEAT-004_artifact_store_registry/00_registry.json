@@ -1,0 +1,16 @@
+{
+  "feature_id": "FEAT-004",
+  "title": "Artifact Store & Registry",
+  "description": "Content-addressable storage for all pipeline artifacts with reference tracking and garbage collection.",
+  "category": "infrastructure",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001"
+  ],
+  "src_modules": [
+    "src/core/artifactStore/cas.ts",
+    "src/core/artifactStore/refs.ts",
+    "src/core/artifactStore/gc.ts"
+  ],
+  "gates": []
+}

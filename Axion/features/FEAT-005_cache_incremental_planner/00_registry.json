@@ -1,0 +1,17 @@
+{
+  "feature_id": "FEAT-005",
+  "title": "Cache & Incremental Planner",
+  "description": "Caching layer and incremental planning engine that avoids redundant computation by tracking input hashes and reusing prior stage outputs.",
+  "category": "infrastructure",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-004"
+  ],
+  "src_modules": [
+    "src/core/cache/keys.ts",
+    "src/core/cache/planner.ts",
+    "src/core/cache/integrity.ts"
+  ],
+  "gates": []
+}

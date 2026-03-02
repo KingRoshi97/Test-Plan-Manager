@@ -1,0 +1,27 @@
+{
+  "feature_id": "FEAT-002",
+  "title": "Operator UI Core",
+  "description": "CLI and operator interface for interacting with the Axion pipeline, triggering runs, inspecting state, and managing configuration.",
+  "category": "interface",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001"
+  ],
+  "src_modules": [
+    "src/cli/axion.ts",
+    "src/cli/index.ts",
+    "src/cli/commands/generateKit.ts",
+    "src/cli/commands/validateIntake.ts",
+    "src/cli/commands/resolveStandards.ts",
+    "src/cli/commands/buildSpec.ts",
+    "src/cli/commands/planWork.ts",
+    "src/cli/commands/fillTemplates.ts",
+    "src/cli/commands/packageKit.ts",
+    "src/cli/commands/runGates.ts",
+    "src/cli/commands/runControlPlane.ts",
+    "src/cli/commands/exportBundle.ts",
+    "src/cli/commands/release.ts",
+    "src/cli/commands/repro.ts"
+  ],
+  "gates": []
+}

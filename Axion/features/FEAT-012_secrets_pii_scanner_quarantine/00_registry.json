@@ -1,0 +1,17 @@
+{
+  "feature_id": "FEAT-012",
+  "title": "Secrets & PII Scanner / Quarantine",
+  "description": "Security scanning engine that detects secrets, PII, and sensitive data in artifacts, with quarantine workflow for flagged content.",
+  "category": "security",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-004"
+  ],
+  "src_modules": [
+    "src/core/scanner/packs.ts",
+    "src/core/scanner/scan.ts",
+    "src/core/scanner/quarantine.ts"
+  ],
+  "gates": []
+}

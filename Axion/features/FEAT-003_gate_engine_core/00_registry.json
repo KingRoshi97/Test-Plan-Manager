@@ -1,0 +1,30 @@
+{
+  "feature_id": "FEAT-003",
+  "title": "Gate Engine Core",
+  "description": "Deterministic gate evaluation engine that enforces pass/fail checks on artifacts and stage outputs, preventing forward progress without compliance.",
+  "category": "infrastructure",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001"
+  ],
+  "src_modules": [
+    "src/core/gates/dsl.ts",
+    "src/core/gates/index.ts",
+    "src/core/gates/registry.ts",
+    "src/core/gates/report.ts",
+    "src/core/gates/reports.ts",
+    "src/core/gates/run.ts",
+    "src/core/gates/runner.ts"
+  ],
+  "gates": [
+    "GATE-01",
+    "GATE-02",
+    "GATE-03",
+    "GATE-04",
+    "GATE-05",
+    "GATE-06",
+    "GATE-07",
+    "GATE-08",
+    "GATE-09"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "feature_id": "FEAT-006",
+  "title": "Standards Resolution Engine",
+  "description": "Resolves applicable standards packs against normalized input, producing a version-pinned, conflict-free standards snapshot.",
+  "category": "core-logic",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-003"
+  ],
+  "src_modules": [
+    "src/core/standards/resolver.ts",
+    "src/core/standards/selector.ts",
+    "src/core/standards/snapshot.ts"
+  ],
+  "gates": [
+    "GATE-03"
+  ]
+}

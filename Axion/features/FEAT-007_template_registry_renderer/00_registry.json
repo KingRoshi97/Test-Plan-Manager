@@ -1,0 +1,21 @@
+{
+  "feature_id": "FEAT-007",
+  "title": "Template Registry & Renderer",
+  "description": "Template selection, filling, and completeness checking engine that populates document templates from canonical spec and standards data.",
+  "category": "core-logic",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-003",
+    "FEAT-006"
+  ],
+  "src_modules": [
+    "src/core/templates/filler.ts",
+    "src/core/templates/selector.ts",
+    "src/core/templates/completenessGate.ts",
+    "src/core/templates/index.ts"
+  ],
+  "gates": [
+    "GATE-07"
+  ]
+}

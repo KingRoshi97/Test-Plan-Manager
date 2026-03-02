@@ -1,0 +1,16 @@
+{
+  "feature_id": "FEAT-015",
+  "title": "Run Diff Engine",
+  "description": "Compares pipeline runs to produce structured diff reports, classifying changes across stages, artifacts, and gate results.",
+  "category": "core-logic",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-004"
+  ],
+  "src_modules": [
+    "src/core/diff/runDiff.ts",
+    "src/core/diff/classify.ts"
+  ],
+  "gates": []
+}

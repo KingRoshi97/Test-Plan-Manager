@@ -1,0 +1,432 @@
+{
+  "$schema": "intake/schema/v1",
+  "schema_version": "1.0.0",
+  "description": "IntakeSubmission schema defining canonical field paths, types, and base constraints (INT-02).",
+  "sections": {
+    "routing": {
+      "required": true,
+      "fields": {
+        "skill_level": { "type": "enum", "enum_ref": "SkillLevel", "required": true },
+        "category": { "type": "enum", "enum_ref": "ProjectCategory", "required": true },
+        "type_preset": { "type": "enum", "enum_ref": "TypePreset", "required": true },
+        "build_target": { "type": "enum", "enum_ref": "BuildTarget", "required": true },
+        "audience_context": { "type": "enum", "enum_ref": "AudienceContext", "required": true },
+        "autofill": { "type": "boolean", "required": true }
+      }
+    },
+    "project": {
+      "required": true,
+      "fields": {
+        "project_name": { "type": "string", "required": true, "min_length": 2, "max_length": 120 },
+        "project_overview": { "type": "string", "required": true, "min_length": 20, "max_length": 5000 },
+        "project_oneliner": { "type": "string", "required": false, "max_length": 200 },
+        "core_experience_paragraph": { "type": "string", "required": false, "max_length": 2000 }
+      }
+    },
+    "inputs": {
+      "required": false,
+      "fields": {
+        "zip_upload": { "type": "fileRef", "required": false, "allowed_filetypes": [".zip"] },
+        "reference_links": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "url": { "type": "string", "format": "url", "required": true },
+              "label": { "type": "string", "required": false }
+            }
+          }
+        }
+      }
+    },
+    "existing": {
+      "required": false,
+      "condition": "routing.build_target == 'existing'",
+      "fields": {
+        "existing_repo_link": { "type": "string", "format": "url", "required": false },
+        "current_state_summary": { "type": "string", "required": false, "min_length": 10, "max_length": 5000 },
+        "must_not_change": { "type": "array", "required": false, "items": { "type": "string" } },
+        "known_issues": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "title": { "type": "string", "required": true },
+              "description": { "type": "string", "required": false }
+            }
+          }
+        }
+      }
+    },
+    "delivery": {
+      "required": true,
+      "fields": {
+        "desired_scope": { "type": "enum", "enum_ref": "DesiredScope", "required": true },
+        "priority_bias": { "type": "enum", "enum_ref": "PriorityBias", "required": true }
+      }
+    },
+    "intent": {
+      "required": true,
+      "fields": {
+        "problem_statement": { "type": "string", "required": true, "min_length": 20, "max_length": 5000 },
+        "why_now": { "type": "string", "required": false },
+        "alternatives": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "string", "required": true },
+              "link": { "type": "string", "format": "url", "required": false },
+              "whats_missing": { "type": "string", "required": false }
+            }
+          }
+        },
+        "audience_description": { "type": "string", "required": true },
+        "primary_user_label": { "type": "string", "required": true },
+        "secondary_users": { "type": "array", "required": false, "items": { "type": "string" } },
+        "primary_goals": { "type": "array", "required": true, "min_items": 1, "items": { "type": "string" } },
+        "success_definition": { "type": "string", "required": true },
+        "success_metrics": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "metric": { "type": "string", "required": true },
+              "target": { "type": "string", "required": false },
+              "timeframe": { "type": "string", "required": false }
+            }
+          }
+        },
+        "out_of_scope": { "type": "array", "required": true, "min_items": 1, "items": { "type": "string" } }
+      }
+    },
+    "brand": {
+      "required": false,
+      "condition": "routing.audience_context == 'consumer'",
+      "fields": {
+        "stands_for": { "type": "string", "required": false },
+        "change_created": { "type": "string", "required": false },
+        "core_values": { "type": "array", "required": false, "items": { "type": "string" } },
+        "decision_beliefs": { "type": "array", "required": false, "items": { "type": "string" } },
+        "refusal_guardrails": { "type": "string", "required": false },
+        "psychographics": { "type": "string", "required": false },
+        "user_cares_about": { "type": "string", "required": false },
+        "user_fears_avoids": { "type": "string", "required": false },
+        "aligned_communities": { "type": "array", "required": false, "items": { "type": "string" } },
+        "status_signal": { "type": "enum", "enum_ref": "StatusSignal", "required": false },
+        "brand_promise": { "type": "string", "required": false },
+        "positioning_statement": { "type": "string", "required": false },
+        "unique_advantage": { "type": "string", "required": false },
+        "voice_adjectives": { "type": "array", "required": false, "items": { "type": "string" } },
+        "tone_boundaries": { "type": "string", "required": false },
+        "example_phrases": { "type": "array", "required": false, "items": { "type": "string" } },
+        "content_maturity": { "type": "enum", "enum_ref": "ContentMaturity", "required": false },
+        "first_open_emotion": { "type": "string", "required": false },
+        "post_success_emotion": { "type": "string", "required": false },
+        "avoid_emotions": { "type": "string", "required": false }
+      }
+    },
+    "design": {
+      "required": false,
+      "fields": {
+        "style_adjectives": { "type": "array", "required": false, "items": { "type": "string" } },
+        "visual_preset": { "type": "enum", "enum_ref": "VisualPreset", "required": false },
+        "avoid_list": { "type": "array", "required": false, "items": { "type": "string" } },
+        "logo_file": { "type": "fileRef", "required": false },
+        "brand_colors": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "string", "required": false },
+              "hex": { "type": "string", "format": "hex_color", "required": true }
+            }
+          }
+        },
+        "fonts": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "string", "required": true },
+              "use_case": { "type": "enum", "enum_ref": "FontUseCase", "required": false }
+            }
+          }
+        },
+        "brand_references": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "url": { "type": "string", "format": "url", "required": true },
+              "notes": { "type": "string", "required": false }
+            }
+          }
+        },
+        "ui_density": { "type": "enum", "enum_ref": "UIDensity", "required": false },
+        "nav_preference": { "type": "enum", "enum_ref": "NavPreference", "required": false },
+        "component_vibe": { "type": "array", "required": false, "items": { "type": "string" } },
+        "motion_preference": { "type": "enum", "enum_ref": "MotionPreference", "required": false },
+        "a11y_expectations": { "type": "array", "required": false, "items": { "type": "string" } },
+        "a11y_notes": { "type": "string", "required": false },
+        "content_presentation": { "type": "enum", "enum_ref": "ContentPresentation", "required": false },
+        "showcase_screens": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "string", "required": true },
+              "visual_priority": { "type": "enum", "enum_ref": "ShowcasePriority", "required": false },
+              "notes": { "type": "string", "required": false },
+              "ref_url": { "type": "string", "format": "url", "required": false },
+              "ref_file": { "type": "fileRef", "required": false }
+            }
+          }
+        }
+      }
+    },
+    "spec": {
+      "required": true,
+      "fields": {
+        "must_have_features": {
+          "type": "array",
+          "required": true,
+          "min_items": 1,
+          "items": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "string", "required": true },
+              "description": { "type": "string", "required": false }
+            }
+          }
+        },
+        "nice_to_have_features": { "type": "array", "required": false, "items": { "type": "object", "fields": { "name": { "type": "string", "required": true }, "description": { "type": "string", "required": false } } } },
+        "future_features": { "type": "array", "required": false, "items": { "type": "object", "fields": { "name": { "type": "string", "required": true }, "description": { "type": "string", "required": false } } } },
+        "feature_priority_rank": { "type": "array", "required": true, "items": { "type": "string" } },
+        "roles": {
+          "type": "array",
+          "required": true,
+          "min_items": 1,
+          "items": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "string", "required": true },
+              "description": { "type": "string", "required": false },
+              "primary_goal": { "type": "string", "required": false }
+            }
+          }
+        },
+        "role_permissions": {
+          "type": "array",
+          "required": true,
+          "items": {
+            "type": "object",
+            "fields": {
+              "role_name": { "type": "string", "required": true },
+              "allowed_capabilities": { "type": "array", "required": true, "items": { "type": "string" } },
+              "restricted_actions": { "type": "array", "required": false, "items": { "type": "string" } },
+              "approval_required_actions": { "type": "array", "required": false, "items": { "type": "string" } }
+            }
+          }
+        },
+        "workflows": {
+          "type": "array",
+          "required": true,
+          "min_items": 3,
+          "items": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "string", "required": true },
+              "actor_role": { "type": "string", "required": true },
+              "steps": { "type": "array", "required": true, "items": { "type": "string" } },
+              "success_outcome": { "type": "string", "required": true },
+              "failure_states": { "type": "string", "required": false },
+              "priority": { "type": "enum", "enum_ref": "WorkflowPriority", "required": false }
+            }
+          }
+        },
+        "edge_workflows": { "type": "array", "required": false, "items": { "type": "object", "fields": { "name": { "type": "string", "required": true }, "actor_role": { "type": "string", "required": true }, "steps": { "type": "array", "required": true, "items": { "type": "string" } }, "success_outcome": { "type": "string", "required": true } } } },
+        "business_rules_enabled": { "type": "boolean", "required": false },
+        "must_always_rules": { "type": "array", "required": false, "items": { "type": "string" } },
+        "must_never_rules": { "type": "array", "required": false, "items": { "type": "string" } },
+        "validation_rules": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "fields": { "type": "string", "required": false },
+              "rule": { "type": "string", "required": true }
+            }
+          }
+        },
+        "lifecycle_rules": { "type": "array", "required": false, "items": { "type": "string" } }
+      }
+    },
+    "data": {
+      "required": false,
+      "fields": {
+        "enabled": { "type": "boolean", "required": false },
+        "objects": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "string", "required": true },
+              "description": { "type": "string", "required": false },
+              "required_fields": { "type": "array", "required": false, "items": { "type": "object" } },
+              "optional_fields": { "type": "array", "required": false, "items": { "type": "object" } },
+              "relationships": { "type": "array", "required": false, "items": { "type": "object" } },
+              "lifecycle_states": { "type": "array", "required": false, "items": { "type": "string" } }
+            }
+          }
+        },
+        "sensitive_data_flags": { "type": "array", "required": false, "items": { "type": "string" } },
+        "import_export_needs": { "type": "array", "required": false, "items": { "type": "string" } },
+        "retention_expectations": { "type": "string", "required": false },
+        "ownership_tenancy_notes": { "type": "string", "required": false }
+      }
+    },
+    "auth": {
+      "required": false,
+      "fields": {
+        "required": { "type": "boolean", "required": false },
+        "methods": { "type": "array", "required": false, "items": { "type": "enum", "enum_ref": "AuthMethod" } },
+        "account_lifecycle": { "type": "array", "required": false, "items": { "type": "enum", "enum_ref": "AccountLifecycle" } },
+        "two_fa_required": { "type": "boolean", "required": false },
+        "session_rules": { "type": "array", "required": false, "items": { "type": "enum", "enum_ref": "SessionRule" } },
+        "authorization_model": { "type": "enum", "enum_ref": "AuthorizationModel", "required": false },
+        "approval_flows_needed": { "type": "boolean", "required": false },
+        "approval_flows_description": { "type": "string", "required": false }
+      }
+    },
+    "integrations": {
+      "required": false,
+      "fields": {
+        "enabled": { "type": "boolean", "required": false },
+        "items": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "service_name": { "type": "string", "required": true },
+              "purpose": { "type": "string", "required": true },
+              "data_in": { "type": "string", "required": false },
+              "data_out": { "type": "string", "required": false },
+              "triggers": { "type": "array", "required": false, "items": { "type": "enum", "enum_ref": "IntegrationTrigger" } },
+              "secrets_handling": { "type": "string", "required": false }
+            }
+          }
+        }
+      }
+    },
+    "nfr": {
+      "required": false,
+      "fields": {
+        "performance_targets": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "metric": { "type": "string", "required": true },
+              "target": { "type": "string", "required": true }
+            }
+          }
+        },
+        "scale_assumptions": {
+          "type": "object",
+          "required": false,
+          "fields": {
+            "expected_users": { "type": "string", "required": false },
+            "concurrent_users": { "type": "string", "required": false },
+            "notes": { "type": "string", "required": false },
+            "unsure": { "type": "boolean", "required": false }
+          }
+        },
+        "reliability_expectation": { "type": "enum", "enum_ref": "ReliabilityLevel", "required": false },
+        "offline_required": { "type": "boolean", "required": false },
+        "compliance_flags": { "type": "array", "required": false, "items": { "type": "enum", "enum_ref": "ComplianceFlag" } }
+      }
+    },
+    "app_ui": {
+      "required": false,
+      "condition": "routing.category == 'application'",
+      "fields": {
+        "screens": {
+          "type": "array",
+          "required": false,
+          "items": {
+            "type": "object",
+            "fields": {
+              "name": { "type": "string", "required": true },
+              "purpose": { "type": "string", "required": false },
+              "roles": { "type": "array", "required": false, "items": { "type": "string" } },
+              "data": { "type": "string", "required": false },
+              "actions": { "type": "array", "required": false, "items": { "type": "string" } },
+              "states": { "type": "array", "required": false, "items": { "type": "string" } }
+            }
+          }
+        },
+        "navigation_summary": { "type": "string", "required": false },
+        "ux_requirements": { "type": "array", "required": false, "items": { "type": "string" } }
+      }
+    },
+    "service": {
+      "required": false,
+      "condition": "routing.category == 'service'",
+      "fields": {
+        "responsibilities": { "type": "string", "required": false },
+        "operations": { "type": "array", "required": false, "items": { "type": "string" } },
+        "api_consumers": { "type": "array", "required": false, "items": { "type": "string" } },
+        "endpoints": { "type": "array", "required": false, "items": { "type": "string" } },
+        "webhooks": { "type": "array", "required": false, "items": { "type": "string" } }
+      }
+    },
+    "infra": {
+      "required": false,
+      "condition": "routing.category == 'infrastructure'",
+      "fields": {
+        "infra_goal": { "type": "string", "required": false },
+        "environments": { "type": "array", "required": false, "items": { "type": "string" } },
+        "runtime_expectations": { "type": "array", "required": false, "items": { "type": "string" } },
+        "observability_needs": { "type": "array", "required": false, "items": { "type": "string" } },
+        "backup_recovery_notes": { "type": "string", "required": false }
+      }
+    },
+    "sdk": {
+      "required": false,
+      "condition": "routing.category == 'library_sdk'",
+      "fields": {
+        "target_languages": { "type": "array", "required": false, "items": { "type": "string" } },
+        "developer_persona": { "type": "string", "required": false },
+        "api_surface": { "type": "array", "required": false, "items": { "type": "string" } },
+        "init_config_pattern": { "type": "string", "required": false },
+        "packaging_distribution": { "type": "string", "required": false },
+        "docs_examples_expectations": { "type": "array", "required": false, "items": { "type": "string" } }
+      }
+    },
+    "final": {
+      "required": true,
+      "fields": {
+        "definition_of_done": { "type": "string", "required": true },
+        "must_pass_checks": { "type": "array", "required": false, "items": { "type": "string" } },
+        "acceptance_criteria": { "type": "array", "required": false, "items": { "type": "string" } },
+        "rejection_conditions": { "type": "string", "required": false },
+        "confirm_priorities": { "type": "boolean", "required": true, "must_be": true },
+        "confirm_out_of_scope": { "type": "boolean", "required": true, "must_be": true },
+        "confirm_constraints": { "type": "boolean", "required": true, "must_be": true }
+      }
+    }
+  }
+}

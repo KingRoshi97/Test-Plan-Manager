@@ -1,0 +1,79 @@
+{
+  "$schema": "standards/pack/v1",
+  "pack_id": "sec_baseline",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-03",
+  "description": "Security baseline standards — auth/session requirements, authorization enforcement, sensitive data handling, abuse controls.",
+  "applies_when": {
+    "routing": {},
+    "gates": {}
+  },
+  "priority": 100,
+  "fixed_rules": [
+    {
+      "rule_id": "SEC-001",
+      "name": "No Secrets in Source",
+      "description": "No secrets, API keys, tokens, or credentials may appear in source code or configuration files checked into version control.",
+      "rule_type": "prohibition",
+      "value": { "pattern": "no_hardcoded_secrets" },
+      "fixed": true,
+      "source_pack": "sec_baseline@1.0.0"
+    },
+    {
+      "rule_id": "SEC-002",
+      "name": "Sensitive Data Logging Prohibition",
+      "description": "Sensitive data (PII, credentials, tokens) must never be written to logs, traces, or error messages.",
+      "rule_type": "prohibition",
+      "value": { "pattern": "no_sensitive_logging" },
+      "fixed": true,
+      "source_pack": "sec_baseline@1.0.0"
+    },
+    {
+      "rule_id": "SEC-003",
+      "name": "Authentication Required for Mutations",
+      "description": "All state-mutating operations must require authenticated identity when auth is enabled.",
+      "rule_type": "requirement",
+      "value": { "scope": "mutations", "requires": "authenticated_identity" },
+      "fixed": true,
+      "source_pack": "sec_baseline@1.0.0"
+    },
+    {
+      "rule_id": "SEC-004",
+      "name": "Authorization Check Before Access",
+      "description": "Every protected resource access must verify authorization before returning data or executing actions.",
+      "rule_type": "requirement",
+      "value": { "pattern": "authz_before_access" },
+      "fixed": true,
+      "source_pack": "sec_baseline@1.0.0"
+    },
+    {
+      "rule_id": "SEC-005",
+      "name": "Input Validation Required",
+      "description": "All external inputs must be validated and sanitized before processing.",
+      "rule_type": "requirement",
+      "value": { "pattern": "validate_all_inputs" },
+      "fixed": true,
+      "source_pack": "sec_baseline@1.0.0"
+    }
+  ],
+  "configurable_rules": [
+    {
+      "rule_id": "SEC-006",
+      "name": "Session Timeout",
+      "description": "Maximum session duration before requiring re-authentication.",
+      "rule_type": "default",
+      "value": { "max_duration_minutes": 480, "idle_timeout_minutes": 30 },
+      "fixed": false,
+      "source_pack": "sec_baseline@1.0.0"
+    },
+    {
+      "rule_id": "SEC-007",
+      "name": "Rate Limiting Baseline",
+      "description": "Public-facing endpoints must have rate limiting when abuse controls are applicable.",
+      "rule_type": "default",
+      "value": { "default_rpm": 60, "auth_rpm": 10 },
+      "fixed": false,
+      "source_pack": "sec_baseline@1.0.0"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "feature_id": "FEAT-013",
+  "title": "Reference Integrity Engine",
+  "description": "Extracts, resolves, and validates cross-references across all artifacts, building a reference graph and detecting broken links or cycles.",
+  "category": "core-logic",
+  "status": "draft",
+  "dependencies": [
+    "FEAT-001",
+    "FEAT-003"
+  ],
+  "src_modules": [
+    "src/core/refs/extractor.ts",
+    "src/core/refs/resolver.ts",
+    "src/core/refs/graph.ts"
+  ],
+  "gates": [
+    "GATE-04"
+  ]
+}

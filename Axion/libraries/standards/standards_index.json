@@ -1,0 +1,52 @@
+{
+  "$schema": "standards/index/v1",
+  "standards_library_version": "1.0.0",
+  "description": "Standards Library index — all packs, versions, applicability filters, and categories (STD-01).",
+  "categories": [
+    { "category_id": "STD-CAT-01", "name": "Engineering Standards", "description": "Language, framework, tooling, repo structure, coding conventions, dependency policy." },
+    { "category_id": "STD-CAT-02", "name": "Design Standards", "description": "Typography, layout, component styling, spacing, accessibility baseline, brand application." },
+    { "category_id": "STD-CAT-03", "name": "Security Standards", "description": "Auth/session baseline, authorization enforcement, sensitive data handling, abuse controls." },
+    { "category_id": "STD-CAT-04", "name": "Quality Standards", "description": "Verification checks, coverage expectations, acceptance/proof discipline, performance checks." },
+    { "category_id": "STD-CAT-05", "name": "Operations Standards", "description": "Environment expectations, deployment constraints, secrets/config management, observability, backup/recovery." },
+    { "category_id": "STD-CAT-06", "name": "Interface/Contract Standards", "description": "API error model, versioning/compatibility, event/webhook conventions, contract naming." },
+    { "category_id": "STD-CAT-07", "name": "Analytics/Telemetry Standards", "description": "Event naming, required metadata, metric definitions, privacy constraints for telemetry." }
+  ],
+  "packs": [
+    {
+      "pack_id": "eng_core",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-01",
+      "applies_when": {
+        "routing": {},
+        "gates": {}
+      },
+      "priority": 100,
+      "rule_count": 8,
+      "file_path": "packs/eng_core@1.0.0.json"
+    },
+    {
+      "pack_id": "sec_baseline",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-03",
+      "applies_when": {
+        "routing": {},
+        "gates": {}
+      },
+      "priority": 100,
+      "rule_count": 7,
+      "file_path": "packs/sec_baseline@1.0.0.json"
+    },
+    {
+      "pack_id": "qa_baseline",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-04",
+      "applies_when": {
+        "routing": {},
+        "gates": {}
+      },
+      "priority": 100,
+      "rule_count": 7,
+      "file_path": "packs/qa_baseline@1.0.0.json"
+    }
+  ]
+}
