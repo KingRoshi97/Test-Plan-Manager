@@ -9,12 +9,16 @@ Scaffolding complete — all types, interfaces, and stub CLI commands are implem
 ### File Counts
 - **104 non-empty .ts source files** (zero empty .ts remaining)
 - **50 docs_system specification files** (fully written system contracts)
-- **17 filled template .md files** (with TMP-02 contract structure)
-- **160 empty template .md files** (Groups 1–4 without documented titles + Groups 5–8 folders only)
+- **177 filled template .md files** (zero empty — all Groups 1–4 filled from source PDFs)
+  - Group 1 Product Definition: 38 templates (PRD, URD, STK, DMG, RSC, RISK, BRP, SMIP)
+  - Group 2 Experience Design: 43 templates (DES, IXD, CDX, DSYS, IAN, A11YD, RLB, VAP)
+  - Group 3 System Architecture: 52 templates (ARC, SIC, SBDT, PMAD, ERR, RTM, WFO, APIG)
+  - Group 4 Data & Information: 44 templates (DATA, DLR, DGL, DQV, SRCH, CACHE, RPT)
+  - Groups 5–8: empty directories only (Application Build, Integrations, Security, Operations)
 - **136 non-empty feature doc files** (17 features × 8 docs each)
 - **17 non-empty feature registry JSON files**
 - **9 non-empty global registry JSON files**
-- **8 non-empty library JSON files** (intake schemas, standards packs, template index)
+- **8 non-empty library JSON files** (intake schemas, standards packs, template index with 177 entries)
 - **11 non-empty test files** (unit + integration + helpers)
 
 ## Project Structure

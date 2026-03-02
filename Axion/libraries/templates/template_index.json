@@ -13,12 +13,26 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "always",
-      "required_by_skill_level": { "beginner": "required", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.features", "spec.roles", "spec.workflows"],
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.features",
+        "spec.roles",
+        "spec.workflows"
+      ],
       "output_path": "01_requirements/PRD-01.md",
-      "upstream_dependencies": ["STD-03"],
+      "upstream_dependencies": [
+        "STD-03"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["features", "roles", "workflows"],
+      "references_entities": [
+        "features",
+        "roles",
+        "workflows"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -30,12 +44,23 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "always",
-      "required_by_skill_level": { "beginner": "required", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.features", "spec.rules"],
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.features",
+        "spec.rules"
+      ],
       "output_path": "01_requirements/PRD-02.md",
-      "upstream_dependencies": ["STD-03"],
+      "upstream_dependencies": [
+        "STD-03"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["features"],
+      "references_entities": [
+        "features"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -47,12 +72,23 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "always",
-      "required_by_skill_level": { "beginner": "required", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.features"],
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.features"
+      ],
       "output_path": "01_requirements/PRD-03.md",
-      "upstream_dependencies": ["STD-03", "CAN-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["features"],
+      "references_entities": [
+        "features"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -64,12 +100,25 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "always",
-      "required_by_skill_level": { "beginner": "required", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.workflows", "spec.roles"],
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.workflows",
+        "spec.roles"
+      ],
       "output_path": "01_requirements/PRD-04.md",
-      "upstream_dependencies": ["STD-03", "CAN-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["workflows", "roles"],
+      "references_entities": [
+        "workflows",
+        "roles"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -81,12 +130,25 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "always",
-      "required_by_skill_level": { "beginner": "required", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.roles", "spec.permissions"],
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.roles",
+        "spec.permissions"
+      ],
       "output_path": "01_requirements/PRD-05.md",
-      "upstream_dependencies": ["STD-03", "CAN-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["roles", "permissions"],
+      "references_entities": [
+        "roles",
+        "permissions"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -98,12 +160,24 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "conditional",
-      "required_by_skill_level": { "beginner": "optional", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.rules", "standards.constraints"],
+      "required_by_skill_level": {
+        "beginner": "optional",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.rules",
+        "standards.constraints"
+      ],
       "output_path": "01_requirements/PRD-06.md",
-      "upstream_dependencies": ["STD-03", "CAN-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["features"],
+      "references_entities": [
+        "features"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -113,12 +187,25 @@
       "template_version": "1.0.0",
       "file_path": "Experience Design/DES/DES-01.md",
       "status": "active",
-      "applies_when": { "audience_context": ["consumer"] },
+      "applies_when": {
+        "audience_context": [
+          "consumer"
+        ]
+      },
       "requiredness": "conditional",
-      "required_by_skill_level": { "beginner": "required", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.design", "standards.design"],
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.design",
+        "standards.design"
+      ],
       "output_path": "02_design/DES-01.md",
-      "upstream_dependencies": ["STD-03"],
+      "upstream_dependencies": [
+        "STD-03"
+      ],
       "compliance_gate_id": "GATE-07",
       "references_entities": [],
       "no_duplicate_truth": true
@@ -132,10 +219,20 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "conditional",
-      "required_by_skill_level": { "beginner": "optional", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.design", "standards.design"],
+      "required_by_skill_level": {
+        "beginner": "optional",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.design",
+        "standards.design"
+      ],
       "output_path": "02_design/DES-02.md",
-      "upstream_dependencies": ["STD-03", "DES-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "DES-01"
+      ],
       "compliance_gate_id": "GATE-07",
       "references_entities": [],
       "no_duplicate_truth": true
@@ -149,12 +246,25 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "conditional",
-      "required_by_skill_level": { "beginner": "optional", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.screens", "spec.workflows"],
+      "required_by_skill_level": {
+        "beginner": "optional",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.screens",
+        "spec.workflows"
+      ],
       "output_path": "02_design/DES-03.md",
-      "upstream_dependencies": ["STD-03", "CAN-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["screens", "workflows"],
+      "references_entities": [
+        "screens",
+        "workflows"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -166,12 +276,27 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "always",
-      "required_by_skill_level": { "beginner": "required", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.screens", "spec.workflows", "spec.roles"],
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.screens",
+        "spec.workflows",
+        "spec.roles"
+      ],
       "output_path": "02_design/DES-04.md",
-      "upstream_dependencies": ["STD-03", "CAN-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["screens", "workflows", "roles"],
+      "references_entities": [
+        "screens",
+        "workflows",
+        "roles"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -183,12 +308,24 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "conditional",
-      "required_by_skill_level": { "beginner": "optional", "intermediate": "optional", "expert": "required" },
-      "inputs_required": ["spec.screens", "standards.design"],
+      "required_by_skill_level": {
+        "beginner": "optional",
+        "intermediate": "optional",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.screens",
+        "standards.design"
+      ],
       "output_path": "02_design/DES-05.md",
-      "upstream_dependencies": ["STD-03", "DES-04"],
+      "upstream_dependencies": [
+        "STD-03",
+        "DES-04"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["screens"],
+      "references_entities": [
+        "screens"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -200,12 +337,23 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "always",
-      "required_by_skill_level": { "beginner": "required", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.screens", "standards.quality"],
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.screens",
+        "standards.quality"
+      ],
       "output_path": "02_design/DES-06.md",
-      "upstream_dependencies": ["STD-03"],
+      "upstream_dependencies": [
+        "STD-03"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["screens"],
+      "references_entities": [
+        "screens"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -217,12 +365,26 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "always",
-      "required_by_skill_level": { "beginner": "required", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.features", "spec.operations", "standards.engineering"],
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.features",
+        "spec.operations",
+        "standards.engineering"
+      ],
       "output_path": "03_architecture/ARC-01.md",
-      "upstream_dependencies": ["STD-03", "CAN-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["features", "operations"],
+      "references_entities": [
+        "features",
+        "operations"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -234,12 +396,26 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "conditional",
-      "required_by_skill_level": { "beginner": "optional", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.operations", "spec.data_objects"],
+      "required_by_skill_level": {
+        "beginner": "optional",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.operations",
+        "spec.data_objects"
+      ],
       "output_path": "03_architecture/ARC-02.md",
-      "upstream_dependencies": ["STD-03", "CAN-01", "ARC-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01",
+        "ARC-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["operations", "data_objects"],
+      "references_entities": [
+        "operations",
+        "data_objects"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -251,12 +427,24 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "conditional",
-      "required_by_skill_level": { "beginner": "omit", "intermediate": "optional", "expert": "required" },
-      "inputs_required": ["spec.operations", "standards.ops"],
+      "required_by_skill_level": {
+        "beginner": "omit",
+        "intermediate": "optional",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.operations",
+        "standards.ops"
+      ],
       "output_path": "03_architecture/ARC-03.md",
-      "upstream_dependencies": ["STD-03", "ARC-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "ARC-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["operations"],
+      "references_entities": [
+        "operations"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -268,12 +456,27 @@
       "status": "active",
       "applies_when": {},
       "requiredness": "conditional",
-      "required_by_skill_level": { "beginner": "omit", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.operations", "spec.features", "standards.interface"],
+      "required_by_skill_level": {
+        "beginner": "omit",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.operations",
+        "spec.features",
+        "standards.interface"
+      ],
       "output_path": "03_architecture/ARC-04.md",
-      "upstream_dependencies": ["STD-03", "CAN-01", "ARC-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01",
+        "ARC-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["operations", "features"],
+      "references_entities": [
+        "operations",
+        "features"
+      ],
       "no_duplicate_truth": true
     },
     {
@@ -283,14 +486,5091 @@
       "template_version": "1.0.0",
       "file_path": "Data & Information/DATA/DATA-02.md",
       "status": "active",
-      "applies_when": { "requires_data_enabled": true },
+      "applies_when": {
+        "requires_data_enabled": true
+      },
       "requiredness": "conditional",
-      "required_by_skill_level": { "beginner": "optional", "intermediate": "required", "expert": "required" },
-      "inputs_required": ["spec.data_objects"],
+      "required_by_skill_level": {
+        "beginner": "optional",
+        "intermediate": "required",
+        "expert": "required"
+      },
+      "inputs_required": [
+        "spec.data_objects"
+      ],
       "output_path": "08_data/DATA-02.md",
-      "upstream_dependencies": ["STD-03", "CAN-01"],
+      "upstream_dependencies": [
+        "STD-03",
+        "CAN-01"
+      ],
       "compliance_gate_id": "GATE-07",
-      "references_entities": ["data_objects"],
+      "references_entities": [
+        "data_objects"
+      ],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "BRP-01",
+      "title": "Business Rules Catalog (by ID)",
+      "type": "Product / Business Rules",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/BRP/BRP-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-04",
+        "DMG-01",
+        "DMG-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/policy/BRP-01_Business_Rules_Catalog.md",
+      "upstream_dependencies": [
+        "PRD-04",
+        "DMG-01",
+        "DMG-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "BRP-02",
+      "title": "Eligibility & Entitlement Rules",
+      "type": "Product / Business Rules",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/BRP/BRP-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "BRP-01",
+        "PRD-03",
+        "PRD-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/policy/BRP-02_Eligibility_Entitlements.md",
+      "upstream_dependencies": [
+        "BRP-01",
+        "PRD-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "BRP-03",
+      "title": "Pricing/Permission Policy",
+      "type": "Product / Business Rules",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/BRP/BRP-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "BRP-02",
+        "PRD-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/policy/BRP-03_Pricing_Permission_Policy.md",
+      "upstream_dependencies": [
+        "BRP-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "BRP-04",
+      "title": "Exceptions & Edge-Case Policy",
+      "type": "Product / Business Rules",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/BRP/BRP-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "BRP-01",
+        "PRD-09",
+        "DMG-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/policy/BRP-04_Exceptions_EdgeCases.md",
+      "upstream_dependencies": [
+        "BRP-01",
+        "PRD-09",
+        "DMG-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DMG-01",
+      "title": "Domain Glossary (canonical",
+      "type": "Product / Domain Model",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/DMG/DMG-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-01",
+        "PRD-03",
+        "PRD-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/domain/DMG-01_Domain_Glossary.md",
+      "upstream_dependencies": [
+        "PRD-01",
+        "PRD-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DMG-02",
+      "title": "Concept Model (entities +",
+      "type": "Product / Domain Model",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/DMG/DMG-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DMG-01",
+        "PRD-04",
+        "PRD-06",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/domain/DMG-02_Concept_Model.md",
+      "upstream_dependencies": [
+        "DMG-01",
+        "PRD-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DMG-03",
+      "title": "Invariants & Definitions",
+      "type": "Product / Domain Model",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/DMG/DMG-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DMG-02",
+        "BRP-01",
+        "PRD-06",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/domain/DMG-03_Invariants_Definitions.md",
+      "upstream_dependencies": [
+        "DMG-02",
+        "BRP-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DMG-04",
+      "title": "Event Vocabulary (canonical",
+      "type": "Product / Domain Model",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/DMG/DMG-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DMG-02",
+        "PRD-04",
+        "BRP-01",
+        "SMIP-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/domain/DMG-04_Event_Vocabulary.md",
+      "upstream_dependencies": [
+        "DMG-02",
+        "PRD-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "PRD-07",
+      "title": "Constraints & Assumptions",
+      "type": "Product / Requirements",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/PRD/PRD-07.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-01",
+        "PRD-06",
+        "SPEC_INDEX",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/requirements/PRD-07_Constraints_Assumptions.md",
+      "upstream_dependencies": [
+        "PRD-01",
+        "PRD-06"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "PRD-08",
+      "title": "Open Questions Log",
+      "type": "Product / Requirements",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/PRD/PRD-08.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-01",
+        "PRD-04",
+        "PRD-06",
+        "PRD-07",
+        "SPEC_INDEX",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/requirements/PRD-08_Open_Questions_Log.md",
+      "upstream_dependencies": [
+        "PRD-01",
+        "PRD-04",
+        "PRD-06",
+        "PRD-07"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "PRD-09",
+      "title": "Acceptance Criteria Catalog (by",
+      "type": "Product / Requirements",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/PRD/PRD-09.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-04",
+        "PRD-05",
+        "PRD-06",
+        "SPEC_INDEX",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/requirements/PRD-09_Acceptance_Criteria_Catalog.md",
+      "upstream_dependencies": [
+        "PRD-04",
+        "PRD-05",
+        "PRD-06"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RISK-01",
+      "title": "Assumptions Register",
+      "type": "Product / Risk",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/RISK/RISK-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-01",
+        "PRD-02",
+        "PRD-06",
+        "URD-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/risk/RISK-01_Assumptions_Register.md",
+      "upstream_dependencies": [
+        "PRD-01",
+        "PRD-02",
+        "PRD-06",
+        "URD-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RISK-02",
+      "title": "Risk Register",
+      "type": "Product / Risk",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/RISK/RISK-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RISK-01",
+        "PRD-06",
+        "RSC-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/risk/RISK-02_Risk_Register.md",
+      "upstream_dependencies": [
+        "RISK-01",
+        "PRD-06",
+        "RSC-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RISK-03",
+      "title": "Dependency Map",
+      "type": "Product / Risk",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/RISK/RISK-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RSC-01",
+        "PRD-04",
+        "IMP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/risk/RISK-03_Dependency_Map.md",
+      "upstream_dependencies": [
+        "RSC-01",
+        "IMP-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RISK-04",
+      "title": "Contingency Triggers (what",
+      "type": "Product / Risk",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/RISK/RISK-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RISK-02",
+        "RSC-01",
+        "RELIA-01",
+        "STK-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/risk/RISK-04_Contingency_Triggers.md",
+      "upstream_dependencies": [
+        "RISK-02",
+        "RSC-01",
+        "RELIA-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RSC-01",
+      "title": "Release Roadmap (milestones)",
+      "type": "Product / Roadmap",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/RSC/RSC-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-02",
+        "PRD-04",
+        "PRD-06",
+        "STK-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/roadmap/RSC-01_Release_Roadmap.md",
+      "upstream_dependencies": [
+        "PRD-02",
+        "PRD-04",
+        "PRD-06"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RSC-02",
+      "title": "Scope Boundaries (in/out +",
+      "type": "Product / Roadmap",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/RSC/RSC-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-01",
+        "PRD-04",
+        "STK-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/roadmap/RSC-02_Scope_Boundaries.md",
+      "upstream_dependencies": [
+        "PRD-01",
+        "PRD-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RSC-03",
+      "title": "Prioritization Framework",
+      "type": "Product / Roadmap",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/RSC/RSC-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-04",
+        "URD-03",
+        "PRD-02",
+        "RISK-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/roadmap/RSC-03_Prioritization_Framework.md",
+      "upstream_dependencies": [
+        "PRD-04",
+        "URD-03",
+        "PRD-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RSC-04",
+      "title": "Change Control Policy (how",
+      "type": "Product / Roadmap",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/RSC/RSC-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RSC-02",
+        "STK-04",
+        "STK-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/roadmap/RSC-04_Change_Control_Policy.md",
+      "upstream_dependencies": [
+        "RSC-02",
+        "STK-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SMIP-01",
+      "title": "KPI/OKR Definitions (targets +",
+      "type": "Product / Metrics",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/SMIP/SMIP-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-02",
+        "PRD-04",
+        "URD-05",
+        "STK-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/metrics/SMIP-01_KPI_OKR_Definitions.md",
+      "upstream_dependencies": [
+        "PRD-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SMIP-02",
+      "title": "Analytics Event Spec (event",
+      "type": "Product / Metrics",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/SMIP/SMIP-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SMIP-01",
+        "DMG-04",
+        "PRD-04",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/metrics/SMIP-02_Analytics_Event_Spec.md",
+      "upstream_dependencies": [
+        "SMIP-01",
+        "DMG-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SMIP-03",
+      "title": "Funnel/Conversion Definitions",
+      "type": "Product / Metrics",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/SMIP/SMIP-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SMIP-01",
+        "SMIP-02",
+        "PRD-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/metrics/SMIP-03_Funnel_Definitions.md",
+      "upstream_dependencies": [
+        "SMIP-01",
+        "SMIP-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SMIP-04",
+      "title": "Experiment Measurement Plan",
+      "type": "Product / Metrics",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/SMIP/SMIP-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SMIP-01",
+        "URD-05",
+        "SMIP-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/metrics/SMIP-04_Experiment_Measurement_Plan.md",
+      "upstream_dependencies": [
+        "SMIP-01",
+        "URD-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "STK-01",
+      "title": "Stakeholder Map (roles,",
+      "type": "Product / Stakeholders",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/STK/STK-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-01",
+        "PRD-02",
+        "PRD-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/governance/STK-01_Stakeholder_Map.md",
+      "upstream_dependencies": [
+        "PRD-01",
+        "PRD-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "STK-02",
+      "title": "Decision Log (what/why/when)",
+      "type": "Product / Stakeholders",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/STK/STK-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "STK-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/governance/STK-02_Decision_Log.md",
+      "upstream_dependencies": [
+        "STK-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "STK-03",
+      "title": "RACI / Ownership Matrix",
+      "type": "Product / Stakeholders",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/STK/STK-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "STK-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/governance/STK-03_RACI_Ownership.md",
+      "upstream_dependencies": [
+        "STK-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "STK-04",
+      "title": "Approval Gates (who signs",
+      "type": "Product / Stakeholders",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/STK/STK-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "STK-01",
+        "STK-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/governance/STK-04_Approval_Gates.md",
+      "upstream_dependencies": [
+        "STK-01",
+        "STK-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "URD-01",
+      "title": "Research Plan (questions,",
+      "type": "Product / User Research",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/URD/URD-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-01",
+        "PRD-02",
+        "PRD-03",
+        "GLOSSARY",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/research/URD-01_Research_Plan.md",
+      "upstream_dependencies": [
+        "PRD-01",
+        "PRD-02",
+        "PRD-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "URD-02",
+      "title": "Findings Summary (themes +",
+      "type": "Product / User Research",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/URD/URD-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "URD-01",
+        "PRD-01",
+        "PRD-02",
+        "PRD-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/research/URD-02_Findings_Summary.md",
+      "upstream_dependencies": [
+        "URD-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "URD-03",
+      "title": "User Needs & Pain Points",
+      "type": "Product / User Research",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/URD/URD-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "URD-02",
+        "PRD-03",
+        "PRD-04",
+        "GLOSSARY",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/research/URD-03_Needs_PainPoints.md",
+      "upstream_dependencies": [
+        "URD-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "URD-04",
+      "title": "Journey Map (current vs target)",
+      "type": "Product / User Research",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/URD/URD-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "URD-02",
+        "URD-03",
+        "PRD-03",
+        "PRD-04",
+        "GLOSSARY",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/research/URD-04_Journey_Map.md",
+      "upstream_dependencies": [
+        "URD-02",
+        "URD-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "URD-05",
+      "title": "Validation Plan (what to test,",
+      "type": "Product / User Research",
+      "template_version": "1.0.0",
+      "file_path": "Product Definition/URD/URD-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "URD-02",
+        "URD-03",
+        "PRD-02",
+        "PRD-04",
+        "SMIP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/research/URD-05_Validation_Plan.md",
+      "upstream_dependencies": [
+        "URD-02",
+        "URD-03",
+        "PRD-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "A11YD-01",
+      "title": "Accessibility Requirements",
+      "type": "Design / Accessibility",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/A11YD/A11YD-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-06",
+        "DES-03",
+        "DSYS-01",
+        "CDX-01",
+        "IAN-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/accessibility/A11YD-01_A11y_Requirements_Checklist.md",
+      "upstream_dependencies": [
+        "PRD-06",
+        "DES-03",
+        "DSYS-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "A11YD-02",
+      "title": "Keyboard/Focus Order Spec",
+      "type": "Design / Accessibility",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/A11YD/A11YD-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-02",
+        "DES-03",
+        "IXD-01",
+        "IAN-02",
+        "DSYS-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/accessibility/A11YD-02_Keyboard_Focus_Order_Spec.md",
+      "upstream_dependencies": [
+        "DES-02",
+        "DES-03",
+        "IXD-01",
+        "IAN-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "A11YD-03",
+      "title": "Screen Reader & Labels Spec",
+      "type": "Design / Accessibility",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/A11YD/A11YD-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-03",
+        "DSYS-02",
+        "CDX-02",
+        "CDX-04",
+        "A11YD-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/accessibility/A11YD-03_ScreenReader_Labels_Spec.md",
+      "upstream_dependencies": [
+        "DES-03",
+        "DSYS-02",
+        "CDX-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "A11YD-04",
+      "title": "Color Contrast & Visual",
+      "type": "Design / Accessibility",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/A11YD/A11YD-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DSYS-01",
+        "DSYS-05",
+        "RLB-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/accessibility/A11YD-04_Color_Contrast_Visual_A11y.md",
+      "upstream_dependencies": [
+        "DSYS-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "A11YD-05",
+      "title": "Accessible Error Messaging",
+      "type": "Design / Accessibility",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/A11YD/A11YD-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-06",
+        "DES-07",
+        "CDX-04",
+        "A11YD-02",
+        "A11YD-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/accessibility/A11YD-05_Accessible_Error_Messaging.md",
+      "upstream_dependencies": [
+        "DES-06",
+        "DES-07",
+        "CDX-04",
+        "A11YD-02",
+        "A11YD-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CDX-01",
+      "title": "Content Style Guide (tone,",
+      "type": "Design / Content",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/CDX/CDX-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DMG-01",
+        "PRD-01",
+        "PRD-03",
+        "A11YD-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/content/CDX-01_Content_Style_Guide.md",
+      "upstream_dependencies": [
+        "DMG-01",
+        "PRD-03",
+        "PRD-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CDX-02",
+      "title": "UI Copy Inventory (labels,",
+      "type": "Design / Content",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/CDX/CDX-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-02",
+        "DES-03",
+        "CDX-01",
+        "DMG-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/content/CDX-02_UI_Copy_Inventory.md",
+      "upstream_dependencies": [
+        "DES-02",
+        "DES-03",
+        "CDX-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CDX-03",
+      "title": "Empty States & Onboarding",
+      "type": "Design / Content",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/CDX/CDX-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-05",
+        "DES-03",
+        "CDX-01",
+        "CDX-02",
+        "URD-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/content/CDX-03_EmptyStates_Onboarding_Copy.md",
+      "upstream_dependencies": [
+        "DES-05",
+        "DES-03",
+        "CDX-01",
+        "CDX-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CDX-04",
+      "title": "Error/Warning/Success",
+      "type": "Design / Content",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/CDX/CDX-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-07",
+        "DES-06",
+        "CDX-01",
+        "ARC-06",
+        "API-03",
+        "A11YD-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/content/CDX-04_Message_Catalog.md",
+      "upstream_dependencies": [
+        "DES-07",
+        "DES-06",
+        "ARC-06",
+        "API-03",
+        "CDX-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CDX-05",
+      "title": "Notification Copy Templates",
+      "type": "Design / Content",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/CDX/CDX-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "CDX-01",
+        "CDX-02",
+        "CDX-04",
+        "DMG-04",
+        "MSG-03",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/content/CDX-05_Notification_Copy_Templates.md",
+      "upstream_dependencies": [
+        "CDX-01",
+        "CDX-02",
+        "CDX-04",
+        "DMG-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DES-07",
+      "title": "Error Handling UX (toasts,",
+      "type": "Design / UX",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/DES/DES-07.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-05",
+        "ARC-06",
+        "API-03",
+        "CDX-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design/DES-07_Error_Handling_UX.md",
+      "upstream_dependencies": [
+        "DES-05",
+        "ARC-06",
+        "API-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DES-08",
+      "title": "Acceptance Hooks (screen/flow",
+      "type": "Design / UX",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/DES/DES-08.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-01",
+        "DES-02",
+        "PRD-09",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design/DES-08_Acceptance_Hooks.md",
+      "upstream_dependencies": [
+        "DES-01",
+        "DES-02",
+        "PRD-09"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DSYS-01",
+      "title": "Token Spec (color, type,",
+      "type": "Design / System",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/DSYS/DSYS-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "CDX-01",
+        "A11YD-04",
+        "RLB-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design_system/DSYS-01_Token_Spec.md",
+      "upstream_dependencies": [
+        "CDX-01",
+        "A11YD-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DSYS-02",
+      "title": "Component Variants Spec",
+      "type": "Design / System",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/DSYS/DSYS-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DSYS-01",
+        "DES-04",
+        "A11YD-01",
+        "A11YD-02",
+        "A11YD-05",
+        "IXD-01",
+        "IXD-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design_system/DSYS-02_Component_Variants_Spec.md",
+      "upstream_dependencies": [
+        "DSYS-01",
+        "DES-04",
+        "A11YD-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DSYS-03",
+      "title": "Layout Grid & Spacing Rules",
+      "type": "Design / System",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/DSYS/DSYS-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DSYS-01",
+        "RLB-01",
+        "RLB-02",
+        "A11YD-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design_system/DSYS-03_Layout_Grid_Spacing_Rules.md",
+      "upstream_dependencies": [
+        "DSYS-01",
+        "RLB-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DSYS-04",
+      "title": "Iconography & Illustration",
+      "type": "Design / System",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/DSYS/DSYS-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DSYS-01",
+        "CDX-01",
+        "A11YD-01",
+        "VAP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design_system/DSYS-04_Iconography_Illustration_Rules.md",
+      "upstream_dependencies": [
+        "DSYS-01",
+        "CDX-01",
+        "A11YD-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DSYS-05",
+      "title": "Theming Rules (light/dark,",
+      "type": "Design / System",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/DSYS/DSYS-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DSYS-01",
+        "A11YD-04",
+        "CDX-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design_system/DSYS-05_Theming_Rules.md",
+      "upstream_dependencies": [
+        "DSYS-01",
+        "A11YD-04",
+        "CDX-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IAN-01",
+      "title": "Navigation Map",
+      "type": "Design / Information Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IAN/IAN-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-04",
+        "DES-01",
+        "PRD-03",
+        "RSC-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/ia/IAN-01_Navigation_Map.md",
+      "upstream_dependencies": [
+        "PRD-04",
+        "DES-01",
+        "PRD-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IAN-02",
+      "title": "Route & Deep Link Spec (route",
+      "type": "Design / Information Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IAN/IAN-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "IAN-01",
+        "DES-02",
+        "PRD-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/ia/IAN-02_Route_DeepLink_Spec.md",
+      "upstream_dependencies": [
+        "IAN-01",
+        "DES-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IAN-03",
+      "title": "Information Architecture Tree",
+      "type": "Design / Information Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IAN/IAN-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "IAN-01",
+        "DES-02",
+        "URD-03",
+        "PRD-04",
+        "CDX-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/ia/IAN-03_IA_Tree.md",
+      "upstream_dependencies": [
+        "IAN-01",
+        "DES-02",
+        "URD-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IAN-04",
+      "title": "Search/Filter/Sort UX (if",
+      "type": "Design / Information Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IAN/IAN-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "IAN-03",
+        "DES-03",
+        "URD-03",
+        "PRD-04",
+        "CDX-01",
+        "CDX-02",
+        "A11YD-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/ia/IAN-04_Search_Filter_Sort_UX.md",
+      "upstream_dependencies": [
+        "IAN-03",
+        "DES-03",
+        "URD-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IAN-05",
+      "title": "Access-Gated Navigation Rules",
+      "type": "Design / Information Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IAN/IAN-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "IAN-01",
+        "PRD-03",
+        "BRP-02",
+        "IAM-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/ia/IAN-05_Access_Gated_Navigation_Rules.md",
+      "upstream_dependencies": [
+        "IAN-01",
+        "PRD-03",
+        "BRP-02",
+        "IAM-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IXD-01",
+      "title": "Interaction Patterns Catalog",
+      "type": "Design / Interaction",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IXD/IXD-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-01",
+        "DES-03",
+        "DES-06",
+        "DES-07",
+        "DSYS-02",
+        "A11YD-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design/IXD-01_Interaction_Patterns_Catalog.md",
+      "upstream_dependencies": [
+        "DES-01",
+        "DES-03",
+        "DES-06",
+        "DES-07"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IXD-02",
+      "title": "Motion Rules",
+      "type": "Design / Interaction",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IXD/IXD-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "IXD-01",
+        "DES-05",
+        "DSYS-01",
+        "A11YD-01",
+        "A11YD-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design/IXD-02_Motion_Rules.md",
+      "upstream_dependencies": [
+        "IXD-01",
+        "DES-05",
+        "DSYS-01",
+        "A11YD-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IXD-03",
+      "title": "Transition Map (screen",
+      "type": "Design / Interaction",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IXD/IXD-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DES-02",
+        "IXD-02",
+        "IAN-01",
+        "IAN-02",
+        "DSYS-01",
+        "A11YD-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design/IXD-03_Transition_Map.md",
+      "upstream_dependencies": [
+        "DES-02",
+        "IXD-02",
+        "IAN-01",
+        "IAN-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IXD-04",
+      "title": "Micro-interactions Spec",
+      "type": "Design / Interaction",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IXD/IXD-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "IXD-01",
+        "IXD-02",
+        "DES-05",
+        "DES-06",
+        "DSYS-02",
+        "A11YD-01",
+        "A11YD-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design/IXD-04_Micro_Interactions_Spec.md",
+      "upstream_dependencies": [
+        "IXD-01",
+        "IXD-02",
+        "DES-05",
+        "DES-06",
+        "A11YD-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "IXD-05",
+      "title": "Accessibility-Safe Motion Rules",
+      "type": "Design / Interaction",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/IXD/IXD-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "IXD-02",
+        "IXD-03",
+        "IXD-04",
+        "A11YD-01",
+        "A11YD-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/design/IXD-05_Reduce_Motion_Compliance.md",
+      "upstream_dependencies": [
+        "IXD-02",
+        "A11YD-01",
+        "A11YD-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RLB-01",
+      "title": "Breakpoint Definitions (sizes +",
+      "type": "Design / Responsive Layout",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/RLB/RLB-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DSYS-01",
+        "DSYS-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/responsive/RLB-01_Breakpoint_Definitions.md",
+      "upstream_dependencies": [
+        "DSYS-03",
+        "DSYS-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RLB-02",
+      "title": "Layout Adaptation Rules (per",
+      "type": "Design / Responsive Layout",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/RLB/RLB-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RLB-01",
+        "DSYS-03",
+        "DES-03",
+        "IAN-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/responsive/RLB-02_Layout_Adaptation_Rules.md",
+      "upstream_dependencies": [
+        "RLB-01",
+        "DSYS-03",
+        "DES-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RLB-03",
+      "title": "Responsive Component",
+      "type": "Design / Responsive Layout",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/RLB/RLB-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RLB-01",
+        "DSYS-02",
+        "DSYS-03",
+        "A11YD-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/responsive/RLB-03_Responsive_Component_Behavior.md",
+      "upstream_dependencies": [
+        "RLB-01",
+        "DSYS-02",
+        "DSYS-03",
+        "A11YD-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RLB-04",
+      "title": "Touch Target & Density Rules",
+      "type": "Design / Responsive Layout",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/RLB/RLB-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "A11YD-01",
+        "DSYS-03",
+        "RLB-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/responsive/RLB-04_Touch_Target_Density_Rules.md",
+      "upstream_dependencies": [
+        "A11YD-01",
+        "DSYS-03",
+        "RLB-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RLB-05",
+      "title": "Responsive Media Rules",
+      "type": "Design / Responsive Layout",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/RLB/RLB-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RLB-01",
+        "VAP-02",
+        "A11YD-01",
+        "DSYS-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/responsive/RLB-05_Responsive_Media_Rules.md",
+      "upstream_dependencies": [
+        "RLB-01",
+        "VAP-02",
+        "A11YD-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "VAP-01",
+      "title": "Asset Inventory (logos, icons,",
+      "type": "Design / Visual Assets",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/VAP/VAP-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DSYS-04",
+        "CDX-03",
+        "DSYS-01",
+        "IAN-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/assets/VAP-01_Asset_Inventory.md",
+      "upstream_dependencies": [
+        "DSYS-04",
+        "CDX-03",
+        "DSYS-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "VAP-02",
+      "title": "Export Spec (formats, sizes,",
+      "type": "Design / Visual Assets",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/VAP/VAP-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "VAP-01",
+        "DSYS-04",
+        "RLB-05",
+        "DSYS-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/assets/VAP-02_Export_Spec.md",
+      "upstream_dependencies": [
+        "VAP-01",
+        "DSYS-04",
+        "RLB-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "VAP-03",
+      "title": "Brand Usage Rules (do/don’t,",
+      "type": "Design / Visual Assets",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/VAP/VAP-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "VAP-01",
+        "DSYS-01",
+        "DSYS-05",
+        "CDX-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/assets/VAP-03_Brand_Usage_Rules.md",
+      "upstream_dependencies": [
+        "VAP-01",
+        "DSYS-01",
+        "DSYS-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "VAP-04",
+      "title": "Asset Delivery Checklist",
+      "type": "Design / Visual Assets",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/VAP/VAP-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "VAP-01",
+        "VAP-02",
+        "RLB-05",
+        "A11YD-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/assets/VAP-04_Asset_Delivery_Checklist.md",
+      "upstream_dependencies": [
+        "VAP-01",
+        "VAP-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "VAP-05",
+      "title": "Accessibility for Visual Assets",
+      "type": "Design / Visual Assets",
+      "template_version": "1.0.0",
+      "file_path": "Experience Design/VAP/VAP-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "A11YD-03",
+        "DSYS-04",
+        "VAP-01",
+        "CDX-01",
+        "CDX-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/assets/VAP-05_Accessibility_for_Visual_Assets.md",
+      "upstream_dependencies": [
+        "A11YD-03",
+        "DSYS-04",
+        "VAP-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "APIG-01",
+      "title": "API Standards (naming,",
+      "type": "Architecture / API Governance",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/APIG/APIG-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DMG-01",
+        "ERR-03",
+        "APIG-02",
+        "PFS-01",
+        "RLIM-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/api_governance/APIG-01_API_Standards.md",
+      "upstream_dependencies": [
+        "DMG-01",
+        "ERR-03",
+        "APIG-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "APIG-02",
+      "title": "Versioning Policy (v1/v2 rules,",
+      "type": "Architecture / API Governance",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/APIG/APIG-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "APIG-01",
+        "ARC-02",
+        "STK-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/api_governance/APIG-02_Versioning_Policy.md",
+      "upstream_dependencies": [
+        "APIG-01",
+        "ARC-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "APIG-03",
+      "title": "Deprecation & Sunset Policy",
+      "type": "Architecture / API Governance",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/APIG/APIG-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "APIG-02",
+        "REL-02",
+        "RELOPS-01",
+        "SUP-03",
+        "STK-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/api_governance/APIG-03_Deprecation_Sunset_Policy.md",
+      "upstream_dependencies": [
+        "APIG-02",
+        "REL-02",
+        "RELOPS-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "APIG-04",
+      "title": "Review Gate Checklist (what",
+      "type": "Architecture / API Governance",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/APIG/APIG-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "APIG-01",
+        "ERR-03",
+        "PMAD-03",
+        "QA-05",
+        "SEC-02",
+        "RLIM-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/api_governance/APIG-04_Review_Gate_Checklist.md",
+      "upstream_dependencies": [
+        "APIG-01",
+        "ERR-03",
+        "PMAD-03",
+        "QA-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "APIG-05",
+      "title": "Compatibility Test",
+      "type": "Architecture / API Governance",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/APIG/APIG-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "APIG-01",
+        "APIG-02",
+        "API-02",
+        "ERR-03",
+        "TINF-01",
+        "CICD-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/api_governance/APIG-05_Compatibility_Test_Requirements.md",
+      "upstream_dependencies": [
+        "APIG-01",
+        "APIG-02",
+        "API-02",
+        "ERR-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "APIG-06",
+      "title": "Schema Evolution Rules",
+      "type": "Architecture / API Governance",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/APIG/APIG-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "APIG-02",
+        "DATA-04",
+        "ERR-03",
+        "STK-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/api_governance/APIG-06_Schema_Evolution_Rules.md",
+      "upstream_dependencies": [
+        "APIG-02",
+        "DATA-04",
+        "ERR-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ARC-05",
+      "title": "Realtime Architecture",
+      "type": "Architecture / System",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ARC/ARC-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-04",
+        "DES-01",
+        "RTM-01",
+        "RTM-02",
+        "RTM-03",
+        "RTM-04",
+        "RTM-05",
+        "PMAD-01",
+        "ERR-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/architecture/ARC-05_Realtime_Architecture.md",
+      "upstream_dependencies": [
+        "PRD-04",
+        "DES-01",
+        "RTM-01",
+        "RTM-02",
+        "PMAD-01",
+        "RISK-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ARC-06",
+      "title": "Error Model + Reason Codes",
+      "type": "Architecture / System",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ARC/ARC-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "BRP-01",
+        "DMG-03",
+        "DES-07",
+        "CDX-04",
+        "ERR-01",
+        "ERR-02",
+        "ERR-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/architecture/ARC-06_Error_Model_Reason_Codes.md",
+      "upstream_dependencies": [
+        "BRP-01",
+        "DMG-03",
+        "DES-07",
+        "CDX-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ARC-07",
+      "title": "Integration Architecture",
+      "type": "Architecture / System",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ARC/ARC-07.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ARC-01",
+        "SIC-01",
+        "RISK-03",
+        "BRP-01",
+        "DGP-01",
+        "SEC-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/architecture/ARC-07_Integration_Architecture.md",
+      "upstream_dependencies": [
+        "ARC-01",
+        "SIC-01",
+        "RISK-03",
+        "COMP-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ARC-08",
+      "title": "Deployment Topology",
+      "type": "Architecture / System",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ARC/ARC-08.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ARC-01",
+        "SBDT-01",
+        "SBDT-02",
+        "SBDT-03",
+        "OPS-01",
+        "ENV-01",
+        "SEC-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/architecture/ARC-08_Deployment_Topology.md",
+      "upstream_dependencies": [
+        "ARC-01",
+        "SBDT-01",
+        "OPS-01",
+        "ENV-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ARC-09",
+      "title": "Cross-Cutting Concerns",
+      "type": "Architecture / System",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ARC/ARC-09.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ARC-01",
+        "ARC-02",
+        "ERR-06",
+        "OBS-01",
+        "OBS-03",
+        "APIG-01",
+        "RLIM-01",
+        "CACHE-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/architecture/ARC-09_Cross_Cutting_Concerns.md",
+      "upstream_dependencies": [
+        "ARC-01",
+        "ARC-02",
+        "ERR-06",
+        "OBS-01",
+        "APIG-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ARC-10",
+      "title": "Architecture Constraints &",
+      "type": "Architecture / System",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ARC/ARC-10.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ARC-01",
+        "DMG-03",
+        "RISK-02",
+        "SEC-02",
+        "APIG-02",
+        "WFO-03",
+        "ERR-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/architecture/ARC-10_Architecture_Constraints_Invariants.md",
+      "upstream_dependencies": [
+        "ARC-01",
+        "DMG-03",
+        "RISK-02",
+        "SEC-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ERR-01",
+      "title": "Error Taxonomy (classes,",
+      "type": "Architecture / Error Model",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ERR/ERR-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ARC-06",
+        "BRP-01",
+        "DES-07",
+        "CDX-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/errors/ERR-01_Error_Taxonomy.md",
+      "upstream_dependencies": [
+        "ARC-06",
+        "BRP-01",
+        "DES-07"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ERR-02",
+      "title": "Reason Codes Registry (rc_*",
+      "type": "Architecture / Error Model",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ERR/ERR-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ERR-01",
+        "ARC-06",
+        "BRP-01",
+        "DMG-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/errors/ERR-02_Reason_Codes_Registry.md",
+      "upstream_dependencies": [
+        "ERR-01",
+        "ARC-06"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ERR-03",
+      "title": "API Error Contract (shape,",
+      "type": "Architecture / Error Model",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ERR/ERR-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ERR-01",
+        "ERR-02",
+        "APIG-01",
+        "DGP-01",
+        "CDX-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/errors/ERR-03_API_Error_Contract.md",
+      "upstream_dependencies": [
+        "ERR-01",
+        "ERR-02",
+        "APIG-01",
+        "DGP-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ERR-04",
+      "title": "UX Error Mapping Rules",
+      "type": "Architecture / Error Model",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ERR/ERR-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ERR-02",
+        "DES-07",
+        "CDX-04",
+        "CDX-01",
+        "A11YD-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/errors/ERR-04_UX_Error_Mapping_Rules.md",
+      "upstream_dependencies": [
+        "ERR-02",
+        "DES-07",
+        "CDX-04",
+        "A11YD-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ERR-05",
+      "title": "Retryability & Idempotency",
+      "type": "Architecture / Error Model",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ERR/ERR-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ERR-01",
+        "ERR-02",
+        "WFO-03",
+        "APIG-01",
+        "SIC-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/errors/ERR-05_Retryability_Idempotency_Rules.md",
+      "upstream_dependencies": [
+        "ERR-01",
+        "ERR-02",
+        "WFO-03",
+        "APIG-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "ERR-06",
+      "title": "Observability Requirements for",
+      "type": "Architecture / Error Model",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/ERR/ERR-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ERR-01",
+        "OBS-01",
+        "OBS-02",
+        "OBS-03",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/errors/ERR-06_Error_Observability_Requirements.md",
+      "upstream_dependencies": [
+        "ERR-01",
+        "OBS-01",
+        "OBS-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "PMAD-01",
+      "title": "Permission Model Overview",
+      "type": "Architecture / Authorization",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/PMAD/PMAD-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-03",
+        "BRP-02",
+        "DMG-02",
+        "IAM-03",
+        "ARC-04",
+        "STK-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/authz/PMAD-01_Permission_Model_Overview.md",
+      "upstream_dependencies": [
+        "PRD-03",
+        "BRP-02",
+        "DMG-02",
+        "ARC-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "PMAD-02",
+      "title": "AuthZ Policy Rules",
+      "type": "Architecture / Authorization",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/PMAD/PMAD-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PMAD-01",
+        "BRP-02",
+        "BRP-04",
+        "ERR-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/authz/PMAD-02_AuthZ_Policy_Rules.md",
+      "upstream_dependencies": [
+        "PMAD-01",
+        "BRP-02",
+        "BRP-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "PMAD-03",
+      "title": "Enforcement Points Map",
+      "type": "Architecture / Authorization",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/PMAD/PMAD-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PMAD-02",
+        "ARC-01",
+        "API-01",
+        "DATA-01",
+        "IAN-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/authz/PMAD-03_Enforcement_Points_Map.md",
+      "upstream_dependencies": [
+        "PMAD-02",
+        "ARC-01",
+        "API-01",
+        "DATA-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "PMAD-04",
+      "title": "Permission Check Patterns",
+      "type": "Architecture / Authorization",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/PMAD/PMAD-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PMAD-02",
+        "ERR-02",
+        "ERR-03",
+        "ARC-06",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/authz/PMAD-04_Permission_Check_Patterns.md",
+      "upstream_dependencies": [
+        "PMAD-02",
+        "ERR-02",
+        "ERR-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "PMAD-05",
+      "title": "Privileged Operations Policy",
+      "type": "Architecture / Authorization",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/PMAD/PMAD-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PMAD-01",
+        "PMAD-02",
+        "ADMIN-01",
+        "AUDIT-01",
+        "STK-04",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/authz/PMAD-05_Privileged_Operations_Policy.md",
+      "upstream_dependencies": [
+        "PMAD-01",
+        "PMAD-02",
+        "ADMIN-01",
+        "AUDIT-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "PMAD-06",
+      "title": "Audit Requirements for AuthZ",
+      "type": "Architecture / Authorization",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/PMAD/PMAD-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PMAD-03",
+        "PMAD-04",
+        "AUDIT-01",
+        "DGP-01",
+        "OBS-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/authz/PMAD-06_Audit_Requirements_for_AuthZ.md",
+      "upstream_dependencies": [
+        "PMAD-03",
+        "PMAD-04",
+        "AUDIT-01",
+        "DGP-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RTM-01",
+      "title": "Realtime Use Cases Catalog",
+      "type": "Architecture / Realtime",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/RTM/RTM-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-04",
+        "DES-01",
+        "ARC-05",
+        "PMAD-01",
+        "ERR-01",
+        "RISK-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/realtime/RTM-01_Realtime_UseCases_Catalog.md",
+      "upstream_dependencies": [
+        "PRD-04",
+        "DES-01",
+        "ARC-05",
+        "PMAD-01",
+        "RISK-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RTM-02",
+      "title": "Protocol & Transport Map",
+      "type": "Architecture / Realtime",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/RTM/RTM-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RTM-01",
+        "ARC-05",
+        "SBDT-02",
+        "PMAD-01",
+        "ERR-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/realtime/RTM-02_Protocol_Transport_Map.md",
+      "upstream_dependencies": [
+        "RTM-01",
+        "ARC-05",
+        "SBDT-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RTM-03",
+      "title": "Channel/Topic Model (naming,",
+      "type": "Architecture / Realtime",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/RTM/RTM-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RTM-01",
+        "PMAD-01",
+        "PMAD-02",
+        "ARC-05",
+        "ERR-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/realtime/RTM-03_Channel_Topic_Model.md",
+      "upstream_dependencies": [
+        "RTM-01",
+        "PMAD-01",
+        "PMAD-02",
+        "ARC-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RTM-04",
+      "title": "Delivery Semantics (ordering,",
+      "type": "Architecture / Realtime",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/RTM/RTM-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RTM-01",
+        "RTM-02",
+        "ERR-05",
+        "OBS-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/realtime/RTM-04_Delivery_Semantics.md",
+      "upstream_dependencies": [
+        "RTM-01",
+        "RTM-02",
+        "ERR-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RTM-05",
+      "title": "Presence & State Sync Model",
+      "type": "Architecture / Realtime",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/RTM/RTM-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RTM-01",
+        "RTM-02",
+        "RTM-03",
+        "ARC-05",
+        "ERR-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/realtime/RTM-05_Presence_State_Sync_Model.md",
+      "upstream_dependencies": [
+        "RTM-01",
+        "RTM-02",
+        "RTM-03",
+        "ARC-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RTM-06",
+      "title": "Abuse/Rate Control for",
+      "type": "Architecture / Realtime",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/RTM/RTM-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RTM-01",
+        "RTM-03",
+        "RLIM-01",
+        "TNS-01",
+        "PMAD-05",
+        "OBS-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/realtime/RTM-06_Abuse_Rate_Control.md",
+      "upstream_dependencies": [
+        "RTM-01",
+        "RTM-03",
+        "RLIM-01",
+        "TNS-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SBDT-01",
+      "title": "Service Boundary Map",
+      "type": "Architecture / Deployment",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SBDT/SBDT-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ARC-01",
+        "ARC-08",
+        "RISK-03",
+        "STK-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/topology/SBDT-01_Service_Boundary_Map.md",
+      "upstream_dependencies": [
+        "ARC-01",
+        "ARC-08",
+        "RISK-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SBDT-02",
+      "title": "Runtime Topology (services,",
+      "type": "Architecture / Deployment",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SBDT/SBDT-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SBDT-01",
+        "ARC-08",
+        "OPS-02",
+        "ENV-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/topology/SBDT-02_Runtime_Topology.md",
+      "upstream_dependencies": [
+        "SBDT-01",
+        "ARC-08",
+        "OPS-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SBDT-03",
+      "title": "Environment Topology",
+      "type": "Architecture / Deployment",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SBDT/SBDT-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ARC-08",
+        "ENV-01",
+        "OPS-01",
+        "DGP-01",
+        "SEC-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/topology/SBDT-03_Environment_Topology.md",
+      "upstream_dependencies": [
+        "ARC-08",
+        "ENV-01",
+        "OPS-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SBDT-04",
+      "title": "Scaling Model",
+      "type": "Architecture / Deployment",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SBDT/SBDT-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SBDT-02",
+        "PERF-02",
+        "LOAD-01",
+        "COST-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/topology/SBDT-04_Scaling_Model.md",
+      "upstream_dependencies": [
+        "SBDT-02",
+        "PERF-02",
+        "COST-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SBDT-05",
+      "title": "Resilience Topology",
+      "type": "Architecture / Deployment",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SBDT/SBDT-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SBDT-02",
+        "RELIA-02",
+        "SLO-01",
+        "BDR-01",
+        "OBS-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/topology/SBDT-05_Resilience_Topology.md",
+      "upstream_dependencies": [
+        "SBDT-02",
+        "RELIA-02",
+        "SLO-01",
+        "BDR-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SBDT-06",
+      "title": "Deployment Constraints",
+      "type": "Architecture / Deployment",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SBDT/SBDT-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ARC-08",
+        "REL-01",
+        "REL-04",
+        "DATA-04",
+        "CICD-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/topology/SBDT-06_Deployment_Constraints.md",
+      "upstream_dependencies": [
+        "ARC-08",
+        "REL-01",
+        "REL-04",
+        "DATA-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SIC-01",
+      "title": "External Interface Inventory",
+      "type": "Architecture / Interfaces",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SIC/SIC-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "ARC-07",
+        "RISK-03",
+        "DGP-01",
+        "SEC-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/integrations/SIC-01_External_Interface_Inventory.md",
+      "upstream_dependencies": [
+        "ARC-07",
+        "RISK-03",
+        "COMP-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SIC-02",
+      "title": "Contract Spec (per interface:",
+      "type": "Architecture / Interfaces",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SIC/SIC-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SIC-01",
+        "ARC-07",
+        "ERR-03",
+        "DGP-01",
+        "SEC-02",
+        "APIG-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/integrations/SIC-02_Interface_Contract_Specs.md",
+      "upstream_dependencies": [
+        "SIC-01",
+        "ARC-07",
+        "ERR-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SIC-03",
+      "title": "Webhook Contract Spec",
+      "type": "Architecture / Interfaces",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SIC/SIC-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SIC-01",
+        "ARC-07",
+        "ERR-05",
+        "DGP-01",
+        "SEC-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/integrations/SIC-03_Webhook_Contract_Spec.md",
+      "upstream_dependencies": [
+        "SIC-01",
+        "ARC-07",
+        "ERR-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SIC-04",
+      "title": "Data Mapping Contract (field",
+      "type": "Architecture / Interfaces",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SIC/SIC-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SIC-02",
+        "DATA-01",
+        "DMG-01",
+        "DGP-01",
+        "ERR-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/integrations/SIC-04_Data_Mapping_Contract.md",
+      "upstream_dependencies": [
+        "SIC-02",
+        "DATA-01",
+        "DMG-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SIC-05",
+      "title": "Integration Failure Modes &",
+      "type": "Architecture / Interfaces",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SIC/SIC-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SIC-01",
+        "SIC-02",
+        "SIC-03",
+        "ERR-05",
+        "RELIA-01",
+        "OBS-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/integrations/SIC-05_Integration_Failure_Recovery.md",
+      "upstream_dependencies": [
+        "SIC-01",
+        "SIC-02",
+        "SIC-03",
+        "ERR-05",
+        "RELIA-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SIC-06",
+      "title": "Vendor/Third-Party Trust Model",
+      "type": "Architecture / Interfaces",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/SIC/SIC-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SIC-01",
+        "ARC-07",
+        "DGP-01",
+        "SEC-02",
+        "COMP-05",
+        "AUDIT-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/integrations/SIC-06_Vendor_Trust_Model.md",
+      "upstream_dependencies": [
+        "SIC-01",
+        "ARC-07",
+        "DGP-01",
+        "COMP-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "WFO-01",
+      "title": "Workflow Catalog",
+      "type": "Architecture / Workflow",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/WFO/WFO-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-04",
+        "ARC-03",
+        "ARC-05",
+        "API-06",
+        "ERR-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/workflows/WFO-01_Workflow_Catalog.md",
+      "upstream_dependencies": [
+        "PRD-04",
+        "ARC-03",
+        "ARC-05",
+        "API-06"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "WFO-02",
+      "title": "Orchestration Patterns (state",
+      "type": "Architecture / Workflow",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/WFO/WFO-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "WFO-01",
+        "ERR-05",
+        "RELIA-02",
+        "OBS-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/workflows/WFO-02_Orchestration_Patterns.md",
+      "upstream_dependencies": [
+        "WFO-01",
+        "ERR-05",
+        "RELIA-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "WFO-03",
+      "title": "Idempotency & Concurrency",
+      "type": "Architecture / Workflow",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/WFO/WFO-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "WFO-01",
+        "ERR-05",
+        "DATA-03",
+        "APIG-01",
+        "RTM-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/workflows/WFO-03_Idempotency_Concurrency_Model.md",
+      "upstream_dependencies": [
+        "WFO-01",
+        "ERR-05",
+        "DATA-03",
+        "APIG-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "WFO-04",
+      "title": "Scheduling & Triggers",
+      "type": "Architecture / Workflow",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/WFO/WFO-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "WFO-01",
+        "EVT-01",
+        "API-06",
+        "ENV-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/workflows/WFO-04_Scheduling_Triggers.md",
+      "upstream_dependencies": [
+        "WFO-01",
+        "EVT-01",
+        "API-06"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "WFO-05",
+      "title": "Failure Handling (DLQ, backoff,",
+      "type": "Architecture / Workflow",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/WFO/WFO-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "WFO-01",
+        "WFO-02",
+        "ERR-05",
+        "RELIA-01",
+        "OBS-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/workflows/WFO-05_Failure_Handling.md",
+      "upstream_dependencies": [
+        "WFO-01",
+        "WFO-02",
+        "ERR-05",
+        "RELIA-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "WFO-06",
+      "title": "Workflow Observability",
+      "type": "Architecture / Workflow",
+      "template_version": "1.0.0",
+      "file_path": "System Architecture/WFO/WFO-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "WFO-01",
+        "OBS-01",
+        "OBS-03",
+        "AUDIT-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/workflows/WFO-06_Workflow_Observability.md",
+      "upstream_dependencies": [
+        "WFO-01",
+        "OBS-01",
+        "OBS-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CACHE-01",
+      "title": "Caching Strategy (what to",
+      "type": "Data / Caching",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/CACHE/CACHE-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-07",
+        "SRCH-01",
+        "PERF-01",
+        "COST-01",
+        "CACHE-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/caching/CACHE-01_Caching_Strategy.md",
+      "upstream_dependencies": [
+        "DATA-07",
+        "SRCH-01",
+        "PERF-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CACHE-02",
+      "title": "Invalidation Rules (events,",
+      "type": "Data / Caching",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/CACHE/CACHE-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "CACHE-01",
+        "EVT-01",
+        "WFO-01",
+        "ERR-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/caching/CACHE-02_Invalidation_Rules.md",
+      "upstream_dependencies": [
+        "CACHE-01",
+        "EVT-01",
+        "WFO-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CACHE-03",
+      "title": "Consistency Model",
+      "type": "Data / Caching",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/CACHE/CACHE-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-07",
+        "DATA-08",
+        "ERR-05",
+        "DES-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/caching/CACHE-03_Consistency_Model.md",
+      "upstream_dependencies": [
+        "DATA-07",
+        "DATA-08",
+        "ERR-05",
+        "DES-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CACHE-04",
+      "title": "Read/Write Split Rules (read",
+      "type": "Data / Caching",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/CACHE/CACHE-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-07",
+        "DATA-08",
+        "SBDT-02",
+        "PERF-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/caching/CACHE-04_Read_Write_Split_Rules.md",
+      "upstream_dependencies": [
+        "DATA-07",
+        "DATA-08",
+        "SBDT-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CACHE-05",
+      "title": "Rate/Cost Controls for",
+      "type": "Data / Caching",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/CACHE/CACHE-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "CACHE-01",
+        "PERF-02",
+        "COST-01",
+        "RLIM-01",
+        "OBS-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/caching/CACHE-05_Rate_Cost_Controls_for_Reads.md",
+      "upstream_dependencies": [
+        "CACHE-01",
+        "PERF-02",
+        "COST-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "CACHE-06",
+      "title": "Cache Failure Behavior",
+      "type": "Data / Caching",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/CACHE/CACHE-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "CACHE-01",
+        "CACHE-02",
+        "CACHE-03",
+        "RELIA-01",
+        "ERR-01",
+        "DES-07",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/caching/CACHE-06_Cache_Failure_Behavior.md",
+      "upstream_dependencies": [
+        "CACHE-01",
+        "CACHE-02",
+        "CACHE-03",
+        "RELIA-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DATA-01",
+      "title": "Entity Definitions (canonical",
+      "type": "Data / Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DATA/DATA-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DMG-01",
+        "DMG-02",
+        "PRD-04",
+        "BRP-01",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data/DATA-01_Entity_Definitions.md",
+      "upstream_dependencies": [
+        "DMG-01",
+        "DMG-02",
+        "PRD-04",
+        "BRP-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DATA-03",
+      "title": "Persistence Rules (indexes,",
+      "type": "Data / Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DATA/DATA-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "DATA-02",
+        "DQV-01",
+        "SRCH-03",
+        "CACHE-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data/DATA-03_Persistence_Rules.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "DATA-02",
+        "DQV-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DATA-04",
+      "title": "Migration Plan (schema",
+      "type": "Data / Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DATA/DATA-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "DATA-02",
+        "DATA-03",
+        "APIG-06",
+        "REL-04",
+        "SBDT-06",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data/DATA-04_Migration_Plan.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "DATA-02",
+        "APIG-06",
+        "REL-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DATA-05",
+      "title": "Seed Data Spec",
+      "type": "Data / Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DATA/DATA-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "PMAD-01",
+        "DSYS-01",
+        "ENV-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data/DATA-05_Seed_Data_Spec.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "PMAD-01",
+        "DSYS-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DATA-06",
+      "title": "Validation Schemas",
+      "type": "Data / Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DATA/DATA-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "DQV-01",
+        "API-02",
+        "FORM-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data/DATA-06_Validation_Schemas.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "DQV-01",
+        "API-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DATA-07",
+      "title": "Derived/Read Models Spec",
+      "type": "Data / Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DATA/DATA-07.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "DATA-02",
+        "SRCH-03",
+        "CACHE-03",
+        "WFO-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data/DATA-07_Derived_Read_Models_Spec.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "DATA-02",
+        "SRCH-03",
+        "CACHE-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DATA-08",
+      "title": "Data Access Patterns",
+      "type": "Data / Architecture",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DATA/DATA-08.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-03",
+        "BPLAT-04",
+        "CACHE-03",
+        "WFO-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data/DATA-08_Data_Access_Patterns.md",
+      "upstream_dependencies": [
+        "DATA-03",
+        "BPLAT-04",
+        "CACHE-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DGL-01",
+      "title": "Data Ownership Map (owner",
+      "type": "Data / Governance",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DGL/DGL-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "ARC-01",
+        "STK-03",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_governance/DGL-01_Data_Ownership_Map.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "ARC-01",
+        "STK-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DGL-02",
+      "title": "Data Ownership Map (owner",
+      "type": "Data / Governance",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DGL/DGL-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "ARC-01",
+        "STK-03",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_governance/DGL-01_Data_Ownership_Map.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "ARC-01",
+        "STK-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DGL-03",
+      "title": "Transformation Rules Catalog",
+      "type": "Data / Governance",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DGL/DGL-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DGL-02",
+        "SIC-04",
+        "DLR-06",
+        "DQV-01",
+        "ERR-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_governance/DGL-03_Transformation_Rules_Catalog.md",
+      "upstream_dependencies": [
+        "DGL-02",
+        "SIC-04",
+        "DLR-06"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DGL-04",
+      "title": "Auditability Requirements",
+      "type": "Data / Governance",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DGL/DGL-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PMAD-06",
+        "AUDIT-01",
+        "DGL-04",
+        "DGP-01",
+        "OBS-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_governance/DGL-05_Auditability_Requirements.md",
+      "upstream_dependencies": [
+        "PMAD-06",
+        "AUDIT-01",
+        "DGL-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DGL-05",
+      "title": "Data Catalog / Dictionary",
+      "type": "Data / Governance",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DGL/DGL-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "DMG-01",
+        "DGP-01",
+        "DGL-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_governance/DGL-06_Data_Catalog_Dictionary.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "DMG-01",
+        "DGP-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DGL-06",
+      "title": "Data Catalog / Dictionary",
+      "type": "Data / Governance",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DGL/DGL-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "DMG-01",
+        "DGP-01",
+        "DGL-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_governance/DGL-06_Data_Catalog_Dictionary.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "DMG-01",
+        "DGP-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DLR-01",
+      "title": "Data Lifecycle States",
+      "type": "Data / Lifecycle",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DLR/DLR-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "DGP-02",
+        "BRP-01",
+        "RISK-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_lifecycle/DLR-01_Data_Lifecycle_States.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "DGP-02",
+        "BRP-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DLR-02",
+      "title": "Retention Policy Matrix (by data",
+      "type": "Data / Lifecycle",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DLR/DLR-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DGP-01",
+        "DATA-01",
+        "DLR-01",
+        "COMP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_lifecycle/DLR-02_Retention_Policy_Matrix.md",
+      "upstream_dependencies": [
+        "DGP-01",
+        "DATA-01",
+        "DLR-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DLR-03",
+      "title": "Deletion & Erasure Procedures",
+      "type": "Data / Lifecycle",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DLR/DLR-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DLR-01",
+        "DLR-02",
+        "DGP-02",
+        "DGP-04",
+        "DATA-02",
+        "ERR-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_lifecycle/DLR-03_Deletion_Erasure_Procedures.md",
+      "upstream_dependencies": [
+        "DLR-01",
+        "DLR-02",
+        "DGP-02",
+        "ERR-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DLR-04",
+      "title": "Legal Holds & Exceptions",
+      "type": "Data / Lifecycle",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DLR/DLR-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DLR-02",
+        "COMP-01",
+        "DGP-02",
+        "GOVOPS-03",
+        "AUDIT-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_lifecycle/DLR-04_Legal_Holds_Exceptions_Policy.md",
+      "upstream_dependencies": [
+        "DLR-02",
+        "COMP-01",
+        "GOVOPS-03"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DLR-05",
+      "title": "Archival & Cold Storage",
+      "type": "Data / Lifecycle",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DLR/DLR-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DLR-01",
+        "DLR-02",
+        "STORE-01",
+        "RPT-04",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_lifecycle/DLR-05_Archival_Cold_Storage_Strategy.md",
+      "upstream_dependencies": [
+        "DLR-01",
+        "DLR-02",
+        "STORE-01",
+        "RPT-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DLR-06",
+      "title": "Data Minimization Rules",
+      "type": "Data / Lifecycle",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DLR/DLR-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-06",
+        "DGP-01",
+        "DGP-02",
+        "FORM-01",
+        "API-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_lifecycle/DLR-06_Data_Minimization_Rules.md",
+      "upstream_dependencies": [
+        "PRD-06",
+        "DGP-01",
+        "DGP-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DQV-01",
+      "title": "Validation Policy (schema vs",
+      "type": "Data / Quality",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DQV/DQV-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "BRP-01",
+        "ERR-01",
+        "API-02",
+        "FORM-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_quality/DQV-01_Validation_Policy.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "BRP-01",
+        "ERR-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DQV-02",
+      "title": "Data Quality Checks Catalog",
+      "type": "Data / Quality",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DQV/DQV-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "DATA-03",
+        "DQV-01",
+        "ERR-02",
+        "OBS-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_quality/DQV-02_Data_Quality_Checks_Catalog.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "DATA-03",
+        "DQV-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DQV-03",
+      "title": "Data Quality Checks Catalog",
+      "type": "Data / Quality",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DQV/DQV-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DATA-01",
+        "DATA-03",
+        "DQV-01",
+        "ERR-02",
+        "OBS-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_quality/DQV-02_Data_Quality_Checks_Catalog.md",
+      "upstream_dependencies": [
+        "DATA-01",
+        "DATA-03",
+        "DQV-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DQV-04",
+      "title": "Consistency & Integrity",
+      "type": "Data / Quality",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DQV/DQV-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DQV-02",
+        "OBS-02",
+        "ALRT-01",
+        "RELIA-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_quality/DQV-04_Consistency_Integrity_Monitoring.md",
+      "upstream_dependencies": [
+        "DQV-02",
+        "OBS-02",
+        "ALRT-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DQV-05",
+      "title": "Consistency & Integrity",
+      "type": "Data / Quality",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DQV/DQV-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DQV-02",
+        "OBS-02",
+        "ALRT-01",
+        "RELIA-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_quality/DQV-04_Consistency_Integrity_Monitoring.md",
+      "upstream_dependencies": [
+        "DQV-02",
+        "OBS-02",
+        "ALRT-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "DQV-06",
+      "title": "Bad Data Handling (quarantine,",
+      "type": "Data / Quality",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/DQV/DQV-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "DQV-02",
+        "DQV-04",
+        "PIPE-04",
+        "WFO-05",
+        "ERR-02",
+        "OBS-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/data_quality/DQV-05_Bad_Data_Handling.md",
+      "upstream_dependencies": [
+        "DQV-02",
+        "DQV-04",
+        "PIPE-04",
+        "WFO-05"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RPT-01",
+      "title": "Reporting Surfaces Inventory",
+      "type": "Data / Reporting",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/RPT/RPT-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SMIP-01",
+        "RPT-02",
+        "DGL-04",
+        "ADMIN-01",
+        "DIST-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/reporting/RPT-01_Reporting_Surfaces_Inventory.md",
+      "upstream_dependencies": [
+        "SMIP-01",
+        "RPT-02",
+        "DGL-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RPT-02",
+      "title": "Reporting Surfaces Inventory",
+      "type": "Data / Reporting",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/RPT/RPT-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SMIP-01",
+        "RPT-02",
+        "DGL-04",
+        "ADMIN-01",
+        "DIST-03",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/reporting/RPT-01_Reporting_Surfaces_Inventory.md",
+      "upstream_dependencies": [
+        "SMIP-01",
+        "RPT-02",
+        "DGL-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RPT-03",
+      "title": "Aggregation & Rollup Rules",
+      "type": "Data / Reporting",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/RPT/RPT-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RPT-02",
+        "DATA-07",
+        "BI-02",
+        "DQV-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/reporting/RPT-03_Aggregation_Rollup_Rules.md",
+      "upstream_dependencies": [
+        "RPT-02",
+        "DATA-07",
+        "BI-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RPT-04",
+      "title": "Aggregation & Rollup Rules",
+      "type": "Data / Reporting",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/RPT/RPT-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RPT-02",
+        "DATA-07",
+        "BI-02",
+        "DQV-02",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/reporting/RPT-03_Aggregation_Rollup_Rules.md",
+      "upstream_dependencies": [
+        "RPT-02",
+        "DATA-07",
+        "BI-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RPT-05",
+      "title": "Data Access & Permissions for",
+      "type": "Data / Reporting",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/RPT/RPT-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RPT-01",
+        "DGL-04",
+        "PMAD-02",
+        "DGP-01",
+        "ADMIN-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/reporting/RPT-05_Data_Access_Permissions_for_Reports.md",
+      "upstream_dependencies": [
+        "RPT-01",
+        "DGL-04",
+        "PMAD-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "RPT-06",
+      "title": "Reporting Data Quality Rules",
+      "type": "Data / Reporting",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/RPT/RPT-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "RPT-02",
+        "RPT-03",
+        "DQV-02",
+        "DQV-06",
+        "BI-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/reporting/RPT-06_Reporting_Data_Quality_Rules.md",
+      "upstream_dependencies": [
+        "RPT-02",
+        "RPT-03",
+        "DQV-02"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SRCH-01",
+      "title": "Search Scope & Surfaces",
+      "type": "Data / Search",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/SRCH/SRCH-01.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-04",
+        "DISC-03",
+        "IAN-01",
+        "DGL-04",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/search/SRCH-01_Search_Scope_Surfaces.md",
+      "upstream_dependencies": [
+        "PRD-04",
+        "DISC-03",
+        "IAN-01",
+        "DGL-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SRCH-02",
+      "title": "Search Scope & Surfaces",
+      "type": "Data / Search",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/SRCH/SRCH-02.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "PRD-04",
+        "DISC-03",
+        "IAN-01",
+        "DGL-04",
+        "DGP-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/search/SRCH-01_Search_Scope_Surfaces.md",
+      "upstream_dependencies": [
+        "PRD-04",
+        "DISC-03",
+        "IAN-01",
+        "DGL-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SRCH-03",
+      "title": "Index Update Strategy",
+      "type": "Data / Search",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/SRCH/SRCH-03.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SRCH-01",
+        "DGL-02",
+        "WFO-01",
+        "EVT-01",
+        "ERR-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/search/SRCH-03_Index_Update_Strategy.md",
+      "upstream_dependencies": [
+        "SRCH-01",
+        "DGL-02",
+        "WFO-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SRCH-04",
+      "title": "Search Result Quality Rules",
+      "type": "Data / Search",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/SRCH/SRCH-04.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SRCH-02",
+        "SRCH-03",
+        "DISC-04",
+        "PERF-01",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/search/SRCH-04_Search_Result_Quality_Rules.md",
+      "upstream_dependencies": [
+        "SRCH-02",
+        "SRCH-03",
+        "DISC-04"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SRCH-05",
+      "title": "Search Abuse Controls",
+      "type": "Data / Search",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/SRCH/SRCH-05.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SRCH-02",
+        "TNS-01",
+        "RLIM-01",
+        "DISC-05",
+        "OBS-04",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/search/SRCH-05_Search_Abuse_Controls.md",
+      "upstream_dependencies": [
+        "SRCH-02",
+        "TNS-01",
+        "RLIM-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
+      "no_duplicate_truth": true
+    },
+    {
+      "template_id": "SRCH-06",
+      "title": "Search Observability (metrics,",
+      "type": "Data / Search",
+      "template_version": "1.0.0",
+      "file_path": "Data & Information/SRCH/SRCH-06.md",
+      "status": "active",
+      "applies_when": {},
+      "requiredness": "conditional",
+      "required_by_skill_level": {
+        "beginner": "required",
+        "intermediate": "required",
+        "expert": "optional"
+      },
+      "inputs_required": [
+        "SRCH-03",
+        "SRCH-04",
+        "OBS-01",
+        "OBS-02",
+        "OBS-05",
+        "STANDARDS_INDEX"
+      ],
+      "output_path": "10_app/search/SRCH-06_Search_Observability.md",
+      "upstream_dependencies": [
+        "SRCH-03",
+        "SRCH-04",
+        "OBS-01"
+      ],
+      "compliance_gate_id": "GATE-07",
+      "references_entities": [],
       "no_duplicate_truth": true
     }
   ]
