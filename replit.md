@@ -25,6 +25,17 @@ Full Mechanics pipeline implemented with 10 stages, 7 enforced gates (G1–G6, G
 - **11 non-empty test files** (unit + integration + helpers)
 
 ## Project Structure
+Two top-level directories: `Axion/` (pipeline engine) and `App/` (internal UI).
+
+### App/ — Internal React UI
+React + Vite + TypeScript frontend for browsing Axion runs, templates, registries, proofs, and kits.
+- Stack: React 19, Vite 6, TypeScript 5, react-router-dom 7
+- Dev server: port 5000 (webview workflow `cd App && npx vite`)
+- `App/src/routes/` — 7 pages: Dashboard, Runs, RunDetail, Registries, Templates, Proofs, Kits
+- `App/src/components/` — 5 shared components: Layout, Nav, DataTable, JsonViewer, StatusBadge
+- `App/src/lib/` — api.ts (fetch helpers), paths.ts (route constants), types.ts (domain types)
+
+### Axion/ — Pipeline Engine
 All source code lives under `Axion/`:
 
 - `Axion/src/` — TypeScript source
@@ -40,7 +51,7 @@ All source code lives under `Axion/`:
 - `Axion/libraries/` — Persistent system assets:
   - `intake/` — enums.v1.json, schema.v1.json, rules.v1.json (from INT-02/INT-03)
   - `standards/` — standards_index.json + 3 packs (eng_core, sec_baseline, qa_baseline)
-  - `templates/` — template_index.json + 8 template groups (177 total .md files)
+  - `templates/` — template_index.json + 8 template groups (446 total .md files)
 - `Axion/registries/` — 9 global registry JSON files
 - `Axion/features/` — 17 feature packs (FEAT-001 through FEAT-017), each with 00_registry.json + 8 doc files
 - `Axion/test/` — Unit tests, integration tests, fixtures, helpers
