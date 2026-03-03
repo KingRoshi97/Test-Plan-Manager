@@ -1,0 +1,314 @@
+Exact UI Step List (buttons → wrapper endpoint → expected pointers → screens that render them)
+
+This is the canonical operator flow for your App (Option A) and the artifact spine your UI should show at each step.
+
+1) Doctor (preflight)
+Button
+
+Doctor
+
+Wrapper endpoint
+
+POST /api/doctor
+
+Expected pointers returned
+
+report → doctor report artifact
+
+logs[] → wrapper logs (and/or AXION doctor log)
+
+UI screen behavior
+
+Dashboard: show outcome badge + “Open report” + “Open logs”
+
+Commands/Recent Actions panel: append action row
+
+2) Start Run
+Button
+
+Start Run (modal form)
+
+Wrapper endpoint
+
+POST /api/run/start
+
+Expected pointers returned
+
+manifest → run_manifest.json
+
+wrapper logs[]
+
+UI screen behavior
+
+Dashboard: show new run_id + status + “Open manifest”
+
+Runs List: new run appears on refresh
+
+Run Detail: clicking run opens run timeline built from manifest
+
+3) Advance Run (repeat until completion or gated)
+Button
+
+Advance (from Dashboard or Run Detail)
+
+Wrapper endpoint
+
+POST /api/run/advance
+
+Expected pointers returned
+
+manifest (updated)
+
+stage_report (latest stage attempt)
+
+gate_report? (only if gates evaluated at this step)
+
+wrapper logs[]
+
+UI screen behavior
+
+Run Detail:
+
+update stage timeline highlight to the latest stage
+
+show “Latest Stage Report” link
+
+if gate_report returned: show “Gated / Gate Failures” callout
+
+Dashboard:
+
+update “Latest Run” card: current stage + last updated
+
+4) View Stage Report (inspection)
+Interaction
+
+click a stage report pointer from Run Detail
+
+Wrapper endpoint
+
+GET /api/artifact?path=<stage_report_path>
+
+Expected output
+
+JSON content of the stage report
+
+UI screen behavior
+
+open Artifact Drawer:
+
+JsonViewer
+
+show artifact path + copy path
+
+5) Gate Failure Review (when gated or failures exist)
+Navigation
+
+Gate Failures screen from Run Detail or sidebar
+
+Wrapper endpoints
+
+GET /api/runs/:run_id → discover gate report pointer(s)
+
+GET /api/artifact?path=<gate_report_path> → load gate report JSON
+
+GET /api/log?path=<log_path> → open evidence logs
+
+GET /api/artifact?path=<artifact_path> → open evidence artifacts
+
+Expected pointers used
+
+gate_report pointer(s)
+
+evidence pointers inside report (logs/artifacts)
+
+UI screen behavior
+
+left pane: gates list (PASS/FAIL)
+
+main pane: predicates + remediation + evidence pointers (clickable)
+
+right drawer: opens evidence artifact/log
+
+6) Run Stage (targeted execution) (optional but supported)
+Button
+
+Run Stage (pick stage_id)
+
+Wrapper endpoint
+
+POST /api/run/stage
+
+Expected pointers returned
+
+manifest (updated)
+
+stage_report
+
+gate_report? (if stage triggers gates)
+
+wrapper logs[]
+
+UI screen behavior
+
+Run Detail refreshes pointers and stage timeline
+
+7) Verify (separate action)
+Button
+
+Verify
+
+Wrapper endpoint
+
+POST /api/verify
+
+Expected pointers returned
+
+verification_result
+
+proof_ledger?
+
+gate_report? (if verify triggers gate evaluation)
+
+logs[]
+
+UI screen behavior
+
+Verify screen:
+
+show ActionResultPanel
+
+open verification_result in drawer
+
+open proof_ledger in drawer if present
+
+open gate_report if present
+
+logs drawer available
+
+8) Proofs (browse ledger) (Phase 3 page, but deterministic)
+Navigation
+
+Proofs screen
+
+Wrapper endpoints
+
+GET /api/runs/:run_id → locate proof ledger pointer
+
+GET /api/artifact?path=<proof_ledger_path> → load ledger
+
+GET /api/artifact?path=<proof_object_path> → view proof object
+
+GET /api/log?path=<log_path> → view proof source logs
+
+UI screen behavior
+
+table: proof_id, type, applies_to, source pointer
+
+click row opens proof object; pointers open logs/artifacts
+
+9) Pack Kit
+Button
+
+Pack (choose variant internal/external)
+
+Wrapper endpoint
+
+POST /api/pack
+
+Expected pointers returned
+
+kit_manifest
+
+kit_entrypoint
+
+bundle_metadata
+
+bundle_export
+
+logs[]
+
+UI screen behavior
+
+Kits screen:
+
+show ActionResultPanel
+
+open kit_manifest and kit_entrypoint in drawer
+
+show bundle hash/metadata
+
+provide “copy export path” (since local)
+
+10) Repro (reproducibility check)
+Button
+
+Repro
+
+Wrapper endpoint
+
+POST /api/repro
+
+Expected pointers returned
+
+repro_report
+
+diff_report?
+
+logs[]
+
+UI screen behavior
+
+Commands or Repro screen:
+
+open repro_report
+
+if diff exists, highlight mismatch + link to diff
+
+logs drawer available
+
+11) Runs List + Run Detail reading (always available)
+Runs list
+
+GET /api/runs → show summaries
+
+Run detail
+
+GET /api/runs/:run_id → show pointers + statuses
+
+clicking any pointer uses:
+
+GET /api/artifact or GET /api/log
+
+Screen-to-artifact mapping (what each page must be able to render)
+
+Dashboard: run summary + latest manifest pointer + last action logs pointers
+
+Runs List: RunSummary list
+
+Run Detail: run_manifest + stage_report pointers + gate_report pointers
+
+Gate Failures: gate_report JSON + evidence pointers
+
+Verify: verification_result + logs (+ proof ledger optional)
+
+Kits: kit manifest + entrypoint + bundle metadata/export
+
+Proofs: proof ledger + proof objects + source logs
+
+Registries (later): registry JSON via artifact read
+
+“Expected pointers by action” checklist
+
+Doctor → report + logs
+
+Start Run → manifest + logs
+
+Advance/Stage → manifest + stage_report (+ gate_report?) + logs
+
+Verify → verification_result (+ proof_ledger?) (+ gate_report?) + logs
+
+Pack → kit_manifest + kit_entrypoint + bundle_metadata + bundle_export + logs
+
+Repro → repro_report (+ diff_report?) + logs
+
+That’s the complete, deterministic UI workflow map.

@@ -1,0 +1,263 @@
+Below is a step-by-step AXION system workflow reconstructed from what’s actually present in the two zips you uploaded:
+
+Axion (3).zip (the repo code + scaffolding)
+
+Docs zip.zip (your system PDFs: Agent Kit, Control Planes, Source of Truth, Knowledge Library, template groups, etc.)
+
+I’m describing it as a deterministic pipeline (what AXION is designed to do), and I’ll also note where the current repo is stubbed vs implemented.
+
+0) Repo boot + runtime root
+
+Goal: ensure the runtime artifact root exists and is consistent.
+
+Initialize runtime directory
+
+CLI: axion init
+
+Creates: .axion/ runtime area (gitignored)
+
+Runtime run root: .axion/runs/<run_id>/
+
+Repo evidence: Axion/src/cli/axion.ts runs cmdInit() before run creation, and .axion/runs is the artifact root.
+
+1) Run creation (Control Plane start)
+
+Goal: create a new run with a stable directory shape and a manifest spine.
+
+Create a new run_id + run directory
+
+CLI currently: axion run calls cmdRunControlPlane()
+
+Creates folders under .axion/runs/<run_id>/:
+
+standards/, canonical/, planning/, gates/, proof/, verification/, kit/, state/, state/handoff_packet/
+
+Writes:
+
+run_manifest.json
+
+placeholder standards/resolved_standards_snapshot.json
+
+placeholder canonical/canonical_spec.json
+
+Repo evidence: Axion/src/cli/commands/runControlPlane.ts writes those initial artifacts.
+
+2) Intake (validate + normalize) — designed stage
+
+Goal: take a submission and convert it into a canonical “normalized input” that downstream stages can depend on.
+
+Validate intake
+
+CLI exists: cmdValidateIntake
+
+Expected artifacts (from your system docs + architecture):
+
+submission
+
+normalized input
+
+submission record
+
+Current repo: cmdValidateIntake is stubbed (NotImplementedError).
+
+Repo evidence: Axion/src/cli/commands/validateIntake.ts exists and is stubbed. There is a full core/intake/* module set.
+
+3) Standards resolution — designed stage
+
+Goal: select and resolve the correct standards for this run deterministically.
+
+Load standards registries
+
+From repo structure: Axion/registries/ and Axion/libraries/ are the sources.
+
+Designed inputs:
+
+standards index
+
+applicability rules
+
+packs + precedence/conflict rules
+
+Designed output:
+
+standards applicability output (why selected)
+
+resolved standards snapshot (what rules apply, with versions and precedence decisions)
+
+Resolve standards → snapshot
+
+CLI exists: cmdResolveStandards (not currently executed by axion run stub flow)
+
+Current repo: likely stubbed/not wired into the axion run “1/6..6/6” path yet.
+
+Repo evidence: Axion/src/cli/commands/resolveStandards.ts exists. README describes standards snapshot as part of the artifact spine.
+
+4) Canonical build — designed stage
+
+Goal: build the canonical spec (the single source of truth for what is being built).
+
+Build canonical spec
+
+CLI exists: cmdBuildSpec (stubbed)
+
+Canonical artifacts (from docs and README):
+
+canonical/canonical_spec.json
+
+unknowns/assumptions (supported by src/core/canonical/unknowns.ts)
+
+Repo evidence: Axion/src/cli/commands/buildSpec.ts is stubbed; canonical modules exist.
+
+5) Template system — designed stage
+
+Goal: select templates based on run context + standards, then render “filled templates” into envelopes.
+
+Select templates
+
+Uses template registries and selection profiles.
+
+Output:
+
+template_selection_result
+
+Fill templates
+
+CLI exists: cmdFillTemplates (not in the current axion run stub execution list)
+
+Output:
+
+render_envelopes[]
+
+completeness report
+
+Repo evidence: Axion/src/cli/commands/fillTemplates.ts exists; template libraries exist under Axion/libraries/templates/*.
+
+6) Planning (work breakdown + acceptance + sequencing)
+
+Goal: translate the canonical spec + templates into a deterministic unit plan (1 target per unit) and define “done.”
+
+Generate planning artifacts
+
+In current stub flow, this is step [2/6] Generating planning artifacts... → cmdPlanWork()
+
+Outputs under planning/ (per README):
+
+work_breakdown.json
+
+acceptance_map.json
+
+sequencing_report.json
+
+Repo evidence: Axion/src/cli/commands/planWork.ts exists and is called by axion run.
+
+7) Gates (enforcement points)
+
+Goal: evaluate gates (predicate checks) against artifacts produced so far and require evidence.
+
+Run gates
+
+In current stub flow, this is step [3/6] Running gates... → cmdRunGates()
+
+Outputs under gates/:
+
+<gate_id>.gate_report.json (per README)
+
+Repo evidence: Axion/src/cli/commands/runGates.ts exists and is called by axion run. Gate engine modules exist in src/core/gates/*.
+
+8) Proof + evidence ledger
+
+Goal: record proofs (verification outputs, hashes, logs) and make PASS auditable.
+
+Write proof ledger
+
+In current stub flow, this is step [4/6] Writing proof ledger... → cmdWriteProof()
+
+Output:
+
+proof/proof_ledger.jsonl (per README)
+
+Repo evidence: Axion/src/cli/commands/writeProof.ts exists and is called. Proof modules exist in src/core/* (proof/verification related).
+
+9) Agent Kit packaging
+
+Goal: package everything the build agent needs into a deterministic kit.
+
+Package kit
+
+In current stub flow, this is step [5/6] Packaging kit... → cmdPackageKit()
+
+Outputs under kit/ (per README):
+
+kit_manifest.json
+
+entrypoint.json
+
+version_stamp.json
+
+(Repo also has dedicated kit build modules: src/core/kit/*)
+
+Repo evidence: Axion/src/cli/commands/packageKit.ts is executed; kit core modules exist.
+
+10) State snapshot + verification
+
+Goal: snapshot run state for resume/hand-off and produce verification completion outputs.
+
+Write state snapshot
+
+In current stub flow: [6/6] Writing state + verification... → cmdWriteState()
+
+Outputs under state/ (per README):
+
+state_snapshot.json
+
+resume_plan.json
+
+handoff_packet/ (directory)
+
+Verify
+
+In current stub flow: cmdVerify()
+
+Output under verification/:
+
+completion_report.json
+
+Repo evidence: both commands are called by Axion/src/cli/axion.ts.
+
+11) Optional lifecycle actions (present as CLI scaffolding)
+
+Goal: support long-term reproducibility and release flows.
+
+Repro
+
+CLI exists: cmdRepro (to re-run from manifest/pins and compare outputs)
+
+Release / Export bundle
+
+CLI exists: cmdRelease, cmdExportBundle, cmdGenerateKit
+
+Used to move from “kit created” to “kit distributed” deterministically.
+
+Repo evidence: these commands exist under Axion/src/cli/commands/.
+
+What the current repo actually executes today (stub pipeline)
+
+When you run axion run right now, the executed sequence is:
+
+init .axion/
+
+create run manifest + placeholder standards + placeholder canonical
+
+planning artifacts
+
+gates
+
+proof ledger
+
+kit packaging
+
+state snapshot + verification report
+
+Repo evidence: Axion/src/cli/axion.ts prints [1/6]..[6/6] and calls exactly those functions.
+
+The other stages (intake validation, canonical build, standards resolution, template fill) are present as modules/commands but are not yet wired into the stub run flow.
