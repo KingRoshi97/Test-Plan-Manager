@@ -24,16 +24,31 @@ Full Mechanics pipeline implemented with 10 stages, 7 enforced gates (G1–G6, G
 - **8 non-empty library JSON files** (intake schemas, standards packs, template index with 446 entries)
 - **11 non-empty test files** (unit + integration + helpers)
 
-## Project Structure
-Two top-level directories: `Axion/` (pipeline engine) and `App/` (internal UI).
+## Architecture
+Three top-level directories: `App/` (UI) → `Controller/` (wrapper API) → `Axion/` (pipeline engine).
+- App calls Controller via allowlisted REST endpoints
+- Controller executes Axion CLI commands as child processes
+- Controller returns pointers to repo artifacts; App renders them via pointer reads
+- Both App and Controller are currently scaffolds (typed interfaces, empty function bodies)
 
-### App/ — Internal React UI
-React + Vite + TypeScript frontend for browsing Axion runs, templates, registries, proofs, and kits.
-- Stack: React 19, Vite 6, TypeScript 5, react-router-dom 7
-- Dev server: port 5000 (webview workflow `cd App && npx vite`)
-- `App/src/routes/` — 7 pages: Dashboard, Runs, RunDetail, Registries, Templates, Proofs, Kits
-- `App/src/components/` — 5 shared components: Layout, Nav, DataTable, JsonViewer, StatusBadge
-- `App/src/lib/` — api.ts (fetch helpers), paths.ts (route constants), types.ts (domain types)
+## Project Structure
+
+### App/ — Operator Console (React + Vite + TypeScript)
+Internal-only UI for operating AXION. Port 5000 (webview workflow).
+- **11 screens**: Dashboard(/), Runs(/runs), RunDetail(/runs/:runId), GateFailures(/runs/:runId/gates), Verify(/runs/:runId/verify), Kits(/runs/:runId/kits), ProofLedger(/runs/:runId/proofs), Registries(/registries), Commands(/commands), Knowledge(/knowledge), Settings(/settings)
+- **15 components**: Layout, Nav, StatusBadge, IdPill, DataTable, JsonViewer, ArtifactLink, ArtifactDrawer, LogDrawer, ActionBar, StartRunForm, ActionResultPanel, StageTimeline, GateReportViewer
+- **lib/**: types.ts (locked data model D-01–D-05), api.ts (typed client C-06), paths.ts (route map)
+- MVP phases: Phase 1 (Dashboard, Runs, RunDetail, GateFailures) → Phase 2 (Verify, Kits) → Phase 3 (Registries, Proofs)
+
+### Controller/ — Local Wrapper API (Express + TypeScript)
+Local-only API service (port 8000, console workflow). Allowlisted command execution + audit.
+- **API surface (12 endpoints)**:
+  - POST: /api/doctor, /api/run/start, /api/run/advance, /api/run/stage, /api/run/rerun-stage, /api/run/close, /api/verify, /api/pack, /api/repro
+  - GET: /api/runs, /api/runs/:run_id, /api/artifact?path=, /api/log?path=
+- **Allowlist (9 actions)**: doctor, run_start, run_advance, run_stage, run_rerun_stage, run_close, verify, pack, repro
+- **Security**: X-Repo-Token for POST, allowed read roots (runs/, registries/, bundles/, knowledge/, Controller/storage/)
+- **Audit**: append-only ui_action_log.jsonl, per-action log dirs under Controller/storage/logs/<action_id>/
+- **Folder tree**: src/routes/ (7 files), src/core/schemas/ (9 files), src/core/exec/ (5 files), src/core/artifacts/ (4 files), src/core/audit/ (2 files)
 
 ### Axion/ — Pipeline Engine
 All source code lives under `Axion/`:

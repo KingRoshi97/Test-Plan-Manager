@@ -1,84 +1,181 @@
-export interface Run {
-  run_id: string;
-  status: 'pass' | 'fail' | 'running' | 'pending';
-  created_at: string;
-  stages: StageReport[];
-  gates: GateReport[];
-}
+export type OutcomeStatus = 'PASS' | 'FAIL' | 'ERROR';
 
-export interface StageReport {
-  stage_id: string;
-  status: 'pass' | 'fail' | 'skip' | 'not_started' | 'in_progress';
-  started_at: string;
-  ended_at: string;
-  artifacts: string[];
-}
+export type RunStatus =
+  | 'QUEUED'
+  | 'RUNNING'
+  | 'GATED'
+  | 'FAILED'
+  | 'RELEASED'
+  | 'ARCHIVED'
+  | 'PAUSED'
+  | 'CANCELLED';
 
-export interface GateReport {
-  gate_id: string;
-  stage_id: string;
-  status: 'pass' | 'fail';
-  evaluated_at: string;
-  checks: GateCheck[];
-  failure_codes: string[];
-}
+export type StageStatus =
+  | 'NOT_STARTED'
+  | 'IN_PROGRESS'
+  | 'PASS'
+  | 'FAIL'
+  | 'SKIP';
 
-export interface GateCheck {
-  check_id: string;
-  status: 'pass' | 'fail';
-  failure_code: string | null;
-  evidence: EvidenceEntry[];
-}
+export type RiskClass = 'prototype' | 'production' | 'compliance';
 
-export interface EvidenceEntry {
-  type: string;
+export type ExecutorType = 'internal' | 'external';
+
+export type PointerKind = 'artifact' | 'log';
+
+export interface Pointer {
+  kind: PointerKind;
   path: string;
-  hash?: string;
 }
 
-export interface ProofEntry {
-  proof_id: string;
-  proof_type: string;
+export interface ActionRef {
+  action_id: string;
+  timestamp: string;
+  action_type: string;
+  outcome: OutcomeStatus;
+}
+
+export interface RunSummary {
+  run_id: string;
+  status: RunStatus;
+  mode_id?: string;
+  run_profile_id?: string;
+  risk_class?: RiskClass;
+  current_stage?: string;
+  updated_at: string;
+}
+
+export interface DoctorRequest {
+  [key: string]: never;
+}
+
+export interface StartRunRequest {
+  mode_id?: string;
+  run_profile_id?: string;
+  risk_class: RiskClass;
+  executor_type_default: ExecutorType;
+  targets: {
+    platforms: string[];
+    domains?: string[];
+    stack?: Record<string, string>;
+  };
+}
+
+export interface AdvanceRunRequest {
+  run_id: string;
+}
+
+export interface RunStageRequest {
   run_id: string;
   stage_id: string;
-  created_at: string;
-  payload: Record<string, unknown>;
 }
 
-export interface KitManifest {
-  kit_id: string;
+export interface RerunStageRequest {
   run_id: string;
-  version: string;
-  created_at: string;
-  entry_point: string;
-  artifacts: KitArtifact[];
+  stage_id: string;
 }
 
-export interface KitArtifact {
+export interface CloseRunRequest {
+  run_id: string;
+}
+
+export interface VerifyRequest {
+  run_id: string;
+}
+
+export interface PackRequest {
+  run_id: string;
+  kit_variant: ExecutorType;
+}
+
+export interface ReproRequest {
+  run_id: string;
+}
+
+export interface ArtifactReadRequest {
   path: string;
-  hash: string;
-  size: number;
 }
 
-export interface RegistryEntry {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  data: Record<string, unknown>;
+export interface LogReadRequest {
+  path: string;
+  tail?: boolean;
+  full?: boolean;
 }
 
-export interface Template {
-  template_id: string;
-  title: string;
-  type: string;
-  template_version: string;
-  file_path: string;
-  status: string;
-  requiredness: string;
-  compliance_gate_id: string;
+export interface DoctorResponse {
+  action: ActionRef;
+  report: Pointer;
+  logs: Pointer[];
 }
 
-export type RunStatus = 'pass' | 'fail' | 'running' | 'pending';
-export type StageStatus = 'pass' | 'fail' | 'skip' | 'not_started' | 'in_progress';
-export type GateStatus = 'pass' | 'fail';
+export interface StartRunResponse {
+  action: ActionRef;
+  run: RunSummary;
+  manifest: Pointer;
+}
+
+export interface AdvanceRunResponse {
+  action: ActionRef;
+  run: RunSummary;
+  manifest: Pointer;
+  stage_report?: Pointer;
+  gate_report?: Pointer;
+  logs?: Pointer[];
+}
+
+export interface RunStageResponse {
+  action: ActionRef;
+  manifest: Pointer;
+  stage_report: Pointer;
+  gate_report?: Pointer;
+  logs?: Pointer[];
+}
+
+export interface VerifyResponse {
+  action: ActionRef;
+  verification_result: Pointer;
+  proof_ledger?: Pointer;
+  gate_report?: Pointer;
+  logs: Pointer[];
+}
+
+export interface PackResponse {
+  action: ActionRef;
+  kit: { kit_id: string; variant: ExecutorType };
+  kit_manifest: Pointer;
+  kit_entrypoint: Pointer;
+  bundle_metadata: Pointer;
+  bundle_export: Pointer;
+  logs: Pointer[];
+}
+
+export interface ReproResponse {
+  action: ActionRef;
+  repro_report: Pointer;
+  diff_report?: Pointer;
+  logs: Pointer[];
+}
+
+export interface RunsListResponse {
+  runs: RunSummary[];
+}
+
+export interface RunDetailResponse {
+  run: RunSummary;
+  manifest: Pointer;
+  stage_reports: Pointer[];
+  gate_reports: Pointer[];
+}
+
+export interface ArtifactReadResponse {
+  path: string;
+  content_type: string;
+  content: unknown;
+}
+
+export interface LogReadResponse {
+  path: string;
+  content_type: string;
+  tail: boolean;
+  content: string;
+}

@@ -3,9 +3,9 @@ import Nav from './Nav';
 
 export default function Layout() {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+    <div>
       <Nav />
-      <main style={{ flex: 1, padding: '32px', overflow: 'auto' }}>
+      <main>
         <Outlet />
       </main>
     </div>
