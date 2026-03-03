@@ -1,0 +1,189 @@
+## End-to-End Operator Workflow (UI-driven run lifecycle)
+
+### F-00 Purpose
+
+Define the canonical “how you use AXION through the UI” flow so the console is predictable and testable.
+
+---
+
+## F-01 Baseline flow (normal run)
+
+### Step 1 — Health check
+
+**UI action**
+
+* click **Doctor**
+
+**Wrapper call**
+
+* `POST /api/doctor`
+
+**UI renders**
+
+* doctor report
+* wrapper logs
+* if FAIL: stop and fix registry/schema issues before starting a run
+
+---
+
+### Step 2 — Start run
+
+**UI action**
+
+* fill form: `mode_id` and/or `run_profile_id`, `risk_class`, `executor_type_default`, `targets`
+* click **Start Run**
+
+**Wrapper call**
+
+* `POST /api/run/start`
+
+**UI renders**
+
+* `run_manifest`
+* wrapper logs
+
+**Success condition**
+
+* run_manifest exists and shows state `RUNNING` (or `QUEUED` if you support queueing)
+
+---
+
+### Step 3 — Advance pipeline
+
+**UI action**
+
+* click **Advance** (repeat until completion or gate stop)
+
+**Wrapper call**
+
+* `POST /api/run/advance`
+
+**UI renders after each advance**
+
+* updated `run_manifest`
+* latest `stage_report`
+* `gate_report` if returned
+* wrapper logs
+
+**Stop conditions**
+
+* if manifest shows `GATED`: go to Step 4
+* if manifest shows `FAILED`: go to Step 6
+* if manifest shows `RELEASED`: go to Step 5
+
+---
+
+### Step 4 — Resolve gate stop (GATED)
+
+**UI action**
+
+* open **Gate Failures**
+* review remediation and evidence pointers
+* if fix required, execute the appropriate follow-up stage or rerun
+
+**Wrapper calls**
+
+* optional: `POST /api/run/stage` (run a specific stage)
+* optional: `POST /api/run/rerun-stage` (rerun a stage)
+
+**UI renders**
+
+* gate report detail (predicate-level)
+* referenced artifacts/logs
+
+**Exit condition**
+
+* once gates pass, advance again
+
+---
+
+### Step 5 — Package kit (if profile requires)
+
+**UI action**
+
+* choose kit variant (internal/external)
+* click **Pack**
+
+**Wrapper call**
+
+* `POST /api/pack`
+
+**UI renders**
+
+* kit manifest + entrypoint + bundle metadata + export pointer
+* wrapper logs
+
+**Success condition**
+
+* kit artifacts exist and validate; bundle hash is shown
+
+---
+
+### Step 6 — Verify (optional or required by profile)
+
+**UI action**
+
+* click **Verify**
+
+**Wrapper call**
+
+* `POST /api/verify`
+
+**UI renders**
+
+* verification result
+* proof ledger (if present)
+* gate report (if returned)
+* wrapper logs
+
+**Exit condition**
+
+* if verify gates fail, return to Step 4
+
+---
+
+### Step 7 — Close/archive (if supported)
+
+**UI action**
+
+* click **Close Run** (only if you support it)
+
+**Wrapper call**
+
+* `POST /api/run/close`
+
+**UI renders**
+
+* final manifest/status and archive pointers
+
+---
+
+## F-02 Failure flow (run FAILED)
+
+### Step A — Identify failure point
+
+**UI**
+
+* open Run Detail
+* inspect failing stage report + logs
+
+### Step B — Remediate
+
+**UI**
+
+* fix config/registry issue (outside UI if needed)
+* rerun the failing stage via UI if supported
+
+### Step C — Preserve evidence
+
+**Rule**
+
+* do not delete logs/reports; reruns create new attempts
+
+---
+
+## F-03 Hard boundaries (locked)
+
+* UI never bypasses gates; it can only trigger allowed reruns/stages
+* FAIL outcomes always come with logs and reports
+* runs are operated through manifest truth, not UI assumptions

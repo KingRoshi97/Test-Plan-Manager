@@ -1,0 +1,177 @@
+Global UI Prompt — AXION Operator Console (Internal Repo UI)
+
+Design a clean, premium, internal operator console UI for a developer repo called AXION. This is not a public web app. It is a local-only UI that represents the repo state and controls AXION via allowlisted actions (Doctor, Start Run, Advance, Run Stage, Verify, Pack, Repro). The UI reads artifacts through pointers and displays run manifests, stage reports, gate reports, proof ledgers, logs, and kit manifests.
+
+Style
+
+Dark mode default, with a light mode option.
+
+Clean, minimal, “developer cockpit” aesthetic.
+
+High contrast but not harsh; muted neutrals with 1–2 subtle accent colors.
+
+Use a modern sans-serif; strong typography hierarchy.
+
+Rounded corners, soft shadows, subtle borders.
+
+Motion: minimal, fast transitions; no flashy animations.
+
+Components should feel like a professional ops console (think GitHub Actions + Datadog + Linear vibes).
+
+Layout (global)
+
+App shell with:
+
+Left sidebar navigation (icons + labels).
+
+Top header bar with:
+
+Repo name: “AXION Test Suite”
+
+Connection status indicator (Wrapper: Connected/Disconnected)
+
+Current run pill (if active): RUN-xxxx + status badge
+
+Quick action buttons: Doctor, Start Run, Advance, Verify, Pack
+
+Main content area with page title + contextual actions.
+
+Right-side drawer system for viewing artifacts/logs (slides in; supports JSON view and log view).
+
+Consistent “Status Badges” for: PASS/FAIL/ERROR and run/stage states.
+
+All lists should be data-table style with sorting and row click navigation.
+
+Navigation (sidebar)
+
+Dashboard
+
+Runs
+
+Gate Failures
+
+Verify
+
+Kits
+
+Registries (read-only)
+
+Proofs
+
+Knowledge (optional / future)
+
+Settings (local)
+
+Core screens and behavior
+
+Dashboard
+
+“System Health” card: last Doctor outcome, timestamp, link to report.
+
+“Latest Run” card: run_id, status, current stage, updated_at, last gate result.
+
+“Quick Actions” panel: buttons for Doctor / Start Run / Advance / Verify / Pack / Repro.
+
+“Recent Actions” list: last 10 wrapper actions with outcome + link to logs.
+
+Runs List
+
+Table of runs: run_id, status, mode/profile, risk class, current stage, updated time.
+
+Clicking a run opens Run Detail.
+
+Run Detail
+
+Stage timeline component showing ordered stages with statuses.
+
+Tabs: Overview | Artifacts | Gates | Logs | Proofs | Kit
+
+Overview shows run_manifest summary (run context, pins, effective config).
+
+Artifacts shows pointers grouped by stage.
+
+Gates shows latest gate report summary and links to failure detail.
+
+Logs shows common logs for that run (tail view).
+
+Provide buttons: Advance, Run Stage (select stage), Verify, Pack.
+
+Gate Failures
+
+Left panel: gate list with PASS/FAIL.
+
+Main panel: selected gate details:
+
+predicate list with pass/fail
+
+remediation steps
+
+evidence pointers as clickable links opening the right drawer
+
+Show “Missing evidence types” clearly.
+
+Verify
+
+A single page to trigger Verify for a run and view results.
+
+Show verification_run_result JSON and logs.
+
+Show proof_ledger link if present.
+
+Kits
+
+Show produced kits/bundles for the run.
+
+Kit detail view: kit_manifest inventory table, kit_entrypoint viewer, bundle hash and export pointer.
+
+Registries (read-only)
+
+Left panel: registry list (standards, templates, gates, proof types, schema registry, version registry).
+
+Main panel: JSON viewer with validation status badge (from doctor if available).
+
+No editing controls (read-only).
+
+Proofs
+
+Proof ledger table: proof_id, type, applies_to, source pointer.
+
+Clicking opens proof object and source logs via right drawer.
+
+Components (global)
+
+StatusBadge (PASS/FAIL/ERROR; run/stage states)
+
+DataTable (runs, proofs, artifacts inventory)
+
+JsonViewer (collapsible tree, copy path)
+
+LogViewer (tail with load more, search within)
+
+ArtifactLink (pointer chip that opens drawer)
+
+Drawer (ArtifactDrawer/LogDrawer)
+
+ActionResultPanel (shows action_id, outcome, returned pointers)
+
+StartRunModal (mode/profile/risk/executor/targets form)
+
+UX rules
+
+Treat FAIL as a valid outcome (gate failure) with actionable remediation.
+
+Treat ERROR as wrapper/system failure with logs highlighted.
+
+Always show returned pointers and provide one-click open in drawer.
+
+Never hide logs; logs are always accessible.
+
+No background autos; actions are user-triggered.
+
+Deliver:
+
+A full UI layout with consistent spacing and components
+
+Screen mockups for Dashboard, Runs List, Run Detail, Gate Failures, Kits
+
+Component library styles for badges, tables, drawers, and viewers

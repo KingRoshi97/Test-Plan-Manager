@@ -1,0 +1,186 @@
+## App Component Inventory (mapped to MVP screens)
+
+### C-00 Purpose
+
+Define the minimum reusable UI components so screens stay consistent and you don’t rebuild UI logic per page.
+
+---
+
+## C-01 Layout components
+
+### 1) `Layout`
+
+**Used by:** all screens
+**Responsibilities**
+
+* global page frame (header/sidebar)
+* route outlet
+* global error boundary area (shows wrapper connectivity/errors)
+
+### 2) `Nav`
+
+**Used by:** all screens
+**Responsibilities**
+
+* links: Dashboard, Runs, Run Detail (via routing), Gates, Verify, Kits, Registries (later), Proofs (later)
+
+---
+
+## C-02 Status and identity components
+
+### 3) `StatusBadge`
+
+**Used by:** Dashboard, Runs List, Run Detail, Gate Failures
+**Responsibilities**
+
+* render status enums consistently:
+
+  * Run: QUEUED/RUNNING/GATED/FAILED/RELEASED/ARCHIVED
+  * Stage: NOT_STARTED/IN_PROGRESS/PASS/FAIL/SKIP
+  * Action outcome: PASS/FAIL/ERROR
+
+### 4) `IdPill`
+
+**Used by:** Runs List, Run Detail
+**Responsibilities**
+
+* display run_id/action_id/kit_id with copy button
+
+---
+
+## C-03 Data display components
+
+### 5) `DataTable`
+
+**Used by:** Runs List, unit lists (later), proof lists (later)
+**Responsibilities**
+
+* sorting (client-side)
+* row click navigation
+* optional filter/search input
+
+### 6) `JsonViewer`
+
+**Used by:** Run Detail, Gate Failures, Verify, Kits, Registries
+**Responsibilities**
+
+* pretty render JSON
+* collapse/expand nodes
+* show schema_version/pinset refs if present
+
+### 7) `ArtifactLink`
+
+**Used by:** anywhere pointers are shown
+**Responsibilities**
+
+* takes a Pointer `{kind, path}`
+* opens Artifact/Log drawer to fetch and render content
+
+### 8) `ArtifactDrawer`
+
+**Used by:** all screens with artifacts/logs
+**Responsibilities**
+
+* fetches via `GET /api/artifact?path=...`
+* shows JSON/text with size handling
+* displays content_type and path
+
+### 9) `LogDrawer`
+
+**Used by:** Gate Failures, Verify, Run Detail
+**Responsibilities**
+
+* fetches via `GET /api/log?path=...`
+* default tail view with “load more” (still capped)
+* highlights common patterns (optional; not required)
+
+---
+
+## C-04 Action components (control surface)
+
+### 10) `ActionBar`
+
+**Used by:** Dashboard, Run Detail
+**Responsibilities**
+
+* standardized button group for:
+
+  * Doctor
+  * Start Run
+  * Advance
+  * Verify
+  * Pack
+  * Repro
+* shows last action outcome + link to wrapper logs
+
+### 11) `StartRunForm`
+
+**Used by:** Dashboard
+**Responsibilities**
+
+* fields: mode_id/run_profile_id/risk_class/executor_type/targets
+* validates required fields before submit
+* calls `POST /api/run/start`
+
+### 12) `ActionResultPanel`
+
+**Used by:** Dashboard, Verify, Kits
+**Responsibilities**
+
+* render `action` object (action_id, outcome)
+* list returned artifact pointers
+* list returned log pointers (openable)
+
+---
+
+## C-05 Page-level composites
+
+### 13) `StageTimeline`
+
+**Used by:** Run Detail
+**Responsibilities**
+
+* render stages in order with status
+* click stage → open stage report pointer
+
+### 14) `GateReportViewer`
+
+**Used by:** Gate Failures, Run Detail
+**Responsibilities**
+
+* list gates
+* show predicates and remediation
+* show evidence pointers as ArtifactLinks
+
+---
+
+## C-06 Client library (App-side)
+
+### 15) `apiClient`
+
+**Used by:** all data fetch and actions
+**Responsibilities**
+
+* wrapper base URL
+* attaches token header for POST
+* typed methods:
+
+  * doctor()
+  * startRun()
+  * advanceRun()
+  * runStage()
+  * verify()
+  * pack()
+  * repro()
+  * runsList()
+  * runDetail()
+  * readArtifact(path)
+  * readLog(path)
+
+---
+
+## C-07 Hard boundaries (locked)
+
+* App components do not interpret or mutate repo state.
+* Every content view is driven by pointers returned by wrapper.
+* No “edit registry” components in MVP.

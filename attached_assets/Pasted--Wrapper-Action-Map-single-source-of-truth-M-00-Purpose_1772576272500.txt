@@ -1,0 +1,182 @@
+## Wrapper Action Map (single source of truth)
+
+### M-00 Purpose
+
+Define one deterministic table that maps:
+**UI action → API endpoint → AXION CLI invocation → required returned pointers → audit fields**
+
+This is what prevents drift between App, Controller, and AXION.
+
+---
+
+## M-01 Action allowlist table
+
+### M-01.1 `doctor`
+
+* **API:** `POST /api/doctor`
+* **CLI template:** `axion doctor`
+* **Must return pointers**
+
+  * `report` (doctor report artifact)
+  * `logs[]` (doctor log)
+* **Audit must record**
+
+  * `action_type=doctor`
+  * resolved CLI args (none)
+
+---
+
+### M-01.2 `run_start`
+
+* **API:** `POST /api/run/start`
+* **CLI template:** `axion run --mode {mode_id?} --profile {run_profile_id?} --risk {risk_class} --executor {executor_type_default} --targets {targets...}`
+* **Must return pointers**
+
+  * `manifest` (run_manifest)
+  * `logs[]` (run start log)
+* **Audit must record**
+
+  * `mode_id`, `run_profile_id`, `risk_class`, `executor_type_default`, `targets`
+
+---
+
+### M-01.3 `run_advance`
+
+* **API:** `POST /api/run/advance`
+* **CLI template:** `axion run --advance --run {run_id}` *(or your equivalent)*
+* **Must return pointers**
+
+  * `manifest` (updated)
+  * `stage_report` (latest stage attempt)
+  * `gate_report?` (only if evaluated)
+  * `logs[]` (advance log)
+* **Audit must record**
+
+  * `run_id`
+
+---
+
+### M-01.4 `run_stage`
+
+* **API:** `POST /api/run/stage`
+* **CLI template:** `axion stage --run {run_id} --stage {stage_id}`
+* **Must return pointers**
+
+  * `manifest` (updated)
+  * `stage_report`
+  * `gate_report?` (if evaluated)
+  * `logs[]`
+* **Audit must record**
+
+  * `run_id`, `stage_id`
+
+---
+
+### M-01.5 `run_rerun_stage`
+
+* **API:** `POST /api/run/rerun-stage`
+* **CLI template:** `axion stage --rerun --run {run_id} --stage {stage_id}`
+* **Must return pointers**
+
+  * `manifest` (updated)
+  * `stage_report` *(new attempt)*
+  * `logs[]`
+* **Audit must record**
+
+  * `run_id`, `stage_id`, attempt linkage if available
+
+---
+
+### M-01.6 `verify`
+
+* **API:** `POST /api/verify`
+* **CLI template:** `axion verify --run {run_id}`
+* **Must return pointers**
+
+  * `verification_result`
+  * `proof_ledger?` *(if produced)*
+  * `gate_report?` *(if verify triggers gates)*
+  * `logs[]`
+* **Audit must record**
+
+  * `run_id`
+
+---
+
+### M-01.7 `pack`
+
+* **API:** `POST /api/pack`
+* **CLI template:** `axion pack --run {run_id} --variant {kit_variant}`
+* **Must return pointers**
+
+  * `kit_manifest`
+  * `kit_entrypoint`
+  * `bundle_metadata`
+  * `bundle_export`
+  * `logs[]`
+* **Audit must record**
+
+  * `run_id`, `kit_variant`
+
+---
+
+### M-01.8 `repro`
+
+* **API:** `POST /api/repro`
+* **CLI template:** `axion repro --run {run_id}` *(or `--pinset {pinset_ref}` if supported)*
+* **Must return pointers**
+
+  * `repro_report`
+  * `diff_report?` *(if mismatch or configured)*
+  * `logs[]`
+* **Audit must record**
+
+  * `run_id` or `pinset_ref`
+
+---
+
+## M-02 Read actions (non-exec)
+
+These never invoke CLI.
+
+### M-02.1 `runs_list`
+
+* **API:** `GET /api/runs`
+* **Source:** build from `Axion/runs/*/run_manifest.json` (or run index)
+* **Must return**
+
+  * `runs[]` (RunSummary list)
+
+### M-02.2 `run_detail`
+
+* **API:** `GET /api/runs/:run_id`
+* **Source:** run_manifest + pointers
+* **Must return**
+
+  * manifest pointer
+  * stage report pointers (if present)
+  * gate report pointers (if present)
+
+### M-02.3 `artifact_read`
+
+* **API:** `GET /api/artifact?path=...`
+* **Source:** repo file read (allowlisted roots)
+* **Must return**
+
+  * content + content_type + path
+
+### M-02.4 `log_read`
+
+* **API:** `GET /api/log?path=...`
+* **Source:** repo file read (allowlisted roots)
+* **Must return**
+
+  * content (tail/full per request) + content_type + path
+
+---
+
+## M-03 Hard boundaries (locked)
+
+* Any action not in this map is rejected.
+* Any request fields outside the action schema are rejected.
+* Any pointer returned must be within allowed read roots and must dereference.

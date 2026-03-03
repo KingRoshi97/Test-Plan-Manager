@@ -1,0 +1,282 @@
+UI → Wrapper API Schemas (request/response contracts)
+C-00 Purpose
+
+Lock request/response shapes so:
+
+UI is fully typed and deterministic
+
+wrapper stays allowlisted and auditable
+
+UI renders artifacts by pointers (repo remains source of truth)
+
+All schemas below are “minimum required fields.” You can extend later.
+
+C-01 Common Types
+C-01.1 OutcomeStatus
+
+PASS | FAIL | ERROR
+
+C-01.2 Pointer
+
+A resolvable reference to a repo artifact/log.
+
+kind: artifact | log
+
+path: string
+
+C-01.3 ActionRef
+
+action_id: string
+
+timestamp: string (ISO)
+
+action_type: string
+
+outcome: OutcomeStatus
+
+C-01.4 RunSummary
+
+run_id: string
+
+status: QUEUED | RUNNING | GATED | FAILED | RELEASED | ARCHIVED | PAUSED | CANCELLED
+
+mode_id?: string
+
+run_profile_id?: string
+
+risk_class?: prototype | production | compliance
+
+current_stage?: string
+
+updated_at: string (ISO)
+
+C-02 POST /api/doctor
+Request
+{}
+Response
+{
+  "action": {
+    "action_id": "ACT-...",
+    "timestamp": "2026-03-03T13:00:00Z",
+    "action_type": "doctor",
+    "outcome": "PASS"
+  },
+  "report": { "kind": "artifact", "path": "Axion/runs/.../doctor_report.json" },
+  "logs": [{ "kind": "log", "path": "Axion/runs/.../logs/doctor.log" }]
+}
+
+Rules
+
+response always returns a report pointer, even on FAIL/ERROR
+
+C-03 POST /api/run/start
+Request
+{
+  "mode_id": "MM-01",
+  "run_profile_id": "PROFILE-API-BASE",
+  "risk_class": "prototype",
+  "executor_type_default": "internal",
+  "targets": {
+    "platforms": ["api"],
+    "domains": ["auth", "users"],
+    "stack": { "backend": "node", "db": "postgres" }
+  }
+}
+
+Required
+
+at least one of: mode_id or run_profile_id
+
+risk_class
+
+executor_type_default
+
+targets.platforms
+
+Response
+{
+  "action": {
+    "action_id": "ACT-...",
+    "timestamp": "2026-03-03T13:02:00Z",
+    "action_type": "run_start",
+    "outcome": "PASS"
+  },
+  "run": {
+    "run_id": "RUN-...",
+    "status": "RUNNING",
+    "mode_id": "MM-01",
+    "run_profile_id": "PROFILE-API-BASE",
+    "risk_class": "prototype",
+    "current_stage": "S0_INIT",
+    "updated_at": "2026-03-03T13:02:00Z"
+  },
+  "manifest": { "kind": "artifact", "path": "Axion/runs/RUN-.../run_manifest.json" }
+}
+
+Rules
+
+if start fails, outcome=FAIL|ERROR and manifest may be omitted, but wrapper must return logs pointer(s)
+
+C-04 POST /api/run/advance
+Request
+{ "run_id": "RUN-..." }
+Response
+{
+  "action": {
+    "action_id": "ACT-...",
+    "timestamp": "2026-03-03T13:05:00Z",
+    "action_type": "run_advance",
+    "outcome": "PASS"
+  },
+  "run": {
+    "run_id": "RUN-...",
+    "status": "RUNNING",
+    "current_stage": "S3_STANDARDS_RESOLUTION",
+    "updated_at": "2026-03-03T13:05:00Z"
+  },
+  "manifest": { "kind": "artifact", "path": "Axion/runs/RUN-.../run_manifest.json" },
+  "stage_report": { "kind": "artifact", "path": "Axion/runs/RUN-.../stages/S3/report.json" },
+  "gate_report": { "kind": "artifact", "path": "Axion/runs/RUN-.../gate_report.json" }
+}
+
+Rules
+
+gate_report is optional and only present if a gating point was evaluated in that advance
+
+C-05 POST /api/run/stage
+Request
+{ "run_id": "RUN-...", "stage_id": "S5_TEMPLATE_SELECTION" }
+Response
+{
+  "action": {
+    "action_id": "ACT-...",
+    "timestamp": "2026-03-03T13:07:00Z",
+    "action_type": "run_stage",
+    "outcome": "PASS"
+  },
+  "manifest": { "kind": "artifact", "path": "Axion/runs/RUN-.../run_manifest.json" },
+  "stage_report": { "kind": "artifact", "path": "Axion/runs/RUN-.../stages/S5/report.json" },
+  "gate_report": { "kind": "artifact", "path": "Axion/runs/RUN-.../gate_report.json" }
+}
+C-06 POST /api/verify
+Request
+{ "run_id": "RUN-..." }
+Response
+{
+  "action": {
+    "action_id": "ACT-...",
+    "timestamp": "2026-03-03T13:12:00Z",
+    "action_type": "verify",
+    "outcome": "PASS"
+  },
+  "verification_result": { "kind": "artifact", "path": "Axion/runs/RUN-.../verification/result.json" },
+  "proof_ledger": { "kind": "artifact", "path": "Axion/runs/RUN-.../proof/ledger.json" },
+  "gate_report": { "kind": "artifact", "path": "Axion/runs/RUN-.../gate_report.json" },
+  "logs": [{ "kind": "log", "path": "Axion/runs/RUN-.../logs/verify.log" }]
+}
+
+Rules
+
+proof_ledger may be omitted if verification is configured without ledger capture (but then gate policies must reflect that)
+
+C-07 POST /api/pack
+Request
+{ "run_id": "RUN-...", "kit_variant": "external" }
+Response
+{
+  "action": {
+    "action_id": "ACT-...",
+    "timestamp": "2026-03-03T13:20:00Z",
+    "action_type": "pack",
+    "outcome": "PASS"
+  },
+  "kit": {
+    "kit_id": "KIT-...",
+    "variant": "external"
+  },
+  "kit_manifest": { "kind": "artifact", "path": "Axion/runs/RUN-.../kit/manifest.json" },
+  "kit_entrypoint": { "kind": "artifact", "path": "Axion/runs/RUN-.../kit/entrypoint.json" },
+  "bundle_export": { "kind": "artifact", "path": "Axion/bundles/KIT-.../bundle.zip" },
+  "bundle_metadata": { "kind": "artifact", "path": "Axion/bundles/KIT-.../bundle_metadata.json" },
+  "logs": [{ "kind": "log", "path": "Axion/runs/RUN-.../logs/pack.log" }]
+}
+C-08 POST /api/repro
+Request
+{ "run_id": "RUN-..." }
+Response
+{
+  "action": {
+    "action_id": "ACT-...",
+    "timestamp": "2026-03-03T13:30:00Z",
+    "action_type": "repro",
+    "outcome": "PASS"
+  },
+  "repro_report": { "kind": "artifact", "path": "Axion/runs/RUN-.../repro/report.json" },
+  "diff_report": { "kind": "artifact", "path": "Axion/runs/RUN-.../repro/diff.json" },
+  "logs": [{ "kind": "log", "path": "Axion/runs/RUN-.../logs/repro.log" }]
+}
+
+Rules
+
+diff_report present only on mismatch or when configured to always emit
+
+C-09 Read APIs
+GET /api/runs
+Response
+{
+  "runs": [
+    {
+      "run_id": "RUN-...",
+      "status": "RUNNING",
+      "mode_id": "MM-01",
+      "run_profile_id": "PROFILE-API-BASE",
+      "risk_class": "prototype",
+      "current_stage": "S3_STANDARDS_RESOLUTION",
+      "updated_at": "2026-03-03T13:05:00Z"
+    }
+  ]
+}
+GET /api/runs/:run_id
+Response
+{
+  "run": {
+    "run_id": "RUN-...",
+    "status": "RUNNING",
+    "mode_id": "MM-01",
+    "run_profile_id": "PROFILE-API-BASE",
+    "risk_class": "prototype",
+    "current_stage": "S3_STANDARDS_RESOLUTION",
+    "updated_at": "2026-03-03T13:05:00Z"
+  },
+  "manifest": { "kind": "artifact", "path": "Axion/runs/RUN-.../run_manifest.json" },
+  "stage_reports": [
+    { "kind": "artifact", "path": "Axion/runs/RUN-.../stages/S1/report.json" }
+  ],
+  "gate_reports": [
+    { "kind": "artifact", "path": "Axion/runs/RUN-.../gate_report.json" }
+  ]
+}
+GET /api/artifact?path=...
+Response
+{
+  "path": "Axion/runs/RUN-.../run_manifest.json",
+  "content_type": "application/json",
+  "content": { }
+}
+GET /api/log?path=...
+Response
+{
+  "path": "Axion/runs/RUN-.../logs/verify.log",
+  "content_type": "text/plain",
+  "tail": true,
+  "content": "..."
+}
+C-10 Hard boundaries (API layer)
+
+wrapper executes only allowlisted actions (no arbitrary commands)
+
+UI writes nothing directly to repo; it triggers allowlisted actions and reads artifacts
+
+every response returns pointers to repo artifacts/logs (UI is not a second source of truth)
+
+failures must still return actionable pointers (logs/report)

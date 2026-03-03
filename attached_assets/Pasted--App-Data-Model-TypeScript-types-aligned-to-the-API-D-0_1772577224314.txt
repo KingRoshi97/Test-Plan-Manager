@@ -1,0 +1,199 @@
+## App Data Model (TypeScript types aligned to the API)
+
+### D-00 Purpose
+
+Lock the client-side types so your UI is consistent, safe, and doesn’t drift from the wrapper API contract.
+
+---
+
+## D-01 Core enums
+
+### `OutcomeStatus`
+
+* `"PASS" | "FAIL" | "ERROR"`
+
+### `RunStatus`
+
+* `"QUEUED" | "RUNNING" | "GATED" | "FAILED" | "RELEASED" | "ARCHIVED" | "PAUSED" | "CANCELLED"`
+
+### `StageStatus`
+
+* `"NOT_STARTED" | "IN_PROGRESS" | "PASS" | "FAIL" | "SKIP"`
+
+### `RiskClass`
+
+* `"prototype" | "production" | "compliance"`
+
+### `ExecutorType`
+
+* `"internal" | "external"`
+
+### `PointerKind`
+
+* `"artifact" | "log"`
+
+---
+
+## D-02 Common shapes
+
+### `Pointer`
+
+* `kind: PointerKind`
+* `path: string`
+
+### `ActionRef`
+
+* `action_id: string`
+* `timestamp: string` *(ISO)*
+* `action_type: string`
+* `outcome: OutcomeStatus`
+
+### `RunSummary`
+
+* `run_id: string`
+* `status: RunStatus`
+* `mode_id?: string`
+* `run_profile_id?: string`
+* `risk_class?: RiskClass`
+* `current_stage?: string`
+* `updated_at: string` *(ISO)*
+
+---
+
+## D-03 Requests
+
+### `DoctorRequest`
+
+* `{}`
+
+### `StartRunRequest`
+
+* `mode_id?: string`
+* `run_profile_id?: string`
+* `risk_class: RiskClass`
+* `executor_type_default: ExecutorType`
+* `targets: { platforms: string[]; domains?: string[]; stack?: Record<string, string> }`
+
+### `AdvanceRunRequest`
+
+* `run_id: string`
+
+### `RunStageRequest`
+
+* `run_id: string`
+* `stage_id: string`
+
+### `VerifyRequest`
+
+* `run_id: string`
+
+### `PackRequest`
+
+* `run_id: string`
+* `kit_variant: ExecutorType` *(internal/external)*
+
+### `ReproRequest`
+
+* `run_id: string`
+
+### `ArtifactReadRequest`
+
+* `path: string`
+
+### `LogReadRequest`
+
+* `path: string`
+* `tail?: boolean`
+* `full?: boolean`
+
+---
+
+## D-04 Responses
+
+### `DoctorResponse`
+
+* `action: ActionRef`
+* `report: Pointer`
+* `logs: Pointer[]`
+
+### `StartRunResponse`
+
+* `action: ActionRef`
+* `run: RunSummary`
+* `manifest: Pointer`
+
+### `AdvanceRunResponse`
+
+* `action: ActionRef`
+* `run: RunSummary`
+* `manifest: Pointer`
+* `stage_report?: Pointer`
+* `gate_report?: Pointer`
+* `logs?: Pointer[]` *(if you choose to always return wrapper logs)*
+
+### `RunStageResponse`
+
+* `action: ActionRef`
+* `manifest: Pointer`
+* `stage_report: Pointer`
+* `gate_report?: Pointer`
+* `logs?: Pointer[]`
+
+### `VerifyResponse`
+
+* `action: ActionRef`
+* `verification_result: Pointer`
+* `proof_ledger?: Pointer`
+* `gate_report?: Pointer`
+* `logs: Pointer[]`
+
+### `PackResponse`
+
+* `action: ActionRef`
+* `kit: { kit_id: string; variant: ExecutorType }`
+* `kit_manifest: Pointer`
+* `kit_entrypoint: Pointer`
+* `bundle_metadata: Pointer`
+* `bundle_export: Pointer`
+* `logs: Pointer[]`
+
+### `ReproResponse`
+
+* `action: ActionRef`
+* `repro_report: Pointer`
+* `diff_report?: Pointer`
+* `logs: Pointer[]`
+
+### `RunsListResponse`
+
+* `runs: RunSummary[]`
+
+### `RunDetailResponse`
+
+* `run: RunSummary`
+* `manifest: Pointer`
+* `stage_reports: Pointer[]`
+* `gate_reports: Pointer[]`
+
+### `ArtifactReadResponse`
+
+* `path: string`
+* `content_type: string`
+* `content: unknown` *(JSON object) | string (text)*
+
+### `LogReadResponse`
+
+* `path: string`
+* `content_type: string`
+* `tail: boolean`
+* `content: string`
+
+---
+
+## D-05 Client invariants (must be true)
+
+* UI state is driven by `RunSummary` and fetched artifacts, not invented state.
+* Every clickable pointer is fetched through the wrapper.
+* FAIL is rendered as a valid outcome with remediation view; ERROR is a wrapper/system error.
+
+If you want the next block: **Route-to-Data Wiring** (for each screen, which API calls happen on load vs on click, and which components render which response fields).

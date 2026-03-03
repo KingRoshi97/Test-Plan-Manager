@@ -1,0 +1,154 @@
+## Wrapper Security & Safety Policy (local operator console)
+
+### P-00 Purpose
+
+Because the App can trigger real repo actions, the wrapper must enforce a strict safety policy:
+
+* local-only
+* allowlisted actions and reads
+* bounded logs
+* input sanitization
+* auditable actions
+
+---
+
+## P-01 Network boundary
+
+### P-01.1 Bind-local
+
+* server must bind to `127.0.0.1` only
+* reject any request where:
+
+  * Host is not localhost/127.0.0.1
+  * request originates from a non-local interface
+
+### P-01.2 CORS policy (if used)
+
+* allow only the App dev origin(s) (e.g., localhost port)
+* reject wildcard origins in production
+
+---
+
+## P-02 Authentication boundary (recommended even for local)
+
+### P-02.1 Repo token
+
+* require `X-Repo-Token` header for all POST routes
+* token stored in:
+
+  * OS env var or a local, non-committed file
+* token never stored in repo
+
+### P-02.2 Token rotation
+
+* wrapper must support token rotation without code changes (env update)
+
+---
+
+## P-03 Execution boundary (no arbitrary shell)
+
+### P-03.1 Command allowlist enforcement
+
+* wrapper must execute only action-mapped commands (doctor/run/stage/verify/pack/repro)
+* reject any attempt to:
+
+  * pass unknown flags
+  * inject shell operators (`;`, `&&`, `|`, backticks)
+  * run user-provided command strings
+
+### P-03.2 Working directory lock
+
+* all exec calls must run in `cwd = repo_root`
+* wrapper must reject a request that tries to supply its own cwd
+
+---
+
+## P-04 File read boundary (artifact/log endpoints)
+
+### P-04.1 Allowed read roots
+
+Wrapper may only serve files under:
+
+* `Axion/runs/`
+* `Axion/registries/`
+* `Axion/bundles/`
+* `knowledge/` *(when present)*
+* `Controller/storage/` *(wrapper logs/audit)*
+
+### P-04.2 Path traversal protection
+
+* reject any path containing `..` or absolute roots
+* resolve and confirm final path is within allowed roots
+
+### P-04.3 Size limits
+
+* enforce max response sizes:
+
+  * JSON artifacts: bounded (e.g., 2–10MB)
+  * logs: default tail; full log requires explicit `full=true` and still capped
+* reject binary files unless explicitly supported
+
+---
+
+## P-05 Write boundary (wrapper-owned only)
+
+Wrapper must not write to repo content, except:
+
+* `Controller/storage/` (audit log + wrapper execution logs)
+  AXION itself will write to `Axion/runs/` and `Axion/bundles/` as part of its normal operation.
+
+---
+
+## P-06 Secret/PII safety in logs
+
+### P-06.1 Sanitization
+
+* wrapper must sanitize:
+
+  * request payloads before writing to action log
+  * environment variables from being echoed into logs
+* redact common secret patterns (tokens, keys) when detected
+
+### P-06.2 Non-negotiable rule
+
+* wrapper logs must never contain secrets in cleartext
+
+---
+
+## P-07 Audit policy (append-only)
+
+### P-07.1 Action log required for every request
+
+For every API call:
+
+* create an `action_id`
+* record inputs (sanitized), CLI template, outcome, pointers returned
+
+### P-07.2 Immutability
+
+* action log is append-only
+* no overwrites
+* each action’s logs stored under its action_id directory
+
+---
+
+## P-08 Failure behavior (safe by default)
+
+* on any validation failure:
+
+  * do not execute CLI
+  * return error + write audit record
+* on CLI failure:
+
+  * return outcome FAIL/ERROR with log pointers
+  * never suppress logs or pointers
+
+---
+
+## P-09 Hard boundaries (locked)
+
+* local-only service
+* allowlisted actions only
+* allowlisted read roots only
+* wrapper writes only to its own storage
+* every action is auditable and pointer-linked
