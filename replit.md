@@ -9,16 +9,19 @@ Full Mechanics pipeline implemented with 10 stages, 7 enforced gates (G1–G6, G
 ### File Counts
 - **105+ non-empty .ts source files**
 - **50 docs_system specification files** (fully written system contracts)
-- **177 filled template .md files** (zero empty — all Groups 1–4 filled from source PDFs)
+- **446 filled template .md files** (Groups 1–7 filled from source PDFs; Group 8 empty)
   - Group 1 Product Definition: 38 templates (PRD, URD, STK, DMG, RSC, RISK, BRP, SMIP)
   - Group 2 Experience Design: 43 templates (DES, IXD, CDX, DSYS, IAN, A11YD, RLB, VAP)
   - Group 3 System Architecture: 52 templates (ARC, SIC, SBDT, PMAD, ERR, RTM, WFO, APIG)
   - Group 4 Data & Information: 44 templates (DATA, DLR, DGL, DQV, SRCH, CACHE, RPT)
-  - Groups 5–8: empty directories only (Application Build, Integrations, Security, Operations)
+  - Group 5 Application Build: 131 templates (API×7, JBS×6, EVT×8, RLIM×6, FFCFG×6, PFS×5, FPMP×7, ADMIN×6, FE×7, SMD×6, CPR×5, FORM×6, ROUTE×6, UICP×5, CER×5, CSec×5, MOB×5, MDC×5, OFS×5, MBAT×5, MDL×4, MPUSH×6, SIGN×5)
+  - Group 6 Integrations & External Services: 70 templates (IXS×10→INT dir, SSO×10, CRMERP×10, WHCP×10, PAY×10, NOTIF×10, FMS×10)
+  - Group 7 Security, Privacy & Compliance: 68 templates (SEC×10, IAM×10, TMA×9, SKM×10, PRIV×10, AUDIT×10, COMP×9)
+  - Group 8 Operations & Reliability: empty directories only
 - **136 non-empty feature doc files** (17 features × 8 docs each)
 - **17 non-empty feature registry JSON files**
 - **9 non-empty global registry JSON files**
-- **8 non-empty library JSON files** (intake schemas, standards packs, template index with 177 entries)
+- **8 non-empty library JSON files** (intake schemas, standards packs, template index with 446 entries)
 - **11 non-empty test files** (unit + integration + helpers)
 
 ## Project Structure
@@ -99,7 +102,7 @@ Fields: run_id, gate_id, stage_id, status (pass/fail), evaluated_at, engine {nam
 
 ## Template System
 ### Selector (src/core/templates/selector.ts)
-- Source: `libraries/templates/template_index.json` (177 templates)
+- Source: `libraries/templates/template_index.json` (446 templates)
 - Default profile filter: `status == "active"` AND `requiredness == "always"` → 8 templates
 - Output: SelectedTemplate[] with template_id, template_version, source paths, output_path
 
