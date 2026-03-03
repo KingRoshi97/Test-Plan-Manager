@@ -180,6 +180,103 @@ Structured, policy-governed knowledge base providing KID files (Knowledge Items)
 ### Domain Subfolders (standardized per domain)
 concepts/ patterns/ procedures/ checklists/ pitfalls/ references/ examples/
 
+## Control Planes
+
+Axion implements three Control Planes per the system specification. Each runs in a different context with its own state machine, runtime modules, output artifacts, and hard boundaries.
+
+### Internal Control Plane (ICP)
+Lives in the AXION runtime. Orchestrates the 10-stage Mechanics pipeline.
+
+**State Machine (RunState):** QUEUED → RUNNING → GATED → RUNNING → RELEASED → ARCHIVED (+ PAUSED, CANCELLED, ROLLING_BACK)
+**Stage States:** NOT_STARTED → IN_PROGRESS → PASS/FAIL/SKIP
+
+**Modules** (`Axion/src/core/controlPlane/`):
+| Module | File | Produces |
+|---|---|---|
+| State Machine | model.ts | Run state transitions, advancement validation |
+| Run Orchestrator | api.ts (RunController) | Run lifecycle (create, advance, gate, release, fail, archive) |
+| Run Store | store.ts (JSONRunStore) | JSON file I/O for runs |
+| Registry Loader | registryLoader.ts | resolved_pinset, registry_resolution_report |
+| Standards Engine | standardsEngine.ts | standards_applicability_output, resolved_standards_snapshot |
+| Template Driver | templateDriver.ts | template_selection_result, render_envelopes, completeness_report |
+| Gate Engine | gateEngine.ts | gate_report with per-gate results + remediation |
+| Proof System | proofSystem.ts | proof_objects, proof_ledger (append-only) |
+| Kit Packager | kitPackager.ts | kit_manifest, kit_entrypoint, bundle_metadata |
+| Audit Logger | audit.ts | Hash-chained audit_log.jsonl |
+| Releases | releases.ts | Release records (create, sign, publish, revoke) |
+| Pins | pins.ts | Pin/unpin artifacts with deterministic version selection |
+| Policies | policies.ts | Policy evaluation with threshold rules |
+| Outputs | outputs.ts | run_manifest, run_log, stage_reports, gate_reports, pinset, state_snapshot |
+| Failures | failures.ts | Failure classification (contract/verification/recoverable), remediation |
+| Determinism | determinism.ts | Noise isolation, golden comparison, determinism hashing |
+| Index | index.ts | Re-exports all ICP modules |
+
+### Kit Control Plane (KCP)
+Ships inside every agent kit as a built-in enforcer. ICP embeds KCP during S10 packaging. KCP treats kit contents (standards snapshot, templates, gates) as read-only inputs.
+
+**State Machine (KitRunState):** READY → EXECUTING → VERIFYING → COMPLETE/BLOCKED/FAILED (+ PAUSED, CANCELLED, RESUMING)
+**Work Unit States:** NOT_STARTED → IN_PROGRESS → DONE/FAILED/SKIPPED
+
+**Modules** (`Axion/src/core/kitControlPlane/`):
+| Module | File | Purpose |
+|---|---|---|
+| Types | types.ts | KCP-specific types (KitRunState, WorkUnitState, GuardrailViolation) |
+| State Machine | stateMachine.ts | Kit-run state transitions, validation |
+| Kit Validator | validator.ts | Validate kit artifacts, schema, entrypoint, pinset |
+| Work Unit Manager | workUnitManager.ts | Plan unit loading, 1-target enforcement, deterministic next |
+| Verification Runner | verificationRunner.ts | Execute lint/test/build/typecheck commands |
+| Result Writer | resultWriter.ts | RESULT_<UNIT_ID>.json with implementation + proof refs |
+| Proof Capture | proofCapture.ts | Kit-local proof objects and proof ledger |
+| Guardrails | guardrails.ts | Forbidden paths, agent restrictions, plagiarism, secrets/PII |
+| Kit Run Report | kitRunReport.ts | Aggregated kit_run_report |
+| Index | index.ts | Re-exports all KCP modules |
+
+**Enforcements:** 1-target rule on plan units, read-only kit contents, guardrail violations block, non-empty proof_refs for DONE
+
+### Maintenance Control Plane (MCP)
+Lives in the target repo for post-build lifecycle management.
+
+**State Machine (MaintenanceRunState):** PLANNED → APPLYING → VERIFYING → COMPLETE/BLOCKED/FAILED (+ PAUSED, CANCELLED, ROLLBACKING)
+
+**Modules** (`Axion/src/core/maintenanceControlPlane/`):
+| Module | File | Purpose |
+|---|---|---|
+| Types | types.ts | MCP-specific types (MaintenanceIntent, ScopeConstraints) |
+| State Machine | stateMachine.ts | Maintenance-run state transitions |
+| Dependency Manager | dependencyManager.ts | Version bumps, lockfile updates, breaking change detection |
+| Migration Manager | migrationManager.ts | Migration planning, execution, backcompat checks |
+| Test Maintainer | testMaintainer.ts | Regression tests, flake triage, coverage |
+| Refactor Manager | refactorManager.ts | Controlled refactors with impact assessment |
+| CI Maintainer | ciMaintainer.ts | CI workflow updates, doctor/verify preservation |
+| AXION Compat | axionCompat.ts | AXION artifact + kit output validation |
+| Maintenance Runner | maintenanceRunner.ts | Orchestrates maintenance runs end-to-end |
+| Outputs | outputs.ts | MCP output artifact writers |
+| Failures | failures.ts | MCP failure classification + remediation |
+| Index | index.ts | Re-exports all MCP modules |
+
+### Control Plane Registries (`Axion/registries/`)
+| Registry | Description |
+|---|---|
+| CONTROL_PLANE_REGISTRY.json | All 3 control planes with modules, boundaries, artifact contracts |
+| OPERATOR_ACTIONS_REGISTRY.json | Allowed operator actions per CP with override rules |
+| FAILURE_CODES_REGISTRY.json | Failure codes (contract/verification/recoverable) with remediation templates |
+| PROOF_TYPE_REGISTRY.json | Proof types (verification_log, snapshot_hash, command_output, etc.) |
+
+### Control Plane Docs (`Axion/docs_system/CP/`)
+- CP-01: Control Plane Architecture (overview, boundaries, interactions)
+- CP-02: ICP Specification (inputs, state, modules, outputs, determinism, failures)
+- CP-03: KCP Specification (kit-local lifecycle)
+- CP-04: MCP Specification (maintenance lifecycle)
+- CP-05: Determinism Guarantees (cross-cutting determinism rules)
+- CP-06: Failure Semantics (cross-cutting failure handling)
+
+### Shared Types (`Axion/src/types/controlPlane.ts`)
+RunState, StageState, KitRunState, MaintenanceRunState, WorkUnitState, RiskClass, ExecutorType, FailureClassification, RunContext, Pinset, EvidencePointer, RemediationStep, AttemptRecord, OverrideRecord, OperatorActionType, RunLogEntry, ICPStageReport, ICPGateReport, StateSnapshot, FailureReport, GuardrailViolation
+
+### Run Artifacts (new with ICP)
+- `audit_log.jsonl` — Hash-chained operator action log (start_run → release_bundle)
+- `run_log.jsonl` — Chronological stage_start/stage_end/info event trace
+
 ## Key Config Files
 - `Axion/package.json`, `Axion/tsconfig.json`, `Axion/.gitignore`
 - `Filetree.md` — Canonical file tree reference

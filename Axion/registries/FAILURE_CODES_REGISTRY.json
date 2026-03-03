@@ -1,0 +1,170 @@
+{
+  "$schema": "failure_codes_registry/v1",
+  "description": "All failure classification codes with descriptions, severity, retryability, and remediation templates.",
+  "classifications": [
+    {
+      "classification": "contract_failure",
+      "description": "A required contract or schema was violated. The system cannot proceed because inputs, outputs, or intermediate artifacts do not conform to their declared contracts.",
+      "fail_fast": true,
+      "retryable": false,
+      "codes": [
+        {
+          "code": "CF-001",
+          "name": "SCHEMA_VIOLATION",
+          "description": "Artifact does not conform to its declared JSON schema.",
+          "severity": "critical",
+          "remediation_template": "Validate the artifact against its schema. Fix all violations before retrying."
+        },
+        {
+          "code": "CF-002",
+          "name": "MISSING_REQUIRED_ARTIFACT",
+          "description": "A required artifact is missing from the expected path.",
+          "severity": "critical",
+          "remediation_template": "Ensure the producing stage completed successfully and wrote the artifact to the expected path."
+        },
+        {
+          "code": "CF-003",
+          "name": "REFERENTIAL_INTEGRITY_BREAK",
+          "description": "A referenced ID does not exist in the target registry or artifact.",
+          "severity": "critical",
+          "remediation_template": "Check all cross-references. Ensure referenced IDs exist in their target registries."
+        },
+        {
+          "code": "CF-004",
+          "name": "INVALID_STATE_TRANSITION",
+          "description": "An invalid state transition was attempted.",
+          "severity": "critical",
+          "remediation_template": "Review the state machine. Only valid transitions are permitted."
+        },
+        {
+          "code": "CF-005",
+          "name": "PINSET_MISMATCH",
+          "description": "The resolved pinset does not match the expected frozen versions.",
+          "severity": "critical",
+          "remediation_template": "Re-resolve pins or verify the pinset was not modified after freezing."
+        },
+        {
+          "code": "CF-006",
+          "name": "STAGE_ORDER_VIOLATION",
+          "description": "A stage was advanced out of order, skipping a required predecessor.",
+          "severity": "critical",
+          "remediation_template": "Complete all prior stages before advancing. No skipping without explicit SKIP + reason."
+        }
+      ]
+    },
+    {
+      "classification": "verification_failure",
+      "description": "Verification checks (tests, linting, type checking, gate predicates) did not pass. The artifacts exist but do not meet quality requirements.",
+      "fail_fast": false,
+      "retryable": true,
+      "codes": [
+        {
+          "code": "VF-001",
+          "name": "GATE_PREDICATE_FAIL",
+          "description": "One or more gate predicates evaluated to FAIL.",
+          "severity": "high",
+          "remediation_template": "Review the gate report. Fix failing predicates and re-evaluate."
+        },
+        {
+          "code": "VF-002",
+          "name": "TEST_FAILURE",
+          "description": "One or more verification tests failed.",
+          "severity": "high",
+          "remediation_template": "Review test output logs. Fix failing tests and rerun verification."
+        },
+        {
+          "code": "VF-003",
+          "name": "LINT_FAILURE",
+          "description": "Linting checks produced violations.",
+          "severity": "medium",
+          "remediation_template": "Review lint output. Fix all violations or configure appropriate overrides."
+        },
+        {
+          "code": "VF-004",
+          "name": "TYPE_CHECK_FAILURE",
+          "description": "Type checking produced errors.",
+          "severity": "high",
+          "remediation_template": "Review type checker output. Fix all type errors."
+        },
+        {
+          "code": "VF-005",
+          "name": "COVERAGE_BELOW_THRESHOLD",
+          "description": "Code coverage fell below the required threshold.",
+          "severity": "medium",
+          "remediation_template": "Add tests to increase coverage to the required threshold."
+        },
+        {
+          "code": "VF-006",
+          "name": "HASH_MISMATCH",
+          "description": "Artifact hash does not match the expected value in the manifest.",
+          "severity": "critical",
+          "remediation_template": "Rebuild the artifact. Verify no unauthorized modifications occurred."
+        },
+        {
+          "code": "VF-007",
+          "name": "TEMPLATE_COMPLETENESS_FAIL",
+          "description": "Rendered template has unresolved placeholders.",
+          "severity": "high",
+          "remediation_template": "Fill all required placeholders in the template. Check the completeness report."
+        },
+        {
+          "code": "VF-008",
+          "name": "PROOF_POINTER_UNRESOLVED",
+          "description": "A proof pointer references a file or artifact that does not exist.",
+          "severity": "high",
+          "remediation_template": "Ensure all proof artifacts exist at their declared paths."
+        }
+      ]
+    },
+    {
+      "classification": "recoverable_execution_failure",
+      "description": "An execution-time failure that may be resolved by retry, environment fix, or parameter adjustment. The system itself is not broken.",
+      "fail_fast": false,
+      "retryable": true,
+      "codes": [
+        {
+          "code": "RE-001",
+          "name": "FILE_IO_ERROR",
+          "description": "Failed to read or write a file on disk.",
+          "severity": "high",
+          "remediation_template": "Check file permissions, disk space, and path validity. Retry the operation."
+        },
+        {
+          "code": "RE-002",
+          "name": "TIMEOUT",
+          "description": "An operation exceeded its configured timeout.",
+          "severity": "medium",
+          "remediation_template": "Increase the timeout or optimize the operation. Retry."
+        },
+        {
+          "code": "RE-003",
+          "name": "COMMAND_EXECUTION_FAILURE",
+          "description": "A verification command exited with a non-zero code due to environment issues.",
+          "severity": "medium",
+          "remediation_template": "Check the command environment (dependencies installed, paths correct). Retry."
+        },
+        {
+          "code": "RE-004",
+          "name": "REGISTRY_LOAD_FAILURE",
+          "description": "Failed to load a registry file.",
+          "severity": "high",
+          "remediation_template": "Verify the registry file exists and is valid JSON. Retry."
+        },
+        {
+          "code": "RE-005",
+          "name": "LOCKFILE_UPDATE_FAILURE",
+          "description": "Failed to update lockfiles during dependency management.",
+          "severity": "medium",
+          "remediation_template": "Check network connectivity and package registry availability. Retry."
+        },
+        {
+          "code": "RE-006",
+          "name": "MIGRATION_APPLY_FAILURE",
+          "description": "A migration step failed during application.",
+          "severity": "high",
+          "remediation_template": "Review the migration step. Check prerequisites. Rollback and retry if applicable."
+        }
+      ]
+    }
+  ]
+}

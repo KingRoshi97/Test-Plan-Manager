@@ -1,0 +1,270 @@
+{
+  "$schema": "control_plane_registry/v1",
+  "description": "Registry of all 3 Axion control planes: modules, boundaries, and artifact contracts.",
+  "control_planes": [
+    {
+      "id": "ICP",
+      "name": "Internal Control Plane",
+      "description": "Orchestrates the deterministic build pipeline from intake through packaging. Owns run lifecycle, state machine, gate evaluation, and artifact production.",
+      "modules": [
+        {
+          "module_id": "ICP-MOD-001",
+          "name": "RunController",
+          "file": "Axion/src/core/controlPlane/api.ts",
+          "description": "Run lifecycle orchestrator: create, advance, gate, release, fail, archive.",
+          "produces": ["run_manifest", "run_log"]
+        },
+        {
+          "module_id": "ICP-MOD-002",
+          "name": "JSONRunStore",
+          "file": "Axion/src/core/controlPlane/store.ts",
+          "description": "Persistent run state storage with JSON file I/O.",
+          "produces": ["run_state_file"]
+        },
+        {
+          "module_id": "ICP-MOD-003",
+          "name": "RegistryLoader",
+          "file": "Axion/src/core/controlPlane/registryLoader.ts",
+          "description": "Loads and validates all registries, resolves pinsets deterministically.",
+          "produces": ["resolved_pinset", "registry_resolution_report"]
+        },
+        {
+          "module_id": "ICP-MOD-004",
+          "name": "StandardsEngine",
+          "file": "Axion/src/core/controlPlane/standardsEngine.ts",
+          "description": "Computes standards applicability and resolves a single snapshot.",
+          "produces": ["standards_applicability_output", "resolved_standards_snapshot"]
+        },
+        {
+          "module_id": "ICP-MOD-005",
+          "name": "TemplateDriver",
+          "file": "Axion/src/core/controlPlane/templateDriver.ts",
+          "description": "Selects, renders, and packages templates into envelopes.",
+          "produces": ["template_selection_result", "render_envelopes", "template_completeness_report"]
+        },
+        {
+          "module_id": "ICP-MOD-006",
+          "name": "GateEngine",
+          "file": "Axion/src/core/controlPlane/gateEngine.ts",
+          "description": "Evaluates gate predicates against artifacts and evidence.",
+          "produces": ["gate_report"]
+        },
+        {
+          "module_id": "ICP-MOD-007",
+          "name": "ProofSystem",
+          "file": "Axion/src/core/controlPlane/proofSystem.ts",
+          "description": "Captures proof objects and maintains append-only proof ledger.",
+          "produces": ["proof_object", "proof_ledger"]
+        },
+        {
+          "module_id": "ICP-MOD-008",
+          "name": "KitPackager",
+          "file": "Axion/src/core/controlPlane/kitPackager.ts",
+          "description": "Packages run artifacts into a distributable kit bundle.",
+          "produces": ["kit_manifest", "kit_entrypoint", "bundle_metadata", "bundle_export"]
+        },
+        {
+          "module_id": "ICP-MOD-009",
+          "name": "AuditLogger",
+          "file": "Axion/src/core/controlPlane/audit.ts",
+          "description": "Records operator actions with override tracking and expiry.",
+          "produces": ["audit_trail"]
+        },
+        {
+          "module_id": "ICP-MOD-010",
+          "name": "ReleaseManager",
+          "file": "Axion/src/core/controlPlane/releases.ts",
+          "description": "Creates, signs, publishes, and revokes releases.",
+          "produces": ["release_object"]
+        },
+        {
+          "module_id": "ICP-MOD-011",
+          "name": "PinManager",
+          "file": "Axion/src/core/controlPlane/pins.ts",
+          "description": "Manages artifact version pins and resolves pinsets.",
+          "produces": ["pinset"]
+        },
+        {
+          "module_id": "ICP-MOD-012",
+          "name": "OutputWriter",
+          "file": "Axion/src/core/controlPlane/outputs.ts",
+          "description": "Writes all ICP output artifacts (O-01 through O-10).",
+          "produces": ["run_manifest", "run_log", "stage_report", "gate_report", "pinset", "state_snapshot"]
+        },
+        {
+          "module_id": "ICP-MOD-013",
+          "name": "FailureClassifier",
+          "file": "Axion/src/core/controlPlane/failures.ts",
+          "description": "Classifies failures, builds failure reports, determines fail-fast behavior.",
+          "produces": ["failure_report"]
+        },
+        {
+          "module_id": "ICP-MOD-014",
+          "name": "DeterminismEngine",
+          "file": "Axion/src/core/controlPlane/determinism.ts",
+          "description": "Normalizes run context, isolates noise fields, enables golden comparisons.",
+          "produces": ["normalized_context", "comparison_result"]
+        }
+      ],
+      "boundaries": {
+        "owns": ["run_lifecycle", "stage_progression", "gate_evaluation", "artifact_production", "proof_capture", "kit_packaging"],
+        "does_not_own": ["kit_execution", "code_generation", "external_agent_behavior", "maintenance_actions"],
+        "hard_rules": [
+          "No stage may be skipped without explicit SKIP + recorded reason",
+          "Gate results are immutable once written",
+          "Proof ledger is append-only",
+          "All state transitions must be validated by the state machine",
+          "Pinset is frozen at run start"
+        ]
+      }
+    },
+    {
+      "id": "KCP",
+      "name": "Kit Control Plane",
+      "description": "Manages kit-local execution lifecycle: validates kits, tracks work units, runs verification commands, captures proofs, and enforces guardrails.",
+      "modules": [
+        {
+          "module_id": "KCP-MOD-001",
+          "name": "KitValidator",
+          "file": "Axion/src/core/kitControlPlane/validator.ts",
+          "description": "Validates kit structure, schema compliance, entrypoint, and pinset presence.",
+          "produces": ["kit_validation_report"]
+        },
+        {
+          "module_id": "KCP-MOD-002",
+          "name": "WorkUnitManager",
+          "file": "Axion/src/core/kitControlPlane/workUnitManager.ts",
+          "description": "Loads plan units, enforces 1-target rule, tracks unit status, recommends next unit.",
+          "produces": ["unit_status_index"]
+        },
+        {
+          "module_id": "KCP-MOD-003",
+          "name": "VerificationRunner",
+          "file": "Axion/src/core/kitControlPlane/verificationRunner.ts",
+          "description": "Executes verification commands (lint, test, build, typecheck) and captures output.",
+          "produces": ["verification_run_result", "command_logs"]
+        },
+        {
+          "module_id": "KCP-MOD-004",
+          "name": "ResultWriter",
+          "file": "Axion/src/core/kitControlPlane/resultWriter.ts",
+          "description": "Writes RESULT files per work unit with implementation and proof references.",
+          "produces": ["result_file"]
+        },
+        {
+          "module_id": "KCP-MOD-005",
+          "name": "ProofCapture",
+          "file": "Axion/src/core/kitControlPlane/proofCapture.ts",
+          "description": "Captures kit-local proofs and writes kit-local proof ledger.",
+          "produces": ["proof_object", "kit_proof_ledger"]
+        },
+        {
+          "module_id": "KCP-MOD-006",
+          "name": "ExecutionGuardrails",
+          "file": "Axion/src/core/kitControlPlane/guardrails.ts",
+          "description": "Checks forbidden paths, external agent restrictions, plagiarism/reuse, and secrets/PII.",
+          "produces": ["guardrail_report"]
+        },
+        {
+          "module_id": "KCP-MOD-007",
+          "name": "KitRunReport",
+          "file": "Axion/src/core/kitControlPlane/kitRunReport.ts",
+          "description": "Builds comprehensive kit run report from all KCP module outputs.",
+          "produces": ["kit_run_report"]
+        },
+        {
+          "module_id": "KCP-MOD-008",
+          "name": "KCPStateMachine",
+          "file": "Axion/src/core/kitControlPlane/stateMachine.ts",
+          "description": "Validates KCP state transitions (READY→EXECUTING→VERIFYING→COMPLETE/BLOCKED/FAILED).",
+          "produces": []
+        }
+      ],
+      "boundaries": {
+        "owns": ["kit_validation", "work_unit_tracking", "verification_execution", "kit_proof_capture", "guardrail_enforcement"],
+        "does_not_own": ["run_lifecycle", "gate_evaluation", "standards_resolution", "template_rendering", "maintenance_actions"],
+        "hard_rules": [
+          "Each work unit targets exactly 1 artifact",
+          "Result files require non-empty implementation_refs and proof_refs for DONE status",
+          "Guardrail violations block progression",
+          "External agents cannot modify ICP artifacts",
+          "Proof ledger is append-only within the kit"
+        ]
+      }
+    },
+    {
+      "id": "MCP",
+      "name": "Maintenance Control Plane",
+      "description": "Manages post-delivery maintenance lifecycle: dependency upgrades, migrations, test hardening, refactoring, CI maintenance, and Axion compatibility checks.",
+      "modules": [
+        {
+          "module_id": "MCP-MOD-001",
+          "name": "DependencyManager",
+          "file": "Axion/src/core/maintenanceControlPlane/dependencyManager.ts",
+          "description": "Applies version bumps, updates lockfiles, detects breaking changes.",
+          "produces": ["dependency_update_report", "updated_lockfiles", "changelog_entry"]
+        },
+        {
+          "module_id": "MCP-MOD-002",
+          "name": "MigrationManager",
+          "file": "Axion/src/core/maintenanceControlPlane/migrationManager.ts",
+          "description": "Generates and applies migration plans with backcompat checks.",
+          "produces": ["migration_plan", "migration_verification_report"]
+        },
+        {
+          "module_id": "MCP-MOD-003",
+          "name": "TestMaintainer",
+          "file": "Axion/src/core/maintenanceControlPlane/testMaintainer.ts",
+          "description": "Adds regression tests, triages flakes, assesses coverage.",
+          "produces": ["test_update_report"]
+        },
+        {
+          "module_id": "MCP-MOD-004",
+          "name": "RefactorManager",
+          "file": "Axion/src/core/maintenanceControlPlane/refactorManager.ts",
+          "description": "Plans and applies refactors with impact assessment and contract preservation.",
+          "produces": ["refactor_report"]
+        },
+        {
+          "module_id": "MCP-MOD-005",
+          "name": "CIMaintainer",
+          "file": "Axion/src/core/maintenanceControlPlane/ciMaintainer.ts",
+          "description": "Updates CI workflows and validates doctor/verify checks preserved.",
+          "produces": ["ci_update_report"]
+        },
+        {
+          "module_id": "MCP-MOD-006",
+          "name": "AxionCompat",
+          "file": "Axion/src/core/maintenanceControlPlane/axionCompat.ts",
+          "description": "Validates Axion artifact compatibility and kit output validity.",
+          "produces": ["axion_compatibility_report"]
+        },
+        {
+          "module_id": "MCP-MOD-007",
+          "name": "MaintenanceRunner",
+          "file": "Axion/src/core/maintenanceControlPlane/maintenanceRunner.ts",
+          "description": "Orchestrates maintenance runs by interpreting mode and executing modules.",
+          "produces": ["maintenance_run_report"]
+        },
+        {
+          "module_id": "MCP-MOD-008",
+          "name": "MCPStateMachine",
+          "file": "Axion/src/core/maintenanceControlPlane/stateMachine.ts",
+          "description": "Validates MCP state transitions (PLANNED→APPLYING→VERIFYING→COMPLETE/BLOCKED/FAILED/ROLLBACKING).",
+          "produces": []
+        }
+      ],
+      "boundaries": {
+        "owns": ["dependency_management", "migration_planning", "test_maintenance", "refactoring", "ci_maintenance", "axion_compatibility"],
+        "does_not_own": ["run_lifecycle", "kit_execution", "gate_evaluation", "standards_resolution", "template_rendering"],
+        "hard_rules": [
+          "All changes must be scoped by ScopeConstraints",
+          "Rollback strategy must be recorded before applying changes",
+          "Contract preservation is mandatory for refactors",
+          "CI changes must preserve existing verification checks",
+          "Breaking changes require explicit acknowledgment"
+        ]
+      }
+    }
+  ]
+}

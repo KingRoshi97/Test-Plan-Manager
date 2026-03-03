@@ -5,6 +5,8 @@ import { cmdRunStart } from "./commands/runControlPlane.js";
 import { cmdRunStage } from "./commands/runStage.js";
 import { cmdRunGates } from "./commands/runGates.js";
 import { STAGE_ORDER } from "../types/run.js";
+import { AuditLogger } from "../core/controlPlane/audit.js";
+import { appendRunLogEntry } from "../core/controlPlane/outputs.js";
 
 const USAGE = `
 axion — Axion CLI
@@ -92,10 +94,31 @@ function main(): void {
         const runId = cmdRunStart(baseDir);
         const runDir = join(baseDir, ".axion", "runs", runId);
 
+        const auditLogger = new AuditLogger(join(runDir, "audit_log.jsonl"));
+        auditLogger.logOperatorAction({
+          action_type: "start_run",
+          run_id: runId,
+          operator_id: "cli",
+          details: { trigger: "cli", mode: "full_run" },
+          timestamp: new Date().toISOString(),
+        });
+        appendRunLogEntry(runDir, runId, "info", "Run started via CLI full run");
+
         console.log(`\n[2/2] Executing ${STAGE_ORDER.length} stages...`);
         for (const stageId of STAGE_ORDER) {
+          appendRunLogEntry(runDir, runId, "stage_start", `Starting stage ${stageId}`, {}, stageId);
           cmdRunStage(baseDir, runId, stageId);
+          appendRunLogEntry(runDir, runId, "stage_end", `Completed stage ${stageId}`, {}, stageId);
         }
+
+        auditLogger.logOperatorAction({
+          action_type: "release_bundle",
+          run_id: runId,
+          operator_id: "cli",
+          details: { trigger: "cli", result: "completed" },
+          timestamp: new Date().toISOString(),
+        });
+        appendRunLogEntry(runDir, runId, "info", "Run completed successfully");
 
         console.log(`\nDone. Full artifact spine written to: ${runDir}`);
         console.log("\nArtifact listing:");
