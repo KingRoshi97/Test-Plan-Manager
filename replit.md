@@ -36,7 +36,8 @@ Three top-level directories: `App/` (UI) → `Controller/` (wrapper API) → `Ax
 ### App/ — Operator Console (React + Vite + TypeScript)
 Internal-only UI for operating AXION. Port 5000 (webview workflow).
 - **11 screens**: Dashboard(/), Runs(/runs), RunDetail(/runs/:runId), GateFailures(/runs/:runId/gates), Verify(/runs/:runId/verify), Kits(/runs/:runId/kits), ProofLedger(/runs/:runId/proofs), Registries(/registries), Commands(/commands), Knowledge(/knowledge), Settings(/settings)
-- **15 components**: Layout, Nav, StatusBadge, IdPill, DataTable, JsonViewer, ArtifactLink, ArtifactDrawer, LogDrawer, ActionBar, StartRunForm, ActionResultPanel, StageTimeline, GateReportViewer
+- **15 components** (all implemented with dark cockpit design): Layout (sidebar+header shell), Nav (sectioned sidebar with active states), StatusBadge (colored pills for all status enums), IdPill (monospace copy-to-clipboard), DataTable (sortable, hover, empty states), JsonViewer (collapsible syntax-colored tree), ArtifactLink (pointer chips), ArtifactDrawer (slide-in artifact panel), LogDrawer (slide-in log panel), ActionBar (6 action buttons with disabled states), StartRunForm (full form with selects/inputs), ActionResultPanel (outcome + pointer listing), StageTimeline (vertical dot timeline), GateReportViewer (expandable gate accordion)
+- **Design system**: CSS custom properties in index.css — dark mode (#0f1117 base), indigo accent (#6366f1), emerald accent (#10b981), status colors (pass/fail/error/running/gated/pending), Inter font stack, JetBrains Mono for code, CSS modules for Layout+Nav
 - **lib/**: types.ts (locked data model D-01–D-05), api.ts (typed client C-06), paths.ts (route map)
 - MVP phases: Phase 1 (Dashboard, Runs, RunDetail, GateFailures) → Phase 2 (Verify, Kits) → Phase 3 (Registries, Proofs)
 
