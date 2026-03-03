@@ -90,7 +90,7 @@ export default function GateReportViewer({
             >
               <ArtifactLink pointer={pointer} onClick={onSelectEvidence} />
               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                Gate detail will load from Controller
+                Click to inspect full gate report
               </div>
             </div>
           )}

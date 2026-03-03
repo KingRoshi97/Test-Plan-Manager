@@ -1,84 +1,79 @@
 import type {
-  DoctorResponse,
-  StartRunRequest,
-  StartRunResponse,
-  AdvanceRunRequest,
-  AdvanceRunResponse,
-  RunStageRequest,
-  RunStageResponse,
-  RerunStageRequest,
-  CloseRunRequest,
-  VerifyRequest,
-  VerifyResponse,
-  PackRequest,
-  PackResponse,
-  ReproRequest,
-  ReproResponse,
   RunsListResponse,
   RunDetailResponse,
   ArtifactReadResponse,
   LogReadResponse,
 } from './types';
 
-const BASE_URL = import.meta.env.VITE_AXION_API_URL || '';
-
-function getToken(): string | null {
-  return localStorage.getItem('axion_repo_token');
-}
-
-async function post<TReq, TRes>(path: string, body: TReq): Promise<TRes> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = getToken();
-  if (token) headers['X-Repo-Token'] = token;
-  const res = await fetch(`${BASE_URL}${path}`, {
+async function post<TRes>(path: string, body: Record<string, unknown> = {}): Promise<TRes> {
+  const res = await fetch(path, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error((err as Record<string, string>).error || `API error ${res.status}`);
+  }
   return res.json() as Promise<TRes>;
 }
 
 async function get<TRes>(path: string): Promise<TRes> {
-  const res = await fetch(`${BASE_URL}${path}`);
-  if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`);
+  const res = await fetch(path);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error((err as Record<string, string>).error || `API error ${res.status}`);
+  }
   return res.json() as Promise<TRes>;
 }
 
-export function doctor(): Promise<DoctorResponse> {
-  return post('/api/doctor', {});
+export interface ActionResult {
+  action: {
+    action_id: string;
+    timestamp: string;
+    action_type: string;
+    outcome: string;
+  };
+  stdout: string;
+  stderr: string;
+  run?: {
+    run_id: string;
+    status: string;
+    risk_class?: string;
+    current_stage?: string;
+    updated_at: string;
+  };
+  run_id?: string;
+  manifest?: { kind: string; path: string } | null;
+  stage_reports?: { kind: string; path: string }[];
+  gate_reports?: { kind: string; path: string }[];
+  stage_report?: { kind: string; path: string };
+  report?: { kind: string; path: string };
+  logs?: { kind: string; path: string }[];
 }
 
-export function startRun(req: StartRunRequest): Promise<StartRunResponse> {
-  return post('/api/run/start', req);
+export function doctor(): Promise<ActionResult> {
+  return post('/api/doctor');
 }
 
-export function advanceRun(req: AdvanceRunRequest): Promise<AdvanceRunResponse> {
-  return post('/api/run/advance', req);
+export function startRun(): Promise<ActionResult> {
+  return post('/api/run/start');
 }
 
-export function runStage(req: RunStageRequest): Promise<RunStageResponse> {
-  return post('/api/run/stage', req);
+export function advanceRun(runId: string): Promise<ActionResult> {
+  return post('/api/run/advance', { run_id: runId });
 }
 
-export function rerunStage(req: RerunStageRequest): Promise<RunStageResponse> {
-  return post('/api/run/rerun-stage', req);
+export function runStage(runId: string, stageId: string): Promise<ActionResult> {
+  return post('/api/run/stage', { run_id: runId, stage_id: stageId });
 }
 
-export function closeRun(req: CloseRunRequest): Promise<void> {
-  return post('/api/run/close', req);
+export function runGates(runId: string, stageId: string): Promise<ActionResult> {
+  return post('/api/run/gates', { run_id: runId, stage_id: stageId });
 }
 
-export function verify(req: VerifyRequest): Promise<VerifyResponse> {
-  return post('/api/verify', req);
-}
-
-export function pack(req: PackRequest): Promise<PackResponse> {
-  return post('/api/pack', req);
-}
-
-export function repro(req: ReproRequest): Promise<ReproResponse> {
-  return post('/api/repro', req);
+export function fullRun(): Promise<ActionResult> {
+  return post('/api/run/full');
 }
 
 export function runsList(): Promise<RunsListResponse> {
@@ -95,10 +90,13 @@ export function readArtifact(path: string): Promise<ArtifactReadResponse> {
 
 export function readLog(
   path: string,
-  opts?: { tail?: boolean; full?: boolean }
+  opts?: { tail?: boolean }
 ): Promise<LogReadResponse> {
   const params = new URLSearchParams({ path });
   if (opts?.tail) params.set('tail', 'true');
-  if (opts?.full) params.set('full', 'true');
   return get(`/api/log?${params.toString()}`);
+}
+
+export function getStages(): Promise<{ stages: string[] }> {
+  return get('/api/stages');
 }

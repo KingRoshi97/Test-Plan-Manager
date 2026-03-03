@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import type { Pointer } from '../lib/types';
+import * as api from '../lib/api';
 
 interface LogDrawerProps {
   pointer: Pointer | null;
@@ -6,6 +8,23 @@ interface LogDrawerProps {
 }
 
 export default function LogDrawer({ pointer, onClose }: LogDrawerProps) {
+  const [content, setContent] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pointer) {
+      setContent('');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    api.readLog(pointer.path)
+      .then((res) => setContent(res.content))
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setLoading(false));
+  }, [pointer?.path]);
+
   if (!pointer) return null;
 
   return (
@@ -66,18 +85,28 @@ export default function LogDrawer({ pointer, onClose }: LogDrawerProps) {
           flex: 1,
           padding: '20px',
           overflow: 'auto',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '12px',
-          lineHeight: 1.6,
-          color: 'var(--text-secondary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
         }}
       >
-        <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-          Log content will load from Controller
-        </span>
+        {loading && (
+          <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Loading…</div>
+        )}
+        {error && (
+          <div style={{ color: 'var(--status-fail)', fontSize: '13px' }}>{error}</div>
+        )}
+        {!loading && !error && (
+          <pre
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              lineHeight: 1.6,
+              color: 'var(--text-secondary)',
+              whiteSpace: 'pre-wrap',
+              margin: 0,
+            }}
+          >
+            {content || '(empty)'}
+          </pre>
+        )}
       </div>
     </div>
   );

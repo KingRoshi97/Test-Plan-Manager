@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react';
 import type { Pointer } from '../lib/types';
+import JsonViewer from './JsonViewer';
+import * as api from '../lib/api';
 
 interface ArtifactDrawerProps {
   pointer: Pointer | null;
@@ -6,6 +9,23 @@ interface ArtifactDrawerProps {
 }
 
 export default function ArtifactDrawer({ pointer, onClose }: ArtifactDrawerProps) {
+  const [content, setContent] = useState<unknown>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!pointer) {
+      setContent(null);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    api.readArtifact(pointer.path)
+      .then((res) => setContent(res.content))
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setLoading(false));
+  }, [pointer?.path]);
+
   if (!pointer) return null;
 
   return (
@@ -62,19 +82,16 @@ export default function ArtifactDrawer({ pointer, onClose }: ArtifactDrawerProps
           ✕
         </button>
       </div>
-      <div
-        style={{
-          flex: 1,
-          padding: '20px',
-          overflow: 'auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-          Artifact content will load from Controller
-        </span>
+      <div style={{ flex: 1, padding: '20px', overflow: 'auto' }}>
+        {loading && (
+          <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Loading…</div>
+        )}
+        {error && (
+          <div style={{ color: 'var(--status-fail)', fontSize: '13px' }}>{error}</div>
+        )}
+        {!loading && !error && content !== null && (
+          <JsonViewer data={content} label={pointer.path.split('/').pop()} />
+        )}
       </div>
     </div>
   );
