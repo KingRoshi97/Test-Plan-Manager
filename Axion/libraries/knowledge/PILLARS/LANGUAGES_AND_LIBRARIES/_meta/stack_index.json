@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "pillar": "LANGUAGES_AND_LIBRARIES",
+  "stacks": [
+    {
+      "id": "javascript_typescript",
+      "name": "JavaScript / TypeScript",
+      "description": "TypeScript/JavaScript language core, tooling, security, performance, and references",
+      "sub_stacks": ["nodejs", "react", "nextjs"]
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "description": "Python language core and FastAPI framework",
+      "sub_stacks": []
+    },
+    {
+      "id": "go",
+      "name": "Go",
+      "description": "Go language core and web framework patterns",
+      "sub_stacks": []
+    },
+    {
+      "id": "rust",
+      "name": "Rust",
+      "description": "Rust language core and web framework patterns",
+      "sub_stacks": []
+    },
+    {
+      "id": "databases_postgres",
+      "name": "SQL / Postgres",
+      "description": "SQL fundamentals, Postgres-specific references, security, and performance",
+      "sub_stacks": []
+    },
+    {
+      "id": "solidity_evm",
+      "name": "Solidity / EVM",
+      "description": "EVM mental model, Solidity language core, security, patterns, and references",
+      "sub_stacks": []
+    }
+  ]
+}

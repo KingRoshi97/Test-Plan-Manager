@@ -1,0 +1,55 @@
+---
+kid: "KID-ITARCH-PROCEDURE-0001"
+title: "Architecture Review Procedure (what to check)"
+type: procedure
+pillar: IT_END_TO_END
+domains:
+  - software_delivery
+  - architecture_design
+tags: [architecture, review, procedure]
+maturity: draft
+use_policy: pattern_only
+executor_access: internal_and_external
+license: internal_owned
+allowed_excerpt: null
+supersedes: null
+deprecated_by: null
+created_at: "2025-01-01"
+updated_at: "2025-01-01"
+owner: axion
+---
+
+# Architecture Review Procedure (what to check)
+
+## Summary
+
+Architecture Review Procedure (what to check).
+
+## When to Use
+
+Apply when working within the architecture_design domain in software delivery contexts.
+
+## Do / Don't
+
+### Do
+- Follow established architecture_design practices
+- Reference this KID when applicable
+
+### Don't
+- Copy content verbatim without allowlist approval
+- Skip validation steps
+
+## Core Content
+
+Content for Architecture Review Procedure (what to check) — to be expanded during review cycle.
+
+## Links
+
+- Pillar: IT_END_TO_END
+- Group: 02_software_delivery
+- Domain: architecture_design
+
+## Proof / Confidence
+
+- Tier: draft
+- References: internal authoring

@@ -1,0 +1,54 @@
+---
+kid: "KID-IND-HC-RISK-0001"
+title: "Common Healthcare Threats (ransomware, access abuse)"
+type: "pitfall"
+pillar: "INDUSTRY_PLAYBOOKS"
+domains:
+  - "healthcare"
+tags:
+  - "healthcare"
+  - "security"
+  - "threats"
+  - "ransomware"
+maturity: "draft"
+use_policy: "pattern_only"
+executor_access: "internal_and_external"
+license: "internal_owned"
+created_at: "2025-01-01"
+updated_at: "2025-01-01"
+owner: "axion-system"
+---
+
+# Common Healthcare Threats (ransomware, access abuse)
+
+## Summary
+
+Common Healthcare Threats (ransomware, access abuse).
+
+## When to use
+
+Apply this knowledge item when working on healthcare systems.
+
+## Do / Don't
+
+**Do:**
+- Follow industry-standard practices
+- Reference applicable regulations and standards
+
+**Don't:**
+- Skip compliance requirements
+- Ignore industry-specific constraints
+
+## Core content
+
+Content for KID-IND-HC-RISK-0001 — Common Healthcare Threats (ransomware, access abuse).
+
+## Links
+
+- Pillar: INDUSTRY_PLAYBOOKS
+- Domain: healthcare
+
+## Proof / confidence
+
+- **Tier:** draft
+- **References:** Internal domain expertise

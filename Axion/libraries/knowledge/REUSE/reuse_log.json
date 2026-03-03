@@ -1,0 +1,6 @@
+{
+  "$schema": "knowledge-reuse-log-v1",
+  "version": "1.0.0",
+  "description": "Records of reuse events (what/where/license/attribution)",
+  "entries": []
+}

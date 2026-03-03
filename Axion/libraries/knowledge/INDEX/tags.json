@@ -1,0 +1,277 @@
+{
+  "$schema": "knowledge-tags-v1",
+  "version": "1.0.0",
+  "description": "Controlled vocabulary for knowledge item tags",
+  "tags": {
+    "auth": {
+      "aliases": [
+        "authentication",
+        "authn"
+      ],
+      "description": "Authentication patterns and protocols"
+    },
+    "authz": {
+      "aliases": [
+        "authorization"
+      ],
+      "description": "Authorization and access control"
+    },
+    "payments": {
+      "aliases": [
+        "billing",
+        "checkout"
+      ],
+      "description": "Payment processing and billing"
+    },
+    "realtime": {
+      "aliases": [
+        "websocket",
+        "sse",
+        "pubsub"
+      ],
+      "description": "Real-time communication patterns"
+    },
+    "mobile": {
+      "aliases": [
+        "ios",
+        "android",
+        "react-native"
+      ],
+      "description": "Mobile application patterns"
+    },
+    "api": {
+      "aliases": [
+        "rest",
+        "graphql",
+        "grpc"
+      ],
+      "description": "API design and integration"
+    },
+    "security": {
+      "aliases": [
+        "sec",
+        "infosec"
+      ],
+      "description": "Security patterns and practices"
+    },
+    "database": {
+      "aliases": [
+        "db",
+        "sql",
+        "nosql"
+      ],
+      "description": "Database design and operations"
+    },
+    "caching": {
+      "aliases": [
+        "cache",
+        "redis",
+        "memcached"
+      ],
+      "description": "Caching strategies"
+    },
+    "testing": {
+      "aliases": [
+        "test",
+        "qa",
+        "quality"
+      ],
+      "description": "Testing approaches and frameworks"
+    },
+    "observability": {
+      "aliases": [
+        "monitoring",
+        "logging",
+        "tracing",
+        "metrics"
+      ],
+      "description": "System observability"
+    },
+    "deployment": {
+      "aliases": [
+        "deploy",
+        "release",
+        "rollout"
+      ],
+      "description": "Deployment and release patterns"
+    },
+    "ci_cd": {
+      "aliases": [
+        "pipeline",
+        "build",
+        "automation"
+      ],
+      "description": "CI/CD pipelines and automation"
+    },
+    "containers": {
+      "aliases": [
+        "docker",
+        "kubernetes",
+        "k8s"
+      ],
+      "description": "Container orchestration"
+    },
+    "serverless": {
+      "aliases": [
+        "lambda",
+        "functions"
+      ],
+      "description": "Serverless compute patterns"
+    },
+    "networking": {
+      "aliases": [
+        "network",
+        "dns",
+        "cdn",
+        "lb"
+      ],
+      "description": "Network infrastructure"
+    },
+    "storage": {
+      "aliases": [
+        "s3",
+        "blob",
+        "filesystem"
+      ],
+      "description": "Storage systems and patterns"
+    },
+    "compliance": {
+      "aliases": [
+        "regulatory",
+        "audit",
+        "governance"
+      ],
+      "description": "Compliance and regulatory"
+    },
+    "privacy": {
+      "aliases": [
+        "pii",
+        "gdpr",
+        "data-protection"
+      ],
+      "description": "Privacy and data protection"
+    },
+    "performance": {
+      "aliases": [
+        "perf",
+        "optimization",
+        "latency"
+      ],
+      "description": "Performance optimization"
+    },
+    "error_handling": {
+      "aliases": [
+        "errors",
+        "exceptions",
+        "fault-tolerance"
+      ],
+      "description": "Error handling patterns"
+    },
+    "data_modeling": {
+      "aliases": [
+        "schema",
+        "erd",
+        "domain-model"
+      ],
+      "description": "Data modeling patterns"
+    },
+    "accessibility": {
+      "aliases": [
+        "a11y",
+        "wcag"
+      ],
+      "description": "Accessibility standards"
+    },
+    "i18n": {
+      "aliases": [
+        "internationalization",
+        "l10n",
+        "localization"
+      ],
+      "description": "Internationalization"
+    },
+    "cost": {
+      "aliases": [
+        "finops",
+        "budget",
+        "pricing"
+      ],
+      "description": "Cost optimization"
+    },
+    "search": {
+      "aliases": [
+        "elasticsearch",
+        "full-text",
+        "vector-search"
+      ],
+      "description": "Search and retrieval"
+    },
+    "distributed": {
+      "aliases": [
+        "consensus",
+        "replication",
+        "partition"
+      ],
+      "description": "Distributed systems"
+    },
+    "iam": {
+      "aliases": [
+        "rbac",
+        "abac",
+        "sso",
+        "oauth"
+      ],
+      "description": "Identity and access management"
+    },
+    "blockchain": {
+      "aliases": [
+        "web3",
+        "smart-contract",
+        "evm"
+      ],
+      "description": "Blockchain and smart contracts"
+    },
+    "healthcare": {
+      "aliases": [
+        "hipaa",
+        "hl7",
+        "fhir",
+        "ehr"
+      ],
+      "description": "Healthcare domain"
+    },
+    "finance": {
+      "aliases": [
+        "fintech",
+        "kyc",
+        "aml",
+        "pci"
+      ],
+      "description": "Finance domain"
+    },
+    "ecommerce": {
+      "aliases": [
+        "retail",
+        "cart",
+        "catalog"
+      ],
+      "description": "Ecommerce domain"
+    },
+    "logistics": {
+      "aliases": [
+        "supply-chain",
+        "shipping",
+        "tracking"
+      ],
+      "description": "Logistics domain"
+    },
+    "government": {
+      "aliases": [
+        "gov",
+        "fedramp",
+        "public-sector"
+      ],
+      "description": "Government domain"
+    }
+  }
+}

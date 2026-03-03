@@ -1,0 +1,17 @@
+{
+  "bundle_id": "REALTIME_CHAT",
+  "name": "Realtime Chat",
+  "description": "Knowledge bundle for realtime chat/messaging projects",
+  "kids": [],
+  "filter_rules": {
+    "run_profile": "REALTIME_CHAT",
+    "min_maturity": "draft"
+  },
+  "tags": [
+    "realtime",
+    "api",
+    "auth",
+    "database",
+    "caching"
+  ]
+}

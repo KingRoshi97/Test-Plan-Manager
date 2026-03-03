@@ -1,0 +1,17 @@
+{
+  "bundle_id": "PRODUCTION",
+  "name": "Production Risk Class",
+  "description": "Knowledge bundle for production projects requiring reviewed+ maturity KIDs",
+  "kids": [],
+  "filter_rules": {
+    "risk_class": "production",
+    "min_maturity": "reviewed"
+  },
+  "tags": [
+    "security",
+    "observability",
+    "testing",
+    "deployment",
+    "error_handling"
+  ]
+}

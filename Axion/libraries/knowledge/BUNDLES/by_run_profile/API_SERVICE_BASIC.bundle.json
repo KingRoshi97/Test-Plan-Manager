@@ -1,0 +1,17 @@
+{
+  "bundle_id": "API_SERVICE_BASIC",
+  "name": "API Service Basic",
+  "description": "Knowledge bundle for basic API/backend service projects",
+  "kids": [],
+  "filter_rules": {
+    "run_profile": "API_SERVICE_BASIC",
+    "min_maturity": "draft"
+  },
+  "tags": [
+    "api",
+    "auth",
+    "database",
+    "error_handling",
+    "testing"
+  ]
+}

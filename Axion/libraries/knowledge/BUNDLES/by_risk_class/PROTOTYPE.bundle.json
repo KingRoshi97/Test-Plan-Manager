@@ -1,0 +1,14 @@
+{
+  "bundle_id": "PROTOTYPE",
+  "name": "Prototype Risk Class",
+  "description": "Knowledge bundle for prototype/experimental projects with relaxed maturity requirements",
+  "kids": [],
+  "filter_rules": {
+    "risk_class": "prototype",
+    "min_maturity": "draft"
+  },
+  "tags": [
+    "testing",
+    "deployment"
+  ]
+}

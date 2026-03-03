@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0.0",
+  "pillar": "INDUSTRY_PLAYBOOKS",
+  "industries": [
+    {
+      "id": "healthcare",
+      "name": "Healthcare",
+      "code": "HC",
+      "description": "Patient care systems, EHR/EMR, HIPAA compliance, claims processing",
+      "subfolders": [
+        "workflows",
+        "data_models",
+        "integrations",
+        "compliance",
+        "security_risk",
+        "kpis_metrics",
+        "templates_guidance"
+      ],
+      "kid_count": 12
+    },
+    {
+      "id": "finance",
+      "name": "Finance (Banking/Payments)",
+      "code": "FIN",
+      "description": "KYC, transactions, fraud detection, PCI compliance",
+      "subfolders": [
+        "workflows",
+        "data_models",
+        "integrations",
+        "compliance",
+        "security_risk",
+        "kpis_metrics",
+        "templates_guidance"
+      ],
+      "kid_count": 12
+    },
+    {
+      "id": "retail_ecommerce",
+      "name": "Retail & Ecommerce",
+      "code": "ECOM",
+      "description": "Shopping workflows, inventory, fulfillment, marketplace integrations",
+      "subfolders": [
+        "workflows",
+        "data_models",
+        "integrations",
+        "compliance",
+        "security_risk",
+        "kpis_metrics",
+        "templates_guidance"
+      ],
+      "kid_count": 11
+    },
+    {
+      "id": "logistics_supply_chain",
+      "name": "Logistics & Supply Chain",
+      "code": "LOG",
+      "description": "Warehouse operations, carrier integrations, EDI, shipment tracking",
+      "subfolders": [
+        "workflows",
+        "data_models",
+        "integrations",
+        "compliance",
+        "security_risk",
+        "kpis_metrics",
+        "templates_guidance"
+      ],
+      "kid_count": 11
+    },
+    {
+      "id": "government_public_sector",
+      "name": "Government / Public Sector",
+      "code": "GOV",
+      "description": "Case management, benefits eligibility, records requests, inter-agency data sharing",
+      "subfolders": [
+        "workflows",
+        "data_models",
+        "integrations",
+        "compliance",
+        "security_risk",
+        "kpis_metrics",
+        "templates_guidance"
+      ],
+      "kid_count": 12
+    }
+  ],
+  "universal_structure": {
+    "subfolders": [
+      "workflows",
+      "data_models",
+      "integrations",
+      "compliance",
+      "security_risk",
+      "kpis_metrics",
+      "templates_guidance"
+    ],
+    "description": "Every industry folder follows this standardized subfolder structure"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "bundle_id": "MOBILE_APP_BASIC",
+  "name": "Mobile Application Basic",
+  "description": "Knowledge bundle for basic mobile application projects",
+  "kids": [],
+  "filter_rules": {
+    "run_profile": "MOBILE_APP_BASIC",
+    "min_maturity": "draft"
+  },
+  "tags": [
+    "mobile",
+    "auth",
+    "api",
+    "performance",
+    "testing"
+  ]
+}

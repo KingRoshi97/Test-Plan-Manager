@@ -1,0 +1,54 @@
+---
+kid: "KID-IND-ECOM-RISK-0001"
+title: "Checkout Fraud + Bot Abuse Patterns"
+type: "pitfall"
+pillar: "INDUSTRY_PLAYBOOKS"
+domains:
+  - "retail_ecommerce"
+tags:
+  - "ecommerce"
+  - "fraud"
+  - "bots"
+  - "security"
+maturity: "draft"
+use_policy: "pattern_only"
+executor_access: "internal_and_external"
+license: "internal_owned"
+created_at: "2025-01-01"
+updated_at: "2025-01-01"
+owner: "axion-system"
+---
+
+# Checkout Fraud + Bot Abuse Patterns
+
+## Summary
+
+Checkout Fraud + Bot Abuse Patterns.
+
+## When to use
+
+Apply this knowledge item when working on retail_ecommerce systems.
+
+## Do / Don't
+
+**Do:**
+- Follow industry-standard practices
+- Reference applicable regulations and standards
+
+**Don't:**
+- Skip compliance requirements
+- Ignore industry-specific constraints
+
+## Core content
+
+Content for KID-IND-ECOM-RISK-0001 — Checkout Fraud + Bot Abuse Patterns.
+
+## Links
+
+- Pillar: INDUSTRY_PLAYBOOKS
+- Domain: retail_ecommerce
+
+## Proof / confidence
+
+- **Tier:** draft
+- **References:** Internal domain expertise

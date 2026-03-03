@@ -1,0 +1,3957 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-03-03T17:15:51.060Z",
+  "total_items": 395,
+  "items": [
+    {
+      "kid": "KID-IND-ECOM-COMP-0001",
+      "title": "Privacy + Retention Overview (ecom lens)",
+      "type": "checklist",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/compliance/KID-IND-ECOM-COMP-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-DM-0001",
+      "title": "Product / Cart / Order Entity Map",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/data_models/KID-IND-ECOM-DM-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-DM-0002",
+      "title": "Customer Data Sensitivity Map",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/data_models/KID-IND-ECOM-DM-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-INT-0001",
+      "title": "Payment/Tax/Shipping Integrations Overview",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/integrations/KID-IND-ECOM-INT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-INT-0002",
+      "title": "Marketplace Integration Patterns (high level)",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/integrations/KID-IND-ECOM-INT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-KPI-0001",
+      "title": "Conversion Funnel KPIs",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/kpis_metrics/KID-IND-ECOM-KPI-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-KPI-0002",
+      "title": "Fulfillment Cycle Time KPIs",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/kpis_metrics/KID-IND-ECOM-KPI-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-RISK-0001",
+      "title": "Checkout Fraud + Bot Abuse Patterns",
+      "type": "pitfall",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/security_risk/KID-IND-ECOM-RISK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-WF-0001",
+      "title": "Browse → Cart → Checkout Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/workflows/KID-IND-ECOM-WF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-WF-0002",
+      "title": "Orders → Fulfillment → Returns Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/workflows/KID-IND-ECOM-WF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-ECOM-WF-0003",
+      "title": "Inventory Sync Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/retail_ecommerce/workflows/KID-IND-ECOM-WF-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-COMP-0001",
+      "title": "Audit + Access Controls Expectations (finance)",
+      "type": "checklist",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/compliance/KID-IND-FIN-COMP-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-COMP-0002",
+      "title": "Data Retention Expectations (finance lens)",
+      "type": "checklist",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/compliance/KID-IND-FIN-COMP-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-DM-0001",
+      "title": "Account / Ledger / Transaction Entity Map",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/data_models/KID-IND-FIN-DM-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-DM-0002",
+      "title": "Sensitive Data Map (PCI-adjacent, tokens)",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/data_models/KID-IND-FIN-DM-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-INT-0001",
+      "title": "Payment Processor Integration Patterns",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/integrations/KID-IND-FIN-INT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-INT-0002",
+      "title": "Webhook Idempotency + Reconciliation Patterns",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/integrations/KID-IND-FIN-INT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-KPI-0001",
+      "title": "Settlement/Reconciliation KPIs",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/kpis_metrics/KID-IND-FIN-KPI-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-KPI-0002",
+      "title": "Fraud Rate + Review Latency KPIs",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/kpis_metrics/KID-IND-FIN-KPI-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-RISK-0001",
+      "title": "Fraud/Abuse Threat Highlights (finance)",
+      "type": "pitfall",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/security_risk/KID-IND-FIN-RISK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-WF-0001",
+      "title": "KYC → Account → Transactions Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/workflows/KID-IND-FIN-WF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-WF-0002",
+      "title": "Disputes/Chargebacks Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/workflows/KID-IND-FIN-WF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-FIN-WF-0003",
+      "title": "Fraud Review Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/finance/workflows/KID-IND-FIN-WF-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-COMP-0001",
+      "title": "Audit + Access Controls Expectations (public sector)",
+      "type": "checklist",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/compliance/KID-IND-GOV-COMP-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-COMP-0002",
+      "title": "Retention + Records Management Overview",
+      "type": "checklist",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/compliance/KID-IND-GOV-COMP-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-DM-0001",
+      "title": "Citizen / Case / Document Entity Map",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/data_models/KID-IND-GOV-DM-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-DM-0002",
+      "title": "Sensitive Data Classification Map (public sector)",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/data_models/KID-IND-GOV-DM-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-INT-0001",
+      "title": "Identity Provider + SSO Integration Overview",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/integrations/KID-IND-GOV-INT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-INT-0002",
+      "title": "Inter-agency Data Sharing Patterns (high level)",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/integrations/KID-IND-GOV-INT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-KPI-0001",
+      "title": "Case Throughput + Backlog KPIs",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/kpis_metrics/KID-IND-GOV-KPI-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-KPI-0002",
+      "title": "Availability Targets for Citizen-Facing Services",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/kpis_metrics/KID-IND-GOV-KPI-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-RISK-0001",
+      "title": "Threat Highlights (PII exposure, insider risk)",
+      "type": "pitfall",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/security_risk/KID-IND-GOV-RISK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-WF-0001",
+      "title": "Case Intake → Review → Decision Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/workflows/KID-IND-GOV-WF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-WF-0002",
+      "title": "Benefits Eligibility Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/workflows/KID-IND-GOV-WF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-GOV-WF-0003",
+      "title": "Records Requests Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/government_public_sector/workflows/KID-IND-GOV-WF-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-COMP-0001",
+      "title": "HIPAA Tech Requirements Overview",
+      "type": "checklist",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/compliance/KID-IND-HC-COMP-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-COMP-0002",
+      "title": "Audit Logs + Access Controls Expectations (healthcare)",
+      "type": "checklist",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/compliance/KID-IND-HC-COMP-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-DM-0001",
+      "title": "Patient / Provider / Encounter Entity Map",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/data_models/KID-IND-HC-DM-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-DM-0002",
+      "title": "PHI/PII Classification Map (HIPAA lens)",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/data_models/KID-IND-HC-DM-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-INT-0001",
+      "title": "EHR/EMR Integration Overview (tech-facing)",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/integrations/KID-IND-HC-INT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-INT-0002",
+      "title": "HL7/FHIR Integration Patterns (high level)",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/integrations/KID-IND-HC-INT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-KPI-0001",
+      "title": "Throughput + Cycle Time KPIs (claims/scheduling)",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/kpis_metrics/KID-IND-HC-KPI-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-KPI-0002",
+      "title": "Availability Targets for Critical Systems",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/kpis_metrics/KID-IND-HC-KPI-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-RISK-0001",
+      "title": "Common Healthcare Threats (ransomware, access abuse)",
+      "type": "pitfall",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/security_risk/KID-IND-HC-RISK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-WF-0001",
+      "title": "Patient Intake → Care → Billing Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/workflows/KID-IND-HC-WF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-WF-0002",
+      "title": "Claims Submission + Denial Management Workflow",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/workflows/KID-IND-HC-WF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-HC-WF-0003",
+      "title": "Scheduling + Provider Assignment Workflow",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/healthcare/workflows/KID-IND-HC-WF-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-COMP-0001",
+      "title": "Audit + Retention Expectations (logistics)",
+      "type": "checklist",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/compliance/KID-IND-LOG-COMP-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-DM-0001",
+      "title": "Shipment / SKU / Location Entity Map",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/data_models/KID-IND-LOG-DM-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-DM-0002",
+      "title": "Scan Event Model (audit-ready)",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/data_models/KID-IND-LOG-DM-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-INT-0001",
+      "title": "Carrier API Integration Patterns",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/integrations/KID-IND-LOG-INT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-INT-0002",
+      "title": "EDI Integration Overview (high level)",
+      "type": "concept",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/integrations/KID-IND-LOG-INT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-KPI-0001",
+      "title": "On-time Delivery + Delay KPIs",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/kpis_metrics/KID-IND-LOG-KPI-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-KPI-0002",
+      "title": "Inventory Accuracy KPIs",
+      "type": "reference",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/kpis_metrics/KID-IND-LOG-KPI-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-RISK-0001",
+      "title": "Fraud/Abuse Patterns (shipping diversion, access abuse)",
+      "type": "pitfall",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/security_risk/KID-IND-LOG-RISK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-WF-0001",
+      "title": "Order → Warehouse → Shipment Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/workflows/KID-IND-LOG-WF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-WF-0002",
+      "title": "Receiving + Putaway Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/workflows/KID-IND-LOG-WF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-IND-LOG-WF-0003",
+      "title": "Exceptions (lost/damaged/backorder) Workflow Map",
+      "type": "pattern",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "path": "PILLARS/INDUSTRY_PLAYBOOKS/logistics_supply_chain/workflows/KID-IND-LOG-WF-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-CHECK-0001",
+      "title": "Endpoint Checklist (auth, validation, errors, logging)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/checklists/KID-ITAPI-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-CHECK-0002",
+      "title": "Integration Checklist (retries, idempotency, limits)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/checklists/KID-ITAPI-CHECK-0002.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-CONCEPT-0001",
+      "title": "REST vs RPC vs Events",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/concepts/KID-ITAPI-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-CONCEPT-0002",
+      "title": "Idempotency (why it matters)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/concepts/KID-ITAPI-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-CONCEPT-0003",
+      "title": "Pagination/Filtering/Sorting Basics",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/concepts/KID-ITAPI-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-CONCEPT-0004",
+      "title": "Webhooks Basics (delivery, retries)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/concepts/KID-ITAPI-CONCEPT-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-PATTERN-0001",
+      "title": "Consistent Error Shape Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/patterns/KID-ITAPI-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-PATTERN-0002",
+      "title": "Idempotent Write Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/patterns/KID-ITAPI-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-PATTERN-0003",
+      "title": "Webhook Signature + Replay Protection Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/patterns/KID-ITAPI-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-PATTERN-0004",
+      "title": "Versioning Strategy Pattern (URL/header)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/patterns/KID-ITAPI-PATTERN-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-PITFALL-0001",
+      "title": "Breaking changes without versioning",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/pitfalls/KID-ITAPI-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-PITFALL-0002",
+      "title": "Unbounded list endpoints (DoS risk)",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/pitfalls/KID-ITAPI-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-PROCEDURE-0001",
+      "title": "API Contract Change Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/procedures/KID-ITAPI-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-PROCEDURE-0002",
+      "title": "Webhook Failure Triage Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/procedures/KID-ITAPI-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITAPI-REF-0001",
+      "title": "HTTP Method Semantics Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/apis_integrations/references/KID-ITAPI-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-CHECK-0001",
+      "title": "Architecture Baseline Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/checklists/KID-ITARCH-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-CHECK-0002",
+      "title": "Dependency Hygiene Checklist (cycles, boundaries)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/checklists/KID-ITARCH-CHECK-0002.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-CONCEPT-0001",
+      "title": "System Boundaries (what is a \"service/module\")",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/concepts/KID-ITARCH-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-CONCEPT-0002",
+      "title": "DDD Basics (entities, value objects, bounded contexts)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/concepts/KID-ITARCH-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-CONCEPT-0003",
+      "title": "Coupling vs Cohesion (practical)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/concepts/KID-ITARCH-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-PATTERN-0001",
+      "title": "Layered Architecture Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/patterns/KID-ITARCH-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-PATTERN-0002",
+      "title": "Modular Monolith Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/patterns/KID-ITARCH-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-PATTERN-0003",
+      "title": "Event-Driven Integration Pattern (high level)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/patterns/KID-ITARCH-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-PITFALL-0001",
+      "title": "\"Microservices by default\" failure modes",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/pitfalls/KID-ITARCH-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-PITFALL-0002",
+      "title": "Shared DB coupling across services",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/pitfalls/KID-ITARCH-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-PROCEDURE-0001",
+      "title": "Architecture Review Procedure (what to check)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/procedures/KID-ITARCH-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITARCH-REF-0001",
+      "title": "Common Architecture Terms Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/architecture_design/references/KID-ITARCH-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCACHE-CHECK-0001",
+      "title": "Caching Checklist (keys, TTLs, invalidation)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/caching/checklists/KID-ITCACHE-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCACHE-CONCEPT-0001",
+      "title": "Cache-aside vs Write-through",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/caching/concepts/KID-ITCACHE-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCACHE-CONCEPT-0002",
+      "title": "Invalidation (why it's the hard part)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/caching/concepts/KID-ITCACHE-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCACHE-PATTERN-0001",
+      "title": "Cache-aside Pattern (with TTL)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/caching/patterns/KID-ITCACHE-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCACHE-PATTERN-0002",
+      "title": "Request Coalescing Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/caching/patterns/KID-ITCACHE-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCACHE-PITFALL-0001",
+      "title": "Stale cache serving critical data",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/caching/pitfalls/KID-ITCACHE-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCACHE-PITFALL-0002",
+      "title": "Cache stampede",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/caching/pitfalls/KID-ITCACHE-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCACHE-PROCEDURE-0001",
+      "title": "Cache Incident Triage Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/caching/procedures/KID-ITCACHE-PROCEDURE-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCACHE-REF-0001",
+      "title": "Caching Terms Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/caching/references/KID-ITCACHE-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-CHECK-0001",
+      "title": "CI Baseline Checklist (lint/test/build)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/checklists/KID-ITCICD-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-CHECK-0002",
+      "title": "Deploy Readiness Checklist (observability, rollback)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/checklists/KID-ITCICD-CHECK-0002.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-CONCEPT-0001",
+      "title": "Pipeline Stages (build/test/package/deploy)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/concepts/KID-ITCICD-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-CONCEPT-0002",
+      "title": "Environments (dev/stage/prod parity)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/concepts/KID-ITCICD-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-CONCEPT-0003",
+      "title": "Rollback vs Rollforward",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/concepts/KID-ITCICD-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-PATTERN-0001",
+      "title": "Trunk-Based Development Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/patterns/KID-ITCICD-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-PATTERN-0002",
+      "title": "Artifact Promotion Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/patterns/KID-ITCICD-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-PATTERN-0003",
+      "title": "Feature Flags Pattern (release safety)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/patterns/KID-ITCICD-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-PITFALL-0001",
+      "title": "Unpinned dependencies in CI",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/pitfalls/KID-ITCICD-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-PITFALL-0002",
+      "title": "\"Green build\" but broken deploy",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/pitfalls/KID-ITCICD-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-PROCEDURE-0001",
+      "title": "Safe Deploy Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/procedures/KID-ITCICD-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-PROCEDURE-0002",
+      "title": "Rollback Procedure (with verification)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/procedures/KID-ITCICD-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCICD-REF-0001",
+      "title": "CI Artifact Types Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/ci_cd_devops/references/KID-ITCICD-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-CHECK-0001",
+      "title": "Cloud Baseline Checklist (network, IAM, logging)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/checklists/KID-ITCLOUD-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-CONCEPT-0001",
+      "title": "Shared Responsibility Model",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/concepts/KID-ITCLOUD-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-CONCEPT-0002",
+      "title": "IAM Basics in Cloud (high level)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/concepts/KID-ITCLOUD-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-CONCEPT-0003",
+      "title": "VPC/VNet Basics (subnets, routing)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/concepts/KID-ITCLOUD-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-PATTERN-0001",
+      "title": "Least Privilege IAM Pattern (cloud)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/patterns/KID-ITCLOUD-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-PATTERN-0002",
+      "title": "Multi-Environment Pattern (dev/stage/prod)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/patterns/KID-ITCLOUD-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-PITFALL-0001",
+      "title": "Over-permissive IAM policies",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/pitfalls/KID-ITCLOUD-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-PITFALL-0002",
+      "title": "Public storage buckets by accident",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/pitfalls/KID-ITCLOUD-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-PROCEDURE-0001",
+      "title": "Cloud Cost Spike Triage Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/procedures/KID-ITCLOUD-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCLOUD-REF-0001",
+      "title": "Common Cloud Services Reference (compute/storage/net)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/cloud_fundamentals/references/KID-ITCLOUD-REF-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-CHECK-0001",
+      "title": "Container Security Checklist (least privilege, no root)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/checklists/KID-ITCMP-CHECK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-CHECK-0002",
+      "title": "Deploy Readiness Checklist (health checks, rollbacks)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/checklists/KID-ITCMP-CHECK-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-CONCEPT-0001",
+      "title": "VMs vs Containers (what changes)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/concepts/KID-ITCMP-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-CONCEPT-0002",
+      "title": "Container Image Basics (layers, tags)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/concepts/KID-ITCMP-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-CONCEPT-0003",
+      "title": "Scheduling Basics (why pods move)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/concepts/KID-ITCMP-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-PATTERN-0001",
+      "title": "Immutable Image Build Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/patterns/KID-ITCMP-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-PATTERN-0002",
+      "title": "Multi-Stage Build Pattern (lean images)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/patterns/KID-ITCMP-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-PITFALL-0001",
+      "title": "Tag Drift (latest) in Deployments",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/pitfalls/KID-ITCMP-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-PITFALL-0002",
+      "title": "Missing Resource Limits — Noisy Neighbor",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/pitfalls/KID-ITCMP-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-PROCEDURE-0001",
+      "title": "Debug Container Runtime Issues",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/procedures/KID-ITCMP-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-PROCEDURE-0002",
+      "title": "Rollback Deployment Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/procedures/KID-ITCMP-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCMP-REF-0001",
+      "title": "Common Container/Orchestration Terms Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/compute_virtualization/references/KID-ITCMP-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCOST-CHECK-0001",
+      "title": "Cost Baseline Checklist (monitoring + tagging)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/finops_cost/checklists/KID-ITCOST-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCOST-CONCEPT-0001",
+      "title": "Cost Drivers (compute, storage, egress)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/finops_cost/concepts/KID-ITCOST-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCOST-CONCEPT-0002",
+      "title": "Capacity Planning Basics",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/finops_cost/concepts/KID-ITCOST-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCOST-PATTERN-0001",
+      "title": "Budget Guardrail Pattern (alerts/limits)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/finops_cost/patterns/KID-ITCOST-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCOST-PATTERN-0002",
+      "title": "Cost Attribution Pattern (tags/labels)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/finops_cost/patterns/KID-ITCOST-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCOST-PITFALL-0001",
+      "title": "Hidden egress costs",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/finops_cost/pitfalls/KID-ITCOST-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCOST-PITFALL-0002",
+      "title": "Unbounded logs/metrics bills",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/finops_cost/pitfalls/KID-ITCOST-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCOST-PROCEDURE-0001",
+      "title": "Cost Spike Investigation Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/finops_cost/procedures/KID-ITCOST-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITCOST-REF-0001",
+      "title": "Common Cloud Cost Terms Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/finops_cost/references/KID-ITCOST-REF-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-CHECK-0001",
+      "title": "Schema Design Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/checklists/KID-ITDB-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-CHECK-0002",
+      "title": "Migration Checklist (safe deploy)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/checklists/KID-ITDB-CHECK-0002.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-CONCEPT-0001",
+      "title": "Transactions + Isolation Levels (practical)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/concepts/KID-ITDB-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-CONCEPT-0002",
+      "title": "Indexing Basics (why queries are slow)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/concepts/KID-ITDB-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-CONCEPT-0003",
+      "title": "Migrations Basics (safe schema evolution)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/concepts/KID-ITDB-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-PATTERN-0001",
+      "title": "Migration Discipline Pattern (forward-only)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/patterns/KID-ITDB-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-PATTERN-0002",
+      "title": "Soft Delete Pattern (with retention)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/patterns/KID-ITDB-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-PATTERN-0003",
+      "title": "Outbox Pattern (reliable events)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/patterns/KID-ITDB-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-PITFALL-0001",
+      "title": "Missing indexes on high-traffic queries",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/pitfalls/KID-ITDB-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-PITFALL-0002",
+      "title": "Migration locks that take prod down",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/pitfalls/KID-ITDB-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-PROCEDURE-0001",
+      "title": "Migration Rollout Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/procedures/KID-ITDB-PROCEDURE-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-PROCEDURE-0002",
+      "title": "Slow Query Triage Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/procedures/KID-ITDB-PROCEDURE-0002.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDB-REF-0001",
+      "title": "SQL Anti-Patterns Reference (practical)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/databases/references/KID-ITDB-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-CHECK-0001",
+      "title": "Distributed Workflow Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/checklists/KID-ITDIST-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-CONCEPT-0001",
+      "title": "Consistency Models (eventual vs strong)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/concepts/KID-ITDIST-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-CONCEPT-0002",
+      "title": "Replication + Failover Basics",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/concepts/KID-ITDIST-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-CONCEPT-0003",
+      "title": "Queues vs Streams (when to use)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/concepts/KID-ITDIST-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-PATTERN-0001",
+      "title": "Idempotent Consumer Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/patterns/KID-ITDIST-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-PATTERN-0002",
+      "title": "Retry with Backoff Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/patterns/KID-ITDIST-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-PATTERN-0003",
+      "title": "Circuit Breaker Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/patterns/KID-ITDIST-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-PITFALL-0001",
+      "title": "Exactly-once assumptions (why it's hard)",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/pitfalls/KID-ITDIST-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-PITFALL-0002",
+      "title": "Retry storms and thundering herds",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/pitfalls/KID-ITDIST-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-PROCEDURE-0001",
+      "title": "Message Processing Failure Triage",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/procedures/KID-ITDIST-PROCEDURE-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITDIST-REF-0001",
+      "title": "Common Distributed Terms Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/distributed_systems/references/KID-ITDIST-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-CHECK-0001",
+      "title": "Data Handling Checklist (retention, redaction)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/checklists/KID-ITGOV-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-CHECK-0002",
+      "title": "Audit Readiness Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/checklists/KID-ITGOV-CHECK-0002.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-CONCEPT-0001",
+      "title": "Data Classification Basics (PII, secrets, internal)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/concepts/KID-ITGOV-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-CONCEPT-0002",
+      "title": "Retention + Deletion Basics",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/concepts/KID-ITGOV-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-CONCEPT-0003",
+      "title": "Auditability Basics (what \"audit-ready\" means)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/concepts/KID-ITGOV-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-PATTERN-0001",
+      "title": "PII Minimization Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/patterns/KID-ITGOV-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-PATTERN-0002",
+      "title": "Redaction-at-Source Pattern (logs/proofs)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/patterns/KID-ITGOV-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-PITFALL-0001",
+      "title": "\"We'll redact later\" (why it fails)",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/pitfalls/KID-ITGOV-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-PITFALL-0002",
+      "title": "Retention policy exists but isn't enforced",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/pitfalls/KID-ITGOV-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-PROCEDURE-0001",
+      "title": "Compliance Change Procedure (policy update)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/procedures/KID-ITGOV-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-PROCEDURE-0002",
+      "title": "Data Deletion Request Procedure (high level)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/procedures/KID-ITGOV-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITGOV-REF-0001",
+      "title": "Data Handling Terms Reference (retention, deletion)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/compliance_governance/references/KID-ITGOV-REF-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-CHECK-0001",
+      "title": "IAM Implementation Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/checklists/KID-ITIAM-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-CONCEPT-0001",
+      "title": "OAuth/OIDC Basics (flows at a high level)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/concepts/KID-ITIAM-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-CONCEPT-0002",
+      "title": "RBAC vs ABAC (when to use)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/concepts/KID-ITIAM-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-CONCEPT-0003",
+      "title": "SSO Basics",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/concepts/KID-ITIAM-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-PATTERN-0001",
+      "title": "Permission Matrix Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/patterns/KID-ITIAM-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-PATTERN-0002",
+      "title": "Audit Trail for Privileged Actions Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/patterns/KID-ITIAM-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-PITFALL-0001",
+      "title": "\"Admin\" role creep over time",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/pitfalls/KID-ITIAM-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-PITFALL-0002",
+      "title": "Missing audit logs for privileged actions",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/pitfalls/KID-ITIAM-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-PROCEDURE-0001",
+      "title": "Access Review Procedure (IAM-focused)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/procedures/KID-ITIAM-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITIAM-REF-0001",
+      "title": "Auth Terminology Reference (OAuth/OIDC glossary)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/identity_access_management/references/KID-ITIAM-REF-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-CHECK-0001",
+      "title": "Service Exposure Checklist (ports, ingress, egress)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/checklists/KID-ITNET-CHECK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-CHECK-0002",
+      "title": "DNS Change Checklist (TTL, propagation, rollback)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/checklists/KID-ITNET-CHECK-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-CONCEPT-0001",
+      "title": "Networking Mental Model (packets, layers, boundaries)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/concepts/KID-ITNET-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-CONCEPT-0002",
+      "title": "DNS Basics (records, resolution, TTL)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/concepts/KID-ITNET-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-CONCEPT-0003",
+      "title": "HTTP/HTTPS Basics (requests, TLS, certs)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/concepts/KID-ITNET-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-CONCEPT-0004",
+      "title": "Load Balancing Basics (L4 vs L7)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/concepts/KID-ITNET-CONCEPT-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-CONCEPT-0005",
+      "title": "Firewalls/NAT/VPN Basics (traffic control)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/concepts/KID-ITNET-CONCEPT-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-EXAMPLE-0001",
+      "title": "Example Network Diagram (simple web app)",
+      "type": "example",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/examples/KID-ITNET-EXAMPLE-0001.md",
+      "use_policy": "restricted_internal_only",
+      "maturity": "draft",
+      "executor_access": "internal_only"
+    },
+    {
+      "kid": "KID-ITNET-PATTERN-0001",
+      "title": "Public/Private Network Segmentation Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/patterns/KID-ITNET-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-PATTERN-0002",
+      "title": "Zero-Trust Network Access Pattern (high level)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/patterns/KID-ITNET-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-PATTERN-0003",
+      "title": "Rate-Limit at Edge Pattern (CDN/WAF)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/patterns/KID-ITNET-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-PITFALL-0001",
+      "title": "DNS Misconfigurations That Break Prod",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/pitfalls/KID-ITNET-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-PITFALL-0002",
+      "title": "CORS Misunderstandings (what it does/doesn't do)",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/pitfalls/KID-ITNET-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-PROCEDURE-0001",
+      "title": "Debugging Connectivity (DNS to TCP to TLS to HTTP)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/procedures/KID-ITNET-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-PROCEDURE-0002",
+      "title": "TLS Certificate Rotation Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/procedures/KID-ITNET-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-REF-0001",
+      "title": "Common Ports and Protocols Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/references/KID-ITNET-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITNET-REF-0002",
+      "title": "HTTP Status Codes Reference (operational meaning)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/networking/references/KID-ITNET-REF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-CHECK-0001",
+      "title": "Minimal Server Baseline Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/checklists/KID-ITOS-CHECK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-CHECK-0002",
+      "title": "Runtime Config Checklist (no secrets in repo)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/checklists/KID-ITOS-CHECK-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-CONCEPT-0001",
+      "title": "Processes/Threads Basics",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/concepts/KID-ITOS-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-CONCEPT-0002",
+      "title": "Filesystems + Permissions (ownership, modes)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/concepts/KID-ITOS-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-CONCEPT-0003",
+      "title": "Environment Variables + Runtime Config",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/concepts/KID-ITOS-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-CONCEPT-0004",
+      "title": "Resource Limits (CPU/RAM/FDs)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/concepts/KID-ITOS-CONCEPT-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-PATTERN-0001",
+      "title": "Least-Privilege Service Account Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/patterns/KID-ITOS-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-PATTERN-0002",
+      "title": "Immutable Infrastructure Mindset (high level)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/patterns/KID-ITOS-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-PITFALL-0001",
+      "title": "Permissions Misconfig That Exposes Secrets",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/pitfalls/KID-ITOS-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-PITFALL-0002",
+      "title": "Works on my machine Environment Drift",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/pitfalls/KID-ITOS-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-PROCEDURE-0001",
+      "title": "Basic Linux Debug Workflow (logs, ps, netstat)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/procedures/KID-ITOS-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-PROCEDURE-0002",
+      "title": "Service Hardening Procedure (permissions, limits)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/procedures/KID-ITOS-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITOS-REF-0001",
+      "title": "Common Linux Commands Reference (ops focus)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/operating_systems/references/KID-ITOS-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-CHECK-0001",
+      "title": "Release Checklist (pre/post)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/checklists/KID-ITREL-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-CONCEPT-0001",
+      "title": "Semantic Versioning (practical)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/concepts/KID-ITREL-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-CONCEPT-0002",
+      "title": "Breaking Change vs Non-Breaking Change",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/concepts/KID-ITREL-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-PATTERN-0001",
+      "title": "Deprecation Window Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/patterns/KID-ITREL-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-PATTERN-0002",
+      "title": "Migration-First Release Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/patterns/KID-ITREL-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-PITFALL-0001",
+      "title": "\"Minor change\" that breaks clients",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/pitfalls/KID-ITREL-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-PITFALL-0002",
+      "title": "No rollback plan",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/pitfalls/KID-ITREL-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-PROCEDURE-0001",
+      "title": "Breaking Change Release Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/procedures/KID-ITREL-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-PROCEDURE-0002",
+      "title": "Rollback Decision Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/procedures/KID-ITREL-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITREL-REF-0001",
+      "title": "Release Artifact Reference (what must exist)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/04_platform_ops/release_management/references/KID-ITREL-REF-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEARCH-CHECK-0001",
+      "title": "Search Implementation Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/search_retrieval/checklists/KID-ITSEARCH-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEARCH-CONCEPT-0001",
+      "title": "Indexing Basics (tokens, analyzers)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/search_retrieval/concepts/KID-ITSEARCH-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEARCH-CONCEPT-0002",
+      "title": "Relevance Basics (precision/recall)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/search_retrieval/concepts/KID-ITSEARCH-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEARCH-PATTERN-0001",
+      "title": "Search Index Sync Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/search_retrieval/patterns/KID-ITSEARCH-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEARCH-PATTERN-0002",
+      "title": "Faceted Search Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/search_retrieval/patterns/KID-ITSEARCH-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEARCH-PITFALL-0001",
+      "title": "Stale index causes missing data",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/search_retrieval/pitfalls/KID-ITSEARCH-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEARCH-PITFALL-0002",
+      "title": "Unbounded queries melt clusters",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/search_retrieval/pitfalls/KID-ITSEARCH-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEARCH-PROCEDURE-0001",
+      "title": "Search Quality Triage Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/search_retrieval/procedures/KID-ITSEARCH-PROCEDURE-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEARCH-REF-0001",
+      "title": "Search Metrics Reference (CTR, zero-result rate)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/03_data_systems/search_retrieval/references/KID-ITSEARCH-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CHECK-0001",
+      "title": "Auth System Checklist (sessions, tokens, MFA readiness)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/checklists/KID-ITSEC-CHECK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CHECK-0002",
+      "title": "API Security Checklist (auth, rate limit, input validation, logging)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/checklists/KID-ITSEC-CHECK-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CHECK-0003",
+      "title": "Data Handling Checklist (PII, retention, redaction)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/checklists/KID-ITSEC-CHECK-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CHECK-0004",
+      "title": "Logging Checklist (no secrets, correlation IDs, audit fields)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/checklists/KID-ITSEC-CHECK-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CHECK-0005",
+      "title": "Dependency Hygiene Checklist (lockfiles, updates, license notes)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/checklists/KID-ITSEC-CHECK-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CHECK-0006",
+      "title": "Threat Model Checklist (assets, actors, mitigations)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/checklists/KID-ITSEC-CHECK-0006.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CHECK-0007",
+      "title": "External Agent Execution Checklist (least privilege + no copy rules)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/checklists/KID-ITSEC-CHECK-0007.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CONCEPT-0001",
+      "title": "Threat Modeling Basics (assets, actors, attack surfaces)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/concepts/KID-ITSEC-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CONCEPT-0002",
+      "title": "AuthN vs AuthZ (what they are, common failure patterns)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/concepts/KID-ITSEC-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CONCEPT-0003",
+      "title": "Principle of Least Privilege (POLP)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/concepts/KID-ITSEC-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CONCEPT-0004",
+      "title": "Defense in Depth",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/concepts/KID-ITSEC-CONCEPT-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CONCEPT-0005",
+      "title": "CIA Triad + Practical Mapping to Systems",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/concepts/KID-ITSEC-CONCEPT-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CONCEPT-0006",
+      "title": "Secrets vs Credentials vs Tokens (taxonomy)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/concepts/KID-ITSEC-CONCEPT-0006.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-CONCEPT-0007",
+      "title": "Encryption Basics (at rest, in transit, key roles)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/concepts/KID-ITSEC-CONCEPT-0007.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-EXAMPLE-0001",
+      "title": "Example Threat Model (small web app)",
+      "type": "example",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/examples/KID-ITSEC-EXAMPLE-0001.md",
+      "use_policy": "restricted_internal_only",
+      "maturity": "draft",
+      "executor_access": "internal_only"
+    },
+    {
+      "kid": "KID-ITSEC-EXAMPLE-0002",
+      "title": "Example Audit Log Event Schema",
+      "type": "example",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/examples/KID-ITSEC-EXAMPLE-0002.md",
+      "use_policy": "restricted_internal_only",
+      "maturity": "draft",
+      "executor_access": "internal_only"
+    },
+    {
+      "kid": "KID-ITSEC-EXAMPLE-0003",
+      "title": "Example RBAC Permission Matrix",
+      "type": "example",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/examples/KID-ITSEC-EXAMPLE-0003.md",
+      "use_policy": "restricted_internal_only",
+      "maturity": "draft",
+      "executor_access": "internal_only"
+    },
+    {
+      "kid": "KID-ITSEC-PATTERN-0001",
+      "title": "Security Baseline by Default (secure defaults checklist)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/patterns/KID-ITSEC-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PATTERN-0002",
+      "title": "Auth Session Hardening Pattern (rotation, expiry, refresh)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/patterns/KID-ITSEC-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PATTERN-0003",
+      "title": "RBAC Pattern (roles, permissions, least privilege)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/patterns/KID-ITSEC-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PATTERN-0004",
+      "title": "ABAC Pattern (attributes + policy evaluation)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/patterns/KID-ITSEC-PATTERN-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PATTERN-0005",
+      "title": "API Key Management Pattern (issue, rotate, revoke)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/patterns/KID-ITSEC-PATTERN-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PATTERN-0006",
+      "title": "Rate Limit + Abuse Control Pattern (token bucket + bans)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/patterns/KID-ITSEC-PATTERN-0006.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PATTERN-0007",
+      "title": "Audit Logging Pattern (what to log, what not to log)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/patterns/KID-ITSEC-PATTERN-0007.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PATTERN-0008",
+      "title": "Input Validation + Output Encoding Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/patterns/KID-ITSEC-PATTERN-0008.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PATTERN-0009",
+      "title": "Webhook Verification Pattern (signatures, replay protection)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/patterns/KID-ITSEC-PATTERN-0009.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PITFALL-0001",
+      "title": "JWT Everywhere Failure Modes",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/pitfalls/KID-ITSEC-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PITFALL-0002",
+      "title": "Secrets in Logs (how it happens, prevention)",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/pitfalls/KID-ITSEC-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PITFALL-0003",
+      "title": "Broken Access Control (most common causes)",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/pitfalls/KID-ITSEC-PITFALL-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PITFALL-0004",
+      "title": "Missing Idempotency on Webhooks",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/pitfalls/KID-ITSEC-PITFALL-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PITFALL-0005",
+      "title": "Over-permissive CORS and Public RPC",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/pitfalls/KID-ITSEC-PITFALL-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PITFALL-0006",
+      "title": "Insecure Defaults in Dev That Ship to Prod",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/pitfalls/KID-ITSEC-PITFALL-0006.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PROCEDURE-0001",
+      "title": "Secrets Handling Procedure (dev, CI, prod)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/procedures/KID-ITSEC-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PROCEDURE-0002",
+      "title": "Incident Triage Procedure (containment to recovery)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/procedures/KID-ITSEC-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PROCEDURE-0003",
+      "title": "Key Rotation Procedure (what triggers rotation)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/procedures/KID-ITSEC-PROCEDURE-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PROCEDURE-0004",
+      "title": "Vulnerability Response Procedure (patch cycle + verification)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/procedures/KID-ITSEC-PROCEDURE-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PROCEDURE-0005",
+      "title": "Access Review Procedure (who has what, why)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/procedures/KID-ITSEC-PROCEDURE-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-PROCEDURE-0006",
+      "title": "Secure Release Checklist Procedure (pre-release checks)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/procedures/KID-ITSEC-PROCEDURE-0006.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-REF-0001",
+      "title": "Security Terminology Reference (canonical definitions + aliases)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/references/KID-ITSEC-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-REF-0002",
+      "title": "Common HTTP Security Headers Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/references/KID-ITSEC-REF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-REF-0003",
+      "title": "Password Storage Reference (hashing requirements, anti-patterns)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/references/KID-ITSEC-REF-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSEC-REF-0004",
+      "title": "OWASP Top Risks Reference (mapped to common app modules)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/security_fundamentals/references/KID-ITSEC-REF-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-CHECK-0001",
+      "title": "Observability Baseline Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/checklists/KID-ITSRE-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-CHECK-0002",
+      "title": "Incident Readiness Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/checklists/KID-ITSRE-CHECK-0002.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-CONCEPT-0001",
+      "title": "Logs/Metrics/Traces (what each is for)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/concepts/KID-ITSRE-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-CONCEPT-0002",
+      "title": "SLO/SLI Basics",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/concepts/KID-ITSRE-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-CONCEPT-0003",
+      "title": "Incident Response Basics",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/concepts/KID-ITSRE-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-PATTERN-0001",
+      "title": "Structured Logging Pattern (correlation IDs)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/patterns/KID-ITSRE-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-PATTERN-0002",
+      "title": "Health Check Pattern (liveness/readiness)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/patterns/KID-ITSRE-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-PATTERN-0003",
+      "title": "Alerting Hygiene Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/patterns/KID-ITSRE-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-PITFALL-0001",
+      "title": "No correlation IDs → no debugging",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/pitfalls/KID-ITSRE-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-PITFALL-0002",
+      "title": "Alert fatigue from noisy alerts",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/pitfalls/KID-ITSRE-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-PROCEDURE-0001",
+      "title": "Incident Triage Procedure (ops view)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/procedures/KID-ITSRE-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-PROCEDURE-0002",
+      "title": "Postmortem Procedure (blameless)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/procedures/KID-ITSRE-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSRE-REF-0001",
+      "title": "Common Metrics Reference (latency, error rate, saturation)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/observability_sre/references/KID-ITSRE-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-CHECK-0001",
+      "title": "Backup Coverage Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/checklists/KID-ITSTO-CHECK-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-CHECK-0002",
+      "title": "Retention/Deletion Checklist (compliance-safe)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/checklists/KID-ITSTO-CHECK-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-CONCEPT-0001",
+      "title": "Block vs File vs Object Storage",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/concepts/KID-ITSTO-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-CONCEPT-0002",
+      "title": "Durability, Backups, and Recovery Basics",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/concepts/KID-ITSTO-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-CONCEPT-0003",
+      "title": "Encryption at Rest Concepts",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/concepts/KID-ITSTO-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-PATTERN-0001",
+      "title": "Backup + Restore Validation Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/patterns/KID-ITSTO-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-PATTERN-0002",
+      "title": "Data Retention Policy Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/patterns/KID-ITSTO-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-PITFALL-0001",
+      "title": "Backups exist but restores fail",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/pitfalls/KID-ITSTO-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-PITFALL-0002",
+      "title": "Orphaned data with no retention owner",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/pitfalls/KID-ITSTO-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-PROCEDURE-0001",
+      "title": "Backup Restore Drill Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/procedures/KID-ITSTO-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-PROCEDURE-0002",
+      "title": "Data Recovery Workflow (high level)",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/procedures/KID-ITSTO-PROCEDURE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITSTO-REF-0001",
+      "title": "Backup RPO/RTO Reference (practical definitions)",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/01_foundations/storage_fundamentals/references/KID-ITSTO-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-CHECK-0001",
+      "title": "Test Coverage Checklist (what matters)",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/checklists/KID-ITTEST-CHECK-0001.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-CHECK-0002",
+      "title": "Release Test Checklist",
+      "type": "checklist",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/checklists/KID-ITTEST-CHECK-0002.md",
+      "use_policy": "reusable_with_allowlist",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-CONCEPT-0001",
+      "title": "Test Pyramid (unit/integration/e2e)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/concepts/KID-ITTEST-CONCEPT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-CONCEPT-0002",
+      "title": "Deterministic Tests (flakiness causes)",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/concepts/KID-ITTEST-CONCEPT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-CONCEPT-0003",
+      "title": "Test Data Strategy",
+      "type": "concept",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/concepts/KID-ITTEST-CONCEPT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-PATTERN-0001",
+      "title": "Contract Testing Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/patterns/KID-ITTEST-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-PATTERN-0002",
+      "title": "Golden Fixture Testing Pattern",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/patterns/KID-ITTEST-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-PATTERN-0003",
+      "title": "Property-Based Testing Pattern (high level)",
+      "type": "pattern",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/patterns/KID-ITTEST-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-PITFALL-0001",
+      "title": "Over-mocking (tests pass, system fails)",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/pitfalls/KID-ITTEST-PITFALL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-PITFALL-0002",
+      "title": "Flaky tests ignored until they kill velocity",
+      "type": "pitfall",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/pitfalls/KID-ITTEST-PITFALL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-PROCEDURE-0001",
+      "title": "Flaky Test Triage Procedure",
+      "type": "procedure",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/procedures/KID-ITTEST-PROCEDURE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-ITTEST-REF-0001",
+      "title": "Common Test Types Reference",
+      "type": "reference",
+      "pillar": "IT_END_TO_END",
+      "path": "PILLARS/IT_END_TO_END/02_software_delivery/testing_qa/references/KID-ITTEST-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-EVM-CORE-0001",
+      "title": "EVM Mental Model (state, gas, transactions)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/language_core/KID-LANG-EVM-CORE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-GO-CORE-0001",
+      "title": "Go Mental Model (packages, concurrency)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/go/language_core/KID-LANG-GO-CORE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-GO-CORE-0002",
+      "title": "Project Structure Norms (cmd/internal/pkg)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/go/language_core/KID-LANG-GO-CORE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-GO-CORE-0003",
+      "title": "Testing Norms (go test baseline)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/go/language_core/KID-LANG-GO-CORE-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-GO-CORE-0004",
+      "title": "Common Pitfalls (context, goroutines)",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/go/language_core/KID-LANG-GO-CORE-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-GO-WEB-0001",
+      "title": "Go API Structure Pattern",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/go/frameworks/web/KID-LANG-GO-WEB-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-GO-WEB-0002",
+      "title": "Middleware + Logging Pattern",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/go/frameworks/web/KID-LANG-GO-WEB-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-GO-WEB-0003",
+      "title": "Security Checklist (Go services)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/go/frameworks/web/KID-LANG-GO-WEB-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-GO-WEB-0004",
+      "title": "Deployment Notes (Go)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/go/frameworks/web/KID-LANG-GO-WEB-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NEXT-NEXT-0001",
+      "title": "Next.js Overview (routing + rendering modes)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nextjs/frameworks/nextjs/KID-LANG-NEXT-NEXT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NEXT-NEXT-0002",
+      "title": "App Structure Pattern (app router)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nextjs/frameworks/nextjs/KID-LANG-NEXT-NEXT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NEXT-NEXT-0003",
+      "title": "Data Fetching + Caching Pattern",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nextjs/frameworks/nextjs/KID-LANG-NEXT-NEXT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NEXT-NEXT-0004",
+      "title": "Auth Pattern (Next)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nextjs/frameworks/nextjs/KID-LANG-NEXT-NEXT-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NEXT-NEXT-0005",
+      "title": "Security Checklist (Next)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nextjs/frameworks/nextjs/KID-LANG-NEXT-NEXT-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NEXT-NEXT-0006",
+      "title": "Performance Checklist (Next)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nextjs/frameworks/nextjs/KID-LANG-NEXT-NEXT-0006.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NEXT-NEXT-0007",
+      "title": "Deployment Notes (Next)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nextjs/frameworks/nextjs/KID-LANG-NEXT-NEXT-0007.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NODE-NODE-0001",
+      "title": "Node Server Architecture Overview",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/frameworks/node/KID-LANG-NODE-NODE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NODE-NODE-0002",
+      "title": "API Structure Pattern (routes/services/data)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/frameworks/node/KID-LANG-NODE-NODE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NODE-NODE-0003",
+      "title": "Auth + Sessions Pattern (Node)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/frameworks/node/KID-LANG-NODE-NODE-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NODE-NODE-0004",
+      "title": "Error Handling + Logging Pattern (Node)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/frameworks/node/KID-LANG-NODE-NODE-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NODE-NODE-0005",
+      "title": "Background Jobs Pattern (Node)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/frameworks/node/KID-LANG-NODE-NODE-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NODE-NODE-0006",
+      "title": "Testing Strategy (Node APIs)",
+      "type": "procedure",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/frameworks/node/KID-LANG-NODE-NODE-0006.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NODE-NODE-0007",
+      "title": "Deployment Notes (Node)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/frameworks/node/KID-LANG-NODE-NODE-0007.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NODE-SEC-0001",
+      "title": "SSRF/RCE/Injection Risks in Node (high level)",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/security/KID-LANG-NODE-SEC-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-NODE-SEC-0002",
+      "title": "Rate Limits + Abuse Controls (Node apps)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/security/KID-LANG-NODE-SEC-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PG-PERF-0001",
+      "title": "Slow Query Triage (EXPLAIN basics)",
+      "type": "procedure",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/databases_postgres/performance/KID-LANG-PG-PERF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PG-REF-0001",
+      "title": "Postgres Defaults Reference (practical)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/databases_postgres/references/KID-LANG-PG-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PG-REF-0002",
+      "title": "Common Query Anti-Patterns Reference",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/databases_postgres/references/KID-LANG-PG-REF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PG-SEC-0001",
+      "title": "SQL Injection Prevention (parameterization)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/databases_postgres/security/KID-LANG-PG-SEC-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-CORE-0001",
+      "title": "Python Mental Model (runtime, packaging)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/language_core/KID-LANG-PY-CORE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-CORE-0002",
+      "title": "Project Structure Norms (venv, deps)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/language_core/KID-LANG-PY-CORE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-CORE-0003",
+      "title": "Testing Norms (pytest baseline)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/language_core/KID-LANG-PY-CORE-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-CORE-0004",
+      "title": "Common Pitfalls (env drift, typing gaps)",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/language_core/KID-LANG-PY-CORE-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-FASTAPI-0001",
+      "title": "FastAPI Overview (why/when)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/frameworks/fastapi/KID-LANG-PY-FASTAPI-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-FASTAPI-0002",
+      "title": "API Structure Pattern (routers/services)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/frameworks/fastapi/KID-LANG-PY-FASTAPI-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-FASTAPI-0003",
+      "title": "Validation + Schemas Pattern (pydantic)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/frameworks/fastapi/KID-LANG-PY-FASTAPI-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-FASTAPI-0004",
+      "title": "Security Checklist (FastAPI)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/frameworks/fastapi/KID-LANG-PY-FASTAPI-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-FASTAPI-0005",
+      "title": "Testing Strategy (FastAPI)",
+      "type": "procedure",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/frameworks/fastapi/KID-LANG-PY-FASTAPI-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-PY-FASTAPI-0006",
+      "title": "Deployment Notes (FastAPI)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/python/frameworks/fastapi/KID-LANG-PY-FASTAPI-0006.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-REACT-REACT-0001",
+      "title": "React App Model (components, state, effects)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/react/frameworks/react/KID-LANG-REACT-REACT-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-REACT-REACT-0002",
+      "title": "UI Architecture Pattern (pages/components/hooks)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/react/frameworks/react/KID-LANG-REACT-REACT-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-REACT-REACT-0003",
+      "title": "Data Fetching Pattern (query caching)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/react/frameworks/react/KID-LANG-REACT-REACT-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-REACT-REACT-0004",
+      "title": "Accessibility Checklist (React UI)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/react/frameworks/react/KID-LANG-REACT-REACT-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-REACT-REACT-0005",
+      "title": "Performance Checklist (React)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/react/frameworks/react/KID-LANG-REACT-REACT-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-REACT-REACT-0006",
+      "title": "Testing Strategy (React)",
+      "type": "procedure",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/react/frameworks/react/KID-LANG-REACT-REACT-0006.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-REACT-REACT-0007",
+      "title": "Deployment Notes (React SPA)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/react/frameworks/react/KID-LANG-REACT-REACT-0007.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-REACT-SEC-0001",
+      "title": "XSS + Injection Prevention (UI)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/react/security/KID-LANG-REACT-SEC-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-RUST-CORE-0001",
+      "title": "Rust Mental Model (ownership/borrowing)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/rust/language_core/KID-LANG-RUST-CORE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-RUST-CORE-0002",
+      "title": "Project Structure Norms (cargo, crates)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/rust/language_core/KID-LANG-RUST-CORE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-RUST-CORE-0003",
+      "title": "Testing Norms (cargo test baseline)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/rust/language_core/KID-LANG-RUST-CORE-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-RUST-CORE-0004",
+      "title": "Common Pitfalls (lifetimes, async)",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/rust/language_core/KID-LANG-RUST-CORE-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-RUST-WEB-0001",
+      "title": "Rust Web Service Structure Pattern",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/rust/frameworks/web/KID-LANG-RUST-WEB-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-RUST-WEB-0002",
+      "title": "Security Checklist (Rust services)",
+      "type": "checklist",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/rust/frameworks/web/KID-LANG-RUST-WEB-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-CORE-0001",
+      "title": "Solidity Basics (types, storage/memory)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/language_core/KID-LANG-SOL-CORE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-CORE-0002",
+      "title": "Contract Architecture Patterns (modules, libraries)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/language_core/KID-LANG-SOL-CORE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-CORE-0003",
+      "title": "Testing Norms (unit tests + forks)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/language_core/KID-LANG-SOL-CORE-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-PATTERN-0001",
+      "title": "Checks-Effects-Interactions Pattern",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/patterns/KID-LANG-SOL-PATTERN-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-PATTERN-0002",
+      "title": "Role-Based Access Pattern (contracts)",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/patterns/KID-LANG-SOL-PATTERN-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-PATTERN-0003",
+      "title": "Pausable/Emergency Stop Pattern",
+      "type": "pattern",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/patterns/KID-LANG-SOL-PATTERN-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-REF-0001",
+      "title": "Gas Cost Awareness Reference (practical)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/references/KID-LANG-SOL-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-REF-0002",
+      "title": "Tooling Baseline (Foundry/Hardhat choices)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/references/KID-LANG-SOL-REF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-SEC-0001",
+      "title": "Smart Contract Threat Model Basics",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/security/KID-LANG-SOL-SEC-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-SEC-0002",
+      "title": "Common Vulnerabilities Reference (reentrancy, access control)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/security/KID-LANG-SOL-SEC-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-SEC-0003",
+      "title": "Upgradeability Risks (proxy patterns)",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/security/KID-LANG-SOL-SEC-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SOL-SEC-0004",
+      "title": "Key Management + Admin Control Risks",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/solidity_evm/security/KID-LANG-SOL-SEC-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SQL-CORE-0001",
+      "title": "Relational Model Mental Model",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/databases_postgres/language_core/KID-LANG-SQL-CORE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SQL-CORE-0002",
+      "title": "Query Shape + Indexing Basics",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/databases_postgres/language_core/KID-LANG-SQL-CORE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SQL-CORE-0003",
+      "title": "Transaction Isolation (practical)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/databases_postgres/language_core/KID-LANG-SQL-CORE-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-SQL-CORE-0004",
+      "title": "Migrations Discipline (baseline)",
+      "type": "procedure",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/databases_postgres/language_core/KID-LANG-SQL-CORE-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-CORE-0001",
+      "title": "TypeScript Mental Model (types vs runtime)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/language_core/KID-LANG-TS-CORE-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-CORE-0002",
+      "title": "Module Systems (ESM/CJS) Basics",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/language_core/KID-LANG-TS-CORE-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-CORE-0003",
+      "title": "Project Structure Norms (monorepo vs single)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/language_core/KID-LANG-TS-CORE-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-CORE-0004",
+      "title": "Testing Norms (unit/integration in JS land)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/language_core/KID-LANG-TS-CORE-0004.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-CORE-0005",
+      "title": "Common TypeScript Pitfalls (any, inference, build drift)",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/language_core/KID-LANG-TS-CORE-0005.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-PERF-0001",
+      "title": "Node Performance Basics (event loop)",
+      "type": "concept",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/performance/KID-LANG-TS-PERF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-PERF-0002",
+      "title": "Common Bottlenecks (JSON, I/O, DB)",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/performance/KID-LANG-TS-PERF-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-REF-0001",
+      "title": "TS Project Baseline Reference (recommended defaults)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/references/KID-LANG-TS-REF-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-SEC-0001",
+      "title": "Dependency Risk in JS Ecosystem (practical)",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/security/KID-LANG-TS-SEC-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-SEC-0002",
+      "title": "Secrets Handling in Node/JS Apps",
+      "type": "procedure",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/security/KID-LANG-TS-SEC-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-SEC-0003",
+      "title": "Input Validation + Serialization Footguns",
+      "type": "pitfall",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/security/KID-LANG-TS-SEC-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-TOOL-0001",
+      "title": "Toolchain Baseline (tsc + bundler)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/tooling/KID-LANG-TS-TOOL-0001.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-TOOL-0002",
+      "title": "Lint/Format Norms (eslint/prettier)",
+      "type": "reference",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/tooling/KID-LANG-TS-TOOL-0002.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    },
+    {
+      "kid": "KID-LANG-TS-TOOL-0003",
+      "title": "Package Lock Discipline (npm/pnpm/yarn)",
+      "type": "procedure",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "path": "PILLARS/LANGUAGES_AND_LIBRARIES/javascript_typescript/tooling/KID-LANG-TS-TOOL-0003.md",
+      "use_policy": "pattern_only",
+      "maturity": "draft",
+      "executor_access": "internal_and_external"
+    }
+  ]
+}

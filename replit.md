@@ -152,6 +152,34 @@ Under `.axion/runs/RUN-NNNNNN/`:
 - Node.js >= 18
 - ESM imports with `.js` extensions (Node16 resolution)
 
+## Knowledge Library (`Axion/libraries/knowledge/`)
+Structured, policy-governed knowledge base providing KID files (Knowledge Items) across three pillars.
+
+### Structure
+- **INDEX/** — 8 registry files: knowledge.index.json (395 KIDs), taxonomy.json, tags.json, bundles.index.json, sources.index.json, changelog.md, deprecations.json, quality_tiers.json
+- **POLICIES/** — 5 policy files: use_policy.md, external_agent_policy.md, citation_policy.md, plagiarism_ip_rules.md, secrets_pii_handling.md
+- **BUNDLES/** — 10 bundle JSON files (5 by_run_profile, 3 by_risk_class, 2 by_executor)
+- **REUSE/** — allowlist.json, reuse_log.json, licenses/ (4 license texts)
+- **TEMPLATES/** — KID authoring templates (knowledge_item.md, industry_playbook.md, stack_playbook.md)
+- **OUTPUTS/** — Schema files for selection results and bundle exports
+
+### Pillars (395 KID files total)
+- **IT_END_TO_END** (254 KIDs): 19 domains across 4 groups
+  - 01_foundations: networking, operating_systems, security_fundamentals, compute_virtualization, storage_fundamentals
+  - 02_software_delivery: architecture_design, apis_integrations, ci_cd_devops, testing_qa, observability_sre
+  - 03_data_systems: databases, distributed_systems, caching, search_retrieval
+  - 04_platform_ops: cloud_fundamentals, identity_access_management, compliance_governance, release_management, finops_cost
+- **INDUSTRY_PLAYBOOKS** (58 KIDs): healthcare, finance, retail_ecommerce, logistics_supply_chain, government_public_sector
+- **LANGUAGES_AND_LIBRARIES** (83 KIDs): javascript_typescript (+ nodejs, react, nextjs), python, go, rust, databases/postgres, solidity_evm
+
+### KID File Contract
+- YAML frontmatter: kid, title, type, pillar, domains, tags, maturity (draft/reviewed/verified/golden), use_policy, executor_access, license
+- Sections: Summary, When to use, Do/Don't, Core content, Links, Proof/confidence
+- Naming: KID-<PILLAR_PREFIX><DOMAIN>-<TYPE>-<NNNN>.md
+
+### Domain Subfolders (standardized per domain)
+concepts/ patterns/ procedures/ checklists/ pitfalls/ references/ examples/
+
 ## Key Config Files
 - `Axion/package.json`, `Axion/tsconfig.json`, `Axion/.gitignore`
 - `Filetree.md` — Canonical file tree reference

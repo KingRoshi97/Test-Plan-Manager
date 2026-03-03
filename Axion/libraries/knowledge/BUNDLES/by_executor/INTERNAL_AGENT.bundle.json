@@ -1,0 +1,14 @@
+{
+  "bundle_id": "INTERNAL_AGENT",
+  "name": "Internal Agent",
+  "description": "Full knowledge bundle available to internal agents including restricted content",
+  "kids": [],
+  "filter_rules": {
+    "executor_type": "internal",
+    "executor_access": [
+      "internal_only",
+      "internal_and_external"
+    ]
+  },
+  "tags": []
+}

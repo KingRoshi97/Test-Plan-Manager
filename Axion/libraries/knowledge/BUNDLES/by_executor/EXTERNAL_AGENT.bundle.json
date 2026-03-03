@@ -1,0 +1,16 @@
+{
+  "bundle_id": "EXTERNAL_AGENT",
+  "name": "External Agent",
+  "description": "Filtered knowledge bundle for external agents excluding restricted content",
+  "kids": [],
+  "filter_rules": {
+    "executor_type": "external",
+    "executor_access": [
+      "internal_and_external"
+    ],
+    "exclude_use_policy": [
+      "restricted_internal_only"
+    ]
+  },
+  "tags": []
+}

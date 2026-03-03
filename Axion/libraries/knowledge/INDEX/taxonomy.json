@@ -1,0 +1,127 @@
+{
+  "$schema": "knowledge-taxonomy-v1",
+  "version": "1.0.0",
+  "pillars": {
+    "IT_END_TO_END": {
+      "description": "Foundational IT knowledge spanning infrastructure through platform operations",
+      "groups": {
+        "01_foundations": {
+          "domains": {
+            "networking": {
+              "description": "Network protocols, topologies, DNS, load balancing, CDN"
+            },
+            "operating_systems": {
+              "description": "OS concepts, process management, file systems, kernel"
+            },
+            "security_fundamentals": {
+              "description": "Authentication, encryption, threat modeling, OWASP"
+            },
+            "compute_virtualization": {
+              "description": "VMs, containers, orchestration, serverless"
+            },
+            "storage_fundamentals": {
+              "description": "Block, object, file storage, replication, durability"
+            }
+          }
+        },
+        "02_software_delivery": {
+          "domains": {
+            "architecture_design": {
+              "description": "System design, microservices, monolith, DDD, CQRS"
+            },
+            "apis_integrations": {
+              "description": "REST, GraphQL, gRPC, webhooks, API versioning"
+            },
+            "ci_cd_devops": {
+              "description": "Build pipelines, deployment strategies, GitOps, IaC"
+            },
+            "testing_qa": {
+              "description": "Unit, integration, E2E, property-based, mutation testing"
+            },
+            "observability_sre": {
+              "description": "Metrics, logging, tracing, SLOs, incident response"
+            }
+          }
+        },
+        "03_data_systems": {
+          "domains": {
+            "databases": {
+              "description": "SQL, NoSQL, indexing, query optimization, migrations"
+            },
+            "distributed_systems": {
+              "description": "Consensus, replication, partitioning, CAP theorem"
+            },
+            "caching": {
+              "description": "Cache strategies, invalidation, Redis, Memcached"
+            },
+            "search_retrieval": {
+              "description": "Full-text search, Elasticsearch, vector search, ranking"
+            }
+          }
+        },
+        "04_platform_ops": {
+          "domains": {
+            "cloud_fundamentals": {
+              "description": "Cloud services, regions, networking, managed services"
+            },
+            "identity_access_management": {
+              "description": "IAM, RBAC, ABAC, OAuth, SAML, SSO"
+            },
+            "compliance_governance": {
+              "description": "Regulatory frameworks, audit, data residency"
+            },
+            "release_management": {
+              "description": "Versioning, release trains, feature flags, rollback"
+            },
+            "finops_cost": {
+              "description": "Cloud cost optimization, budgets, tagging, reserved instances"
+            }
+          }
+        }
+      }
+    },
+    "INDUSTRY_PLAYBOOKS": {
+      "description": "Domain-specific guidance for vertical industries",
+      "industries": {
+        "healthcare": {
+          "description": "Healthcare IT: EHR, claims, HIPAA, HL7/FHIR"
+        },
+        "finance": {
+          "description": "Financial services: payments, KYC/AML, PCI-DSS, trading"
+        },
+        "retail_ecommerce": {
+          "description": "Retail/ecommerce: catalog, cart, checkout, fulfillment"
+        },
+        "logistics_supply_chain": {
+          "description": "Logistics: tracking, routing, warehouse, fleet"
+        },
+        "government_public_sector": {
+          "description": "Government: citizen services, FedRAMP, accessibility"
+        }
+      }
+    },
+    "LANGUAGES_AND_LIBRARIES": {
+      "description": "Language-specific knowledge, frameworks, and tooling",
+      "stacks": {
+        "javascript_typescript": {
+          "description": "JS/TS core, Node.js, React, Next.js"
+        },
+        "python": {
+          "description": "Python core, FastAPI, Django"
+        },
+        "go": {
+          "description": "Go core, web frameworks, concurrency"
+        },
+        "rust": {
+          "description": "Rust core, web frameworks, safety patterns"
+        },
+        "solidity_evm": {
+          "description": "Solidity, EVM, smart contract patterns"
+        },
+        "databases_postgres": {
+          "description": "SQL core, PostgreSQL patterns, performance"
+        }
+      }
+    }
+  }
+}

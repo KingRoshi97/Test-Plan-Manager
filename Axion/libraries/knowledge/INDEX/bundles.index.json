@@ -1,0 +1,57 @@
+{
+  "$schema": "knowledge-bundles-index-v1",
+  "version": "1.0.0",
+  "description": "Registry of curated knowledge bundles",
+  "bundles": [
+    {
+      "bundle_id": "API_SERVICE_BASIC",
+      "path": "BUNDLES/by_run_profile/API_SERVICE_BASIC.bundle.json",
+      "category": "run_profile"
+    },
+    {
+      "bundle_id": "WEB_APP_BASIC",
+      "path": "BUNDLES/by_run_profile/WEB_APP_BASIC.bundle.json",
+      "category": "run_profile"
+    },
+    {
+      "bundle_id": "MOBILE_APP_BASIC",
+      "path": "BUNDLES/by_run_profile/MOBILE_APP_BASIC.bundle.json",
+      "category": "run_profile"
+    },
+    {
+      "bundle_id": "FULLSTACK_SAAS",
+      "path": "BUNDLES/by_run_profile/FULLSTACK_SAAS.bundle.json",
+      "category": "run_profile"
+    },
+    {
+      "bundle_id": "REALTIME_CHAT",
+      "path": "BUNDLES/by_run_profile/REALTIME_CHAT.bundle.json",
+      "category": "run_profile"
+    },
+    {
+      "bundle_id": "PROTOTYPE",
+      "path": "BUNDLES/by_risk_class/PROTOTYPE.bundle.json",
+      "category": "risk_class"
+    },
+    {
+      "bundle_id": "PRODUCTION",
+      "path": "BUNDLES/by_risk_class/PRODUCTION.bundle.json",
+      "category": "risk_class"
+    },
+    {
+      "bundle_id": "COMPLIANCE",
+      "path": "BUNDLES/by_risk_class/COMPLIANCE.bundle.json",
+      "category": "risk_class"
+    },
+    {
+      "bundle_id": "INTERNAL_AGENT",
+      "path": "BUNDLES/by_executor/INTERNAL_AGENT.bundle.json",
+      "category": "executor"
+    },
+    {
+      "bundle_id": "EXTERNAL_AGENT",
+      "path": "BUNDLES/by_executor/EXTERNAL_AGENT.bundle.json",
+      "category": "executor"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "$schema": "knowledge-allowlist-v1",
+  "version": "1.0.0",
+  "description": "KIDs and paths allowed for reusable_with_allowlist copying",
+  "allowed_items": []
+}

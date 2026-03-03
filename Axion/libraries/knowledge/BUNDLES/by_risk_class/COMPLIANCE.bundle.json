@@ -1,0 +1,17 @@
+{
+  "bundle_id": "COMPLIANCE",
+  "name": "Compliance Risk Class",
+  "description": "Knowledge bundle for compliance-critical projects requiring verified+ maturity KIDs",
+  "kids": [],
+  "filter_rules": {
+    "risk_class": "compliance",
+    "min_maturity": "verified"
+  },
+  "tags": [
+    "compliance",
+    "security",
+    "privacy",
+    "iam",
+    "observability"
+  ]
+}

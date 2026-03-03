@@ -1,0 +1,17 @@
+{
+  "bundle_id": "WEB_APP_BASIC",
+  "name": "Web Application Basic",
+  "description": "Knowledge bundle for basic web application projects",
+  "kids": [],
+  "filter_rules": {
+    "run_profile": "WEB_APP_BASIC",
+    "min_maturity": "draft"
+  },
+  "tags": [
+    "api",
+    "auth",
+    "database",
+    "accessibility",
+    "performance"
+  ]
+}

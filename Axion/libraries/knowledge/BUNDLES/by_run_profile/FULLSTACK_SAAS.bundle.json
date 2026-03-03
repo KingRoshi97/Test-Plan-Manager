@@ -1,0 +1,18 @@
+{
+  "bundle_id": "FULLSTACK_SAAS",
+  "name": "Fullstack SaaS",
+  "description": "Knowledge bundle for fullstack SaaS application projects",
+  "kids": [],
+  "filter_rules": {
+    "run_profile": "FULLSTACK_SAAS",
+    "min_maturity": "draft"
+  },
+  "tags": [
+    "api",
+    "auth",
+    "payments",
+    "database",
+    "deployment",
+    "observability"
+  ]
+}

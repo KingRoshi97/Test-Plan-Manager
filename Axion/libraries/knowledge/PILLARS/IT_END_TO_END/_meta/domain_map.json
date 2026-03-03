@@ -1,0 +1,50 @@
+{
+  "pillar": "IT_END_TO_END",
+  "version": "1.0.0",
+  "groups": [
+    {
+      "id": "01_foundations",
+      "name": "Foundations",
+      "domains": [
+        "networking",
+        "operating_systems",
+        "security_fundamentals",
+        "compute_virtualization",
+        "storage_fundamentals"
+      ]
+    },
+    {
+      "id": "02_software_delivery",
+      "name": "Software Delivery",
+      "domains": [
+        "architecture_design",
+        "apis_integrations",
+        "ci_cd_devops",
+        "testing_qa",
+        "observability_sre"
+      ]
+    },
+    {
+      "id": "03_data_systems",
+      "name": "Data Systems",
+      "domains": [
+        "databases",
+        "distributed_systems",
+        "caching",
+        "search_retrieval"
+      ]
+    },
+    {
+      "id": "04_platform_ops",
+      "name": "Platform & Operations",
+      "domains": [
+        "cloud_fundamentals",
+        "identity_access_management",
+        "compliance_governance",
+        "release_management",
+        "finops_cost"
+      ]
+    }
+  ],
+  "total_domains": 19
+}

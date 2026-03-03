@@ -1,0 +1,44 @@
+{
+  "$schema": "knowledge-quality-tiers-v1",
+  "version": "1.0.0",
+  "description": "Quality tier definitions and rules for knowledge items",
+  "tiers": {
+    "draft": {
+      "order": 1,
+      "description": "Initial content; not yet reviewed for correctness or policy alignment",
+      "rules": {
+        "selectable": true,
+        "allowed_for_production": false,
+        "requires_review_before": "production"
+      }
+    },
+    "reviewed": {
+      "order": 2,
+      "description": "Checked for correctness and policy alignment by a reviewer",
+      "rules": {
+        "selectable": true,
+        "allowed_for_production": true,
+        "minimum_for_production_runs": true
+      }
+    },
+    "verified": {
+      "order": 3,
+      "description": "Validated against real runs or tests; confirmed accurate in practice",
+      "rules": {
+        "selectable": true,
+        "allowed_for_production": true,
+        "recommended_for_compliance": true
+      }
+    },
+    "golden": {
+      "order": 4,
+      "description": "Stable canonical reference; changes are controlled and versioned",
+      "rules": {
+        "selectable": true,
+        "allowed_for_production": true,
+        "change_control_required": true,
+        "deprecation_window_days": 90
+      }
+    }
+  }
+}

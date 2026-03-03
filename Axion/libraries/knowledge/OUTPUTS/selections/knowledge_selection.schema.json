@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Knowledge Selection",
+  "description": "Artifact produced by knowledge selection step: recommended KIDs for a run",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "selected_kids",
+    "bundles_used",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "executor_type": {
+      "type": "string",
+      "enum": [
+        "internal",
+        "external"
+      ]
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": [
+        "prototype",
+        "production",
+        "compliance"
+      ]
+    },
+    "run_profile": {
+      "type": "string"
+    },
+    "selected_kids": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kid",
+          "reason",
+          "use_policy"
+        ],
+        "properties": {
+          "kid": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "use_policy": {
+            "type": "string",
+            "enum": [
+              "pattern_only",
+              "reusable_with_allowlist",
+              "restricted_internal_only"
+            ]
+          },
+          "allowed_excerpt": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "tags_matched": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "bundles_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

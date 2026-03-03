@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Knowledge Bundle Export",
+  "description": "Schema for exported knowledge bundle artifacts",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "export_timestamp",
+    "items"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "bundle_id": {
+      "type": "string"
+    },
+    "export_timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "executor_type": {
+      "type": "string",
+      "enum": [
+        "internal",
+        "external"
+      ]
+    },
+    "filter_applied": {
+      "type": "object",
+      "properties": {
+        "executor_access": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "min_maturity": {
+          "type": "string"
+        },
+        "excluded_use_policies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kid",
+          "title",
+          "type",
+          "use_policy",
+          "path"
+        ],
+        "properties": {
+          "kid": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "use_policy": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "maturity": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "total_items": {
+      "type": "integer"
+    }
+  }
+}

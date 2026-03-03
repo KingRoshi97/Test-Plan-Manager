@@ -1,0 +1,15 @@
+{
+  "$schema": "knowledge-sources-index-v1",
+  "version": "1.0.0",
+  "description": "Source provenance and licensing for knowledge items",
+  "sources": [
+    {
+      "source_id": "internal_owned",
+      "type": "internal_authored",
+      "description": "Content authored internally by the Axion team",
+      "license": "internal_owned",
+      "attribution_required": false,
+      "allowed_reuse_level": "pattern_only"
+    }
+  ]
+}

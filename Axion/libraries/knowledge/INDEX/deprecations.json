@@ -1,0 +1,6 @@
+{
+  "$schema": "knowledge-deprecations-v1",
+  "version": "1.0.0",
+  "description": "Deprecated KIDs and their replacements",
+  "deprecated": []
+}
