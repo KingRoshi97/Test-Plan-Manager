@@ -1,49 +1,38 @@
-import type { OutcomeStatus, RunStatus, StageStatus } from '../lib/types';
+import type { RunStatus, StageStatus, GateStatus } from '../lib/types';
 
-interface StatusBadgeProps {
-  status: OutcomeStatus | RunStatus | StageStatus;
-  size?: 'sm' | 'md';
-}
+type BadgeStatus = RunStatus | StageStatus | GateStatus;
 
-const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
-  PASS: { bg: 'var(--status-pass-bg)', color: 'var(--status-pass)' },
-  RELEASED: { bg: 'var(--status-pass-bg)', color: 'var(--status-pass)' },
-  FAIL: { bg: 'var(--status-fail-bg)', color: 'var(--status-fail)' },
-  FAILED: { bg: 'var(--status-fail-bg)', color: 'var(--status-fail)' },
-  ERROR: { bg: 'var(--status-error-bg)', color: 'var(--status-error)' },
-  RUNNING: { bg: 'var(--status-running-bg)', color: 'var(--status-running)' },
-  IN_PROGRESS: { bg: 'var(--status-running-bg)', color: 'var(--status-running)' },
-  GATED: { bg: 'var(--status-gated-bg)', color: 'var(--status-gated)' },
-  PAUSED: { bg: 'var(--status-gated-bg)', color: 'var(--status-gated)' },
-  SKIP: { bg: 'var(--status-gated-bg)', color: 'var(--status-gated)' },
-  QUEUED: { bg: 'var(--status-pending-bg)', color: 'var(--status-pending)' },
-  NOT_STARTED: { bg: 'var(--status-pending-bg)', color: 'var(--status-pending)' },
-  ARCHIVED: { bg: 'var(--status-pending-bg)', color: 'var(--status-pending)' },
-  CANCELLED: { bg: 'var(--status-pending-bg)', color: 'var(--status-pending)' },
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  pass: { bg: '#dcfce7', text: '#166534' },
+  fail: { bg: '#fee2e2', text: '#991b1b' },
+  running: { bg: '#dbeafe', text: '#1e40af' },
+  pending: { bg: '#f3f4f6', text: '#6b7280' },
+  skip: { bg: '#fef3c7', text: '#92400e' },
+  not_started: { bg: '#f3f4f6', text: '#6b7280' },
+  in_progress: { bg: '#dbeafe', text: '#1e40af' },
 };
 
-export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
-  const s = STATUS_STYLES[status] ?? STATUS_STYLES.QUEUED;
-  const px = size === 'sm' ? '6px 8px' : '4px 10px';
-  const fs = size === 'sm' ? '10px' : '11px';
+interface StatusBadgeProps {
+  status: BadgeStatus;
+}
 
+export default function StatusBadge({ status }: StatusBadgeProps) {
+  const colors = STATUS_COLORS[status] ?? STATUS_COLORS.pending;
   return (
     <span
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        padding: px,
-        borderRadius: 'var(--radius-full)',
-        background: s.bg,
-        color: s.color,
-        fontSize: fs,
+        display: 'inline-block',
+        padding: '2px 10px',
+        borderRadius: '9999px',
+        fontSize: '12px',
         fontWeight: 600,
-        letterSpacing: '0.5px',
-        lineHeight: 1,
-        whiteSpace: 'nowrap',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
+        backgroundColor: colors.bg,
+        color: colors.text,
       }}
     >
-      {status.replace(/_/g, ' ')}
+      {status.replace('_', ' ')}
     </span>
   );
 }

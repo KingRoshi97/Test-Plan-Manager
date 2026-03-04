@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, normalize, isAbsolute } from "node:path";
 import { sha256 } from "../../utils/hash.js";
-import { KNOWN_OPERATORS, UnknownOperatorError } from "./registry.js";
 import type { GateCheck } from "./registry.js";
 
 export interface EvidenceEntry {
@@ -33,18 +32,6 @@ function resolvePointer(obj: unknown, pointer: string): { found: boolean; value:
     current = rec[part];
   }
   return { found: true, value: current };
-}
-
-export function resolveEvidencePointer(filePath: string, pointer: string): { found: boolean; value: unknown; error: string | null } {
-  if (!existsSync(filePath)) {
-    return { found: false, value: undefined, error: "E_FILE_MISSING" };
-  }
-  const { data, error } = readAndParse(filePath);
-  if (error) {
-    return { found: false, value: undefined, error: "E_JSON_INVALID" };
-  }
-  const result = resolvePointer(data, pointer);
-  return { found: result.found, value: result.value, error: result.found ? null : "E_POINTER_UNRESOLVABLE" };
 }
 
 function readAndParse(path: string): { data: unknown; error: string | null } {
@@ -374,11 +361,7 @@ function evalVerifyHashManifest(check: GateCheck): CheckResult {
   };
 }
 
-export function evalCheck(check: GateCheck, gateId?: string): CheckResult {
-  if (!KNOWN_OPERATORS.has(check.op)) {
-    throw new UnknownOperatorError(gateId ?? "unknown", check.op);
-  }
-
+export function evalCheck(check: GateCheck): CheckResult {
   switch (check.op) {
     case "file_exists":
       return evalFileExists(check);
@@ -393,6 +376,10 @@ export function evalCheck(check: GateCheck, gateId?: string): CheckResult {
     case "verify_hash_manifest":
       return evalVerifyHashManifest(check);
     default:
-      throw new UnknownOperatorError(gateId ?? "unknown", check.op);
+      return {
+        pass: false,
+        failure_code: "E_UNKNOWN_OP",
+        evidence: [{ path: "", pointer: "", details: { op: check.op } }],
+      };
   }
 }

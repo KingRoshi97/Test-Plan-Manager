@@ -1,7 +1,4 @@
-import { join } from "node:path";
-import { sha256 } from "../../utils/hash.js";
-import { writeJson, readJson, ensureDir } from "../../utils/fs.js";
-import { isoNow } from "../../utils/time.js";
+import { NotImplementedError } from "../../utils/errors.js";
 
 export interface SubmissionRecord {
   submission_id: string;
@@ -17,33 +14,13 @@ export interface SubmissionRecord {
 }
 
 export function writeSubmissionRecord(
-  runDir: string,
-  submission: unknown,
-  schemaVersion: string
+  _runDir: string,
+  _submission: unknown,
+  _schemaVersion: string
 ): SubmissionRecord {
-  const canonicalPayload = JSON.stringify(submission, Object.keys(submission as Record<string, unknown>).sort(), 0);
-  const payloadHash = sha256(canonicalPayload);
-  const submissionId = `SUB-${payloadHash.slice(0, 12)}`;
-
-  const record: SubmissionRecord = {
-    submission_id: submissionId,
-    received_at: isoNow(),
-    schema_version: schemaVersion,
-    payload_hash: payloadHash,
-    payload: submission,
-    metadata: {
-      source: "cli",
-    },
-  };
-
-  const intakeDir = join(runDir, "intake");
-  ensureDir(intakeDir);
-  writeJson(join(intakeDir, "submission_record.json"), record);
-
-  return record;
+  throw new NotImplementedError("writeSubmissionRecord");
 }
 
-export function loadSubmissionRecord(runDir: string): SubmissionRecord {
-  const filePath = join(runDir, "intake", "submission_record.json");
-  return readJson<SubmissionRecord>(filePath);
+export function loadSubmissionRecord(_runDir: string): SubmissionRecord {
+  throw new NotImplementedError("loadSubmissionRecord");
 }

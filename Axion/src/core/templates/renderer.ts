@@ -105,37 +105,3 @@ export function buildAutoContext(
 
   return context;
 }
-
-export function buildSpecContext(
-  canonicalSpec: Record<string, unknown>,
-  standardsSnapshot: Record<string, unknown>,
-  extra: Record<string, unknown> = {},
-): Record<string, unknown> {
-  const context: Record<string, unknown> = {};
-
-  if (canonicalSpec) {
-    for (const [key, value] of Object.entries(canonicalSpec)) {
-      context[key] = value;
-    }
-    context["spec"] = canonicalSpec;
-  }
-
-  if (standardsSnapshot) {
-    context["standards"] = standardsSnapshot;
-    if (standardsSnapshot.resolved_standards_id) {
-      context["standards_id"] = standardsSnapshot.resolved_standards_id;
-    }
-  }
-
-  if (canonicalSpec.meta && typeof canonicalSpec.meta === "object") {
-    const meta = canonicalSpec.meta as Record<string, unknown>;
-    if (meta.spec_id) context["spec_id"] = meta.spec_id;
-    if (meta.submission_id) context["submission_id"] = meta.submission_id;
-  }
-
-  for (const [key, value] of Object.entries(extra)) {
-    context[key] = value;
-  }
-
-  return context;
-}

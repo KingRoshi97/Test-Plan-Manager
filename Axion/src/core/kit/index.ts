@@ -7,5 +7,4 @@ export type { KitBuildResult } from "./build.js";
 export { validateKit } from "./validate.js";
 export type { KitValidationResult } from "./validate.js";
 export { packageKit } from "./packager.js";
-export type { KitVariant } from "./packager.js";
 export type { KitManifest, KitArtifactEntry, Entrypoint, VersionStamp } from "./schemas.js";

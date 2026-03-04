@@ -1,8 +1,8 @@
 export { parseGate, evalGate } from "./dsl.js";
 export type { GateAST, GateCondition, GateOperator } from "./dsl.js";
-export { loadGateRegistry, filterGatesByStage, templateGatePaths, isNonOverridable, validateGateOperators, KNOWN_OPERATORS, UnknownOperatorError, NonOverridableGateError } from "./registry.js";
+export { loadGateRegistry, filterGatesByStage, templateGatePaths } from "./registry.js";
 export type { GateDefinition, GateCheck, GateRegistryFile } from "./registry.js";
-export { evalCheck, resolveEvidencePointer } from "./evaluator.js";
+export { evalCheck } from "./evaluator.js";
 export type { CheckResult, EvidenceEntry } from "./evaluator.js";
 export { writeGateReport } from "./report.js";
 export type { GateReportV1, CheckReport, GateVerdict } from "./report.js";

@@ -5,8 +5,6 @@
       "gate_id": "G1_INTAKE_VALIDITY",
       "stage_id": "S2_VALIDATE_INTAKE",
       "severity": "hard",
-      "non_overridable": true,
-      "required_proof_types": [],
       "checks": [
         { "op": "file_exists", "path": ".axion/runs/{{run_id}}/intake/validation_result.json" },
         { "op": "json_valid", "path": ".axion/runs/{{run_id}}/intake/validation_result.json" }
@@ -16,20 +14,16 @@
       "gate_id": "G2_CANONICAL_INTEGRITY",
       "stage_id": "S4_VALIDATE_CANONICAL",
       "severity": "hard",
-      "non_overridable": true,
-      "required_proof_types": [],
       "checks": [
         { "op": "file_exists", "path": ".axion/runs/{{run_id}}/canonical/canonical_spec.json" },
         { "op": "json_valid", "path": ".axion/runs/{{run_id}}/canonical/canonical_spec.json" },
-        { "op": "json_has", "path": ".axion/runs/{{run_id}}/canonical/canonical_spec.json", "pointer": "/meta" }
+        { "op": "json_has", "path": ".axion/runs/{{run_id}}/canonical/canonical_spec.json", "pointer": "/run_id" }
       ]
     },
     {
       "gate_id": "G3_STANDARDS_RESOLVED",
       "stage_id": "S5_RESOLVE_STANDARDS",
       "severity": "hard",
-      "non_overridable": true,
-      "required_proof_types": [],
       "checks": [
         { "op": "file_exists", "path": ".axion/runs/{{run_id}}/standards/resolved_standards_snapshot.json" },
         { "op": "json_valid", "path": ".axion/runs/{{run_id}}/standards/resolved_standards_snapshot.json" }
@@ -39,8 +33,6 @@
       "gate_id": "G4_TEMPLATE_SELECTION",
       "stage_id": "S6_SELECT_TEMPLATES",
       "severity": "hard",
-      "non_overridable": false,
-      "required_proof_types": [],
       "checks": [
         { "op": "file_exists", "path": ".axion/runs/{{run_id}}/templates/selection_result.json" },
         { "op": "json_valid", "path": ".axion/runs/{{run_id}}/templates/selection_result.json" },
@@ -51,21 +43,16 @@
       "gate_id": "G5_TEMPLATE_COMPLETENESS",
       "stage_id": "S7_RENDER_DOCS",
       "severity": "hard",
-      "non_overridable": false,
-      "required_proof_types": [],
       "checks": [
         { "op": "file_exists", "path": ".axion/runs/{{run_id}}/templates/render_report.json" },
         { "op": "json_valid", "path": ".axion/runs/{{run_id}}/templates/render_report.json" },
-        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/templates/template_completeness_report.json" },
-        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/templates/template_completeness_report.json" }
+        { "op": "json_eq", "path": ".axion/runs/{{run_id}}/templates/render_report.json", "pointer": "/unresolved_placeholders_count", "expected": 0 }
       ]
     },
     {
       "gate_id": "G6_PLAN_COVERAGE",
       "stage_id": "S8_BUILD_PLAN",
       "severity": "hard",
-      "non_overridable": true,
-      "required_proof_types": [],
       "checks": [
         { "op": "file_exists", "path": ".axion/runs/{{run_id}}/planning/coverage_report.json" },
         { "op": "json_valid", "path": ".axion/runs/{{run_id}}/planning/coverage_report.json" },
@@ -76,8 +63,6 @@
       "gate_id": "G8_PACKAGE_INTEGRITY",
       "stage_id": "S10_PACKAGE",
       "severity": "hard",
-      "non_overridable": true,
-      "required_proof_types": [],
       "checks": [
         { "op": "file_exists", "path": ".axion/runs/{{run_id}}/kit/packaging_manifest.json" },
         { "op": "json_valid", "path": ".axion/runs/{{run_id}}/kit/packaging_manifest.json" },

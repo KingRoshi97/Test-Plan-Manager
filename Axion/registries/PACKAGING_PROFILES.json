@@ -6,38 +6,6 @@
       "profile_id": "full",
       "description": "Full bundle with all artifacts.",
       "includes": ["manifest", "artifacts", "proofs", "reports", "state"]
-    },
-    {
-      "profile_id": "internal",
-      "description": "Internal kit — all artifacts including intake, proofs, and stage reports.",
-      "includes": ["manifest", "artifacts", "proofs", "reports", "state", "intake", "knowledge"]
-    },
-    {
-      "profile_id": "external",
-      "description": "External kit — excludes restricted knowledge, sensitive intake, proofs, and stage reports.",
-      "includes": ["manifest", "artifacts", "reports"],
-      "excludes": ["intake/raw_submission", "intake/normalized_payload.json", "proof/", "stage_reports/", "knowledge/"]
-    },
-    {
-      "profile_id": "thin",
-      "description": "Minimal bundle with canonical spec, templates, and kit only.",
-      "includes": ["canonical", "templates", "kit"]
-    },
-    {
-      "profile_id": "audit",
-      "description": "Audit bundle with full traceability chain.",
-      "includes": ["intake", "canonical", "standards", "planning", "proofs", "reports", "state"]
-    },
-    {
-      "profile_id": "public",
-      "description": "Public bundle — no sensitive data, no intake, no proofs.",
-      "includes": ["canonical", "templates", "kit"],
-      "excludes": ["intake/", "proof/", "stage_reports/", "knowledge/"]
-    },
-    {
-      "profile_id": "repro",
-      "description": "Reproducibility bundle — inputs and intermediate artifacts for deterministic replay.",
-      "includes": ["intake", "canonical", "standards", "templates", "planning"]
     }
   ]
 }

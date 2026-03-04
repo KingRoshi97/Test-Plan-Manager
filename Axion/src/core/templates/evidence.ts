@@ -1,11 +1,9 @@
 import { join, dirname } from "node:path";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { readJson, ensureDir } from "../../utils/fs.js";
 import { writeCanonicalJson } from "../../utils/canonicalJson.js";
 import { selectTemplates } from "./selector.js";
-import { renderTemplate, countPlaceholders, scanUnresolvedPlaceholders, buildSpecContext } from "./renderer.js";
-import { checkAllTemplates, buildCompletenessReport } from "./completenessGate.js";
-import type { FilledTemplate } from "./filler.js";
+import { renderTemplate, countPlaceholders, scanUnresolvedPlaceholders, buildAutoContext } from "./renderer.js";
 
 export function writeSelectionResult(runDir: string, runId: string, generatedAt: string, baseDir: string): void {
   const { selected, index } = selectTemplates(baseDir);
@@ -45,23 +43,6 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
   const selectionPath = join(runDir, "templates", "selection_result.json");
   const selection = readJson<SelectionResultFile>(selectionPath);
 
-  let canonicalSpec: Record<string, unknown> = {};
-  const specPath = join(runDir, "canonical", "canonical_spec.json");
-  if (existsSync(specPath)) {
-    canonicalSpec = JSON.parse(readFileSync(specPath, "utf-8"));
-  }
-
-  let standardsSnapshot: Record<string, unknown> = {};
-  const stdPath = join(runDir, "standards", "resolved_standards_snapshot.json");
-  if (existsSync(stdPath)) {
-    standardsSnapshot = JSON.parse(readFileSync(stdPath, "utf-8"));
-  }
-
-  const context = buildSpecContext(canonicalSpec, standardsSnapshot, {
-    run_id: runId,
-    generated_at: generatedAt,
-  });
-
   const templateContents: string[] = [];
 
   for (const tmpl of selection.selected_templates) {
@@ -69,6 +50,11 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
     const content = readFileSync(absPath, "utf-8");
     templateContents.push(content);
   }
+
+  const context = buildAutoContext(templateContents, {
+    run_id: runId,
+    generated_at: generatedAt,
+  });
 
   const files: Array<{
     template_id: string;
@@ -85,8 +71,6 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
     key: string;
     occurrences: number;
   }> = [];
-
-  const filledTemplates: FilledTemplate[] = [];
 
   for (let i = 0; i < selection.selected_templates.length; i++) {
     const tmpl = selection.selected_templates[i];
@@ -118,20 +102,6 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
         occurrences: u.occurrences,
       });
     }
-
-    filledTemplates.push({
-      template_id: tmpl.template_id,
-      template_version: tmpl.template_version,
-      filled_at: generatedAt,
-      output_path: outputRelPath,
-      content: rendered,
-      placeholders_resolved: totalPlaceholders - unresolved.length,
-      placeholders_unknown: unresolved.length,
-      unknowns: unresolved.map((u) => ({
-        placeholder: u.key,
-        status: "BLOCKED" as const,
-      })),
-    });
   }
 
   writeCanonicalJson(join(runDir, "templates", "render_report.json"), {
@@ -142,8 +112,4 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
     unresolved_placeholders: allUnresolved,
     unresolved_placeholders_count: allUnresolved.length,
   });
-
-  const completenessResults = checkAllTemplates(filledTemplates, canonicalSpec);
-  const completenessReport = buildCompletenessReport(completenessResults, runId, generatedAt);
-  writeCanonicalJson(join(runDir, "templates", "template_completeness_report.json"), completenessReport);
 }

@@ -1,10 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { axionApiPlugin } from './server/index';
 
 export default defineConfig({
-  plugins: [react(), axionApiPlugin()],
+  plugins: [react()],
   server: {
     host: '0.0.0.0',
     port: 5000,

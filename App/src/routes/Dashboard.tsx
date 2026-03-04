@@ -1,226 +1,73 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import ActionBar from '../components/ActionBar';
 import StatusBadge from '../components/StatusBadge';
-import IdPill from '../components/IdPill';
-import type { ActionResult } from '../lib/api';
-import * as api from '../lib/api';
-import { runDetailPath } from '../lib/paths';
+
+const STATS = [
+  { label: 'Total Templates', value: '446', color: '#6366f1' },
+  { label: 'Pipeline Stages', value: '10', color: '#059669' },
+  { label: 'Enforced Gates', value: '7', color: '#d97706' },
+  { label: 'Knowledge Items', value: '395', color: '#7c3aed' },
+];
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastResult, setLastResult] = useState<ActionResult | null>(null);
-
-  const exec = async (label: string, fn: () => Promise<ActionResult>) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await fn();
-      setLastResult(result);
-    } catch (e) {
-      setError(`${label} failed: ${e instanceof Error ? e.message : String(e)}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div>
-        <h1 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px' }}>
-          Dashboard
-        </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-          Axion pipeline operator console — initialize, run, and inspect
-        </p>
-      </div>
+    <div>
+      <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>
+        Dashboard
+      </h2>
+      <p style={{ color: '#6b7280', marginBottom: '32px' }}>
+        Axion pipeline overview and system status.
+      </p>
 
-      <div
-        style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '20px',
-        }}
-      >
-        <div
-          style={{
-            fontSize: '11px',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            color: 'var(--text-muted)',
-            marginBottom: '14px',
-          }}
-        >
-          Pipeline Actions
-        </div>
-        <ActionBar
-          runId={lastResult?.run?.run_id}
-          onDoctor={() => exec('Doctor', api.doctor)}
-          onStartRun={() => exec('Start Run', api.startRun)}
-          onAdvance={() => {
-            const rid = lastResult?.run?.run_id;
-            if (rid) exec('Advance', () => api.advanceRun(rid));
-          }}
-          onVerify={() => {}}
-          onPack={() => {}}
-          onRepro={() => {}}
-        />
-        {loading && (
-          <div style={{ marginTop: '12px', color: 'var(--accent-indigo)', fontSize: '13px' }}>
-            Running…
-          </div>
-        )}
-      </div>
-
-      {error && (
-        <div
-          style={{
-            background: 'var(--status-fail-bg)',
-            border: '1px solid var(--status-fail)',
-            borderRadius: 'var(--radius-md)',
-            padding: '12px 16px',
-            color: 'var(--status-fail)',
-            fontSize: '13px',
-          }}
-        >
-          {error}
-        </div>
-      )}
-
-      {lastResult && (
-        <div
-          style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-          }}
-        >
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
+        {STATS.map((stat) => (
           <div
+            key={stat.label}
             style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              color: 'var(--text-muted)',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              padding: '24px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             }}
           >
-            Last Action Result
+            <div style={{ fontSize: '12px', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {stat.label}
+            </div>
+            <div style={{ fontSize: '32px', fontWeight: 700, color: stat.color, marginTop: '4px' }}>
+              {stat.value}
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <StatusBadge status={lastResult.action.outcome as 'PASS' | 'FAIL' | 'ERROR'} />
-            <IdPill id={lastResult.action.action_id} truncate={16} />
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              {lastResult.action.action_type}
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: 'auto' }}>
-              {lastResult.action.timestamp}
-            </span>
-          </div>
+        ))}
+      </div>
 
-          {lastResult.run && (
+      <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '16px', color: '#111827' }}>
+          Pipeline Stages
+        </h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {[
+            'S1_INGEST_NORMALIZE', 'S2_VALIDATE_INTAKE', 'S3_BUILD_CANONICAL',
+            'S4_VALIDATE_CANONICAL', 'S5_RESOLVE_STANDARDS', 'S6_SELECT_TEMPLATES',
+            'S7_RENDER_DOCS', 'S8_BUILD_PLAN', 'S9_VERIFY_PROOF', 'S10_PACKAGE',
+          ].map((stage) => (
             <div
+              key={stage}
               style={{
+                padding: '8px 12px',
+                backgroundColor: '#f9fafb',
+                borderRadius: '6px',
+                border: '1px solid #e5e7eb',
+                fontSize: '12px',
+                fontFamily: 'monospace',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
-                padding: '10px 14px',
-                background: 'var(--bg-secondary)',
-                borderRadius: 'var(--radius-md)',
-                cursor: 'pointer',
+                gap: '8px',
               }}
-              onClick={() => navigate(runDetailPath(lastResult.run!.run_id))}
             >
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Run:</span>
-              <IdPill id={lastResult.run.run_id} />
-              <StatusBadge status={lastResult.run.status as 'RUNNING'} size="sm" />
-              {lastResult.run.current_stage && (
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                  Stage: {lastResult.run.current_stage}
-                </span>
-              )}
-              <span style={{ fontSize: '11px', color: 'var(--accent-indigo)', marginLeft: 'auto' }}>
-                View →
-              </span>
+              {stage}
+              <StatusBadge status="pass" />
             </div>
-          )}
-
-          {lastResult.stdout && (
-            <div>
-              <div
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  color: 'var(--text-muted)',
-                  marginBottom: '6px',
-                }}
-              >
-                Output
-              </div>
-              <pre
-                style={{
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '12px',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '11px',
-                  lineHeight: 1.5,
-                  color: 'var(--text-secondary)',
-                  overflow: 'auto',
-                  maxHeight: '300px',
-                  whiteSpace: 'pre-wrap',
-                  margin: 0,
-                }}
-              >
-                {lastResult.stdout}
-              </pre>
-            </div>
-          )}
-
-          {lastResult.stderr && (
-            <div>
-              <div
-                style={{
-                  fontSize: '10px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  color: 'var(--status-error)',
-                  marginBottom: '6px',
-                }}
-              >
-                Stderr
-              </div>
-              <pre
-                style={{
-                  background: 'var(--bg-input)',
-                  border: '1px solid var(--status-error)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '12px',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '11px',
-                  lineHeight: 1.5,
-                  color: 'var(--status-error)',
-                  overflow: 'auto',
-                  maxHeight: '200px',
-                  whiteSpace: 'pre-wrap',
-                  margin: 0,
-                }}
-              >
-                {lastResult.stderr}
-              </pre>
-            </div>
-          )}
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
