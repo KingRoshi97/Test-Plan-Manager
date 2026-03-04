@@ -1,0 +1,206 @@
+Yes — this plan is the right shape. What you’ve written is essentially:
+
+Keep the new Mechanics backbone (S1–S10, gates, artifact spine, kit packaging)
+
+Port the old “product layer” (DB + API + dashboard UI) on top of it
+
+Drive pipeline execution from the web layer by spawning the existing axion run (or calling the internal runner once you expose it)
+
+Below is a clean, step-by-step outline of what to build, with the only necessary alignment fixes so it matches your repo decisions (you already chose App/ at repo root).
+
+Step 0 — Repo layout (lock this first)
+
+Your target layout should be:
+
+/Axion/        # Mechanics backbone (existing)
+ /App/         # React UI (you already decided this)
+ /server/      # Express API (web layer)
+ /shared/      # shared schema/types (db + API types)
+ drizzle.config.ts
+ package.json
+
+This keeps the web app layer outside Axion/ exactly like you wanted.
+
+Step 1 (T001) — Database schema + Drizzle (server truth)
+
+Goal: create the persisted control-plane memory the clean system currently lacks.
+
+Build
+
+Add Drizzle + Neon dependencies.
+
+Create shared/schema.ts tables (your list is good). Keep assemblies as your top-level entity.
+
+Create server/db.ts (Drizzle client).
+
+Create drizzle.config.ts.
+
+Run drizzle-kit push.
+
+Must-have table notes (so it matches Mechanics)
+
+pipeline_runs.stages should store S1–S10 statuses + timestamps (JSON is fine for now).
+
+Store gate results either:
+
+inside pipeline_runs.stages JSON, or
+
+as reports records with report_type="gate_report".
+
+Acceptance
+
+npx drizzle-kit push succeeds and tables exist.
+
+Step 2 (T002) — Express API (control plane interface)
+
+Goal: the API becomes the operator surface for the UI.
+
+Build
+
+server/index.ts Express app.
+
+server/routes.ts with your endpoints.
+
+server/storage.ts DB CRUD.
+
+Critical endpoints (must work first)
+
+POST /api/assemblies
+
+GET /api/assemblies
+
+GET /api/assemblies/:id
+
+POST /api/assemblies/:id/run
+
+GET /api/assemblies/:id/runs
+
+GET /api/assemblies/:id/runs/:runId
+
+GET /api/files + GET /api/files/:path (artifact browser)
+
+Acceptance
+
+Server starts and endpoints return real DB-backed responses (even before pipeline execution is wired).
+
+Step 3 (T003) — React frontend in App/ (not client/)
+
+Goal: build the dashboard UI as the physical representation of the repo.
+
+Build
+
+Put everything in App/ (rename your T003 “client/” folder to App/).
+
+Vite proxy points to Express API.
+
+React Query for API state.
+
+Acceptance
+
+npm run dev serves UI; API calls work through proxy.
+
+Step 4 (T004) — Dashboard + New Assembly flows
+
+Goal: make the UI functional before pipeline execution.
+
+Build
+
+/ Dashboard: list assemblies with status cards + metrics summary.
+
+/new: form creates assembly; optional “start run immediately”.
+
+Sidebar navigation.
+
+Acceptance
+
+Dashboard shows real assemblies from GET /api/assemblies.
+
+New assembly creates record via POST /api/assemblies.
+
+Step 5 (T005) — Assembly detail + Pipeline visualization
+
+Goal: show the Mechanics pipeline state (S1–S10 + gates + artifacts).
+
+Build
+
+/assemblies/:id
+
+Assembly header + actions
+
+Stage timeline (S1–S10) rendered from pipeline_runs.stages
+
+Gate results (7 gates)
+
+Stage report viewer (reads artifacts via /api/files/:path)
+
+Artifact browser for that run directory
+
+Run history list
+
+Acceptance
+
+Selecting an assembly shows its run list and lets you drill into a run’s artifacts.
+
+Step 6 (T007) — Wire pipeline execution to web app (this is the “it works” moment)
+
+Goal: clicking “Run” in UI triggers the real Mechanics pipeline.
+
+Build server/pipeline-runner.ts
+
+Spawn the Mechanics CLI as a child process.
+
+Capture stdout/stderr to logs.
+
+Parse stage progress and update pipeline_runs + assemblies in realtime.
+
+Important design choice (keep it simple)
+
+Use a single “runner” API call:
+
+POST /api/assemblies/:id/run creates a pipeline_runs row and starts spawn
+
+For realtime UI:
+
+simplest: polling GET /api/assemblies/:id/runs/:runId every 1–2s
+
+better: SSE endpoint GET /api/assemblies/:id/runs/:runId/stream (still simple)
+
+How runner finds outputs
+
+After completion, runner should store:
+
+run_id (Mechanics run id)
+
+run_dir_path (where .axion/runs/<run_id> lives)
+
+Your existing file endpoints then browse artifacts directly.
+
+Acceptance
+
+Start run from UI → Mechanics pipeline runs → UI shows stage progress → run completes → artifacts visible.
+
+Step 7 (T006) — Remaining pages (only after T007)
+
+These are “operator console depth” pages that become easy once the pipeline works:
+
+Files, Health, Logs, Doc Inventory, Tests view, Export, Presets, Performance, Scripts, Workspaces.
+
+Acceptance
+
+Every page renders real data from API/artifacts (no mock content).
+
+Step 8 (T008) — replit.md + end-to-end test
+
+Goal: lock the operating manual so the system stays stable after you move fast.
+
+Acceptance
+
+Create assembly → run pipeline → view gates/proofs → export kit → verify everything from UI.
+
+The one big correction to your task list
+
+You wrote “Create client/ directory” — but you already decided the frontend must be:
+
+✅ App/ at repo root (same level as Axion/)
+
+So T003–T006 should reference App/, not client/.

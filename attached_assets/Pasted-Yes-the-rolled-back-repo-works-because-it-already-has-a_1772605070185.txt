@@ -1,0 +1,204 @@
+Yes — the rolled-back repo works because it already has a complete operational backbone: a run state spine + stage runner + deterministic artifact outputs + gates + kit packaging. Your new “clean” version drifted toward docs + structure before that backbone was rebuilt.
+
+Here’s exactly what you need to build (or port) so the system actually works, using the rolled-back repo as the reference for “working.”
+
+What the working (old) repo has that makes it run end-to-end
+
+In the rolled-back version, axion run works because it includes:
+
+Run orchestration
+
+axion init
+
+axion run start (allocates a run + creates the folder spine)
+
+axion run stage <run_id> <stage_id> (executes one stage)
+
+axion run (loops through STAGE_ORDER)
+
+A real run spine
+
+run_manifest.json with stages[] + statuses
+
+deterministic stage order + stage→gate mapping
+
+stage_reports/<stage>.json written every stage
+
+artifact_index.json appended to as you go
+
+Stage IO contract + outputs
+
+each stage has consumed[] and produced[] expectations
+
+stages write deterministic artifacts under:
+
+intake/, canonical/, standards/, templates/, planning/, proof/, kit/, state/, verification/
+
+Gate evaluation in-line
+
+after certain stages, it runs gates and blocks on fail
+
+writes gates/*.gate_report.json
+
+Kit packaging
+
+writes kit_manifest.json, entrypoint.json, version_stamp.json, plus packaging manifest
+
+That’s why it “works” even if some of the content is still placeholder/evidence-generated: the machine is complete.
+
+What the clean/new system is missing (to be “actually working”)
+
+To make the new version work, you need to rebuild/port the same backbone first, before further cleanup.
+
+1) Run manifest + stage machine (must-have)
+
+Build/port:
+
+RunManifest schema with:
+
+run_id, status, created_at, updated_at
+
+stages[]: {stage_id, status, stage_report_ref?}
+
+STAGE_ORDER (authoritative)
+
+STAGE_GATES (stage → gate id mapping)
+
+resolveStageId() (strict)
+
+If this isn’t present, nothing else can be “operated.”
+
+2) run start must allocate a run + write the folder spine
+
+Build/port:
+
+cmdInit() creates runtime root (e.g. .axion/)
+
+cmdRunStart():
+
+allocates RUN-xxxxxx
+
+creates run directory and required subfolders
+
+writes run_manifest.json with all stages in NOT_STARTED
+
+writes any required “empty but schema-valid” starter artifacts if your pipeline expects them
+
+3) Stage runner (run stage) must be able to execute each stage deterministically
+
+Build/port:
+
+cmdRunStage(run_id, stage_id) that:
+
+reads manifest
+
+marks stage in progress
+
+performs stage work (even if stubbed at first)
+
+runs gates for that stage (if configured)
+
+writes stage_reports/<stage>.json
+
+updates manifest status and stage status
+
+appends to artifact_index.json
+
+Also port the concept of:
+
+STAGE_IO[stage_id] = {consumed[], produced[]}
+so each stage has enforceable IO expectations.
+
+4) Minimal stage implementations (don’t overbuild; just make outputs real)
+
+In the “working” repo, the system works because each stage writes something deterministic.
+
+For the new system, implement the same approach in order:
+
+S1 INGEST/NORMALIZE
+
+write: intake/normalized_payload.json (+ a validation result file)
+
+S3 BUILD_CANONICAL
+
+write: canonical/canonical_spec.json
+
+S5 RESOLVE_STANDARDS
+
+write: standards/resolved_standards_snapshot.json
+
+S6 SELECT_TEMPLATES
+
+write: templates/selection_result.json + selection_report.json
+
+S7 RENDER_DOCS
+
+write: templates/render_report.json (+ rendered outputs if you keep them)
+
+S8 BUILD_PLAN
+
+write: planning/work_breakdown.json, acceptance_map.json, coverage_report.json
+
+S9 VERIFY/PROOF
+
+write: proof/proof_ledger.jsonl
+
+S10 PACKAGE
+
+write: kit/kit_manifest.json, entrypoint.json, version_stamp.json, packaging_manifest.json
+
+You can keep these as “evidence writers” initially like the old version did — the key is: the pipeline is executable and produces the spine.
+
+5) Gate engine must block runs (pass/fail actually means something)
+
+Build/port:
+
+runGatesForStage(run_id, stage_id) that:
+
+loads the gate(s) for the stage
+
+evaluates predicates (even minimal checks at first like “file exists” / “schema valid”)
+
+writes gates/<gate_id>.gate_report.json
+
+returns all_passed so stage runner can fail-fast
+
+Without this, stages “run” but nothing enforces correctness.
+
+6) Proof ledger + evidence pointers (minimum viable)
+
+Build/port:
+
+cmdWriteProof() (or S9_VERIFY_PROOF stage work) that writes proof_ledger.jsonl
+
+Evidence pointers only need to support file path pointers at first, but they must be consistent.
+
+7) Kit packager must be deterministic
+
+Build/port:
+
+packaging manifest builder:
+
+enumerate included files
+
+write kit manifest + hashes
+
+write entrypoint
+
+(bundle export can come later; first, produce the kit folder + manifest spine)
+
+The fastest path: “Port the backbone first”
+
+If your new repo doesn’t currently have the above pieces wired together, the fastest way to make it work is:
+
+Port run manifest + stage runner + stage order/gates mapping
+
+Port stage IO table + stage report writer
+
+Port the evidence writers (so each stage produces the expected files)
+
+Port gate engine loop (block on fail)
+
+Then replace evidence writers with real logic (intake/canonical/standards/templates) incrementally
+
+That’s exactly why the old version runs and the new one “looks clean but doesn’t work.”
