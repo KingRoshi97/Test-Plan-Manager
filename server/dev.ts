@@ -16,7 +16,7 @@ async function start() {
 
   const vite = await createViteServer({
     root: path.resolve(__dirname, "..", "App"),
-    server: { middlewareMode: true, hmr: { port: 5173 } },
+    server: { middlewareMode: true, hmr: { port: 5173 }, allowedHosts: true },
     appType: "spa",
   });
 
