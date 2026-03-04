@@ -1,6 +1,6 @@
 run = "cowsay Configure me!"
 entrypoint = "README.md"
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "postgresql-16"]
 
 [nix]
 channel = "stable-24_11"
@@ -25,9 +25,18 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd Axion && npx tsx src/cli/axion.ts run"
+args = "npm run dev"
+waitForPort = 5000
 
-[workflows.workflow.metadata]
-outputType = "console"
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 5173
+externalPort = 5173
