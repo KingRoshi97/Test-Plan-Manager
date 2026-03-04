@@ -1,7 +1,5 @@
 import type { Run } from "./model.js";
-import { existsSync, readdirSync } from "node:fs";
-import { join } from "node:path";
-import { ensureDir, writeJson, readJson } from "../../utils/fs.js";
+import { NotImplementedError } from "../../utils/errors.js";
 
 export interface RunStore {
   createRun(run: Run): Promise<void>;
@@ -11,40 +9,21 @@ export interface RunStore {
 }
 
 export class JSONRunStore implements RunStore {
-  constructor(private basePath: string) {
-    ensureDir(this.basePath);
+  constructor(private basePath: string) {}
+
+  async createRun(_run: Run): Promise<void> {
+    throw new NotImplementedError("JSONRunStore.createRun");
   }
 
-  private runPath(runId: string): string {
-    return join(this.basePath, `${runId}.json`);
+  async getRun(_runId: string): Promise<Run | null> {
+    throw new NotImplementedError("JSONRunStore.getRun");
   }
 
-  async createRun(run: Run): Promise<void> {
-    const p = this.runPath(run.run_id);
-    if (existsSync(p)) {
-      throw new Error(`Run ${run.run_id} already exists`);
-    }
-    writeJson(p, run);
-  }
-
-  async getRun(runId: string): Promise<Run | null> {
-    const p = this.runPath(runId);
-    if (!existsSync(p)) return null;
-    return readJson<Run>(p);
-  }
-
-  async updateRun(runId: string, updates: Partial<Run>): Promise<void> {
-    const existing = await this.getRun(runId);
-    if (!existing) {
-      throw new Error(`Run ${runId} not found`);
-    }
-    const merged: Run = { ...existing, ...updates, updated_at: new Date().toISOString() };
-    writeJson(this.runPath(runId), merged);
+  async updateRun(_runId: string, _updates: Partial<Run>): Promise<void> {
+    throw new NotImplementedError("JSONRunStore.updateRun");
   }
 
   async listRuns(): Promise<Run[]> {
-    if (!existsSync(this.basePath)) return [];
-    const files = readdirSync(this.basePath).filter((f) => f.endsWith(".json"));
-    return files.map((f) => readJson<Run>(join(this.basePath, f)));
+    throw new NotImplementedError("JSONRunStore.listRuns");
   }
 }
