@@ -1,10 +1,12 @@
 import { join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
 import { readJson, writeJson } from "../../utils/fs.js";
 import { isoNow } from "../../utils/time.js";
-import { loadGateRegistry, filterGatesByStage, templateGatePaths } from "./registry.js";
-import { evalCheck } from "./evaluator.js";
+import { loadGateRegistry, filterGatesByStage, templateGatePaths, isNonOverridable } from "./registry.js";
+import { evalCheck, resolveEvidencePointer } from "./evaluator.js";
 import { writeGateReport } from "./report.js";
 import type { GateReportV1, CheckReport } from "./report.js";
+import type { GateDefinition } from "./registry.js";
 import type { RunManifest } from "../../types/run.js";
 
 export interface GateRunResult {
@@ -12,7 +14,42 @@ export interface GateRunResult {
   all_passed: boolean;
 }
 
-const ENGINE = { name: "axion-gates", version: "0.1.0" };
+const ENGINE = { name: "axion-gates", version: "0.2.0" };
+
+function checkRequiredProofTypes(gate: GateDefinition, runDir: string): { pass: boolean; missing: string[] } {
+  const required = gate.required_proof_types;
+  if (!required || required.length === 0) {
+    return { pass: true, missing: [] };
+  }
+
+  const ledgerPath = join(runDir, "proof_ledger", "ledger.jsonl");
+  if (!existsSync(ledgerPath)) {
+    return { pass: false, missing: [...required] };
+  }
+
+  let ledgerContent: string;
+  try {
+    ledgerContent = readFileSync(ledgerPath, "utf-8");
+  } catch {
+    return { pass: false, missing: [...required] };
+  }
+
+  const proofTypes = new Set<string>();
+  for (const line of ledgerContent.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const entry = JSON.parse(line);
+      if (entry.proof_type) {
+        proofTypes.add(entry.proof_type);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  const missing = required.filter((pt) => !proofTypes.has(pt));
+  return { pass: missing.length === 0, missing };
+}
 
 export function runGatesForStage(baseDir: string, runId: string, stageId: string): GateRunResult {
   const registryPath = join(baseDir, "registries", "GATE_REGISTRY.json");
@@ -38,7 +75,7 @@ export function runGatesForStage(baseDir: string, runId: string, stageId: string
     let failEvidence: GateReportV1["evidence"] = [];
 
     for (const check of gate.checks) {
-      const result = evalCheck(check);
+      const result = evalCheck(check, gate.gate_id);
       const cr: CheckReport = {
         check_id: check.op,
         status: result.pass ? "pass" : "fail",
@@ -52,6 +89,29 @@ export function runGatesForStage(baseDir: string, runId: string, stageId: string
         firstFailureCode = result.failure_code;
         failEvidence = result.evidence;
         break;
+      }
+    }
+
+    if (gatePassed) {
+      const proofCheck = checkRequiredProofTypes(rawGate, runDir);
+      if (!proofCheck.pass) {
+        gatePassed = false;
+        firstFailureCode = "E_MISSING_REQUIRED_PROOF_TYPES";
+        failEvidence = [{
+          path: "",
+          pointer: "",
+          details: {
+            gate_id: gate.gate_id,
+            missing_proof_types: proofCheck.missing,
+            required_proof_types: rawGate.required_proof_types,
+          },
+        }];
+        checkReports.push({
+          check_id: "required_proof_types",
+          status: "fail",
+          failure_code: "E_MISSING_REQUIRED_PROOF_TYPES",
+          evidence: failEvidence,
+        });
       }
     }
 

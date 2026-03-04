@@ -1,5 +1,14 @@
 import { readJson } from "../../utils/fs.js";
 
+export const KNOWN_OPERATORS = new Set([
+  "file_exists",
+  "json_valid",
+  "json_has",
+  "coverage_gte",
+  "json_eq",
+  "verify_hash_manifest",
+]);
+
 export interface GateCheck {
   op: string;
   path?: string;
@@ -15,6 +24,8 @@ export interface GateDefinition {
   stage_id: string;
   severity: string;
   checks: GateCheck[];
+  required_proof_types?: string[];
+  non_overridable?: boolean;
 }
 
 export interface GateRegistryFile {
@@ -22,13 +33,42 @@ export interface GateRegistryFile {
   gates: GateDefinition[];
 }
 
+export class UnknownOperatorError extends Error {
+  constructor(gateId: string, op: string) {
+    super(`Gate ${gateId}: unknown predicate operator "${op}". Known operators: ${[...KNOWN_OPERATORS].join(", ")}`);
+    this.name = "UnknownOperatorError";
+  }
+}
+
+export class NonOverridableGateError extends Error {
+  constructor(gateId: string) {
+    super(`Gate ${gateId} is non-overridable and cannot be skipped`);
+    this.name = "NonOverridableGateError";
+  }
+}
+
+export function validateGateOperators(gate: GateDefinition): void {
+  for (const check of gate.checks) {
+    if (!KNOWN_OPERATORS.has(check.op)) {
+      throw new UnknownOperatorError(gate.gate_id, check.op);
+    }
+  }
+}
+
 export function loadGateRegistry(registryPath: string): GateDefinition[] {
   const registry = readJson<GateRegistryFile>(registryPath);
+  for (const gate of registry.gates) {
+    validateGateOperators(gate);
+  }
   return registry.gates;
 }
 
 export function filterGatesByStage(gates: GateDefinition[], stageId: string): GateDefinition[] {
   return gates.filter((g) => g.stage_id === stageId);
+}
+
+export function isNonOverridable(gate: GateDefinition): boolean {
+  return gate.non_overridable === true;
 }
 
 function templateString(value: string, runId: string): string {

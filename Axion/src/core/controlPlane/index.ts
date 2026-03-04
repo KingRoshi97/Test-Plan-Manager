@@ -7,6 +7,7 @@ export { type Release, createRelease, signRelease, publishRelease, revokeRelease
 export { type PinEntry, pinArtifact, unpinArtifact, listPins } from "./pins.js";
 export { loadRegistries, resolvePins, validateRegistryIntegrity } from "./registryLoader.js";
 export { computeApplicability, resolveStandards } from "./standardsEngine.js";
+export { validateStageBoundary, type BoundaryValidationResult, type BoundaryValidationError } from "./boundaryValidator.js";
 export { selectTemplates, renderTemplates, packageEnvelopes, buildCompletenessReport } from "./templateDriver.js";
 export { evaluateGates, buildGateReport } from "./gateEngine.js";
 export { captureProof, appendToLedger, verifyProofPointers } from "./proofSystem.js";
@@ -14,3 +15,4 @@ export { packageKit } from "./kitPackager.js";
 export { writeRunManifest, writeRunLog, appendRunLogEntry, writeICPStageReport, writeICPGateReport, writePinset, writeStateSnapshot, buildStateSnapshot } from "./outputs.js";
 export { classifyFailure, shouldFailFast, canRetry, buildFailureReport, buildRemediationStep, isMinimalFailureDeliverable, validateFailureReport } from "./failures.js";
 export { normalizeRunContext, isolateNoiseFields, goldenCompare, computeDeterminismHash } from "./determinism.js";
+export { type RunProfile, type RunProfileRegistry, type ModeOverlay, type ProfileResolutionResult, type EffectiveRunConfig, loadRunProfileRegistry, resolveProfile, buildEffectiveConfig, resolveRunProfile } from "./profiles.js";

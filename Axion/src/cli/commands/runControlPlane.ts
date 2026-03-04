@@ -1,11 +1,13 @@
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { writeJson, readJson, ensureDir } from "../../utils/fs.js";
+import { writeCanonicalJson } from "../../utils/canonicalJson.js";
 import { isoNow } from "../../utils/time.js";
 import { sha256 } from "../../utils/hash.js";
 import type { RunManifest, StageRun } from "../../types/run.js";
 import { STAGE_ORDER, STAGE_GATES, GATES_REQUIRED } from "../../types/run.js";
 import type { ArtifactIndexEntry } from "../../types/artifacts.js";
+import { resolveRunProfile } from "../../core/controlPlane/profiles.js";
 
 function padRunId(n: number): string {
   return `RUN-${String(n).padStart(6, "0")}`;
@@ -33,7 +35,7 @@ function artifactEntry(
   };
 }
 
-export function cmdRunStart(baseDir: string = "."): string {
+export function cmdRunStart(baseDir: string = ".", submissionPath?: string): string {
   const counterPath = join(baseDir, ".axion", "run_counter.json");
   const counter = readJson<{ next: number }>(counterPath);
   const runNumber = counter.next;
@@ -69,6 +71,38 @@ export function cmdRunStart(baseDir: string = "."): string {
     stage_report_ref: null,
   }));
 
+  const registryPath = join(baseDir, "Axion", "registries", "RUN_PROFILE_REGISTRY.json");
+  let resolvedProfileId = "default";
+  let effectiveStageOrder = [...STAGE_ORDER];
+  let effectiveStageGates = { ...STAGE_GATES };
+  let effectiveGatesRequired = [...GATES_REQUIRED];
+
+  if (existsSync(registryPath)) {
+    try {
+      const runContext = {
+        run_id: runId,
+        risk_class: "prototype" as const,
+        executor_type_default: "internal" as const,
+        targets: { platforms: ["web" as const], domains: ["default"] },
+      };
+
+      const { resolution, effectiveConfig } = resolveRunProfile(registryPath, runContext, runId);
+      resolvedProfileId = resolution.resolved_profile_id;
+
+      effectiveStageOrder = effectiveConfig.active_stages;
+      effectiveGatesRequired = effectiveConfig.gates_required;
+      effectiveStageGates = effectiveConfig.stage_gate_map;
+
+      const resolutionPath = join(runDir, "run_profile_resolution_result.json");
+      writeCanonicalJson(resolutionPath, resolution);
+
+      const effectiveConfigPath = join(runDir, "effective_run_config.json");
+      writeCanonicalJson(effectiveConfigPath, effectiveConfig);
+    } catch {
+      resolvedProfileId = "default";
+    }
+  }
+
   const manifest: RunManifest = {
     run_id: runId,
     status: "running",
@@ -79,7 +113,7 @@ export function cmdRunStart(baseDir: string = "."): string {
       pipeline_version: "0.2.0",
     },
     profile: {
-      profile_id: "default",
+      profile_id: resolvedProfileId,
     },
     stage_order: [...STAGE_ORDER],
     stages,
@@ -89,7 +123,7 @@ export function cmdRunStart(baseDir: string = "."): string {
     artifact_index_ref: "artifact_index.json",
     errors: [],
     policy_snapshot_ref: null,
-    config: {},
+    config: submissionPath ? { submission_path: submissionPath } : {},
   };
 
   const manifestPath = join(runDir, "run_manifest.json");
@@ -101,11 +135,21 @@ export function cmdRunStart(baseDir: string = "."): string {
     artifactEntry("manifest_001", "run_manifest", "run_manifest.json", hashFile(manifestPath), "S1_INGEST_NORMALIZE", now),
   ];
 
+  const resolutionFilePath = join(runDir, "run_profile_resolution_result.json");
+  if (existsSync(resolutionFilePath)) {
+    index.push(artifactEntry("profile_resolution_001", "run_profile_resolution", "run_profile_resolution_result.json", hashFile(resolutionFilePath), "S1_INGEST_NORMALIZE", now));
+  }
+  const effectiveConfigFilePath = join(runDir, "effective_run_config.json");
+  if (existsSync(effectiveConfigFilePath)) {
+    index.push(artifactEntry("effective_config_001", "effective_run_config", "effective_run_config.json", hashFile(effectiveConfigFilePath), "S1_INGEST_NORMALIZE", now));
+  }
+
   writeJson(indexPath, index);
   index.push(artifactEntry("artifact_index_001", "artifact_index", "artifact_index.json", hashFile(indexPath), "S1_INGEST_NORMALIZE", now));
   writeJson(indexPath, index);
 
   console.log(`Created run: ${runId}`);
   console.log(`  Run directory: ${runDir}`);
+  console.log(`  Profile: ${resolvedProfileId}`);
   return runId;
 }

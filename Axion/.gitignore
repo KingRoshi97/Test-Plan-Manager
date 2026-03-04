@@ -1,4 +1,5 @@
-.axion/
+.axion/runs/
+.axion/icp_runs/
 node_modules/
 dist/
 *.tsbuildinfo

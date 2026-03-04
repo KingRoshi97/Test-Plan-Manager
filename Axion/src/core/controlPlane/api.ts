@@ -17,6 +17,9 @@ import {
 } from "./model.js";
 import { isoNow } from "../../utils/time.js";
 import { sha256 } from "../../utils/hash.js";
+import { validateStageBoundary } from "./boundaryValidator.js";
+import type { StageId } from "../../types/run.js";
+import { STAGE_ORDER } from "../../types/run.js";
 
 export class RunController {
   constructor(private store: RunStore) {}
@@ -93,7 +96,7 @@ export class RunController {
   async completeStage(
     runId: string,
     stageId: string,
-    result: { status: "PASS" | "FAIL"; report?: ICPStageReport },
+    result: { status: "PASS" | "FAIL"; report?: ICPStageReport; runDir?: string; baseDir?: string },
   ): Promise<void> {
     const run = await this.requireRun(runId);
     const idx = getStageIndex(run.stages, stageId);
@@ -102,6 +105,18 @@ export class RunController {
     const stage = run.stages[idx];
     if (stage.state !== "IN_PROGRESS") {
       throw new Error(`Stage ${stageId} is not IN_PROGRESS (current: ${stage.state})`);
+    }
+
+    if (result.status === "PASS" && result.runDir && result.baseDir) {
+      const isValidStageId = (STAGE_ORDER as readonly string[]).includes(stageId);
+      if (isValidStageId) {
+        const boundaryResult = validateStageBoundary(result.runDir, result.baseDir, stageId as StageId);
+        if (!boundaryResult.valid) {
+          const hardErrors = boundaryResult.errors.filter((e) => e.severity === "hard");
+          const errorMessages = hardErrors.map((e) => `${e.artifact}: ${e.message}`).join("; ");
+          throw new Error(`Stage ${stageId} boundary validation failed: ${errorMessages}`);
+        }
+      }
     }
 
     const target: StageState = result.status;
