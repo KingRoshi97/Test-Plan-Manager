@@ -1,0 +1,255 @@
+Phase 3 Implementation Blueprint (Kit safety + Variants + Retention control)
+
+This phase makes kits safe to ship (especially external kits) and stops .axion/runs from turning into a junkyard.
+
+1) Kit Variant Filtering (internal vs external becomes real)
+1.1 Add a kit_variant decision surface
+
+The run’s effective config must include:
+
+kit_variant = internal | external
+
+1.2 Implement deterministic inclusion rules
+
+When building the kit, include/exclude artifacts by variant:
+
+External kit must exclude
+
+restricted knowledge items
+
+internal-only policy/docs
+
+sensitive intake content not required for execution
+
+debug-heavy logs/config that leak internal details
+
+Internal kit may include
+
+broader knowledge bundles
+
+richer diagnostics
+
+wider tool configs (still pinned)
+
+1.3 Manifest classification fields required
+
+In kit_manifest.json, every artifact must be tagged:
+
+required | optional
+
+access_class = public | internal | restricted
+
+included_by_variant = internal | external | both
+
+Done when
+
+kit variant produces different, predictable kit inventories.
+
+2) Secrets Scan (kit must not contain secrets)
+2.1 Add a packaging-time secret scanner
+
+Before bundle_export is produced:
+
+scan all kit files (and optionally referenced artifacts) for secret patterns
+
+2.2 Enforce fail-fast
+
+If secrets detected → packaging FAIL
+
+Must produce:
+
+a kit_security_scan_report.json with offending paths + redaction guidance
+
+External strictness
+
+external kit: non-overridable failure by default
+
+Done when
+
+secrets cannot slip into kits.
+
+3) Reuse / Plagiarism controls (enforceable, not prose)
+3.1 Add REUSE_ALLOWLIST artifact to kit (when reuse permitted)
+
+Allowlist defines:
+
+what may be reused
+
+excerpt limits
+
+attribution requirements (if applicable)
+
+3.2 Add reuse logging requirement
+
+If reuse occurs:
+
+KCP must write a reuse_log.jsonl entry that includes:
+
+source pointer
+
+what was reused (bounded)
+
+why allowed (allowlist reference)
+
+3.3 Enforce at KCP level
+
+If output contains allowlisted excerpts but no reuse log entry → FAIL/BLOCKED
+
+If output contains non-allowlisted reuse → FAIL
+
+Done when
+
+reuse is either (a) properly logged and allowed or (b) blocked.
+
+4) Kit Validation (KCP must validate before executing)
+4.1 Implement a mandatory kit validator
+
+Before any work begins:
+
+validate required artifacts exist (per manifest)
+
+validate schemas for:
+
+kit_manifest
+
+entrypoint
+
+pinset
+
+plan units (if included)
+
+verification policy
+
+4.2 Output required even on failure
+
+kit_validation_report.json always written
+
+Done when
+
+broken kits cannot proceed to execution.
+
+5) External Kit Guardrails (tight execution boundary)
+5.1 Path allowlists
+
+External kits must ship:
+
+allowed write roots (where code changes may occur)
+
+forbidden paths (e.g., .git/, secrets files, system paths)
+
+5.2 Command allowlists
+
+External kits must ship:
+
+strict command list derived from verification_policy
+
+no arbitrary shell commands
+
+5.3 Redaction strictness
+
+External kits must:
+
+redact aggressively in logs/reports/results
+
+fail-fast on secrets
+
+Done when
+
+external execution is constrained and safe.
+
+6) Bundle Export + Metadata (reproducible packaging)
+6.1 Bundle export must be deterministic
+
+Same kit content + same pins → same:
+
+bundle hash
+
+bundle metadata (modulo timestamps)
+
+6.2 Bundle metadata must include
+
+kit_id, run_id, variant
+
+hash of kit_manifest and entrypoint
+
+pinset hash
+
+bundle hash + algorithm
+
+Done when
+
+bundles are reproducible and verifiable.
+
+7) Retention + Bloat Control (stop .axion/runs growth)
+7.1 Define run retention policy (system-level)
+
+For each run, define what is kept:
+
+Keep (always)
+
+run_manifest
+
+stage_reports
+
+gate_reports
+
+proof ledger + required proof objects
+
+kit manifest/entrypoint (if produced)
+
+state snapshot + verification report
+
+Prune or compress (policy-defined)
+
+large rendered docs outputs
+
+duplicated render artifacts
+
+verbose logs beyond retention window
+
+7.2 Fix the current bloat source: rendered template docs
+
+Right now .axion/runs/*/templates/rendered_docs/ is your main bloat engine.
+
+Policy choices
+
+store only:
+
+render envelopes (structured JSON)
+
+hashes of any derived human-readable docs
+
+optionally generate human-readable docs on-demand, not persisted per run
+
+7.3 Add a prune command
+
+A command like:
+
+axion prune --keep-last N --keep-failures M --prune-rendered-docs
+Must:
+
+never delete manifests/reports/proofs required for audit
+
+write a prune_report.json of what was deleted
+
+Done when
+
+.axion/runs stays bounded and doesn’t balloon with repeated renders.
+
+8) Phase 3 Definition of done
+
+Phase 3 is complete when:
+
+internal vs external kit inventories differ deterministically
+
+secrets scan blocks leakage
+
+reuse allowlist + reuse log enforcement works
+
+kit validation runs before execution
+
+external guardrails are strict and enforceable
+
+bundles are reproducible with hashes
+
+retention policy + prune command prevents run bloat
