@@ -25,14 +25,9 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[workflows.workflow.metadata]
-outputType = "webview"
-
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd App && npx vite"
-waitForPort = 5000
+args = "cd Axion && npx tsx src/cli/axion.ts run"
 
-[[ports]]
-localPort = 5000
-externalPort = 80
+[workflows.workflow.metadata]
+outputType = "console"
