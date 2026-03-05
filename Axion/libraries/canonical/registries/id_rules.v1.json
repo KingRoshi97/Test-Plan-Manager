@@ -1,0 +1,16 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "id_rules.v1",
+    "id_algo_version": "1",
+    "namespace_mode": "workspace_project",
+    "entity_prefix": "E-",
+    "relationship_prefix": "R-",
+    "canonical_key_templates": {
+      "project": "project:{project_slug}",
+      "domain": "domain:{domain_slug}",
+      "component": "component:{name_slug}",
+      "endpoint": "endpoint:{method}:{path}",
+      "data_entity": "data_entity:{name_slug}",
+      "integration": "integration:{provider_slug}:{purpose_slug}"
+    }
+}

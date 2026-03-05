@@ -328,6 +328,22 @@ export function registerRoutes(app: Express) {
       gates: { docs: gatesDocCount, schemas: gatesSchemaCount, registries: gatesRegistryCount, definitions: gatesDefinitionCount },
       policy: { docs: polDocCount, schemas: polSchemaCount, registries: polRegistryCount, riskClasses: polRiskClassCount, policySets: polPolicySetCount },
       intake: { docs: intDocCount, schemas: intSchemaCount, registries: intRegistryCount, enums: intEnumCount },
+      canonical: (() => {
+        let canDocCount = 0, canSchemaCount = 0, canRegistryCount = 0, canEntityTypes = 0, canRelTypes = 0;
+        try {
+          const canDir = path.join(AXION_ROOT, "libraries", "canonical");
+          if (fs.existsSync(canDir)) canDocCount = fs.readdirSync(canDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+          const canSchDir = path.join(canDir, "schemas");
+          if (fs.existsSync(canSchDir)) canSchemaCount = fs.readdirSync(canSchDir).filter((f) => f.endsWith(".json")).length;
+          const canRegDir = path.join(canDir, "registries");
+          if (fs.existsSync(canRegDir)) canRegistryCount = fs.readdirSync(canRegDir).filter((f) => f.endsWith(".json")).length;
+          const rcPath = path.join(canRegDir, "relationship_constraints.v1.json");
+          if (fs.existsSync(rcPath)) { const rc = JSON.parse(fs.readFileSync(rcPath, "utf-8")); canRelTypes = rc.constraints?.length ?? 0; }
+          const idPath = path.join(canRegDir, "id_rules.v1.json");
+          if (fs.existsSync(idPath)) { const id = JSON.parse(fs.readFileSync(idPath, "utf-8")); canEntityTypes = Object.keys(id.canonical_key_templates ?? {}).length; }
+        } catch {}
+        return { docs: canDocCount, schemas: canSchemaCount, registries: canRegistryCount, entityTypes: canEntityTypes, relationshipTypes: canRelTypes };
+      })(),
       recentRuns,
     });
   });
@@ -1332,6 +1348,178 @@ export function registerRoutes(app: Express) {
       }
       const filePath = path.join(INTAKE_LIB_DIR, filename);
       if (!filePath.startsWith(INTAKE_LIB_DIR) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Document '${filename}' not found` });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+      let frontmatter: Record<string, string> = {};
+      let content = raw;
+      if (fmMatch) {
+        const lines = fmMatch[1].split("\n");
+        for (const line of lines) {
+          const idx = line.indexOf(":");
+          if (idx > 0) {
+            frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          }
+        }
+        content = fmMatch[2];
+      }
+      res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ── Canonical Library endpoints ──────────────────────────────────────
+  const CANONICAL_LIB_DIR = path.join(AXION_ROOT, "libraries", "canonical");
+
+  app.get("/api/canonical", (_req: Request, res: Response) => {
+    try {
+      const groups: Record<string, string[]> = {};
+      const schemas: string[] = [];
+      const registries: string[] = [];
+      let entityTypes = 0;
+      let relationshipTypes = 0;
+
+      if (fs.existsSync(CANONICAL_LIB_DIR)) {
+        for (const f of fs.readdirSync(CANONICAL_LIB_DIR)) {
+          if (f.endsWith(".md") || f.endsWith(".txt") || (f.endsWith(".json") && f.startsWith("CAN-"))) {
+            const prefix = f.match(/^(CAN-\d+)/)?.[1] ?? "other";
+            if (!groups[prefix]) groups[prefix] = [];
+            groups[prefix].push(f);
+          }
+        }
+      }
+      const schemasDir = path.join(CANONICAL_LIB_DIR, "schemas");
+      if (fs.existsSync(schemasDir)) {
+        for (const f of fs.readdirSync(schemasDir)) {
+          if (f.endsWith(".json")) schemas.push(f);
+        }
+      }
+      const registriesDir = path.join(CANONICAL_LIB_DIR, "registries");
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
+          if (f.endsWith(".json")) registries.push(f);
+        }
+      }
+
+      const rcPath = path.join(registriesDir, "relationship_constraints.v1.json");
+      if (fs.existsSync(rcPath)) {
+        try {
+          const rc = JSON.parse(fs.readFileSync(rcPath, "utf-8"));
+          relationshipTypes = rc.constraints?.length ?? 0;
+        } catch {}
+      }
+
+      const idPath = path.join(registriesDir, "id_rules.v1.json");
+      if (fs.existsSync(idPath)) {
+        try {
+          const id = JSON.parse(fs.readFileSync(idPath, "utf-8"));
+          entityTypes = Object.keys(id.canonical_key_templates ?? {}).length;
+        } catch {}
+      }
+
+      const docCount = Object.values(groups).flat().length;
+
+      res.json({
+        groups,
+        schemas,
+        registries,
+        counts: {
+          docs: docCount,
+          schemas: schemas.length,
+          registries: registries.length,
+          entityTypes,
+          relationshipTypes,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/canonical/schemas", (_req: Request, res: Response) => {
+    try {
+      const schemasDir = path.join(CANONICAL_LIB_DIR, "schemas");
+      if (!fs.existsSync(schemasDir)) return res.json([]);
+      const files = fs.readdirSync(schemasDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(schemasDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/canonical/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      if (name.includes("..") || name.includes("/")) return res.status(400).json({ error: "Invalid name" });
+      const filePath = path.join(CANONICAL_LIB_DIR, "registries", name.endsWith(".json") ? name : `${name}.json`);
+      if (!fs.existsSync(filePath)) return res.status(404).json({ error: `Registry '${name}' not found` });
+      res.json({ filename: path.basename(filePath), content: JSON.parse(fs.readFileSync(filePath, "utf-8")) });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/canonical/registries", (_req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(CANONICAL_LIB_DIR, "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const files = fs.readdirSync(registriesDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/canonical/docs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(CANONICAL_LIB_DIR)) return res.json([]);
+      const files = fs.readdirSync(CANONICAL_LIB_DIR)
+        .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
+        .sort();
+      const result = files.map((filename) => {
+        const raw = fs.readFileSync(path.join(CANONICAL_LIB_DIR, filename), "utf-8");
+        const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+        let frontmatter: Record<string, string> = {};
+        let content = raw;
+        if (fmMatch) {
+          const lines = fmMatch[1].split("\n");
+          for (const line of lines) {
+            const idx = line.indexOf(":");
+            if (idx > 0) {
+              frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            }
+          }
+          content = fmMatch[2];
+        }
+        return { filename, frontmatter, content };
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/canonical/docs/:filename", (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      if (!filename.endsWith(".md") && !filename.endsWith(".txt")) {
+        return res.status(400).json({ error: "Only .md and .txt files are accessible" });
+      }
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      const filePath = path.join(CANONICAL_LIB_DIR, filename);
+      if (!filePath.startsWith(CANONICAL_LIB_DIR) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: `Document '${filename}' not found` });
       }
       const raw = fs.readFileSync(filePath, "utf-8");

@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "relationship_constraints.v1",
+  "constraints": [
+    { "type": "contains", "from_types": ["project", "domain", "capability", "component"], "to_types": ["domain", "capability", "component", "endpoint", "data_entity", "workflow"] },
+    { "type": "depends_on", "from_types": ["component", "workflow", "integration"], "to_types": ["component", "integration", "data_entity"] },
+    { "type": "exposes", "from_types": ["component"], "to_types": ["endpoint"] },
+    { "type": "stores", "from_types": ["component"], "to_types": ["data_entity"] },
+    { "type": "integrates_with", "from_types": ["component"], "to_types": ["integration"] },
+    { "type": "satisfies", "from_types": ["component", "workflow"], "to_types": ["requirement"] },
+    { "type": "constrained_by", "from_types": ["project", "domain", "component", "endpoint", "workflow"], "to_types": ["constraint", "risk"] }
+  ]
+}

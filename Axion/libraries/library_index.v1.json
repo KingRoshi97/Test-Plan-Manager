@@ -8,6 +8,8 @@
     { "id": "intake.normalization_rules", "path": "Axion/libraries/intake/registries/normalization_rules.v1.json", "version": "1.0.0" },
 
     { "id": "canonical.id_rules", "path": "Axion/libraries/canonical/id_rules.v1.json", "version": "1.0.0" },
+    { "id": "canonical.id_rules_registry", "path": "Axion/libraries/canonical/registries/id_rules.v1.json", "version": "1.0.0" },
+    { "id": "canonical.relationship_constraints", "path": "Axion/libraries/canonical/registries/relationship_constraints.v1.json", "version": "1.0.0" },
 
     { "id": "standards.index", "path": "Axion/libraries/standards/standards_index.json", "version": "1.0.0" },
     { "id": "standards.resolver_rules", "path": "Axion/libraries/standards/resolver_rules.v1.json", "version": "1.0.0" },

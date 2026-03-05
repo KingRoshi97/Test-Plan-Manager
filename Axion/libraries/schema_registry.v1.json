@@ -14,6 +14,24 @@
       "uri": "axion://schemas/canonical/unknowns.schema.v1.json",
       "version": "1.0.0"
     },
+    {
+      "schema_id": "canonical.canonical_spec.v1",
+      "path": "Axion/libraries/canonical/schemas/canonical_spec.v1.schema.json",
+      "uri": "axion://schemas/canonical/canonical_spec.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "canonical.unknown_assumptions.v1",
+      "path": "Axion/libraries/canonical/schemas/unknown_assumptions.v1.schema.json",
+      "uri": "axion://schemas/canonical/unknown_assumptions.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "canonical.canonical_build_report.v1",
+      "path": "Axion/libraries/canonical/schemas/canonical_build_report.v1.schema.json",
+      "uri": "axion://schemas/canonical/canonical_build_report.v1.schema.json",
+      "version": "1.0.0"
+    },
 
     {
       "schema_id": "intake.intake_form_spec.v1",

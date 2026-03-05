@@ -61,18 +61,36 @@ Form spec, field enums, validation rules, submission records, normalization cont
 **UI**: `/intake-library` page with 4 tabs (Intake, Documents, Schemas, Registries), field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 **Registered in:** `schema_registry.v1.json` (7 entries), `library_index.v1.json` (3 entries + 1 existing)
 
-### Canonical Library (Axion/libraries/canonical/)
-11 files — 8 new authoritative CAN-01/02/03 contract files + 3 legacy files kept for backward compat:
-- `CAN-01.canonical_spec.schema.v1.json` — JSON Schema (draft/2020-12) for the full canonical spec artifact; defines meta/routing/constraints/entities/rules/unknowns/index with `$defs` for all 8 entity types
-- `CAN-01.entity_relationships.v1.json` — 8 entity types, 3 relationship edges (WF→ROLE, PERM→ROLE, SCREEN→ROLE), 9 required indexes, 2 required cross-maps
-- `CAN-02.id_rules.v1.json` — 10 entity type prefixes/patterns (ROLE/FEAT/WF/PERM/SCREEN/DATA/OP/INTG/UNK/SPEC), 9 uniqueness collections, generation block with padding rules
-- `CAN-02.reference_integrity_rules.v1.json` — 3 reference fields with required/optional flag, 2 validation rules (CAN02-REF-01/02), determinism sort order
-- `CAN-02.duplicate_truth_rules.v1.json` — duplicate truth definitions for ROLE/FEAT/WF with fingerprint fields and error codes
-- `CAN-03.unknown.schema.v1.json` — JSON Schema for unknown objects (unknown_id/area/summary/impact/blocking/needs/refs)
-- `CAN-03.unknown_policy.v1.json` — blocking thresholds, severity mapping, required fields, determinism sort order
-- `CAN-03.unknown_index_rules.v1.json` — required indexes (unknowns_by_id) and cross-maps (unknowns_by_area) for canonical spec
+### Canonical Library (`Axion/libraries/canonical/`)
+Entity model, stable IDs, reference integrity, unknowns/assumptions, canonical gates (CAN-0 through CAN-7). 12 legacy flat files preserved for backward compat (pipeline code: validate.ts, specBuilder.ts).
 
-**Code wired to CAN-02:** `validate.ts` and `specBuilder.ts` now load from `CAN-02.id_rules.v1.json` (10 entity types) and `CAN-02.reference_integrity_rules.v1.json` (split ref integrity), with fallback to legacy files.
+**Structure (47 files: 30 new root files + 3 schemas + 2 registries + 12 legacy):**
+- **CAN-0**: Purpose + boundary checklist (2 docs)
+- **CAN-1**: Entity model + determinism rules + validation checklist (3 docs) + `canonical_spec.v1.schema.json`
+- **CAN-2**: ID rules + ID generation spec + dedupe rules + determinism rules + validation checklist (5 docs) + `id_rules.v1.json` registry
+- **CAN-3**: Reference integrity + integrity checks + determinism rules + validation checklist (4 docs) + `relationship_constraints.v1.json` registry
+- **CAN-4**: Unknowns/assumptions model + rules + determinism rules + validation checklist (4 docs) + `unknown_assumptions.v1.schema.json`
+- **CAN-5**: Artifacts + manifest requirements + determinism rules + validation checklist (4 docs) + `canonical_build_report.v1.schema.json`
+- **CAN-6**: Canonical gates + gate mapping + evidence requirements + determinism rules + validation checklist (5 docs) + `CAN-6_canonical_gates.spec.json`
+- **CAN-7**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
+
+**Subdirectories:**
+- `schemas/` — 3 JSON Schema files (canonical_spec: 11 entity types + 7 relationship types, unknown_assumptions: ua_items with severity/pointer/prompt, canonical_build_report: counts + refs)
+- `registries/` — 2 registry files (id_rules: deterministic ID generation with 6 canonical key templates + namespace mode, relationship_constraints: 7 type constraints with from/to rules)
+
+**Loader** (`Axion/src/core/canonical/loader.ts`):
+- `loadCanonicalLibrary(repoRoot)` — loads id_rules + relationship_constraints registries, cached
+- `loadCanonicalDocs(repoRoot)` — all CAN-N docs with frontmatter
+- `loadCanonicalSchemas(repoRoot)` — all JSON schema files from schemas/
+- `loadCanonicalRegistries(repoRoot)` — all registry JSON files from registries/
+- `getIdRules(repoRoot)` — returns ID rules registry
+- `getRelationshipConstraints(repoRoot)` — returns relationship constraints registry
+
+**API**: 6 `/api/canonical/*` endpoints
+**UI**: `/canonical` page with 4 tabs (Canonical, Documents, Schemas, Registries), entity type grid with canonical key templates, relationship type constraints table, unknowns model overview, canonical gates list
+**Registered in:** `schema_registry.v1.json` (3 new + 2 legacy entries), `library_index.v1.json` (2 new + 1 legacy entry)
+
+**Code wired to CAN-02 (legacy):** `validate.ts` and `specBuilder.ts` load from `CAN-02.id_rules.v1.json` (10 entity types) and `CAN-02.reference_integrity_rules.v1.json` (split ref integrity), with fallback to legacy files.
 
 ### Standards Library (Axion/libraries/standards/)
 5 new STD contract files + 7 new starter pack files + updated index (10 total packs, 31 rules in snapshot):
@@ -135,7 +153,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -163,6 +181,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/orchestration/registries/:name` — single registry by name
 - `GET /api/orchestration/docs` — all documents with frontmatter
 - `GET /api/orchestration/docs/:filename` — single document by filename
+- `GET /api/canonical` — canonical library overview (groups, schema/registry/doc/entityType/relationshipType counts)
+- `GET /api/canonical/schemas` — all 3 canonical schemas with content
+- `GET /api/canonical/registries` — all 2 registries with content
+- `GET /api/canonical/registries/:name` — single registry by name
+- `GET /api/canonical/docs` — all canonical documents with frontmatter
+- `GET /api/canonical/docs/:filename` — single document by filename
 - `GET /api/intake-library` — intake library overview (groups, schema/registry/doc/enum/crossFieldRule/normalizationRule counts)
 - `GET /api/intake-library/schemas` — all 7 intake schemas with content
 - `GET /api/intake-library/registries` — all 3 registries with content
@@ -200,6 +224,7 @@ package.json      # Root package.json with all dependencies
 - `/orchestration` — Orchestration Library: 4 tabs (Pipeline, Documents, Schemas, Registries) for ORC-0 through ORC-7, pipeline stage visualization
 - `/gates` — Gates Library: 4 tabs (Gates, Documents, Schemas, Registries) for GATE-0 through GATE-6, 8 gate definitions with predicates/severity/evidence
 - `/policy` — Policy Library: 4 tabs (Policy, Documents, Schemas, Registries) for POL-0 through POL-5, 3 risk classes with color-coded cards, override permission matrix, policy sets
+- `/canonical` — Canonical Library: 4 tabs (Canonical, Documents, Schemas, Registries) for CAN-0 through CAN-7, entity type grid with canonical key templates, relationship type constraints table, unknowns model overview, canonical gates list
 - `/intake-library` — Intake Library: 4 tabs (Intake, Documents, Schemas, Registries) for INT-0 through INT-7, field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
@@ -236,7 +261,7 @@ The pipeline is fully registry-driven with deterministic library loading:
 - `Axion/docs_system/` — 50 system docs across 12 domains
 - `Axion/libraries/` — Persistent system assets:
   - `intake/` — 47 files: 25 INT-0 through INT-7 docs + schemas/ (7) + registries/ (3) + 12 legacy flat files
-  - `canonical/` — id_rules.v1.json, spec.schema.v1.json, unknowns.schema.v1.json
+  - `canonical/` — 47 files: 30 CAN-0 through CAN-7 docs + schemas/ (3) + registries/ (2) + 12 legacy flat files
   - `standards/` — standards_index.json, resolver_rules.v1.json + 3 packs
   - `templates/` — template_index.json, placeholder_catalog.v1.json + 77 template groups across 8 categories (533 total .md files)
   - `planning/` — work_breakdown.schema.v1.json, acceptance_map.schema.v1.json, sequencing_policy.v1.json

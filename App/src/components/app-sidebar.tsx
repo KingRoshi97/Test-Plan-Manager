@@ -12,6 +12,7 @@ import {
   GitBranch,
   Shield,
   Scale,
+  Network,
   ClipboardList,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ const links = [
   { href: "/orchestration", label: "Orchestration", icon: GitBranch },
   { href: "/gates", label: "Gates Library", icon: Shield },
   { href: "/policy", label: "Policy Library", icon: Scale },
+  { href: "/canonical", label: "Canonical Library", icon: Network },
   { href: "/intake-library", label: "Intake Library", icon: ClipboardList },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },

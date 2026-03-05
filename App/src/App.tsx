@@ -15,6 +15,7 @@ import OrchestrationLibraryPage from "./pages/orchestration-library";
 import GatesLibraryPage from "./pages/gates-library";
 import PolicyLibraryPage from "./pages/policy-library";
 import IntakeLibraryPage from "./pages/intake-library";
+import CanonicalLibraryPage from "./pages/canonical-library";
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/orchestration" component={OrchestrationLibraryPage} />
           <Route path="/gates" component={GatesLibraryPage} />
           <Route path="/policy" component={PolicyLibraryPage} />
+          <Route path="/canonical" component={CanonicalLibraryPage} />
           <Route path="/intake-library" component={IntakeLibraryPage} />
           <Route path="/docs" component={DocInventoryPage} />
           <Route path="/export" component={ExportPage} />

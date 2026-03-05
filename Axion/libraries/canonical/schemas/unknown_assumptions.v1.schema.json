@@ -1,0 +1,54 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "unknown_assumptions.v1",
+    "type": "object",
+    "required": ["ua_id", "run_id", "unknowns", "assumptions", "generated_at"],
+    "properties": {
+      "ua_id": { "type": "string", "pattern": "^UA-[A-Z0-9]{6,}$" },
+      "run_id": { "type": "string" },
+
+     "unknowns": {
+       "type": "array",
+       "items": { "$ref": "#/$defs/ua_item" }
+     },
+
+     "assumptions": {
+       "type": "array",
+       "items": { "$ref": "#/$defs/ua_item" }
+     },
+
+      "generated_at": { "type": "string", "format": "date-time" }
+    },
+
+    "$defs": {
+     "ua_item": {
+      "type": "object",
+      "required": ["item_id", "kind", "topic", "pointer", "severity", "prompt"],
+      "properties": {
+        "item_id": { "type": "string", "pattern": "^UAITEM-[A-Z0-9]{6,}$" },
+        "kind": { "type": "string", "enum": ["unknown", "assumption"] },
+
+        "topic": { "type": "string", "minLength": 3 },
+        "pointer": { "type": "string", "description": "Pointer into canonical_spec or normalized_input (JSON pointer)" },
+
+        "severity": { "type": "string", "enum": ["low", "medium", "high", "blocking"] },
+
+        "prompt": { "type": "string", "minLength": 5, "description": "Question to resolve the unknown" },
+        "proposed_value": { "description": "Present for assumptions", "type": ["string", "number", "boolean", "object", "array", "null"] },
+
+        "source": {
+          "type": "object",
+          "properties": {
+            "from": { "type": "string", "enum": ["intake_missing", "intake_conflict", "standards_gap", "dedupe_conflict", "builder_default"] },
+            "refs": { "type": "array", "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+     }
+    },
+
+    "additionalProperties": false
+}

@@ -1,0 +1,12 @@
+{
+    "schema_version": "1.0.0",
+    "contract_id": "CAN-6b",
+    "gates": [
+    { "gate_id": "CAN-GATE-01", "name": "Canonical spec schema valid", "severity": "hard_stop", "checks": ["schema_valid(canonical_spec.v1)"] },
+    { "gate_id": "CAN-GATE-02", "name": "ID integrity", "severity": "hard_stop", "checks": ["unique(entity_id)", "unique(rel_id)"] },
+    { "gate_id": "CAN-GATE-03", "name": "Relationship integrity", "severity": "hard_stop", "checks": ["all relationships.from/to exist"] },
+    { "gate_id": "CAN-GATE-04", "name": "Relationship type compatibility", "severity": "hard_stop", "checks": ["relationship_constraints respected"] },
+    { "gate_id": "CAN-GATE-05", "name": "Uniqueness constraints", "severity": "hard_stop", "checks": ["unique endpoint(method+path)", "unique component(name_slug)", "unique data_entity(name_slug)"] },
+    { "gate_id": "CAN-GATE-06", "name": "Unknowns handling", "severity": "policy_controlled", "checks": ["UNKNOWN_ASSUMPTIONS exists", "blocking unknown behavior per risk class"] }
+  ]
+}
