@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "rerun_request.v1",
+  "type": "object",
+  "required": ["request_id", "run_id", "stage_id", "mode", "reason", "requested_by", "requested_at"],
+  "properties": {
+    "request_id": { "type": "string", "pattern": "^RERUN-[A-Z0-9]{6,}$" },
+    "run_id": { "type": "string", "pattern": "^RUN-[A-Z0-9]{6,}$" },
+    "stage_id": { "type": "string" },
+
+    "mode": {
+      "type": "string",
+      "enum": ["resume", "stage_rerun", "partial_run"]
+    },
+
+    "reason": { "type": "string", "minLength": 3 },
+    "requested_by": { "type": "string", "minLength": 2 },
+    "requested_at": { "type": "string", "format": "date-time" },
+
+    "pins_override": {
+      "type": "object",
+      "description": "Only allowed if SYS pin policy allows; otherwise gate failure.",
+      "additionalProperties": true
+    },
+
+    "partial_inputs": {
+      "type": "array",
+      "description": "For partial_run: list of contract_id + path refs that substitute upstream stages.",
+      "items": {
+        "type": "object",
+        "required": ["contract_id", "path"],
+        "properties": {
+          "contract_id": { "type": "string" },
+          "path": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

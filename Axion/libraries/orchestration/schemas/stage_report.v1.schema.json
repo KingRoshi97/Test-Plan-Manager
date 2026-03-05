@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "stage_report.v1",
+  "type": "object",
+  "required": [
+    "run_id",
+    "stage_id",
+    "status",
+    "started_at",
+    "ended_at",
+    "inputs",
+    "outputs",
+    "validations",
+    "messages"
+  ],
+  "properties": {
+    "run_id": { "type": "string", "pattern": "^RUN-[A-Z0-9]{6,}$" },
+    "stage_id": { "type": "string" },
+
+    "status": { "type": "string", "enum": ["succeeded", "failed", "paused", "skipped"] },
+
+    "started_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": "string", "format": "date-time" },
+
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/io_ref" }
+    },
+
+    "outputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/io_ref" }
+    },
+
+    "validations": {
+      "type": "array",
+      "description": "Schema and rule validations performed by the stage",
+      "items": {
+        "type": "object",
+        "required": ["validation_id", "status"],
+        "properties": {
+          "validation_id": { "type": "string", "minLength": 2 },
+          "status": { "type": "string", "enum": ["pass", "fail", "warn"] },
+          "details": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "messages": {
+      "type": "array",
+      "description": "Human-readable warnings/errors (short)",
+      "items": {
+        "type": "object",
+        "required": ["level", "code", "text"],
+        "properties": {
+          "level": { "type": "string", "enum": ["info", "warning", "error"] },
+          "code": { "type": "string", "minLength": 2 },
+          "text": { "type": "string", "minLength": 2 }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "decisions": {
+      "type": "array",
+      "description": "Optional: key decisions made (selector choices, resolver outputs, etc.)",
+      "items": {
+        "type": "object",
+        "required": ["decision_id", "summary"],
+        "properties": {
+          "decision_id": { "type": "string", "minLength": 2 },
+          "summary": { "type": "string", "minLength": 3 },
+          "refs": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+
+  "$defs": {
+    "io_ref": {
+      "type": "object",
+      "required": ["contract_id", "path"],
+      "properties": {
+        "contract_id": { "type": "string", "minLength": 2 },
+        "path": { "type": "string", "minLength": 2 },
+        "hash": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "additionalProperties": false
+}

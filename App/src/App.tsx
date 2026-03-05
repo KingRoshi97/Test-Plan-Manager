@@ -11,6 +11,7 @@ import ExportPage from "./pages/export";
 import FeaturesPage from "./pages/features";
 import FeatureDetailPage from "./pages/feature-detail";
 import SystemLibraryPage from "./pages/system-library";
+import OrchestrationLibraryPage from "./pages/orchestration-library";
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/health" component={HealthPage} />
           <Route path="/logs" component={LogsPage} />
           <Route path="/system" component={SystemLibraryPage} />
+          <Route path="/orchestration" component={OrchestrationLibraryPage} />
           <Route path="/docs" component={DocInventoryPage} />
           <Route path="/export" component={ExportPage} />
           <Route>

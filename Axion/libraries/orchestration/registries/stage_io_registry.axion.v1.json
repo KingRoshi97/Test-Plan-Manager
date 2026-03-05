@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "stage_io_registry.axion.v1",
+  "contracts": [
+    {
+      "contract_id": "INTAKE_SUBMISSION",
+      "kind": "input",
+      "description": "Raw intake submission payload (wizard output).",
+      "schema_ref": { "schema_id": "intake_submission.v1", "schema_version": "1.0.0" },
+      "required_fields": ["submission_id", "answers"]
+    },
+    {
+      "contract_id": "NORMALIZED_INPUT",
+      "kind": "artifact",
+      "description": "Normalized intake inputs used deterministically downstream.",
+      "schema_ref": { "schema_id": "normalized_input.v1", "schema_version": "1.0.0" },
+      "required_fields": ["run_profile", "risk_class", "project_name"]
+    },
+    {
+      "contract_id": "INTAKE_VALIDATION_REPORT",
+      "kind": "report",
+      "description": "Report of intake validation results and missing fields.",
+      "schema_ref": { "schema_id": "intake_validation_report.v1", "schema_version": "1.0.0" },
+      "required_fields": ["status", "errors"]
+    },
+    {
+      "contract_id": "STANDARDS_SNAPSHOT",
+      "kind": "artifact",
+      "description": "Resolved standards snapshot for the run.",
+      "schema_ref": { "schema_id": "standards_snapshot.v1", "schema_version": "1.0.0" },
+      "required_fields": ["snapshot_id", "packs", "resolver_version"]
+    },
+    {
+      "contract_id": "CANONICAL_SPEC",
+      "kind": "artifact",
+      "description": "Canonical spec built from normalized input + standards.",
+      "schema_ref": { "schema_id": "canonical_spec.v1", "schema_version": "1.0.0" },
+      "required_fields": ["entities", "relationships"]
+    },
+    {
+      "contract_id": "UNKNOWN_ASSUMPTIONS",
+      "kind": "artifact",
+      "description": "Unknowns/assumptions list produced during canonical build.",
+      "schema_ref": { "schema_id": "unknown_assumptions.v1", "schema_version": "1.0.0" },
+      "required_fields": ["unknowns"]
+    },
+    {
+      "contract_id": "TEMPLATE_SELECTION",
+      "kind": "artifact",
+      "description": "Selected templates (ordered) with rationale and constraints.",
+      "schema_ref": { "schema_id": "template_selection.v1", "schema_version": "1.0.0" },
+      "required_fields": ["templates", "selection_reason"]
+    },
+    {
+      "contract_id": "WORK_BREAKDOWN",
+      "kind": "artifact",
+      "description": "Work breakdown structure derived from canonical spec and template set.",
+      "schema_ref": { "schema_id": "work_breakdown.v1", "schema_version": "1.0.0" },
+      "required_fields": ["items"]
+    },
+    {
+      "contract_id": "ACCEPTANCE_MAP",
+      "kind": "artifact",
+      "description": "Acceptance criteria mapping (requirements → artifacts/tests).",
+      "schema_ref": { "schema_id": "acceptance_map.v1", "schema_version": "1.0.0" },
+      "required_fields": ["requirements"]
+    },
+    {
+      "contract_id": "BUILD_PLAN",
+      "kind": "artifact",
+      "description": "Build plan and sequencing decisions for the run.",
+      "schema_ref": { "schema_id": "build_plan.v1", "schema_version": "1.0.0" },
+      "required_fields": ["sequence"]
+    },
+    {
+      "contract_id": "RENDERED_TEMPLATES",
+      "kind": "artifact",
+      "description": "The rendered docs output from template fill (content files).",
+      "schema_ref": { "schema_id": "rendered_templates.v1", "schema_version": "1.0.0" },
+      "required_fields": ["outputs"]
+    },
+    {
+      "contract_id": "RENDER_ENVELOPES",
+      "kind": "artifact",
+      "description": "Render envelopes including citations and trace metadata.",
+      "schema_ref": { "schema_id": "render_envelopes.v1", "schema_version": "1.0.0" },
+      "required_fields": ["envelopes"]
+    },
+    {
+      "contract_id": "GATE_REPORT",
+      "kind": "report",
+      "description": "Gate evaluation report including failures and evidence pointers.",
+      "schema_ref": { "schema_id": "gate_report.v1", "schema_version": "1.0.0" },
+      "required_fields": ["gate_id", "status", "evidence"]
+    },
+    {
+      "contract_id": "PROOF_LEDGER",
+      "kind": "artifact",
+      "description": "Proof ledger containing verification records for completion.",
+      "schema_ref": { "schema_id": "proof_ledger.v1", "schema_version": "1.0.0" },
+      "required_fields": ["proofs"]
+    },
+    {
+      "contract_id": "KIT_MANIFEST",
+      "kind": "artifact",
+      "description": "Kit manifest of packaged deliverables.",
+      "schema_ref": { "schema_id": "kit_manifest.v1", "schema_version": "1.0.0" },
+      "required_fields": ["kit_id", "contents"]
+    }
+  ]
+}

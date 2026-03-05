@@ -1,0 +1,131 @@
+{
+    "schema_version": "1.0.0",
+    "pipeline_id": "PIPE-AXION",
+    "version": "1.0.0",
+    "stage_order": [
+      "S0_INIT",
+      "S1_INGEST_NORMALIZE",
+      "S2_INTAKE_VALIDATION",
+      "S3_STANDARDS_RESOLUTION",
+      "S4_CANONICAL_BUILD",
+      "S5_TEMPLATE_SELECTION",
+      "S6_PLAN_GENERATION",
+      "S7_TEMPLATE_FILL",
+      "S8_GATE_EVALUATION",
+      "S9_KIT_PACKAGE",
+      "S10_CLOSE"
+    ],
+    "stages": {
+      "S0_INIT": {
+        "stage_id": "S0_INIT",
+        "name": "Init",
+        "consumes": [],
+        "produces": ["RUN_MANIFEST_INIT"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "hard_stop"
+      },
+      "S1_INGEST_NORMALIZE": {
+        "stage_id": "S1_INGEST_NORMALIZE",
+        "name": "Ingest + Normalize",
+        "consumes": ["INTAKE_SUBMISSION"],
+        "produces": ["NORMALIZED_INPUT"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "hard_stop"
+      },
+      "S2_INTAKE_VALIDATION": {
+        "stage_id": "S2_INTAKE_VALIDATION",
+        "name": "Intake Validation",
+        "consumes": ["NORMALIZED_INPUT"],
+        "produces": ["INTAKE_VALIDATION_REPORT"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "gate_pause"
+      },
+      "S3_STANDARDS_RESOLUTION": {
+        "stage_id": "S3_STANDARDS_RESOLUTION",
+        "name": "Standards Resolution",
+        "consumes": ["NORMALIZED_INPUT"],
+        "produces": ["STANDARDS_SNAPSHOT"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "hard_stop"
+      },
+      "S4_CANONICAL_BUILD": {
+        "stage_id": "S4_CANONICAL_BUILD",
+        "name": "Canonical Build",
+        "consumes": ["NORMALIZED_INPUT", "STANDARDS_SNAPSHOT"],
+        "produces": ["CANONICAL_SPEC", "UNKNOWN_ASSUMPTIONS"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "hard_stop"
+      },
+      "S5_TEMPLATE_SELECTION": {
+        "stage_id": "S5_TEMPLATE_SELECTION",
+        "name": "Template Selection",
+        "consumes": ["CANONICAL_SPEC", "STANDARDS_SNAPSHOT"],
+        "produces": ["TEMPLATE_SELECTION"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "hard_stop"
+      },
+      "S6_PLAN_GENERATION": {
+        "stage_id": "S6_PLAN_GENERATION",
+        "name": "Plan Generation",
+        "consumes": ["CANONICAL_SPEC", "TEMPLATE_SELECTION", "STANDARDS_SNAPSHOT"],
+        "produces": ["BUILD_PLAN", "ACCEPTANCE_MAP", "WORK_BREAKDOWN"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "hard_stop"
+      },
+      "S7_TEMPLATE_FILL": {
+        "stage_id": "S7_TEMPLATE_FILL",
+        "name": "Template Fill",
+        "consumes": ["BUILD_PLAN", "TEMPLATE_SELECTION", "CANONICAL_SPEC", "STANDARDS_SNAPSHOT"],
+        "produces": ["RENDERED_TEMPLATES", "RENDER_ENVELOPES"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "hard_stop"
+      },
+      "S8_GATE_EVALUATION": {
+        "stage_id": "S8_GATE_EVALUATION",
+        "name": "Gate Evaluation",
+        "consumes": ["RENDER_ENVELOPES", "BUILD_PLAN", "CANONICAL_SPEC"],
+        "produces": ["GATE_REPORT", "PROOF_LEDGER"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "gate_pause"
+      },
+      "S9_KIT_PACKAGE": {
+        "stage_id": "S9_KIT_PACKAGE",
+        "name": "Kit Package",
+        "consumes": ["RENDERED_TEMPLATES", "GATE_REPORT", "PROOF_LEDGER"],
+        "produces": ["KIT_BUNDLE", "KIT_MANIFEST"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": true,
+        "failure_policy": "hard_stop"
+      },
+      "S10_CLOSE": {
+        "stage_id": "S10_CLOSE",
+        "name": "Close",
+        "consumes": ["KIT_MANIFEST"],
+        "produces": ["RUN_CLOSED"],
+        "activation": { "mode": "always", "requires": [] },
+        "can_rerun": false,
+        "failure_policy": "hard_stop"
+      }
+    },
+    "gate_points": [
+      { "after_stage": "S2_INTAKE_VALIDATION", "gate_id": "G1_INTAKE_VALIDITY", "severity": "pause" },
+      { "after_stage": "S4_CANONICAL_BUILD", "gate_id": "G2_CANONICAL_INTEGRITY", "severity": "hard_stop" },
+      { "after_stage": "S3_STANDARDS_RESOLUTION", "gate_id": "G3_STANDARDS_RESOLVED", "severity": "hard_stop" },
+      { "after_stage": "S5_TEMPLATE_SELECTION", "gate_id": "G4_TEMPLATE_SELECTION", "severity": "hard_stop" },
+      { "after_stage": "S7_TEMPLATE_FILL", "gate_id": "G5_TEMPLATE_COMPLETENESS", "severity": "hard_stop" },
+      { "after_stage": "S6_PLAN_GENERATION", "gate_id": "G6_PLAN_COVERAGE", "severity": "hard_stop" },
+      { "after_stage": "S8_GATE_EVALUATION", "gate_id": "G7_VERIFICATION", "severity": "pause" }
+    ],
+    "created_at": "2026-03-05T00:00:00Z",
+    "updated_at": "2026-03-05T00:00:00Z",
+    "owner": "axion"
+}

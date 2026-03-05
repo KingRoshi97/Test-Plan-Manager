@@ -116,8 +116,8 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system library stats, recent runs)
-- `GET /api/config` — pipeline configuration
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration library stats, recent runs)
+- `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
 - `GET /api/system` — system library overview (groups, schema/registry/doc counts)
@@ -126,6 +126,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/system/registries/:name` — single registry by name
 - `GET /api/system/docs` — all markdown documents with frontmatter
 - `GET /api/system/docs/:filename` — single document by filename
+- `GET /api/orchestration` — orchestration library overview (groups, schema/registry/doc/stage counts)
+- `GET /api/orchestration/schemas` — all 6 orchestration schemas with content
+- `GET /api/orchestration/registries` — all 3 registries with content
+- `GET /api/orchestration/registries/:name` — single registry by name
+- `GET /api/orchestration/docs` — all documents with frontmatter
+- `GET /api/orchestration/docs/:filename` — single document by filename
 - `POST /api/uploads` — upload files (multipart/form-data, up to 10 files, 50MB limit per file)
 - `GET /api/uploads/:id` — download uploaded file
 - `DELETE /api/uploads/:id` — delete uploaded file
@@ -153,6 +159,8 @@ package.json      # Root package.json with all dependencies
 - `/files` — File browser: navigate run artifact directories
 - `/health` — System health: pipeline, knowledge library, templates, recent runs
 - `/logs` — Run logs viewer with status filtering
+- `/system` — System Library: 3 tabs (Documents, Schemas, Registries) for SYS-0 through SYS-7
+- `/orchestration` — Orchestration Library: 4 tabs (Pipeline, Documents, Schemas, Registries) for ORC-0 through ORC-7, pipeline stage visualization
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
 
@@ -195,7 +203,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `gates/` — gate_dsl.schema.v1.json
   - `verification/` — proof_log.schema.v1.json, command_runs.schema.v1.json
   - `kit/` — kit_tree.schema.v1.json, kit_manifest.schema.v1.json, kit_entrypoint.schema.v1.json, kit_versions.schema.v1.json
-  - `orchestration/` — pipeline_definition.schema.v1.json, stage_io_contract.schema.v1.json, stage_report.schema.v1.json, run_manifest.schema.v1.json
+  - `orchestration/` — Pipeline execution contracts and run lifecycle (ORC-0 through ORC-7). See Orchestration Library section below.
   - `policy/` — risk_classes.v1.json, override_policy.v1.json, override_policy.schema.v1.json
   - `audit/` — operator_actions_ledger.schema.v1.json
   - `telemetry/` — event.schema.v1.json, run_metrics.schema.v1.json, sink_policy.v1.json
@@ -380,3 +388,48 @@ Control-plane configuration and runtime contracts for Axion. Defines the stable 
 - Route: `ROUTE-[A-Z0-9]{4,}`
 - Policy request: `POLREQ-[A-Z0-9]{6,}`
 - Policy decision: `POLDEC-[A-Z0-9]{6,}`
+
+## Orchestration Library (`Axion/libraries/orchestration/`)
+Pipeline execution contracts and run lifecycle definitions. Defines the authoritative model for pipeline stages, IO contracts, run manifests, stage reports, and rerun/resume rules.
+
+### Structure (ORC-0 through ORC-7)
+- **ORC-0**: Purpose + boundaries — what orchestration/ governs (pipeline execution contract) and boundary checklist
+- **ORC-1**: Pipeline definition model — stages, ordering, activation rules, gating points; `pipeline_definition.v1.schema.json`; starter pipeline `PIPE-AXION` with 11 stages (S0-S10); determinism rules; validation checklist
+- **ORC-2**: Stage IO contracts — consumes/produces model; `stage_io_contract.v1.schema.json` and `stage_io_registry.v1.schema.json`; 15 IO contracts in starter registry; determinism rules
+- **ORC-3**: Run manifest format — single authoritative run record; `run_manifest.v1.schema.json`; append-only event semantics; invariants
+- **ORC-4**: Stage report schema — standard report per stage; `stage_report.v1.schema.json`; example template; determinism rules
+- **ORC-5**: Rerun/resume rules — deterministic resume, stage rerun, partial run; `rerun_request.v1.schema.json`; rerun policies registry with downstream invalidation lists; invariants; manifest event requirements
+- **ORC-6**: Orchestration gates (ORC-GATE-01 through 06) — stage order integrity, consumes/produces validation, report emission, manifest coherence, rerun invariants; gate spec JSON; evidence format
+- **ORC-7**: Minimum viable set — required files inventory, definition of done checklist, minimal folder tree
+
+### Subdirectories
+- `schemas/` — 6 JSON Schema files (pipeline_definition, stage_io_contract, stage_io_registry, run_manifest, stage_report, rerun_request)
+- `registries/` — 3 starter registry files (pipeline_definition.axion.v1, stage_io_registry.axion.v1, rerun_policies.axion.v1)
+- `templates/` — 1 example (stage_report.example.json)
+
+### Runtime Integration
+- **Loader module**: `Axion/src/core/orchestration/loader.ts` — loads and caches all 3 registries, exports typed accessors:
+  - `loadOrchestrationLibrary(repoRoot)` — returns `{ pipelineDefinition, stageIOContracts, rerunPolicies }`
+  - `getPipelineDefinition(repoRoot)` — returns the pipeline definition registry
+  - `getStageIOContract(repoRoot, contractId)` — look up a single IO contract by ID
+  - `getRerunPolicy(repoRoot, stageId)` — look up rerun policy for a stage
+  - `validateStageConsumes(repoRoot, stageId)` — check if all consumes contracts exist
+  - `getInvalidatedContracts(repoRoot, stageId)` — get downstream contracts invalidated by rerunning a stage
+  - `loadOrchestrationDocs/loadOrchestrationSchemas/loadOrchestrationRegistries` — read files for API/UI consumption
+- **ICP wiring**: `RunController.createRun()` loads pipeline definition from orchestration library and attaches `pipeline_ref` (pipeline_id, version, source) to every run.
+- **ICPRun model**: Added optional `pipeline_ref?: { pipeline_id, version, source }` field; preserved in manifest round-trip
+- **`/api/config`**: Now loads `stageOrder` and `stageGates` from `pipeline_definition.axion.v1.json` registry, falling back to hardcoded values if file is missing
+- **API**: 6 new `/api/orchestration/*` endpoints expose orchestration library data to the UI
+- **UI**: `/orchestration` page with 4 tabs (Pipeline, Documents, Schemas, Registries), overview cards, pipeline stage visualization with IO contract labels and gate points
+
+### Migration Notes
+- The ORC-3 run_manifest.v1 schema defines the *target* manifest format (pipeline_ref, pins, runtime, stage_timeline, artifacts). The current runtime uses the legacy `RunManifest` type from `types/run.ts` with different field names. Full alignment requires a pipeline migration task.
+- The runtime still uses hardcoded `STAGE_ORDER` (S1-S10) and `STAGE_GATES` from `types/run.ts`. The orchestration library defines the target pipeline (S0-S10 via `PIPE-AXION`). `/api/config` now serves orchestration library data for UI/informational use; runtime execution continues on the legacy pipeline for stability.
+- `pipeline_ref` is stored on `ICPRun` as a first-class field and round-tripped through manifests via `config.__pipeline_ref` for backward compatibility with the legacy `RunManifest` type.
+
+### Key ID patterns
+- Pipeline: `PIPE-[A-Z0-9_]+`
+- Stage: `S\d{1,2}_[A-Z0-9_]+`
+- Run: `RUN-[A-Z0-9]{6,}`
+- IO Contract: `[A-Z0-9_-]+`
+- Rerun request: `RERUN-[A-Z0-9]{6,}`

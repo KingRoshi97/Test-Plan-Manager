@@ -70,6 +70,11 @@ export interface ICPRun {
   config: Record<string, unknown>;
   system_profile?: string;
   quota_set?: string;
+  pipeline_ref?: {
+    pipeline_id: string;
+    version: string;
+    source: string;
+  };
 }
 
 export function icpRunToManifest(icp: ICPRun): RunManifest {
@@ -98,6 +103,7 @@ export function icpRunToManifest(icp: ICPRun): RunManifest {
   };
   if (icp.system_profile) (manifest.config as Record<string, unknown>).__system_profile = icp.system_profile;
   if (icp.quota_set) (manifest.config as Record<string, unknown>).__quota_set = icp.quota_set;
+  if (icp.pipeline_ref) (manifest.config as Record<string, unknown>).__pipeline_ref = icp.pipeline_ref;
   return manifest;
 }
 
@@ -144,6 +150,7 @@ export function manifestToICPRun(manifest: RunManifest): ICPRun {
     config: manifest.config,
     system_profile: (cfg.__system_profile as string) ?? undefined,
     quota_set: (cfg.__quota_set as string) ?? undefined,
+    pipeline_ref: (cfg.__pipeline_ref as { pipeline_id: string; version: string; source: string }) ?? undefined,
   };
 }
 

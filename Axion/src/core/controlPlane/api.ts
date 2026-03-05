@@ -7,6 +7,7 @@ import { STAGE_ORDER, STAGE_GATES, GATES_REQUIRED } from "../../types/run.js";
 import { isoNow } from "../../utils/time.js";
 import { readJson, writeJson, ensureDir } from "../../utils/fs.js";
 import { getRunProfile, evaluatePolicyHook } from "../system/loader.js";
+import { getPipelineDefinition } from "../orchestration/loader.js";
 
 function padRunId(n: number): string {
   return `RUN-${String(n).padStart(6, "0")}`;
@@ -74,6 +75,11 @@ export class RunController {
     const resolvedProfile = getRunProfile(this.baseDir, requestedProfile);
     const systemProfileId = resolvedProfile?.profile_id ?? requestedProfile;
 
+    const orchPipeline = getPipelineDefinition(this.baseDir);
+    const pipelineRef = orchPipeline
+      ? { pipeline_id: orchPipeline.pipeline_id, version: orchPipeline.version, source: "orchestration_library" }
+      : undefined;
+
     const hookDecision = evaluatePolicyHook("RUN_START", {
       run_id: runId,
       profile_id: systemProfileId,
@@ -109,6 +115,7 @@ export class RunController {
       config,
       system_profile: systemProfileId,
       quota_set: config.quota_set as string ?? "QUOTA-BASE01",
+      pipeline_ref: pipelineRef,
     };
 
     await this.store.createRun(run);

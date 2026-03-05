@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "rerun_policies.axion.v1",
+  "rules": [
+    {
+      "stage_id": "S2_INTAKE_VALIDATION",
+      "can_rerun": true,
+      "invalidates": []
+    },
+    {
+      "stage_id": "S3_STANDARDS_RESOLUTION",
+      "can_rerun": true,
+      "invalidates": ["STANDARDS_SNAPSHOT", "CANONICAL_SPEC", "UNKNOWN_ASSUMPTIONS", "TEMPLATE_SELECTION", "BUILD_PLAN", "WORK_BREAKDOWN", "ACCEPTANCE_MAP", "RENDERED_TEMPLATES", "RENDER_ENVELOPES", "GATE_REPORT", "PROOF_LEDGER", "KIT_MANIFEST"]
+    },
+    {
+      "stage_id": "S4_CANONICAL_BUILD",
+      "can_rerun": true,
+      "invalidates": ["CANONICAL_SPEC", "UNKNOWN_ASSUMPTIONS", "TEMPLATE_SELECTION", "BUILD_PLAN", "WORK_BREAKDOWN", "ACCEPTANCE_MAP", "RENDERED_TEMPLATES", "RENDER_ENVELOPES", "GATE_REPORT", "PROOF_LEDGER", "KIT_MANIFEST"]
+    },
+    {
+      "stage_id": "S5_TEMPLATE_SELECTION",
+      "can_rerun": true,
+      "invalidates": ["TEMPLATE_SELECTION", "BUILD_PLAN", "WORK_BREAKDOWN", "ACCEPTANCE_MAP", "RENDERED_TEMPLATES", "RENDER_ENVELOPES", "GATE_REPORT", "PROOF_LEDGER", "KIT_MANIFEST"]
+    },
+    {
+      "stage_id": "S6_PLAN_GENERATION",
+      "can_rerun": true,
+      "invalidates": ["BUILD_PLAN", "WORK_BREAKDOWN", "ACCEPTANCE_MAP", "RENDERED_TEMPLATES", "RENDER_ENVELOPES", "GATE_REPORT", "PROOF_LEDGER", "KIT_MANIFEST"]
+    },
+    {
+      "stage_id": "S7_TEMPLATE_FILL",
+      "can_rerun": true,
+      "invalidates": ["RENDERED_TEMPLATES", "RENDER_ENVELOPES", "GATE_REPORT", "PROOF_LEDGER", "KIT_MANIFEST"]
+    },
+    {
+      "stage_id": "S8_GATE_EVALUATION",
+      "can_rerun": true,
+      "invalidates": ["GATE_REPORT", "PROOF_LEDGER", "KIT_MANIFEST"]
+    },
+    {
+      "stage_id": "S9_KIT_PACKAGE",
+      "can_rerun": true,
+      "invalidates": ["KIT_MANIFEST"]
+    }
+  ]
+}

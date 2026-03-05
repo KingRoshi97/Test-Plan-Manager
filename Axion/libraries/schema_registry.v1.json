@@ -75,26 +75,38 @@
 
     {
       "schema_id": "orchestration.pipeline_definition.v1",
-      "path": "Axion/libraries/orchestration/pipeline_definition.schema.v1.json",
-      "uri": "axion://schemas/orchestration/pipeline_definition.schema.v1.json",
+      "path": "Axion/libraries/orchestration/schemas/pipeline_definition.v1.schema.json",
+      "uri": "axion://schemas/orchestration/pipeline_definition.v1.schema.json",
       "version": "1.0.0"
     },
     {
       "schema_id": "orchestration.stage_io_contract.v1",
-      "path": "Axion/libraries/orchestration/stage_io_contract.schema.v1.json",
-      "uri": "axion://schemas/orchestration/stage_io_contract.schema.v1.json",
+      "path": "Axion/libraries/orchestration/schemas/stage_io_contract.v1.schema.json",
+      "uri": "axion://schemas/orchestration/stage_io_contract.v1.schema.json",
       "version": "1.0.0"
     },
     {
-      "schema_id": "orchestration.stage_report.v1",
-      "path": "Axion/libraries/orchestration/stage_report.schema.v1.json",
-      "uri": "axion://schemas/orchestration/stage_report.schema.v1.json",
+      "schema_id": "orchestration.stage_io_registry.v1",
+      "path": "Axion/libraries/orchestration/schemas/stage_io_registry.v1.schema.json",
+      "uri": "axion://schemas/orchestration/stage_io_registry.v1.schema.json",
       "version": "1.0.0"
     },
     {
       "schema_id": "orchestration.run_manifest.v1",
-      "path": "Axion/libraries/orchestration/run_manifest.schema.v1.json",
-      "uri": "axion://schemas/orchestration/run_manifest.schema.v1.json",
+      "path": "Axion/libraries/orchestration/schemas/run_manifest.v1.schema.json",
+      "uri": "axion://schemas/orchestration/run_manifest.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "orchestration.stage_report.v1",
+      "path": "Axion/libraries/orchestration/schemas/stage_report.v1.schema.json",
+      "uri": "axion://schemas/orchestration/stage_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "orchestration.rerun_request.v1",
+      "path": "Axion/libraries/orchestration/schemas/rerun_request.v1.schema.json",
+      "uri": "axion://schemas/orchestration/rerun_request.v1.schema.json",
       "version": "1.0.0"
     },
 

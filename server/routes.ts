@@ -215,17 +215,54 @@ export function registerRoutes(app: Express) {
       }
     } catch {}
 
+    let orcDocCount = 0;
+    let orcSchemaCount = 0;
+    let orcRegistryCount = 0;
+    let orcStageCount = 0;
+    const orcLibDir = path.join(AXION_ROOT, "libraries", "orchestration");
+    try {
+      if (fs.existsSync(orcLibDir)) {
+        orcDocCount = fs.readdirSync(orcLibDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt") || (f.endsWith(".json") && f.startsWith("ORC-"))).length;
+      }
+      const orcSchemDir = path.join(orcLibDir, "schemas");
+      if (fs.existsSync(orcSchemDir)) {
+        orcSchemaCount = fs.readdirSync(orcSchemDir).filter((f) => f.endsWith(".json")).length;
+      }
+      const orcRegDir = path.join(orcLibDir, "registries");
+      if (fs.existsSync(orcRegDir)) {
+        orcRegistryCount = fs.readdirSync(orcRegDir).filter((f) => f.endsWith(".json")).length;
+      }
+      const pipelinePath = path.join(orcRegDir, "pipeline_definition.axion.v1.json");
+      if (fs.existsSync(pipelinePath)) {
+        const pd = JSON.parse(fs.readFileSync(pipelinePath, "utf-8"));
+        orcStageCount = pd.stage_order?.length ?? 0;
+      }
+    } catch {}
+
     res.json({
       status: "ok",
       pipeline: { stages: 10, gates: gateCount },
       knowledge: { kids: kidCount },
       templates: 177,
       system: { docs: sysDocCount, schemas: sysSchemaCount, registries: sysRegistryCount },
+      orchestration: { docs: orcDocCount, schemas: orcSchemaCount, registries: orcRegistryCount, stages: orcStageCount },
       recentRuns,
     });
   });
 
   app.get("/api/config", (_req: Request, res: Response) => {
+    try {
+      const pipelinePath = path.join(AXION_ROOT, "libraries", "orchestration", "registries", "pipeline_definition.axion.v1.json");
+      if (fs.existsSync(pipelinePath)) {
+        const pipeline = JSON.parse(fs.readFileSync(pipelinePath, "utf-8"));
+        const stageOrder = pipeline.stage_order ?? [];
+        const stageGates: Record<string, string> = {};
+        for (const gp of pipeline.gate_points ?? []) {
+          stageGates[gp.after_stage] = gp.gate_id;
+        }
+        return res.json({ stageOrder, stageGates, pipeline_id: pipeline.pipeline_id, pipeline_version: pipeline.version });
+      }
+    } catch {}
     const stageOrder = [
       "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
       "S4_VALIDATE_CANONICAL", "S5_RESOLVE_STANDARDS", "S6_SELECT_TEMPLATES",
@@ -507,6 +544,176 @@ export function registerRoutes(app: Express) {
       }
       const filePath = path.join(SYSTEM_LIB_DIR, filename);
       if (!filePath.startsWith(SYSTEM_LIB_DIR) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Document '${filename}' not found` });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+      let frontmatter: Record<string, string> = {};
+      let content = raw;
+      if (fmMatch) {
+        const lines = fmMatch[1].split("\n");
+        for (const line of lines) {
+          const idx = line.indexOf(":");
+          if (idx > 0) {
+            frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          }
+        }
+        content = fmMatch[2];
+      }
+      res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  const ORC_LIB_DIR = path.join(AXION_ROOT, "libraries", "orchestration");
+
+  app.get("/api/orchestration", (_req: Request, res: Response) => {
+    try {
+      const docs: string[] = [];
+      const schemaFiles: string[] = [];
+      const registryFiles: string[] = [];
+
+      if (fs.existsSync(ORC_LIB_DIR)) {
+        for (const f of fs.readdirSync(ORC_LIB_DIR)) {
+          if (f.endsWith(".md") || f.endsWith(".txt") || (f.endsWith(".json") && f.startsWith("ORC-"))) docs.push(f);
+        }
+      }
+      const schemasDir = path.join(ORC_LIB_DIR, "schemas");
+      if (fs.existsSync(schemasDir)) {
+        for (const f of fs.readdirSync(schemasDir)) {
+          if (f.endsWith(".json")) schemaFiles.push(f);
+        }
+      }
+      const registriesDir = path.join(ORC_LIB_DIR, "registries");
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
+          if (f.endsWith(".json")) registryFiles.push(f);
+        }
+      }
+
+      const groups: Record<string, string[]> = {};
+      for (const d of docs.sort()) {
+        const prefix = d.match(/^(ORC-\d)/)?.[1] ?? "other";
+        if (!groups[prefix]) groups[prefix] = [];
+        groups[prefix].push(d);
+      }
+
+      let stageCount = 0;
+      try {
+        const pdPath = path.join(registriesDir, "pipeline_definition.axion.v1.json");
+        if (fs.existsSync(pdPath)) {
+          const pd = JSON.parse(fs.readFileSync(pdPath, "utf-8"));
+          stageCount = pd.stage_order?.length ?? 0;
+        }
+      } catch {}
+
+      res.json({
+        groups,
+        schemas: schemaFiles.sort(),
+        registries: registryFiles.sort(),
+        counts: { docs: docs.length, schemas: schemaFiles.length, registries: registryFiles.length, stages: stageCount },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/orchestration/schemas", (_req: Request, res: Response) => {
+    try {
+      const schemasDir = path.join(ORC_LIB_DIR, "schemas");
+      if (!fs.existsSync(schemasDir)) return res.json([]);
+      const schemas = fs.readdirSync(schemasDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((filename) => ({
+          filename,
+          content: JSON.parse(fs.readFileSync(path.join(schemasDir, filename), "utf-8")),
+        }));
+      res.json(schemas);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/orchestration/registries", (_req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(ORC_LIB_DIR, "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const registries = fs.readdirSync(registriesDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((filename) => ({
+          filename,
+          content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
+        }));
+      res.json(registries);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/orchestration/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      const registriesDir = path.join(ORC_LIB_DIR, "registries");
+      const candidates = [name, `${name}.json`, `${name}.v1.json`];
+      let filePath: string | null = null;
+      for (const c of candidates) {
+        const p = path.join(registriesDir, c);
+        if (fs.existsSync(p) && p.startsWith(registriesDir)) {
+          filePath = p;
+          break;
+        }
+      }
+      if (!filePath) return res.status(404).json({ error: `Registry '${name}' not found` });
+      const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      res.json({ filename: path.basename(filePath), content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/orchestration/docs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(ORC_LIB_DIR)) return res.json([]);
+      const files = fs.readdirSync(ORC_LIB_DIR)
+        .filter((f) => f.endsWith(".md") || f.endsWith(".txt") || (f.endsWith(".json") && f.startsWith("ORC-")))
+        .sort();
+      const docs = files.map((filename) => {
+        const raw = fs.readFileSync(path.join(ORC_LIB_DIR, filename), "utf-8");
+        const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+        let frontmatter: Record<string, string> = {};
+        let content = raw;
+        if (fmMatch) {
+          const lines = fmMatch[1].split("\n");
+          for (const line of lines) {
+            const idx = line.indexOf(":");
+            if (idx > 0) {
+              frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            }
+          }
+          content = fmMatch[2];
+        }
+        return { filename, frontmatter, content };
+      });
+      res.json(docs);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/orchestration/docs/:filename", (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      if (!filename.endsWith(".md") && !filename.endsWith(".txt") && !(filename.endsWith(".json") && filename.startsWith("ORC-"))) {
+        return res.status(400).json({ error: "Only .md, .txt, and ORC-*.json files are accessible" });
+      }
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      const filePath = path.join(ORC_LIB_DIR, filename);
+      if (!filePath.startsWith(ORC_LIB_DIR) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: `Document '${filename}' not found` });
       }
       const raw = fs.readFileSync(filePath, "utf-8");

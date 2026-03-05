@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "stage_io_contract.v1",
+  "type": "object",
+  "required": ["contract_id", "kind", "description", "schema_ref", "required_fields"],
+  "properties": {
+    "contract_id": { "type": "string", "pattern": "^[A-Z0-9_\\-]+$" },
+
+    "kind": {
+      "type": "string",
+      "enum": ["input", "output", "report", "artifact"]
+    },
+
+    "description": { "type": "string", "minLength": 5 },
+
+    "schema_ref": {
+      "type": "object",
+      "required": ["schema_id", "schema_version"],
+      "properties": {
+        "schema_id": { "type": "string", "minLength": 3 },
+        "schema_version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+
+    "required_fields": {
+      "type": "array",
+      "minItems": 0,
+      "items": { "type": "string", "minLength": 1 }
+    },
+
+    "validation": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["schema_only", "schema_plus_rules"] },
+        "rules_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

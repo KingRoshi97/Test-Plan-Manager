@@ -9,6 +9,7 @@ import {
   Download,
   Blocks,
   Server,
+  GitBranch,
 } from "lucide-react";
 
 const links = [
@@ -16,6 +17,7 @@ const links = [
   { href: "/new", label: "New Assembly", icon: Plus },
   { href: "/features", label: "Features", icon: Blocks },
   { href: "/system", label: "System Library", icon: Server },
+  { href: "/orchestration", label: "Orchestration", icon: GitBranch },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },
   { href: "/logs", label: "Logs", icon: ScrollText },

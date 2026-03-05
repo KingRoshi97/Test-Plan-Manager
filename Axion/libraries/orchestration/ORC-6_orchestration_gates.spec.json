@@ -1,0 +1,62 @@
+{
+    "schema_version": "1.0.0",
+    "contract_id": "ORC-6a",
+    "gates": [
+      {
+        "gate_id": "ORC-GATE-01",
+        "name": "Stage order integrity",
+        "severity": "hard_stop",
+        "checks": [
+          "executed_stage_ids is subsequence of pipeline.stage_order",
+          "any skipped stages have activation justification in manifest"
+        ]
+      },
+      {
+        "gate_id": "ORC-GATE-02",
+        "name": "Consumes exist and validate",
+        "severity": "hard_stop",
+        "checks": [
+          "before stage starts: all consumes artifacts exist",
+          "before stage starts: consumes validate against schema_ref"
+        ]
+      },
+      {
+        "gate_id": "ORC-GATE-03",
+        "name": "Produces complete",
+        "severity": "hard_stop",
+        "checks": [
+          "if stage status==succeeded then all produces artifacts exist",
+          "if stage status==succeeded then produces validate against schema_ref"
+        ]
+      },
+      {
+        "gate_id": "ORC-GATE-04",
+        "name": "Stage report emitted",
+        "severity": "hard_stop",
+        "checks": [
+          "exactly one stage_report per executed stage",
+          "stage_report.inputs/outputs align with manifest artifact refs"
+        ]
+      },
+      {
+        "gate_id": "ORC-GATE-05",
+        "name": "Run manifest coherence",
+        "severity": "hard_stop",
+        "checks": [
+          "manifest has pipeline_ref and pins.pin_set_ref",
+          "stage timeline aligns with emitted stage reports",
+          "artifact entries align with stage outputs"
+        ]
+      },
+      {
+        "gate_id": "ORC-GATE-06",
+        "name": "Rerun/resume invariants",
+        "severity": "hard_stop",
+        "checks": [
+          "resume does not change pins/pipeline_ref",
+          "stage_rerun respects can_rerun and invalidation rules",
+          "rerun/resume events appended to manifest"
+        ]
+      }
+    ]
+}

@@ -1,0 +1,22 @@
+{
+  "run_id": "RUN-ABC123",
+  "stage_id": "S3_STANDARDS_RESOLUTION",
+  "status": "succeeded",
+  "started_at": "2026-03-05T00:00:00Z",
+  "ended_at": "2026-03-05T00:01:00Z",
+  "inputs": [
+    { "contract_id": "NORMALIZED_INPUT", "path": "runs/RUN-ABC123/artifacts/NORMALIZED_INPUT.json" }
+  ],
+  "outputs": [
+    { "contract_id": "STANDARDS_SNAPSHOT", "path": "runs/RUN-ABC123/artifacts/STANDARDS_SNAPSHOT.json" }
+  ],
+  "validations": [
+    { "validation_id": "STD-SNAPSHOT-SCHEMA", "status": "pass", "details": {} }
+  ],
+  "messages": [
+    { "level": "info", "code": "STD-RESOLVED", "text": "Resolved 5 standards packs." }
+  ],
+  "decisions": [
+    { "decision_id": "STD-RESOLVE-001", "summary": "Applied resolver order: global -> profile -> risk.", "refs": ["snapshot:STDSNAP-001"] }
+  ]
+}
