@@ -1,0 +1,78 @@
+For the INT (Intake & Validation) section of “Axion System docs Update (1)”, you need to create these 5 concrete pieces (INT-01 → INT-05). 
+
+Axion System docs Update (1)
+
+Also note the required dependency order: INT-01 → INT-02 → INT-03 → INT-05, and INT-01 + INT-02 → INT-04. 
+
+Axion System docs Update (1)
+
+INT-01 — Intake Form Spec
+
+Piece to make: the form specification that defines exactly what users can submit (fields, sections, and conditional requiredness). 
+
+Axion System docs Update (1)
+
+What it must include (at minimum):
+
+Field inventory (names + paths)
+
+Which fields are always required vs conditional requiredness rules (so INT-03 can mirror them)
+
+INT-02 — Intake Schema Spec
+
+Piece to make: the schema that defines what is valid (types + requiredness + base constraints), aligned 1:1 with INT-01. 
+
+Axion System docs Update (1)
+
+
+It must include an enum registry reference (SkillLevel, ProjectCategory, etc.). 
+
+Axion System docs Update (1)
+
+
+Definition-of-done requires every INT-01 field has a matching schema path, explicit types, enum refs complete, and version bump rules. 
+
+Axion System docs Update (1)
+
+INT-03 — Intake Validation Rules
+
+Piece to make: the logic layer beyond types: dependency rules, contextual validity, referential integrity, skill-level thresholds, and conditional format checks. 
+
+Axion System docs Update (1)
+
+
+Rules must be deterministic and include rule_id + when/then + error_code + pointers. 
+
+Axion System docs Update (1)
+
+INT-04 — Submission Record Format (Traceability)
+
+Piece to make: the immutable submission record (raw truth) that stores what the user provided + version stamps + upload refs + routing snapshot. 
+
+Axion System docs Update (1)
+
+
+Minimum required metadata includes submission_id, created_at/by, source, form_version, schema_version, plus required routing_snapshot fields. 
+
+Axion System docs Update (1)
+
+INT-05 — Validator Output Format (Errors/Warnings Contract)
+
+Piece to make: the single standard validation result contract: pass/fail decision, errors/warnings arrays, versions used, stored and linked to submission_id. 
+
+Axion System docs Update (1)
+
+
+It must include required top-level fields (submission_id, is_valid, versions used, errors/warnings, summary). 
+
+Axion System docs Update (1)
+
+
+Validation issues must include severity, error_code, rule_id, field_path, message. 
+
+Axion System docs Update (1)
+
+
+Error code catalog is locked (REQUIRED, MIN_ITEMS, INVALID_ENUM, etc.) and ordering/pointer determinism rules are required. 
+
+Axion System docs Update (1)

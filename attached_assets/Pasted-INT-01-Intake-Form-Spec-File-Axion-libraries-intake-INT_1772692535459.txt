@@ -1,0 +1,380 @@
+INT-01 — Intake Form Spec
+File
+
+Axion/libraries/intake/INT-01.form_spec.v1.json
+
+{
+  "form_version": "1.0.0",
+  "doc_id": "INT-01",
+  "description": "Authoritative intake form specification. Defines all fields, sections, and conditional requiredness.",
+  "sections": [
+    {
+      "section_id": "routing",
+      "title": "Routing",
+      "required": true,
+      "fields": [
+        { "path": "routing.skill_level", "type": "enum", "enum_ref": "SkillLevel", "required": true },
+        { "path": "routing.category", "type": "enum", "enum_ref": "ProjectCategory", "required": true },
+        { "path": "routing.type_preset", "type": "enum", "enum_ref": "TypePreset", "required": true },
+        { "path": "routing.build_target", "type": "enum", "enum_ref": "BuildTarget", "required": true },
+        { "path": "routing.audience_context", "type": "string", "required": true }
+      ]
+    },
+    {
+      "section_id": "project",
+      "title": "Project",
+      "required": true,
+      "fields": [
+        { "path": "project.project_name", "type": "string", "required": true },
+        { "path": "project.problem_statement", "type": "string", "required": true },
+        { "path": "project.desired_scope", "type": "enum", "enum_ref": "DesiredScope", "required": false }
+      ]
+    },
+    {
+      "section_id": "uploads",
+      "title": "Uploads",
+      "required": false,
+      "fields": [
+        { "path": "uploads.zip_upload", "type": "file_ref", "required": false },
+        { "path": "uploads.links", "type": "string_array", "required": false }
+      ]
+    }
+  ],
+  "conditional_requiredness": [
+    {
+      "rule_id": "INT01-REQ-01",
+      "when": { "path": "uploads.zip_upload", "op": "exists", "value": true },
+      "then_require": ["uploads.zip_upload"],
+      "notes": "If user says they uploaded, a file ref must exist."
+    }
+  ],
+  "compat_rules": {
+    "breaking_change_requires_new_version": true,
+    "notes": [
+      "Renaming/removing any field path is breaking.",
+      "Adding optional fields is non-breaking."
+    ]
+  }
+}
+INT-02 — Intake Schema Spec
+File
+
+Axion/libraries/intake/INT-02.intake_schema.v1.json
+
+{
+  "schema_version": "1.0.0",
+  "doc_id": "INT-02",
+  "description": "Machine-enforceable intake schema: field paths, types, requiredness, and base constraints.",
+  "enums_ref": "Axion/libraries/intake/INT-02.enums.v1.json",
+  "schema": {
+    "type": "object",
+    "required": ["routing", "project"],
+    "properties": {
+      "routing": {
+        "type": "object",
+        "required": ["skill_level", "category", "type_preset", "build_target", "audience_context"],
+        "properties": {
+          "skill_level": { "type": "string", "enum_ref": "SkillLevel" },
+          "category": { "type": "string", "enum_ref": "ProjectCategory" },
+          "type_preset": { "type": "string", "enum_ref": "TypePreset" },
+          "build_target": { "type": "string", "enum_ref": "BuildTarget" },
+          "audience_context": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      },
+      "project": {
+        "type": "object",
+        "required": ["project_name", "problem_statement"],
+        "properties": {
+          "project_name": { "type": "string", "minLength": 1 },
+          "problem_statement": { "type": "string", "minLength": 1 },
+          "desired_scope": { "type": "string", "enum_ref": "DesiredScope" }
+        },
+        "additionalProperties": true
+      },
+      "uploads": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "zip_upload": { "type": ["null", "object"], "format": "file_ref" },
+          "links": { "type": "array", "items": { "type": "string", "format": "url" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "additionalProperties": true
+  }
+}
+File
+
+Axion/libraries/intake/INT-02.enums.v1.json
+
+{
+  "version": "1.0.0",
+  "enums": {
+    "SkillLevel": ["beginner", "intermediate", "advanced"],
+    "ProjectCategory": ["software", "data", "docs", "other"],
+    "TypePreset": ["web_app", "internal_tool", "api_only", "mobile_app", "library"],
+    "BuildTarget": ["mvp", "production", "prototype"],
+    "DesiredScope": ["thin", "mvp", "full"]
+  }
+}
+INT-03 — Intake Validation Rules
+File
+
+Axion/libraries/intake/INT-03.validation_rules.v1.json
+
+This is the ruleset whose rule_id is referenced by validator issues (INT-05 requires rule_id anchored to INT-03). 
+
+Axion System docs Update (1)
+
+ 
+
+Axion System docs Update (1)
+
+{
+  "ruleset_version": "1.0.0",
+  "doc_id": "INT-03",
+  "description": "Deterministic intake validation rules beyond schema typing.",
+  "rules": [
+    {
+      "rule_id": "INT03-REQ-ROUTING-01",
+      "severity": "error",
+      "error_code": "REQUIRED",
+      "when": { "path": "routing.skill_level", "op": "missing" },
+      "then": { "field_path": "routing.skill_level", "message": "routing.skill_level is required." }
+    },
+    {
+      "rule_id": "INT03-DEP-UPLOAD-01",
+      "severity": "error",
+      "error_code": "DEPENDENCY_MISSING",
+      "when": { "path": "uploads.zip_upload", "op": "exists", "value": true },
+      "then": { "field_path": "uploads.zip_upload", "message": "uploads.zip_upload must be a valid file_ref when provided." }
+    },
+    {
+      "rule_id": "INT03-FMT-LINKS-01",
+      "severity": "error",
+      "error_code": "INVALID_URL",
+      "when": { "path": "uploads.links[]", "op": "invalid_format", "format": "url" },
+      "then": { "field_path": "uploads.links", "message": "All uploads.links entries must be valid URLs." }
+    }
+  ],
+  "determinism": {
+    "stable_rule_order": true,
+    "no_freeform_errors": true
+  }
+}
+INT-04 — Submission Record Format
+
+INT-04 must explicitly define required metadata, immutability, version stamps, upload refs, and hash/integrity policy. 
+
+Axion System docs Update (1)
+
+File
+
+Axion/libraries/intake/INT-04.submission_record.schema.v1.json
+
+{
+  "version": "1.0.0",
+  "doc_id": "INT-04",
+  "description": "Schema for immutable submission record (raw truth + stamps + upload refs).",
+  "required": [
+    "submission_id",
+    "created_at",
+    "created_by",
+    "source",
+    "form_version_used",
+    "schema_version_used",
+    "raw_submission",
+    "routing_snapshot",
+    "uploads",
+    "integrity"
+  ],
+  "properties": {
+    "submission_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "created_by": { "type": "string" },
+    "source": { "type": "string" },
+
+    "form_version_used": { "type": "string" },
+    "schema_version_used": { "type": "string" },
+
+    "routing_snapshot": {
+      "type": "object",
+      "required": ["skill_level", "category", "type_preset", "build_target", "audience_context"],
+      "properties": {
+        "skill_level": { "type": "string" },
+        "category": { "type": "string" },
+        "type_preset": { "type": "string" },
+        "build_target": { "type": "string" },
+        "audience_context": { "type": "string" }
+      }
+    },
+
+    "raw_submission": { "type": "object" },
+
+    "uploads": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["upload_id", "filename", "content_type", "bytes", "storage_ref"],
+            "properties": {
+              "upload_id": { "type": "string" },
+              "filename": { "type": "string" },
+              "content_type": { "type": "string" },
+              "bytes": { "type": "number" },
+              "storage_ref": { "type": "string" },
+              "sha256": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "integrity": {
+      "type": "object",
+      "required": ["immutability", "hash_policy"],
+      "properties": {
+        "immutability": { "type": "string", "enum": ["immutable"] },
+        "hash_policy": { "type": "string", "enum": ["sha256_optional", "sha256_required"] }
+      }
+    }
+  }
+}
+INT-05 — Validator Output Format
+
+INT-05 defines the single validation result contract: pass/fail, errors/warnings, versions used, and the ValidationIssue fields (issue_id, severity, error_code, rule_id, field_path, message). 
+
+Axion System docs Update (1)
+
+
+It also locks the error code catalog and deterministic ordering rules. 
+
+Axion System docs Update (1)
+
+File
+
+Axion/libraries/intake/INT-05.validation_result.schema.v1.json
+
+{
+  "version": "1.0.0",
+  "doc_id": "INT-05",
+  "description": "Schema for validator output (errors/warnings contract).",
+  "required": [
+    "submission_id",
+    "validated_at",
+    "is_valid",
+    "schema_version_used",
+    "form_version_used",
+    "ruleset_version_used",
+    "errors",
+    "warnings",
+    "summary"
+  ],
+  "properties": {
+    "submission_id": { "type": "string" },
+    "validated_at": { "type": "string" },
+    "is_valid": { "type": "boolean" },
+
+    "schema_version_used": { "type": "string" },
+    "form_version_used": { "type": "string" },
+    "ruleset_version_used": { "type": "string" },
+
+    "errors": { "type": "array", "items": { "$ref": "#/defs/ValidationIssue" } },
+    "warnings": { "type": "array", "items": { "$ref": "#/defs/ValidationIssue" } },
+
+    "summary": {
+      "type": "object",
+      "required": ["error_count", "warning_count", "blocking_rule_ids"],
+      "properties": {
+        "error_count": { "type": "number" },
+        "warning_count": { "type": "number" },
+        "blocking_rule_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "defs": {
+    "ValidationIssue": {
+      "type": "object",
+      "required": ["issue_id", "severity", "error_code", "rule_id", "field_path", "message"],
+      "properties": {
+        "issue_id": { "type": "string" },
+        "severity": { "type": "string", "enum": ["error", "warning"] },
+        "error_code": { "type": "string" },
+        "rule_id": { "type": "string" },
+        "field_path": { "type": "string" },
+        "message": { "type": "string" },
+        "meta": { "type": "object" }
+      }
+    }
+  }
+}
+File (locked codes list)
+
+Axion/libraries/intake/INT-05.error_code_catalog.v1.json
+
+{
+  "version": "1.0.0",
+  "doc_id": "INT-05",
+  "locked": true,
+  "error_codes": [
+    "REQUIRED",
+    "DEPENDENCY_MISSING",
+    "MIN_ITEMS",
+    "INVALID_ENUM",
+    "INVALID_ENUM_FOR_CONTEXT",
+    "INVALID_FORMAT",
+    "INVALID_URL",
+    "INVALID_FILETYPE",
+    "INVALID_REFERENCE",
+    "DUPLICATE_VALUE",
+    "WARNING_INCOMPLETE"
+  ],
+  "notes": [
+    "If a new code is needed, it must be added via change control."
+  ]
+}
+File (determinism rules)
+
+Axion/libraries/intake/INT-05.determinism_rules.v1.json
+
+This encodes the required deterministic ordering + stable pointers. 
+
+Axion System docs Update (1)
+
+{
+  "version": "1.0.0",
+  "doc_id": "INT-05",
+  "rules": [
+    {
+      "rule_id": "INT5-DET-01",
+      "name": "Stable ordering",
+      "order": [
+        "routing",
+        "requiredness_and_dependencies",
+        "type_and_format",
+        "reference_integrity",
+        "thresholds"
+      ]
+    },
+    {
+      "rule_id": "INT5-DET-02",
+      "name": "Stable pointers",
+      "requirements": [
+        "field_path must always point to a real schema path",
+        "for relationship issues, field_path points to referencing field"
+      ]
+    },
+    {
+      "rule_id": "INT5-DET-03",
+      "name": "Rule ID required",
+      "requirements": [
+        "Every issue must include rule_id linking it to INT-03",
+        "No freeform validator errors without a rule anchor"
+      ]
+    }
+  ]
+}
