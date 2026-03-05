@@ -329,6 +329,37 @@
       "path": "Axion/libraries/system/schemas/policy_hook_decision.v1.schema.json",
       "uri": "axion://schemas/system/policy_hook_decision.v1.schema.json",
       "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "standards.standards_pack.v1",
+      "path": "Axion/libraries/standards/schemas/standards_pack.v1.schema.json",
+      "uri": "axion://schemas/standards/standards_pack.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "standards.standards_index_entry.v1",
+      "path": "Axion/libraries/standards/schemas/standards_index_entry.v1.schema.json",
+      "uri": "axion://schemas/standards/standards_index_entry.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "standards.standards_index.v1",
+      "path": "Axion/libraries/standards/schemas/standards_index.v1.schema.json",
+      "uri": "axion://schemas/standards/standards_index.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "standards.standards_conflict.v1",
+      "path": "Axion/libraries/standards/schemas/standards_conflict.v1.schema.json",
+      "uri": "axion://schemas/standards/standards_conflict.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "standards.standards_snapshot.v1",
+      "path": "Axion/libraries/standards/schemas/standards_snapshot.v1.schema.json",
+      "uri": "axion://schemas/standards/standards_snapshot.v1.schema.json",
+      "version": "1.0.0"
     }
   ]
 }

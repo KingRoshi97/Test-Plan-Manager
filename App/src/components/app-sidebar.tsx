@@ -13,6 +13,7 @@ import {
   Shield,
   Scale,
   Network,
+  BookMarked,
   ClipboardList,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ const links = [
   { href: "/gates", label: "Gates Library", icon: Shield },
   { href: "/policy", label: "Policy Library", icon: Scale },
   { href: "/canonical", label: "Canonical Library", icon: Network },
+  { href: "/standards", label: "Standards Library", icon: BookMarked },
   { href: "/intake-library", label: "Intake Library", icon: ClipboardList },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },

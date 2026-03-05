@@ -344,6 +344,26 @@ export function registerRoutes(app: Express) {
         } catch {}
         return { docs: canDocCount, schemas: canSchemaCount, registries: canRegistryCount, entityTypes: canEntityTypes, relationshipTypes: canRelTypes };
       })(),
+      standards: (() => {
+        let stdDocCount = 0, stdSchemaCount = 0, stdRegistryCount = 0, stdPackCount = 0, stdRuleCount = 0;
+        try {
+          const stdDir = path.join(AXION_ROOT, "libraries", "standards");
+          if (fs.existsSync(stdDir)) stdDocCount = fs.readdirSync(stdDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+          const stdSchDir = path.join(stdDir, "schemas");
+          if (fs.existsSync(stdSchDir)) stdSchemaCount = fs.readdirSync(stdSchDir).filter((f) => f.endsWith(".json")).length;
+          const stdRegDir = path.join(stdDir, "registries");
+          if (fs.existsSync(stdRegDir)) stdRegistryCount = fs.readdirSync(stdRegDir).filter((f) => f.endsWith(".json")).length;
+          const stdPackDir = path.join(stdDir, "packs");
+          if (fs.existsSync(stdPackDir)) {
+            const packFiles = fs.readdirSync(stdPackDir).filter((f) => f.endsWith(".json"));
+            stdPackCount = packFiles.length;
+            for (const pf of packFiles) {
+              try { const pk = JSON.parse(fs.readFileSync(path.join(stdPackDir, pf), "utf-8")); stdRuleCount += pk.rules?.length ?? 0; } catch {}
+            }
+          }
+        } catch {}
+        return { docs: stdDocCount, schemas: stdSchemaCount, registries: stdRegistryCount, packs: stdPackCount, rules: stdRuleCount };
+      })(),
       recentRuns,
     });
   });
@@ -1520,6 +1540,199 @@ export function registerRoutes(app: Express) {
       }
       const filePath = path.join(CANONICAL_LIB_DIR, filename);
       if (!filePath.startsWith(CANONICAL_LIB_DIR) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Document '${filename}' not found` });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+      let frontmatter: Record<string, string> = {};
+      let content = raw;
+      if (fmMatch) {
+        const lines = fmMatch[1].split("\n");
+        for (const line of lines) {
+          const idx = line.indexOf(":");
+          if (idx > 0) {
+            frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          }
+        }
+        content = fmMatch[2];
+      }
+      res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  const STANDARDS_LIB_DIR = path.join(AXION_ROOT, "libraries", "standards");
+
+  app.get("/api/standards", (_req: Request, res: Response) => {
+    try {
+      const groups: Record<string, string[]> = {};
+      const schemas: string[] = [];
+      const registries: string[] = [];
+      const packs: string[] = [];
+      let totalRules = 0;
+      let gateCount = 0;
+
+      if (fs.existsSync(STANDARDS_LIB_DIR)) {
+        for (const f of fs.readdirSync(STANDARDS_LIB_DIR)) {
+          if (f.endsWith(".md") || f.endsWith(".txt") || (f.endsWith(".json") && f.startsWith("STD-"))) {
+            const prefix = f.match(/^(STD-\d+)/)?.[1] ?? "other";
+            if (!groups[prefix]) groups[prefix] = [];
+            groups[prefix].push(f);
+          }
+        }
+      }
+      const schemasDir = path.join(STANDARDS_LIB_DIR, "schemas");
+      if (fs.existsSync(schemasDir)) {
+        for (const f of fs.readdirSync(schemasDir)) {
+          if (f.endsWith(".json")) schemas.push(f);
+        }
+      }
+      const registriesDir = path.join(STANDARDS_LIB_DIR, "registries");
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
+          if (f.endsWith(".json")) registries.push(f);
+        }
+      }
+      const packsDir = path.join(STANDARDS_LIB_DIR, "packs");
+      if (fs.existsSync(packsDir)) {
+        for (const f of fs.readdirSync(packsDir)) {
+          if (f.endsWith(".json")) {
+            packs.push(f);
+            try {
+              const pk = JSON.parse(fs.readFileSync(path.join(packsDir, f), "utf-8"));
+              totalRules += pk.rules?.length ?? 0;
+            } catch {}
+          }
+        }
+      }
+
+      const gateSpecPath = path.join(STANDARDS_LIB_DIR, "STD-5_standards_gates.spec.json");
+      if (fs.existsSync(gateSpecPath)) {
+        try {
+          const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
+          gateCount = gs.gates?.length ?? 0;
+        } catch {}
+      }
+
+      const docCount = Object.values(groups).flat().length;
+
+      res.json({
+        groups,
+        schemas,
+        registries,
+        packs,
+        counts: {
+          docs: docCount,
+          schemas: schemas.length,
+          registries: registries.length,
+          packs: packs.length,
+          rules: totalRules,
+          gates: gateCount,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/standards/schemas", (_req: Request, res: Response) => {
+    try {
+      const schemasDir = path.join(STANDARDS_LIB_DIR, "schemas");
+      if (!fs.existsSync(schemasDir)) return res.json([]);
+      const files = fs.readdirSync(schemasDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(schemasDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/standards/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      if (name.includes("..") || name.includes("/")) return res.status(400).json({ error: "Invalid name" });
+      const filePath = path.join(STANDARDS_LIB_DIR, "registries", name.endsWith(".json") ? name : `${name}.json`);
+      if (!fs.existsSync(filePath)) return res.status(404).json({ error: `Registry '${name}' not found` });
+      res.json({ filename: path.basename(filePath), content: JSON.parse(fs.readFileSync(filePath, "utf-8")) });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/standards/registries", (_req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(STANDARDS_LIB_DIR, "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const files = fs.readdirSync(registriesDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/standards/packs", (_req: Request, res: Response) => {
+    try {
+      const packsDir = path.join(STANDARDS_LIB_DIR, "packs");
+      if (!fs.existsSync(packsDir)) return res.json([]);
+      const files = fs.readdirSync(packsDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(packsDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/standards/docs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(STANDARDS_LIB_DIR)) return res.json([]);
+      const files = fs.readdirSync(STANDARDS_LIB_DIR)
+        .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
+        .sort();
+      const result = files.map((filename) => {
+        const raw = fs.readFileSync(path.join(STANDARDS_LIB_DIR, filename), "utf-8");
+        const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+        let frontmatter: Record<string, string> = {};
+        let content = raw;
+        if (fmMatch) {
+          const lines = fmMatch[1].split("\n");
+          for (const line of lines) {
+            const idx = line.indexOf(":");
+            if (idx > 0) {
+              frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            }
+          }
+          content = fmMatch[2];
+        }
+        return { filename, frontmatter, content };
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/standards/docs/:filename", (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      if (!filename.endsWith(".md") && !filename.endsWith(".txt")) {
+        return res.status(400).json({ error: "Only .md and .txt files are accessible" });
+      }
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      const filePath = path.join(STANDARDS_LIB_DIR, filename);
+      if (!filePath.startsWith(STANDARDS_LIB_DIR) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: `Document '${filename}' not found` });
       }
       const raw = fs.readFileSync(filePath, "utf-8");

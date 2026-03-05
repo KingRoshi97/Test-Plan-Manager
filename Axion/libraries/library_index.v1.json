@@ -13,6 +13,7 @@
 
     { "id": "standards.index", "path": "Axion/libraries/standards/standards_index.json", "version": "1.0.0" },
     { "id": "standards.resolver_rules", "path": "Axion/libraries/standards/resolver_rules.v1.json", "version": "1.0.0" },
+    { "id": "standards.standards_index_registry", "path": "Axion/libraries/standards/registries/standards_index.v1.json", "version": "1.0.0" },
 
     { "id": "templates.index", "path": "Axion/libraries/templates/template_index.json", "version": "1.0.0" },
     { "id": "templates.placeholder_catalog", "path": "Axion/libraries/templates/placeholder_catalog.v1.json", "version": "1.0.0" },

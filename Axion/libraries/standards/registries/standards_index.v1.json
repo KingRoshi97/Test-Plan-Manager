@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0.0",
+  "index_id": "standards_index.v1",
+  "packs": [
+    {
+      "pack_id": "STD-SECURITY_BASELINE",
+      "version": "1.0.0",
+      "path": "Axion/libraries/standards/packs/STD-SECURITY_BASELINE.v1.json",
+      "scope": { "profiles": ["PROFILE-API", "PROFILE-WEB"], "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"], "domains": ["auth", "security"] },
+      "maturity": "draft"
+    }
+  ]
+}

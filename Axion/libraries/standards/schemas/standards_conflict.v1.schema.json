@@ -1,0 +1,23 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "standards_conflict.v1",
+    "type": "object",
+    "required": ["conflict_id", "pack_ids", "rule_ids", "summary", "resolution"],
+    "properties": {
+      "conflict_id": { "type": "string", "pattern": "^STDCONF-[A-Z0-9]{6,}$" },
+      "pack_ids": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+      "rule_ids": { "type": "array", "items": { "type": "string" }, "minItems": 2 },
+      "summary": { "type": "string", "minLength": 5 },
+      "resolution": {
+        "type": "object",
+        "required": ["mode"],
+        "properties": {
+          "mode": { "type": "string", "enum": ["most_restrictive", "require_approval", "fail"] },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+}

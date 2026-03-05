@@ -1,0 +1,48 @@
+{
+  "pack_id": "STD-SECURITY_BASELINE",
+  "title": "Security Baseline (API/Web)",
+  "version": "1.0.0",
+  "scope": {
+    "profiles": ["PROFILE-API", "PROFILE-WEB"],
+    "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"],
+    "domains": ["auth", "security"]
+  },
+  "rules": [
+    {
+      "rule_id": "RULE-SEC-INPUT-VALIDATION",
+      "type": "constraint",
+      "severity": "must",
+      "statement": "All external inputs must be schema-validated at the boundary before business logic executes.",
+      "evidence": { "artifact_contract_ids": ["NORMALIZED_INPUT"] }
+    },
+    {
+      "rule_id": "RULE-SEC-AUTHZ-OBJECT",
+      "type": "constraint",
+      "severity": "must",
+      "statement": "Authorization must be enforced at object level (resource-specific), not only route level.",
+      "evidence": { "proof_requirements": ["proof:authz_tests_present"] }
+    },
+    {
+      "rule_id": "RULE-SEC-REDACTION",
+      "type": "constraint",
+      "severity": "must_not",
+      "statement": "Secrets, tokens, and credential-bearing headers must not appear in logs or render envelopes."
+    },
+    {
+      "rule_id": "RULE-SEC-RATE-LIMIT",
+      "type": "default",
+      "severity": "should",
+      "statement": "Auth and privileged endpoints should be rate-limited and have request size limits."
+    },
+    {
+      "rule_id": "RULE-SEC-VERIFY-AUTH",
+      "type": "verification",
+      "severity": "should",
+      "statement": "Include verification commands/tests that demonstrate authN/authZ failures are blocked.",
+      "evidence": { "proof_requirements": ["proof:auth_tests_run"] }
+    }
+  ],
+  "created_at": "2026-03-05T00:00:00Z",
+  "updated_at": "2026-03-05T00:00:00Z",
+  "owner": "axion"
+}

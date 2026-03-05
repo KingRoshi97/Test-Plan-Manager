@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "standards_index_entry.v1",
+    "type": "object",
+    "required": ["pack_id", "version", "path", "scope", "maturity"],
+    "properties": {
+      "pack_id": { "type": "string" },
+      "version": { "type": "string" },
+      "path": { "type": "string" },
+      "hash": { "type": "string" },
+      "scope": { "type": "object", "additionalProperties": true },
+      "maturity": { "type": "string", "enum": ["draft", "reviewed", "verified", "golden"] },
+      "deprecated_by": { "type": "string" }
+    },
+    "additionalProperties": false
+}

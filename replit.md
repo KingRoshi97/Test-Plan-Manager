@@ -92,26 +92,37 @@ Entity model, stable IDs, reference integrity, unknowns/assumptions, canonical g
 
 **Code wired to CAN-02 (legacy):** `validate.ts` and `specBuilder.ts` load from `CAN-02.id_rules.v1.json` (10 entity types) and `CAN-02.reference_integrity_rules.v1.json` (split ref integrity), with fallback to legacy files.
 
-### Standards Library (Axion/libraries/standards/)
-5 new STD contract files + 7 new starter pack files + updated index (10 total packs, 31 rules in snapshot):
+### Standards Library (`Axion/libraries/standards/`)
+Standards pack system, index, applicability, resolution, snapshots, and gates (STD-0 through STD-6). 7 legacy flat files preserved for backward compat (pipeline code: registryLoader.ts, applicability.ts, resolver.ts, selector.ts, snapshot.ts).
 
-**Contract files:**
-- `STD-01.categories.v1.json` — locked set of 7 categories (STD-CAT-01 through STD-CAT-07)
-- `STD-01.pack_contract.v1.json` — required pack metadata fields, applies_when model, required rule fields, rule_type enum, 3 structural constraints
-- `STD-01.library_index.schema.v1.json` — index minimum required fields including `rule_ids` and `rule_id_to_category`
-- `STD-02.resolution_rules.v1.json` — deterministic selection/merge rules: sort by priority_desc/pack_id_asc, fixed wins over configurable, no cross-category overlap
-- `STD-03.snapshot.schema.v1.json` — snapshot artifact format: required top-level fields, inputs_required, resolved_rule_required, determinism rules
+**Structure (31 new files: 22 .md docs + 1 .txt + 1 gate spec JSON = 24 root files, 5 schemas, 1 registry, 1 new pack):**
+- **STD-0**: Purpose + boundary checklist (2 docs)
+- **STD-1**: Standards pack model + determinism rules + validation checklist (3 docs) + `standards_pack.v1.schema.json` + `standards_index_entry.v1.schema.json`
+- **STD-2**: Standards index model + applicability rules + determinism rules + validation checklist (4 docs) + `standards_index.v1.schema.json` + `standards_index.v1.json` registry
+- **STD-3**: Resolution model + resolver order rules + determinism rules + validation checklist (4 docs) + `standards_conflict.v1.schema.json`
+- **STD-4**: Snapshot model + determinism rules + validation checklist (3 docs) + `standards_snapshot.v1.schema.json`
+- **STD-5**: Standards gates + gate mapping + gate spec JSON + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON)
+- **STD-6**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
 
-**Starter packs (Axion/libraries/standards/packs/):** 7 new packs alongside 3 legacy packs
-- `CORE@1.0.0` (STD-CAT-01, priority 1000) — 3 fixed + 1 configurable: deterministic stages, schema validation, pinning, hashing policy
-- `DESIGN_BASE@1.0.0` (STD-CAT-02, priority 500) — UI design section required for UI builds
-- `SEC_BASE@1.0.0` (STD-CAT-03, priority 800) — no secrets in artifacts (fixed), auth test requirement (configurable)
-- `QA_BASE@1.0.0` (STD-CAT-04, priority 700) — minimum test evidence
-- `OPS_CONDITIONAL@1.0.0` (STD-CAT-05, priority 400) — telemetry required when `data_enabled: true`
-- `CONTRACTS_CONDITIONAL@1.0.0` (STD-CAT-06, priority 450) — interface contracts required when `integrations_enabled: true`
-- `ANALYTICS_CONDITIONAL@1.0.0` (STD-CAT-07, priority 350) — analytics plan required when `build_target: production`
+**Subdirectories:**
+- `schemas/` — 5 JSON Schema files (standards_pack: pack_id/scope/rules with 6 rule types, standards_index_entry: maturity lifecycle, standards_index: index_id/packs[], standards_conflict: conflict resolution modes, standards_snapshot: resolved packs/rules/conflicts)
+- `registries/` — 1 registry file (standards_index: starter index with 1 pack entry)
+- `packs/` — 11 pack files (10 legacy + 1 new STD-SECURITY_BASELINE with 5 security rules)
 
-**Index updated:** `standards_index.json` now has 10 packs total, `rule_id_to_category` map at top level, and `rule_ids[]` per new pack entry alongside `file_path` (required by registryLoader.ts).
+**Loader** (`Axion/src/core/standards/loader.ts`):
+- `loadStandardsLibrary(repoRoot)` — loads standards index registry, cached
+- `loadStandardsDocs(repoRoot)` — all STD-N docs with frontmatter
+- `loadStandardsSchemas(repoRoot)` — all JSON schema files from schemas/
+- `loadStandardsRegistries(repoRoot)` — all registry JSON files from registries/
+- `loadStandardsPacks(repoRoot)` — all pack files from packs/
+- `getStandardsIndex(repoRoot)` — returns standards index registry
+- `getPackById(repoRoot, packId)` — returns specific pack by pack_id
+
+**API**: 7 `/api/standards/*` endpoints (overview, schemas, registries, registries/:name, packs, docs, docs/:filename)
+**UI**: `/standards` page with 4 tabs (Standards, Documents, Schemas, Packs), standards pack grid with scope badges, rules by type/severity, 6 standards gates (STD-GATE-01..06) mapped to G3_STANDARDS_RESOLVED
+**Registered in:** `schema_registry.v1.json` (5 new entries), `library_index.v1.json` (1 new + 2 existing entries)
+
+**Legacy files preserved:** STD-01.categories.v1.json, STD-01.pack_contract.v1.json, STD-01.library_index.schema.v1.json, STD-02.resolution_rules.v1.json, STD-03.snapshot.schema.v1.json, resolver_rules.v1.json, standards_index.json
 
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
@@ -153,7 +164,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -187,6 +198,13 @@ package.json      # Root package.json with all dependencies
 - `GET /api/canonical/registries/:name` — single registry by name
 - `GET /api/canonical/docs` — all canonical documents with frontmatter
 - `GET /api/canonical/docs/:filename` — single document by filename
+- `GET /api/standards` — standards library overview (groups, schemas, registries, packs, counts: docs/schemas/registries/packs/rules/gates)
+- `GET /api/standards/schemas` — all 5 standards schemas with content
+- `GET /api/standards/registries` — all registries with content
+- `GET /api/standards/registries/:name` — single registry by name
+- `GET /api/standards/packs` — all pack files with content
+- `GET /api/standards/docs` — all standards documents with frontmatter
+- `GET /api/standards/docs/:filename` — single document by filename
 - `GET /api/intake-library` — intake library overview (groups, schema/registry/doc/enum/crossFieldRule/normalizationRule counts)
 - `GET /api/intake-library/schemas` — all 7 intake schemas with content
 - `GET /api/intake-library/registries` — all 3 registries with content
@@ -225,6 +243,7 @@ package.json      # Root package.json with all dependencies
 - `/gates` — Gates Library: 4 tabs (Gates, Documents, Schemas, Registries) for GATE-0 through GATE-6, 8 gate definitions with predicates/severity/evidence
 - `/policy` — Policy Library: 4 tabs (Policy, Documents, Schemas, Registries) for POL-0 through POL-5, 3 risk classes with color-coded cards, override permission matrix, policy sets
 - `/canonical` — Canonical Library: 4 tabs (Canonical, Documents, Schemas, Registries) for CAN-0 through CAN-7, entity type grid with canonical key templates, relationship type constraints table, unknowns model overview, canonical gates list
+- `/standards` — Standards Library: 4 tabs (Standards, Documents, Schemas, Packs) for STD-0 through STD-6, standards pack grid with scope badges, rules by type/severity, 6 standards gates (STD-GATE-01..06) mapped to G3_STANDARDS_RESOLVED
 - `/intake-library` — Intake Library: 4 tabs (Intake, Documents, Schemas, Registries) for INT-0 through INT-7, field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
@@ -262,7 +281,7 @@ The pipeline is fully registry-driven with deterministic library loading:
 - `Axion/libraries/` — Persistent system assets:
   - `intake/` — 47 files: 25 INT-0 through INT-7 docs + schemas/ (7) + registries/ (3) + 12 legacy flat files
   - `canonical/` — 47 files: 30 CAN-0 through CAN-7 docs + schemas/ (3) + registries/ (2) + 12 legacy flat files
-  - `standards/` — standards_index.json, resolver_rules.v1.json + 3 packs
+  - `standards/` — 31 new files (24 STD-0 through STD-6 docs + schemas/ (5) + registries/ (1) + packs/ (11, 10 legacy + 1 new)) + 7 legacy flat files
   - `templates/` — template_index.json, placeholder_catalog.v1.json + 77 template groups across 8 categories (533 total .md files)
   - `planning/` — work_breakdown.schema.v1.json, acceptance_map.schema.v1.json, sequencing_policy.v1.json
   - `gates/` — Gates Library (GATE-0 through GATE-6). See Gates Library section below.

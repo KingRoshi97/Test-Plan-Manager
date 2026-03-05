@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "STD-5b",
+  "gates": [
+    { "gate_id": "STD-GATE-01", "name": "Standards index pinned + valid", "severity": "hard_stop", "checks": ["pinned(standards_index)", "schema_valid(standards_index.v1)"] },
+    { "gate_id": "STD-GATE-02", "name": "Referenced packs exist + validate", "severity": "hard_stop", "checks": ["all selected pack paths exist", "schema_valid(standards_pack.v1)"] },
+    { "gate_id": "STD-GATE-03", "name": "Resolver produced snapshot", "severity": "hard_stop", "checks": ["STANDARDS_SNAPSHOT exists", "schema_valid(standards_snapshot.v1)"] },
+    { "gate_id": "STD-GATE-04", "name": "Snapshot ordering deterministic", "severity": "hard_stop", "checks": ["resolved_packs ordered", "resolved_rules ordered"] },
+    { "gate_id": "STD-GATE-05", "name": "Conflicts handled deterministically", "severity": "policy_controlled", "checks": ["conflicts recorded and resolved deterministically"] },
+    { "gate_id": "STD-GATE-06", "name": "Snapshot pinned in run manifest", "severity": "hard_stop", "checks": ["manifest references STANDARDS_SNAPSHOT artifact"] }
+  ]
+}
