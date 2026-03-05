@@ -57,7 +57,7 @@ function validatePage(pageId: number, data: IntakeData): string | null {
     }
     case 1: {
       if (!data.project.project_name.trim()) return "Project name is required.";
-      if (!data.project.problem_statement.trim()) return "Problem statement is required.";
+      if (!data.project.problem_statement.trim()) return "Project description is required.";
       return null;
     }
     case 10: {
@@ -194,9 +194,7 @@ export default function IntakeWizard() {
           existing_state: data.project.existing_state || undefined,
           must_not_change: data.project.must_not_change || undefined,
           known_issues: data.project.known_issues || undefined,
-        },
-        uploads: {
-          links: data.project.links.filter(Boolean),
+          attachments: data.project.attachments?.length ? data.project.attachments : undefined,
         },
         intent: {
           alternatives: data.intent.alternatives || undefined,

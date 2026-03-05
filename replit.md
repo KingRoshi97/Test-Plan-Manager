@@ -120,6 +120,9 @@ package.json      # Root package.json with all dependencies
 - `GET /api/config` — pipeline configuration
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
+- `POST /api/uploads` — upload files (multipart/form-data, up to 10 files, 50MB limit per file)
+- `GET /api/uploads/:id` — download uploaded file
+- `DELETE /api/uploads/:id` — delete uploaded file
 
 ### Pipeline Runner (server/pipeline-runner.ts)
 - Spawns `npx tsx Axion/src/cli/axion.ts run` as child process

@@ -6,9 +6,39 @@ import { generateAutofillSuggestions } from "./openai.js";
 import fs from "fs";
 import path from "path";
 import archiver from "archiver";
+import multer from "multer";
+import crypto from "crypto";
 
 const AXION_ROOT = path.resolve(process.cwd(), "Axion");
 const AXION_RUNS = path.resolve(AXION_ROOT, ".axion", "runs");
+const UPLOADS_DIR = path.resolve(process.cwd(), "uploads");
+
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+const ALLOWED_EXTENSIONS = new Set([
+  ".pdf", ".txt", ".zip", ".doc", ".docx", ".md", ".csv", ".json", ".xml", ".rtf", ".xlsx", ".xls",
+]);
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
+    filename: (_req, file, cb) => {
+      const uniqueId = crypto.randomBytes(8).toString("hex");
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `${uniqueId}${ext}`);
+    },
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return cb(new Error(`File type ${ext} is not allowed`));
+    }
+    cb(null, true);
+  },
+});
 
 function safePath(userPath: string): string | null {
   const resolved = path.resolve(AXION_RUNS, userPath);
@@ -270,6 +300,53 @@ export function registerRoutes(app: Express) {
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
+  });
+
+  app.post("/api/uploads", (req: Request, res: Response) => {
+    upload.array("files", 10)(req, res, (err: any) => {
+      if (err) {
+        if (err instanceof multer.MulterError) {
+          if (err.code === "LIMIT_FILE_SIZE") return res.status(413).json({ error: "File too large (max 50MB)" });
+          if (err.code === "LIMIT_FILE_COUNT") return res.status(400).json({ error: "Too many files (max 10)" });
+          return res.status(400).json({ error: err.message });
+        }
+        return res.status(400).json({ error: err.message || "Upload failed" });
+      }
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) return res.status(400).json({ error: "No files provided" });
+
+      const result = files.map((f) => ({
+        id: path.basename(f.filename, path.extname(f.filename)),
+        filename: f.filename,
+        originalName: f.originalname,
+        size: f.size,
+        mimeType: f.mimetype,
+      }));
+      res.json(result);
+    });
+  });
+
+  app.get("/api/uploads/:id", (req: Request, res: Response) => {
+    const id = req.params.id;
+    if (!/^[a-f0-9]{16}$/.test(id)) return res.status(400).json({ error: "Invalid file ID" });
+    const files = fs.readdirSync(UPLOADS_DIR);
+    const match = files.find((f) => path.basename(f, path.extname(f)) === id);
+    if (!match) return res.status(404).json({ error: "File not found" });
+
+    const fullPath = path.join(UPLOADS_DIR, match);
+    res.download(fullPath, match);
+  });
+
+  app.delete("/api/uploads/:id", (req: Request, res: Response) => {
+    const id = req.params.id;
+    if (!/^[a-f0-9]{16}$/.test(id)) return res.status(400).json({ error: "Invalid file ID" });
+    const files = fs.readdirSync(UPLOADS_DIR);
+    const match = files.find((f) => path.basename(f, path.extname(f)) === id);
+    if (!match) return res.status(404).json({ error: "File not found" });
+
+    const fullPath = path.join(UPLOADS_DIR, match);
+    fs.unlinkSync(fullPath);
+    res.json({ ok: true });
   });
 
   app.post("/api/autofill", async (req: Request, res: Response) => {

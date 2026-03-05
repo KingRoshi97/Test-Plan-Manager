@@ -16,6 +16,7 @@ export interface IntakeData {
     existing_state: string;
     must_not_change: string;
     known_issues: string;
+    attachments: { id: string; filename: string; originalName: string; size: number; mimeType: string }[];
   };
   intent: {
     alternatives: string;
@@ -110,6 +111,7 @@ export function createEmptyIntakeData(): IntakeData {
       existing_state: "",
       must_not_change: "",
       known_issues: "",
+      attachments: [],
     },
     intent: {
       alternatives: "",
