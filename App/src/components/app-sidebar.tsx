@@ -8,12 +8,14 @@ import {
   BookOpen,
   Download,
   Blocks,
+  Server,
 } from "lucide-react";
 
 const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/new", label: "New Assembly", icon: Plus },
   { href: "/features", label: "Features", icon: Blocks },
+  { href: "/system", label: "System Library", icon: Server },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },
   { href: "/logs", label: "Logs", icon: ScrollText },

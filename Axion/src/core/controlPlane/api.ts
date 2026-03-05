@@ -6,6 +6,7 @@ import { AuditLogger } from "./audit.js";
 import { STAGE_ORDER, STAGE_GATES, GATES_REQUIRED } from "../../types/run.js";
 import { isoNow } from "../../utils/time.js";
 import { readJson, writeJson, ensureDir } from "../../utils/fs.js";
+import { getRunProfile, evaluatePolicyHook } from "../system/loader.js";
 
 function padRunId(n: number): string {
   return `RUN-${String(n).padStart(6, "0")}`;
@@ -69,6 +70,22 @@ export class RunController {
       stage_report_ref: null,
     }));
 
+    const requestedProfile = config.profile_id as string ?? "default";
+    const resolvedProfile = getRunProfile(this.baseDir, requestedProfile);
+    const systemProfileId = resolvedProfile?.profile_id ?? requestedProfile;
+
+    const hookDecision = evaluatePolicyHook("RUN_START", {
+      run_id: runId,
+      profile_id: systemProfileId,
+      pipeline_id: config.pipeline_id as string ?? "axion_default",
+    });
+
+    if (hookDecision.decision === "DENY") {
+      throw new Error(
+        `Policy hook RUN_START denied run creation: ${hookDecision.reason}`,
+      );
+    }
+
     const run: ICPRun = {
       run_id: runId,
       icp_status: "queued",
@@ -79,7 +96,7 @@ export class RunController {
         pipeline_version: config.pipeline_version as string ?? "0.2.0",
       },
       profile: {
-        profile_id: config.profile_id as string ?? "default",
+        profile_id: resolvedProfile?.profile_id ?? (config.profile_id as string ?? "default"),
       },
       stage_order: [...STAGE_ORDER],
       stages,
@@ -90,14 +107,17 @@ export class RunController {
       errors: [],
       policy_snapshot_ref: null,
       config,
+      system_profile: systemProfileId,
+      quota_set: config.quota_set as string ?? "QUOTA-BASE01",
     };
 
     await this.store.createRun(run);
 
-    this.audit?.append("run.created", runId, { config });
+    this.audit?.append("run.created", runId, { config, system_profile: systemProfileId });
 
     console.log(`Created run: ${runId}`);
     console.log(`  Run directory: ${runDir}`);
+    console.log(`  System profile: ${systemProfileId}`);
 
     return run;
   }
@@ -218,11 +238,30 @@ export class RunController {
       );
     }
 
+    const exportDecision = evaluatePolicyHook("KIT_EXPORT", {
+      run_id: runId,
+      system_profile: run.system_profile,
+      quota_set: run.quota_set,
+    });
+
+    if (exportDecision.decision === "DENY") {
+      this.transitionRun(run, "gated");
+      run.errors.push({
+        stage_id: run.stage_order[run.stage_order.length - 1],
+        message: `Policy hook KIT_EXPORT denied release: ${exportDecision.reason}`,
+        timestamp: isoNow(),
+      });
+      run.updated_at = isoNow();
+      await this.store.updateRun(runId, run);
+      this.audit?.append("run.export_denied", runId, { reason: exportDecision.reason });
+      throw new Error(`Policy hook KIT_EXPORT denied release: ${exportDecision.reason}`);
+    }
+
     this.transitionRun(run, "released");
     run.updated_at = isoNow();
     await this.store.updateRun(runId, run);
 
-    this.audit?.append("run.released", runId, {});
+    this.audit?.append("run.released", runId, { system_profile: run.system_profile });
   }
 
   async getRunStatus(runId: string): Promise<ICPRun | null> {

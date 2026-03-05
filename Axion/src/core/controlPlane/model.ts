@@ -68,10 +68,12 @@ export interface ICPRun {
   errors: RunError[];
   policy_snapshot_ref: string | null;
   config: Record<string, unknown>;
+  system_profile?: string;
+  quota_set?: string;
 }
 
 export function icpRunToManifest(icp: ICPRun): RunManifest {
-  return {
+  const manifest: RunManifest = {
     run_id: icp.run_id,
     status: ICP_TO_MANIFEST_RUN_STATUS[icp.icp_status],
     created_at: icp.created_at,
@@ -94,6 +96,9 @@ export function icpRunToManifest(icp: ICPRun): RunManifest {
     policy_snapshot_ref: icp.policy_snapshot_ref,
     config: icp.config,
   };
+  if (icp.system_profile) (manifest.config as Record<string, unknown>).__system_profile = icp.system_profile;
+  if (icp.quota_set) (manifest.config as Record<string, unknown>).__quota_set = icp.quota_set;
+  return manifest;
 }
 
 export function manifestToICPRun(manifest: RunManifest): ICPRun {
@@ -114,6 +119,7 @@ export function manifestToICPRun(manifest: RunManifest): ICPRun {
     skipped: "skip",
   };
 
+  const cfg = manifest.config as Record<string, unknown>;
   return {
     run_id: manifest.run_id,
     icp_status: reverseRunStatus[manifest.status],
@@ -136,6 +142,8 @@ export function manifestToICPRun(manifest: RunManifest): ICPRun {
     errors: manifest.errors,
     policy_snapshot_ref: manifest.policy_snapshot_ref,
     config: manifest.config,
+    system_profile: (cfg.__system_profile as string) ?? undefined,
+    quota_set: (cfg.__quota_set as string) ?? undefined,
   };
 }
 

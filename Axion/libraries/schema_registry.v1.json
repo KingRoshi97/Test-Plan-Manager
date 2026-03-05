@@ -123,6 +123,91 @@
       "path": "Axion/libraries/telemetry/run_metrics.schema.v1.json",
       "uri": "axion://schemas/telemetry/run_metrics.schema.v1.json",
       "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "system.workspace.v1",
+      "path": "Axion/libraries/system/schemas/workspace.v1.schema.json",
+      "uri": "axion://schemas/system/workspace.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.project.v1",
+      "path": "Axion/libraries/system/schemas/project.v1.schema.json",
+      "uri": "axion://schemas/system/project.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.pin_policy.v1",
+      "path": "Axion/libraries/system/schemas/pin_policy.v1.schema.json",
+      "uri": "axion://schemas/system/pin_policy.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.pin_set.v1",
+      "path": "Axion/libraries/system/schemas/pin_set.v1.schema.json",
+      "uri": "axion://schemas/system/pin_set.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.capability_registry.v1",
+      "path": "Axion/libraries/system/schemas/capability_registry.v1.schema.json",
+      "uri": "axion://schemas/system/capability_registry.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.adapter_profile.v1",
+      "path": "Axion/libraries/system/schemas/adapter_profile.v1.schema.json",
+      "uri": "axion://schemas/system/adapter_profile.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.command_policy.v1",
+      "path": "Axion/libraries/system/schemas/command_policy.v1.schema.json",
+      "uri": "axion://schemas/system/command_policy.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.quota_set.v1",
+      "path": "Axion/libraries/system/schemas/quota_set.v1.schema.json",
+      "uri": "axion://schemas/system/quota_set.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.quota_profile_modifiers.v1",
+      "path": "Axion/libraries/system/schemas/quota_profile_modifiers.v1.schema.json",
+      "uri": "axion://schemas/system/quota_profile_modifiers.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.notification_event_types.v1",
+      "path": "Axion/libraries/system/schemas/notification_event_types.v1.schema.json",
+      "uri": "axion://schemas/system/notification_event_types.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.notification_destinations.v1",
+      "path": "Axion/libraries/system/schemas/notification_destinations.v1.schema.json",
+      "uri": "axion://schemas/system/notification_destinations.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.notification_routes.v1",
+      "path": "Axion/libraries/system/schemas/notification_routes.v1.schema.json",
+      "uri": "axion://schemas/system/notification_routes.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.policy_hook_request.v1",
+      "path": "Axion/libraries/system/schemas/policy_hook_request.v1.schema.json",
+      "uri": "axion://schemas/system/policy_hook_request.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.policy_hook_decision.v1",
+      "path": "Axion/libraries/system/schemas/policy_hook_decision.v1.schema.json",
+      "uri": "axion://schemas/system/policy_hook_decision.v1.schema.json",
+      "version": "1.0.0"
     }
   ]
 }

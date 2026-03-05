@@ -197,11 +197,30 @@ export function registerRoutes(app: Express) {
       recentRuns = fs.readdirSync(runsDir).filter((d) => d.startsWith("RUN-")).sort().reverse().slice(0, 5);
     }
 
+    let sysDocCount = 0;
+    let sysSchemaCount = 0;
+    let sysRegistryCount = 0;
+    const sysLibDir = path.join(AXION_ROOT, "libraries", "system");
+    try {
+      if (fs.existsSync(sysLibDir)) {
+        sysDocCount = fs.readdirSync(sysLibDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+      }
+      const schemDir = path.join(sysLibDir, "schemas");
+      if (fs.existsSync(schemDir)) {
+        sysSchemaCount = fs.readdirSync(schemDir).filter((f) => f.endsWith(".json")).length;
+      }
+      const regDir = path.join(sysLibDir, "registries");
+      if (fs.existsSync(regDir)) {
+        sysRegistryCount = fs.readdirSync(regDir).filter((f) => f.endsWith(".json")).length;
+      }
+    } catch {}
+
     res.json({
       status: "ok",
       pipeline: { stages: 10, gates: gateCount },
       knowledge: { kids: kidCount },
       templates: 177,
+      system: { docs: sysDocCount, schemas: sysSchemaCount, registries: sysRegistryCount },
       recentRuns,
     });
   });
@@ -347,6 +366,167 @@ export function registerRoutes(app: Express) {
     const fullPath = path.join(UPLOADS_DIR, match);
     fs.unlinkSync(fullPath);
     res.json({ ok: true });
+  });
+
+  const SYSTEM_LIB_DIR = path.join(AXION_ROOT, "libraries", "system");
+
+  app.get("/api/system", (_req: Request, res: Response) => {
+    try {
+      const docs: string[] = [];
+      const schemaFiles: string[] = [];
+      const registryFiles: string[] = [];
+
+      if (fs.existsSync(SYSTEM_LIB_DIR)) {
+        for (const f of fs.readdirSync(SYSTEM_LIB_DIR)) {
+          if (f.endsWith(".md") || f.endsWith(".txt")) docs.push(f);
+        }
+      }
+      const schemasDir = path.join(SYSTEM_LIB_DIR, "schemas");
+      if (fs.existsSync(schemasDir)) {
+        for (const f of fs.readdirSync(schemasDir)) {
+          if (f.endsWith(".json")) schemaFiles.push(f);
+        }
+      }
+      const registriesDir = path.join(SYSTEM_LIB_DIR, "registries");
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
+          if (f.endsWith(".json")) registryFiles.push(f);
+        }
+      }
+
+      const groups: Record<string, string[]> = {};
+      for (const d of docs.sort()) {
+        const prefix = d.match(/^(SYS-\d)/)?.[1] ?? "other";
+        if (!groups[prefix]) groups[prefix] = [];
+        groups[prefix].push(d);
+      }
+
+      res.json({
+        groups,
+        schemas: schemaFiles.sort(),
+        registries: registryFiles.sort(),
+        counts: { docs: docs.length, schemas: schemaFiles.length, registries: registryFiles.length },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/system/schemas", (_req: Request, res: Response) => {
+    try {
+      const schemasDir = path.join(SYSTEM_LIB_DIR, "schemas");
+      if (!fs.existsSync(schemasDir)) return res.json([]);
+      const schemas = fs.readdirSync(schemasDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((filename) => ({
+          filename,
+          content: JSON.parse(fs.readFileSync(path.join(schemasDir, filename), "utf-8")),
+        }));
+      res.json(schemas);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/system/registries", (_req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(SYSTEM_LIB_DIR, "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const registries = fs.readdirSync(registriesDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((filename) => ({
+          filename,
+          content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
+        }));
+      res.json(registries);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/system/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      const registriesDir = path.join(SYSTEM_LIB_DIR, "registries");
+      const candidates = [name, `${name}.json`, `${name}.v1.json`];
+      let filePath: string | null = null;
+      for (const c of candidates) {
+        const p = path.join(registriesDir, c);
+        if (fs.existsSync(p) && p.startsWith(registriesDir)) {
+          filePath = p;
+          break;
+        }
+      }
+      if (!filePath) return res.status(404).json({ error: `Registry '${name}' not found` });
+      const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      res.json({ filename: path.basename(filePath), content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/system/docs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(SYSTEM_LIB_DIR)) return res.json([]);
+      const files = fs.readdirSync(SYSTEM_LIB_DIR)
+        .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
+        .sort();
+      const docs = files.map((filename) => {
+        const raw = fs.readFileSync(path.join(SYSTEM_LIB_DIR, filename), "utf-8");
+        const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+        let frontmatter: Record<string, string> = {};
+        let content = raw;
+        if (fmMatch) {
+          const lines = fmMatch[1].split("\n");
+          for (const line of lines) {
+            const idx = line.indexOf(":");
+            if (idx > 0) {
+              frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            }
+          }
+          content = fmMatch[2];
+        }
+        return { filename, frontmatter, content };
+      });
+      res.json(docs);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/system/docs/:filename", (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      if (!filename.endsWith(".md") && !filename.endsWith(".txt")) {
+        return res.status(400).json({ error: "Only .md and .txt files are accessible" });
+      }
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      const filePath = path.join(SYSTEM_LIB_DIR, filename);
+      if (!filePath.startsWith(SYSTEM_LIB_DIR) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Document '${filename}' not found` });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+      let frontmatter: Record<string, string> = {};
+      let content = raw;
+      if (fmMatch) {
+        const lines = fmMatch[1].split("\n");
+        for (const line of lines) {
+          const idx = line.indexOf(":");
+          if (idx > 0) {
+            frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          }
+        }
+        content = fmMatch[2];
+      }
+      res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   app.post("/api/autofill", async (req: Request, res: Response) => {

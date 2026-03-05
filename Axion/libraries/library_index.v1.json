@@ -17,7 +17,14 @@
     { "id": "policy.risk_classes", "path": "Axion/libraries/policy/risk_classes.v1.json", "version": "1.0.0" },
     { "id": "policy.override_policy", "path": "Axion/libraries/policy/override_policy.v1.json", "version": "1.0.0" },
 
-    { "id": "telemetry.sink_policy", "path": "Axion/libraries/telemetry/sink_policy.v1.json", "version": "1.0.0" }
+    { "id": "telemetry.sink_policy", "path": "Axion/libraries/telemetry/sink_policy.v1.json", "version": "1.0.0" },
+
+    { "id": "system.run_profiles", "path": "Axion/libraries/system/registries/run_profiles.v1.json", "version": "1.0.0" },
+    { "id": "system.capabilities", "path": "Axion/libraries/system/registries/capabilities.v1.json", "version": "1.0.0" },
+    { "id": "system.quota_sets", "path": "Axion/libraries/system/registries/quota_sets.v1.json", "version": "1.0.0" },
+    { "id": "system.notification_event_types", "path": "Axion/libraries/system/registries/notification_event_types.v1.json", "version": "1.0.0" },
+    { "id": "system.notification_destinations", "path": "Axion/libraries/system/registries/notification_destinations.v1.json", "version": "1.0.0" },
+    { "id": "system.notification_routes", "path": "Axion/libraries/system/registries/notification_routes.v1.json", "version": "1.0.0" }
   ],
   "notes": [
     "Schema files are registered in schema_registry.v1.json (separate).",

@@ -116,10 +116,16 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system library stats, recent runs)
 - `GET /api/config` — pipeline configuration
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
+- `GET /api/system` — system library overview (groups, schema/registry/doc counts)
+- `GET /api/system/schemas` — all 14 system schemas with content
+- `GET /api/system/registries` — all 6 registries with content
+- `GET /api/system/registries/:name` — single registry by name
+- `GET /api/system/docs` — all markdown documents with frontmatter
+- `GET /api/system/docs/:filename` — single document by filename
 - `POST /api/uploads` — upload files (multipart/form-data, up to 10 files, 50MB limit per file)
 - `GET /api/uploads/:id` — download uploaded file
 - `DELETE /api/uploads/:id` — delete uploaded file
@@ -346,6 +352,19 @@ Control-plane configuration and runtime contracts for Axion. Defines the stable 
 ### Subdirectories
 - `schemas/` — 14 JSON Schema files (workspace, project, pin_policy, pin_set, capability_registry, adapter_profile, command_policy, quota_set, quota_profile_modifiers, notification_event_types, notification_destinations, notification_routes, policy_hook_request, policy_hook_decision)
 - `registries/` — 6 starter registry files (run_profiles, capabilities, quota_sets, notification_event_types, notification_destinations, notification_routes)
+
+### Runtime Integration
+- **Loader module**: `Axion/src/core/system/loader.ts` — loads and caches all 6 registries, exports typed accessors:
+  - `loadSystemLibrary(repoRoot)` — returns `{ profiles, capabilities, quotaSets, eventTypes, destinations, routes }`
+  - `getRunProfile(repoRoot, profileId)` — resolve a run profile from the registry
+  - `checkQuota(repoRoot, quotaSetId, metric, currentValue)` — check if a metric exceeds its quota limit
+  - `resolveNotificationRoutes(repoRoot, eventType)` — find matching notification routes for an event
+  - `evaluatePolicyHook(hookPoint, context)` — invoke policy at 6 hook points (currently returns ALLOW by default)
+  - `loadSystemDocs/loadSystemSchemas/loadSystemRegistries` — read files for API/UI consumption
+- **ICP wiring**: `RunController.createRun()` resolves `system_profile` from run_profiles registry, invokes `evaluatePolicyHook("RUN_START")`, sets `quota_set` on the run. `completeRun()` invokes `evaluatePolicyHook("KIT_EXPORT")` before releasing.
+- **ICPRun model**: Added optional `system_profile?: string` and `quota_set?: string` fields
+- **API**: 6 new `/api/system/*` endpoints expose system library data to the UI
+- **UI**: `/system` page with 3 tabs (Documents, Schemas, Registries), overview cards, expandable content viewers
 
 ### Key ID patterns
 - Workspace: `WS-[A-Z0-9]{6,}`
