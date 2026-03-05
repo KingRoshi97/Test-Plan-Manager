@@ -124,6 +124,38 @@ Standards pack system, index, applicability, resolution, snapshots, and gates (S
 
 **Legacy files preserved:** STD-01.categories.v1.json, STD-01.pack_contract.v1.json, STD-01.library_index.schema.v1.json, STD-02.resolution_rules.v1.json, STD-03.snapshot.schema.v1.json, resolver_rules.v1.json, standards_index.json
 
+### Templates Library (`Axion/libraries/templates/`)
+Document template library system, registry, selection rules, render envelopes, completeness, and gates (TMP-0 through TMP-7). 8 legacy flat files preserved for backward compat (pipeline code: selector.ts, filler.ts, renderer.ts, completeness.ts, completenessGate.ts, evidence.ts). 8 template category directories with 533 .md template files preserved.
+
+**Structure (35 new files: 27 root files + 5 schemas + 3 registries):**
+- **TMP-0**: Purpose + boundary checklist (2 docs)
+- **TMP-1**: Template model + determinism rules + validation checklist (3 docs) + `template_definition.v1.schema.json`
+- **TMP-2**: Registry model + determinism rules + validation checklist (3 docs) + `template_registry_entry.v1.schema.json` + `template_registry.v1.schema.json` + `template_registry.v1.json` registry
+- **TMP-3**: Selection model + selection rules + determinism rules + validation checklist (4 docs) + `template_selection.v1.schema.json` + `template_category_order.v1.json` registry
+- **TMP-4**: Render envelope model + determinism rules + validation checklist (3 docs) + `render_envelope.v1.schema.json`
+- **TMP-5**: Completeness model + placeholder syntax rules + evaluation rules + determinism rules + validation checklist (5 docs) + `template_completeness_policy.v1.json` registry
+- **TMP-6**: Template gates + gate mapping + gate spec JSON + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON)
+- **TMP-7**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
+
+**Subdirectories:**
+- `schemas/` — 5 JSON Schema files (template_definition: template_id/category(8)/placeholders[]/output, template_registry_entry: maturity lifecycle, template_registry: registry_id/templates[], template_selection: selection_id/selected[]/cap, render_envelope: envelope_id/template_ref/input_refs/knowledge_citations/completeness)
+- `registries/` — 3 registry files (template_registry: starter with 1 TMP-01 entry, template_category_order: 8 fixed categories for tie-breaking, template_completeness_policy: thresholds by risk class PROTOTYPE/PROD/COMPLIANCE)
+
+**Loader** (`Axion/src/core/templates/loader.ts`):
+- `loadTemplatesLibrary(repoRoot)` — loads template_registry + category_order + completeness_policy, cached
+- `loadTemplatesDocs(repoRoot)` — all TMP-N docs with frontmatter
+- `loadTemplatesSchemas(repoRoot)` — all JSON schema files from schemas/
+- `loadTemplatesRegistries(repoRoot)` — all registry JSON files from registries/
+- `getTemplateRegistry(repoRoot)` — returns template registry
+- `getCategoryOrder(repoRoot)` — returns category order registry
+- `getCompletenessPolicy(repoRoot)` — returns completeness policy registry
+
+**API**: 7 `/api/templates-library/*` endpoints (overview, schemas, registries, registries/:name, categories, docs, docs/:filename)
+**UI**: `/templates-library` page with 4 tabs (Templates, Documents, Schemas, Registries), template registry with category/profile/risk badges, 8-category ordering, completeness thresholds, 6 template gates (TMP-GATE-01..06) mapped to G4/G5
+**Registered in:** `schema_registry.v1.json` (5 new entries), `library_index.v1.json` (3 new + 2 existing entries)
+
+**Legacy files preserved:** TMP-01..TMP-05 JSON files, placeholder_catalog.v1.json, template_index.json, 8 category directories with 533 .md templates
+
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 
@@ -164,7 +196,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -205,6 +237,13 @@ package.json      # Root package.json with all dependencies
 - `GET /api/standards/packs` — all pack files with content
 - `GET /api/standards/docs` — all standards documents with frontmatter
 - `GET /api/standards/docs/:filename` — single document by filename
+- `GET /api/templates-library` — templates library overview (groups, schemas, registries, categories, counts: docs/schemas/registries/categoryCount/gates/templateFiles)
+- `GET /api/templates-library/schemas` — all 5 templates schemas with content
+- `GET /api/templates-library/registries` — all 3 registries with content
+- `GET /api/templates-library/registries/:name` — single registry by name
+- `GET /api/templates-library/categories` — list of 8 template category directories with file counts
+- `GET /api/templates-library/docs` — all templates documents with frontmatter
+- `GET /api/templates-library/docs/:filename` — single document by filename
 - `GET /api/intake-library` — intake library overview (groups, schema/registry/doc/enum/crossFieldRule/normalizationRule counts)
 - `GET /api/intake-library/schemas` — all 7 intake schemas with content
 - `GET /api/intake-library/registries` — all 3 registries with content
@@ -244,6 +283,7 @@ package.json      # Root package.json with all dependencies
 - `/policy` — Policy Library: 4 tabs (Policy, Documents, Schemas, Registries) for POL-0 through POL-5, 3 risk classes with color-coded cards, override permission matrix, policy sets
 - `/canonical` — Canonical Library: 4 tabs (Canonical, Documents, Schemas, Registries) for CAN-0 through CAN-7, entity type grid with canonical key templates, relationship type constraints table, unknowns model overview, canonical gates list
 - `/standards` — Standards Library: 4 tabs (Standards, Documents, Schemas, Packs) for STD-0 through STD-6, standards pack grid with scope badges, rules by type/severity, 6 standards gates (STD-GATE-01..06) mapped to G3_STANDARDS_RESOLVED
+- `/templates-library` — Templates Library: 4 tabs (Templates, Documents, Schemas, Registries) for TMP-0 through TMP-7, template registry with category/profile/risk badges, 8-category ordering, completeness thresholds, 6 template gates (TMP-GATE-01..06) mapped to G4/G5
 - `/intake-library` — Intake Library: 4 tabs (Intake, Documents, Schemas, Registries) for INT-0 through INT-7, field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
@@ -282,7 +322,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `intake/` — 47 files: 25 INT-0 through INT-7 docs + schemas/ (7) + registries/ (3) + 12 legacy flat files
   - `canonical/` — 47 files: 30 CAN-0 through CAN-7 docs + schemas/ (3) + registries/ (2) + 12 legacy flat files
   - `standards/` — 31 new files (24 STD-0 through STD-6 docs + schemas/ (5) + registries/ (1) + packs/ (11, 10 legacy + 1 new)) + 7 legacy flat files
-  - `templates/` — template_index.json, placeholder_catalog.v1.json + 77 template groups across 8 categories (533 total .md files)
+  - `templates/` — 35 new files (27 TMP-0 through TMP-7 docs + schemas/ (5) + registries/ (3)) + 8 legacy flat files + 8 category directories with 533 .md template files
   - `planning/` — work_breakdown.schema.v1.json, acceptance_map.schema.v1.json, sequencing_policy.v1.json
   - `gates/` — Gates Library (GATE-0 through GATE-6). See Gates Library section below.
   - `verification/` — proof_log.schema.v1.json, command_runs.schema.v1.json

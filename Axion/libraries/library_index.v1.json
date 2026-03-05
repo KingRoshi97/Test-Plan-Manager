@@ -17,6 +17,9 @@
 
     { "id": "templates.index", "path": "Axion/libraries/templates/template_index.json", "version": "1.0.0" },
     { "id": "templates.placeholder_catalog", "path": "Axion/libraries/templates/placeholder_catalog.v1.json", "version": "1.0.0" },
+    { "id": "templates.template_registry", "path": "Axion/libraries/templates/registries/template_registry.v1.json", "version": "1.0.0" },
+    { "id": "templates.category_order", "path": "Axion/libraries/templates/registries/template_category_order.v1.json", "version": "1.0.0" },
+    { "id": "templates.completeness_policy", "path": "Axion/libraries/templates/registries/template_completeness_policy.v1.json", "version": "1.0.0" },
 
     { "id": "planning.sequencing_policy", "path": "Axion/libraries/planning/sequencing_policy.v1.json", "version": "1.0.0" },
 

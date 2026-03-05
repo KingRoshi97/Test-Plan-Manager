@@ -360,6 +360,37 @@
       "path": "Axion/libraries/standards/schemas/standards_snapshot.v1.schema.json",
       "uri": "axion://schemas/standards/standards_snapshot.v1.schema.json",
       "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "templates.template_definition.v1",
+      "path": "Axion/libraries/templates/schemas/template_definition.v1.schema.json",
+      "uri": "axion://schemas/templates/template_definition.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "templates.template_registry_entry.v1",
+      "path": "Axion/libraries/templates/schemas/template_registry_entry.v1.schema.json",
+      "uri": "axion://schemas/templates/template_registry_entry.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "templates.template_registry.v1",
+      "path": "Axion/libraries/templates/schemas/template_registry.v1.schema.json",
+      "uri": "axion://schemas/templates/template_registry.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "templates.template_selection.v1",
+      "path": "Axion/libraries/templates/schemas/template_selection.v1.schema.json",
+      "uri": "axion://schemas/templates/template_selection.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "templates.render_envelope.v1",
+      "path": "Axion/libraries/templates/schemas/render_envelope.v1.schema.json",
+      "uri": "axion://schemas/templates/render_envelope.v1.schema.json",
+      "version": "1.0.0"
     }
   ]
 }

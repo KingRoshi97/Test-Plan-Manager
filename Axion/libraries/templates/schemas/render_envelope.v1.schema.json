@@ -1,0 +1,106 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "render_envelope.v1",
+    "type": "object",
+    "required": [
+      "envelope_id",
+      "run_id",
+      "template_ref",
+      "output_ref",
+      "input_refs",
+      "knowledge_citations",
+      "policy_refs",
+      "created_at"
+    ],
+    "properties": {
+      "envelope_id": { "type": "string", "pattern": "^ENV-[A-Z0-9]{6,}$" },
+      "run_id": { "type": "string" },
+
+     "template_ref": {
+       "type": "object",
+       "required": ["template_id", "version", "path"],
+       "properties": {
+         "template_id": { "type": "string" },
+         "version": { "type": "string" },
+         "path": { "type": "string" },
+         "hash": { "type": "string" }
+       },
+       "additionalProperties": false
+     },
+
+     "output_ref": {
+       "type": "object",
+       "required": ["path"],
+       "properties": {
+         "path": { "type": "string" },
+         "hash": { "type": "string" }
+       },
+       "additionalProperties": false
+     },
+
+     "input_refs": {
+  "type": "object",
+  "required": ["canonical_spec_ref", "standards_snapshot_ref"],
+  "properties": {
+    "canonical_spec_ref": { "$ref": "#/$defs/ref" },
+    "standards_snapshot_ref": { "$ref": "#/$defs/ref" },
+    "knowledge_selection_ref": { "$ref": "#/$defs/ref" },
+    "plan_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ref" }
+    }
+  },
+  "additionalProperties": false
+},
+
+"knowledge_citations": {
+  "type": "array",
+  "items": { "type": "string", "pattern": "^KID-" }
+},
+
+"reuse_log_refs": {
+  "type": "array",
+  "description": "Present only if reusable excerpts were included per allowlist rules.",
+  "items": { "$ref": "#/$defs/ref" }
+},
+
+"policy_refs": {
+  "type": "object",
+  "required": ["risk_class", "policy_set_id"],
+  "properties": {
+    "risk_class": { "type": "string" },
+    "policy_set_id": { "type": "string" },
+    "decisions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Policy decision IDs relevant to this render (optional)"
+    }
+  },
+  "additionalProperties": false
+},
+
+"completeness": {
+ "type": "object",
+ "properties": {
+   "placeholders_total": { "type": "integer", "minimum": 0 },
+         "placeholders_filled": { "type": "integer", "minimum": 0 },
+         "missing_required_placeholder_ids": { "type": "array", "items": { "type": "string" } }
+       },
+       "additionalProperties": false
+     },
+
+      "created_at": { "type": "string", "format": "date-time" }
+    },
+
+    "$defs": {
+      "ref": {
+        "type": "object",
+        "required": ["path"],
+        "properties": { "path": { "type": "string" }, "hash": { "type": "string" } },
+        "additionalProperties": false
+      }
+    },
+
+    "additionalProperties": false
+}

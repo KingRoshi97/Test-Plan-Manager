@@ -364,6 +364,23 @@ export function registerRoutes(app: Express) {
         } catch {}
         return { docs: stdDocCount, schemas: stdSchemaCount, registries: stdRegistryCount, packs: stdPackCount, rules: stdRuleCount };
       })(),
+      templates_library: (() => {
+        let tmpDocCount = 0, tmpSchemaCount = 0, tmpRegistryCount = 0, tmpCategoryCount = 0;
+        try {
+          const tmpDir = path.join(AXION_ROOT, "libraries", "templates");
+          if (fs.existsSync(tmpDir)) tmpDocCount = fs.readdirSync(tmpDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+          const tmpSchDir = path.join(tmpDir, "schemas");
+          if (fs.existsSync(tmpSchDir)) tmpSchemaCount = fs.readdirSync(tmpSchDir).filter((f) => f.endsWith(".json")).length;
+          const tmpRegDir = path.join(tmpDir, "registries");
+          if (fs.existsSync(tmpRegDir)) tmpRegistryCount = fs.readdirSync(tmpRegDir).filter((f) => f.endsWith(".json")).length;
+          const catOrderPath = path.join(tmpRegDir, "template_category_order.v1.json");
+          if (fs.existsSync(catOrderPath)) {
+            const co = JSON.parse(fs.readFileSync(catOrderPath, "utf-8"));
+            tmpCategoryCount = co.order?.length ?? 0;
+          }
+        } catch {}
+        return { docs: tmpDocCount, schemas: tmpSchemaCount, registries: tmpRegistryCount, categories: tmpCategoryCount };
+      })(),
       recentRuns,
     });
   });
@@ -1733,6 +1750,227 @@ export function registerRoutes(app: Express) {
       }
       const filePath = path.join(STANDARDS_LIB_DIR, filename);
       if (!filePath.startsWith(STANDARDS_LIB_DIR) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Document '${filename}' not found` });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+      let frontmatter: Record<string, string> = {};
+      let content = raw;
+      if (fmMatch) {
+        const lines = fmMatch[1].split("\n");
+        for (const line of lines) {
+          const idx = line.indexOf(":");
+          if (idx > 0) {
+            frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          }
+        }
+        content = fmMatch[2];
+      }
+      res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  const TEMPLATES_LIB_DIR = path.join(AXION_ROOT, "libraries", "templates");
+
+  function countMdFilesRecursive(dir: string): number {
+    let count = 0;
+    if (!fs.existsSync(dir)) return 0;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) count += countMdFilesRecursive(path.join(dir, entry.name));
+      else if (entry.name.endsWith(".md")) count++;
+    }
+    return count;
+  }
+
+  function listMdFilesRecursive(dir: string, prefix = ""): string[] {
+    const result: string[] = [];
+    if (!fs.existsSync(dir)) return result;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) result.push(...listMdFilesRecursive(path.join(dir, entry.name), rel));
+      else if (entry.name.endsWith(".md")) result.push(rel);
+    }
+    return result.sort();
+  }
+
+  app.get("/api/templates-library", (_req: Request, res: Response) => {
+    try {
+      const groups: Record<string, string[]> = {};
+      const schemas: string[] = [];
+      const registries: string[] = [];
+      let gateCount = 0;
+      let categoryCount = 0;
+
+      if (fs.existsSync(TEMPLATES_LIB_DIR)) {
+        for (const f of fs.readdirSync(TEMPLATES_LIB_DIR)) {
+          if (f.endsWith(".md") || f.endsWith(".txt") || (f.endsWith(".json") && f.startsWith("TMP-"))) {
+            const prefix = f.match(/^(TMP-\d+)/)?.[1] ?? "other";
+            if (!groups[prefix]) groups[prefix] = [];
+            groups[prefix].push(f);
+          }
+        }
+      }
+      const schemasDir = path.join(TEMPLATES_LIB_DIR, "schemas");
+      if (fs.existsSync(schemasDir)) {
+        for (const f of fs.readdirSync(schemasDir)) {
+          if (f.endsWith(".json")) schemas.push(f);
+        }
+      }
+      const registriesDir = path.join(TEMPLATES_LIB_DIR, "registries");
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
+          if (f.endsWith(".json")) registries.push(f);
+        }
+      }
+
+      const gateSpecPath = path.join(TEMPLATES_LIB_DIR, "TMP-6_template_gates.spec.json");
+      if (fs.existsSync(gateSpecPath)) {
+        try {
+          const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
+          gateCount = gs.gates?.length ?? 0;
+        } catch {}
+      }
+
+      const catOrderPath = path.join(registriesDir, "template_category_order.v1.json");
+      if (fs.existsSync(catOrderPath)) {
+        try {
+          const co = JSON.parse(fs.readFileSync(catOrderPath, "utf-8"));
+          categoryCount = co.order?.length ?? 0;
+        } catch {}
+      }
+
+      const categories: Array<{ name: string; fileCount: number }> = [];
+      const catDirs = ["Product Definition", "System Architecture", "Application Build", "Data & Information", "Experience Design", "Integrations & External Services", "Security, Privacy & Compliance", "Operations & Reliability"];
+      for (const dir of catDirs) {
+        const catDir = path.join(TEMPLATES_LIB_DIR, dir);
+        if (fs.existsSync(catDir)) {
+          const count = countMdFilesRecursive(catDir);
+          categories.push({ name: dir, fileCount: count });
+        }
+      }
+
+      const docCount = Object.values(groups).flat().length;
+
+      res.json({
+        groups,
+        schemas,
+        registries,
+        categories,
+        counts: {
+          docs: docCount,
+          schemas: schemas.length,
+          registries: registries.length,
+          categoryCount,
+          gates: gateCount,
+          templateFiles: categories.reduce((sum, c) => sum + c.fileCount, 0),
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/templates-library/schemas", (_req: Request, res: Response) => {
+    try {
+      const schemasDir = path.join(TEMPLATES_LIB_DIR, "schemas");
+      if (!fs.existsSync(schemasDir)) return res.json([]);
+      const files = fs.readdirSync(schemasDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(schemasDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/templates-library/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      if (name.includes("..") || name.includes("/")) return res.status(400).json({ error: "Invalid name" });
+      const filePath = path.join(TEMPLATES_LIB_DIR, "registries", name.endsWith(".json") ? name : `${name}.json`);
+      if (!fs.existsSync(filePath)) return res.status(404).json({ error: `Registry '${name}' not found` });
+      res.json({ filename: path.basename(filePath), content: JSON.parse(fs.readFileSync(filePath, "utf-8")) });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/templates-library/registries", (_req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(TEMPLATES_LIB_DIR, "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const files = fs.readdirSync(registriesDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/templates-library/categories", (_req: Request, res: Response) => {
+    try {
+      const catDirs = ["Product Definition", "System Architecture", "Application Build", "Data & Information", "Experience Design", "Integrations & External Services", "Security, Privacy & Compliance", "Operations & Reliability"];
+      const categories: Array<{ name: string; fileCount: number; files: string[] }> = [];
+      for (const dir of catDirs) {
+        const catDir = path.join(TEMPLATES_LIB_DIR, dir);
+        if (fs.existsSync(catDir)) {
+          const files = listMdFilesRecursive(catDir);
+          categories.push({ name: dir, fileCount: files.length, files });
+        }
+      }
+      res.json(categories);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/templates-library/docs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(TEMPLATES_LIB_DIR)) return res.json([]);
+      const files = fs.readdirSync(TEMPLATES_LIB_DIR)
+        .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
+        .sort();
+      const result = files.map((filename) => {
+        const raw = fs.readFileSync(path.join(TEMPLATES_LIB_DIR, filename), "utf-8");
+        const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+        let frontmatter: Record<string, string> = {};
+        let content = raw;
+        if (fmMatch) {
+          const lines = fmMatch[1].split("\n");
+          for (const line of lines) {
+            const idx = line.indexOf(":");
+            if (idx > 0) {
+              frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            }
+          }
+          content = fmMatch[2];
+        }
+        return { filename, frontmatter, content };
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/templates-library/docs/:filename", (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      if (!filename.endsWith(".md") && !filename.endsWith(".txt")) {
+        return res.status(400).json({ error: "Only .md and .txt files are accessible" });
+      }
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      const filePath = path.join(TEMPLATES_LIB_DIR, filename);
+      if (!filePath.startsWith(TEMPLATES_LIB_DIR) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: `Document '${filename}' not found` });
       }
       const raw = fs.readFileSync(filePath, "utf-8");

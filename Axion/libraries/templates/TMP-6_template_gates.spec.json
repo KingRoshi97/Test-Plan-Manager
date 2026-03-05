@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "TMP-6b",
+  "gates": [
+    { "gate_id": "TMP-GATE-01", "name": "Template registry pinned + valid", "severity": "hard_stop", "checks": ["pinned(template_registry)", "schema_valid(template_registry.v1)"] },
+    { "gate_id": "TMP-GATE-02", "name": "Template selection artifact valid", "severity": "hard_stop", "checks": ["TEMPLATE_SELECTION exists", "schema_valid(template_selection.v1)", "selected templates exist in registry"] },
+    { "gate_id": "TMP-GATE-03", "name": "Required inputs satisfiable", "severity": "hard_stop", "checks": ["for each selected template: required_inputs present"] },
+    { "gate_id": "TMP-GATE-04", "name": "Render envelopes produced", "severity": "hard_stop", "checks": ["for each output: render_envelope exists and schema_valid(render_envelope.v1)"] },
+    { "gate_id": "TMP-GATE-05", "name": "Completeness threshold met", "severity": "policy_controlled", "checks": ["completeness >= threshold for risk_class", "no missing required sections"] },
+    { "gate_id": "TMP-GATE-06", "name": "Knowledge citations + reuse logs", "severity": "hard_stop", "checks": ["if knowledge used then citations present", "if reuse then reuse_log_refs present"] }
+  ]
+}

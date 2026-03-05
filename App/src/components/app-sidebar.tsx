@@ -14,6 +14,7 @@ import {
   Scale,
   Network,
   BookMarked,
+  FileText,
   ClipboardList,
 } from "lucide-react";
 
@@ -27,6 +28,7 @@ const links = [
   { href: "/policy", label: "Policy Library", icon: Scale },
   { href: "/canonical", label: "Canonical Library", icon: Network },
   { href: "/standards", label: "Standards Library", icon: BookMarked },
+  { href: "/templates-library", label: "Templates Library", icon: FileText },
   { href: "/intake-library", label: "Intake Library", icon: ClipboardList },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },

@@ -1,0 +1,19 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "template_registry.v1",
+    "templates": [
+      {
+        "template_id": "TMP-01",
+        "version": "1.0.0",
+        "path": "Axion/libraries/templates/TMP-01.template_index.v1.json",
+        "category": "PRODUCT_DEFINITION",
+        "subcategory": "Problem/Goals",
+        "required_inputs": ["CANONICAL_SPEC", "STANDARDS_SNAPSHOT"],
+        "tags": ["product", "scope"],
+        "domains": ["project"],
+        "profiles": ["PROFILE-API", "PROFILE-WEB", "PROFILE-MOBILE"],
+        "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"],
+        "maturity": "draft"
+      }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "template_registry_entry.v1",
+    "type": "object",
+    "required": ["template_id", "version", "path", "category", "required_inputs", "tags", "maturity"],
+    "properties": {
+      "template_id": { "type": "string" },
+      "version": { "type": "string" },
+      "path": { "type": "string" },
+      "hash": { "type": "string" },
+
+     "category": { "type": "string" },
+     "subcategory": { "type": "string" },
+
+     "required_inputs": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+
+     "tags": { "type": "array", "items": { "type": "string" } },
+     "domains": { "type": "array", "items": { "type": "string" } },
+     "profiles": { "type": "array", "items": { "type": "string" } },
+     "risk_classes": { "type": "array", "items": { "type": "string" } },
+
+     "maturity": { "type": "string", "enum": ["draft", "reviewed", "verified", "golden"] },
+
+      "deprecated_by": { "type": "string" }
+    },
+    "additionalProperties": false
+}
