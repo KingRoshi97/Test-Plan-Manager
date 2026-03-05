@@ -185,6 +185,26 @@ export default function PageRouting({ data, onChange }: PageProps) {
           ))}
         </div>
       </fieldset>
+
+      <fieldset className="space-y-2">
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+          <input
+            type="checkbox"
+            id="autofill-toggle"
+            checked={r.autofill}
+            onChange={(e) => onChange("routing", { autofill: e.target.checked })}
+            className="h-4 w-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))]"
+          />
+          <label htmlFor="autofill-toggle" className="flex-1 cursor-pointer">
+            <span className="font-medium text-sm text-[hsl(var(--foreground))]">
+              Use AI to draft answers (opt-in)
+            </span>
+            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+              When enabled, AI will suggest answers for remaining sections based on your project details. All values are editable.
+            </p>
+          </label>
+        </div>
+      </fieldset>
     </div>
   );
 }

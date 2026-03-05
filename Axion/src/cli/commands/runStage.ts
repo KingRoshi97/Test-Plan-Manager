@@ -34,7 +34,7 @@ import { createProofsFromGateReports } from "../../core/proof/create.js";
 import { ProofLedger } from "../../core/proofLedger/ledger.js";
 import { validatePointers, collectRunPointers } from "../../core/evidence/pointers.js";
 
-const STAGE_IO: Record<string, { consumed: string[]; produced: string[] }> = {
+export const STAGE_IO: Record<string, { consumed: string[]; produced: string[] }> = {
   S1_INGEST_NORMALIZE: {
     consumed: ["intake/raw_submission.*"],
     produced: ["intake/submission.json", "intake/normalized_input.json", "intake/submission_record.json", "intake/validation_result.json"],
@@ -89,36 +89,7 @@ const STAGE_IO: Record<string, { consumed: string[]; produced: string[] }> = {
   },
 };
 
-export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string): void {
-  const resolved = resolveStageId(stageIdArg);
-  if (!resolved) {
-    console.error(`Invalid stage_id: ${stageIdArg}`);
-    console.error(`Valid stages: ${STAGE_ORDER.join(", ")}`);
-    process.exit(1);
-  }
-  const stageId: StageId = resolved;
-
-  const runDir = join(baseDir, ".axion", "runs", runId);
-  const manifestPath = join(runDir, "run_manifest.json");
-
-  let manifest: RunManifest;
-  try {
-    manifest = readJson<RunManifest>(manifestPath);
-  } catch {
-    console.error(`Run not found: ${runId}`);
-    process.exit(1);
-  }
-
-  const stageEntry = manifest.stages.find((s) => s.stage_id === stageId);
-  if (!stageEntry) {
-    console.error(`Stage ${stageId} not found in manifest for run ${runId}`);
-    process.exit(1);
-  }
-
-  const io = STAGE_IO[stageId] ?? { consumed: [], produced: [] };
-  const now = isoNow();
-  const generatedAt = manifest.created_at;
-
+export function executeStageWork(baseDir: string, runDir: string, runId: string, stageId: StageId, generatedAt: string): void {
   if (stageId === "S1_INGEST_NORMALIZE") {
     const rawSubmissionPath = join(runDir, "intake", "raw_submission.json");
     let rawSubmission: Record<string, unknown>;
@@ -176,8 +147,7 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     try {
       normalizedInput = readJson<Record<string, unknown>>(normalizedPath);
     } catch {
-      console.error("Cannot run S2: normalized_input.json not found. Run S1 first.");
-      process.exit(1);
+      throw new Error("Cannot run S2: normalized_input.json not found. Run S1 first.");
     }
 
     const validationResult = validateIntake(normalizedInput, "1.0.0", baseDir);
@@ -208,8 +178,7 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     try {
       normalizedInput = readJson<Record<string, unknown>>(normalizedPath);
     } catch {
-      console.error("Cannot run S3: normalized_input.json not found. Run S1 first.");
-      process.exit(1);
+      throw new Error("Cannot run S3: normalized_input.json not found. Run S1 first.");
     }
 
     const canonicalSpec = buildSpec(normalizedInput, null, baseDir);
@@ -229,8 +198,7 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     try {
       canonicalSpec = readJson<Record<string, unknown>>(specPath);
     } catch {
-      console.error("Cannot run S4: canonical_spec.json not found. Run S3 first.");
-      process.exit(1);
+      throw new Error("Cannot run S4: canonical_spec.json not found. Run S3 first.");
     }
 
     const validationReport = validateCanonicalSpec(canonicalSpec as any, runId, baseDir);
@@ -245,8 +213,7 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     try {
       normalizedInput = readJson<Record<string, unknown>>(normalizedPath);
     } catch {
-      console.error("Cannot run S5: normalized_input.json not found. Run S1 first.");
-      process.exit(1);
+      throw new Error("Cannot run S5: normalized_input.json not found. Run S1 first.");
     }
 
     const registry = loadStandardsRegistry(baseDir);
@@ -296,8 +263,7 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     try {
       canonicalSpec = readJson<CanonicalSpec>(specPath);
     } catch {
-      console.error("Cannot run S8: canonical_spec.json not found. Run S3 first.");
-      process.exit(1);
+      throw new Error("Cannot run S8: canonical_spec.json not found. Run S3 first.");
     }
 
     const workBreakdown = buildWorkBreakdown(canonicalSpec, runId, baseDir);
@@ -355,6 +321,18 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     const kitResult = buildRealKit(runDir, runId, generatedAt, baseDir);
     console.log(`  S10: Packaged kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
   }
+}
+
+export interface StageExecutionResult {
+  passed: boolean;
+  reportRelPath: string;
+}
+
+export function executeStageWithGates(baseDir: string, runDir: string, runId: string, stageId: StageId, generatedAt: string): StageExecutionResult {
+  const io = STAGE_IO[stageId] ?? { consumed: [], produced: [] };
+  const now = isoNow();
+
+  executeStageWork(baseDir, runDir, runId, stageId, generatedAt);
 
   const gateId = STAGE_GATES[stageId];
   let gatesPassed = true;
@@ -363,10 +341,6 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     if (!gateResult.all_passed) {
       gatesPassed = false;
     }
-  }
-
-  if (gateId) {
-    manifest = readJson<RunManifest>(manifestPath);
   }
 
   if (!gatesPassed) {
@@ -385,14 +359,7 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     const failReportRelPath = `stage_reports/${stageId}.json`;
     writeJson(join(runDir, failReportRelPath), failReport);
 
-    stageEntry.status = "fail";
-    stageEntry.stage_report_ref = failReportRelPath;
-    manifest.status = "failed";
-    manifest.updated_at = isoNow();
-    writeJson(manifestPath, manifest);
-
-    console.log(`  Stage ${stageId}: FAIL (gate ${gateId} blocked)`);
-    process.exit(1);
+    return { passed: false, reportRelPath: failReportRelPath };
   }
 
   const report: StageReport = {
@@ -410,20 +377,6 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
   const reportRelPath = `stage_reports/${stageId}.json`;
   const reportPath = join(runDir, reportRelPath);
   writeJson(reportPath, report);
-
-  const currentStageEntry = manifest.stages.find((s) => s.stage_id === stageId);
-  if (currentStageEntry) {
-    currentStageEntry.status = "pass";
-    currentStageEntry.stage_report_ref = reportRelPath;
-  }
-  manifest.updated_at = isoNow();
-
-  const allDone = manifest.stages.every((s) => s.status === "pass" || s.status === "skipped");
-  if (allDone) {
-    manifest.status = "completed";
-  }
-
-  writeJson(manifestPath, manifest);
 
   const indexPath = join(runDir, "artifact_index.json");
   let index: ArtifactIndexEntry[];
@@ -444,5 +397,67 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
 
   writeJson(indexPath, index);
 
-  console.log(`  Stage ${stageId}: pass → ${reportRelPath}`);
+  return { passed: true, reportRelPath };
+}
+
+export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string): void {
+  const resolved = resolveStageId(stageIdArg);
+  if (!resolved) {
+    console.error(`Invalid stage_id: ${stageIdArg}`);
+    console.error(`Valid stages: ${STAGE_ORDER.join(", ")}`);
+    process.exit(1);
+  }
+  const stageId: StageId = resolved;
+
+  const runDir = join(baseDir, ".axion", "runs", runId);
+  const manifestPath = join(runDir, "run_manifest.json");
+
+  let manifest: RunManifest;
+  try {
+    manifest = readJson<RunManifest>(manifestPath);
+  } catch {
+    console.error(`Run not found: ${runId}`);
+    process.exit(1);
+  }
+
+  const stageEntry = manifest.stages.find((s) => s.stage_id === stageId);
+  if (!stageEntry) {
+    console.error(`Stage ${stageId} not found in manifest for run ${runId}`);
+    process.exit(1);
+  }
+
+  const generatedAt = manifest.created_at;
+  const result = executeStageWithGates(baseDir, runDir, runId, stageId, generatedAt);
+
+  manifest = readJson<RunManifest>(manifestPath);
+  const currentStageEntry = manifest.stages.find((s) => s.stage_id === stageId);
+
+  if (!result.passed) {
+    if (currentStageEntry) {
+      currentStageEntry.status = "fail";
+      currentStageEntry.stage_report_ref = result.reportRelPath;
+    }
+    manifest.status = "failed";
+    manifest.updated_at = isoNow();
+    writeJson(manifestPath, manifest);
+
+    const gateId = STAGE_GATES[stageId];
+    console.log(`  Stage ${stageId}: FAIL (gate ${gateId} blocked)`);
+    process.exit(1);
+  }
+
+  if (currentStageEntry) {
+    currentStageEntry.status = "pass";
+    currentStageEntry.stage_report_ref = result.reportRelPath;
+  }
+  manifest.updated_at = isoNow();
+
+  const allDone = manifest.stages.every((s) => s.status === "pass" || s.status === "skipped");
+  if (allDone) {
+    manifest.status = "completed";
+  }
+
+  writeJson(manifestPath, manifest);
+
+  console.log(`  Stage ${stageId}: pass → ${result.reportRelPath}`);
 }

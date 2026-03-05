@@ -1,17 +1,22 @@
 import { join } from "node:path";
-import { readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { cmdInit } from "./commands/initAxion.js";
-import { cmdRunStart } from "./commands/runControlPlane.js";
+import { cmdRunStart, cmdRunFull } from "./commands/runControlPlane.js";
 import { cmdRunStage } from "./commands/runStage.js";
 import { cmdRunGates } from "./commands/runGates.js";
-import { STAGE_ORDER } from "../types/run.js";
+
+function resolveBaseDir(): string {
+  if (existsSync("registries")) return ".";
+  if (existsSync("Axion/registries")) return "Axion";
+  return ".";
+}
 
 const USAGE = `
 axion — Axion CLI
 
 Usage:
   axion init                                  Initialize .axion/ directory
-  axion run                                   Full run: init + start + all stages
+  axion run                                   Full run: init + start + all stages (ICP control plane)
   axion run start                             Create a new run (allocate RUN-NNNNNN)
   axion run stage <run_id> <stage_id>         Execute a single stage for a run
   axion run gates <run_id> <stage_id>         Run gates for a stage
@@ -31,6 +36,11 @@ Gate Registry (stage → gate):
   S8_BUILD_PLAN           → G6_PLAN_COVERAGE
   S9_VERIFY_PROOF         → G7_VERIFICATION (not enforced yet)
   S10_PACKAGE             → G8_PACKAGE_INTEGRITY
+
+Control Planes:
+  ICP — Internal Control Plane (orchestrates pipeline)
+  KCP — Kit Control Plane (enforces kit-local rules)
+  MCP — Maintenance Control Plane (handles upgrades/migrations)
 `;
 
 function walk(base: string, current: string): string[] {
@@ -48,10 +58,10 @@ function walk(base: string, current: string): string[] {
   return results;
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const command = args[0] || "help";
-  const baseDir = ".";
+  const baseDir = resolveBaseDir();
 
   switch (command) {
     case "init": {
@@ -64,8 +74,9 @@ function main(): void {
 
       if (subCommand === "start") {
         cmdInit(baseDir);
-        console.log("\n[run start] Creating new run...");
-        cmdRunStart(baseDir);
+        console.log("\n[run start] Creating new run via ICP...");
+        const runId = await cmdRunStart(baseDir);
+        console.log(`  Run ID: ${runId}`);
 
       } else if (subCommand === "stage") {
         const runId = args[2];
@@ -87,19 +98,14 @@ function main(): void {
 
       } else {
         cmdInit(baseDir);
+        await cmdRunFull(baseDir);
 
-        console.log("\n[1/2] Creating new run...");
-        const runId = cmdRunStart(baseDir);
-        const runDir = join(baseDir, ".axion", "runs", runId);
+        const runDir = join(baseDir, ".axion", "runs");
+        const runs = readdirSync(runDir).filter((d) => d.startsWith("RUN-")).sort();
+        const lastRunDir = join(runDir, runs[runs.length - 1]);
 
-        console.log(`\n[2/2] Executing ${STAGE_ORDER.length} stages...`);
-        for (const stageId of STAGE_ORDER) {
-          cmdRunStage(baseDir, runId, stageId);
-        }
-
-        console.log(`\nDone. Full artifact spine written to: ${runDir}`);
         console.log("\nArtifact listing:");
-        for (const entry of walk(runDir, runDir)) {
+        for (const entry of walk(lastRunDir, lastRunDir)) {
           console.log(`  ${entry}`);
         }
       }
@@ -114,4 +120,7 @@ function main(): void {
   }
 }
 
-main();
+main().catch((err) => {
+  console.error("Fatal error:", err.message || err);
+  process.exit(1);
+});

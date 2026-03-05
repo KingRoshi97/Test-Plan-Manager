@@ -5,6 +5,7 @@ export interface IntakeData {
     type_preset: string;
     build_target: string;
     audience_context: string;
+    autofill: boolean;
   };
   project: {
     project_name: string;
@@ -98,6 +99,7 @@ export function createEmptyIntakeData(): IntakeData {
       type_preset: "",
       build_target: "",
       audience_context: "",
+      autofill: false,
     },
     project: {
       project_name: "",

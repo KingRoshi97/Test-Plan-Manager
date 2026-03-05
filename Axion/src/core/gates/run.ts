@@ -2,11 +2,30 @@ import { join } from "node:path";
 import { readJson, writeJson } from "../../utils/fs.js";
 import { isoNow } from "../../utils/time.js";
 import { loadGateRegistry, filterGatesByStage, templateGatePaths } from "./registry.js";
+import type { GateDefinition, GateCheck } from "./registry.js";
 import { evalCheck } from "./evaluator.js";
 import { writeGateReport, deriveTarget, checksToIssues } from "./report.js";
 import type { GateReportV1, CheckReport } from "./report.js";
 import type { RunManifest } from "../../types/run.js";
 import { evaluateEvidenceCompleteness, getRequiredProofTypes } from "./evidencePolicy.js";
+
+function prefixGatePaths(gate: GateDefinition, baseDir: string): GateDefinition {
+  if (baseDir === ".") return gate;
+  const prefixPath = (p: string | undefined): string | undefined => {
+    if (!p) return p;
+    if (p.startsWith("/")) return p;
+    return join(baseDir, p);
+  };
+  return {
+    ...gate,
+    checks: gate.checks.map((check): GateCheck => ({
+      ...check,
+      path: prefixPath(check.path),
+      manifest_path: prefixPath(check.manifest_path),
+      bundle_root: prefixPath(check.bundle_root),
+    })),
+  };
+}
 
 export interface GateRunResult {
   reports: GateReportV1[];
@@ -47,7 +66,7 @@ export function runGatesForStage(baseDir: string, runId: string, stageId: string
   const reports: GateReportV1[] = [];
 
   for (const rawGate of stageGates) {
-    const gate = templateGatePaths(rawGate, runId);
+    const gate = prefixGatePaths(templateGatePaths(rawGate, runId), baseDir);
     const checkReports: CheckReport[] = [];
     let gatePassed = true;
     let firstFailureCode: string | null = null;
@@ -102,7 +121,6 @@ export function runGatesForStage(baseDir: string, runId: string, stageId: string
     });
 
     if (!gatePassed) {
-      manifest.status = "failed";
       manifest.updated_at = isoNow();
       writeJson(manifestPath, manifest);
 

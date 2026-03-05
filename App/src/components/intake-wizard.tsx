@@ -1,8 +1,8 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "../lib/queryClient";
-import { ArrowLeft, ArrowRight, Loader2, Check, SkipForward } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Check, SkipForward, Sparkles } from "lucide-react";
 import { createEmptyIntakeData, type IntakeData } from "./intake/types";
 import PageRouting from "./intake/page-routing";
 import PageProject from "./intake/page-project";
@@ -72,11 +72,24 @@ function validatePage(pageId: number, data: IntakeData): string | null {
   }
 }
 
+const PAGE_ID_TO_SECTION: Record<number, string> = {
+  2: "intent",
+  3: "design",
+  4: "functional",
+  5: "data",
+  6: "auth",
+  8: "nfr",
+  9: "category_specific",
+};
+
 export default function IntakeWizard() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<IntakeData>(createEmptyIntakeData);
   const [error, setError] = useState<string | null>(null);
+  const [autofillLoading, setAutofillLoading] = useState(false);
+  const [autofilledSections, setAutofilledSections] = useState<Set<string>>(new Set());
+  const autofillTriggered = useRef(false);
 
   const visiblePages = useMemo(() => {
     const always = ALL_PAGES.filter((p) => p.id <= 4 || p.id >= 8);
@@ -96,6 +109,35 @@ export default function IntakeWizard() {
     setError(null);
   }, []);
 
+  const runAutofillForSection = useCallback(async (sectionName: string) => {
+    if (autofilledSections.has(sectionName)) return;
+    setAutofillLoading(true);
+    try {
+      const resp = await fetch("/api/autofill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          routing: data.routing,
+          project: data.project,
+          targetSection: sectionName,
+        }),
+      });
+      if (resp.ok) {
+        const result = await resp.json();
+        if (result.suggestions && Object.keys(result.suggestions).length > 0) {
+          setData((prev) => ({
+            ...prev,
+            [sectionName]: { ...prev[sectionName as keyof IntakeData], ...result.suggestions },
+          }));
+          setAutofilledSections((prev) => new Set(prev).add(sectionName));
+        }
+      }
+    } catch {
+    } finally {
+      setAutofillLoading(false);
+    }
+  }, [data.routing, data.project, autofilledSections]);
+
   const goNext = () => {
     if (!currentPageDef) return;
     const err = validatePage(currentPageDef.id, data);
@@ -104,7 +146,20 @@ export default function IntakeWizard() {
       return;
     }
     setError(null);
-    if (!isLastStep) setCurrentStep(currentStep + 1);
+    if (!isLastStep) {
+      const nextStep = currentStep + 1;
+      setCurrentStep(nextStep);
+
+      if (data.routing.autofill && currentPageDef.id >= 1) {
+        const nextPage = visiblePages[nextStep];
+        if (nextPage) {
+          const sectionName = PAGE_ID_TO_SECTION[nextPage.id];
+          if (sectionName) {
+            runAutofillForSection(sectionName);
+          }
+        }
+      }
+    }
   };
 
   const goBack = () => {
@@ -305,6 +360,18 @@ export default function IntakeWizard() {
       </div>
 
       <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] p-6">
+        {autofillLoading && (
+          <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)]">
+            <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--primary))]" />
+            <span className="text-sm text-[hsl(var(--primary))]">AI is drafting suggestions...</span>
+          </div>
+        )}
+        {currentPageDef && autofilledSections.has(PAGE_ID_TO_SECTION[currentPageDef.id] || "") && (
+          <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)]">
+            <Sparkles className="w-4 h-4 text-[hsl(var(--primary))]" />
+            <span className="text-sm text-[hsl(var(--primary))]">AI-drafted — review and edit as needed</span>
+          </div>
+        )}
         {renderPage()}
       </div>
 

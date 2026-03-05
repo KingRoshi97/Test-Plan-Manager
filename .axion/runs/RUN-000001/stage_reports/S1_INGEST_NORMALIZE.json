@@ -2,8 +2,8 @@
   "run_id": "RUN-000001",
   "stage_id": "S1_INGEST_NORMALIZE",
   "status": "pass",
-  "started_at": "2026-03-05T06:54:20.933Z",
-  "finished_at": "2026-03-05T06:54:20.939Z",
+  "started_at": "2026-03-05T08:53:07.536Z",
+  "finished_at": "2026-03-05T08:53:07.544Z",
   "consumed": [
     "intake/raw_submission.*"
   ],

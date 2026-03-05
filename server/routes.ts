@@ -2,6 +2,7 @@ import { type Express, type Request, type Response } from "express";
 import { storage } from "./storage.js";
 import { insertAssemblySchema } from "../shared/schema.js";
 import { startPipelineRun } from "./pipeline-runner.js";
+import { generateAutofillSuggestions } from "./openai.js";
 import fs from "fs";
 import path from "path";
 
@@ -155,5 +156,26 @@ export function registerRoutes(app: Express) {
     const failed = allAssemblies.filter((a) => a.status === "failed").length;
     const queued = allAssemblies.filter((a) => a.status === "queued").length;
     res.json({ total: allAssemblies.length, running, completed, failed, queued });
+  });
+
+  app.post("/api/autofill", async (req: Request, res: Response) => {
+    try {
+      const { routing, project, targetSection } = req.body;
+
+      if (!routing || !targetSection) {
+        return res.status(400).json({ error: "routing and targetSection are required" });
+      }
+
+      const suggestions = await generateAutofillSuggestions(
+        routing as Record<string, string>,
+        (project || {}) as Record<string, unknown>,
+        targetSection as string,
+      );
+
+      res.json({ suggestions, section: targetSection });
+    } catch (err: any) {
+      console.error("Autofill error:", err.message || err);
+      res.status(500).json({ error: "Failed to generate suggestions" });
+    }
   });
 }

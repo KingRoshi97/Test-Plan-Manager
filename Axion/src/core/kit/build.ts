@@ -307,8 +307,49 @@ function buildNaMd(slot: string, reason: string): string {
 `;
 }
 
+const SUBDIR_TO_SLOT: Record<string, string> = {
+  requirements: "01_requirements",
+  domain: "01_requirements",
+  workflows: "01_requirements",
+  risk: "01_requirements",
+  roadmap: "01_requirements",
+  research: "01_requirements",
+  content: "01_requirements",
+  architecture: "02_architecture",
+  topology: "02_architecture",
+  data: "03_data_models",
+  data_governance: "03_data_models",
+  data_lifecycle: "03_data_models",
+  data_quality: "03_data_models",
+  api_governance: "04_api_contracts",
+  policy: "05_auth_security",
+  governance: "05_auth_security",
+  authz: "05_auth_security",
+  design: "06_frontend",
+  design_system: "06_frontend",
+  assets: "06_frontend",
+  accessibility: "06_frontend",
+  responsive: "06_frontend",
+  ia: "06_frontend",
+  errors: "07_backend",
+  caching: "07_backend",
+  realtime: "07_backend",
+  search: "07_backend",
+  integrations: "10_integrations",
+  reporting: "12_analytics",
+  metrics: "12_analytics",
+};
+
 function slotForOutputPath(outputPath: string): string | null {
   const lower = outputPath.toLowerCase();
+
+  if (lower.startsWith("10_app/")) {
+    const subdir = lower.split("/")[1];
+    if (subdir && subdir in SUBDIR_TO_SLOT) {
+      return SUBDIR_TO_SLOT[subdir];
+    }
+  }
+
   if (lower.includes("requirements") || lower.includes("prd") || lower.includes("scope")) return "01_requirements";
   if (lower.includes("architecture") || lower.includes("design") || lower.includes("system")) return "02_architecture";
   if (lower.includes("data") || lower.includes("model") || lower.includes("schema") || lower.includes("erd")) return "03_data_models";

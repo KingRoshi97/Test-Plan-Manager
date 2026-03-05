@@ -1,8 +1,8 @@
 {
   "run_id": "RUN-000001",
   "status": "running",
-  "created_at": "2026-03-05T06:54:20.928Z",
-  "updated_at": "2026-03-05T06:54:20.940Z",
+  "created_at": "2026-03-05T08:53:07.530Z",
+  "updated_at": "2026-03-05T08:53:07.548Z",
   "pipeline": {
     "pipeline_id": "axion_default",
     "pipeline_version": "0.2.0"
@@ -30,7 +30,7 @@
     },
     {
       "stage_id": "S2_VALIDATE_INTAKE",
-      "status": "queued",
+      "status": "running",
       "stage_report_ref": null
     },
     {

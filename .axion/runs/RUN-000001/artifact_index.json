@@ -3,8 +3,8 @@
     "artifact_id": "manifest_001",
     "type": "run_manifest",
     "path": "run_manifest.json",
-    "sha256": "d2ba057b80f4c4834cbfbe36cbd51557c029304d53abddb89822baaef65be1ce",
-    "created_at": "2026-03-05T06:54:20.928Z",
+    "sha256": "8b65216891ec5dd6ed7ea13593e64b5410adf06ba1e2c3cbea2e9774bd423768",
+    "created_at": "2026-03-05T08:53:07.533Z",
     "producer": {
       "stage_id": "S1_INGEST_NORMALIZE"
     }
@@ -13,8 +13,8 @@
     "artifact_id": "artifact_index_001",
     "type": "artifact_index",
     "path": "artifact_index.json",
-    "sha256": "9b90e14a8198906e62d3aade096d3ee1eadf3097b378d3f43bba2430742d5908",
-    "created_at": "2026-03-05T06:54:20.928Z",
+    "sha256": "81a922341f59e1b993a7d70abf789e2449f6aeffb7c2f2be64d15f22899ecb5c",
+    "created_at": "2026-03-05T08:53:07.533Z",
     "producer": {
       "stage_id": "S1_INGEST_NORMALIZE"
     }
@@ -23,8 +23,8 @@
     "artifact_id": "stage_report_S1_INGEST_NORMALIZE",
     "type": "stage_report",
     "path": "stage_reports/S1_INGEST_NORMALIZE.json",
-    "sha256": "fda7804285baca4754f435802097d640b95870529c15802e825d7b782d15a4a5",
-    "created_at": "2026-03-05T06:54:20.933Z",
+    "sha256": "74e3f00287011e53c3c25f402beee2c703cecc7630dbe412a4ee1bc6151b8f71",
+    "created_at": "2026-03-05T08:53:07.536Z",
     "producer": {
       "stage_id": "S1_INGEST_NORMALIZE"
     }
