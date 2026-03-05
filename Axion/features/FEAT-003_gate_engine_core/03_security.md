@@ -1,37 +1,43 @@
 # FEAT-003 — Gate Engine Core: Security Requirements
 
-  ## 1. Scope
+## 1. Scope
 
-  Security requirements specific to the Gate Engine Core feature domain.
+Security requirements for the gate evaluation engine, covering file access, path safety, and data integrity.
 
-  ## 2. Security Requirements
+## 2. Path Traversal Protection
 
-  - Gate rules are read-only during evaluation
-- Override records are append-only
-- Gate reports are immutable once generated
+The `verify_hash_manifest` operator enforces path safety via `isPathSafe()`:
+- Rejects absolute paths (`isAbsolute(p)`)
+- Rejects directory traversal (`..`)
+- Rejects backslash characters (`\`)
+- Validates that resolved paths stay within the bundle root using `normalize()` comparison
+
+## 3. File Access Model
+
+- All file reads are synchronous via `readFileSync` and `existsSync`
 - No external network calls during gate evaluation
+- File access is read-only — evaluators never modify artifacts
+- Gate reports are written once via `writeCanonicalJson` (deterministic, append-only semantics)
 
-  ## 3. Data Classification
+## 4. Data Classification
 
-  - Input data: Internal
-  - Output data: Internal
-  - Audit data: Restricted (append-only)
+| Data | Classification | Access |
+|------|---------------|--------|
+| Gate registry | Internal | Read-only during evaluation |
+| Artifact files | Internal | Read-only during checks |
+| Gate reports | Internal | Write-once, immutable after generation |
+| Run manifest | Internal | Append gate_reports entries |
+| Evidence entries | Internal | Embedded in gate reports |
 
-  ## 4. Access Control
+## 5. Integrity Guarantees
 
-  - Feature operations require authenticated context
-  - Write operations require appropriate authorization
-  - Audit logs are read-only for non-system actors
+- Gate reports are written with `writeCanonicalJson` for deterministic output
+- Hash verification uses SHA-256 with strict 64-char lowercase hex validation
+- Evidence entries capture full audit trail (path, pointer, details)
+- Failure on first check prevents partial-pass scenarios
 
-  ## 5. Threat Mitigations
+## 6. Cross-References
 
-  - Input validation on all external-facing interfaces
-  - Output sanitization to prevent information leakage
-  - Rate limiting on high-frequency operations
-
-  ## 6. Cross-References
-
-  - SYS-07 (Compliance & Gate Model)
-  - FEAT-012 (Secrets & PII Scanner / Quarantine)
-  - sec_baseline@1.0.0 standards pack
-  
+- SYS-07 (Compliance & Gate Model)
+- FEAT-012 (Secrets & PII Scanner / Quarantine)
+- FEAT-001 (Control Plane Core — run directory access)

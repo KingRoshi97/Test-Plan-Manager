@@ -1,46 +1,44 @@
 # FEAT-006 — Standards Resolution Engine: Observability
 
-  ## 1. Metrics
+## 1. Key Metrics
 
-  - `standards.packs.resolved`
-- `standards.conflicts.detected`
-- `standards.conflicts.resolved`
-- `standards.overrides.applied`
-- `standards.resolution.duration_ms`
+| Metric | Source | Description |
+|--------|--------|-------------|
+| Packs loaded | `registryLoader.ts` | Number of packs loaded from the standards library index |
+| Packs matched | `applicability.ts` | Number of packs in `matched_packs` after applicability evaluation |
+| Packs unmatched | `applicability.ts` | Number of packs in `unmatched_packs` |
+| Rules resolved | `resolver.ts` | Total rules in the final `rules` array |
+| Conflicts detected | `resolver.ts` | Length of `conflict_log` in `ResolverOutput` |
+| Trace entries | `resolver.ts` | Length of `resolver_trace` (one per rule per pack encounter) |
 
-  ## 2. Logging
+## 2. Audit Trail
 
-  ### 2.1 Structured Log Fields
+The `ResolvedStandardsSnapshot` itself serves as the primary audit artifact:
 
-  - `feature`: `FEAT-006`
-  - `domain`: `standards`
-  - `operation`: Name of the function/operation
-  - `duration_ms`: Execution time
-  - `status`: success | failure
-  - `error_code`: Error code if applicable (ERR-STD-NNN)
+- `resolver_trace[]` — Every rule merge event with `pack_id`, `version`, `rule_id`, `merged_at` timestamp, and derived `namespace`
+- `conflicts[]` — Every conflict with participating `packs`, `values`, and `resolution` rationale
+- `overrides_applied[]` / `overrides_blocked[]` — Override audit records with source, reason, and status
+- `selected_packs[]` — Full list of packs that passed applicability with their `specificity_score` and `priority`
 
-  ### 2.2 Log Levels
+## 3. Logging
 
-  - `ERROR`: Operation failures requiring attention
-  - `WARN`: Degraded operations or policy warnings
-  - `INFO`: Normal operation milestones
-  - `DEBUG`: Detailed execution traces (development only)
+### 3.1 Structured Fields
 
-  ## 3. Traces
+- `feature`: `FEAT-006`
+- `domain`: `standards`
+- `run_id`: Current pipeline run identifier
+- `pack_count`: Number of packs processed
+- `rule_count`: Number of rules resolved
+- `conflict_count`: Number of conflicts encountered
 
-  - Each operation generates a trace span with:
-    - `span_name`: `standards.{operation}`
-    - `feature_id`: `FEAT-006`
-    - `run_id`: Current pipeline run identifier
+### 3.2 Key Events
 
-  ## 4. Alerting
+- Registry loaded (pack count, library version)
+- Applicability evaluation complete (matched/unmatched counts)
+- Resolution complete (rule count, conflict count, snapshot ID)
+- Snapshot written (file path)
 
-  - Alert on sustained error rates exceeding threshold
-  - Alert on operation duration exceeding SLO
-  - Alert on resource exhaustion (storage, memory)
+## 4. Cross-References
 
-  ## 5. Cross-References
-
-  - SYS-06 (Data & Traceability Model)
-  - GOV-04 (Audit & Traceability Rules)
-  
+- SYS-06 (Data & Traceability Model)
+- GOV-04 (Audit & Traceability Rules)

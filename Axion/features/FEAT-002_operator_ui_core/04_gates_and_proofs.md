@@ -1,41 +1,50 @@
 # FEAT-002 — Operator UI Core: Gates & Proofs
 
-  ## 1. Applicable Gates
+## 1. Applicable Gates
 
-  This feature does not own any gates directly. It is subject to gates enforced by upstream features (FEAT-003 Gate Engine Core).
+FEAT-002 does not own any gates. The CLI invokes gates owned by FEAT-003 (Gate Engine Core) during stage execution. The gate mapping used by the CLI is defined in `STAGE_GATES` from `src/types/run.ts`:
 
-  ## 2. Required Proof Types
+| Stage | Gate |
+|-------|------|
+| S2_VALIDATE_INTAKE | G1_INTAKE_VALIDITY |
+| S4_VALIDATE_CANONICAL | G2_CANONICAL_INTEGRITY |
+| S5_RESOLVE_STANDARDS | G3_STANDARDS_RESOLVED |
+| S6_SELECT_TEMPLATES | G4_TEMPLATE_SELECTION |
+| S7_RENDER_DOCS | G5_TEMPLATE_COMPLETENESS |
+| S8_BUILD_PLAN | G6_PLAN_COVERAGE |
+| S9_VERIFY_PROOF | G7_VERIFICATION |
+| S10_PACKAGE | G8_PACKAGE_INTEGRITY |
 
-  The following proof types (from VER-01) are applicable to this feature:
+Stages S1_INGEST_NORMALIZE and S3_BUILD_CANONICAL have no gate and pass unconditionally.
 
-  | Proof Type | Name | Applicability |
-  |------------|------|---------------|
-  | P-01 | Command Output Proof | Build and runtime verification |
-  | P-02 | Test Result Proof | Unit and integration test results |
-  | P-05 | Diff/Commit Reference Proof | Code change verification |
-  | P-06 | Checklist Proof (Manual Verification) | Manual review verification |
+## 2. Gate Invocation Flow
 
-  ## 3. Gate Report Contract
+1. `executeStageWithGates()` runs the stage work via `executeStageWork()`
+2. Looks up `STAGE_GATES[stageId]` for the mapped gate ID
+3. If a gate exists, calls `runGatesForStage(baseDir, runId, stageId)` from FEAT-003
+4. If `gateResult.all_passed` is false, produces a fail `StageReport` and returns `{ passed: false }`
+5. If no gate is mapped or gate passes, produces a pass `StageReport`
 
-  Every gate produces a report per ORD-02 Section 7:
+## 3. Proof Generation
 
-  - `gate_id` — Gate identifier
-  - `target` — Artifact or output being checked
-  - `status` — pass | fail
-  - `executed_at` — Timestamp
-  - `issues[]` — Array of issue objects with:
-    - `issue_id`, `severity`, `error_code`, `rule_id`, `pointer`, `message`, `remediation`
+The CLI generates proof artifacts during S9_VERIFY_PROOF:
 
-  ## 4. Override Policy
+- Calls `collectGateReports(runDir)` to gather all `*.gate_report.json` files
+- Calls `createProofsFromGateReports(gateReports, runId)` to create proof objects
+- Appends each proof object to the `ProofLedger` at `proof/proof_ledger.jsonl`
+- Validates evidence pointers via `validatePointers()`
+- Writes completion report via `writeCompletionReport()`
 
-  - Overrides are allowed only if the gate rule declares `overridable: true`
-  - Override records must include: override_id, gate_id, rule_id, approver, reason, risk_acknowledged, timestamp
-  - Overrides never delete the original failure — they annotate it
+## 4. Required Proof Types
 
-  ## 5. Cross-References
+| Proof Type | Name | Usage in CLI |
+|------------|------|-------------|
+| P-01 | Command Output Proof | Gate report artifacts produced by `runGatesForStage` |
+| P-02 | Test Result Proof | Verification run result from `runVerification` |
 
-  - SYS-07 (Compliance & Gate Model)
-  - ORD-02 (Gate DSL & Gate Rules)
-  - VER-01 (Proof Types & Evidence Rules)
-  - FEAT-003 (Gate Engine Core)
-  
+## 5. Cross-References
+
+- SYS-07 (Compliance & Gate Model)
+- ORD-02 (Gate DSL & Gate Rules)
+- VER-01 (Proof Types & Evidence Rules)
+- FEAT-003 (Gate Engine Core)

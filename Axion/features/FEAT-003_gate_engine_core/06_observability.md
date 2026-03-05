@@ -1,46 +1,51 @@
 # FEAT-003 — Gate Engine Core: Observability
 
-  ## 1. Metrics
+## 1. Console Output
 
-  - `gates.evaluated`
-- `gates.passed`
-- `gates.failed`
-- `gates.duration_ms`
-- `gates.overrides`
+The gate engine emits structured console output during evaluation:
 
-  ## 2. Logging
+| Event | Format | Example |
+|-------|--------|---------|
+| Gate pass | `PASS {gate_id}` | `PASS G1_INTAKE_VALIDITY` |
+| Gate fail | `FAIL {gate_id}: {failure_code}` | `FAIL G1_INTAKE_VALIDITY: E_FILE_MISSING` |
+| No gates for stage | `No gates defined for stage {stageId}` | `No gates defined for stage S01` |
 
-  ### 2.1 Structured Log Fields
+## 2. Gate Report Artifacts
 
-  - `feature`: `FEAT-003`
-  - `domain`: `gates`
-  - `operation`: Name of the function/operation
-  - `duration_ms`: Execution time
-  - `status`: success | failure
-  - `error_code`: Error code if applicable (ERR-GATE-NNN)
+Every gate evaluation produces a `GateReportV1` JSON file at:
+```
+.axion/runs/{run_id}/gates/{gate_id}.gate_report.json
+```
 
-  ### 2.2 Log Levels
+Each report contains:
+- `status`: `"pass"` or `"fail"`
+- `evaluated_at`: ISO 8601 timestamp
+- `engine`: `{ name: "axion-gates", version: "0.1.0" }`
+- `checks[]`: per-check results with evidence
+- `issues[]`: structured issues derived from failed checks
+- `failure_codes[]`: aggregated failure codes
+- `evidence_completeness`: proof-type satisfaction status
 
-  - `ERROR`: Operation failures requiring attention
-  - `WARN`: Degraded operations or policy warnings
-  - `INFO`: Normal operation milestones
-  - `DEBUG`: Detailed execution traces (development only)
+## 3. Run Manifest Updates
 
-  ## 3. Traces
+The run manifest (`run_manifest.json`) is updated after gate evaluation with:
+```json
+{
+  "gate_reports": [
+    { "gate_id": "G1_INTAKE_VALIDITY", "path": "gates/G1_INTAKE_VALIDITY.gate_report.json", "verdict": "pass" }
+  ],
+  "updated_at": "<ISO timestamp>"
+}
+```
 
-  - Each operation generates a trace span with:
-    - `span_name`: `gates.{operation}`
-    - `feature_id`: `FEAT-003`
-    - `run_id`: Current pipeline run identifier
+## 4. Evidence Trail
 
-  ## 4. Alerting
+Every `CheckResult` includes `EvidenceEntry[]`:
+- `path`: file path examined
+- `pointer`: JSON pointer evaluated
+- `details`: operator-specific details (e.g., `{ min_required, actual }` for `coverage_gte`)
 
-  - Alert on sustained error rates exceeding threshold
-  - Alert on operation duration exceeding SLO
-  - Alert on resource exhaustion (storage, memory)
+## 5. Cross-References
 
-  ## 5. Cross-References
-
-  - SYS-06 (Data & Traceability Model)
-  - GOV-04 (Audit & Traceability Rules)
-  
+- SYS-06 (Data & Traceability Model)
+- GOV-04 (Audit & Traceability Rules)

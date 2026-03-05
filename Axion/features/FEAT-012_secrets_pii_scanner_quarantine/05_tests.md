@@ -1,46 +1,70 @@
 # FEAT-012 — Secrets & PII Scanner / Quarantine: Test Plan
 
-  ## 1. Unit Tests
+## 1. Unit Tests
 
-  ### 1.1 Core Function Tests
+### 1.1 packs.ts
 
-  - `loadScanPacks()` — verify correct output for valid input
-- `loadScanPacks()` — verify error handling for invalid input
-- `scanArtifact()` — verify correct output for valid input
-- `scanArtifact()` — verify error handling for invalid input
-- `quarantine()` — verify correct output for valid input
-- `quarantine()` — verify error handling for invalid input
-- `reviewFinding()` — verify correct output for valid input
-- `reviewFinding()` — verify error handling for invalid input
+- `getDefaultPacks()` — returns 2 packs: `secrets-core` (8 patterns) and `pii-core` (5 patterns)
+- `getDefaultPacks()` — returns deep copies (mutations do not affect subsequent calls)
+- `loadScanPacks(filePath)` — loads a single JSON file containing a valid scan pack
+- `loadScanPacks(dirPath)` — loads all `.json` files from a directory
+- `loadScanPacks()` — throws `ERR-SCAN-001` when path does not exist
+- `loadScanPacks()` — throws `ERR-SCAN-001` when directory contains no `.json` files
+- `loadScanPacks()` — throws `ERR-SCAN-002` for invalid JSON
+- `loadScanPacks()` — throws `ERR-SCAN-002` for missing required fields
+- `mergePacks()` — merges packs from multiple sets, deduplicating by `pack_id` and `pattern_id`
 
-  ### 1.2 Edge Cases
+### 1.2 scan.ts
 
-  - Empty input handling
-  - Boundary value testing
-  - Error propagation verification
+- `scanArtifact()` — detects AWS access key (`AKIA...`) in a file
+- `scanArtifact()` — detects private key header (`-----BEGIN RSA PRIVATE KEY-----`)
+- `scanArtifact()` — detects email addresses
+- `scanArtifact()` — detects SSN patterns
+- `scanArtifact()` — returns empty array for binary files (`.png`, `.jpg`, etc.)
+- `scanArtifact()` — returns empty array for files exceeding 10MB
+- `scanArtifact()` — throws `ERR-SCAN-003` for non-existent file
+- `scanArtifact()` — produces masked snippets (first 4 + `***` + last 4)
+- `scanArtifact()` — generates deterministic `finding_id` (SHA-256 of path:pattern:line)
+- `scanDirectory()` — recursively scans all files, excluding `node_modules`, `.git`, `.quarantine`
+- `scanDirectory()` — computes correct summary counts by severity
+- `scanDirectory()` — `passed` is `true` only when `critical === 0 && high === 0`
+- `scanDirectory()` — throws `ERR-SCAN-003` for non-existent directory
 
-  ## 2. Integration Tests
+### 1.3 quarantine.ts
 
-  - End-to-end flow through Secrets & PII Scanner / Quarantine pipeline stage
-  - Integration with dependent features: FEAT-001, FEAT-004
-  - Artifact persistence and retrieval
+- `quarantine()` — creates `.quarantine/` directory and copies flagged files
+- `quarantine()` — only quarantines `critical` and `high` severity findings
+- `quarantine()` — skips findings already in the ledger (idempotent)
+- `quarantine()` — writes `quarantine_ledger.json` with all entries
+- `quarantine()` — returns `blocked_from_kit` list of unique file paths
+- `quarantine()` — throws `ERR-SCAN-004` when `runDir` does not exist
+- `isQuarantined()` — returns `true` for files in the ledger
+- `isQuarantined()` — returns `false` for files not in the ledger
+- `getQuarantineLedger()` — returns full ledger array
 
-  ## 3. Acceptance Tests
+## 2. Integration Tests
 
-  - Feature satisfies all invariants defined in 01_contract.md
-  - All gate checks pass for valid artifacts
-  - Error codes match ERROR_CODE_REGISTRY definitions
+- End-to-end: load default packs → scan a directory with planted secrets → quarantine findings → verify ledger
+- Verify `isQuarantined()` returns `true` for quarantined files after the flow
+- Verify `scanDirectory().passed === false` when secrets are present
+- Verify `scanDirectory().passed === true` for a clean directory
 
-  ## 4. Test Infrastructure
+## 3. Acceptance Tests
 
-  - Test framework: Vitest
-  - Fixtures: `test/fixtures/`
-  - Helpers: `test/helpers/`
+- All invariants from 01_contract.md are satisfied
+- No `NotImplementedError` remains in any scanner module
+- Error codes match the SCAN domain in the Error Taxonomy Registry
+- Masked snippets never reveal full secret values
 
-  ## 5. Cross-References
+## 4. Test Infrastructure
 
-  - VER-01 (Proof Types & Evidence Rules)
-  - VER-03 (Completion Criteria)
-  - 01_contract.md (invariants to verify)
-  - 04_gates_and_proofs.md (proof requirements)
-  
+- Test framework: Vitest
+- Fixtures: `test/fixtures/` (temporary directories with planted secrets for scanning)
+- Helpers: `test/helpers/`
+
+## 5. Cross-References
+
+- VER-01 (Proof Types & Evidence Rules)
+- VER-03 (Completion Criteria)
+- 01_contract.md (invariants to verify)
+- 04_gates_and_proofs.md (proof requirements)

@@ -1,31 +1,31 @@
 # FEAT-011 — Policy Engine Core: Error Codes
 
-  ## 1. Error Code Format
+## 1. Error Code Format
 
-  All error codes follow the `ERR-DOMAIN-NNN` format defined in the ERROR_CODE_REGISTRY.
+All error codes follow the `ERR-POL-NNN` format.
 
-  ## 2. Domain
+## 2. Domain
 
-  `POL`
+`POL`
 
-  ## 3. Error Codes
+## 3. Error Codes
 
-  | Code | Severity | Message | Retryable | Action |
-  |------|----------|---------|-----------|--------|
-  | `ERR-POL-001` | error | Policy Engine Core initialization failed | false | Check configuration and dependencies. |
-| `ERR-POL-002` | error | Policy Engine Core invalid input | false | Validate input against schema before passing. |
-| `ERR-POL-003` | warning | Policy Engine Core degraded operation | false | Review logs for root cause. |
+The policy engine does not throw domain-specific error codes. Errors propagate from underlying I/O and JSON parsing:
 
-  ## 4. Error Handling Rules
+| Source | Condition | Behavior |
+|--------|-----------|----------|
+| `readJson()` | Registry file exists but is malformed JSON | Throws parse error from `readJson` |
+| `readJson()` | Risk-class or override file is malformed | Throws parse error from `readJson` |
+| `existsSync()` | File does not exist | Returns empty array / skips silently — no error |
+| `matchesCondition()` | Unrecognized condition string | Returns `false` — no error thrown |
 
-  - All errors must include the error code from this registry
-  - Error messages must not expose internal implementation details
-  - Errors must include actionable remediation guidance
-  - Unregistered error codes must not be thrown at runtime
+## 4. Error Handling Rules
 
-  ## 5. Cross-References
+- `loadPolicies()`: If the registry file does not exist, returns `[]`. If it exists but is unreadable, the error propagates from `readJson`.
+- `evaluatePolicy()`: Never throws. Unmatched scopes return `{ passed: true, violations: [] }`. Unknown conditions default to `false` (not triggered).
+- `evaluateAllPolicies()`: Maps over all policies; if any individual evaluation throws, the error propagates.
 
-  - ERROR_CODE_REGISTRY.json
-  - FEAT-017 (Error Taxonomy & Registry)
-  - SYS-07 (Compliance & Gate Model)
-  
+## 5. Cross-References
+
+- FEAT-017 (Error Taxonomy & Registry)
+- SYS-07 (Compliance & Gate Model)

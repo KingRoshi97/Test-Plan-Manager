@@ -1,14 +1,17 @@
 {
   "feature_id": "FEAT-003",
   "title": "Gate Engine Core",
-  "description": "Deterministic gate evaluation engine that enforces pass/fail checks on artifacts and stage outputs, preventing forward progress without compliance.",
+  "description": "Deterministic gate evaluation engine with 6 registered operators (file_exists, json_valid, json_has, json_eq, coverage_gte, verify_hash_manifest) that enforces pass/fail checks across 8 gates (G1–G8), producing structured gate reports with evidence and evidence-completeness tracking.",
   "category": "infrastructure",
-  "status": "draft",
+  "status": "active",
   "dependencies": [
     "FEAT-001"
   ],
   "src_modules": [
     "src/core/gates/dsl.ts",
+    "src/core/gates/evaluator.ts",
+    "src/core/gates/evidence.ts",
+    "src/core/gates/evidencePolicy.ts",
     "src/core/gates/index.ts",
     "src/core/gates/registry.ts",
     "src/core/gates/report.ts",
@@ -17,14 +20,13 @@
     "src/core/gates/runner.ts"
   ],
   "gates": [
-    "GATE-01",
-    "GATE-02",
-    "GATE-03",
-    "GATE-04",
-    "GATE-05",
-    "GATE-06",
-    "GATE-07",
-    "GATE-08",
-    "GATE-09"
+    "G1_INTAKE_VALIDITY",
+    "G2_CANONICAL_INTEGRITY",
+    "G3_STANDARDS_RESOLVED",
+    "G4_TEMPLATE_SELECTION",
+    "G5_TEMPLATE_COMPLETENESS",
+    "G6_PLAN_COVERAGE",
+    "G7_VERIFICATION",
+    "G8_PACKAGE_INTEGRITY"
   ]
 }

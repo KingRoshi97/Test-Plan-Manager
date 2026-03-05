@@ -1,41 +1,36 @@
 # FEAT-011 — Policy Engine Core: Gates & Proofs
 
-  ## 1. Applicable Gates
+## 1. Applicable Gates
 
-  This feature does not own any gates directly. It is subject to gates enforced by upstream features (FEAT-003 Gate Engine Core).
+This feature does not own any gates directly. It is consumed by the Control Plane (FEAT-001) which invokes policy evaluation during pipeline execution. Gate results from FEAT-003 are passed into `PolicyContext.gate_results` for policy condition matching.
 
-  ## 2. Required Proof Types
+## 2. Required Proof Types
 
-  The following proof types (from VER-01) are applicable to this feature:
+| Proof Type | Name | Applicability |
+|------------|------|---------------|
+| P-01 | Command Output Proof | Verify `loadPolicies()` loads from registry and library files correctly |
+| P-02 | Test Result Proof | Unit test results for `evaluatePolicy()`, `evaluateAllPolicies()`, condition matching |
+| P-05 | Diff/Commit Reference Proof | Code change verification for policy engine modifications |
 
-  | Proof Type | Name | Applicability |
-  |------------|------|---------------|
-  | P-01 | Command Output Proof | Build and runtime verification |
-  | P-02 | Test Result Proof | Unit and integration test results |
-  | P-05 | Diff/Commit Reference Proof | Code change verification |
-  | P-06 | Checklist Proof (Manual Verification) | Manual review verification |
+## 3. Policy–Gate Interaction
 
-  ## 3. Gate Report Contract
+The policy engine evaluates `gate_results` from context:
 
-  Every gate produces a report per ORD-02 Section 7:
+- `matchesCondition()` checks hard-stop patterns (`security.gates.fail`, `privacy.data_handling.missing`) by scanning `context.gate_results` keys for domain matches
+- If a matching gate key exists and `passed === false`, the condition is triggered
+- This enables policies that enforce "if security gate failed, deny progression"
 
-  - `gate_id` — Gate identifier
-  - `target` — Artifact or output being checked
-  - `status` — pass | fail
-  - `executed_at` — Timestamp
-  - `issues[]` — Array of issue objects with:
-    - `issue_id`, `severity`, `error_code`, `rule_id`, `pointer`, `message`, `remediation`
+## 4. Override Policy Integration
 
-  ## 4. Override Policy
+- Override rules loaded from `libraries/policy/override_policy.v1.json`
+- Each `OverrideRule` specifies: `rule_id`, `applies_to`, `allowed`, `requires_evidence[]`, `expires_in_days`
+- Synthesized into a single `OVERRIDE-POLICY` policy with `enforcement: "strict"`
+- Rules where `allowed === true` become `action: "allow"` (skipped during evaluation)
+- Rules where `allowed === false` become `action: "deny"` (block overrides)
 
-  - Overrides are allowed only if the gate rule declares `overridable: true`
-  - Override records must include: override_id, gate_id, rule_id, approver, reason, risk_acknowledged, timestamp
-  - Overrides never delete the original failure — they annotate it
+## 5. Cross-References
 
-  ## 5. Cross-References
-
-  - SYS-07 (Compliance & Gate Model)
-  - ORD-02 (Gate DSL & Gate Rules)
-  - VER-01 (Proof Types & Evidence Rules)
-  - FEAT-003 (Gate Engine Core)
-  
+- SYS-07 (Compliance & Gate Model)
+- ORD-02 (Gate DSL & Gate Rules)
+- VER-01 (Proof Types & Evidence Rules)
+- FEAT-003 (Gate Engine Core)

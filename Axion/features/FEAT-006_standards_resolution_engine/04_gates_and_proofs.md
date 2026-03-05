@@ -1,43 +1,40 @@
 # FEAT-006 — Standards Resolution Engine: Gates & Proofs
 
-  ## 1. Applicable Gates
+## 1. Applicable Gates
 
-  ### GATE-03 — Standards Gate (Resolved Ruleset Integrity)
+### GATE-03 — Standards Gate (Resolved Ruleset Integrity)
 
-Checks standards snapshot: version pinned, defaults + overrides recorded, fixed vs configurable flags set, conflicts resolved or explicitly blocked. Hard stop if unresolved conflicts.
+Validates the `resolved_standards_snapshot.json` produced by the resolver:
 
-  ## 2. Required Proof Types
+- Snapshot file exists at `{runDir}/standards/resolved_standards_snapshot.json`
+- All resolved rules are version-pinned (via `standards_library_version_used` and per-pack `pack_version`)
+- `fixed_vs_configurable` map is populated for every resolved rule
+- `conflicts` array is present; every conflict entry has a non-empty `resolution` string
+- `selected_packs` array is non-empty (at least one pack matched)
+- `resolved_standards_id` is a valid hash-based identifier
 
-  The following proof types (from VER-01) are applicable to this feature:
+## 2. Snapshot Fields Verified by GATE-03
 
-  | Proof Type | Name | Applicability |
-  |------------|------|---------------|
-  | P-01 | Command Output Proof | Build and runtime verification |
-  | P-02 | Test Result Proof | Unit and integration test results |
-  | P-05 | Diff/Commit Reference Proof | Code change verification |
-  | P-06 | Checklist Proof (Manual Verification) | Manual review verification |
+| Field | Check |
+|-------|-------|
+| `resolved_standards_id` | Non-empty, starts with snapshot_id_prefix |
+| `standards_library_version_used` | Non-empty string |
+| `resolver_version` | Non-empty string |
+| `selected_packs` | Array length > 0 |
+| `rules` | Array length > 0 |
+| `fixed_vs_configurable` | Keys match `rules` array entries |
+| `conflicts` | Each entry has `rule_id`, `packs`, `values`, `resolution` |
 
-  ## 3. Gate Report Contract
+## 3. Proof Artifacts
 
-  Every gate produces a report per ORD-02 Section 7:
+| Artifact | Path | Description |
+|----------|------|-------------|
+| Standards snapshot | `{runDir}/standards/resolved_standards_snapshot.json` | Full resolved snapshot with provenance |
+| Gate report | `{runDir}/gates/G3_STANDARDS_RESOLVED.json` | GATE-03 pass/fail report |
 
-  - `gate_id` — Gate identifier
-  - `target` — Artifact or output being checked
-  - `status` — pass | fail
-  - `executed_at` — Timestamp
-  - `issues[]` — Array of issue objects with:
-    - `issue_id`, `severity`, `error_code`, `rule_id`, `pointer`, `message`, `remediation`
+## 4. Cross-References
 
-  ## 4. Override Policy
-
-  - Overrides are allowed only if the gate rule declares `overridable: true`
-  - Override records must include: override_id, gate_id, rule_id, approver, reason, risk_acknowledged, timestamp
-  - Overrides never delete the original failure — they annotate it
-
-  ## 5. Cross-References
-
-  - SYS-07 (Compliance & Gate Model)
-  - ORD-02 (Gate DSL & Gate Rules)
-  - VER-01 (Proof Types & Evidence Rules)
-  - FEAT-003 (Gate Engine Core)
-  
+- SYS-07 (Compliance & Gate Model)
+- ORD-02 (Gate DSL & Gate Rules)
+- VER-01 (Proof Types & Evidence Rules)
+- FEAT-003 (Gate Engine Core)

@@ -1,41 +1,27 @@
 # FEAT-016 — Minimal Repro Exporter: Gates & Proofs
 
-  ## 1. Applicable Gates
+## 1. Applicable Gates
 
-  This feature does not own any gates directly. It is subject to gates enforced by upstream features (FEAT-003 Gate Engine Core).
+This feature does not own any gates directly. It operates outside the main pipeline stage/gate flow as a post-run utility. It is subject to gates enforced by upstream features (FEAT-003 Gate Engine Core) when used within a pipeline context.
 
-  ## 2. Required Proof Types
+## 2. Required Proof Types
 
-  The following proof types (from VER-01) are applicable to this feature:
+| Proof Type | Name | Applicability |
+|------------|------|---------------|
+| P-01 | Command Output Proof | CLI `cmdRepro` output showing successful package creation |
+| P-02 | Test Result Proof | Unit tests for selector and builder functions |
+| P-05 | Diff/Commit Reference Proof | Code change verification |
 
-  | Proof Type | Name | Applicability |
-  |------------|------|---------------|
-  | P-01 | Command Output Proof | Build and runtime verification |
-  | P-02 | Test Result Proof | Unit and integration test results |
-  | P-05 | Diff/Commit Reference Proof | Code change verification |
-  | P-06 | Checklist Proof (Manual Verification) | Manual review verification |
+## 3. Verification Points
 
-  ## 3. Gate Report Contract
+- `selectReproArtifacts()` returns valid `ReproSelection` with non-empty `selected_artifacts` for a valid run directory
+- `buildReproPackage()` copies all selected artifacts and writes `repro_manifest.json`
+- Sensitive files are never included in `selected_artifacts`
+- `content_hash` is deterministic for identical input
 
-  Every gate produces a report per ORD-02 Section 7:
+## 4. Cross-References
 
-  - `gate_id` — Gate identifier
-  - `target` — Artifact or output being checked
-  - `status` — pass | fail
-  - `executed_at` — Timestamp
-  - `issues[]` — Array of issue objects with:
-    - `issue_id`, `severity`, `error_code`, `rule_id`, `pointer`, `message`, `remediation`
-
-  ## 4. Override Policy
-
-  - Overrides are allowed only if the gate rule declares `overridable: true`
-  - Override records must include: override_id, gate_id, rule_id, approver, reason, risk_acknowledged, timestamp
-  - Overrides never delete the original failure — they annotate it
-
-  ## 5. Cross-References
-
-  - SYS-07 (Compliance & Gate Model)
-  - ORD-02 (Gate DSL & Gate Rules)
-  - VER-01 (Proof Types & Evidence Rules)
-  - FEAT-003 (Gate Engine Core)
-  
+- SYS-07 (Compliance & Gate Model)
+- ORD-02 (Gate DSL & Gate Rules)
+- VER-01 (Proof Types & Evidence Rules)
+- FEAT-003 (Gate Engine Core)

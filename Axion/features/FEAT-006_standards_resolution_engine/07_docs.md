@@ -1,33 +1,41 @@
 # FEAT-006 — Standards Resolution Engine: Documentation Requirements
 
-  ## 1. API Documentation
+## 1. System Documentation References
 
-  - All exported functions must have JSDoc comments
-  - Parameter types and return types must be documented
-  - Error conditions and thrown error codes must be listed
+| Document | Relevance |
+|----------|-----------|
+| STD-01 (Standards Library Structure) | Defines the on-disk layout of `libraries/standards/` — index, packs, resolver rules |
+| STD-02 (Standards Resolution Rules) | Defines the resolution algorithm contract: selection, ordering, conflicts, overrides, output |
+| STD-03 (Standards Snapshot Format) | Defines the schema for `resolved_standards_snapshot.json` |
+| SYS-03 (End-to-End Architecture) | Places standards resolution in the pipeline between intake normalization and template selection |
+| SYS-07 (Compliance & Gate Model) | Defines GATE-03 which validates the snapshot |
 
-  ## 2. Architecture Documentation
+## 2. Data Flow
 
-  - Module dependency diagram
-  - Data flow through Standards Resolution Engine
-  - Integration points with: FEAT-001, FEAT-003
+```
+loadStandardsRegistry(repoRoot)
+  → { index, packs, resolverRules }
 
-  ## 3. Operator Documentation
+evaluateApplicability(routing, constraints, packs, resolverRules, runId, evaluatedAt)
+  → { matched_packs, unmatched_packs }
 
-  - Configuration options and defaults
-  - CLI commands related to this feature
-  - Troubleshooting guide for common error codes (ERR-STD-NNN)
+resolveStandards(normalizedInput, registry, matchedPacks, runId)
+  → { snapshot, resolverOutput }
 
-  ## 4. Change Log
+writeSnapshot(runDir, snapshot)
+  → writes resolved_standards_snapshot.json
+```
 
-  - All changes to this feature must be recorded
-  - Breaking changes must follow GOV-03 (Deprecation & Migration Rules)
-  - Version stamps per GOV-01 (Versioning Policy)
+## 3. Configuration Files
 
-  ## 5. Cross-References
+| File | Location | Purpose |
+|------|----------|---------|
+| `standards_index.json` | `libraries/standards/` | Pack registry with categories and file paths |
+| `resolver_rules.v1.json` | `libraries/standards/` | Selection, ordering, conflict, override, and output rules |
+| Pack files (`*.json`) | `libraries/standards/packs/` | Individual standards packs with fixed and configurable rules |
 
-  - SYS-09 (Terminology & Definitions)
-  - GOV-01 (Versioning Policy)
-  - GOV-02 (Change Control Rules)
-  - GOV-03 (Deprecation & Migration Rules)
-  
+## 4. Cross-References
+
+- SYS-09 (Terminology & Definitions)
+- GOV-01 (Versioning Policy)
+- GOV-02 (Change Control Rules)

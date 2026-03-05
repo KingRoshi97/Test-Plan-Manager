@@ -1,9 +1,9 @@
 {
   "feature_id": "FEAT-011",
   "title": "Policy Engine Core",
-  "description": "Policy evaluation engine that enforces configurable rules, override controls, and compliance constraints across pipeline operations.",
+  "description": "Policy evaluation engine that loads policies from registry files and risk-class/override library files, evaluates configurable rules against pipeline context, and enforces compliance constraints with strict/advisory enforcement modes.",
   "category": "infrastructure",
-  "status": "draft",
+  "status": "active",
   "dependencies": [
     "FEAT-001",
     "FEAT-003"

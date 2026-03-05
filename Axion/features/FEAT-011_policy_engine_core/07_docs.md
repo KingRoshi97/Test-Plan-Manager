@@ -1,33 +1,42 @@
 # FEAT-011 — Policy Engine Core: Documentation Requirements
 
-  ## 1. API Documentation
+## 1. API Documentation
 
-  - All exported functions must have JSDoc comments
-  - Parameter types and return types must be documented
-  - Error conditions and thrown error codes must be listed
+- `loadPolicies(registryPath)` — Loads policies from registry JSON, risk-class library, and override-policy library
+- `evaluatePolicy(policy, context)` — Evaluates a single policy against a context, returning pass/fail with violations
+- `evaluateAllPolicies(policies, context)` — Evaluates all policies, returning an array of results
 
-  ## 2. Architecture Documentation
+## 2. Architecture Documentation
 
-  - Module dependency diagram
-  - Data flow through Policy Engine Core
-  - Integration points with: FEAT-001, FEAT-003
+### Data Flow
 
-  ## 3. Operator Documentation
+1. `loadPolicies()` reads registry JSON → iterates `entries[]` → constructs `Policy[]`
+2. `loadPolicies()` checks for `libraries/policy/risk_classes.v1.json` → synthesizes risk-class policies with hard-stop/evidence/override rules
+3. `loadPolicies()` checks for `libraries/policy/override_policy.v1.json` → synthesizes override policy
+4. `evaluatePolicy()` checks if policy applies via `policyAppliesToContext()` → evaluates each rule via `matchesCondition()` → collects violations → determines `passed` based on enforcement mode
 
-  - Configuration options and defaults
-  - CLI commands related to this feature
-  - Troubleshooting guide for common error codes (ERR-POL-NNN)
+### Condition Matching Patterns
 
-  ## 4. Change Log
+| Pattern | Behavior |
+|---------|----------|
+| `"true"` | Always matches |
+| `"security.gates.fail"` | Matches if a gate key containing "security" has `passed: false` |
+| `"privacy.data_handling.missing"` | Matches if a gate key containing "privacy" has `passed: false` |
+| `evidence.includes("X")` | Matches if `"X"` is NOT in `context.evidence` |
+| `"overrides.length === 0"` | Matches if `context.overrides` is non-empty |
+| `"gates.*"` / `"standards.*"` | Always returns `false` (reserved) |
 
-  - All changes to this feature must be recorded
-  - Breaking changes must follow GOV-03 (Deprecation & Migration Rules)
-  - Version stamps per GOV-01 (Versioning Policy)
+## 3. Type Reference
 
-  ## 5. Cross-References
+- `Policy` — `{ policy_id, name, version, description, rules: PolicyRule[], applies_to: string[], enforcement: "strict" | "advisory" }`
+- `PolicyRule` — `{ rule_id, condition, action: "allow" | "deny" | "warn", message }`
+- `PolicyEvaluationResult` — `{ policy_id, passed, violations[] }`
+- `RiskClass` — `{ risk_class, hard_stops[], required_evidence[], allow_overrides }`
+- `OverrideRule` — `{ rule_id, applies_to, allowed, requires_evidence[], expires_in_days, notes? }`
+- `PolicyContext` — `{ run_id?, stage_id?, risk_class?, gate_results?, evidence?, overrides?, [key]: unknown }`
 
-  - SYS-09 (Terminology & Definitions)
-  - GOV-01 (Versioning Policy)
-  - GOV-02 (Change Control Rules)
-  - GOV-03 (Deprecation & Migration Rules)
-  
+## 4. Cross-References
+
+- SYS-03 (End-to-End Architecture)
+- SYS-07 (Compliance & Gate Model)
+- GOV-01 (Versioning Policy)

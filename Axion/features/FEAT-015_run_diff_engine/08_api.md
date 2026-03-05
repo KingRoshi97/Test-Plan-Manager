@@ -1,47 +1,82 @@
 # FEAT-015 — Run Diff Engine: API Surface
 
-  ## 1. Module Exports
+## 1. Module Exports
 
-  Source modules:
-
-  - `src/core/diff/runDiff.ts`
+- `src/core/diff/runDiff.ts`
 - `src/core/diff/classify.ts`
 
-  ## 2. Public Functions
+## 2. Public Functions
 
-  ### `diffRuns()`
-
-- **Module**: `src/core/diff/runDiff.ts`
-- **Returns**: Result object or throws registered error code
-- **Side Effects**: See 01_contract.md for invariants
-
-### `classifyChanges()`
+### `diffRuns(previousRunDir: string, currentRunDir: string): DiffReport`
 
 - **Module**: `src/core/diff/runDiff.ts`
-- **Returns**: Result object or throws registered error code
-- **Side Effects**: See 01_contract.md for invariants
+- **Parameters**:
+  - `previousRunDir` — Path to the baseline run directory
+  - `currentRunDir` — Path to the comparison run directory
+- **Returns**: `DiffReport` with entries sorted by path and summary counts
+- **Throws**: `ERR-DIFF-001` if directory does not exist, `ERR-DIFF-002` if path is not a directory
+- **Side Effects**: Reads files from both directories (no writes)
 
+### `classifyChanges(entries: DiffEntry[]): DiffEntry[]`
 
-  ## 3. Types
+- **Module**: `src/core/diff/classify.ts`
+- **Parameters**:
+  - `entries` — Array of `DiffEntry` objects (typically from `diffRuns()`)
+- **Returns**: New array of `DiffEntry` with `classification` field populated
+- **Throws**: None
+- **Side Effects**: None (pure function)
 
-  All types are defined in or re-exported from:
+### `classifySingleChange(entry: DiffEntry): ChangeClassification`
 
-  - `src/types/index.ts`
-  - `src/types/artifacts.ts`
-  - `src/types/run.ts`
+- **Module**: `src/core/diff/classify.ts`
+- **Parameters**:
+  - `entry` — Single `DiffEntry` object
+- **Returns**: `ChangeClassification` — one of `"structural"`, `"content"`, `"metadata"`, `"formatting"`, `"unknown"`
+- **Throws**: None
+- **Side Effects**: None (pure function)
 
-  ## 4. Error Codes
+## 3. Types
 
-  See 02_errors.md for the complete error code table for this feature.
+### `DiffEntry` (exported from `runDiff.ts`)
 
-  ## 5. Integration Points
+```typescript
+interface DiffEntry {
+  path: string;
+  change_type: "added" | "removed" | "modified" | "unchanged";
+  previous_hash?: string;
+  current_hash?: string;
+  classification?: string;
+}
+```
 
-  - FEAT-001
-- FEAT-004
+### `DiffReport` (exported from `runDiff.ts`)
 
-  ## 6. Cross-References
+```typescript
+interface DiffReport {
+  previous_run_id: string;
+  current_run_id: string;
+  diffed_at: string;
+  entries: DiffEntry[];
+  summary: { added: number; removed: number; modified: number; unchanged: number };
+}
+```
 
-  - 01_contract.md (inputs, outputs, invariants)
-  - 02_errors.md (error codes)
-  - SYS-03 (End-to-End Architecture)
-  
+### `ChangeClassification` (exported from `classify.ts`)
+
+```typescript
+type ChangeClassification = "structural" | "content" | "metadata" | "formatting" | "unknown";
+```
+
+## 4. Error Codes
+
+See 02_errors.md for the complete error code table.
+
+## 5. Integration Points
+
+- FEAT-001 (Control Plane Core — run directory structure and manifest format)
+
+## 6. Cross-References
+
+- 01_contract.md (inputs, outputs, invariants)
+- 02_errors.md (error codes)
+- SYS-03 (End-to-End Architecture)

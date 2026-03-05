@@ -1,31 +1,53 @@
 # FEAT-001 — Control Plane Core: Error Codes
 
-  ## 1. Error Code Format
+## 1. Error Code Format
 
-  All error codes follow the `ERR-DOMAIN-NNN` format defined in the ERROR_CODE_REGISTRY.
+Errors are thrown as standard `Error` objects with descriptive messages. The error messages follow consistent patterns per module.
 
-  ## 2. Domain
+## 2. Errors by Module
 
-  `CP`
+### api.ts — RunController
 
-  ## 3. Error Codes
+| Throw Condition | Message Pattern | Trigger |
+|----------------|-----------------|---------|
+| Run not found | `Run ${runId} not found` | `advanceStage`, `recordStageResult`, `completeRun` when store returns null |
+| Stage not in order | `Stage ${stageId} not in run stage_order` | `advanceStage` when stageId not in `run.stage_order` |
+| Prior stage incomplete | `Cannot advance to ${stageId}: prior stage ${prevStageId} is ${status} (must be pass or skip)` | `advanceStage` when previous stage is not pass/skip |
+| Run status blocks advance | `Cannot advance stage: run is ${status}` | `advanceStage` when run is not queued, running, or gated |
+| Stage not found in run | `Stage ${stageId} not found in run ${runId}` | `advanceStage`, `recordStageResult` when stage lookup fails |
+| Run not complete | `Cannot complete run: stages not done: ${list}` | `completeRun` when not all stages are pass/skip |
+| Invalid transition | `Invalid run transition: ${current} → ${target}` | `transitionRun` when target not in allowed transitions |
 
-  | Code | Severity | Message | Retryable | Action |
-  |------|----------|---------|-----------|--------|
-  | `ERR-CP-001` | error | Control Plane Core initialization failed | false | Check configuration and dependencies. |
-| `ERR-CP-002` | error | Control Plane Core invalid input | false | Validate input against schema before passing. |
-| `ERR-CP-003` | warning | Control Plane Core degraded operation | false | Review logs for root cause. |
+### store.ts — JSONRunStore
 
-  ## 4. Error Handling Rules
+| Throw Condition | Message Pattern | Trigger |
+|----------------|-----------------|---------|
+| Run not found on update | `Run ${runId} not found` | `updateRun` when existing run not found |
 
-  - All errors must include the error code from this registry
-  - Error messages must not expose internal implementation details
-  - Errors must include actionable remediation guidance
-  - Unregistered error codes must not be thrown at runtime
+### pins.ts
 
-  ## 5. Cross-References
+| Throw Condition | Message Pattern | Trigger |
+|----------------|-----------------|---------|
+| File not found | `Cannot pin artifact: file not found at ${path}` | `pinArtifact` when file does not exist |
+| Duplicate pin | `Artifact already pinned: ${path} (pin_id: ${id})` | `pinArtifact` when artifact already has a pin |
+| Pin not found | `Pin not found: ${pinId} in run ${runId}` | `unpinArtifact`, `verifyPin` when pin ID not in pinset |
 
-  - ERROR_CODE_REGISTRY.json
-  - FEAT-017 (Error Taxonomy & Registry)
-  - SYS-07 (Compliance & Gate Model)
-  
+### releases.ts
+
+| Throw Condition | Message Pattern | Trigger |
+|----------------|-----------------|---------|
+| Release not found | `Release ${releaseId} not found` | `signRelease`, `publishRelease`, `revokeRelease` |
+| Invalid transition | `Invalid release transition: ${current} → ${target}. Allowed: ${list}` | Any status change violating transition rules |
+| Unsigned publish | `Release ${releaseId} must be signed before publishing` | `publishRelease` when `signatures.length === 0` |
+
+## 3. Error Handling Rules
+
+- All errors are synchronous `throw new Error(message)` — no custom error classes
+- Error messages include context (run ID, stage ID, pin ID, release ID) for debuggability
+- No error codes from a formal registry are used — errors are identified by message pattern
+- Gate-blocked stage failures result in run status `gated` (not `failed`), logged in `run.errors[]`
+
+## 4. Cross-References
+
+- FEAT-017 (Error Taxonomy & Registry)
+- SYS-07 (Compliance & Gate Model)

@@ -3,7 +3,7 @@
   "title": "Artifact Store & Registry",
   "description": "Content-addressable storage for all pipeline artifacts with reference tracking and garbage collection.",
   "category": "infrastructure",
-  "status": "draft",
+  "status": "active",
   "dependencies": [
     "FEAT-001"
   ],

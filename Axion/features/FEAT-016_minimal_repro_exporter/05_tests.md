@@ -1,42 +1,55 @@
 # FEAT-016 — Minimal Repro Exporter: Test Plan
 
-  ## 1. Unit Tests
+## 1. Unit Tests
 
-  ### 1.1 Core Function Tests
+### 1.1 selector.ts — `selectReproArtifacts()`
 
-  - `selectReproArtifacts()` — verify correct output for valid input
-- `selectReproArtifacts()` — verify error handling for invalid input
-- `buildReproPackage()` — verify correct output for valid input
-- `buildReproPackage()` — verify error handling for invalid input
+- Returns `ReproSelection` with `run_id` extracted from `run_manifest.json`
+- Falls back to directory basename when `run_manifest.json` is missing or malformed
+- In minimal mode: selects core artifacts (`run_manifest.json`, `artifact_index.json`, `canonical/canonical_spec.json`, `standards/resolved_standards_snapshot.json`)
+- In minimal mode: includes `stage_reports/*.json` when `include_stage_reports` is true
+- In minimal mode: includes `gates/*.gate_report.json` when `include_gate_reports` is true
+- In minimal mode: includes verification artifacts when `include_proof_ledger` is true
+- In minimal mode: excludes planning, state, and supplementary artifacts not matching filters
+- In full mode (`minimal: false`): includes all non-sensitive artifacts
+- Always excludes files matching sensitive patterns (`.env`, `secret`, `credentials`, `private_key`)
+- Excluded sensitive files appear with reason `"sensitive_content"`
+- Non-selected files in minimal mode appear with reason `"not_required_for_minimal_repro"`
+- Each selected artifact has a SHA-256 `hash` field
+- Throws `ERR-REPRO-001` when `runDir` does not exist
+- Returns empty selection for empty run directory
 
-  ### 1.2 Edge Cases
+### 1.2 builder.ts — `buildReproPackage()`
 
-  - Empty input handling
-  - Boundary value testing
-  - Error propagation verification
+- Copies all selected artifacts from source to output directory
+- Creates subdirectories as needed in output path
+- Writes `repro_manifest.json` in canonical JSON format to output directory
+- `repro_id` is deterministic for same `run_id + timestamp`
+- `content_hash` is SHA-256 of sorted artifact hashes joined with `:`
+- `artifacts_included` reflects actual copied count (skips missing files)
+- Throws `ERR-REPRO-002` when `runDir` does not exist
+- Throws `ERR-REPRO-003` when `selected_artifacts` is empty
 
-  ## 2. Integration Tests
+### 1.3 Edge Cases
 
-  - End-to-end flow through Minimal Repro Exporter pipeline stage
-  - Integration with dependent features: FEAT-001, FEAT-004
-  - Artifact persistence and retrieval
+- Run directory with no artifacts → `ERR-REPRO-003` at build time
+- Run directory with only sensitive files → empty selection, `ERR-REPRO-003` at build time
+- Artifact file deleted between selection and build → silently skipped, count decremented
 
-  ## 3. Acceptance Tests
+## 2. Integration Tests
 
-  - Feature satisfies all invariants defined in 01_contract.md
-  - All gate checks pass for valid artifacts
-  - Error codes match ERROR_CODE_REGISTRY definitions
+- End-to-end: `cmdRepro(runDir)` produces a valid repro directory with manifest
+- Repro manifest can be parsed and all listed artifact paths exist in output
+- `content_hash` matches re-computed hash from output artifacts
 
-  ## 4. Test Infrastructure
+## 3. Acceptance Tests
 
-  - Test framework: Vitest
-  - Fixtures: `test/fixtures/`
-  - Helpers: `test/helpers/`
+- Repro bundle is self-contained — all referenced artifacts present
+- Sensitive files never appear in output directory
+- `repro_manifest.json` is valid JSON and parseable
 
-  ## 5. Cross-References
+## 4. Test Infrastructure
 
-  - VER-01 (Proof Types & Evidence Rules)
-  - VER-03 (Completion Criteria)
-  - 01_contract.md (invariants to verify)
-  - 04_gates_and_proofs.md (proof requirements)
-  
+- Test framework: Vitest
+- Fixtures: `test/fixtures/` (mock run directories)
+- Helpers: `test/helpers/`

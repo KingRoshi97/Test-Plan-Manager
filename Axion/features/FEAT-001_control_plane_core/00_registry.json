@@ -1,9 +1,9 @@
 {
   "feature_id": "FEAT-001",
   "title": "Control Plane Core",
-  "description": "Central orchestration service managing pipeline runs, stage progression, artifact tracking, audit logging, and policy enforcement across the Axion system.",
+  "description": "Central orchestration service managing pipeline runs, stage progression, artifact pinning, release lifecycle, audit logging, and policy enforcement across the Axion system.",
   "category": "infrastructure",
-  "status": "draft",
+  "status": "active",
   "dependencies": [],
   "src_modules": [
     "src/core/controlPlane/api.ts",
@@ -15,14 +15,13 @@
     "src/core/controlPlane/policies.ts"
   ],
   "gates": [
-    "GATE-01",
-    "GATE-02",
-    "GATE-03",
-    "GATE-04",
-    "GATE-05",
-    "GATE-06",
-    "GATE-07",
-    "GATE-08",
-    "GATE-09"
+    "G1_INTAKE_VALIDITY",
+    "G2_CANONICAL_INTEGRITY",
+    "G3_STANDARDS_RESOLVED",
+    "G4_TEMPLATE_SELECTION",
+    "G5_TEMPLATE_COMPLETENESS",
+    "G6_PLAN_COVERAGE",
+    "G7_VERIFICATION",
+    "G8_PACKAGE_INTEGRITY"
   ]
 }

@@ -1,41 +1,38 @@
 # FEAT-014 — Coverage Scoring Engine: Gates & Proofs
 
-  ## 1. Applicable Gates
+## 1. Applicable Gates
 
-  This feature does not own any gates directly. It is subject to gates enforced by upstream features (FEAT-003 Gate Engine Core).
+This feature does not own any gates directly. It is consumed by the gate engine (FEAT-003) via the `coverage_gte` evaluator operation, which calls `computeCoverage()` and `meetsCoverageThreshold()` to determine if G6 PLAN-COVERAGE passes.
 
-  ## 2. Required Proof Types
+## 2. Integration with Gate Engine
 
-  The following proof types (from VER-01) are applicable to this feature:
+The coverage scoring engine is invoked during gate evaluation:
 
-  | Proof Type | Name | Applicability |
-  |------------|------|---------------|
-  | P-01 | Command Output Proof | Build and runtime verification |
-  | P-02 | Test Result Proof | Unit and integration test results |
-  | P-05 | Diff/Commit Reference Proof | Code change verification |
-  | P-06 | Checklist Proof (Manual Verification) | Manual review verification |
+- **G6 (PLAN-COVERAGE)**: Uses `computeCoverage()` to compute the score, then `meetsCoverageThreshold()` to check against the configured threshold
+- The gate engine passes the acceptance map, proof ledger entries, and threshold as inputs
 
-  ## 3. Gate Report Contract
+## 3. Required Proof Types
 
-  Every gate produces a report per ORD-02 Section 7:
+The following proof types (from VER-01) are relevant to coverage scoring:
 
-  - `gate_id` — Gate identifier
-  - `target` — Artifact or output being checked
-  - `status` — pass | fail
-  - `executed_at` — Timestamp
-  - `issues[]` — Array of issue objects with:
-    - `issue_id`, `severity`, `error_code`, `rule_id`, `pointer`, `message`, `remediation`
+| Proof Type | Name | Usage in Coverage |
+|------------|------|-------------------|
+| P-01 | Command Output Proof | Counted as coverage for functional/integration items |
+| P-02 | Test Result Proof | Counted as coverage for functional/security items |
+| P-05 | Diff/Commit Reference Proof | Counted as coverage for code change items |
+| P-06 | Checklist Proof (Manual Verification) | Counted as coverage for security/manual review items |
 
-  ## 4. Override Policy
+Items with `required_proof_types` specified must have proofs of all listed types to be considered covered.
 
-  - Overrides are allowed only if the gate rule declares `overridable: true`
-  - Override records must include: override_id, gate_id, rule_id, approver, reason, risk_acknowledged, timestamp
-  - Overrides never delete the original failure — they annotate it
+## 4. Override Policy
 
-  ## 5. Cross-References
+- Coverage threshold overrides are governed by the policy engine (FEAT-011)
+- Overrides do not change the computed score — they only affect whether a gate passes despite below-threshold coverage
 
-  - SYS-07 (Compliance & Gate Model)
-  - ORD-02 (Gate DSL & Gate Rules)
-  - VER-01 (Proof Types & Evidence Rules)
-  - FEAT-003 (Gate Engine Core)
-  
+## 5. Cross-References
+
+- SYS-07 (Compliance & Gate Model)
+- ORD-02 (Gate DSL & Gate Rules)
+- VER-01 (Proof Types & Evidence Rules)
+- FEAT-003 (Gate Engine Core)
+- FEAT-008 (Proof Ledger)

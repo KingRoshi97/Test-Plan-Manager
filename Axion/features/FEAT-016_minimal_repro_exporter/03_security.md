@@ -1,36 +1,42 @@
 # FEAT-016 — Minimal Repro Exporter: Security Requirements
 
-  ## 1. Scope
+## 1. Scope
 
-  Security requirements specific to the Minimal Repro Exporter feature domain.
+Security requirements for the Minimal Repro Exporter, focused on preventing sensitive data leakage in exported repro bundles.
 
-  ## 2. Security Requirements
+## 2. Security Requirements
 
-  - Repro bundles are scanned for secrets before export
-- PII is redacted from repro content
-- Bundle export paths are validated
+- Files matching sensitive patterns are always excluded from selection regardless of mode
+- Sensitive patterns include: `.env`, `secret`, `credentials`, `private_key` (case-insensitive regex matching)
+- Output paths are validated to exist before writing
+- No network I/O — all operations are local filesystem only
 
-  ## 3. Data Classification
+## 3. Sensitive File Exclusion
 
-  - Input data: Internal
-  - Output data: Internal
-  - Audit data: Restricted (append-only)
+The selector applies regex-based filtering against all file paths:
 
-  ## 4. Access Control
+| Pattern | Matches |
+|---------|---------|
+| `/\.env$/i` | Environment variable files |
+| `/secret/i` | Any path containing "secret" |
+| `/credentials/i` | Any path containing "credentials" |
+| `/private_key/i` | Any path containing "private_key" |
 
-  - Feature operations require authenticated context
-  - Write operations require appropriate authorization
-  - Audit logs are read-only for non-system actors
+Excluded files appear in `excluded_artifacts[]` with reason `"sensitive_content"`.
 
-  ## 5. Threat Mitigations
+## 4. Data Classification
 
-  - Input validation on all external-facing interfaces
-  - Output sanitization to prevent information leakage
-  - Rate limiting on high-frequency operations
+- Input data: Internal (run directory contents)
+- Output data: Internal (repro bundle — may be shared externally after review)
+- Manifest data: Internal (contains artifact hashes, no content)
 
-  ## 6. Cross-References
+## 5. Integrity Guarantees
 
-  - SYS-07 (Compliance & Gate Model)
-  - FEAT-012 (Secrets & PII Scanner / Quarantine)
-  - sec_baseline@1.0.0 standards pack
-  
+- Every selected artifact includes a SHA-256 hash
+- The package `content_hash` is a SHA-256 of all sorted artifact hashes
+- `repro_manifest.json` is written using canonical JSON (deterministic key ordering)
+
+## 6. Cross-References
+
+- SYS-07 (Compliance & Gate Model)
+- FEAT-012 (Secrets & PII Scanner / Quarantine)

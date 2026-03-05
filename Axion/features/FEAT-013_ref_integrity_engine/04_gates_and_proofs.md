@@ -1,47 +1,47 @@
 # FEAT-013 — Ref Integrity Engine: Gates & Proofs
 
-  ## 1. Applicable Gates
+## 1. Applicable Gates
 
-  ### GATE-04 — Spec Gate (Truth Integrity)
+### GATE-04 — Spec Gate (Truth Integrity)
 
-Checks canonical spec: stable IDs exist, referential integrity, no duplicate truth, unknowns explicit and indexed. Hard stop if broken references or duplicate truth.
+The Ref Integrity Engine is the primary implementer of GATE-04's referential integrity checks:
 
-### GATE-05 — Planning Gate (Work Breakdown Integrity)
+- `extractRefsFromSpec()` extracts all cross-entity references from the canonical spec
+- `resolveRefs()` validates every extracted reference resolves to an existing entity
+- `validateRefIntegrity()` combines extraction + resolution into a single call
+- `buildGraph()` + `detectCycles()` verify the reference graph is acyclic for dependency references
 
-Checks work breakdown: each unit maps to spec IDs, dependency graph is acyclic, units are within size discipline. Hard stop if missing mappings or cycles.
+**Gate pass condition**: `validateRefIntegrity(spec).all_valid === true` AND `detectCycles(buildGraph(refs)).has_cycles === false`
 
-  ## 2. Required Proof Types
+## 2. Required Proof Types
 
-  The following proof types (from VER-01) are applicable to this feature:
+| Proof Type | Name | Applicability |
+|------------|------|---------------|
+| P-01 | Command Output Proof | Output of `validateRefIntegrity()` showing `all_valid: true` |
+| P-02 | Test Result Proof | Unit test results for extractor, resolver, graph modules |
+| P-05 | Diff/Commit Reference Proof | Code changes to ref integrity modules |
 
-  | Proof Type | Name | Applicability |
-  |------------|------|---------------|
-  | P-01 | Command Output Proof | Build and runtime verification |
-  | P-02 | Test Result Proof | Unit and integration test results |
-  | P-05 | Diff/Commit Reference Proof | Code change verification |
-  | P-06 | Checklist Proof (Manual Verification) | Manual review verification |
+## 3. Gate Report Contract
 
-  ## 3. Gate Report Contract
+Every gate produces a report per ORD-02 Section 7:
 
-  Every gate produces a report per ORD-02 Section 7:
+- `gate_id` — `GATE-04`
+- `target` — Canonical spec artifact path
+- `status` — pass | fail
+- `executed_at` — Timestamp
+- `issues[]` — Array of issue objects for each unresolved reference or detected cycle
 
-  - `gate_id` — Gate identifier
-  - `target` — Artifact or output being checked
-  - `status` — pass | fail
-  - `executed_at` — Timestamp
-  - `issues[]` — Array of issue objects with:
-    - `issue_id`, `severity`, `error_code`, `rule_id`, `pointer`, `message`, `remediation`
+## 4. Evidence Artifacts
 
-  ## 4. Override Policy
+| Artifact | Content |
+|----------|---------|
+| `ref_resolution_result.json` | Full `RefResolutionResult` from `validateRefIntegrity()` |
+| `ref_graph.json` | Serialized `RefGraph` (nodes as entries, edges array) |
+| `cycle_result.json` | `CycleResult` from `detectCycles()` |
 
-  - Overrides are allowed only if the gate rule declares `overridable: true`
-  - Override records must include: override_id, gate_id, rule_id, approver, reason, risk_acknowledged, timestamp
-  - Overrides never delete the original failure — they annotate it
+## 5. Cross-References
 
-  ## 5. Cross-References
-
-  - SYS-07 (Compliance & Gate Model)
-  - ORD-02 (Gate DSL & Gate Rules)
-  - VER-01 (Proof Types & Evidence Rules)
-  - FEAT-003 (Gate Engine Core)
-  
+- SYS-07 (Compliance & Gate Model)
+- ORD-02 (Gate DSL & Gate Rules)
+- VER-01 (Proof Types & Evidence Rules)
+- FEAT-003 (Gate Engine Core)

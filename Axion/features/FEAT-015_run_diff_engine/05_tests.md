@@ -1,42 +1,60 @@
 # FEAT-015 — Run Diff Engine: Test Plan
 
-  ## 1. Unit Tests
+## 1. Unit Tests
 
-  ### 1.1 Core Function Tests
+### 1.1 `diffRuns()`
 
-  - `diffRuns()` — verify correct output for valid input
-- `diffRuns()` — verify error handling for invalid input
-- `classifyChanges()` — verify correct output for valid input
-- `classifyChanges()` — verify error handling for invalid input
+- Two identical directories → all entries `unchanged`, summary counts match
+- Directory with added files → entries contain `added` with `current_hash` only
+- Directory with removed files → entries contain `removed` with `previous_hash` only
+- Directory with modified files → entries contain `modified` with both hashes differing
+- Mixed changes → summary counts are consistent with entry array
+- Entries are sorted alphabetically by `path`
+- Run ID extracted from `manifest.json` when present
+- Run ID falls back to directory name when `manifest.json` absent
+- `diffed_at` is a valid ISO-8601 timestamp
+- Nested subdirectories are recursed and relative paths are correct
 
-  ### 1.2 Edge Cases
+### 1.2 `diffRuns()` Error Cases
 
-  - Empty input handling
-  - Boundary value testing
-  - Error propagation verification
+- Non-existent previous directory → throws `ERR-DIFF-001`
+- Non-existent current directory → throws `ERR-DIFF-001`
+- Path points to a file, not directory → throws `ERR-DIFF-002`
 
-  ## 2. Integration Tests
+### 1.3 `classifySingleChange()`
 
-  - End-to-end flow through Run Diff Engine pipeline stage
-  - Integration with dependent features: FEAT-001, FEAT-004
-  - Artifact persistence and retrieval
+- Manifest/index/schema files → `structural`
+- Added or removed files → `structural`
+- Files in `.axion/`, `state/`, `gate_reports/` → `metadata`
+- `.css`/`.scss` files → `formatting`
+- Modified `.md`/`.ts`/`.json` content files → `content`
+- Unchanged entries → `unknown`
 
-  ## 3. Acceptance Tests
+### 1.4 `classifyChanges()`
 
-  - Feature satisfies all invariants defined in 01_contract.md
-  - All gate checks pass for valid artifacts
-  - Error codes match ERROR_CODE_REGISTRY definitions
+- Returns new array with `classification` field set on every entry
+- Original entries are not mutated
+- All entries receive a valid `ChangeClassification` value
 
-  ## 4. Test Infrastructure
+## 2. Integration Tests
 
-  - Test framework: Vitest
-  - Fixtures: `test/fixtures/`
-  - Helpers: `test/helpers/`
+- End-to-end: create two temp run directories, run `diffRuns()` then `classifyChanges()`, verify complete report
+- Large directory (100+ files) completes without error
 
-  ## 5. Cross-References
+## 3. Acceptance Tests
 
-  - VER-01 (Proof Types & Evidence Rules)
-  - VER-03 (Completion Criteria)
-  - 01_contract.md (invariants to verify)
-  - 04_gates_and_proofs.md (proof requirements)
-  
+- Determinism: calling `diffRuns()` twice on same directories produces identical entries
+- Empty directories produce zero-count summary
+- All invariants from 01_contract.md are satisfied
+
+## 4. Test Infrastructure
+
+- Test framework: Vitest
+- Fixtures: Temporary directories created in `test/fixtures/`
+- Helpers: `test/helpers/`
+
+## 5. Cross-References
+
+- VER-01 (Proof Types & Evidence Rules)
+- VER-03 (Completion Criteria)
+- 01_contract.md (invariants to verify)

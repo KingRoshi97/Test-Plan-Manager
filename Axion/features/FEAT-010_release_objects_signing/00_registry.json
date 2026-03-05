@@ -1,9 +1,9 @@
 {
   "feature_id": "FEAT-010",
   "title": "Release Objects & Signing",
-  "description": "Release lifecycle management including version tagging, release object creation, and artifact signing for distribution integrity.",
+  "description": "Release lifecycle management with state machine (draft→staged→published→revoked), SHA-256 integrity signing, version tagging, and CLI commands for release operations.",
   "category": "core-logic",
-  "status": "draft",
+  "status": "active",
   "dependencies": [
     "FEAT-001",
     "FEAT-004",

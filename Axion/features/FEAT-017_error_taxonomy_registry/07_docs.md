@@ -1,33 +1,44 @@
 # FEAT-017 — Error Taxonomy & Registry: Documentation Requirements
 
-  ## 1. API Documentation
+## 1. API Documentation
 
-  - All exported functions must have JSDoc comments
-  - Parameter types and return types must be documented
-  - Error conditions and thrown error codes must be listed
+All exported functions have documented signatures:
 
-  ## 2. Architecture Documentation
+### errors.ts exports
+- `validateErrorCode(code: string): boolean`
+- `extractDomain(code: string): string | null`
+- `loadErrorRegistry(registryPath: string): ErrorRegistry`
+- `lookupErrorCode(code: string, registry: ErrorRegistry): ErrorCode | undefined`
+- `listDomains(registry: ErrorRegistry): string[]`
+- `listByDomain(domain: string, registry: ErrorRegistry): ErrorCode[]`
+- `listBySeverity(severity: ErrorCode["severity"], registry: ErrorRegistry): ErrorCode[]`
+- `compareSeverity(a: ErrorCode["severity"], b: ErrorCode["severity"]): number`
+- `createInMemoryRegistry(entries: ErrorCode[], version?: string): ErrorRegistry`
 
-  - Module dependency diagram
-  - Data flow through Error Taxonomy & Registry
-  - Integration points with: none (root feature)
+### normalize.ts exports
+- `formatErrorMessage(template: string, params: Record<string, unknown>): string`
+- `normalizeError(error: unknown, errorDef: ErrorCode, context?: Record<string, unknown>): NormalizedError`
+- `normalizeUnknownError(error: unknown, domain?: string, context?: Record<string, unknown>): NormalizedError`
+- `isNormalizedError(value: unknown): value is NormalizedError`
 
-  ## 3. Operator Documentation
+## 2. Architecture Documentation
 
-  - Configuration options and defaults
-  - CLI commands related to this feature
-  - Troubleshooting guide for common error codes (ERR-ERR-NNN)
+- Two modules: `errors.ts` (registry) and `normalize.ts` (normalization)
+- Data flow: Load registry from JSON → lookup error code → normalize error with context → produce NormalizedError
+- No external dependencies; consumed by all other features as a foundational utility
 
-  ## 4. Change Log
+## 3. Operator Documentation
 
-  - All changes to this feature must be recorded
-  - Breaking changes must follow GOV-03 (Deprecation & Migration Rules)
-  - Version stamps per GOV-01 (Versioning Policy)
+- Registry file format: JSON with `version` (string) and `entries` (ErrorCode array)
+- Error code format: `ERR-DOMAIN-NNN` where DOMAIN is uppercase alphanumeric, NNN is 3 digits
+- Known domains: INT, GATE, STD, TMP, KIT, PLAN, CAN, SCAN, REF, COV, DIFF, REPRO, REL, CACHE, CAS, POL, TAX, SYS
 
-  ## 5. Cross-References
+## 4. Change Log
 
-  - SYS-09 (Terminology & Definitions)
-  - GOV-01 (Versioning Policy)
-  - GOV-02 (Change Control Rules)
-  - GOV-03 (Deprecation & Migration Rules)
-  
+- v1.0.0: Initial implementation — registry loading, validation, lookup, normalization, context sanitization
+
+## 5. Cross-References
+
+- SYS-09 (Terminology & Definitions)
+- GOV-01 (Versioning Policy)
+- GOV-02 (Change Control Rules)

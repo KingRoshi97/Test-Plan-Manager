@@ -1,9 +1,9 @@
 {
   "feature_id": "FEAT-016",
   "title": "Minimal Repro Exporter",
-  "description": "Selects the minimal set of artifacts needed to reproduce a pipeline issue and packages them into a self-contained repro bundle.",
+  "description": "Selects the minimal set of artifacts needed to reproduce a pipeline run result and packages them into a self-contained repro bundle with integrity hashing.",
   "category": "infrastructure",
-  "status": "draft",
+  "status": "active",
   "dependencies": [
     "FEAT-001",
     "FEAT-004"

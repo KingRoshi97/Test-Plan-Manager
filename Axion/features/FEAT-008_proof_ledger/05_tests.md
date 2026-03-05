@@ -1,46 +1,66 @@
 # FEAT-008 — Proof Ledger: Test Plan
 
-  ## 1. Unit Tests
+## 1. Unit Tests
 
-  ### 1.1 Core Function Tests
+### 1.1 ProofLedger Class
 
-  - `writeProof()` — verify correct output for valid input
-- `writeProof()` — verify error handling for invalid input
-- `validateProof()` — verify correct output for valid input
-- `validateProof()` — verify error handling for invalid input
-- `queryProofs()` — verify correct output for valid input
-- `queryProofs()` — verify error handling for invalid input
-- `getCompletionStatus()` — verify correct output for valid input
-- `getCompletionStatus()` — verify error handling for invalid input
+- `append()` — creates ProofEntry with correct proof_id, hash, timestamp; appends to JSONL file
+- `append()` — acceptance_refs defaults to empty array
+- `appendProofObject()` — converts ProofObject to ProofEntry and appends
+- `load()` — reads all entries from JSONL file
+- `query()` — filters by run_id, gate_id, proof_type, acceptance_ref
+- `getById()` — returns matching entry or undefined
+- `getByRun()` — returns all entries for a run
+- `getByGate()` — returns all entries for a gate
+- `getCoverage()` — returns covered/uncovered/coverage ratio
 
-  ### 1.2 Edge Cases
+### 1.2 Registry Functions
 
-  - Empty input handling
-  - Boundary value testing
-  - Error propagation verification
+- `loadProofEntries()` — returns empty array for missing file
+- `loadProofEntries()` — skips malformed JSONL lines
+- `filterProofsByGate()` — filters correctly
+- `filterProofsByRun()` — filters correctly
+- `filterProofsByType()` — filters by ProofType
+- `filterProofsByAcceptanceRef()` — matches entries containing the ref
+- `queryProofs()` — combines multiple filters
+- `getProofById()` — finds by proof_id
+- `getAcceptanceCoverage()` — computes correct coverage ratio
 
-  ## 2. Integration Tests
+### 1.3 Validation Functions
 
-  - End-to-end flow through Proof Ledger pipeline stage
-  - Integration with dependent features: FEAT-001, FEAT-003
-  - Artifact persistence and retrieval
+- `validateProofEntry()` — returns true for valid entries
+- `validateProofEntry()` — returns false for missing proof_id, run_id, gate_id, proof_type, timestamp, hash
+- `validateProofEntry()` — returns false for invalid proof_type
+- `verifyProofHash()` — returns true for matching hash
+- `verifyProofHash()` — returns false for tampered entry
+- `validateEvidenceFields()` — returns empty array when all required fields present
+- `validateEvidenceFields()` — returns missing field names for P-01..P-06
+- `validateLedgerIntegrity()` — returns LedgerIntegrityReport with correct counts
 
-  ## 3. Acceptance Tests
+### 1.4 Proof Creation Functions
 
-  - Feature satisfies all invariants defined in 01_contract.md
-  - All gate checks pass for valid artifacts
-  - Error codes match ERROR_CODE_REGISTRY definitions
+- `createProofFromGateReport()` — creates ProofObject with automated_check type
+- `createProofsFromGateReports()` — maps array of reports
+- `createCommandOutputProof()` — creates P-01 proof with required evidence fields
+- `createTestResultProof()` — creates P-02 proof; pass when failed=0
+- `createDiffCommitProof()` — creates P-05 proof with files_changed list
+- `createChecklistProof()` — creates P-06 proof; pass only when all items pass
 
-  ## 4. Test Infrastructure
+### 1.5 Registry Loader
 
-  - Test framework: Vitest
-  - Fixtures: `test/fixtures/`
-  - Helpers: `test/helpers/`
+- `loadProofTypeRegistry()` — loads from registries/PROOF_TYPE_REGISTRY.json
+- `getEvidencePolicies()` — returns all 8 gate policies
+- `getRequiredProofTypes()` — returns correct types for each gate ID
+- `getRequiredProofTypes()` — returns empty array for unknown gate ID
 
-  ## 5. Cross-References
+## 2. Integration Tests
 
-  - VER-01 (Proof Types & Evidence Rules)
-  - VER-03 (Completion Criteria)
-  - 01_contract.md (invariants to verify)
-  - 04_gates_and_proofs.md (proof requirements)
-  
+- Append multiple proofs → load → query by different criteria → verify all returned
+- Create proofs from gate reports → append to ledger → validate integrity → verify all pass
+- Coverage computation with partial acceptance refs → verify correct ratio
+
+## 3. Test Infrastructure
+
+- Framework: Vitest
+- Fixtures: `test/fixtures/` (sample JSONL ledger files, gate reports)
+- Helpers: `test/helpers/` (temp directory creation, sample entry builders)

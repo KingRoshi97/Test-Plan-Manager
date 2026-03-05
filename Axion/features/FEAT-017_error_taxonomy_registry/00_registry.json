@@ -3,7 +3,7 @@
   "title": "Error Taxonomy & Registry",
   "description": "Centralized error code registry with domain-scoped error definitions, severity classification, and normalized error object construction.",
   "category": "infrastructure",
-  "status": "draft",
+  "status": "active",
   "dependencies": [],
   "src_modules": [
     "src/core/taxonomy/errors.ts",

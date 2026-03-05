@@ -1,36 +1,45 @@
 # FEAT-007 — Template Registry & Renderer: Security Requirements
 
-  ## 1. Scope
+## 1. Scope
 
-  Security requirements specific to the Template Registry & Renderer feature domain.
+Security requirements for the template selection, filling, rendering, and completeness checking pipeline.
 
-  ## 2. Security Requirements
+## 2. Security Requirements
 
-  - Template content does not include secrets or PII
-- Template paths are validated against the template index
-- Filled templates are integrity-checked before packaging
+- Template source files in `libraries/templates/` are read-only at runtime — enforced by `assertNotTemplateLibrary` guardrail
+- Rendered output is written exclusively to `runs/<runId>/templates/rendered_docs/`
+- No secrets or PII should appear in template output — all content derives from canonical spec entities, routing, rules, and standards
+- Template content is not executed — it is treated as data (markdown strings)
+- Path traversal is mitigated by using `node:path.join` and `node:path.resolve` for all file operations
 
-  ## 3. Data Classification
+## 3. Data Classification
 
-  - Input data: Internal
-  - Output data: Internal
-  - Audit data: Restricted (append-only)
+| Data | Classification | Notes |
+|------|---------------|-------|
+| Template index | Internal | Read-only registry |
+| Template source files | Internal | Read-only markdown |
+| Canonical spec | Internal | Contains project entities |
+| Rendered documents | Internal | Generated output |
+| Selection/render reports | Internal | Metadata only |
+| Knowledge context | Internal | KID citations |
 
-  ## 4. Access Control
+## 4. Access Control
 
-  - Feature operations require authenticated context
-  - Write operations require appropriate authorization
-  - Audit logs are read-only for non-system actors
+- Template library is read-only for all pipeline operations
+- Run directory is write-only during pipeline execution
+- No authentication/authorization layer exists within the module — access control is inherited from the run controller (FEAT-001)
 
-  ## 5. Threat Mitigations
+## 5. Threat Mitigations
 
-  - Input validation on all external-facing interfaces
-  - Output sanitization to prevent information leakage
-  - Rate limiting on high-frequency operations
+| Threat | Mitigation |
+|--------|------------|
+| Write-back to template library | `assertNotTemplateLibrary` checks every write path against `libraries/templates/` |
+| Path traversal via template paths | All paths constructed via `node:path.join`; `source_abs_path` is prefixed with `libraries/templates/` |
+| Content injection via spec data | `formatCellValue` serializes all values to strings; no eval/execution of content |
+| Information leakage via error messages | Errors include file paths but not file contents |
 
-  ## 6. Cross-References
+## 6. Cross-References
 
-  - SYS-07 (Compliance & Gate Model)
-  - FEAT-012 (Secrets & PII Scanner / Quarantine)
-  - sec_baseline@1.0.0 standards pack
-  
+- SYS-07 (Compliance & Gate Model)
+- FEAT-012 (Secrets & PII Scanner / Quarantine)
+- TMP-02 (Template File Contract)

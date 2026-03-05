@@ -181,7 +181,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `schema_registry.v1.json` — single registry for JSON Schemas
   - `knowledge/` — Knowledge Library (395 KIDs across 3 pillars)
 - `Axion/registries/` — Global registry JSON files (GATE_REGISTRY, PINS_DEFAULT, PROOF_TYPE_REGISTRY, pipelines, gates)
-- `Axion/features/` — 17 feature packs (FEAT-001 through FEAT-017)
+- `Axion/features/` — 17 feature packs (FEAT-001 through FEAT-017), all `status: "active"` with production-quality specs
 - `Axion/test/` — Unit tests, integration tests, fixtures, helpers
 
 ### CLI Commands

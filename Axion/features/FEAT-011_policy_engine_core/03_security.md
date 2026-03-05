@@ -1,36 +1,36 @@
 # FEAT-011 — Policy Engine Core: Security Requirements
 
-  ## 1. Scope
+## 1. Scope
 
-  Security requirements specific to the Policy Engine Core feature domain.
+Security considerations for the policy evaluation engine and its data flows.
 
-  ## 2. Security Requirements
+## 2. Data Flow
 
-  - Policy definitions are access-controlled
-- Policy evaluation logs are tamper-evident
-- Sensitive policy parameters are not logged in plaintext
+- **Input**: On-disk JSON files (policy registry, risk classes, override policy) read via `readJson`. Runtime context objects passed in-memory.
+- **Processing**: Pure evaluation logic — no network calls, no database access, no external service dependencies.
+- **Output**: In-memory `PolicyEvaluationResult` objects returned to caller.
 
-  ## 3. Data Classification
+## 3. Data Classification
 
-  - Input data: Internal
-  - Output data: Internal
-  - Audit data: Restricted (append-only)
+- Policy registry files: Internal configuration — should be version-controlled and access-restricted
+- Risk-class definitions: Internal — define hard stops and required evidence per class
+- Override policy rules: Sensitive — control which safety overrides are permitted
+- Evaluation results: Internal — contain violation details including `risk_class` and `stage_id`
+- `PolicyContext`: May contain run identifiers, gate results, evidence lists, and override records
 
-  ## 4. Access Control
+## 4. Access Control
 
-  - Feature operations require authenticated context
-  - Write operations require appropriate authorization
-  - Audit logs are read-only for non-system actors
+- Policy files are read from the local filesystem; access is controlled by OS-level file permissions
+- No authentication or authorization is enforced within the module itself
+- Callers (Control Plane) are responsible for ensuring appropriate access before invoking policy evaluation
 
-  ## 5. Threat Mitigations
+## 5. Threat Mitigations
 
-  - Input validation on all external-facing interfaces
-  - Output sanitization to prevent information leakage
-  - Rate limiting on high-frequency operations
+- **Condition injection**: `matchesCondition()` uses pattern matching against a fixed set of known patterns; arbitrary condition strings that don't match any pattern return `false`
+- **Hard-stop patterns**: Only `security.gates.fail` and `privacy.data_handling.missing` are recognized as hard-stop conditions
+- **Override safety**: Override context is checked but override records must be supplied by the caller; the engine does not create or persist overrides
 
-  ## 6. Cross-References
+## 6. Cross-References
 
-  - SYS-07 (Compliance & Gate Model)
-  - FEAT-012 (Secrets & PII Scanner / Quarantine)
-  - sec_baseline@1.0.0 standards pack
-  
+- SYS-07 (Compliance & Gate Model)
+- FEAT-012 (Secrets & PII Scanner / Quarantine)

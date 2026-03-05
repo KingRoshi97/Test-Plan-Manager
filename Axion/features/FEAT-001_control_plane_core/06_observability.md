@@ -1,47 +1,75 @@
 # FEAT-001 — Control Plane Core: Observability
 
-  ## 1. Metrics
+## 1. Audit Log (Primary Observability Channel)
 
-  - `cp.runs.total`
-- `cp.runs.active`
-- `cp.stages.duration_ms`
-- `cp.policies.evaluated`
-- `cp.pins.created`
-- `cp.audit.entries`
+The `AuditLogger` is the main observability mechanism. It writes hash-chained JSONL entries for all state mutations.
 
-  ## 2. Logging
+### Audit Actions
 
-  ### 2.1 Structured Log Fields
+| Action | Trigger | Details Payload |
+|--------|---------|----------------|
+| `run.created` | `createRun()` | `{ config }` |
+| `stage.started` | `advanceStage()` | `{ stage_id }` |
+| `stage.completed` | `recordStageResult()` | `{ stage_id, result, report_ref }` |
+| `run.released` | `completeRun()` | `{}` |
 
-  - `feature`: `FEAT-001`
-  - `domain`: `control-plane`
-  - `operation`: Name of the function/operation
-  - `duration_ms`: Execution time
-  - `status`: success | failure
-  - `error_code`: Error code if applicable (ERR-CP-NNN)
+### Audit Entry Schema
 
-  ### 2.2 Log Levels
+```typescript
+interface AuditEntry {
+  timestamp: string;       // ISO 8601
+  action: string;          // Dot-notation action identifier
+  run_id: string;          // Run ID (RUN-NNNNNN)
+  details: Record<string, unknown>;
+  prev_hash: string;       // SHA-256 of previous entry (or zero hash for first)
+  hash: string;            // SHA-256 of this entry's payload
+}
+```
 
-  - `ERROR`: Operation failures requiring attention
-  - `WARN`: Degraded operations or policy warnings
-  - `INFO`: Normal operation milestones
-  - `DEBUG`: Detailed execution traces (development only)
+## 2. Console Logging
 
-  ## 3. Traces
+The following `console.log` statements provide runtime visibility:
 
-  - Each operation generates a trace span with:
-    - `span_name`: `control-plane.{operation}`
-    - `feature_id`: `FEAT-001`
-    - `run_id`: Current pipeline run identifier
+| Module | Message | Trigger |
+|--------|---------|---------|
+| api.ts | `Created run: ${runId}` | `createRun()` |
+| api.ts | `  Run directory: ${runDir}` | `createRun()` |
+| api.ts | `  Stage ${stageId}: ${result}` | `recordStageResult()` |
 
-  ## 4. Alerting
+## 3. Run Error Tracking
 
-  - Alert on sustained error rates exceeding threshold
-  - Alert on operation duration exceeding SLO
-  - Alert on resource exhaustion (storage, memory)
+Gate-blocked failures are recorded in `run.errors[]`:
 
-  ## 5. Cross-References
+```typescript
+interface RunError {
+  stage_id: StageId;
+  message: string;       // "Gate ${gateId} blocked stage ${stageId}"
+  timestamp: string;     // ISO 8601
+}
+```
 
-  - SYS-06 (Data & Traceability Model)
-  - GOV-04 (Audit & Traceability Rules)
-  
+## 4. Pin Verification Reporting
+
+`verifyAllPins()` returns a structured verification report:
+
+```typescript
+{
+  valid: boolean;
+  results: Array<{ pin_id: string; valid: boolean }>
+}
+```
+
+## 5. Observable State
+
+| State | Location | Format |
+|-------|----------|--------|
+| Run manifest | `.axion/runs/{RUN-ID}/run_manifest.json` | JSON |
+| Audit log | Configured log path | JSONL (append-only) |
+| Pinset | `.axion/runs/{RUN-ID}/pinset.json` | JSON |
+| Releases | `.axion/releases/{REL-ID}.json` | JSON |
+| Run counter | `.axion/run_counter.json` | JSON |
+
+## 6. Cross-References
+
+- SYS-06 (Data & Traceability Model)
+- GOV-04 (Audit & Traceability Rules)

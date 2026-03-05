@@ -3,7 +3,7 @@
   "title": "Cache & Incremental Planner",
   "description": "Caching layer and incremental planning engine that avoids redundant computation by tracking input hashes and reusing prior stage outputs.",
   "category": "infrastructure",
-  "status": "draft",
+  "status": "active",
   "dependencies": [
     "FEAT-001",
     "FEAT-004"

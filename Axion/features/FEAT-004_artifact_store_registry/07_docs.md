@@ -1,33 +1,57 @@
 # FEAT-004 — Artifact Store & Registry: Documentation Requirements
 
-  ## 1. API Documentation
+## 1. API Documentation
 
-  - All exported functions must have JSDoc comments
-  - Parameter types and return types must be documented
-  - Error conditions and thrown error codes must be listed
+- All exported functions have JSDoc-style documentation
+- Parameter types and return types documented in 08_api.md
+- Error conditions and thrown error codes listed in 02_errors.md
 
-  ## 2. Architecture Documentation
+## 2. Architecture Documentation
 
-  - Module dependency diagram
-  - Data flow through Artifact Store & Registry
-  - Integration points with: FEAT-001
+### Module Structure
 
-  ## 3. Operator Documentation
+```
+src/core/artifactStore/
+├── cas.ts    — Content-addressable store (put/get/has/delete/list)
+├── refs.ts   — Named reference store (set/get/delete/list/resolve)
+└── gc.ts     — Garbage collector (findUnreferenced, garbageCollect)
+```
 
-  - Configuration options and defaults
-  - CLI commands related to this feature
-  - Troubleshooting guide for common error codes (ERR-ART-NNN)
+### Storage Layout
 
-  ## 4. Change Log
+```
+{storePath}/
+├── objects/
+│   ├── ab/
+│   │   └── ab3f...  (full hash as filename)
+│   ├── cd/
+│   │   └── cd9a...
+│   └── ...
+└── refs/
+    ├── latest-manifest.json
+    ├── run-001-spec.json
+    └── ...
+```
 
-  - All changes to this feature must be recorded
-  - Breaking changes must follow GOV-03 (Deprecation & Migration Rules)
-  - Version stamps per GOV-01 (Versioning Policy)
+### Data Flow
 
-  ## 5. Cross-References
+1. Pipeline stages produce artifacts → `cas.put(content)` → returns hash
+2. Callers store named references → `refStore.set(name, { scheme: "cas", hash })`
+3. Consumers resolve references → `refStore.get(name)` → `resolveRef(ref, storePath)` → read file
+4. Operator triggers GC → `garbageCollect(storePath, referencedHashes, options)` → removes orphans
 
-  - SYS-09 (Terminology & Definitions)
-  - GOV-01 (Versioning Policy)
-  - GOV-02 (Change Control Rules)
-  - GOV-03 (Deprecation & Migration Rules)
-  
+## 3. Integration Points
+
+- FEAT-001 (Control Plane) — provides run context and store path
+- FEAT-009 (Export Bundles) — uses CAS for kit artifact storage
+- FEAT-008 (Proof Ledger) — may store proof artifacts in CAS
+
+## 4. Change Log
+
+- v1.0.0 — Initial implementation: CAS with SHA-256/512, RefStore, GC with dryRun/maxAge
+
+## 5. Cross-References
+
+- SYS-09 (Terminology & Definitions)
+- GOV-01 (Versioning Policy)
+- GOV-02 (Change Control Rules)

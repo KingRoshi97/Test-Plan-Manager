@@ -1,31 +1,27 @@
 # FEAT-015 — Run Diff Engine: Error Codes
 
-  ## 1. Error Code Format
+## 1. Error Code Format
 
-  All error codes follow the `ERR-DOMAIN-NNN` format defined in the ERROR_CODE_REGISTRY.
+All error codes follow the `ERR-DIFF-NNN` format.
 
-  ## 2. Domain
+## 2. Domain
 
-  `DIFF`
+`DIFF`
 
-  ## 3. Error Codes
+## 3. Error Codes
 
-  | Code | Severity | Message | Retryable | Action |
-  |------|----------|---------|-----------|--------|
-  | `ERR-DIFF-001` | error | Run Diff Engine initialization failed | false | Check configuration and dependencies. |
-| `ERR-DIFF-002` | error | Run Diff Engine invalid input | false | Validate input against schema before passing. |
-| `ERR-DIFF-003` | warning | Run Diff Engine degraded operation | false | Review logs for root cause. |
+| Code | Severity | Message | Retryable | Action |
+|------|----------|---------|-----------|--------|
+| `ERR-DIFF-001` | error | Run directory does not exist | false | Verify the run directory path exists before calling `diffRuns()`. |
+| `ERR-DIFF-002` | error | Path is not a directory | false | Ensure the provided path points to a directory, not a file. |
 
-  ## 4. Error Handling Rules
+## 4. Error Handling Rules
 
-  - All errors must include the error code from this registry
-  - Error messages must not expose internal implementation details
-  - Errors must include actionable remediation guidance
-  - Unregistered error codes must not be thrown at runtime
+- Both `ERR-DIFF-001` and `ERR-DIFF-002` are thrown as standard `Error` instances with the error code prefixed in the message
+- File-level I/O errors (permission denied, broken symlinks) propagate as native Node.js errors
+- All errors are non-retryable; the caller must fix the input before retrying
 
-  ## 5. Cross-References
+## 5. Cross-References
 
-  - ERROR_CODE_REGISTRY.json
-  - FEAT-017 (Error Taxonomy & Registry)
-  - SYS-07 (Compliance & Gate Model)
-  
+- FEAT-017 (Error Taxonomy & Registry)
+- SYS-07 (Compliance & Gate Model)

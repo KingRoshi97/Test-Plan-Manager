@@ -1,45 +1,41 @@
 # FEAT-011 — Policy Engine Core: Observability
 
-  ## 1. Metrics
+## 1. Metrics
 
-  - `policies.evaluated`
-- `policies.pass`
-- `policies.fail`
-- `policies.overrides`
+The current implementation does not emit metrics directly. The following metrics should be tracked by callers:
 
-  ## 2. Logging
+- `policies.loaded` — Count of policies returned by `loadPolicies()`
+- `policies.evaluated` — Count of policies evaluated per `evaluateAllPolicies()` call
+- `policies.passed` — Count of policies with `passed: true`
+- `policies.failed` — Count of policies with `passed: false`
+- `policies.violations.deny` — Count of `deny` violations across all evaluated policies
+- `policies.violations.warn` — Count of `warn` violations across all evaluated policies
 
-  ### 2.1 Structured Log Fields
+## 2. Logging
 
-  - `feature`: `FEAT-011`
-  - `domain`: `policy`
-  - `operation`: Name of the function/operation
-  - `duration_ms`: Execution time
-  - `status`: success | failure
-  - `error_code`: Error code if applicable (ERR-POL-NNN)
+The current implementation does not perform structured logging. Callers should log:
 
-  ### 2.2 Log Levels
+### 2.1 Recommended Log Events
 
-  - `ERROR`: Operation failures requiring attention
-  - `WARN`: Degraded operations or policy warnings
-  - `INFO`: Normal operation milestones
-  - `DEBUG`: Detailed execution traces (development only)
+- `policy.load.complete` — After `loadPolicies()` returns, log count of policies loaded (registry + risk-class + override)
+- `policy.evaluate.result` — After each `evaluatePolicy()`, log `policy_id`, `passed`, violation count
+- `policy.evaluate.violation` — For each violation, log `rule_id`, `action`, `condition`, `risk_class`
+- `policy.scope.skip` — When a policy does not apply to the current context
 
-  ## 3. Traces
+### 2.2 Log Levels
 
-  - Each operation generates a trace span with:
-    - `span_name`: `policy.{operation}`
-    - `feature_id`: `FEAT-011`
-    - `run_id`: Current pipeline run identifier
+- `ERROR`: Policy file exists but fails to parse
+- `WARN`: Advisory policy violations (violations with enforcement `"advisory"`)
+- `INFO`: Policy load summary, evaluation results
+- `DEBUG`: Individual condition matching results, scope matching
 
-  ## 4. Alerting
+## 3. Traces
 
-  - Alert on sustained error rates exceeding threshold
-  - Alert on operation duration exceeding SLO
-  - Alert on resource exhaustion (storage, memory)
+- `policy.load` — Span covering file reads and policy synthesis
+- `policy.evaluate` — Span per policy evaluation
+- `policy.evaluateAll` — Parent span covering all policy evaluations
 
-  ## 5. Cross-References
+## 4. Cross-References
 
-  - SYS-06 (Data & Traceability Model)
-  - GOV-04 (Audit & Traceability Rules)
-  
+- SYS-06 (Data & Traceability Model)
+- GOV-04 (Audit & Traceability Rules)

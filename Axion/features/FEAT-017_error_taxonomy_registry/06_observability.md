@@ -1,45 +1,43 @@
 # FEAT-017 — Error Taxonomy & Registry: Observability
 
-  ## 1. Metrics
+## 1. Metrics
 
-  - `errors.total`
-- `errors.by_domain`
-- `errors.by_severity`
-- `errors.unclassified`
+- `taxonomy.registry_loaded` — Counter, incremented each time a registry is successfully loaded
+- `taxonomy.registry_load_errors` — Counter, incremented on registry load failures
+- `taxonomy.lookups_total` — Counter, total `lookupErrorCode()` calls
+- `taxonomy.lookups_miss` — Counter, lookups that returned `undefined`
+- `taxonomy.normalizations_total` — Counter, total `normalizeError()` calls
+- `taxonomy.normalizations_unclassified` — Counter, `normalizeUnknownError()` calls (errors without registry match)
 
-  ## 2. Logging
+## 2. Logging
 
-  ### 2.1 Structured Log Fields
+### 2.1 Structured Log Fields
 
-  - `feature`: `FEAT-017`
-  - `domain`: `taxonomy`
-  - `operation`: Name of the function/operation
-  - `duration_ms`: Execution time
-  - `status`: success | failure
-  - `error_code`: Error code if applicable (ERR-ERR-NNN)
+- `feature`: `FEAT-017`
+- `domain`: `taxonomy`
+- `operation`: Function name (`loadErrorRegistry`, `lookupErrorCode`, `normalizeError`, etc.)
+- `error_code`: The ERR-TAX-NNN code when an error occurs
+- `registry_version`: Version string from the loaded registry
 
-  ### 2.2 Log Levels
+### 2.2 Log Levels
 
-  - `ERROR`: Operation failures requiring attention
-  - `WARN`: Degraded operations or policy warnings
-  - `INFO`: Normal operation milestones
-  - `DEBUG`: Detailed execution traces (development only)
+- `ERROR`: Registry load failures (ERR-TAX-001 through ERR-TAX-009)
+- `WARN`: Lookup misses (code not found in registry), unclassified error normalization
+- `INFO`: Registry loaded successfully with entry count
+- `DEBUG`: Individual lookup and normalization operations
 
-  ## 3. Traces
+## 3. Traces
 
-  - Each operation generates a trace span with:
-    - `span_name`: `taxonomy.{operation}`
-    - `feature_id`: `FEAT-017`
-    - `run_id`: Current pipeline run identifier
+- Each `loadErrorRegistry()` call generates a trace span: `taxonomy.loadErrorRegistry`
+- Each `normalizeError()` call generates a trace span: `taxonomy.normalizeError`
+- Span attributes: `feature_id=FEAT-017`, `registry_version`, `error_code`
 
-  ## 4. Alerting
+## 4. Alerting
 
-  - Alert on sustained error rates exceeding threshold
-  - Alert on operation duration exceeding SLO
-  - Alert on resource exhaustion (storage, memory)
+- Alert when `taxonomy.registry_load_errors` exceeds 0 in a pipeline run (registry must load successfully)
+- Alert when `taxonomy.normalizations_unclassified` rate exceeds a configurable threshold (indicates missing error definitions)
 
-  ## 5. Cross-References
+## 5. Cross-References
 
-  - SYS-06 (Data & Traceability Model)
-  - GOV-04 (Audit & Traceability Rules)
-  
+- SYS-06 (Data & Traceability Model)
+- GOV-04 (Audit & Traceability Rules)

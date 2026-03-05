@@ -1,44 +1,45 @@
 # FEAT-016 — Minimal Repro Exporter: Observability
 
-  ## 1. Metrics
+## 1. Metrics
 
-  - `repro.bundles.created`
-- `repro.bundles.size_bytes`
-- `repro.bundles.artifacts_count`
+| Metric | Type | Description |
+|--------|------|-------------|
+| `repro.selection.artifacts_selected` | gauge | Number of artifacts selected per invocation |
+| `repro.selection.artifacts_excluded` | gauge | Number of artifacts excluded per invocation |
+| `repro.selection.total_size_bytes` | gauge | Total size of selected artifacts in bytes |
+| `repro.package.artifacts_included` | gauge | Number of artifacts actually copied into package |
+| `repro.package.content_hash` | label | Content hash of the built package |
 
-  ## 2. Logging
+## 2. Logging
 
-  ### 2.1 Structured Log Fields
+### 2.1 CLI Output (cmdRepro)
 
-  - `feature`: `FEAT-016`
-  - `domain`: `repro`
-  - `operation`: Name of the function/operation
-  - `duration_ms`: Execution time
-  - `status`: success | failure
-  - `error_code`: Error code if applicable (ERR-REPRO-NNN)
+The CLI command logs structured progress messages to stdout:
 
-  ### 2.2 Log Levels
+- `[repro] Selecting artifacts from: {runDir}`
+- `[repro] Selected {N} artifacts ({M} excluded)`
+- `[repro] Building repro package at: {outputPath}`
+- `[repro] Repro package created:` followed by `repro_id`, `run_id`, `artifacts`, `hash`, `output`
 
-  - `ERROR`: Operation failures requiring attention
-  - `WARN`: Degraded operations or policy warnings
-  - `INFO`: Normal operation milestones
-  - `DEBUG`: Detailed execution traces (development only)
+### 2.2 Error Output
 
-  ## 3. Traces
+- `ERR-REPRO-001` → stderr + `process.exit(1)` in CLI mode
 
-  - Each operation generates a trace span with:
-    - `span_name`: `repro.{operation}`
-    - `feature_id`: `FEAT-016`
-    - `run_id`: Current pipeline run identifier
+### 2.3 Structured Log Fields
 
-  ## 4. Alerting
+- `feature`: `FEAT-016`
+- `domain`: `repro`
+- `operation`: `select` | `build` | `cli`
+- `run_id`: Current run identifier
+- `repro_id`: Generated repro package identifier
 
-  - Alert on sustained error rates exceeding threshold
-  - Alert on operation duration exceeding SLO
-  - Alert on resource exhaustion (storage, memory)
+## 3. Traces
 
-  ## 5. Cross-References
+- `repro.select` — artifact selection phase
+- `repro.build` — package assembly phase
+- `repro.cli` — full CLI invocation
 
-  - SYS-06 (Data & Traceability Model)
-  - GOV-04 (Audit & Traceability Rules)
-  
+## 4. Cross-References
+
+- SYS-06 (Data & Traceability Model)
+- GOV-04 (Audit & Traceability Rules)

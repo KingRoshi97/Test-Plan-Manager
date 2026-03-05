@@ -3,7 +3,7 @@
   "title": "Reference Integrity Engine",
   "description": "Extracts, resolves, and validates cross-references across all artifacts, building a reference graph and detecting broken links or cycles.",
   "category": "core-logic",
-  "status": "draft",
+  "status": "active",
   "dependencies": [
     "FEAT-001",
     "FEAT-003"

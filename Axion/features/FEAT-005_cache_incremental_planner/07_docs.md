@@ -1,33 +1,32 @@
 # FEAT-005 — Cache & Incremental Planner: Documentation Requirements
 
-  ## 1. API Documentation
+## 1. API Documentation
 
-  - All exported functions must have JSDoc comments
-  - Parameter types and return types must be documented
-  - Error conditions and thrown error codes must be listed
+- All exported functions have JSDoc-compatible signatures documented in 08_api.md
+- Parameter types and return types are documented with TypeScript interfaces
+- Error conditions reference specific `ERR-CACHE-NNN` codes from 02_errors.md
 
-  ## 2. Architecture Documentation
+## 2. Architecture Documentation
 
-  - Module dependency diagram
-  - Data flow through Cache & Incremental Planner
-  - Integration points with: FEAT-001, FEAT-004
+- Three-module architecture: `keys.ts` (key generation) → `planner.ts` (incremental decisions) → `integrity.ts` (validation)
+- `keys.ts` is a pure function module with no filesystem side effects
+- `planner.ts` reads previous run directories and manifest files
+- `integrity.ts` reads/writes integrity manifests and can delete corrupted files
+- Data flow: stage inputs → `computeKey()` → `planIncremental()` compares against previous run → produces `IncrementalPlan`
 
-  ## 3. Operator Documentation
+## 3. Operator Documentation
 
-  - Configuration options and defaults
-  - CLI commands related to this feature
-  - Troubleshooting guide for common error codes (ERR-CACHE-NNN)
+- Cache keys follow the format `namespace:version:input_hash`
+- The `integrity.json` file in a cache directory maps relative file paths to SHA-256 hashes
+- `repairCache()` is destructive — it removes corrupted files from disk
+- `buildIntegrityManifest()` should be run after populating a cache directory to enable future integrity checks
 
-  ## 4. Change Log
+## 4. Change Log
 
-  - All changes to this feature must be recorded
-  - Breaking changes must follow GOV-03 (Deprecation & Migration Rules)
-  - Version stamps per GOV-01 (Versioning Policy)
+- v1.0.0: Initial implementation — replaced `NotImplementedError` stubs with working cache key generation, incremental planning, and integrity validation
 
-  ## 5. Cross-References
+## 5. Cross-References
 
-  - SYS-09 (Terminology & Definitions)
-  - GOV-01 (Versioning Policy)
-  - GOV-02 (Change Control Rules)
-  - GOV-03 (Deprecation & Migration Rules)
-  
+- SYS-09 (Terminology & Definitions)
+- GOV-01 (Versioning Policy)
+- GOV-02 (Change Control Rules)

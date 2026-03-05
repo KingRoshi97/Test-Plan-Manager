@@ -1,31 +1,37 @@
 # FEAT-004 — Artifact Store & Registry: Error Codes
 
-  ## 1. Error Code Format
+## 1. Error Code Format
 
-  All error codes follow the `ERR-DOMAIN-NNN` format defined in the ERROR_CODE_REGISTRY.
+All error codes follow the `ERR-ART-NNN` format.
 
-  ## 2. Domain
+## 2. Domain
 
-  `ART`
+`ART`
 
-  ## 3. Error Codes
+## 3. Error Codes
 
-  | Code | Severity | Message | Retryable | Action |
-  |------|----------|---------|-----------|--------|
-  | `ERR-ART-001` | error | Artifact Store & Registry initialization failed | false | Check configuration and dependencies. |
-| `ERR-ART-002` | error | Artifact Store & Registry invalid input | false | Validate input against schema before passing. |
-| `ERR-ART-003` | warning | Artifact Store & Registry degraded operation | false | Review logs for root cause. |
+| Code | Severity | Message | Retryable | Action |
+|------|----------|---------|-----------|--------|
+| `ERR-ART-002` | error | Invalid ref format or missing required field | false | Check ref string format (`scheme:value`) and ensure CAS refs have `hash`, file refs have `path`. |
+| `ERR-ART-003` | warning | Cannot resolve inline ref to file path | false | Inline refs cannot be resolved to filesystem paths. Use `cas:` or `file:` scheme instead. |
 
-  ## 4. Error Handling Rules
+## 4. Error Sources
 
-  - All errors must include the error code from this registry
-  - Error messages must not expose internal implementation details
-  - Errors must include actionable remediation guidance
-  - Unregistered error codes must not be thrown at runtime
+| Function | Throws | Condition |
+|----------|--------|-----------|
+| `parseRef()` | `ERR-ART-002` | Ref string missing `:` separator or unrecognized scheme |
+| `formatRef()` | `ERR-ART-002` | CAS ref without `hash` or file ref without `path` |
+| `resolveRef()` | `ERR-ART-002` | CAS ref without `hash` or file ref without `path` |
+| `resolveRef()` | `ERR-ART-003` | Inline scheme passed to `resolveRef()` |
+| `garbageCollect()` | — | Errors captured in `GCResult.errors[]` array, not thrown |
 
-  ## 5. Cross-References
+## 5. Error Handling Rules
 
-  - ERROR_CODE_REGISTRY.json
-  - FEAT-017 (Error Taxonomy & Registry)
-  - SYS-07 (Compliance & Gate Model)
-  
+- All errors include the error code prefix for grep-ability
+- Filesystem errors during GC are captured in `GCResult.errors[]` and do not halt collection
+- `createCAS` operations propagate raw filesystem errors (ENOSPC, EACCES)
+
+## 6. Cross-References
+
+- FEAT-017 (Error Taxonomy & Registry)
+- SYS-07 (Compliance & Gate Model)

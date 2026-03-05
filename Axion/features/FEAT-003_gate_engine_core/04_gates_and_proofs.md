@@ -1,75 +1,63 @@
 # FEAT-003 — Gate Engine Core: Gates & Proofs
 
-  ## 1. Applicable Gates
+## 1. Gate Map (G1–G8)
 
-  ### GATE-01 — Schema Gate (Intake Validity)
+The engine evaluates 8 gates across the pipeline. Each gate maps to a target artifact and required proof types via `GATE_EVIDENCE_MAP` and `deriveTarget()`.
 
-Checks submissions against the Intake Schema: required fields, types/enums/formats, dependencies, skill-level thresholds. Hard stop if failing.
+| Gate ID | Name | Target Artifact | Required Proof Types |
+|---------|------|----------------|---------------------|
+| `G1_INTAKE_VALIDITY` | Intake Validity | `intake/validation_result.json` | `intake_validation` |
+| `G2_CANONICAL_INTEGRITY` | Canonical Integrity | `canonical/canonical_spec.json` | `canonical_validation` |
+| `G3_STANDARDS_RESOLVED` | Standards Resolved | `standards/resolved_standards_snapshot.json` | `standards_resolution` |
+| `G4_TEMPLATE_SELECTION` | Template Selection | `templates/selection_result.json` | `template_selection` |
+| `G5_TEMPLATE_COMPLETENESS` | Template Completeness | `templates/template_completeness_report.json` | `template_completeness` |
+| `G6_PLAN_COVERAGE` | Plan Coverage | `planning/coverage_report.json` | `plan_coverage` |
+| `G7_VERIFICATION` | Verification | `verification/verification_run_result.json` | `verification_result`, `proof_ledger` |
+| `G8_PACKAGE_INTEGRITY` | Package Integrity | `kit/kit_manifest.json` | `package_integrity` |
 
-### GATE-02 — Normalization Gate (Transform Integrity)
+## 2. Gate Evaluation Flow
 
-Checks that normalization did not invent content, recorded changes in a normalization report, produced schema-consistent types and canonical naming. Hard stop if invention or invalid types.
+1. `runGatesForStage(baseDir, runId, stageId)` loads all gates from `GATE_REGISTRY.json`
+2. Gates are filtered to the current `stageId` via `filterGatesByStage()`
+3. Each gate's paths are templated (`{{run_id}}` substitution) and prefixed with `baseDir`
+4. Checks are evaluated sequentially via `evalCheck()`
+5. On first check failure, the gate short-circuits — remaining checks are skipped
+6. Evidence completeness is evaluated via `evaluateEvidenceCompleteness()`
+7. A `GateReportV1` is written to `gates/{gate_id}.gate_report.json`
+8. The run manifest's `gate_reports` array is updated
+9. On gate failure, the stage halts immediately
 
-### GATE-03 — Standards Gate (Resolved Ruleset Integrity)
+## 3. Evidence Completeness
 
-Checks standards snapshot: version pinned, defaults + overrides recorded, fixed vs configurable flags set, conflicts resolved or explicitly blocked. Hard stop if unresolved conflicts.
+`evaluateEvidenceCompleteness()` compares available proof types against required proof types from `GATE_EVIDENCE_MAP`. Result includes:
+- `required_proof_types`: what the gate needs
+- `satisfied`: which proof types are present
+- `missing`: which are absent
+- `complete`: boolean (true if `missing` is empty)
 
-### GATE-04 — Spec Gate (Truth Integrity)
+Available proof types are derived from gate pass status via `deriveAvailableProofTypes()` — a failed gate produces no proof types.
 
-Checks canonical spec: stable IDs exist, referential integrity, no duplicate truth, unknowns explicit and indexed. Hard stop if broken references or duplicate truth.
+## 4. Gate Report Structure (`GateReportV1`)
 
-### GATE-05 — Planning Gate (Work Breakdown Integrity)
+```typescript
+{
+  run_id: string;
+  gate_id: string;
+  stage_id: string;
+  target: string;
+  status: "pass" | "fail";
+  evaluated_at: string;       // ISO timestamp
+  engine: { name: "axion-gates", version: "0.1.0" };
+  issues: GateIssue[];
+  checks: CheckReport[];
+  failure_codes: string[];
+  evidence: EvidenceEntry[];
+  evidence_completeness?: EvidenceCompletenessResult;
+}
+```
 
-Checks work breakdown: each unit maps to spec IDs, dependency graph is acyclic, units are within size discipline. Hard stop if missing mappings or cycles.
+## 5. Cross-References
 
-### GATE-06 — Acceptance Gate (Proof Completeness)
-
-Checks acceptance map: every unit has acceptance items, hard gates defined, proof types and verification instructions present. Hard stop if any unit lacks hard-gate acceptance.
-
-### GATE-07 — Template Gate (Filled Doc Completeness)
-
-Checks filled templates: required fields populated (or valid UNKNOWN policy), no contradictions, cross-references resolve to canonical spec IDs. Hard stop if required fields missing or contradictions.
-
-### GATE-08 — Packaging Gate (Kit Contract)
-
-Checks kit: file tree contract satisfied, manifest/index present and correct, version stamps present, N/A rule followed. Hard stop if contract violated.
-
-### GATE-09 — Execution Gate (Proof & Completion)
-
-Checks build progress: acceptance items pass, proofs recorded and linked, state snapshot updated. Hard stop for completion claim without proof.
-
-  ## 2. Required Proof Types
-
-  The following proof types (from VER-01) are applicable to this feature:
-
-  | Proof Type | Name | Applicability |
-  |------------|------|---------------|
-  | P-01 | Command Output Proof | Build and runtime verification |
-  | P-02 | Test Result Proof | Unit and integration test results |
-  | P-05 | Diff/Commit Reference Proof | Code change verification |
-  | P-06 | Checklist Proof (Manual Verification) | Manual review verification |
-
-  ## 3. Gate Report Contract
-
-  Every gate produces a report per ORD-02 Section 7:
-
-  - `gate_id` — Gate identifier
-  - `target` — Artifact or output being checked
-  - `status` — pass | fail
-  - `executed_at` — Timestamp
-  - `issues[]` — Array of issue objects with:
-    - `issue_id`, `severity`, `error_code`, `rule_id`, `pointer`, `message`, `remediation`
-
-  ## 4. Override Policy
-
-  - Overrides are allowed only if the gate rule declares `overridable: true`
-  - Override records must include: override_id, gate_id, rule_id, approver, reason, risk_acknowledged, timestamp
-  - Overrides never delete the original failure — they annotate it
-
-  ## 5. Cross-References
-
-  - SYS-07 (Compliance & Gate Model)
-  - ORD-02 (Gate DSL & Gate Rules)
-  - VER-01 (Proof Types & Evidence Rules)
-  - FEAT-003 (Gate Engine Core)
-  
+- SYS-07 (Compliance & Gate Model)
+- ORD-02 (Gate DSL & Gate Rules)
+- VER-01 (Proof Types & Evidence Rules)

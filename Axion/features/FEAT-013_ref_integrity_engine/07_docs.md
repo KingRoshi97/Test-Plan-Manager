@@ -1,33 +1,42 @@
 # FEAT-013 — Ref Integrity Engine: Documentation Requirements
 
-  ## 1. API Documentation
+## 1. API Documentation
 
-  - All exported functions must have JSDoc comments
-  - Parameter types and return types must be documented
-  - Error conditions and thrown error codes must be listed
+All exported functions have JSDoc-compatible signatures:
 
-  ## 2. Architecture Documentation
+### extractor.ts
+- `extractRefs(artifact: unknown, artifactPath: string): ExtractedRef[]`
+- `extractRefsFromSpec(spec: unknown): ExtractedRef[]`
+- `extractRefsFromTemplate(templateContent: string, templatePath: string): ExtractedRef[]`
 
-  - Module dependency diagram
-  - Data flow through Ref Integrity Engine
-  - Integration points with: FEAT-001, FEAT-003
+### resolver.ts
+- `resolveRefs(refs: ExtractedRef[], spec: unknown): RefResolutionResult`
+- `validateRefIntegrity(spec: unknown): Promise<RefResolutionResult>`
 
-  ## 3. Operator Documentation
+### graph.ts
+- `buildGraph(refs: ExtractedRef[]): RefGraph`
+- `detectCycles(graph: RefGraph): CycleResult`
+- `topologicalSort(graph: RefGraph): string[]`
 
-  - Configuration options and defaults
-  - CLI commands related to this feature
-  - Troubleshooting guide for common error codes (ERR-REF-NNN)
+## 2. Architecture Documentation
 
-  ## 4. Change Log
+- **Data flow**: Canonical spec → `extractRefsFromSpec()` → `resolveRefs()` → `RefResolutionResult`
+- **Graph flow**: `ExtractedRef[]` → `buildGraph()` → `detectCycles()` / `topologicalSort()`
+- **Integration**: GATE-04 calls `validateRefIntegrity()` during spec truth integrity check
 
-  - All changes to this feature must be recorded
-  - Breaking changes must follow GOV-03 (Deprecation & Migration Rules)
-  - Version stamps per GOV-01 (Versioning Policy)
+## 3. Type Exports
 
-  ## 5. Cross-References
+| Type | Module | Description |
+|------|--------|-------------|
+| `ExtractedRef` | extractor.ts | Single reference with source, ID, type, context |
+| `RefResolutionResult` | resolver.ts | Resolution outcome with resolved/unresolved arrays |
+| `RefNode` | graph.ts | Graph node with ID, type, outgoing/incoming edges |
+| `RefGraph` | graph.ts | Complete directed graph (nodes Map + edges array) |
+| `CycleResult` | graph.ts | Cycle detection result |
 
-  - SYS-09 (Terminology & Definitions)
-  - GOV-01 (Versioning Policy)
-  - GOV-02 (Change Control Rules)
-  - GOV-03 (Deprecation & Migration Rules)
-  
+## 4. Cross-References
+
+- CAN-02 (ID Rules — defines valid ID patterns)
+- CAN-02 (Reference Integrity Rules — defines ref field paths)
+- GOV-01 (Versioning Policy)
+- GOV-02 (Change Control Rules)

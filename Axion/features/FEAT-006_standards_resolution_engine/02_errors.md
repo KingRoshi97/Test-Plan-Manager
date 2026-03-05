@@ -1,31 +1,27 @@
 # FEAT-006 — Standards Resolution Engine: Error Codes
 
-  ## 1. Error Code Format
+## 1. Error Sources
 
-  All error codes follow the `ERR-DOMAIN-NNN` format defined in the ERROR_CODE_REGISTRY.
+All errors in this feature are thrown as native `Error` objects with descriptive messages. The `selector.ts` module throws `NotImplementedError` for its stub functions.
 
-  ## 2. Domain
+## 2. Error Catalog
 
-  `STD`
+| Error | Source Module | Condition | Message Pattern |
+|-------|--------------|-----------|-----------------|
+| Missing standards index | `registryLoader.ts` | `standards_index.json` not found at expected path | `Standards index not found: {path}` |
+| Missing resolver rules | `registryLoader.ts` | `resolver_rules.v1.json` not found at expected path | `Resolver rules not found: {path}` |
+| Missing pack file | `registryLoader.ts` | Pack JSON file referenced in index but absent on disk | `Standards pack not found: {path} (pack_id: {id})` |
+| Missing snapshot | `snapshot.ts` | `resolved_standards_snapshot.json` not found in run directory | `Standards snapshot not found: {path}` |
+| Not implemented | `selector.ts` | Stub functions called before implementation | `NotImplementedError: {functionName}` |
 
-  ## 3. Error Codes
+## 3. Error Handling Rules
 
-  | Code | Severity | Message | Retryable | Action |
-  |------|----------|---------|-----------|--------|
-  | `ERR-STD-001` | error | Standards Resolution Engine initialization failed | false | Check configuration and dependencies. |
-| `ERR-STD-002` | error | Standards Resolution Engine invalid input | false | Validate input against schema before passing. |
-| `ERR-STD-003` | warning | Standards Resolution Engine degraded operation | false | Review logs for root cause. |
+- All errors are thrown synchronously (no async error paths)
+- File-not-found errors include the full expected path for diagnostics
+- Pack-not-found errors include the `pack_id` to trace back to the index entry
+- No error codes are currently registered in a centralized error registry; errors use descriptive message strings
 
-  ## 4. Error Handling Rules
+## 4. Cross-References
 
-  - All errors must include the error code from this registry
-  - Error messages must not expose internal implementation details
-  - Errors must include actionable remediation guidance
-  - Unregistered error codes must not be thrown at runtime
-
-  ## 5. Cross-References
-
-  - ERROR_CODE_REGISTRY.json
-  - FEAT-017 (Error Taxonomy & Registry)
-  - SYS-07 (Compliance & Gate Model)
-  
+- FEAT-017 (Error Taxonomy & Registry) — future integration for structured error codes
+- SYS-07 (Compliance & Gate Model)

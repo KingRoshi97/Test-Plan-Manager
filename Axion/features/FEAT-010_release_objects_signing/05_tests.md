@@ -1,44 +1,74 @@
 # FEAT-010 — Release Objects & Signing: Test Plan
 
-  ## 1. Unit Tests
+## 1. Unit Tests — releases.ts
 
-  ### 1.1 Core Function Tests
+### 1.1 createRelease()
+- Creates a release with status `draft`, correct run_id, version, timestamps
+- Generates unique release IDs with `REL-` prefix
+- Persists release JSON to `{basePath}/releases/{release_id}.json`
+- Handles empty artifacts array
+- Stores optional notes field
 
-  - `createRelease()` — verify correct output for valid input
-- `createRelease()` — verify error handling for invalid input
-- `verifyRelease()` — verify correct output for valid input
-- `verifyRelease()` — verify error handling for invalid input
-- `listReleases()` — verify correct output for valid input
-- `listReleases()` — verify error handling for invalid input
+### 1.2 signRelease()
+- Transitions release from `draft` to `staged`
+- Appends a signature entry with signer, SHA-256 hash, and signed_at timestamp
+- Throws if release ID not found
+- Throws if release is not in `draft` status (invalid transition)
 
-  ### 1.2 Edge Cases
+### 1.3 publishRelease()
+- Transitions release from `staged` to `published`
+- Throws if release has zero signatures
+- Throws if release is in `draft` status (must sign first)
+- Throws if release ID not found
 
-  - Empty input handling
-  - Boundary value testing
-  - Error propagation verification
+### 1.4 revokeRelease()
+- Transitions release to `revoked` from any non-revoked state (draft, staged, published)
+- Stores revocation_reason
+- Throws if release is already revoked
+- Throws if release ID not found
 
-  ## 2. Integration Tests
+### 1.5 getRelease()
+- Returns the release object for a valid ID
+- Returns null for a non-existent ID
 
-  - End-to-end flow through Release Objects & Signing pipeline stage
-  - Integration with dependent features: FEAT-001, FEAT-009
-  - Artifact persistence and retrieval
+### 1.6 listReleases()
+- Returns all releases from the releases directory
+- Returns empty array if no releases directory exists
+- Returns empty array if directory exists but is empty
 
-  ## 3. Acceptance Tests
+### 1.7 State Machine Transitions
+- Valid: draft → staged, draft → revoked, staged → published, staged → revoked, published → revoked
+- Invalid: revoked → any, draft → published, published → staged, published → draft
 
-  - Feature satisfies all invariants defined in 01_contract.md
-  - All gate checks pass for valid artifacts
-  - Error codes match ERROR_CODE_REGISTRY definitions
+## 2. Unit Tests — release.ts (CLI)
 
-  ## 4. Test Infrastructure
+### 2.1 cmdRelease()
+- Creates a release from the latest run if no runId specified
+- Creates a release from a specific runId
+- Collects artifacts from artifact_index.json
+- Throws if run directory not found
 
-  - Test framework: Vitest
-  - Fixtures: `test/fixtures/`
-  - Helpers: `test/helpers/`
+### 2.2 cmdReleaseSign(), cmdReleasePublish(), cmdReleaseRevoke()
+- Delegate correctly to core functions
+- Print formatted release output
 
-  ## 5. Cross-References
+### 2.3 cmdReleaseList()
+- Lists all releases with formatted output
 
-  - VER-01 (Proof Types & Evidence Rules)
-  - VER-03 (Completion Criteria)
-  - 01_contract.md (invariants to verify)
-  - 04_gates_and_proofs.md (proof requirements)
-  
+## 3. Integration Tests
+
+- Full lifecycle: create → sign → publish
+- Full lifecycle: create → revoke
+- Create release from actual pipeline run output
+
+## 4. Test Infrastructure
+
+- Test framework: Vitest
+- Fixtures: `test/fixtures/` (temp directories for release storage)
+- Helpers: `test/helpers/`
+
+## 5. Cross-References
+
+- VER-01 (Proof Types & Evidence Rules)
+- VER-03 (Completion Criteria)
+- 01_contract.md (invariants to verify)

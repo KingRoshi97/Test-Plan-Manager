@@ -1,35 +1,31 @@
 # FEAT-015 — Run Diff Engine: Security Requirements
 
-  ## 1. Scope
+## 1. Scope
 
-  Security requirements specific to the Run Diff Engine feature domain.
+Security requirements for the Run Diff Engine's file-system access and output handling.
 
-  ## 2. Security Requirements
+## 2. Security Requirements
 
-  - Diff reports do not expose secrets from either run
-- Run snapshots are access-controlled
+- Diff operations read files using `readFileSync`; no write operations are performed on run directories
+- Output `DiffReport` contains only relative paths and SHA-256 hashes — no file content is included
+- Run directories are accessed as provided; no path traversal normalization is applied beyond Node.js `join`/`relative`
 
-  ## 3. Data Classification
+## 3. Data Classification
 
-  - Input data: Internal
-  - Output data: Internal
-  - Audit data: Restricted (append-only)
+- Input data: Internal (run directory contents)
+- Output data: Internal (hashes and relative paths only, no raw content)
 
-  ## 4. Access Control
+## 4. Access Control
 
-  - Feature operations require authenticated context
-  - Write operations require appropriate authorization
-  - Audit logs are read-only for non-system actors
+- File-system permissions govern access to run directories
+- No authentication or authorization layer is built into the diff engine itself; callers are responsible for access checks
 
-  ## 5. Threat Mitigations
+## 5. Threat Mitigations
 
-  - Input validation on all external-facing interfaces
-  - Output sanitization to prevent information leakage
-  - Rate limiting on high-frequency operations
+- No file content is ever included in `DiffReport`, preventing accidental secret leakage through diff output
+- SHA-256 hashing is one-way; original content cannot be recovered from hashes
 
-  ## 6. Cross-References
+## 6. Cross-References
 
-  - SYS-07 (Compliance & Gate Model)
-  - FEAT-012 (Secrets & PII Scanner / Quarantine)
-  - sec_baseline@1.0.0 standards pack
-  
+- SYS-07 (Compliance & Gate Model)
+- FEAT-012 (Secrets & PII Scanner / Quarantine)

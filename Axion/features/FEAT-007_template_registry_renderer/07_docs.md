@@ -1,33 +1,75 @@
 # FEAT-007 — Template Registry & Renderer: Documentation Requirements
 
-  ## 1. API Documentation
+## 1. System Documentation References
 
-  - All exported functions must have JSDoc comments
-  - Parameter types and return types must be documented
-  - Error conditions and thrown error codes must be listed
+| Document | ID | Relevance |
+|----------|----|-----------|
+| Template Index Registry | TMP-01 | Defines the `template_index.json` schema and registry rules |
+| Template File Contract | TMP-02 | Defines the 11-section markdown structure for templates |
+| Template Selection Rules | TMP-03 | Defines `applies_when`, `requiredness`, and `required_by_skill_level` logic |
+| Template Fill Rules | TMP-04 | Defines placeholder resolution precedence and 5 placeholder types |
+| Template Completeness Rules | TMP-05 | Defines completeness checking, blocking logic, and UNKNOWN policy |
+| End-to-End Architecture | SYS-03 | Template pipeline position in the overall run flow |
+| Compliance & Gate Model | SYS-07 | GATE-07 definition and gate report contract |
 
-  ## 2. Architecture Documentation
+## 2. API Documentation
 
-  - Module dependency diagram
-  - Data flow through Template Registry & Renderer
-  - Integration points with: FEAT-001, FEAT-003, FEAT-006
+All exported functions have TypeScript type signatures. Key exports from `index.ts`:
 
-  ## 3. Operator Documentation
+- `selectTemplates` — template selection engine
+- `fillTemplate` — template filling engine
+- `renderTemplate` — simple `{{key}}` placeholder renderer
+- `countPlaceholders` — count `{{...}}` occurrences in content
+- `scanUnresolvedPlaceholders` — find unresolved `{{key}}` entries
+- `buildAutoContext` — build context skeleton from template placeholders
+- `writeSelectionResult` — orchestrate selection and write evidence
+- `writeRenderedDocs` — orchestrate rendering, filling, completeness, and write evidence
+- `parsePlaceholder` — parse raw placeholder string into `PlaceholderSyntax`
+- `resolvePlaceholder` — resolve parsed placeholder against `FillContext`
+- `checkCompleteness` — single template completeness check (legacy interface, stub)
+- `checkAllTemplates` — batch completeness check (legacy interface, stub)
 
-  - Configuration options and defaults
-  - CLI commands related to this feature
-  - Troubleshooting guide for common error codes (ERR-TMP-NNN)
+## 3. Architecture Documentation
 
-  ## 4. Change Log
+### Data Flow
 
-  - All changes to this feature must be recorded
-  - Breaking changes must follow GOV-03 (Deprecation & Migration Rules)
-  - Version stamps per GOV-01 (Versioning Policy)
+```
+template_index.json
+        |
+        v
+  selectTemplates() ──> selection_result.json
+        |                selection_report.json
+        v
+  fillTemplate() ──────> rendered_docs/<id>.md
+        |                 render_envelopes.json
+        v                 render_report.json
+  checkTemplateCompleteness()
+        |
+        v
+  buildCompletenessReport() ──> template_completeness_report.json
+        |
+        v
+  GATE-07 evaluation
+```
 
-  ## 5. Cross-References
+### Module Dependency Graph
 
-  - SYS-09 (Terminology & Definitions)
-  - GOV-01 (Versioning Policy)
-  - GOV-02 (Change Control Rules)
-  - GOV-03 (Deprecation & Migration Rules)
-  
+- `evidence.ts` → `selector.ts`, `filler.ts`, `renderer.ts`, `completeness.ts`, `knowledge/resolver.ts`
+- `filler.ts` → `selector.ts` (types), `knowledge/resolver.ts`
+- `selector.ts` → `knowledge/resolver.ts` (types)
+- `completeness.ts` → (standalone)
+- `renderer.ts` → (standalone)
+- `index.ts` → re-exports from all modules
+
+## 4. Change Log
+
+- All changes to this feature must be recorded
+- Breaking changes must follow GOV-03 (Deprecation & Migration Rules)
+- Version stamps per GOV-01 (Versioning Policy)
+
+## 5. Cross-References
+
+- SYS-09 (Terminology & Definitions)
+- GOV-01 (Versioning Policy)
+- GOV-02 (Change Control Rules)
+- GOV-03 (Deprecation & Migration Rules)

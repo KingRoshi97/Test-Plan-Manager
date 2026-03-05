@@ -1,33 +1,32 @@
 # FEAT-008 — Proof Ledger: Documentation Requirements
 
-  ## 1. API Documentation
+## 1. API Documentation
 
-  - All exported functions must have JSDoc comments
-  - Parameter types and return types must be documented
-  - Error conditions and thrown error codes must be listed
+- `ProofLedger` class: constructor(ledgerPath), append(), appendProofObject(), load(), query(), getById(), getByRun(), getByGate(), getCoverage()
+- Registry functions: loadProofEntries(), filterProofsByGate/Run/Type/AcceptanceRef(), queryProofs(), getProofById(), getAcceptanceCoverage()
+- Validation functions: validateProofEntry(), verifyProofHash(), validateEvidenceFields(), validateLedgerIntegrity()
+- Proof creators: createProofFromGateReport(), createProofsFromGateReports(), createCommandOutputProof(), createTestResultProof(), createDiffCommitProof(), createChecklistProof()
+- Registry loader: loadProofTypeRegistry(), getEvidencePolicies(), getRequiredProofTypes()
 
-  ## 2. Architecture Documentation
+## 2. Architecture Documentation
 
-  - Module dependency diagram
-  - Data flow through Proof Ledger
-  - Integration points with: FEAT-001, FEAT-003
+- Data flow: Gate Reports → proof/create.ts → ProofObject → proofLedger/ledger.ts → JSONL file
+- Query flow: JSONL file → proofLedger/registry.ts → filtered ProofEntry[]
+- Validation flow: ProofEntry[] → proofLedger/validate.ts → LedgerIntegrityReport
+- Integration: FEAT-003 (Gate Engine) produces GateReportV1 → FEAT-008 creates proof → FEAT-014 (Coverage) consumes proofs
 
-  ## 3. Operator Documentation
+## 3. Type Reference
 
-  - Configuration options and defaults
-  - CLI commands related to this feature
-  - Troubleshooting guide for common error codes (ERR-PROOF-NNN)
+- `ProofEntry` — core ledger record (proof_id, run_id, gate_id, proof_type, timestamp, evidence, hash, acceptance_refs)
+- `ProofObject` — extended proof with status (pass/fail) and created_at
+- `ProofType` — union of P-01..P-06 and system types
+- `ProofQuery` — query filter object (run_id?, gate_id?, proof_type?, acceptance_ref?)
+- `LedgerIntegrityReport` — validation summary (total, valid, invalid, hash_mismatches, missing_fields, details)
+- `PROOF_TYPE_LABELS` — human-readable names for each proof type
+- `PROOF_TYPE_REQUIRED_FIELDS` — required evidence fields per P-01..P-06
 
-  ## 4. Change Log
+## 4. Cross-References
 
-  - All changes to this feature must be recorded
-  - Breaking changes must follow GOV-03 (Deprecation & Migration Rules)
-  - Version stamps per GOV-01 (Versioning Policy)
-
-  ## 5. Cross-References
-
-  - SYS-09 (Terminology & Definitions)
-  - GOV-01 (Versioning Policy)
-  - GOV-02 (Change Control Rules)
-  - GOV-03 (Deprecation & Migration Rules)
-  
+- VER-01 (Proof Types & Evidence Rules)
+- GOV-01 (Versioning Policy)
+- GOV-02 (Change Control Rules)

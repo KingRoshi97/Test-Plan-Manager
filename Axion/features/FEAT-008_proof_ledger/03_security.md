@@ -1,36 +1,38 @@
 # FEAT-008 — Proof Ledger: Security Requirements
 
-  ## 1. Scope
+## 1. Scope
 
-  Security requirements specific to the Proof Ledger feature domain.
+Security requirements for the append-only proof ledger and proof object creation.
 
-  ## 2. Security Requirements
+## 2. Security Requirements
 
-  - Proof ledger is append-only and tamper-evident
-- Proof entries include timestamp and source context
-- Access to proof modification is restricted
+- Ledger is append-only — no API for deletion or mutation of existing entries
+- Every proof entry includes a SHA-256 hash for tamper detection
+- Hash covers: `{ proofId, runId, gate_id, evidence, timestamp }`
+- Proof IDs are deterministic from run/gate/timestamp to prevent ID spoofing
+- Evidence objects are serialized as-is — no executable content
 
-  ## 3. Data Classification
+## 3. Data Classification
 
-  - Input data: Internal
-  - Output data: Internal
-  - Audit data: Restricted (append-only)
+- Proof evidence: Internal (may contain command outputs, file paths)
+- Ledger file: Restricted (append-only, integrity-critical)
+- Proof hashes: Internal (integrity verification data)
 
-  ## 4. Access Control
+## 4. Access Control
 
-  - Feature operations require authenticated context
-  - Write operations require appropriate authorization
-  - Audit logs are read-only for non-system actors
+- Write: Only system processes (pipeline stages, gate evaluator) append to ledger
+- Read: All system components can query the ledger
+- No delete or update operations exposed
 
-  ## 5. Threat Mitigations
+## 5. Threat Mitigations
 
-  - Input validation on all external-facing interfaces
-  - Output sanitization to prevent information leakage
-  - Rate limiting on high-frequency operations
+- **Tamper detection**: SHA-256 hash on each entry; `verifyProofHash()` validates integrity
+- **Replay prevention**: Proof IDs include timestamp component
+- **Evidence validation**: `validateEvidenceFields()` checks required fields per proof type
+- **Graceful degradation**: Malformed JSONL lines are skipped during load, not crash
 
-  ## 6. Cross-References
+## 6. Cross-References
 
-  - SYS-07 (Compliance & Gate Model)
-  - FEAT-012 (Secrets & PII Scanner / Quarantine)
-  - sec_baseline@1.0.0 standards pack
-  
+- VER-01 (Proof Types & Evidence Rules)
+- SYS-07 (Compliance & Gate Model)
+- FEAT-012 (Secrets & PII Scanner) — scan proof evidence for leaked secrets

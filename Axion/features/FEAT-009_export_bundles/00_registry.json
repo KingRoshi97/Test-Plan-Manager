@@ -1,9 +1,9 @@
 {
   "feature_id": "FEAT-009",
   "title": "Export Bundles",
-  "description": "Packaging and export engine that assembles agent kits into distributable bundles with manifests, version stamps, and integrity verification.",
+  "description": "Packaging and export engine that assembles agent kits from pipeline run outputs. Maps rendered documents to 12 domain slots via SUBDIR_TO_SLOT, generates kit metadata files (START_HERE, MANIFEST, INDEX, VERSIONS, RUN_RULES, PROOF_LOG), copies core artifacts, produces packaging_manifest.json with SHA-256 hashes, and writes entrypoint.json and version_stamp.json.",
   "category": "core-logic",
-  "status": "draft",
+  "status": "active",
   "dependencies": [
     "FEAT-001",
     "FEAT-003",
@@ -23,5 +23,6 @@
   ],
   "gates": [
     "GATE-08"
-  ]
+  ],
+  "notes": "buildRealKit is the primary entrypoint. packageKit and validateKit are stubs (NotImplementedError). CLI cmdExportBundle is also a stub."
 }

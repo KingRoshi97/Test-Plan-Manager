@@ -1,75 +1,77 @@
 # FEAT-001 — Control Plane Core: Gates & Proofs
 
-  ## 1. Applicable Gates
+## 1. Gate-to-Stage Mapping
 
-  ### GATE-01 — Schema Gate (Intake Validity)
+The Control Plane enforces 8 gates across the 10-stage pipeline. Gates are defined in `STAGE_GATES` (types/run.ts) and loaded into each run at creation time.
 
-Checks submissions against the Intake Schema: required fields, types/enums/formats, dependencies, skill-level thresholds. Hard stop if failing.
+| Stage | Gate | Description |
+|-------|------|-------------|
+| S2_VALIDATE_INTAKE | G1_INTAKE_VALIDITY | Validates intake submission against schema |
+| S4_VALIDATE_CANONICAL | G2_CANONICAL_INTEGRITY | Validates canonical spec referential integrity |
+| S5_RESOLVE_STANDARDS | G3_STANDARDS_RESOLVED | Validates standards snapshot completeness |
+| S6_SELECT_TEMPLATES | G4_TEMPLATE_SELECTION | Validates template selection correctness |
+| S7_RENDER_DOCS | G5_TEMPLATE_COMPLETENESS | Validates filled template completeness |
+| S8_BUILD_PLAN | G6_PLAN_COVERAGE | Validates work breakdown coverage |
+| S9_VERIFY_PROOF | G7_VERIFICATION | Validates proof and evidence completeness |
+| S10_PACKAGE | G8_PACKAGE_INTEGRITY | Validates kit package contract |
 
-### GATE-02 — Normalization Gate (Transform Integrity)
+Stages S1_INGEST_NORMALIZE and S3_BUILD_CANONICAL have no associated gates.
 
-Checks that normalization did not invent content, recorded changes in a normalization report, produced schema-consistent types and canonical naming. Hard stop if invention or invalid types.
+## 2. Gate Enforcement Behavior
 
-### GATE-03 — Standards Gate (Resolved Ruleset Integrity)
+When `recordStageResult()` is called with `result: "fail"`:
 
-Checks standards snapshot: version pinned, defaults + overrides recorded, fixed vs configurable flags set, conflicts resolved or explicitly blocked. Hard stop if unresolved conflicts.
+1. If the failed stage has an associated gate in `stage_gates`:
+   - Run transitions to `gated` (not `failed`)
+   - An error entry is appended to `run.errors[]` with message: `Gate ${gateId} blocked stage ${stageId}`
+   - The run can be retried by calling `advanceStage()` again (gated → running)
 
-### GATE-04 — Spec Gate (Truth Integrity)
+2. If the failed stage has no associated gate:
+   - Run transitions to `failed`
+   - The run cannot be retried (failed → archived only)
 
-Checks canonical spec: stable IDs exist, referential integrity, no duplicate truth, unknowns explicit and indexed. Hard stop if broken references or duplicate truth.
+## 3. Required Gates
 
-### GATE-05 — Planning Gate (Work Breakdown Integrity)
+All 8 gates are required for every run (from `GATES_REQUIRED`):
 
-Checks work breakdown: each unit maps to spec IDs, dependency graph is acyclic, units are within size discipline. Hard stop if missing mappings or cycles.
+- G1_INTAKE_VALIDITY
+- G2_CANONICAL_INTEGRITY
+- G3_STANDARDS_RESOLVED
+- G4_TEMPLATE_SELECTION
+- G5_TEMPLATE_COMPLETENESS
+- G6_PLAN_COVERAGE
+- G7_VERIFICATION
+- G8_PACKAGE_INTEGRITY
 
-### GATE-06 — Acceptance Gate (Proof Completeness)
+## 4. Run Completion Gate
 
-Checks acceptance map: every unit has acceptance items, hard gates defined, proof types and verification instructions present. Hard stop if any unit lacks hard-gate acceptance.
+`completeRun()` enforces a meta-gate: all stages must have status `pass` or `skip`. If any stage is in another status, the run cannot be completed (throws with list of incomplete stages).
 
-### GATE-07 — Template Gate (Filled Doc Completeness)
+## 5. Gate Reports
 
-Checks filled templates: required fields populated (or valid UNKNOWN policy), no contradictions, cross-references resolve to canonical spec IDs. Hard stop if required fields missing or contradictions.
+Gate report references are stored in `run.gate_reports: GateReportRef[]`. Each reference contains:
 
-### GATE-08 — Packaging Gate (Kit Contract)
+```typescript
+interface GateReportRef {
+  gate_id: string;
+  report_ref: string;
+  status: "pass" | "fail";
+  timestamp: string;
+}
+```
 
-Checks kit: file tree contract satisfied, manifest/index present and correct, version stamps present, N/A rule followed. Hard stop if contract violated.
+## 6. Required Proof Types
 
-### GATE-09 — Execution Gate (Proof & Completion)
+| Proof Type | Name | Applicability |
+|------------|------|---------------|
+| P-01 | Command Output Proof | Verifying run creation, stage advancement |
+| P-02 | Test Result Proof | Unit and integration test results |
+| P-05 | Diff/Commit Reference Proof | Code change verification |
+| P-06 | Checklist Proof | Manual review of state transitions |
 
-Checks build progress: acceptance items pass, proofs recorded and linked, state snapshot updated. Hard stop for completion claim without proof.
+## 7. Cross-References
 
-  ## 2. Required Proof Types
-
-  The following proof types (from VER-01) are applicable to this feature:
-
-  | Proof Type | Name | Applicability |
-  |------------|------|---------------|
-  | P-01 | Command Output Proof | Build and runtime verification |
-  | P-02 | Test Result Proof | Unit and integration test results |
-  | P-05 | Diff/Commit Reference Proof | Code change verification |
-  | P-06 | Checklist Proof (Manual Verification) | Manual review verification |
-
-  ## 3. Gate Report Contract
-
-  Every gate produces a report per ORD-02 Section 7:
-
-  - `gate_id` — Gate identifier
-  - `target` — Artifact or output being checked
-  - `status` — pass | fail
-  - `executed_at` — Timestamp
-  - `issues[]` — Array of issue objects with:
-    - `issue_id`, `severity`, `error_code`, `rule_id`, `pointer`, `message`, `remediation`
-
-  ## 4. Override Policy
-
-  - Overrides are allowed only if the gate rule declares `overridable: true`
-  - Override records must include: override_id, gate_id, rule_id, approver, reason, risk_acknowledged, timestamp
-  - Overrides never delete the original failure — they annotate it
-
-  ## 5. Cross-References
-
-  - SYS-07 (Compliance & Gate Model)
-  - ORD-02 (Gate DSL & Gate Rules)
-  - VER-01 (Proof Types & Evidence Rules)
-  - FEAT-003 (Gate Engine Core)
-  
+- SYS-07 (Compliance & Gate Model)
+- ORD-02 (Gate DSL & Gate Rules)
+- VER-01 (Proof Types & Evidence Rules)
+- FEAT-003 (Gate Engine Core)

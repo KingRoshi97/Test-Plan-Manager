@@ -1,13 +1,12 @@
 {
   "feature_id": "FEAT-014",
   "title": "Coverage Scoring Engine",
-  "description": "Computes coverage scores across spec items, acceptance criteria, and proof artifacts to measure completeness and identify gaps.",
+  "description": "Computes coverage scores across spec items, acceptance criteria, and proof artifacts to measure completeness and identify gaps. Supports per-category thresholds, configurable rules, and detailed uncovered-item reporting.",
   "category": "core-logic",
-  "status": "draft",
+  "status": "active",
   "dependencies": [
     "FEAT-001",
-    "FEAT-008",
-    "FEAT-013"
+    "FEAT-008"
   ],
   "src_modules": [
     "src/core/coverage/scorer.ts",
