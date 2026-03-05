@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "run_profiles.v1",
+  "profiles": [
+    { "profile_id": "PROFILE-API", "name": "API" },
+    { "profile_id": "PROFILE-WEB", "name": "Web App" },
+    { "profile_id": "PROFILE-MOBILE", "name": "Mobile App" },
+    { "profile_id": "PROFILE-INFRA", "name": "Infrastructure" },
+    { "profile_id": "PROFILE-DATA", "name": "Data" },
+    { "profile_id": "PROFILE-MIXED", "name": "Mixed" }
+  ]
+}

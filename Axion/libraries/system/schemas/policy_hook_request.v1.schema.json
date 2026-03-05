@@ -1,0 +1,50 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "policy_hook_request.v1",
+    "type": "object",
+    "required": [
+      "request_id",
+      "hook_point",
+      "workspace_id",
+      "project_id",
+      "profile_id",
+      "risk_class",
+      "pins",
+      "context",
+      "requested_at"
+    ],
+    "properties": {
+      "request_id": { "type": "string", "pattern": "^POLREQ-[A-Z0-9]{6,}$" },
+      "hook_point": {
+        "type": "string",
+        "enum": [
+          "RUN_START",
+          "PIN_RESOLUTION",
+          "ADAPTER_SELECTION",
+          "QUOTA_CHECK",
+          "GATE_OVERRIDE",
+          "KIT_EXPORT"
+        ]
+      },
+      "workspace_id": { "type": "string", "pattern": "^WS-[A-Z0-9]{6,}$" },
+      "project_id": { "type": "string", "pattern": "^PRJ-[A-Z0-9]{6,}$" },
+      "profile_id": { "type": "string", "pattern": "^PROFILE-[A-Z0-9_]+$" },
+      "risk_class": { "type": "string", "minLength": 2 },
+
+      "pins": {
+        "type": "object",
+        "description": "Resolved or proposed pins/locks for the run",
+        "additionalProperties": true
+      },
+
+      "context": {
+        "type": "object",
+        "description": "Hook-specific contextual fields (quota exceed, gate id, export target, etc.)",
+        "additionalProperties": true
+      },
+
+      "requested_at": { "type": "string", "format": "date-time" }
+    },
+    "additionalProperties": false
+}

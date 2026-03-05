@@ -193,9 +193,10 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `policy/` — risk_classes.v1.json, override_policy.v1.json, override_policy.schema.v1.json
   - `audit/` — operator_actions_ledger.schema.v1.json
   - `telemetry/` — event.schema.v1.json, run_metrics.schema.v1.json, sink_policy.v1.json
+  - `system/` — Control-plane configuration and runtime contracts (SYS-0 through SYS-7). See System Library section below.
   - `library_index.v1.json` — single registry for versioned libraries
   - `schema_registry.v1.json` — single registry for JSON Schemas
-  - `knowledge/` — Knowledge Library (395 KIDs across 3 pillars)
+  - `knowledge/` — Knowledge Library (395+ KIDs across 3 pillars)
 - `Axion/registries/` — Global registry JSON files (GATE_REGISTRY, PINS_DEFAULT, PROOF_TYPE_REGISTRY, pipelines, gates)
 - `Axion/features/` — 17 feature packs (FEAT-001 through FEAT-017), all `status: "active"` with production-quality specs
 - `Axion/test/` — Unit tests, integration tests, fixtures, helpers
@@ -328,3 +329,35 @@ The Knowledge Library is wired into the IA through three integration points:
 **Reports** include knowledge fields:
 - `selection_report.json`: `knowledge_citations[]`, `knowledge_boosted_templates[]`
 - `render_report.json`: `knowledge_citations[]`, `knowledge_bundle`, `knowledge_domains_used[]`
+
+## System Library (`Axion/libraries/system/`)
+Control-plane configuration and runtime contracts for Axion. Defines the stable "operating environment" that every run depends on.
+
+### Structure (SYS-0 through SYS-7)
+- **SYS-0**: Purpose + boundaries — what system/ governs (in scope) and what it does not (out of scope), boundary checklist
+- **SYS-1**: Workspace / Project model — workspace, project, and profile entities; workspace.v1 and project.v1 schemas; run_profiles registry; determinism rules
+- **SYS-2**: Pin / Lock policies — deterministic resolution via pins (explicit version refs) and locks (enforcement rules); pin_policy.v1 and pin_set.v1 schemas; resolution rules (workspace → project → run-level)
+- **SYS-3**: Adapter manager — capability discovery for execution environments (local/Replit/CI/container); capability_registry.v1, adapter_profile.v1, command_policy.v1 schemas; capabilities registry
+- **SYS-4**: Quotas + rate limits — per project/profile constraints (runs/day, tokens, compute, storage, network); quota_set.v1 and quota_profile_modifiers.v1 schemas; starter quota sets
+- **SYS-5**: Notification routing — deterministic event→destination routing with throttle/dedupe; notification_event_types.v1, notification_destinations.v1, notification_routes.v1 schemas and registries
+- **SYS-6**: Policy engine hooks — how runtime invokes policy at 6 hook points (RUN_START, PIN_RESOLUTION, ADAPTER_SELECTION, QUOTA_CHECK, GATE_OVERRIDE, KIT_EXPORT); policy_hook_request.v1 and policy_hook_decision.v1 schemas
+- **SYS-7**: Minimum viable set — required files inventory, definition of done checklist, minimal folder tree
+
+### Subdirectories
+- `schemas/` — 14 JSON Schema files (workspace, project, pin_policy, pin_set, capability_registry, adapter_profile, command_policy, quota_set, quota_profile_modifiers, notification_event_types, notification_destinations, notification_routes, policy_hook_request, policy_hook_decision)
+- `registries/` — 6 starter registry files (run_profiles, capabilities, quota_sets, notification_event_types, notification_destinations, notification_routes)
+
+### Key ID patterns
+- Workspace: `WS-[A-Z0-9]{6,}`
+- Project: `PRJ-[A-Z0-9]{6,}`
+- Profile: `PROFILE-[A-Z0-9_]+`
+- Pin policy: `PINPOL-[A-Z0-9]{6,}`
+- Pin set: `PINSET-[A-Z0-9]{6,}`
+- Adapter profile: `ADP-[A-Z0-9]{6,}`
+- Capability: `CAP-[A-Z0-9_]+`
+- Command policy: `CMDPOL-[A-Z0-9]{6,}`
+- Quota set: `QUOTA-[A-Z0-9]{6,}`
+- Destination: `DEST-[A-Z0-9]{4,}`
+- Route: `ROUTE-[A-Z0-9]{4,}`
+- Policy request: `POLREQ-[A-Z0-9]{6,}`
+- Policy decision: `POLDEC-[A-Z0-9]{6,}`

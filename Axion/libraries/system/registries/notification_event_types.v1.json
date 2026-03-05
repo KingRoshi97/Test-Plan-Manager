@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "notification_event_types.v1",
+  "event_types": [
+    { "event_type": "RUN_STARTED", "severity_levels": ["info"] },
+    { "event_type": "RUN_COMPLETED", "severity_levels": ["info"] },
+    { "event_type": "RUN_FAILED", "severity_levels": ["error", "critical"] },
+    { "event_type": "GATE_FAILED", "severity_levels": ["warning", "error", "critical"] },
+    { "event_type": "APPROVAL_REQUIRED", "severity_levels": ["warning", "error"] },
+    { "event_type": "PIN_CHANGED", "severity_levels": ["warning"] },
+    { "event_type": "STANDARDS_CHANGED", "severity_levels": ["warning"] },
+    { "event_type": "TEMPLATE_REGISTRY_CHANGED", "severity_levels": ["warning"] },
+    { "event_type": "KNOWLEDGE_LIBRARY_CHANGED", "severity_levels": ["warning"] }
+  ]
+}

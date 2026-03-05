@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0.0",
+  "routes_id": "notification_routes.v1",
+  "routes": [
+    {
+      "route_id": "ROUTE-RUNFAIL",
+      "match": { "event_type": "RUN_FAILED", "severity": ["error", "critical"] },
+      "deliver": { "destination_ids": ["DEST-CONSOLE"] },
+      "throttle": { "mode": "dedupe_window", "window_seconds": 300, "dedupe_key": "event_type_plus_run" }
+    },
+    {
+      "route_id": "ROUTE-GATEFAIL",
+      "match": { "event_type": "GATE_FAILED", "severity": ["warning", "error", "critical"] },
+      "deliver": { "destination_ids": ["DEST-CONSOLE"] },
+      "throttle": { "mode": "dedupe_window", "window_seconds": 300, "dedupe_key": "event_type_plus_gate" }
+    }
+  ]
+}

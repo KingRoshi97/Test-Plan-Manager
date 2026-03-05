@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "capabilities.v1",
+  "capabilities": [
+    { "capability_id": "CAP-FS_READ", "name": "Read files", "category": "filesystem" },
+    { "capability_id": "CAP-FS_WRITE", "name": "Write files", "category": "filesystem" },
+    { "capability_id": "CAP-PROC_SPAWN", "name": "Spawn processes", "category": "process" },
+    { "capability_id": "CAP-NET_NONE", "name": "No network access", "category": "network" },
+    { "capability_id": "CAP-NET_RESTRICTED", "name": "Restricted network access", "category": "network" },
+    { "capability_id": "CAP-GIT_READ", "name": "Read git repo", "category": "git" },
+    { "capability_id": "CAP-GIT_WRITE", "name": "Write git repo", "category": "git" },
+    { "capability_id": "CAP-SECRETS_READ", "name": "Read injected secrets", "category": "secrets" }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "quota_set.v1",
+    "type": "object",
+    "required": ["quota_set_id", "limits", "enforcement", "created_at", "updated_at", "owner"],
+    "properties": {
+      "quota_set_id": { "type": "string", "pattern": "^QUOTA-[A-Z0-9]{6,}$" },
+
+      "limits": {
+        "type": "object",
+        "required": ["runs", "tokens", "compute", "storage"],
+        "properties": {
+          "runs": {
+            "type": "object",
+            "required": ["per_day", "concurrent_max"],
+            "properties": {
+              "per_day": { "type": "integer", "minimum": 0 },
+              "concurrent_max": { "type": "integer", "minimum": 1 }
+            },
+            "additionalProperties": false
+          },
+
+          "tokens": {
+            "type": "object",
+            "required": ["per_run_max", "per_day_max"],
+            "properties": {
+              "per_run_max": { "type": "integer", "minimum": 0 },
+              "per_day_max": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          },
+
+          "compute": {
+            "type": "object",
+            "required": ["runtime_minutes_max"],
+            "properties": {
+              "runtime_minutes_max": { "type": "integer", "minimum": 1 }
+            },
+            "additionalProperties": false
+          },
+
+          "storage": {
+            "type": "object",
+            "required": ["artifacts_mb_max", "kits_mb_max"],
+            "properties": {
+              "artifacts_mb_max": { "type": "integer", "minimum": 0 },
+              "kits_mb_max": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          },
+
+          "network": {
+            "type": "object",
+            "properties": {
+              "egress_mb_max": { "type": "integer", "minimum": 0 },
+              "requests_per_minute_max": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+
+      "enforcement": {
+        "type": "object",
+        "required": ["on_exceed"],
+        "properties": {
+          "on_exceed": {
+            "type": "string",
+            "enum": ["block", "warn", "require_approval", "degrade"]
+          },
+          "degrade_mode": {
+            "type": "string",
+            "enum": ["reduce_selection_cap", "reduce_template_scope", "disable_optional_stages"],
+            "description": "Only used when on_exceed == degrade"
+          }
+        },
+        "additionalProperties": false
+      },
+
+      "created_at": { "type": "string", "format": "date-time" },
+      "updated_at": { "type": "string", "format": "date-time" },
+      "owner": { "type": "string", "minLength": 2 }
+    },
+    "additionalProperties": false
+}

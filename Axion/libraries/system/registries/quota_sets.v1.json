@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "quota_sets.v1",
+  "quota_sets": [
+    {
+      "quota_set_id": "QUOTA-BASE01",
+      "limits": {
+        "runs": { "per_day": 20, "concurrent_max": 2 },
+        "tokens": { "per_run_max": 250000, "per_day_max": 1500000 },
+        "compute": { "runtime_minutes_max": 60 },
+        "storage": { "artifacts_mb_max": 500, "kits_mb_max": 500 }
+      },
+      "enforcement": { "on_exceed": "block" },
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "owner": "axion"
+    }
+  ]
+}

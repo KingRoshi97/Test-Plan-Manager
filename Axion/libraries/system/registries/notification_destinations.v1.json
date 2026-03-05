@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "notification_destinations.v1",
+  "destinations": [
+    { "destination_id": "DEST-CONSOLE", "kind": "console", "enabled": true, "config": {} }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "command_policy.v1",
+    "type": "object",
+    "required": ["command_policy_id", "allow", "deny", "created_at", "updated_at", "owner"],
+    "properties": {
+      "command_policy_id": { "type": "string", "pattern": "^CMDPOL-[A-Z0-9]{6,}$" },
+      "allow": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 },
+        "description": "Allowed command patterns (simple glob/regex patterns; engine-defined)"
+      },
+      "deny": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 },
+        "description": "Denied command patterns take precedence"
+      },
+      "created_at": { "type": "string", "format": "date-time" },
+      "updated_at": { "type": "string", "format": "date-time" },
+      "owner": { "type": "string", "minLength": 2 }
+    },
+    "additionalProperties": false
+}

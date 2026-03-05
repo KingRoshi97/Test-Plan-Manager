@@ -1,0 +1,60 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "policy_hook_decision.v1",
+    "type": "object",
+    "required": [
+      "decision_id",
+      "request_id",
+      "hook_point",
+      "outcome",
+      "constraints",
+      "expiry",
+      "decided_at"
+    ],
+    "properties": {
+      "decision_id": { "type": "string", "pattern": "^POLDEC-[A-Z0-9]{6,}$" },
+      "request_id": { "type": "string" },
+      "hook_point": { "type": "string" },
+
+      "outcome": {
+        "type": "string",
+        "enum": ["allow", "deny", "require_approval", "degrade"]
+      },
+
+      "constraints": {
+        "type": "object",
+        "description": "Concrete constraints applied (e.g., reduced cap, blocked export, required approvers)",
+        "additionalProperties": true
+      },
+
+      "approval": {
+        "type": "object",
+        "description": "Present only if outcome=require_approval",
+        "required": ["required_roles", "reason"],
+        "properties": {
+          "required_roles": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "reason": { "type": "string", "minLength": 3 }
+        },
+        "additionalProperties": false
+      },
+
+      "expiry": {
+        "type": "object",
+        "required": ["expires_at"],
+        "properties": {
+          "expires_at": { "type": "string", "format": "date-time" }
+        },
+        "additionalProperties": false
+      },
+
+      "evidence": {
+        "type": "object",
+        "description": "Pointers to why/what was evaluated (policy_set_id, rule ids, etc.)",
+        "additionalProperties": true
+      },
+
+      "decided_at": { "type": "string", "format": "date-time" }
+    },
+    "additionalProperties": false
+}

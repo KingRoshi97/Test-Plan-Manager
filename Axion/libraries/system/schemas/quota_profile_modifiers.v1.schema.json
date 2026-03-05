@@ -1,0 +1,30 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "quota_profile_modifiers.v1",
+    "type": "object",
+    "required": ["registry_id", "modifiers"],
+    "properties": {
+      "registry_id": { "type": "string", "minLength": 3 },
+      "modifiers": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["profile_id", "multiplier"],
+          "properties": {
+            "profile_id": { "type": "string", "pattern": "^PROFILE-[A-Z0-9_]+$" },
+            "multiplier": {
+              "type": "object",
+              "properties": {
+                "tokens_per_run": { "type": "number", "minimum": 0 },
+                "runtime_minutes": { "type": "number", "minimum": 0 }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+}

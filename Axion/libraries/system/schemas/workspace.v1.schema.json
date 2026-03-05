@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "workspace.v1",
+  "type": "object",
+  "required": [
+    "workspace_id",
+    "name",
+    "owner",
+    "created_at",
+    "updated_at",
+    "defaults"
+  ],
+  "properties": {
+    "workspace_id": { "type": "string", "pattern": "^WS-[A-Z0-9]{6,}$" },
+    "name": { "type": "string", "minLength": 2 },
+    "owner": { "type": "string", "minLength": 2 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+
+    "defaults": {
+      "type": "object",
+      "required": ["policy_set_id", "quota_set_id", "pin_policy_id"],
+      "properties": {
+        "policy_set_id": { "type": "string", "minLength": 3 },
+        "quota_set_id": { "type": "string", "minLength": 3 },
+        "pin_policy_id": { "type": "string", "minLength": 3 }
+      },
+      "additionalProperties": false
+    },
+
+    "labels": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}
