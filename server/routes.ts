@@ -158,6 +158,75 @@ export function registerRoutes(app: Express) {
     res.json({ total: allAssemblies.length, running, completed, failed, queued });
   });
 
+  const FEATURES_DIR = path.join(AXION_ROOT, "features");
+
+  app.get("/api/features", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(FEATURES_DIR)) return res.json([]);
+      const dirs = fs.readdirSync(FEATURES_DIR).filter((d) => d.startsWith("FEAT-")).sort();
+      const features = dirs.map((dir) => {
+        const registryPath = path.join(FEATURES_DIR, dir, "00_registry.json");
+        try {
+          return JSON.parse(fs.readFileSync(registryPath, "utf-8"));
+        } catch {
+          return null;
+        }
+      }).filter(Boolean);
+      res.json(features);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/features/:id", (req: Request, res: Response) => {
+    try {
+      const featureId = req.params.id.toUpperCase();
+      const dirs = fs.readdirSync(FEATURES_DIR).filter((d) => d.toUpperCase().startsWith(featureId));
+      if (dirs.length === 0) return res.status(404).json({ error: "Feature not found" });
+      const featureDir = path.join(FEATURES_DIR, dirs[0]);
+      const registryPath = path.join(featureDir, "00_registry.json");
+      if (!fs.existsSync(registryPath)) return res.status(404).json({ error: "Registry not found" });
+
+      const registry = JSON.parse(fs.readFileSync(registryPath, "utf-8"));
+
+      const specFiles: Record<string, string> = {};
+      const specMap: Record<string, string> = {
+        "01_contract.md": "contract",
+        "02_errors.md": "errors",
+        "03_security.md": "security",
+        "04_gates_and_proofs.md": "gates_and_proofs",
+        "05_tests.md": "tests",
+        "06_observability.md": "observability",
+        "07_docs.md": "docs",
+        "08_api.md": "api",
+      };
+
+      for (const [file, key] of Object.entries(specMap)) {
+        const filePath = path.join(featureDir, file);
+        try {
+          specFiles[key] = fs.readFileSync(filePath, "utf-8");
+        } catch {
+          specFiles[key] = "";
+        }
+      }
+
+      const allDirs = fs.readdirSync(FEATURES_DIR).filter((d) => d.startsWith("FEAT-"));
+      const reverseDeps: string[] = [];
+      for (const d of allDirs) {
+        try {
+          const r = JSON.parse(fs.readFileSync(path.join(FEATURES_DIR, d, "00_registry.json"), "utf-8"));
+          if (r.dependencies?.includes(registry.feature_id) && r.feature_id !== registry.feature_id) {
+            reverseDeps.push(r.feature_id);
+          }
+        } catch {}
+      }
+
+      res.json({ ...registry, specs: specFiles, reverse_dependencies: reverseDeps });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post("/api/autofill", async (req: Request, res: Response) => {
     try {
       const { routing, project, targetSection } = req.body;

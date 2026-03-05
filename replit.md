@@ -19,6 +19,13 @@ Full Mechanics pipeline + web application layer with three formal control planes
 ### Kit Template Slot Mapping Fix
 `Axion/src/core/kit/build.ts` — SUBDIR_TO_SLOT lookup table maps all 77 template prefix groups to correct domain slots (01_requirements through 12_analytics). Zero fallthrough to `11_documentation`.
 
+### Feature Registry UI
+- `GET /api/features` — Returns all 17 feature pack registries from `Axion/features/FEAT-*/00_registry.json`
+- `GET /api/features/:id` — Returns registry + all 8 spec file contents + reverse dependencies
+- `/features` page — Feature Registry Dashboard grouped by category (infrastructure, core-logic, interface, security) with status badges, module counts, dependency counts
+- `/features/:id` page — Feature detail inspector with tabbed spec viewer (Contract, Errors, Security, Gates & Proofs, Tests, Observability, Docs, API), source modules list, dependency/reverse-dependency links, gate badges
+- Health page shows Feature Packs summary card with total/active counts and category breakdown
+
 ### OpenAI Autofill Integration
 - `server/openai.ts` — OpenAI client using Replit AI Integrations (AI_INTEGRATIONS_OPENAI_BASE_URL + AI_INTEGRATIONS_OPENAI_API_KEY)
 - `POST /api/autofill` — returns structured suggestions for intake sections based on routing + project info

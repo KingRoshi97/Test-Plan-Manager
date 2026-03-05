@@ -8,6 +8,8 @@ import HealthPage from "./pages/health";
 import LogsPage from "./pages/logs";
 import DocInventoryPage from "./pages/doc-inventory";
 import ExportPage from "./pages/export";
+import FeaturesPage from "./pages/features";
+import FeatureDetailPage from "./pages/feature-detail";
 
 export default function App() {
   return (
@@ -18,6 +20,8 @@ export default function App() {
           <Route path="/" component={DashboardPage} />
           <Route path="/new" component={NewAssemblyPage} />
           <Route path="/assembly/:id" component={AssemblyPage} />
+          <Route path="/features" component={FeaturesPage} />
+          <Route path="/features/:id" component={FeatureDetailPage} />
           <Route path="/files" component={FilesPage} />
           <Route path="/health" component={HealthPage} />
           <Route path="/logs" component={LogsPage} />

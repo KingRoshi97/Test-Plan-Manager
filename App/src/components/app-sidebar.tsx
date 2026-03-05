@@ -7,11 +7,13 @@ import {
   ScrollText,
   BookOpen,
   Download,
+  Blocks,
 } from "lucide-react";
 
 const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/new", label: "New Assembly", icon: Plus },
+  { href: "/features", label: "Features", icon: Blocks },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },
   { href: "/logs", label: "Logs", icon: ScrollText },
@@ -30,7 +32,7 @@ export function AppSidebar() {
       </div>
       <nav className="flex-1 p-2 space-y-1">
         {links.map(({ href, label, icon: Icon }) => {
-          const active = location === href;
+          const active = href === "/" ? location === "/" : location.startsWith(href);
           return (
             <button
               key={href}
