@@ -1,0 +1,42 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "gate_dsl_functions.v1",
+    "functions": [
+      {
+        "name": "has_artifact",
+        "args": ["contract_id:string"],
+        "returns": "boolean",
+        "reads": ["run_manifest.artifacts"]
+      },
+      {
+        "name": "coverage",
+        "args": ["category:string"],
+        "returns": "number",
+        "reads": ["spec_index", "coverage_map"]
+      },
+      {
+        "name": "maturity_at_least",
+        "args": ["level:string"],
+        "returns": "boolean",
+        "reads": ["knowledge_selection.selected[].restrictions.maturity"]
+      },
+      {
+          "name": "targets_contains",
+          "args": ["target_name:string"],
+          "returns": "boolean",
+          "reads": ["run_manifest.runtime.profile_id", "canonical_spec.targets"]
+        },
+        {
+          "name": "ledger_has",
+          "args": ["requirement:string"],
+          "returns": "boolean",
+          "reads": ["proof_ledger"]
+        },
+        {
+          "name": "allow_override",
+          "args": ["gate_id:string"],
+          "returns": "boolean",
+          "reads": ["run_manifest.runtime.policy_decisions"]
+        }
+    ]
+}

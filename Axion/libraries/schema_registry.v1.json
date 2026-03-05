@@ -16,9 +16,39 @@
     },
 
     {
-      "schema_id": "gates.dsl.v1",
-      "path": "Axion/libraries/gates/gate_dsl.schema.v1.json",
-      "uri": "axion://schemas/gates/gate_dsl.schema.v1.json",
+      "schema_id": "gates.gate_definition.v1",
+      "path": "Axion/libraries/gates/schemas/gate_definition.v1.schema.json",
+      "uri": "axion://schemas/gates/gate_definition.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "gates.gate_registry.v1",
+      "path": "Axion/libraries/gates/schemas/gate_registry.v1.schema.json",
+      "uri": "axion://schemas/gates/gate_registry.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "gates.gate_eval_request.v1",
+      "path": "Axion/libraries/gates/schemas/gate_eval_request.v1.schema.json",
+      "uri": "axion://schemas/gates/gate_eval_request.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "gates.gate_eval_trace.v1",
+      "path": "Axion/libraries/gates/schemas/gate_eval_trace.v1.schema.json",
+      "uri": "axion://schemas/gates/gate_eval_trace.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "gates.gate_report.v1",
+      "path": "Axion/libraries/gates/schemas/gate_report.v1.schema.json",
+      "uri": "axion://schemas/gates/gate_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "gates.gate_replay_request.v1",
+      "path": "Axion/libraries/gates/schemas/gate_replay_request.v1.schema.json",
+      "uri": "axion://schemas/gates/gate_replay_request.v1.schema.json",
       "version": "1.0.0"
     },
 

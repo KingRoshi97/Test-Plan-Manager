@@ -1,0 +1,37 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "gate_eval_trace.v1",
+    "type": "object",
+    "required": ["run_id", "gate_id", "evaluated_at", "steps"],
+    "properties": {
+      "run_id": { "type": "string" },
+      "gate_id": { "type": "string" },
+      "evaluated_at": { "type": "string", "format": "date-time" },
+      "steps": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": ["predicate_id", "expr", "result"],
+          "properties": {
+            "predicate_id": { "type": "string" },
+            "expr": { "type": "string" },
+            "result": { "type": "boolean" },
+            "resolved_values": {
+              "type": "object",
+              "description": "Optional: extracted values used in evaluation (safe, small)",
+              "additionalProperties": true
+            },
+            "evidence_refs": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Pointers to evidence attached for this predicate"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+}

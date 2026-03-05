@@ -240,6 +240,30 @@ export function registerRoutes(app: Express) {
       }
     } catch {}
 
+    let gatesDocCount = 0;
+    let gatesSchemaCount = 0;
+    let gatesRegistryCount = 0;
+    let gatesDefinitionCount = 0;
+    const gatesLibDir = path.join(AXION_ROOT, "libraries", "gates");
+    try {
+      if (fs.existsSync(gatesLibDir)) {
+        gatesDocCount = fs.readdirSync(gatesLibDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+      }
+      const gatesSchemDir = path.join(gatesLibDir, "schemas");
+      if (fs.existsSync(gatesSchemDir)) {
+        gatesSchemaCount = fs.readdirSync(gatesSchemDir).filter((f) => f.endsWith(".json")).length;
+      }
+      const gatesRegDir = path.join(gatesLibDir, "registries");
+      if (fs.existsSync(gatesRegDir)) {
+        gatesRegistryCount = fs.readdirSync(gatesRegDir).filter((f) => f.endsWith(".json")).length;
+      }
+      const gateRegPath = path.join(gatesRegDir, "gate_registry.axion.v1.json");
+      if (fs.existsSync(gateRegPath)) {
+        const gr = JSON.parse(fs.readFileSync(gateRegPath, "utf-8"));
+        gatesDefinitionCount = gr.gates?.length ?? 0;
+      }
+    } catch {}
+
     res.json({
       status: "ok",
       pipeline: { stages: 10, gates: gateCount },
@@ -247,6 +271,7 @@ export function registerRoutes(app: Express) {
       templates: 177,
       system: { docs: sysDocCount, schemas: sysSchemaCount, registries: sysRegistryCount },
       orchestration: { docs: orcDocCount, schemas: orcSchemaCount, registries: orcRegistryCount, stages: orcStageCount },
+      gates: { docs: gatesDocCount, schemas: gatesSchemaCount, registries: gatesRegistryCount, definitions: gatesDefinitionCount },
       recentRuns,
     });
   });
@@ -723,6 +748,176 @@ export function registerRoutes(app: Express) {
       }
       const filePath = path.join(ORC_LIB_DIR, filename);
       if (!filePath.startsWith(ORC_LIB_DIR) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Document '${filename}' not found` });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+      let frontmatter: Record<string, string> = {};
+      let content = raw;
+      if (fmMatch) {
+        const lines = fmMatch[1].split("\n");
+        for (const line of lines) {
+          const idx = line.indexOf(":");
+          if (idx > 0) {
+            frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          }
+        }
+        content = fmMatch[2];
+      }
+      res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  const GATES_LIB_DIR = path.join(AXION_ROOT, "libraries", "gates");
+
+  app.get("/api/gates", (_req: Request, res: Response) => {
+    try {
+      const docs: string[] = [];
+      const schemaFiles: string[] = [];
+      const registryFiles: string[] = [];
+
+      if (fs.existsSync(GATES_LIB_DIR)) {
+        for (const f of fs.readdirSync(GATES_LIB_DIR)) {
+          if (f.endsWith(".md") || f.endsWith(".txt")) docs.push(f);
+        }
+      }
+      const schemasDir = path.join(GATES_LIB_DIR, "schemas");
+      if (fs.existsSync(schemasDir)) {
+        for (const f of fs.readdirSync(schemasDir)) {
+          if (f.endsWith(".json")) schemaFiles.push(f);
+        }
+      }
+      const registriesDir = path.join(GATES_LIB_DIR, "registries");
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
+          if (f.endsWith(".json")) registryFiles.push(f);
+        }
+      }
+
+      const groups: Record<string, string[]> = {};
+      for (const d of docs.sort()) {
+        const prefix = d.match(/^(GATE-\d)/)?.[1] ?? "other";
+        if (!groups[prefix]) groups[prefix] = [];
+        groups[prefix].push(d);
+      }
+
+      let gateDefinitions = 0;
+      try {
+        const regPath = path.join(registriesDir, "gate_registry.axion.v1.json");
+        if (fs.existsSync(regPath)) {
+          const gr = JSON.parse(fs.readFileSync(regPath, "utf-8"));
+          gateDefinitions = gr.gates?.length ?? 0;
+        }
+      } catch {}
+
+      res.json({
+        groups,
+        schemas: schemaFiles.sort(),
+        registries: registryFiles.sort(),
+        counts: { docs: docs.length, schemas: schemaFiles.length, registries: registryFiles.length, definitions: gateDefinitions },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/gates/schemas", (_req: Request, res: Response) => {
+    try {
+      const schemasDir = path.join(GATES_LIB_DIR, "schemas");
+      if (!fs.existsSync(schemasDir)) return res.json([]);
+      const schemas = fs.readdirSync(schemasDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((filename) => ({
+          filename,
+          content: JSON.parse(fs.readFileSync(path.join(schemasDir, filename), "utf-8")),
+        }));
+      res.json(schemas);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/gates/registries", (_req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(GATES_LIB_DIR, "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const registries = fs.readdirSync(registriesDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((filename) => ({
+          filename,
+          content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
+        }));
+      res.json(registries);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/gates/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      const registriesDir = path.join(GATES_LIB_DIR, "registries");
+      const candidates = [name, `${name}.json`, `${name}.v1.json`];
+      let filePath: string | null = null;
+      for (const c of candidates) {
+        const p = path.join(registriesDir, c);
+        if (fs.existsSync(p) && p.startsWith(registriesDir)) {
+          filePath = p;
+          break;
+        }
+      }
+      if (!filePath) return res.status(404).json({ error: `Registry '${name}' not found` });
+      const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      res.json({ filename: path.basename(filePath), content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/gates/docs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(GATES_LIB_DIR)) return res.json([]);
+      const files = fs.readdirSync(GATES_LIB_DIR)
+        .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
+        .sort();
+      const docs = files.map((filename) => {
+        const raw = fs.readFileSync(path.join(GATES_LIB_DIR, filename), "utf-8");
+        const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+        let frontmatter: Record<string, string> = {};
+        let content = raw;
+        if (fmMatch) {
+          const lines = fmMatch[1].split("\n");
+          for (const line of lines) {
+            const idx = line.indexOf(":");
+            if (idx > 0) {
+              frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            }
+          }
+          content = fmMatch[2];
+        }
+        return { filename, frontmatter, content };
+      });
+      res.json(docs);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/gates/docs/:filename", (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      if (!filename.endsWith(".md") && !filename.endsWith(".txt")) {
+        return res.status(400).json({ error: "Only .md and .txt files are accessible" });
+      }
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      const filePath = path.join(GATES_LIB_DIR, filename);
+      if (!filePath.startsWith(GATES_LIB_DIR) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: `Document '${filename}' not found` });
       }
       const raw = fs.readFileSync(filePath, "utf-8");

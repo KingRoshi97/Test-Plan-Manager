@@ -1,0 +1,15 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "gate_replay_request.v1",
+    "type": "object",
+    "required": ["request_id", "run_id", "gate_id", "manifest_ref", "requested_at"],
+    "properties": {
+      "request_id": { "type": "string", "pattern": "^GATEREP-[A-Z0-9]{6,}$" },
+      "run_id": { "type": "string" },
+      "gate_id": { "type": "string" },
+      "manifest_ref": { "type": "string", "minLength": 3 },
+      "requested_at": { "type": "string", "format": "date-time" }
+    },
+    "additionalProperties": false
+}

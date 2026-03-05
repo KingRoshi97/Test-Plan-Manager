@@ -120,6 +120,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
+- `GET /api/gates` — gates library overview (groups, schema/registry/doc/definition counts)
+- `GET /api/gates/schemas` — all 6 gate schemas with content
+- `GET /api/gates/registries` — all 2 registries with content
+- `GET /api/gates/registries/:name` — single registry by name
+- `GET /api/gates/docs` — all gate documents with frontmatter
+- `GET /api/gates/docs/:filename` — single document by filename
 - `GET /api/system` — system library overview (groups, schema/registry/doc counts)
 - `GET /api/system/schemas` — all 14 system schemas with content
 - `GET /api/system/registries` — all 6 registries with content
@@ -161,6 +167,7 @@ package.json      # Root package.json with all dependencies
 - `/logs` — Run logs viewer with status filtering
 - `/system` — System Library: 3 tabs (Documents, Schemas, Registries) for SYS-0 through SYS-7
 - `/orchestration` — Orchestration Library: 4 tabs (Pipeline, Documents, Schemas, Registries) for ORC-0 through ORC-7, pipeline stage visualization
+- `/gates` — Gates Library: 4 tabs (Gates, Documents, Schemas, Registries) for GATE-0 through GATE-6, 8 gate definitions with predicates/severity/evidence
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
 
@@ -200,7 +207,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `standards/` — standards_index.json, resolver_rules.v1.json + 3 packs
   - `templates/` — template_index.json, placeholder_catalog.v1.json + 77 template groups across 8 categories (533 total .md files)
   - `planning/` — work_breakdown.schema.v1.json, acceptance_map.schema.v1.json, sequencing_policy.v1.json
-  - `gates/` — gate_dsl.schema.v1.json
+  - `gates/` — Gates Library (GATE-0 through GATE-6). See Gates Library section below.
   - `verification/` — proof_log.schema.v1.json, command_runs.schema.v1.json
   - `kit/` — kit_tree.schema.v1.json, kit_manifest.schema.v1.json, kit_entrypoint.schema.v1.json, kit_versions.schema.v1.json
   - `orchestration/` — Pipeline execution contracts and run lifecycle (ORC-0 through ORC-7). See Orchestration Library section below.
@@ -258,6 +265,26 @@ S1_INGEST_NORMALIZE → S2_VALIDATE_INTAKE → S3_BUILD_CANONICAL → S4_VALIDAT
 - 6 evaluator ops: file_exists, json_valid, json_has, json_eq, coverage_gte, verify_hash_manifest
 - Evidence policy: gates require associated proof types from PROOF_TYPE_REGISTRY
 - Gate reports include evidence completeness sections
+
+### Gates Library (`Axion/libraries/gates/`)
+Formal Gate DSL and evaluation contract library (GATE-0 through GATE-6) defining how pass/fail checks are expressed, what data gates read, how evidence is collected, and how gate outcomes interact with run control.
+
+**Structure (31 files):**
+- 22 docs (GATE-0: purpose/boundaries, GATE-1: gate definition model/determinism/validation, GATE-2: DSL grammar/expression validation/determinism/validation, GATE-3: evaluation runtime/evidence collection/determinism/validation, GATE-4: gate report model/determinism/validation, GATE-5: determinism+replay/replay evidence/validation, GATE-6: minimum viable set/definition of done/minimal tree)
+- 6 schemas: `gate_definition.v1`, `gate_registry.v1`, `gate_eval_request.v1`, `gate_eval_trace.v1`, `gate_report.v1`, `gate_replay_request.v1`
+- 2 registries: `gate_dsl_functions.v1.json` (6 DSL functions: has_artifact, coverage, maturity_at_least, targets_contains, ledger_has, allow_override), `gate_registry.axion.v1.json` (8 gate definitions for PIPE-AXION-V1)
+- 1 template: `gate_report.example.json`
+
+**Loader** (`Axion/src/core/gates/loader.ts`):
+- `loadGatesLibrary(repoRoot)` — loads gate registry + DSL functions, cached
+- `loadGatesDocs(repoRoot)` — all GATE-N docs with frontmatter
+- `loadGatesSchemas(repoRoot)` — all JSON schemas
+- `loadGatesRegistries(repoRoot)` — all registries
+- `getGateDefinition(repoRoot, gateId)` — specific gate definition
+- `getAllGateDefinitions(repoRoot)` — all 8 gate definitions
+- `getDSLFunctions(repoRoot)` — DSL function catalog
+
+**Registered in:** `schema_registry.v1.json` (6 entries), `library_index.v1.json` (2 entries)
 
 ### Template System
 - **Source Templates**: `libraries/templates/` (533 TMP-02 contract files in 8 categories: Product Definition, System Architecture, Experience Design, Data & Information, Integrations & External Services, Operations & Reliability, Security Privacy & Compliance, Application Build). These are READ-ONLY — never modified by runs. Each contains: Header Block, Purpose, Inputs Required, Required Fields, Optional Fields, Rules, Output Format, Cross-References, Skill Level Rules, Unknown Handling, Completeness Gate.

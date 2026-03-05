@@ -26,6 +26,9 @@
     { "id": "system.notification_destinations", "path": "Axion/libraries/system/registries/notification_destinations.v1.json", "version": "1.0.0" },
     { "id": "system.notification_routes", "path": "Axion/libraries/system/registries/notification_routes.v1.json", "version": "1.0.0" },
 
+    { "id": "gates.gate_dsl_functions", "path": "Axion/libraries/gates/registries/gate_dsl_functions.v1.json", "version": "1.0.0" },
+    { "id": "gates.gate_registry", "path": "Axion/libraries/gates/registries/gate_registry.axion.v1.json", "version": "1.0.0" },
+
     { "id": "orchestration.pipeline_definition", "path": "Axion/libraries/orchestration/registries/pipeline_definition.axion.v1.json", "version": "1.0.0" },
     { "id": "orchestration.stage_io_registry", "path": "Axion/libraries/orchestration/registries/stage_io_registry.axion.v1.json", "version": "1.0.0" },
     { "id": "orchestration.rerun_policies", "path": "Axion/libraries/orchestration/registries/rerun_policies.axion.v1.json", "version": "1.0.0" }

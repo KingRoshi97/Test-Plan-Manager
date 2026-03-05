@@ -1,0 +1,35 @@
+Axion/libraries/gates/
+├── GATE-0_purpose.md
+├── GATE-0_boundary_checklist.md
+├── GATE-1_gate_definition_model.md
+├── GATE-1_determinism_rules.md
+├── GATE-1_validation_checklist.md
+├── GATE-2_dsl_grammar.md
+├── GATE-2_expression_validation_rules.md
+├── GATE-2_determinism_rules.md
+├── GATE-2_validation_checklist.md
+├── GATE-3_evaluation_runtime.md
+├── GATE-3_evidence_collection_rules.md
+├── GATE-3_determinism_rules.md
+├── GATE-3_validation_checklist.md
+├── GATE-4_gate_report_model.md
+├── GATE-4_determinism_rules.md
+├── GATE-4_validation_checklist.md
+├── GATE-5_determinism_replay_rules.md
+├── GATE-5_replay_evidence_requirements.md
+├── GATE-5_validation_checklist.md
+├── GATE-6_minimum_viable_set.md
+├── GATE-6_definition_of_done.md
+├── GATE-6_minimal_tree.txt
+├── schemas/
+│   ├── gate_definition.v1.schema.json
+│   ├── gate_registry.v1.schema.json
+│   ├── gate_eval_request.v1.schema.json
+│   ├── gate_eval_trace.v1.schema.json
+│   ├── gate_report.v1.schema.json
+│   └── gate_replay_request.v1.schema.json
+├── registries/
+│   ├── gate_dsl_functions.v1.json
+│   └── gate_registry.axion.v1.json
+└── templates/
+    └── gate_report.example.json

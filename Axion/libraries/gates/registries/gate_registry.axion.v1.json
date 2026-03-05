@@ -1,0 +1,280 @@
+{
+  "registry_id": "gate_registry.axion.v1",
+  "schema_version": "1.0.0",
+  "gates": [
+    {
+      "gate_id": "G1_INTAKE_VALIDITY",
+      "title": "Intake Validity Gate",
+      "severity": "hard_stop",
+      "predicates": [
+        {
+          "predicate_id": "PRED-G1A1",
+          "expr": "has_artifact(\"INTAKE_VALIDATION_RESULT\")",
+          "message_on_fail": "Intake validation result artifact is missing.",
+          "evidence_tags": ["intake/validation_result.json"]
+        },
+        {
+          "predicate_id": "PRED-G1A2",
+          "expr": "coverage(\"intake_fields\") >= 100",
+          "message_on_fail": "Intake field coverage is below 100%.",
+          "evidence_tags": ["intake/validation_result.json#coverage"]
+        }
+      ],
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": false
+      },
+      "override_hook": {
+        "hook_point": "GATE_OVERRIDE",
+        "requires_reason": true
+      },
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "owner": "axion-core"
+    },
+    {
+      "gate_id": "G2_CANONICAL_INTEGRITY",
+      "title": "Canonical Spec Integrity Gate",
+      "severity": "hard_stop",
+      "predicates": [
+        {
+          "predicate_id": "PRED-G2A1",
+          "expr": "has_artifact(\"CANONICAL_SPEC\")",
+          "message_on_fail": "Canonical spec artifact is missing.",
+          "evidence_tags": ["canonical/canonical_spec.json"]
+        },
+        {
+          "predicate_id": "PRED-G2A2",
+          "expr": "coverage(\"canonical_fields\") >= 100",
+          "message_on_fail": "Canonical spec field coverage is below 100%.",
+          "evidence_tags": ["canonical/canonical_spec.json#fields"]
+        },
+        {
+          "predicate_id": "PRED-G2A3",
+          "expr": "has_artifact(\"CANONICAL_SPEC\") and coverage(\"relationships\") >= 100",
+          "message_on_fail": "Canonical spec must include entity relationships.",
+          "evidence_tags": ["canonical/canonical_spec.json#relationships"]
+        }
+      ],
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": true
+      },
+      "override_hook": {
+        "hook_point": "GATE_OVERRIDE",
+        "requires_reason": true
+      },
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "owner": "axion-core"
+    },
+    {
+      "gate_id": "G3_STANDARDS_RESOLVED",
+      "title": "Standards Resolution Gate",
+      "severity": "hard_stop",
+      "predicates": [
+        {
+          "predicate_id": "PRED-G3A1",
+          "expr": "has_artifact(\"RESOLVED_STANDARDS_SNAPSHOT\")",
+          "message_on_fail": "Resolved standards snapshot artifact is missing.",
+          "evidence_tags": ["standards/resolved_standards_snapshot.json"]
+        },
+        {
+          "predicate_id": "PRED-G3A2",
+          "expr": "coverage(\"standards\") >= 100",
+          "message_on_fail": "Standards resolution coverage is below 100%.",
+          "evidence_tags": ["standards/resolved_standards_snapshot.json#coverage"]
+        }
+      ],
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": true
+      },
+      "override_hook": {
+        "hook_point": "GATE_OVERRIDE",
+        "requires_reason": true
+      },
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "owner": "axion-core"
+    },
+    {
+      "gate_id": "G4_TEMPLATE_SELECTION",
+      "title": "Template Selection Gate",
+      "severity": "hard_stop",
+      "predicates": [
+        {
+          "predicate_id": "PRED-G4A1",
+          "expr": "has_artifact(\"TEMPLATE_SELECTION_RESULT\")",
+          "message_on_fail": "Template selection result artifact is missing.",
+          "evidence_tags": ["templates/selection_result.json"]
+        },
+        {
+          "predicate_id": "PRED-G4A2",
+          "expr": "targets_contains(\"selected_templates\")",
+          "message_on_fail": "Template selection must include selected templates.",
+          "evidence_tags": ["templates/selection_result.json#selected_templates"]
+        }
+      ],
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": false
+      },
+      "override_hook": {
+        "hook_point": "GATE_OVERRIDE",
+        "requires_reason": true
+      },
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "owner": "axion-core"
+    },
+    {
+      "gate_id": "G5_TEMPLATE_COMPLETENESS",
+      "title": "Template Completeness Gate",
+      "severity": "hard_stop",
+      "predicates": [
+        {
+          "predicate_id": "PRED-G5A1",
+          "expr": "has_artifact(\"RENDER_REPORT\")",
+          "message_on_fail": "Template render report artifact is missing.",
+          "evidence_tags": ["templates/render_report.json"]
+        },
+        {
+          "predicate_id": "PRED-G5A2",
+          "expr": "has_artifact(\"TEMPLATE_COMPLETENESS_REPORT\")",
+          "message_on_fail": "Template completeness report artifact is missing.",
+          "evidence_tags": ["templates/template_completeness_report.json"]
+        },
+        {
+          "predicate_id": "PRED-G5A3",
+          "expr": "coverage(\"template_completeness\") >= 100",
+          "message_on_fail": "Template completeness must be 100%.",
+          "evidence_tags": ["templates/template_completeness_report.json#pass"]
+        }
+      ],
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": true
+      },
+      "override_hook": {
+        "hook_point": "GATE_OVERRIDE",
+        "requires_reason": true
+      },
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "owner": "axion-core"
+    },
+    {
+      "gate_id": "G6_PLAN_COVERAGE",
+      "title": "Plan Coverage Gate",
+      "severity": "hard_stop",
+      "predicates": [
+        {
+          "predicate_id": "PRED-G6A1",
+          "expr": "has_artifact(\"COVERAGE_REPORT\")",
+          "message_on_fail": "Plan coverage report artifact is missing.",
+          "evidence_tags": ["planning/coverage_report.json"]
+        },
+        {
+          "predicate_id": "PRED-G6A2",
+          "expr": "coverage(\"plan\") >= 100",
+          "message_on_fail": "Plan coverage must be at least 100%.",
+          "evidence_tags": ["planning/coverage_report.json#coverage_percent"]
+        }
+      ],
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": true
+      },
+      "override_hook": {
+        "hook_point": "GATE_OVERRIDE",
+        "requires_reason": true
+      },
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "owner": "axion-core"
+    },
+    {
+      "gate_id": "G7_VERIFICATION",
+      "title": "Verification Gate",
+      "severity": "hard_stop",
+      "predicates": [
+        {
+          "predicate_id": "PRED-G7A1",
+          "expr": "has_artifact(\"VERIFICATION_RUN_RESULT\")",
+          "message_on_fail": "Verification run result artifact is missing.",
+          "evidence_tags": ["verification/verification_run_result.json"]
+        },
+        {
+          "predicate_id": "PRED-G7A2",
+          "expr": "ledger_has(\"proof_ledger\")",
+          "message_on_fail": "Proof ledger artifact is missing or incomplete.",
+          "evidence_tags": ["proof/proof_ledger.jsonl"]
+        },
+        {
+          "predicate_id": "PRED-G7A3",
+          "expr": "has_artifact(\"COMPLETION_REPORT\")",
+          "message_on_fail": "Verification completion report artifact is missing.",
+          "evidence_tags": ["verification/completion_report.json"]
+        }
+      ],
+      "evidence_policy": {
+        "mode": "trace",
+        "include_pointers": true,
+        "include_diff": true,
+        "include_verification_proof": true
+      },
+      "override_hook": {
+        "hook_point": "GATE_OVERRIDE",
+        "requires_reason": true
+      },
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "owner": "axion-core"
+    },
+    {
+      "gate_id": "G8_PACKAGE_INTEGRITY",
+      "title": "Package Integrity Gate",
+      "severity": "hard_stop",
+      "predicates": [
+        {
+          "predicate_id": "PRED-G8A1",
+          "expr": "has_artifact(\"PACKAGING_MANIFEST\")",
+          "message_on_fail": "Packaging manifest artifact is missing.",
+          "evidence_tags": ["kit/packaging_manifest.json"]
+        },
+        {
+          "predicate_id": "PRED-G8A2",
+          "expr": "has_artifact(\"PACKAGING_MANIFEST\") and coverage(\"package_hashes\") >= 100",
+          "message_on_fail": "Package hash verification failed or incomplete.",
+          "evidence_tags": ["kit/packaging_manifest.json#hashes", "kit/bundle/"]
+        }
+      ],
+      "evidence_policy": {
+        "mode": "trace",
+        "include_pointers": true,
+        "include_diff": true,
+        "include_verification_proof": true
+      },
+      "override_hook": {
+        "hook_point": "GATE_OVERRIDE",
+        "requires_reason": true
+      },
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "owner": "axion-core"
+    }
+  ]
+}

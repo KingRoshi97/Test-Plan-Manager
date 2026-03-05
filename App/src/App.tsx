@@ -12,6 +12,7 @@ import FeaturesPage from "./pages/features";
 import FeatureDetailPage from "./pages/feature-detail";
 import SystemLibraryPage from "./pages/system-library";
 import OrchestrationLibraryPage from "./pages/orchestration-library";
+import GatesLibraryPage from "./pages/gates-library";
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/logs" component={LogsPage} />
           <Route path="/system" component={SystemLibraryPage} />
           <Route path="/orchestration" component={OrchestrationLibraryPage} />
+          <Route path="/gates" component={GatesLibraryPage} />
           <Route path="/docs" component={DocInventoryPage} />
           <Route path="/export" component={ExportPage} />
           <Route>

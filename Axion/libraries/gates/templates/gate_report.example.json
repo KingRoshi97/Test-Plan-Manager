@@ -1,0 +1,25 @@
+{
+    "run_id": "RUN-ABC123",
+    "gate_id": "G2_CANONICAL_INTEGRITY",
+  "status": "fail",
+  "evaluated_at": "2026-03-05T00:10:00Z",
+  "summary": {
+    "failed_predicates": 1,
+    "notes": ["Canonical spec missing required relationships."]
+  },
+  "evidence_policy": { "mode": "standard" },
+  "failures": [
+    {
+      "predicate_id": "PRED-0001",
+      "message": "Canonical spec must include entity relationships.",
+      "evidence_refs": [
+        { "kind": "pointer", "ref": "runs/RUN-ABC123/artifacts/CANONICAL_SPEC.json#relationships", "notes": "Field missing or empty." }
+      ],
+      "remediation": [
+        "Update canonical builder to populate relationships.",
+        "Re-run S4_CANONICAL_BUILD and downstream stages."
+      ]
+    }
+  ],
+  "override": { "requested": false, "granted": false }
+}
