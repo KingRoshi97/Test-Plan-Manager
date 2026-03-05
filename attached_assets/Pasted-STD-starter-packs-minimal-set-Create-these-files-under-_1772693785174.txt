@@ -1,0 +1,224 @@
+STD starter packs (minimal set)
+
+Create these files under:
+
+Axion/libraries/standards/packs/
+
+1) Axion/libraries/standards/packs/CORE@1.0.0.json
+{
+  "pack_id": "CORE",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-01",
+  "applies_when": {},
+  "priority": 1000,
+  "fixed_rules": [
+    {
+      "rule_id": "STD-ENG-001",
+      "name": "Deterministic stage order",
+      "description": "Pipeline stages must execute in a fixed, declared order; no implicit stages.",
+      "rule_type": "requirement",
+      "value": { "deterministic_stage_order": true },
+      "fixed": true,
+      "source_pack": "CORE@1.0.0"
+    },
+    {
+      "rule_id": "STD-ENG-002",
+      "name": "Artifacts must be schema-validatable",
+      "description": "All emitted artifacts must have a schema_ref and be machine-validated where applicable.",
+      "rule_type": "requirement",
+      "value": { "schema_validation_required": true },
+      "fixed": true,
+      "source_pack": "CORE@1.0.0"
+    },
+    {
+      "rule_id": "STD-ENG-003",
+      "name": "Pins are required",
+      "description": "Runs must record pinned versions for libraries, schemas, templates, and standards.",
+      "rule_type": "requirement",
+      "value": { "pinning_required": true },
+      "fixed": true,
+      "source_pack": "CORE@1.0.0"
+    }
+  ],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-ENG-101",
+      "name": "Default artifact hashing policy",
+      "description": "Default hashing policy for artifacts unless overridden by stricter packs.",
+      "rule_type": "default",
+      "value": { "hash_policy": "sha256_optional" },
+      "fixed": false,
+      "source_pack": "CORE@1.0.0"
+    }
+  ]
+}
+2) Axion/libraries/standards/packs/DESIGN_BASE@1.0.0.json
+{
+  "pack_id": "DESIGN_BASE",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-02",
+  "applies_when": {},
+  "priority": 500,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-DES-101",
+      "name": "Design outputs required for UI builds",
+      "description": "If build target includes UI, templates must include a design section and UI constraints.",
+      "rule_type": "default",
+      "value": { "ui_design_section_required": true },
+      "fixed": false,
+      "source_pack": "DESIGN_BASE@1.0.0"
+    }
+  ]
+}
+3) Axion/libraries/standards/packs/SEC_BASE@1.0.0.json
+{
+  "pack_id": "SEC_BASE",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-03",
+  "applies_when": {},
+  "priority": 800,
+  "fixed_rules": [
+    {
+      "rule_id": "STD-SEC-001",
+      "name": "No secrets in artifacts",
+      "description": "Artifacts must not contain secrets (tokens/keys/passwords).",
+      "rule_type": "prohibition",
+      "value": { "secrets_forbidden": true },
+      "fixed": true,
+      "source_pack": "SEC_BASE@1.0.0"
+    }
+  ],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-SEC-101",
+      "name": "Auth required gate",
+      "description": "If auth_required is true, require auth documentation and tests.",
+      "rule_type": "default",
+      "value": { "auth_requires_tests": true },
+      "fixed": false,
+      "source_pack": "SEC_BASE@1.0.0"
+    }
+  ]
+}
+4) Axion/libraries/standards/packs/QA_BASE@1.0.0.json
+{
+  "pack_id": "QA_BASE",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-04",
+  "applies_when": {},
+  "priority": 700,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-QA-101",
+      "name": "Minimum test evidence",
+      "description": "Runs should produce test evidence when tests exist.",
+      "rule_type": "default",
+      "value": { "test_evidence_required": true },
+      "fixed": false,
+      "source_pack": "QA_BASE@1.0.0"
+    }
+  ]
+}
+5) Axion/libraries/standards/packs/OPS_CONDITIONAL@1.0.0.json
+{
+  "pack_id": "OPS_CONDITIONAL",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-05",
+  "applies_when": {
+    "gates": { "data_enabled": true }
+  },
+  "priority": 400,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-OPS-101",
+      "name": "Operational logging required when data_enabled",
+      "description": "If data is enabled, require basic logging/telemetry artifacts.",
+      "rule_type": "requirement",
+      "value": { "telemetry_required": true },
+      "fixed": false,
+      "source_pack": "OPS_CONDITIONAL@1.0.0"
+    }
+  ]
+}
+6) Axion/libraries/standards/packs/CONTRACTS_CONDITIONAL@1.0.0.json
+{
+  "pack_id": "CONTRACTS_CONDITIONAL",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-06",
+  "applies_when": {
+    "gates": { "integrations_enabled": true }
+  },
+  "priority": 450,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-CON-101",
+      "name": "Explicit interface contracts required when integrations_enabled",
+      "description": "If integrations are enabled, require endpoint/interface contracts and proof.",
+      "rule_type": "requirement",
+      "value": { "interface_contracts_required": true },
+      "fixed": false,
+      "source_pack": "CONTRACTS_CONDITIONAL@1.0.0"
+    }
+  ]
+}
+7) Axion/libraries/standards/packs/ANALYTICS_CONDITIONAL@1.0.0.json
+{
+  "pack_id": "ANALYTICS_CONDITIONAL",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-07",
+  "applies_when": {
+    "routing": { "build_target": "production" }
+  },
+  "priority": 350,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-ANL-101",
+      "name": "Analytics plan required for production",
+      "description": "If build_target is production, require an analytics/telemetry plan artifact.",
+      "rule_type": "requirement",
+      "value": { "analytics_plan_required": true },
+      "fixed": false,
+      "source_pack": "ANALYTICS_CONDITIONAL@1.0.0"
+    }
+  ]
+}
+Update your standards index (STD-01 registry)
+
+Add these pack entries into your existing:
+Axion/libraries/standards/standards_index.json
+
+Use this exact structure for each new pack entry:
+
+{
+  "pack_id": "CORE",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-01",
+  "applies_when": {},
+  "priority": 1000,
+  "rule_count": 4,
+  "rule_ids": ["STD-ENG-001", "STD-ENG-002", "STD-ENG-003", "STD-ENG-101"]
+}
+
+Repeat for each pack with:
+
+pack_id
+
+pack_version
+
+category
+
+applies_when
+
+priority
+
+rule_count
+
+rule_ids
+
+And update rule_id_to_category with the rule IDs mapping to the category id (STD-CAT-01..07).
