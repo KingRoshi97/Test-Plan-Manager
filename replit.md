@@ -76,7 +76,7 @@ package.json      # Root package.json with all dependencies
 - lucide-react (icons)
 
 ### Database Schema (shared/schema.ts)
-- `assemblies` — project builds with status, preset, verification, run metrics
+- `assemblies` — project builds with status, preset, verification, run metrics, `intakePayload` (JSONB, nullable)
 - `pipeline_runs` — individual pipeline executions with S1–S10 stage statuses (JSON)
 - `module_statuses` — per-module stage tracking
 - `reports` — gate reports, run completion reports
@@ -99,10 +99,20 @@ package.json      # Root package.json with all dependencies
 - Parses stdout for stage progress and gate results
 - Updates `pipeline_runs` and `assemblies` in real-time
 - Stores run_id and run artifacts path on completion
+- Writes `intakePayload` to `.axion/runs/<run_id>/intake/raw_submission.json` before S1 stage if available
+
+### Intake Wizard (App/src/components/intake-wizard.tsx)
+- 11-page multi-step wizard per INT-01 form spec (Pages 0-10)
+- Page components in `App/src/components/intake/` (page-routing, page-project, page-intent, page-design, page-functional, page-data, page-auth, page-integrations, page-nfr, page-category, page-final)
+- Shared `IntakeData` type in `App/src/components/intake/types.ts`
+- Per-page validation (routing fields required on P0, project name/problem statement on P1, 3 checkboxes on P10)
+- Conditional pages: P5 (data) gated by manages_data toggle, P6 (auth) gated by requires_auth, P7 (integrations) gated by has_integrations
+- P9 renders category-specific variant (software/data/docs/other) based on P0 routing.category
+- On submit: builds INT-02-compliant intakePayload, creates assembly, optionally starts pipeline
 
 ### Frontend Pages (App/src/pages/)
 - `/` — Dashboard: assembly cards with status, metrics, actions
-- `/new` — New Assembly: form with project name, idea, preset, start-immediately option
+- `/new` — New Assembly: 11-page multi-step intake wizard (INT-01 spec) with routing, project basics, intent, design, functional spec, data model, auth, integrations, NFRs, category-specific, and final verification
 - `/assembly/:id` — Assembly detail: pipeline stage timeline, gate results, artifact browser, run history
 - `/files` — File browser: navigate run artifact directories
 - `/health` — System health: pipeline, knowledge library, templates, recent runs

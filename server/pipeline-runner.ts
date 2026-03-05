@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import path from "path";
+import fs from "fs";
 import { storage } from "./storage.js";
 import type { Assembly, PipelineRun } from "../shared/schema.js";
 
@@ -61,6 +62,16 @@ async function runPipeline(assemblyId: number, pipelineRunId: number) {
       runId = runMatch[1];
       await storage.updatePipelineRun(pipelineRunId, { runId });
       await storage.updateAssembly(assemblyId, { runId });
+
+      const assembly = await storage.getAssembly(assemblyId);
+      if (assembly?.intakePayload) {
+        const intakeDir = path.join(AXION_ROOT, ".axion", "runs", runId, "intake");
+        fs.mkdirSync(intakeDir, { recursive: true });
+        fs.writeFileSync(
+          path.join(intakeDir, "raw_submission.json"),
+          JSON.stringify(assembly.intakePayload, null, 2),
+        );
+      }
     }
 
     for (const line of text.split("\n")) {

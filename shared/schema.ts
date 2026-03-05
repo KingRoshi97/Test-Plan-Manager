@@ -20,6 +20,7 @@ export const assemblies = pgTable("assemblies", {
   kitType: varchar("kit_type", { length: 50 }),
   totalRuns: integer("total_runs").default(0),
   totalDurationMs: integer("total_duration_ms").default(0),
+  intakePayload: jsonb("intake_payload"),
 });
 
 export const pipelineRuns = pgTable("pipeline_runs", {
