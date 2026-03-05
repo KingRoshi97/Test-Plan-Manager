@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-02",
+  "description": "Canonical stable ID rules: prefixes, patterns, generation guidance, and uniqueness constraints.",
+  "id_types": [
+    { "type": "ROLE", "prefix": "ROLE-", "pattern": "^ROLE-[0-9]{3}$" },
+    { "type": "FEAT", "prefix": "FEAT-", "pattern": "^FEAT-[0-9]{3}$" },
+    { "type": "WF", "prefix": "WF-", "pattern": "^WF-[0-9]{3}$" },
+    { "type": "PERM", "prefix": "PERM-", "pattern": "^PERM-[0-9]{3}$" },
+    { "type": "SCREEN", "prefix": "SCR-", "pattern": "^SCR-[0-9]{3}$" },
+    { "type": "DATA", "prefix": "DATA-", "pattern": "^DATA-[0-9]{3}$" },
+    { "type": "OP", "prefix": "OP-", "pattern": "^OP-[0-9]{3}$" },
+    { "type": "INTG", "prefix": "INTG-", "pattern": "^INTG-[0-9]{3}$" },
+    { "type": "UNK", "prefix": "UNK-", "pattern": "^UNK-[0-9]{4}$" },
+    { "type": "SPEC", "prefix": "SPEC-", "pattern": "^SPEC-.*$" }
+  ],
+  "uniqueness": {
+    "unique_ids_within_collections": true,
+    "collections": [
+      { "path": "entities.roles", "id_field": "role_id" },
+      { "path": "entities.features", "id_field": "feature_id" },
+      { "path": "entities.workflows", "id_field": "workflow_id" },
+      { "path": "entities.permissions", "id_field": "perm_id" },
+      { "path": "entities.screens", "id_field": "screen_id" },
+      { "path": "entities.data_objects", "id_field": "data_object_id" },
+      { "path": "entities.operations", "id_field": "operation_id" },
+      { "path": "entities.integrations", "id_field": "integration_id" },
+      { "path": "unknowns", "id_field": "unknown_id" }
+    ]
+  },
+  "generation": {
+    "stable_incrementing": true,
+    "padding": {
+      "ROLE": 3,
+      "FEAT": 3,
+      "WF": 3,
+      "PERM": 3,
+      "SCREEN": 3,
+      "DATA": 3,
+      "OP": 3,
+      "INTG": 3,
+      "UNK": 4
+    },
+    "notes": [
+      "IDs should be stable once assigned; renumbering is treated as breaking unless explicitly migrated."
+    ]
+  }
+}

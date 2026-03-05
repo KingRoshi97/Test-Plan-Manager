@@ -1,0 +1,187 @@
+STD pieces to create (STD-01 → STD-02 → STD-03) 
+
+Axion System docs Update (1)
+
+Below are the repo files (paths + full JSON) that implement the STD section requirements: versioned packs, deterministic selection, fixed vs configurable, non-overlap by category, and snapshot-able rules. 
+
+Axion System docs Update (1)
+
+STD-01 — Standards Library Structure
+1) Axion/libraries/standards/STD-01.categories.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "STD-01",
+  "locked": true,
+  "categories": [
+    { "category_id": "STD-CAT-01", "name": "Engineering Standards" },
+    { "category_id": "STD-CAT-02", "name": "Design Standards" },
+    { "category_id": "STD-CAT-03", "name": "Security Standards" },
+    { "category_id": "STD-CAT-04", "name": "Quality Standards" },
+    { "category_id": "STD-CAT-05", "name": "Operations Standards (conditional)" },
+    { "category_id": "STD-CAT-06", "name": "Interface/Contract Standards (conditional)" },
+    { "category_id": "STD-CAT-07", "name": "Analytics/Telemetry Standards (conditional)" }
+  ]
+}
+
+(These categories are the locked set.) 
+
+Axion System docs Update (1)
+
+2) Axion/libraries/standards/STD-01.pack_contract.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "STD-01",
+  "description": "Standards pack structure contract (metadata + rules).",
+  "pack_metadata_required": [
+    "pack_id",
+    "pack_version",
+    "category",
+    "applies_when",
+    "priority",
+    "fixed_rules",
+    "configurable_rules"
+  ],
+  "applies_when_model": {
+    "routing": ["category", "type_preset", "audience_context", "build_target"],
+    "gates": ["data_enabled", "auth_required", "integrations_enabled"]
+  },
+  "rule_required_fields": [
+    "rule_id",
+    "name",
+    "description",
+    "rule_type",
+    "value",
+    "fixed",
+    "source_pack"
+  ],
+  "rule_type_enum": ["requirement", "constraint", "default", "prohibition"],
+  "constraints": [
+    {
+      "rule_id": "STD01-STRUCT-01",
+      "name": "Each rule must declare fixed vs configurable",
+      "require_fixed_field": true
+    },
+    {
+      "rule_id": "STD01-STRUCT-02",
+      "name": "Non-overlap: each rule belongs to exactly one standards category",
+      "enforced_by": "index.rule_id_to_category"
+    },
+    {
+      "rule_id": "STD01-STRUCT-03",
+      "name": "Snapshot-able: value must be representable without interpretation",
+      "enforced_by": "STD-03 snapshot writer"
+    }
+  ]
+}
+
+(Pack metadata + rule fields are explicitly required.) 
+
+Axion System docs Update (1)
+
+3) Axion/libraries/standards/STD-01.library_index.schema.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "STD-01",
+  "description": "Standards index/registry minimum required fields (machine-readable).",
+  "required_top_level": ["standards_library_version", "packs", "rule_id_to_category"],
+  "pack_index_required_fields": [
+    "pack_id",
+    "pack_version",
+    "category",
+    "applies_when",
+    "priority",
+    "rule_count",
+    "rule_ids"
+  ],
+  "notes": [
+    "Index must list all packs+versions, applies_when filters, categories covered, and rule IDs."
+  ]
+}
+
+(Index minimum fields are specified.) 
+
+Axion System docs Update (1)
+
+STD-02 — Standards Resolution Rules
+Axion/libraries/standards/STD-02.resolution_rules.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "STD-02",
+  "description": "Deterministic selection + merge rules to produce STD-03 snapshot.",
+  "selection": {
+    "must_be_selectable_by": ["routing", "gates"],
+    "no_ambiguity_rule": true,
+    "applies_when_evaluation": {
+      "routing_match": "all_specified_fields_match",
+      "gates_match": "all_specified_gates_match"
+    }
+  },
+  "ordering": {
+    "deterministic": true,
+    "sort_keys": ["priority_desc", "pack_id_asc", "pack_version_asc"]
+  },
+  "merge": {
+    "fixed_vs_configurable": {
+      "fixed_rules_win_over_configurable": true,
+      "configurable_can_override_only_configurable": true
+    },
+    "conflict_policy": {
+      "default": "last_write_wins_by_ordering",
+      "disallow_cross_category_overlap": true,
+      "overlap_violation_error": "STD02-OVERLAP-CAT"
+    }
+  },
+  "provenance": {
+    "record_source_pack": true,
+    "record_merge_order": true
+  }
+}
+
+(Deterministic selection/priority/tie-breaking and fixed vs configurable are required principles.) 
+
+Axion System docs Update (1)
+
+ 
+
+Axion System docs Update (1)
+
+STD-03 — Standards Snapshot Format
+Axion/libraries/standards/STD-03.snapshot.schema.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "STD-03",
+  "description": "Resolved standards snapshot artifact format (emitted output).",
+  "required_top_level": [
+    "snapshot_id",
+    "created_at",
+    "standards_library_version",
+    "resolver_version_used",
+    "inputs",
+    "resolved"
+  ],
+  "inputs_required": [
+    "routing_snapshot",
+    "gates_snapshot",
+    "packs_selected"
+  ],
+  "pack_selected_required": ["pack_id", "pack_version", "category", "priority", "rule_ids"],
+  "resolved_rule_required": [
+    "rule_id",
+    "category",
+    "name",
+    "description",
+    "rule_type",
+    "value",
+    "fixed",
+    "source_pack"
+  ],
+  "determinism": {
+    "stable_rule_sort": ["category_asc", "rule_id_asc"],
+    "no_hidden_logic": true,
+    "snapshotable_values_only": true
+  }
+}
+
+(The library must be snapshot-able; no hidden logic; snapshot must be representable without interpretation.) 
+
+Axion System docs Update (1)

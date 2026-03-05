@@ -37,13 +37,38 @@ interface RefIntegrityRule {
 function loadIdRules(repoRoot?: string): { id_types: IdRule[]; ref_integrity: { required_refs: RefIntegrityRule[] } } {
   const defaultResult = { id_types: [], ref_integrity: { required_refs: [] } };
   if (!repoRoot) return defaultResult;
-  const rulesPath = join(repoRoot, "libraries", "canonical", "id_rules.v1.json");
-  if (!existsSync(rulesPath)) return defaultResult;
-  const raw = JSON.parse(readFileSync(rulesPath, "utf-8"));
-  return {
-    id_types: raw.id_types ?? [],
-    ref_integrity: raw.ref_integrity ?? { required_refs: [] },
-  };
+
+  const idRulesPath = join(repoRoot, "libraries", "canonical", "CAN-02.id_rules.v1.json");
+  const refIntegrityPath = join(repoRoot, "libraries", "canonical", "CAN-02.reference_integrity_rules.v1.json");
+
+  let id_types: IdRule[] = [];
+  if (existsSync(idRulesPath)) {
+    const raw = JSON.parse(readFileSync(idRulesPath, "utf-8"));
+    id_types = raw.id_types ?? [];
+  } else {
+    const legacyPath = join(repoRoot, "libraries", "canonical", "id_rules.v1.json");
+    if (existsSync(legacyPath)) {
+      const raw = JSON.parse(readFileSync(legacyPath, "utf-8"));
+      id_types = raw.id_types ?? [];
+    }
+  }
+
+  let required_refs: RefIntegrityRule[] = [];
+  if (existsSync(refIntegrityPath)) {
+    const raw = JSON.parse(readFileSync(refIntegrityPath, "utf-8"));
+    const refFields: Array<{ field_path: string; target_type: string; required: boolean }> = raw.reference_fields ?? [];
+    required_refs = refFields
+      .filter((r) => r.required === true)
+      .map((r) => ({ field: r.field_path, must_match_type: r.target_type }));
+  } else {
+    const legacyPath = join(repoRoot, "libraries", "canonical", "id_rules.v1.json");
+    if (existsSync(legacyPath)) {
+      const raw = JSON.parse(readFileSync(legacyPath, "utf-8"));
+      required_refs = raw.ref_integrity?.required_refs ?? [];
+    }
+  }
+
+  return { id_types, ref_integrity: { required_refs } };
 }
 
 function validateIdFormat(id: string, rules: IdRule[]): CanonicalValidationIssue | null {

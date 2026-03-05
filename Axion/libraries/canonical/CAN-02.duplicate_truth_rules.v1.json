@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-02",
+  "description": "Rules for detecting and blocking 'duplicate truth' in canonical specs (same fact represented in multiple places).",
+  "duplicate_truth_definitions": [
+    {
+      "dup_id": "DUP-ROLE-NAME-01",
+      "entity_type": "ROLE",
+      "scope": "entities.roles[]",
+      "fingerprint_fields": ["name"],
+      "case_insensitive": true,
+      "on_violation_error_code": "DUPLICATE_VALUE",
+      "message": "Duplicate ROLE name detected."
+    },
+    {
+      "dup_id": "DUP-FEAT-NAME-01",
+      "entity_type": "FEAT",
+      "scope": "entities.features[]",
+      "fingerprint_fields": ["name"],
+      "case_insensitive": true,
+      "on_violation_error_code": "DUPLICATE_VALUE",
+      "message": "Duplicate FEATURE name detected."
+    },
+    {
+      "dup_id": "DUP-WF-NAME-ACTOR-01",
+      "entity_type": "WF",
+      "scope": "entities.workflows[]",
+      "fingerprint_fields": ["name", "actor_role_ref"],
+      "case_insensitive": true,
+      "on_violation_error_code": "DUPLICATE_VALUE",
+      "message": "Duplicate WORKFLOW (name + actor role) detected."
+    }
+  ],
+  "notes": [
+    "This is the minimal set. Expand fingerprint fields per your domain once you add more entities."
+  ]
+}

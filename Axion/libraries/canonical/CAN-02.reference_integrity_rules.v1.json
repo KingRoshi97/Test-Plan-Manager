@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-02",
+  "description": "Referential integrity rules: which fields are references and what entity types they may point to.",
+  "reference_fields": [
+    {
+      "ref_id": "WF.actor_role_ref",
+      "field_path": "entities.workflows[].actor_role_ref",
+      "target_type": "ROLE",
+      "target_index": "index.roles_by_id",
+      "required": true
+    },
+    {
+      "ref_id": "PERM.role_ref",
+      "field_path": "entities.permissions[].role_ref",
+      "target_type": "ROLE",
+      "target_index": "index.roles_by_id",
+      "required": true
+    },
+    {
+      "ref_id": "SCREEN.primary_actor_role_ref",
+      "field_path": "entities.screens[].primary_actor_role_ref",
+      "target_type": "ROLE",
+      "target_index": "index.roles_by_id",
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "CAN02-REF-01",
+      "name": "All required refs must exist",
+      "on_violation_error_code": "INVALID_REFERENCE"
+    },
+    {
+      "rule_id": "CAN02-REF-02",
+      "name": "Optional refs must either be absent or point to an existing target",
+      "on_violation_error_code": "INVALID_REFERENCE"
+    }
+  ],
+  "determinism": {
+    "stable_sort_by": ["field_path", "ref_id"]
+  }
+}

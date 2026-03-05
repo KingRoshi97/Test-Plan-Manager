@@ -1,0 +1,68 @@
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-01",
+  "description": "Canonical entity types, allowed relationships, and required indexes/cross-maps.",
+  "entity_types": [
+    { "type": "ROLE", "collection_path": "entities.roles", "id_field": "role_id" },
+    { "type": "FEAT", "collection_path": "entities.features", "id_field": "feature_id" },
+    { "type": "WF", "collection_path": "entities.workflows", "id_field": "workflow_id" },
+    { "type": "PERM", "collection_path": "entities.permissions", "id_field": "perm_id" },
+    { "type": "SCREEN", "collection_path": "entities.screens", "id_field": "screen_id" },
+    { "type": "DATA", "collection_path": "entities.data_objects", "id_field": "data_object_id" },
+    { "type": "OP", "collection_path": "entities.operations", "id_field": "operation_id" },
+    { "type": "INTG", "collection_path": "entities.integrations", "id_field": "integration_id" }
+  ],
+  "relationships": [
+    {
+      "rel_id": "WF.actor_role",
+      "from_type": "WF",
+      "to_type": "ROLE",
+      "from_ref_path": "entities.workflows[].actor_role_ref",
+      "cardinality": "many_to_one",
+      "required": true
+    },
+    {
+      "rel_id": "PERM.role",
+      "from_type": "PERM",
+      "to_type": "ROLE",
+      "from_ref_path": "entities.permissions[].role_ref",
+      "cardinality": "many_to_one",
+      "required": true
+    },
+    {
+      "rel_id": "SCREEN.primary_actor_role",
+      "from_type": "SCREEN",
+      "to_type": "ROLE",
+      "from_ref_path": "entities.screens[].primary_actor_role_ref",
+      "cardinality": "many_to_one",
+      "required": false
+    }
+  ],
+  "required_indexes": [
+    { "index_id": "roles_by_id", "source": "entities.roles", "key": "role_id" },
+    { "index_id": "features_by_id", "source": "entities.features", "key": "feature_id" },
+    { "index_id": "workflows_by_id", "source": "entities.workflows", "key": "workflow_id" },
+    { "index_id": "permissions_by_id", "source": "entities.permissions", "key": "perm_id" },
+    { "index_id": "screens_by_id", "source": "entities.screens", "key": "screen_id" },
+    { "index_id": "data_objects_by_id", "source": "entities.data_objects", "key": "data_object_id" },
+    { "index_id": "operations_by_id", "source": "entities.operations", "key": "operation_id" },
+    { "index_id": "integrations_by_id", "source": "entities.integrations", "key": "integration_id" },
+    { "index_id": "unknowns_by_id", "source": "unknowns", "key": "unknown_id" }
+  ],
+  "required_cross_maps": [
+    {
+      "map_id": "role_to_workflows",
+      "description": "ROLE -> WF[] (workflows grouped by actor role)",
+      "from_index": "roles_by_id",
+      "to_collection": "entities.workflows",
+      "link_ref_path": "entities.workflows[].actor_role_ref"
+    },
+    {
+      "map_id": "role_to_permissions",
+      "description": "ROLE -> PERM[] (permissions grouped by role)",
+      "from_index": "roles_by_id",
+      "to_collection": "entities.permissions",
+      "link_ref_path": "entities.permissions[].role_ref"
+    }
+  ]
+}

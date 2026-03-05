@@ -17,6 +17,19 @@ Full Mechanics pipeline + web application layer. Pipeline: 10 stages, 8 enforced
 - `INT-05.error_code_catalog.v1.json` — locked error code catalog
 - `INT-05.determinism_rules.v1.json` — ordering and pointer determinism rules
 
+### Canonical Library (Axion/libraries/canonical/)
+11 files — 8 new authoritative CAN-01/02/03 contract files + 3 legacy files kept for backward compat:
+- `CAN-01.canonical_spec.schema.v1.json` — JSON Schema (draft/2020-12) for the full canonical spec artifact; defines meta/routing/constraints/entities/rules/unknowns/index with `$defs` for all 8 entity types
+- `CAN-01.entity_relationships.v1.json` — 8 entity types, 3 relationship edges (WF→ROLE, PERM→ROLE, SCREEN→ROLE), 9 required indexes, 2 required cross-maps
+- `CAN-02.id_rules.v1.json` — 10 entity type prefixes/patterns (ROLE/FEAT/WF/PERM/SCREEN/DATA/OP/INTG/UNK/SPEC), 9 uniqueness collections, generation block with padding rules
+- `CAN-02.reference_integrity_rules.v1.json` — 3 reference fields with required/optional flag, 2 validation rules (CAN02-REF-01/02), determinism sort order
+- `CAN-02.duplicate_truth_rules.v1.json` — duplicate truth definitions for ROLE/FEAT/WF with fingerprint fields and error codes
+- `CAN-03.unknown.schema.v1.json` — JSON Schema for unknown objects (unknown_id/area/summary/impact/blocking/needs/refs)
+- `CAN-03.unknown_policy.v1.json` — blocking thresholds, severity mapping, required fields, determinism sort order
+- `CAN-03.unknown_index_rules.v1.json` — required indexes (unknowns_by_id) and cross-maps (unknowns_by_area) for canonical spec
+
+**Code wired to CAN-02:** `validate.ts` and `specBuilder.ts` now load from `CAN-02.id_rules.v1.json` (10 entity types) and `CAN-02.reference_integrity_rules.v1.json` (split ref integrity), with fallback to legacy files.
+
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 

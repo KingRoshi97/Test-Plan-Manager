@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-03",
+  "description": "Required indexing/mapping rules for unknowns inside Canonical Spec.",
+  "required_indexes": [
+    {
+      "index_id": "unknowns_by_id",
+      "source": "unknowns",
+      "key": "unknown_id",
+      "must_be_complete": true
+    }
+  ],
+  "required_cross_maps": [
+    {
+      "map_id": "unknowns_by_area",
+      "description": "area -> unknown[]",
+      "group_by_field": "area",
+      "source": "unknowns",
+      "must_be_complete": true
+    }
+  ],
+  "constraints": [
+    {
+      "rule_id": "CAN03-UNK-01",
+      "name": "Unknown IDs must be unique",
+      "on_violation_error_code": "DUPLICATE_VALUE"
+    }
+  ]
+}

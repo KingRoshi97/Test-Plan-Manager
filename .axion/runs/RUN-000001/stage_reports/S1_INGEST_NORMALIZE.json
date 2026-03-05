@@ -1,0 +1,23 @@
+{
+  "run_id": "RUN-000001",
+  "stage_id": "S1_INGEST_NORMALIZE",
+  "status": "pass",
+  "started_at": "2026-03-05T06:54:20.933Z",
+  "finished_at": "2026-03-05T06:54:20.939Z",
+  "consumed": [
+    "intake/raw_submission.*"
+  ],
+  "produced": [
+    "intake/submission.json",
+    "intake/normalized_input.json",
+    "intake/submission_record.json",
+    "intake/validation_result.json"
+  ],
+  "gate_reports": [],
+  "notes": [
+    {
+      "level": "info",
+      "message": "Stage report for S1_INGEST_NORMALIZE"
+    }
+  ]
+}

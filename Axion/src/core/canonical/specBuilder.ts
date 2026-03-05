@@ -158,7 +158,9 @@ interface IdRule {
 
 function loadIdRules(repoRoot?: string): IdRule[] {
   if (!repoRoot) return [];
-  const rulesPath = join(repoRoot, "libraries", "canonical", "id_rules.v1.json");
+  const primaryPath = join(repoRoot, "libraries", "canonical", "CAN-02.id_rules.v1.json");
+  const legacyPath = join(repoRoot, "libraries", "canonical", "id_rules.v1.json");
+  const rulesPath = existsSync(primaryPath) ? primaryPath : legacyPath;
   if (!existsSync(rulesPath)) return [];
   const raw = JSON.parse(readFileSync(rulesPath, "utf-8"));
   return raw.id_types ?? [];

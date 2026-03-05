@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-03",
+  "description": "Unknown handling policy: thresholds and blocking behavior for canonical build and downstream stages.",
+  "blocking_rules": {
+    "block_if_any_blocking_unknown": true,
+    "block_if_high_impact_unknown_count_gte": 1,
+    "block_if_total_unknown_count_gte": 999999
+  },
+  "severity_mapping": {
+    "high": "blocking",
+    "medium": "non_blocking",
+    "low": "non_blocking"
+  },
+  "required_fields_for_unknown": ["unknown_id", "area", "summary", "impact", "blocking", "needs", "refs"],
+  "determinism": {
+    "sort_unknowns_by": ["blocking_desc", "impact_desc", "unknown_id_asc"]
+  }
+}
