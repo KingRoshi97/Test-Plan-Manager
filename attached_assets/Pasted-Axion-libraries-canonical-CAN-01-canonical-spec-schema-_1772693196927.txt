@@ -1,0 +1,505 @@
+Axion/libraries/canonical/CAN-01.canonical_spec.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/canonical/CAN-01.canonical_spec.schema.v1.json",
+  "title": "CAN-01 — Canonical Spec Schema (v1)",
+  "type": "object",
+  "required": ["meta", "routing", "constraints", "entities", "rules", "unknowns", "index"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "spec_id",
+        "submission_id",
+        "form_version_used",
+        "schema_version_used",
+        "ruleset_version_used",
+        "spec_version",
+        "created_at"
+      ],
+      "properties": {
+        "spec_id": { "type": "string" },
+        "submission_id": { "type": "string" },
+        "form_version_used": { "type": "string" },
+        "schema_version_used": { "type": "string" },
+        "ruleset_version_used": { "type": "string" },
+        "spec_version": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "routing": {
+      "type": "object",
+      "required": ["skill_level", "category", "type_preset", "build_target", "audience_context"],
+      "properties": {
+        "skill_level": { "type": "string" },
+        "category": { "type": "string" },
+        "type_preset": { "type": "string" },
+        "build_target": { "type": "string" },
+        "audience_context": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "constraints": {
+      "type": "object",
+      "required": ["stack_constraints", "security_constraints", "quality_constraints", "fixed_vs_configurable"],
+      "properties": {
+        "stack_constraints": { "type": "object" },
+        "security_constraints": { "type": "object" },
+        "quality_constraints": { "type": "object" },
+        "design_constraints": { "type": "object" },
+        "fixed_vs_configurable": {
+          "type": "object",
+          "additionalProperties": { "enum": ["fixed", "configurable"] }
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "entities": {
+      "type": "object",
+      "required": ["roles", "features", "workflows", "permissions", "screens", "data_objects", "operations", "integrations"],
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Role" }
+        },
+        "features": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Feature" }
+        },
+        "workflows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Workflow" }
+        },
+        "permissions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Permission" }
+        },
+        "screens": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Screen" }
+        },
+        "data_objects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/DataObject" }
+        },
+        "operations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Operation" }
+        },
+        "integrations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Integration" }
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "rules": {
+      "type": "object",
+      "required": ["definition_of_done", "acceptance_criteria"],
+      "properties": {
+        "definition_of_done": { "type": "string" },
+        "must_always": { "type": "array", "items": { "type": "string" } },
+        "must_never": { "type": "array", "items": { "type": "string" } },
+        "must_pass_checks": { "type": "array", "items": { "type": "string" } },
+        "acceptance_criteria": { "type": "array", "items": { "type": "string" } },
+        "rejection_conditions": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "axion://schemas/canonical/CAN-03.unknown.schema.v1.json" }
+    },
+
+    "index": {
+      "type": "object",
+      "required": [
+        "roles_by_id",
+        "features_by_id",
+        "workflows_by_id",
+        "permissions_by_id",
+        "screens_by_id",
+        "data_objects_by_id",
+        "operations_by_id",
+        "integrations_by_id",
+        "cross_maps",
+        "unknowns_by_id"
+      ],
+      "properties": {
+        "roles_by_id": { "type": "object" },
+        "features_by_id": { "type": "object" },
+        "workflows_by_id": { "type": "object" },
+        "permissions_by_id": { "type": "object" },
+        "screens_by_id": { "type": "object" },
+        "data_objects_by_id": { "type": "object" },
+        "operations_by_id": { "type": "object" },
+        "integrations_by_id": { "type": "object" },
+        "unknowns_by_id": { "type": "object" },
+        "cross_maps": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "Role": {
+      "type": "object",
+      "required": ["role_id", "name"],
+      "properties": {
+        "role_id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "primary_goal": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "Feature": {
+      "type": "object",
+      "required": ["feature_id", "name", "priority_tier"],
+      "properties": {
+        "feature_id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "priority_tier": { "enum": ["must", "nice", "future"] },
+        "priority_rank": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "Workflow": {
+      "type": "object",
+      "required": ["workflow_id", "name", "actor_role_ref", "steps", "success_outcome"],
+      "properties": {
+        "workflow_id": { "type": "string" },
+        "name": { "type": "string" },
+        "actor_role_ref": { "type": "string" },
+        "steps": { "type": "array", "items": { "type": "string" } },
+        "success_outcome": { "type": "string" },
+        "failure_states": { "type": "string" },
+        "priority": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "Permission": {
+      "type": "object",
+      "required": ["perm_id", "role_ref", "allowed_capabilities"],
+      "properties": {
+        "perm_id": { "type": "string" },
+        "role_ref": { "type": "string" },
+        "allowed_capabilities": { "type": "array", "items": { "type": "string" } },
+        "restricted_actions": { "type": "array", "items": { "type": "string" } },
+        "approval_required_actions": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "Screen": {
+      "type": "object",
+      "required": ["screen_id", "name"],
+      "properties": {
+        "screen_id": { "type": "string" },
+        "name": { "type": "string" },
+        "purpose": { "type": "string" },
+        "primary_actor_role_ref": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "DataObject": {
+      "type": "object",
+      "required": ["data_object_id", "name"],
+      "properties": {
+        "data_object_id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "fields": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": true
+    },
+    "Operation": {
+      "type": "object",
+      "required": ["operation_id", "name"],
+      "properties": {
+        "operation_id": { "type": "string" },
+        "name": { "type": "string" },
+        "kind": { "type": "string" },
+        "inputs": { "type": "array", "items": { "type": "string" } },
+        "outputs": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "Integration": {
+      "type": "object",
+      "required": ["integration_id", "name"],
+      "properties": {
+        "integration_id": { "type": "string" },
+        "name": { "type": "string" },
+        "provider": { "type": "string" },
+        "kind": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  }
+}
+Axion/libraries/canonical/CAN-01.entity_relationships.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-01",
+  "description": "Canonical entity types, allowed relationships, and required indexes/cross-maps.",
+  "entity_types": [
+    { "type": "ROLE", "collection_path": "entities.roles", "id_field": "role_id" },
+    { "type": "FEAT", "collection_path": "entities.features", "id_field": "feature_id" },
+    { "type": "WF", "collection_path": "entities.workflows", "id_field": "workflow_id" },
+    { "type": "PERM", "collection_path": "entities.permissions", "id_field": "perm_id" },
+    { "type": "SCREEN", "collection_path": "entities.screens", "id_field": "screen_id" },
+    { "type": "DATA", "collection_path": "entities.data_objects", "id_field": "data_object_id" },
+    { "type": "OP", "collection_path": "entities.operations", "id_field": "operation_id" },
+    { "type": "INTG", "collection_path": "entities.integrations", "id_field": "integration_id" }
+  ],
+  "relationships": [
+    {
+      "rel_id": "WF.actor_role",
+      "from_type": "WF",
+      "to_type": "ROLE",
+      "from_ref_path": "entities.workflows[].actor_role_ref",
+      "cardinality": "many_to_one",
+      "required": true
+    },
+    {
+      "rel_id": "PERM.role",
+      "from_type": "PERM",
+      "to_type": "ROLE",
+      "from_ref_path": "entities.permissions[].role_ref",
+      "cardinality": "many_to_one",
+      "required": true
+    },
+    {
+      "rel_id": "SCREEN.primary_actor_role",
+      "from_type": "SCREEN",
+      "to_type": "ROLE",
+      "from_ref_path": "entities.screens[].primary_actor_role_ref",
+      "cardinality": "many_to_one",
+      "required": false
+    }
+  ],
+  "required_indexes": [
+    { "index_id": "roles_by_id", "source": "entities.roles", "key": "role_id" },
+    { "index_id": "features_by_id", "source": "entities.features", "key": "feature_id" },
+    { "index_id": "workflows_by_id", "source": "entities.workflows", "key": "workflow_id" },
+    { "index_id": "permissions_by_id", "source": "entities.permissions", "key": "perm_id" },
+    { "index_id": "screens_by_id", "source": "entities.screens", "key": "screen_id" },
+    { "index_id": "data_objects_by_id", "source": "entities.data_objects", "key": "data_object_id" },
+    { "index_id": "operations_by_id", "source": "entities.operations", "key": "operation_id" },
+    { "index_id": "integrations_by_id", "source": "entities.integrations", "key": "integration_id" },
+    { "index_id": "unknowns_by_id", "source": "unknowns", "key": "unknown_id" }
+  ],
+  "required_cross_maps": [
+    {
+      "map_id": "role_to_workflows",
+      "description": "ROLE -> WF[] (workflows grouped by actor role)",
+      "from_index": "roles_by_id",
+      "to_collection": "entities.workflows",
+      "link_ref_path": "entities.workflows[].actor_role_ref"
+    },
+    {
+      "map_id": "role_to_permissions",
+      "description": "ROLE -> PERM[] (permissions grouped by role)",
+      "from_index": "roles_by_id",
+      "to_collection": "entities.permissions",
+      "link_ref_path": "entities.permissions[].role_ref"
+    }
+  ]
+}
+Axion/libraries/canonical/CAN-02.id_rules.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-02",
+  "description": "Canonical stable ID rules: prefixes, patterns, generation guidance, and uniqueness constraints.",
+  "id_types": [
+    { "type": "ROLE", "prefix": "ROLE-", "pattern": "^ROLE-[0-9]{3}$" },
+    { "type": "FEAT", "prefix": "FEAT-", "pattern": "^FEAT-[0-9]{3}$" },
+    { "type": "WF", "prefix": "WF-", "pattern": "^WF-[0-9]{3}$" },
+    { "type": "PERM", "prefix": "PERM-", "pattern": "^PERM-[0-9]{3}$" },
+    { "type": "SCREEN", "prefix": "SCR-", "pattern": "^SCR-[0-9]{3}$" },
+    { "type": "DATA", "prefix": "DATA-", "pattern": "^DATA-[0-9]{3}$" },
+    { "type": "OP", "prefix": "OP-", "pattern": "^OP-[0-9]{3}$" },
+    { "type": "INTG", "prefix": "INTG-", "pattern": "^INTG-[0-9]{3}$" },
+    { "type": "UNK", "prefix": "UNK-", "pattern": "^UNK-[0-9]{4}$" },
+    { "type": "SPEC", "prefix": "SPEC-", "pattern": "^SPEC-.*$" }
+  ],
+  "uniqueness": {
+    "unique_ids_within_collections": true,
+    "collections": [
+      { "path": "entities.roles", "id_field": "role_id" },
+      { "path": "entities.features", "id_field": "feature_id" },
+      { "path": "entities.workflows", "id_field": "workflow_id" },
+      { "path": "entities.permissions", "id_field": "perm_id" },
+      { "path": "entities.screens", "id_field": "screen_id" },
+      { "path": "entities.data_objects", "id_field": "data_object_id" },
+      { "path": "entities.operations", "id_field": "operation_id" },
+      { "path": "entities.integrations", "id_field": "integration_id" },
+      { "path": "unknowns", "id_field": "unknown_id" }
+    ]
+  },
+  "generation": {
+    "stable_incrementing": true,
+    "padding": { "ROLE": 3, "FEAT": 3, "WF": 3, "PERM": 3, "SCREEN": 3, "DATA": 3, "OP": 3, "INTG": 3, "UNK": 4 },
+    "notes": [
+      "IDs should be stable once assigned; renumbering is treated as breaking unless explicitly migrated."
+    ]
+  }
+}
+Axion/libraries/canonical/CAN-02.reference_integrity_rules.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-02",
+  "description": "Referential integrity rules: which fields are references and what entity types they may point to.",
+  "reference_fields": [
+    {
+      "ref_id": "WF.actor_role_ref",
+      "field_path": "entities.workflows[].actor_role_ref",
+      "target_type": "ROLE",
+      "target_index": "index.roles_by_id",
+      "required": true
+    },
+    {
+      "ref_id": "PERM.role_ref",
+      "field_path": "entities.permissions[].role_ref",
+      "target_type": "ROLE",
+      "target_index": "index.roles_by_id",
+      "required": true
+    },
+    {
+      "ref_id": "SCREEN.primary_actor_role_ref",
+      "field_path": "entities.screens[].primary_actor_role_ref",
+      "target_type": "ROLE",
+      "target_index": "index.roles_by_id",
+      "required": false
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "CAN02-REF-01",
+      "name": "All required refs must exist",
+      "on_violation_error_code": "INVALID_REFERENCE"
+    },
+    {
+      "rule_id": "CAN02-REF-02",
+      "name": "Optional refs must either be absent or point to an existing target",
+      "on_violation_error_code": "INVALID_REFERENCE"
+    }
+  ],
+  "determinism": {
+    "stable_sort_by": ["field_path", "ref_id"]
+  }
+}
+Axion/libraries/canonical/CAN-02.duplicate_truth_rules.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-02",
+  "description": "Rules for detecting and blocking 'duplicate truth' in canonical specs (same fact represented in multiple places).",
+  "duplicate_truth_definitions": [
+    {
+      "dup_id": "DUP-ROLE-NAME-01",
+      "entity_type": "ROLE",
+      "scope": "entities.roles[]",
+      "fingerprint_fields": ["name"],
+      "case_insensitive": true,
+      "on_violation_error_code": "DUPLICATE_VALUE",
+      "message": "Duplicate ROLE name detected."
+    },
+    {
+      "dup_id": "DUP-FEAT-NAME-01",
+      "entity_type": "FEAT",
+      "scope": "entities.features[]",
+      "fingerprint_fields": ["name"],
+      "case_insensitive": true,
+      "on_violation_error_code": "DUPLICATE_VALUE",
+      "message": "Duplicate FEATURE name detected."
+    },
+    {
+      "dup_id": "DUP-WF-NAME-ACTOR-01",
+      "entity_type": "WF",
+      "scope": "entities.workflows[]",
+      "fingerprint_fields": ["name", "actor_role_ref"],
+      "case_insensitive": true,
+      "on_violation_error_code": "DUPLICATE_VALUE",
+      "message": "Duplicate WORKFLOW (name + actor role) detected."
+    }
+  ],
+  "notes": [
+    "This is the minimal set. Expand fingerprint fields per your domain once you add more entities."
+  ]
+}
+Axion/libraries/canonical/CAN-03.unknown.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/canonical/CAN-03.unknown.schema.v1.json",
+  "title": "CAN-03 — Unknown Schema (v1)",
+  "type": "object",
+  "required": ["unknown_id", "area", "summary", "impact", "blocking", "needs", "refs"],
+  "properties": {
+    "unknown_id": { "type": "string" },
+    "area": { "type": "string" },
+    "summary": { "type": "string" },
+    "impact": { "enum": ["low", "medium", "high"] },
+    "blocking": { "type": "boolean" },
+    "needs": { "type": "string" },
+    "refs": { "type": "array", "items": { "type": "string" } },
+    "meta": { "type": "object" }
+  },
+  "additionalProperties": true
+}
+Axion/libraries/canonical/CAN-03.unknown_policy.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-03",
+  "description": "Unknown handling policy: thresholds and blocking behavior for canonical build and downstream stages.",
+  "blocking_rules": {
+    "block_if_any_blocking_unknown": true,
+    "block_if_high_impact_unknown_count_gte": 1,
+    "block_if_total_unknown_count_gte": 999999
+  },
+  "severity_mapping": {
+    "high": "blocking",
+    "medium": "non_blocking",
+    "low": "non_blocking"
+  },
+  "required_fields_for_unknown": ["unknown_id", "area", "summary", "impact", "blocking", "needs", "refs"],
+  "determinism": {
+    "sort_unknowns_by": ["blocking_desc", "impact_desc", "unknown_id_asc"]
+  }
+}
+Axion/libraries/canonical/CAN-03.unknown_index_rules.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "CAN-03",
+  "description": "Required indexing/mapping rules for unknowns inside Canonical Spec.",
+  "required_indexes": [
+    {
+      "index_id": "unknowns_by_id",
+      "source": "unknowns",
+      "key": "unknown_id",
+      "must_be_complete": true
+    }
+  ],
+  "required_cross_maps": [
+    {
+      "map_id": "unknowns_by_area",
+      "description": "area -> unknown[]",
+      "group_by_field": "area",
+      "source": "unknowns",
+      "must_be_complete": true
+    }
+  ],
+  "constraints": [
+    {
+      "rule_id": "CAN03-UNK-01",
+      "name": "Unknown IDs must be unique",
+      "on_violation_error_code": "DUPLICATE_VALUE"
+    }
+  ]
+}
