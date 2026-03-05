@@ -1,0 +1,42 @@
+{
+    "schema_version": "1.0.0",
+    "contract_id": "INT-6b",
+    "gates": [
+     {
+       "gate_id": "INT-GATE-01",
+       "name": "Submission schema valid",
+      "severity": "hard_stop",
+      "checks": ["schema_valid(intake_submission.v1)"]
+    },
+    {
+      "gate_id": "INT-GATE-02",
+      "name": "Form spec pinned + compatible",
+      "severity": "hard_stop",
+      "checks": ["submission.form_ref matches pinned_form_spec"]
+    },
+    {
+      "gate_id": "INT-GATE-03",
+      "name": "Enum resolution valid",
+      "severity": "hard_stop",
+      "checks": ["all enum answers resolve via intake_enums registry"]
+    },
+    {
+      "gate_id": "INT-GATE-04",
+      "name": "Required fields satisfied",
+      "severity": "hard_stop",
+      "checks": ["required fields present including conditional requirements"]
+    },
+    {
+      "gate_id": "INT-GATE-05",
+      "name": "Cross-field rules satisfied",
+      "severity": "hard_stop",
+      "checks": ["cross-field rules evaluated; no violations"]
+    },
+    {
+      "gate_id": "INT-GATE-06",
+      "name": "Normalization output valid",
+      "severity": "hard_stop",
+      "checks": ["normalized_input exists and schema_valid(normalized_input.v1)", "normalized_input.provenance present"]
+    }
+  ]
+}

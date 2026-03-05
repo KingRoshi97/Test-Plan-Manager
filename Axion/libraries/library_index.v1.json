@@ -3,6 +3,9 @@
   "description": "Single registry for all Axion versioned libraries (non-schema files). Used for pins + deterministic resolution.",
   "libraries": [
     { "id": "intake.form_version", "path": "Axion/libraries/intake/form_version.v1.json", "version": "1.0.0" },
+    { "id": "intake.intake_enums", "path": "Axion/libraries/intake/registries/intake_enums.v1.json", "version": "1.0.0" },
+    { "id": "intake.cross_field_rules", "path": "Axion/libraries/intake/registries/intake_cross_field_rules.v1.json", "version": "1.0.0" },
+    { "id": "intake.normalization_rules", "path": "Axion/libraries/intake/registries/normalization_rules.v1.json", "version": "1.0.0" },
 
     { "id": "canonical.id_rules", "path": "Axion/libraries/canonical/id_rules.v1.json", "version": "1.0.0" },
 

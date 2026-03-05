@@ -1,0 +1,40 @@
+Axion/libraries/intake/
+ INT-0_purpose.md
+ INT-0_boundary_checklist.md
+ INT-1_form_spec_model.md
+ INT-1_determinism_rules.md
+ INT-1_validation_checklist.md
+ INT-2_enum_registry_model.md
+ INT-2_determinism_rules.md
+ INT-2_validation_checklist.md
+ INT-3_validation_model.md
+ INT-3_determinism_rules.md
+ INT-3_validation_checklist.md
+ INT-4_submission_record_model.md
+ INT-4_determinism_rules.md
+ INT-4_validation_checklist.md
+ INT-5_stable_id_rules.md
+ INT-5_determinism_checklist.md
+ INT-5_validation_checklist.md
+ INT-6_intake_gates.md
+ INT-6_gate_mapping.md
+ INT-6_evidence_requirements.md
+ INT-6_validation_checklist.md
+ INT-7_minimum_viable_set.md
+ INT-7_definition_of_done.md
+ INT-7_minimal_tree.txt
+
+ schemas/
+ intake_form_spec.v1.schema.json
+ intake_enums.v1.schema.json
+ intake_cross_field_rules.v1.schema.json
+ intake_submission.v1.schema.json
+ normalized_input.v1.schema.json
+ normalization_rules.v1.schema.json
+ intake_validation_report.v1.schema.json
+
+registries/
+ form_spec.axion.v1.json
+ intake_enums.v1.json
+ intake_cross_field_rules.v1.json
+ normalization_rules.v1.json

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "normalized_input.v1",
+  "type": "object",
+  "required": [
+    "submission_id",
+    "normalized_at",
+    "inputs",
+    "derived",
+    "provenance"
+  ],
+  "properties": {
+    "submission_id": { "type": "string" },
+    "normalized_at": { "type": "string", "format": "date-time" },
+    "inputs": {
+      "type": "object",
+      "description": "Canonicalized input values used downstream",
+      "additionalProperties": true
+    },
+    "derived": {
+      "type": "object",
+      "description": "Derived/normalized helpers (slugs, parsed lists, flags)",
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["form_ref", "enum_registry_ref", "normalization_rules_ref"],
+      "properties": {
+        "form_ref": {
+          "type": "object",
+          "required": ["form_id", "version"],
+          "properties": { "form_id": { "type": "string" }, "version": { "type": "string" } },
+          "additionalProperties": false
+        },
+        "enum_registry_ref": {
+          "type": "object",
+          "required": ["registry_id", "schema_version"],
+          "properties": { "registry_id": { "type": "string" }, "schema_version": { "type": "string" } },
+          "additionalProperties": false
+        },
+        "normalization_rules_ref": {
+          "type": "object",
+          "required": ["rules_id", "schema_version"],
+          "properties": { "rules_id": { "type": "string" }, "schema_version": { "type": "string" } },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

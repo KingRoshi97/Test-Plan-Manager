@@ -16,6 +16,49 @@
     },
 
     {
+      "schema_id": "intake.intake_form_spec.v1",
+      "path": "Axion/libraries/intake/schemas/intake_form_spec.v1.schema.json",
+      "uri": "axion://schemas/intake/intake_form_spec.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "intake.intake_enums.v1",
+      "path": "Axion/libraries/intake/schemas/intake_enums.v1.schema.json",
+      "uri": "axion://schemas/intake/intake_enums.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "intake.intake_cross_field_rules.v1",
+      "path": "Axion/libraries/intake/schemas/intake_cross_field_rules.v1.schema.json",
+      "uri": "axion://schemas/intake/intake_cross_field_rules.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "intake.intake_validation_report.v1",
+      "path": "Axion/libraries/intake/schemas/intake_validation_report.v1.schema.json",
+      "uri": "axion://schemas/intake/intake_validation_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "intake.intake_submission.v1",
+      "path": "Axion/libraries/intake/schemas/intake_submission.v1.schema.json",
+      "uri": "axion://schemas/intake/intake_submission.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "intake.normalized_input.v1",
+      "path": "Axion/libraries/intake/schemas/normalized_input.v1.schema.json",
+      "uri": "axion://schemas/intake/normalized_input.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "intake.normalization_rules.v1",
+      "path": "Axion/libraries/intake/schemas/normalization_rules.v1.schema.json",
+      "uri": "axion://schemas/intake/normalization_rules.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
       "schema_id": "gates.gate_definition.v1",
       "path": "Axion/libraries/gates/schemas/gate_definition.v1.schema.json",
       "uri": "axion://schemas/gates/gate_definition.v1.schema.json",

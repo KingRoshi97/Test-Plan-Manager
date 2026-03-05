@@ -31,16 +31,35 @@ Full Mechanics pipeline + web application layer with three formal control planes
 - `POST /api/autofill` — returns structured suggestions for intake sections based on routing + project info
 - Opt-in toggle on Page 0 (routing); "AI-drafted" badge on auto-filled fields; all values editable
 
-### Intake Library (Axion/libraries/intake/)
-12 files present — includes the original spec files plus the INT-01 through INT-05 formal contract files:
-- `INT-01.form_spec.v1.json` — form field inventory and conditional requiredness rules
-- `INT-02.intake_schema.v1.json` — machine-enforceable schema (types, requiredness, constraints)
-- `INT-02.enums.v1.json` — enum value lists for INT-02
-- `INT-03.validation_rules.v1.json` — deterministic validation rules with rule_id/error_code/pointers
-- `INT-04.submission_record.schema.v1.json` — immutable submission record schema
-- `INT-05.validation_result.schema.v1.json` — validator output contract (is_valid, errors[], warnings[])
-- `INT-05.error_code_catalog.v1.json` — locked error code catalog
-- `INT-05.determinism_rules.v1.json` — ordering and pointer determinism rules
+### Intake Library (`Axion/libraries/intake/`)
+Form spec, field enums, validation rules, submission records, normalization contracts, and intake gates (INT-0 through INT-7). 12 legacy flat files preserved for backward compat (pipeline code: normalizer.ts, validator.ts, submissionRecord.ts).
+
+**Structure (47 files: 25 new root files + 7 schemas + 3 registries + 12 legacy):**
+- **INT-0**: Purpose + boundary checklist (2 docs)
+- **INT-1**: Form spec model + determinism rules + validation checklist (3 docs) + `intake_form_spec.v1.schema.json`
+- **INT-2**: Enum registry model + determinism rules + validation checklist (3 docs) + `intake_enums.v1.schema.json` + `intake_enums.v1.json` registry
+- **INT-3**: Validation model + determinism rules + validation checklist (3 docs) + `intake_cross_field_rules.v1.schema.json` + `intake_validation_report.v1.schema.json` + `intake_cross_field_rules.v1.json` registry
+- **INT-4**: Submission record model + determinism rules + validation checklist (3 docs) + `intake_submission.v1.schema.json` + `normalized_input.v1.schema.json`
+- **INT-5**: Stable ID rules + determinism checklist + validation checklist (3 docs) + `normalization_rules.v1.schema.json` + `normalization_rules.v1.json` registry
+- **INT-6**: Intake gates + gate mapping + evidence requirements + validation checklist (4 docs) + `INT-6_intake_gates.spec.json`
+- **INT-7**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
+
+**Subdirectories:**
+- `schemas/` — 7 JSON Schema files (intake_form_spec, intake_enums, intake_cross_field_rules, intake_validation_report, intake_submission, normalized_input, normalization_rules)
+- `registries/` — 3 starter registry files (intake_enums: 3 enums with aliases, intake_cross_field_rules: 2 conditional rules, normalization_rules: 4 transforms)
+
+**Loader** (`Axion/src/core/intake/loader.ts`):
+- `loadIntakeLibrary(repoRoot)` — loads enums + cross-field rules + normalization rules registries, cached
+- `loadIntakeDocs(repoRoot)` — all INT-N docs with frontmatter
+- `loadIntakeSchemas(repoRoot)` — all JSON schema files from schemas/
+- `loadIntakeRegistries(repoRoot)` — all registry JSON files from registries/
+- `getEnumRegistry(repoRoot)` — returns enum registry
+- `getCrossFieldRules(repoRoot)` — returns cross-field rules
+- `getNormalizationRules(repoRoot)` — returns normalization rules
+
+**API**: 6 `/api/intake-library/*` endpoints (prefix `-library` to avoid collision with intake wizard endpoints)
+**UI**: `/intake-library` page with 4 tabs (Intake, Documents, Schemas, Registries), field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
+**Registered in:** `schema_registry.v1.json` (7 entries), `library_index.v1.json` (3 entries + 1 existing)
 
 ### Canonical Library (Axion/libraries/canonical/)
 11 files — 8 new authoritative CAN-01/02/03 contract files + 3 legacy files kept for backward compat:
@@ -116,7 +135,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -144,6 +163,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/orchestration/registries/:name` — single registry by name
 - `GET /api/orchestration/docs` — all documents with frontmatter
 - `GET /api/orchestration/docs/:filename` — single document by filename
+- `GET /api/intake-library` — intake library overview (groups, schema/registry/doc/enum/crossFieldRule/normalizationRule counts)
+- `GET /api/intake-library/schemas` — all 7 intake schemas with content
+- `GET /api/intake-library/registries` — all 3 registries with content
+- `GET /api/intake-library/registries/:name` — single registry by name
+- `GET /api/intake-library/docs` — all intake documents with frontmatter
+- `GET /api/intake-library/docs/:filename` — single document by filename
 - `POST /api/uploads` — upload files (multipart/form-data, up to 10 files, 50MB limit per file)
 - `GET /api/uploads/:id` — download uploaded file
 - `DELETE /api/uploads/:id` — delete uploaded file
@@ -175,6 +200,7 @@ package.json      # Root package.json with all dependencies
 - `/orchestration` — Orchestration Library: 4 tabs (Pipeline, Documents, Schemas, Registries) for ORC-0 through ORC-7, pipeline stage visualization
 - `/gates` — Gates Library: 4 tabs (Gates, Documents, Schemas, Registries) for GATE-0 through GATE-6, 8 gate definitions with predicates/severity/evidence
 - `/policy` — Policy Library: 4 tabs (Policy, Documents, Schemas, Registries) for POL-0 through POL-5, 3 risk classes with color-coded cards, override permission matrix, policy sets
+- `/intake-library` — Intake Library: 4 tabs (Intake, Documents, Schemas, Registries) for INT-0 through INT-7, field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
 
@@ -209,7 +235,7 @@ The pipeline is fully registry-driven with deterministic library loading:
 - `Axion/.axion/` — Runtime artifact root (gitignored, created by `axion init`)
 - `Axion/docs_system/` — 50 system docs across 12 domains
 - `Axion/libraries/` — Persistent system assets:
-  - `intake/` — enums.v1.json, schema.v1.json, rules.v1.json, form_version.v1.json
+  - `intake/` — 47 files: 25 INT-0 through INT-7 docs + schemas/ (7) + registries/ (3) + 12 legacy flat files
   - `canonical/` — id_rules.v1.json, spec.schema.v1.json, unknowns.schema.v1.json
   - `standards/` — standards_index.json, resolver_rules.v1.json + 3 packs
   - `templates/` — template_index.json, placeholder_catalog.v1.json + 77 template groups across 8 categories (533 total .md files)

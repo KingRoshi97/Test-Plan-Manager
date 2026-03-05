@@ -294,6 +294,30 @@ export function registerRoutes(app: Express) {
       }
     } catch {}
 
+    let intDocCount = 0;
+    let intSchemaCount = 0;
+    let intRegistryCount = 0;
+    let intEnumCount = 0;
+    const intLibDir = path.join(AXION_ROOT, "libraries", "intake");
+    try {
+      if (fs.existsSync(intLibDir)) {
+        intDocCount = fs.readdirSync(intLibDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+      }
+      const intSchemDir = path.join(intLibDir, "schemas");
+      if (fs.existsSync(intSchemDir)) {
+        intSchemaCount = fs.readdirSync(intSchemDir).filter((f) => f.endsWith(".json")).length;
+      }
+      const intRegDir = path.join(intLibDir, "registries");
+      if (fs.existsSync(intRegDir)) {
+        intRegistryCount = fs.readdirSync(intRegDir).filter((f) => f.endsWith(".json")).length;
+      }
+      const intEnumPath = path.join(intRegDir, "intake_enums.v1.json");
+      if (fs.existsSync(intEnumPath)) {
+        const en = JSON.parse(fs.readFileSync(intEnumPath, "utf-8"));
+        intEnumCount = en.enums?.length ?? 0;
+      }
+    } catch {}
+
     res.json({
       status: "ok",
       pipeline: { stages: 10, gates: gateCount },
@@ -303,6 +327,7 @@ export function registerRoutes(app: Express) {
       orchestration: { docs: orcDocCount, schemas: orcSchemaCount, registries: orcRegistryCount, stages: orcStageCount },
       gates: { docs: gatesDocCount, schemas: gatesSchemaCount, registries: gatesRegistryCount, definitions: gatesDefinitionCount },
       policy: { docs: polDocCount, schemas: polSchemaCount, registries: polRegistryCount, riskClasses: polRiskClassCount, policySets: polPolicySetCount },
+      intake: { docs: intDocCount, schemas: intSchemaCount, registries: intRegistryCount, enums: intEnumCount },
       recentRuns,
     });
   });
@@ -1125,6 +1150,188 @@ export function registerRoutes(app: Express) {
       }
       const filePath = path.join(POLICY_LIB_DIR, filename);
       if (!filePath.startsWith(POLICY_LIB_DIR) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Document '${filename}' not found` });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+      let frontmatter: Record<string, string> = {};
+      let content = raw;
+      if (fmMatch) {
+        const lines = fmMatch[1].split("\n");
+        for (const line of lines) {
+          const idx = line.indexOf(":");
+          if (idx > 0) {
+            frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          }
+        }
+        content = fmMatch[2];
+      }
+      res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  const INTAKE_LIB_DIR = path.join(AXION_ROOT, "libraries", "intake");
+
+  app.get("/api/intake-library", (_req: Request, res: Response) => {
+    try {
+      const docs: string[] = [];
+      const schemaFiles: string[] = [];
+      const registryFiles: string[] = [];
+
+      if (fs.existsSync(INTAKE_LIB_DIR)) {
+        for (const f of fs.readdirSync(INTAKE_LIB_DIR)) {
+          if (f.endsWith(".md") || f.endsWith(".txt")) docs.push(f);
+        }
+      }
+      const schemasDir = path.join(INTAKE_LIB_DIR, "schemas");
+      if (fs.existsSync(schemasDir)) {
+        for (const f of fs.readdirSync(schemasDir)) {
+          if (f.endsWith(".json")) schemaFiles.push(f);
+        }
+      }
+      const registriesDir = path.join(INTAKE_LIB_DIR, "registries");
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
+          if (f.endsWith(".json")) registryFiles.push(f);
+        }
+      }
+
+      const groups: Record<string, string[]> = {};
+      for (const d of docs.sort()) {
+        const prefix = d.match(/^(INT-\d)/)?.[1] ?? "other";
+        if (!groups[prefix]) groups[prefix] = [];
+        groups[prefix].push(d);
+      }
+
+      let enumCount = 0;
+      let crossFieldRuleCount = 0;
+      let normRuleCount = 0;
+      try {
+        const enumPath = path.join(registriesDir, "intake_enums.v1.json");
+        if (fs.existsSync(enumPath)) {
+          const en = JSON.parse(fs.readFileSync(enumPath, "utf-8"));
+          enumCount = en.enums?.length ?? 0;
+        }
+        const cfPath = path.join(registriesDir, "intake_cross_field_rules.v1.json");
+        if (fs.existsSync(cfPath)) {
+          const cf = JSON.parse(fs.readFileSync(cfPath, "utf-8"));
+          crossFieldRuleCount = cf.rules?.length ?? 0;
+        }
+        const nrPath = path.join(registriesDir, "normalization_rules.v1.json");
+        if (fs.existsSync(nrPath)) {
+          const nr = JSON.parse(fs.readFileSync(nrPath, "utf-8"));
+          normRuleCount = nr.rules?.length ?? 0;
+        }
+      } catch {}
+
+      res.json({
+        groups,
+        schemas: schemaFiles.sort(),
+        registries: registryFiles.sort(),
+        counts: { docs: docs.length, schemas: schemaFiles.length, registries: registryFiles.length, enums: enumCount, crossFieldRules: crossFieldRuleCount, normalizationRules: normRuleCount },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/intake-library/schemas", (_req: Request, res: Response) => {
+    try {
+      const schemasDir = path.join(INTAKE_LIB_DIR, "schemas");
+      if (!fs.existsSync(schemasDir)) return res.json([]);
+      const schemas = fs.readdirSync(schemasDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((filename) => ({
+          filename,
+          content: JSON.parse(fs.readFileSync(path.join(schemasDir, filename), "utf-8")),
+        }));
+      res.json(schemas);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/intake-library/registries", (_req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(INTAKE_LIB_DIR, "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const registries = fs.readdirSync(registriesDir)
+        .filter((f) => f.endsWith(".json"))
+        .sort()
+        .map((filename) => ({
+          filename,
+          content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
+        }));
+      res.json(registries);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/intake-library/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      const registriesDir = path.join(INTAKE_LIB_DIR, "registries");
+      const candidates = [name, `${name}.json`, `${name}.v1.json`];
+      let filePath: string | null = null;
+      for (const c of candidates) {
+        const p = path.join(registriesDir, c);
+        if (fs.existsSync(p) && p.startsWith(registriesDir)) {
+          filePath = p;
+          break;
+        }
+      }
+      if (!filePath) return res.status(404).json({ error: `Registry '${name}' not found` });
+      const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      res.json({ filename: path.basename(filePath), content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/intake-library/docs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(INTAKE_LIB_DIR)) return res.json([]);
+      const files = fs.readdirSync(INTAKE_LIB_DIR)
+        .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
+        .sort();
+      const docs = files.map((filename) => {
+        const raw = fs.readFileSync(path.join(INTAKE_LIB_DIR, filename), "utf-8");
+        const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+        let frontmatter: Record<string, string> = {};
+        let content = raw;
+        if (fmMatch) {
+          const lines = fmMatch[1].split("\n");
+          for (const line of lines) {
+            const idx = line.indexOf(":");
+            if (idx > 0) {
+              frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            }
+          }
+          content = fmMatch[2];
+        }
+        return { filename, frontmatter, content };
+      });
+      res.json(docs);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/intake-library/docs/:filename", (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      if (!filename.endsWith(".md") && !filename.endsWith(".txt")) {
+        return res.status(400).json({ error: "Only .md and .txt files are accessible" });
+      }
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      const filePath = path.join(INTAKE_LIB_DIR, filename);
+      if (!filePath.startsWith(INTAKE_LIB_DIR) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: `Document '${filename}' not found` });
       }
       const raw = fs.readFileSync(filePath, "utf-8");

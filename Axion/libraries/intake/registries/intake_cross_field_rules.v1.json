@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ruleset_id": "intake_cross_field_rules.v1",
+    "rules": [
+      {
+        "rule_id": "XVAL-REQUIRE_STACK_FOR_WEB",
+        "if": [
+          { "field_id": "F-RUN_PROFILE", "op": "==", "value": "web" }
+        ],
+        "then": { "require_fields": ["F-FRONTEND_STACK"] },
+        "message": "Frontend stack is required for web runs."
+      },
+      {
+        "rule_id": "XVAL-EXTERNAL_EXECUTOR_REQUIRES_REPO",
+        "if": [
+          { "field_id": "F-EXECUTOR_TYPE", "op": "==", "value": "external" }
+        ],
+        "then": { "require_fields": ["F-REPO_URL"] },
+        "message": "Repo URL is required for external execution."
+      }
+    ]
+}

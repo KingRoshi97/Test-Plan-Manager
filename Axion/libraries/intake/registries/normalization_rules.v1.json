@@ -1,0 +1,26 @@
+{
+    "schema_version": "1.0.0",
+    "rules_id": "normalization_rules.v1",
+    "rules": [
+      {
+        "rule_id": "NORM-TRIM-ALL",
+        "applies_to": { "field_ids": ["*"] },
+        "transform": { "kind": "trim" }
+      },
+      {
+        "rule_id": "NORM-COLLAPSE-WS",
+        "applies_to": { "field_ids": ["*"] },
+        "transform": { "kind": "collapse_whitespace" }
+      },
+      {
+        "rule_id": "NORM-SLUGIFY-PROJECT",
+        "applies_to": { "field_ids": ["F-PROJECT_NAME"] },
+        "transform": { "kind": "slugify" }
+      },
+      {
+        "rule_id": "NORM-DEDUPE-SORT-MULTI",
+        "applies_to": { "field_ids": ["*MULTI_ENUM*"] },
+        "transform": { "kind": "dedupe_sort" }
+      }
+    ]
+}

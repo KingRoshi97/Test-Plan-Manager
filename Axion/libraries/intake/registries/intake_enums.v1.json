@@ -1,0 +1,35 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "intake_enums.v1",
+    "enums": [
+      {
+        "enum_id": "ENUM-RUN_PROFILE",
+        "title": "Run Profile",
+        "options": [
+          { "value": "api", "label": "API", "aliases": ["backend", "server"] },
+          { "value": "web", "label": "Web App", "aliases": ["frontend"] },
+          { "value": "mobile", "label": "Mobile App", "aliases": ["ios", "android"] },
+          { "value": "infra", "label": "Infrastructure", "aliases": ["devops"] },
+          { "value": "data", "label": "Data", "aliases": ["analytics"] },
+          { "value": "mixed", "label": "Mixed", "aliases": ["fullstack"] }
+        ]
+      },
+      {
+        "enum_id": "ENUM-RISK_CLASS",
+        "title": "Risk Class",
+        "options": [
+          { "value": "prototype", "label": "Prototype", "aliases": ["poc", "mvp"] },
+          { "value": "prod", "label": "Production", "aliases": ["production"] },
+          { "value": "compliance", "label": "Compliance", "aliases": ["regulated"] }
+        ]
+      },
+      {
+        "enum_id": "ENUM-EXECUTOR_TYPE",
+        "title": "Executor Type",
+        "options": [
+          { "value": "internal", "label": "Internal", "aliases": ["local"] },
+          { "value": "external", "label": "External", "aliases": ["hosted"] }
+        ]
+      }
+    ]
+}
