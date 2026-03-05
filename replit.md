@@ -4,7 +4,25 @@
 Axion is a document-generation and compliance-enforcement system with a full-stack web application. It takes intake submissions through a 10-stage Mechanics pipeline (S1_INGEST_NORMALIZE → S10_PACKAGE), resolves standards, builds canonical specs, selects and renders templates, plans work, verifies proofs, runs gates, and packages everything into versioned "kits." The web dashboard provides a UI for creating assemblies, triggering pipeline runs, and browsing artifacts.
 
 ## Current State
-Full Mechanics pipeline + web application layer. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 190 kit files produced.
+Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 193 kit files produced.
+
+### Control Planes
+- **ICP (Internal Control Plane)** — `Axion/src/core/controlPlane/`: Run orchestrator (api.ts), model/store (model.ts, store.ts), policies (policies.ts), releases (releases.ts), pins (pins.ts), audit (audit.ts). States: QUEUED → RUNNING → GATED → (FAILED | RELEASED) → ARCHIVED. CLI wired via RunController.
+- **KCP (Kit Control Plane)** — `Axion/src/core/kcp/`: 10 modules — model, store, controller, validator, unitManager, verificationRunner, resultWriter, proofCapture, guardrails, runReport. States: READY → EXECUTING → VERIFYING → (BLOCKED | FAILED | COMPLETE). Enforces kit-local rules during build execution.
+- **MCP (Maintenance Control Plane)** — `Axion/src/core/mcp/`: 10 modules — model, store, controller, dependencyManager, migrationManager, testMaintainer, refactorManager, ciMaintainer, axionIntegration, modeRunner. States: PLANNED → APPLYING → VERIFYING → (BLOCKED | FAILED | COMPLETE). Handles repo maintenance operations.
+
+### Agent Types
+- **IA (Internal Agent)** — `Axion/src/core/agents/internal.ts`: Produces AXION outputs under ICP governance (intake, canonical build, standards, template selection, planning, kit preparation).
+- **BA (Build Agent)** — `Axion/src/core/agents/build.ts`: Executes Agent Kit under KCP governance (1-target-per-unit, RESULT artifacts, verification, reruns).
+- **MA (Maintenance Agent)** — `Axion/src/core/agents/maintenance.ts`: Performs repo maintenance under MCP governance (dependency upgrades, migrations, test hardening, CI, rollback).
+
+### Kit Template Slot Mapping Fix
+`Axion/src/core/kit/build.ts` — SUBDIR_TO_SLOT lookup table maps all 30 `10_app/` subdirectories to correct domain slots. Near-zero fallthrough to `11_documentation`.
+
+### OpenAI Autofill Integration
+- `server/openai.ts` — OpenAI client using Replit AI Integrations (AI_INTEGRATIONS_OPENAI_BASE_URL + AI_INTEGRATIONS_OPENAI_API_KEY)
+- `POST /api/autofill` — returns structured suggestions for intake sections based on routing + project info
+- Opt-in toggle on Page 0 (routing); "AI-drafted" badge on auto-filled fields; all values editable
 
 ### Intake Library (Axion/libraries/intake/)
 12 files present — includes the original spec files plus the INT-01 through INT-05 formal contract files:

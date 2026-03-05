@@ -35,6 +35,9 @@
     "drizzle-zod": "^0.8.3",
     "express": "^5.2.1",
     "lucide-react": "^0.576.0",
+    "openai": "^6.25.0",
+    "p-limit": "^7.3.0",
+    "p-retry": "^7.1.1",
     "pg": "^8.19.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -44,6 +47,7 @@
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "wouter": "^3.9.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "zod-validation-error": "^5.0.0"
   }
 }
