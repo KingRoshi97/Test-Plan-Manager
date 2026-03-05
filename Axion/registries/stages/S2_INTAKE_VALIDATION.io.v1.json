@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "stage_id": "S2_INTAKE_VALIDATION",
+  "consumes": ["submission_record"],
+  "produces": ["validation_result"],
+  "required_inputs": [
+    {
+      "artifact_id": "submission_record",
+      "path": ".axion/runs/<run_id>/intake/submission_record.json"
+    }
+  ],
+  "required_outputs": [
+    {
+      "artifact_id": "validation_result",
+      "path": ".axion/runs/<run_id>/intake/validation_result.json"
+    }
+  ],
+  "optional_outputs": []
+}

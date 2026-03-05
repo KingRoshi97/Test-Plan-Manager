@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "stage_id": "S7_TEMPLATE_FILL",
+  "consumes": ["canonical_spec", "resolved_standards_snapshot", "template_selection_result", "work_breakdown", "acceptance_map"],
+  "produces": ["render_report", "render_envelopes"],
+  "required_inputs": [
+    {
+      "artifact_id": "canonical_spec",
+      "path": ".axion/runs/<run_id>/canonical/canonical_spec.json"
+    },
+    {
+      "artifact_id": "resolved_standards_snapshot",
+      "path": ".axion/runs/<run_id>/standards/resolved_standards_snapshot.json"
+    },
+    {
+      "artifact_id": "template_selection_result",
+      "path": ".axion/runs/<run_id>/templates/selection_result.json"
+    },
+    {
+      "artifact_id": "work_breakdown",
+      "path": ".axion/runs/<run_id>/planning/work_breakdown.json"
+    },
+    {
+      "artifact_id": "acceptance_map",
+      "path": ".axion/runs/<run_id>/planning/acceptance_map.json"
+    }
+  ],
+  "required_outputs": [
+    {
+      "artifact_id": "render_report",
+      "path": ".axion/runs/<run_id>/templates/render_report.json"
+    }
+  ],
+  "optional_outputs": [
+    {
+      "artifact_id": "render_envelopes",
+      "path": ".axion/runs/<run_id>/templates/envelopes/",
+      "notes": "Per-template envelopes."
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/system/SYS-03.operator_actions_ledger.schema.v1.json",
+  "title": "SYS-03 — Operator Actions Ledger Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "entries"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entry_id", "ts", "actor", "action", "target", "why", "before", "after", "prev_hash", "hash"],
+        "properties": {
+          "entry_id": { "type": "string" },
+          "ts": { "type": "string" },
+          "actor": {
+            "type": "object",
+            "required": ["type", "id"],
+            "properties": {
+              "type": { "enum": ["human", "system", "agent"] },
+              "id": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "action": { "type": "string" },
+          "target": {
+            "type": "object",
+            "required": ["kind", "ref"],
+            "properties": {
+              "kind": { "type": "string" },
+              "ref": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "why": { "type": "string" },
+          "reason_code": { "type": "string" },
+          "before": {},
+          "after": {},
+          "prev_hash": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

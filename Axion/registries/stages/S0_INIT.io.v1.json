@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "stage_id": "S0_INIT",
+  "consumes": [],
+  "produces": ["run_manifest"],
+  "required_inputs": [],
+  "required_outputs": [
+    {
+      "artifact_id": "run_manifest",
+      "path": ".axion/runs/<run_id>/run_manifest.json",
+      "schema_ref": "axion://schemas/orchestration/ORD-05.run_manifest.schema.v1.json"
+    }
+  ],
+  "optional_outputs": []
+}

@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "doc_id": "SYS-08",
+  "description": "Pinning + locking rules (what is pinned, when it locks, and what changes force new run).",
+  "pin_sets": [
+    {
+      "pin_set_id": "core",
+      "must_pin": [
+        "library_index",
+        "schema_registry",
+        "intake.form_version",
+        "intake.schema",
+        "intake.rules",
+        "canonical.schemas",
+        "standards.index",
+        "templates.index",
+        "gates.registry",
+        "planning.schemas",
+        "kit.contracts"
+      ]
+    }
+  ],
+  "locking": {
+    "lock_pins_at_stage": "S0_INIT",
+    "lock_inputs_at_stage": "S1_INGEST_NORMALIZE",
+    "lock_templates_at_stage": "S5_TEMPLATE_SELECTION"
+  },
+  "change_control": {
+    "requires_new_run_if_changed": [
+      "intake.schema",
+      "intake.rules",
+      "canonical.schemas",
+      "standards.packs",
+      "templates.templates",
+      "gate_rules"
+    ],
+    "allowed_mid_run_changes": ["notifications", "quota_profile"]
+  }
+}

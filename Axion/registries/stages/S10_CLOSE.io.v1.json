@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "stage_id": "S10_CLOSE",
+  "consumes": ["kit_manifest"],
+  "produces": ["run_closed"],
+  "required_inputs": [
+    {
+      "artifact_id": "kit_manifest",
+      "path": ".axion/runs/<run_id>/kit/packaging_manifest.json"
+    }
+  ],
+  "required_outputs": [
+    {
+      "artifact_id": "run_closed",
+      "path": ".axion/runs/<run_id>/close/closed.json"
+    }
+  ],
+  "optional_outputs": []
+}

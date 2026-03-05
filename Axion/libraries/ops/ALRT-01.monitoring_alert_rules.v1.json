@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "doc_id": "ALRT-01",
+  "rules": [
+    {
+      "rule_id": "ALRT01-01",
+      "name": "Run failures spike",
+      "condition": "counters.run_failed_last_15m >= 3",
+      "severity": "high",
+      "channels": ["console"],
+      "cooldown_minutes": 15
+    },
+    {
+      "rule_id": "ALRT01-02",
+      "name": "Gate failures spike",
+      "condition": "counters.gate_fail_last_15m >= 5",
+      "severity": "med",
+      "channels": ["console"],
+      "cooldown_minutes": 10
+    },
+    {
+      "rule_id": "ALRT01-03",
+      "name": "Stage runtime exceeds budget",
+      "condition": "timings_ms.stage_max_ms > timings_ms.stage_budget_ms",
+      "severity": "med",
+      "channels": ["console"],
+      "cooldown_minutes": 10
+    }
+  ]
+}

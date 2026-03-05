@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "doc_id": "LTS-01",
+  "description": "Logging + tracing standards (field requirements, correlation IDs, redaction).",
+  "required_log_fields": [
+    "ts",
+    "level",
+    "message",
+    "run_id",
+    "stage_id",
+    "gate_id",
+    "artifact_id",
+    "trace_id",
+    "span_id"
+  ],
+  "levels": ["debug", "info", "warn", "error"],
+  "correlation": {
+    "trace_id_required": true,
+    "span_id_required": true,
+    "run_id_required": true,
+    "stage_id_required": true
+  },
+  "redaction": {
+    "enabled": true,
+    "patterns": [
+      "AKIA[0-9A-Z]{16}",
+      "-----BEGIN(.*)PRIVATE KEY-----",
+      "password\\s*[:=]\\s*.+",
+      "token\\s*[:=]\\s*.+"
+    ],
+    "replacement": "[REDACTED]"
+  },
+  "constraints": [
+    { "rule_id": "LTS01-01", "name": "No secrets in logs", "enforced": true },
+    { "rule_id": "LTS01-02", "name": "All log lines must include run_id", "enforced": true }
+  ]
+}

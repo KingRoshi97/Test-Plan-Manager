@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "doc_id": "SYS-06",
+  "description": "Project/profile quotas and rate limits (runs/day, compute, storage).",
+  "profiles": [
+    {
+      "profile_id": "default",
+      "limits": {
+        "runs_per_day": 50,
+        "max_active_runs": 5,
+        "max_run_runtime_seconds": 1800,
+        "max_artifact_storage_mb": 1024
+      }
+    },
+    {
+      "profile_id": "constrained",
+      "limits": {
+        "runs_per_day": 10,
+        "max_active_runs": 2,
+        "max_run_runtime_seconds": 900,
+        "max_artifact_storage_mb": 256
+      }
+    }
+  ],
+  "enforcement": {
+    "on_exceed": "deny",
+    "record_in_audit_ledger": true
+  }
+}

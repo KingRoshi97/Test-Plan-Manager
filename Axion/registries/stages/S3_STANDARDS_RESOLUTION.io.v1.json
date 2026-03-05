@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "stage_id": "S3_STANDARDS_RESOLUTION",
+  "consumes": ["submission_record", "validation_result"],
+  "produces": ["resolved_standards_snapshot"],
+  "required_inputs": [
+    {
+      "artifact_id": "submission_record",
+      "path": ".axion/runs/<run_id>/intake/submission_record.json"
+    },
+    {
+      "artifact_id": "validation_result",
+      "path": ".axion/runs/<run_id>/intake/validation_result.json"
+    }
+  ],
+  "required_outputs": [
+    {
+      "artifact_id": "resolved_standards_snapshot",
+      "path": ".axion/runs/<run_id>/standards/resolved_standards_snapshot.json"
+    }
+  ],
+  "optional_outputs": []
+}

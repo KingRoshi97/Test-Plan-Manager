@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/planning/PLAN-01.work_breakdown.schema.v1.json",
+  "title": "PLAN-01 — Work Breakdown Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "generated_at", "units"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "units": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Unit" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Unit": {
+      "type": "object",
+      "required": ["unit_id", "title", "type", "scope_refs", "depends_on", "outputs"],
+      "properties": {
+        "unit_id": { "type": "string" },
+        "title": { "type": "string" },
+        "type": {
+          "enum": [
+            "spec",
+            "design",
+            "frontend",
+            "backend",
+            "contracts",
+            "data",
+            "security",
+            "qa",
+            "devops",
+            "docs"
+          ]
+        },
+        "description": { "type": "string" },
+        "scope_refs": { "type": "array", "items": { "type": "string" } },
+        "depends_on": { "type": "array", "items": { "type": "string" } },
+        "outputs": { "type": "array", "items": { "type": "string" } },
+        "acceptance_refs": { "type": "array", "items": { "type": "string" } },
+        "priority": { "enum": ["p0", "p1", "p2", "p3"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

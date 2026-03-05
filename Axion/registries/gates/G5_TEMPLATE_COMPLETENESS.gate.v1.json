@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "gate_id": "G5_TEMPLATE_COMPLETENESS",
+  "description": "Template fill must not have missing required placeholders.",
+  "rules": [
+    {
+      "rule_id": "G5-01",
+      "when": { "bool": true },
+      "assert": { "op": "eq", "args": ["templates.render.missing_required_total", 0] },
+      "on_fail": "fail",
+      "message": "Rendered templates have missing required placeholders.",
+      "pointers": [".axion/runs/<run_id>/templates/render_report.json"],
+      "evidence_refs": ["templates.render_report"]
+    }
+  ]
+}

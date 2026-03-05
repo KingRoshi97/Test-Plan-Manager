@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "stage_id": "S1_INGEST_NORMALIZE",
+  "consumes": ["raw_submission"],
+  "produces": ["submission_record"],
+  "required_inputs": [
+    {
+      "artifact_id": "raw_submission",
+      "path": ".axion/runs/<run_id>/intake/raw_submission.json",
+      "notes": "Raw input before normalization."
+    }
+  ],
+  "required_outputs": [
+    {
+      "artifact_id": "submission_record",
+      "path": ".axion/runs/<run_id>/intake/submission_record.json"
+    }
+  ],
+  "optional_outputs": []
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/gates/ORD-03.gate_model.schema.v1.json",
+  "title": "ORD-03 — Gate Model Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "gate_id", "evaluated_at", "status", "rules"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "gate_id": { "type": "string" },
+    "evaluated_at": { "type": "string" },
+    "status": { "enum": ["pass", "fail", "warn"] },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "result", "message", "evidence_refs"],
+        "properties": {
+          "rule_id": { "type": "string" },
+          "result": { "enum": ["pass", "fail", "warn"] },
+          "message": { "type": "string" },
+          "pointers": { "type": "array", "items": { "type": "string" } },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "fail_count": { "type": "integer" },
+        "warn_count": { "type": "integer" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

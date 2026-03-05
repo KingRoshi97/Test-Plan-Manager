@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/ops/COST-01.capacity_cost_model.schema.v1.json",
+  "title": "COST-01 — Capacity & Cost Model Schema (v1)",
+  "type": "object",
+  "required": ["version", "model_id", "assumptions", "units", "estimates"],
+  "properties": {
+    "version": { "type": "string" },
+    "model_id": { "type": "string" },
+    "assumptions": { "type": "object" },
+    "units": {
+      "type": "object",
+      "required": ["compute", "storage"],
+      "properties": {
+        "compute": { "type": "string" },
+        "storage": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "estimates": {
+      "type": "object",
+      "required": ["per_run", "per_day"],
+      "properties": {
+        "per_run": { "type": "object" },
+        "per_day": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

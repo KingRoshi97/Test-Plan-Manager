@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "gate_id": "G4_TEMPLATE_SELECTION",
+  "description": "Template selection result must exist and include at least one template.",
+  "rules": [
+    {
+      "rule_id": "G4-01",
+      "when": { "bool": true },
+      "assert": { "op": "exists", "args": ["templates.selection_result"] },
+      "on_fail": "fail",
+      "message": "Template selection result missing.",
+      "pointers": [".axion/runs/<run_id>/templates/selection_result.json"],
+      "evidence_refs": ["templates.selection_result"]
+    }
+  ]
+}

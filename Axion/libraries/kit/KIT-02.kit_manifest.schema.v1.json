@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/KIT-02.kit_manifest.schema.v1.json",
+  "title": "KIT-02 — Kit Manifest Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "created_at", "files"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role", "hash"],
+        "properties": {
+          "path": { "type": "string" },
+          "role": {
+            "enum": [
+              "entrypoint",
+              "versions",
+              "canonical",
+              "standards",
+              "planning",
+              "templates",
+              "gates",
+              "proof",
+              "misc"
+            ]
+          },
+          "hash": { "type": "string" },
+          "bytes": { "type": "integer" },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

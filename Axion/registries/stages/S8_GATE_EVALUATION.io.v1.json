@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "stage_id": "S8_GATE_EVALUATION",
+  "consumes": ["validation_result", "canonical_spec", "template_selection_result", "render_report", "work_breakdown", "acceptance_map", "build_plan"],
+  "produces": ["gate_reports"],
+  "required_inputs": [
+    {
+      "artifact_id": "validation_result",
+      "path": ".axion/runs/<run_id>/intake/validation_result.json"
+    },
+    {
+      "artifact_id": "canonical_spec",
+      "path": ".axion/runs/<run_id>/canonical/canonical_spec.json"
+    },
+    {
+      "artifact_id": "template_selection_result",
+      "path": ".axion/runs/<run_id>/templates/selection_result.json"
+    },
+    {
+      "artifact_id": "render_report",
+      "path": ".axion/runs/<run_id>/templates/render_report.json"
+    },
+    {
+      "artifact_id": "work_breakdown",
+      "path": ".axion/runs/<run_id>/planning/work_breakdown.json"
+    },
+    {
+      "artifact_id": "acceptance_map",
+      "path": ".axion/runs/<run_id>/planning/acceptance_map.json"
+    },
+    {
+      "artifact_id": "build_plan",
+      "path": ".axion/runs/<run_id>/planning/build_plan.json"
+    }
+  ],
+  "required_outputs": [
+    {
+      "artifact_id": "gate_reports",
+      "path": ".axion/runs/<run_id>/gates/gate_reports.json"
+    }
+  ],
+  "optional_outputs": []
+}

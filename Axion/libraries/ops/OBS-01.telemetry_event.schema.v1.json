@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/ops/OBS-01.telemetry_event.schema.v1.json",
+  "title": "OBS-01 — Telemetry Event Schema (v1)",
+  "type": "object",
+  "required": ["version", "event_id", "ts", "run_id", "type", "payload"],
+  "properties": {
+    "version": { "type": "string" },
+    "event_id": { "type": "string" },
+    "ts": { "type": "string" },
+    "run_id": { "type": "string" },
+    "type": {
+      "enum": [
+        "run.started",
+        "run.stage.started",
+        "run.stage.finished",
+        "run.gate.evaluated",
+        "run.failed",
+        "run.released",
+        "run.closed",
+        "artifact.written",
+        "policy.override.applied",
+        "quota.denied",
+        "adapter.selected",
+        "verification.command.ran"
+      ]
+    },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

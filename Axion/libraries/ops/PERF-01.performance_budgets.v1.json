@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "doc_id": "PERF-01",
+  "description": "Performance budgets + profiling policy for Axion pipeline execution.",
+  "stage_budgets_ms": {
+    "S1_INGEST_NORMALIZE": 30000,
+    "S2_INTAKE_VALIDATION": 30000,
+    "S3_STANDARDS_RESOLUTION": 30000,
+    "S4_CANONICAL_BUILD": 60000,
+    "S5_TEMPLATE_SELECTION": 30000,
+    "S6_PLAN_GENERATION": 60000,
+    "S7_TEMPLATE_FILL": 120000,
+    "S8_GATE_EVALUATION": 60000,
+    "S9_KIT_PACKAGE": 120000,
+    "S10_CLOSE": 15000
+  },
+  "run_budget_ms": 600000,
+  "profiling": {
+    "enabled": true,
+    "capture_threshold_ms": 30000,
+    "artifacts": {
+      "profile_output_path": ".axion/runs/<run_id>/perf/profile.json"
+    }
+  }
+}

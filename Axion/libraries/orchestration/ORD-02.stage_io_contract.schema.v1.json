@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/ORD-02.stage_io_contract.schema.v1.json",
+  "title": "ORD-02 — Stage IO Contract Schema (v1)",
+  "type": "object",
+  "required": ["version", "stage_id", "consumes", "produces", "required_inputs", "required_outputs"],
+  "properties": {
+    "version": { "type": "string" },
+    "stage_id": { "type": "string" },
+    "consumes": { "type": "array", "items": { "type": "string" } },
+    "produces": { "type": "array", "items": { "type": "string" } },
+    "required_inputs": { "type": "array", "items": { "$ref": "#/$defs/ArtifactRef" } },
+    "required_outputs": { "type": "array", "items": { "$ref": "#/$defs/ArtifactRef" } },
+    "optional_outputs": { "type": "array", "items": { "$ref": "#/$defs/ArtifactRef" } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ArtifactRef": {
+      "type": "object",
+      "required": ["artifact_id", "path"],
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "path": { "type": "string" },
+        "schema_ref": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

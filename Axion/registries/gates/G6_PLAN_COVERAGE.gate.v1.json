@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "gate_id": "G6_PLAN_COVERAGE",
+  "description": "Plan outputs must exist (work breakdown + acceptance map + build plan).",
+  "rules": [
+    {
+      "rule_id": "G6-01",
+      "when": { "bool": true },
+      "assert": {
+        "and": [
+          { "op": "exists", "args": ["planning.work_breakdown"] },
+          { "op": "exists", "args": ["planning.acceptance_map"] },
+          { "op": "exists", "args": ["planning.build_plan"] }
+        ]
+      },
+      "on_fail": "fail",
+      "message": "Planning outputs missing (work_breakdown/acceptance_map/build_plan).",
+      "pointers": [
+        ".axion/runs/<run_id>/planning/work_breakdown.json",
+        ".axion/runs/<run_id>/planning/acceptance_map.json",
+        ".axion/runs/<run_id>/planning/build_plan.json"
+      ],
+      "evidence_refs": ["planning.work_breakdown", "planning.acceptance_map", "planning.build_plan"]
+    }
+  ]
+}

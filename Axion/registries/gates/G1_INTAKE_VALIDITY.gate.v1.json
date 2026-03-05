@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "gate_id": "G1_INTAKE_VALIDITY",
+  "description": "Intake must be valid (no errors).",
+  "rules": [
+    {
+      "rule_id": "G1-01",
+      "when": { "bool": true },
+      "assert": { "op": "eq", "args": ["intake.validation.is_valid", true] },
+      "on_fail": "fail",
+      "message": "Intake validation failed.",
+      "pointers": [".axion/runs/<run_id>/intake/validation_result.json"],
+      "evidence_refs": ["intake.validation_result"]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/ops/ALRT-01.monitoring_alert_rules.schema.v1.json",
+  "title": "ALRT-01 — Monitoring & Alert Rules Schema (v1)",
+  "type": "object",
+  "required": ["version", "rules"],
+  "properties": {
+    "version": { "type": "string" },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "name", "condition", "severity", "channels", "cooldown_minutes"],
+        "properties": {
+          "rule_id": { "type": "string" },
+          "name": { "type": "string" },
+          "condition": { "type": "string" },
+          "severity": { "enum": ["low", "med", "high", "critical"] },
+          "channels": { "type": "array", "items": { "type": "string" } },
+          "cooldown_minutes": { "type": "integer", "minimum": 0 },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

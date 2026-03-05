@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/ops/OBS-02.run_metrics.schema.v1.json",
+  "title": "OBS-02 — Run Metrics Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "counters", "timings_ms", "sizes_bytes"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "counters": { "type": "object", "additionalProperties": { "type": "integer" } },
+    "timings_ms": { "type": "object", "additionalProperties": { "type": "number" } },
+    "sizes_bytes": { "type": "object", "additionalProperties": { "type": "integer" } },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

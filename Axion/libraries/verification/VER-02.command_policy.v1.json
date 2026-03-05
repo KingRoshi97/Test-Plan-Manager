@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "doc_id": "VER-02",
+  "description": "Verification command policy: allowed commands, capture requirements, and redaction rules.",
+  "capture": {
+    "must_capture_stdout": true,
+    "must_capture_stderr": true,
+    "must_capture_exit_code": true,
+    "must_capture_cwd": true
+  },
+  "redaction": {
+    "enabled": true,
+    "patterns": [
+      "AKIA[0-9A-Z]{16}",
+      "-----BEGIN(.*)PRIVATE KEY-----",
+      "password\\s*[:=]\\s*.+",
+      "token\\s*[:=]\\s*.+"
+    ],
+    "replacement": "[REDACTED]"
+  },
+  "allowed_commands": [
+    { "command_ref": "lint", "examples": ["npm run lint", "pnpm lint"] },
+    { "command_ref": "typecheck", "examples": ["npm run typecheck", "pnpm typecheck"] },
+    { "command_ref": "test", "examples": ["npm test", "pnpm test"] },
+    { "command_ref": "build", "examples": ["npm run build", "pnpm build"] }
+  ],
+  "constraints": [
+    {
+      "rule_id": "VER02-CMD-01",
+      "name": "Only allowed commands may be recorded as verification evidence",
+      "on_violation": "fail"
+    }
+  ]
+}

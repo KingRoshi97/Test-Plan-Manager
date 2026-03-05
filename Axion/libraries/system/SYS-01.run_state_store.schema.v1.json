@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/system/SYS-01.run_state_store.schema.v1.json",
+  "title": "SYS-01 — Run State Store Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "pipeline_id", "status", "created_at", "updated_at", "stage_states", "locks"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "pipeline_id": { "type": "string" },
+    "status": { "enum": ["queued", "running", "gated", "failed", "released", "closed"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "stage_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["stage_id", "status"],
+        "properties": {
+          "stage_id": { "type": "string" },
+          "status": { "enum": ["queued", "running", "gated", "failed", "released", "skipped"] },
+          "report_path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "locks": {
+      "type": "object",
+      "required": ["pins_locked", "inputs_locked", "templates_locked"],
+      "properties": {
+        "pins_locked": { "type": "boolean" },
+        "inputs_locked": { "type": "boolean" },
+        "templates_locked": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

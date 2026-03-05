@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "gate_id": "G2_CANONICAL_INTEGRITY",
+  "description": "Canonical spec must exist and pass integrity checks (IDs/refs/unknowns policy).",
+  "rules": [
+    {
+      "rule_id": "G2-01",
+      "when": { "bool": true },
+      "assert": { "op": "exists", "args": ["canonical.spec"] },
+      "on_fail": "fail",
+      "message": "Canonical spec missing.",
+      "pointers": [".axion/runs/<run_id>/canonical/canonical_spec.json"],
+      "evidence_refs": ["canonical.spec"]
+    }
+  ]
+}

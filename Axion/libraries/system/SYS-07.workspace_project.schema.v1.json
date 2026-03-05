@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/system/SYS-07.workspace_project.schema.v1.json",
+  "title": "SYS-07 — Workspace/Project Schema (v1)",
+  "type": "object",
+  "required": ["version", "workspace_id", "projects"],
+  "properties": {
+    "version": { "type": "string" },
+    "workspace_id": { "type": "string" },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["project_id", "name", "quota_profile", "permissions"],
+        "properties": {
+          "project_id": { "type": "string" },
+          "name": { "type": "string" },
+          "quota_profile": { "type": "string" },
+          "permissions": {
+            "type": "object",
+            "required": ["roles"],
+            "properties": {
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["role", "can_start_runs", "can_override"],
+                  "properties": {
+                    "role": { "type": "string" },
+                    "can_start_runs": { "type": "boolean" },
+                    "can_override": { "type": "boolean" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

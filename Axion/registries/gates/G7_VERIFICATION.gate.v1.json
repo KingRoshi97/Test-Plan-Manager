@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "gate_id": "G7_VERIFICATION",
+  "description": "Verification evidence must be present when required (proof ledger / command runs).",
+  "rules": [
+    {
+      "rule_id": "G7-01",
+      "when": { "bool": true },
+      "assert": { "op": "exists", "args": ["verification.proof_log"] },
+      "on_fail": "warn",
+      "message": "Proof log missing (warn by default; tighten via policy/standards).",
+      "pointers": [".axion/runs/<run_id>/proof/proof_log.json"],
+      "evidence_refs": ["verification.proof_log"]
+    }
+  ]
+}

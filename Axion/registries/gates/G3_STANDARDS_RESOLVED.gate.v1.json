@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "gate_id": "G3_STANDARDS_RESOLVED",
+  "description": "Resolved standards snapshot must exist.",
+  "rules": [
+    {
+      "rule_id": "G3-01",
+      "when": { "bool": true },
+      "assert": { "op": "exists", "args": ["standards.snapshot"] },
+      "on_fail": "fail",
+      "message": "Resolved standards snapshot missing.",
+      "pointers": [".axion/runs/<run_id>/standards/resolved_standards_snapshot.json"],
+      "evidence_refs": ["standards.snapshot"]
+    }
+  ]
+}

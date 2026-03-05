@@ -1,0 +1,25 @@
+{
+  "version": "1.0.0",
+  "doc_id": "COST-01",
+  "model_id": "DEFAULT",
+  "assumptions": {
+    "avg_run_cpu_seconds": 120,
+    "avg_run_memory_mb": 512,
+    "avg_artifact_storage_mb": 25,
+    "runs_per_day": 20
+  },
+  "units": {
+    "compute": "cpu_seconds",
+    "storage": "megabytes"
+  },
+  "estimates": {
+    "per_run": {
+      "compute_cpu_seconds": 120,
+      "storage_mb": 25
+    },
+    "per_day": {
+      "compute_cpu_seconds": 2400,
+      "storage_mb": 500
+    }
+  }
+}

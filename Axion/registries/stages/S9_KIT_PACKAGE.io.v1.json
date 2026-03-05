@@ -1,0 +1,53 @@
+{
+  "version": "1.0.0",
+  "stage_id": "S9_KIT_PACKAGE",
+  "consumes": ["canonical_spec", "resolved_standards_snapshot", "template_selection_result", "render_report", "work_breakdown", "acceptance_map", "build_plan", "gate_reports"],
+  "produces": ["kit_manifest", "kit_bundle"],
+  "required_inputs": [
+    {
+      "artifact_id": "canonical_spec",
+      "path": ".axion/runs/<run_id>/canonical/canonical_spec.json"
+    },
+    {
+      "artifact_id": "resolved_standards_snapshot",
+      "path": ".axion/runs/<run_id>/standards/resolved_standards_snapshot.json"
+    },
+    {
+      "artifact_id": "template_selection_result",
+      "path": ".axion/runs/<run_id>/templates/selection_result.json"
+    },
+    {
+      "artifact_id": "render_report",
+      "path": ".axion/runs/<run_id>/templates/render_report.json"
+    },
+    {
+      "artifact_id": "work_breakdown",
+      "path": ".axion/runs/<run_id>/planning/work_breakdown.json"
+    },
+    {
+      "artifact_id": "acceptance_map",
+      "path": ".axion/runs/<run_id>/planning/acceptance_map.json"
+    },
+    {
+      "artifact_id": "build_plan",
+      "path": ".axion/runs/<run_id>/planning/build_plan.json"
+    },
+    {
+      "artifact_id": "gate_reports",
+      "path": ".axion/runs/<run_id>/gates/gate_reports.json"
+    }
+  ],
+  "required_outputs": [
+    {
+      "artifact_id": "kit_manifest",
+      "path": ".axion/runs/<run_id>/kit/packaging_manifest.json"
+    }
+  ],
+  "optional_outputs": [
+    {
+      "artifact_id": "kit_bundle",
+      "path": ".axion/runs/<run_id>/kit/bundle/",
+      "notes": "Packaged kit tree."
+    }
+  ]
+}

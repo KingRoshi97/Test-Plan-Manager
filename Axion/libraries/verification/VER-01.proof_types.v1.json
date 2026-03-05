@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "doc_id": "VER-01",
+  "description": "Allowed proof types and required fields per type.",
+  "types": [
+    {
+      "type": "test_run",
+      "required_entry_fields": ["status", "commands", "artifacts"],
+      "recommended_artifacts": ["test_report", "coverage_report"]
+    },
+    {
+      "type": "lint_run",
+      "required_entry_fields": ["status", "commands"],
+      "recommended_artifacts": ["lint_report"]
+    },
+    {
+      "type": "typecheck",
+      "required_entry_fields": ["status", "commands"],
+      "recommended_artifacts": ["typecheck_log"]
+    },
+    {
+      "type": "screenshot",
+      "required_entry_fields": ["status", "artifacts"],
+      "recommended_artifacts": ["image"]
+    },
+    {
+      "type": "api_trace",
+      "required_entry_fields": ["status", "artifacts"],
+      "recommended_artifacts": ["trace_log"]
+    },
+    {
+      "type": "log_excerpt",
+      "required_entry_fields": ["status", "artifacts"],
+      "recommended_artifacts": ["log"]
+    },
+    {
+      "type": "manual_check",
+      "required_entry_fields": ["status"],
+      "recommended_artifacts": []
+    },
+    {
+      "type": "benchmark",
+      "required_entry_fields": ["status", "commands", "artifacts"],
+      "recommended_artifacts": ["benchmark_report"]
+    }
+  ],
+  "constraints": [
+    {
+      "rule_id": "VER01-TYPE-01",
+      "name": "ProofEntry.type must be one of the allowed types",
+      "on_violation": "fail"
+    }
+  ]
+}

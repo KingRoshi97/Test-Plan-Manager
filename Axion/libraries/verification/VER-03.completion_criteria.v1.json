@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "doc_id": "VER-03",
+  "description": "Completion criteria for units and runs (unit done + run done).",
+  "unit_done": {
+    "required": [
+      "unit_outputs_present",
+      "acceptance_items_linked",
+      "required_proof_satisfied"
+    ],
+    "notes": [
+      "A unit is done when its outputs exist, acceptance items reference it, and required proof exists for those acceptance items."
+    ]
+  },
+  "run_done": {
+    "required": [
+      "all_required_gates_passed",
+      "all_required_units_done",
+      "kit_packaged",
+      "run_manifest_closed"
+    ],
+    "notes": [
+      "A run is done when required gates pass, all required units are complete, a kit is packaged, and the run is closed."
+    ]
+  },
+  "determinism": {
+    "evaluation_order": [
+      "gates",
+      "units",
+      "proof",
+      "packaging",
+      "close"
+    ]
+  }
+}

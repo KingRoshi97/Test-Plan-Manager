@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "doc_id": "PLAN-03",
+  "description": "Deterministic sequencing policy for work units and acceptance items.",
+  "unit_order": {
+    "primary": [
+      "spec",
+      "contracts",
+      "data",
+      "backend",
+      "frontend",
+      "security",
+      "qa",
+      "devops",
+      "docs",
+      "design"
+    ],
+    "tie_breakers": ["priority_p0_first", "unit_id_asc"]
+  },
+  "priority_order": ["p0", "p1", "p2", "p3"],
+  "acceptance_order": {
+    "primary": [
+      "entity",
+      "business_rule",
+      "endpoint",
+      "flow",
+      "component",
+      "screen",
+      "test_case",
+      "acceptance_criterion",
+      "nonfunctional"
+    ],
+    "tie_breakers": ["acceptance_id_asc"]
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "version": "1.0.0",
+  "doc_id": "KIT-01",
+  "root": "kit",
+  "required_files": [
+    "kit/00_START_HERE.json",
+    "kit/00_VERSIONS.json",
+    "kit/00_KIT_MANIFEST.json"
+  ],
+  "required_folders": [
+    "kit/01_core_artifacts",
+    "kit/02_docs",
+    "kit/03_planning",
+    "kit/04_quality",
+    "kit/05_gates",
+    "kit/06_proof"
+  ],
+  "slots": [
+    {
+      "slot_id": "core.canonical_spec",
+      "path": "kit/01_core_artifacts/canonical_spec.json",
+      "description": "Canonical Spec (authoritative build spec).",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "core.resolved_standards_snapshot",
+      "path": "kit/01_core_artifacts/resolved_standards_snapshot.json",
+      "description": "Resolved standards snapshot used for the run.",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "templates.prd",
+      "path": "kit/02_docs/PRD.md",
+      "description": "Rendered PRD document.",
+      "required": false,
+      "allowed_extensions": [".md"]
+    },
+    {
+      "slot_id": "templates.architecture",
+      "path": "kit/02_docs/ARCHITECTURE.md",
+      "description": "Rendered architecture document.",
+      "required": false,
+      "allowed_extensions": [".md"]
+    },
+    {
+      "slot_id": "planning.work_breakdown",
+      "path": "kit/03_planning/work_breakdown.json",
+      "description": "Work breakdown (units).",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "planning.acceptance_map",
+      "path": "kit/03_planning/acceptance_map.json",
+      "description": "Acceptance map (acceptance items + proof requirements).",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "planning.build_plan",
+      "path": "kit/03_planning/build_plan.json",
+      "description": "Build plan (ordered execution steps).",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "quality.test_plan",
+      "path": "kit/04_quality/TEST_PLAN.md",
+      "description": "Rendered test plan document.",
+      "required": false,
+      "allowed_extensions": [".md"]
+    },
+    {
+      "slot_id": "gates.gate_reports",
+      "path": "kit/05_gates/gate_reports.json",
+      "description": "Gate evaluation reports.",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "proof.proof_log",
+      "path": "kit/06_proof/proof_log.json",
+      "description": "Proof log / ledger for verification evidence.",
+      "required": false,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "proof.command_runs",
+      "path": "kit/06_proof/command_runs.json",
+      "description": "Command runs capture (stdout/stderr/exit codes).",
+      "required": false,
+      "allowed_extensions": [".json"]
+    }
+  ]
+}

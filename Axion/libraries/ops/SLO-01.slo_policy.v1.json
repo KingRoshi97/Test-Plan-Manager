@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "doc_id": "SLO-01",
+  "description": "SLO/SLA + error budget policy for Axion runs.",
+  "slos": [
+    {
+      "slo_id": "SLO-RUN-SUCCESS",
+      "name": "Run success rate",
+      "window_days": 30,
+      "objective": 0.99,
+      "measurement": "runs_released / runs_started"
+    },
+    {
+      "slo_id": "SLO-RUN-LATENCY",
+      "name": "Run p95 latency",
+      "window_days": 30,
+      "objective_ms": 600000,
+      "measurement": "p95(run_total_ms)"
+    }
+  ],
+  "error_budget": {
+    "budget_window_days": 30,
+    "burn_alerts": [
+      { "burn_id": "EB-FAST", "threshold": 0.5, "window_hours": 6, "action": "tighten_gates" },
+      { "burn_id": "EB-SLOW", "threshold": 0.9, "window_hours": 72, "action": "freeze_changes" }
+    ]
+  }
+}
