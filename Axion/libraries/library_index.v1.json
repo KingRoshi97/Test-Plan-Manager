@@ -14,8 +14,8 @@
 
     { "id": "planning.sequencing_policy", "path": "Axion/libraries/planning/sequencing_policy.v1.json", "version": "1.0.0" },
 
-    { "id": "policy.risk_classes", "path": "Axion/libraries/policy/risk_classes.v1.json", "version": "1.0.0" },
-    { "id": "policy.override_policy", "path": "Axion/libraries/policy/override_policy.v1.json", "version": "1.0.0" },
+    { "id": "policy.risk_classes", "path": "Axion/libraries/policy/registries/risk_classes.v1.json", "version": "1.0.0" },
+    { "id": "policy.policy_sets", "path": "Axion/libraries/policy/registries/policy_sets.v1.json", "version": "1.0.0" },
 
     { "id": "telemetry.sink_policy", "path": "Axion/libraries/telemetry/sink_policy.v1.json", "version": "1.0.0" },
 

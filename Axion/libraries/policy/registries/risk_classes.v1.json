@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "risk_classes.v1",
+  "classes": [
+    {
+      "risk_class": "PROTOTYPE",
+      "description": "Fast iteration; minimal governance; suitable for internal prototypes.",
+      "thresholds": {
+        "knowledge_min_maturity": "draft",
+        "standards_mode": "lenient",
+        "template_completeness": "basic",
+        "verification_level": "basic"
+      },
+      "gate_strictness": {},
+      "executor_rules": {
+        "external_allowed": true,
+        "external_restrictions": ["no_internal_only_knowledge", "no_restricted_exports"]
+      }
+    },
+    {
+      "risk_class": "PROD",
+      "description": "Production-quality; enforce reviewed knowledge and strict baseline gates.",
+      "thresholds": {
+        "knowledge_min_maturity": "reviewed",
+        "standards_mode": "strict",
+        "template_completeness": "strict",
+        "verification_level": "standard"
+      },
+      "gate_strictness": {
+        "G1_INTAKE_VALIDITY": "pause",
+        "G2_CANONICAL_INTEGRITY": "hard_stop",
+        "G7_VERIFICATION": "pause"
+      },
+      "executor_rules": {
+        "external_allowed": true,
+        "external_restrictions": ["no_internal_only_knowledge", "no_restricted_exports"]
+      }
+    },
+    {
+      "risk_class": "COMPLIANCE",
+      "description": "High-stakes/regulated; enforce verified knowledge and locked standards behavior.",
+      "thresholds": {
+        "knowledge_min_maturity": "verified",
+        "standards_mode": "locked",
+        "template_completeness": "strict",
+        "verification_level": "strict"
+      },
+      "gate_strictness": {
+        "G1_INTAKE_VALIDITY": "pause",
+        "G2_CANONICAL_INTEGRITY": "hard_stop",
+        "G7_VERIFICATION": "pause"
+      },
+      "executor_rules": {
+        "external_allowed": false,
+        "external_restrictions": ["internal_execution_only"]
+      }
+    }
+  ]
+}

@@ -141,9 +141,27 @@
     },
 
     {
-      "schema_id": "policy.override_policy.v1",
-      "path": "Axion/libraries/policy/override_policy.schema.v1.json",
-      "uri": "axion://schemas/policy/override_policy.schema.v1.json",
+      "schema_id": "policy.risk_classes.v1",
+      "path": "Axion/libraries/policy/schemas/risk_classes.v1.schema.json",
+      "uri": "axion://schemas/policy/risk_classes.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "policy.override_request.v1",
+      "path": "Axion/libraries/policy/schemas/override_request.v1.schema.json",
+      "uri": "axion://schemas/policy/override_request.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "policy.override_decision.v1",
+      "path": "Axion/libraries/policy/schemas/override_decision.v1.schema.json",
+      "uri": "axion://schemas/policy/override_decision.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "policy.policy_set.v1",
+      "path": "Axion/libraries/policy/schemas/policy_set.v1.schema.json",
+      "uri": "axion://schemas/policy/policy_set.v1.schema.json",
       "version": "1.0.0"
     },
 

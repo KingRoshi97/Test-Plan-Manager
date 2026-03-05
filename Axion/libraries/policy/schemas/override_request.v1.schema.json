@@ -1,0 +1,54 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "override_request.v1",
+    "type": "object",
+    "required": [
+        "override_request_id",
+        "run_id",
+        "hook_point",
+        "scope",
+        "reason",
+        "requested_by",
+        "requested_at"
+    ],
+    "properties": {
+        "override_request_id": { "type": "string", "pattern": "^OVRREQ-[A-Z0-9]{6,}$" },
+        "run_id": { "type": "string" },
+        "hook_point": {
+            "type": "string",
+            "enum": ["GATE_OVERRIDE", "QUOTA_CHECK", "PIN_RESOLUTION", "ADAPTER_SELECTION", "KIT_EXPORT"]
+        },
+        "scope": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+                "type": { "type": "string", "enum": ["gate", "quota", "pin", "adapter", "export"] },
+                "gate_id": { "type": "string" },
+                "predicate_id": { "type": "string" },
+                "quota_limit": { "type": "string" },
+                "pin_target": { "type": "string" },
+                "adapter_profile_id": { "type": "string" },
+                "export_target": { "type": "string", "enum": ["internal", "external"] }
+            },
+            "additionalProperties": false
+        },
+        "reason": { "type": "string", "minLength": 8 },
+        "requested_by": {
+            "type": "object",
+            "required": ["actor_id", "role"],
+            "properties": {
+                "actor_id": { "type": "string", "minLength": 2 },
+                "role": { "type": "string", "enum": ["owner", "maintainer", "operator"] }
+            },
+            "additionalProperties": false
+        },
+        "requested_at": { "type": "string", "format": "date-time" },
+        "evidence_refs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Pointers to supporting artifacts/reports (optional but recommended)"
+        }
+    },
+    "additionalProperties": false
+}

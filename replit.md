@@ -126,6 +126,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/gates/registries/:name` — single registry by name
 - `GET /api/gates/docs` — all gate documents with frontmatter
 - `GET /api/gates/docs/:filename` — single document by filename
+- `GET /api/policy` — policy library overview (groups, schema/registry/doc/riskClass/policySet counts)
+- `GET /api/policy/schemas` — all 4 policy schemas with content
+- `GET /api/policy/registries` — all 2 registries with content
+- `GET /api/policy/registries/:name` — single registry by name
+- `GET /api/policy/docs` — all policy documents with frontmatter
+- `GET /api/policy/docs/:filename` — single document by filename
 - `GET /api/system` — system library overview (groups, schema/registry/doc counts)
 - `GET /api/system/schemas` — all 14 system schemas with content
 - `GET /api/system/registries` — all 6 registries with content
@@ -168,6 +174,7 @@ package.json      # Root package.json with all dependencies
 - `/system` — System Library: 3 tabs (Documents, Schemas, Registries) for SYS-0 through SYS-7
 - `/orchestration` — Orchestration Library: 4 tabs (Pipeline, Documents, Schemas, Registries) for ORC-0 through ORC-7, pipeline stage visualization
 - `/gates` — Gates Library: 4 tabs (Gates, Documents, Schemas, Registries) for GATE-0 through GATE-6, 8 gate definitions with predicates/severity/evidence
+- `/policy` — Policy Library: 4 tabs (Policy, Documents, Schemas, Registries) for POL-0 through POL-5, 3 risk classes with color-coded cards, override permission matrix, policy sets
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
 
@@ -211,7 +218,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `verification/` — proof_log.schema.v1.json, command_runs.schema.v1.json
   - `kit/` — kit_tree.schema.v1.json, kit_manifest.schema.v1.json, kit_entrypoint.schema.v1.json, kit_versions.schema.v1.json
   - `orchestration/` — Pipeline execution contracts and run lifecycle (ORC-0 through ORC-7). See Orchestration Library section below.
-  - `policy/` — risk_classes.v1.json, override_policy.v1.json, override_policy.schema.v1.json
+  - `policy/` — Policy Library (POL-0 through POL-5). See Policy Library section below.
   - `audit/` — operator_actions_ledger.schema.v1.json
   - `telemetry/` — event.schema.v1.json, run_metrics.schema.v1.json, sink_policy.v1.json
   - `system/` — Control-plane configuration and runtime contracts (SYS-0 through SYS-7). See System Library section below.
@@ -285,6 +292,26 @@ Formal Gate DSL and evaluation contract library (GATE-0 through GATE-6) defining
 - `getDSLFunctions(repoRoot)` — DSL function catalog
 
 **Registered in:** `schema_registry.v1.json` (6 entries), `library_index.v1.json` (2 entries)
+
+### Policy Library (`Axion/libraries/policy/`)
+Risk class governance, override policies, precedence rules, and enforcement points (POL-0 through POL-5) defining how policy tiers control gate strictness, override permissions, and executor behavior across the pipeline.
+
+**Structure (25 files):**
+- 19 docs (POL-0: purpose/boundary checklist, POL-1: risk class model/determinism/validation, POL-2: override policy model/override rules/validation, POL-3: precedence model/conflict rules/determinism/validation, POL-4: enforcement points/enforcement matrix/determinism/validation, POL-5: minimum viable set/definition of done/minimal tree)
+- 4 schemas: `risk_classes.v1`, `override_request.v1`, `override_decision.v1`, `policy_set.v1`
+- 2 registries: `risk_classes.v1.json` (3 risk classes: PROTOTYPE/PROD/COMPLIANCE with thresholds, gate_strictness, executor_rules), `policy_sets.v1.json` (baseline POLSET-BASE01 with override_permissions per hook point per risk class)
+
+**Loader** (`Axion/src/core/policy/loader.ts`):
+- `loadPolicyLibrary(repoRoot)` — loads risk_classes + policy_sets registries, cached
+- `loadPolicyDocs(repoRoot)` — all POL-N docs with frontmatter
+- `loadPolicySchemas(repoRoot)` — all JSON schemas
+- `loadPolicyRegistries(repoRoot)` — all registries
+- `getRiskClass(repoRoot, riskClass)` — specific risk class definition
+- `getAllRiskClasses(repoRoot)` — all risk class definitions
+- `getPolicySet(repoRoot, policySetId)` — specific policy set
+- `getDefaultPolicySet(repoRoot)` — first/default policy set
+
+**Registered in:** `schema_registry.v1.json` (4 entries), `library_index.v1.json` (2 entries)
 
 ### Template System
 - **Source Templates**: `libraries/templates/` (533 TMP-02 contract files in 8 categories: Product Definition, System Architecture, Experience Design, Data & Information, Integrations & External Services, Operations & Reliability, Security Privacy & Compliance, Application Build). These are READ-ONLY — never modified by runs. Each contains: Header Block, Purpose, Inputs Required, Required Fields, Optional Fields, Rules, Output Format, Cross-References, Skill Level Rules, Unknown Handling, Completeness Gate.

@@ -1,0 +1,53 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "policy_set.v1",
+    "type": "object",
+    "required": ["policy_set_id", "rules", "created_at", "updated_at", "owner"],
+    "properties": {
+        "policy_set_id": { "type": "string", "pattern": "^POLSET-[A-Z0-9]{6,}$" },
+        "rules": {
+            "type": "object",
+            "required": ["precedence_mode", "override_permissions"],
+            "properties": {
+                "precedence_mode": {
+                    "type": "string",
+                    "enum": ["most_restrictive_wins", "explicit_priority"]
+                },
+                "explicit_priority": {
+                    "type": "array",
+                    "description": "Only used when precedence_mode==explicit_priority",
+                    "items": { "type": "string", "enum": ["global", "workspace", "project", "run", "override"] }
+                },
+                "override_permissions": {
+                    "type": "object",
+                    "description": "Which hook points can be overridden by risk class",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "PROTOTYPE": { "type": "boolean" },
+                            "PROD": { "type": "boolean" },
+                            "COMPLIANCE": { "type": "boolean" }
+                        },
+                        "additionalProperties": false
+                    }
+                },
+                "max_override_duration_hours": {
+                    "type": "object",
+                    "properties": {
+                        "PROTOTYPE": { "type": "integer", "minimum": 1 },
+                        "PROD": { "type": "integer", "minimum": 1 },
+                        "COMPLIANCE": { "type": "integer", "minimum": 1 }
+                    },
+                    "additionalProperties": false
+                },
+                "deny_by_default": { "type": "boolean", "default": true }
+            },
+            "additionalProperties": false
+        },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "owner": { "type": "string", "minLength": 2 }
+    },
+    "additionalProperties": false
+}

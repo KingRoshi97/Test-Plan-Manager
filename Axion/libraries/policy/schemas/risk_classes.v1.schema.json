@@ -1,0 +1,62 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "risk_classes.v1",
+    "type": "object",
+    "required": ["registry_id", "schema_version", "classes"],
+    "properties": {
+        "registry_id": { "type": "string", "minLength": 3 },
+        "schema_version": { "type": "string", "minLength": 1 },
+        "classes": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/risk_class" }
+        }
+    },
+    "$defs": {
+        "risk_class": {
+            "type": "object",
+            "required": [
+                "risk_class",
+                "description",
+                "thresholds",
+                "gate_strictness",
+                "executor_rules"
+            ],
+            "properties": {
+                "risk_class": { "type": "string", "enum": ["PROTOTYPE", "PROD", "COMPLIANCE"] },
+                "description": { "type": "string", "minLength": 5 },
+                "thresholds": {
+                    "type": "object",
+                    "required": ["knowledge_min_maturity"],
+                    "properties": {
+                        "knowledge_min_maturity": { "type": "string", "enum": ["draft", "reviewed", "verified", "golden"] },
+                        "standards_mode": { "type": "string", "enum": ["lenient", "strict", "locked"] },
+                        "template_completeness": { "type": "string", "enum": ["basic", "strict"] },
+                        "verification_level": { "type": "string", "enum": ["basic", "standard", "strict"] }
+                    },
+                    "additionalProperties": false
+                },
+                "gate_strictness": {
+                    "type": "object",
+                    "description": "Overrides default gate severities per risk class",
+                    "additionalProperties": { "type": "string", "enum": ["hard_stop", "pause", "warn"] }
+                },
+                "executor_rules": {
+                    "type": "object",
+                    "required": ["external_allowed"],
+                    "properties": {
+                        "external_allowed": { "type": "boolean" },
+                        "external_restrictions": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}
