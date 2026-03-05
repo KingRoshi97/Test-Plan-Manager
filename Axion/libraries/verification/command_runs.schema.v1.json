@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/verification/command_runs.schema.v1.json",
+  "title": "Axion Command Runs Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "runs"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "runs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/CommandRun" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "CommandRun": {
+      "type": "object",
+      "required": [
+        "command_ref",
+        "started_at",
+        "finished_at",
+        "cwd",
+        "command",
+        "exit_code",
+        "status",
+        "stdout_path",
+        "stderr_path"
+      ],
+      "properties": {
+        "command_ref": { "type": "string" },
+        "started_at": { "type": "string" },
+        "finished_at": { "type": "string" },
+        "cwd": { "type": "string" },
+        "command": { "type": "string" },
+        "exit_code": { "type": "integer" },
+        "status": { "enum": ["pass", "fail", "warn", "skipped"] },
+        "stdout_path": { "type": "string" },
+        "stderr_path": { "type": "string" },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "hash": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

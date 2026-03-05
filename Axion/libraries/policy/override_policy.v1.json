@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "rules": [
+    {
+      "rule_id": "OVR-01",
+      "applies_to": "gates.*.on_fail=warn",
+      "allowed": true,
+      "requires_evidence": ["operator_approval", "reason_code"],
+      "expires_in_days": 7,
+      "notes": "Temporary downgrade of a gate failure to warning with explicit approval."
+    },
+    {
+      "rule_id": "OVR-02",
+      "applies_to": "standards.fixed_rules.*",
+      "allowed": false,
+      "requires_evidence": [],
+      "expires_in_days": 0,
+      "notes": "Fixed rules cannot be overridden."
+    }
+  ]
+}

@@ -1,4 +1,8 @@
-import { NotImplementedError } from "../../utils/errors.js";
+import { join } from "node:path";
+import { sha256 } from "../../utils/hash.js";
+import { isoNow } from "../../utils/time.js";
+import { writeJson, readJson } from "../../utils/fs.js";
+import { canonicalJsonString } from "../../utils/canonicalJson.js";
 
 export interface SubmissionRecord {
   submission_id: string;
@@ -14,13 +18,29 @@ export interface SubmissionRecord {
 }
 
 export function writeSubmissionRecord(
-  _runDir: string,
-  _submission: unknown,
-  _schemaVersion: string
+  runDir: string,
+  submission: unknown,
+  schemaVersion: string
 ): SubmissionRecord {
-  throw new NotImplementedError("writeSubmissionRecord");
+  const payloadStr = canonicalJsonString(submission);
+  const payloadHash = sha256(payloadStr);
+  const sub = submission as Record<string, unknown>;
+
+  const record: SubmissionRecord = {
+    submission_id: String(sub.submission_id ?? `SUB-${Date.now()}`),
+    received_at: isoNow(),
+    schema_version: schemaVersion,
+    payload_hash: payloadHash,
+    payload: submission,
+    metadata: {
+      source: "axion-cli",
+    },
+  };
+
+  writeJson(join(runDir, "intake", "submission_record.json"), record);
+  return record;
 }
 
-export function loadSubmissionRecord(_runDir: string): SubmissionRecord {
-  throw new NotImplementedError("loadSubmissionRecord");
+export function loadSubmissionRecord(runDir: string): SubmissionRecord {
+  return readJson<SubmissionRecord>(join(runDir, "intake", "submission_record.json"));
 }

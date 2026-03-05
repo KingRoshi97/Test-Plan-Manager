@@ -6,6 +6,7 @@ import { evalCheck } from "./evaluator.js";
 import { writeGateReport } from "./report.js";
 import type { GateReportV1, CheckReport } from "./report.js";
 import type { RunManifest } from "../../types/run.js";
+import { evaluateEvidenceCompleteness, getRequiredProofTypes } from "./evidencePolicy.js";
 
 export interface GateRunResult {
   reports: GateReportV1[];
@@ -13,6 +14,21 @@ export interface GateRunResult {
 }
 
 const ENGINE = { name: "axion-gates", version: "0.1.0" };
+
+function deriveAvailableProofTypes(gateId: string, gatePassed: boolean): string[] {
+  if (!gatePassed) return [];
+  const typeMap: Record<string, string[]> = {
+    G1_INTAKE_VALIDITY: ["intake_validation"],
+    G2_CANONICAL_INTEGRITY: ["canonical_validation"],
+    G3_STANDARDS_RESOLVED: ["standards_resolution"],
+    G4_TEMPLATE_SELECTION: ["template_selection"],
+    G5_TEMPLATE_COMPLETENESS: ["template_completeness"],
+    G6_PLAN_COVERAGE: ["plan_coverage"],
+    G7_VERIFICATION: ["verification_result", "proof_ledger"],
+    G8_PACKAGE_INTEGRITY: ["package_integrity"],
+  };
+  return typeMap[gateId] ?? [];
+}
 
 export function runGatesForStage(baseDir: string, runId: string, stageId: string): GateRunResult {
   const registryPath = join(baseDir, "registries", "GATE_REGISTRY.json");
@@ -55,6 +71,9 @@ export function runGatesForStage(baseDir: string, runId: string, stageId: string
       }
     }
 
+    const availableProofTypes = deriveAvailableProofTypes(gate.gate_id, gatePassed);
+    const evidenceCompleteness = evaluateEvidenceCompleteness(gate.gate_id, availableProofTypes);
+
     const report: GateReportV1 = {
       run_id: runId,
       gate_id: gate.gate_id,
@@ -65,6 +84,7 @@ export function runGatesForStage(baseDir: string, runId: string, stageId: string
       checks: checkReports,
       failure_codes: gatePassed ? [] : (firstFailureCode ? [firstFailureCode] : []),
       evidence: gatePassed ? [] : failEvidence,
+      evidence_completeness: evidenceCompleteness,
     };
 
     const reportPath = join(runDir, "gates", `${gate.gate_id}.gate_report.json`);

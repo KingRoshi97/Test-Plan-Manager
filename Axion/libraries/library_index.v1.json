@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "description": "Single registry for all Axion versioned libraries (non-schema files). Used for pins + deterministic resolution.",
+  "libraries": [
+    { "id": "intake.form_version", "path": "Axion/libraries/intake/form_version.v1.json", "version": "1.0.0" },
+
+    { "id": "canonical.id_rules", "path": "Axion/libraries/canonical/id_rules.v1.json", "version": "1.0.0" },
+
+    { "id": "standards.index", "path": "Axion/libraries/standards/standards_index.json", "version": "1.0.0" },
+    { "id": "standards.resolver_rules", "path": "Axion/libraries/standards/resolver_rules.v1.json", "version": "1.0.0" },
+
+    { "id": "templates.index", "path": "Axion/libraries/templates/template_index.json", "version": "1.0.0" },
+    { "id": "templates.placeholder_catalog", "path": "Axion/libraries/templates/placeholder_catalog.v1.json", "version": "1.0.0" },
+
+    { "id": "planning.sequencing_policy", "path": "Axion/libraries/planning/sequencing_policy.v1.json", "version": "1.0.0" },
+
+    { "id": "policy.risk_classes", "path": "Axion/libraries/policy/risk_classes.v1.json", "version": "1.0.0" },
+    { "id": "policy.override_policy", "path": "Axion/libraries/policy/override_policy.v1.json", "version": "1.0.0" },
+
+    { "id": "telemetry.sink_policy", "path": "Axion/libraries/telemetry/sink_policy.v1.json", "version": "1.0.0" }
+  ],
+  "notes": [
+    "Schema files are registered in schema_registry.v1.json (separate).",
+    "Standards packs remain under Axion/libraries/standards/packs/*.json and are referenced by standards_index.json."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/telemetry/event.schema.v1.json",
+  "title": "Axion Telemetry Event Schema v1",
+  "type": "object",
+  "required": ["version", "event_id", "ts", "run_id", "type", "payload"],
+  "properties": {
+    "version": { "type": "string" },
+    "event_id": { "type": "string" },
+    "ts": { "type": "string" },
+    "run_id": { "type": "string" },
+    "type": {
+      "enum": [
+        "run.started",
+        "run.stage.started",
+        "run.stage.finished",
+        "run.gate.evaluated",
+        "run.failed",
+        "run.released",
+        "policy.override.applied",
+        "artifact.written",
+        "verification.command.ran"
+      ]
+    },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}

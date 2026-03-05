@@ -48,7 +48,7 @@ export function AppSidebar() {
         })}
       </nav>
       <div className="p-4 border-t border-[hsl(var(--border))] text-xs text-[hsl(var(--muted-foreground))]">
-        10 stages / 7 gates / 395 KIDs
+        10 stages / 8 gates / 395 KIDs
       </div>
     </aside>
   );

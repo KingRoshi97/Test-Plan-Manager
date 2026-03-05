@@ -1,0 +1,128 @@
+{
+  "version": "1.0.0",
+  "description": "Registry of JSON schemas. Used to validate artifacts, libraries, and run outputs deterministically.",
+  "schemas": [
+    {
+      "schema_id": "canonical.spec.v1",
+      "path": "Axion/libraries/canonical/spec.schema.v1.json",
+      "uri": "axion://schemas/canonical/spec.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "canonical.unknowns.v1",
+      "path": "Axion/libraries/canonical/unknowns.schema.v1.json",
+      "uri": "axion://schemas/canonical/unknowns.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "gates.dsl.v1",
+      "path": "Axion/libraries/gates/gate_dsl.schema.v1.json",
+      "uri": "axion://schemas/gates/gate_dsl.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "planning.work_breakdown.v1",
+      "path": "Axion/libraries/planning/work_breakdown.schema.v1.json",
+      "uri": "axion://schemas/planning/work_breakdown.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "planning.acceptance_map.v1",
+      "path": "Axion/libraries/planning/acceptance_map.schema.v1.json",
+      "uri": "axion://schemas/planning/acceptance_map.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "verification.proof_log.v1",
+      "path": "Axion/libraries/verification/proof_log.schema.v1.json",
+      "uri": "axion://schemas/verification/proof_log.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "verification.command_runs.v1",
+      "path": "Axion/libraries/verification/command_runs.schema.v1.json",
+      "uri": "axion://schemas/verification/command_runs.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "kit.tree.v1",
+      "path": "Axion/libraries/kit/kit_tree.schema.v1.json",
+      "uri": "axion://schemas/kit/kit_tree.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "kit.manifest.v1",
+      "path": "Axion/libraries/kit/kit_manifest.schema.v1.json",
+      "uri": "axion://schemas/kit/kit_manifest.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "kit.entrypoint.v1",
+      "path": "Axion/libraries/kit/kit_entrypoint.schema.v1.json",
+      "uri": "axion://schemas/kit/kit_entrypoint.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "kit.versions.v1",
+      "path": "Axion/libraries/kit/kit_versions.schema.v1.json",
+      "uri": "axion://schemas/kit/kit_versions.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "orchestration.pipeline_definition.v1",
+      "path": "Axion/libraries/orchestration/pipeline_definition.schema.v1.json",
+      "uri": "axion://schemas/orchestration/pipeline_definition.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "orchestration.stage_io_contract.v1",
+      "path": "Axion/libraries/orchestration/stage_io_contract.schema.v1.json",
+      "uri": "axion://schemas/orchestration/stage_io_contract.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "orchestration.stage_report.v1",
+      "path": "Axion/libraries/orchestration/stage_report.schema.v1.json",
+      "uri": "axion://schemas/orchestration/stage_report.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "orchestration.run_manifest.v1",
+      "path": "Axion/libraries/orchestration/run_manifest.schema.v1.json",
+      "uri": "axion://schemas/orchestration/run_manifest.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "policy.override_policy.v1",
+      "path": "Axion/libraries/policy/override_policy.schema.v1.json",
+      "uri": "axion://schemas/policy/override_policy.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "audit.operator_actions_ledger.v1",
+      "path": "Axion/libraries/audit/operator_actions_ledger.schema.v1.json",
+      "uri": "axion://schemas/audit/operator_actions_ledger.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "telemetry.event.v1",
+      "path": "Axion/libraries/telemetry/event.schema.v1.json",
+      "uri": "axion://schemas/telemetry/event.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "telemetry.run_metrics.v1",
+      "path": "Axion/libraries/telemetry/run_metrics.schema.v1.json",
+      "uri": "axion://schemas/telemetry/run_metrics.schema.v1.json",
+      "version": "1.0.0"
+    }
+  ]
+}

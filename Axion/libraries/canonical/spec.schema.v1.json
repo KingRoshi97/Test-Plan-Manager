@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/canonical/spec.schema.v1.json",
+  "title": "Axion Canonical Spec Schema v1",
+  "type": "object",
+  "required": ["meta", "routing", "constraints", "entities", "rules", "unknowns", "index"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "spec_id",
+        "submission_id",
+        "schema_version_used",
+        "standards_snapshot_id",
+        "standards_version_used",
+        "spec_version",
+        "created_at"
+      ],
+      "properties": {
+        "spec_id": { "type": "string" },
+        "submission_id": { "type": "string" },
+        "schema_version_used": { "type": "string" },
+        "standards_snapshot_id": { "type": "string" },
+        "standards_version_used": { "type": "string" },
+        "spec_version": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "routing": {
+      "type": "object",
+      "required": ["skill_level", "category", "type_preset", "build_target", "audience_context"],
+      "properties": {
+        "skill_level": { "type": "string" },
+        "category": { "type": "string" },
+        "type_preset": { "type": "string" },
+        "build_target": { "type": "string" },
+        "audience_context": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "constraints": {
+      "type": "object",
+      "required": [
+        "stack_constraints",
+        "security_constraints",
+        "quality_constraints",
+        "fixed_vs_configurable"
+      ],
+      "properties": {
+        "stack_constraints": {},
+        "security_constraints": {},
+        "quality_constraints": {},
+        "design_constraints": {},
+        "fixed_vs_configurable": {
+          "type": "object",
+          "additionalProperties": { "enum": ["fixed", "configurable"] }
+        }
+      },
+      "additionalProperties": true
+    },
+    "entities": {
+      "type": "object",
+      "required": ["roles", "features", "workflows", "permissions"],
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role_id", "name"],
+            "properties": {
+              "role_id": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "primary_goal": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["feature_id", "name", "priority_tier"],
+            "properties": {
+              "feature_id": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "priority_tier": { "enum": ["must", "nice", "future"] },
+              "priority_rank": { "type": "number" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "workflows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["workflow_id", "name", "actor_role_ref", "steps", "success_outcome"],
+            "properties": {
+              "workflow_id": { "type": "string" },
+              "name": { "type": "string" },
+              "actor_role_ref": { "type": "string" },
+              "steps": { "type": "array", "items": { "type": "string" } },
+              "success_outcome": { "type": "string" },
+              "failure_states": { "type": "string" },
+              "priority": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["perm_id", "role_ref", "allowed_capabilities"],
+            "properties": {
+              "perm_id": { "type": "string" },
+              "role_ref": { "type": "string" },
+              "allowed_capabilities": { "type": "array", "items": { "type": "string" } },
+              "restricted_actions": { "type": "array", "items": { "type": "string" } },
+              "approval_required_actions": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": true
+          }
+        },
+        "screens": { "type": "array" },
+        "data_objects": { "type": "array" },
+        "operations": { "type": "array" },
+        "integrations": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "rules": {
+      "type": "object",
+      "required": ["definition_of_done"],
+      "properties": {
+        "definition_of_done": { "type": "string" },
+        "must_always": { "type": "array", "items": { "type": "string" } },
+        "must_never": { "type": "array", "items": { "type": "string" } },
+        "must_pass_checks": { "type": "array", "items": { "type": "string" } },
+        "acceptance_criteria": { "type": "array", "items": { "type": "string" } },
+        "rejection_conditions": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "axion://schemas/canonical/unknowns.schema.v1.json" }
+    },
+    "index": {
+      "type": "object",
+      "required": ["roles_by_id", "features_by_id", "workflows_by_id", "cross_maps"],
+      "properties": {
+        "roles_by_id": { "type": "object", "additionalProperties": { "type": "object" } },
+        "features_by_id": { "type": "object", "additionalProperties": { "type": "object" } },
+        "workflows_by_id": { "type": "object", "additionalProperties": { "type": "object" } },
+        "cross_maps": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

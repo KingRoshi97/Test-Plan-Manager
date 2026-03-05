@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/run_manifest.schema.v1.json",
+  "title": "Axion Run Manifest Schema v1",
+  "type": "object",
+  "required": [
+    "version",
+    "run_id",
+    "pipeline_id",
+    "status",
+    "created_at",
+    "updated_at",
+    "stage_states",
+    "pins",
+    "artifacts"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "pipeline_id": { "type": "string" },
+    "status": { "enum": ["queued", "running", "gated", "failed", "released", "closed"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "stage_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["stage_id", "status", "report_path"],
+        "properties": {
+          "stage_id": { "type": "string" },
+          "status": { "enum": ["queued", "running", "gated", "failed", "released", "skipped"] },
+          "report_path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pins": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "version"],
+        "properties": {
+          "id": { "type": "string" },
+          "version": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifact_id", "path", "role"],
+        "properties": {
+          "artifact_id": { "type": "string" },
+          "path": { "type": "string" },
+          "role": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

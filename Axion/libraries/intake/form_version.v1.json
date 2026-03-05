@@ -1,0 +1,52 @@
+{
+  "form_version": "1.0.0",
+  "description": "Inventory of intake modules/sections and how they map into normalized input. Used for deterministic intake evolution.",
+  "modules": [
+    {
+      "module_id": "routing",
+      "required": true,
+      "fields": ["skill_level", "category", "type_preset", "build_target", "audience_context"]
+    },
+    {
+      "module_id": "delivery",
+      "required": false,
+      "fields": ["desired_scope", "priority_bias"]
+    },
+    {
+      "module_id": "constraints",
+      "required": false,
+      "fields": [
+        "stack",
+        "security",
+        "quality",
+        "design",
+        "data_enabled",
+        "auth_required",
+        "integrations_enabled",
+        "compliance_flags"
+      ]
+    },
+    {
+      "module_id": "spec.roles",
+      "required": false,
+      "fields": ["name", "description", "primary_goal"]
+    },
+    {
+      "module_id": "spec.must_have_features",
+      "required": false,
+      "fields": ["name", "description"]
+    },
+    {
+      "module_id": "spec.workflows",
+      "required": false,
+      "fields": ["name", "actor_role", "steps", "success_outcome", "failure_states", "priority"]
+    }
+  ],
+  "compat": {
+    "breaking_change_requires_new_version": true,
+    "notes": [
+      "If you rename or remove a module_id, bump form_version.",
+      "If you add optional fields, keep same form_version but update schema/rules."
+    ]
+  }
+}

@@ -361,7 +361,36 @@ function evalVerifyHashManifest(check: GateCheck): CheckResult {
   };
 }
 
+const REGISTERED_OPS = new Set([
+  "file_exists",
+  "json_valid",
+  "json_has",
+  "coverage_gte",
+  "json_eq",
+  "verify_hash_manifest",
+]);
+
+export function isRegisteredOperator(op: string): boolean {
+  return REGISTERED_OPS.has(op);
+}
+
 export function evalCheck(check: GateCheck): CheckResult {
+  if (!isRegisteredOperator(check.op)) {
+    return {
+      pass: false,
+      failure_code: "E_UNKNOWN_OP",
+      evidence: [{
+        path: "",
+        pointer: "",
+        details: {
+          op: check.op,
+          registered_ops: Array.from(REGISTERED_OPS),
+          error: `Operator '${check.op}' is not registered. Only registered operators from gate_dsl.schema are allowed.`,
+        },
+      }],
+    };
+  }
+
   switch (check.op) {
     case "file_exists":
       return evalFileExists(check);

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/kit_entrypoint.schema.v1.json",
+  "title": "Axion Kit Entrypoint Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "start_here", "how_to_use", "do_not_do"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "start_here": { "type": "string" },
+    "how_to_use": { "type": "array", "items": { "type": "string" } },
+    "do_not_do": { "type": "array", "items": { "type": "string" } },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "path"],
+        "properties": {
+          "label": { "type": "string" },
+          "path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

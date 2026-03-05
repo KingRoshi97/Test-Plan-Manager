@@ -1,32 +1,20 @@
-import { NotImplementedError } from "../../utils/errors.js";
-import type { ResolverContext, SelectedPack, ResolvedRule, OverrideRecord, ConflictEntry } from "./resolver.js";
+import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { readJson } from "../../utils/fs.js";
+import { writeCanonicalJson } from "../../utils/canonicalJson.js";
+import type { ResolvedStandardsSnapshot } from "./resolver.js";
 
-export interface StandardsSnapshot {
-  resolved_standards_id: string;
-  submission_id: string;
-  spec_id?: string;
-  created_at: string;
-  versions: {
-    system_version: string;
-    schema_version_used: string;
-    standards_library_version_used: string;
-    template_library_version_used?: string;
-    resolver_ruleset_version_used: string;
-  };
-  resolver_context: ResolverContext;
-  selected_packs: SelectedPack[];
-  rules: ResolvedRule[];
-  fixed_vs_configurable: Record<string, "fixed" | "configurable">;
-  overrides_applied: OverrideRecord[];
-  overrides_blocked: OverrideRecord[];
-  conflicts: ConflictEntry[];
-  snapshot_hash?: string;
+export type { ResolvedStandardsSnapshot } from "./resolver.js";
+
+export function writeSnapshot(runDir: string, snapshot: ResolvedStandardsSnapshot): void {
+  const outPath = join(runDir, "standards", "resolved_standards_snapshot.json");
+  writeCanonicalJson(outPath, snapshot);
 }
 
-export function writeSnapshot(_runDir: string, _snapshot: StandardsSnapshot): void {
-  throw new NotImplementedError("writeSnapshot");
-}
-
-export function loadSnapshot(_runDir: string): StandardsSnapshot {
-  throw new NotImplementedError("loadSnapshot");
+export function loadSnapshot(runDir: string): ResolvedStandardsSnapshot {
+  const snapshotPath = join(runDir, "standards", "resolved_standards_snapshot.json");
+  if (!existsSync(snapshotPath)) {
+    throw new Error(`Standards snapshot not found: ${snapshotPath}`);
+  }
+  return readJson<ResolvedStandardsSnapshot>(snapshotPath);
 }

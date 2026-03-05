@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/canonical/unknowns.schema.v1.json",
+  "title": "Axion Unknown Entity Schema v1",
+  "type": "object",
+  "required": ["unknown_id", "area", "summary", "impact", "blocking", "needs", "refs"],
+  "properties": {
+    "unknown_id": { "type": "string" },
+    "area": { "type": "string" },
+    "summary": { "type": "string" },
+    "impact": { "enum": ["low", "medium", "high"] },
+    "blocking": { "type": "boolean" },
+    "needs": { "type": "string" },
+    "refs": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}

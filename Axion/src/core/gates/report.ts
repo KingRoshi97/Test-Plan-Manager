@@ -1,5 +1,6 @@
 import { writeCanonicalJson } from "../../utils/canonicalJson.js";
 import type { EvidenceEntry } from "./evaluator.js";
+import type { EvidenceCompletenessResult } from "./evidencePolicy.js";
 
 export type GateVerdict = "pass" | "fail";
 
@@ -23,6 +24,7 @@ export interface GateReportV1 {
   checks: CheckReport[];
   failure_codes: string[];
   evidence: EvidenceEntry[];
+  evidence_completeness?: EvidenceCompletenessResult;
 }
 
 export function writeGateReport(outputPath: string, report: GateReportV1): void {

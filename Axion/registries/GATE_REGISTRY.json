@@ -46,7 +46,9 @@
       "checks": [
         { "op": "file_exists", "path": ".axion/runs/{{run_id}}/templates/render_report.json" },
         { "op": "json_valid", "path": ".axion/runs/{{run_id}}/templates/render_report.json" },
-        { "op": "json_eq", "path": ".axion/runs/{{run_id}}/templates/render_report.json", "pointer": "/unresolved_placeholders_count", "expected": 0 }
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/templates/template_completeness_report.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/templates/template_completeness_report.json" },
+        { "op": "json_eq", "path": ".axion/runs/{{run_id}}/templates/template_completeness_report.json", "pointer": "/pass", "expected": true }
       ]
     },
     {
@@ -57,6 +59,18 @@
         { "op": "file_exists", "path": ".axion/runs/{{run_id}}/planning/coverage_report.json" },
         { "op": "json_valid", "path": ".axion/runs/{{run_id}}/planning/coverage_report.json" },
         { "op": "coverage_gte", "path": ".axion/runs/{{run_id}}/planning/coverage_report.json", "pointer": "/coverage_percent", "min": 100 }
+      ]
+    },
+    {
+      "gate_id": "G7_VERIFICATION",
+      "stage_id": "S9_VERIFY_PROOF",
+      "severity": "hard",
+      "checks": [
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/verification/verification_run_result.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/verification/verification_run_result.json" },
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/proof/proof_ledger.jsonl" },
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/verification/completion_report.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/verification/completion_report.json" }
       ]
     },
     {

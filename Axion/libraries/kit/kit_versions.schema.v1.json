@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/kit_versions.schema.v1.json",
+  "title": "Axion Kit Versions / Pins Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "pins"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "pins": {
+      "type": "object",
+      "required": ["intake", "canonical", "standards", "templates", "planning", "gates"],
+      "properties": {
+        "intake": { "$ref": "#/$defs/Pin" },
+        "canonical": { "$ref": "#/$defs/Pin" },
+        "standards": { "$ref": "#/$defs/Pin" },
+        "templates": { "$ref": "#/$defs/Pin" },
+        "planning": { "$ref": "#/$defs/Pin" },
+        "gates": { "$ref": "#/$defs/Pin" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/Pin" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Pin": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "string" },
+        "hash": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

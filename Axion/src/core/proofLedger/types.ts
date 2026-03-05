@@ -6,6 +6,7 @@ export interface ProofEntry {
   timestamp: string;
   evidence: Record<string, unknown>;
   hash: string;
+  acceptance_refs?: string[];
 }
 
 export type ProofType =

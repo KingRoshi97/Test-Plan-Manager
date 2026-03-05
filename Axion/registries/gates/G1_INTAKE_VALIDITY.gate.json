@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "gate_id": "G1_INTAKE_VALIDITY",
+  "description": "Basic intake validity requirements.",
+  "rules": [
+    {
+      "rule_id": "G1-01",
+      "title": "Intake validation must pass",
+      "when": { "bool": true },
+      "assert": { "op": "eq", "args": ["intake.validation.status", "pass"] },
+      "on_fail": "fail",
+      "message": "Intake validation did not pass.",
+      "pointers": ["Axion/.axion/runs/<run_id>/intake/validation_result.json"],
+      "evidence_refs": ["intake.validation_result"]
+    }
+  ]
+}

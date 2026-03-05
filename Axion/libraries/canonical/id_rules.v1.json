@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "description": "Canonical ID prefix and format rules. Used by validators and generators.",
+  "id_types": [
+    { "type": "ROLE", "prefix": "ROLE-", "pattern": "^ROLE-[0-9]{3}$" },
+    { "type": "FEAT", "prefix": "FEAT-", "pattern": "^FEAT-[0-9]{3}$" },
+    { "type": "WF", "prefix": "WF-", "pattern": "^WF-[0-9]{3}$" },
+    { "type": "PERM", "prefix": "PERM-", "pattern": "^PERM-[0-9]{3}$" },
+    { "type": "SPEC", "prefix": "SPEC-", "pattern": "^SPEC-.*$" }
+  ],
+  "ref_integrity": {
+    "required_refs": [
+      { "field": "entities.workflows[].actor_role_ref", "must_match_type": "ROLE" },
+      { "field": "entities.permissions[].role_ref", "must_match_type": "ROLE" }
+    ],
+    "notes": [
+      "If you add new entity collections (screens/data_objects/operations), extend required_refs."
+    ]
+  }
+}

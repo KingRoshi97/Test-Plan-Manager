@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "description": "Where telemetry is written during runs.",
+  "sinks": [
+    {
+      "sink_id": "local_jsonl",
+      "path": ".axion/runs/<run_id>/telemetry/events.jsonl",
+      "format": "jsonl",
+      "enabled": true
+    }
+  ]
+}

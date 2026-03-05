@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "description": "Deterministic ordering rules for planning outputs (work units and acceptance items).",
+  "unit_order": {
+    "primary": ["spec", "contracts", "data", "backend", "frontend", "security", "qa", "devops", "docs", "design"],
+    "tie_breakers": ["unit_id_asc"]
+  },
+  "acceptance_order": {
+    "primary": [
+      "entity",
+      "business_rule",
+      "endpoint",
+      "flow",
+      "component",
+      "screen",
+      "test_case",
+      "acceptance_criterion",
+      "nonfunctional"
+    ],
+    "tie_breakers": ["acceptance_id_asc"]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/planning/acceptance_map.schema.v1.json",
+  "title": "Axion Acceptance Map Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "acceptance"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "acceptance": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/AcceptanceItem" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "AcceptanceItem": {
+      "type": "object",
+      "required": [
+        "acceptance_id",
+        "title",
+        "unit_ref",
+        "category",
+        "criteria",
+        "required_proof"
+      ],
+      "properties": {
+        "acceptance_id": { "type": "string" },
+        "title": { "type": "string" },
+        "unit_ref": { "type": "string" },
+        "category": {
+          "enum": [
+            "screen",
+            "endpoint",
+            "entity",
+            "business_rule",
+            "component",
+            "acceptance_criterion",
+            "test_case",
+            "flow",
+            "nonfunctional"
+          ]
+        },
+        "criteria": { "type": "array", "items": { "type": "string" } },
+        "required_proof": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "ref"],
+            "properties": {
+              "type": {
+                "enum": [
+                  "test_run",
+                  "lint_run",
+                  "typecheck",
+                  "screenshot",
+                  "api_trace",
+                  "log_excerpt",
+                  "manual_check",
+                  "benchmark"
+                ]
+              },
+              "ref": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

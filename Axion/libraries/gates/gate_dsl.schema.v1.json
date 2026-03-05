@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/gates/gate_dsl.schema.v1.json",
+  "title": "Axion Gate DSL Schema v1",
+  "type": "object",
+  "required": ["version", "gate_id", "description", "rules"],
+  "properties": {
+    "version": { "type": "string" },
+    "gate_id": { "type": "string" },
+    "description": { "type": "string" },
+    "severity_defaults": {
+      "type": "object",
+      "properties": {
+        "on_fail": { "enum": ["fail", "warn"] },
+        "on_missing_evidence": { "enum": ["fail", "warn"] }
+      },
+      "additionalProperties": false
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/GateRule" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "GateRule": {
+      "type": "object",
+      "required": ["rule_id", "when", "assert", "on_fail", "evidence_refs"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "title": { "type": "string" },
+        "when": { "$ref": "#/$defs/Predicate" },
+        "assert": { "$ref": "#/$defs/Predicate" },
+        "on_fail": { "enum": ["fail", "warn"] },
+        "message": { "type": "string" },
+        "pointers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Predicate": {
+      "description": "Minimal predicate grammar. Each predicate is one of: op-call, boolean literal, or composed predicate (and/or/not).",
+      "oneOf": [
+        { "$ref": "#/$defs/BoolLiteral" },
+        { "$ref": "#/$defs/OpCall" },
+        { "$ref": "#/$defs/And" },
+        { "$ref": "#/$defs/Or" },
+        { "$ref": "#/$defs/Not" }
+      ]
+    },
+    "BoolLiteral": {
+      "type": "object",
+      "required": ["bool"],
+      "properties": { "bool": { "type": "boolean" } },
+      "additionalProperties": false
+    },
+    "OpCall": {
+      "type": "object",
+      "required": ["op"],
+      "properties": {
+        "op": {
+          "enum": [
+            "coverage",
+            "has_artifact",
+            "ledger_complete_require_fields",
+            "upstream_locked",
+            "targets_contains",
+            "eq",
+            "neq",
+            "exists"
+          ]
+        },
+        "args": {
+          "type": "array",
+          "items": {}
+        }
+      },
+      "additionalProperties": false
+    },
+    "And": {
+      "type": "object",
+      "required": ["and"],
+      "properties": {
+        "and": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Predicate" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Or": {
+      "type": "object",
+      "required": ["or"],
+      "properties": {
+        "or": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Predicate" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Not": {
+      "type": "object",
+      "required": ["not"],
+      "properties": {
+        "not": { "$ref": "#/$defs/Predicate" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

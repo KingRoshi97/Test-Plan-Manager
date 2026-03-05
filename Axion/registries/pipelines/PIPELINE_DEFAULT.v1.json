@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "pipeline_id": "PIPELINE_DEFAULT",
+  "description": "Default Axion pipeline stages, order, and gate points.",
+  "stages": [
+    {
+      "stage_id": "S0_INIT",
+      "name": "Init",
+      "consumes": [],
+      "produces": ["run_manifest"],
+      "outputs": [{ "artifact_id": "run_manifest", "path": ".axion/runs/<run_id>/run_manifest.json", "role": "manifest" }]
+    },
+    {
+      "stage_id": "S1_INGEST_NORMALIZE",
+      "name": "Ingest + Normalize",
+      "consumes": ["raw_submission"],
+      "produces": ["submission_record"],
+      "outputs": [{ "artifact_id": "submission_record", "path": ".axion/runs/<run_id>/intake/submission_record.json", "role": "intake", "schema_ref": "axion://schemas/intake/submission_record.schema.v1.json" }]
+    },
+    {
+      "stage_id": "S2_INTAKE_VALIDATION",
+      "name": "Intake Validation",
+      "consumes": ["submission_record"],
+      "produces": ["validation_result"],
+      "outputs": [{ "artifact_id": "validation_result", "path": ".axion/runs/<run_id>/intake/validation_result.json", "role": "intake" }]
+    }
+  ],
+  "stage_order": ["S0_INIT", "S1_INGEST_NORMALIZE", "S2_INTAKE_VALIDATION"],
+  "gates": [
+    { "gate_id": "G1_INTAKE_VALIDITY", "after_stage_id": "S2_INTAKE_VALIDATION", "required": true }
+  ],
+  "activation_rules": []
+}
