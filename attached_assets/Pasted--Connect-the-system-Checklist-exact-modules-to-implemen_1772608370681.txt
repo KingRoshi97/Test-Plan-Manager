@@ -1,0 +1,446 @@
+“Connect the system” Checklist (exact modules to implement)
+
+This is the minimum set of work to turn your current working Mechanics spine into the real new AXION: S2/S4/S9 become real, and S5/S6/S7 become registry-driven (not evidence-writers).
+
+I’m writing this as WHAT to implement + WHERE (by module responsibility), so you can execute without drift.
+
+0) Lock the contracts (so stages can enforce)
+0.1 Add / finalize schema validators
+
+Implement
+
+JSON schema (or Zod) validators for:
+
+INTAKE: submission, normalized input, submission record
+
+CANONICAL: canonical spec, unknowns/assumptions
+
+STANDARDS: applicability output, resolved snapshot
+
+TEMPLATES: selection result, render envelope, completeness report
+
+PROOF: proof object, proof ledger, verification run result
+
+KIT: kit manifest, entrypoint, bundle metadata
+
+Where
+
+Axion/src/core/schemas/* (or your existing validation location)
+
+Add a registry: Axion/registries/schemas/schema_registry.json (optional now; validators can be code-first)
+
+Result
+
+stages can “fail-fast” on invalid artifacts
+
+1) Make S2_VALIDATE_INTAKE real (not a placeholder)
+1.1 Implement intake normalization pipeline
+
+Implement
+
+normalizeSubmission(submission) -> normalized_input
+
+stable ordering
+
+enum normalization
+
+explicit defaults
+
+Where
+
+Axion/src/core/intake/normalize.ts (you already have a core/intake area)
+
+1.2 Implement intake record writer
+
+Implement
+
+writeSubmissionRecord(run_id, hashes, pointers)
+
+Where
+
+Axion/src/core/intake/record.ts
+
+1.3 Stage runner wiring
+
+Implement
+
+In cmdRunStage for S2:
+
+read/create intake/submission.json
+
+write intake/normalized_input.json
+
+write intake/submission_record.json
+
+validate all three schemas
+
+update artifact_index.json
+
+Where
+
+Axion/src/cli/commands/runStage.ts (or your stage runner)
+
+Must output
+
+.axion/runs/<run_id>/intake/submission.json
+
+.axion/runs/<run_id>/intake/normalized_input.json
+
+.axion/runs/<run_id>/intake/submission_record.json
+
+2) Make S4_VALIDATE_CANONICAL real (integrity enforcement)
+2.1 Implement canonical builder (if S3 is currently evidence)
+
+If S3 is still writing “canonical evidence,” convert it to:
+
+build canonical spec from normalized_input + run context
+
+write unknowns/assumptions
+
+Where
+
+Axion/src/core/canonical/build.ts
+
+Axion/src/core/canonical/unknowns.ts (you already have unknowns utilities)
+
+2.2 Implement canonical validator
+
+Implement
+
+validateCanonicalIntegrity(canonical_spec, unknowns):
+
+schema-valid
+
+required sections present (even if empty)
+
+references/hashes link to intake artifacts
+
+unknowns listed for any required-but-missing fields
+
+Where
+
+Axion/src/core/canonical/validate.ts
+
+2.3 Stage runner wiring
+
+Implement
+
+In S4:
+
+validate canonical spec + unknowns
+
+emit canonical_validation_report.json (optional but clean)
+
+Where
+
+stage runner + core/canonical/validate.ts
+
+3) Convert S5_RESOLVE_STANDARDS to registry-driven (real snapshot)
+3.1 Implement standards registry loader
+
+Implement
+
+load:
+
+STANDARDS_INDEX
+
+APPLICABILITY_MAP
+
+CONSTRAINT_PACK_INDEX
+
+resolver rules (tie-breakers)
+
+Where
+
+Axion/src/core/standards/registryLoader.ts
+
+3.2 Implement applicability evaluator
+
+Implement
+
+evaluateApplicability(run_context, canonical_spec) -> applicability_output
+
+Where
+
+Axion/src/core/standards/applicability.ts
+
+3.3 Implement resolver (packs + precedence)
+
+Implement
+
+resolveStandards(applicability_output, packs) -> resolved_snapshot
+
+must record:
+
+selected IDs + versions
+
+precedence decisions
+
+resolver trace
+
+Where
+
+Axion/src/core/standards/resolve.ts
+
+3.4 Stage runner wiring (replace evidence writer)
+
+Implement
+
+in S5:
+
+compute applicability output
+
+resolve snapshot
+
+validate schemas
+
+write:
+
+standards/applicability_output.json
+
+standards/resolved_standards_snapshot.json
+
+update pinset to include snapshot hash/version
+
+Where
+
+stage runner + core/standards/*
+
+4) Convert S6_SELECT_TEMPLATES to registry-driven (real selection)
+4.1 Implement template registry loader
+
+Implement
+
+load TEMPLATE_INDEX
+
+load selection profiles if used (TEMPLATE_SELECTION_PROFILES)
+
+Where
+
+Axion/src/core/templates/registryLoader.ts
+
+4.2 Implement deterministic selection
+
+Implement
+
+selectTemplates(run_context, canonical_spec, standards_snapshot) -> selection_result
+
+must include rationale tokens and selection hash
+
+Where
+
+Axion/src/core/templates/select.ts
+
+4.3 Stage runner wiring
+
+Implement
+
+in S6:
+
+compute selection_result
+
+validate schema
+
+write templates/template_selection_result.json
+
+5) Convert S7_RENDER_DOCS to envelope-first + completeness enforcement
+
+Right now this stage is your main bloat engine (rendered_docs/*). Make envelopes the truth.
+
+5.1 Implement renderer that outputs envelopes
+
+Implement
+
+renderEnvelopes(selection_result, canonical_spec, standards_snapshot) -> envelopes[]
+
+Where
+
+Axion/src/core/templates/render.ts
+
+5.2 Implement placeholder/derive validator
+
+Implement
+
+enforce allowed placeholder forms (registry-driven or hardcoded minimal now)
+
+Where
+
+Axion/src/core/templates/placeholders.ts
+
+5.3 Implement completeness checker
+
+Implement
+
+checkCompleteness(envelopes, rules) -> completeness_report
+
+required templates cannot pass if required placeholders unresolved
+
+Where
+
+Axion/src/core/templates/completeness.ts
+
+5.4 Stage runner wiring
+
+Implement
+
+in S7:
+
+write:
+
+templates/render_envelopes/*.json (or one file)
+
+templates/template_completeness_report.json
+
+optionally generate human docs on demand later
+
+stop writing large rendered_docs/* per run (or make it optional)
+
+6) Make S9_VERIFY_PROOF real (proof ledger + enforcement)
+6.1 Implement proof type registry loader
+
+Implement
+
+load PROOF_TYPE_REGISTRY
+
+load EVIDENCE_POLICY_REGISTRY (gate → required proofs)
+
+Where
+
+Axion/src/core/proof/registryLoader.ts
+
+6.2 Implement verification runner (minimum viable)
+
+Implement
+
+execute verify commands defined by profile/policy OR a minimal command list first
+
+capture:
+
+stdout/stderr logs
+
+exit codes
+
+tool versions (metadata)
+
+Where
+
+Axion/src/core/verification/run.ts
+
+6.3 Implement proof object creation
+
+Implement
+
+map verification outputs → proof objects
+
+validate proof objects against proof type requirements
+
+Where
+
+Axion/src/core/proof/create.ts
+
+6.4 Implement proof ledger append
+
+Implement
+
+write proof/proof_ledger.jsonl (append-only)
+
+link proofs to:
+
+run_id
+
+gate ids (if applicable)
+
+units/spec items (if applicable)
+
+Where
+
+Axion/src/core/proof/ledger.ts
+
+6.5 Implement pointer resolver enforcement (required for proof)
+
+Implement
+
+dereference file/log pointers; optional hash match
+
+FAIL if required pointers don’t resolve
+
+Where
+
+Axion/src/core/evidence/pointers.ts
+
+6.6 Stage runner wiring
+
+Implement
+
+in S9:
+
+run verification commands (per policy)
+
+write verification result artifact
+
+write proof objects
+
+append proof ledger
+
+run gates that require verification (G7)
+
+Must output
+
+verification/verification_run_result.json
+
+proof/proof_objects/*.json (or combined)
+
+proof/proof_ledger.jsonl
+
+7) Wire gates to the new enforcement surfaces (stop “pass without proof”)
+7.1 Predicate operator registry enforcement
+
+Implement
+
+gate evaluator rejects unknown operators
+
+Where
+
+Axion/src/core/gates/evaluate.ts (or equivalent)
+
+7.2 Evidence policy mapping enforcement
+
+Implement
+
+gate PASS requires required proof types present (from S9 outputs)
+
+Where
+
+Axion/src/core/gates/evidencePolicy.ts
+
+7.3 Gate report must include evidence completeness section
+
+Implement
+
+per gate:
+
+required proof types
+
+satisfied/missing
+
+pointers
+
+8) Minimal “Connected System” definition (your completion check)
+
+The system is considered connected when these are true in one run:
+
+S2 writes and validates intake artifacts
+
+S3/S4 produce and validate canonical + unknowns
+
+S5 produces real applicability output + standards snapshot from registries
+
+S6 produces real template selection from registry
+
+S7 produces render envelopes + completeness report (enforced)
+
+S9 produces verification results + proof ledger + proof objects
+
+gates enforce operator registry + evidence policy + pointer resolver
+
+kit packaging consumes the real upstream artifacts (not placeholders)

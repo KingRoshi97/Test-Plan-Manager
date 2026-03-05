@@ -1,0 +1,211 @@
+Library index (single source of truth for versioned libraries)
+Axion/libraries/library_index.v1.json
+{
+  "version": "1.0.0",
+  "description": "Single registry for all Axion versioned libraries (non-schema files). Used for pins + deterministic resolution.",
+  "libraries": [
+    { "id": "intake.form_version", "path": "Axion/libraries/intake/form_version.v1.json", "version": "1.0.0" },
+
+    { "id": "canonical.id_rules", "path": "Axion/libraries/canonical/id_rules.v1.json", "version": "1.0.0" },
+
+    { "id": "standards.index", "path": "Axion/libraries/standards/standards_index.json", "version": "1.0.0" },
+    { "id": "standards.resolver_rules", "path": "Axion/libraries/standards/resolver_rules.v1.json", "version": "1.0.0" },
+
+    { "id": "templates.index", "path": "Axion/libraries/templates/template_index.json", "version": "1.0.0" },
+    { "id": "templates.placeholder_catalog", "path": "Axion/libraries/templates/placeholder_catalog.v1.json", "version": "1.0.0" },
+
+    { "id": "planning.sequencing_policy", "path": "Axion/libraries/planning/sequencing_policy.v1.json", "version": "1.0.0" },
+
+    { "id": "policy.risk_classes", "path": "Axion/libraries/policy/risk_classes.v1.json", "version": "1.0.0" },
+    { "id": "policy.override_policy", "path": "Axion/libraries/policy/override_policy.v1.json", "version": "1.0.0" },
+
+    { "id": "telemetry.sink_policy", "path": "Axion/libraries/telemetry/sink_policy.v1.json", "version": "1.0.0" }
+  ],
+  "notes": [
+    "Schema files are registered in schema_registry.v1.json (separate).",
+    "Standards packs remain under Axion/libraries/standards/packs/*.json and are referenced by standards_index.json."
+  ]
+}
+12) Schema registry (single source of truth for JSON Schemas)
+Axion/libraries/schema_registry.v1.json
+{
+  "version": "1.0.0",
+  "description": "Registry of JSON schemas. Used to validate artifacts, libraries, and run outputs deterministically.",
+  "schemas": [
+    {
+      "schema_id": "canonical.spec.v1",
+      "path": "Axion/libraries/canonical/spec.schema.v1.json",
+      "uri": "axion://schemas/canonical/spec.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "canonical.unknowns.v1",
+      "path": "Axion/libraries/canonical/unknowns.schema.v1.json",
+      "uri": "axion://schemas/canonical/unknowns.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "gates.dsl.v1",
+      "path": "Axion/libraries/gates/gate_dsl.schema.v1.json",
+      "uri": "axion://schemas/gates/gate_dsl.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "planning.work_breakdown.v1",
+      "path": "Axion/libraries/planning/work_breakdown.schema.v1.json",
+      "uri": "axion://schemas/planning/work_breakdown.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "planning.acceptance_map.v1",
+      "path": "Axion/libraries/planning/acceptance_map.schema.v1.json",
+      "uri": "axion://schemas/planning/acceptance_map.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "verification.proof_log.v1",
+      "path": "Axion/libraries/verification/proof_log.schema.v1.json",
+      "uri": "axion://schemas/verification/proof_log.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "verification.command_runs.v1",
+      "path": "Axion/libraries/verification/command_runs.schema.v1.json",
+      "uri": "axion://schemas/verification/command_runs.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "kit.tree.v1",
+      "path": "Axion/libraries/kit/kit_tree.schema.v1.json",
+      "uri": "axion://schemas/kit/kit_tree.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "kit.manifest.v1",
+      "path": "Axion/libraries/kit/kit_manifest.schema.v1.json",
+      "uri": "axion://schemas/kit/kit_manifest.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "kit.entrypoint.v1",
+      "path": "Axion/libraries/kit/kit_entrypoint.schema.v1.json",
+      "uri": "axion://schemas/kit/kit_entrypoint.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "kit.versions.v1",
+      "path": "Axion/libraries/kit/kit_versions.schema.v1.json",
+      "uri": "axion://schemas/kit/kit_versions.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "orchestration.pipeline_definition.v1",
+      "path": "Axion/libraries/orchestration/pipeline_definition.schema.v1.json",
+      "uri": "axion://schemas/orchestration/pipeline_definition.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "orchestration.stage_io_contract.v1",
+      "path": "Axion/libraries/orchestration/stage_io_contract.schema.v1.json",
+      "uri": "axion://schemas/orchestration/stage_io_contract.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "orchestration.stage_report.v1",
+      "path": "Axion/libraries/orchestration/stage_report.schema.v1.json",
+      "uri": "axion://schemas/orchestration/stage_report.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "orchestration.run_manifest.v1",
+      "path": "Axion/libraries/orchestration/run_manifest.schema.v1.json",
+      "uri": "axion://schemas/orchestration/run_manifest.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "policy.override_policy.v1",
+      "path": "Axion/libraries/policy/override_policy.schema.v1.json",
+      "uri": "axion://schemas/policy/override_policy.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "audit.operator_actions_ledger.v1",
+      "path": "Axion/libraries/audit/operator_actions_ledger.schema.v1.json",
+      "uri": "axion://schemas/audit/operator_actions_ledger.schema.v1.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "telemetry.event.v1",
+      "path": "Axion/libraries/telemetry/event.schema.v1.json",
+      "uri": "axion://schemas/telemetry/event.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "telemetry.run_metrics.v1",
+      "path": "Axion/libraries/telemetry/run_metrics.schema.v1.json",
+      "uri": "axion://schemas/telemetry/run_metrics.schema.v1.json",
+      "version": "1.0.0"
+    }
+  ]
+}
+13) Default pins file (what the control plane pins for a run)
+
+This is the “one file” that locks which versions are used.
+
+Axion/registries/PINS_DEFAULT.v1.json
+{
+  "version": "1.0.0",
+  "description": "Default pins applied to new runs unless overridden.",
+  "pins": {
+    "library_index": { "id": "library_index", "path": "Axion/libraries/library_index.v1.json", "version": "1.0.0" },
+    "schema_registry": { "id": "schema_registry", "path": "Axion/libraries/schema_registry.v1.json", "version": "1.0.0" },
+
+    "intake.form_version": { "id": "intake.form_version", "version": "1.0.0" },
+
+    "canonical.id_rules": { "id": "canonical.id_rules", "version": "1.0.0" },
+    "canonical.spec.schema": { "id": "canonical.spec.v1", "version": "1.0.0" },
+    "canonical.unknowns.schema": { "id": "canonical.unknowns.v1", "version": "1.0.0" },
+
+    "standards.index": { "id": "standards.index", "version": "1.0.0" },
+    "standards.resolver_rules": { "id": "standards.resolver_rules", "version": "1.0.0" },
+
+    "templates.index": { "id": "templates.index", "version": "1.0.0" },
+    "templates.placeholder_catalog": { "id": "templates.placeholder_catalog", "version": "1.0.0" },
+
+    "planning.work_breakdown.schema": { "id": "planning.work_breakdown.v1", "version": "1.0.0" },
+    "planning.acceptance_map.schema": { "id": "planning.acceptance_map.v1", "version": "1.0.0" },
+    "planning.sequencing_policy": { "id": "planning.sequencing_policy", "version": "1.0.0" },
+
+    "gates.dsl.schema": { "id": "gates.dsl.v1", "version": "1.0.0" },
+
+    "verification.proof_log.schema": { "id": "verification.proof_log.v1", "version": "1.0.0" },
+    "verification.command_runs.schema": { "id": "verification.command_runs.v1", "version": "1.0.0" },
+
+    "kit.tree.schema": { "id": "kit.tree.v1", "version": "1.0.0" },
+    "kit.manifest.schema": { "id": "kit.manifest.v1", "version": "1.0.0" },
+    "kit.entrypoint.schema": { "id": "kit.entrypoint.v1", "version": "1.0.0" },
+    "kit.versions.schema": { "id": "kit.versions.v1", "version": "1.0.0" },
+
+    "orchestration.pipeline_definition.schema": { "id": "orchestration.pipeline_definition.v1", "version": "1.0.0" },
+    "orchestration.stage_io_contract.schema": { "id": "orchestration.stage_io_contract.v1", "version": "1.0.0" },
+    "orchestration.stage_report.schema": { "id": "orchestration.stage_report.v1", "version": "1.0.0" },
+    "orchestration.run_manifest.schema": { "id": "orchestration.run_manifest.v1", "version": "1.0.0" },
+
+    "policy.risk_classes": { "id": "policy.risk_classes", "version": "1.0.0" },
+    "policy.override_policy": { "id": "policy.override_policy", "version": "1.0.0" },
+
+    "audit.operator_actions_ledger.schema": { "id": "audit.operator_actions_ledger.v1", "version": "1.0.0" },
+
+    "telemetry.event.schema": { "id": "telemetry.event.v1", "version": "1.0.0" },
+    "telemetry.run_metrics.schema": { "id": "telemetry.run_metrics.v1", "version": "1.0.0" },
+    "telemetry.sink_policy": { "id": "telemetry.sink_policy", "version": "1.0.0" }
+  }
+}

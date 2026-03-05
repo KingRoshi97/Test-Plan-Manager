@@ -1,0 +1,170 @@
+Yes — a functioning “system layer” exists in this newer AXION repo, but it’s only the Mechanics spine. What’s not there yet (or not connected) is the meaning layer that turns the spine into the full AXION you designed (registries → standards → templates → proofs → profiles → operator UI).
+
+Below is the exact reality of what you have vs what’s missing, based on the repo you rolled back to (the one with Axion/src/cli/axion.ts + cmdRunStage + .axion/runs/*).
+
+What does exist (the functioning layer you actually have)
+
+This is the part that “works” today:
+
+1) Run orchestration + state spine
+
+axion init
+
+axion run start → allocates RUN-00000X, writes run_manifest.json
+
+axion run stage <run_id> <stage_id>
+
+STAGE_ORDER + STAGE_GATES are real and drive execution
+
+2) Deterministic artifact output shape
+
+Runs produce a stable filesystem contract under:
+
+.axion/runs/<run_id>/
+
+stage_reports/
+
+gates/*.gate_report.json
+
+templates/selection_result.json, render_report.json, rendered_docs/*
+
+kit/bundle/*, packaging_manifest.json
+
+artifact_index.json
+
+3) Gates are wired into the stage machine
+
+cmdRunStage() runs runGatesForStage() whenever a stage has a gate mapping and blocks on failure.
+
+So: the Mechanics pipeline “exists.” That’s the functioning layer.
+
+What’s missing / not connected (why it still feels incomplete)
+
+These are the gaps that stop it from being the full AXION system you’re designing now.
+
+A) Stages are “evidence writers,” not the real engines
+
+In your stage runner, only these stages actually do work:
+
+S1 → writeIntakeValidationResult() (evidence output, not real intake)
+
+S3 → writeCanonicalSpecEvidence() (not real canonical synthesis)
+
+S5 → writeResolvedStandardsSnapshot() (not resolved from standards registries)
+
+S6 → writeSelectionResult() (selection evidence)
+
+S7 → writeRenderedDocs() (renders docs, but not envelope-first completeness enforcement)
+
+S8 → writeCoverageReport() (coverage evidence)
+
+S10 → writeBundleAndPackagingManifest() (kit packaging is real-ish)
+
+Not connected / effectively empty in stage logic:
+
+S2_VALIDATE_INTAKE
+
+S4_VALIDATE_CANONICAL
+
+S9_VERIFY_PROOF (the big one — proof ledger is listed in IO but the stage doesn’t write it)
+
+Result: the pipeline “runs,” but key stages are not actually generating/validating the artifacts your docs define.
+
+B) Registries aren’t actually driving the run yet
+
+Your architecture relies on registries as source-of-truth:
+
+standards index, applicability map, constraint packs
+
+template registry/selection profiles
+
+gate registry + predicate operator registry
+
+proof type registry + evidence policy registry
+
+schema registry + compatibility rules
+
+In the current repo, stage work is primarily coming from core/*/evidence.ts helpers — not from registry-driven resolution.
+
+So the missing connection is:
+Run context → registries → resolved snapshot/selection → enforced outputs
+Right now it’s closer to:
+Run context → write sample artifacts → run gates
+
+C) Gate enforcement is present, but “gates as law” is incomplete
+
+You do have gates running, but the enforcement model is still missing key locks:
+
+Predicate operator registry enforcement (prevent invented predicates)
+
+Evidence policy mapping enforcement (gate → required proof types)
+
+Pointer resolver enforcement (evidence pointers must dereference/hash-match)
+
+G7_VERIFICATION is explicitly “not enforced yet” (your help text says it)
+
+So you can get “PASS” without the full proof discipline you designed.
+
+D) Proof system isn’t actually connected to execution yet
+
+This is the biggest functional gap:
+
+S9 claims it produces proof/proof_ledger.jsonl
+
+but the stage runner does not write it
+
+and the “PASS requires evidence” linkage isn’t enforced end-to-end
+
+So your system currently lacks:
+
+proof object types (registered + validated)
+
+proof capture from verification commands
+
+ledger completeness required for pass
+
+E) The web application layer is not present in this version
+
+This version has:
+
+CLI + artifacts
+
+no persistent DB-backed run index
+
+no operator dashboard/API
+
+no assembly/workspace model
+
+So “everything isn’t connected” includes: no operator console layer to drive and inspect runs (like the old system had).
+
+The shortest “missing set” to make this version actually be the new AXION
+
+If you only fix the critical missing connections:
+
+Make S2/S4/S9 real
+
+S2: validate intake artifact(s) (schema + required fields)
+
+S4: validate canonical integrity (schema + completeness)
+
+S9: generate proof ledger and tie it to verification outputs
+
+Replace evidence-writers with registry-driven engines
+
+S5 resolves standards from standards registries
+
+S6 selects templates from template registry / selection profile
+
+S7 enforces completeness using placeholder rules registry (envelopes, not just rendered_docs)
+
+Enforce gates with registered operators + evidence policy
+
+no “PASS” unless required proofs exist and pointers resolve
+
+Add the operator web layer (optional but matches your goal)
+
+DB tables: assemblies, pipeline_runs, module_statuses, reports
+
+API that spawns axion run and streams progress
+
+UI that displays stage timeline, gates, artifacts, kits

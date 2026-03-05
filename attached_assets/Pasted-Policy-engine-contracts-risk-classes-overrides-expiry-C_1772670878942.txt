@@ -1,0 +1,220 @@
+Policy engine contracts (risk classes, overrides, expiry)
+Create folder: Axion/libraries/policy/
+Axion/libraries/policy/risk_classes.v1.json
+{
+  "version": "1.0.0",
+  "description": "Risk classes drive hard stops, required evidence, and override permissions.",
+  "classes": [
+    {
+      "risk_class": "LOW",
+      "hard_stops": [],
+      "required_evidence": [],
+      "allow_overrides": true
+    },
+    {
+      "risk_class": "MED",
+      "hard_stops": ["security.gates.fail"],
+      "required_evidence": ["proof_log"],
+      "allow_overrides": true
+    },
+    {
+      "risk_class": "HIGH",
+      "hard_stops": ["security.gates.fail", "privacy.data_handling.missing"],
+      "required_evidence": ["proof_log", "command_runs"],
+      "allow_overrides": false
+    }
+  ]
+}
+Axion/libraries/policy/override_policy.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/policy/override_policy.schema.v1.json",
+  "title": "Axion Override Policy Schema v1",
+  "type": "object",
+  "required": ["version", "rules"],
+  "properties": {
+    "version": { "type": "string" },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/OverrideRule" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "OverrideRule": {
+      "type": "object",
+      "required": ["rule_id", "applies_to", "allowed", "requires_evidence", "expires_in_days"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "applies_to": { "type": "string" },
+        "allowed": { "type": "boolean" },
+        "requires_evidence": { "type": "array", "items": { "type": "string" } },
+        "expires_in_days": { "type": "integer", "minimum": 0 },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Axion/libraries/policy/override_policy.v1.json
+{
+  "version": "1.0.0",
+  "rules": [
+    {
+      "rule_id": "OVR-01",
+      "applies_to": "gates.*.on_fail=warn",
+      "allowed": true,
+      "requires_evidence": ["operator_approval", "reason_code"],
+      "expires_in_days": 7,
+      "notes": "Temporary downgrade of a gate failure to warning with explicit approval."
+    },
+    {
+      "rule_id": "OVR-02",
+      "applies_to": "standards.fixed_rules.*",
+      "allowed": false,
+      "requires_evidence": [],
+      "expires_in_days": 0,
+      "notes": "Fixed rules cannot be overridden."
+    }
+  ]
+}
+9) Operator actions ledger (audit log, tamper-evident hooks)
+Create folder: Axion/libraries/audit/
+Axion/libraries/audit/operator_actions_ledger.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/audit/operator_actions_ledger.schema.v1.json",
+  "title": "Axion Operator Actions Ledger Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "entries"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/LedgerEntry" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "LedgerEntry": {
+      "type": "object",
+      "required": [
+        "entry_id",
+        "ts",
+        "actor",
+        "action",
+        "target",
+        "why",
+        "before",
+        "after",
+        "prev_hash",
+        "hash"
+      ],
+      "properties": {
+        "entry_id": { "type": "string" },
+        "ts": { "type": "string" },
+        "actor": {
+          "type": "object",
+          "required": ["type", "id"],
+          "properties": {
+            "type": { "enum": ["human", "system", "agent"] },
+            "id": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "action": { "type": "string" },
+        "target": {
+          "type": "object",
+          "required": ["kind", "ref"],
+          "properties": {
+            "kind": { "type": "string" },
+            "ref": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "why": { "type": "string" },
+        "reason_code": { "type": "string" },
+        "before": {},
+        "after": {},
+        "prev_hash": { "type": "string" },
+        "hash": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+10) Telemetry & metrics contracts (events + run metrics)
+Create folder: Axion/libraries/telemetry/
+Axion/libraries/telemetry/event.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/telemetry/event.schema.v1.json",
+  "title": "Axion Telemetry Event Schema v1",
+  "type": "object",
+  "required": ["version", "event_id", "ts", "run_id", "type", "payload"],
+  "properties": {
+    "version": { "type": "string" },
+    "event_id": { "type": "string" },
+    "ts": { "type": "string" },
+    "run_id": { "type": "string" },
+    "type": {
+      "enum": [
+        "run.started",
+        "run.stage.started",
+        "run.stage.finished",
+        "run.gate.evaluated",
+        "run.failed",
+        "run.released",
+        "policy.override.applied",
+        "artifact.written",
+        "verification.command.ran"
+      ]
+    },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/telemetry/run_metrics.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/telemetry/run_metrics.schema.v1.json",
+  "title": "Axion Run Metrics Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "counters", "timings_ms", "sizes_bytes"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "counters": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "timings_ms": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "sizes_bytes": {
+      "type": "object",
+      "additionalProperties": { "type": "integer" }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+(Optional) Default event sink contract (where events are written)
+
+Axion/libraries/telemetry/sink_policy.v1.json
+
+{
+  "version": "1.0.0",
+  "description": "Where telemetry is written during runs.",
+  "sinks": [
+    {
+      "sink_id": "local_jsonl",
+      "path": ".axion/runs/<run_id>/telemetry/events.jsonl",
+      "format": "jsonl",
+      "enabled": true
+    }
+  ]
+}

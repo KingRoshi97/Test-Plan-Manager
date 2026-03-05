@@ -1,0 +1,284 @@
+Axion/libraries/intake/form_version.v1.json
+{
+  "form_version": "1.0.0",
+  "description": "Inventory of intake modules/sections and how they map into normalized input. Used for deterministic intake evolution.",
+  "modules": [
+    {
+      "module_id": "routing",
+      "required": true,
+      "fields": ["skill_level", "category", "type_preset", "build_target", "audience_context"]
+    },
+    {
+      "module_id": "delivery",
+      "required": false,
+      "fields": ["desired_scope", "priority_bias"]
+    },
+    {
+      "module_id": "constraints",
+      "required": false,
+      "fields": [
+        "stack",
+        "security",
+        "quality",
+        "design",
+        "data_enabled",
+        "auth_required",
+        "integrations_enabled",
+        "compliance_flags"
+      ]
+    },
+    {
+      "module_id": "spec.roles",
+      "required": false,
+      "fields": ["name", "description", "primary_goal"]
+    },
+    {
+      "module_id": "spec.must_have_features",
+      "required": false,
+      "fields": ["name", "description"]
+    },
+    {
+      "module_id": "spec.workflows",
+      "required": false,
+      "fields": ["name", "actor_role", "steps", "success_outcome", "failure_states", "priority"]
+    }
+  ],
+  "compat": {
+    "breaking_change_requires_new_version": true,
+    "notes": [
+      "If you rename or remove a module_id, bump form_version.",
+      "If you add optional fields, keep same form_version but update schema/rules."
+    ]
+  }
+}
+2) Create folder: Axion/libraries/canonical/
+2a) Axion/libraries/canonical/spec.schema.v1.json
+
+(JSON Schema for CanonicalSpec — minimal but enforceable)
+
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/canonical/spec.schema.v1.json",
+  "title": "Axion Canonical Spec Schema v1",
+  "type": "object",
+  "required": ["meta", "routing", "constraints", "entities", "rules", "unknowns", "index"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "spec_id",
+        "submission_id",
+        "schema_version_used",
+        "standards_snapshot_id",
+        "standards_version_used",
+        "spec_version",
+        "created_at"
+      ],
+      "properties": {
+        "spec_id": { "type": "string" },
+        "submission_id": { "type": "string" },
+        "schema_version_used": { "type": "string" },
+        "standards_snapshot_id": { "type": "string" },
+        "standards_version_used": { "type": "string" },
+        "spec_version": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "routing": {
+      "type": "object",
+      "required": ["skill_level", "category", "type_preset", "build_target", "audience_context"],
+      "properties": {
+        "skill_level": { "type": "string" },
+        "category": { "type": "string" },
+        "type_preset": { "type": "string" },
+        "build_target": { "type": "string" },
+        "audience_context": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "constraints": {
+      "type": "object",
+      "required": [
+        "stack_constraints",
+        "security_constraints",
+        "quality_constraints",
+        "fixed_vs_configurable"
+      ],
+      "properties": {
+        "stack_constraints": {},
+        "security_constraints": {},
+        "quality_constraints": {},
+        "design_constraints": {},
+        "fixed_vs_configurable": {
+          "type": "object",
+          "additionalProperties": { "enum": ["fixed", "configurable"] }
+        }
+      },
+      "additionalProperties": true
+    },
+    "entities": {
+      "type": "object",
+      "required": ["roles", "features", "workflows", "permissions"],
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role_id", "name"],
+            "properties": {
+              "role_id": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "primary_goal": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["feature_id", "name", "priority_tier"],
+            "properties": {
+              "feature_id": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "priority_tier": { "enum": ["must", "nice", "future"] },
+              "priority_rank": { "type": "number" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "workflows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["workflow_id", "name", "actor_role_ref", "steps", "success_outcome"],
+            "properties": {
+              "workflow_id": { "type": "string" },
+              "name": { "type": "string" },
+              "actor_role_ref": { "type": "string" },
+              "steps": { "type": "array", "items": { "type": "string" } },
+              "success_outcome": { "type": "string" },
+              "failure_states": { "type": "string" },
+              "priority": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["perm_id", "role_ref", "allowed_capabilities"],
+            "properties": {
+              "perm_id": { "type": "string" },
+              "role_ref": { "type": "string" },
+              "allowed_capabilities": { "type": "array", "items": { "type": "string" } },
+              "restricted_actions": { "type": "array", "items": { "type": "string" } },
+              "approval_required_actions": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": true
+          }
+        },
+        "screens": { "type": "array" },
+        "data_objects": { "type": "array" },
+        "operations": { "type": "array" },
+        "integrations": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "rules": {
+      "type": "object",
+      "required": ["definition_of_done"],
+      "properties": {
+        "definition_of_done": { "type": "string" },
+        "must_always": { "type": "array", "items": { "type": "string" } },
+        "must_never": { "type": "array", "items": { "type": "string" } },
+        "must_pass_checks": { "type": "array", "items": { "type": "string" } },
+        "acceptance_criteria": { "type": "array", "items": { "type": "string" } },
+        "rejection_conditions": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "axion://schemas/canonical/unknowns.schema.v1.json" }
+    },
+    "index": {
+      "type": "object",
+      "required": ["roles_by_id", "features_by_id", "workflows_by_id", "cross_maps"],
+      "properties": {
+        "roles_by_id": { "type": "object", "additionalProperties": { "type": "object" } },
+        "features_by_id": { "type": "object", "additionalProperties": { "type": "object" } },
+        "workflows_by_id": { "type": "object", "additionalProperties": { "type": "object" } },
+        "cross_maps": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
+2b) Axion/libraries/canonical/id_rules.v1.json
+{
+  "version": "1.0.0",
+  "description": "Canonical ID prefix and format rules. Used by validators and generators.",
+  "id_types": [
+    { "type": "ROLE", "prefix": "ROLE-", "pattern": "^ROLE-[0-9]{3}$" },
+    { "type": "FEAT", "prefix": "FEAT-", "pattern": "^FEAT-[0-9]{3}$" },
+    { "type": "WF", "prefix": "WF-", "pattern": "^WF-[0-9]{3}$" },
+    { "type": "PERM", "prefix": "PERM-", "pattern": "^PERM-[0-9]{3}$" },
+    { "type": "SPEC", "prefix": "SPEC-", "pattern": "^SPEC-.*$" }
+  ],
+  "ref_integrity": {
+    "required_refs": [
+      { "field": "entities.workflows[].actor_role_ref", "must_match_type": "ROLE" },
+      { "field": "entities.permissions[].role_ref", "must_match_type": "ROLE" }
+    ],
+    "notes": [
+      "If you add new entity collections (screens/data_objects/operations), extend required_refs."
+    ]
+  }
+}
+2c) Axion/libraries/canonical/unknowns.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/canonical/unknowns.schema.v1.json",
+  "title": "Axion Unknown Entity Schema v1",
+  "type": "object",
+  "required": ["unknown_id", "area", "summary", "impact", "blocking", "needs", "refs"],
+  "properties": {
+    "unknown_id": { "type": "string" },
+    "area": { "type": "string" },
+    "summary": { "type": "string" },
+    "impact": { "enum": ["low", "medium", "high"] },
+    "blocking": { "type": "boolean" },
+    "needs": { "type": "string" },
+    "refs": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": true
+}
+3) Axion/libraries/templates/placeholder_catalog.v1.json
+{
+  "version": "1.0.0",
+  "description": "Allowed placeholder roots and derived functions for template filling.",
+  "roots": ["spec", "standards", "work", "acceptance", "meta"],
+  "flags": ["OPTIONAL", "UNKNOWN_ALLOWED"],
+  "syntax": {
+    "direct": "{{ path.to.value }}",
+    "array_join": "{{ path.to.array[] }}",
+    "derived": "{{ derive:name(arg1,arg2) }}",
+    "optional": "{{ spec.rules.definition_of_done|OPTIONAL }}",
+    "unknown_allowed": "{{ spec.unknowns|UNKNOWN_ALLOWED }}"
+  },
+  "derived_functions": [
+    { "name": "now", "args": [], "returns": "iso_datetime" },
+    { "name": "spec_id", "args": [], "returns": "string" },
+    { "name": "submission_id", "args": [], "returns": "string" }
+  ],
+  "notes": [
+    "This matches your current filler implementation in src/core/templates/filler.ts.",
+    "If you add derive functions, update both this catalog and the derive() switch."
+  ]
+}

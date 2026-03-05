@@ -1,0 +1,281 @@
+6) Orchestration / Pipeline contracts (pipeline, stage IO, run manifest, stage report)
+Create folder: Axion/libraries/orchestration/
+Axion/libraries/orchestration/pipeline_definition.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/pipeline_definition.schema.v1.json",
+  "title": "Axion Pipeline Definition Schema v1",
+  "type": "object",
+  "required": ["version", "pipeline_id", "description", "stages", "stage_order", "gates"],
+  "properties": {
+    "version": { "type": "string" },
+    "pipeline_id": { "type": "string" },
+    "description": { "type": "string" },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Stage" }
+    },
+    "stage_order": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "gates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/GatePoint" }
+    },
+    "activation_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ActivationRule" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Stage": {
+      "type": "object",
+      "required": ["stage_id", "name", "consumes", "produces", "outputs"],
+      "properties": {
+        "stage_id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "consumes": { "type": "array", "items": { "type": "string" } },
+        "produces": { "type": "array", "items": { "type": "string" } },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Output" }
+        },
+        "verification_commands": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "Output": {
+      "type": "object",
+      "required": ["artifact_id", "path", "role"],
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "path": { "type": "string" },
+        "role": { "type": "string" },
+        "schema_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "GatePoint": {
+      "type": "object",
+      "required": ["gate_id", "after_stage_id"],
+      "properties": {
+        "gate_id": { "type": "string" },
+        "after_stage_id": { "type": "string" },
+        "before_stage_id": { "type": "string" },
+        "required": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "ActivationRule": {
+      "type": "object",
+      "required": ["rule_id", "when", "enable_stages"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "when": { "type": "string" },
+        "enable_stages": { "type": "array", "items": { "type": "string" } },
+        "disable_stages": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Axion/libraries/orchestration/stage_io_contract.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/stage_io_contract.schema.v1.json",
+  "title": "Axion Stage IO Contract Schema v1",
+  "type": "object",
+  "required": ["version", "stage_id", "consumes", "produces", "required_inputs", "required_outputs"],
+  "properties": {
+    "version": { "type": "string" },
+    "stage_id": { "type": "string" },
+    "consumes": { "type": "array", "items": { "type": "string" } },
+    "produces": { "type": "array", "items": { "type": "string" } },
+    "required_inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ArtifactRef" }
+    },
+    "required_outputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ArtifactRef" }
+    },
+    "optional_outputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ArtifactRef" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ArtifactRef": {
+      "type": "object",
+      "required": ["artifact_id", "path"],
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "path": { "type": "string" },
+        "schema_ref": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Axion/libraries/orchestration/stage_report.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/stage_report.schema.v1.json",
+  "title": "Axion Stage Report Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "stage_id", "status", "started_at", "finished_at", "outputs", "notes"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "stage_id": { "type": "string" },
+    "status": { "enum": ["queued", "running", "gated", "failed", "released", "skipped"] },
+    "started_at": { "type": "string" },
+    "finished_at": { "type": "string" },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifact_id", "path"],
+        "properties": {
+          "artifact_id": { "type": "string" },
+          "path": { "type": "string" },
+          "hash": { "type": "string" },
+          "bytes": { "type": "integer" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "pointers": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/orchestration/run_manifest.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/run_manifest.schema.v1.json",
+  "title": "Axion Run Manifest Schema v1",
+  "type": "object",
+  "required": [
+    "version",
+    "run_id",
+    "pipeline_id",
+    "status",
+    "created_at",
+    "updated_at",
+    "stage_states",
+    "pins",
+    "artifacts"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "pipeline_id": { "type": "string" },
+    "status": { "enum": ["queued", "running", "gated", "failed", "released", "closed"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "stage_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["stage_id", "status", "report_path"],
+        "properties": {
+          "stage_id": { "type": "string" },
+          "status": { "enum": ["queued", "running", "gated", "failed", "released", "skipped"] },
+          "report_path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pins": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "version"],
+        "properties": {
+          "id": { "type": "string" },
+          "version": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifact_id", "path", "role"],
+        "properties": {
+          "artifact_id": { "type": "string" },
+          "path": { "type": "string" },
+          "role": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+7) (Optional) Concrete pipeline definition file you can pin
+
+If you want a real pinned pipeline file (not just schemas), add:
+
+Axion/registries/pipelines/PIPELINE_DEFAULT.v1.json
+{
+  "version": "1.0.0",
+  "pipeline_id": "PIPELINE_DEFAULT",
+  "description": "Default Axion pipeline stages, order, and gate points.",
+  "stages": [
+    {
+      "stage_id": "S0_INIT",
+      "name": "Init",
+      "consumes": [],
+      "produces": ["run_manifest"],
+      "outputs": [{ "artifact_id": "run_manifest", "path": ".axion/runs/<run_id>/run_manifest.json", "role": "manifest" }]
+    },
+    {
+      "stage_id": "S1_INGEST_NORMALIZE",
+      "name": "Ingest + Normalize",
+      "consumes": ["raw_submission"],
+      "produces": ["submission_record"],
+      "outputs": [{ "artifact_id": "submission_record", "path": ".axion/runs/<run_id>/intake/submission_record.json", "role": "intake", "schema_ref": "axion://schemas/intake/submission_record.schema.v1.json" }]
+    },
+    {
+      "stage_id": "S2_INTAKE_VALIDATION",
+      "name": "Intake Validation",
+      "consumes": ["submission_record"],
+      "produces": ["validation_result"],
+      "outputs": [{ "artifact_id": "validation_result", "path": ".axion/runs/<run_id>/intake/validation_result.json", "role": "intake" }]
+    }
+  ],
+  "stage_order": ["S0_INIT", "S1_INGEST_NORMALIZE", "S2_INTAKE_VALIDATION"],
+  "gates": [
+    { "gate_id": "G1_INTAKE_VALIDITY", "after_stage_id": "S2_INTAKE_VALIDATION", "required": true }
+  ],
+  "activation_rules": []
+}

@@ -1,0 +1,283 @@
+Verification schemas (proof log + command run capture)
+Create folder: Axion/libraries/verification/
+Axion/libraries/verification/proof_log.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/verification/proof_log.schema.v1.json",
+  "title": "Axion Proof Log Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "entries"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ProofEntry" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ProofEntry": {
+      "type": "object",
+      "required": [
+        "proof_id",
+        "created_at",
+        "acceptance_refs",
+        "unit_refs",
+        "type",
+        "status",
+        "artifacts",
+        "commands"
+      ],
+      "properties": {
+        "proof_id": { "type": "string" },
+        "created_at": { "type": "string" },
+        "acceptance_refs": { "type": "array", "items": { "type": "string" } },
+        "unit_refs": { "type": "array", "items": { "type": "string" } },
+        "type": {
+          "enum": [
+            "test_run",
+            "lint_run",
+            "typecheck",
+            "screenshot",
+            "api_trace",
+            "log_excerpt",
+            "manual_check",
+            "benchmark"
+          ]
+        },
+        "status": { "enum": ["pass", "fail", "warn", "skipped"] },
+        "summary": { "type": "string" },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ref", "path"],
+            "properties": {
+              "ref": { "type": "string" },
+              "path": { "type": "string" },
+              "hash": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["command_ref"],
+            "properties": {
+              "command_ref": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Axion/libraries/verification/command_runs.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/verification/command_runs.schema.v1.json",
+  "title": "Axion Command Runs Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "runs"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "runs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/CommandRun" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "CommandRun": {
+      "type": "object",
+      "required": [
+        "command_ref",
+        "started_at",
+        "finished_at",
+        "cwd",
+        "command",
+        "exit_code",
+        "status",
+        "stdout_path",
+        "stderr_path"
+      ],
+      "properties": {
+        "command_ref": { "type": "string" },
+        "started_at": { "type": "string" },
+        "finished_at": { "type": "string" },
+        "cwd": { "type": "string" },
+        "command": { "type": "string" },
+        "exit_code": { "type": "integer" },
+        "status": { "enum": ["pass", "fail", "warn", "skipped"] },
+        "stdout_path": { "type": "string" },
+        "stderr_path": { "type": "string" },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "hash": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+5) Kit packaging contracts (tree + manifest + entrypoint + versions)
+Create folder: Axion/libraries/kit/
+Axion/libraries/kit/kit_tree.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/kit_tree.schema.v1.json",
+  "title": "Axion Kit Tree Contract Schema v1",
+  "type": "object",
+  "required": ["version", "root", "required_files", "required_folders", "slots"],
+  "properties": {
+    "version": { "type": "string" },
+    "root": { "type": "string" },
+    "required_files": { "type": "array", "items": { "type": "string" } },
+    "required_folders": { "type": "array", "items": { "type": "string" } },
+    "slots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slot_id", "path", "description", "required"],
+        "properties": {
+          "slot_id": { "type": "string" },
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "required": { "type": "boolean" },
+          "allowed_extensions": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/kit/kit_manifest.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/kit_manifest.schema.v1.json",
+  "title": "Axion Kit Manifest Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "created_at", "files"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role", "hash"],
+        "properties": {
+          "path": { "type": "string" },
+          "role": {
+            "enum": [
+              "entrypoint",
+              "versions",
+              "canonical",
+              "standards",
+              "planning",
+              "templates",
+              "gates",
+              "proof",
+              "misc"
+            ]
+          },
+          "hash": { "type": "string" },
+          "bytes": { "type": "integer" },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/kit/kit_entrypoint.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/kit_entrypoint.schema.v1.json",
+  "title": "Axion Kit Entrypoint Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "start_here", "how_to_use", "do_not_do"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "start_here": { "type": "string" },
+    "how_to_use": { "type": "array", "items": { "type": "string" } },
+    "do_not_do": { "type": "array", "items": { "type": "string" } },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "path"],
+        "properties": {
+          "label": { "type": "string" },
+          "path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/kit/kit_versions.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/kit_versions.schema.v1.json",
+  "title": "Axion Kit Versions / Pins Schema v1",
+  "type": "object",
+  "required": ["version", "run_id", "pins"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "pins": {
+      "type": "object",
+      "required": ["intake", "canonical", "standards", "templates", "planning", "gates"],
+      "properties": {
+        "intake": { "$ref": "#/$defs/Pin" },
+        "canonical": { "$ref": "#/$defs/Pin" },
+        "standards": { "$ref": "#/$defs/Pin" },
+        "templates": { "$ref": "#/$defs/Pin" },
+        "planning": { "$ref": "#/$defs/Pin" },
+        "gates": { "$ref": "#/$defs/Pin" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/Pin" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Pin": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "string" },
+        "hash": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
