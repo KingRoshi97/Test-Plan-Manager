@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "doc_id": "INT-05",
+  "description": "Schema for validator output (errors/warnings contract).",
+  "required": [
+    "submission_id",
+    "validated_at",
+    "is_valid",
+    "schema_version_used",
+    "form_version_used",
+    "ruleset_version_used",
+    "errors",
+    "warnings",
+    "summary"
+  ],
+  "properties": {
+    "submission_id": { "type": "string" },
+    "validated_at": { "type": "string" },
+    "is_valid": { "type": "boolean" },
+    "schema_version_used": { "type": "string" },
+    "form_version_used": { "type": "string" },
+    "ruleset_version_used": { "type": "string" },
+    "errors": { "type": "array", "items": { "$ref": "#/defs/ValidationIssue" } },
+    "warnings": { "type": "array", "items": { "$ref": "#/defs/ValidationIssue" } },
+    "summary": {
+      "type": "object",
+      "required": ["error_count", "warning_count", "blocking_rule_ids"],
+      "properties": {
+        "error_count": { "type": "number" },
+        "warning_count": { "type": "number" },
+        "blocking_rule_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "defs": {
+    "ValidationIssue": {
+      "type": "object",
+      "required": ["issue_id", "severity", "error_code", "rule_id", "field_path", "message"],
+      "properties": {
+        "issue_id": { "type": "string" },
+        "severity": { "type": "string", "enum": ["error", "warning"] },
+        "error_code": { "type": "string" },
+        "rule_id": { "type": "string" },
+        "field_path": { "type": "string" },
+        "message": { "type": "string" },
+        "meta": { "type": "object" }
+      }
+    }
+  }
+}

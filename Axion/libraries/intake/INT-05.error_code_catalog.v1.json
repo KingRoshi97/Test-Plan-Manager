@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "doc_id": "INT-05",
+  "locked": true,
+  "error_codes": [
+    "REQUIRED",
+    "DEPENDENCY_MISSING",
+    "MIN_ITEMS",
+    "INVALID_ENUM",
+    "INVALID_ENUM_FOR_CONTEXT",
+    "INVALID_FORMAT",
+    "INVALID_URL",
+    "INVALID_FILETYPE",
+    "INVALID_REFERENCE",
+    "DUPLICATE_VALUE",
+    "WARNING_INCOMPLETE"
+  ],
+  "notes": [
+    "If a new code is needed, it must be added via change control."
+  ]
+}

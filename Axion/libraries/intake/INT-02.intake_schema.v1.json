@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "doc_id": "INT-02",
+  "description": "Machine-enforceable intake schema: field paths, types, requiredness, and base constraints.",
+  "enums_ref": "Axion/libraries/intake/INT-02.enums.v1.json",
+  "schema": {
+    "type": "object",
+    "required": ["routing", "project"],
+    "properties": {
+      "routing": {
+        "type": "object",
+        "required": ["skill_level", "category", "type_preset", "build_target", "audience_context"],
+        "properties": {
+          "skill_level": { "type": "string", "enum_ref": "SkillLevel" },
+          "category": { "type": "string", "enum_ref": "ProjectCategory" },
+          "type_preset": { "type": "string", "enum_ref": "TypePreset" },
+          "build_target": { "type": "string", "enum_ref": "BuildTarget" },
+          "audience_context": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      },
+      "project": {
+        "type": "object",
+        "required": ["project_name", "problem_statement"],
+        "properties": {
+          "project_name": { "type": "string", "minLength": 1 },
+          "problem_statement": { "type": "string", "minLength": 1 },
+          "desired_scope": { "type": "string", "enum_ref": "DesiredScope" }
+        },
+        "additionalProperties": true
+      },
+      "uploads": {
+        "type": "object",
+        "required": [],
+        "properties": {
+          "zip_upload": { "type": ["null", "object"], "format": "file_ref" },
+          "links": { "type": "array", "items": { "type": "string", "format": "url" } }
+        },
+        "additionalProperties": true
+      }
+    },
+    "additionalProperties": true
+  }
+}

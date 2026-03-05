@@ -1,0 +1,32 @@
+{
+  "ruleset_version": "1.0.0",
+  "doc_id": "INT-03",
+  "description": "Deterministic intake validation rules beyond schema typing.",
+  "rules": [
+    {
+      "rule_id": "INT03-REQ-ROUTING-01",
+      "severity": "error",
+      "error_code": "REQUIRED",
+      "when": { "path": "routing.skill_level", "op": "missing" },
+      "then": { "field_path": "routing.skill_level", "message": "routing.skill_level is required." }
+    },
+    {
+      "rule_id": "INT03-DEP-UPLOAD-01",
+      "severity": "error",
+      "error_code": "DEPENDENCY_MISSING",
+      "when": { "path": "uploads.zip_upload", "op": "exists", "value": true },
+      "then": { "field_path": "uploads.zip_upload", "message": "uploads.zip_upload must be a valid file_ref when provided." }
+    },
+    {
+      "rule_id": "INT03-FMT-LINKS-01",
+      "severity": "error",
+      "error_code": "INVALID_URL",
+      "when": { "path": "uploads.links[]", "op": "invalid_format", "format": "url" },
+      "then": { "field_path": "uploads.links", "message": "All uploads.links entries must be valid URLs." }
+    }
+  ],
+  "determinism": {
+    "stable_rule_order": true,
+    "no_freeform_errors": true
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "version": "1.0.0",
+  "doc_id": "INT-04",
+  "description": "Schema for immutable submission record (raw truth + stamps + upload refs).",
+  "required": [
+    "submission_id",
+    "created_at",
+    "created_by",
+    "source",
+    "form_version_used",
+    "schema_version_used",
+    "raw_submission",
+    "routing_snapshot",
+    "uploads",
+    "integrity"
+  ],
+  "properties": {
+    "submission_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "created_by": { "type": "string" },
+    "source": { "type": "string" },
+    "form_version_used": { "type": "string" },
+    "schema_version_used": { "type": "string" },
+    "routing_snapshot": {
+      "type": "object",
+      "required": ["skill_level", "category", "type_preset", "build_target", "audience_context"],
+      "properties": {
+        "skill_level": { "type": "string" },
+        "category": { "type": "string" },
+        "type_preset": { "type": "string" },
+        "build_target": { "type": "string" },
+        "audience_context": { "type": "string" }
+      }
+    },
+    "raw_submission": { "type": "object" },
+    "uploads": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["upload_id", "filename", "content_type", "bytes", "storage_ref"],
+            "properties": {
+              "upload_id": { "type": "string" },
+              "filename": { "type": "string" },
+              "content_type": { "type": "string" },
+              "bytes": { "type": "number" },
+              "storage_ref": { "type": "string" },
+              "sha256": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["immutability", "hash_policy"],
+      "properties": {
+        "immutability": { "type": "string", "enum": ["immutable"] },
+        "hash_policy": { "type": "string", "enum": ["sha256_optional", "sha256_required"] }
+      }
+    }
+  }
+}

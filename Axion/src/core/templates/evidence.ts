@@ -105,6 +105,11 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
     standardsSnapshot = readJson<Record<string, unknown>>(join(runDir, "standards", "resolved_standards_snapshot.json"));
   } catch { /* empty */ }
 
+  let normalizedInput: Record<string, unknown> = {};
+  try {
+    normalizedInput = readJson<Record<string, unknown>>(join(runDir, "intake", "normalized_input.json"));
+  } catch { /* empty */ }
+
   const templateContents: string[] = [];
   for (const tmpl of selection.selected) {
     try {
@@ -119,22 +124,48 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
   const specMeta = (canonicalSpec.meta as Record<string, unknown>) ?? {};
   const specEntities = (canonicalSpec.entities as Record<string, unknown>) ?? {};
   const specRouting = (canonicalSpec.routing as Record<string, unknown>) ?? {};
+  const specRules = (canonicalSpec.rules as Record<string, unknown>) ?? {};
   const derivedSpecId = (specMeta.spec_id as string) ?? "SPEC-UNKNOWN";
+
+  const normalizedProject = (normalizedInput.project as Record<string, unknown>) ?? {};
+  const normalizedRouting = (normalizedInput.routing as Record<string, unknown>) ?? {};
+  const normalizedConstraints = (normalizedInput.constraints as Record<string, unknown>) ?? {};
+
+  const projectName = String(
+    normalizedProject.project_name ??
+    specMeta.project_name ??
+    specRouting.project_name ??
+    "Project"
+  );
+  const projectOverview = String(normalizedProject.project_overview ?? "No overview provided.");
 
   const context = buildAutoContext(templateContents, {
     run_id: runId,
     generated_at: generatedAt,
     spec: canonicalSpec,
     standards: standardsSnapshot,
-    project_name: specMeta.project_name ?? specRouting.project_name ?? "Project",
+    project_name: projectName,
+    project_overview: projectOverview,
     spec_id: derivedSpecId,
-    submission_id: specMeta.submission_id ?? "unknown",
-    skill_level: specRouting.skill_level ?? "intermediate",
-    category: specRouting.category ?? "application",
-    type_preset: specRouting.type_preset ?? "web_app",
+    submission_id: String(specMeta.submission_id ?? normalizedInput.submission_id ?? "unknown"),
+    skill_level: String(normalizedRouting.skill_level ?? specRouting.skill_level ?? "intermediate"),
+    category: String(normalizedRouting.category ?? specRouting.category ?? "application"),
+    type_preset: String(normalizedRouting.type_preset ?? specRouting.type_preset ?? "web_app"),
+    build_target: String(normalizedRouting.build_target ?? specRouting.build_target ?? "new"),
+    audience_context: String(normalizedRouting.audience_context ?? specRouting.audience_context ?? "internal"),
     features: specEntities.features ?? [],
     roles: specEntities.roles ?? [],
     workflows: specEntities.workflows ?? [],
+    permissions: specEntities.permissions ?? [],
+    definition_of_done: String(specRules.definition_of_done ?? "All features implemented and tested"),
+    must_always_rules: specRules.must_always ?? [],
+    must_never_rules: specRules.must_never ?? [],
+    acceptance_criteria: specRules.acceptance_criteria ?? [],
+    nfr: (normalizedConstraints.nfr as Record<string, unknown>) ?? {},
+    auth: (normalizedConstraints.auth as Record<string, unknown>) ?? {},
+    data: (normalizedConstraints.data as Record<string, unknown>) ?? {},
+    integrations: (normalizedConstraints.integrations as Record<string, unknown>) ?? {},
+    delivery: (normalizedConstraints.delivery as Record<string, unknown>) ?? {},
   });
 
   const envelopes: Array<{

@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "doc_id": "INT-05",
+  "rules": [
+    {
+      "rule_id": "INT5-DET-01",
+      "name": "Stable ordering",
+      "order": [
+        "routing",
+        "requiredness_and_dependencies",
+        "type_and_format",
+        "reference_integrity",
+        "thresholds"
+      ]
+    },
+    {
+      "rule_id": "INT5-DET-02",
+      "name": "Stable pointers",
+      "requirements": [
+        "field_path must always point to a real schema path",
+        "for relationship issues, field_path points to referencing field"
+      ]
+    },
+    {
+      "rule_id": "INT5-DET-03",
+      "name": "Rule ID required",
+      "requirements": [
+        "Every issue must include rule_id linking it to INT-03",
+        "No freeform validator errors without a rule anchor"
+      ]
+    }
+  ]
+}

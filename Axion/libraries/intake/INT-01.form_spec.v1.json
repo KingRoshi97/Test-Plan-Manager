@@ -1,0 +1,53 @@
+{
+  "form_version": "1.0.0",
+  "doc_id": "INT-01",
+  "description": "Authoritative intake form specification. Defines all fields, sections, and conditional requiredness.",
+  "sections": [
+    {
+      "section_id": "routing",
+      "title": "Routing",
+      "required": true,
+      "fields": [
+        { "path": "routing.skill_level", "type": "enum", "enum_ref": "SkillLevel", "required": true },
+        { "path": "routing.category", "type": "enum", "enum_ref": "ProjectCategory", "required": true },
+        { "path": "routing.type_preset", "type": "enum", "enum_ref": "TypePreset", "required": true },
+        { "path": "routing.build_target", "type": "enum", "enum_ref": "BuildTarget", "required": true },
+        { "path": "routing.audience_context", "type": "string", "required": true }
+      ]
+    },
+    {
+      "section_id": "project",
+      "title": "Project",
+      "required": true,
+      "fields": [
+        { "path": "project.project_name", "type": "string", "required": true },
+        { "path": "project.problem_statement", "type": "string", "required": true },
+        { "path": "project.desired_scope", "type": "enum", "enum_ref": "DesiredScope", "required": false }
+      ]
+    },
+    {
+      "section_id": "uploads",
+      "title": "Uploads",
+      "required": false,
+      "fields": [
+        { "path": "uploads.zip_upload", "type": "file_ref", "required": false },
+        { "path": "uploads.links", "type": "string_array", "required": false }
+      ]
+    }
+  ],
+  "conditional_requiredness": [
+    {
+      "rule_id": "INT01-REQ-01",
+      "when": { "path": "uploads.zip_upload", "op": "exists", "value": true },
+      "then_require": ["uploads.zip_upload"],
+      "notes": "If user says they uploaded, a file ref must exist."
+    }
+  ],
+  "compat_rules": {
+    "breaking_change_requires_new_version": true,
+    "notes": [
+      "Renaming/removing any field path is breaking.",
+      "Adding optional fields is non-breaking."
+    ]
+  }
+}

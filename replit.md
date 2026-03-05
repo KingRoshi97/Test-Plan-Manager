@@ -4,7 +4,21 @@
 Axion is a document-generation and compliance-enforcement system with a full-stack web application. It takes intake submissions through a 10-stage Mechanics pipeline (S1_INGEST_NORMALIZE → S10_PACKAGE), resolves standards, builds canonical specs, selects and renders templates, plans work, verifies proofs, runs gates, and packages everything into versioned "kits." The web dashboard provides a UI for creating assemblies, triggering pipeline runs, and browsing artifacts.
 
 ## Current State
-Full Mechanics pipeline + web application layer. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass.
+Full Mechanics pipeline + web application layer. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 190 kit files produced.
+
+### Intake Library (Axion/libraries/intake/)
+12 files present — includes the original spec files plus the INT-01 through INT-05 formal contract files:
+- `INT-01.form_spec.v1.json` — form field inventory and conditional requiredness rules
+- `INT-02.intake_schema.v1.json` — machine-enforceable schema (types, requiredness, constraints)
+- `INT-02.enums.v1.json` — enum value lists for INT-02
+- `INT-03.validation_rules.v1.json` — deterministic validation rules with rule_id/error_code/pointers
+- `INT-04.submission_record.schema.v1.json` — immutable submission record schema
+- `INT-05.validation_result.schema.v1.json` — validator output contract (is_valid, errors[], warnings[])
+- `INT-05.error_code_catalog.v1.json` — locked error code catalog
+- `INT-05.determinism_rules.v1.json` — ordering and pointer determinism rules
+
+### Template Rendering (evidence.ts)
+`writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 
 ## Repo Layout
 ```

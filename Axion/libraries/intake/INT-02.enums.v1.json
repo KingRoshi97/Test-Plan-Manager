@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "enums": {
+    "SkillLevel": ["beginner", "intermediate", "advanced"],
+    "ProjectCategory": ["software", "data", "docs", "other"],
+    "TypePreset": ["web_app", "internal_tool", "api_only", "mobile_app", "library"],
+    "BuildTarget": ["mvp", "production", "prototype"],
+    "DesiredScope": ["thin", "mvp", "full"]
+  }
+}
