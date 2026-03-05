@@ -1,0 +1,201 @@
+Axion/libraries/planning/PLAN-01.work_breakdown.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/planning/PLAN-01.work_breakdown.schema.v1.json",
+  "title": "PLAN-01 — Work Breakdown Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "generated_at", "units"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "units": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Unit" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Unit": {
+      "type": "object",
+      "required": ["unit_id", "title", "type", "scope_refs", "depends_on", "outputs"],
+      "properties": {
+        "unit_id": { "type": "string" },
+        "title": { "type": "string" },
+        "type": {
+          "enum": [
+            "spec",
+            "design",
+            "frontend",
+            "backend",
+            "contracts",
+            "data",
+            "security",
+            "qa",
+            "devops",
+            "docs"
+          ]
+        },
+        "description": { "type": "string" },
+        "scope_refs": { "type": "array", "items": { "type": "string" } },
+        "depends_on": { "type": "array", "items": { "type": "string" } },
+        "outputs": { "type": "array", "items": { "type": "string" } },
+        "acceptance_refs": { "type": "array", "items": { "type": "string" } },
+        "priority": { "enum": ["p0", "p1", "p2", "p3"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Axion/libraries/planning/PLAN-02.acceptance_map.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/planning/PLAN-02.acceptance_map.schema.v1.json",
+  "title": "PLAN-02 — Acceptance Map Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "generated_at", "acceptance"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "acceptance": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/AcceptanceItem" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "AcceptanceItem": {
+      "type": "object",
+      "required": [
+        "acceptance_id",
+        "title",
+        "unit_ref",
+        "category",
+        "criteria",
+        "required_proof"
+      ],
+      "properties": {
+        "acceptance_id": { "type": "string" },
+        "title": { "type": "string" },
+        "unit_ref": { "type": "string" },
+        "category": {
+          "enum": [
+            "screen",
+            "endpoint",
+            "entity",
+            "business_rule",
+            "component",
+            "acceptance_criterion",
+            "test_case",
+            "flow",
+            "nonfunctional"
+          ]
+        },
+        "criteria": { "type": "array", "items": { "type": "string" } },
+        "required_proof": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "ref"],
+            "properties": {
+              "type": {
+                "enum": [
+                  "test_run",
+                  "lint_run",
+                  "typecheck",
+                  "screenshot",
+                  "api_trace",
+                  "log_excerpt",
+                  "manual_check",
+                  "benchmark"
+                ]
+              },
+              "ref": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Axion/libraries/planning/PLAN-03.sequencing_policy.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "PLAN-03",
+  "description": "Deterministic sequencing policy for work units and acceptance items.",
+  "unit_order": {
+    "primary": [
+      "spec",
+      "contracts",
+      "data",
+      "backend",
+      "frontend",
+      "security",
+      "qa",
+      "devops",
+      "docs",
+      "design"
+    ],
+    "tie_breakers": ["priority_p0_first", "unit_id_asc"]
+  },
+  "priority_order": ["p0", "p1", "p2", "p3"],
+  "acceptance_order": {
+    "primary": [
+      "entity",
+      "business_rule",
+      "endpoint",
+      "flow",
+      "component",
+      "screen",
+      "test_case",
+      "acceptance_criterion",
+      "nonfunctional"
+    ],
+    "tie_breakers": ["acceptance_id_asc"]
+  }
+}
+Axion/libraries/planning/PLAN-03.build_plan.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/planning/PLAN-03.build_plan.schema.v1.json",
+  "title": "PLAN-03 — Build Plan Schema (v1)",
+  "type": "object",
+  "required": [
+    "version",
+    "run_id",
+    "spec_id",
+    "generated_at",
+    "sequence",
+    "notes"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "sequence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step_id", "unit_ref", "depends_on", "outputs"],
+        "properties": {
+          "step_id": { "type": "string" },
+          "unit_ref": { "type": "string" },
+          "depends_on": { "type": "array", "items": { "type": "string" } },
+          "outputs": { "type": "array", "items": { "type": "string" } },
+          "verification_commands": { "type": "array", "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
