@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/templates/TMP-05.template_gate_report.schema.v1.json",
+  "title": "TMP-05 — Template Gate Report Schema (v1)",
+  "type": "object",
+  "required": [
+    "version",
+    "run_id",
+    "spec_id",
+    "evaluated_at",
+    "status",
+    "rules_evaluated",
+    "summary",
+    "template_reports"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "evaluated_at": { "type": "string" },
+    "status": { "enum": ["pass", "fail", "warn"] },
+    "rules_evaluated": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "result"],
+        "properties": {
+          "rule_id": { "type": "string" },
+          "result": { "enum": ["pass", "fail", "warn"] },
+          "message": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["templates_total", "templates_failed", "missing_required_total"],
+      "properties": {
+        "templates_total": { "type": "integer" },
+        "templates_failed": { "type": "integer" },
+        "missing_required_total": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "template_reports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["template_id", "status", "render_envelope_path"],
+        "properties": {
+          "template_id": { "type": "string" },
+          "status": { "enum": ["pass", "fail", "warn", "skipped"] },
+          "render_envelope_path": { "type": "string" },
+          "notes": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

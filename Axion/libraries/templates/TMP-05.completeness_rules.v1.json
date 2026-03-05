@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "doc_id": "TMP-05",
+  "description": "Completeness rules for template gating (missing placeholders, unknown allowances, optional behavior).",
+  "rules": [
+    {
+      "rule_id": "TMP05-COMP-01",
+      "name": "No missing required placeholders",
+      "failure_condition": "missing_required > 0",
+      "on_fail": "fail"
+    },
+    {
+      "rule_id": "TMP05-COMP-02",
+      "name": "Unknown allowed placeholders must be explicitly flagged",
+      "failure_condition": "unknown_allowed_unflagged > 0",
+      "on_fail": "fail"
+    },
+    {
+      "rule_id": "TMP05-COMP-03",
+      "name": "Optional missing placeholders are allowed",
+      "failure_condition": "optional_missing < 0",
+      "on_fail": "warn"
+    }
+  ],
+  "determinism": {
+    "stable_missing_sort": ["kind_asc", "field_path_asc", "placeholder_asc"]
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "version": "1.0.0",
+  "doc_id": "TMP-01",
+  "description": "Template registry: defines all templates, their applicability, required sections, and output roles.",
+  "templates": [
+    {
+      "template_id": "PRD-01",
+      "type": "product",
+      "title": "Product Requirements Document",
+      "path": "Axion/libraries/templates/product/PRD-01.md",
+      "applies_when": {
+        "routing": { "category": "software" }
+      },
+      "priority": 900,
+      "required_sections": [
+        "1. Overview",
+        "2. Goals",
+        "3. Non-Goals",
+        "4. Users & Roles",
+        "5. Requirements",
+        "6. Workflows",
+        "7. Data",
+        "8. Security",
+        "9. Acceptance Criteria",
+        "10. Open Questions"
+      ],
+      "output": {
+        "artifact_id": "doc.prd",
+        "role": "templates",
+        "default_output_path": "kit/02_docs/PRD.md"
+      }
+    },
+    {
+      "template_id": "ARC-01",
+      "type": "architecture",
+      "title": "Architecture Overview",
+      "path": "Axion/libraries/templates/architecture/ARC-01.md",
+      "applies_when": {
+        "routing": { "category": "software" }
+      },
+      "priority": 800,
+      "required_sections": [
+        "1. Architecture Summary",
+        "2. Components",
+        "3. Data Model",
+        "4. APIs",
+        "5. Security Considerations",
+        "6. Operational Considerations",
+        "7. Risks & Tradeoffs",
+        "8. Open Questions"
+      ],
+      "output": {
+        "artifact_id": "doc.architecture",
+        "role": "templates",
+        "default_output_path": "kit/02_docs/ARCHITECTURE.md"
+      }
+    },
+    {
+      "template_id": "TST-01",
+      "type": "quality",
+      "title": "Test Plan",
+      "path": "Axion/libraries/templates/quality/TST-01.md",
+      "applies_when": {
+        "routing": { "category": "software" }
+      },
+      "priority": 700,
+      "required_sections": [
+        "1. Scope",
+        "2. Test Strategy",
+        "3. Test Cases",
+        "4. Environments",
+        "5. Evidence & Proof",
+        "6. Exit Criteria"
+      ],
+      "output": {
+        "artifact_id": "doc.test_plan",
+        "role": "templates",
+        "default_output_path": "kit/04_quality/TEST_PLAN.md"
+      }
+    }
+  ],
+  "constraints": [
+    {
+      "rule_id": "TMP01-REG-01",
+      "name": "template_id must be unique",
+      "enforced_by": "registry_loader"
+    },
+    {
+      "rule_id": "TMP01-REG-02",
+      "name": "path must exist and be a .md file",
+      "enforced_by": "template_loader"
+    }
+  ],
+  "determinism": {
+    "selection_sort_keys": ["priority_desc", "template_id_asc"],
+    "no_random_choice": true
+  }
+}

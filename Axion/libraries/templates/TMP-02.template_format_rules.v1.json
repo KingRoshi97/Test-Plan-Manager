@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "doc_id": "TMP-02",
+  "description": "Template format rules: section order, placeholder syntax, and allowed directives.",
+  "markdown_rules": {
+    "required_heading_style": "atx",
+    "top_level_heading": "#",
+    "section_heading": "##",
+    "no_html_required": true
+  },
+  "sections": {
+    "must_match_required_sections_exactly": false,
+    "allow_extra_sections": true,
+    "required_sections_enforced_by_index": true
+  },
+  "placeholders": {
+    "syntax": {
+      "direct": "{{ path.to.value }}",
+      "optional": "{{ path.to.value|OPTIONAL }}",
+      "unknown_allowed": "{{ path.to.value|UNKNOWN_ALLOWED }}",
+      "derived": "{{ derive:name(arg1,arg2) }}"
+    },
+    "allowed_flags": ["OPTIONAL", "UNKNOWN_ALLOWED"],
+    "allowed_roots": ["spec", "standards", "work", "acceptance", "meta"],
+    "array_access": {
+      "allow_array_join": true,
+      "array_suffix": "[]"
+    },
+    "forbidden": [
+      "{{ eval:",
+      "{{ execute:",
+      "{{ system:"
+    ]
+  },
+  "constraints": [
+    {
+      "rule_id": "TMP02-FMT-01",
+      "name": "No unknown placeholder roots",
+      "on_violation": "fail"
+    },
+    {
+      "rule_id": "TMP02-FMT-02",
+      "name": "Forbidden directives are not allowed",
+      "on_violation": "fail"
+    }
+  ],
+  "determinism": {
+    "placeholder_scan_order": "top_to_bottom",
+    "stable_missing_list": true
+  }
+}
