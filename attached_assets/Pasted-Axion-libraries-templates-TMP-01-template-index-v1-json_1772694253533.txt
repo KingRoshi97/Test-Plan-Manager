@@ -1,0 +1,434 @@
+Axion/libraries/templates/TMP-01.template_index.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "TMP-01",
+  "description": "Template registry: defines all templates, their applicability, required sections, and output roles.",
+  "templates": [
+    {
+      "template_id": "PRD-01",
+      "type": "product",
+      "title": "Product Requirements Document",
+      "path": "Axion/libraries/templates/product/PRD-01.md",
+      "applies_when": {
+        "routing": { "category": "software" }
+      },
+      "priority": 900,
+      "required_sections": [
+        "1. Overview",
+        "2. Goals",
+        "3. Non-Goals",
+        "4. Users & Roles",
+        "5. Requirements",
+        "6. Workflows",
+        "7. Data",
+        "8. Security",
+        "9. Acceptance Criteria",
+        "10. Open Questions"
+      ],
+      "output": {
+        "artifact_id": "doc.prd",
+        "role": "templates",
+        "default_output_path": "kit/02_docs/PRD.md"
+      }
+    },
+    {
+      "template_id": "ARC-01",
+      "type": "architecture",
+      "title": "Architecture Overview",
+      "path": "Axion/libraries/templates/architecture/ARC-01.md",
+      "applies_when": {
+        "routing": { "category": "software" }
+      },
+      "priority": 800,
+      "required_sections": [
+        "1. Architecture Summary",
+        "2. Components",
+        "3. Data Model",
+        "4. APIs",
+        "5. Security Considerations",
+        "6. Operational Considerations",
+        "7. Risks & Tradeoffs",
+        "8. Open Questions"
+      ],
+      "output": {
+        "artifact_id": "doc.architecture",
+        "role": "templates",
+        "default_output_path": "kit/02_docs/ARCHITECTURE.md"
+      }
+    },
+    {
+      "template_id": "TST-01",
+      "type": "quality",
+      "title": "Test Plan",
+      "path": "Axion/libraries/templates/quality/TST-01.md",
+      "applies_when": {
+        "routing": { "category": "software" }
+      },
+      "priority": 700,
+      "required_sections": [
+        "1. Scope",
+        "2. Test Strategy",
+        "3. Test Cases",
+        "4. Environments",
+        "5. Evidence & Proof",
+        "6. Exit Criteria"
+      ],
+      "output": {
+        "artifact_id": "doc.test_plan",
+        "role": "templates",
+        "default_output_path": "kit/04_quality/TEST_PLAN.md"
+      }
+    }
+  ],
+  "constraints": [
+    {
+      "rule_id": "TMP01-REG-01",
+      "name": "template_id must be unique",
+      "enforced_by": "registry_loader"
+    },
+    {
+      "rule_id": "TMP01-REG-02",
+      "name": "path must exist and be a .md file",
+      "enforced_by": "template_loader"
+    }
+  ],
+  "determinism": {
+    "selection_sort_keys": ["priority_desc", "template_id_asc"],
+    "no_random_choice": true
+  }
+}
+Axion/libraries/templates/TMP-02.template_format_rules.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "TMP-02",
+  "description": "Template format rules: section order, placeholder syntax, and allowed directives.",
+  "markdown_rules": {
+    "required_heading_style": "atx",
+    "top_level_heading": "#",
+    "section_heading": "##",
+    "no_html_required": true
+  },
+  "sections": {
+    "must_match_required_sections_exactly": false,
+    "allow_extra_sections": true,
+    "required_sections_enforced_by_index": true
+  },
+  "placeholders": {
+    "syntax": {
+      "direct": "{{ path.to.value }}",
+      "optional": "{{ path.to.value|OPTIONAL }}",
+      "unknown_allowed": "{{ path.to.value|UNKNOWN_ALLOWED }}",
+      "derived": "{{ derive:name(arg1,arg2) }}"
+    },
+    "allowed_flags": ["OPTIONAL", "UNKNOWN_ALLOWED"],
+    "allowed_roots": ["spec", "standards", "work", "acceptance", "meta"],
+    "array_access": {
+      "allow_array_join": true,
+      "array_suffix": "[]"
+    },
+    "forbidden": [
+      "{{ eval:",
+      "{{ execute:",
+      "{{ system:"
+    ]
+  },
+  "constraints": [
+    {
+      "rule_id": "TMP02-FMT-01",
+      "name": "No unknown placeholder roots",
+      "on_violation": "fail"
+    },
+    {
+      "rule_id": "TMP02-FMT-02",
+      "name": "Forbidden directives are not allowed",
+      "on_violation": "fail"
+    }
+  ],
+  "determinism": {
+    "placeholder_scan_order": "top_to_bottom",
+    "stable_missing_list": true
+  }
+}
+Axion/libraries/templates/TMP-03.selection_result.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/templates/TMP-03.selection_result.schema.v1.json",
+  "title": "TMP-03 — Template Selection Result Schema (v1)",
+  "type": "object",
+  "required": [
+    "version",
+    "run_id",
+    "spec_id",
+    "selected_at",
+    "inputs",
+    "selected_templates"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "selected_at": { "type": "string" },
+    "inputs": {
+      "type": "object",
+      "required": ["routing_snapshot", "standards_snapshot_id"],
+      "properties": {
+        "routing_snapshot": { "type": "object" },
+        "standards_snapshot_id": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "selected_templates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "template_id",
+          "path",
+          "type",
+          "priority",
+          "reason"
+        ],
+        "properties": {
+          "template_id": { "type": "string" },
+          "path": { "type": "string" },
+          "type": { "type": "string" },
+          "priority": { "type": "number" },
+          "reason": { "type": "string" },
+          "applies_when": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/templates/TMP-04.render_envelope.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/templates/TMP-04.render_envelope.schema.v1.json",
+  "title": "TMP-04 — Render Envelope Schema (v1)",
+  "type": "object",
+  "required": [
+    "version",
+    "run_id",
+    "spec_id",
+    "rendered_at",
+    "template_id",
+    "template_path",
+    "output_path",
+    "status",
+    "hash",
+    "placeholders"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "rendered_at": { "type": "string" },
+    "template_id": { "type": "string" },
+    "template_path": { "type": "string" },
+    "output_path": { "type": "string" },
+    "status": { "enum": ["rendered", "skipped", "failed"] },
+    "hash": { "type": "string" },
+    "placeholders": {
+      "type": "object",
+      "required": ["total", "resolved", "optional_missing", "unknown_allowed", "missing_required"],
+      "properties": {
+        "total": { "type": "integer" },
+        "resolved": { "type": "integer" },
+        "optional_missing": { "type": "integer" },
+        "unknown_allowed": { "type": "integer" },
+        "missing_required": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "missing": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["placeholder", "field_path", "kind"],
+        "properties": {
+          "placeholder": { "type": "string" },
+          "field_path": { "type": "string" },
+          "kind": { "enum": ["required", "optional", "unknown_allowed"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/templates/TMP-05.completeness_rules.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "TMP-05",
+  "description": "Completeness rules for template gating (missing placeholders, unknown allowances, optional behavior).",
+  "rules": [
+    {
+      "rule_id": "TMP05-COMP-01",
+      "name": "No missing required placeholders",
+      "failure_condition": "missing_required > 0",
+      "on_fail": "fail"
+    },
+    {
+      "rule_id": "TMP05-COMP-02",
+      "name": "Unknown allowed placeholders must be explicitly flagged",
+      "failure_condition": "unknown_allowed_unflagged > 0",
+      "on_fail": "fail"
+    },
+    {
+      "rule_id": "TMP05-COMP-03",
+      "name": "Optional missing placeholders are allowed",
+      "failure_condition": "optional_missing < 0",
+      "on_fail": "warn"
+    }
+  ],
+  "determinism": {
+    "stable_missing_sort": ["kind_asc", "field_path_asc", "placeholder_asc"]
+  }
+}
+Axion/libraries/templates/TMP-05.template_gate_report.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/templates/TMP-05.template_gate_report.schema.v1.json",
+  "title": "TMP-05 — Template Gate Report Schema (v1)",
+  "type": "object",
+  "required": [
+    "version",
+    "run_id",
+    "spec_id",
+    "evaluated_at",
+    "status",
+    "rules_evaluated",
+    "summary",
+    "template_reports"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "evaluated_at": { "type": "string" },
+    "status": { "enum": ["pass", "fail", "warn"] },
+    "rules_evaluated": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "result"],
+        "properties": {
+          "rule_id": { "type": "string" },
+          "result": { "enum": ["pass", "fail", "warn"] },
+          "message": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["templates_total", "templates_failed", "missing_required_total"],
+      "properties": {
+        "templates_total": { "type": "integer" },
+        "templates_failed": { "type": "integer" },
+        "missing_required_total": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "template_reports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["template_id", "status", "render_envelope_path"],
+        "properties": {
+          "template_id": { "type": "string" },
+          "status": { "enum": ["pass", "fail", "warn", "skipped"] },
+          "render_envelope_path": { "type": "string" },
+          "notes": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Template files (the actual .md templates)
+Axion/libraries/templates/product/PRD-01.md
+# Product Requirements Document (PRD-01)
+
+## 1. Overview
+{{ spec.meta.spec_id|OPTIONAL }}
+{{ spec.routing.audience_context }}
+
+## 2. Goals
+{{ spec.rules.definition_of_done|OPTIONAL }}
+
+## 3. Non-Goals
+{{ spec.rules.must_never|OPTIONAL }}
+
+## 4. Users & Roles
+{{ spec.entities.roles|UNKNOWN_ALLOWED }}
+
+## 5. Requirements
+{{ spec.entities.features|UNKNOWN_ALLOWED }}
+
+## 6. Workflows
+{{ spec.entities.workflows|UNKNOWN_ALLOWED }}
+
+## 7. Data
+{{ spec.entities.data_objects|UNKNOWN_ALLOWED }}
+
+## 8. Security
+{{ standards.security|UNKNOWN_ALLOWED }}
+
+## 9. Acceptance Criteria
+{{ spec.rules.acceptance_criteria|UNKNOWN_ALLOWED }}
+
+## 10. Open Questions
+{{ spec.unknowns|UNKNOWN_ALLOWED }}
+Axion/libraries/templates/architecture/ARC-01.md
+# Architecture Overview (ARC-01)
+
+## 1. Architecture Summary
+{{ spec.routing.category }}
+{{ spec.routing.type_preset }}
+{{ spec.routing.build_target }}
+
+## 2. Components
+{{ spec.entities.operations|UNKNOWN_ALLOWED }}
+
+## 3. Data Model
+{{ spec.entities.data_objects|UNKNOWN_ALLOWED }}
+
+## 4. APIs
+{{ spec.entities.operations|UNKNOWN_ALLOWED }}
+
+## 5. Security Considerations
+{{ standards.security|UNKNOWN_ALLOWED }}
+
+## 6. Operational Considerations
+{{ standards.ops|UNKNOWN_ALLOWED }}
+
+## 7. Risks & Tradeoffs
+{{ spec.unknowns|UNKNOWN_ALLOWED }}
+
+## 8. Open Questions
+{{ spec.unknowns|UNKNOWN_ALLOWED }}
+Axion/libraries/templates/quality/TST-01.md
+# Test Plan (TST-01)
+
+## 1. Scope
+{{ spec.entities.features|UNKNOWN_ALLOWED }}
+
+## 2. Test Strategy
+{{ standards.quality|UNKNOWN_ALLOWED }}
+
+## 3. Test Cases
+{{ acceptance.acceptance_items|UNKNOWN_ALLOWED }}
+
+## 4. Environments
+{{ standards.ops|UNKNOWN_ALLOWED }}
+
+## 5. Evidence & Proof
+{{ work.units|UNKNOWN_ALLOWED }}
+
+## 6. Exit Criteria
+{{ spec.rules.acceptance_criteria|UNKNOWN_ALLOWED }}

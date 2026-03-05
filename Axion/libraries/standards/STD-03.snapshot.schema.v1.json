@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "doc_id": "STD-03",
+  "description": "Resolved standards snapshot artifact format (emitted output).",
+  "required_top_level": [
+    "snapshot_id",
+    "created_at",
+    "standards_library_version",
+    "resolver_version_used",
+    "inputs",
+    "resolved"
+  ],
+  "inputs_required": [
+    "routing_snapshot",
+    "gates_snapshot",
+    "packs_selected"
+  ],
+  "pack_selected_required": ["pack_id", "pack_version", "category", "priority", "rule_ids"],
+  "resolved_rule_required": [
+    "rule_id",
+    "category",
+    "name",
+    "description",
+    "rule_type",
+    "value",
+    "fixed",
+    "source_pack"
+  ],
+  "determinism": {
+    "stable_rule_sort": ["category_asc", "rule_id_asc"],
+    "no_hidden_logic": true,
+    "snapshotable_values_only": true
+  }
+}

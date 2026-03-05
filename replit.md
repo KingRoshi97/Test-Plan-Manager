@@ -30,6 +30,27 @@ Full Mechanics pipeline + web application layer. Pipeline: 10 stages, 8 enforced
 
 **Code wired to CAN-02:** `validate.ts` and `specBuilder.ts` now load from `CAN-02.id_rules.v1.json` (10 entity types) and `CAN-02.reference_integrity_rules.v1.json` (split ref integrity), with fallback to legacy files.
 
+### Standards Library (Axion/libraries/standards/)
+5 new STD contract files + 7 new starter pack files + updated index (10 total packs, 31 rules in snapshot):
+
+**Contract files:**
+- `STD-01.categories.v1.json` — locked set of 7 categories (STD-CAT-01 through STD-CAT-07)
+- `STD-01.pack_contract.v1.json` — required pack metadata fields, applies_when model, required rule fields, rule_type enum, 3 structural constraints
+- `STD-01.library_index.schema.v1.json` — index minimum required fields including `rule_ids` and `rule_id_to_category`
+- `STD-02.resolution_rules.v1.json` — deterministic selection/merge rules: sort by priority_desc/pack_id_asc, fixed wins over configurable, no cross-category overlap
+- `STD-03.snapshot.schema.v1.json` — snapshot artifact format: required top-level fields, inputs_required, resolved_rule_required, determinism rules
+
+**Starter packs (Axion/libraries/standards/packs/):** 7 new packs alongside 3 legacy packs
+- `CORE@1.0.0` (STD-CAT-01, priority 1000) — 3 fixed + 1 configurable: deterministic stages, schema validation, pinning, hashing policy
+- `DESIGN_BASE@1.0.0` (STD-CAT-02, priority 500) — UI design section required for UI builds
+- `SEC_BASE@1.0.0` (STD-CAT-03, priority 800) — no secrets in artifacts (fixed), auth test requirement (configurable)
+- `QA_BASE@1.0.0` (STD-CAT-04, priority 700) — minimum test evidence
+- `OPS_CONDITIONAL@1.0.0` (STD-CAT-05, priority 400) — telemetry required when `data_enabled: true`
+- `CONTRACTS_CONDITIONAL@1.0.0` (STD-CAT-06, priority 450) — interface contracts required when `integrations_enabled: true`
+- `ANALYTICS_CONDITIONAL@1.0.0` (STD-CAT-07, priority 350) — analytics plan required when `build_target: production`
+
+**Index updated:** `standards_index.json` now has 10 packs total, `rule_id_to_category` map at top level, and `rule_ids[]` per new pack entry alongside `file_path` (required by registryLoader.ts).
+
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 

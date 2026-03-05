@@ -1,0 +1,21 @@
+{
+  "pack_id": "CONTRACTS_CONDITIONAL",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-06",
+  "applies_when": {
+    "gates": { "integrations_enabled": true }
+  },
+  "priority": 450,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-CON-101",
+      "name": "Explicit interface contracts required when integrations_enabled",
+      "description": "If integrations are enabled, require endpoint/interface contracts and proof.",
+      "rule_type": "requirement",
+      "value": { "interface_contracts_required": true },
+      "fixed": false,
+      "source_pack": "CONTRACTS_CONDITIONAL@1.0.0"
+    }
+  ]
+}

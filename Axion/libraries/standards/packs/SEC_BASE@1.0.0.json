@@ -1,0 +1,29 @@
+{
+  "pack_id": "SEC_BASE",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-03",
+  "applies_when": {},
+  "priority": 800,
+  "fixed_rules": [
+    {
+      "rule_id": "STD-SEC-001",
+      "name": "No secrets in artifacts",
+      "description": "Artifacts must not contain secrets (tokens/keys/passwords).",
+      "rule_type": "prohibition",
+      "value": { "secrets_forbidden": true },
+      "fixed": true,
+      "source_pack": "SEC_BASE@1.0.0"
+    }
+  ],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-SEC-101",
+      "name": "Auth required gate",
+      "description": "If auth_required is true, require auth documentation and tests.",
+      "rule_type": "default",
+      "value": { "auth_requires_tests": true },
+      "fixed": false,
+      "source_pack": "SEC_BASE@1.0.0"
+    }
+  ]
+}

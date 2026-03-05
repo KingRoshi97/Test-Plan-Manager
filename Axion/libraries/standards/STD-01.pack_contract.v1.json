@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0",
+  "doc_id": "STD-01",
+  "description": "Standards pack structure contract (metadata + rules).",
+  "pack_metadata_required": [
+    "pack_id",
+    "pack_version",
+    "category",
+    "applies_when",
+    "priority",
+    "fixed_rules",
+    "configurable_rules"
+  ],
+  "applies_when_model": {
+    "routing": ["category", "type_preset", "audience_context", "build_target"],
+    "gates": ["data_enabled", "auth_required", "integrations_enabled"]
+  },
+  "rule_required_fields": [
+    "rule_id",
+    "name",
+    "description",
+    "rule_type",
+    "value",
+    "fixed",
+    "source_pack"
+  ],
+  "rule_type_enum": ["requirement", "constraint", "default", "prohibition"],
+  "constraints": [
+    {
+      "rule_id": "STD01-STRUCT-01",
+      "name": "Each rule must declare fixed vs configurable",
+      "require_fixed_field": true
+    },
+    {
+      "rule_id": "STD01-STRUCT-02",
+      "name": "Non-overlap: each rule belongs to exactly one standards category",
+      "enforced_by": "index.rule_id_to_category"
+    },
+    {
+      "rule_id": "STD01-STRUCT-03",
+      "name": "Snapshot-able: value must be representable without interpretation",
+      "enforced_by": "STD-03 snapshot writer"
+    }
+  ]
+}

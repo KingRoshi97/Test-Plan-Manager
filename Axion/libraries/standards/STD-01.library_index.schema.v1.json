@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "doc_id": "STD-01",
+  "description": "Standards index/registry minimum required fields (machine-readable).",
+  "required_top_level": ["standards_library_version", "packs", "rule_id_to_category"],
+  "pack_index_required_fields": [
+    "pack_id",
+    "pack_version",
+    "category",
+    "applies_when",
+    "priority",
+    "rule_count",
+    "rule_ids"
+  ],
+  "notes": [
+    "Index must list all packs+versions, applies_when filters, categories covered, and rule IDs."
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "pack_id": "ANALYTICS_CONDITIONAL",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-07",
+  "applies_when": {
+    "routing": { "build_target": "production" }
+  },
+  "priority": 350,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-ANL-101",
+      "name": "Analytics plan required for production",
+      "description": "If build_target is production, require an analytics/telemetry plan artifact.",
+      "rule_type": "requirement",
+      "value": { "analytics_plan_required": true },
+      "fixed": false,
+      "source_pack": "ANALYTICS_CONDITIONAL@1.0.0"
+    }
+  ]
+}

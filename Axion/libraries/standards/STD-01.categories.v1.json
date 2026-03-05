@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "doc_id": "STD-01",
+  "locked": true,
+  "categories": [
+    { "category_id": "STD-CAT-01", "name": "Engineering Standards" },
+    { "category_id": "STD-CAT-02", "name": "Design Standards" },
+    { "category_id": "STD-CAT-03", "name": "Security Standards" },
+    { "category_id": "STD-CAT-04", "name": "Quality Standards" },
+    { "category_id": "STD-CAT-05", "name": "Operations Standards (conditional)" },
+    { "category_id": "STD-CAT-06", "name": "Interface/Contract Standards (conditional)" },
+    { "category_id": "STD-CAT-07", "name": "Analytics/Telemetry Standards (conditional)" }
+  ]
+}

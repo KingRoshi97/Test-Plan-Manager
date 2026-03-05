@@ -1,0 +1,32 @@
+{
+  "version": "1.0.0",
+  "doc_id": "STD-02",
+  "description": "Deterministic selection + merge rules to produce STD-03 snapshot.",
+  "selection": {
+    "must_be_selectable_by": ["routing", "gates"],
+    "no_ambiguity_rule": true,
+    "applies_when_evaluation": {
+      "routing_match": "all_specified_fields_match",
+      "gates_match": "all_specified_gates_match"
+    }
+  },
+  "ordering": {
+    "deterministic": true,
+    "sort_keys": ["priority_desc", "pack_id_asc", "pack_version_asc"]
+  },
+  "merge": {
+    "fixed_vs_configurable": {
+      "fixed_rules_win_over_configurable": true,
+      "configurable_can_override_only_configurable": true
+    },
+    "conflict_policy": {
+      "default": "last_write_wins_by_ordering",
+      "disallow_cross_category_overlap": true,
+      "overlap_violation_error": "STD02-OVERLAP-CAT"
+    }
+  },
+  "provenance": {
+    "record_source_pack": true,
+    "record_merge_order": true
+  }
+}

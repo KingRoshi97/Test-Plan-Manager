@@ -1,0 +1,19 @@
+{
+  "pack_id": "DESIGN_BASE",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-02",
+  "applies_when": {},
+  "priority": 500,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-DES-101",
+      "name": "Design outputs required for UI builds",
+      "description": "If build target includes UI, templates must include a design section and UI constraints.",
+      "rule_type": "default",
+      "value": { "ui_design_section_required": true },
+      "fixed": false,
+      "source_pack": "DESIGN_BASE@1.0.0"
+    }
+  ]
+}

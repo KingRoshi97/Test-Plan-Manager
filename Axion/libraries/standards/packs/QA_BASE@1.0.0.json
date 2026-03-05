@@ -1,0 +1,19 @@
+{
+  "pack_id": "QA_BASE",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-04",
+  "applies_when": {},
+  "priority": 700,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-QA-101",
+      "name": "Minimum test evidence",
+      "description": "Runs should produce test evidence when tests exist.",
+      "rule_type": "default",
+      "value": { "test_evidence_required": true },
+      "fixed": false,
+      "source_pack": "QA_BASE@1.0.0"
+    }
+  ]
+}

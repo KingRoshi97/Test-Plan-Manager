@@ -1,0 +1,47 @@
+{
+  "pack_id": "CORE",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-01",
+  "applies_when": {},
+  "priority": 1000,
+  "fixed_rules": [
+    {
+      "rule_id": "STD-ENG-001",
+      "name": "Deterministic stage order",
+      "description": "Pipeline stages must execute in a fixed, declared order; no implicit stages.",
+      "rule_type": "requirement",
+      "value": { "deterministic_stage_order": true },
+      "fixed": true,
+      "source_pack": "CORE@1.0.0"
+    },
+    {
+      "rule_id": "STD-ENG-002",
+      "name": "Artifacts must be schema-validatable",
+      "description": "All emitted artifacts must have a schema_ref and be machine-validated where applicable.",
+      "rule_type": "requirement",
+      "value": { "schema_validation_required": true },
+      "fixed": true,
+      "source_pack": "CORE@1.0.0"
+    },
+    {
+      "rule_id": "STD-ENG-003",
+      "name": "Pins are required",
+      "description": "Runs must record pinned versions for libraries, schemas, templates, and standards.",
+      "rule_type": "requirement",
+      "value": { "pinning_required": true },
+      "fixed": true,
+      "source_pack": "CORE@1.0.0"
+    }
+  ],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-ENG-101",
+      "name": "Default artifact hashing policy",
+      "description": "Default hashing policy for artifacts unless overridden by stricter packs.",
+      "rule_type": "default",
+      "value": { "hash_policy": "sha256_optional" },
+      "fixed": false,
+      "source_pack": "CORE@1.0.0"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "pack_id": "OPS_CONDITIONAL",
+  "pack_version": "1.0.0",
+  "category": "STD-CAT-05",
+  "applies_when": {
+    "gates": { "data_enabled": true }
+  },
+  "priority": 400,
+  "fixed_rules": [],
+  "configurable_rules": [
+    {
+      "rule_id": "STD-OPS-101",
+      "name": "Operational logging required when data_enabled",
+      "description": "If data is enabled, require basic logging/telemetry artifacts.",
+      "rule_type": "requirement",
+      "value": { "telemetry_required": true },
+      "fixed": false,
+      "source_pack": "OPS_CONDITIONAL@1.0.0"
+    }
+  ]
+}
