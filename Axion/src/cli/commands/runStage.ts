@@ -27,6 +27,7 @@ import { normalizeSubmission } from "../../core/intake/normalizer.js";
 import { writeSubmissionRecord } from "../../core/intake/submissionRecord.js";
 import { validateIntake } from "../../core/intake/validator.js";
 import { writeCanonicalJson } from "../../utils/canonicalJson.js";
+import { buildStateSnapshot, writeStateSnapshot } from "../../core/state/stateSnapshot.js";
 import { runVerification, collectGateReports } from "../../core/verification/runner.js";
 import { writeCompletionReport } from "../../core/verification/completion.js";
 import { createProofsFromGateReports } from "../../core/proof/create.js";
@@ -308,7 +309,11 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     const coverageReport = calculateCoverage(canonicalSpec, workBreakdown, acceptanceMap, runId);
     writeCanonicalJson(join(runDir, "planning", "coverage_report.json"), coverageReport);
 
-    console.log(`  S8: Generated ${workBreakdown.units.length} work units, ${acceptanceMap.acceptance.length} acceptance items, coverage: ${coverageReport.coverage_percent}%`);
+    const stateSnapshot = buildStateSnapshot(runId, workBreakdown, acceptanceMap);
+    writeStateSnapshot(runDir, stateSnapshot);
+
+    const acceptanceCount = acceptanceMap.acceptance_items?.length ?? acceptanceMap.acceptance?.length ?? 0;
+    console.log(`  S8: Generated ${workBreakdown.units.length} work units, ${acceptanceCount} acceptance items, coverage: ${coverageReport.coverage_percent}%`);
   } else if (stageId === "S9_VERIFY_PROOF") {
     const gateReports = collectGateReports(runDir);
 

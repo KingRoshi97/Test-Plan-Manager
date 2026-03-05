@@ -84,11 +84,26 @@ export interface ResolverTraceEntry {
   namespace: string;
 }
 
+export interface FixedVsConfigurable {
+  [rule_id: string]: "fixed" | "configurable";
+}
+
 export interface ResolvedStandardsSnapshot {
-  snapshot_id: string;
-  run_id: string;
+  resolved_standards_id: string;
+  submission_id: string;
   created_at: string;
+  system_version: string;
+  schema_version_used: string;
+  standards_library_version_used: string;
   resolver_version: string;
+  resolver_context: ResolverContext;
+  selected_packs: SelectedPack[];
+  rules: ResolvedRule[];
+  fixed_vs_configurable: FixedVsConfigurable;
+  overrides_applied: OverrideRecord[];
+  overrides_blocked: OverrideRecord[];
+  conflicts: ConflictEntry[];
+  run_id: string;
   resolved_standards: ResolvedStandard[];
   resolver_trace: ResolverTraceEntry[];
 }
@@ -265,11 +280,32 @@ export function resolveStandards(
   const snapshotId = `${registry.resolverRules.output.snapshot_id_prefix}${shortHash(canonicalJsonString({ runId, rules: resolvedRules }), 12)}`;
   const createdAt = isoNow();
 
+  const fixedVsConfigurable: Record<string, "fixed" | "configurable"> = {};
+  for (const [, { rule }] of ruleMap) {
+    fixedVsConfigurable[rule.rule_id] = rule.fixed ? "fixed" : "configurable";
+  }
+
+  const submissionId = (() => {
+    const input = normalizedInput as Record<string, unknown>;
+    return String(input.submission_id ?? "unknown");
+  })();
+
   const snapshot: ResolvedStandardsSnapshot = {
-    snapshot_id: snapshotId,
-    run_id: runId,
+    resolved_standards_id: snapshotId,
+    submission_id: submissionId,
     created_at: createdAt,
+    system_version: "1.0.0",
+    schema_version_used: "1.0.0",
+    standards_library_version_used: registry.index.standards_library_version,
     resolver_version: registry.resolverRules.version,
+    resolver_context: context,
+    selected_packs: selectedPacks,
+    rules: resolvedRules,
+    fixed_vs_configurable: fixedVsConfigurable,
+    overrides_applied: [],
+    overrides_blocked: [],
+    conflicts: conflictLog,
+    run_id: runId,
     resolved_standards: resolvedStandards,
     resolver_trace: resolverTrace,
   };

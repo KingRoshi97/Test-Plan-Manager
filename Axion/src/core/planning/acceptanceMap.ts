@@ -1,28 +1,39 @@
 import { join } from "node:path";
 import { readFileSync, existsSync } from "node:fs";
+import { isoNow } from "../../utils/time.js";
 import type { CanonicalSpec } from "../canonical/specBuilder.js";
 import type { WorkBreakdownOutput, WorkUnit } from "./workBreakdown.js";
 
-export interface RequiredProof {
-  type: "test_run" | "lint_run" | "typecheck" | "screenshot" | "api_trace" | "log_excerpt" | "manual_check" | "benchmark";
-  ref: string;
-  notes?: string;
-}
-
 export interface AcceptanceItem {
   acceptance_id: string;
-  title: string;
+  unit_id: string;
   unit_ref: string;
+  title: string;
+  statement: string;
+  criterion_type: "functional_check" | "verification" | "performance" | "security" | "compliance";
+  proof_required: boolean;
+  proof_type: "test_run" | "lint_run" | "typecheck" | "screenshot" | "api_trace" | "log_excerpt" | "manual_check" | "benchmark";
+  how_to_verify: string;
+  gating: "hard_gate" | "soft_gate";
+  scope_refs: string[];
   category: "screen" | "endpoint" | "entity" | "business_rule" | "component" | "acceptance_criterion" | "test_case" | "flow" | "nonfunctional";
   criteria: string[];
-  required_proof: RequiredProof[];
+}
+
+export interface UnitAcceptanceIndex {
+  [unit_id: string]: string[];
 }
 
 export interface AcceptanceMapOutput {
+  acceptance_map_id: string;
+  work_breakdown_id: string;
   version: string;
   run_id: string;
   spec_id: string;
+  created_at: string;
+  acceptance_items: AcceptanceItem[];
   acceptance: AcceptanceItem[];
+  unit_acceptance_index: UnitAcceptanceIndex;
 }
 
 interface AcceptanceOrder {
@@ -54,60 +65,55 @@ function sortAcceptance(items: AcceptanceItem[], order: AcceptanceOrder): Accept
   });
 }
 
-function proofForType(unitType: string): RequiredProof[] {
+function proofTypeForUnit(unitType: string): AcceptanceItem["proof_type"] {
   switch (unitType) {
-    case "backend":
-      return [
-        { type: "test_run", ref: "unit_tests" },
-        { type: "typecheck", ref: "tsc_check" },
-      ];
-    case "frontend":
-      return [
-        { type: "test_run", ref: "component_tests" },
-        { type: "screenshot", ref: "ui_screenshot" },
-      ];
-    case "security":
-      return [
-        { type: "lint_run", ref: "security_scan" },
-        { type: "test_run", ref: "auth_tests" },
-      ];
-    case "qa":
-      return [
-        { type: "test_run", ref: "integration_tests" },
-        { type: "log_excerpt", ref: "test_logs" },
-      ];
-    case "contracts":
-      return [
-        { type: "typecheck", ref: "schema_validation" },
-        { type: "api_trace", ref: "contract_trace" },
-      ];
-    case "spec":
-      return [{ type: "manual_check", ref: "spec_review" }];
-    case "docs":
-      return [{ type: "manual_check", ref: "docs_review" }];
-    default:
-      return [{ type: "manual_check", ref: `${unitType}_review` }];
+    case "backend": return "test_run";
+    case "frontend": return "screenshot";
+    case "security": return "lint_run";
+    case "qa": return "test_run";
+    case "contracts": return "typecheck";
+    case "spec": return "manual_check";
+    case "docs": return "manual_check";
+    default: return "manual_check";
   }
 }
 
 function categoryForType(unitType: string): AcceptanceItem["category"] {
   switch (unitType) {
-    case "backend":
-      return "endpoint";
-    case "frontend":
-      return "screen";
-    case "contracts":
-      return "entity";
-    case "security":
-      return "business_rule";
-    case "qa":
-      return "test_case";
-    case "spec":
-      return "acceptance_criterion";
-    case "docs":
-      return "acceptance_criterion";
-    default:
-      return "component";
+    case "backend": return "endpoint";
+    case "frontend": return "screen";
+    case "contracts": return "entity";
+    case "security": return "business_rule";
+    case "qa": return "test_case";
+    case "spec": return "acceptance_criterion";
+    case "docs": return "acceptance_criterion";
+    default: return "component";
+  }
+}
+
+function gatingForType(unitType: string): "hard_gate" | "soft_gate" {
+  switch (unitType) {
+    case "spec": return "hard_gate";
+    case "backend": return "hard_gate";
+    case "contracts": return "hard_gate";
+    case "security": return "hard_gate";
+    case "qa": return "hard_gate";
+    case "frontend": return "soft_gate";
+    case "docs": return "soft_gate";
+    default: return "soft_gate";
+  }
+}
+
+function howToVerifyForType(unitType: string, title: string): string {
+  switch (unitType) {
+    case "backend": return `Run unit tests for ${title}; confirm all pass with no failures`;
+    case "frontend": return `Take screenshot of ${title} UI; confirm layout matches requirements`;
+    case "security": return `Run security scan; confirm no critical findings for ${title}`;
+    case "qa": return `Execute integration test suite; confirm all tests in ${title} pass`;
+    case "contracts": return `Validate API schema for ${title}; run contract tests`;
+    case "spec": return `Review ${title} documentation; confirm all requirements documented`;
+    case "docs": return `Review generated documentation for completeness`;
+    default: return `Manually verify ${title} is complete and meets acceptance criteria`;
   }
 }
 
@@ -165,24 +171,45 @@ export function buildAcceptanceMap(
       }
     }
 
-    items.push({
+    const item: AcceptanceItem = {
       acceptance_id: acceptanceId,
-      title: `Acceptance: ${unit.title}`,
+      unit_id: unit.unit_id,
       unit_ref: unit.unit_id,
+      title: `Acceptance: ${unit.title}`,
+      statement: criteria[0] ?? `${unit.title} meets all requirements`,
+      criterion_type: unit.type === "qa" ? "verification" : "functional_check",
+      proof_required: gatingForType(unit.type) === "hard_gate",
+      proof_type: proofTypeForUnit(unit.type),
+      how_to_verify: howToVerifyForType(unit.type, unit.title),
+      gating: gatingForType(unit.type),
+      scope_refs: unit.scope_refs,
       category: categoryForType(unit.type),
       criteria,
-      required_proof: proofForType(unit.type),
-    });
+    };
 
+    items.push(item);
     unit.acceptance_refs = [acceptanceId];
   }
 
   const sorted = sortAcceptance(items, order);
 
+  const unitAcceptanceIndex: UnitAcceptanceIndex = {};
+  for (const item of sorted) {
+    if (!unitAcceptanceIndex[item.unit_id]) {
+      unitAcceptanceIndex[item.unit_id] = [];
+    }
+    unitAcceptanceIndex[item.unit_id].push(item.acceptance_id);
+  }
+
   return {
+    acceptance_map_id: `ACCMAP-${runId}`,
+    work_breakdown_id: workBreakdown.work_breakdown_id,
     version: "1.0.0",
     run_id: runId,
     spec_id: specId,
+    created_at: isoNow(),
+    acceptance_items: sorted,
     acceptance: sorted,
+    unit_acceptance_index: unitAcceptanceIndex,
   };
 }

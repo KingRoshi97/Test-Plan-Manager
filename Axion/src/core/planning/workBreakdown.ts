@@ -11,15 +11,30 @@ export interface WorkUnit {
   description?: string;
   scope_refs: string[];
   depends_on: string[];
+  deliverables: string[];
   outputs: string[];
   acceptance_refs?: string[];
 }
 
+export interface DependencyEdge {
+  from: string;
+  to: string;
+}
+
+export interface DependencyGraph {
+  nodes: string[];
+  edges: DependencyEdge[];
+}
+
 export interface WorkBreakdownOutput {
+  work_breakdown_id: string;
   version: string;
   run_id: string;
   spec_id: string;
+  created_at: string;
   units: WorkUnit[];
+  dependency_graph: DependencyGraph;
+  unit_index: Record<string, WorkUnit>;
 }
 
 interface SequencingPolicy {
@@ -54,6 +69,17 @@ function sortUnits(units: WorkUnit[], policy: SequencingPolicy): WorkUnit[] {
   });
 }
 
+function buildDependencyGraph(units: WorkUnit[]): DependencyGraph {
+  const nodes = units.map((u) => u.unit_id);
+  const edges: DependencyEdge[] = [];
+  for (const unit of units) {
+    for (const dep of unit.depends_on) {
+      edges.push({ from: dep, to: unit.unit_id });
+    }
+  }
+  return { nodes, edges };
+}
+
 export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, repoRoot: string): WorkBreakdownOutput {
   const specId = canonicalSpec.meta.spec_id;
   const policy = loadSequencingPolicy(repoRoot);
@@ -67,6 +93,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
     description: "Define and validate project requirements from canonical spec",
     scope_refs: [specId],
     depends_on: [],
+    deliverables: ["canonical_spec.json", "unknowns.json"],
     outputs: ["canonical_spec.json", "unknowns.json"],
   };
   units.push(specUnit);
@@ -79,6 +106,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
       description: feature.description ?? `Implement backend logic for ${feature.name}`,
       scope_refs: [feature.feature_id],
       depends_on: [specUnit.unit_id],
+      deliverables: [`backend/${feature.feature_id.toLowerCase()}.ts`],
       outputs: [`backend/${feature.feature_id.toLowerCase()}.ts`],
     };
     units.push(backendUnit);
@@ -90,6 +118,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
       description: `Build UI components for ${feature.name}`,
       scope_refs: [feature.feature_id],
       depends_on: [backendUnit.unit_id],
+      deliverables: [`frontend/${feature.feature_id.toLowerCase()}.tsx`],
       outputs: [`frontend/${feature.feature_id.toLowerCase()}.tsx`],
     };
     units.push(frontendUnit);
@@ -103,6 +132,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
       description: "Define API contracts for all workflows",
       scope_refs: canonicalSpec.entities.workflows.map((w) => w.workflow_id),
       depends_on: [specUnit.unit_id],
+      deliverables: ["contracts/api_schema.json"],
       outputs: ["contracts/api_schema.json"],
     };
     units.push(contractsUnit);
@@ -116,6 +146,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
       description: "Define and implement user roles and access levels",
       scope_refs: canonicalSpec.entities.roles.map((r) => r.role_id),
       depends_on: [specUnit.unit_id],
+      deliverables: ["security/roles.ts"],
       outputs: ["security/roles.ts"],
     };
     units.push(rolesUnit);
@@ -129,6 +160,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
       description: "Implement role-based permissions and security controls",
       scope_refs: canonicalSpec.entities.permissions.map((p) => p.perm_id),
       depends_on: [specUnit.unit_id],
+      deliverables: ["security/rbac.ts", "security/policies.json"],
       outputs: ["security/rbac.ts", "security/policies.json"],
     };
     units.push(securityUnit);
@@ -141,6 +173,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
     description: "Write and run tests for all features and workflows",
     scope_refs: canonicalSpec.entities.features.map((f) => f.feature_id),
     depends_on: units.filter((u) => u.type === "backend" || u.type === "frontend").map((u) => u.unit_id),
+    deliverables: ["tests/test_results.json"],
     outputs: ["tests/test_results.json"],
   };
   units.push(qaUnit);
@@ -152,16 +185,28 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
     description: "Generate project documentation from templates and specs",
     scope_refs: [specId],
     depends_on: [specUnit.unit_id],
+    deliverables: ["docs/README.md", "docs/api_reference.md"],
     outputs: ["docs/README.md", "docs/api_reference.md"],
   };
   units.push(docsUnit);
 
   const sorted = sortUnits(units, policy);
 
+  const dependencyGraph = buildDependencyGraph(sorted);
+
+  const unitIndex: Record<string, WorkUnit> = {};
+  for (const unit of sorted) {
+    unitIndex[unit.unit_id] = unit;
+  }
+
   return {
+    work_breakdown_id: `WBD-${runId}`,
     version: "1.0.0",
     run_id: runId,
     spec_id: specId,
+    created_at: isoNow(),
     units: sorted,
+    dependency_graph: dependencyGraph,
+    unit_index: unitIndex,
   };
 }

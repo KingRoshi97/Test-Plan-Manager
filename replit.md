@@ -130,7 +130,7 @@ S1_INGEST_NORMALIZE → S2_VALIDATE_INTAKE → S3_BUILD_CANONICAL → S4_VALIDAT
 | S5_RESOLVE_STANDARDS | Loads standards registry → evaluates pack applicability → resolves with precedence/conflict handling → applicability_output.json + resolved_standards_snapshot.json |
 | S6_SELECT_TEMPLATES | Registry-driven template selection with rationale tokens and deterministic selection hash → selection_result.json |
 | S7_RENDER_DOCS | Envelope-first rendering with placeholder resolution tracking → rendered_docs/, render_envelopes.json, template_completeness_report.json |
-| S8_BUILD_PLAN | Generates work breakdown (typed units from spec entities), acceptance map (with proof requirements), coverage report → work_breakdown.json, acceptance_map.json, coverage_report.json |
+| S8_BUILD_PLAN | Generates work breakdown (PLAN-01: work_breakdown_id, units, dependency_graph, unit_index), acceptance map (PLAN-02: acceptance_map_id, acceptance_items with hard_gate/soft_gate, proof_required), coverage report, state snapshot (STATE-01: meta, pointers, unit_status[], acceptance_status[]) |
 | S9_VERIFY_PROOF | Collects gate reports → runs verification → creates proof objects → appends proof_ledger.jsonl → validates evidence pointers → completion_report.json |
 | S10_PACKAGE | Builds real kit bundle from upstream artifacts (canonical, standards, templates, planning, gates, proof) with version pins from loader → kit_manifest.json, entrypoint.json, version_stamp.json, packaging_manifest.json |
 
@@ -164,11 +164,16 @@ S1_INGEST_NORMALIZE → S2_VALIDATE_INTAKE → S3_BUILD_CANONICAL → S4_VALIDAT
 - Evidence Pointers: dereferences file pointers, verifies files exist, optional hash match
 - Completion Report: aggregated verification status
 
-### Kit Packaging (S10)
-- Bundles real upstream artifacts: canonical spec, standards snapshot, rendered docs, planning artifacts, gate reports, proof ledger
-- Version stamp records actual library versions used (from pinned loader)
-- Packaging manifest hashes all bundle files (sha256)
-- Kit manifest provides file listing with roles
+### Kit Packaging (S10) — KIT-01 compliant
+Produces full `agent_kit/` folder hierarchy inside `kit/bundle/`:
+- `00_START_HERE.md` (KIT-03: purpose, reading order, execution loop, completion definition)
+- `00_KIT_MANIFEST.md` (KIT-02: fenced JSON with reading_order, core_artifacts map, proof, versions)
+- `00_KIT_INDEX.md` (table of contents)
+- `00_VERSIONS.md` (KIT-04: V-01 through V-07 version categories)
+- `00_RUN_RULES.md` (no claims without proof, follow work breakdown)
+- `00_PROOF_LOG.md` (empty initial proof log)
+- `01_core_artifacts/` — 6 required JSONs (normalized_input, standards_snapshot, canonical_spec, work_breakdown, acceptance_map, state_snapshot)
+- `10_app/` — 12 domain slot folders (01_requirements through 12_analytics), each with rendered templates or `00_NA.md`
 
 ## Knowledge Library (`Axion/libraries/knowledge/`)
 Structured, policy-governed knowledge base providing KID files (Knowledge Items) across three pillars.

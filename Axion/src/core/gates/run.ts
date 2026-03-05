@@ -3,7 +3,7 @@ import { readJson, writeJson } from "../../utils/fs.js";
 import { isoNow } from "../../utils/time.js";
 import { loadGateRegistry, filterGatesByStage, templateGatePaths } from "./registry.js";
 import { evalCheck } from "./evaluator.js";
-import { writeGateReport } from "./report.js";
+import { writeGateReport, deriveTarget, checksToIssues } from "./report.js";
 import type { GateReportV1, CheckReport } from "./report.js";
 import type { RunManifest } from "../../types/run.js";
 import { evaluateEvidenceCompleteness, getRequiredProofTypes } from "./evidencePolicy.js";
@@ -74,13 +74,17 @@ export function runGatesForStage(baseDir: string, runId: string, stageId: string
     const availableProofTypes = deriveAvailableProofTypes(gate.gate_id, gatePassed);
     const evidenceCompleteness = evaluateEvidenceCompleteness(gate.gate_id, availableProofTypes);
 
+    const issues = checksToIssues(checkReports, gate.gate_id);
+
     const report: GateReportV1 = {
       run_id: runId,
       gate_id: gate.gate_id,
       stage_id: gate.stage_id,
+      target: deriveTarget(gate.gate_id),
       status: gatePassed ? "pass" : "fail",
       evaluated_at: isoNow(),
       engine: ENGINE,
+      issues,
       checks: checkReports,
       failure_codes: gatePassed ? [] : (firstFailureCode ? [firstFailureCode] : []),
       evidence: gatePassed ? [] : failEvidence,

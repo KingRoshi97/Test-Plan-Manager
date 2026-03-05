@@ -116,11 +116,25 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
     }
   }
 
+  const specMeta = (canonicalSpec.meta as Record<string, unknown>) ?? {};
+  const specEntities = (canonicalSpec.entities as Record<string, unknown>) ?? {};
+  const specRouting = (canonicalSpec.routing as Record<string, unknown>) ?? {};
+  const derivedSpecId = (specMeta.spec_id as string) ?? "SPEC-UNKNOWN";
+
   const context = buildAutoContext(templateContents, {
     run_id: runId,
     generated_at: generatedAt,
     spec: canonicalSpec,
     standards: standardsSnapshot,
+    project_name: specMeta.project_name ?? specRouting.project_name ?? "Project",
+    spec_id: derivedSpecId,
+    submission_id: specMeta.submission_id ?? "unknown",
+    skill_level: specRouting.skill_level ?? "intermediate",
+    category: specRouting.category ?? "application",
+    type_preset: specRouting.type_preset ?? "web_app",
+    features: specEntities.features ?? [],
+    roles: specEntities.roles ?? [],
+    workflows: specEntities.workflows ?? [],
   });
 
   const envelopes: Array<{
