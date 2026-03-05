@@ -1,4 +1,4 @@
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
 import { readJson, ensureDir } from "../../utils/fs.js";
 import { writeCanonicalJson } from "../../utils/canonicalJson.js";
@@ -13,6 +13,7 @@ import {
   buildCompletenessReport,
 } from "./completeness.js";
 import type { TemplateCompletenessEntry } from "./completeness.js";
+import { fillTemplate, type FillContext } from "./filler.js";
 
 export function writeSelectionResult(
   runDir: string,
@@ -90,7 +91,21 @@ interface SelectionResultFile {
   }>;
 }
 
+function assertNotTemplateLibrary(targetPath: string, baseDir: string): void {
+  const templateLibDir = resolve(baseDir, "libraries", "templates");
+  const absTarget = resolve(targetPath);
+  if (absTarget.startsWith(templateLibDir)) {
+    throw new Error(
+      `GUARDRAIL VIOLATION: Attempted write to template library at ${absTarget}. ` +
+      `Source templates in libraries/templates/ are read-only. ` +
+      `Rendered output must go to runs/<runId>/templates/rendered_docs/.`
+    );
+  }
+}
+
 export function writeRenderedDocs(runDir: string, runId: string, generatedAt: string, baseDir: string): void {
+  assertNotTemplateLibrary(runDir, baseDir);
+
   const selectionPath = join(runDir, "templates", "selection_result.json");
   const selection = readJson<SelectionResultFile>(selectionPath);
   const catalog = loadPlaceholderCatalog(baseDir);
@@ -110,63 +125,35 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
     normalizedInput = readJson<Record<string, unknown>>(join(runDir, "intake", "normalized_input.json"));
   } catch { /* empty */ }
 
-  const templateContents: string[] = [];
-  for (const tmpl of selection.selected) {
-    try {
-      const absPath = join(baseDir, tmpl.source_abs_path);
-      const content = readFileSync(absPath, "utf-8");
-      templateContents.push(content);
-    } catch {
-      templateContents.push("");
-    }
-  }
+  let workBreakdown: Record<string, unknown> = {};
+  try {
+    workBreakdown = readJson<Record<string, unknown>>(join(runDir, "planning", "work_breakdown.json"));
+  } catch { /* empty */ }
+
+  let acceptanceMap: Record<string, unknown> = {};
+  try {
+    acceptanceMap = readJson<Record<string, unknown>>(join(runDir, "planning", "acceptance_map.json"));
+  } catch { /* empty */ }
 
   const specMeta = (canonicalSpec.meta as Record<string, unknown>) ?? {};
-  const specEntities = (canonicalSpec.entities as Record<string, unknown>) ?? {};
-  const specRouting = (canonicalSpec.routing as Record<string, unknown>) ?? {};
-  const specRules = (canonicalSpec.rules as Record<string, unknown>) ?? {};
   const derivedSpecId = (specMeta.spec_id as string) ?? "SPEC-UNKNOWN";
-
-  const normalizedProject = (normalizedInput.project as Record<string, unknown>) ?? {};
-  const normalizedRouting = (normalizedInput.routing as Record<string, unknown>) ?? {};
-  const normalizedConstraints = (normalizedInput.constraints as Record<string, unknown>) ?? {};
-
-  const projectName = String(
-    normalizedProject.project_name ??
-    specMeta.project_name ??
-    specRouting.project_name ??
-    "Project"
+  const standardsId = String(
+    (standardsSnapshot as Record<string, unknown>).snapshot_id ??
+    (standardsSnapshot as Record<string, unknown>).standards_snapshot_id ??
+    "STD-UNKNOWN"
   );
-  const projectOverview = String(normalizedProject.project_overview ?? "No overview provided.");
 
-  const context = buildAutoContext(templateContents, {
-    run_id: runId,
-    generated_at: generatedAt,
+  const fillCtx: FillContext = {
     spec: canonicalSpec,
     standards: standardsSnapshot,
-    project_name: projectName,
-    project_overview: projectOverview,
+    work: workBreakdown,
+    acceptance: acceptanceMap,
+    normalizedInput,
+    submission_id: String(specMeta.submission_id ?? (normalizedInput as Record<string, unknown>).submission_id ?? "unknown"),
     spec_id: derivedSpecId,
-    submission_id: String(specMeta.submission_id ?? normalizedInput.submission_id ?? "unknown"),
-    skill_level: String(normalizedRouting.skill_level ?? specRouting.skill_level ?? "intermediate"),
-    category: String(normalizedRouting.category ?? specRouting.category ?? "application"),
-    type_preset: String(normalizedRouting.type_preset ?? specRouting.type_preset ?? "web_app"),
-    build_target: String(normalizedRouting.build_target ?? specRouting.build_target ?? "new"),
-    audience_context: String(normalizedRouting.audience_context ?? specRouting.audience_context ?? "internal"),
-    features: specEntities.features ?? [],
-    roles: specEntities.roles ?? [],
-    workflows: specEntities.workflows ?? [],
-    permissions: specEntities.permissions ?? [],
-    definition_of_done: String(specRules.definition_of_done ?? "All features implemented and tested"),
-    must_always_rules: specRules.must_always ?? [],
-    must_never_rules: specRules.must_never ?? [],
-    acceptance_criteria: specRules.acceptance_criteria ?? [],
-    nfr: (normalizedConstraints.nfr as Record<string, unknown>) ?? {},
-    auth: (normalizedConstraints.auth as Record<string, unknown>) ?? {},
-    data: (normalizedConstraints.data as Record<string, unknown>) ?? {},
-    integrations: (normalizedConstraints.integrations as Record<string, unknown>) ?? {},
-    delivery: (normalizedConstraints.delivery as Record<string, unknown>) ?? {},
-  });
+    standards_id: standardsId,
+    run_id: runId,
+  };
 
   const envelopes: Array<{
     template_id: string;
@@ -183,39 +170,61 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
   const completenessEntries: TemplateCompletenessEntry[] = [];
   const now = isoNow();
 
-  for (let i = 0; i < selection.selected.length; i++) {
-    const tmpl = selection.selected[i];
-    const rawContent = templateContents[i];
-    const totalPlaceholders = countPlaceholders(rawContent);
-    const rendered = renderTemplate(rawContent, context);
-    const unresolved = scanUnresolvedPlaceholders(rendered);
+  for (const tmpl of selection.selected) {
+    let rawContent = "";
+    try {
+      const absPath = join(baseDir, tmpl.source_abs_path);
+      rawContent = readFileSync(absPath, "utf-8");
+    } catch {
+      rawContent = "";
+    }
+
+    const filled = fillTemplate(
+      {
+        template_id: tmpl.template_id,
+        template_version: tmpl.template_version,
+        source_file_path: tmpl.source_file_path,
+        source_abs_path: tmpl.source_abs_path,
+        output_path: tmpl.output_path,
+        rationale: tmpl.rationale ?? "",
+        requiredness: tmpl.requiredness ?? "conditional",
+      },
+      rawContent,
+      fillCtx,
+    );
 
     const outputRelPath = `templates/rendered_docs/${tmpl.template_id}.md`;
     const outputAbsPath = join(runDir, outputRelPath);
 
+    assertNotTemplateLibrary(outputAbsPath, baseDir);
     ensureDir(dirname(outputAbsPath));
-    writeFileSync(outputAbsPath, rendered, "utf-8");
+    writeFileSync(outputAbsPath, filled.content, "utf-8");
 
-    const unresolvedFields = unresolved.map((u) => u.key);
+    const totalFields = filled.placeholders_resolved + filled.placeholders_unknown;
+    const unresolvedFields = filled.unknowns.map((u) => u.placeholder);
+    const unknownAllowedFields = filled.unknowns
+      .filter((u) => u.status === "UNKNOWN_ALLOWED")
+      .map((u) => u.placeholder);
 
     envelopes.push({
       template_id: tmpl.template_id,
       template_version: tmpl.template_version,
       rendered_at: now,
       output_path: outputRelPath,
-      placeholders_total: totalPlaceholders,
-      placeholders_resolved: totalPlaceholders - unresolved.length,
-      placeholders_unresolved: unresolved.length,
+      placeholders_total: totalFields,
+      placeholders_resolved: filled.placeholders_resolved,
+      placeholders_unresolved: filled.placeholders_unknown,
       unresolved_fields: unresolvedFields,
-      content_hash: sha256(rendered).slice(0, 16),
+      content_hash: sha256(filled.content).slice(0, 16),
     });
 
     const completenessEntry = checkTemplateCompleteness(
       tmpl.template_id,
       tmpl.requiredness ?? "conditional",
-      totalPlaceholders,
+      totalFields,
       unresolvedFields,
       catalog,
+      unknownAllowedFields,
     );
     completenessEntries.push(completenessEntry);
   }

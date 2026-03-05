@@ -41,15 +41,16 @@ export function checkTemplateCompleteness(
   totalPlaceholders: number,
   unresolvedFields: string[],
   catalog: PlaceholderCatalog,
+  unknownAllowedFields?: string[],
 ): TemplateCompletenessEntry {
   const resolved = totalPlaceholders - unresolvedFields.length;
-  const hasUnresolved = unresolvedFields.length > 0;
 
-  const optionalFields = unresolvedFields.filter((f) => {
-    return f.endsWith("|OPTIONAL") || f.endsWith("|UNKNOWN_ALLOWED");
-  });
+  const allowedSet = new Set(unknownAllowedFields ?? []);
+
   const requiredUnresolved = unresolvedFields.filter((f) => {
-    return !f.endsWith("|OPTIONAL") && !f.endsWith("|UNKNOWN_ALLOWED");
+    if (f.endsWith("|OPTIONAL") || f.endsWith("|UNKNOWN_ALLOWED")) return false;
+    if (allowedSet.has(f)) return false;
+    return true;
   });
 
   const blocking = requiredness === "always" && requiredUnresolved.length > 0;

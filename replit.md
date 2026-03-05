@@ -229,9 +229,12 @@ S1_INGEST_NORMALIZE → S2_VALIDATE_INTAKE → S3_BUILD_CANONICAL → S4_VALIDAT
 - Gate reports include evidence completeness sections
 
 ### Template System
-- Selector: `libraries/templates/template_index.json` (177 templates) → registry-driven selection with rationale
-- Renderer: envelope-first rendering with `{{dotted.path}}` placeholder resolution
-- Completeness: required templates block on unresolved required placeholders
+- **Source Templates**: `libraries/templates/` (177 TMP-02 contract files in 4 categories: Product Definition, System Architecture, Experience Design, Data & Information). These are READ-ONLY — never modified by runs. Each contains: Header Block, Purpose, Inputs Required, Required Fields, Optional Fields, Rules, Output Format, Cross-References, Skill Level Rules, Unknown Handling, Completeness Gate.
+- **Filler Engine**: `filler.ts` reads each template's Output Format (Section 7) and produces a filled document using canonical spec entities (features, roles, workflows, permissions), standards, constraints, and intake data. Supports 5 placeholder types: direct, array, derived, optional, unknown-allowed. TMP-04 precedence: Canonical Spec → Standards → Work Breakdown → Acceptance Map.
+- **Selector**: `template_index.json` → registry-driven selection with rationale
+- **Rendered Output**: Filled documents written to `.axion/runs/<runId>/templates/rendered_docs/` — contain real project data (entity tables, requirements, cross-references), not template instruction text
+- **Completeness**: checks filled content quality; UNKNOWN_ALLOWED fields don't block
+- **Read-Only Guard**: `assertNotTemplateLibrary()` prevents any write to `libraries/templates/`; IA guardrail IA-G07 enforces at agent level
 - Evidence: writes selection_result.json, render_envelopes.json, template_completeness_report.json, rendered docs
 
 ### Proof & Verification

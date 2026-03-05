@@ -84,6 +84,16 @@ const noExternalRepoGuardrail: AgentGuardrail = {
   }),
 };
 
+const templateReadOnlyGuardrail: AgentGuardrail = {
+  guardrail_id: "IA-G07",
+  description: "IA must never modify source templates in libraries/templates/ — only read from them and write to runs/<runId>/templates/rendered_docs/",
+  check: (_ctx: AgentContext): GuardrailResult => ({
+    passed: true,
+    guardrail_id: "IA-G07",
+    message: "Template library read-only guard active",
+  }),
+};
+
 export class InternalAgent extends BaseAgent {
   constructor(agentId: string = "IA-001") {
     const identity: AgentIdentity = {
@@ -99,6 +109,7 @@ export class InternalAgent extends BaseAgent {
       noSecretsGuardrail,
       evidencePointerGuardrail,
       noExternalRepoGuardrail,
+      templateReadOnlyGuardrail,
     ]);
   }
 
