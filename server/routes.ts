@@ -5,6 +5,7 @@ import { startPipelineRun } from "./pipeline-runner.js";
 import { generateAutofillSuggestions } from "./openai.js";
 import fs from "fs";
 import path from "path";
+import archiver from "archiver";
 
 const AXION_ROOT = path.resolve(process.cwd(), "Axion");
 const AXION_RUNS = path.resolve(AXION_ROOT, ".axion", "runs");
@@ -18,7 +19,14 @@ function safePath(userPath: string): string | null {
 export function registerRoutes(app: Express) {
   app.get("/api/assemblies", async (_req: Request, res: Response) => {
     const rows = await storage.getAssemblies();
-    res.json(rows);
+    const enriched = await Promise.all(
+      rows.map(async (a) => {
+        if (!a.runId) return a;
+        const run = await storage.getPipelineRunByRunId(a.runId);
+        return { ...a, latestStages: run?.stages || null };
+      })
+    );
+    res.json(enriched);
   });
 
   app.get("/api/assemblies/:id", async (req: Request, res: Response) => {
@@ -41,6 +49,43 @@ export function registerRoutes(app: Express) {
     if (!assembly) return res.status(404).json({ error: "Not found" });
     await storage.deleteAssembly(id);
     res.json({ ok: true });
+  });
+
+  app.patch("/api/assemblies/:id", async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const assembly = await storage.getAssembly(id);
+    if (!assembly) return res.status(404).json({ error: "Not found" });
+    if (assembly.status === "running") return res.status(409).json({ error: "Cannot update while running" });
+
+    const allowedFields = ["projectName", "idea", "preset", "intakePayload", "config"];
+    const update: Record<string, any> = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) update[key] = req.body[key];
+    }
+    if (Object.keys(update).length === 0) return res.status(400).json({ error: "No valid fields to update" });
+
+    const updated = await storage.updateAssembly(id, update);
+    res.json(updated);
+  });
+
+  app.get("/api/assemblies/:id/kit", async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const assembly = await storage.getAssembly(id);
+    if (!assembly) return res.status(404).json({ error: "Not found" });
+    if (!assembly.runId) return res.status(404).json({ error: "No completed run" });
+
+    const kitDir = path.join(AXION_RUNS, assembly.runId, "kit", "bundle", "agent_kit");
+    const altKitDir = path.join(AXION_RUNS, assembly.runId, "kit");
+    const targetDir = fs.existsSync(kitDir) ? kitDir : fs.existsSync(altKitDir) ? altKitDir : null;
+    if (!targetDir) return res.status(404).json({ error: "Kit not found" });
+
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="${assembly.projectName.replace(/[^a-zA-Z0-9_-]/g, "_")}_kit.zip"`);
+    const archive = archiver("zip", { zlib: { level: 6 } });
+    archive.on("error", () => { if (!res.headersSent) res.status(500).end(); else res.end(); });
+    archive.pipe(res);
+    archive.directory(targetDir, "agent_kit");
+    archive.finalize();
   });
 
   app.post("/api/assemblies/:id/run", async (req: Request, res: Response) => {

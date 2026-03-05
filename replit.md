@@ -107,9 +107,11 @@ package.json      # Root package.json with all dependencies
 - `reports` — gate reports, run completion reports
 
 ### API Endpoints (server/routes.ts)
-- `GET/POST /api/assemblies` — list/create assemblies
+- `GET/POST /api/assemblies` — list/create assemblies (includes latest pipeline stage data)
 - `GET/DELETE /api/assemblies/:id` — get/delete assembly (includes runs)
+- `PATCH /api/assemblies/:id` — update assembly fields (projectName, idea, preset, intakePayload, config)
 - `POST /api/assemblies/:id/run` — trigger pipeline execution
+- `GET /api/assemblies/:id/kit` — download agent kit as ZIP archive
 - `GET /api/assemblies/:id/runs` — list runs for assembly
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
@@ -136,14 +138,18 @@ package.json      # Root package.json with all dependencies
 - On submit: builds INT-02-compliant intakePayload, creates assembly, optionally starts pipeline
 
 ### Frontend Pages (App/src/pages/)
-- `/` — Dashboard: assembly cards with status, metrics, actions
+- `/` — Dashboard: command center with stat pills, quick action cards (latest run, health, features), sortable assembly table with pipeline progress dots
 - `/new` — New Assembly: 11-page multi-step intake wizard (INT-01 spec) with routing, project basics, intent, design, functional spec, data model, auth, integrations, NFRs, category-specific, and final verification
-- `/assembly/:id` — Assembly detail: pipeline stage timeline, gate results, artifact browser, run history
+- `/assembly/:id` — Assembly workspace with 5 tabs: Overview (project details, pipeline progress, quick actions), Pipeline (stage timeline, run history), Intake (editable intake form with Save & Re-run), Artifacts (file browser with kit download), Config (assembly settings, danger zone)
 - `/files` — File browser: navigate run artifact directories
 - `/health` — System health: pipeline, knowledge library, templates, recent runs
 - `/logs` — Run logs viewer with status filtering
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
+
+### Reusable Components
+- `App/src/components/pipeline-progress.tsx` — Compact horizontal pipeline visualization (10 stage dots with tooltips, sm/md sizes)
+- `App/src/components/app-sidebar.tsx` — Navigation sidebar with "Control Suite" branding
 
 ### Development
 ```bash

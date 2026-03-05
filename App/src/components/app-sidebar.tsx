@@ -28,7 +28,7 @@ export function AppSidebar() {
     <aside className="w-60 border-r border-[hsl(var(--border))] bg-[hsl(var(--card))] flex flex-col min-h-screen">
       <div className="p-4 border-b border-[hsl(var(--border))]">
         <h1 className="text-lg font-bold tracking-tight">AXION</h1>
-        <p className="text-xs text-[hsl(var(--muted-foreground))]">Pipeline Dashboard</p>
+        <p className="text-xs text-[hsl(var(--muted-foreground))]">Control Suite</p>
       </div>
       <nav className="flex-1 p-2 space-y-1">
         {links.map(({ href, label, icon: Icon }) => {
