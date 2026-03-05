@@ -14,6 +14,8 @@ import {
 } from "./completeness.js";
 import type { TemplateCompletenessEntry } from "./completeness.js";
 import { fillTemplate, type FillContext } from "./filler.js";
+import { resolveKnowledge } from "../knowledge/resolver.js";
+import type { KnowledgeContext } from "../knowledge/resolver.js";
 
 export function writeSelectionResult(
   runDir: string,
@@ -26,7 +28,12 @@ export function writeSelectionResult(
   const routing = loadRoutingFromRun(runDir);
   const constraints = loadConstraintsFromRun(runDir);
 
-  const { selected, index } = selectTemplates(baseDir, routing, constraints, canonicalSpec, standardsSnapshot);
+  let knowledgeContext: KnowledgeContext | undefined;
+  try {
+    knowledgeContext = resolveKnowledge(baseDir, routing, constraints);
+  } catch { /* empty */ }
+
+  const { selected, index, knowledgeBoostedIds } = selectTemplates(baseDir, routing, constraints, canonicalSpec, standardsSnapshot, knowledgeContext);
   const selectionHash = computeSelectionHash(selected);
   const now = isoNow();
 
@@ -42,14 +49,32 @@ export function writeSelectionResult(
 
   writeCanonicalJson(join(runDir, "templates", "selection_result.json"), result);
 
+  const notes: Array<{ level: string; message: string }> = [
+    {
+      level: "info",
+      message: `Selected ${selected.length} templates with registry-driven selection (selection_hash=${selectionHash})`,
+    },
+  ];
+
+  if (knowledgeBoostedIds.length > 0) {
+    notes.push({
+      level: "info",
+      message: `Knowledge-boosted ${knowledgeBoostedIds.length} templates: ${knowledgeBoostedIds.join(", ")}`,
+    });
+  }
+
+  if (knowledgeContext) {
+    notes.push({
+      level: "info",
+      message: `Knowledge context: bundle=${knowledgeContext.bundleId ?? "none"}, resolved_kids=${knowledgeContext.resolvedKids.length}, domains=${Object.keys(knowledgeContext.domainMap).length}`,
+    });
+  }
+
   writeCanonicalJson(join(runDir, "templates", "selection_report.json"), {
     generated_at: now,
-    notes: [
-      {
-        level: "info",
-        message: `Selected ${selected.length} templates with registry-driven selection (selection_hash=${selectionHash})`,
-      },
-    ],
+    knowledge_citations: knowledgeContext?.citationRefs ?? [],
+    knowledge_boosted_templates: knowledgeBoostedIds,
+    notes,
     run_id: runId,
     selected_count: selected.length,
     selection_hash: selectionHash,
@@ -143,6 +168,13 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
     "STD-UNKNOWN"
   );
 
+  let knowledgeContext: KnowledgeContext | undefined;
+  try {
+    const routing = (normalizedInput.routing ?? {}) as Record<string, unknown>;
+    const constraints = (normalizedInput.constraints ?? {}) as Record<string, unknown>;
+    knowledgeContext = resolveKnowledge(baseDir, routing, constraints);
+  } catch { /* empty */ }
+
   const fillCtx: FillContext = {
     spec: canonicalSpec,
     standards: standardsSnapshot,
@@ -153,6 +185,7 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
     spec_id: derivedSpecId,
     standards_id: standardsId,
     run_id: runId,
+    knowledge: knowledgeContext,
   };
 
   const envelopes: Array<{
@@ -245,6 +278,9 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
       unresolved: e.unresolved_fields,
     })),
     generated_at: now,
+    knowledge_citations: knowledgeContext?.citationRefs ?? [],
+    knowledge_bundle: knowledgeContext?.bundleId ?? null,
+    knowledge_domains_used: knowledgeContext ? Object.keys(knowledgeContext.domainMap) : [],
     run_id: runId,
     templates_rendered: envelopes.length,
     unresolved_placeholders: envelopes.flatMap((e) =>

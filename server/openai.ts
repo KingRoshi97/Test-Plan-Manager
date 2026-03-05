@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { join } from "node:path";
+import { resolveKnowledge, summarizeKnowledgeForPrompt } from "../Axion/src/core/knowledge/resolver.js";
 
 export function getOpenAIClient(): OpenAI {
   return new OpenAI({
@@ -63,10 +65,21 @@ Return JSON with these fields.`,
 Return JSON with these fields.`,
 };
 
+const SECTION_KNOWLEDGE_DOMAINS: Record<string, string[]> = {
+  intent: ["architecture_design", "testing_qa"],
+  design: ["architecture_design"],
+  functional: ["architecture_design", "apis_integrations"],
+  data: ["databases", "storage_fundamentals", "caching", "search_retrieval"],
+  auth: ["security_fundamentals", "identity_access_management"],
+  nfr: ["observability_sre", "compliance_governance", "cloud_fundamentals"],
+  category_specific: ["ci_cd_devops", "release_management", "observability_sre"],
+};
+
 export async function generateAutofillSuggestions(
   routing: Record<string, string>,
   project: Record<string, unknown>,
   targetSection: string,
+  axionBaseDir?: string,
 ): Promise<Record<string, unknown>> {
   const sectionPrompt = SECTION_PROMPTS[targetSection];
   if (!sectionPrompt) {
@@ -75,9 +88,36 @@ export async function generateAutofillSuggestions(
 
   const client = getOpenAIClient();
 
-  const systemMessage = `You are a software project intake assistant. You help users fill out project intake forms by generating smart suggestions based on the project context they've provided.
+  let knowledgeSection = "";
+  if (axionBaseDir) {
+    try {
+      const constraints: Record<string, unknown> = {};
+      if (routing.requires_auth === "true") constraints.requires_auth = true;
+      if (routing.manages_data === "true") constraints.manages_data = true;
+      if (routing.has_integrations === "true") constraints.has_integrations = true;
 
-Always return valid JSON. Only return the JSON object, no markdown or explanation.`;
+      const knowledge = resolveKnowledge(axionBaseDir, routing, constraints);
+
+      const sectionDomains = SECTION_KNOWLEDGE_DOMAINS[targetSection] ?? [];
+      const relevantKids = knowledge.resolvedKids.filter((kid) => {
+        const kidText = `${kid.title} ${kid.path} ${(kid.domains ?? []).join(" ")} ${(kid.tags ?? []).join(" ")}`.toLowerCase();
+        return sectionDomains.some((d) => kidText.includes(d)) ||
+               sectionDomains.length === 0;
+      });
+
+      const contextForPrompt = {
+        ...knowledge,
+        resolvedKids: relevantKids.slice(0, 10),
+      };
+      knowledgeSection = summarizeKnowledgeForPrompt(contextForPrompt, 10);
+    } catch {
+      knowledgeSection = "";
+    }
+  }
+
+  const systemMessage = `You are a software project intake assistant for the AXION system. You help users fill out project intake forms by generating smart suggestions based on the project context and the Knowledge Library they've provided.
+
+${knowledgeSection ? `You have access to the following knowledge from the AXION Knowledge Library. Use these patterns, checklists, and concepts to guide your suggestions and maintain consistency. Do not copy them verbatim — adapt them to the specific project context.\n\n${knowledgeSection}\n` : ""}Always return valid JSON. Only return the JSON object, no markdown or explanation.`;
 
   const userMessage = `Project Context:
 - Category: ${routing.category || "not specified"}

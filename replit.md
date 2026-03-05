@@ -269,3 +269,27 @@ Structured, policy-governed knowledge base providing KID files (Knowledge Items)
 ### KID File Contract
 - YAML frontmatter: kid, title, type, pillar, domains, tags, maturity, use_policy, executor_access, license
 - Sections: Summary, When to use, Do/Don't, Core content, Links, Proof/confidence
+
+### Knowledge Library Integration (IA wiring)
+The Knowledge Library is wired into the IA through three integration points:
+
+1. **Autofill (OpenAI)** — `server/openai.ts` calls `resolveKnowledge()` before each OpenAI request, injects relevant KID summaries into the system prompt so suggestions are scoped by domain-relevant patterns, checklists, and pitfalls. Section-specific domain filtering via `SECTION_KNOWLEDGE_DOMAINS` map.
+
+2. **Template Selection (S6)** — `Axion/src/core/templates/selector.ts` accepts optional `KnowledgeContext`, annotates templates with `knowledge_boost` rationale token when template domains overlap with resolved KID domains. Does NOT override `applies_when` constraints — knowledge boost is informational only, maintaining registry-driven selection integrity.
+
+3. **Template Filling (S7)** — `Axion/src/core/templates/filler.ts` accepts `knowledge?: KnowledgeContext` in `FillContext`. `buildHeadingContent()` wraps inner content with `renderKnowledgeReferences()`, appending matching KID citations (up to 5 per heading) with maturity badges and content snippets.
+
+**Knowledge Resolver** (`Axion/src/core/knowledge/resolver.ts`):
+- `resolveKnowledge(baseDir, routing, constraints)` → loads index, matches bundle by run_profile, filters KIDs by domain, returns `KnowledgeContext`
+- `summarizeKnowledgeForPrompt(knowledge, maxKids)` → formats KIDs for OpenAI system prompt injection
+- `getKnowledgeCitationsForDomain(knowledge, domainKeywords)` → per-heading KID lookup
+
+**IA Registration** (`Axion/src/core/agents/internal.ts`):
+- Capability: `knowledge_resolution`
+- Constraint: `must_emit_knowledge_citations`
+- Guardrail: `IA-G08` — knowledge citations must be emitted when KID content is used
+- Evidence: `buildEvidenceRecord()` now accepts optional `knowledgeCitations[]`
+
+**Reports** include knowledge fields:
+- `selection_report.json`: `knowledge_citations[]`, `knowledge_boosted_templates[]`
+- `render_report.json`: `knowledge_citations[]`, `knowledge_bundle`, `knowledge_domains_used[]`

@@ -166,10 +166,13 @@ export function registerRoutes(app: Express) {
         return res.status(400).json({ error: "routing and targetSection are required" });
       }
 
+      const axionBaseDir = path.join(process.cwd(), "Axion");
+
       const suggestions = await generateAutofillSuggestions(
         routing as Record<string, string>,
         (project || {}) as Record<string, unknown>,
         targetSection as string,
+        axionBaseDir,
       );
 
       res.json({ suggestions, section: targetSection });

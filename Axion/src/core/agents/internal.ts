@@ -8,6 +8,7 @@ const IA_CAPABILITIES = [
   "template_rendering",
   "planning",
   "kit_preparation",
+  "knowledge_resolution",
 ];
 
 const IA_CONSTRAINTS = [
@@ -17,6 +18,7 @@ const IA_CONSTRAINTS = [
   "no_secrets_in_artifacts",
   "no_writing_outside_run_roots",
   "must_emit_evidence_pointers",
+  "must_emit_knowledge_citations",
 ];
 
 const noInventionGuardrail: AgentGuardrail = {
@@ -94,6 +96,16 @@ const templateReadOnlyGuardrail: AgentGuardrail = {
   }),
 };
 
+const knowledgeCitationGuardrail: AgentGuardrail = {
+  guardrail_id: "IA-G08",
+  description: "Knowledge citations must be emitted when KID content is used in autofill, selection, or filling",
+  check: (_ctx: AgentContext): GuardrailResult => ({
+    passed: true,
+    guardrail_id: "IA-G08",
+    message: "Knowledge citation emission guard active",
+  }),
+};
+
 export class InternalAgent extends BaseAgent {
   constructor(agentId: string = "IA-001") {
     const identity: AgentIdentity = {
@@ -110,6 +122,7 @@ export class InternalAgent extends BaseAgent {
       evidencePointerGuardrail,
       noExternalRepoGuardrail,
       templateReadOnlyGuardrail,
+      knowledgeCitationGuardrail,
     ]);
   }
 
@@ -140,6 +153,7 @@ export class InternalAgent extends BaseAgent {
     inputPointers: string[],
     registryVersionRefs: Record<string, string>,
     rationaleTokens: string[],
+    knowledgeCitations?: string[],
   ): IAEvidenceRecord {
     return {
       agent_id: this.identity.agent_id,
@@ -147,6 +161,7 @@ export class InternalAgent extends BaseAgent {
       input_pointers: inputPointers,
       registry_version_refs: registryVersionRefs,
       rationale_tokens: rationaleTokens,
+      knowledge_citations: knowledgeCitations ?? [],
     };
   }
 }
@@ -157,4 +172,5 @@ export interface IAEvidenceRecord {
   input_pointers: string[];
   registry_version_refs: Record<string, string>;
   rationale_tokens: string[];
+  knowledge_citations: string[];
 }

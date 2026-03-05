@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { readJson } from "../../utils/fs.js";
 import { sha256 } from "../../utils/hash.js";
 import { canonicalJsonString } from "../../utils/canonicalJson.js";
+import type { KnowledgeContext } from "../knowledge/resolver.js";
 
 export interface TemplateIndexEntry {
   template_id: string;
@@ -48,6 +49,57 @@ export interface TemplateSelectionResult {
   selected: SelectedTemplate[];
 }
 
+const TEMPLATE_TYPE_DOMAIN_MAP: Record<string, string[]> = {
+  "architecture": ["architecture_design"],
+  "security": ["security_fundamentals", "identity_access_management"],
+  "data": ["databases", "storage_fundamentals"],
+  "api": ["apis_integrations"],
+  "integration": ["apis_integrations"],
+  "testing": ["testing_qa"],
+  "deployment": ["ci_cd_devops", "cloud_fundamentals"],
+  "monitoring": ["observability_sre"],
+  "compliance": ["compliance_governance"],
+  "caching": ["caching"],
+  "search": ["search_retrieval"],
+  "error": ["observability_sre"],
+  "performance": ["observability_sre"],
+  "reliability": ["observability_sre"],
+};
+
+function getTemplateDomains(entry: TemplateIndexEntry): string[] {
+  const domains: string[] = [];
+  const titleLower = entry.title.toLowerCase();
+  const typeLower = entry.type.toLowerCase();
+  const idLower = entry.template_id.toLowerCase();
+  const combined = `${titleLower} ${typeLower} ${idLower}`;
+
+  for (const [keyword, domainList] of Object.entries(TEMPLATE_TYPE_DOMAIN_MAP)) {
+    if (combined.includes(keyword)) {
+      domains.push(...domainList);
+    }
+  }
+
+  return [...new Set(domains)];
+}
+
+function hasKnowledgeDomainOverlap(
+  entry: TemplateIndexEntry,
+  knowledgeContext: KnowledgeContext,
+): boolean {
+  const templateDomains = getTemplateDomains(entry);
+  if (templateDomains.length === 0) return false;
+
+  const knowledgeDomains = new Set(Object.keys(knowledgeContext.domainMap));
+  for (const kid of knowledgeContext.resolvedKids) {
+    const pathParts = kid.path.toLowerCase().split("/");
+    pathParts.forEach((p) => knowledgeDomains.add(p));
+    if (kid.domains) kid.domains.forEach((d) => knowledgeDomains.add(d));
+    if (kid.tags) kid.tags.forEach((t) => knowledgeDomains.add(t));
+  }
+
+  return templateDomains.some((d) => knowledgeDomains.has(d));
+}
+
 function matchesAppliesWhen(
   appliesWhen: Record<string, unknown>,
   routing: Record<string, unknown>,
@@ -73,6 +125,7 @@ function buildRationale(
   entry: TemplateIndexEntry,
   skillLevel: string,
   appliesWhenMatched: boolean,
+  knowledgeBoosted: boolean,
 ): string {
   const parts: string[] = [];
 
@@ -88,6 +141,10 @@ function buildRationale(
     }
   }
 
+  if (knowledgeBoosted) {
+    parts.push("knowledge_boost");
+  }
+
   parts.push(`status=${entry.status}`);
   return parts.join("; ");
 }
@@ -98,9 +155,11 @@ export function selectTemplates(
   constraints?: Record<string, unknown>,
   canonicalSpec?: Record<string, unknown>,
   standardsSnapshot?: Record<string, unknown>,
+  knowledgeContext?: KnowledgeContext,
 ): {
   selected: SelectedTemplate[];
   index: TemplateIndex;
+  knowledgeBoostedIds: string[];
 } {
   const indexPath = join(baseDir, "libraries", "templates", "template_index.json");
   const index = readJson<TemplateIndex>(indexPath);
@@ -110,6 +169,9 @@ export function selectTemplates(
   const constraintsLookup = constraints ?? {};
 
   const filtered: TemplateIndexEntry[] = [];
+  const knowledgeBoostedIds: string[] = [];
+  const boostedSet = new Set<string>();
+
   for (const t of index.templates) {
     if (t.status !== "active") continue;
 
@@ -125,6 +187,11 @@ export function selectTemplates(
       const skillReq = t.required_by_skill_level[skillLevel];
       if (skillReq === "omit") continue;
 
+      if (knowledgeContext && hasKnowledgeDomainOverlap(t, knowledgeContext)) {
+        boostedSet.add(t.template_id);
+        knowledgeBoostedIds.push(t.template_id);
+      }
+
       filtered.push(t);
     }
   }
@@ -133,18 +200,19 @@ export function selectTemplates(
 
   const selected: SelectedTemplate[] = filtered.map((t) => {
     const appliesWhenMatched = matchesAppliesWhen(t.applies_when, routingLookup, constraintsLookup);
+    const knowledgeBoosted = boostedSet.has(t.template_id);
     return {
       template_id: t.template_id,
       template_version: t.template_version,
       source_file_path: t.file_path,
       source_abs_path: `libraries/templates/${t.file_path}`,
       output_path: t.output_path,
-      rationale: buildRationale(t, skillLevel, appliesWhenMatched),
+      rationale: buildRationale(t, skillLevel, appliesWhenMatched, knowledgeBoosted),
       requiredness: t.requiredness,
     };
   });
 
-  return { selected, index };
+  return { selected, index, knowledgeBoostedIds };
 }
 
 export function computeSelectionHash(selected: SelectedTemplate[]): string {

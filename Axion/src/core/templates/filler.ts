@@ -1,5 +1,7 @@
 import type { SelectedTemplate } from "./selector.js";
 import { isoNow } from "../../utils/time.js";
+import type { KnowledgeContext, KIDEntry } from "../knowledge/resolver.js";
+import { getKnowledgeCitationsForDomain } from "../knowledge/resolver.js";
 
 export interface FillContext {
   spec: Record<string, unknown>;
@@ -11,6 +13,7 @@ export interface FillContext {
   spec_id: string;
   standards_id: string;
   run_id: string;
+  knowledge?: KnowledgeContext;
 }
 
 export interface FilledTemplate {
@@ -250,7 +253,79 @@ function renderUnknowns(unknowns: unknown[]): string {
     .join("\n\n") + "\n";
 }
 
+function renderKnowledgeReferences(title: string, knowledge?: KnowledgeContext): string {
+  if (!knowledge || knowledge.resolvedKids.length === 0) return "";
+
+  const titleWords = title.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter((w) => w.length > 3);
+  const domainKeywords = [...titleWords];
+
+  const HEADING_DOMAIN_MAP: Record<string, string[]> = {
+    "architecture": ["architecture_design"],
+    "security": ["security_fundamentals", "identity_access_management"],
+    "auth": ["identity_access_management", "security_fundamentals"],
+    "data": ["databases", "storage_fundamentals"],
+    "api": ["apis_integrations"],
+    "integration": ["apis_integrations"],
+    "test": ["testing_qa"],
+    "deploy": ["ci_cd_devops", "cloud_fundamentals"],
+    "monitor": ["observability_sre"],
+    "compliance": ["compliance_governance"],
+    "cache": ["caching"],
+    "search": ["search_retrieval"],
+    "error": ["observability_sre"],
+    "performance": ["observability_sre"],
+    "permission": ["identity_access_management"],
+    "workflow": ["architecture_design"],
+    "component": ["architecture_design"],
+    "scope": ["architecture_design"],
+    "feature": ["architecture_design"],
+    "risk": ["compliance_governance"],
+    "standard": ["compliance_governance"],
+  };
+
+  for (const word of titleWords) {
+    for (const [keyword, domains] of Object.entries(HEADING_DOMAIN_MAP)) {
+      if (word.includes(keyword)) {
+        domainKeywords.push(...domains);
+      }
+    }
+  }
+
+  const citations = getKnowledgeCitationsForDomain(knowledge, [...new Set(domainKeywords)]);
+  if (citations.length === 0) return "";
+
+  const topCitations = citations.slice(0, 5);
+  const refLines: string[] = [];
+  refLines.push("\n**Knowledge References:**\n");
+  for (const kid of topCitations) {
+    const maturityBadge = kid.maturity === "golden" ? " ★" : kid.maturity === "verified" ? " ✓" : "";
+    refLines.push(`- \`${kid.kid}\`: ${kid.title} [${kid.type}]${maturityBadge}`);
+    if (kid.coreContent && kid.coreContent.length > 10) {
+      const snippet = kid.coreContent.length > 200
+        ? kid.coreContent.substring(0, 200) + "..."
+        : kid.coreContent;
+      refLines.push(`  > ${snippet.replace(/\n/g, "\n  > ")}`);
+    }
+  }
+  refLines.push("");
+  return refLines.join("\n");
+}
+
 function buildHeadingContent(
+  heading: OutputHeading,
+  ctx: FillContext,
+  resolvedCount: { n: number },
+  unknownsList: FilledTemplate["unknowns"],
+): string {
+  const content = buildHeadingContentInner(heading, ctx, resolvedCount, unknownsList);
+  const knowledgeRefs = renderKnowledgeReferences(heading.title, ctx.knowledge);
+  if (knowledgeRefs) {
+    return content + knowledgeRefs;
+  }
+  return content;
+}
+
+function buildHeadingContentInner(
   heading: OutputHeading,
   ctx: FillContext,
   resolvedCount: { n: number },
