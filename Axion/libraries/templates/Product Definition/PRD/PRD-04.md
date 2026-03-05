@@ -1,101 +1,131 @@
-# PRD-04 — Workflow Excerpts
+# PRD-04 — Feature Catalog (by ID) +
 
 ## 1. Header Block
 
 | Field             | Value                                              |
 |-------------------|----------------------------------------------------|
 | Template ID       | PRD-04                                             |
-| Template Type     | Product Definition                                 |
+| Template Type     | Product / Requirements                                          |
 | Template Version  | 1.0.0                                              |
-| Applies           | All projects with user-facing or system workflows   |
+| Applies           | All projects requiring feature catalog (by id) +    |
 | Filled By         | Internal Agent                                     |
-| Consumes          | Canonical Spec, Work Breakdown                     |
-| Produces          | Filled Workflow Excerpts document                  |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Feature Catalog (by ID) + Document                         |
 
 ## 2. Purpose
 
-Document the key user and system workflows that the product must support. Each workflow excerpt describes the sequence of steps, actors involved, decision points, and expected outcomes. Workflows are extracted from the canonical spec and presented in a standardized format.
+Define the authoritative, machine-addressable catalog of product features using stable feature
+IDs. This is the anchor for planning, design, implementation, and test coverage. Each feature
+includes acceptance hooks that point downstream to flows, screens, endpoints, and test cases
+(without redefining those details here).
 
 ## 3. Inputs Required
 
-- Canonical Spec (`{{spec.workflows[]}}`)
-- Work Breakdown (`{{work.*}}`)
-- Acceptance Map (`{{acceptance.*}}`)
+- ●
+- ●
+- ●
+- ●
+- ●
+- ●
+- SPEC_INDEX: {{spec.index}}
+- PRD-01: {{xref:PRD-01}}
+- PRD-03: {{xref:PRD-03}} | OPTIONAL
+- GLOSSARY: {{glossary.terms}} | OPTIONAL
+- STANDARDS_INDEX: {{standards.index}} | OPTIONAL
+- Existing backlog: {{inputs.backlog}} | OPTIONAL
 
 ## 4. Required Fields
 
-| Field Name           | Source       | UNKNOWN Allowed |
-|----------------------|--------------|-----------------|
-| Workflow ID          | spec         | No              |
-| Workflow Name        | spec         | No              |
-| Actors               | spec         | No              |
-| Steps                | spec         | No              |
-| Trigger              | spec         | Yes             |
-| Expected Outcome     | spec         | No              |
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| For each feature:         | spec         | Yes             |
+| ○ feature_id (stable)     | spec         | Yes             |
+| ○ name                    | spec         | Yes             |
+| description               | spec         | Yes             |
+| primary persona(s)        | spec         | Yes             |
+| priority (P0/P1/P2)       | spec         | Yes             |
+| status (planned/in_pro... | spec         | Yes             |
+| dependencies (feature_... | spec         | Yes             |
+| success signals (high ... | spec         | Yes             |
+| allowed                   | spec         | Yes             |
 
 ## 5. Optional Fields
 
-| Field Name           | Source       | Notes                          |
-|----------------------|--------------|--------------------------------|
-| Error Paths          | spec         | Alternate/exception flows      |
-| Decision Points      | spec         | Branching logic                |
-| Related Features     | spec         | Cross-reference to PRD-03      |
+●
+●
+●
+●
+●
+
+Feature exclusions (not in MVP) | OPTIONAL
+Feature risks | OPTIONAL
+Effort estimate (t-shirt sizing) | OPTIONAL
+Rollout strategy | OPTIONAL
+Open questions | OPTIONAL
 
 ## 6. Rules
 
-- **No duplicate truth**: Workflow IDs must come from canonical spec.
-- **No invention**: Steps must reflect spec content, not agent assumptions.
-- **Completeness**: All workflows referenced by features in PRD-03 must appear here.
-- **Actor consistency**: Actors must match roles defined in canonical spec.
+- Must align to: {{standards.rules[STD-CANONICAL-TRUTH]}} | OPTIONAL
+- Feature IDs must be stable and unique. Do not renumber once assigned.
+- Use this format for IDs unless constrained otherwise: feat_<short_slug> (e.g.,
+- 
+- 
+- 
+- 
+- **feat_auth_login).**
+- Do not invent personas/roles; reference: {{spec.personas_by_id}} | OPTIONAL,
+- **{{xref:PRD-03}} | OPTIONAL**
+- **Acceptance hooks are pointers only; details live in downstream docs**
+- **(DES/ARC/API/QA).**
+- If a required feature attribute is unknown, mark UNKNOWN and add to Open Questions.
+- **Every P0 feature must have at least one acceptance hook in each of:**
+- **○ Flow OR Screen (DES)**
+- **○ Endpoint OR Component (ARC/API/FE)**
+- **○ Test case (QA)**
+- If not available yet, placeholders are allowed but must be present.
 
 ## 7. Output Format
 
 ### Required Headings (in order)
 
-1. `## Workflow Index`
-   - Table: Workflow ID | Name | Actors | Feature Refs
-2. `## Workflow Details`
-   - Per workflow subsection:
-     - `### <Workflow ID>: <Name>`
-     - Trigger
-     - Steps (numbered)
-     - Expected Outcome
-     - Error Paths (if applicable)
-3. `## Unknowns & Open Questions`
+1. `## 1) Feature Index (summary)`
+2. `## feature_id`
+3. `## name`
+4. `## priority`
+5. `## primary_pe`
+6. `## rsonas`
+7. `## status`
+8. `## depends_on`
+9. `## _by_id[feat_x].i by_id[feat_x].na`
+10. `## d}}`
 
 ## 8. Cross-References
 
-- **Upstream**: PRD-03 (Feature List), Canonical Spec (CAN-01)
-- **Downstream**: DES-03 (Navigation Model), ARC-02 (Data Flow), Screen Packs
-- **Entity Types Referenced**: workflows, roles, features
+- Upstream: {{xref:PRD-01}}, {{xref:PRD-03}} | OPTIONAL, {{xref:SPEC_INDEX}} |
+- OPTIONAL
+- Downstream: {{xref:DES-01}}, {{xref:DES-04}}, {{xref:ARC-02}}, {{xref:IMP-01}},
+- **{{xref:QA-01}}, {{xref:QA-02}}**
+- Standards: {{standards.rules[STD-NAMING]}} | OPTIONAL,
+- {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
 ## 9. Skill Level Requiredness Rules
 
-| Section               | Beginner  | Intermediate | Expert   |
-|-----------------------|-----------|--------------|----------|
-| Workflow Index        | Required  | Required     | Required |
-| Workflow Details      | Required  | Required     | Required |
-| Error Paths           | Optional  | Optional     | Required |
-| Unknowns              | Optional  | Required     | Required |
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
 ## 10. Unknown Handling
 
-Unknowns must be written in the following format:
-
-```
-UNKNOWN-<NNN>: [Area] <summary>
-Impact: Low|Med|High
-Blocking: Yes|No
-Needs: <what input resolves it>
-Refs: <spec_id/entity_id/field_path>
-```
-
-Unknowns in this template must map back to Canonical Spec unknown objects (CAN-03).
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
 ## 11. Completeness Gate
 
-- [ ] All required fields are populated
-- [ ] All workflow IDs resolve to canonical spec entities
-- [ ] No contradictions between workflows and feature list
-- [ ] Unknowns are handled per UNKNOWN format (section 10)
-- [ ] All actors reference valid canonical role IDs
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

@@ -1,202 +1,436 @@
-DSYS-02
-DSYS-02 — Component Variants Spec
-(props, variants, states)
-Header Block
-   ●​ template_id: DSYS-02​
+# DSYS-02 — Component Variants Spec
 
-   ●​ title: Component Variants Spec (props, variants, states)​
+## 1. Header Block
 
-   ●​ type: design_system_tokens​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | DSYS-02                                             |
+| Template Type     | Design / System                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring component variants spec    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Component Variants Spec Document                         |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/design_system/DSYS-02_Component_Variants_Spec.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.DSYS​
-
-   ●​ upstream_dependencies: ["DSYS-01", "DES-04", "A11YD-01"]​
-
-   ●​ inputs_required: ["DSYS-01", "DES-04", "A11YD-01", "A11YD-02", "A11YD-05",
-      "IXD-01", "IXD-04", "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define the design-system component contract: which components exist, what variants they
 support, what states they must handle, and what props/inputs they accept at a conceptual level.
 This enables FE/MOB to implement consistently without inventing component behavior.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​ DSYS-01: {{xref:DSYS-01}}​
+- ● DSYS-01: {{xref:DSYS-01}}
+- ● DES-04: {{xref:DES-04}} | OPTIONAL
+- ● IXD-01: {{xref:IXD-01}} | OPTIONAL
+- ● IXD-04: {{xref:IXD-04}} | OPTIONAL
+- ● A11YD-01: {{xref:A11YD-01}} | OPTIONAL
+- ● A11YD-02: {{xref:A11YD-02}} | OPTIONAL
+- ● A11YD-05: {{xref:A11YD-05}} | OPTIONAL
+- ● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
-   ●​ DES-04: {{xref:DES-04}} | OPTIONAL​
+## 4. Required Fields
 
-   ●​ IXD-01: {{xref:IXD-01}} | OPTIONAL​
-  ●​ IXD-04: {{xref:IXD-04}} | OPTIONAL​
+● Component list (minimum 12 for non-trivial products)
+● For each component:
+○ dsys_component_id (or component_id alignment to DES-04)
+○ name
+○ purpose
+○ supported variants (e.g., size, style, intent)
+○ required states (default/hover/active/focus/disabled/loading/error)
+○ props/inputs (conceptual; name + meaning)
+○ output events (onClick/onChange/etc.)
+○ accessibility contract (keyboard, focus, labels, SR semantics)
+○ content rules (label length, wrapping, truncation policy)
+○ motion hooks (if any; reference IXD)
+● Variant consistency rules (what “primary/secondary/destructive” means across
+components)
+● State precedence rules (disabled overrides hover, etc.)
 
-  ●​ A11YD-01: {{xref:A11YD-01}} | OPTIONAL​
-
-  ●​ A11YD-02: {{xref:A11YD-02}} | OPTIONAL​
-
-  ●​ A11YD-05: {{xref:A11YD-05}} | OPTIONAL​
-
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
-
-
-
-Required Fields
-  ●​ Component list (minimum 12 for non-trivial products)​
-
-  ●​ For each component:​
-
-         ○​ dsys_component_id (or component_id alignment to DES-04)​
-
-         ○​ name​
-
-         ○​ purpose​
-
-         ○​ supported variants (e.g., size, style, intent)​
-
-         ○​ required states (default/hover/active/focus/disabled/loading/error)​
-
-         ○​ props/inputs (conceptual; name + meaning)​
-
-         ○​ output events (onClick/onChange/etc.)​
-
-         ○​ accessibility contract (keyboard, focus, labels, SR semantics)​
-
-         ○​ content rules (label length, wrapping, truncation policy)​
-
-         ○​ motion hooks (if any; reference IXD)​
-
-  ●​ Variant consistency rules (what “primary/secondary/destructive” means across
-     components)​
-
-  ●​ State precedence rules (disabled overrides hover, etc.)​
 Optional Fields
-   ●​ Platform-specific differences (web/mobile) | OPTIONAL​
-
-   ●​ Deprecation/compat notes | OPTIONAL​
-
-   ●​ Notes | OPTIONAL​
-
-
+● Platform-specific differences (web/mobile) | OPTIONAL
+● Deprecation/compat notes | OPTIONAL
+● Notes | OPTIONAL
 
 Rules
-   ●​ Each component must declare its required states; missing states are not allowed.​
-
-   ●​ “Focus” behavior must be explicit and align with A11Y focus specs.​
-
-   ●​ Variants must be semantic (intent-driven), not “random style names.”​
-
-   ●​ Any motion hooks must respect IXD reduce-motion rules.​
-
-   ●​ Props must be stable; changes require versioning notes.​
-
-
+● Each component must declare its required states; missing states are not allowed.
+● “Focus” behavior must be explicit and align with A11Y focus specs.
+● Variants must be semantic (intent-driven), not “random style names.”
+● Any motion hooks must respect IXD reduce-motion rules.
+● Props must be stable; changes require versioning notes.
 
 Output Format
 1) Variant Semantics (required)
-
 Define shared meaning for common variant names.
+variant_
+name
 
- variant_            meaning                        do                        dont
-  name
+meaning
 
-primary     {{variant_semantics.primary. {{variant_semantics.pri    {{variant_semantics.prim
-            meaning}}                    mary.do}}                  ary.dont}}
+do
 
-seconda     {{variant_semantics.second    {{variant_semantics.sec   {{variant_semantics.seco
-ry          ary.meaning}}                 ondary.do}}               ndary.dont}}
+dont
 
-destructi   {{variant_semantics.destruc   {{variant_semantics.des   {{variant_semantics.destr
-ve          tive.meaning}}                tructive.do}}             uctive.dont}}
+primary
 
+{{variant_semantics.primary. {{variant_semantics.pri
+meaning}}
+mary.do}}
+
+{{variant_semantics.prim
+ary.dont}}
+
+seconda
+ry
+
+{{variant_semantics.second
+ary.meaning}}
+
+{{variant_semantics.sec
+ondary.do}}
+
+{{variant_semantics.seco
+ndary.dont}}
+
+destructi
+ve
+
+{{variant_semantics.destruc
+tive.meaning}}
+
+{{variant_semantics.des
+tructive.do}}
+
+{{variant_semantics.destr
+uctive.dont}}
 
 2) State Precedence Rules (required)
-   ●​ disabled overrides hover/active/focus: {{state_precedence.disabled}}​
 
-   ●​ loading overrides interaction (unless cancel): {{state_precedence.loading}}​
-
-   ●​ error overrides success feedback: {{state_precedence.error}} | OPTIONAL​
-
-
+● disabled overrides hover/active/focus: {{state_precedence.disabled}}
+● loading overrides interaction (unless cancel): {{state_precedence.loading}}
+● error overrides success feedback: {{state_precedence.error}} | OPTIONAL
 
 3) Component Contract Catalog (canonical)
-  co    nam     purp      varia     requi    prop    outp     a11y    conte motio         platfo    note
- mp      e      ose        nts      red_     s_in    ut_ev    _con    nt_ru n_ho          rm_n       s
- one                                state    puts    ents     tract    les   oks           otes
- nt_i                                 s
-   d
+co
+mp
+one
+nt_i
+d
 
-{{co    {{co    {{com     {{com     {{co     {{co    {{com    {{co    {{com     {{com     {{com     {{co
-mpo     mpon    ponen     ponen     mpon     mpon    pone     mpo     pone      pone      ponen     mpo
-nent    ents[   ts[0].p   ts[0].v   ents[    ents[   nts[0]   nent    nts[0].   nts[0].   ts[0].p   nents
-s[0].   0].na   urpos     ariant    0].sta   0].pr   .even    s[0].   conte     motio     latfor    [0].n
-id}}    me}}    e}}       s}}       tes}}    ops}}   ts}}     a11y    nt}}      n}}       m}}       otes}
-                                                              }}                                    }
+nam
+e
 
-{{co    {{co    {{com     {{com     {{co     {{co    {{com    {{co    {{com     {{com     {{com     {{co
-mpo     mpon    ponen     ponen     mpon     mpon    pone     mpo     pone      pone      ponen     mpo
-nent    ents[   ts[1].p   ts[1].v   ents[    ents[   nts[1]   nent    nts[1].   nts[1].   ts[1].p   nents
-s[1].   1].na   urpos     ariant    1].sta   1].pr   .even    s[1].   conte     motio     latfor    [1].n
-id}}    me}}    e}}       s}}       tes}}    ops}}   ts}}     a11y    nt}}      n}}       m}}       otes}
-                                                              }}                                    }
+purp
+ose
 
+varia
+nts
+
+requi
+red_
+state
+s
+
+prop
+s_in
+puts
+
+outp
+ut_ev
+ents
+
+a11y
+_con
+tract
+
+conte motio
+nt_ru n_ho
+les
+oks
+
+platfo
+rm_n
+otes
+
+note
+s
+
+{{co
+mpo
+nent
+s[0].
+id}}
+
+{{co
+mpon
+ents[
+0].na
+me}}
+
+{{com
+ponen
+ts[0].p
+urpos
+e}}
+
+{{com
+ponen
+ts[0].v
+ariant
+s}}
+
+{{co
+mpon
+ents[
+0].sta
+tes}}
+
+{{co
+mpon
+ents[
+0].pr
+ops}}
+
+{{com
+pone
+nts[0]
+.even
+ts}}
+
+{{co
+mpo
+nent
+s[0].
+a11y
+}}
+
+{{com
+pone
+nts[0].
+conte
+nt}}
+
+{{com
+pone
+nts[0].
+motio
+n}}
+
+{{com
+ponen
+ts[0].p
+latfor
+m}}
+
+{{co
+mpo
+nents
+[0].n
+otes}
+}
+
+{{co
+mpo
+nent
+s[1].
+id}}
+
+{{co
+mpon
+ents[
+1].na
+me}}
+
+{{com
+ponen
+ts[1].p
+urpos
+e}}
+
+{{com
+ponen
+ts[1].v
+ariant
+s}}
+
+{{co
+mpon
+ents[
+1].sta
+tes}}
+
+{{co
+mpon
+ents[
+1].pr
+ops}}
+
+{{com
+pone
+nts[1]
+.even
+ts}}
+
+{{co
+mpo
+nent
+s[1].
+a11y
+}}
+
+{{com
+pone
+nts[1].
+conte
+nt}}
+
+{{com
+pone
+nts[1].
+motio
+n}}
+
+{{com
+ponen
+ts[1].p
+latfor
+m}}
+
+{{co
+mpo
+nents
+[1].n
+otes}
+}
 
 4) Coverage Checks (required)
-
-   ●​ Components cover DES-04 inventory: {{coverage.covers_des04}} | OPTIONAL​
-
-   ●​ Required states present for all components: {{coverage.states_complete}}​
-
-   ●​ A11y contract present for all interactive components: {{coverage.a11y_complete}}​
-
-
+● Components cover DES-04 inventory: {{coverage.covers_des04}} | OPTIONAL
+● Required states present for all components: {{coverage.states_complete}}
+● A11y contract present for all interactive components: {{coverage.a11y_complete}}
 
 Cross-References
-   ●​ Upstream: {{xref:DSYS-01}}, {{xref:DES-04}} | OPTIONAL​
-  ●​ Downstream: {{xref:FE-02}} | OPTIONAL, {{xref:FE-06}} | OPTIONAL, {{xref:MOB-*}} |
-     OPTIONAL, {{xref:QA-02}} | OPTIONAL​
+● Upstream: {{xref:DSYS-01}}, {{xref:DES-04}} | OPTIONAL
 
-  ●​ Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
-     {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
+● Downstream: {{xref:FE-02}} | OPTIONAL, {{xref:FE-06}} | OPTIONAL, {{xref:MOB-*}} |
+OPTIONAL, {{xref:QA-02}} | OPTIONAL
+● Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
+{{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
 Skill Level Requiredness Rules
-  ●​ beginner: Required. Define component list + variants + required states.​
-
-  ●​ intermediate: Required. Add props/events and state precedence.​
-
-  ●​ advanced: Required. Add a11y contracts, content rules, and motion hooks.​
-
-
+● beginner: Required. Define component list + variants + required states.
+● intermediate: Required. Add props/events and state precedence.
+● advanced: Required. Add a11y contracts, content rules, and motion hooks.
 
 Unknown Handling
-  ●​ UNKNOWN_ALLOWED: platform_notes, deprecation_notes, notes,
-     motion_hooks (if none)​
-
-  ●​ If any interactive component lacks a11y_contract → block Completeness Gate.​
-
-
+● UNKNOWN_ALLOWED: platform_notes, deprecation_notes, notes,
+motion_hooks (if none)
+● If any interactive component lacks a11y_contract → block Completeness Gate.
 
 Completeness Gate
-  ●​ Gate ID: TMP-05.PRIMARY.DSYS​
+● Gate ID: TMP-05.PRIMARY.DSYS
+● Pass conditions:
+○ required_fields_present == true
+○ components_count >= 12
+○ required_states_complete == true
+○ a11y_contract_complete == true
+○ placeholder_resolution == true
+○ no_unapproved_unknowns == true
 
-  ●​ Pass conditions:​
+DSYS-03
 
-         ○​ required_fields_present == true​
+DSYS-03 — Layout Grid & Spacing Rules
+Header Block
+● template_id: DSYS-03
+● title: Layout Grid & Spacing Rules
+● type: design_system_tokens
+● template_version: 1.0.0
+● output_path: 10_app/design_system/DSYS-03_Layout_Grid_Spacing_Rules.md
+● compliance_gate_id: TMP-05.PRIMARY.DSYS
+● upstream_dependencies: ["DSYS-01", "RLB-01"]
+● inputs_required: ["DSYS-01", "RLB-01", "RLB-02", "A11YD-01", "STANDARDS_INDEX"]
+● required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}
 
-         ○​ components_count >= 12​
+Purpose
+Define the system-wide layout and spacing rules so screens and components align to a
+consistent grid and density model across breakpoints. This prevents arbitrary spacing and
+ensures predictable responsive behavior.
 
-         ○​ required_states_complete == true​
+Inputs Required
+● DSYS-01: {{xref:DSYS-01}}
+● RLB-01: {{xref:RLB-01}} | OPTIONAL
+● RLB-02: {{xref:RLB-02}} | OPTIONAL
+● A11YD-01: {{xref:A11YD-01}} | OPTIONAL
 
-         ○​ a11y_contract_complete == true​
+● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
-         ○​ placeholder_resolution == true​
+Required Fields
+● Grid model definition (web and/or mobile)
+○ columns (if applicable)
+○ gutters
+○ margins/containers
+○ baseline spacing unit
+● Spacing scale usage rules (tie to DSYS-01 spacing tokens)
+● Density rules (comfortable/compact) if applicable
+● Alignment rules (edges, baselines, centers) and when to use each
+● Common layout patterns (list/detail, cards, forms, dashboards)
+● Touch target spacing rules (must align with A11Y/touch guidance)
+● Exceptions policy (when breaking grid is allowed)
 
-         ○​ no_unapproved_unknowns == true​
+## 5. Optional Fields
+
+● Platform-specific differences (web/mobile) | OPTIONAL
+● Deprecation/compat notes | OPTIONAL
+● Notes | OPTIONAL
+
+## 6. Rules
+
+- Each component must declare its required states; missing states are not allowed.
+- “Focus” behavior must be explicit and align with A11Y focus specs.
+- Variants must be semantic (intent-driven), not “random style names.”
+- Any motion hooks must respect IXD reduce-motion rules.
+- Props must be stable; changes require versioning notes.
+
+## 7. Output Format
+
+### Required Headings (in order)
+
+1. `## 1) Variant Semantics (required)`
+2. `## Define shared meaning for common variant names.`
+3. `## variant_`
+4. `## name`
+5. `## meaning`
+6. `## dont`
+7. `## primary`
+8. `## meaning}}`
+9. `## mary.do}}`
+10. `## ary.dont}}`
+
+## 8. Cross-References
+
+- Upstream: {{xref:DSYS-01}}, {{xref:DES-04}} | OPTIONAL
+- Downstream: {{xref:FE-02}} | OPTIONAL, {{xref:FE-06}} | OPTIONAL, {{xref:MOB-*}} |
+- **OPTIONAL, {{xref:QA-02}} | OPTIONAL**
+- Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
+- {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+
+## 9. Skill Level Requiredness Rules
+
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
+
+## 10. Unknown Handling
+
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
+
+## 11. Completeness Gate
+
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

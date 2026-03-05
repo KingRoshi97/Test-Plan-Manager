@@ -1,154 +1,89 @@
-DGL-02
-DGL-01 — Data Ownership Map (owner
-per entity/dataset)
-Header Block
-   ●​ template_id: DGL-01​
+# DGL-02 — Data Quality Standards
 
-   ●​ title: Data Ownership Map (owner per entity/dataset)​
+## 1. Header Block
 
-   ●​ type: data_governance_lineage​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | DGL-02                                             |
+| Template Type     | Data / Governance                                            |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring data quality standards      |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Data Quality Standards Document                           |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/data_governance/DGL-01_Data_Ownership_Map.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.DGL​
-
-   ●​ upstream_dependencies: ["DATA-01", "ARC-01", "STK-03"]​
-
-   ●​ inputs_required: ["DATA-01", "ARC-01", "STK-03", "DGP-01", "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define who “owns” each entity/dataset: the accountable party for correctness, schema changes,
 access controls, retention policy alignment, and incident response. This prevents orphaned data
 with unclear decision rights.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​ DATA-01: {{xref:DATA-01}} | OPTIONAL​
+- Canonical Spec (`{{spec.*}}`)
+- Intake Submission (`{{submission_id}}`)
+- Resolved Standards Snapshot (`{{standards.*}}`)
 
-   ●​ ARC-01: {{xref:ARC-01}} | OPTIONAL​
+## 4. Required Fields
 
-   ●​ STK-03: {{xref:STK-03}} | OPTIONAL​
-  ●​ DGP-01: {{xref:DGP-01}} | OPTIONAL​
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Data Quality Standards Overview         | spec         | No              |
+| Scope & Boundaries        | spec         | No              |
+| Key Definitions           | spec         | Yes             |
+| Constraints               | spec         | Yes             |
 
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
+## 5. Optional Fields
 
+| Field Name                | Source       | Notes                          |
+|---------------------------|--------------|--------------------------------|
+| Additional Context        | spec         | Enrichment only, no new truth  |
+| Revision History          | spec         | Auto-populated from version stamps |
+| Open Questions            | spec         | Tracked for resolution         |
 
+## 6. Rules
 
-Required Fields
-  ●​ Ownership registry entries (minimum: all DATA-01 entities + key derived datasets)​
+- **No duplicate truth**: All content must reference canonical entity IDs from the spec; no redefining entities.
+- **No invention**: If data cannot be derived from spec or standards, mark as UNKNOWN.
+- **Traceability**: Every entry must map to a source in the canonical spec.
+- **Completeness**: All sections must be populated or explicitly marked N/A with justification.
 
-  ●​ For each entry:​
+## 7. Output Format
 
-         ○​ entity_id or dataset_id​
+### Required Headings (in order)
 
-         ○​ owner_role/team​
+1. `## Overview`
+2. `## Scope & Boundaries`
+3. `## Core Specification`
+4. `## Detailed Entries`
+5. `## Constraints & Assumptions`
+6. `## Dependencies`
+7. `## Unknowns & Open Questions`
 
-         ○​ steward (optional second owner)​
+## 8. Cross-References
 
-         ○​ change approver (who approves schema changes)​
+- **Upstream**: Canonical Spec (CAN-01), Intake Submission (INT-01)
+- **Downstream**: Related Data / Governance templates
+- **Entity Types Referenced**: As defined in canonical spec
 
-         ○​ access approver (who approves access/export)​
+## 9. Skill Level Requiredness Rules
 
-         ○​ oncall/escalation contact (role, not person) | OPTIONAL​
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-         ○​ sensitivity class (PII level)​
+## 10. Unknown Handling
 
-         ○​ criticality (P0/P1/P2)​
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
-  ●​ Ownership change procedure​
+## 11. Completeness Gate
 
-
-
-Optional Fields
-  ●​ Data product classification | OPTIONAL​
-
-  ●​ Notes | OPTIONAL​
-
-
-
-Rules
-  ●​ Every entity must have exactly one primary owner.​
-   ●​ High-sensitivity entities require explicit access approver.​
-
-   ●​ Ownership must align with boundary ownership (ARC-01); if mismatch, justify.​
-
-   ●​ Ownership changes must be auditable.​
-
-
-
-Output Format
-1) Ownership Registry (canonical)
- id       kind    owne      stewa      schema_     access_a    escalat    sensiti     critical   notes
-         (entit     r         rd       approver     pprover    ion_rol     vity         ity
-         y/dat                                                    e
-         aset)
-
-{{ow     {{own    {{own     {{owne     {{owners[   {{owners[   {{owner    {{owner     {{owner {{own
-ners     ers[0]   ers[0].   rs[0].st   0].schema   0].access   s[0].esc   s[0].se     s[0].crit ers[0]
-[0].id   .kind}   owner     eward}     _approver   _approver   alation}   nsitivity   icality}} .notes
-}}       }        }}        }          }}          }}          }          }}                    }}
-
-{{ow     {{own    {{own     {{owne     {{owners[   {{owners[   {{owner    {{owner     {{owner {{own
-ners     ers[1]   ers[1].   rs[1].st   1].schema   1].access   s[1].esc   s[1].se     s[1].crit ers[1]
-[1].id   .kind}   owner     eward}     _approver   _approver   alation}   nsitivity   icality}} .notes
-}}       }        }}        }          }}          }}          }          }}                    }}
-
-
-2) Ownership Change Procedure (required)
-
-   ●​ How to request change: {{change.request}}​
-
-   ●​ Required approvals: {{change.approvals}}​
-
-   ●​ Audit/log requirement: {{change.audit}} | OPTIONAL​
-
-
-
-Cross-References
-   ●​ Upstream: {{xref:ARC-01}} | OPTIONAL, {{xref:STK-03}} | OPTIONAL, {{xref:DGP-01}} |
-      OPTIONAL​
-
-   ●​ Downstream: {{xref:DGL-04}} | OPTIONAL, {{xref:DLR-02}} | OPTIONAL,
-      {{xref:DQV-04}} | OPTIONAL​
-  ●​ Standards: {{standards.rules[STD-PRIVACY]}} | OPTIONAL,
-     {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
-
-Skill Level Requiredness Rules
-  ●​ beginner: Required. Ownership registry with primary owners.​
-
-  ●​ intermediate: Required. Add approvers and sensitivity/criticality.​
-
-  ●​ advanced: Required. Add escalation role and change procedure rigor.​
-
-
-
-Unknown Handling
-  ●​ UNKNOWN_ALLOWED: steward, escalation_role,
-     data_product_classification, notes​
-
-  ●​ If any entity lacks primary owner → block Completeness Gate.​
-
-
-
-Completeness Gate
-  ●​ Gate ID: TMP-05.PRIMARY.DGL​
-
-  ●​ Pass conditions:​
-
-         ○​ required_fields_present == true​
-
-         ○​ ownership_complete_for_entities == true​
-
-         ○​ exactly_one_primary_owner_each == true​
-
-         ○​ placeholder_resolution == true​
-
-         ○​ no_unapproved_unknowns == true
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

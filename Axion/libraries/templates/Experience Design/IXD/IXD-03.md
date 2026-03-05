@@ -1,188 +1,384 @@
-IXD-03
-IXD-03 — Transition Map (screen
-transitions + durations)
-Header Block
-   ●​ template_id: IXD-03​
+# IXD-03 — Transition Map (screen
 
-   ●​ title: Transition Map (screen transitions + durations)​
+## 1. Header Block
 
-   ●​ type: interaction_design_motion​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | IXD-03                                             |
+| Template Type     | Design / Interaction                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring transition map (screen    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Transition Map (screen Document                         |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/design/IXD-03_Transition_Map.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.IXD​
-
-   ●​ upstream_dependencies: ["DES-02", "IXD-02", "IAN-01", "IAN-02"]​
-
-   ●​ inputs_required: ["DES-02", "IXD-02", "IAN-01", "IAN-02", "DSYS-01", "A11YD-01",
-      "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define the canonical transition behavior between screens and navigation contexts. This ensures
 consistent mental model, supports accessibility (reduced motion), and avoids ad-hoc transition
 choices in implementation.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​ DES-02: {{xref:DES-02}}​
+- ● DES-02: {{xref:DES-02}}
+- ● IAN-01: {{xref:IAN-01}} | OPTIONAL
+- ● IAN-02: {{xref:IAN-02}} | OPTIONAL
+- ● IXD-02: {{xref:IXD-02}}
+- ● DSYS-01: {{xref:DSYS-01}} | OPTIONAL
+- ● A11YD-01: {{xref:A11YD-01}} | OPTIONAL
+- ● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
-   ●​ IAN-01: {{xref:IAN-01}} | OPTIONAL​
+## 4. Required Fields
 
-   ●​ IAN-02: {{xref:IAN-02}} | OPTIONAL​
-  ●​ IXD-02: {{xref:IXD-02}}​
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Default transition per... | spec         | Yes             |
+| Per-transition mapping:   | spec         | Yes             |
+| ○ from_screen_id          | spec         | Yes             |
+| ○ to_screen_id            | spec         | Yes             |
+| ○ transition_type         | spec         | Yes             |
+| ○ intent (why this tra... | spec         | Yes             |
+| ○ duration_ms (must be... | spec         | Yes             |
+| ○ reduced_motion behavior | spec         | Yes             |
+| ○ interactive gesture ... | spec         | Yes             |
 
-  ●​ DSYS-01: {{xref:DSYS-01}} | OPTIONAL​
+## 5. Optional Fields
 
-  ●​ A11YD-01: {{xref:A11YD-01}} | OPTIONAL​
+● Platform-specific variants | OPTIONAL
+● Notes | OPTIONAL
 
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
-
-
-
-Required Fields
-  ●​ Navigation contexts covered (stack/tab/drawer/modal/web route changes)​
-
-  ●​ Transition types list (push/pop, modal open/close, tab switch, deep link jump, replace)​
-
-  ●​ Default transition per context​
-
-  ●​ Per-transition mapping:​
-
-         ○​ from_screen_id​
-
-         ○​ to_screen_id​
-
-         ○​ transition_type​
-
-         ○​ intent (why this transition)​
-
-         ○​ duration_ms (must be within IXD-02 bounds)​
-
-         ○​ reduced_motion behavior​
-
-         ○​ interactive gesture (if any) + fallback​
-
-  ●​ Exceptions list (where defaults do not apply) with rationale​
-
-
-
-Optional Fields
-  ●​ Platform-specific variants | OPTIONAL​
-
-  ●​ Notes | OPTIONAL​
 Rules
-  ●​ Transition durations must comply with IXD-02 min/max.​
-
-  ●​ Reduced motion must have an equivalent (instant or minimal) transition.​
-
-  ●​ “Replace” navigation must not look like “back” navigation (avoid confusion).​
-
-  ●​ Modal transitions must respect focus rules and dismissal patterns (IXD-01).​
-
-  ●​ If DES-02 route is unknown, still map via screen_id; route mapping can be filled later.​
-
-
+● Transition durations must comply with IXD-02 min/max.
+● Reduced motion must have an equivalent (instant or minimal) transition.
+● “Replace” navigation must not look like “back” navigation (avoid confusion).
+● Modal transitions must respect focus rules and dismissal patterns (IXD-01).
+● If DES-02 route is unknown, still map via screen_id; route mapping can be filled later.
 
 Output Format
 1) Navigation Context Defaults (required)
- conte   default_transiti         duration_ms        reduced_motion_beha              notes
-   xt       on_type                                          vior
+conte
+xt
 
-stack_ {{defaults.stack_       {{defaults.stack_pu   {{defaults.stack_push.re {{defaults.stack_
-push   push.type}}             sh.duration}}         duced_motion}}           push.notes}}
+default_transiti
+on_type
 
-stack_ {{defaults.stack_       {{defaults.stack_po   {{defaults.stack_pop.re    {{defaults.stack_
-pop    pop.type}}              p.duration}}          duced_motion}}             pop.notes}}
+duration_ms
 
-modal    {{defaults.modal      {{defaults.modal_o    {{defaults.modal_open.r    {{defaults.modal_
-_open    _open.type}}          pen.duration}}        educed_motion}}            open.notes}}
+reduced_motion_beha
+vior
 
-modal {{defaults.modal         {{defaults.modal_cl   {{defaults.modal_close.r {{defaults.modal_
-_close _close.type}}           ose.duration}}        educed_motion}}          close.notes}}
+notes
 
-tab_s    {{defaults.tab_sw {{defaults.tab_switc      {{defaults.tab_switch.re   {{defaults.tab_swi
-witch    itch.type}}       h.duration}}              duced_motion}}             tch.notes}}
+stack_ {{defaults.stack_
+push
+push.type}}
 
-deep_    {{defaults.deep_l     {{defaults.deep_lin   {{defaults.deep_link.red   {{defaults.deep_li
-link     ink.type}}            k.duration}}          uced_motion}}              nk.notes}}
+{{defaults.stack_pu
+sh.duration}}
 
+{{defaults.stack_push.re {{defaults.stack_
+duced_motion}}
+push.notes}}
+
+stack_ {{defaults.stack_
+pop
+pop.type}}
+
+{{defaults.stack_po
+p.duration}}
+
+{{defaults.stack_pop.re
+duced_motion}}
+
+{{defaults.stack_
+pop.notes}}
+
+modal
+_open
+
+{{defaults.modal
+_open.type}}
+
+{{defaults.modal_o
+pen.duration}}
+
+{{defaults.modal_open.r
+educed_motion}}
+
+{{defaults.modal_
+open.notes}}
+
+modal {{defaults.modal
+_close _close.type}}
+
+{{defaults.modal_cl
+ose.duration}}
+
+{{defaults.modal_close.r {{defaults.modal_
+educed_motion}}
+close.notes}}
+
+tab_s
+witch
+
+{{defaults.tab_sw {{defaults.tab_switc
+itch.type}}
+h.duration}}
+
+{{defaults.tab_switch.re
+duced_motion}}
+
+{{defaults.tab_swi
+tch.notes}}
+
+deep_
+link
+
+{{defaults.deep_l
+ink.type}}
+
+{{defaults.deep_link.red
+uced_motion}}
+
+{{defaults.deep_li
+nk.notes}}
+
+{{defaults.deep_lin
+k.duration}}
 
 2) Transition Map (required)
-from_    to_s   contex       transi   intent   duratio   reduced_      gestur    gestur    notes
-scree    cree     t          tion_t             n_ms     motion_be       e       e_fallb
- n_id    n_id                  ype                         havior                 ack
-{{map[ {{ma     {{map[    {{map     {{map[    {{map[0    {{map[0].re     {{map[      {{map[0 {{map[
-0].fro p[0].t   0].cont   [0].typ   0].inte   ].durati   duced_mot       0].gest     ].fallbac 0].not
-m}}    o}}      ext}}     e}}       nt}}      on}}       ion}}           ure}}       k}}       es}}
+from_
+scree
+n_id
 
+to_s
+cree
+n_id
+
+contex
+t
+
+transi
+tion_t
+ype
+
+intent
+
+duratio
+n_ms
+
+reduced_
+motion_be
+havior
+
+gestur
+e
+
+gestur
+e_fallb
+ack
+
+notes
+
+{{map[ {{ma
+0].fro
+p[0].t
+m}}
+o}}
+
+{{map[
+0].cont
+ext}}
+
+{{map
+[0].typ
+e}}
+
+{{map[
+0].inte
+nt}}
+
+{{map[0
+].durati
+on}}
+
+{{map[0].re
+duced_mot
+ion}}
+
+{{map[
+0].gest
+ure}}
+
+{{map[0 {{map[
+].fallbac 0].not
+k}}
+es}}
 
 3) Exceptions (required if any)
- excepti        scope               description              rationale             replacement_rule
-  on_id    (context/route/sc
-              reen_pair)
+excepti
+on_id
 
-ex_01      {{exceptions[0].sc   {{exceptions[0].des      {{exceptions[0].ra    {{exceptions[0].repl
-           ope}}                cription}}               tionale}}             acement}}
+scope
+(context/route/sc
+reen_pair)
 
+description
+
+rationale
+
+replacement_rule
+
+ex_01
+
+{{exceptions[0].sc
+ope}}
+
+{{exceptions[0].des
+cription}}
+
+{{exceptions[0].ra
+tionale}}
+
+{{exceptions[0].repl
+acement}}
 
 4) Compliance Checks (required)
-
-   ●​ All durations within bounds: {{checks.durations_within_bounds}}​
-
-   ●​ Reduced motion defined for all transitions: {{checks.reduced_motion_complete}}​
-
-   ●​ Gesture fallbacks present where gestures exist: {{checks.gesture_fallbacks_complete}}​
-
-
+● All durations within bounds: {{checks.durations_within_bounds}}
+● Reduced motion defined for all transitions: {{checks.reduced_motion_complete}}
+● Gesture fallbacks present where gestures exist: {{checks.gesture_fallbacks_complete}}
 
 Cross-References
-   ●​ Upstream: {{xref:DES-02}}, {{xref:IXD-02}}, {{xref:IXD-01}} | OPTIONAL​
-
-   ●​ Downstream: {{xref:MOB-01}} | OPTIONAL, {{xref:FE-01}} | OPTIONAL,
-      {{xref:ROUTE-*}} | OPTIONAL​
-
-   ●​ Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
-      {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
+● Upstream: {{xref:DES-02}}, {{xref:IXD-02}}, {{xref:IXD-01}} | OPTIONAL
+● Downstream: {{xref:MOB-01}} | OPTIONAL, {{xref:FE-01}} | OPTIONAL,
+{{xref:ROUTE-*}} | OPTIONAL
+● Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
+{{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
 Skill Level Requiredness Rules
-   ●​ beginner: Required. Define defaults per context and basic map rows.​
+● beginner: Required. Define defaults per context and basic map rows.
+● intermediate: Required. Add intent, reduced motion behavior, and exceptions.
+● advanced: Required. Add gesture interaction and enforce compliance checks.
 
-   ●​ intermediate: Required. Add intent, reduced motion behavior, and exceptions.​
-
-   ●​ advanced: Required. Add gesture interaction and enforce compliance checks.​
 Unknown Handling
- ●​ UNKNOWN_ALLOWED: platform_variants, notes, exceptions (if none,
-    explicitly state none)​
-
- ●​ If any transition lacks reduced_motion_behavior → block Completeness Gate.​
-
-
+● UNKNOWN_ALLOWED: platform_variants, notes, exceptions (if none,
+explicitly state none)
+● If any transition lacks reduced_motion_behavior → block Completeness Gate.
 
 Completeness Gate
- ●​ Gate ID: TMP-05.PRIMARY.IXD​
+● Gate ID: TMP-05.PRIMARY.IXD
+● Pass conditions:
+○ required_fields_present == true
+○ defaults_present_for_all_contexts == true
+○ transition_map_present == true
+○ durations_within_bounds == true
+○ reduced_motion_complete == true
+○ gesture_fallbacks_complete == true
+○ placeholder_resolution == true
+○ no_unapproved_unknowns == true
 
- ●​ Pass conditions:​
+IXD-04
 
-        ○​ required_fields_present == true​
+IXD-04 — Micro-interactions Spec
+(hover/press/drag/feedback)
+Header Block
+● template_id: IXD-04
+● title: Micro-interactions Spec (hover/press/drag/feedback)
+● type: interaction_design_motion
+● template_version: 1.0.0
+● output_path: 10_app/design/IXD-04_Micro_Interactions_Spec.md
+● compliance_gate_id: TMP-05.PRIMARY.IXD
+● upstream_dependencies: ["IXD-01", "IXD-02", "DES-05", "DES-06", "A11YD-01"]
+● inputs_required: ["IXD-01", "IXD-02", "DES-05", "DES-06", "DSYS-02", "A11YD-01",
+"A11YD-02", "STANDARDS_INDEX"]
+● required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}
 
-        ○​ defaults_present_for_all_contexts == true​
+Purpose
+Define the small, repeatable interaction feedback behaviors (micro-interactions) that
+communicate system state and affordances: hover, press, focus, drag, loading spinners,
+success confirmations, and subtle error feedback. These must be accessible, consistent, and
+implementable across platforms.
 
-        ○​ transition_map_present == true​
+Inputs Required
+● IXD-01: {{xref:IXD-01}} | OPTIONAL
+● IXD-02: {{xref:IXD-02}} | OPTIONAL
 
-        ○​ durations_within_bounds == true​
+● DES-05: {{xref:DES-05}} | OPTIONAL
+● DES-06: {{xref:DES-06}} | OPTIONAL
+● DSYS-02: {{xref:DSYS-02}} | OPTIONAL
+● A11YD-01: {{xref:A11YD-01}} | OPTIONAL
+● A11YD-02: {{xref:A11YD-02}} | OPTIONAL
+● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
-        ○​ reduced_motion_complete == true​
+Required Fields
+● Interaction types covered (minimum: hover, press/tap, focus, drag, disabled, loading,
+success, error)
+● For each interaction:
+○ interaction_id
+○ target element types (button, list item, input, card, icon, etc.)
+○ trigger (what user does / what system state)
+○ visual feedback description (non-visual wording, no colors)
+○ motion behavior (if any) + duration bounds compliance
+○ haptic/audio (if mobile) + default off policy
+○ accessibility behavior (focus, SR announcement if applicable)
+○ do/don’t rules
+○ reduced motion behavior
+● Consistency rules (priority order if multiple micro-interactions apply)
 
-        ○​ gesture_fallbacks_complete == true​
+Optional Fields
 
-        ○​ placeholder_resolution == true​
+● Component-specific overrides | OPTIONAL
+● Notes | OPTIONAL
 
-        ○​ no_unapproved_unknowns == true​
+## 6. Rules
+
+- Transition durations must comply with IXD-02 min/max.
+- Reduced motion must have an equivalent (instant or minimal) transition.
+- “Replace” navigation must not look like “back” navigation (avoid confusion).
+- Modal transitions must respect focus rules and dismissal patterns (IXD-01).
+- If DES-02 route is unknown, still map via screen_id; route mapping can be filled later.
+
+## 7. Output Format
+
+### Required Headings (in order)
+
+1. `## 1) Navigation Context Defaults (required)`
+2. `## conte`
+3. `## default_transiti`
+4. `## on_type`
+5. `## duration_ms`
+6. `## reduced_motion_beha`
+7. `## vior`
+8. `## notes`
+9. `## push`
+10. `## push.type}}`
+
+## 8. Cross-References
+
+- Upstream: {{xref:DES-02}}, {{xref:IXD-02}}, {{xref:IXD-01}} | OPTIONAL
+- Downstream: {{xref:MOB-01}} | OPTIONAL, {{xref:FE-01}} | OPTIONAL,
+- **{{xref:ROUTE-*}} | OPTIONAL**
+- Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
+- {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+
+## 9. Skill Level Requiredness Rules
+
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
+
+## 10. Unknown Handling
+
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
+
+## 11. Completeness Gate
+
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

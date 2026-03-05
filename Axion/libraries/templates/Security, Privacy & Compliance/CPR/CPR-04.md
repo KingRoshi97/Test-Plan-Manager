@@ -1,0 +1,87 @@
+# CPR-04 — Profiling Plan (what to measure, tools)
+
+## 1. Header Block
+
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | CPR-04                                             |
+| Template Type     | Security / Compliance Programs                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring profiling plan (what to measure, tools)    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Profiling Plan (what to measure, tools) Document                         |
+
+## 2. Purpose
+
+Define and document the profiling plan (what to measure, tools) for the project. This template establishes the authoritative specification that downstream documents reference.
+
+## 3. Inputs Required
+
+- Canonical Spec (`{{spec.*}}`)
+- Intake Submission (`{{submission_id}}`)
+- Resolved Standards Snapshot (`{{standards.*}}`)
+
+## 4. Required Fields
+
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Profiling Plan (what to measure, tools) Overview       | spec         | No              |
+| Scope & Boundaries        | spec         | No              |
+| Key Definitions           | spec         | Yes             |
+| Constraints               | spec         | Yes             |
+
+## 5. Optional Fields
+
+| Field Name                | Source       | Notes                          |
+|---------------------------|--------------|--------------------------------|
+| Additional Context        | spec         | Enrichment only, no new truth  |
+| Revision History          | spec         | Auto-populated from version stamps |
+| Open Questions            | spec         | Tracked for resolution         |
+
+## 6. Rules
+
+- **No duplicate truth**: All content must reference canonical entity IDs from the spec; no redefining entities.
+- **No invention**: If data cannot be derived from spec or standards, mark as UNKNOWN.
+- **Traceability**: Every entry must map to a source in the canonical spec.
+- **Completeness**: All sections must be populated or explicitly marked N/A with justification.
+
+## 7. Output Format
+
+### Required Headings (in order)
+
+1. `## Overview`
+2. `## Scope & Boundaries`
+3. `## Core Specification`
+4. `## Detailed Entries`
+5. `## Constraints & Assumptions`
+6. `## Dependencies`
+7. `## Unknowns & Open Questions`
+
+## 8. Cross-References
+
+- **Upstream**: Canonical Spec (CAN-01), Intake Submission (INT-01)
+- **Downstream**: Related Security, Privacy & Compliance templates
+- **Entity Types Referenced**: As defined in canonical spec
+
+## 9. Skill Level Requiredness Rules
+
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
+
+## 10. Unknown Handling
+
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
+
+## 11. Completeness Gate
+
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

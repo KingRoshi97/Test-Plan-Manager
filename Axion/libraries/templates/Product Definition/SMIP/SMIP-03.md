@@ -1,96 +1,100 @@
-SMIP-03
-SMIP-03 — Funnel/Conversion Definitions
-Header Block
-   ●​   template_id: SMIP-03
-   ●​   title: Funnel/Conversion Definitions
-   ●​   type: success_metrics_instrumentation
-   ●​   template_version: 1.0.0
-   ●​   output_path: 10_app/metrics/SMIP-03_Funnel_Definitions.md
-   ●​   compliance_gate_id: TMP-05.PRIMARY.METRICS
-   ●​   upstream_dependencies: ["SMIP-01", "SMIP-02"]
-   ●​   inputs_required: ["SMIP-01", "SMIP-02", "PRD-04", "STANDARDS_INDEX"]
-   ●​   required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": false}
+# SMIP-03 — Funnel/Conversion Definitions
 
+## 1. Header Block
 
-Purpose
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | SMIP-03                                             |
+| Template Type     | Product / Metrics                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring funnel/conversion definitions    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Funnel/Conversion Definitions Document                         |
+
+## 2. Purpose
+
 Define the canonical funnels and conversion events used to measure product success. Funnels
 must be linked to analytics events and have clear step definitions to prevent metric drift.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​   SMIP-01: {{xref:SMIP-01}}
-   ●​   SMIP-02: {{xref:SMIP-02}}
-   ●​   PRD-04: {{xref:PRD-04}} | OPTIONAL
-   ●​   STANDARDS_INDEX: {{standards.index}} | OPTIONAL
+- ●
+- ●
+- ●
+- ●
+- SMIP-01: {{xref:SMIP-01}}
+- SMIP-02: {{xref:SMIP-02}}
+- PRD-04: {{xref:PRD-04}} | OPTIONAL
+- STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
+## 4. Required Fields
 
-Required Fields
-   ●​ Funnel list (minimum 2)
-   ●​ For each funnel:
-         ○​ funnel_id
-         ○​ name
-         ○​ purpose
-         ○​ audience/persona (optional)
-         ○​ steps (ordered), each step references event_name(s)
-         ○​ conversion definition (what counts)
-         ○​ window (time window)
-         ○​ segmentation rules (optional)
-         ○​ linked metric_ids
-            ○​ guardrails (optional)
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Funnel list (minimum 2)   | spec         | Yes             |
+| For each funnel:          | spec         | Yes             |
+| ○ funnel_id               | spec         | Yes             |
+| ○ name                    | spec         | Yes             |
+| ○ purpose                 | spec         | Yes             |
+| ○ audience/persona (op... | spec         | Yes             |
+| ○ steps (ordered), eac... | spec         | Yes             |
+| ○ conversion definitio... | spec         | Yes             |
+| ○ window (time window)    | spec         | Yes             |
+| ○ segmentation rules (... | spec         | Yes             |
+| ○ linked metric_ids       | spec         | Yes             |
+| ○ guardrails (optional)   | spec         | Yes             |
 
+## 5. Optional Fields
 
-Optional Fields
-     ●​ Drop-off analysis notes | OPTIONAL
-     ●​ Open questions | OPTIONAL
+● Drop-off analysis notes | OPTIONAL
+● Open questions | OPTIONAL
 
+## 6. Rules
 
-Rules
-     ●​ Every funnel step must reference events defined in SMIP-02.
-     ●​ Conversion must be measurable and unambiguous.
-     ●​ Time window must be explicit.
+- Every funnel step must reference events defined in SMIP-02.
+- Conversion must be measurable and unambiguous.
+- Time window must be explicit.
 
+## 7. Output Format
 
-Output Format
-1) Funnel Catalog (canonical)
-fu     name      purpos     steps     convers     windo      segme      linked_     guardra     notes
-nn                 e                  ion_defi      w          nts      metric_i      ils
-el                                     nition                              ds
-_i
- d
+### Required Headings (in order)
 
-fu     {{funn    {{funnel   {{funn    {{funnels   {{funnel   {{funnel   {{funnels   {{funnel    {{funn
-n_     els[0].   s[0].pur   els[0].   [0].conv    s[0].win   s[0].seg   [0].metri   s[0].gua    els[0].
-01     name}     pose}}     steps}    ersion}}    dow}}      ments}}    c_ids}}     rdrails}}   notes}
-       }                    }                                                                   }
+1. `## 1) Funnel Catalog (canonical)`
+2. `## name`
+3. `## purpos`
+4. `## steps`
+5. `## convers`
+6. `## ion_defi`
+7. `## nition`
+8. `## windo`
+9. `## segme`
+10. `## nts`
 
+## 8. Cross-References
 
-2) Open Questions (optional)
+- Upstream: {{xref:SMIP-01}}, {{xref:SMIP-02}}
+- Downstream: {{xref:BI-}} | OPTIONAL, {{xref:EXPER-}} | OPTIONAL
+- Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
-     ●​ {{open_questions[0]}} | OPTIONAL
+## 9. Skill Level Requiredness Rules
 
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-Cross-References
-     ●​ Upstream: {{xref:SMIP-01}}, {{xref:SMIP-02}}
-     ●​ Downstream: {{xref:BI-}} | OPTIONAL, {{xref:EXPER-}} | OPTIONAL
-     ●​ Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+## 10. Unknown Handling
 
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
-Skill Level Requiredness Rules
-     ●​ beginner: Required. Define 2 funnels with steps + window.
- ●​ intermediate: Required. Add linked metrics and segments.
- ●​ advanced: Not required. (Advanced experimentation lives in EXPER.)
+## 11. Completeness Gate
 
-
-Unknown Handling
- ●​ UNKNOWN_ALLOWED: segments, guardrails, notes, open_questions
- ●​ If any funnel step references unknown event → block Completeness Gate.
-
-
-Completeness Gate
- ●​ Gate ID: TMP-05.PRIMARY.METRICS
- ●​ Pass conditions:
-       ○​ required_fields_present == true
-       ○​ funnels_count >= 2
-       ○​ all_steps_reference_known_events == true
-       ○​ placeholder_resolution == true
-       ○​ no_unapproved_unknowns == true
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

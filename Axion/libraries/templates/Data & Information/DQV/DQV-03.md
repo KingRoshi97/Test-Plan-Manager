@@ -1,179 +1,89 @@
-DQV-03
-DQV-02 — Data Quality Checks Catalog
-(rules by entity)
-Header Block
-   ●​ template_id: DQV-02​
+# DQV-03 — Data Quality Metrics Catalog
 
-   ●​ title: Data Quality Checks Catalog (rules by entity)​
+## 1. Header Block
 
-   ●​ type: data_quality_validation​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | DQV-03                                             |
+| Template Type     | Data / Quality                                            |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring data quality metrics catalog      |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Data Quality Metrics Catalog Document                           |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/data_quality/DQV-02_Data_Quality_Checks_Catalog.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.DQV​
-
-   ●​ upstream_dependencies: ["DATA-01", "DATA-03", "DQV-01"]​
-
-   ●​ inputs_required: ["DATA-01", "DATA-03", "DQV-01", "ERR-02", "OBS-02",
-      "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": false, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define the catalog of data quality checks that continuously validate correctness, completeness,
 and integrity of stored data. These checks detect drift, corruption, and broken invariants over
 time.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​ DATA-01: {{xref:DATA-01}} | OPTIONAL​
+- Canonical Spec (`{{spec.*}}`)
+- Intake Submission (`{{submission_id}}`)
+- Resolved Standards Snapshot (`{{standards.*}}`)
 
-   ●​ DATA-03: {{xref:DATA-03}} | OPTIONAL​
+## 4. Required Fields
 
-   ●​ DQV-01: {{xref:DQV-01}} | OPTIONAL​
-  ●​ ERR-02: {{xref:ERR-02}} | OPTIONAL​
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Data Quality Metrics Catalog Overview         | spec         | No              |
+| Scope & Boundaries        | spec         | No              |
+| Key Definitions           | spec         | Yes             |
+| Constraints               | spec         | Yes             |
 
-  ●​ OBS-02: {{xref:OBS-02}} | OPTIONAL​
+## 5. Optional Fields
 
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
+| Field Name                | Source       | Notes                          |
+|---------------------------|--------------|--------------------------------|
+| Additional Context        | spec         | Enrichment only, no new truth  |
+| Revision History          | spec         | Auto-populated from version stamps |
+| Open Questions            | spec         | Tracked for resolution         |
 
+## 6. Rules
 
+- **No duplicate truth**: All content must reference canonical entity IDs from the spec; no redefining entities.
+- **No invention**: If data cannot be derived from spec or standards, mark as UNKNOWN.
+- **Traceability**: Every entry must map to a source in the canonical spec.
+- **Completeness**: All sections must be populated or explicitly marked N/A with justification.
 
-Required Fields
-  ●​ Applicability (true/false). If false, mark N/A.​
+## 7. Output Format
 
-  ●​ DQ check catalog (minimum 25 checks)​
+### Required Headings (in order)
 
-  ●​ For each check:​
+1. `## Overview`
+2. `## Scope & Boundaries`
+3. `## Core Specification`
+4. `## Detailed Entries`
+5. `## Constraints & Assumptions`
+6. `## Dependencies`
+7. `## Unknowns & Open Questions`
 
-          ○​ dq_id​
+## 8. Cross-References
 
-          ○​ entity_id/dataset_id​
+- **Upstream**: Canonical Spec (CAN-01), Intake Submission (INT-01)
+- **Downstream**: Related Data / Quality templates
+- **Entity Types Referenced**: As defined in canonical spec
 
-          ○​ check_type (completeness/validity/uniqueness/referential/freshness)​
+## 9. Skill Level Requiredness Rules
 
-          ○​ rule description (predicate)​
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-          ○​ threshold (allowed failure rate)​
+## 10. Unknown Handling
 
-          ○​ schedule (cron/streaming/on-write)​
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
-          ○​ owner​
+## 11. Completeness Gate
 
-          ○​ alerting severity​
-
-          ○​ failure action (alert/quarantine/stop pipeline)​
-
-          ○​ reason_code (if user-impacting) | OPTIONAL​
-
-          ○​ metric name (for tracking)​
-
-  ●​ Reporting format (DQ report contents)​
-
-
-
-Optional Fields
-    ●​ Auto-repair strategies | OPTIONAL​
-
-    ●​ Notes | OPTIONAL​
-
-
-
-Rules
-    ●​ If applies == false, include 00_NA block only.​
-
-    ●​ Each check must be measurable and produce a metric.​
-
-    ●​ Thresholds must be explicit; “should be good” is not allowed.​
-
-    ●​ Any “stop pipeline” action must have an escalation path.​
-
-
-
-Output Format
-1) Applicability
-
-    ●​ applies: {{dq.applies}} (true/false)​
-
-    ●​ 00_NA (if not applies): {{dq.na_block}} | OPTIONAL​
-
-
-
-2) DQ Checks Catalog (canonical)
-d    target   chec      rule    thresh     schedu    owner     severit    action    metric    notes
-q             k_typ               old        le                  y
-_               e
-i
-d
-
-d {{chec      {{chec {{che      {{check {{check      {{chec    {{check    {{chec    {{chec    {{chec
-q ks[0].t     ks[0].t cks[0]    s[0].thre s[0].sch   ks[0].o   s[0].se    ks[0].a   ks[0].    ks[0].n
-_ arget}}     ype}} .rule}}     shold}}   edule}}    wner}}    verity}}   ction}}   metric}   otes}}
-0                                                                                   }
-1
-
-d {{chec      {{chec {{che      {{check {{check      {{chec    {{check    {{chec    {{chec    {{chec
-q ks[1].t     ks[1].t cks[1]    s[1].thre s[1].sch   ks[1].o   s[1].se    ks[1].a   ks[1].    ks[1].n
-_ arget}}     ype}} .rule}}     shold}}   edule}}    wner}}    verity}}   ction}}   metric}   otes}}
-                                                                                    }
-0
-2
-
-
-3) DQ Report Format (required if applies)
-
-    ●​ Report fields: {{report.fields}}​
-
-    ●​ Aggregation windows: {{report.windows}} | OPTIONAL​
-
-    ●​ Storage location pointer: {{report.storage}} | OPTIONAL​
-
-
-
-Cross-References
-    ●​ Upstream: {{xref:DQV-01}} | OPTIONAL, {{xref:DATA-03}} | OPTIONAL​
-
-    ●​ Downstream: {{xref:DQV-04}}, {{xref:DQV-05}}, {{xref:ALRT-*}} | OPTIONAL​
-
-    ●​ Standards: {{standards.rules[STD-RELIABILITY]}} | OPTIONAL,
-       {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
-
-Skill Level Requiredness Rules
-    ●​ beginner: Not required.​
-
-    ●​ intermediate: Required if applies. 25 checks with thresholds and schedules.​
-
-    ●​ advanced: Required if applies. Add failure actions, alerting severity, and report storage.​
-
-
-
-Unknown Handling
-    ●​ UNKNOWN_ALLOWED: auto_repair_strategies, notes,
-        report_storage_pointer​
-
-    ●​ If applies == true and thresholds are UNKNOWN → block Completeness Gate.​
-
-
-
-Completeness Gate
-●​ Gate ID: TMP-05.PRIMARY.DQV​
-
-●​ Pass conditions:​
-
-       ○​ required_fields_present == true​
-
-       ○​ if_applies_then_checks_count >= 25​
-
-       ○​ thresholds_present == true​
-
-       ○​ schedules_present == true​
-
-       ○​ placeholder_resolution == true​
-
-       ○​ no_unapproved_unknowns == true
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

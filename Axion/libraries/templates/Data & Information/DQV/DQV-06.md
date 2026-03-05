@@ -1,232 +1,89 @@
-DQV-06
-DQV-05 — Bad Data Handling (quarantine,
-repair, backfill)
-Header Block
-   ●​ template_id: DQV-05​
+# DQV-06 — Data Quality Remediation
 
-   ●​ title: Bad Data Handling (quarantine, repair, backfill)​
+## 1. Header Block
 
-   ●​ type: data_quality_validation​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | DQV-06                                             |
+| Template Type     | Data / Quality                                            |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring data quality remediation      |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Data Quality Remediation Document                           |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/data_quality/DQV-05_Bad_Data_Handling.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.DQV​
-
-   ●​ upstream_dependencies: ["DQV-02", "DQV-04", "PIPE-04", "WFO-05"]​
-
-   ●​ inputs_required: ["DQV-02", "DQV-04", "PIPE-04", "WFO-05", "ERR-02", "OBS-04",
-      "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define how the system handles bad data when detected: quarantine, repair workflows, backfills,
 reconciliation, and safe reprocessing. This prevents silent corruption and ensures deterministic
 remediation.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​ DQV-02: {{xref:DQV-02}} | OPTIONAL​
+- Canonical Spec (`{{spec.*}}`)
+- Intake Submission (`{{submission_id}}`)
+- Resolved Standards Snapshot (`{{standards.*}}`)
 
-   ●​ DQV-04: {{xref:DQV-04}} | OPTIONAL​
+## 4. Required Fields
 
-   ●​ PIPE-04: {{xref:PIPE-04}} | OPTIONAL​
-  ●​ WFO-05: {{xref:WFO-05}} | OPTIONAL​
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Data Quality Remediation Overview         | spec         | No              |
+| Scope & Boundaries        | spec         | No              |
+| Key Definitions           | spec         | Yes             |
+| Constraints               | spec         | Yes             |
 
-  ●​ ERR-02: {{xref:ERR-02}} | OPTIONAL​
+## 5. Optional Fields
 
-  ●​ OBS-04: {{xref:OBS-04}} | OPTIONAL​
+| Field Name                | Source       | Notes                          |
+|---------------------------|--------------|--------------------------------|
+| Additional Context        | spec         | Enrichment only, no new truth  |
+| Revision History          | spec         | Auto-populated from version stamps |
+| Open Questions            | spec         | Tracked for resolution         |
 
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
+## 6. Rules
 
+- **No duplicate truth**: All content must reference canonical entity IDs from the spec; no redefining entities.
+- **No invention**: If data cannot be derived from spec or standards, mark as UNKNOWN.
+- **Traceability**: Every entry must map to a source in the canonical spec.
+- **Completeness**: All sections must be populated or explicitly marked N/A with justification.
 
+## 7. Output Format
 
-Required Fields
-  ●​ Bad data classification (types):​
+### Required Headings (in order)
 
-         ○​ schema invalid​
+1. `## Overview`
+2. `## Scope & Boundaries`
+3. `## Core Specification`
+4. `## Detailed Entries`
+5. `## Constraints & Assumptions`
+6. `## Dependencies`
+7. `## Unknowns & Open Questions`
 
-         ○​ semantic invalid​
+## 8. Cross-References
 
-         ○​ referential broken​
+- **Upstream**: Canonical Spec (CAN-01), Intake Submission (INT-01)
+- **Downstream**: Related Data / Quality templates
+- **Entity Types Referenced**: As defined in canonical spec
 
-         ○​ duplicate​
+## 9. Skill Level Requiredness Rules
 
-         ○​ stale/out-of-order​
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-  ●​ Quarantine model:​
+## 10. Unknown Handling
 
-         ○​ what data is quarantined​
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
-         ○​ where it is stored​
+## 11. Completeness Gate
 
-         ○​ required quarantine record fields​
-
-         ○​ retention policy​
-
-  ●​ Repair workflow definitions (minimum 6):​
-
-         ○​ repair_id​
-
-         ○​ trigger (which check/signal)​
-
-         ○​ remediation steps​
-
-         ○​ approvals required (if any)​
-         ○​ safe re-run policy (idempotency)​
-
-         ○​ verification checks​
-
-         ○​ audit/logging requirements​
-
-  ●​ Backfill policy:​
-
-         ○​ how backfills are scoped​
-
-         ○​ rate limiting/impact controls​
-
-         ○​ reprocessing rules​
-
-  ●​ Escalation rules (who owns fixing)​
-
-  ●​ Verification checklist​
-
-
-
-Optional Fields
-  ●​ Auto-repair rules | OPTIONAL​
-
-  ●​ Notes | OPTIONAL​
-
-
-
-Rules
-  ●​ Quarantine must preserve enough context to debug but respect privacy/redaction.​
-
-  ●​ Repairs and backfills must be idempotent and observable.​
-
-  ●​ Any repair that changes user-visible outcomes must be auditable.​
-
-  ●​ Backfills must be throttled and safe for production.​
-
-
-
-Output Format
-1) Bad Data Types (required)
-   ●​ {{types[0]}}​
-
-   ●​ {{types[1]}}​
-
-   ●​ {{types[2]}} | OPTIONAL​
-
-
-
-2) Quarantine Model (required)
-
-   ●​ Stored where: {{quarantine.location}}​
-
-   ●​ Required fields: {{quarantine.required_fields}}​
-
-   ●​ Retention policy: {{quarantine.retention}}​
-
-   ●​ Redaction rules: {{quarantine.redaction}} | OPTIONAL​
-
-
-
-3) Repair Workflows (canonical, min 6)
- rep     trigger        steps        approvals      idempot        verify        audit        notes
- air_                                               ency_rul
-  id                                                   e
-
-rep     {{repairs[0] {{repairs[     {{repairs[0].   {{repairs[   {{repairs[0   {{repairs[   {{repairs[
-_01     .trigger}}   0].steps}}     approvals}}     0].idem}}    ].verify}}    0].audit}}   0].notes}}
-
-rep     {{repairs[1] {{repairs[     {{repairs[1].   {{repairs[   {{repairs[1   {{repairs[   {{repairs[
-_02     .trigger}}   1].steps}}     approvals}}     1].idem}}    ].verify}}    1].audit}}   1].notes}}
-
-
-4) Backfill Policy (required)
-
-   ●​ Scope rules: {{backfill.scope}}​
-
-   ●​ Throttling rules: {{backfill.throttle}}​
-
-   ●​ Reprocessing rules: {{backfill.reprocess}}​
-
-   ●​ Stop conditions: {{backfill.stop_conditions}} | OPTIONAL​
-
-
-
-5) Escalation Rules (required)
-
-   ●​ Owner assignment: {{escalation.owner_assignment}}​
-   ●​ SLA for critical issues: {{escalation.sla}} | OPTIONAL​
-
-   ●​ When to page: {{escalation.paging}} | OPTIONAL​
-
-
-
-6) Verification Checklist (required)
-
-   ●​ {{verify[0]}}​
-
-   ●​ {{verify[1]}}​
-
-   ●​ {{verify[2]}} | OPTIONAL​
-
-
-
-Cross-References
-   ●​ Upstream: {{xref:DQV-04}} | OPTIONAL, {{xref:WFO-05}} | OPTIONAL, {{xref:PIPE-04}} |
-      OPTIONAL​
-
-   ●​ Downstream: {{xref:DQV-06}} | OPTIONAL, {{xref:RELIA-05}} | OPTIONAL, {{xref:IRP-*}}
-      | OPTIONAL​
-
-   ●​ Standards: {{standards.rules[STD-PRIVACY]}} | OPTIONAL,
-      {{standards.rules[STD-RELIABILITY]}} | OPTIONAL,
-      {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
-
-Skill Level Requiredness Rules
-   ●​ beginner: Required. Quarantine model + backfill policy basics.​
-
-   ●​ intermediate: Required. Add repair workflow catalog and verification checks.​
-
-   ●​ advanced: Required. Add approval governance, stop conditions, and audit rigor.​
-
-
-
-Unknown Handling
-   ●​ UNKNOWN_ALLOWED: auto_repair, notes, stop_conditions, sla​
-
-   ●​ If quarantine location or required fields are UNKNOWN → block Completeness Gate.​
-Completeness Gate
- ●​ Gate ID: TMP-05.PRIMARY.DQV​
-
- ●​ Pass conditions:​
-
-        ○​ required_fields_present == true​
-
-        ○​ quarantine_model_present == true​
-
-        ○​ repairs_count >= 6​
-
-        ○​ backfill_policy_present == true​
-
-        ○​ placeholder_resolution == true​
-
-        ○​ no_unapproved_unknowns == true​
-Search & Indexing (SRCH)
-Search & Indexing (SRCH)​
-SRCH-01 Search Scope & Surfaces (what is searchable, where)​
-SRCH-02 Query Model (filters, ranking signals, facets)​
-SRCH-03 Index Update Strategy (sync/async, reindex)​
-SRCH-04 Search Result Quality Rules (relevance, freshness, dedupe)​
-SRCH-05 Search Abuse Controls (gaming, spam, limits)​
-SRCH-06 Search Observability (metrics, logging, evaluation)
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

@@ -1,97 +1,93 @@
-STK-03
-STK-03 — RACI / Ownership Matrix
-Header Block
-   ●​   template_id: STK-03
-   ●​   title: RACI / Ownership Matrix
-   ●​   type: stakeholders_governance
-   ●​   template_version: 1.0.0
-   ●​   output_path: 10_app/governance/STK-03_RACI_Ownership.md
-   ●​   compliance_gate_id: TMP-05.PRIMARY.GOV
-   ●​   upstream_dependencies: ["STK-01"]
-   ●​   inputs_required: ["STK-01", "STANDARDS_INDEX"]
-   ●​   required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": false}
+# STK-03 — RACI / Ownership Matrix
 
+## 1. Header Block
 
-Purpose
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | STK-03                                             |
+| Template Type     | Product / Stakeholders                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring raci / ownership matrix    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled RACI / Ownership Matrix Document                         |
+
+## 2. Purpose
+
 Define operational ownership across recurring responsibilities so execution is deterministic (who
 does what). This is the canonical “who is responsible/accountable” table used during build and
 release.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​ STK-01: {{xref:STK-01}}
-   ●​ Standards: {{standards.index}} | OPTIONAL
+- ● STK-01: {{xref:STK-01}}
+- ● Standards: {{standards.index}} | OPTIONAL
 
+## 4. Required Fields
 
-Required Fields
-   ●​ Responsibility list (minimum 10 for non-trivial products)
-   ●​ For each responsibility:
-         ○​ responsibility_id
-         ○​ area
-         ○​ description
-         ○​ R (responsible) stakeholder_id(s)
-         ○​ A (accountable) stakeholder_id
-         ○​ C (consulted) stakeholder_id(s)
-         ○​ I (informed) stakeholder_id(s)
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Responsibility list (m... | spec         | Yes             |
+| For each responsibility:  | spec         | Yes             |
+| ○ responsibility_id       | spec         | Yes             |
+| ○ area                    | spec         | Yes             |
+| ○ description             | spec         | Yes             |
+| ○ R (responsible) stak... | spec         | Yes             |
+| ○ A (accountable) stak... | spec         | Yes             |
+| ○ C (consulted) stakeh... | spec         | Yes             |
+| ○ I (informed) stakeho... | spec         | Yes             |
 
+## 5. Optional Fields
 
-Optional Fields
-   ●​ SLA/hand-off notes | OPTIONAL
-   ●​ Backup owners | OPTIONAL
+● SLA/hand-off notes | OPTIONAL
+● Backup owners | OPTIONAL
 
+## 6. Rules
 
-Rules
-   ●​ A must be exactly one stakeholder.
-   ●​ Stakeholder IDs must come from STK-01.
-   ●​ Responsibilities must cover at least: product, design, backend, frontend, data, security,
-      ops, QA, release.
+- A must be exactly one stakeholder.
+- Stakeholder IDs must come from STK-01.
+- Responsibilities must cover at least: product, design, backend, frontend, data, security,
+- **ops, QA, release.**
 
+## 7. Output Format
 
-Output Format
-1) RACI Matrix (canonical)
- responsi       area        description        R          A          C          I        notes
-  bility_id
+### Required Headings (in order)
 
-resp_01       {{rows[0].   {{rows[0].desc   {{rows[0   {{rows[0   {{rows[0   {{rows[   {{rows[0].
-              area}}       ription}}        ].R}}      ].A}}      ].C}}      0].I}}    notes}}
+1. `## 1) RACI Matrix (canonical)`
+2. `## responsi`
+3. `## bility_id`
+4. `## area`
+5. `## description`
+6. `## notes`
+7. `## resp_01`
+8. `## area}}`
+9. `## ription}}`
+10. `## ].R}}`
 
+## 8. Cross-References
 
-2) Coverage Checklist (required)
+- Upstream: {{xref:STK-01}}
+- Downstream: {{xref:STK-04}} | OPTIONAL
+- Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
-   ●​   product covered: {{coverage.product}}
-   ●​   design covered: {{coverage.design}}
-   ●​   backend covered: {{coverage.backend}}
-   ●​   frontend covered: {{coverage.frontend}}
-   ●​   data covered: {{coverage.data}}
-   ●​   security covered: {{coverage.security}}
-   ●​   ops covered: {{coverage.ops}}
-   ●​   qa covered: {{coverage.qa}}
-   ●​   release covered: {{coverage.release}}
+## 9. Skill Level Requiredness Rules
 
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-Cross-References
-   ●​ Upstream: {{xref:STK-01}}
-   ●​ Downstream: {{xref:STK-04}} | OPTIONAL
-   ●​ Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+## 10. Unknown Handling
 
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
-Skill Level Requiredness Rules
-   ●​ beginner: Required. Minimum responsibilities + R/A assigned.
-   ●​ intermediate: Required. Add C/I lists and coverage checklist.
- ●​ advanced: Not required. (Advanced ops workflows live in OPS/REL.)
+## 11. Completeness Gate
 
-
-Unknown Handling
- ●​ UNKNOWN_ALLOWED: notes, backup_owners
- ●​ If any responsibility has A == UNKNOWN → block Completeness Gate.
-
-
-Completeness Gate
- ●​ Gate ID: TMP-05.PRIMARY.GOV
- ●​ Pass conditions:
-       ○​ required_fields_present == true
-       ○​ responsibilities_count >= 10
-       ○​ all_rows_have_A == true
-       ○​ coverage_checklist_complete == true
-       ○​ placeholder_resolution == true
-       ○​ no_unapproved_unknowns == true
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

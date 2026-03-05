@@ -1,99 +1,102 @@
-# DES-05 — States & Motion
+# DES-05 — UI State Model
 
 ## 1. Header Block
 
 | Field             | Value                                              |
 |-------------------|----------------------------------------------------|
 | Template ID       | DES-05                                             |
-| Template Type     | Experience Design                                  |
+| Template Type     | Design / UX                                          |
 | Template Version  | 1.0.0                                              |
-| Applies           | All projects with interactive UI states or animation |
+| Applies           | All projects requiring ui state model    |
 | Filled By         | Internal Agent                                     |
-| Consumes          | Canonical Spec, DES-01, DES-04                     |
-| Produces          | Filled States & Motion specification               |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled UI State Model Document                         |
 
 ## 2. Purpose
 
-Define the interactive states, transitions, and motion design for the product. This document covers loading states, error states, empty states, transition animations, micro-interactions, and feedback patterns. It ensures consistent, purposeful motion across all screens and components.
+Define the canonical UX behavior for common UI states so screens are consistent: loading,
+empty, error, success, disabled, offline, and permission denied.
 
 ## 3. Inputs Required
 
-- Canonical Spec (`{{spec.*}}`)
-- DES-01 Design Language
-- DES-04 Screen Layout Specs
+- ●
+- ●
+- ●
+- ●
+- DES-01: {{xref:DES-01}}
+- PRD-06: {{xref:PRD-06}} | OPTIONAL
+- CDX-04: {{xref:CDX-04}} | OPTIONAL
+- STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
 ## 4. Required Fields
 
-| Field Name           | Source       | UNKNOWN Allowed |
-|----------------------|--------------|-----------------|
-| State Definitions    | spec         | No              |
-| Transition Rules     | spec         | Yes             |
-| Motion Principles    | spec         | Yes             |
-| Feedback Patterns    | spec         | Yes             |
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| For each state:           | spec         | Yes             |
+| ○ state_id                | spec         | Yes             |
+| ○ definition              | spec         | Yes             |
+| ○ when it occurs (cond... | spec         | Yes             |
+| ○ user feedback (what ... | spec         | Yes             |
+| ○ retry/recovery actio... | spec         | Yes             |
+| ○ logging/telemetry ex... | spec         | Yes             |
+| ○ accessibility consid... | spec         | Yes             |
 
 ## 5. Optional Fields
 
-| Field Name           | Source       | Notes                          |
-|----------------------|--------------|--------------------------------|
-| Animation Timing     | spec         | Easing curves, durations       |
-| Reduced Motion Rules | standards    | Accessibility preference       |
-| Gesture Responses    | spec         | If touch/gesture input         |
+● Component-level state guidelines | OPTIONAL
+● Notes | OPTIONAL
 
 ## 6. Rules
 
-- **No duplicate truth**: State definitions must reference screen IDs from DES-04.
-- **No invention**: Motion patterns must derive from spec or design language principles.
-- **Accessibility**: Must support reduced motion preferences per standards.
-- **Performance**: Animations must not degrade perceived performance.
+- 
+- 
+- 
+- 
+- **Error states must define user action options (retry, back, support, etc.).**
+- **Offline behavior must be consistent with MOB-03 (if mobile/offline).**
+- **Permission denied must align to IAM/BRP entitlements.**
+- **Avoid duplicating copy; reference CDX-04 for exact messages if available.**
 
 ## 7. Output Format
 
 ### Required Headings (in order)
 
-1. `## State Catalog`
-   - Table: State Type | Description | Applies To | Trigger
-2. `## Transition Rules`
-   - Table: From State | To State | Animation | Duration
-3. `## Motion Principles`
-4. `## Feedback Patterns`
-5. `## Accessibility Motion Rules`
-6. `## Unknowns & Open Questions`
+1. `## 1) State Catalog (canonical)`
+2. `## state`
+3. `## _id`
+4. `## definition`
+5. `## when_occ`
+6. `## urs`
+7. `## user_feedb`
+8. `## ack`
+9. `## a11y_note`
+10. `## telemetry_n`
 
 ## 8. Cross-References
 
-- **Upstream**: DES-01 (Design Language), DES-04 (Screen Layout Specs)
-- **Downstream**: Component Packs, Implementation templates
-- **Entity Types Referenced**: features, workflows
+- Upstream: {{xref:DES-01}}, {{xref:PRD-06}} | OPTIONAL
+- Downstream: {{xref:DES-03}}, {{xref:FE-07}} | OPTIONAL, {{xref:CER-*}} | OPTIONAL,
+- **{{xref:MOB-03}} | OPTIONAL**
+- Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
 ## 9. Skill Level Requiredness Rules
 
 | Section                    | Beginner  | Intermediate | Expert   |
 |----------------------------|-----------|--------------|----------|
-| State Catalog              | Required  | Required     | Required |
-| Transition Rules           | Optional  | Required     | Required |
-| Motion Principles          | Optional  | Optional     | Required |
-| Feedback Patterns          | Optional  | Required     | Required |
-| Accessibility Motion Rules | Optional  | Required     | Required |
-| Unknowns                   | Optional  | Required     | Required |
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
 ## 10. Unknown Handling
 
-Unknowns must be written in the following format:
-
-```
-UNKNOWN-<NNN>: [Area] <summary>
-Impact: Low|Med|High
-Blocking: Yes|No
-Needs: <what input resolves it>
-Refs: <spec_id/entity_id/field_path>
-```
-
-Unknowns in this template must map back to Canonical Spec unknown objects (CAN-03).
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
 ## 11. Completeness Gate
 
-- [ ] All required fields are populated
-- [ ] All state references resolve to DES-04 screen entries
-- [ ] No contradictions between motion rules and accessibility standards
-- [ ] Unknowns are handled per UNKNOWN format (section 10)
-- [ ] Reduced motion preferences are addressed
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

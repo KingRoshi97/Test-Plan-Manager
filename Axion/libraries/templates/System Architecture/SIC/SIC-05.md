@@ -1,218 +1,106 @@
-SIC-05
-SIC-05 — Integration Failure Modes &
-Recovery (timeouts, retries, DLQ,
-fallbacks)
-Header Block
-   ●​ template_id: SIC-05​
+# SIC-05 — Integration Failure Modes &
 
-   ●​ title: Integration Failure Modes & Recovery (timeouts, retries, DLQ, fallbacks)​
+## 1. Header Block
 
-   ●​ type: system_interfaces_integration_contracts​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | SIC-05                                             |
+| Template Type     | Architecture / Interfaces                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring integration failure modes &    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Integration Failure Modes & Document                         |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/integrations/SIC-05_Integration_Failure_Recovery.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.INTEGRATION​
-
-   ●​ upstream_dependencies: ["SIC-01", "SIC-02", "SIC-03", "ERR-05", "RELIA-01"]​
-
-   ●​ inputs_required: ["SIC-01", "SIC-02", "SIC-03", "ERR-05", "RELIA-01", "OBS-04",
-      "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define the deterministic failure handling model for integrations: what can fail, how we detect it,
 how we retry, when we stop, what goes to DLQ/quarantine, and what user/system fallbacks
 apply. This ensures integrations fail safely and recover predictably.
 
-
-Inputs Required
-   ●​ SIC-01: {{xref:SIC-01}} | OPTIONAL​
-  ●​ SIC-02: {{xref:SIC-02}} | OPTIONAL​
-
-  ●​ SIC-03: {{xref:SIC-03}} | OPTIONAL​
-
-  ●​ ERR-05: {{xref:ERR-05}} | OPTIONAL​
-
-  ●​ RELIA-01: {{xref:RELIA-01}} | OPTIONAL​
-
-  ●​ OBS-04: {{xref:OBS-04}} | OPTIONAL​
-
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
-
-
-
-Required Fields
-  ●​ Failure mode catalog (minimum 10)​
-
-  ●​ For each failure mode:​
-
-         ○​ fail_id​
-
-         ○​ interface_id​
-
-         ○​ operation (endpoint/event/webhook/job)​
-
-         ○​ failure_type (timeout/5xx/4xx/schema/signature/rate_limit/network/partial)​
-
-         ○​ detection method (status/timeout/validation)​
-
-         ○​ classification (transient/permanent/unknown)​
-
-         ○​ retry policy (none/immediate/backoff/scheduled)​
-
-         ○​ max attempts​
-
-         ○​ idempotency requirement (yes/no + key)​
-
-         ○​ DLQ/quarantine rule​
-
-         ○​ fallback behavior (system + user-facing)​
-
-         ○​ alerting rule + severity​
-            ○​ observability fields required​
-
-            ○​ reason_code mapping (if exposed to client)​
-
-
-
-Optional Fields
-  ●​ Vendor escalation runbook pointer | OPTIONAL​
-
-  ●​ Manual backfill/reconciliation steps | OPTIONAL​
-
-  ●​ Notes | OPTIONAL​
-
-
-
-Rules
-  ●​ Transient failures must use bounded backoff; never infinite retry.​
-
-  ●​ Permanent failures must not retry; must quarantine or reject deterministically.​
-
-  ●​ Any retryable operation must be idempotent (define key).​
-
-  ●​ DLQ entries must be re-drivable with safety checks.​
-
-  ●​ User-facing fallbacks must align with DES-07/CDX-04 when applicable.​
-
-
-
-Output Format
-1) Failure Modes Catalog (canonical)
-f interf oper fail          dete     cla   retry   ma    idem       dl   fall   aler   ob    reas      not
-a ace_i atio ure            ctio     ss    _poli   x_    pote      q_    bac    ting   s_    on_c      es
-i   d     n   _ty            n              cy     att    ncy      rul    k            fie   ode
-l             pe                                   em               e                  ld
-_                                                  pts                                  s
-i
-d
-
-f {{fails   {{fail   {{fa   {{fail   {{fa {{fails {{fa   {{fails   {{f {{fail   {{fail {{f   {{fails   {{fa
-_ [0].int   s[0].    ils[   s[0].    ils[ [0].ret ils[   [0].id    ail s[0].    s[0]. ail    [0].re    ils[
-  erfac     oper     0].t   dete     0].c         0].    empo      s[0 fallb    alert s[0    ason      0].n
-0 e_id}     ation yp           ction    las    ry_po      ma     tency     ].dl ack}       ing}      ].o _cod        ote
-1 }         }}    e}}          }}       s}}    licy}}     x}}    }}        q}} }           }         bs} e}}         s}}
-                                                                                                     }
-
-f {{fails   {{fail     {{fa    {{fail   {{fa   {{fails    {{fa   {{fails   {{f    {{fail   {{fail    {{f   {{fails   {{fa
-_ [1].int   s[1].      ils[    s[1].    ils[   [1].ret    ils[   [1].id    ail    s[1].    s[1].     ail   [1].re    ils[
-0 erfac     oper       1].t    dete     1].c   ry_po      1].    empo      s[1    fallb    alert     s[1   ason      1].n
-2 e_id}     ation      yp      ction    las    licy}}     ma     tency     ].dl   ack}     ing}      ].o   _cod      ote
-  }         }}         e}}     }}       s}}               x}}    }}        q}}    }        }         bs}   e}}       s}}
-                                                                                                     }
-
-
-2) Retry Policy Defaults (required)
-
-   ●​ Backoff strategy: {{retry.defaults.backoff}}​
-
-   ●​ Jitter rule: {{retry.defaults.jitter}} | OPTIONAL​
-
-   ●​ Max attempts default: {{retry.defaults.max_attempts}}​
-
-   ●​ When to switch to DLQ: {{retry.defaults.dlq_threshold}}​
-
-
-
-3) DLQ / Quarantine Rules (required)
-
-   ●​ DLQ entry must include: {{dlq.required_fields}}​
-
-   ●​ Re-drive conditions: {{dlq.redrive_conditions}}​
-
-   ●​ Re-drive safety checks: {{dlq.safety_checks}}​
-
-   ●​ Data retention window: {{dlq.retention}} | OPTIONAL​
-
-
-
-4) Alerts & SLO Impact (required)
-  alert_type                  trigger                   severity           response_sla                    owner
-
-integration_d        {{alerts.down.trigg       {{alerts.down.sever         {{alerts.down.sl {{alerts.down.own
-own                  er}}                      ity}}                       a}}              er}}
-
-dlq_growth           {{alerts.dlq.trigger} {{alerts.dlq.severity           {{alerts.dlq.sla}        {{alerts.dlq.owner
-                     }                     }}                              }                        }}
-
-
-5) User-facing Fallback Guidance (required if user-visible)
-  ●​ Copy pointer: {{xref:CDX-04}} | OPTIONAL​
-
-  ●​ UX surface pointer: {{xref:DES-07}} | OPTIONAL​
-
-
-
-Cross-References
-  ●​ Upstream: {{xref:SIC-02}} | OPTIONAL, {{xref:SIC-03}} | OPTIONAL, {{xref:ERR-05}} |
-     OPTIONAL​
-
-  ●​ Downstream: {{xref:OPS-06}} | OPTIONAL, {{xref:IRP-*}} | OPTIONAL, {{xref:QA-04}} |
-     OPTIONAL​
-
-  ●​ Standards: {{standards.rules[STD-RELIABILITY]}} | OPTIONAL,
-     {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
-
-Skill Level Requiredness Rules
-  ●​ beginner: Required. Failure catalog + retry defaults + DLQ basics.​
-
-  ●​ intermediate: Required. Add idempotency keys and alerting rules.​
-
-  ●​ advanced: Required. Add re-drive safety checks and SLO impact mapping.​
-
-
-
-Unknown Handling
-  ●​ UNKNOWN_ALLOWED: vendor_escalation_runbook,
-     manual_reconciliation, notes, retention_window​
-
-  ●​ If any retryable operation lacks idempotency definition → block Completeness Gate.​
-
-
-
-Completeness Gate
-  ●​ Gate ID: TMP-05.PRIMARY.INTEGRATION​
-
-  ●​ Pass conditions:​
-○​ required_fields_present == true​
-
-○​ failure_modes_count >= 10​
-
-○​ retry_defaults_present == true​
-
-○​ dlq_rules_present == true​
-
-○​ alerting_present == true​
-
-○​ retryables_have_idempotency == true​
-
-○​ placeholder_resolution == true​
-
-○​ no_unapproved_unknowns == true​
+## 3. Inputs Required
+
+- ● SIC-01: {{xref:SIC-01}} | OPTIONAL
+- ● SIC-02: {{xref:SIC-02}} | OPTIONAL
+- ● SIC-03: {{xref:SIC-03}} | OPTIONAL
+- ● ERR-05: {{xref:ERR-05}} | OPTIONAL
+- ● RELIA-01: {{xref:RELIA-01}} | OPTIONAL
+- ● OBS-04: {{xref:OBS-04}} | OPTIONAL
+- ● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
+
+## 4. Required Fields
+
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Failure mode catalog (... | spec         | Yes             |
+| For each failure mode:    | spec         | Yes             |
+| ○ fail_id                 | spec         | Yes             |
+| ○ interface_id            | spec         | Yes             |
+| ○ operation (endpoint/... | spec         | Yes             |
+| ○ detection method (st... | spec         | Yes             |
+| ○ classification (tran... | spec         | Yes             |
+| ○ retry policy (none/i... | spec         | Yes             |
+| ○ max attempts            | spec         | Yes             |
+| ○ idempotency requirem... | spec         | Yes             |
+| ○ DLQ/quarantine rule     | spec         | Yes             |
+| ○ fallback behavior (s... | spec         | Yes             |
+
+## 5. Optional Fields
+
+● Vendor escalation runbook pointer | OPTIONAL
+● Manual backfill/reconciliation steps | OPTIONAL
+● Notes | OPTIONAL
+
+## 6. Rules
+
+- Transient failures must use bounded backoff; never infinite retry.
+- Permanent failures must not retry; must quarantine or reject deterministically.
+- Any retryable operation must be idempotent (define key).
+- DLQ entries must be re-drivable with safety checks.
+- User-facing fallbacks must align with DES-07/CDX-04 when applicable.
+
+## 7. Output Format
+
+### Required Headings (in order)
+
+1. `## 1) Failure Modes Catalog (canonical)`
+2. `## f interf oper fail`
+3. `## a ace_i atio ure`
+4. `## _ty`
+5. `## dete`
+6. `## ctio`
+7. `## cla`
+8. `## att`
+9. `## pts`
+10. `## idem`
+
+## 8. Cross-References
+
+- Upstream: {{xref:SIC-02}} | OPTIONAL, {{xref:SIC-03}} | OPTIONAL, {{xref:ERR-05}} |
+- OPTIONAL
+- Downstream: {{xref:OPS-06}} | OPTIONAL, {{xref:IRP-*}} | OPTIONAL, {{xref:QA-04}} |
+- OPTIONAL
+- Standards: {{standards.rules[STD-RELIABILITY]}} | OPTIONAL,
+- {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+
+## 9. Skill Level Requiredness Rules
+
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
+
+## 10. Unknown Handling
+
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
+
+## 11. Completeness Gate
+
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

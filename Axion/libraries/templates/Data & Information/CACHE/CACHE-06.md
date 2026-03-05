@@ -1,188 +1,105 @@
-CACHE-06
-CACHE-06 — Cache Failure Behavior
-(fallbacks, degradation)
-Header Block
-   ●​ template_id: CACHE-06​
+# CACHE-06 — Cache Failure Behavior
 
-   ●​ title: Cache Failure Behavior (fallbacks, degradation)​
+## 1. Header Block
 
-   ●​ type: caching_data_access_patterns​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | CACHE-06                                             |
+| Template Type     | Data / Caching                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring cache failure behavior    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Cache Failure Behavior Document                         |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/caching/CACHE-06_Cache_Failure_Behavior.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.CACHE​
-
-   ●​ upstream_dependencies: ["CACHE-01", "CACHE-02", "CACHE-03", "RELIA-01"]​
-
-   ●​ inputs_required: ["CACHE-01", "CACHE-02", "CACHE-03", "RELIA-01", "ERR-01",
-      "DES-07", "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define what happens when caches fail or misbehave: cache outages, high miss rates, stale
 data, stampedes, and partial invalidation failures. This specifies deterministic fallback paths and
 UX degradation behavior.
 
-
-Inputs Required
-   ●​ CACHE-01: {{xref:CACHE-01}} | OPTIONAL​
-
-   ●​ CACHE-02: {{xref:CACHE-02}} | OPTIONAL​
-
-   ●​ CACHE-03: {{xref:CACHE-03}} | OPTIONAL​
-  ●​ RELIA-01: {{xref:RELIA-01}} | OPTIONAL​
-
-  ●​ ERR-01: {{xref:ERR-01}} | OPTIONAL​
-
-  ●​ DES-07: {{xref:DES-07}} | OPTIONAL​
-
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
-
-
-
-Required Fields
-  ●​ Failure mode catalog (minimum 10)​
-
-  ●​ For each failure mode:​
-
-         ○​ fail_id​
-
-         ○​ cache layer affected (client/server/edge)​
-
-         ○​ detection signal (timeout, error rate, miss spike)​
-
-         ○​ expected behavior:​
-
-                 ■​ fail open vs fail closed​
-
-                 ■​ fallback source (DB/read model/stale copy)​
-
-                 ■​ max staleness allowed​
-
-         ○​ user-visible behavior (loading, banner, stale badge)​
-
-         ○​ retry/backoff rules (avoid stampedes)​
-
-         ○​ circuit breaker rule (when to stop using cache)​
-
-         ○​ observability and alerting (what triggers paging)​
-
-  ●​ Stampede mitigation policy​
-
-  ●​ Verification checklist​
-
-
-
-Optional Fields
-   ●​ Emergency disable switch policy | OPTIONAL​
-
-   ●​ Notes | OPTIONAL​
-
-
-
-Rules
-   ●​ Failure behaviors must align with CACHE-03 consistency requirements.​
-
-   ●​ Avoid cascading failures: do not hammer DB when cache is down without throttling.​
-
-   ●​ User-visible behavior must be defined for any user-facing impact.​
-
-   ●​ “Fail open” must not leak data; enforce auth in fallback path.​
-
-
-
-Output Format
-1) Failure Modes (canonical)
- fail_   layer   detect     behavi      fallbac     max_st      user     retry    circuit    alerti    notes
-  id              ion         or        k_sour      alenes      _beh     _bac      _rule      ng
-                                          ce           s        avio      koff
-                                                                  r
-
-cach {{fails[    {{fails[   {{fails[0   {{fails[0   {{fails[0   {{fail   {{fails[ {{fails[   {{fails   {{fails[
-e_fa 0].lay      0].det     ].behav     ].fallba    ].stalen    s[0].    0].retr 0].circ     [0].al    0].not
-il_01 er}}       ect}}      ior}}       ck}}        ess}}       ux}}     y}}      uit}}      ert}}     es}}
-
-cach {{fails[    {{fails[   {{fails[1   {{fails[1   {{fails[1   {{fail   {{fails[ {{fails[   {{fails   {{fails[
-e_fa 1].lay      1].det     ].behav     ].fallba    ].stalen    s[1].    1].retr 1].circ     [1].al    1].not
-il_02 er}}       ect}}      ior}}       ck}}        ess}}       ux}}     y}}      uit}}      ert}}     es}}
-
-
-2) Stampede Mitigation (required)
-
-   ●​ Coalescing strategy: {{stampede.coalescing}}​
-
-   ●​ Jitter rules: {{stampede.jitter}} | OPTIONAL​
-
-   ●​ Max concurrent refreshes: {{stampede.max_refresh}} | OPTIONAL​
-
-
-
-3) Verification Checklist (required)
-  ●​ {{verify[0]}}​
-
-  ●​ {{verify[1]}}​
-
-  ●​ {{verify[2]}} | OPTIONAL​
-
-
-
-Cross-References
-  ●​ Upstream: {{xref:CACHE-03}} | OPTIONAL, {{xref:RELIA-01}} | OPTIONAL,
-     {{xref:DES-07}} | OPTIONAL​
-
-  ●​ Downstream: {{xref:ALRT-}} | OPTIONAL, {{xref:IRP-}} | OPTIONAL, {{xref:PERF-03}} |
-     OPTIONAL​
-
-  ●​ Standards: {{standards.rules[STD-RELIABILITY]}} | OPTIONAL,
-     {{standards.rules[STD-SECURITY]}} | OPTIONAL,
-     {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
-
-Skill Level Requiredness Rules
-  ●​ beginner: Required. Basic failure modes + fallback paths.​
-
-  ●​ intermediate: Required. Add detection signals, max staleness, and circuit rules.​
-
-  ●​ advanced: Required. Add stampede mitigation and alerting thresholds rigor.​
-
-
-
-Unknown Handling
-  ●​ UNKNOWN_ALLOWED: emergency_disable_switch, notes, jitter_rules,
-      max_refresh​
-
-  ●​ If any failure mode lacks fallback_source or user_behavior (when user-facing) → block
-     Completeness Gate.​
-
-
-
-Completeness Gate
-●​ Gate ID: TMP-05.PRIMARY.CACHE​
-
-●​ Pass conditions:​
-
-       ○​ required_fields_present == true​
-
-       ○​ failure_modes_count >= 10​
-
-       ○​ fallback_paths_present == true​
-
-       ○​ stampede_policy_present == true​
-
-       ○​ placeholder_resolution == true​
-
-       ○​ no_unapproved_unknowns == true
-Reporting & Aggregations (RPT)
-Reporting & Aggregations (RPT)​
-RPT-01 Reporting Surfaces Inventory (dashboards, exports, admin)​
-RPT-02 Metrics Definitions (canonical KPI semantics)​
-RPT-03 Aggregation & Rollup Rules (windows, group-bys)​
-RPT-04 Snapshotting Strategy (daily/weekly, recompute rules)​
-RPT-05 Data Access & Permissions for Reports​
-RPT-06 Reporting Data Quality Rules (reconciliation, correctness)
+## 3. Inputs Required
+
+- ● CACHE-01: {{xref:CACHE-01}} | OPTIONAL
+- ● CACHE-02: {{xref:CACHE-02}} | OPTIONAL
+- ● CACHE-03: {{xref:CACHE-03}} | OPTIONAL
+- ● RELIA-01: {{xref:RELIA-01}} | OPTIONAL
+- ● ERR-01: {{xref:ERR-01}} | OPTIONAL
+- ● DES-07: {{xref:DES-07}} | OPTIONAL
+- ● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
+
+## 4. Required Fields
+
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Failure mode catalog (... | spec         | Yes             |
+| For each failure mode:    | spec         | Yes             |
+| ○ fail_id                 | spec         | Yes             |
+| ○ cache layer affected... | spec         | Yes             |
+| ○ detection signal (ti... | spec         | Yes             |
+| ○ expected behavior:      | spec         | Yes             |
+| ■ fail open vs fail cl... | spec         | Yes             |
+| ■ fallback source (DB/... | spec         | Yes             |
+| ■ max staleness allowed   | spec         | Yes             |
+| ○ user-visible behavio... | spec         | Yes             |
+| ○ retry/backoff rules ... | spec         | Yes             |
+| ○ circuit breaker rule... | spec         | Yes             |
+
+## 5. Optional Fields
+
+● Emergency disable switch policy | OPTIONAL
+● Notes | OPTIONAL
+
+## 6. Rules
+
+- Failure behaviors must align with CACHE-03 consistency requirements.
+- Avoid cascading failures: do not hammer DB when cache is down without throttling.
+- User-visible behavior must be defined for any user-facing impact.
+- “Fail open” must not leak data; enforce auth in fallback path.
+
+## 7. Output Format
+
+### Required Headings (in order)
+
+1. `## 1) Failure Modes (canonical)`
+2. `## fail_`
+3. `## layer`
+4. `## detect`
+5. `## ion`
+6. `## behavi`
+7. `## fallbac`
+8. `## k_sour`
+9. `## max_st`
+10. `## alenes`
+
+## 8. Cross-References
+
+- Upstream: {{xref:CACHE-03}} | OPTIONAL, {{xref:RELIA-01}} | OPTIONAL,
+- **{{xref:DES-07}} | OPTIONAL**
+- Downstream: {{xref:ALRT-}} | OPTIONAL, {{xref:IRP-}} | OPTIONAL, {{xref:PERF-03}} |
+- OPTIONAL
+- Standards: {{standards.rules[STD-RELIABILITY]}} | OPTIONAL,
+- {{standards.rules[STD-SECURITY]}} | OPTIONAL,
+- {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+
+## 9. Skill Level Requiredness Rules
+
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
+
+## 10. Unknown Handling
+
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
+
+## 11. Completeness Gate
+
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

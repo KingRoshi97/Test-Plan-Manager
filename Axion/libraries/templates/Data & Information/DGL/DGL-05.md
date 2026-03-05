@@ -1,161 +1,105 @@
-DGL-05
-DGL-06 — Data Catalog / Dictionary
-(datasets, meaning, sensitivity)
-Header Block
-   ●​ template_id: DGL-06​
-
-   ●​ title: Data Catalog / Dictionary (datasets, meaning, sensitivity)​
-
-   ●​ type: data_governance_lineage​
-
-   ●​ template_version: 1.0.0​
-
-   ●​ output_path: 10_app/data_governance/DGL-06_Data_Catalog_Dictionary.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.DGL​
-
-   ●​ upstream_dependencies: ["DATA-01", "DMG-01", "DGP-01"]​
-
-   ●​ inputs_required: ["DATA-01", "DMG-01", "DGP-01", "DGL-01", "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
-Create a human- and machine-friendly dictionary of datasets/entities: what they mean, what
-they contain, how sensitive they are, who owns them, and what their retention and access rules
-are. This is the “catalog layer” for data governance.
-
-
-Inputs Required
-   ●​ DATA-01: {{xref:DATA-01}} | OPTIONAL​
-
-   ●​ DMG-01: {{xref:DMG-01}} | OPTIONAL​
-
-   ●​ DGP-01: {{xref:DGP-01}} | OPTIONAL​
-  ●​ DGL-01: {{xref:DGL-01}} | OPTIONAL​
-
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
-
-
-
-Required Fields
-  ●​ Catalog entries (minimum: all DATA-01 entities + key derived/read models + reporting
-     datasets)​
-
-  ●​ For each entry:​
-
-         ○​ id (entity_id/dataset_id/read_model_id)​
-
-         ○​ name​
-
-         ○​ description (plain language)​
-
-         ○​ owner (DGL-01 pointer)​
-
-         ○​ sensitivity class (PII level)​
-
-         ○​ key fields (top 10)​
-
-         ○​ retention pointer (DLR-02)​
-
-         ○​ access pointer (DGL-04)​
-
-         ○​ lineage pointer (DGL-02) | OPTIONAL​
-
-         ○​ typical use cases (API/search/reporting)​
-
-         ○​ common pitfalls (gotchas)​
-
-  ●​ Verification checklist​
-
-
-
-Optional Fields
-  ●​ Data quality score pointer (DQV) | OPTIONAL​
-
-  ●​ Notes | OPTIONAL​
-Rules
-   ●​ Must align terms with DMG glossary.​
-
-   ●​ Sensitivity must be explicit and consistent with DGP classification.​
-
-   ●​ Catalog must include derived/read models and reporting datasets to prevent “shadow
-      data.”​
-
-   ●​ Catalog entries must remain stable and versioned.​
-
-
-
-Output Format
-Data Catalog Entries (canonical)
- id     nam     desc owne        sen     key_fi    retent    acce     linea     use_c     pitfal     note
-         e      ripti  r         sitiv    elds     ion_r     ss_r     ge_re     ases        ls        s
-                 on               ity                ef       ef         f
-
-{{ca    {{cat   {{cat   {{cata   {{cat   {{catal   {{catal   {{cata   {{cata    {{catal   {{cata     {{cat
-talo    alog[   alog[   log[0]   alog[   og[0].k   og[0].r   log[0]   log[0].   og[0].u   log[0]     alog[
-g[0]    0].na   0].de   .own     0].se   ey_fiel   etenti    .acce    lineag    se_ca     .pitfall   0].no
-.id}}   me}}    sc}}    er}}     ns}}    ds}}      on}}      ss}}     e}}       ses}}     s}}        tes}}
-
-{{ca    {{cat   {{cat   {{cata   {{cat   {{catal   {{catal   {{cata   {{cata    {{catal   {{cata     {{cat
-talo    alog[   alog[   log[1]   alog[   og[1].k   og[1].r   log[1]   log[1].   og[1].u   log[1]     alog[
-g[1]    1].na   1].de   .own     1].se   ey_fiel   etenti    .acce    lineag    se_ca     .pitfall   1].no
-.id}}   me}}    sc}}    er}}     ns}}    ds}}      on}}      ss}}     e}}       ses}}     s}}        tes}}
-
-
-Verification Checklist (required)
-
-   ●​ {{verify[0]}}​
-
-   ●​ {{verify[1]}}​
-
-   ●​ {{verify[2]}} | OPTIONAL​
-
-
-
-Cross-References
-  ●​ Upstream: {{xref:DMG-01}} | OPTIONAL, {{xref:DGL-01}} | OPTIONAL, {{xref:DGP-01}} |
-     OPTIONAL​
-
-  ●​ Downstream: {{xref:DQV-02}} | OPTIONAL, {{xref:RPT-01}} | OPTIONAL,
-     {{xref:SRCH-01}} | OPTIONAL​
-
-  ●​ Standards: {{standards.rules[STD-PRIVACY]}} | OPTIONAL,
-     {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
-
-Skill Level Requiredness Rules
-  ●​ beginner: Required. Entries with name/description/sensitivity/owner.​
-
-  ●​ intermediate: Required. Add retention/access pointers and key fields.​
-
-  ●​ advanced: Required. Add lineage pointers and pitfalls/use-cases rigor.​
-
-
-
-Unknown Handling
-  ●​ UNKNOWN_ALLOWED: dq_score_pointer, notes, lineage_ref (if no lineage
-     tracking yet)​
-
-  ●​ If any entity lacks sensitivity classification → block Completeness Gate.​
-
-
-
-Completeness Gate
-  ●​ Gate ID: TMP-05.PRIMARY.DGL​
-
-  ●​ Pass conditions:​
-
-         ○​ required_fields_present == true​
-
-         ○​ catalog_complete_for_entities == true​
-
-         ○​ sensitivity_present == true​
-
-         ○​ retention_and_access_refs_present == true​
-○​ placeholder_resolution == true​
-
-○​ no_unapproved_unknowns == true
+# DGL-05 — Auditability Requirements
+
+## 1. Header Block
+
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | DGL-05                                             |
+| Template Type     | Data / Governance                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring auditability requirements    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Auditability Requirements Document                         |
+
+## 2. Purpose
+
+Define what data actions must be traceable end-to-end: create/update/delete, access, exports,
+transformations, and administrative repairs. This consolidates audit requirements into a
+concrete checklist and event catalog.
+
+## 3. Inputs Required
+
+- ● PMAD-06: {{xref:PMAD-06}} | OPTIONAL
+- ● AUDIT-01: {{xref:AUDIT-01}} | OPTIONAL
+- ● DGL-04: {{xref:DGL-04}} | OPTIONAL
+- ● DGP-01: {{xref:DGP-01}} | OPTIONAL
+- ● OBS-01: {{xref:OBS-01}} | OPTIONAL
+- ● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
+
+## 4. Required Fields
+
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Traceability event cat... | spec         | Yes             |
+| For each event:           | spec         | Yes             |
+| ○ event_id                | spec         | Yes             |
+| ○ entity_id/dataset_id    | spec         | Yes             |
+| ○ action                  | spec         | Yes             |
+| ○ who (actor types: us... | spec         | Yes             |
+| ○ redaction rules         | spec         | Yes             |
+| ○ retention window for... | spec         | Yes             |
+| ○ access controls for ... | spec         | Yes             |
+| Required trace linkage:   | spec         | Yes             |
+| ○ correlation_id / tra... | spec         | Yes             |
+| Verification checklist    | spec         | Yes             |
+
+## 5. Optional Fields
+
+● Evidence pack requirements for compliance audits | OPTIONAL
+
+● Notes | OPTIONAL
+
+## 6. Rules
+
+- Any export and any privileged data repair must be auditable.
+- Before/after must be stored in a safe form (redacted) or as pointers to snapshots.
+- Audit logs must be tamper-evident or protected (system pointer).
+- Viewing audit logs is itself an auditable action.
+
+## 7. Output Format
+
+### Required Headings (in order)
+
+1. `## 1) Audit Event Catalog (canonical)`
+2. `## categor`
+3. `## entity`
+4. `## _or_d`
+5. `## ataset`
+6. `## action`
+7. `## actor_`
+8. `## types`
+9. `## requir`
+10. `## ed_fiel`
+
+## 8. Cross-References
+
+- Upstream: {{xref:PMAD-06}} | OPTIONAL, {{xref:AUDIT-01}} | OPTIONAL,
+- **{{xref:DGL-04}} | OPTIONAL**
+- Downstream: {{xref:COMP-02}} | OPTIONAL, {{xref:GOVOPS-05}} | OPTIONAL,
+- **{{xref:ADMIN-03}} | OPTIONAL**
+- Standards: {{standards.rules[STD-PRIVACY]}} | OPTIONAL,
+- {{standards.rules[STD-SECURITY]}} | OPTIONAL,
+- {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+
+## 9. Skill Level Requiredness Rules
+
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
+
+## 10. Unknown Handling
+
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
+
+## 11. Completeness Gate
+
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

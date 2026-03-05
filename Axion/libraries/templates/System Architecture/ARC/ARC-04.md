@@ -1,103 +1,105 @@
-# ARC-04 — Service & Module Contract
+# ARC-04 — Authentication Architecture
 
 ## 1. Header Block
 
 | Field             | Value                                              |
 |-------------------|----------------------------------------------------|
 | Template ID       | ARC-04                                             |
-| Template Type     | System Architecture                                |
+| Template Type     | Architecture / System                                          |
 | Template Version  | 1.0.0                                              |
-| Applies           | All projects with service or module boundaries      |
+| Applies           | All projects requiring authentication architecture    |
 | Filled By         | Internal Agent                                     |
-| Consumes          | Canonical Spec, ARC-01, ARC-02                     |
-| Produces          | Filled Service & Module Contract document          |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Authentication Architecture Document                         |
 
 ## 2. Purpose
 
-Define the contract for each service or module in the system, including its public API, dependencies, data ownership, error handling, and operational requirements. Each contract maps to a component in ARC-01 and features in PRD-03.
+Define how authentication works across the system: identity sources, session/token strategy,
+SSO boundaries (if any), and the trust model for establishing and maintaining authenticated
+user context.
 
 ## 3. Inputs Required
 
-- Canonical Spec (`{{spec.*}}`)
-- ARC-01 System Architecture Overview
-- ARC-02 Data Flow Diagrams
-- PRD-03 Feature & Capability List
+- ● PRD-03: {{xref:PRD-03}} | OPTIONAL
+- ● IAM-01: {{xref:IAM-01}} | OPTIONAL
+- ● IAM-02: {{xref:IAM-02}} | OPTIONAL
+- ● IAM-04: {{xref:IAM-04}} | OPTIONAL
+- ● PMAD-01: {{xref:PMAD-01}} | OPTIONAL
+- ● DGP-01: {{xref:DGP-01}} | OPTIONAL
+- ● SEC-02: {{xref:SEC-02}} | OPTIONAL
+- ● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
 ## 4. Required Fields
 
-| Field Name           | Source       | UNKNOWN Allowed |
-|----------------------|--------------|-----------------|
-| Service/Module ID    | spec         | No              |
-| Responsibility       | spec         | No              |
-| Public API Surface   | spec         | No              |
-| Dependencies         | spec         | Yes             |
-| Data Ownership       | spec         | Yes             |
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Auth strategy (session... | spec         | Yes             |
+| Token/session lifecycle:  | spec         | Yes             |
+| ○ issuance rules          | spec         | Yes             |
+| ○ rotation rules          | spec         | Yes             |
+| ○ expiry rules            | spec         | Yes             |
+| ○ revocation rules        | spec         | Yes             |
+| ○ refresh strategy        | spec         | Yes             |
+| Auth flows (high level):  | spec         | Yes             |
+| ○ signup                  | spec         | Yes             |
+| ○ login                   | spec         | Yes             |
+| ○ recovery                | spec         | Yes             |
+| ○ logout                  | spec         | Yes             |
 
 ## 5. Optional Fields
 
-| Field Name           | Source       | Notes                          |
-|----------------------|--------------|--------------------------------|
-| Error Codes          | spec         | Service-specific error codes   |
-| SLA/SLO Targets      | standards    | If defined in standards        |
-| Circuit Breaker Rules| spec         | If resilience patterns needed  |
+● MFA strategy | OPTIONAL
+● Device/session limits | OPTIONAL
+● Notes | OPTIONAL
 
 ## 6. Rules
 
-- **No duplicate truth**: Service IDs must reference ARC-01 components.
-- **No invention**: API surfaces must derive from canonical spec.
-- **Contract stability**: Public APIs must be versioned.
-- **Dependency clarity**: All dependencies must be explicit and unidirectional where possible.
+- Auth must separate identity (who you are) from authorization (what you can do).
+- Any token storage method must respect privacy/security policy; no sensitive tokens in
+- **unsafe storage.**
+- Rotation/revocation must be deterministic; “manual revocation” without strategy is not
+- **allowed.**
+- If SSO exists, define attribute mapping and account linking behavior.
 
 ## 7. Output Format
 
 ### Required Headings (in order)
 
-1. `## Service/Module Index`
-   - Table: Service ID | Name | Responsibility | Feature Refs
-2. `## Service Contracts`
-   - Per service subsection:
-     - `### <Service ID>: <Name>`
-     - Responsibility
-     - Public API Surface
-     - Dependencies
-     - Data Ownership
-     - Error Handling
-3. `## Dependency Graph`
-4. `## Unknowns & Open Questions`
+1. `## 1) Strategy Overview (required)`
+2. `## 2) Token/Session Lifecycle (required)`
+3. `## artifa`
+4. `## issued_wh`
+5. `## stored_whe`
+6. `## rotated_wh`
+7. `## expires_in`
+8. `## acces`
+9. `## s_tok`
+10. `## ccess.issue`
 
 ## 8. Cross-References
 
-- **Upstream**: ARC-01 (Architecture Overview), ARC-02 (Data Flow), PRD-03 (Feature List)
-- **Downstream**: API templates, Implementation templates, Feature Packs
-- **Entity Types Referenced**: features, data entities, workflows
+- Upstream: {{xref:IAM-02}} | OPTIONAL, {{xref:IAM-04}} | OPTIONAL, {{xref:PMAD-01}} |
+- OPTIONAL
+- Downstream: {{xref:API-02}} | OPTIONAL, {{xre
 
 ## 9. Skill Level Requiredness Rules
 
-| Section               | Beginner  | Intermediate | Expert   |
-|-----------------------|-----------|--------------|----------|
-| Service/Module Index  | Required  | Required     | Required |
-| Service Contracts     | Optional  | Required     | Required |
-| Dependency Graph      | Optional  | Optional     | Required |
-| Unknowns              | Optional  | Required     | Required |
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
 ## 10. Unknown Handling
 
-Unknowns must be written in the following format:
-
-```
-UNKNOWN-<NNN>: [Area] <summary>
-Impact: Low|Med|High
-Blocking: Yes|No
-Needs: <what input resolves it>
-Refs: <spec_id/entity_id/field_path>
-```
-
-Unknowns in this template must map back to Canonical Spec unknown objects (CAN-03).
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
 ## 11. Completeness Gate
 
-- [ ] All required fields are populated
-- [ ] All service IDs resolve to ARC-01 components
-- [ ] No contradictions between service contracts and data flows
-- [ ] Unknowns are handled per UNKNOWN format (section 10)
-- [ ] Every service traces to at least one feature
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

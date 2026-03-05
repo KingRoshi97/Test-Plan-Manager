@@ -1,115 +1,112 @@
-RSC-01
-RSC-01 — Release Roadmap (milestones)
-Header Block
-   ●​   template_id: RSC-01
-   ●​   title: Release Roadmap (milestones)
-   ●​   type: roadmap_scope
-   ●​   template_version: 1.0.0
-   ●​   output_path: 10_app/roadmap/RSC-01_Release_Roadmap.md
-   ●​   compliance_gate_id: TMP-05.PRIMARY.ROADMAP
-   ●​   upstream_dependencies: ["PRD-02", "PRD-04", "PRD-06"]
-   ●​   inputs_required: ["PRD-02", "PRD-04", "PRD-06", "STK-04", "STANDARDS_INDEX"]
-   ●​   required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}
+# RSC-01 — Release Roadmap (milestones)
 
+## 1. Header Block
 
-Purpose
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | RSC-01                                             |
+| Template Type     | Product / Roadmap                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring release roadmap (milestones)    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Release Roadmap (milestones) Document                         |
+
+## 2. Purpose
+
 Define the canonical release roadmap: milestones, scope slices, and target dates (or date
 ranges). This is not a task plan; it is a product-level sequencing map that aligns stakeholders
 and gates.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​   PRD-02: {{xref:PRD-02}} | OPTIONAL
-   ●​   PRD-04: {{xref:PRD-04}}
-   ●​   PRD-06: {{xref:PRD-06}} | OPTIONAL
-   ●​   STK-04: {{xref:STK-04}} | OPTIONAL
-   ●​   STANDARDS_INDEX: {{standards.index}} | OPTIONAL
-   ●​   Existing roadmap notes: {{inputs.roadmap_notes}} | OPTIONAL
+- ●
+- ●
+- ●
+- ●
+- ●
+- ●
+- PRD-02: {{xref:PRD-02}} | OPTIONAL
+- PRD-04: {{xref:PRD-04}}
+- PRD-06: {{xref:PRD-06}} | OPTIONAL
+- STK-04: {{xref:STK-04}} | OPTIONAL
+- STANDARDS_INDEX: {{standards.index}} | OPTIONAL
+- Existing roadmap notes: {{inputs.roadmap_notes}} | OPTIONAL
 
+## 4. Required Fields
 
-Required Fields
-   ●​ Roadmap horizon (e.g., MVP, next 90 days, 2–4 releases)
-   ●​ Milestones list (minimum 3)
-   ●​ For each milestone:
-          ○​ milestone_id
-          ○​ name
-          ○​ objective
-          ○​ target_date (or UNKNOWN)
-          ○​ included feature_ids (or “TBD set” with rules)
-         ○​ exit criteria (high level)
-         ○​ dependencies (internal/external)
-         ○​ stakeholders/approvers
-   ●​ Risks to roadmap (top 3–10)
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Roadmap horizon (e.g.,... | spec         | Yes             |
+| Milestones list (minim... | spec         | Yes             |
+| For each milestone:       | spec         | Yes             |
+| ○ milestone_id            | spec         | Yes             |
+| ○ name                    | spec         | Yes             |
+| ○ objective               | spec         | Yes             |
+| ○ target_date (or UNKN... | spec         | Yes             |
+| ○ included feature_ids... | spec         | Yes             |
+| ○ exit criteria (high ... | spec         | Yes             |
+| ○ dependencies (intern... | spec         | Yes             |
+| ○ stakeholders/approvers  | spec         | Yes             |
+| Risks to roadmap (top ... | spec         | Yes             |
 
+## 5. Optional Fields
 
-Optional Fields
-   ●​ Confidence level per milestone | OPTIONAL
-   ●​ Beta/RC phases | OPTIONAL
-   ●​ Notes | OPTIONAL
+● Confidence level per milestone | OPTIONAL
+● Beta/RC phases | OPTIONAL
+● Notes | OPTIONAL
 
+## 6. Rules
 
-Rules
-   ●​   Must align to: {{standards.rules[STD-CANONICAL-TRUTH]}} | OPTIONAL
-   ●​   Milestones must reference existing feature IDs from PRD-04 where possible.
-   ●​   Exit criteria must be measurable or tied to gates (QA/REL).
-   ●​   Do not include implementation tasks; that belongs in IMP.
+- 
+- 
+- 
+- 
+- Must align to: {{standards.rules[STD-CANONICAL-TRUTH]}} | OPTIONAL
+- **Milestones must reference existing feature IDs from PRD-04 where possible.**
+- **Exit criteria must be measurable or tied to gates (QA/REL).**
+- Do not include implementation tasks; that belongs in IMP.
 
+## 7. Output Format
 
-Output Format
-1) Roadmap Overview
+### Required Headings (in order)
 
-   ●​ Horizon: {{roadmap.horizon}}
-   ●​ Cadence: {{roadmap.cadence}} | OPTIONAL
-   ●​ Primary stakeholders: {{roadmap.stakeholders}} | OPTIONAL
+1. `## 1) Roadmap Overview`
+2. `## 2) Milestones (canonical)`
+3. `## mil`
+4. `## est`
+5. `## e_i`
+6. `## name`
+7. `## objectiv`
+8. `## target`
+9. `## _date`
+10. `## included`
 
-2) Milestones (canonical)
- mil    name       objectiv    target    included    exit_crite   depende   approve    confiden
- est                  e        _date     _feature        ria       ncies     r_ids        ce
- on                                        _ids
- e_i
-  d
+## 8. Cross-References
 
-ms      {{milest   {{milesto   {{miles   {{milesto   {{mileston {{mileston {{milesto   {{milesto
-_0      ones[0]    nes[0].o    tones[    nes[0].fe   es[0].exit es[0].depe nes[0].a    nes[0].co
-1       .name}     bjective}   0].date   ature_ids   _criteria}} ndencies}} pprovers   nfidence}
-        }          }           }}        }}                                 }}         }
+- Upstream: {{xref:PRD-04}}, {{xref:PRD-06}} | OPTIONAL, {{xref:PRD-02}} | OPTIONAL
+- Downstream: {{xref:IMP-01}} | OPTIONAL, {{xref:REL-*}} | OPTIONAL, {{xref:QA-04}} |
+- OPTIONAL
+- Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
-ms      {{milest   {{milesto   {{miles   {{milesto   {{mileston {{mileston {{milesto   {{milesto
-_0      ones[1]    nes[1].o    tones[    nes[1].fe   es[1].exit es[1].depe nes[1].a    nes[1].co
-2                                                    _criteria}} ndencies}}
-     .name}   bjective}   1].date   ature_ids                       pprovers   nfidence}
-     }        }           }}        }}                              }}         }
+## 9. Skill Level Requiredness Rules
 
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-3) Roadmap Risks (required)
+## 10. Unknown Handling
 
-  ●​ {{roadmap.risks[0]}}
-  ●​ {{roadmap.risks[1]}} | OPTIONAL
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
+## 11. Completeness Gate
 
-Cross-References
-  ●​ Upstream: {{xref:PRD-04}}, {{xref:PRD-06}} | OPTIONAL, {{xref:PRD-02}} | OPTIONAL
-  ●​ Downstream: {{xref:IMP-01}} | OPTIONAL, {{xref:REL-*}} | OPTIONAL, {{xref:QA-04}} |
-     OPTIONAL
-  ●​ Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
-
-
-Skill Level Requiredness Rules
-  ●​ beginner: Required. 3 milestones with objectives + feature IDs.
-  ●​ intermediate: Required. Add exit criteria + dependencies.
-  ●​ advanced: Required. Add confidence and approvals aligned to STK-04.
-
-
-Unknown Handling
-  ●​ UNKNOWN_ALLOWED: target_date, confidence, notes, beta_phases
-  ●​ If any milestone has UNKNOWN objective → block Completeness Gate.
-
-
-Completeness Gate
-  ●​ Gate ID: TMP-05.PRIMARY.ROADMAP
-  ●​ Pass conditions:
-        ○​ required_fields_present == true
-        ○​ milestones_count >= 3
-        ○​ milestones_have_objectives == true
-        ○​ placeholder_resolution == true
-        ○​ no_unapproved_unknowns == true
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

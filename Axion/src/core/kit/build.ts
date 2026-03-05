@@ -308,6 +308,7 @@ function buildNaMd(slot: string, reason: string): string {
 }
 
 const SUBDIR_TO_SLOT: Record<string, string> = {
+  // Product Definition
   requirements: "01_requirements",
   domain: "01_requirements",
   workflows: "01_requirements",
@@ -315,27 +316,128 @@ const SUBDIR_TO_SLOT: Record<string, string> = {
   roadmap: "01_requirements",
   research: "01_requirements",
   content: "01_requirements",
+  prd: "01_requirements",
+  urd: "01_requirements",
+  stk: "01_requirements",
+  dmg: "01_requirements",
+  rsc: "01_requirements",
+  brp: "01_requirements",
+  smip: "01_requirements",
+
+  // System Architecture
   architecture: "02_architecture",
   topology: "02_architecture",
+  arc: "02_architecture",
+  sic: "02_architecture",
+  sbdt: "02_architecture",
+  wfo: "02_architecture",
+  rtm: "02_architecture",
+  err: "02_architecture",
+  apig: "04_api_contracts",
+
+  // Data & Information
   data: "03_data_models",
   data_governance: "03_data_models",
   data_lifecycle: "03_data_models",
   data_quality: "03_data_models",
+  dlr: "03_data_models",
+  dgl: "03_data_models",
+  dqv: "03_data_models",
+  cache: "03_data_models",
+  srch: "03_data_models",
+  rpt: "03_data_models",
+
+  // API & Contracts
   api_governance: "04_api_contracts",
+  api: "04_api_contracts",
+  pfs: "04_api_contracts",
+
+  // Auth & Security
   policy: "05_auth_security",
   governance: "05_auth_security",
   authz: "05_auth_security",
+  pmad: "05_auth_security",
+  sec: "05_auth_security",
+  iam: "05_auth_security",
+  tma: "05_auth_security",
+  skm: "05_auth_security",
+  priv: "05_auth_security",
+  audit: "05_auth_security",
+  comp: "05_auth_security",
+  cpr: "05_auth_security",
+  csec: "05_auth_security",
+
+  // Experience Design / Frontend
   design: "06_frontend",
   design_system: "06_frontend",
   assets: "06_frontend",
   accessibility: "06_frontend",
   responsive: "06_frontend",
   ia: "06_frontend",
+  des: "06_frontend",
+  ixd: "06_frontend",
+  cdx: "06_frontend",
+  dsys: "06_frontend",
+  ian: "06_frontend",
+  a11yd: "06_frontend",
+  yd: "06_frontend",
+  rlb: "06_frontend",
+  vap: "06_frontend",
+  fe: "06_frontend",
+  smd: "06_frontend",
+  uicp: "06_frontend",
+  cer: "06_frontend",
+  form: "06_frontend",
+  route: "06_frontend",
+
+  // Backend
   errors: "07_backend",
   caching: "07_backend",
   realtime: "07_backend",
   search: "07_backend",
+  jbs: "07_backend",
+  evt: "07_backend",
+  rlim: "07_backend",
+  ffcfg: "07_backend",
+  fpmp: "07_backend",
+  admin: "07_backend",
+  pbp: "07_backend",
+
+  // DevOps
+  load: "08_devops",
+  rel: "08_devops",
+  qa: "09_testing",
+
+  // Integrations & External Services
   integrations: "10_integrations",
+  ixs: "10_integrations",
+  sso: "10_integrations",
+  crmerp: "10_integrations",
+  whcp: "10_integrations",
+  pay: "10_integrations",
+  notif: "10_integrations",
+  fms: "10_integrations",
+
+  // Mobile
+  mob: "06_frontend",
+  mdc: "06_frontend",
+  ofs: "06_frontend",
+  mbat: "06_frontend",
+  mdl: "06_frontend",
+  mpush: "06_frontend",
+  sign: "08_devops",
+
+  // Operations & Reliability
+  obs: "12_analytics",
+  anl: "12_analytics",
+  lts: "12_analytics",
+  alrt: "12_analytics",
+  slo: "12_analytics",
+  perf: "12_analytics",
+  irp: "12_analytics",
+  cost: "12_analytics",
+
+  // Analytics / Reporting
   reporting: "12_analytics",
   metrics: "12_analytics",
 };

@@ -1,130 +1,99 @@
-STK-02
-STK-02 — Decision Log (what/why/when)
-Header Block
-   ●​   template_id: STK-02
-   ●​   title: Decision Log (what/why/when)
-   ●​   type: stakeholders_governance
-   ●​   template_version: 1.0.0
-   ●​   output_path: 10_app/governance/STK-02_Decision_Log.md
-   ●​   compliance_gate_id: TMP-05.PRIMARY.GOV
-   ●​   upstream_dependencies: ["STK-01"]
-   ●​   inputs_required: ["STK-01", "STANDARDS_INDEX"]
-   ●​   required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}
+# STK-02 — Decision Log (what/why/when)
 
+## 1. Header Block
 
-Purpose
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | STK-02                                             |
+| Template Type     | Product / Stakeholders                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring decision log (what/why/when)    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Decision Log (what/why/when) Document                         |
+
+## 2. Purpose
+
 Create the canonical audit of material decisions that affect scope, architecture, security, data,
 UX, release, and operations. This log is the source of truth for “why we chose X,” and is used to
 prevent re-litigating decisions.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​ STK-01: {{xref:STK-01}}
-   ●​ Standards: {{standards.index}} | OPTIONAL
-   ●​ Decision notes: {{inputs.decision_notes}} | OPTIONAL
+- ● STK-01: {{xref:STK-01}}
+- ● Standards: {{standards.index}} | OPTIONAL
+- ● Decision notes: {{inputs.decision_notes}} | OPTIONAL
 
+## 4. Required Fields
 
-Required Fields
-   ●​ Decision entries (can be 0, but must be explicit)
-   ●​ For each decision:
-         ○​ decision_id
-         ○​ date
-         ○​ decision_title
-         ○​ decision_area (product/design/architecture/security/data/release/ops)
-         ○​ decision_statement
-         ○​ context
-         ○​ options_considered
-         ○​ rationale
-         ○​ approver_stakeholder_id
-           ○​ status (proposed/approved/reversed)
-           ○​ affected_docs (IDs)
-           ○​ reversal_pointer (if reversed)
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Decision entries (can ... | spec         | Yes             |
+| For each decision:        | spec         | Yes             |
+| ○ decision_id             | spec         | Yes             |
+| ○ date                    | spec         | Yes             |
+| ○ decision_title          | spec         | Yes             |
+| ○ decision_statement      | spec         | Yes             |
+| ○ context                 | spec         | Yes             |
+| ○ options_considered      | spec         | Yes             |
+| ○ rationale               | spec         | Yes             |
+| ○ approver_stakeholder_id | spec         | Yes             |
+| ○ status (proposed/app... | spec         | Yes             |
+| ○ affected_docs (IDs)     | spec         | Yes             |
 
+## 5. Optional Fields
 
-Optional Fields
-   ●​ Evidence/links | OPTIONAL
-   ●​ Follow-ups | OPTIONAL
+● Evidence/links | OPTIONAL
+● Follow-ups | OPTIONAL
 
+## 6. Rules
 
-Rules
-   ●​ Decision IDs must be stable and unique (dec_YYYYMMDD_<slug> or dec_<seq>).
-   ●​ Approver must be a stakeholder from STK-01.
-   ●​ If a decision changes PRD scope or requirements, it must reference PRD-04 and
-      RSC-04.
-   ●​ Reversals must be explicit and point to the reversing decision.
+- Decision IDs must be stable and unique (dec_YYYYMMDD_<slug> or dec_<seq>).
+- Approver must be a stakeholder from STK-01.
+- If a decision changes PRD scope or requirements, it must reference PRD-04 and
+- **RSC-04.**
+- Reversals must be explicit and point to the reversing decision.
 
+## 7. Output Format
 
-Output Format
-1) Decision Log (canonical)
-  de     date      area      title     decision     approver_     status     affected_d     links
- cis                                   _stateme     stakehold                    ocs
- ion                                      nt          er_id
- _id
+### Required Headings (in order)
 
- dec {{decisi    {{decisi   {{decisi   {{decision   {{decisions   {{decisi   {{decisions[ {{decisi
- _0 ons[0].      ons[0].    ons[0].t   s[0].state   [0].approv    ons[0].s   0].affected_ ons[0].li
- 1   date}}      area}}     itle}}     ment}}       er_id}}       tatus}}    docs}}       nks}}
+1. `## 1) Decision Log (canonical)`
+2. `## cis`
+3. `## ion`
+4. `## _id`
+5. `## date`
+6. `## area`
+7. `## title`
+8. `## decision`
+9. `## _stateme`
+10. `## approver_`
 
+## 8. Cross-References
 
-2) Decision Detail Blocks (required per entry)
+- Upstream: {{xref:STK-01}}
+- Downstream: {{xref:RSC-04}} | OPTIONAL, {{xref:PRD-04}} | OPTIONAL, {{xref:ARC-*}}
+- | OPTIONAL
+- Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
-{{decisions[0].decision_id}} — {{decisions[0].title}}
+## 9. Skill Level Requiredness Rules
 
-   ●​   Area: {{decisions[0].area}}
-   ●​   Date: {{decisions[0].date}}
-   ●​   Approver: {{decisions[0].approver_id}}
-   ●​   Status: {{decisions[0].status}}
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-Context​
-{{decisions[0].context}}
+## 10. Unknown Handling
 
-Options considered
-   ●​ {{decisions[0].options[0]}}
-   ●​ {{decisions[0].options[1]}} | OPTIONAL
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
-Decision​
-{{decisions[0].statement}}
+## 11. Completeness Gate
 
-Rationale​
-{{decisions[0].rationale}}
-
-Affected docs​
-{{decisions[0].affected_docs}}
-
-Follow-ups
-
-   ●​ {{decisions[0].followups[0]}} | OPTIONAL
-
-Reversal (if reversed)
-
-   ●​ reversal_pointer: {{decisions[0].reversal_pointer}} | OPTIONAL
-
-
-Cross-References
-   ●​ Upstream: {{xref:STK-01}}
-   ●​ Downstream: {{xref:RSC-04}} | OPTIONAL, {{xref:PRD-04}} | OPTIONAL, {{xref:ARC-*}}
-      | OPTIONAL
-   ●​ Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
-
-
-Skill Level Requiredness Rules
-   ●​ beginner: Required. Capture decisions + rationale + approver.
-   ●​ intermediate: Required. Include options considered and affected docs.
-   ●​ advanced: Required. Maintain reversals and follow-ups with traceability.
-
-
-Unknown Handling
-   ●​ UNKNOWN_ALLOWED: links, followups, options_considered (minimum 1
-      option still required)
-   ●​ If status == approved and approver_stakeholder_id is UNKNOWN → block
-      Completeness Gate.
-
-
-Completeness Gate
-   ●​ Gate ID: TMP-05.PRIMARY.GOV
-●​ Pass conditions:
-      ○​ required_fields_present == true
-      ○​ decision_ids_unique == true
-      ○​ approved_decisions_have_approver == true
-      ○​ placeholder_resolution == true
-      ○​ no_unapproved_unknowns == true
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

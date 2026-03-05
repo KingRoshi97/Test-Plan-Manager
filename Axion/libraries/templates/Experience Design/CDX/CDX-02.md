@@ -1,178 +1,103 @@
-CDX-02
-CDX-02 — UI Copy Inventory (labels,
-buttons, helper text)
-Header Block
-   ●​ template_id: CDX-02​
+# CDX-02 — UI Copy Inventory (labels,
 
-   ●​ title: UI Copy Inventory (labels, buttons, helper text)​
+## 1. Header Block
 
-   ●​ type: content_design_ux_writing​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | CDX-02                                             |
+| Template Type     | Design / Content                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring ui copy inventory (labels,    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled UI Copy Inventory (labels, Document                         |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/content/CDX-02_UI_Copy_Inventory.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.CONTENT​
-
-   ●​ upstream_dependencies: ["DES-02", "DES-03", "CDX-01"]​
-
-   ●​ inputs_required: ["DES-02", "DES-03", "CDX-01", "DMG-01", "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Create the canonical inventory of UI copy strings used across screens: titles, labels, buttons,
 helper text, tooltips, and confirmations. This enables consistency, localization, and
 implementation without copy drift.
 
-
-Inputs Required
-   ●​ DES-02: {{xref:DES-02}} | OPTIONAL​
-
-   ●​ DES-03: {{xref:DES-03}} | OPTIONAL​
-
-   ●​ CDX-01: {{xref:CDX-01}}​
-  ●​ DMG-01: {{xref:DMG-01}} | OPTIONAL​
-
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
-
-
-
-Required Fields
-  ●​ Copy entries list (minimum 50 for non-trivial products; justify if smaller)​
-
-  ●​ For each entry:​
-
-         ○​ copy_id​
-
-         ○​ screen_id (or global)​
-
-         ○​ component_id (optional)​
-
-         ○​ location (header, field label, button, tooltip, helper text)​
-
-         ○​ string_key (implementation key)​
-
-         ○​ default_text​
-
-         ○​ intent (what it communicates)​
-
-         ○​ tone context (from CDX-01)​
-
-         ○​ placeholders (if any)​
-
-         ○​ accessibility note (if SR/aria label differs)​
-
-         ○​ max length guidance (if constrained)​
-
-         ○​ localization note (if special)​
-
-  ●​ Canonical naming rules for string_key​
-
-
-
-Optional Fields
-  ●​ Variants by platform (web/mobile) | OPTIONAL​
-    ●​ Notes | OPTIONAL​
-
-
-
-Rules
-    ●​ Must comply with CDX-01 voice/tone/terminology.​
-
-    ●​ Placeholders must be explicit and consistent (e.g., {name}, {count}).​
-
-    ●​ Avoid embedding PII in logs; copy entries should not require showing sensitive values
-       unless allowed.​
-
-    ●​ If the visible label differs from the aria label, both must be specified.​
-
-
-
-Output Format
-1) String Key Rules (required)
-
-    ●​ Key format: {{keys.format}} (e.g., screen.<screen_id>.<location>.<name>)​
-
-    ●​ Allowed characters: {{keys.allowed_chars}}​
-
-    ●​ Versioning/change rules: {{keys.change_rules}} | OPTIONAL​
-
-
-
-2) UI Copy Inventory (canonical)
-c    stri   scree     compo     locat    def     inte    ton     placeh a11y        max_    l10n note
-o    ng_     n_id     nent_i     ion     ault     nt     e_c     olders _alt_t      lengt   _no   s
-p    key                d                _te             ont             ext          h      tes
-y                                         xt             ext
-_
-i
-d
-
-c   {{co    {{copy    {{copy[   {{cop    {{co    {{co    {{co    {{copy[   {{cop    {{cop   {{co    {{co
-_   py[0    [0].scr   0].com    y[0].l   py[0    py[0]   py[0    0].plac   y[0].a   y[0].   py[0    py[0
-0   ].ke    een_i     ponent    ocati    ].tex   .inte   ].ton   eholde    11y_a    max_    ].l10   ].not
-0   y}}     d}}       _id}}     on}}     t}}     nt}}    e}}     rs}}      lt}}     len}}   n}}     es}}
-1
-c   {{co   {{copy    {{copy[   {{cop    {{co    {{co    {{co    {{copy[   {{cop    {{cop   {{co    {{co
-_   py[1   [1].scr   1].com    y[1].l   py[1    py[1]   py[1    1].plac   y[1].a   y[1].   py[1    py[1
-0   ].ke   een_i     ponent    ocati    ].tex   .inte   ].ton   eholde    11y_a    max_    ].l10   ].not
-0   y}}    d}}       _id}}     on}}     t}}     nt}}    e}}     rs}}      lt}}     len}}   n}}     es}}
-2
-
-
-3) Coverage Checks (required)
-
-    ●​ Screens covered: {{coverage.screens}} | OPTIONAL​
-
-    ●​ Global copy present (app name, generic CTAs): {{coverage.global}}​
-
-    ●​ A11y alt text present where needed: {{coverage.a11y_alt}}​
-
-
-
-Cross-References
-    ●​ Upstream: {{xref:CDX-01}}, {{xref:DES-02}} | OPTIONAL, {{xref:DES-03}} | OPTIONAL​
-
-    ●​ Downstream: {{xref:CDX-03}}, {{xref:CDX-04}}, {{xref:CDX-05}} | OPTIONAL, {{xref:FE-}}
-       | OPTIONAL, {{xref:L10N-}} | OPTIONAL​
-
-    ●​ Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
-       {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
-
-Skill Level Requiredness Rules
-    ●​ beginner: Required. Inventory with keys + default text + screen mapping.​
-
-    ●​ intermediate: Required. Add placeholders, max length guidance, and intent.​
-
-    ●​ advanced: Required. Add a11y alt labels and localization notes.​
-
-
-
-Unknown Handling
-    ●​ UNKNOWN_ALLOWED: component_id, variants_by_platform, max_length,
-       l10n_notes, notes, a11y_alt_text​
- ●​ If string_key rules are UNKNOWN → block Completeness Gate.​
-
-
-
-Completeness Gate
- ●​ Gate ID: TMP-05.PRIMARY.CONTENT​
-
- ●​ Pass conditions:​
-
-        ○​ required_fields_present == true​
-
-        ○​ copy_entries_count >= 50 (or justified)​
-
-        ○​ string_keys_unique == true​
-
-        ○​ cdX01_compliance == true​
-
-        ○​ placeholder_resolution == true​
-
-        ○​ no_unapproved_unknowns == true
+## 3. Inputs Required
+
+- ● DES-02: {{xref:DES-02}} | OPTIONAL
+- ● DES-03: {{xref:DES-03}} | OPTIONAL
+- ● CDX-01: {{xref:CDX-01}}
+- ● DMG-01: {{xref:DMG-01}} | OPTIONAL
+- ● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
+
+## 4. Required Fields
+
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| For each entry:           | spec         | Yes             |
+| ○ copy_id                 | spec         | Yes             |
+| ○ screen_id (or global)   | spec         | Yes             |
+| ○ component_id (optional) | spec         | Yes             |
+| ○ string_key (implemen... | spec         | Yes             |
+| ○ default_text            | spec         | Yes             |
+| ○ intent (what it comm... | spec         | Yes             |
+| ○ tone context (from C... | spec         | Yes             |
+| ○ placeholders (if any)   | spec         | Yes             |
+| ○ accessibility note (... | spec         | Yes             |
+| ○ max length guidance ... | spec         | Yes             |
+| ○ localization note (i... | spec         | Yes             |
+
+## 5. Optional Fields
+
+● Variants by platform (web/mobile) | OPTIONAL
+
+● Notes | OPTIONAL
+
+## 6. Rules
+
+- Must comply with CDX-01 voice/tone/terminology.
+- Placeholders must be explicit and consistent (e.g., {name}, {count}).
+- Avoid embedding PII in logs; copy entries should not require showing sensitive values
+- **unless allowed.**
+- If the visible label differs from the aria label, both must be specified.
+
+## 7. Output Format
+
+### Required Headings (in order)
+
+1. `## 1) String Key Rules (required)`
+2. `## 2) UI Copy Inventory (canonical)`
+3. `## stri`
+4. `## ng_`
+5. `## key`
+6. `## scree`
+7. `## n_id`
+8. `## compo`
+9. `## nent_i`
+10. `## locat`
+
+## 8. Cross-References
+
+- Upstream: {{xref:CDX-01}}, {{xref:DES-02}} | OPTIONAL, {{xref:DES-03}} | OPTIONAL
+- Downstream: {{xref:CDX-03}}, {{xref:CDX-04}}, {{xref:CDX-05}} | OPTIONAL, {{xref:FE-}}
+- **| OPTIONAL, {{xref:L10N-}} | OPTIONAL**
+- Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
+- {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+
+## 9. Skill Level Requiredness Rules
+
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
+
+## 10. Unknown Handling
+
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
+
+## 11. Completeness Gate
+
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

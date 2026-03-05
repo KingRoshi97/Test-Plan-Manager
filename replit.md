@@ -17,7 +17,7 @@ Full Mechanics pipeline + web application layer with three formal control planes
 - **MA (Maintenance Agent)** — `Axion/src/core/agents/maintenance.ts`: Performs repo maintenance under MCP governance (dependency upgrades, migrations, test hardening, CI, rollback).
 
 ### Kit Template Slot Mapping Fix
-`Axion/src/core/kit/build.ts` — SUBDIR_TO_SLOT lookup table maps all 30 `10_app/` subdirectories to correct domain slots. Near-zero fallthrough to `11_documentation`.
+`Axion/src/core/kit/build.ts` — SUBDIR_TO_SLOT lookup table maps all 77 template prefix groups to correct domain slots (01_requirements through 12_analytics). Zero fallthrough to `11_documentation`.
 
 ### OpenAI Autofill Integration
 - `server/openai.ts` — OpenAI client using Replit AI Integrations (AI_INTEGRATIONS_OPENAI_BASE_URL + AI_INTEGRATIONS_OPENAI_API_KEY)
@@ -135,7 +135,7 @@ package.json      # Root package.json with all dependencies
 - `/files` — File browser: navigate run artifact directories
 - `/health` — System health: pipeline, knowledge library, templates, recent runs
 - `/logs` — Run logs viewer with status filtering
-- `/docs` — Document inventory: 177 templates + 395 KIDs
+- `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
 
 ### Development
@@ -168,7 +168,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `intake/` — enums.v1.json, schema.v1.json, rules.v1.json, form_version.v1.json
   - `canonical/` — id_rules.v1.json, spec.schema.v1.json, unknowns.schema.v1.json
   - `standards/` — standards_index.json, resolver_rules.v1.json + 3 packs
-  - `templates/` — template_index.json, placeholder_catalog.v1.json + 8 template groups (177 total .md files)
+  - `templates/` — template_index.json, placeholder_catalog.v1.json + 77 template groups across 8 categories (533 total .md files)
   - `planning/` — work_breakdown.schema.v1.json, acceptance_map.schema.v1.json, sequencing_policy.v1.json
   - `gates/` — gate_dsl.schema.v1.json
   - `verification/` — proof_log.schema.v1.json, command_runs.schema.v1.json
@@ -229,7 +229,7 @@ S1_INGEST_NORMALIZE → S2_VALIDATE_INTAKE → S3_BUILD_CANONICAL → S4_VALIDAT
 - Gate reports include evidence completeness sections
 
 ### Template System
-- **Source Templates**: `libraries/templates/` (177 TMP-02 contract files in 4 categories: Product Definition, System Architecture, Experience Design, Data & Information). These are READ-ONLY — never modified by runs. Each contains: Header Block, Purpose, Inputs Required, Required Fields, Optional Fields, Rules, Output Format, Cross-References, Skill Level Rules, Unknown Handling, Completeness Gate.
+- **Source Templates**: `libraries/templates/` (533 TMP-02 contract files in 8 categories: Product Definition, System Architecture, Experience Design, Data & Information, Integrations & External Services, Operations & Reliability, Security Privacy & Compliance, Application Build). These are READ-ONLY — never modified by runs. Each contains: Header Block, Purpose, Inputs Required, Required Fields, Optional Fields, Rules, Output Format, Cross-References, Skill Level Rules, Unknown Handling, Completeness Gate.
 - **Filler Engine**: `filler.ts` reads each template's Output Format (Section 7) and produces a filled document using canonical spec entities (features, roles, workflows, permissions), standards, constraints, and intake data. Supports 5 placeholder types: direct, array, derived, optional, unknown-allowed. TMP-04 precedence: Canonical Spec → Standards → Work Breakdown → Acceptance Map.
 - **Selector**: `template_index.json` → registry-driven selection with rationale
 - **Rendered Output**: Filled documents written to `.axion/runs/<runId>/templates/rendered_docs/` — contain real project data (entity tables, requirements, cross-references), not template instruction text

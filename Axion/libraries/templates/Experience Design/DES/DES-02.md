@@ -1,97 +1,106 @@
-# DES-02 — Global Component Styles
+# DES-02 — Screen Inventory (by
 
 ## 1. Header Block
 
 | Field             | Value                                              |
 |-------------------|----------------------------------------------------|
 | Template ID       | DES-02                                             |
-| Template Type     | Experience Design                                  |
+| Template Type     | Design / UX                                          |
 | Template Version  | 1.0.0                                              |
-| Applies           | All projects with reusable UI components            |
+| Applies           | All projects requiring screen inventory (by    |
 | Filled By         | Internal Agent                                     |
-| Consumes          | Canonical Spec, DES-01 Design Language             |
-| Produces          | Filled Global Component Styles document            |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Screen Inventory (by Document                         |
 
 ## 2. Purpose
 
-Define the global styling rules for reusable UI components — buttons, inputs, cards, modals, navigation elements, and other shared primitives. These styles consume design tokens from DES-01 and ensure visual consistency across all screens and features.
+Create the canonical inventory of screens, their IDs, and how they relate to routes/navigation.
+This is the bridge between flows and implementation routing.
 
 ## 3. Inputs Required
 
-- DES-01 Design Language (`{{spec.*}}`)
-- Standards Snapshot (`{{standards.*}}`)
-- Canonical Spec (`{{spec.*}}`)
+- ●
+- ●
+- ●
+- ●
+- ●
+- DES-01: {{xref:DES-01}}
+- PRD-04: {{xref:PRD-04}} | OPTIONAL
+- IAN-01: {{xref:IAN-01}} | OPTIONAL
+- IAN-02: {{xref:IAN-02}} | OPTIONAL
+- STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
 ## 4. Required Fields
 
-| Field Name              | Source       | UNKNOWN Allowed |
-|-------------------------|--------------|-----------------|
-| Component List          | spec         | No              |
-| Style Rules per Component | spec       | Yes             |
-| State Variants          | spec         | Yes             |
-| Responsive Behavior     | spec         | Yes             |
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Screen list (minimum 8... | spec         | Yes             |
+| For each screen:          | spec         | Yes             |
+| ○ screen_id               | spec         | Yes             |
+| ○ name                    | spec         | Yes             |
+| ○ route_id / path (or ... | spec         | Yes             |
+| ○ purpose (1–2 sentences) | spec         | Yes             |
+| ○ entry points (what r... | spec         | Yes             |
+| ○ exit destinations (w... | spec         | Yes             |
+| ○ linked_flow_ids         | spec         | Yes             |
+| ○ linked_feature_ids      | spec         | Yes             |
+| ○ access requirements ... | spec         | Yes             |
+| ○ primary states (from... | spec         | Yes             |
 
 ## 5. Optional Fields
 
-| Field Name           | Source       | Notes                          |
-|----------------------|--------------|--------------------------------|
-| Animation Rules      | spec         | Per-component motion           |
-| Dark Mode Overrides  | spec         | If theme modes defined         |
+● Platform variants (web/mobile) | OPTIONAL
+● Notes | OPTIONAL
 
 ## 6. Rules
 
-- **No duplicate truth**: Component styles must reference DES-01 tokens, not redefine values.
-- **No invention**: Style rules must derive from spec or design language.
-- **Consistency**: All components must follow the same spacing and typography rules.
-- **Accessibility**: Interactive components must meet focus, contrast, and touch-target standards.
+- Screen IDs must be stable and unique (screen_<slug>).
+- Route IDs must match IAN-02 if present; otherwise mark UNKNOWN and link to IAN
+- **work.**
+- Access requirements must reference PRD-03/IAM concepts, not invent new roles.
+- Do not define component-level layout; that belongs in DES-03/04.
 
 ## 7. Output Format
 
 ### Required Headings (in order)
 
-1. `## Component Inventory`
-   - Table: Component Name | Category | States | Responsive
-2. `## Style Definitions`
-   - Per component subsection:
-     - `### <Component Name>`
-     - Default State
-     - Interactive States (hover, focus, active, disabled)
-     - Responsive Rules
-3. `## Unknowns & Open Questions`
+1. `## 1) Screen Inventory (canonical)`
+2. `## nam`
+3. `## route`
+4. `## _id_`
+5. `## or_p`
+6. `## ath`
+7. `## purpo`
+8. `## entry`
+9. `## _poi`
+10. `## nts`
 
 ## 8. Cross-References
 
-- **Upstream**: DES-01 (Design Language), Canonical Spec (CAN-01)
-- **Downstream**: DES-04 (Screen Layout Specs), Component Packs
-- **Entity Types Referenced**: features, data entities
+- Upstream: {{xref:DES-01}}, {{xref:PRD-04}} | OPTIONAL
+- Downstream: {{xref:DES-03}}, {{xref:IAN-02}} | OPTIONAL, {{xref:MAP-01}} |
+- **OPTIONAL, {{xref:FE-01}} | OPTIONAL, {{xref:MOB-01}} | OPTIONAL**
+- Standards: {{standards.rules[STD-NAMING]}} | OPTIONAL,
+- {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
 ## 9. Skill Level Requiredness Rules
 
-| Section               | Beginner  | Intermediate | Expert   |
-|-----------------------|-----------|--------------|----------|
-| Component Inventory   | Required  | Required     | Required |
-| Style Definitions     | Optional  | Required     | Required |
-| State Variants        | Optional  | Required     | Required |
-| Unknowns              | Optional  | Required     | Required |
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
 ## 10. Unknown Handling
 
-Unknowns must be written in the following format:
-
-```
-UNKNOWN-<NNN>: [Area] <summary>
-Impact: Low|Med|High
-Blocking: Yes|No
-Needs: <what input resolves it>
-Refs: <spec_id/entity_id/field_path>
-```
-
-Unknowns in this template must map back to Canonical Spec unknown objects (CAN-03).
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
 ## 11. Completeness Gate
 
-- [ ] All required fields are populated
-- [ ] All style rules reference DES-01 design tokens
-- [ ] No contradictions between component styles
-- [ ] Unknowns are handled per UNKNOWN format (section 10)
-- [ ] Interactive components meet accessibility standards
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

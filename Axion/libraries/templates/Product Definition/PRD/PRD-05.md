@@ -1,100 +1,118 @@
-# PRD-05 — User Personas & Role Requirements
+# PRD-05 — User Stories / JTBD Map
 
 ## 1. Header Block
 
 | Field             | Value                                              |
 |-------------------|----------------------------------------------------|
 | Template ID       | PRD-05                                             |
-| Template Type     | Product Definition                                 |
+| Template Type     | Product / Requirements                                          |
 | Template Version  | 1.0.0                                              |
-| Applies           | All projects with defined user roles                |
+| Applies           | All projects requiring user stories / jtbd map    |
 | Filled By         | Internal Agent                                     |
-| Consumes          | Canonical Spec, Intake Submission                  |
-| Produces          | Filled User Personas & Role Requirements document  |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled User Stories / JTBD Map Document                         |
 
 ## 2. Purpose
 
-Define the user personas and role-based requirements for the product. Each persona maps to canonical roles and specifies access levels, capabilities, and constraints. This document ensures design and implementation decisions are grounded in defined user types.
+Translate the feature catalog into user-centered intent statements (User Stories and/or
+Jobs-To-Be-Done) that can be traced to feature IDs and later to flows, screens, endpoints, and
+test cases. This creates a clear “why” layer without redefining implementation.
 
 ## 3. Inputs Required
 
-- Canonical Spec (`{{spec.roles[]}}`)
-- Intake Submission (`{{submission_id}}`)
-- Standards Snapshot (`{{standards.*}}`)
+- ●
+- ●
+- ●
+- ●
+- ●
+- ●
+- PRD-01: {{xref:PRD-01}}
+- PRD-03: {{xref:PRD-03}}
+- PRD-04: {{xref:PRD-04}}
+- SPEC_INDEX: {{spec.index}}
+- GLOSSARY: {{glossary.terms}} | OPTIONAL
+- STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
 ## 4. Required Fields
 
-| Field Name           | Source       | UNKNOWN Allowed |
-|----------------------|--------------|-----------------|
-| Role ID              | spec         | No              |
-| Role Name            | spec         | No              |
-| Description          | spec         | No              |
-| Permissions          | spec         | Yes             |
-| Access Level         | spec         | Yes             |
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Story/JTBD format choi... | spec         | Yes             |
+| For each item:            | spec         | Yes             |
+| ○ story_id / job_id       | spec         | Yes             |
+| ○ persona_id              | spec         | Yes             |
+| ○ linked_feature_ids      | spec         | Yes             |
+| ○ intent statement (st... | spec         | Yes             |
+| ○ acceptance outcomes ... | spec         | Yes             |
+| ○ priority (P0/P1/P2)     | spec         | Yes             |
+| ○ edge cases summary      | spec         | Yes             |
+| Coverage mapping: ever... | spec         | Yes             |
 
 ## 5. Optional Fields
 
-| Field Name           | Source       | Notes                          |
-|----------------------|--------------|--------------------------------|
-| Persona Narrative    | spec         | Enrichment only                |
-| Usage Frequency      | spec         | Contextual detail              |
-| Technical Proficiency| spec         | Informs UX complexity          |
+●
+●
+●
+●
+
+Preconditions | OPTIONAL
+Frequency / importance | OPTIONAL
+Related workflows (derived) | OPTIONAL
+Open questions | OPTIONAL
 
 ## 6. Rules
 
-- **No duplicate truth**: Role IDs must match canonical spec entity IDs.
-- **No invention**: Permissions and access levels must derive from spec or standards.
-- **Completeness**: Every role in the canonical spec must be represented.
-- **Consistency**: Permissions must not contradict security requirements.
+- 
+- 
+- 
+- 
+- 
+- Must align to: {{standards.rules[STD-CANONICAL-TRUTH]}} | OPTIONAL
+- Do not create new features; map only to existing IDs from {{spec.features_by_id}}.
+- Use canonical persona IDs from {{spec.personas_by_id}} or {{xref:PRD-03}}.
+- If acceptance outcomes are unknown, mark UNKNOWN and add to Open Questions.
+- **P0 coverage is mandatory; if missing, fails Completeness Gate.**
 
 ## 7. Output Format
 
 ### Required Headings (in order)
 
-1. `## Roles Index`
-   - Table: Role ID | Name | Access Level | Primary Workflows
-2. `## Persona Details`
-   - Per role subsection:
-     - `### <Role ID>: <Name>`
-     - Description
-     - Permissions
-     - Workflows
-     - Constraints
-3. `## Unknowns & Open Questions`
+1. `## 1) Format Selection`
+2. `## 2) User Stories (if used)`
+3. `## sto`
+4. `## ry_i`
+5. `## persona_id`
+6. `## story`
+7. `## linked_featu`
+8. `## re_ids`
+9. `## priority`
+10. `## acceptance`
 
 ## 8. Cross-References
 
-- **Upstream**: PRD-01 (Product Requirements), Canonical Spec (CAN-01)
-- **Downstream**: PRD-04 (Workflow Excerpts), DES-06 (A11y Requirements), Security templates
-- **Entity Types Referenced**: roles, features, workflows
+- Upstream: {{xref:PRD-01}}, {{xref:PRD-03}}, {{xref:PRD-04}}
+- Downstream: {{xref:DES-01}}, {{xref:DES-04}}, {{xref:QA-02}} | OPTIONAL,
+- **{{xref:IMP-01}} | OPTIONAL**
+- Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
 ## 9. Skill Level Requiredness Rules
 
-| Section               | Beginner  | Intermediate | Expert   |
-|-----------------------|-----------|--------------|----------|
-| Roles Index           | Required  | Required     | Required |
-| Persona Details       | Optional  | Required     | Required |
-| Permissions           | Optional  | Required     | Required |
-| Unknowns              | Optional  | Required     | Required |
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
 ## 10. Unknown Handling
 
-Unknowns must be written in the following format:
-
-```
-UNKNOWN-<NNN>: [Area] <summary>
-Impact: Low|Med|High
-Blocking: Yes|No
-Needs: <what input resolves it>
-Refs: <spec_id/entity_id/field_path>
-```
-
-Unknowns in this template must map back to Canonical Spec unknown objects (CAN-03).
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
 ## 11. Completeness Gate
 
-- [ ] All required fields are populated
-- [ ] All role IDs resolve to canonical spec entities
-- [ ] No contradictions between roles and security requirements
-- [ ] Unknowns are handled per UNKNOWN format (section 10)
-- [ ] Every canonical role is represented
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

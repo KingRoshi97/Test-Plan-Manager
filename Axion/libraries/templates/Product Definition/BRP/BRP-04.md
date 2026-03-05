@@ -1,113 +1,105 @@
-BRP-04
-BRP-04 — Exceptions & Edge-Case Policy
-Header Block
-   ●​   template_id: BRP-04
-   ●​   title: Exceptions & Edge-Case Policy
-   ●​   type: business_rules_policy
-   ●​   template_version: 1.0.0
-   ●​   output_path: 10_app/policy/BRP-04_Exceptions_EdgeCases.md
-   ●​   compliance_gate_id: TMP-05.PRIMARY.POLICY
-   ●​   upstream_dependencies: ["BRP-01", "PRD-09", "DMG-03"]
-   ●​   inputs_required: ["BRP-01", "PRD-09", "DMG-03", "STANDARDS_INDEX"]
-   ●​   required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}
+# BRP-04 — Exceptions & Edge-Case Policy
 
+## 1. Header Block
 
-Purpose
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | BRP-04                                             |
+| Template Type     | Product / Business Rules                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring exceptions & edge-case policy    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Exceptions & Edge-Case Policy Document                         |
+
+## 2. Purpose
+
 Define the canonical handling for edge cases and exceptions so behavior is consistent across
 UI/API/ops and is testable. This prevents ad-hoc “special cases” being implemented differently
 across the system.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​   BRP-01: {{xref:BRP-01}} | OPTIONAL
-   ●​   PRD-09: {{xref:PRD-09}} | OPTIONAL
-   ●​   DMG-03: {{xref:DMG-03}} | OPTIONAL
-   ●​   STANDARDS_INDEX: {{standards.index}} | OPTIONAL
-   ●​   Known edge case notes: {{inputs.edge_notes}} | OPTIONAL
+- ●
+- ●
+- ●
+- ●
+- ●
+- BRP-01: {{xref:BRP-01}} | OPTIONAL
+- PRD-09: {{xref:PRD-09}} | OPTIONAL
+- DMG-03: {{xref:DMG-03}} | OPTIONAL
+- STANDARDS_INDEX: {{standards.index}} | OPTIONAL
+- Known edge case notes: {{inputs.edge_notes}} | OPTIONAL
 
+## 4. Required Fields
 
-Required Fields
-   ●​ Exceptions list (minimum 10 for non-trivial products)
-   ●​ For each exception:
-         ○​ ex_id
-         ○​ triggering_condition
-         ○​ affected_rule_ids / invariant_ids / feature_ids
-         ○​ expected_system_behavior
-         ○​ user_experience (what user sees)
-         ○​ enforcement_points (UI/API/DB/ops)
-         ○​ logging/audit requirements
-          ○​ test cases required (tc pointers or descriptions)
-          ○​ severity (P0/P1/P2)
-    ●​ Global policy for “unknown/unhandled cases”
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Exceptions list (minim... | spec         | Yes             |
+| For each exception:       | spec         | Yes             |
+| ○ ex_id                   | spec         | Yes             |
+| ○ triggering_condition    | spec         | Yes             |
+| ○ affected_rule_ids / ... | spec         | Yes             |
+| ○ expected_system_beha... | spec         | Yes             |
+| ○ user_experience (wha... | spec         | Yes             |
+| ○ enforcement_points (... | spec         | Yes             |
+| ○ logging/audit requir... | spec         | Yes             |
+| ○ test cases required ... | spec         | Yes             |
+| ○ severity (P0/P1/P2)     | spec         | Yes             |
+| Global policy for “unk... | spec         | Yes             |
 
+## 5. Optional Fields
 
-Optional Fields
-    ●​ Support playbook pointer | OPTIONAL
-    ●​ Open questions | OPTIONAL
+● Support playbook pointer | OPTIONAL
+● Open questions | OPTIONAL
 
+## 6. Rules
 
-Rules
-    ●​ Every exception must be testable (must map to a test case requirement).
-    ●​ P0 exceptions must define logging/audit requirements and a user-facing experience.
-    ●​ If “unhandled case” behavior is not defined, default must be explicit (fail-safe vs
-       permissive).
+- Every exception must be testable (must map to a test case requirement).
+- P0 exceptions must define logging/audit requirements and a user-facing experience.
+- If “unhandled case” behavior is not defined, default must be explicit (fail-safe vs
+- **permissive).**
 
+## 7. Output Format
 
-Output Format
-1) Exceptions Catalog (canonical)
-e conditio affected_ expecte            user_     enforce     logging test_r        severit    notes
-x    n        refs   d_beha             exper     ment_po      _audit equire          y
-_                      vior             ience       ints              ments
-i
-d
+### Required Headings (in order)
 
-e   {{excepti   {{exceptio   {{except   {{exce    {{excepti   {{except    {{exce    {{except   {{exce
-x   ons[0].c    ns[0].affe   ions[0].   ptions    ons[0].en   ions[0].l   ptions[   ions[0].   ptions[
-_   ondition}   cted_refs    behavio    [0].ux}   forcemen    ogging}     0].test   severity   0].note
-0   }           }}           r}}        }         t}}         }           s}}       }}         s}}
-1
+1. `## 1) Exceptions Catalog (canonical)`
+2. `## e conditio affected_ expecte`
+3. `## refs`
+4. `## d_beha`
+5. `## vior`
+6. `## user_`
+7. `## exper`
+8. `## ience`
+9. `## enforce`
+10. `## ment_po`
 
+## 8. Cross-References
 
-2) Global Edge-Case Policy (required)
+- Upstream: {{xref:BRP-01}} | OPTIONAL, {{xref:DMG-03}} | OPTIONAL
+- Downstream: {{xref:API-03}} | OPTIONAL, {{xref:ARC-06}} | OPTIONAL, {{xref:QA-02}} |
+- **OPTIONAL, {{xref:ADMIN-02}} | OPTIONAL**
+- Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
-    ●​ Default behavior: {{policy.default_behavior}} (fail-safe / permissive / block + escalate)
-    ●​ Reason codes: {{policy.reason_codes}} | OPTIONAL
-    ●​ Support escalation: {{policy.support_escalation}} | OPTIONAL
+## 9. Skill Level Requiredness Rules
 
-3) Open Questions (optional)
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-    ●​ {{open_questions[0]}} | OPTIONAL
-Cross-References
-  ●​ Upstream: {{xref:BRP-01}} | OPTIONAL, {{xref:DMG-03}} | OPTIONAL
-  ●​ Downstream: {{xref:API-03}} | OPTIONAL, {{xref:ARC-06}} | OPTIONAL, {{xref:QA-02}} |
-     OPTIONAL, {{xref:ADMIN-02}} | OPTIONAL
-  ●​ Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+## 10. Unknown Handling
 
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
-Skill Level Requiredness Rules
-  ●​ beginner: Required. Capture top exceptions + expected behavior.
-  ●​ intermediate: Required. Add enforcement points and logging requirements.
-  ●​ advanced: Required. Add reason codes and explicit test requirement pointers.
+## 11. Completeness Gate
 
-
-Unknown Handling
-  ●​ UNKNOWN_ALLOWED: reason_codes, support_playbook_pointer, notes,
-     open_questions
-  ●​ If severity == P0 and expected_behavior is UNKNOWN → block Completeness Gate.
-
-
-Completeness Gate
-  ●​ Gate ID: TMP-05.PRIMARY.POLICY
-  ●​ Pass conditions:
-        ○​ required_fields_present == true
-        ○​ exceptions_count >= 10
-        ○​ every_exception_has_behavior_and_tests == true
-        ○​ placeholder_resolution == true
-        ○​ no_unapproved_unknowns == true
-Success Metrics & Instrumentation Plan
-(SMIP)
-Success Metrics & Instrumentation Plan (SMIP)​
-SMIP-01 KPI/OKR Definitions (targets + owners)​
-SMIP-02 Analytics Event Spec (event names + properties)​
-SMIP-03 Funnel/Conversion Definitions​
-SMIP-04 Experiment Measurement Plan (guardrails + success)
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

@@ -1,209 +1,102 @@
-VAP-05
-VAP-05 — Accessibility for Visual Assets
-(alt text, meaning)
-Header Block
-   ●​ template_id: VAP-05​
+# VAP-05 — Accessibility for Visual Assets
 
-   ●​ title: Accessibility for Visual Assets (alt text, meaning)​
+## 1. Header Block
 
-   ●​ type: visual_asset_production​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | VAP-05                                             |
+| Template Type     | Design / Visual Assets                                          |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring accessibility for visual assets    |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Accessibility for Visual Assets Document                         |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/assets/VAP-05_Accessibility_for_Visual_Assets.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.ASSETS​
-
-   ●​ upstream_dependencies: ["A11YD-03", "DSYS-04", "VAP-01"]​
-
-   ●​ inputs_required: ["A11YD-03", "DSYS-04", "VAP-01", "CDX-01", "CDX-02",
-      "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define enforceable accessibility rules for visual assets: alt text, decorative vs informative
 classification, icon-only control labeling, and how meaning is conveyed. This ensures assets
 don’t create accessibility gaps or confuse assistive technologies.
 
-
-Inputs Required
-   ●​ A11YD-03: {{xref:A11YD-03}} | OPTIONAL​
-
-   ●​ DSYS-04: {{xref:DSYS-04}} | OPTIONAL​
-
-   ●​ VAP-01: {{xref:VAP-01}} | OPTIONAL​
-  ●​ CDX-01: {{xref:CDX-01}} | OPTIONAL​
-
-  ●​ CDX-02: {{xref:CDX-02}} | OPTIONAL​
-
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
-
-
-
-Required Fields
-  ●​ Classification rules:​
-
-         ○​ decorative assets​
-
-         ○​ informative assets​
-
-         ○​ functional assets (icons used as controls)​
-
-  ●​ Alt text requirements:​
-
-         ○​ when required​
-
-         ○​ length guidance​
-
-         ○​ content rules (what to say / what not to say)​
-
-         ○​ localization readiness​
-
-  ●​ Icon-only control rules:​
-
-         ○​ accessible label source (CDX vs custom)​
-
-         ○​ when tooltips are acceptable (not a substitute)​
-
-  ●​ Illustration meaning rules:​
-
-         ○​ ensure copy conveys meaning, not illustration alone​
-
-         ○​ avoid culturally specific signals unless localized​
-
-  ●​ Inventory compliance:​
-
-         ○​ every VAP-01 asset has a11y_class​
-            ○​ informative assets have alt_text requirement​
-
-   ●​ Verification checklist​
-
-
-
-Optional Fields
-   ●​ Audio description rules (video) | OPTIONAL​
-
-   ●​ Notes | OPTIONAL​
-
-
-
-Rules
-   ●​ Decorative assets must be hidden from screen readers.​
-
-   ●​ Informative assets must have alt text that conveys purpose, not appearance only.​
-
-   ●​ Icons used as controls must have programmatic labels even if visually unlabeled.​
-
-   ●​ Alt text must not duplicate adjacent visible text unless needed for context.​
-
-
-
-Output Format
-1) Classification Rules (required)
-  class            definition                 examples                     SR_behavior
-
-decorativ {{classes.decorative.d      {{classes.decorative.exam    {{classes.decorative.sr_beha
-e         ef}}                        ples}}                       vior}}
-
-informati    {{classes.informative.   {{classes.informative.exam   {{classes.informative.sr_beh
-ve           def}}                    ples}}                       avior}}
-
-functiona {{classes.functional.d      {{classes.functional.examp   {{classes.functional.sr_beha
-l         ef}}                        les}}                        vior}}
-
-
-2) Alt Text Rules (required)
-
-   ●​ When required: {{alt.when_required}}​
-   ●​ Length guidance: {{alt.length}}​
-
-   ●​ Content rules (do): {{alt.do_rules}}​
-
-   ●​ Content rules (don’t): {{alt.dont_rules}}​
-
-   ●​ Localization readiness: {{alt.l10n}}​
-
-
-
-3) Icon-only Controls (required)
-
-   ●​ Label source preference: {{icon_controls.label_source}} (CDX-02 key vs explicit label)​
-
-   ●​ Tooltip policy: {{icon_controls.tooltip_policy}}​
-
-   ●​ Disallowed: {{icon_controls.disallowed}} | OPTIONAL​
-
-
-
-4) Illustration Meaning Rules (required)
-
-   ●​ Illustration never sole meaning: {{illustrations.not_sole_meaning}}​
-
-   ●​ Empty state illustration pairing rule: {{illustrations.empty_state_pairing}} | OPTIONAL​
-
-
-
-5) Inventory Compliance Checks (required)
-
-   ●​ All assets have a11y_class: {{checks.all_assets_classified}}​
-
-   ●​ Informative assets have alt requirements: {{checks.informative_have_alt}}​
-
-   ●​ Functional icons have labels: {{checks.functional_have_labels}}​
-
-
-
-6) Verification Checklist (required)
-
-   ●​ {{verify[0]}}​
-
-   ●​ {{verify[1]}}​
-
-   ●​ {{verify[2]}}​
-
-   ●​ {{verify[3]}} | OPTIONAL​
-Cross-References
-  ●​ Upstream: {{xref:VAP-01}} | OPTIONAL, {{xref:A11YD-03}} | OPTIONAL,
-     {{xref:DSYS-04}} | OPTIONAL​
-
-  ●​ Downstream: {{xref:FE-*}} | OPTIONAL, {{xref:QA-02}} | OPTIONAL​
-
-  ●​ Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
-     {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
-
-Skill Level Requiredness Rules
-  ●​ beginner: Required. Classification + alt rules + icon-label rules.​
-
-  ●​ intermediate: Required. Add inventory compliance checks and illustration rules.​
-
-  ●​ advanced: Required. Add verification checklist rigor and localization constraints.​
-
-
-
-Unknown Handling
-  ●​ UNKNOWN_ALLOWED: audio_description_rules, notes, disallowed​
-
-  ●​ If classification rules are UNKNOWN → block Completeness Gate.​
-
-
-
-Completeness Gate
-  ●​ Gate ID: TMP-05.PRIMARY.ASSETS​
-
-  ●​ Pass conditions:​
-
-         ○​ required_fields_present == true​
-
-         ○​ classification_rules_present == true​
-
-         ○​ alt_text_rules_present == true​
-
-         ○​ inventory_checks_present == true​
-○​ placeholder_resolution == true​
-
-○​ no_unapproved_unknowns == true
+## 3. Inputs Required
+
+- ● A11YD-03: {{xref:A11YD-03}} | OPTIONAL
+- ● DSYS-04: {{xref:DSYS-04}} | OPTIONAL
+- ● VAP-01: {{xref:VAP-01}} | OPTIONAL
+- ● CDX-01: {{xref:CDX-01}} | OPTIONAL
+- ● CDX-02: {{xref:CDX-02}} | OPTIONAL
+- ● STANDARDS_INDEX: {{standards.index}} | OPTIONAL
+
+## 4. Required Fields
+
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Classification rules:     | spec         | Yes             |
+| ○ decorative assets       | spec         | Yes             |
+| ○ informative assets      | spec         | Yes             |
+| ○ functional assets (i... | spec         | Yes             |
+| Alt text requirements:    | spec         | Yes             |
+| ○ when required           | spec         | Yes             |
+| ○ length guidance         | spec         | Yes             |
+| ○ content rules (what ... | spec         | Yes             |
+| ○ localization readiness  | spec         | Yes             |
+| Icon-only control rules:  | spec         | Yes             |
+| ○ accessible label sou... | spec         | Yes             |
+| ○ when tooltips are ac... | spec         | Yes             |
+
+## 5. Optional Fields
+
+● Audio description rules (video) | OPTIONAL
+● Notes | OPTIONAL
+
+## 6. Rules
+
+- Decorative assets must be hidden from screen readers.
+- Informative assets must have alt text that conveys purpose, not appearance only.
+- Icons used as controls must have programmatic labels even if visually unlabeled.
+- Alt text must not duplicate adjacent visible text unless needed for context.
+
+## 7. Output Format
+
+### Required Headings (in order)
+
+1. `## 1) Classification Rules (required)`
+2. `## class`
+3. `## definition`
+4. `## examples`
+5. `## SR_behavior`
+6. `## ef}}`
+7. `## ples}}`
+8. `## vior}}`
+9. `## informati`
+10. `## def}}`
+
+## 8. Cross-References
+
+- Upstream: {{xref:VAP-01}} | OPTIONAL, {{xref:A11YD-03}} | OPTIONAL,
+- **{{xref:DSYS-04}} | OPTIONAL**
+- Downstream: {{xref:FE-*}} | OPTIONAL, {{xref:QA-02}} | OPTIONAL
+- Standards: {{standards.rules[STD-A11Y]}} | OPTIONAL,
+- {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+
+## 9. Skill Level Requiredness Rules
+
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
+
+## 10. Unknown Handling
+
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
+
+## 11. Completeness Gate
+
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

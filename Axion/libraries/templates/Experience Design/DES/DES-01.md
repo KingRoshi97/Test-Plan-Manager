@@ -1,99 +1,114 @@
-# DES-01 — Design Language & Theme Spec
+# DES-01 — UX Flows (happy paths + edge
 
 ## 1. Header Block
 
 | Field             | Value                                              |
 |-------------------|----------------------------------------------------|
 | Template ID       | DES-01                                             |
-| Template Type     | Experience Design                                  |
+| Template Type     | Design / UX                                          |
 | Template Version  | 1.0.0                                              |
-| Applies           | All projects with UI/visual design requirements     |
+| Applies           | All projects requiring ux flows (happy paths + edge    |
 | Filled By         | Internal Agent                                     |
-| Consumes          | Canonical Spec, Standards Snapshot                 |
-| Produces          | Filled Design Language & Theme Specification       |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled UX Flows (happy paths + edge Document                         |
 
 ## 2. Purpose
 
-Define the visual design language and theming rules for the product, including color palette, typography, spacing system, iconography, and brand expression. This document establishes the foundational design tokens and rules that all downstream design and component templates must follow.
+Define the user-facing workflows as step-by-step flows that can be implemented and tested.
+Each flow must map to feature IDs and acceptance criteria, include edge cases, and remain
+UI-framework agnostic while being behavior-specific.
 
 ## 3. Inputs Required
 
-- Canonical Spec (`{{spec.*}}`)
-- Standards Snapshot (`{{standards.*}}`)
-- Intake Submission (`{{submission_id}}`)
+- ●
+- ●
+- ●
+- ●
+- ●
+- PRD-04: {{xref:PRD-04}}
+- PRD-05: {{xref:PRD-05}} | OPTIONAL
+- PRD-09: {{xref:PRD-09}} | OPTIONAL
+- DMG-01: {{xref:DMG-01}} | OPTIONAL
+- STANDARDS_INDEX: {{standards.index}} | OPTIONAL
 
 ## 4. Required Fields
 
-| Field Name           | Source       | UNKNOWN Allowed |
-|----------------------|--------------|-----------------|
-| Color Palette        | spec         | Yes             |
-| Typography Scale     | spec         | Yes             |
-| Spacing System       | spec         | Yes             |
-| Brand Expression     | spec         | Yes             |
-| Theme Mode Support   | spec         | Yes             |
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Flow list (minimum 5 f... | spec         | Yes             |
+| For each flow:            | spec         | Yes             |
+| ○ flow_id                 | spec         | Yes             |
+| ○ name                    | spec         | Yes             |
+| ○ primary persona(s)      | spec         | Yes             |
+| ○ linked_feature_ids      | spec         | Yes             |
+| ○ preconditions           | spec         | Yes             |
+| ○ happy-path steps (or... | spec         | Yes             |
+| ○ edge cases (minimum 2)  | spec         | Yes             |
+| ○ entry points (where ... | spec         | Yes             |
+| ○ exit outcomes (succe... | spec         | Yes             |
+| ○ system feedback (loa... | spec         | Yes             |
 
 ## 5. Optional Fields
 
-| Field Name           | Source       | Notes                          |
-|----------------------|--------------|--------------------------------|
-| Iconography Style    | spec         | If icon set is specified       |
-| Motion Principles    | spec         | High-level animation rules     |
-| Illustration Style   | spec         | If illustrations are in scope  |
+● Variants (mobile vs web differences) | OPTIONAL
+● Timing/latency expectations (qualitative) | OPTIONAL
+● Notes | OPTIONAL
 
 ## 6. Rules
 
-- **No duplicate truth**: Design tokens must reference canonical spec entities.
-- **No invention**: Visual properties must derive from spec or be marked UNKNOWN.
-- **Consistency**: All tokens must be usable across all supported theme modes.
-- **Standards compliance**: Color contrast must meet accessibility standards from the standards snapshot.
+- 
+- 
+- 
+- 
+- **Flows must use existing IDs: feature IDs from PRD-04; acceptance IDs from PRD-09.**
+- **Steps must be written as user actions + system response (both sides).**
+- Do not define UI layout; reference screen IDs when known (DES-02/03).
+- **Edge cases must include at least:**
+- **○ validation failure or missing input**
+- **○ permission/entitlement failure OR system failure (network/server)**
+- If a flow touches sensitive data, reference relevant privacy/security constraints
+- **(DGP/SEC) via pointers only.**
 
 ## 7. Output Format
 
 ### Required Headings (in order)
 
-1. `## Design Tokens`
-   - `### Color Palette`
-   - `### Typography Scale`
-   - `### Spacing System`
-2. `## Brand Expression`
-3. `## Theme Modes`
-4. `## Accessibility Constraints`
-5. `## Unknowns & Open Questions`
+1. `## 1) Flow Index (summary)`
+2. `## flo`
+3. `## w_i`
+4. `## name`
+5. `## persona_ids`
+6. `## feature_ids`
+7. `## entry_poi`
+8. `## exit_outc`
+9. `## omes`
+10. `## flow`
 
 ## 8. Cross-References
 
-- **Upstream**: PRD-01 (Product Requirements), Canonical Spec (CAN-01), Standards Snapshot (STD-03)
-- **Downstream**: DES-02 (Global Component Styles), DES-04 (Screen Layout Specs), Component Packs
-- **Entity Types Referenced**: features, data entities
+- Upstream: {{xref:PRD-04}}, {{xref:PRD-05}} | OPTIONAL, {{xref:PRD-09}} | OPTIONAL
+- Downstream: {{xref:DES-02}}, {{xref:DES-03}}, {{xref:MAP-01}} | OPTIONAL,
+- **{{xref:QA-02}} | OPTIONAL**
+- Standards: {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
 
 ## 9. Skill Level Requiredness Rules
 
 | Section                    | Beginner  | Intermediate | Expert   |
 |----------------------------|-----------|--------------|----------|
-| Design Tokens              | Required  | Required     | Required |
-| Brand Expression           | Optional  | Required     | Required |
-| Theme Modes                | Optional  | Optional     | Required |
-| Accessibility Constraints  | Optional  | Required     | Required |
-| Unknowns                   | Optional  | Required     | Required |
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
 ## 10. Unknown Handling
 
-Unknowns must be written in the following format:
-
-```
-UNKNOWN-<NNN>: [Area] <summary>
-Impact: Low|Med|High
-Blocking: Yes|No
-Needs: <what input resolves it>
-Refs: <spec_id/entity_id/field_path>
-```
-
-Unknowns in this template must map back to Canonical Spec unknown objects (CAN-03).
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
 ## 11. Completeness Gate
 
-- [ ] All required fields are populated or explicitly UNKNOWN
-- [ ] All references resolve to valid canonical entity IDs
-- [ ] No contradictions between design tokens and accessibility standards
-- [ ] Unknowns are handled per UNKNOWN format (section 10)
-- [ ] Color contrast meets standards snapshot accessibility rules
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

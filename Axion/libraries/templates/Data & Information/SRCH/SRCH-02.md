@@ -1,190 +1,89 @@
-SRCH-02
-SRCH-01 — Search Scope & Surfaces
-(what is searchable, where)
-Header Block
-   ●​ template_id: SRCH-01​
+# SRCH-02 — Search Index Schema
 
-   ●​ title: Search Scope & Surfaces (what is searchable, where)​
+## 1. Header Block
 
-   ●​ type: search_indexing​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | SRCH-02                                             |
+| Template Type     | Data / Search                                            |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring search index schema      |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Search Index Schema Document                           |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/search/SRCH-01_Search_Scope_Surfaces.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.SRCH​
-
-   ●​ upstream_dependencies: ["PRD-04", "DISC-03", "IAN-01", "DGL-04"]​
-
-   ●​ inputs_required: ["PRD-04", "DISC-03", "IAN-01", "DGL-04", "DGP-01",
-      "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": true, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define what content/entities are searchable and where search appears in the product
 (surfaces): global search, per-page search, admin search, filters, and discovery surfaces. This
 prevents inconsistent search scope and makes indexing requirements deterministic.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​ PRD-04: {{xref:PRD-04}} | OPTIONAL​
+- Canonical Spec (`{{spec.*}}`)
+- Intake Submission (`{{submission_id}}`)
+- Resolved Standards Snapshot (`{{standards.*}}`)
 
-   ●​ DISC-03: {{xref:DISC-03}} | OPTIONAL​
+## 4. Required Fields
 
-   ●​ IAN-01: {{xref:IAN-01}} | OPTIONAL​
-  ●​ DGL-04: {{xref:DGL-04}} | OPTIONAL​
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Search Index Schema Overview         | spec         | No              |
+| Scope & Boundaries        | spec         | No              |
+| Key Definitions           | spec         | Yes             |
+| Constraints               | spec         | Yes             |
 
-  ●​ DGP-01: {{xref:DGP-01}} | OPTIONAL​
+## 5. Optional Fields
 
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
+| Field Name                | Source       | Notes                          |
+|---------------------------|--------------|--------------------------------|
+| Additional Context        | spec         | Enrichment only, no new truth  |
+| Revision History          | spec         | Auto-populated from version stamps |
+| Open Questions            | spec         | Tracked for resolution         |
 
+## 6. Rules
 
+- **No duplicate truth**: All content must reference canonical entity IDs from the spec; no redefining entities.
+- **No invention**: If data cannot be derived from spec or standards, mark as UNKNOWN.
+- **Traceability**: Every entry must map to a source in the canonical spec.
+- **Completeness**: All sections must be populated or explicitly marked N/A with justification.
 
-Required Fields
-  ●​ Search surfaces list (minimum 5 if search exists; otherwise mark N/A)​
+## 7. Output Format
 
-  ●​ For each surface:​
+### Required Headings (in order)
 
-         ○​ surface_id​
+1. `## Overview`
+2. `## Scope & Boundaries`
+3. `## Core Specification`
+4. `## Detailed Entries`
+5. `## Constraints & Assumptions`
+6. `## Dependencies`
+7. `## Unknowns & Open Questions`
 
-         ○​ platform (web/mobile/admin)​
+## 8. Cross-References
 
-         ○​ location (nav, page, modal)​
+- **Upstream**: Canonical Spec (CAN-01), Intake Submission (INT-01)
+- **Downstream**: Related Data / Search templates
+- **Entity Types Referenced**: As defined in canonical spec
 
-         ○​ purpose​
+## 9. Skill Level Requiredness Rules
 
-         ○​ searchable entity types​
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-         ○​ permissions requirements (who can see results)​
+## 10. Unknown Handling
 
-         ○​ UX constraints pointer (DES/CDX/A11Y)​
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
-  ●​ Searchable entity inventory:​
+## 11. Completeness Gate
 
-         ○​ entity_id​
-
-         ○​ fields searchable​
-
-         ○​ sensitivity constraints (PII)​
-
-         ○​ access control rule pointer (DGL-04/PMAD)​
-
-  ●​ Exclusions list (what must NOT be searchable)​
-
-  ●​ Coverage check: every searchable entity has an index strategy (SRCH-03)​
-
-
-
-Optional Fields
-   ●​ SEO/public discovery notes | OPTIONAL​
-
-   ●​ Notes | OPTIONAL​
-
-
-
-Rules
-   ●​ If applies == false, include 00_NA block only.​
-
-   ●​ Search results must respect authorization; never leak existence of private entities.​
-
-   ●​ Sensitive fields must be excluded or transformed (hash/redact).​
-
-   ●​ Surfaces must specify empty/error states pointers.​
-
-
-
-Output Format
-1) Applicability
-
-   ●​ applies: {{search.applies}} (true/false)​
-
-   ●​ 00_NA (if not applies): {{search.na_block}} | OPTIONAL​
-
-
-
-2) Search Surfaces (canonical)
- surf    platform       location       purpose      entity_typ     perms_ru     ux_poi       notes
- ace                                                    es           le_ref      nter
- _id
-
-srf_    {{surfaces[    {{surfaces[    {{surfaces[   {{surfaces[    {{surfaces   {{surfac   {{surface
-glob    0].platform}   0].location}   0].purpose    0].entities}   [0].perms}   es[0].ux   s[0].notes
-al      }              }              }}            }              }            }}         }}
-
-srf_    {{surfaces[    {{surfaces[    {{surfaces[   {{surfaces[    {{surfaces   {{surfac   {{surface
-adm     1].platform}   1].location}   1].purpose    1].entities}   [1].perms}   es[1].ux   s[1].notes
-in      }              }              }}            }              }            }}         }}
-
-
-3) Searchable Entities (required if applies)
- entity_id     searchable_f      sensitivity      access_rule_        exclusions           notes
-                   ields                              ref
-{{entities[0]   {{entities[0].fi   {{entities[0].s {{entities[0].ac   {{entities[0].exclu   {{entities[0].n
-.id}}           elds}}             ens}}           cess}}             sions}}               otes}}
-
-
-4) Exclusions (required if applies)
-
-   ●​ Must NOT be searchable: {{exclusions.list}}​
-
-   ●​ Rationale: {{exclusions.rationale}} | OPTIONAL​
-
-
-
-5) Coverage Checks (required if applies)
-
-   ●​ Every searchable entity has SRCH-03 plan: {{coverage.index_strategy_present}}​
-
-   ●​ Permissions defined for each surface: {{coverage.perms_present}}​
-
-
-
-Cross-References
-   ●​ Upstream: {{xref:DISC-03}} | OPTIONAL, {{xref:DGL-04}} | OPTIONAL, {{xref:IAN-01}} |
-      OPTIONAL​
-
-   ●​ Downstream: {{xref:SRCH-02}}, {{xref:SRCH-03}} | OPTIONAL, {{xref:SRCH-05}} |
-      OPTIONAL, {{xref:SRCH-06}} | OPTIONAL​
-
-   ●​ Standards: {{standards.rules[STD-PRIVACY]}} | OPTIONAL,
-      {{standards.rules[STD-A11Y]}} | OPTIONAL,
-      {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL​
-
-
-
-Skill Level Requiredness Rules
-   ●​ beginner: Required if applies. Surfaces + searchable entities list.​
-
-   ●​ intermediate: Required if applies. Add access rules and exclusions.​
-
-   ●​ advanced: Required if applies. Add coverage checks and sensitivity constraints.​
-
-
-
-Unknown Handling
- ●​ UNKNOWN_ALLOWED: seo_notes, notes, ux_pointer (if not designed yet but
-    must be planned)​
-
- ●​ If applies == true and access_rule_ref is UNKNOWN → block Completeness Gate.​
-
-
-
-Completeness Gate
- ●​ Gate ID: TMP-05.PRIMARY.SRCH​
-
- ●​ Pass conditions:​
-
-        ○​ required_fields_present == true​
-
-        ○​ if_applies_then_surfaces_present == true​
-
-        ○​ if_applies_then_entities_present == true​
-
-        ○​ perms_present == true​
-
-        ○​ placeholder_resolution == true​
-
-        ○​ no_unapproved_unknowns == true
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.

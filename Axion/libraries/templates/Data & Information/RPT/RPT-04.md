@@ -1,146 +1,89 @@
-RPT-04
-RPT-03 — Aggregation & Rollup Rules
-(windows, group-bys)
-Header Block
-   ●​ template_id: RPT-03​
+# RPT-04 — Report Scheduling & Distribution
 
-   ●​ title: Aggregation & Rollup Rules (windows, group-bys)​
+## 1. Header Block
 
-   ●​ type: reporting_aggregations​
+| Field             | Value                                              |
+|-------------------|----------------------------------------------------|
+| Template ID       | RPT-04                                             |
+| Template Type     | Data / Reporting                                            |
+| Template Version  | 1.0.0                                              |
+| Applies           | All projects requiring report scheduling & distribution      |
+| Filled By         | Internal Agent                                     |
+| Consumes          | Canonical Spec, Intake Submission, Standards Snapshot |
+| Produces          | Filled Report Scheduling & Distribution Document                           |
 
-   ●​ template_version: 1.0.0​
+## 2. Purpose
 
-   ●​ output_path: 10_app/reporting/RPT-03_Aggregation_Rollup_Rules.md​
-
-   ●​ compliance_gate_id: TMP-05.PRIMARY.RPT​
-
-   ●​ upstream_dependencies: ["RPT-02", "DATA-07", "BI-02"]​
-
-   ●​ inputs_required: ["RPT-02", "DATA-07", "BI-02", "DQV-02", "STANDARDS_INDEX"]​
-
-   ●​ required_by_skill_level: {"beginner": false, "intermediate": true, "advanced": true}​
-
-
-
-Purpose
 Define how metrics are aggregated and rolled up: time windows, grouping dimensions,
 late-arriving data handling, deduplication rules, and recomputation policies. This ensures report
 numbers are stable, explainable, and consistent across surfaces.
 
+## 3. Inputs Required
 
-Inputs Required
-   ●​ RPT-02: {{xref:RPT-02}} | OPTIONAL​
+- Canonical Spec (`{{spec.*}}`)
+- Intake Submission (`{{submission_id}}`)
+- Resolved Standards Snapshot (`{{standards.*}}`)
 
-   ●​ DATA-07: {{xref:DATA-07}} | OPTIONAL​
+## 4. Required Fields
 
-   ●​ BI-02: {{xref:BI-02}} | OPTIONAL​
-  ●​ DQV-02: {{xref:DQV-02}} | OPTIONAL​
+| Field Name                | Source       | UNKNOWN Allowed |
+|---------------------------|--------------|-----------------|
+| Report Scheduling & Distribution Overview         | spec         | No              |
+| Scope & Boundaries        | spec         | No              |
+| Key Definitions           | spec         | Yes             |
+| Constraints               | spec         | Yes             |
 
-  ●​ STANDARDS_INDEX: {{standards.index}} | OPTIONAL​
+## 5. Optional Fields
 
+| Field Name                | Source       | Notes                          |
+|---------------------------|--------------|--------------------------------|
+| Additional Context        | spec         | Enrichment only, no new truth  |
+| Revision History          | spec         | Auto-populated from version stamps |
+| Open Questions            | spec         | Tracked for resolution         |
 
+## 6. Rules
 
-Required Fields
-  ●​ Applicability (true/false). If false, mark N/A.​
+- **No duplicate truth**: All content must reference canonical entity IDs from the spec; no redefining entities.
+- **No invention**: If data cannot be derived from spec or standards, mark as UNKNOWN.
+- **Traceability**: Every entry must map to a source in the canonical spec.
+- **Completeness**: All sections must be populated or explicitly marked N/A with justification.
 
-  ●​ Rollup rules catalog (minimum 15 rules)​
+## 7. Output Format
 
-  ●​ For each rule:​
+### Required Headings (in order)
 
-          ○​ rollup_id​
+1. `## Overview`
+2. `## Scope & Boundaries`
+3. `## Core Specification`
+4. `## Detailed Entries`
+5. `## Constraints & Assumptions`
+6. `## Dependencies`
+7. `## Unknowns & Open Questions`
 
-          ○​ metric_id(s)​
+## 8. Cross-References
 
-          ○​ window type (hour/day/week/month/rolling)​
+- **Upstream**: Canonical Spec (CAN-01), Intake Submission (INT-01)
+- **Downstream**: Related Data / Reporting templates
+- **Entity Types Referenced**: As defined in canonical spec
 
-          ○​ window boundaries (timezone)​
+## 9. Skill Level Requiredness Rules
 
-          ○​ group-by dimensions allowed​
+| Section                    | Beginner  | Intermediate | Expert   |
+|----------------------------|-----------|--------------|----------|
+| Overview                   | Required  | Required     | Required |
+| Core Specification         | Required  | Required     | Required |
+| Detailed Fields            | Optional  | Required     | Required |
+| Advanced Configuration     | Optional  | Optional     | Required |
 
-          ○​ dedupe rule (event_id/entity_id)​
+## 10. Unknown Handling
 
-          ○​ late-arriving data policy (backfill window)​
+- If a required field cannot be resolved from inputs, write `UNKNOWN` and add to Open Questions.
+- UNKNOWN fields do not block gate passage unless explicitly marked `UNKNOWN Allowed: No`.
+- All UNKNOWN entries must include a reason and suggested resolution path.
 
-          ○​ recompute policy (full/partial)​
+## 11. Completeness Gate
 
-          ○​ correctness checks (reconciliation rule)​
-
-          ○​ owner​
-
-  ●​ Global rules:​
-
-          ○​ timezone standard for windows​
-
-          ○​ rounding rules​
-
-          ○​ null/empty handling​
-
-  ●​ Verification checklist​
-Optional Fields
-      ●​ Cross-metric consistency rules | OPTIONAL​
-
-      ●​ Notes | OPTIONAL​
-
-
-
-Rules
-      ●​ If applies == false, include 00_NA block only.​
-
-      ●​ Every rollup must specify timezone and dedupe keys.​
-
-      ●​ Late-arriving data must have explicit backfill windows.​
-
-      ●​ Recompute policies must be deterministic and observable.​
-
-
-
-Output Format
-1) Applicability
-
-      ●​ applies: {{rollups.applies}} (true/false)​
-
-      ●​ 00_NA (if not applies): {{rollups.na_block}} | OPTIONAL​
-
-
-
-2) Rollup Rules Catalog (canonical)
-ro      metric     windo      time   group_     dedup     late_    recomp      check     owner     notes
-llu       s          w         zon     by       e_key     data_      ute         s
-p_                              e                         polic
-id                                                          y
-
-rol     {{rules[   {{rules[   {{rul {{rules[   {{rules[   {{rule   {{rules[0   {{rules   {{rules   {{rule
-l_      0].metr    0].wind    es[0] 0].grou    0].ded     s[0].l   ].recom     [0].che   [0].ow    s[0].n
-01      ics}}      ow}}       .tz}} p_by}}     upe}}      ate}}    pute}}      cks}}     ner}}     otes}}
-
-rol     {{rules[   {{rules[   {{rul {{rules[   {{rules[   {{rule   {{rules[1   {{rules   {{rules   {{rule
-l_      1].metr    1].wind    es[1] 1].grou    1].ded     s[1].l   ].recom     [1].che   [1].ow    s[1].n
-02      ics}}      ow}}       .tz}} p_by}}     upe}}      ate}}    pute}}      cks}}     ner}}     otes}}
-
-
-3) Global Rules (required if applies)
-   ●​ Timezone standard: {{global.timezone}}​
-
-   ●​ Rounding rules: {{global.rounding}}​
-
-   ●​ Null/empty handling: {{global.null_handling}}​
-
-
-
-4) Verification Checklist (required if applies)
-
-   ●​ {{verify[0]}}​
-
-   ●​ {{verify[1]}}​
-
-   ●​ {{verify[2]}} | OPTIONAL​
-
-
-
-Cross-References
-   ●​ Upstream: {{xref:RPT-02}} | OPTIONAL, {{xref:DQV-02}} | OPTIONAL​
-
-   ●​ Downstream: {{xref:RPT-04}}, {{xref:RPT-06}} | OPTIONAL, {{xref:BI-03}} | OPTIONAL​
-
-   ●​ Standards: {{standards.rules[STD-RELIABILITY]}} | OPTIONAL,
-      {{standards.rules[STD-UNKNOWN-HANDLING]}} | OPTIONAL
+- All Required Fields must be populated or explicitly marked UNKNOWN with justification.
+- Output must follow the heading structure defined in Section 7.
+- No invented data — all content must trace to canonical spec or intake submission.
+- Cross-references must resolve to valid template IDs.
