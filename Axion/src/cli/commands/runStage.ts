@@ -5,6 +5,7 @@ import { isoNow } from "../../utils/time.js";
 import { sha256 } from "../../utils/hash.js";
 import type { RunManifest, StageReport, StageId } from "../../types/run.js";
 import { STAGE_ORDER, STAGE_GATES, resolveStageId } from "../../types/run.js";
+import { getStageOrder, getStageGates } from "../../core/orchestration/loader.js";
 import type { ArtifactIndexEntry } from "../../types/artifacts.js";
 import { buildRealKit } from "../../core/kit/build.js";
 import { buildWorkBreakdown } from "../../core/planning/workBreakdown.js";
@@ -334,7 +335,9 @@ export function executeStageWithGates(baseDir: string, runDir: string, runId: st
 
   executeStageWork(baseDir, runDir, runId, stageId, generatedAt);
 
-  const gateId = STAGE_GATES[stageId];
+  const orchGates = getStageGates(baseDir);
+  const effectiveGates = Object.keys(orchGates).length > 0 ? orchGates : STAGE_GATES;
+  const gateId = effectiveGates[stageId];
   let gatesPassed = true;
   if (gateId) {
     const gateResult = runGatesForStage(baseDir, runId, stageId);
@@ -403,8 +406,10 @@ export function executeStageWithGates(baseDir: string, runDir: string, runId: st
 export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string): void {
   const resolved = resolveStageId(stageIdArg);
   if (!resolved) {
+    const orchOrder = getStageOrder(baseDir);
+    const validStages = orchOrder.length > 0 ? orchOrder : STAGE_ORDER;
     console.error(`Invalid stage_id: ${stageIdArg}`);
-    console.error(`Valid stages: ${STAGE_ORDER.join(", ")}`);
+    console.error(`Valid stages: ${validStages.join(", ")}`);
     process.exit(1);
   }
   const stageId: StageId = resolved;
@@ -441,8 +446,10 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
     manifest.updated_at = isoNow();
     writeJson(manifestPath, manifest);
 
-    const gateId = STAGE_GATES[stageId];
-    console.log(`  Stage ${stageId}: FAIL (gate ${gateId} blocked)`);
+    const cmdOrcGates = getStageGates(baseDir);
+    const cmdEffGates = Object.keys(cmdOrcGates).length > 0 ? cmdOrcGates : STAGE_GATES;
+    const failGateId = cmdEffGates[stageId];
+    console.log(`  Stage ${stageId}: FAIL (gate ${failGateId} blocked)`);
     process.exit(1);
   }
 

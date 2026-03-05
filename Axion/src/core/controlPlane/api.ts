@@ -7,7 +7,7 @@ import { STAGE_ORDER, STAGE_GATES, GATES_REQUIRED } from "../../types/run.js";
 import { isoNow } from "../../utils/time.js";
 import { readJson, writeJson, ensureDir } from "../../utils/fs.js";
 import { getRunProfile, evaluatePolicyHook } from "../system/loader.js";
-import { getPipelineDefinition } from "../orchestration/loader.js";
+import { getPipelineDefinition, getStageOrder, getStageGates, getGatesRequired } from "../orchestration/loader.js";
 
 function padRunId(n: number): string {
   return `RUN-${String(n).padStart(6, "0")}`;
@@ -65,8 +65,16 @@ export class RunController {
 
     const now = isoNow();
 
-    const stages: ICPStageRun[] = STAGE_ORDER.map((sid) => ({
-      stage_id: sid,
+    const orchStageOrder = getStageOrder(this.baseDir);
+    const orchStageGates = getStageGates(this.baseDir);
+    const orchGatesRequired = getGatesRequired(this.baseDir);
+
+    const effectiveStageOrder = orchStageOrder.length > 0 ? orchStageOrder : [...STAGE_ORDER];
+    const effectiveStageGates = Object.keys(orchStageGates).length > 0 ? orchStageGates : { ...STAGE_GATES };
+    const effectiveGatesRequired = orchGatesRequired.length > 0 ? orchGatesRequired : [...GATES_REQUIRED];
+
+    const stages: ICPStageRun[] = effectiveStageOrder.map((sid) => ({
+      stage_id: sid as StageId,
       icp_status: "not_started" as ICPStageStatus,
       stage_report_ref: null,
     }));
@@ -98,16 +106,16 @@ export class RunController {
       created_at: now,
       updated_at: now,
       pipeline: {
-        pipeline_id: config.pipeline_id as string ?? "axion_default",
-        pipeline_version: config.pipeline_version as string ?? "0.2.0",
+        pipeline_id: orchPipeline?.pipeline_id ?? (config.pipeline_id as string ?? "axion_default"),
+        pipeline_version: orchPipeline?.version ?? (config.pipeline_version as string ?? "0.2.0"),
       },
       profile: {
         profile_id: resolvedProfile?.profile_id ?? (config.profile_id as string ?? "default"),
       },
-      stage_order: [...STAGE_ORDER],
+      stage_order: effectiveStageOrder as StageId[],
       stages,
-      stage_gates: { ...STAGE_GATES },
-      gates_required: [...GATES_REQUIRED],
+      stage_gates: effectiveStageGates,
+      gates_required: effectiveGatesRequired,
       gate_reports: [],
       artifact_index_ref: "artifact_index.json",
       errors: [],

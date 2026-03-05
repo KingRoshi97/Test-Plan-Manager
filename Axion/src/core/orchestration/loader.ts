@@ -152,6 +152,45 @@ export function getInvalidatedContracts(repoRoot: string, stageId: string): stri
   return rule.invalidates;
 }
 
+export function getStageOrder(repoRoot: string): string[] {
+  const pipeline = getPipelineDefinition(repoRoot);
+  return pipeline?.stage_order ?? [];
+}
+
+export function getStageGates(repoRoot: string): Record<string, string> {
+  const pipeline = getPipelineDefinition(repoRoot);
+  if (!pipeline) return {};
+  const gates: Record<string, string> = {};
+  for (const gp of pipeline.gate_points) {
+    gates[gp.after_stage] = gp.gate_id;
+  }
+  return gates;
+}
+
+export function getGatesRequired(repoRoot: string): string[] {
+  const pipeline = getPipelineDefinition(repoRoot);
+  if (!pipeline) return [];
+  if ((pipeline as any).gates_required) return (pipeline as any).gates_required;
+  return pipeline.gate_points.map((gp) => gp.gate_id);
+}
+
+export function getStageName(repoRoot: string, stageId: string): string | null {
+  const pipeline = getPipelineDefinition(repoRoot);
+  if (!pipeline) return null;
+  const stage = pipeline.stages[stageId];
+  return stage?.name ?? null;
+}
+
+export function getStageNames(repoRoot: string): Record<string, string> {
+  const pipeline = getPipelineDefinition(repoRoot);
+  if (!pipeline) return {};
+  const names: Record<string, string> = {};
+  for (const [id, def] of Object.entries(pipeline.stages)) {
+    names[id] = def.name;
+  }
+  return names;
+}
+
 export function loadOrchestrationDocs(repoRoot: string): OrcDoc[] {
   const base = join(repoRoot, ORC_LIB_REL);
   if (!existsSync(base)) return [];

@@ -11,6 +11,7 @@ import { JSONRunStore } from "../../core/controlPlane/store.js";
 import { AuditLogger } from "../../core/controlPlane/audit.js";
 import { icpRunToManifest } from "../../core/controlPlane/model.js";
 import { executeStageWithGates } from "./runStage.js";
+import { getStageOrder } from "../../core/orchestration/loader.js";
 
 function hashFile(absolutePath: string): string {
   return sha256(readFileSync(absolutePath, "utf-8"));
@@ -86,9 +87,12 @@ export async function cmdRunFull(baseDir: string = "."): Promise<void> {
   index.push(artifactEntry("artifact_index_001", "artifact_index", "artifact_index.json", hashFile(indexPath), "S1_INGEST_NORMALIZE", now));
   writeJson(indexPath, index);
 
-  console.log(`\n[2/2] Executing ${STAGE_ORDER.length} stages via ICP control plane...`);
+  const orchOrder = getStageOrder(baseDir);
+  const effectiveOrder = orchOrder.length > 0 ? orchOrder : [...STAGE_ORDER];
 
-  for (const stageId of STAGE_ORDER) {
+  console.log(`\n[2/2] Executing ${effectiveOrder.length} stages via ICP control plane...`);
+
+  for (const stageId of effectiveOrder) {
     await controller.advanceStage(runId, stageId);
 
     const generatedAt = run.created_at;

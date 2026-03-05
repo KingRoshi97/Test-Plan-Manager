@@ -80,6 +80,7 @@ export interface RunManifest {
   config: Record<string, unknown>;
 }
 
+/** @deprecated Use `getStageOrder()` from `core/orchestration/loader` instead. Kept as fallback. */
 export const STAGE_ORDER: StageId[] = [
   "S1_INGEST_NORMALIZE",
   "S2_VALIDATE_INTAKE",
@@ -93,6 +94,7 @@ export const STAGE_ORDER: StageId[] = [
   "S10_PACKAGE",
 ];
 
+/** @deprecated Use `getStageGates()` from `core/orchestration/loader` instead. Kept as fallback. */
 export const STAGE_GATES: Record<string, string> = {
   S2_VALIDATE_INTAKE: "G1_INTAKE_VALIDITY",
   S4_VALIDATE_CANONICAL: "G2_CANONICAL_INTEGRITY",
@@ -104,6 +106,7 @@ export const STAGE_GATES: Record<string, string> = {
   S10_PACKAGE: "G8_PACKAGE_INTEGRITY",
 };
 
+/** @deprecated Use `getGatesRequired()` from `core/orchestration/loader` instead. Kept as fallback. */
 export const GATES_REQUIRED: string[] = [
   "G1_INTAKE_VALIDITY",
   "G2_CANONICAL_INTEGRITY",
@@ -115,6 +118,7 @@ export const GATES_REQUIRED: string[] = [
   "G8_PACKAGE_INTEGRITY",
 ];
 
+/** @deprecated Use `getStageNames()` from `core/orchestration/loader` instead. Kept as fallback. */
 export const STAGE_NAMES: Record<StageId, string> = {
   S1_INGEST_NORMALIZE: "Ingest & Normalize",
   S2_VALIDATE_INTAKE: "Validate Intake",

@@ -415,16 +415,26 @@ Pipeline execution contracts and run lifecycle definitions. Defines the authorit
   - `getRerunPolicy(repoRoot, stageId)` — look up rerun policy for a stage
   - `validateStageConsumes(repoRoot, stageId)` — check if all consumes contracts exist
   - `getInvalidatedContracts(repoRoot, stageId)` — get downstream contracts invalidated by rerunning a stage
+  - `getStageOrder(repoRoot)` — returns pipeline stage_order from registry (source of truth)
+  - `getStageGates(repoRoot)` — builds stage→gate mapping from registry gate_points
+  - `getGatesRequired(repoRoot)` — returns all required gate IDs from registry
+  - `getStageName(repoRoot, stageId)` / `getStageNames(repoRoot)` — stage display names from registry
   - `loadOrchestrationDocs/loadOrchestrationSchemas/loadOrchestrationRegistries` — read files for API/UI consumption
-- **ICP wiring**: `RunController.createRun()` loads pipeline definition from orchestration library and attaches `pipeline_ref` (pipeline_id, version, source) to every run.
-- **ICPRun model**: Added optional `pipeline_ref?: { pipeline_id, version, source }` field; preserved in manifest round-trip
-- **`/api/config`**: Now loads `stageOrder` and `stageGates` from `pipeline_definition.axion.v1.json` registry, falling back to hardcoded values if file is missing
-- **API**: 6 new `/api/orchestration/*` endpoints expose orchestration library data to the UI
+- **ICP wiring**: `RunController.createRun()` loads stage order, gates, and gates_required from orchestration library (with hardcoded fallback). Sets `pipeline` fields (pipeline_id, version) from the registry. Attaches `pipeline_ref` to every run.
+- **CLI wiring**: `cmdRunFull()` and `executeStageWithGates()` load stage order and gates from orchestration library (with fallback)
+- **Server wiring**: `pipeline-runner.ts` builds initial stages from orchestration library. `/api/config` returns `stageOrder`, `stageGates`, `gatesRequired`, `stageNames` from loader with `source: "orchestration_library"`.
+- **Frontend wiring**: Assembly page fetches `/api/config` via React Query hook `usePipelineConfig()` — no hardcoded stage constants in frontend
+- **ICPRun model**: `pipeline_ref?: { pipeline_id, version, source }` field; preserved in manifest round-trip via `config.__pipeline_ref`
+- **API**: 6 `/api/orchestration/*` endpoints expose orchestration library data to the UI
 - **UI**: `/orchestration` page with 4 tabs (Pipeline, Documents, Schemas, Registries), overview cards, pipeline stage visualization with IO contract labels and gate points
 
-### Migration Notes
+### Architecture: Registry-Driven Pipeline
+The orchestration library's `pipeline_definition.axion.v1.json` is the **single source of truth** for pipeline execution. All runtime consumers load from the registry via the orchestration loader, with hardcoded fallbacks in `types/run.ts` (marked `@deprecated`) for resilience if the registry file is missing.
+
+Data flow: `registry JSON → loader.ts → RunController / CLI / pipeline-runner / /api/config → frontend`
+
+### Remaining Migration Notes
 - The ORC-3 run_manifest.v1 schema defines the *target* manifest format (pipeline_ref, pins, runtime, stage_timeline, artifacts). The current runtime uses the legacy `RunManifest` type from `types/run.ts` with different field names. Full alignment requires a pipeline migration task.
-- The runtime still uses hardcoded `STAGE_ORDER` (S1-S10) and `STAGE_GATES` from `types/run.ts`. The orchestration library defines the target pipeline (S0-S10 via `PIPE-AXION`). `/api/config` now serves orchestration library data for UI/informational use; runtime execution continues on the legacy pipeline for stability.
 - `pipeline_ref` is stored on `ICPRun` as a first-class field and round-tripped through manifests via `config.__pipeline_ref` for backward compatibility with the legacy `RunManifest` type.
 
 ### Key ID patterns

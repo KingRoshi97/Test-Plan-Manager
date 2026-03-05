@@ -3,18 +3,24 @@ import path from "path";
 import fs from "fs";
 import { storage } from "./storage.js";
 import type { Assembly, PipelineRun } from "../shared/schema.js";
+import { getStageOrder } from "../Axion/src/core/orchestration/loader.js";
 
 const AXION_ROOT = path.resolve(process.cwd(), "Axion");
 
-const STAGE_ORDER = [
+const FALLBACK_STAGE_ORDER = [
   "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
   "S4_VALIDATE_CANONICAL", "S5_RESOLVE_STANDARDS", "S6_SELECT_TEMPLATES",
   "S7_RENDER_DOCS", "S8_BUILD_PLAN", "S9_VERIFY_PROOF", "S10_PACKAGE",
 ];
 
+function getEffectiveStageOrder(): string[] {
+  const orchOrder = getStageOrder(process.cwd());
+  return orchOrder.length > 0 ? orchOrder : FALLBACK_STAGE_ORDER;
+}
+
 function buildInitialStages() {
   const stages: Record<string, { status: string; startedAt?: string; completedAt?: string }> = {};
-  for (const s of STAGE_ORDER) {
+  for (const s of getEffectiveStageOrder()) {
     stages[s] = { status: "pending" };
   }
   return stages;

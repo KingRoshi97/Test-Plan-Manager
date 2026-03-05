@@ -3,6 +3,7 @@ import { storage } from "./storage.js";
 import { insertAssemblySchema } from "../shared/schema.js";
 import { startPipelineRun } from "./pipeline-runner.js";
 import { generateAutofillSuggestions } from "./openai.js";
+import { getStageOrder, getStageGates, getGatesRequired, getStageNames } from "../Axion/src/core/orchestration/loader.js";
 import fs from "fs";
 import path from "path";
 import archiver from "archiver";
@@ -251,33 +252,41 @@ export function registerRoutes(app: Express) {
   });
 
   app.get("/api/config", (_req: Request, res: Response) => {
-    try {
-      const pipelinePath = path.join(AXION_ROOT, "libraries", "orchestration", "registries", "pipeline_definition.axion.v1.json");
-      if (fs.existsSync(pipelinePath)) {
-        const pipeline = JSON.parse(fs.readFileSync(pipelinePath, "utf-8"));
-        const stageOrder = pipeline.stage_order ?? [];
-        const stageGates: Record<string, string> = {};
-        for (const gp of pipeline.gate_points ?? []) {
-          stageGates[gp.after_stage] = gp.gate_id;
-        }
-        return res.json({ stageOrder, stageGates, pipeline_id: pipeline.pipeline_id, pipeline_version: pipeline.version });
-      }
-    } catch {}
-    const stageOrder = [
-      "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
-      "S4_VALIDATE_CANONICAL", "S5_RESOLVE_STANDARDS", "S6_SELECT_TEMPLATES",
-      "S7_RENDER_DOCS", "S8_BUILD_PLAN", "S9_VERIFY_PROOF", "S10_PACKAGE",
-    ];
-    const stageGates: Record<string, string> = {
-      S2_VALIDATE_INTAKE: "G1_INTAKE_VALIDITY",
-      S4_VALIDATE_CANONICAL: "G2_CANONICAL_INTEGRITY",
-      S5_RESOLVE_STANDARDS: "G3_STANDARDS_RESOLVED",
-      S6_SELECT_TEMPLATES: "G4_TEMPLATE_SELECTION",
-      S7_RENDER_DOCS: "G5_TEMPLATE_COMPLETENESS",
-      S8_BUILD_PLAN: "G6_PLAN_COVERAGE",
-      S10_PACKAGE: "G8_PACKAGE_INTEGRITY",
-    };
-    res.json({ stageOrder, stageGates });
+    const repoRoot = process.cwd();
+    const stageOrder = getStageOrder(repoRoot);
+    const stageGates = getStageGates(repoRoot);
+    const gatesRequired = getGatesRequired(repoRoot);
+    const stageNames = getStageNames(repoRoot);
+
+    if (stageOrder.length === 0) {
+      return res.json({
+        stageOrder: [
+          "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
+          "S4_VALIDATE_CANONICAL", "S5_RESOLVE_STANDARDS", "S6_SELECT_TEMPLATES",
+          "S7_RENDER_DOCS", "S8_BUILD_PLAN", "S9_VERIFY_PROOF", "S10_PACKAGE",
+        ],
+        stageGates: {
+          S2_VALIDATE_INTAKE: "G1_INTAKE_VALIDITY",
+          S4_VALIDATE_CANONICAL: "G2_CANONICAL_INTEGRITY",
+          S5_RESOLVE_STANDARDS: "G3_STANDARDS_RESOLVED",
+          S6_SELECT_TEMPLATES: "G4_TEMPLATE_SELECTION",
+          S7_RENDER_DOCS: "G5_TEMPLATE_COMPLETENESS",
+          S8_BUILD_PLAN: "G6_PLAN_COVERAGE",
+          S10_PACKAGE: "G8_PACKAGE_INTEGRITY",
+        },
+        source: "fallback",
+      });
+    }
+
+    res.json({
+      stageOrder,
+      stageGates,
+      gatesRequired,
+      stageNames,
+      pipeline_id: "PIPE-AXION",
+      pipeline_version: "1.0.0",
+      source: "orchestration_library",
+    });
   });
 
   app.get("/api/status", async (_req: Request, res: Response) => {

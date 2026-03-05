@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { PipelineProgress } from "../components/pipeline-progress";
 
-const STAGE_ORDER = [
+const FALLBACK_STAGE_ORDER = [
   "S1_INGEST_NORMALIZE",
   "S2_VALIDATE_INTAKE",
   "S3_BUILD_CANONICAL",
@@ -22,17 +22,7 @@ const STAGE_ORDER = [
   "S10_PACKAGE",
 ];
 
-const STAGE_GATES: Record<string, string> = {
-  S2_VALIDATE_INTAKE: "G1_INTAKE_VALIDITY",
-  S4_VALIDATE_CANONICAL: "G2_CANONICAL_INTEGRITY",
-  S5_RESOLVE_STANDARDS: "G3_STANDARDS_RESOLVED",
-  S6_SELECT_TEMPLATES: "G4_TEMPLATE_SELECTION",
-  S7_RENDER_DOCS: "G5_TEMPLATE_COMPLETENESS",
-  S8_BUILD_PLAN: "G6_PLAN_COVERAGE",
-  S10_PACKAGE: "G8_PACKAGE_INTEGRITY",
-};
-
-const STAGE_LABELS: Record<string, string> = {
+const FALLBACK_STAGE_LABELS: Record<string, string> = {
   S1_INGEST_NORMALIZE: "Ingest & Normalize",
   S2_VALIDATE_INTAKE: "Validate Intake",
   S3_BUILD_CANONICAL: "Build Canonical",
@@ -44,6 +34,20 @@ const STAGE_LABELS: Record<string, string> = {
   S9_VERIFY_PROOF: "Verify Proof",
   S10_PACKAGE: "Package",
 };
+
+function usePipelineConfig() {
+  const { data } = useQuery({
+    queryKey: ["/api/config"],
+    queryFn: () => apiRequest("/api/config"),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return {
+    stageOrder: (data?.stageOrder as string[]) ?? FALLBACK_STAGE_ORDER,
+    stageGates: (data?.stageGates as Record<string, string>) ?? {},
+    stageNames: (data?.stageNames as Record<string, string>) ?? FALLBACK_STAGE_LABELS,
+  };
+}
 
 function statusColor(status: string) {
   switch (status) {
@@ -106,13 +110,13 @@ const TABS = [
 
 type TabId = typeof TABS[number]["id"];
 
-function PipelineTimeline({ stages }: { stages: Record<string, any> | null }) {
+function PipelineTimeline({ stages, stageOrder, stageGates, stageNames }: { stages: Record<string, any> | null; stageOrder: string[]; stageGates: Record<string, string>; stageNames: Record<string, string> }) {
   return (
     <div className="space-y-1">
-      {STAGE_ORDER.map((stageKey, i) => {
+      {stageOrder.map((stageKey, i) => {
         const stageData = stages?.[stageKey];
         const status = stageData?.status || "pending";
-        const gate = STAGE_GATES[stageKey];
+        const gate = stageGates[stageKey];
         const gateResult = stageData?.gateResult;
         const color = statusColor(status);
 
@@ -133,7 +137,7 @@ function PipelineTimeline({ stages }: { stages: Record<string, any> | null }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium" style={{ color: status === "pending" ? "hsl(var(--muted-foreground))" : "hsl(var(--foreground))" }}>
-                  {STAGE_LABELS[stageKey] || stageKey}
+                  {stageNames[stageKey] || stageKey}
                 </span>
                 <StatusBadge status={status} />
                 {gate && (
@@ -149,7 +153,7 @@ function PipelineTimeline({ stages }: { stages: Record<string, any> | null }) {
               </div>
             </div>
 
-            {i < STAGE_ORDER.length - 1 && (
+            {i < stageOrder.length - 1 && (
               <ChevronRight className="w-4 h-4 shrink-0" style={{ color: "hsl(var(--muted-foreground))" }} />
             )}
           </div>
@@ -470,9 +474,9 @@ function IntakeEditor({ assembly, assemblyId }: { assembly: any; assemblyId: num
   );
 }
 
-function OverviewTab({ assembly, latestStages, onRun, isRunning }: { assembly: any; latestStages: any; onRun: () => void; isRunning: boolean }) {
-  const passedCount = STAGE_ORDER.filter((s) => latestStages?.[s]?.status === "passed").length;
-  const failedCount = STAGE_ORDER.filter((s) => latestStages?.[s]?.status === "failed").length;
+function OverviewTab({ assembly, latestStages, onRun, isRunning, stageOrder }: { assembly: any; latestStages: any; onRun: () => void; isRunning: boolean; stageOrder: string[] }) {
+  const passedCount = stageOrder.filter((s) => latestStages?.[s]?.status === "passed").length;
+  const failedCount = stageOrder.filter((s) => latestStages?.[s]?.status === "failed").length;
 
   return (
     <div className="space-y-6">
@@ -575,14 +579,14 @@ function OverviewTab({ assembly, latestStages, onRun, isRunning }: { assembly: a
   );
 }
 
-function PipelineTab({ stages, runs, assemblyId }: { stages: any; runs: any[]; assemblyId: string }) {
+function PipelineTab({ stages, runs, assemblyId, stageOrder, stageGates, stageNames }: { stages: any; runs: any[]; assemblyId: string; stageOrder: string[]; stageGates: Record<string, string>; stageNames: Record<string, string> }) {
   const [, navigate] = useLocation();
 
   return (
     <div className="space-y-6">
       <div className="border rounded-lg p-4 border-[hsl(var(--border))] bg-[hsl(var(--card))]">
         <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-3">Stage Timeline</h3>
-        <PipelineTimeline stages={stages} />
+        <PipelineTimeline stages={stages} stageOrder={stageOrder} stageGates={stageGates} stageNames={stageNames} />
       </div>
 
       <div>
@@ -694,6 +698,7 @@ export default function AssemblyPage() {
   const queryClient = useQueryClient();
   const id = params?.id;
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const { stageOrder, stageGates, stageNames } = usePipelineConfig();
 
   const { data: assembly, isLoading, error } = useQuery({
     queryKey: ["/api/assemblies", id],
@@ -821,6 +826,7 @@ export default function AssemblyPage() {
           latestStages={latestStages}
           onRun={() => runMutation.mutate()}
           isRunning={runMutation.isPending}
+          stageOrder={stageOrder}
         />
       )}
 
@@ -829,6 +835,9 @@ export default function AssemblyPage() {
           stages={latestStages}
           runs={runs}
           assemblyId={id!}
+          stageOrder={stageOrder}
+          stageGates={stageGates}
+          stageNames={stageNames}
         />
       )}
 
