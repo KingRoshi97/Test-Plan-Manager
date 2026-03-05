@@ -5,6 +5,7 @@ type: "concept"
 pillar: "INDUSTRY_PLAYBOOKS"
 domains:
   - "healthcare"
+subdomains: []
 tags:
   - "healthcare"
   - "data-model"
@@ -13,6 +14,9 @@ maturity: "draft"
 use_policy: "pattern_only"
 executor_access: "internal_and_external"
 license: "internal_owned"
+allowed_excerpt:
+  max_words: 0
+  max_lines: 0
 created_at: "2025-01-01"
 updated_at: "2025-01-01"
 owner: "axion-system"

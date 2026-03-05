@@ -4,11 +4,15 @@ title: "Project Structure Norms (venv, deps)"
 type: concept
 pillar: LANGUAGES_AND_LIBRARIES
 domains: [python]
+subdomains: []
 tags: [python, project-structure, venv]
 maturity: draft
 use_policy: pattern_only
 executor_access: internal_and_external
 license: internal_owned
+allowed_excerpt:
+  max_words: 0
+  max_lines: 0
 created_at: "2025-01-01"
 updated_at: "2025-01-01"
 owner: axion

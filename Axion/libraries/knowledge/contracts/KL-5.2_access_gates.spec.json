@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "KL-5.2a",
+  "gates": [
+    {
+      "gate_id": "KL-GATE-04",
+      "name": "External executor cannot access internal_only KIDs",
+      "severity": "hard_stop",
+      "checks": [
+        "if selection.inputs.executor_type==external then none(selection.selected[].restrictions.executor_access==internal_only)"
+      ]
+    },
+    {
+      "gate_id": "KL-GATE-05",
+      "name": "External kit export excludes restricted content",
+      "severity": "hard_stop",
+      "checks": [
+        "if kit_export.target_executor==external then none(kit.contains_internal_only_kid_text)",
+        "if kit_export.target_executor==external then none(kit.contains_restricted_internal_only_content)",
+        "if kit_export.target_executor==external then all(embedded_excerpts within allowed_excerpt limits)"
+      ]
+    }
+  ]
+}

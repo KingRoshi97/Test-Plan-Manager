@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "KL-5.4a",
+  "gates": [
+    {
+      "gate_id": "KL-GATE-08",
+      "name": "Production maturity threshold",
+      "severity": "policy_controlled",
+      "checks": [
+        "if selection.inputs.risk_class==PROD then all(selected[].restrictions.maturity in {reviewed,verified,golden})",
+        "if selection.inputs.risk_class==COMPLIANCE then all(selected[].restrictions.maturity in {verified,golden})",
+        "if override_present then selection.notes include maturity_exception"
+      ]
+    }
+  ]
+}

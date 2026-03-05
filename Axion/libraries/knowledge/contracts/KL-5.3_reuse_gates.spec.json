@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "KL-5.3a",
+  "gates": [
+    {
+      "gate_id": "KL-GATE-06",
+      "name": "Allowlisted reuse requires reuse_log",
+      "severity": "hard_stop",
+      "checks": [
+        "if output.contains_verbatim_excerpts then reuse_log.exists",
+        "all(reuse_log[].kid has use_policy==reusable_with_allowlist)"
+      ]
+    },
+    {
+      "gate_id": "KL-GATE-07",
+      "name": "Block copying beyond excerpt limits",
+      "severity": "hard_stop",
+      "checks": [
+        "all(reuse_log[].excerpt_size.words <= kid.allowed_excerpt.max_words)",
+        "all(reuse_log[].excerpt_size.lines <= kid.allowed_excerpt.max_lines)",
+        "output.verbatim_excerpt_totals_per_kid <= allowed_excerpt (strict)"
+      ]
+    }
+  ]
+}

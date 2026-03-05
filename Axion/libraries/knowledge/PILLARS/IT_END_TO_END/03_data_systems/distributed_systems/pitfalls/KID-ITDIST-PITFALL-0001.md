@@ -6,12 +6,16 @@ pillar: IT_END_TO_END
 domains:
   - data_systems
   - distributed_systems
+subdomains: []
 tags:
   - distributed_systems
 maturity: draft
 use_policy: pattern_only
 executor_access: internal_and_external
 license: internal_owned
+allowed_excerpt:
+  max_words: 0
+  max_lines: 0
 created_at: "2025-01-01"
 updated_at: "2025-01-01"
 owner: axion

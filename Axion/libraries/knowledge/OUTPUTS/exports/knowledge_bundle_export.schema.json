@@ -1,5 +1,6 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
   "title": "Knowledge Bundle Export",
   "description": "Schema for exported knowledge bundle artifacts",
   "type": "object",
@@ -7,7 +8,9 @@
     "schema_version",
     "bundle_id",
     "export_timestamp",
-    "items"
+    "executor_type",
+    "items",
+    "total_items"
   ],
   "properties": {
     "schema_version": {
@@ -15,7 +18,8 @@
       "const": "1.0.0"
     },
     "bundle_id": {
-      "type": "string"
+      "type": "string",
+      "minLength": 3
     },
     "export_timestamp": {
       "type": "string",
@@ -23,30 +27,25 @@
     },
     "executor_type": {
       "type": "string",
-      "enum": [
-        "internal",
-        "external"
-      ]
+      "enum": ["internal", "external"]
     },
     "filter_applied": {
       "type": "object",
       "properties": {
         "executor_access": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         },
         "min_maturity": {
-          "type": "string"
+          "type": "string",
+          "enum": ["draft", "reviewed", "verified", "golden"]
         },
         "excluded_use_policies": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         }
-      }
+      },
+      "additionalProperties": false
     },
     "items": {
       "type": "array",
@@ -57,32 +56,40 @@
           "title",
           "type",
           "use_policy",
-          "path"
+          "path",
+          "maturity",
+          "allowed_excerpt"
         ],
         "properties": {
-          "kid": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
+          "kid": { "type": "string", "minLength": 8 },
+          "title": { "type": "string", "minLength": 3 },
+          "type": { "type": "string" },
           "use_policy": {
-            "type": "string"
+            "type": "string",
+            "enum": ["pattern_only", "reusable_with_allowlist", "restricted_internal_only"]
           },
-          "path": {
-            "type": "string"
-          },
+          "path": { "type": "string", "minLength": 5 },
           "maturity": {
-            "type": "string"
+            "type": "string",
+            "enum": ["draft", "reviewed", "verified", "golden"]
+          },
+          "allowed_excerpt": {
+            "type": "object",
+            "required": ["max_words", "max_lines"],
+            "properties": {
+              "max_words": { "type": "integer", "minimum": 0 },
+              "max_lines": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
           }
-        }
+        },
+        "additionalProperties": false
       }
     },
     "total_items": {
-      "type": "integer"
+      "type": "integer",
+      "minimum": 0
     }
-  }
+  },
+  "additionalProperties": false
 }

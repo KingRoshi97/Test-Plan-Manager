@@ -4,11 +4,15 @@ title: "Transaction Isolation (practical)"
 type: concept
 pillar: LANGUAGES_AND_LIBRARIES
 domains: [databases_postgres]
+subdomains: []
 tags: [sql, transactions, isolation]
 maturity: draft
 use_policy: pattern_only
 executor_access: internal_and_external
 license: internal_owned
+allowed_excerpt:
+  max_words: 0
+  max_lines: 0
 created_at: "2025-01-01"
 updated_at: "2025-01-01"
 owner: axion

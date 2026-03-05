@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "RUN-000000",
+  "run_profile": "API",
+  "risk_class": "PROTOTYPE",
+  "executor_type": "internal",
+  "min_maturity": "draft",
+  "signals": {
+    "domains": ["security_fundamentals"],
+    "subdomains": [],
+    "tags": ["auth", "validation"],
+    "industries": [],
+    "stack_families": []
+  },
+  "selection_cap": 30,
+  "mode": "normal"
+}

@@ -4,11 +4,15 @@ title: "Data Fetching Pattern (query caching)"
 type: pattern
 pillar: LANGUAGES_AND_LIBRARIES
 domains: [javascript_typescript, react]
+subdomains: []
 tags: [react, data-fetching, query-cache]
 maturity: draft
 use_policy: pattern_only
 executor_access: internal_and_external
 license: internal_owned
+allowed_excerpt:
+  max_words: 0
+  max_lines: 0
 created_at: "2025-01-01"
 updated_at: "2025-01-01"
 owner: axion

@@ -1,57 +1,195 @@
 {
-  "$schema": "knowledge-bundles-index-v1",
-  "version": "1.0.0",
-  "description": "Registry of curated knowledge bundles",
+  "schema_version": "1.0.0",
   "bundles": [
     {
-      "bundle_id": "API_SERVICE_BASIC",
-      "path": "BUNDLES/by_run_profile/API_SERVICE_BASIC.bundle.json",
-      "category": "run_profile"
+      "bundle_id": "BUNDLE-API_SERVICE_BASIC-0001",
+      "title": "API Service Basic",
+      "description": "Knowledge bundle for basic API/backend service projects",
+      "selection_policy": {
+        "mode": "append",
+        "cap": 50,
+        "min_maturity": "draft"
+      },
+      "kids": ["*"],
+      "by_run_profile": ["API_SERVICE_BASIC"],
+      "by_risk_class": [],
+      "by_executor": ["internal_and_external"],
+      "domains": ["api_design", "rest_apis", "authentication_and_sessions", "input_validation_and_sanitization"],
+      "tags": ["api", "auth", "database", "error_handling", "testing"],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     },
     {
-      "bundle_id": "WEB_APP_BASIC",
-      "path": "BUNDLES/by_run_profile/WEB_APP_BASIC.bundle.json",
-      "category": "run_profile"
+      "bundle_id": "BUNDLE-WEB_APP_BASIC-0002",
+      "title": "Web Application Basic",
+      "description": "Knowledge bundle for basic web application projects",
+      "selection_policy": {
+        "mode": "append",
+        "cap": 50,
+        "min_maturity": "draft"
+      },
+      "kids": ["*"],
+      "by_run_profile": ["WEB_APP_BASIC"],
+      "by_risk_class": [],
+      "by_executor": ["internal_and_external"],
+      "domains": ["web_frontend_engineering", "ui_architecture", "accessibility", "performance_frontend"],
+      "tags": ["api", "auth", "database", "accessibility", "performance"],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     },
     {
-      "bundle_id": "MOBILE_APP_BASIC",
-      "path": "BUNDLES/by_run_profile/MOBILE_APP_BASIC.bundle.json",
-      "category": "run_profile"
+      "bundle_id": "BUNDLE-MOBILE_APP_BASIC-0003",
+      "title": "Mobile Application Basic",
+      "description": "Knowledge bundle for basic mobile application projects",
+      "selection_policy": {
+        "mode": "append",
+        "cap": 50,
+        "min_maturity": "draft"
+      },
+      "kids": ["*"],
+      "by_run_profile": ["MOBILE_APP_BASIC"],
+      "by_risk_class": [],
+      "by_executor": ["internal_and_external"],
+      "domains": ["mobile_engineering", "api_design", "authentication_and_sessions"],
+      "tags": ["mobile", "auth", "api", "performance", "testing"],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     },
     {
-      "bundle_id": "FULLSTACK_SAAS",
-      "path": "BUNDLES/by_run_profile/FULLSTACK_SAAS.bundle.json",
-      "category": "run_profile"
+      "bundle_id": "BUNDLE-FULLSTACK_SAAS-0004",
+      "title": "Fullstack SaaS",
+      "description": "Knowledge bundle for fullstack SaaS application projects",
+      "selection_policy": {
+        "mode": "append",
+        "cap": 80,
+        "min_maturity": "draft"
+      },
+      "kids": ["*"],
+      "by_run_profile": ["FULLSTACK_SAAS"],
+      "by_risk_class": [],
+      "by_executor": ["internal_and_external"],
+      "domains": ["api_design", "web_frontend_engineering", "authentication_and_sessions", "rest_apis"],
+      "tags": ["api", "auth", "payments", "database", "deployment", "observability"],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     },
     {
-      "bundle_id": "REALTIME_CHAT",
-      "path": "BUNDLES/by_run_profile/REALTIME_CHAT.bundle.json",
-      "category": "run_profile"
+      "bundle_id": "BUNDLE-REALTIME_CHAT-0005",
+      "title": "Realtime Chat",
+      "description": "Knowledge bundle for realtime chat/messaging projects",
+      "selection_policy": {
+        "mode": "append",
+        "cap": 50,
+        "min_maturity": "draft"
+      },
+      "kids": ["*"],
+      "by_run_profile": ["REALTIME_CHAT"],
+      "by_risk_class": [],
+      "by_executor": ["internal_and_external"],
+      "domains": ["distributed_systems", "caching_strategies", "api_design"],
+      "tags": ["realtime", "api", "auth", "database", "caching"],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     },
     {
-      "bundle_id": "PROTOTYPE",
-      "path": "BUNDLES/by_risk_class/PROTOTYPE.bundle.json",
-      "category": "risk_class"
+      "bundle_id": "BUNDLE-PROTOTYPE-0006",
+      "title": "Prototype Risk Class",
+      "description": "Knowledge bundle for prototype/experimental projects with relaxed maturity requirements",
+      "selection_policy": {
+        "mode": "append",
+        "cap": 30,
+        "min_maturity": "draft"
+      },
+      "kids": ["*"],
+      "by_run_profile": [],
+      "by_risk_class": ["PROTOTYPE"],
+      "by_executor": ["internal_and_external"],
+      "domains": [],
+      "tags": ["testing", "deployment"],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     },
     {
-      "bundle_id": "PRODUCTION",
-      "path": "BUNDLES/by_risk_class/PRODUCTION.bundle.json",
-      "category": "risk_class"
+      "bundle_id": "BUNDLE-PRODUCTION-0007",
+      "title": "Production Risk Class",
+      "description": "Knowledge bundle for production projects requiring reviewed+ maturity KIDs",
+      "selection_policy": {
+        "mode": "append",
+        "cap": 60,
+        "min_maturity": "reviewed"
+      },
+      "kids": ["*"],
+      "by_run_profile": [],
+      "by_risk_class": ["PRODUCTION"],
+      "by_executor": ["internal_and_external"],
+      "domains": [],
+      "tags": ["security", "observability", "testing", "deployment", "error_handling"],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     },
     {
-      "bundle_id": "COMPLIANCE",
-      "path": "BUNDLES/by_risk_class/COMPLIANCE.bundle.json",
-      "category": "risk_class"
+      "bundle_id": "BUNDLE-COMPLIANCE-0008",
+      "title": "Compliance Risk Class",
+      "description": "Knowledge bundle for compliance-critical projects requiring verified+ maturity KIDs",
+      "selection_policy": {
+        "mode": "append",
+        "cap": 60,
+        "min_maturity": "verified"
+      },
+      "kids": ["*"],
+      "by_run_profile": [],
+      "by_risk_class": ["COMPLIANCE"],
+      "by_executor": ["internal_only"],
+      "domains": [],
+      "tags": ["compliance", "security", "privacy", "iam", "observability"],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     },
     {
-      "bundle_id": "INTERNAL_AGENT",
-      "path": "BUNDLES/by_executor/INTERNAL_AGENT.bundle.json",
-      "category": "executor"
+      "bundle_id": "BUNDLE-INTERNAL_AGENT-0009",
+      "title": "Internal Agent",
+      "description": "Full knowledge bundle available to internal agents including restricted content",
+      "selection_policy": {
+        "mode": "append",
+        "cap": 200,
+        "min_maturity": "draft"
+      },
+      "kids": ["*"],
+      "by_run_profile": [],
+      "by_risk_class": [],
+      "by_executor": ["internal_only", "internal_and_external"],
+      "domains": [],
+      "tags": [],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     },
     {
-      "bundle_id": "EXTERNAL_AGENT",
-      "path": "BUNDLES/by_executor/EXTERNAL_AGENT.bundle.json",
-      "category": "executor"
+      "bundle_id": "BUNDLE-EXTERNAL_AGENT-0010",
+      "title": "External Agent",
+      "description": "Filtered knowledge bundle for external agents excluding restricted content",
+      "selection_policy": {
+        "mode": "scoped",
+        "cap": 100,
+        "min_maturity": "draft"
+      },
+      "kids": ["*"],
+      "by_run_profile": [],
+      "by_risk_class": [],
+      "by_executor": ["internal_and_external"],
+      "domains": [],
+      "tags": [],
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     }
   ]
 }

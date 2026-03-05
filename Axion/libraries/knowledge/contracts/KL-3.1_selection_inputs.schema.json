@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "contract_id": "KL-3.1",
+  "title": "Knowledge Selection Inputs Schema",
+  "type": "object",
+  "required": [
+    "run_id",
+    "run_profile",
+    "risk_class",
+    "executor_type",
+    "min_maturity",
+    "signals"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "run_profile": {
+      "type": "string",
+      "description": "High-level build context",
+      "enum": [
+        "API",
+        "WEB",
+        "MOBILE",
+        "INFRA",
+        "DATA",
+        "CLI",
+        "MIXED"
+      ]
+    },
+    "risk_class": {
+      "type": "string",
+      "description": "Controls maturity thresholds and stricter gating",
+      "enum": [
+        "PROTOTYPE",
+        "PROD",
+        "COMPLIANCE"
+      ]
+    },
+    "executor_type": {
+      "type": "string",
+      "description": "Where the agent runs / who can see what",
+      "enum": [
+        "internal",
+        "external"
+      ]
+    },
+    "min_maturity": {
+      "type": "string",
+      "description": "Minimum maturity allowed for selection",
+      "enum": [
+        "draft",
+        "reviewed",
+        "verified",
+        "golden"
+      ]
+    },
+    "target_stack": {
+      "type": "object",
+      "description": "Optional stack signals if known",
+      "properties": {
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "frameworks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "datastores": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "infra": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "standards_snapshot_id": {
+      "type": "string",
+      "description": "Reference to resolved standards snapshot used in this run"
+    },
+    "canonical_spec_signals": {
+      "type": "object",
+      "description": "Signals extracted from canonical spec (domains/features/requirements)",
+      "properties": {
+        "domains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "subdomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "bundle_requests": {
+      "type": "array",
+      "description": "Optional explicit bundle IDs to apply",
+      "items": {
+        "type": "string"
+      }
+    },
+    "signals": {
+      "type": "object",
+      "description": "Computed selection signals used for ranking and filtering",
+      "required": [
+        "domains",
+        "tags"
+      ],
+      "properties": {
+        "domains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "subdomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "industries": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stack_families": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "selection_cap": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 30,
+      "description": "Hard cap to avoid overload"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "reproducibility"
+      ],
+      "default": "normal"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,18 +1,19 @@
 {
-  "bundle_id": "FULLSTACK_SAAS",
-  "name": "Fullstack SaaS",
+  "bundle_id": "BUNDLE-FULLSTACK_SAAS-0004",
+  "title": "Fullstack SaaS",
   "description": "Knowledge bundle for fullstack SaaS application projects",
-  "kids": [],
-  "filter_rules": {
-    "run_profile": "FULLSTACK_SAAS",
+  "selection_policy": {
+    "mode": "append",
+    "cap": 80,
     "min_maturity": "draft"
   },
-  "tags": [
-    "api",
-    "auth",
-    "payments",
-    "database",
-    "deployment",
-    "observability"
-  ]
+  "kids": ["*"],
+  "by_run_profile": ["FULLSTACK_SAAS"],
+  "by_risk_class": [],
+  "by_executor": ["internal_and_external"],
+  "domains": ["api_design", "web_frontend_engineering", "authentication_and_sessions", "rest_apis"],
+  "tags": ["api", "auth", "payments", "database", "deployment", "observability"],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

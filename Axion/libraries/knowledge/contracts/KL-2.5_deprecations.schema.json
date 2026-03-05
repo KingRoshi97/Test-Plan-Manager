@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "contract_id": "KL-2.5",
+  "title": "DEPRECATIONS Registry Schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "deprecated"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deprecated": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/deprecation"
+      }
+    }
+  },
+  "$defs": {
+    "deprecation": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id",
+        "replacement_id",
+        "reason",
+        "effective_date",
+        "created_at",
+        "owner"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "kid",
+            "bundle",
+            "tag",
+            "domain",
+            "subdomain"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 3
+        },
+        "replacement_id": {
+          "type": "string",
+          "minLength": 3
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 3
+        },
+        "effective_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "allow_for_repro": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, deprecated items may be selected only in reproducibility mode."
+        },
+        "notes": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 2
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

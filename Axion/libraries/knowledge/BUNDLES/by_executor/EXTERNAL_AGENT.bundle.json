@@ -1,16 +1,19 @@
 {
-  "bundle_id": "EXTERNAL_AGENT",
-  "name": "External Agent",
+  "bundle_id": "BUNDLE-EXTERNAL_AGENT-0010",
+  "title": "External Agent",
   "description": "Filtered knowledge bundle for external agents excluding restricted content",
-  "kids": [],
-  "filter_rules": {
-    "executor_type": "external",
-    "executor_access": [
-      "internal_and_external"
-    ],
-    "exclude_use_policy": [
-      "restricted_internal_only"
-    ]
+  "selection_policy": {
+    "mode": "scoped",
+    "cap": 100,
+    "min_maturity": "draft"
   },
-  "tags": []
+  "kids": ["*"],
+  "by_run_profile": [],
+  "by_risk_class": [],
+  "by_executor": ["internal_and_external"],
+  "domains": [],
+  "tags": [],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

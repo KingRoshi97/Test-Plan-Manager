@@ -4,11 +4,15 @@ title: "Slow Query Triage (EXPLAIN basics)"
 type: procedure
 pillar: LANGUAGES_AND_LIBRARIES
 domains: [databases_postgres]
+subdomains: []
 tags: [postgres, performance, explain, slow-queries]
 maturity: draft
 use_policy: pattern_only
 executor_access: internal_and_external
 license: internal_owned
+allowed_excerpt:
+  max_words: 0
+  max_lines: 0
 created_at: "2025-01-01"
 updated_at: "2025-01-01"
 owner: axion

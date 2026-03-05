@@ -1,127 +1,2186 @@
 {
-  "$schema": "knowledge-taxonomy-v1",
-  "version": "1.0.0",
-  "pillars": {
-    "IT_END_TO_END": {
-      "description": "Foundational IT knowledge spanning infrastructure through platform operations",
-      "groups": {
-        "01_foundations": {
-          "domains": {
-            "networking": {
-              "description": "Network protocols, topologies, DNS, load balancing, CDN"
-            },
-            "operating_systems": {
-              "description": "OS concepts, process management, file systems, kernel"
-            },
-            "security_fundamentals": {
-              "description": "Authentication, encryption, threat modeling, OWASP"
-            },
-            "compute_virtualization": {
-              "description": "VMs, containers, orchestration, serverless"
-            },
-            "storage_fundamentals": {
-              "description": "Block, object, file storage, replication, durability"
-            }
-          }
-        },
-        "02_software_delivery": {
-          "domains": {
-            "architecture_design": {
-              "description": "System design, microservices, monolith, DDD, CQRS"
-            },
-            "apis_integrations": {
-              "description": "REST, GraphQL, gRPC, webhooks, API versioning"
-            },
-            "ci_cd_devops": {
-              "description": "Build pipelines, deployment strategies, GitOps, IaC"
-            },
-            "testing_qa": {
-              "description": "Unit, integration, E2E, property-based, mutation testing"
-            },
-            "observability_sre": {
-              "description": "Metrics, logging, tracing, SLOs, incident response"
-            }
-          }
-        },
-        "03_data_systems": {
-          "domains": {
-            "databases": {
-              "description": "SQL, NoSQL, indexing, query optimization, migrations"
-            },
-            "distributed_systems": {
-              "description": "Consensus, replication, partitioning, CAP theorem"
-            },
-            "caching": {
-              "description": "Cache strategies, invalidation, Redis, Memcached"
-            },
-            "search_retrieval": {
-              "description": "Full-text search, Elasticsearch, vector search, ranking"
-            }
-          }
-        },
-        "04_platform_ops": {
-          "domains": {
-            "cloud_fundamentals": {
-              "description": "Cloud services, regions, networking, managed services"
-            },
-            "identity_access_management": {
-              "description": "IAM, RBAC, ABAC, OAuth, SAML, SSO"
-            },
-            "compliance_governance": {
-              "description": "Regulatory frameworks, audit, data residency"
-            },
-            "release_management": {
-              "description": "Versioning, release trains, feature flags, rollback"
-            },
-            "finops_cost": {
-              "description": "Cloud cost optimization, budgets, tagging, reserved instances"
-            }
-          }
-        }
-      }
+  "schema_version": "1.0.0",
+  "pillars": ["IT_END_TO_END", "INDUSTRY_PLAYBOOKS", "LANGUAGES_AND_LIBRARIES"],
+  "domains": {
+    "security_fundamentals": {
+      "name": "Security Fundamentals",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "auth": { "name": "Authentication" },
+        "authz": { "name": "Authorization" },
+        "secrets": { "name": "Secrets Management" },
+        "threat_model": { "name": "Threat Modeling" }
+      },
+      "min_tags": ["auth", "authz", "secrets", "threat_model"]
     },
-    "INDUSTRY_PLAYBOOKS": {
-      "description": "Domain-specific guidance for vertical industries",
-      "industries": {
-        "healthcare": {
-          "description": "Healthcare IT: EHR, claims, HIPAA, HL7/FHIR"
-        },
-        "finance": {
-          "description": "Financial services: payments, KYC/AML, PCI-DSS, trading"
-        },
-        "retail_ecommerce": {
-          "description": "Retail/ecommerce: catalog, cart, checkout, fulfillment"
-        },
-        "logistics_supply_chain": {
-          "description": "Logistics: tracking, routing, warehouse, fleet"
-        },
-        "government_public_sector": {
-          "description": "Government: citizen services, FedRAMP, accessibility"
-        }
-      }
+    "identity_and_access_management": {
+      "name": "Identity & Access Management (IAM)",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "sso": { "name": "Single Sign-On" },
+        "mfa": { "name": "Multi-Factor Authentication" },
+        "oauth": { "name": "OAuth / OIDC" },
+        "rbac": { "name": "Role-Based Access Control" }
+      },
+      "min_tags": ["iam", "sso", "oauth"]
     },
-    "LANGUAGES_AND_LIBRARIES": {
-      "description": "Language-specific knowledge, frameworks, and tooling",
-      "stacks": {
-        "javascript_typescript": {
-          "description": "JS/TS core, Node.js, React, Next.js"
-        },
-        "python": {
-          "description": "Python core, FastAPI, Django"
-        },
-        "go": {
-          "description": "Go core, web frameworks, concurrency"
-        },
-        "rust": {
-          "description": "Rust core, web frameworks, safety patterns"
-        },
-        "solidity_evm": {
-          "description": "Solidity, EVM, smart contract patterns"
-        },
-        "databases_postgres": {
-          "description": "SQL core, PostgreSQL patterns, performance"
-        }
-      }
+    "application_security": {
+      "name": "Application Security (AppSec)",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "owasp": { "name": "OWASP Top 10" },
+        "input_validation": { "name": "Input Validation" },
+        "dependency_scanning": { "name": "Dependency Scanning" }
+      },
+      "min_tags": ["appsec", "owasp", "vulnerability"]
+    },
+    "cryptography_and_key_management": {
+      "name": "Cryptography & Key Management",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "encryption": { "name": "Encryption" },
+        "hashing": { "name": "Hashing" },
+        "key_rotation": { "name": "Key Rotation" },
+        "certificates": { "name": "Certificates / TLS" }
+      },
+      "min_tags": ["crypto", "encryption", "tls"]
+    },
+    "networking_fundamentals": {
+      "name": "Networking Fundamentals",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "tcp_ip": { "name": "TCP/IP" },
+        "dns": { "name": "DNS" },
+        "routing": { "name": "Routing" }
+      },
+      "min_tags": ["networking", "dns", "tcp"]
+    },
+    "internet_protocols": {
+      "name": "Internet Protocols (TCP/IP, UDP, DNS)",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "tcp": { "name": "TCP" },
+        "udp": { "name": "UDP" },
+        "dns_protocol": { "name": "DNS Protocol" }
+      },
+      "min_tags": ["tcp", "udp", "dns"]
+    },
+    "http_and_web_platform": {
+      "name": "HTTP & Web Platform Fundamentals",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "http_methods": { "name": "HTTP Methods" },
+        "cors": { "name": "CORS" },
+        "cookies_sessions": { "name": "Cookies & Sessions" }
+      },
+      "min_tags": ["http", "web_platform", "cors"]
+    },
+    "operating_systems": {
+      "name": "Operating Systems (Linux/Windows)",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "linux": { "name": "Linux" },
+        "process_management": { "name": "Process Management" },
+        "file_systems": { "name": "File Systems" }
+      },
+      "min_tags": ["os", "linux", "process"]
+    },
+    "shell_and_cli": {
+      "name": "Shell & CLI Fundamentals",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "bash": { "name": "Bash" },
+        "scripting": { "name": "Scripting" }
+      },
+      "min_tags": ["cli", "bash", "shell"]
+    },
+    "data_structures_and_algorithms": {
+      "name": "Data Structures & Algorithms",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "arrays_lists": { "name": "Arrays & Lists" },
+        "trees_graphs": { "name": "Trees & Graphs" },
+        "sorting_searching": { "name": "Sorting & Searching" }
+      },
+      "min_tags": ["data_structures", "algorithms"]
+    },
+    "software_architecture": {
+      "name": "Software Architecture",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "microservices": { "name": "Microservices" },
+        "monolith": { "name": "Monolith" },
+        "ddd": { "name": "Domain-Driven Design" },
+        "cqrs": { "name": "CQRS" }
+      },
+      "min_tags": ["architecture", "microservices", "ddd"]
+    },
+    "distributed_systems": {
+      "name": "Distributed Systems Fundamentals",
+      "pillar": "IT_END_TO_END",
+      "group": "01_foundations",
+      "subdomains": {
+        "consensus": { "name": "Consensus" },
+        "replication": { "name": "Replication" },
+        "partitioning": { "name": "Partitioning" },
+        "cap_theorem": { "name": "CAP Theorem" }
+      },
+      "min_tags": ["distributed", "consensus", "replication"]
+    },
+    "relational_databases": {
+      "name": "Relational Databases (RDBMS)",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {
+        "indexing": { "name": "Indexing" },
+        "query_optimization": { "name": "Query Optimization" },
+        "normalization": { "name": "Normalization" }
+      },
+      "min_tags": ["rdbms", "sql", "indexing"]
+    },
+    "postgresql": {
+      "name": "PostgreSQL",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {
+        "extensions": { "name": "Extensions" },
+        "vacuum": { "name": "Vacuum & Maintenance" },
+        "replication_pg": { "name": "Replication" }
+      },
+      "min_tags": ["postgresql", "sql", "database"]
+    },
+    "mysql_mariadb": {
+      "name": "MySQL / MariaDB",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {},
+      "min_tags": ["mysql", "database"]
+    },
+    "sql_modeling_and_migrations": {
+      "name": "SQL Modeling & Migrations",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {
+        "migrations": { "name": "Migrations" },
+        "schema_design": { "name": "Schema Design" }
+      },
+      "min_tags": ["sql", "migrations", "schema"]
+    },
+    "nosql_datastores": {
+      "name": "NoSQL Datastores",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {},
+      "min_tags": ["nosql", "database"]
+    },
+    "document_databases": {
+      "name": "Document Databases (MongoDB etc.)",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {},
+      "min_tags": ["mongodb", "document_db"]
+    },
+    "key_value_stores": {
+      "name": "Key-Value Stores (Redis etc.)",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {},
+      "min_tags": ["redis", "key_value"]
+    },
+    "search_and_indexing": {
+      "name": "Search & Indexing (Elasticsearch/OpenSearch)",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {
+        "full_text": { "name": "Full-Text Search" },
+        "vector_search": { "name": "Vector Search" }
+      },
+      "min_tags": ["search", "elasticsearch"]
+    },
+    "data_warehousing": {
+      "name": "Data Warehousing",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {},
+      "min_tags": ["data_warehouse", "analytics"]
+    },
+    "data_lakes_and_lakehouse": {
+      "name": "Data Lakes / Lakehouse",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {},
+      "min_tags": ["data_lake", "lakehouse"]
+    },
+    "object_storage": {
+      "name": "Object Storage (S3-compatible)",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {},
+      "min_tags": ["object_storage", "s3"]
+    },
+    "backup_restore_and_dr": {
+      "name": "Backup, Restore & Disaster Recovery",
+      "pillar": "IT_END_TO_END",
+      "group": "02_data_and_storage",
+      "subdomains": {
+        "backup": { "name": "Backup" },
+        "restore": { "name": "Restore" },
+        "disaster_recovery": { "name": "Disaster Recovery" }
+      },
+      "min_tags": ["backup", "disaster_recovery"]
+    },
+    "api_design": {
+      "name": "API Design",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {
+        "versioning": { "name": "API Versioning" },
+        "documentation": { "name": "API Documentation" }
+      },
+      "min_tags": ["api", "api_design"]
+    },
+    "rest_apis": {
+      "name": "REST APIs",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["rest", "api"]
+    },
+    "graphql": {
+      "name": "GraphQL",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["graphql", "api"]
+    },
+    "grpc_and_rpc": {
+      "name": "gRPC / RPC",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["grpc", "rpc"]
+    },
+    "webhooks_and_event_delivery": {
+      "name": "Webhooks & Event Delivery",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["webhooks", "events"]
+    },
+    "authentication_and_sessions": {
+      "name": "Authentication & Sessions",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {
+        "jwt": { "name": "JWT" },
+        "session_management": { "name": "Session Management" }
+      },
+      "min_tags": ["auth", "sessions", "jwt"]
+    },
+    "authorization_models": {
+      "name": "Authorization Models (RBAC/ABAC/ReBAC)",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["authz", "rbac", "abac"]
+    },
+    "rate_limiting_and_abuse_controls": {
+      "name": "Rate Limiting & Abuse Controls",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["rate_limiting", "abuse_prevention"]
+    },
+    "input_validation_and_sanitization": {
+      "name": "Input Validation & Sanitization",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["validation", "sanitization"]
+    },
+    "background_jobs_and_queues": {
+      "name": "Background Jobs & Queues",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["background_jobs", "queues"]
+    },
+    "caching_strategies": {
+      "name": "Caching Strategies",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {
+        "invalidation": { "name": "Cache Invalidation" },
+        "redis_cache": { "name": "Redis Caching" }
+      },
+      "min_tags": ["caching", "cache_invalidation"]
+    },
+    "feature_flags_and_config": {
+      "name": "Feature Flags & Configuration",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["feature_flags", "config"]
+    },
+    "api_observability": {
+      "name": "API Observability",
+      "pillar": "IT_END_TO_END",
+      "group": "03_backend_and_apis",
+      "subdomains": {},
+      "min_tags": ["observability", "api_metrics"]
+    },
+    "web_frontend_engineering": {
+      "name": "Web Frontend Engineering",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {
+        "spa": { "name": "Single Page Applications" },
+        "ssr": { "name": "Server-Side Rendering" }
+      },
+      "min_tags": ["frontend", "web"]
+    },
+    "mobile_engineering": {
+      "name": "Mobile Engineering",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {
+        "ios": { "name": "iOS" },
+        "android": { "name": "Android" },
+        "cross_platform": { "name": "Cross-Platform" }
+      },
+      "min_tags": ["mobile", "ios", "android"]
+    },
+    "desktop_applications": {
+      "name": "Desktop Applications",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {},
+      "min_tags": ["desktop", "electron"]
+    },
+    "ui_architecture": {
+      "name": "UI Architecture (State, Routing, Data Fetching)",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {
+        "state_management": { "name": "State Management" },
+        "routing": { "name": "Routing" },
+        "data_fetching": { "name": "Data Fetching" }
+      },
+      "min_tags": ["ui_architecture", "state_management"]
+    },
+    "design_systems": {
+      "name": "Design Systems",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {},
+      "min_tags": ["design_systems", "components"]
+    },
+    "accessibility": {
+      "name": "Accessibility (a11y)",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {
+        "wcag": { "name": "WCAG" },
+        "screen_readers": { "name": "Screen Readers" }
+      },
+      "min_tags": ["a11y", "accessibility", "wcag"]
+    },
+    "performance_frontend": {
+      "name": "Frontend Performance",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {},
+      "min_tags": ["performance", "frontend"]
+    },
+    "security_frontend": {
+      "name": "Frontend Security (XSS/CSRF/CSP)",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {},
+      "min_tags": ["xss", "csrf", "csp"]
+    },
+    "offline_and_sync": {
+      "name": "Offline & Sync",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {},
+      "min_tags": ["offline", "sync"]
+    },
+    "push_notifications": {
+      "name": "Push Notifications",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {},
+      "min_tags": ["push_notifications", "mobile"]
+    },
+    "internationalization": {
+      "name": "Internationalization (i18n)",
+      "pillar": "IT_END_TO_END",
+      "group": "04_frontend_and_clients",
+      "subdomains": {},
+      "min_tags": ["i18n", "localization"]
+    },
+    "cloud_fundamentals": {
+      "name": "Cloud Fundamentals",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {
+        "regions": { "name": "Regions & Availability Zones" },
+        "managed_services": { "name": "Managed Services" }
+      },
+      "min_tags": ["cloud", "infrastructure"]
+    },
+    "containers": {
+      "name": "Containers (Docker)",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {},
+      "min_tags": ["docker", "containers"]
+    },
+    "kubernetes": {
+      "name": "Kubernetes",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {
+        "pods": { "name": "Pods" },
+        "services_k8s": { "name": "Services" },
+        "helm": { "name": "Helm" }
+      },
+      "min_tags": ["kubernetes", "k8s"]
+    },
+    "service_mesh": {
+      "name": "Service Mesh",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {},
+      "min_tags": ["service_mesh", "istio"]
+    },
+    "infrastructure_as_code": {
+      "name": "Infrastructure as Code (IaC)",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {},
+      "min_tags": ["iac", "terraform"]
+    },
+    "networking_cloud": {
+      "name": "Cloud Networking",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {
+        "vpc": { "name": "VPC" },
+        "subnets": { "name": "Subnets" }
+      },
+      "min_tags": ["cloud_networking", "vpc"]
+    },
+    "load_balancing_and_edge": {
+      "name": "Load Balancing & Edge/CDN",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {},
+      "min_tags": ["load_balancing", "cdn"]
+    },
+    "secrets_and_config_platform": {
+      "name": "Secrets & Config (Platform)",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {},
+      "min_tags": ["secrets", "config"]
+    },
+    "observability_platform": {
+      "name": "Observability (Platform)",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {},
+      "min_tags": ["observability", "monitoring"]
+    },
+    "platform_engineering": {
+      "name": "Platform Engineering",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {},
+      "min_tags": ["platform_engineering"]
+    },
+    "internal_developer_platforms": {
+      "name": "Internal Developer Platforms (IDPs)",
+      "pillar": "IT_END_TO_END",
+      "group": "05_infrastructure_and_platform",
+      "subdomains": {},
+      "min_tags": ["idp", "developer_experience"]
+    },
+    "ci_cd": {
+      "name": "CI/CD",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {
+        "pipelines": { "name": "Pipelines" },
+        "deployment_strategies": { "name": "Deployment Strategies" }
+      },
+      "min_tags": ["ci_cd", "pipelines"]
+    },
+    "release_engineering": {
+      "name": "Release Engineering",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["release", "versioning"]
+    },
+    "site_reliability_engineering": {
+      "name": "Site Reliability Engineering (SRE)",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["sre", "reliability"]
+    },
+    "incident_response": {
+      "name": "Incident Response",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["incident_response", "on_call"]
+    },
+    "monitoring_and_alerting": {
+      "name": "Monitoring & Alerting",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["monitoring", "alerting"]
+    },
+    "logging_and_tracing": {
+      "name": "Logging & Tracing",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["logging", "tracing"]
+    },
+    "slo_sla_error_budgets": {
+      "name": "SLO/SLA & Error Budgets",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["slo", "sla", "error_budget"]
+    },
+    "capacity_planning": {
+      "name": "Capacity Planning",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["capacity", "scaling"]
+    },
+    "performance_and_scalability": {
+      "name": "Performance & Scalability",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["performance", "scalability"]
+    },
+    "cost_optimization": {
+      "name": "Cost Optimization (FinOps)",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["finops", "cost_optimization"]
+    },
+    "quality_engineering": {
+      "name": "Quality Engineering (QE)",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {},
+      "min_tags": ["quality", "testing"]
+    },
+    "testing_strategies": {
+      "name": "Testing Strategies",
+      "pillar": "IT_END_TO_END",
+      "group": "06_devops_and_reliability",
+      "subdomains": {
+        "unit_testing": { "name": "Unit Testing" },
+        "integration_testing": { "name": "Integration Testing" },
+        "e2e_testing": { "name": "E2E Testing" }
+      },
+      "min_tags": ["testing", "unit_test", "e2e"]
+    },
+    "data_engineering": {
+      "name": "Data Engineering",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["data_engineering", "data_pipelines"]
+    },
+    "etl_elt_pipelines": {
+      "name": "ETL/ELT Pipelines",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["etl", "elt", "pipelines"]
+    },
+    "stream_processing": {
+      "name": "Stream Processing",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["streaming", "stream_processing"]
+    },
+    "event_streaming": {
+      "name": "Event Streaming (Kafka/Pulsar)",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["kafka", "event_streaming"]
+    },
+    "analytics_and_telemetry": {
+      "name": "Analytics & Telemetry",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["analytics", "telemetry"]
+    },
+    "ml_engineering": {
+      "name": "ML Engineering",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["ml", "machine_learning"]
+    },
+    "mlops": {
+      "name": "MLOps",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["mlops", "ml_pipelines"]
+    },
+    "llm_applications": {
+      "name": "LLM Applications",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["llm", "ai"]
+    },
+    "retrieval_and_rag": {
+      "name": "Retrieval & RAG",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["rag", "retrieval"]
+    },
+    "vector_databases": {
+      "name": "Vector Databases",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["vector_db", "embeddings"]
+    },
+    "model_serving": {
+      "name": "Model Serving",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["model_serving", "inference"]
+    },
+    "ai_safety_and_governance": {
+      "name": "AI Safety & Governance",
+      "pillar": "IT_END_TO_END",
+      "group": "07_data_engineering_and_ai",
+      "subdomains": {},
+      "min_tags": ["ai_safety", "ai_governance"]
+    },
+    "security_operations": {
+      "name": "Security Operations (SecOps)",
+      "pillar": "IT_END_TO_END",
+      "group": "08_security_operations_and_compliance",
+      "subdomains": {},
+      "min_tags": ["secops", "security"]
+    },
+    "threat_detection_and_response": {
+      "name": "Threat Detection & Response",
+      "pillar": "IT_END_TO_END",
+      "group": "08_security_operations_and_compliance",
+      "subdomains": {},
+      "min_tags": ["threat_detection", "siem"]
+    },
+    "vulnerability_management": {
+      "name": "Vulnerability Management",
+      "pillar": "IT_END_TO_END",
+      "group": "08_security_operations_and_compliance",
+      "subdomains": {},
+      "min_tags": ["vulnerability", "cve"]
+    },
+    "penetration_testing": {
+      "name": "Penetration Testing",
+      "pillar": "IT_END_TO_END",
+      "group": "08_security_operations_and_compliance",
+      "subdomains": {},
+      "min_tags": ["pentest", "security_testing"]
+    },
+    "secure_sdlc": {
+      "name": "Secure SDLC",
+      "pillar": "IT_END_TO_END",
+      "group": "08_security_operations_and_compliance",
+      "subdomains": {},
+      "min_tags": ["secure_sdlc", "devsecops"]
+    },
+    "compliance_frameworks": {
+      "name": "Compliance Frameworks (SOC2/ISO/HIPAA/PCI)",
+      "pillar": "IT_END_TO_END",
+      "group": "08_security_operations_and_compliance",
+      "subdomains": {
+        "soc2": { "name": "SOC 2" },
+        "iso27001": { "name": "ISO 27001" },
+        "hipaa": { "name": "HIPAA" },
+        "pci_dss": { "name": "PCI DSS" }
+      },
+      "min_tags": ["compliance", "soc2", "iso"]
+    },
+    "privacy_and_data_protection": {
+      "name": "Privacy & Data Protection",
+      "pillar": "IT_END_TO_END",
+      "group": "08_security_operations_and_compliance",
+      "subdomains": {
+        "gdpr": { "name": "GDPR" },
+        "ccpa": { "name": "CCPA" }
+      },
+      "min_tags": ["privacy", "gdpr", "data_protection"]
+    },
+    "governance_risk_and_compliance": {
+      "name": "GRC (Governance, Risk & Compliance)",
+      "pillar": "IT_END_TO_END",
+      "group": "08_security_operations_and_compliance",
+      "subdomains": {},
+      "min_tags": ["grc", "governance", "risk"]
+    },
+    "audit_and_logging": {
+      "name": "Audit & Logging",
+      "pillar": "IT_END_TO_END",
+      "group": "08_security_operations_and_compliance",
+      "subdomains": {},
+      "min_tags": ["audit", "audit_logging"]
+    },
+    "javascript": {
+      "name": "JavaScript",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {
+        "es_modules": { "name": "ES Modules" },
+        "async_await": { "name": "Async/Await" }
+      },
+      "min_tags": ["javascript", "js"]
+    },
+    "typescript": {
+      "name": "TypeScript",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {
+        "type_system": { "name": "Type System" },
+        "generics": { "name": "Generics" }
+      },
+      "min_tags": ["typescript", "ts"]
+    },
+    "python": {
+      "name": "Python",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["python"]
+    },
+    "go": {
+      "name": "Go",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {
+        "concurrency": { "name": "Concurrency" },
+        "goroutines": { "name": "Goroutines" }
+      },
+      "min_tags": ["go", "golang"]
+    },
+    "rust": {
+      "name": "Rust",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {
+        "ownership": { "name": "Ownership" },
+        "lifetimes": { "name": "Lifetimes" }
+      },
+      "min_tags": ["rust"]
+    },
+    "java": {
+      "name": "Java",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["java", "jvm"]
+    },
+    "csharp_dotnet": {
+      "name": "C# / .NET",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["csharp", "dotnet"]
+    },
+    "cpp": {
+      "name": "C++",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["cpp"]
+    },
+    "c": {
+      "name": "C",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["c_lang"]
+    },
+    "swift": {
+      "name": "Swift",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["swift", "ios"]
+    },
+    "kotlin": {
+      "name": "Kotlin",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["kotlin", "android"]
+    },
+    "solidity": {
+      "name": "Solidity",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {
+        "smart_contracts": { "name": "Smart Contracts" },
+        "evm": { "name": "EVM" }
+      },
+      "min_tags": ["solidity", "evm"]
+    },
+    "move": {
+      "name": "Move (Aptos/Sui ecosystems)",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["move", "blockchain"]
+    },
+    "vyper": {
+      "name": "Vyper",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["vyper", "evm"]
+    },
+    "sql": {
+      "name": "SQL",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["sql", "database"]
+    },
+    "bash_shell": {
+      "name": "Bash / Shell Scripting",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "01_programming_languages",
+      "subdomains": {},
+      "min_tags": ["bash", "shell"]
+    },
+    "react": {
+      "name": "React",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {
+        "hooks": { "name": "Hooks" },
+        "state_management_react": { "name": "State Management" },
+        "server_components": { "name": "Server Components" }
+      },
+      "min_tags": ["react", "frontend"]
+    },
+    "nextjs": {
+      "name": "Next.js",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {
+        "app_router": { "name": "App Router" },
+        "ssr_nextjs": { "name": "SSR" }
+      },
+      "min_tags": ["nextjs", "react"]
+    },
+    "vue": {
+      "name": "Vue",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {},
+      "min_tags": ["vue", "frontend"]
+    },
+    "svelte": {
+      "name": "Svelte",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {},
+      "min_tags": ["svelte", "frontend"]
+    },
+    "angular": {
+      "name": "Angular",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {},
+      "min_tags": ["angular", "frontend"]
+    },
+    "nodejs": {
+      "name": "Node.js",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {
+        "event_loop": { "name": "Event Loop" },
+        "streams": { "name": "Streams" }
+      },
+      "min_tags": ["nodejs", "backend"]
+    },
+    "express": {
+      "name": "Express",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {},
+      "min_tags": ["express", "nodejs"]
+    },
+    "nestjs": {
+      "name": "NestJS",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {},
+      "min_tags": ["nestjs", "nodejs"]
+    },
+    "fastapi": {
+      "name": "FastAPI",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {},
+      "min_tags": ["fastapi", "python"]
+    },
+    "django": {
+      "name": "Django",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {},
+      "min_tags": ["django", "python"]
+    },
+    "flask": {
+      "name": "Flask",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {},
+      "min_tags": ["flask", "python"]
+    },
+    "spring_boot": {
+      "name": "Spring Boot",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "02_web_frameworks",
+      "subdomains": {},
+      "min_tags": ["spring_boot", "java"]
+    },
+    "react_native": {
+      "name": "React Native",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "03_mobile_frameworks",
+      "subdomains": {},
+      "min_tags": ["react_native", "mobile"]
+    },
+    "expo": {
+      "name": "Expo",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "03_mobile_frameworks",
+      "subdomains": {},
+      "min_tags": ["expo", "react_native"]
+    },
+    "flutter": {
+      "name": "Flutter",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "03_mobile_frameworks",
+      "subdomains": {},
+      "min_tags": ["flutter", "dart"]
+    },
+    "ios_swiftui": {
+      "name": "iOS (SwiftUI/UIKit)",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "03_mobile_frameworks",
+      "subdomains": {},
+      "min_tags": ["ios", "swiftui"]
+    },
+    "android_kotlin": {
+      "name": "Android (Kotlin/Jetpack)",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "03_mobile_frameworks",
+      "subdomains": {},
+      "min_tags": ["android", "kotlin"]
+    },
+    "drizzle_orm": {
+      "name": "Drizzle ORM",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "04_databases_and_orms",
+      "subdomains": {},
+      "min_tags": ["drizzle", "orm"]
+    },
+    "prisma": {
+      "name": "Prisma",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "04_databases_and_orms",
+      "subdomains": {},
+      "min_tags": ["prisma", "orm"]
+    },
+    "typeorm": {
+      "name": "TypeORM",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "04_databases_and_orms",
+      "subdomains": {},
+      "min_tags": ["typeorm", "orm"]
+    },
+    "sequelize": {
+      "name": "Sequelize",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "04_databases_and_orms",
+      "subdomains": {},
+      "min_tags": ["sequelize", "orm"]
+    },
+    "sqlalchemy": {
+      "name": "SQLAlchemy",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "04_databases_and_orms",
+      "subdomains": {},
+      "min_tags": ["sqlalchemy", "python"]
+    },
+    "postgres_drivers": {
+      "name": "PostgreSQL Drivers",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "04_databases_and_orms",
+      "subdomains": {},
+      "min_tags": ["postgres_driver", "database"]
+    },
+    "redis_clients": {
+      "name": "Redis Clients",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "04_databases_and_orms",
+      "subdomains": {},
+      "min_tags": ["redis", "client"]
+    },
+    "docker": {
+      "name": "Docker",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["docker", "containers"]
+    },
+    "kubernetes_tools": {
+      "name": "Kubernetes Tooling",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["kubernetes", "k8s"]
+    },
+    "terraform": {
+      "name": "Terraform",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["terraform", "iac"]
+    },
+    "pulumi": {
+      "name": "Pulumi",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["pulumi", "iac"]
+    },
+    "ansible": {
+      "name": "Ansible",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["ansible", "automation"]
+    },
+    "github_actions": {
+      "name": "GitHub Actions",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["github_actions", "ci_cd"]
+    },
+    "gitlab_ci": {
+      "name": "GitLab CI",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["gitlab_ci", "ci_cd"]
+    },
+    "circleci": {
+      "name": "CircleCI",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["circleci", "ci_cd"]
+    },
+    "cloudflare_platform": {
+      "name": "Cloudflare Platform",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["cloudflare", "edge"]
+    },
+    "aws": {
+      "name": "Amazon Web Services (AWS)",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["aws", "cloud"]
+    },
+    "gcp": {
+      "name": "Google Cloud Platform (GCP)",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["gcp", "cloud"]
+    },
+    "azure": {
+      "name": "Microsoft Azure",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "05_cloud_and_devops_tooling",
+      "subdomains": {},
+      "min_tags": ["azure", "cloud"]
+    },
+    "ethereum": {
+      "name": "Ethereum",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["ethereum", "evm"]
+    },
+    "polygon": {
+      "name": "Polygon",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["polygon", "l2"]
+    },
+    "solana": {
+      "name": "Solana",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["solana", "blockchain"]
+    },
+    "cosmos_sdk": {
+      "name": "Cosmos SDK",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["cosmos", "blockchain"]
+    },
+    "substrate_polkadot": {
+      "name": "Substrate / Polkadot",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["substrate", "polkadot"]
+    },
+    "chainlink": {
+      "name": "Chainlink",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["chainlink", "oracle"]
+    },
+    "ipfs": {
+      "name": "IPFS",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["ipfs", "decentralized_storage"]
+    },
+    "walletconnect": {
+      "name": "WalletConnect",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["walletconnect", "wallet"]
+    },
+    "wagmi_rainbowkit": {
+      "name": "Wagmi / RainbowKit",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["wagmi", "web3_frontend"]
+    },
+    "hardhat_foundry": {
+      "name": "Hardhat / Foundry",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["hardhat", "foundry"]
+    },
+    "openzeppelin": {
+      "name": "OpenZeppelin",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "06_blockchain_stacks",
+      "subdomains": {},
+      "min_tags": ["openzeppelin", "smart_contracts"]
+    },
+    "daw_concepts": {
+      "name": "Digital Audio Workstations (DAW) Concepts",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["daw", "audio"]
+    },
+    "midi": {
+      "name": "MIDI",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["midi", "music"]
+    },
+    "audio_plugins_vst_au_aax": {
+      "name": "Audio Plugins (VST/AU/AAX)",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["vst", "audio_plugins"]
+    },
+    "dsp_audio": {
+      "name": "Digital Signal Processing (DSP) for Audio",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["dsp", "audio"]
+    },
+    "audio_routing_and_latency": {
+      "name": "Audio Routing & Latency",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["audio_routing", "latency"]
+    },
+    "pro_tools": {
+      "name": "Avid Pro Tools",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["pro_tools", "daw"]
+    },
+    "ableton_live": {
+      "name": "Ableton Live",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["ableton", "daw"]
+    },
+    "logic_pro": {
+      "name": "Logic Pro",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["logic_pro", "daw"]
+    },
+    "fl_studio": {
+      "name": "FL Studio",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["fl_studio", "daw"]
+    },
+    "reaper": {
+      "name": "REAPER",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["reaper", "daw"]
+    },
+    "studio_one": {
+      "name": "Studio One",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "07_audio_music_tech",
+      "subdomains": {},
+      "min_tags": ["studio_one", "daw"]
+    },
+    "blender": {
+      "name": "Blender",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["blender", "3d"]
+    },
+    "maya": {
+      "name": "Autodesk Maya",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["maya", "3d"]
+    },
+    "3ds_max": {
+      "name": "Autodesk 3ds Max",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["3ds_max", "3d"]
+    },
+    "cinema_4d": {
+      "name": "Cinema 4D",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["cinema_4d", "3d"]
+    },
+    "houdini": {
+      "name": "Houdini",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["houdini", "vfx"]
+    },
+    "unreal_engine": {
+      "name": "Unreal Engine",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["unreal", "game_engine"]
+    },
+    "unity": {
+      "name": "Unity",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["unity", "game_engine"]
+    },
+    "substance_3d": {
+      "name": "Adobe Substance 3D",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["substance_3d", "texturing"]
+    },
+    "pbr_materials": {
+      "name": "Physically Based Rendering (PBR) Materials",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["pbr", "materials"]
+    },
+    "rendering_pipelines": {
+      "name": "Rendering Pipelines",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["rendering", "graphics"]
+    },
+    "rigging_and_animation": {
+      "name": "Rigging & Animation",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["rigging", "animation"]
+    },
+    "photogrammetry": {
+      "name": "Photogrammetry",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "08_3d_and_graphics_tech",
+      "subdomains": {},
+      "min_tags": ["photogrammetry", "3d_scanning"]
+    },
+    "webrtc": {
+      "name": "WebRTC",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "09_video_streaming_and_realtime",
+      "subdomains": {},
+      "min_tags": ["webrtc", "realtime"]
+    },
+    "rtmp": {
+      "name": "RTMP",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "09_video_streaming_and_realtime",
+      "subdomains": {},
+      "min_tags": ["rtmp", "streaming"]
+    },
+    "hls_dash": {
+      "name": "HLS / MPEG-DASH",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "09_video_streaming_and_realtime",
+      "subdomains": {},
+      "min_tags": ["hls", "dash"]
+    },
+    "ffmpeg": {
+      "name": "FFmpeg",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "09_video_streaming_and_realtime",
+      "subdomains": {},
+      "min_tags": ["ffmpeg", "video"]
+    },
+    "streaming_architecture": {
+      "name": "Streaming Architecture",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "09_video_streaming_and_realtime",
+      "subdomains": {},
+      "min_tags": ["streaming", "architecture"]
+    },
+    "realtime_messaging": {
+      "name": "Realtime Messaging (WebSockets)",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "09_video_streaming_and_realtime",
+      "subdomains": {},
+      "min_tags": ["websockets", "realtime"]
+    },
+    "signaling_systems": {
+      "name": "Signaling Systems",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "09_video_streaming_and_realtime",
+      "subdomains": {},
+      "min_tags": ["signaling", "webrtc"]
+    },
+    "media_storage_delivery": {
+      "name": "Media Storage & Delivery",
+      "pillar": "LANGUAGES_AND_LIBRARIES",
+      "group": "09_video_streaming_and_realtime",
+      "subdomains": {},
+      "min_tags": ["media_storage", "cdn"]
+    },
+    "healthcare": {
+      "name": "Healthcare (HIPAA)",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "01_regulated_industries",
+      "subdomains": {
+        "ehr": { "name": "EHR Systems" },
+        "claims": { "name": "Claims Processing" },
+        "hl7_fhir": { "name": "HL7/FHIR" }
+      },
+      "min_tags": ["healthcare", "hipaa"]
+    },
+    "financial_services": {
+      "name": "Financial Services",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "01_regulated_industries",
+      "subdomains": {
+        "payments_fin": { "name": "Payments" },
+        "kyc_aml": { "name": "KYC/AML" },
+        "trading": { "name": "Trading" }
+      },
+      "min_tags": ["finance", "kyc"]
+    },
+    "payments": {
+      "name": "Payments (PCI DSS)",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "01_regulated_industries",
+      "subdomains": {},
+      "min_tags": ["payments", "pci_dss"]
+    },
+    "insurance": {
+      "name": "Insurance",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "01_regulated_industries",
+      "subdomains": {},
+      "min_tags": ["insurance", "underwriting"]
+    },
+    "government_public_sector": {
+      "name": "Government / Public Sector",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "01_regulated_industries",
+      "subdomains": {
+        "fedramp": { "name": "FedRAMP" },
+        "citizen_services": { "name": "Citizen Services" }
+      },
+      "min_tags": ["government", "fedramp"]
+    },
+    "education": {
+      "name": "Education (FERPA)",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "01_regulated_industries",
+      "subdomains": {},
+      "min_tags": ["education", "ferpa"]
+    },
+    "legal_services": {
+      "name": "Legal Services",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "01_regulated_industries",
+      "subdomains": {},
+      "min_tags": ["legal", "contracts"]
+    },
+    "energy_utilities": {
+      "name": "Energy & Utilities",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "01_regulated_industries",
+      "subdomains": {},
+      "min_tags": ["energy", "utilities"]
+    },
+    "ecommerce": {
+      "name": "E-commerce",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "02_commerce_and_operations",
+      "subdomains": {
+        "catalog": { "name": "Catalog" },
+        "cart_checkout": { "name": "Cart & Checkout" },
+        "fulfillment": { "name": "Fulfillment" }
+      },
+      "min_tags": ["ecommerce", "checkout"]
+    },
+    "retail": {
+      "name": "Retail",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "02_commerce_and_operations",
+      "subdomains": {},
+      "min_tags": ["retail", "pos"]
+    },
+    "logistics_supply_chain": {
+      "name": "Logistics & Supply Chain",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "02_commerce_and_operations",
+      "subdomains": {
+        "tracking": { "name": "Tracking" },
+        "routing_logistics": { "name": "Routing" },
+        "warehouse": { "name": "Warehouse" }
+      },
+      "min_tags": ["logistics", "supply_chain"]
+    },
+    "manufacturing": {
+      "name": "Manufacturing",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "02_commerce_and_operations",
+      "subdomains": {},
+      "min_tags": ["manufacturing", "production"]
+    },
+    "construction": {
+      "name": "Construction",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "02_commerce_and_operations",
+      "subdomains": {},
+      "min_tags": ["construction", "bim"]
+    },
+    "real_estate": {
+      "name": "Real Estate",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "02_commerce_and_operations",
+      "subdomains": {},
+      "min_tags": ["real_estate", "property"]
+    },
+    "hospitality_travel": {
+      "name": "Hospitality & Travel",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "02_commerce_and_operations",
+      "subdomains": {},
+      "min_tags": ["hospitality", "travel"]
+    },
+    "food_and_beverage": {
+      "name": "Food & Beverage",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "02_commerce_and_operations",
+      "subdomains": {},
+      "min_tags": ["food", "beverage"]
+    },
+    "music_and_audio": {
+      "name": "Music & Audio",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "03_media_and_creator_economy",
+      "subdomains": {},
+      "min_tags": ["music", "audio"]
+    },
+    "film_and_video": {
+      "name": "Film & Video",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "03_media_and_creator_economy",
+      "subdomains": {},
+      "min_tags": ["film", "video"]
+    },
+    "gaming": {
+      "name": "Gaming",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "03_media_and_creator_economy",
+      "subdomains": {},
+      "min_tags": ["gaming", "game_dev"]
+    },
+    "livestreaming_platforms": {
+      "name": "Livestreaming Platforms",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "03_media_and_creator_economy",
+      "subdomains": {},
+      "min_tags": ["livestreaming", "streaming"]
+    },
+    "digital_publishing": {
+      "name": "Digital Publishing",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "03_media_and_creator_economy",
+      "subdomains": {},
+      "min_tags": ["publishing", "content"]
+    },
+    "creator_tools": {
+      "name": "Creator Tools",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "03_media_and_creator_economy",
+      "subdomains": {},
+      "min_tags": ["creator_tools", "creator_economy"]
+    },
+    "blockchain_web3": {
+      "name": "Blockchain / Web3",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "04_emerging_tech_industries",
+      "subdomains": {},
+      "min_tags": ["blockchain", "web3"]
+    },
+    "ai_products": {
+      "name": "AI Products",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "04_emerging_tech_industries",
+      "subdomains": {},
+      "min_tags": ["ai", "ml_products"]
+    },
+    "iot": {
+      "name": "Internet of Things (IoT)",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "04_emerging_tech_industries",
+      "subdomains": {},
+      "min_tags": ["iot", "embedded"]
+    },
+    "cybersecurity_products": {
+      "name": "Cybersecurity Products",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "04_emerging_tech_industries",
+      "subdomains": {},
+      "min_tags": ["cybersecurity", "security_products"]
+    },
+    "devtools": {
+      "name": "Developer Tools",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "04_emerging_tech_industries",
+      "subdomains": {},
+      "min_tags": ["devtools", "developer_experience"]
+    },
+    "saas_b2b": {
+      "name": "B2B SaaS",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "04_emerging_tech_industries",
+      "subdomains": {},
+      "min_tags": ["saas", "b2b"]
+    },
+    "marketplaces": {
+      "name": "Marketplaces",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "04_emerging_tech_industries",
+      "subdomains": {},
+      "min_tags": ["marketplace", "platform"]
+    },
+    "social_platforms": {
+      "name": "Social Platforms / Communities",
+      "pillar": "INDUSTRY_PLAYBOOKS",
+      "group": "04_emerging_tech_industries",
+      "subdomains": {},
+      "min_tags": ["social", "community"]
     }
+  },
+  "tag_vocabulary": {
+    "auth": { "name": "Authentication", "category": "security" },
+    "authz": { "name": "Authorization", "category": "security" },
+    "secrets": { "name": "Secrets", "category": "security" },
+    "threat_model": { "name": "Threat Modeling", "category": "security" },
+    "iam": { "name": "Identity & Access Management", "category": "security" },
+    "sso": { "name": "Single Sign-On", "category": "security" },
+    "oauth": { "name": "OAuth / OIDC", "category": "security" },
+    "appsec": { "name": "Application Security", "category": "security" },
+    "owasp": { "name": "OWASP", "category": "security" },
+    "vulnerability": { "name": "Vulnerability", "category": "security" },
+    "crypto": { "name": "Cryptography", "category": "security" },
+    "encryption": { "name": "Encryption", "category": "security" },
+    "tls": { "name": "TLS", "category": "security" },
+    "xss": { "name": "Cross-Site Scripting (XSS)", "category": "security" },
+    "csrf": { "name": "Cross-Site Request Forgery (CSRF)", "category": "security" },
+    "csp": { "name": "Content Security Policy (CSP)", "category": "security" },
+    "rbac": { "name": "Role-Based Access Control", "category": "security" },
+    "abac": { "name": "Attribute-Based Access Control", "category": "security" },
+    "secops": { "name": "Security Operations", "category": "security" },
+    "siem": { "name": "SIEM", "category": "security" },
+    "cve": { "name": "CVE", "category": "security" },
+    "pentest": { "name": "Penetration Testing", "category": "security" },
+    "security_testing": { "name": "Security Testing", "category": "security" },
+    "secure_sdlc": { "name": "Secure SDLC", "category": "security" },
+    "devsecops": { "name": "DevSecOps", "category": "security" },
+    "compliance": { "name": "Compliance", "category": "security" },
+    "soc2": { "name": "SOC 2", "category": "security" },
+    "iso": { "name": "ISO 27001", "category": "security" },
+    "privacy": { "name": "Privacy", "category": "security" },
+    "gdpr": { "name": "GDPR", "category": "security" },
+    "data_protection": { "name": "Data Protection", "category": "security" },
+    "ccpa": { "name": "CCPA", "category": "security" },
+    "grc": { "name": "GRC", "category": "security" },
+    "governance": { "name": "Governance", "category": "security" },
+    "risk": { "name": "Risk", "category": "security" },
+    "audit": { "name": "Audit", "category": "security" },
+    "audit_logging": { "name": "Audit Logging", "category": "security" },
+    "threat_detection": { "name": "Threat Detection", "category": "security" },
+    "networking": { "name": "Networking", "category": "infra" },
+    "dns": { "name": "DNS", "category": "infra" },
+    "tcp": { "name": "TCP", "category": "infra" },
+    "udp": { "name": "UDP", "category": "infra" },
+    "http": { "name": "HTTP", "category": "infra" },
+    "web_platform": { "name": "Web Platform", "category": "infra" },
+    "cors": { "name": "CORS", "category": "infra" },
+    "os": { "name": "Operating System", "category": "infra" },
+    "linux": { "name": "Linux", "category": "infra" },
+    "process": { "name": "Process Management", "category": "infra" },
+    "cli": { "name": "CLI", "category": "infra" },
+    "bash": { "name": "Bash", "category": "infra" },
+    "shell": { "name": "Shell", "category": "infra" },
+    "cloud": { "name": "Cloud", "category": "infra" },
+    "infrastructure": { "name": "Infrastructure", "category": "infra" },
+    "docker": { "name": "Docker", "category": "infra" },
+    "containers": { "name": "Containers", "category": "infra" },
+    "kubernetes": { "name": "Kubernetes", "category": "infra" },
+    "k8s": { "name": "K8s", "category": "infra" },
+    "service_mesh": { "name": "Service Mesh", "category": "infra" },
+    "istio": { "name": "Istio", "category": "infra" },
+    "iac": { "name": "Infrastructure as Code", "category": "infra" },
+    "terraform": { "name": "Terraform", "category": "infra" },
+    "cloud_networking": { "name": "Cloud Networking", "category": "infra" },
+    "vpc": { "name": "VPC", "category": "infra" },
+    "load_balancing": { "name": "Load Balancing", "category": "infra" },
+    "cdn": { "name": "CDN", "category": "infra" },
+    "config": { "name": "Configuration", "category": "infra" },
+    "platform_engineering": { "name": "Platform Engineering", "category": "infra" },
+    "idp": { "name": "Internal Developer Platform", "category": "infra" },
+    "developer_experience": { "name": "Developer Experience", "category": "infra" },
+    "architecture": { "name": "Architecture", "category": "architecture" },
+    "microservices": { "name": "Microservices", "category": "architecture" },
+    "ddd": { "name": "Domain-Driven Design", "category": "architecture" },
+    "distributed": { "name": "Distributed Systems", "category": "architecture" },
+    "consensus": { "name": "Consensus", "category": "architecture" },
+    "replication": { "name": "Replication", "category": "architecture" },
+    "api": { "name": "API", "category": "architecture" },
+    "api_design": { "name": "API Design", "category": "architecture" },
+    "rest": { "name": "REST", "category": "architecture" },
+    "graphql": { "name": "GraphQL", "category": "architecture" },
+    "grpc": { "name": "gRPC", "category": "architecture" },
+    "rpc": { "name": "RPC", "category": "architecture" },
+    "webhooks": { "name": "Webhooks", "category": "architecture" },
+    "events": { "name": "Events", "category": "architecture" },
+    "sessions": { "name": "Sessions", "category": "architecture" },
+    "jwt": { "name": "JWT", "category": "architecture" },
+    "rate_limiting": { "name": "Rate Limiting", "category": "architecture" },
+    "abuse_prevention": { "name": "Abuse Prevention", "category": "architecture" },
+    "validation": { "name": "Validation", "category": "architecture" },
+    "sanitization": { "name": "Sanitization", "category": "architecture" },
+    "background_jobs": { "name": "Background Jobs", "category": "architecture" },
+    "queues": { "name": "Queues", "category": "architecture" },
+    "caching": { "name": "Caching", "category": "architecture" },
+    "cache_invalidation": { "name": "Cache Invalidation", "category": "architecture" },
+    "feature_flags": { "name": "Feature Flags", "category": "architecture" },
+    "data_structures": { "name": "Data Structures", "category": "architecture" },
+    "algorithms": { "name": "Algorithms", "category": "architecture" },
+    "rdbms": { "name": "RDBMS", "category": "data" },
+    "sql": { "name": "SQL", "category": "data" },
+    "indexing": { "name": "Indexing", "category": "data" },
+    "postgresql": { "name": "PostgreSQL", "category": "data" },
+    "database": { "name": "Database", "category": "data" },
+    "mysql": { "name": "MySQL", "category": "data" },
+    "migrations": { "name": "Migrations", "category": "data" },
+    "schema": { "name": "Schema", "category": "data" },
+    "nosql": { "name": "NoSQL", "category": "data" },
+    "mongodb": { "name": "MongoDB", "category": "data" },
+    "document_db": { "name": "Document Database", "category": "data" },
+    "redis": { "name": "Redis", "category": "data" },
+    "key_value": { "name": "Key-Value Store", "category": "data" },
+    "search": { "name": "Search", "category": "data" },
+    "elasticsearch": { "name": "Elasticsearch", "category": "data" },
+    "data_warehouse": { "name": "Data Warehouse", "category": "data" },
+    "analytics": { "name": "Analytics", "category": "data" },
+    "data_lake": { "name": "Data Lake", "category": "data" },
+    "lakehouse": { "name": "Lakehouse", "category": "data" },
+    "object_storage": { "name": "Object Storage", "category": "data" },
+    "s3": { "name": "S3", "category": "data" },
+    "backup": { "name": "Backup", "category": "data" },
+    "disaster_recovery": { "name": "Disaster Recovery", "category": "data" },
+    "data_engineering": { "name": "Data Engineering", "category": "data" },
+    "data_pipelines": { "name": "Data Pipelines", "category": "data" },
+    "etl": { "name": "ETL", "category": "data" },
+    "elt": { "name": "ELT", "category": "data" },
+    "streaming": { "name": "Streaming", "category": "data" },
+    "stream_processing": { "name": "Stream Processing", "category": "data" },
+    "kafka": { "name": "Kafka", "category": "data" },
+    "event_streaming": { "name": "Event Streaming", "category": "data" },
+    "telemetry": { "name": "Telemetry", "category": "data" },
+    "vector_db": { "name": "Vector Database", "category": "data" },
+    "embeddings": { "name": "Embeddings", "category": "data" },
+    "frontend": { "name": "Frontend", "category": "architecture" },
+    "web": { "name": "Web", "category": "architecture" },
+    "mobile": { "name": "Mobile", "category": "architecture" },
+    "ios": { "name": "iOS", "category": "architecture" },
+    "android": { "name": "Android", "category": "architecture" },
+    "desktop": { "name": "Desktop", "category": "architecture" },
+    "electron": { "name": "Electron", "category": "architecture" },
+    "ui_architecture": { "name": "UI Architecture", "category": "architecture" },
+    "state_management": { "name": "State Management", "category": "architecture" },
+    "design_systems": { "name": "Design Systems", "category": "architecture" },
+    "components": { "name": "Components", "category": "architecture" },
+    "a11y": { "name": "Accessibility", "category": "architecture" },
+    "accessibility": { "name": "Accessibility (full)", "category": "architecture" },
+    "wcag": { "name": "WCAG", "category": "architecture" },
+    "performance": { "name": "Performance", "category": "performance" },
+    "scalability": { "name": "Scalability", "category": "performance" },
+    "offline": { "name": "Offline", "category": "architecture" },
+    "sync": { "name": "Sync", "category": "architecture" },
+    "push_notifications": { "name": "Push Notifications", "category": "architecture" },
+    "i18n": { "name": "Internationalization", "category": "architecture" },
+    "localization": { "name": "Localization", "category": "architecture" },
+    "ci_cd": { "name": "CI/CD", "category": "infra" },
+    "pipelines": { "name": "Pipelines", "category": "infra" },
+    "release": { "name": "Release", "category": "infra" },
+    "versioning": { "name": "Versioning", "category": "infra" },
+    "sre": { "name": "SRE", "category": "infra" },
+    "reliability": { "name": "Reliability", "category": "infra" },
+    "incident_response": { "name": "Incident Response", "category": "infra" },
+    "on_call": { "name": "On-Call", "category": "infra" },
+    "monitoring": { "name": "Monitoring", "category": "observability" },
+    "alerting": { "name": "Alerting", "category": "observability" },
+    "logging": { "name": "Logging", "category": "observability" },
+    "tracing": { "name": "Tracing", "category": "observability" },
+    "observability": { "name": "Observability", "category": "observability" },
+    "api_metrics": { "name": "API Metrics", "category": "observability" },
+    "slo": { "name": "SLO", "category": "observability" },
+    "sla": { "name": "SLA", "category": "observability" },
+    "error_budget": { "name": "Error Budget", "category": "observability" },
+    "capacity": { "name": "Capacity", "category": "performance" },
+    "scaling": { "name": "Scaling", "category": "performance" },
+    "finops": { "name": "FinOps", "category": "performance" },
+    "cost_optimization": { "name": "Cost Optimization", "category": "performance" },
+    "quality": { "name": "Quality", "category": "testing" },
+    "testing": { "name": "Testing", "category": "testing" },
+    "unit_test": { "name": "Unit Test", "category": "testing" },
+    "e2e": { "name": "End-to-End Testing", "category": "testing" },
+    "ml": { "name": "Machine Learning", "category": "data" },
+    "machine_learning": { "name": "Machine Learning (full)", "category": "data" },
+    "mlops": { "name": "MLOps", "category": "data" },
+    "ml_pipelines": { "name": "ML Pipelines", "category": "data" },
+    "llm": { "name": "LLM", "category": "data" },
+    "ai": { "name": "AI", "category": "data" },
+    "rag": { "name": "RAG", "category": "data" },
+    "retrieval": { "name": "Retrieval", "category": "data" },
+    "model_serving": { "name": "Model Serving", "category": "data" },
+    "inference": { "name": "Inference", "category": "data" },
+    "ai_safety": { "name": "AI Safety", "category": "data" },
+    "ai_governance": { "name": "AI Governance", "category": "data" },
+    "javascript": { "name": "JavaScript", "category": "language" },
+    "js": { "name": "JS", "category": "language" },
+    "typescript": { "name": "TypeScript", "category": "language" },
+    "ts": { "name": "TS", "category": "language" },
+    "python": { "name": "Python", "category": "language" },
+    "go": { "name": "Go", "category": "language" },
+    "golang": { "name": "Golang", "category": "language" },
+    "rust": { "name": "Rust", "category": "language" },
+    "java": { "name": "Java", "category": "language" },
+    "jvm": { "name": "JVM", "category": "language" },
+    "csharp": { "name": "C#", "category": "language" },
+    "dotnet": { "name": ".NET", "category": "language" },
+    "cpp": { "name": "C++", "category": "language" },
+    "c_lang": { "name": "C", "category": "language" },
+    "swift": { "name": "Swift", "category": "language" },
+    "kotlin": { "name": "Kotlin", "category": "language" },
+    "solidity": { "name": "Solidity", "category": "language" },
+    "evm": { "name": "EVM", "category": "language" },
+    "move": { "name": "Move", "category": "language" },
+    "vyper": { "name": "Vyper", "category": "language" },
+    "dart": { "name": "Dart", "category": "language" },
+    "react": { "name": "React", "category": "framework" },
+    "nextjs": { "name": "Next.js", "category": "framework" },
+    "vue": { "name": "Vue", "category": "framework" },
+    "svelte": { "name": "Svelte", "category": "framework" },
+    "angular": { "name": "Angular", "category": "framework" },
+    "nodejs": { "name": "Node.js", "category": "framework" },
+    "express": { "name": "Express", "category": "framework" },
+    "nestjs": { "name": "NestJS", "category": "framework" },
+    "fastapi": { "name": "FastAPI", "category": "framework" },
+    "django": { "name": "Django", "category": "framework" },
+    "flask": { "name": "Flask", "category": "framework" },
+    "spring_boot": { "name": "Spring Boot", "category": "framework" },
+    "react_native": { "name": "React Native", "category": "framework" },
+    "expo": { "name": "Expo", "category": "framework" },
+    "flutter": { "name": "Flutter", "category": "framework" },
+    "swiftui": { "name": "SwiftUI", "category": "framework" },
+    "drizzle": { "name": "Drizzle ORM", "category": "framework" },
+    "orm": { "name": "ORM", "category": "framework" },
+    "prisma": { "name": "Prisma", "category": "framework" },
+    "typeorm": { "name": "TypeORM", "category": "framework" },
+    "sequelize": { "name": "Sequelize", "category": "framework" },
+    "sqlalchemy": { "name": "SQLAlchemy", "category": "framework" },
+    "postgres_driver": { "name": "PostgreSQL Driver", "category": "framework" },
+    "client": { "name": "Client Library", "category": "framework" },
+    "pulumi": { "name": "Pulumi", "category": "framework" },
+    "ansible": { "name": "Ansible", "category": "framework" },
+    "automation": { "name": "Automation", "category": "framework" },
+    "github_actions": { "name": "GitHub Actions", "category": "framework" },
+    "gitlab_ci": { "name": "GitLab CI", "category": "framework" },
+    "circleci": { "name": "CircleCI", "category": "framework" },
+    "cloudflare": { "name": "Cloudflare", "category": "framework" },
+    "edge": { "name": "Edge Computing", "category": "framework" },
+    "aws": { "name": "AWS", "category": "framework" },
+    "gcp": { "name": "GCP", "category": "framework" },
+    "azure": { "name": "Azure", "category": "framework" },
+    "blockchain": { "name": "Blockchain", "category": "framework" },
+    "ethereum": { "name": "Ethereum", "category": "framework" },
+    "polygon": { "name": "Polygon", "category": "framework" },
+    "l2": { "name": "Layer 2", "category": "framework" },
+    "solana": { "name": "Solana", "category": "framework" },
+    "cosmos": { "name": "Cosmos", "category": "framework" },
+    "substrate": { "name": "Substrate", "category": "framework" },
+    "polkadot": { "name": "Polkadot", "category": "framework" },
+    "chainlink": { "name": "Chainlink", "category": "framework" },
+    "oracle": { "name": "Oracle (Blockchain)", "category": "framework" },
+    "ipfs": { "name": "IPFS", "category": "framework" },
+    "decentralized_storage": { "name": "Decentralized Storage", "category": "framework" },
+    "walletconnect": { "name": "WalletConnect", "category": "framework" },
+    "wallet": { "name": "Wallet", "category": "framework" },
+    "wagmi": { "name": "Wagmi", "category": "framework" },
+    "web3_frontend": { "name": "Web3 Frontend", "category": "framework" },
+    "hardhat": { "name": "Hardhat", "category": "framework" },
+    "foundry": { "name": "Foundry", "category": "framework" },
+    "openzeppelin": { "name": "OpenZeppelin", "category": "framework" },
+    "smart_contracts": { "name": "Smart Contracts", "category": "framework" },
+    "daw": { "name": "DAW", "category": "general" },
+    "audio": { "name": "Audio", "category": "general" },
+    "midi": { "name": "MIDI", "category": "general" },
+    "music": { "name": "Music", "category": "general" },
+    "vst": { "name": "VST", "category": "general" },
+    "audio_plugins": { "name": "Audio Plugins", "category": "general" },
+    "dsp": { "name": "DSP", "category": "general" },
+    "audio_routing": { "name": "Audio Routing", "category": "general" },
+    "latency": { "name": "Latency", "category": "general" },
+    "pro_tools": { "name": "Pro Tools", "category": "general" },
+    "ableton": { "name": "Ableton", "category": "general" },
+    "logic_pro": { "name": "Logic Pro", "category": "general" },
+    "fl_studio": { "name": "FL Studio", "category": "general" },
+    "reaper": { "name": "REAPER", "category": "general" },
+    "studio_one": { "name": "Studio One", "category": "general" },
+    "3d": { "name": "3D", "category": "general" },
+    "blender": { "name": "Blender", "category": "general" },
+    "maya": { "name": "Maya", "category": "general" },
+    "3ds_max": { "name": "3ds Max", "category": "general" },
+    "cinema_4d": { "name": "Cinema 4D", "category": "general" },
+    "houdini": { "name": "Houdini", "category": "general" },
+    "vfx": { "name": "VFX", "category": "general" },
+    "unreal": { "name": "Unreal Engine", "category": "general" },
+    "game_engine": { "name": "Game Engine", "category": "general" },
+    "unity": { "name": "Unity", "category": "general" },
+    "substance_3d": { "name": "Substance 3D", "category": "general" },
+    "texturing": { "name": "Texturing", "category": "general" },
+    "pbr": { "name": "PBR", "category": "general" },
+    "materials": { "name": "Materials", "category": "general" },
+    "rendering": { "name": "Rendering", "category": "general" },
+    "graphics": { "name": "Graphics", "category": "general" },
+    "rigging": { "name": "Rigging", "category": "general" },
+    "animation": { "name": "Animation", "category": "general" },
+    "photogrammetry": { "name": "Photogrammetry", "category": "general" },
+    "3d_scanning": { "name": "3D Scanning", "category": "general" },
+    "webrtc": { "name": "WebRTC", "category": "general" },
+    "realtime": { "name": "Realtime", "category": "general" },
+    "rtmp": { "name": "RTMP", "category": "general" },
+    "hls": { "name": "HLS", "category": "general" },
+    "dash": { "name": "MPEG-DASH", "category": "general" },
+    "ffmpeg": { "name": "FFmpeg", "category": "general" },
+    "video": { "name": "Video", "category": "general" },
+    "websockets": { "name": "WebSockets", "category": "general" },
+    "signaling": { "name": "Signaling", "category": "general" },
+    "media_storage": { "name": "Media Storage", "category": "general" },
+    "healthcare": { "name": "Healthcare", "category": "industry" },
+    "hipaa": { "name": "HIPAA", "category": "industry" },
+    "finance": { "name": "Finance", "category": "industry" },
+    "kyc": { "name": "KYC", "category": "industry" },
+    "payments": { "name": "Payments", "category": "industry" },
+    "pci_dss": { "name": "PCI DSS", "category": "industry" },
+    "insurance": { "name": "Insurance", "category": "industry" },
+    "underwriting": { "name": "Underwriting", "category": "industry" },
+    "government": { "name": "Government", "category": "industry" },
+    "fedramp": { "name": "FedRAMP", "category": "industry" },
+    "education": { "name": "Education", "category": "industry" },
+    "ferpa": { "name": "FERPA", "category": "industry" },
+    "legal": { "name": "Legal", "category": "industry" },
+    "contracts": { "name": "Contracts", "category": "industry" },
+    "energy": { "name": "Energy", "category": "industry" },
+    "utilities": { "name": "Utilities", "category": "industry" },
+    "ecommerce": { "name": "E-commerce", "category": "industry" },
+    "checkout": { "name": "Checkout", "category": "industry" },
+    "retail": { "name": "Retail", "category": "industry" },
+    "pos": { "name": "Point of Sale", "category": "industry" },
+    "logistics": { "name": "Logistics", "category": "industry" },
+    "supply_chain": { "name": "Supply Chain", "category": "industry" },
+    "manufacturing": { "name": "Manufacturing", "category": "industry" },
+    "production": { "name": "Production", "category": "industry" },
+    "construction": { "name": "Construction", "category": "industry" },
+    "bim": { "name": "BIM", "category": "industry" },
+    "real_estate": { "name": "Real Estate", "category": "industry" },
+    "property": { "name": "Property", "category": "industry" },
+    "hospitality": { "name": "Hospitality", "category": "industry" },
+    "travel": { "name": "Travel", "category": "industry" },
+    "food": { "name": "Food", "category": "industry" },
+    "beverage": { "name": "Beverage", "category": "industry" },
+    "film": { "name": "Film", "category": "industry" },
+    "gaming": { "name": "Gaming", "category": "industry" },
+    "game_dev": { "name": "Game Development", "category": "industry" },
+    "livestreaming": { "name": "Livestreaming", "category": "industry" },
+    "publishing": { "name": "Publishing", "category": "industry" },
+    "content": { "name": "Content", "category": "industry" },
+    "creator_tools": { "name": "Creator Tools", "category": "industry" },
+    "creator_economy": { "name": "Creator Economy", "category": "industry" },
+    "web3": { "name": "Web3", "category": "industry" },
+    "ml_products": { "name": "ML Products", "category": "industry" },
+    "iot": { "name": "IoT", "category": "industry" },
+    "embedded": { "name": "Embedded", "category": "industry" },
+    "cybersecurity": { "name": "Cybersecurity", "category": "industry" },
+    "security_products": { "name": "Security Products", "category": "industry" },
+    "devtools": { "name": "Developer Tools", "category": "industry" },
+    "saas": { "name": "SaaS", "category": "industry" },
+    "b2b": { "name": "B2B", "category": "industry" },
+    "marketplace": { "name": "Marketplace", "category": "industry" },
+    "platform": { "name": "Platform", "category": "industry" },
+    "social": { "name": "Social", "category": "industry" },
+    "community": { "name": "Community", "category": "industry" }
+  },
+  "tag_aliases": {
+    "authentication": "auth",
+    "authorization": "authz",
+    "secret_management": "secrets",
+    "threatmodel": "threat_model",
+    "identity_management": "iam",
+    "single_sign_on": "sso",
+    "app_security": "appsec",
+    "cryptography": "crypto",
+    "cross_site_scripting": "xss",
+    "content_security_policy": "csp",
+    "role_based_access": "rbac",
+    "security_operations": "secops",
+    "penetration_test": "pentest",
+    "dev_sec_ops": "devsecops",
+    "general_data_protection_regulation": "gdpr",
+    "california_consumer_privacy_act": "ccpa",
+    "governance_risk_compliance": "grc",
+    "load_balancer": "load_balancing",
+    "content_delivery_network": "cdn",
+    "dx": "developer_experience",
+    "microservice": "microservices",
+    "domain_driven_design": "ddd",
+    "api_gateway": "api",
+    "representational_state_transfer": "rest",
+    "json_web_token": "jwt",
+    "relational_database": "rdbms",
+    "structured_query_language": "sql",
+    "postgres": "postgresql",
+    "mongo": "mongodb",
+    "elastic": "elasticsearch",
+    "s3_storage": "s3",
+    "dr": "disaster_recovery",
+    "extract_transform_load": "etl",
+    "apache_kafka": "kafka",
+    "machine_learning_ops": "mlops",
+    "large_language_model": "llm",
+    "retrieval_augmented_generation": "rag",
+    "artificial_intelligence": "ai",
+    "js": "javascript",
+    "ts": "typescript",
+    "golang": "go",
+    "c_plus_plus": "cpp",
+    "c_sharp": "csharp",
+    "dot_net": "dotnet",
+    "next": "nextjs",
+    "node": "nodejs",
+    "spring": "spring_boot",
+    "rn": "react_native",
+    "swiftui": "ios",
+    "jetpack_compose": "android",
+    "pg_driver": "postgres_driver",
+    "hcl": "terraform",
+    "gh_actions": "github_actions",
+    "gl_ci": "gitlab_ci",
+    "cf": "cloudflare",
+    "amazon_web_services": "aws",
+    "google_cloud": "gcp",
+    "microsoft_azure": "azure",
+    "eth": "ethereum",
+    "sol": "solana",
+    "oz": "openzeppelin",
+    "web_rtc": "webrtc",
+    "real_time": "realtime",
+    "ws": "websockets",
+    "health_insurance_portability": "hipaa",
+    "know_your_customer": "kyc",
+    "payment_card_industry": "pci_dss",
+    "federal_risk_authorization": "fedramp",
+    "family_educational_rights": "ferpa",
+    "e_commerce": "ecommerce",
+    "point_of_sale": "pos",
+    "supply_chain_management": "supply_chain",
+    "internet_of_things": "iot",
+    "b2b_saas": "saas",
+    "continuous_integration": "ci_cd",
+    "continuous_deployment": "ci_cd",
+    "service_level_objective": "slo",
+    "service_level_agreement": "sla",
+    "site_reliability": "sre",
+    "internationalization": "i18n",
+    "l10n": "localization",
+    "a11y_accessibility": "a11y",
+    "web_content_accessibility": "wcag"
+  },
+  "industries": {
+    "healthcare": { "name": "Healthcare", "regulated": true, "notes": "HIPAA risk context." },
+    "financial_services": { "name": "Financial Services", "regulated": true, "notes": "Banking, trading, KYC/AML." },
+    "payments": { "name": "Payments", "regulated": true, "notes": "PCI DSS compliance context." },
+    "insurance": { "name": "Insurance", "regulated": true, "notes": "Underwriting, claims processing." },
+    "government_public_sector": { "name": "Government / Public Sector", "regulated": true, "notes": "FedRAMP, citizen services." },
+    "education": { "name": "Education", "regulated": true, "notes": "FERPA compliance context." },
+    "legal_services": { "name": "Legal Services", "regulated": true, "notes": "Attorney-client privilege, document management." },
+    "energy_utilities": { "name": "Energy & Utilities", "regulated": true, "notes": "NERC CIP, SCADA." },
+    "ecommerce": { "name": "E-commerce", "regulated": false, "notes": "Catalog, cart, checkout, fulfillment." },
+    "retail": { "name": "Retail", "regulated": false, "notes": "POS, inventory, omnichannel." },
+    "logistics_supply_chain": { "name": "Logistics & Supply Chain", "regulated": false, "notes": "Tracking, routing, warehouse management." },
+    "manufacturing": { "name": "Manufacturing", "regulated": false, "notes": "MES, production scheduling." },
+    "construction": { "name": "Construction", "regulated": false, "notes": "BIM, project management." },
+    "real_estate": { "name": "Real Estate", "regulated": false, "notes": "Property management, listings." },
+    "hospitality_travel": { "name": "Hospitality & Travel", "regulated": false, "notes": "Booking, reservation, loyalty." },
+    "food_and_beverage": { "name": "Food & Beverage", "regulated": false, "notes": "Ordering, delivery, POS." },
+    "music_and_audio": { "name": "Music & Audio", "regulated": false, "notes": "Streaming, production, distribution." },
+    "film_and_video": { "name": "Film & Video", "regulated": false, "notes": "Production, post-production, distribution." },
+    "gaming": { "name": "Gaming", "regulated": false, "notes": "Game engines, multiplayer, monetization." },
+    "livestreaming_platforms": { "name": "Livestreaming Platforms", "regulated": false, "notes": "Live video, chat, moderation." },
+    "digital_publishing": { "name": "Digital Publishing", "regulated": false, "notes": "CMS, content delivery, subscriptions." },
+    "creator_tools": { "name": "Creator Tools", "regulated": false, "notes": "Creator economy platforms." },
+    "blockchain_web3": { "name": "Blockchain / Web3", "regulated": false, "notes": "DeFi, NFTs, DAOs." },
+    "ai_products": { "name": "AI Products", "regulated": false, "notes": "AI-powered applications, MLOps." },
+    "iot": { "name": "Internet of Things (IoT)", "regulated": false, "notes": "Edge devices, telemetry, embedded." },
+    "cybersecurity_products": { "name": "Cybersecurity Products", "regulated": false, "notes": "Security tooling, SIEM, endpoint protection." },
+    "devtools": { "name": "Developer Tools", "regulated": false, "notes": "IDEs, CLIs, SDKs, API platforms." },
+    "saas_b2b": { "name": "B2B SaaS", "regulated": false, "notes": "Multi-tenant, subscription, enterprise." },
+    "marketplaces": { "name": "Marketplaces", "regulated": false, "notes": "Two-sided platforms, matching." },
+    "social_platforms": { "name": "Social Platforms / Communities", "regulated": false, "notes": "User-generated content, moderation." }
+  },
+  "stack_families": {
+    "react": { "name": "React", "ecosystem": "frontend", "notes": "React + tooling families." },
+    "nextjs": { "name": "Next.js", "ecosystem": "fullstack", "notes": "React meta-framework." },
+    "vue": { "name": "Vue", "ecosystem": "frontend", "notes": "Vue.js + Nuxt ecosystem." },
+    "svelte": { "name": "Svelte", "ecosystem": "frontend", "notes": "Svelte + SvelteKit." },
+    "angular": { "name": "Angular", "ecosystem": "frontend", "notes": "Angular framework." },
+    "nodejs": { "name": "Node.js", "ecosystem": "backend", "notes": "Node.js runtime + Express/NestJS." },
+    "fastapi": { "name": "FastAPI", "ecosystem": "backend", "notes": "Python async web framework." },
+    "django": { "name": "Django", "ecosystem": "backend", "notes": "Python full-stack framework." },
+    "spring_boot": { "name": "Spring Boot", "ecosystem": "backend", "notes": "Java enterprise framework." },
+    "react_native": { "name": "React Native", "ecosystem": "mobile", "notes": "Cross-platform mobile (RN + Expo)." },
+    "flutter": { "name": "Flutter", "ecosystem": "mobile", "notes": "Cross-platform mobile (Dart)." },
+    "ios_native": { "name": "iOS Native", "ecosystem": "mobile", "notes": "Swift/SwiftUI/UIKit." },
+    "android_native": { "name": "Android Native", "ecosystem": "mobile", "notes": "Kotlin/Jetpack Compose." },
+    "postgres": { "name": "PostgreSQL", "ecosystem": "data", "notes": "PostgreSQL + ORMs/drivers." },
+    "redis": { "name": "Redis", "ecosystem": "data", "notes": "Redis caching + data store." },
+    "elasticsearch": { "name": "Elasticsearch", "ecosystem": "data", "notes": "Elasticsearch/OpenSearch." },
+    "docker_k8s": { "name": "Docker + Kubernetes", "ecosystem": "infra", "notes": "Container orchestration stack." },
+    "terraform_iac": { "name": "Terraform IaC", "ecosystem": "infra", "notes": "HashiCorp Terraform." },
+    "aws_stack": { "name": "AWS Stack", "ecosystem": "cloud", "notes": "Amazon Web Services." },
+    "gcp_stack": { "name": "GCP Stack", "ecosystem": "cloud", "notes": "Google Cloud Platform." },
+    "azure_stack": { "name": "Azure Stack", "ecosystem": "cloud", "notes": "Microsoft Azure." },
+    "ethereum_stack": { "name": "Ethereum Stack", "ecosystem": "blockchain", "notes": "Ethereum + Solidity + Hardhat/Foundry." },
+    "solana_stack": { "name": "Solana Stack", "ecosystem": "blockchain", "notes": "Solana + Anchor." }
   }
 }

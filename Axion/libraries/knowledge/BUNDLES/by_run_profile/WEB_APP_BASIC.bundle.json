@@ -1,17 +1,19 @@
 {
-  "bundle_id": "WEB_APP_BASIC",
-  "name": "Web Application Basic",
+  "bundle_id": "BUNDLE-WEB_APP_BASIC-0002",
+  "title": "Web Application Basic",
   "description": "Knowledge bundle for basic web application projects",
-  "kids": [],
-  "filter_rules": {
-    "run_profile": "WEB_APP_BASIC",
+  "selection_policy": {
+    "mode": "append",
+    "cap": 50,
     "min_maturity": "draft"
   },
-  "tags": [
-    "api",
-    "auth",
-    "database",
-    "accessibility",
-    "performance"
-  ]
+  "kids": ["*"],
+  "by_run_profile": ["WEB_APP_BASIC"],
+  "by_risk_class": [],
+  "by_executor": ["internal_and_external"],
+  "domains": ["web_frontend_engineering", "ui_architecture", "accessibility", "performance_frontend"],
+  "tags": ["api", "auth", "database", "accessibility", "performance"],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

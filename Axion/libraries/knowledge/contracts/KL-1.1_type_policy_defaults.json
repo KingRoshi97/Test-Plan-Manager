@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "KL-1.1b",
+  "defaults": {
+    "concept": {
+      "use_policy": "pattern_only",
+      "allowed_excerpt": {
+        "max_words": 0,
+        "max_lines": 0
+      }
+    },
+    "pattern": {
+      "use_policy": "pattern_only",
+      "allowed_excerpt": {
+        "max_words": 0,
+        "max_lines": 0
+      }
+    },
+    "procedure": {
+      "use_policy": "pattern_only",
+      "allowed_excerpt": {
+        "max_words": 0,
+        "max_lines": 0
+      }
+    },
+    "checklist": {
+      "use_policy": "pattern_only",
+      "allowed_excerpt": {
+        "max_words": 0,
+        "max_lines": 0
+      }
+    },
+    "reference": {
+      "use_policy": "pattern_only",
+      "allowed_excerpt": {
+        "max_words": 0,
+        "max_lines": 0
+      }
+    },
+    "pitfall": {
+      "use_policy": "pattern_only",
+      "allowed_excerpt": {
+        "max_words": 0,
+        "max_lines": 0
+      }
+    },
+    "example": {
+      "use_policy": "restricted_internal_only",
+      "allowed_excerpt": {
+        "max_words": 0,
+        "max_lines": 0
+      }
+    },
+    "glossary_term": {
+      "use_policy": "pattern_only",
+      "allowed_excerpt": {
+        "max_words": 0,
+        "max_lines": 0
+      }
+    }
+  }
+}

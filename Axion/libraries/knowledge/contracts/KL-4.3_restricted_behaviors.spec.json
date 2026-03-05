@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "KL-4.3a",
+  "restriction_reason_codes": [
+    {
+      "code": "KL-R01",
+      "name": "Verbatim beyond excerpt limits"
+    },
+    {
+      "code": "KL-R02",
+      "name": "Internal-only item used by external executor"
+    },
+    {
+      "code": "KL-R03",
+      "name": "Restricted content exported in external kit"
+    },
+    {
+      "code": "KL-R04",
+      "name": "Example used as copy donor"
+    },
+    {
+      "code": "KL-R05",
+      "name": "Bypassed selection (roamed library)"
+    },
+    {
+      "code": "KL-R06",
+      "name": "High-similarity paraphrase (near-copy)"
+    }
+  ]
+}

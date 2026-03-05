@@ -1,17 +1,19 @@
 {
-  "bundle_id": "PRODUCTION",
-  "name": "Production Risk Class",
+  "bundle_id": "BUNDLE-PRODUCTION-0007",
+  "title": "Production Risk Class",
   "description": "Knowledge bundle for production projects requiring reviewed+ maturity KIDs",
-  "kids": [],
-  "filter_rules": {
-    "risk_class": "production",
+  "selection_policy": {
+    "mode": "append",
+    "cap": 60,
     "min_maturity": "reviewed"
   },
-  "tags": [
-    "security",
-    "observability",
-    "testing",
-    "deployment",
-    "error_handling"
-  ]
+  "kids": ["*"],
+  "by_run_profile": [],
+  "by_risk_class": ["PRODUCTION"],
+  "by_executor": ["internal_and_external"],
+  "domains": [],
+  "tags": ["security", "observability", "testing", "deployment", "error_handling"],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

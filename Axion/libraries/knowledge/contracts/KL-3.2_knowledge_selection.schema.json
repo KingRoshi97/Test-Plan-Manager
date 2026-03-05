@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "artifact_id": "KNOWLEDGE_SELECTION",
+  "title": "KNOWLEDGE_SELECTION Artifact Schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "generated_at",
+    "mode",
+    "inputs",
+    "bundles_used",
+    "selected",
+    "cap",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "reproducibility"
+      ]
+    },
+    "inputs": {
+      "type": "object",
+      "description": "A frozen copy of KL-3.1 inputs used for selection",
+      "required": [
+        "run_profile",
+        "risk_class",
+        "executor_type",
+        "min_maturity",
+        "signals"
+      ],
+      "properties": {
+        "run_profile": {
+          "type": "string"
+        },
+        "risk_class": {
+          "type": "string"
+        },
+        "executor_type": {
+          "type": "string"
+        },
+        "min_maturity": {
+          "type": "string"
+        },
+        "target_stack": {
+          "type": "object"
+        },
+        "standards_snapshot_id": {
+          "type": "string"
+        },
+        "signals": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "bundles_used": {
+      "type": "array",
+      "description": "Bundle IDs applied (in application order)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "selected": {
+      "type": "array",
+      "description": "Ordered list of selected KIDs with reasons + restrictions",
+      "minItems": 0,
+      "items": {
+        "$ref": "#/$defs/selected_item"
+      }
+    },
+    "cap": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "selected_item": {
+      "type": "object",
+      "required": [
+        "kid",
+        "title",
+        "type",
+        "path",
+        "why_selected",
+        "restrictions"
+      ],
+      "properties": {
+        "kid": {
+          "type": "string",
+          "minLength": 8
+        },
+        "title": {
+          "type": "string",
+          "minLength": 3
+        },
+        "type": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 5
+        },
+        "why_selected": {
+          "type": "object",
+          "required": [
+            "matches",
+            "score"
+          ],
+          "properties": {
+            "matches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "kind",
+                  "value"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "domain",
+                      "subdomain",
+                      "tag",
+                      "bundle",
+                      "profile",
+                      "stack_family"
+                    ]
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "applicability": {
+              "type": "string",
+              "description": "Optional short note about 'When to use' match"
+            },
+            "score": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "restrictions": {
+          "type": "object",
+          "required": [
+            "use_policy",
+            "executor_access",
+            "allowed_excerpt",
+            "maturity"
+          ],
+          "properties": {
+            "use_policy": {
+              "type": "string",
+              "enum": [
+                "pattern_only",
+                "reusable_with_allowlist",
+                "restricted_internal_only"
+              ]
+            },
+            "executor_access": {
+              "type": "string",
+              "enum": [
+                "internal_only",
+                "internal_and_external"
+              ]
+            },
+            "allowed_excerpt": {
+              "type": "object",
+              "required": [
+                "max_words",
+                "max_lines"
+              ],
+              "properties": {
+                "max_words": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "max_lines": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
+            "maturity": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "reviewed",
+                "verified",
+                "golden"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "deprecation_notice": {
+          "type": "object",
+          "description": "Present only if selected item is deprecated (repro mode)",
+          "required": [
+            "replacement_id",
+            "reason"
+          ],
+          "properties": {
+            "replacement_id": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

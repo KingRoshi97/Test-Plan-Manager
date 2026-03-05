@@ -1,17 +1,19 @@
 {
-  "bundle_id": "MOBILE_APP_BASIC",
-  "name": "Mobile Application Basic",
+  "bundle_id": "BUNDLE-MOBILE_APP_BASIC-0003",
+  "title": "Mobile Application Basic",
   "description": "Knowledge bundle for basic mobile application projects",
-  "kids": [],
-  "filter_rules": {
-    "run_profile": "MOBILE_APP_BASIC",
+  "selection_policy": {
+    "mode": "append",
+    "cap": 50,
     "min_maturity": "draft"
   },
-  "tags": [
-    "mobile",
-    "auth",
-    "api",
-    "performance",
-    "testing"
-  ]
+  "kids": ["*"],
+  "by_run_profile": ["MOBILE_APP_BASIC"],
+  "by_risk_class": [],
+  "by_executor": ["internal_and_external"],
+  "domains": ["mobile_engineering", "api_design", "authentication_and_sessions"],
+  "tags": ["mobile", "auth", "api", "performance", "testing"],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

@@ -1,17 +1,19 @@
 {
-  "bundle_id": "REALTIME_CHAT",
-  "name": "Realtime Chat",
+  "bundle_id": "BUNDLE-REALTIME_CHAT-0005",
+  "title": "Realtime Chat",
   "description": "Knowledge bundle for realtime chat/messaging projects",
-  "kids": [],
-  "filter_rules": {
-    "run_profile": "REALTIME_CHAT",
+  "selection_policy": {
+    "mode": "append",
+    "cap": 50,
     "min_maturity": "draft"
   },
-  "tags": [
-    "realtime",
-    "api",
-    "auth",
-    "database",
-    "caching"
-  ]
+  "kids": ["*"],
+  "by_run_profile": ["REALTIME_CHAT"],
+  "by_risk_class": [],
+  "by_executor": ["internal_and_external"],
+  "domains": ["distributed_systems", "caching_strategies", "api_design"],
+  "tags": ["realtime", "api", "auth", "database", "caching"],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

@@ -1,17 +1,19 @@
 {
-  "bundle_id": "COMPLIANCE",
-  "name": "Compliance Risk Class",
+  "bundle_id": "BUNDLE-COMPLIANCE-0008",
+  "title": "Compliance Risk Class",
   "description": "Knowledge bundle for compliance-critical projects requiring verified+ maturity KIDs",
-  "kids": [],
-  "filter_rules": {
-    "risk_class": "compliance",
+  "selection_policy": {
+    "mode": "append",
+    "cap": 60,
     "min_maturity": "verified"
   },
-  "tags": [
-    "compliance",
-    "security",
-    "privacy",
-    "iam",
-    "observability"
-  ]
+  "kids": ["*"],
+  "by_run_profile": [],
+  "by_risk_class": ["COMPLIANCE"],
+  "by_executor": ["internal_only"],
+  "domains": [],
+  "tags": ["compliance", "security", "privacy", "iam", "observability"],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

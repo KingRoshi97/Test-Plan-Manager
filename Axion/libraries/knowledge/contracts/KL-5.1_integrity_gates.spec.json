@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "KL-5.1a",
+  "gates": [
+    {
+      "gate_id": "KL-GATE-01",
+      "name": "Referenced KIDs exist",
+      "severity": "hard_stop",
+      "checks": [
+        "all(knowledge_selection.selected[].kid in knowledge_index.items[].kid)",
+        "all(render.knowledge_citations[] in knowledge_index.items[].kid)",
+        "all(render.reuse_log[].kid in knowledge_index.items[].kid)"
+      ]
+    },
+    {
+      "gate_id": "KL-GATE-02",
+      "name": "KID metadata valid",
+      "severity": "hard_stop",
+      "checks": [
+        "all(selected_kids[].frontmatter matches KL-1.3 schema)"
+      ]
+    },
+    {
+      "gate_id": "KL-GATE-03",
+      "name": "Deprecated avoidance",
+      "severity": "hard_stop",
+      "checks": [
+        "if mode==normal then none(selected_kids[].kid in deprecations.kind:kid)",
+        "if mode==reproducibility then all(deprecated_selected have deprecation_notice)"
+      ]
+    }
+  ]
+}

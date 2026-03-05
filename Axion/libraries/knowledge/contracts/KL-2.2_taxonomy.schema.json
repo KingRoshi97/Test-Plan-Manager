@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "contract_id": "KL-2.2",
+  "title": "TAXONOMY Registry Schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "pillars",
+    "domains",
+    "tag_vocabulary",
+    "tag_aliases",
+    "industries",
+    "stack_families"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pillars": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "IT_END_TO_END",
+          "INDUSTRY_PLAYBOOKS",
+          "LANGUAGES_AND_LIBRARIES"
+        ]
+      }
+    },
+    "domains": {
+      "type": "object",
+      "description": "Canonical domain registry keyed by domain_slug",
+      "additionalProperties": {
+        "$ref": "#/$defs/domain"
+      }
+    },
+    "tag_vocabulary": {
+      "type": "object",
+      "description": "Canonical tags keyed by tag",
+      "additionalProperties": {
+        "$ref": "#/$defs/tag"
+      }
+    },
+    "tag_aliases": {
+      "type": "object",
+      "description": "alias -> canonical_tag mapping",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 2
+      }
+    },
+    "industries": {
+      "type": "object",
+      "description": "Industry playbooks registry keyed by industry_slug",
+      "additionalProperties": {
+        "$ref": "#/$defs/industry"
+      }
+    },
+    "stack_families": {
+      "type": "object",
+      "description": "Framework families keyed by stack_slug",
+      "additionalProperties": {
+        "$ref": "#/$defs/stack_family"
+      }
+    }
+  },
+  "$defs": {
+    "domain": {
+      "type": "object",
+      "required": [
+        "name",
+        "pillar",
+        "subdomains",
+        "min_tags"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2
+        },
+        "pillar": {
+          "type": "string",
+          "enum": [
+            "IT_END_TO_END",
+            "INDUSTRY_PLAYBOOKS",
+            "LANGUAGES_AND_LIBRARIES"
+          ]
+        },
+        "subdomains": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/subdomain"
+          }
+        },
+        "min_tags": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "string",
+            "minLength": 2
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "subdomain": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "tag": {
+      "type": "object",
+      "required": [
+        "name",
+        "category"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "security",
+            "architecture",
+            "data",
+            "infra",
+            "testing",
+            "performance",
+            "observability",
+            "product",
+            "language",
+            "framework",
+            "industry",
+            "general"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "industry": {
+      "type": "object",
+      "required": [
+        "name",
+        "regulated"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2
+        },
+        "regulated": {
+          "type": "boolean"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "stack_family": {
+      "type": "object",
+      "required": [
+        "name",
+        "ecosystem"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 2
+        },
+        "ecosystem": {
+          "type": "string",
+          "minLength": 2
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

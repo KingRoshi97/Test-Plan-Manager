@@ -1,14 +1,19 @@
 {
-  "bundle_id": "INTERNAL_AGENT",
-  "name": "Internal Agent",
+  "bundle_id": "BUNDLE-INTERNAL_AGENT-0009",
+  "title": "Internal Agent",
   "description": "Full knowledge bundle available to internal agents including restricted content",
-  "kids": [],
-  "filter_rules": {
-    "executor_type": "internal",
-    "executor_access": [
-      "internal_only",
-      "internal_and_external"
-    ]
+  "selection_policy": {
+    "mode": "append",
+    "cap": 200,
+    "min_maturity": "draft"
   },
-  "tags": []
+  "kids": ["*"],
+  "by_run_profile": [],
+  "by_risk_class": [],
+  "by_executor": ["internal_only", "internal_and_external"],
+  "domains": [],
+  "tags": [],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

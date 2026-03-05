@@ -271,20 +271,39 @@ Produces full `agent_kit/` folder hierarchy inside `kit/bundle/`:
 - `10_app/` — 12 domain slot folders (01_requirements through 12_analytics), each with rendered templates or `00_NA.md`
 
 ## Knowledge Library (`Axion/libraries/knowledge/`)
-Structured, policy-governed knowledge base providing KID files (Knowledge Items) across three pillars.
+Structured, policy-governed knowledge base providing KID files (Knowledge Items) across three pillars with full KL-1 through KL-7 contract system.
+
+### Structure
+- `contracts/` — 76 contract files (KL-1 through KL-7): schemas, rules, validation checklists, gate specs
+- `INDEX/` — Registries: knowledge.index.json (395 items), taxonomy.json (216 domains, 362 tags, 30 industries, 23 stacks), bundles.index.json (10 bundles), sources.index.json, deprecations.json, changelog.md
+- `PILLARS/` — 1,923 directories across 3 pillars with 395 KID files
+- `POLICIES/` — 5 policy files aligned with KL-4/KL-5 contracts
+- `BUNDLES/` — 10 bundle files (by run_profile, risk_class, executor)
+- `TEMPLATES/` — 8 templates including KID frontmatter, selection input/output, ingestion checklist, MVKL starter set
+- `REUSE/` — Allowlist and reuse log
+- `OUTPUTS/` — Selection and export schemas
 
 ### Pillars (395 KID files total)
-- **IT_END_TO_END** (254 KIDs): 19 domains across 4 groups
-  - 01_foundations: networking, operating_systems, security_fundamentals, compute_virtualization, storage_fundamentals
-  - 02_software_delivery: architecture_design, apis_integrations, ci_cd_devops, testing_qa, observability_sre
-  - 03_data_systems: databases, distributed_systems, caching, search_retrieval
-  - 04_platform_ops: cloud_fundamentals, identity_access_management, compliance_governance, release_management, finops_cost
-- **INDUSTRY_PLAYBOOKS** (58 KIDs): healthcare, finance, retail_ecommerce, logistics_supply_chain, government_public_sector
-- **LANGUAGES_AND_LIBRARIES** (83 KIDs): javascript_typescript (+ nodejs, react, nextjs), python, go, rust, databases/postgres, solidity_evm
+- **IT_END_TO_END** (254 KIDs): 92 domains across 8 groups (01_foundations through 08_security_operations_and_compliance)
+- **INDUSTRY_PLAYBOOKS** (58 KIDs): 30 industries across 4 groups (01_regulated_industries through 04_emerging_tech_industries)
+- **LANGUAGES_AND_LIBRARIES** (83 KIDs): 94 domains across 9 groups (01_programming_languages through 09_video_streaming_and_realtime)
 
-### KID File Contract
-- YAML frontmatter: kid, title, type, pillar, domains, tags, maturity, use_policy, executor_access, license
-- Sections: Summary, When to use, Do/Don't, Core content, Links, Proof/confidence
+### KID File Contract (KL-1)
+- YAML frontmatter: kid, title, type, pillar, domains[], subdomains[], tags[], maturity, use_policy, executor_access, license, allowed_excerpt {max_words, max_lines}, supersedes, deprecated_by, created_at, updated_at, owner
+- Required sections (exact order): Summary, When to use, Do / Don't, Core content, Links, Proof / confidence
+- Types: concept, pattern, procedure, checklist, reference, pitfall, example, glossary_term
+- Maturity: draft → reviewed → verified → golden
+- Use policies: pattern_only (default), reusable_with_allowlist, restricted_internal_only
+
+### Enforcement Gates (KL-5)
+- KL-GATE-01: Referenced KIDs exist in KNOWLEDGE_INDEX
+- KL-GATE-02: KID metadata valid per KL-1.3
+- KL-GATE-03: Deprecated KIDs not used unless repro mode
+- KL-GATE-04: External executor cannot access internal_only KIDs
+- KL-GATE-05: Kit export excludes restricted content
+- KL-GATE-06: Allowlisted reuse requires reuse_log
+- KL-GATE-07: Block verbatim copying beyond excerpt limits
+- KL-GATE-08: Production runs require maturity >= reviewed
 
 ### Knowledge Library Integration (IA wiring)
 The Knowledge Library is wired into the IA through three integration points:

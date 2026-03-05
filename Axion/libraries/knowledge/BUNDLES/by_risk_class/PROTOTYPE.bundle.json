@@ -1,14 +1,19 @@
 {
-  "bundle_id": "PROTOTYPE",
-  "name": "Prototype Risk Class",
+  "bundle_id": "BUNDLE-PROTOTYPE-0006",
+  "title": "Prototype Risk Class",
   "description": "Knowledge bundle for prototype/experimental projects with relaxed maturity requirements",
-  "kids": [],
-  "filter_rules": {
-    "risk_class": "prototype",
+  "selection_policy": {
+    "mode": "append",
+    "cap": 30,
     "min_maturity": "draft"
   },
-  "tags": [
-    "testing",
-    "deployment"
-  ]
+  "kids": ["*"],
+  "by_run_profile": [],
+  "by_risk_class": ["PROTOTYPE"],
+  "by_executor": ["internal_and_external"],
+  "domains": [],
+  "tags": ["testing", "deployment"],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

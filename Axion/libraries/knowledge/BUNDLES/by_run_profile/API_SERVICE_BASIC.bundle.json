@@ -1,17 +1,19 @@
 {
-  "bundle_id": "API_SERVICE_BASIC",
-  "name": "API Service Basic",
+  "bundle_id": "BUNDLE-API_SERVICE_BASIC-0001",
+  "title": "API Service Basic",
   "description": "Knowledge bundle for basic API/backend service projects",
-  "kids": [],
-  "filter_rules": {
-    "run_profile": "API_SERVICE_BASIC",
+  "selection_policy": {
+    "mode": "append",
+    "cap": 50,
     "min_maturity": "draft"
   },
-  "tags": [
-    "api",
-    "auth",
-    "database",
-    "error_handling",
-    "testing"
-  ]
+  "kids": ["*"],
+  "by_run_profile": ["API_SERVICE_BASIC"],
+  "by_risk_class": [],
+  "by_executor": ["internal_and_external"],
+  "domains": ["api_design", "rest_apis", "authentication_and_sessions", "input_validation_and_sanitization"],
+  "tags": ["api", "auth", "database", "error_handling", "testing"],
+  "created_at": "2025-01-01",
+  "updated_at": "2025-01-01",
+  "owner": "axion-system"
 }

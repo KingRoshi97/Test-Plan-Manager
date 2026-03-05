@@ -1,15 +1,27 @@
 {
-  "$schema": "knowledge-sources-index-v1",
-  "version": "1.0.0",
-  "description": "Source provenance and licensing for knowledge items",
+  "schema_version": "1.0.0",
   "sources": [
     {
-      "source_id": "internal_owned",
-      "type": "internal_authored",
-      "description": "Content authored internally by the Axion team",
+      "source_id": "SRC-INTERNAL_OWNED-0001",
+      "source_type": "internal_authored",
+      "title": "Axion Internal Authored Content",
+      "origin": {
+        "publisher": "Axion",
+        "author": "axion-system",
+        "year": 2025
+      },
       "license": "internal_owned",
       "attribution_required": false,
-      "allowed_reuse_level": "pattern_only"
+      "allowed_reuse_level": "full_reuse_per_license",
+      "reuse_constraints": {
+        "max_excerpt_words": 0,
+        "max_excerpt_lines": 0,
+        "notes": "Internal content; pattern-only reuse by default per KL-4.1"
+      },
+      "notes": "All internally authored knowledge items default to this source",
+      "created_at": "2025-01-01",
+      "updated_at": "2025-01-01",
+      "owner": "axion-system"
     }
   ]
 }
