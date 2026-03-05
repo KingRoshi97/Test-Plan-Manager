@@ -1,0 +1,321 @@
+Axion/libraries/system/SYS-01.run_state_machine.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "SYS-01",
+  "description": "Authoritative run lifecycle + allowed transitions.",
+  "states": ["queued", "running", "gated", "failed", "released", "closed"],
+  "transitions": [
+    { "from": "queued", "to": "running", "event": "run.start" },
+    { "from": "running", "to": "gated", "event": "gate.fail_or_warn" },
+    { "from": "running", "to": "failed", "event": "stage.fail" },
+    { "from": "running", "to": "released", "event": "all_gates_pass" },
+    { "from": "gated", "to": "running", "event": "operator.resume" },
+    { "from": "gated", "to": "failed", "event": "operator.abort" },
+    { "from": "released", "to": "closed", "event": "run.close" },
+    { "from": "failed", "to": "closed", "event": "run.close" }
+  ],
+  "constraints": [
+    {
+      "rule_id": "SYS01-01",
+      "name": "No direct queued->released",
+      "forbidden_transition": { "from": "queued", "to": "released" }
+    },
+    {
+      "rule_id": "SYS01-02",
+      "name": "Closed is terminal",
+      "terminal_state": "closed"
+    }
+  ]
+}
+Axion/libraries/system/SYS-01.run_state_store.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/system/SYS-01.run_state_store.schema.v1.json",
+  "title": "SYS-01 — Run State Store Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "pipeline_id", "status", "created_at", "updated_at", "stage_states", "locks"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "pipeline_id": { "type": "string" },
+    "status": { "enum": ["queued", "running", "gated", "failed", "released", "closed"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "stage_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["stage_id", "status"],
+        "properties": {
+          "stage_id": { "type": "string" },
+          "status": { "enum": ["queued", "running", "gated", "failed", "released", "skipped"] },
+          "report_path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "locks": {
+      "type": "object",
+      "required": ["pins_locked", "inputs_locked", "templates_locked"],
+      "properties": {
+        "pins_locked": { "type": "boolean" },
+        "inputs_locked": { "type": "boolean" },
+        "templates_locked": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/system/SYS-02.policy_engine.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/system/SYS-02.policy_engine.schema.v1.json",
+  "title": "SYS-02 — Policy Engine Schema (v1)",
+  "type": "object",
+  "required": ["version", "risk_class", "enforced", "overrides"],
+  "properties": {
+    "version": { "type": "string" },
+    "risk_class": { "enum": ["LOW", "MED", "HIGH"] },
+    "enforced": {
+      "type": "object",
+      "required": ["hard_stops", "required_evidence"],
+      "properties": {
+        "hard_stops": { "type": "array", "items": { "type": "string" } },
+        "required_evidence": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "overrides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["override_id", "applies_to", "allowed", "expires_at", "evidence"],
+        "properties": {
+          "override_id": { "type": "string" },
+          "applies_to": { "type": "string" },
+          "allowed": { "type": "boolean" },
+          "expires_at": { "type": "string" },
+          "evidence": { "type": "array", "items": { "type": "string" } },
+          "reason_code": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/system/SYS-03.operator_actions_ledger.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/system/SYS-03.operator_actions_ledger.schema.v1.json",
+  "title": "SYS-03 — Operator Actions Ledger Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "entries"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entry_id", "ts", "actor", "action", "target", "why", "before", "after", "prev_hash", "hash"],
+        "properties": {
+          "entry_id": { "type": "string" },
+          "ts": { "type": "string" },
+          "actor": {
+            "type": "object",
+            "required": ["type", "id"],
+            "properties": {
+              "type": { "enum": ["human", "system", "agent"] },
+              "id": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "action": { "type": "string" },
+          "target": {
+            "type": "object",
+            "required": ["kind", "ref"],
+            "properties": {
+              "kind": { "type": "string" },
+              "ref": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "why": { "type": "string" },
+          "reason_code": { "type": "string" },
+          "before": {},
+          "after": {},
+          "prev_hash": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/system/SYS-04.adapter_manager.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "SYS-04",
+  "description": "Adapter capability discovery + selection rules (local/Replit/CI).",
+  "adapters": [
+    {
+      "adapter_id": "local",
+      "capabilities": ["filesystem", "spawn_process", "network_optional", "git"],
+      "limits": { "max_runtime_seconds": 1800, "max_output_mb": 50 }
+    },
+    {
+      "adapter_id": "replit",
+      "capabilities": ["filesystem", "spawn_process", "network_optional"],
+      "limits": { "max_runtime_seconds": 1200, "max_output_mb": 25 }
+    },
+    {
+      "adapter_id": "ci",
+      "capabilities": ["filesystem", "spawn_process", "network", "git"],
+      "limits": { "max_runtime_seconds": 2400, "max_output_mb": 100 }
+    }
+  ],
+  "selection": {
+    "default_adapter": "local",
+    "prefer_order": ["ci", "local", "replit"],
+    "require_capabilities": {
+      "verification.command.ran": ["spawn_process"],
+      "kit.package": ["filesystem"]
+    }
+  }
+}
+Axion/libraries/system/SYS-05.notification_router.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "SYS-05",
+  "description": "Notification routing for gate failures, approvals, and policy events.",
+  "events": [
+    { "event": "gate.fail", "severity": "high", "channels": ["console"] },
+    { "event": "gate.warn", "severity": "med", "channels": ["console"] },
+    { "event": "policy.override.applied", "severity": "med", "channels": ["console"] },
+    { "event": "run.failed", "severity": "high", "channels": ["console"] },
+    { "event": "run.released", "severity": "low", "channels": ["console"] }
+  ],
+  "constraints": [
+    { "rule_id": "SYS05-01", "name": "All events must be declared", "enforced": true }
+  ]
+}
+Axion/libraries/system/SYS-06.quota_rate_limits.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "SYS-06",
+  "description": "Project/profile quotas and rate limits (runs/day, compute, storage).",
+  "profiles": [
+    {
+      "profile_id": "default",
+      "limits": {
+        "runs_per_day": 50,
+        "max_active_runs": 5,
+        "max_run_runtime_seconds": 1800,
+        "max_artifact_storage_mb": 1024
+      }
+    },
+    {
+      "profile_id": "constrained",
+      "limits": {
+        "runs_per_day": 10,
+        "max_active_runs": 2,
+        "max_run_runtime_seconds": 900,
+        "max_artifact_storage_mb": 256
+      }
+    }
+  ],
+  "enforcement": {
+    "on_exceed": "deny",
+    "record_in_audit_ledger": true
+  }
+}
+Axion/libraries/system/SYS-07.workspace_project.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/system/SYS-07.workspace_project.schema.v1.json",
+  "title": "SYS-07 — Workspace/Project Schema (v1)",
+  "type": "object",
+  "required": ["version", "workspace_id", "projects"],
+  "properties": {
+    "version": { "type": "string" },
+    "workspace_id": { "type": "string" },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["project_id", "name", "quota_profile", "permissions"],
+        "properties": {
+          "project_id": { "type": "string" },
+          "name": { "type": "string" },
+          "quota_profile": { "type": "string" },
+          "permissions": {
+            "type": "object",
+            "required": ["roles"],
+            "properties": {
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["role", "can_start_runs", "can_override"],
+                  "properties": {
+                    "role": { "type": "string" },
+                    "can_start_runs": { "type": "boolean" },
+                    "can_override": { "type": "boolean" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/system/SYS-08.pins_and_locking_policy.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "SYS-08",
+  "description": "Pinning + locking rules (what is pinned, when it locks, and what changes force new run).",
+  "pin_sets": [
+    {
+      "pin_set_id": "core",
+      "must_pin": [
+        "library_index",
+        "schema_registry",
+        "intake.form_version",
+        "intake.schema",
+        "intake.rules",
+        "canonical.schemas",
+        "standards.index",
+        "templates.index",
+        "gates.registry",
+        "planning.schemas",
+        "kit.contracts"
+      ]
+    }
+  ],
+  "locking": {
+    "lock_pins_at_stage": "S0_INIT",
+    "lock_inputs_at_stage": "S1_INGEST_NORMALIZE",
+    "lock_templates_at_stage": "S5_TEMPLATE_SELECTION"
+  },
+  "change_control": {
+    "requires_new_run_if_changed": [
+      "intake.schema",
+      "intake.rules",
+      "canonical.schemas",
+      "standards.packs",
+      "templates.templates",
+      "gate_rules"
+    ],
+    "allowed_mid_run_changes": ["notifications", "quota_profile"]
+  }
+}

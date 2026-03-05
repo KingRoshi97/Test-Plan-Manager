@@ -1,0 +1,261 @@
+Axion/libraries/ops/OBS-01.telemetry_event.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/ops/OBS-01.telemetry_event.schema.v1.json",
+  "title": "OBS-01 — Telemetry Event Schema (v1)",
+  "type": "object",
+  "required": ["version", "event_id", "ts", "run_id", "type", "payload"],
+  "properties": {
+    "version": { "type": "string" },
+    "event_id": { "type": "string" },
+    "ts": { "type": "string" },
+    "run_id": { "type": "string" },
+    "type": {
+      "enum": [
+        "run.started",
+        "run.stage.started",
+        "run.stage.finished",
+        "run.gate.evaluated",
+        "run.failed",
+        "run.released",
+        "run.closed",
+        "artifact.written",
+        "policy.override.applied",
+        "quota.denied",
+        "adapter.selected",
+        "verification.command.ran"
+      ]
+    },
+    "payload": { "type": "object" }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/ops/OBS-02.run_metrics.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/ops/OBS-02.run_metrics.schema.v1.json",
+  "title": "OBS-02 — Run Metrics Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "counters", "timings_ms", "sizes_bytes"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "counters": { "type": "object", "additionalProperties": { "type": "integer" } },
+    "timings_ms": { "type": "object", "additionalProperties": { "type": "number" } },
+    "sizes_bytes": { "type": "object", "additionalProperties": { "type": "integer" } },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/ops/LTS-01.logging_tracing_standards.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "LTS-01",
+  "description": "Logging + tracing standards (field requirements, correlation IDs, redaction).",
+  "required_log_fields": [
+    "ts",
+    "level",
+    "message",
+    "run_id",
+    "stage_id",
+    "gate_id",
+    "artifact_id",
+    "trace_id",
+    "span_id"
+  ],
+  "levels": ["debug", "info", "warn", "error"],
+  "correlation": {
+    "trace_id_required": true,
+    "span_id_required": true,
+    "run_id_required": true,
+    "stage_id_required": true
+  },
+  "redaction": {
+    "enabled": true,
+    "patterns": [
+      "AKIA[0-9A-Z]{16}",
+      "-----BEGIN(.*)PRIVATE KEY-----",
+      "password\\s*[:=]\\s*.+",
+      "token\\s*[:=]\\s*.+"
+    ],
+    "replacement": "[REDACTED]"
+  },
+  "constraints": [
+    { "rule_id": "LTS01-01", "name": "No secrets in logs", "enforced": true },
+    { "rule_id": "LTS01-02", "name": "All log lines must include run_id", "enforced": true }
+  ]
+}
+Axion/libraries/ops/ALRT-01.monitoring_alert_rules.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/ops/ALRT-01.monitoring_alert_rules.schema.v1.json",
+  "title": "ALRT-01 — Monitoring & Alert Rules Schema (v1)",
+  "type": "object",
+  "required": ["version", "rules"],
+  "properties": {
+    "version": { "type": "string" },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "name", "condition", "severity", "channels", "cooldown_minutes"],
+        "properties": {
+          "rule_id": { "type": "string" },
+          "name": { "type": "string" },
+          "condition": { "type": "string" },
+          "severity": { "enum": ["low", "med", "high", "critical"] },
+          "channels": { "type": "array", "items": { "type": "string" } },
+          "cooldown_minutes": { "type": "integer", "minimum": 0 },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/ops/ALRT-01.monitoring_alert_rules.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "ALRT-01",
+  "rules": [
+    {
+      "rule_id": "ALRT01-01",
+      "name": "Run failures spike",
+      "condition": "counters.run_failed_last_15m >= 3",
+      "severity": "high",
+      "channels": ["console"],
+      "cooldown_minutes": 15
+    },
+    {
+      "rule_id": "ALRT01-02",
+      "name": "Gate failures spike",
+      "condition": "counters.gate_fail_last_15m >= 5",
+      "severity": "med",
+      "channels": ["console"],
+      "cooldown_minutes": 10
+    },
+    {
+      "rule_id": "ALRT01-03",
+      "name": "Stage runtime exceeds budget",
+      "condition": "timings_ms.stage_max_ms > timings_ms.stage_budget_ms",
+      "severity": "med",
+      "channels": ["console"],
+      "cooldown_minutes": 10
+    }
+  ]
+}
+Axion/libraries/ops/SLO-01.slo_policy.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "SLO-01",
+  "description": "SLO/SLA + error budget policy for Axion runs.",
+  "slos": [
+    {
+      "slo_id": "SLO-RUN-SUCCESS",
+      "name": "Run success rate",
+      "window_days": 30,
+      "objective": 0.99,
+      "measurement": "runs_released / runs_started"
+    },
+    {
+      "slo_id": "SLO-RUN-LATENCY",
+      "name": "Run p95 latency",
+      "window_days": 30,
+      "objective_ms": 600000,
+      "measurement": "p95(run_total_ms)"
+    }
+  ],
+  "error_budget": {
+    "budget_window_days": 30,
+    "burn_alerts": [
+      { "burn_id": "EB-FAST", "threshold": 0.5, "window_hours": 6, "action": "tighten_gates" },
+      { "burn_id": "EB-SLOW", "threshold": 0.9, "window_hours": 72, "action": "freeze_changes" }
+    ]
+  }
+}
+Axion/libraries/ops/PERF-01.performance_budgets.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "PERF-01",
+  "description": "Performance budgets + profiling policy for Axion pipeline execution.",
+  "stage_budgets_ms": {
+    "S1_INGEST_NORMALIZE": 30000,
+    "S2_INTAKE_VALIDATION": 30000,
+    "S3_STANDARDS_RESOLUTION": 30000,
+    "S4_CANONICAL_BUILD": 60000,
+    "S5_TEMPLATE_SELECTION": 30000,
+    "S6_PLAN_GENERATION": 60000,
+    "S7_TEMPLATE_FILL": 120000,
+    "S8_GATE_EVALUATION": 60000,
+    "S9_KIT_PACKAGE": 120000,
+    "S10_CLOSE": 15000
+  },
+  "run_budget_ms": 600000,
+  "profiling": {
+    "enabled": true,
+    "capture_threshold_ms": 30000,
+    "artifacts": {
+      "profile_output_path": ".axion/runs/<run_id>/perf/profile.json"
+    }
+  }
+}
+Axion/libraries/ops/COST-01.capacity_cost_model.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/ops/COST-01.capacity_cost_model.schema.v1.json",
+  "title": "COST-01 — Capacity & Cost Model Schema (v1)",
+  "type": "object",
+  "required": ["version", "model_id", "assumptions", "units", "estimates"],
+  "properties": {
+    "version": { "type": "string" },
+    "model_id": { "type": "string" },
+    "assumptions": { "type": "object" },
+    "units": {
+      "type": "object",
+      "required": ["compute", "storage"],
+      "properties": {
+        "compute": { "type": "string" },
+        "storage": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "estimates": {
+      "type": "object",
+      "required": ["per_run", "per_day"],
+      "properties": {
+        "per_run": { "type": "object" },
+        "per_day": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/ops/COST-01.capacity_cost_model.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "COST-01",
+  "model_id": "DEFAULT",
+  "assumptions": {
+    "avg_run_cpu_seconds": 120,
+    "avg_run_memory_mb": 512,
+    "avg_artifact_storage_mb": 25,
+    "runs_per_day": 20
+  },
+  "units": {
+    "compute": "cpu_seconds",
+    "storage": "megabytes"
+  },
+  "estimates": {
+    "per_run": {
+      "compute_cpu_seconds": 120,
+      "storage_mb": 25
+    },
+    "per_day": {
+      "compute_cpu_seconds": 2400,
+      "storage_mb": 500
+    }
+  }
+}

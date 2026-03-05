@@ -1,0 +1,256 @@
+Axion/libraries/verification/VER-01.proof_log.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/verification/VER-01.proof_log.schema.v1.json",
+  "title": "VER-01 — Proof Log Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "generated_at", "entries"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ProofEntry" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ProofEntry": {
+      "type": "object",
+      "required": [
+        "proof_id",
+        "created_at",
+        "type",
+        "status",
+        "acceptance_refs",
+        "unit_refs",
+        "artifacts",
+        "commands"
+      ],
+      "properties": {
+        "proof_id": { "type": "string" },
+        "created_at": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "enum": ["pass", "fail", "warn", "skipped"] },
+        "summary": { "type": "string" },
+        "acceptance_refs": { "type": "array", "items": { "type": "string" } },
+        "unit_refs": { "type": "array", "items": { "type": "string" } },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ref", "path"],
+            "properties": {
+              "ref": { "type": "string" },
+              "path": { "type": "string" },
+              "hash": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["command_ref"],
+            "properties": {
+              "command_ref": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Axion/libraries/verification/VER-01.proof_types.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "VER-01",
+  "description": "Allowed proof types and required fields per type.",
+  "types": [
+    {
+      "type": "test_run",
+      "required_entry_fields": ["status", "commands", "artifacts"],
+      "recommended_artifacts": ["test_report", "coverage_report"]
+    },
+    {
+      "type": "lint_run",
+      "required_entry_fields": ["status", "commands"],
+      "recommended_artifacts": ["lint_report"]
+    },
+    {
+      "type": "typecheck",
+      "required_entry_fields": ["status", "commands"],
+      "recommended_artifacts": ["typecheck_log"]
+    },
+    {
+      "type": "screenshot",
+      "required_entry_fields": ["status", "artifacts"],
+      "recommended_artifacts": ["image"]
+    },
+    {
+      "type": "api_trace",
+      "required_entry_fields": ["status", "artifacts"],
+      "recommended_artifacts": ["trace_log"]
+    },
+    {
+      "type": "log_excerpt",
+      "required_entry_fields": ["status", "artifacts"],
+      "recommended_artifacts": ["log"]
+    },
+    {
+      "type": "manual_check",
+      "required_entry_fields": ["status"],
+      "recommended_artifacts": []
+    },
+    {
+      "type": "benchmark",
+      "required_entry_fields": ["status", "commands", "artifacts"],
+      "recommended_artifacts": ["benchmark_report"]
+    }
+  ],
+  "constraints": [
+    {
+      "rule_id": "VER01-TYPE-01",
+      "name": "ProofEntry.type must be one of the allowed types",
+      "on_violation": "fail"
+    }
+  ]
+}
+Axion/libraries/verification/VER-02.command_policy.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "VER-02",
+  "description": "Verification command policy: allowed commands, capture requirements, and redaction rules.",
+  "capture": {
+    "must_capture_stdout": true,
+    "must_capture_stderr": true,
+    "must_capture_exit_code": true,
+    "must_capture_cwd": true
+  },
+  "redaction": {
+    "enabled": true,
+    "patterns": [
+      "AKIA[0-9A-Z]{16}",
+      "-----BEGIN(.*)PRIVATE KEY-----",
+      "password\\s*[:=]\\s*.+",
+      "token\\s*[:=]\\s*.+"
+    ],
+    "replacement": "[REDACTED]"
+  },
+  "allowed_commands": [
+    { "command_ref": "lint", "examples": ["npm run lint", "pnpm lint"] },
+    { "command_ref": "typecheck", "examples": ["npm run typecheck", "pnpm typecheck"] },
+    { "command_ref": "test", "examples": ["npm test", "pnpm test"] },
+    { "command_ref": "build", "examples": ["npm run build", "pnpm build"] }
+  ],
+  "constraints": [
+    {
+      "rule_id": "VER02-CMD-01",
+      "name": "Only allowed commands may be recorded as verification evidence",
+      "on_violation": "fail"
+    }
+  ]
+}
+Axion/libraries/verification/VER-02.command_runs.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/verification/VER-02.command_runs.schema.v1.json",
+  "title": "VER-02 — Command Runs Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "generated_at", "runs"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "runs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/CommandRun" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "CommandRun": {
+      "type": "object",
+      "required": [
+        "command_ref",
+        "started_at",
+        "finished_at",
+        "cwd",
+        "command",
+        "exit_code",
+        "status",
+        "stdout_path",
+        "stderr_path"
+      ],
+      "properties": {
+        "command_ref": { "type": "string" },
+        "started_at": { "type": "string" },
+        "finished_at": { "type": "string" },
+        "cwd": { "type": "string" },
+        "command": { "type": "string" },
+        "exit_code": { "type": "integer" },
+        "status": { "enum": ["pass", "fail", "warn", "skipped"] },
+        "stdout_path": { "type": "string" },
+        "stderr_path": { "type": "string" },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "hash": { "type": "string" },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Axion/libraries/verification/VER-03.completion_criteria.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "VER-03",
+  "description": "Completion criteria for units and runs (unit done + run done).",
+  "unit_done": {
+    "required": [
+      "unit_outputs_present",
+      "acceptance_items_linked",
+      "required_proof_satisfied"
+    ],
+    "notes": [
+      "A unit is done when its outputs exist, acceptance items reference it, and required proof exists for those acceptance items."
+    ]
+  },
+  "run_done": {
+    "required": [
+      "all_required_gates_passed",
+      "all_required_units_done",
+      "kit_packaged",
+      "run_manifest_closed"
+    ],
+    "notes": [
+      "A run is done when required gates pass, all required units are complete, a kit is packaged, and the run is closed."
+    ]
+  },
+  "determinism": {
+    "evaluation_order": [
+      "gates",
+      "units",
+      "proof",
+      "packaging",
+      "close"
+    ]
+  }
+}

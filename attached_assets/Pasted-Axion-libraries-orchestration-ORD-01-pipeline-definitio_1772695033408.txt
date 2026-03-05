@@ -1,0 +1,626 @@
+Axion/libraries/orchestration/ORD-01.pipeline_definition.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/ORD-01.pipeline_definition.schema.v1.json",
+  "title": "ORD-01 — Pipeline Definition Schema (v1)",
+  "type": "object",
+  "required": ["version", "pipeline_id", "description", "stages", "stage_order", "gates"],
+  "properties": {
+    "version": { "type": "string" },
+    "pipeline_id": { "type": "string" },
+    "description": { "type": "string" },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Stage" }
+    },
+    "stage_order": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "gates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/GatePoint" }
+    },
+    "activation_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ActivationRule" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Stage": {
+      "type": "object",
+      "required": ["stage_id", "name", "consumes", "produces", "outputs"],
+      "properties": {
+        "stage_id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "consumes": { "type": "array", "items": { "type": "string" } },
+        "produces": { "type": "array", "items": { "type": "string" } },
+        "outputs": { "type": "array", "items": { "$ref": "#/$defs/Output" } },
+        "verification_commands": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "Output": {
+      "type": "object",
+      "required": ["artifact_id", "path", "role"],
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "path": { "type": "string" },
+        "role": { "type": "string" },
+        "schema_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "GatePoint": {
+      "type": "object",
+      "required": ["gate_id", "after_stage_id"],
+      "properties": {
+        "gate_id": { "type": "string" },
+        "after_stage_id": { "type": "string" },
+        "before_stage_id": { "type": "string" },
+        "required": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "ActivationRule": {
+      "type": "object",
+      "required": ["rule_id", "when", "enable_stages"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "when": { "type": "string" },
+        "enable_stages": { "type": "array", "items": { "type": "string" } },
+        "disable_stages": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Axion/registries/pipelines/ORD-01.PIPELINE_DEFAULT.v1.json
+{
+  "version": "1.0.0",
+  "pipeline_id": "PIPELINE_DEFAULT",
+  "description": "Default Axion pipeline (S0..S10) with gate points.",
+  "stages": [
+    { "stage_id": "S0_INIT", "name": "Init", "consumes": [], "produces": ["run_manifest"], "outputs": [{ "artifact_id": "run_manifest", "path": ".axion/runs/<run_id>/run_manifest.json", "role": "manifest" }] },
+
+    { "stage_id": "S1_INGEST_NORMALIZE", "name": "Ingest + Normalize", "consumes": ["raw_submission"], "produces": ["submission_record"], "outputs": [{ "artifact_id": "submission_record", "path": ".axion/runs/<run_id>/intake/submission_record.json", "role": "intake" }] },
+
+    { "stage_id": "S2_INTAKE_VALIDATION", "name": "Intake Validation", "consumes": ["submission_record"], "produces": ["validation_result"], "outputs": [{ "artifact_id": "validation_result", "path": ".axion/runs/<run_id>/intake/validation_result.json", "role": "intake" }] },
+
+    { "stage_id": "S3_STANDARDS_RESOLUTION", "name": "Standards Resolution", "consumes": ["validation_result", "submission_record"], "produces": ["resolved_standards_snapshot"], "outputs": [{ "artifact_id": "resolved_standards_snapshot", "path": ".axion/runs/<run_id>/standards/resolved_standards_snapshot.json", "role": "standards" }] },
+
+    { "stage_id": "S4_CANONICAL_BUILD", "name": "Canonical Build", "consumes": ["validation_result", "submission_record", "resolved_standards_snapshot"], "produces": ["canonical_spec"], "outputs": [{ "artifact_id": "canonical_spec", "path": ".axion/runs/<run_id>/canonical/canonical_spec.json", "role": "canonical" }] },
+
+    { "stage_id": "S5_TEMPLATE_SELECTION", "name": "Template Selection", "consumes": ["canonical_spec", "resolved_standards_snapshot"], "produces": ["template_selection_result"], "outputs": [{ "artifact_id": "template_selection_result", "path": ".axion/runs/<run_id>/templates/selection_result.json", "role": "templates" }] },
+
+    { "stage_id": "S6_PLAN_GENERATION", "name": "Plan Generation", "consumes": ["canonical_spec", "template_selection_result"], "produces": ["work_breakdown", "acceptance_map", "build_plan"], "outputs": [
+      { "artifact_id": "work_breakdown", "path": ".axion/runs/<run_id>/planning/work_breakdown.json", "role": "planning" },
+      { "artifact_id": "acceptance_map", "path": ".axion/runs/<run_id>/planning/acceptance_map.json", "role": "planning" },
+      { "artifact_id": "build_plan", "path": ".axion/runs/<run_id>/planning/build_plan.json", "role": "planning" }
+    ]},
+
+    { "stage_id": "S7_TEMPLATE_FILL", "name": "Template Fill", "consumes": ["canonical_spec", "resolved_standards_snapshot", "template_selection_result", "work_breakdown", "acceptance_map"], "produces": ["render_envelopes", "render_report"], "outputs": [
+      { "artifact_id": "render_report", "path": ".axion/runs/<run_id>/templates/render_report.json", "role": "templates" }
+    ]},
+
+    { "stage_id": "S8_GATE_EVALUATION", "name": "Gate Evaluation", "consumes": ["validation_result", "canonical_spec", "template_selection_result", "render_report", "work_breakdown", "acceptance_map", "build_plan"], "produces": ["gate_reports"], "outputs": [
+      { "artifact_id": "gate_reports", "path": ".axion/runs/<run_id>/gates/gate_reports.json", "role": "gates" }
+    ]},
+
+    { "stage_id": "S9_KIT_PACKAGE", "name": "Kit Package", "consumes": ["canonical_spec", "resolved_standards_snapshot", "template_selection_result", "render_report", "work_breakdown", "acceptance_map", "build_plan", "gate_reports"], "produces": ["kit_manifest", "kit_bundle"], "outputs": [
+      { "artifact_id": "kit_manifest", "path": ".axion/runs/<run_id>/kit/packaging_manifest.json", "role": "kit" }
+    ]},
+
+    { "stage_id": "S10_CLOSE", "name": "Close", "consumes": ["kit_manifest"], "produces": ["run_closed"], "outputs": [{ "artifact_id": "run_closed", "path": ".axion/runs/<run_id>/close/closed.json", "role": "manifest" }] }
+  ],
+  "stage_order": [
+    "S0_INIT",
+    "S1_INGEST_NORMALIZE",
+    "S2_INTAKE_VALIDATION",
+    "S3_STANDARDS_RESOLUTION",
+    "S4_CANONICAL_BUILD",
+    "S5_TEMPLATE_SELECTION",
+    "S6_PLAN_GENERATION",
+    "S7_TEMPLATE_FILL",
+    "S8_GATE_EVALUATION",
+    "S9_KIT_PACKAGE",
+    "S10_CLOSE"
+  ],
+  "gates": [
+    { "gate_id": "G1_INTAKE_VALIDITY", "after_stage_id": "S2_INTAKE_VALIDATION", "required": true },
+    { "gate_id": "G3_STANDARDS_RESOLVED", "after_stage_id": "S3_STANDARDS_RESOLUTION", "required": true },
+    { "gate_id": "G2_CANONICAL_INTEGRITY", "after_stage_id": "S4_CANONICAL_BUILD", "required": true },
+    { "gate_id": "G4_TEMPLATE_SELECTION", "after_stage_id": "S5_TEMPLATE_SELECTION", "required": true },
+    { "gate_id": "G6_PLAN_COVERAGE", "after_stage_id": "S6_PLAN_GENERATION", "required": true },
+    { "gate_id": "G5_TEMPLATE_COMPLETENESS", "after_stage_id": "S7_TEMPLATE_FILL", "required": true },
+    { "gate_id": "G7_VERIFICATION", "after_stage_id": "S8_GATE_EVALUATION", "required": true }
+  ],
+  "activation_rules": []
+}
+Axion/libraries/orchestration/ORD-02.stage_io_contract.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/ORD-02.stage_io_contract.schema.v1.json",
+  "title": "ORD-02 — Stage IO Contract Schema (v1)",
+  "type": "object",
+  "required": ["version", "stage_id", "consumes", "produces", "required_inputs", "required_outputs"],
+  "properties": {
+    "version": { "type": "string" },
+    "stage_id": { "type": "string" },
+    "consumes": { "type": "array", "items": { "type": "string" } },
+    "produces": { "type": "array", "items": { "type": "string" } },
+    "required_inputs": { "type": "array", "items": { "$ref": "#/$defs/ArtifactRef" } },
+    "required_outputs": { "type": "array", "items": { "$ref": "#/$defs/ArtifactRef" } },
+    "optional_outputs": { "type": "array", "items": { "$ref": "#/$defs/ArtifactRef" } }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ArtifactRef": {
+      "type": "object",
+      "required": ["artifact_id", "path"],
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "path": { "type": "string" },
+        "schema_ref": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+Stage IO files (one per stage)
+Axion/registries/stages/S0_INIT.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S0_INIT",
+  "consumes": [],
+  "produces": ["run_manifest"],
+  "required_inputs": [],
+  "required_outputs": [
+    { "artifact_id": "run_manifest", "path": ".axion/runs/<run_id>/run_manifest.json", "schema_ref": "axion://schemas/orchestration/ORD-05.run_manifest.schema.v1.json" }
+  ],
+  "optional_outputs": []
+}
+Axion/registries/stages/S1_INGEST_NORMALIZE.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S1_INGEST_NORMALIZE",
+  "consumes": ["raw_submission"],
+  "produces": ["submission_record"],
+  "required_inputs": [
+    { "artifact_id": "raw_submission", "path": ".axion/runs/<run_id>/intake/raw_submission.json", "notes": "Raw input before normalization." }
+  ],
+  "required_outputs": [
+    { "artifact_id": "submission_record", "path": ".axion/runs/<run_id>/intake/submission_record.json" }
+  ],
+  "optional_outputs": []
+}
+Axion/registries/stages/S2_INTAKE_VALIDATION.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S2_INTAKE_VALIDATION",
+  "consumes": ["submission_record"],
+  "produces": ["validation_result"],
+  "required_inputs": [
+    { "artifact_id": "submission_record", "path": ".axion/runs/<run_id>/intake/submission_record.json" }
+  ],
+  "required_outputs": [
+    { "artifact_id": "validation_result", "path": ".axion/runs/<run_id>/intake/validation_result.json" }
+  ],
+  "optional_outputs": []
+}
+Axion/registries/stages/S3_STANDARDS_RESOLUTION.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S3_STANDARDS_RESOLUTION",
+  "consumes": ["submission_record", "validation_result"],
+  "produces": ["resolved_standards_snapshot"],
+  "required_inputs": [
+    { "artifact_id": "submission_record", "path": ".axion/runs/<run_id>/intake/submission_record.json" },
+    { "artifact_id": "validation_result", "path": ".axion/runs/<run_id>/intake/validation_result.json" }
+  ],
+  "required_outputs": [
+    { "artifact_id": "resolved_standards_snapshot", "path": ".axion/runs/<run_id>/standards/resolved_standards_snapshot.json" }
+  ],
+  "optional_outputs": []
+}
+Axion/registries/stages/S4_CANONICAL_BUILD.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S4_CANONICAL_BUILD",
+  "consumes": ["submission_record", "validation_result", "resolved_standards_snapshot"],
+  "produces": ["canonical_spec"],
+  "required_inputs": [
+    { "artifact_id": "submission_record", "path": ".axion/runs/<run_id>/intake/submission_record.json" },
+    { "artifact_id": "validation_result", "path": ".axion/runs/<run_id>/intake/validation_result.json" },
+    { "artifact_id": "resolved_standards_snapshot", "path": ".axion/runs/<run_id>/standards/resolved_standards_snapshot.json" }
+  ],
+  "required_outputs": [
+    { "artifact_id": "canonical_spec", "path": ".axion/runs/<run_id>/canonical/canonical_spec.json" }
+  ],
+  "optional_outputs": []
+}
+Axion/registries/stages/S5_TEMPLATE_SELECTION.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S5_TEMPLATE_SELECTION",
+  "consumes": ["canonical_spec", "resolved_standards_snapshot"],
+  "produces": ["template_selection_result"],
+  "required_inputs": [
+    { "artifact_id": "canonical_spec", "path": ".axion/runs/<run_id>/canonical/canonical_spec.json" },
+    { "artifact_id": "resolved_standards_snapshot", "path": ".axion/runs/<run_id>/standards/resolved_standards_snapshot.json" }
+  ],
+  "required_outputs": [
+    { "artifact_id": "template_selection_result", "path": ".axion/runs/<run_id>/templates/selection_result.json" }
+  ],
+  "optional_outputs": []
+}
+Axion/registries/stages/S6_PLAN_GENERATION.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S6_PLAN_GENERATION",
+  "consumes": ["canonical_spec", "template_selection_result"],
+  "produces": ["work_breakdown", "acceptance_map", "build_plan"],
+  "required_inputs": [
+    { "artifact_id": "canonical_spec", "path": ".axion/runs/<run_id>/canonical/canonical_spec.json" },
+    { "artifact_id": "template_selection_result", "path": ".axion/runs/<run_id>/templates/selection_result.json" }
+  ],
+  "required_outputs": [
+    { "artifact_id": "work_breakdown", "path": ".axion/runs/<run_id>/planning/work_breakdown.json" },
+    { "artifact_id": "acceptance_map", "path": ".axion/runs/<run_id>/planning/acceptance_map.json" },
+    { "artifact_id": "build_plan", "path": ".axion/runs/<run_id>/planning/build_plan.json" }
+  ],
+  "optional_outputs": []
+}
+Axion/registries/stages/S7_TEMPLATE_FILL.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S7_TEMPLATE_FILL",
+  "consumes": ["canonical_spec", "resolved_standards_snapshot", "template_selection_result", "work_breakdown", "acceptance_map"],
+  "produces": ["render_report", "render_envelopes"],
+  "required_inputs": [
+    { "artifact_id": "canonical_spec", "path": ".axion/runs/<run_id>/canonical/canonical_spec.json" },
+    { "artifact_id": "resolved_standards_snapshot", "path": ".axion/runs/<run_id>/standards/resolved_standards_snapshot.json" },
+    { "artifact_id": "template_selection_result", "path": ".axion/runs/<run_id>/templates/selection_result.json" },
+    { "artifact_id": "work_breakdown", "path": ".axion/runs/<run_id>/planning/work_breakdown.json" },
+    { "artifact_id": "acceptance_map", "path": ".axion/runs/<run_id>/planning/acceptance_map.json" }
+  ],
+  "required_outputs": [
+    { "artifact_id": "render_report", "path": ".axion/runs/<run_id>/templates/render_report.json" }
+  ],
+  "optional_outputs": [
+    { "artifact_id": "render_envelopes", "path": ".axion/runs/<run_id>/templates/envelopes/", "notes": "Per-template envelopes." }
+  ]
+}
+Axion/registries/stages/S8_GATE_EVALUATION.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S8_GATE_EVALUATION",
+  "consumes": ["validation_result", "canonical_spec", "template_selection_result", "render_report", "work_breakdown", "acceptance_map", "build_plan"],
+  "produces": ["gate_reports"],
+  "required_inputs": [
+    { "artifact_id": "validation_result", "path": ".axion/runs/<run_id>/intake/validation_result.json" },
+    { "artifact_id": "canonical_spec", "path": ".axion/runs/<run_id>/canonical/canonical_spec.json" },
+    { "artifact_id": "template_selection_result", "path": ".axion/runs/<run_id>/templates/selection_result.json" },
+    { "artifact_id": "render_report", "path": ".axion/runs/<run_id>/templates/render_report.json" },
+    { "artifact_id": "work_breakdown", "path": ".axion/runs/<run_id>/planning/work_breakdown.json" },
+    { "artifact_id": "acceptance_map", "path": ".axion/runs/<run_id>/planning/acceptance_map.json" },
+    { "artifact_id": "build_plan", "path": ".axion/runs/<run_id>/planning/build_plan.json" }
+  ],
+  "required_outputs": [
+    { "artifact_id": "gate_reports", "path": ".axion/runs/<run_id>/gates/gate_reports.json" }
+  ],
+  "optional_outputs": []
+}
+Axion/registries/stages/S9_KIT_PACKAGE.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S9_KIT_PACKAGE",
+  "consumes": ["canonical_spec", "resolved_standards_snapshot", "template_selection_result", "render_report", "work_breakdown", "acceptance_map", "build_plan", "gate_reports"],
+  "produces": ["kit_manifest", "kit_bundle"],
+  "required_inputs": [
+    { "artifact_id": "canonical_spec", "path": ".axion/runs/<run_id>/canonical/canonical_spec.json" },
+    { "artifact_id": "resolved_standards_snapshot", "path": ".axion/runs/<run_id>/standards/resolved_standards_snapshot.json" },
+    { "artifact_id": "template_selection_result", "path": ".axion/runs/<run_id>/templates/selection_result.json" },
+    { "artifact_id": "render_report", "path": ".axion/runs/<run_id>/templates/render_report.json" },
+    { "artifact_id": "work_breakdown", "path": ".axion/runs/<run_id>/planning/work_breakdown.json" },
+    { "artifact_id": "acceptance_map", "path": ".axion/runs/<run_id>/planning/acceptance_map.json" },
+    { "artifact_id": "build_plan", "path": ".axion/runs/<run_id>/planning/build_plan.json" },
+    { "artifact_id": "gate_reports", "path": ".axion/runs/<run_id>/gates/gate_reports.json" }
+  ],
+  "required_outputs": [
+    { "artifact_id": "kit_manifest", "path": ".axion/runs/<run_id>/kit/packaging_manifest.json" }
+  ],
+  "optional_outputs": [
+    { "artifact_id": "kit_bundle", "path": ".axion/runs/<run_id>/kit/bundle/", "notes": "Packaged kit tree." }
+  ]
+}
+Axion/registries/stages/S10_CLOSE.io.v1.json
+{
+  "version": "1.0.0",
+  "stage_id": "S10_CLOSE",
+  "consumes": ["kit_manifest"],
+  "produces": ["run_closed"],
+  "required_inputs": [
+    { "artifact_id": "kit_manifest", "path": ".axion/runs/<run_id>/kit/packaging_manifest.json" }
+  ],
+  "required_outputs": [
+    { "artifact_id": "run_closed", "path": ".axion/runs/<run_id>/close/closed.json" }
+  ],
+  "optional_outputs": []
+}
+Axion/libraries/gates/ORD-03.gate_model.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/gates/ORD-03.gate_model.schema.v1.json",
+  "title": "ORD-03 — Gate Model Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "gate_id", "evaluated_at", "status", "rules"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "gate_id": { "type": "string" },
+    "evaluated_at": { "type": "string" },
+    "status": { "enum": ["pass", "fail", "warn"] },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "result", "message", "evidence_refs"],
+        "properties": {
+          "rule_id": { "type": "string" },
+          "result": { "enum": ["pass", "fail", "warn"] },
+          "message": { "type": "string" },
+          "pointers": { "type": "array", "items": { "type": "string" } },
+          "evidence_refs": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "fail_count": { "type": "integer" },
+        "warn_count": { "type": "integer" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+Gate checklist files (one per gate)
+Axion/registries/gates/G1_INTAKE_VALIDITY.gate.v1.json
+{
+  "version": "1.0.0",
+  "gate_id": "G1_INTAKE_VALIDITY",
+  "description": "Intake must be valid (no errors).",
+  "rules": [
+    {
+      "rule_id": "G1-01",
+      "when": { "bool": true },
+      "assert": { "op": "eq", "args": ["intake.validation.is_valid", true] },
+      "on_fail": "fail",
+      "message": "Intake validation failed.",
+      "pointers": [".axion/runs/<run_id>/intake/validation_result.json"],
+      "evidence_refs": ["intake.validation_result"]
+    }
+  ]
+}
+Axion/registries/gates/G2_CANONICAL_INTEGRITY.gate.v1.json
+{
+  "version": "1.0.0",
+  "gate_id": "G2_CANONICAL_INTEGRITY",
+  "description": "Canonical spec must exist and pass integrity checks (IDs/refs/unknowns policy).",
+  "rules": [
+    {
+      "rule_id": "G2-01",
+      "when": { "bool": true },
+      "assert": { "op": "exists", "args": ["canonical.spec"] },
+      "on_fail": "fail",
+      "message": "Canonical spec missing.",
+      "pointers": [".axion/runs/<run_id>/canonical/canonical_spec.json"],
+      "evidence_refs": ["canonical.spec"]
+    }
+  ]
+}
+Axion/registries/gates/G3_STANDARDS_RESOLVED.gate.v1.json
+{
+  "version": "1.0.0",
+  "gate_id": "G3_STANDARDS_RESOLVED",
+  "description": "Resolved standards snapshot must exist.",
+  "rules": [
+    {
+      "rule_id": "G3-01",
+      "when": { "bool": true },
+      "assert": { "op": "exists", "args": ["standards.snapshot"] },
+      "on_fail": "fail",
+      "message": "Resolved standards snapshot missing.",
+      "pointers": [".axion/runs/<run_id>/standards/resolved_standards_snapshot.json"],
+      "evidence_refs": ["standards.snapshot"]
+    }
+  ]
+}
+Axion/registries/gates/G4_TEMPLATE_SELECTION.gate.v1.json
+{
+  "version": "1.0.0",
+  "gate_id": "G4_TEMPLATE_SELECTION",
+  "description": "Template selection result must exist and include at least one template.",
+  "rules": [
+    {
+      "rule_id": "G4-01",
+      "when": { "bool": true },
+      "assert": { "op": "exists", "args": ["templates.selection_result"] },
+      "on_fail": "fail",
+      "message": "Template selection result missing.",
+      "pointers": [".axion/runs/<run_id>/templates/selection_result.json"],
+      "evidence_refs": ["templates.selection_result"]
+    }
+  ]
+}
+Axion/registries/gates/G5_TEMPLATE_COMPLETENESS.gate.v1.json
+{
+  "version": "1.0.0",
+  "gate_id": "G5_TEMPLATE_COMPLETENESS",
+  "description": "Template fill must not have missing required placeholders.",
+  "rules": [
+    {
+      "rule_id": "G5-01",
+      "when": { "bool": true },
+      "assert": { "op": "eq", "args": ["templates.render.missing_required_total", 0] },
+      "on_fail": "fail",
+      "message": "Rendered templates have missing required placeholders.",
+      "pointers": [".axion/runs/<run_id>/templates/render_report.json"],
+      "evidence_refs": ["templates.render_report"]
+    }
+  ]
+}
+Axion/registries/gates/G6_PLAN_COVERAGE.gate.v1.json
+{
+  "version": "1.0.0",
+  "gate_id": "G6_PLAN_COVERAGE",
+  "description": "Plan outputs must exist (work breakdown + acceptance map + build plan).",
+  "rules": [
+    {
+      "rule_id": "G6-01",
+      "when": { "bool": true },
+      "assert": { "and": [
+        { "op": "exists", "args": ["planning.work_breakdown"] },
+        { "op": "exists", "args": ["planning.acceptance_map"] },
+        { "op": "exists", "args": ["planning.build_plan"] }
+      ]},
+      "on_fail": "fail",
+      "message": "Planning outputs missing (work_breakdown/acceptance_map/build_plan).",
+      "pointers": [
+        ".axion/runs/<run_id>/planning/work_breakdown.json",
+        ".axion/runs/<run_id>/planning/acceptance_map.json",
+        ".axion/runs/<run_id>/planning/build_plan.json"
+      ],
+      "evidence_refs": ["planning.work_breakdown", "planning.acceptance_map", "planning.build_plan"]
+    }
+  ]
+}
+Axion/registries/gates/G7_VERIFICATION.gate.v1.json
+{
+  "version": "1.0.0",
+  "gate_id": "G7_VERIFICATION",
+  "description": "Verification evidence must be present when required (proof ledger / command runs).",
+  "rules": [
+    {
+      "rule_id": "G7-01",
+      "when": { "bool": true },
+      "assert": { "op": "exists", "args": ["verification.proof_log"] },
+      "on_fail": "warn",
+      "message": "Proof log missing (warn by default; tighten via policy/standards).",
+      "pointers": [".axion/runs/<run_id>/proof/proof_log.json"],
+      "evidence_refs": ["verification.proof_log"]
+    }
+  ]
+}
+Axion/libraries/orchestration/ORD-04.stage_report.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/ORD-04.stage_report.schema.v1.json",
+  "title": "ORD-04 — Stage Report Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "stage_id", "status", "started_at", "finished_at", "outputs", "notes"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "stage_id": { "type": "string" },
+    "status": { "enum": ["queued", "running", "gated", "failed", "released", "skipped"] },
+    "started_at": { "type": "string" },
+    "finished_at": { "type": "string" },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifact_id", "path"],
+        "properties": {
+          "artifact_id": { "type": "string" },
+          "path": { "type": "string" },
+          "hash": { "type": "string" },
+          "bytes": { "type": "integer" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metrics": { "type": "object", "additionalProperties": { "type": "number" } },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "pointers": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/orchestration/ORD-05.run_manifest.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/orchestration/ORD-05.run_manifest.schema.v1.json",
+  "title": "ORD-05 — Run Manifest Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "pipeline_id", "status", "created_at", "updated_at", "stage_states", "pins", "artifacts"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "pipeline_id": { "type": "string" },
+    "status": { "enum": ["queued", "running", "gated", "failed", "released", "closed"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "stage_states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["stage_id", "status", "report_path"],
+        "properties": {
+          "stage_id": { "type": "string" },
+          "status": { "enum": ["queued", "running", "gated", "failed", "released", "skipped"] },
+          "report_path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pins": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "version"],
+        "properties": {
+          "id": { "type": "string" },
+          "version": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["artifact_id", "path", "role"],
+        "properties": {
+          "artifact_id": { "type": "string" },
+          "path": { "type": "string" },
+          "role": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

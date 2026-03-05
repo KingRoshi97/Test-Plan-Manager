@@ -1,0 +1,238 @@
+Axion/libraries/kit/KIT-01.kit_tree.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/KIT-01.kit_tree.schema.v1.json",
+  "title": "KIT-01 — Kit Tree Contract Schema (v1)",
+  "type": "object",
+  "required": ["version", "root", "required_files", "required_folders", "slots"],
+  "properties": {
+    "version": { "type": "string" },
+    "root": { "type": "string" },
+    "required_files": { "type": "array", "items": { "type": "string" } },
+    "required_folders": { "type": "array", "items": { "type": "string" } },
+    "slots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slot_id", "path", "description", "required"],
+        "properties": {
+          "slot_id": { "type": "string" },
+          "path": { "type": "string" },
+          "description": { "type": "string" },
+          "required": { "type": "boolean" },
+          "allowed_extensions": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/kit/KIT-01.kit_tree.v1.json
+{
+  "version": "1.0.0",
+  "doc_id": "KIT-01",
+  "root": "kit",
+  "required_files": [
+    "kit/00_START_HERE.json",
+    "kit/00_VERSIONS.json",
+    "kit/00_KIT_MANIFEST.json"
+  ],
+  "required_folders": [
+    "kit/01_core_artifacts",
+    "kit/02_docs",
+    "kit/03_planning",
+    "kit/04_quality",
+    "kit/05_gates",
+    "kit/06_proof"
+  ],
+  "slots": [
+    {
+      "slot_id": "core.canonical_spec",
+      "path": "kit/01_core_artifacts/canonical_spec.json",
+      "description": "Canonical Spec (authoritative build spec).",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "core.resolved_standards_snapshot",
+      "path": "kit/01_core_artifacts/resolved_standards_snapshot.json",
+      "description": "Resolved standards snapshot used for the run.",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "templates.prd",
+      "path": "kit/02_docs/PRD.md",
+      "description": "Rendered PRD document.",
+      "required": false,
+      "allowed_extensions": [".md"]
+    },
+    {
+      "slot_id": "templates.architecture",
+      "path": "kit/02_docs/ARCHITECTURE.md",
+      "description": "Rendered architecture document.",
+      "required": false,
+      "allowed_extensions": [".md"]
+    },
+    {
+      "slot_id": "planning.work_breakdown",
+      "path": "kit/03_planning/work_breakdown.json",
+      "description": "Work breakdown (units).",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "planning.acceptance_map",
+      "path": "kit/03_planning/acceptance_map.json",
+      "description": "Acceptance map (acceptance items + proof requirements).",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "planning.build_plan",
+      "path": "kit/03_planning/build_plan.json",
+      "description": "Build plan (ordered execution steps).",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "quality.test_plan",
+      "path": "kit/04_quality/TEST_PLAN.md",
+      "description": "Rendered test plan document.",
+      "required": false,
+      "allowed_extensions": [".md"]
+    },
+    {
+      "slot_id": "gates.gate_reports",
+      "path": "kit/05_gates/gate_reports.json",
+      "description": "Gate evaluation reports.",
+      "required": true,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "proof.proof_log",
+      "path": "kit/06_proof/proof_log.json",
+      "description": "Proof log / ledger for verification evidence.",
+      "required": false,
+      "allowed_extensions": [".json"]
+    },
+    {
+      "slot_id": "proof.command_runs",
+      "path": "kit/06_proof/command_runs.json",
+      "description": "Command runs capture (stdout/stderr/exit codes).",
+      "required": false,
+      "allowed_extensions": [".json"]
+    }
+  ]
+}
+Axion/libraries/kit/KIT-02.kit_manifest.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/KIT-02.kit_manifest.schema.v1.json",
+  "title": "KIT-02 — Kit Manifest Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "created_at", "files"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role", "hash"],
+        "properties": {
+          "path": { "type": "string" },
+          "role": {
+            "enum": [
+              "entrypoint",
+              "versions",
+              "canonical",
+              "standards",
+              "planning",
+              "templates",
+              "gates",
+              "proof",
+              "misc"
+            ]
+          },
+          "hash": { "type": "string" },
+          "bytes": { "type": "integer" },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/kit/KIT-03.kit_entrypoint.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/KIT-03.kit_entrypoint.schema.v1.json",
+  "title": "KIT-03 — Kit Entrypoint Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "spec_id", "start_here", "how_to_use", "do_not_do"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "start_here": { "type": "string" },
+    "how_to_use": { "type": "array", "items": { "type": "string" } },
+    "do_not_do": { "type": "array", "items": { "type": "string" } },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["label", "path"],
+        "properties": {
+          "label": { "type": "string" },
+          "path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+Axion/libraries/kit/KIT-04.kit_versions.schema.v1.json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://schemas/kit/KIT-04.kit_versions.schema.v1.json",
+  "title": "KIT-04 — Kit Versions / Pins Schema (v1)",
+  "type": "object",
+  "required": ["version", "run_id", "pins"],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "pins": {
+      "type": "object",
+      "required": ["intake", "canonical", "standards", "templates", "planning", "gates"],
+      "properties": {
+        "intake": { "$ref": "#/$defs/Pin" },
+        "canonical": { "$ref": "#/$defs/Pin" },
+        "standards": { "$ref": "#/$defs/Pin" },
+        "templates": { "$ref": "#/$defs/Pin" },
+        "planning": { "$ref": "#/$defs/Pin" },
+        "gates": { "$ref": "#/$defs/Pin" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/Pin" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Pin": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "string" },
+        "hash": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
