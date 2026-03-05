@@ -115,14 +115,32 @@
 
     {
       "schema_id": "planning.work_breakdown.v1",
-      "path": "Axion/libraries/planning/work_breakdown.schema.v1.json",
-      "uri": "axion://schemas/planning/work_breakdown.schema.v1.json",
+      "path": "Axion/libraries/planning/schemas/work_breakdown.v1.schema.json",
+      "uri": "axion://schemas/planning/work_breakdown.v1.schema.json",
       "version": "1.0.0"
     },
     {
       "schema_id": "planning.acceptance_map.v1",
-      "path": "Axion/libraries/planning/acceptance_map.schema.v1.json",
-      "uri": "axion://schemas/planning/acceptance_map.schema.v1.json",
+      "path": "Axion/libraries/planning/schemas/acceptance_map.v1.schema.json",
+      "uri": "axion://schemas/planning/acceptance_map.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "planning.build_plan.v1",
+      "path": "Axion/libraries/planning/schemas/build_plan.v1.schema.json",
+      "uri": "axion://schemas/planning/build_plan.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "planning.plan_coverage_rules.v1",
+      "path": "Axion/libraries/planning/schemas/plan_coverage_rules.v1.schema.json",
+      "uri": "axion://schemas/planning/plan_coverage_rules.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "planning.plan_coverage_report.v1",
+      "path": "Axion/libraries/planning/schemas/plan_coverage_report.v1.schema.json",
+      "uri": "axion://schemas/planning/plan_coverage_report.v1.schema.json",
       "version": "1.0.0"
     },
 

@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "PLAN-5b",
+  "gates": [
+    { "gate_id": "PLAN-GATE-01", "name": "WBS valid", "severity": "hard_stop", "checks": ["WORK_BREAKDOWN exists", "schema_valid(work_breakdown.v1)"] },
+    { "gate_id": "PLAN-GATE-02", "name": "Acceptance map valid", "severity": "hard_stop", "checks": ["ACCEPTANCE_MAP exists", "schema_valid(acceptance_map.v1)", "evidence present"] },
+    { "gate_id": "PLAN-GATE-03", "name": "Build plan valid", "severity": "hard_stop", "checks": ["BUILD_PLAN exists", "schema_valid(build_plan.v1)"] },
+    { "gate_id": "PLAN-GATE-04", "name": "Dependency ordering valid", "severity": "hard_stop", "checks": ["no cycles", "plan respects depends_on ordering"] },
+    { "gate_id": "PLAN-GATE-05", "name": "Coverage satisfied", "severity": "policy_controlled", "checks": ["coverage rules pass"] },
+    { "gate_id": "PLAN-GATE-06", "name": "Plan artifacts pinned in manifest", "severity": "hard_stop", "checks": ["manifest references WBS/AMAP/PLAN artifacts"] }
+  ]
+}

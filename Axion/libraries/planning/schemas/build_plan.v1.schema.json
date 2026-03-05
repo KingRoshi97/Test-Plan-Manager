@@ -1,0 +1,48 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "build_plan.v1",
+    "type": "object",
+    "required": ["plan_id", "run_id", "phases", "generated_at"],
+    "properties": {
+      "plan_id": { "type": "string", "pattern": "^PLAN-[A-Z0-9]{6,}$" },
+      "run_id": { "type": "string" },
+      "generated_at": { "type": "string", "format": "date-time" },
+      "phases": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "$ref": "#/$defs/phase" }
+      }
+    },
+    "$defs": {
+      "phase": {
+        "type": "object",
+        "required": ["phase_id", "title", "order", "work_items"],
+        "properties": {
+          "phase_id": { "type": "string", "pattern": "^PHASE-[A-Z0-9]{4,}$" },
+          "title": { "type": "string", "minLength": 3 },
+          "order": { "type": "integer", "minimum": 1 },
+          "work_items": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["milestone_id", "kind", "ref"],
+              "properties": {
+                "milestone_id": { "type": "string", "pattern": "^MS-[A-Z0-9]{4,}$" },
+                "kind": { "type": "string", "enum": ["gate", "checkpoint", "release"] },
+                "ref": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+}

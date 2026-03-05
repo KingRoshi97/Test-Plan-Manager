@@ -1,0 +1,35 @@
+Axion/libraries/planning/
+ PLAN-0_purpose.md
+ PLAN-0_boundary_checklist.md
+ PLAN-1_wbs_model.md
+ PLAN-1_determinism_rules.md
+ PLAN-1_validation_checklist.md
+ PLAN-2_acceptance_map_model.md
+ PLAN-2_determinism_rules.md
+ PLAN-2_validation_checklist.md
+ PLAN-3_build_plan_model.md
+ PLAN-3_sequencing_policies.md
+ PLAN-3_determinism_rules.md
+ PLAN-3_validation_checklist.md
+ PLAN-4_coverage_model.md
+ PLAN-4_determinism_rules.md
+ PLAN-4_validation_checklist.md
+ PLAN-5_planning_gates.md
+ PLAN-5_planning_gates.spec.json
+ PLAN-5_gate_mapping.md
+ PLAN-5_evidence_requirements.md
+ PLAN-5_determinism_rules.md
+ PLAN-5_validation_checklist.md
+ PLAN-6_minimum_viable_set.md
+ PLAN-6_definition_of_done.md
+ PLAN-6_minimal_tree.txt
+
+ schemas/
+  work_breakdown.v1.schema.json
+  acceptance_map.v1.schema.json
+  build_plan.v1.schema.json
+  plan_coverage_rules.v1.schema.json
+  plan_coverage_report.v1.schema.json
+
+ registries/
+  plan_coverage_rules.v1.json

@@ -156,6 +156,35 @@ Document template library system, registry, selection rules, render envelopes, c
 
 **Legacy files preserved:** TMP-01..TMP-05 JSON files, placeholder_catalog.v1.json, template_index.json, 8 category directories with 533 .md templates
 
+### Planning Library (`Axion/libraries/planning/`)
+Work planning mechanics — WBS, acceptance map, build plan, sequencing policies, coverage rules, and gates (PLAN-0 through PLAN-6). 6 legacy flat files preserved for backward compat (pipeline code: plan.ts, workBreakdown.ts, acceptanceMap.ts, sequencing.ts, coverage.ts, outputs.ts).
+
+**Structure (30 new files: 24 root files + 5 schemas + 1 registry):**
+- **PLAN-0**: Purpose + boundary checklist (2 docs)
+- **PLAN-1**: WBS model + determinism rules + validation checklist (3 docs) + `work_breakdown.v1.schema.json`
+- **PLAN-2**: Acceptance map model + determinism rules + validation checklist (3 docs) + `acceptance_map.v1.schema.json`
+- **PLAN-3**: Build plan model + sequencing policies + determinism rules + validation checklist (4 docs) + `build_plan.v1.schema.json`
+- **PLAN-4**: Coverage model + determinism rules + validation checklist (3 docs) + `plan_coverage_rules.v1.schema.json` + `plan_coverage_report.v1.schema.json` + `plan_coverage_rules.v1.json` registry
+- **PLAN-5**: Planning gates + gate mapping + gate spec JSON + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON)
+- **PLAN-6**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
+
+**Subdirectories:**
+- `schemas/` — 5 JSON Schema files (work_breakdown: wbs_id/items[]/work_item with work_type enum + depends_on + status + priority, acceptance_map: amap_id/requirements[]/acceptance_criteria[]/evidence, build_plan: plan_id/phases[]/milestones[], plan_coverage_rules: rules_id/rules[] with category enum entity/template/acceptance + severity must/should, plan_coverage_report: run_id/status/results[])
+- `registries/` — 1 registry file (plan_coverage_rules: 4 starter rules COV-ENTITY-COMPONENTS/COV-ENTITY-ENDPOINTS/COV-TEMPLATES-ALL/COV-ACCEPTANCE-ALL)
+
+**Loader** (`Axion/src/core/planning/loader.ts`):
+- `loadPlanningLibrary(repoRoot)` — loads coverage rules registry, cached
+- `loadPlanningDocs(repoRoot)` — all PLAN-N docs with frontmatter
+- `loadPlanningSchemas(repoRoot)` — all JSON schema files from schemas/
+- `loadPlanningRegistries(repoRoot)` — all registry JSON files from registries/
+- `getCoverageRules(repoRoot)` — returns coverage rules registry
+
+**API**: 6 `/api/planning-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
+**UI**: `/planning-library` page with 4 tabs (Planning, Documents, Schemas, Registries), planning artifacts overview (WBS/AMAP/BUILD_PLAN), 7 default sequencing phases, coverage rules table, 6 planning gates (PLAN-GATE-01..06) mapped to G6_PLAN_COVERAGE
+**Registered in:** `schema_registry.v1.json` (2 updated + 3 new entries = 5 total), `library_index.v1.json` (1 existing + 1 new entry)
+
+**Legacy files preserved:** PLAN-01..PLAN-03 JSON schemas, sequencing_policy.v1.json, acceptance_map.schema.v1.json, work_breakdown.schema.v1.json
+
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 
@@ -196,7 +225,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -244,6 +273,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/templates-library/categories` — list of 8 template category directories with file counts
 - `GET /api/templates-library/docs` — all templates documents with frontmatter
 - `GET /api/templates-library/docs/:filename` — single document by filename
+- `GET /api/planning-library` — planning library overview (groups, schemas, registries, counts: docs/schemas/registries/gates/coverageRules)
+- `GET /api/planning-library/schemas` — all 5 planning schemas with content
+- `GET /api/planning-library/registries` — all 1 registry with content
+- `GET /api/planning-library/registries/:name` — single registry by name
+- `GET /api/planning-library/docs` — all planning documents with frontmatter
+- `GET /api/planning-library/docs/:filename` — single document by filename
 - `GET /api/intake-library` — intake library overview (groups, schema/registry/doc/enum/crossFieldRule/normalizationRule counts)
 - `GET /api/intake-library/schemas` — all 7 intake schemas with content
 - `GET /api/intake-library/registries` — all 3 registries with content
@@ -284,6 +319,7 @@ package.json      # Root package.json with all dependencies
 - `/canonical` — Canonical Library: 4 tabs (Canonical, Documents, Schemas, Registries) for CAN-0 through CAN-7, entity type grid with canonical key templates, relationship type constraints table, unknowns model overview, canonical gates list
 - `/standards` — Standards Library: 4 tabs (Standards, Documents, Schemas, Packs) for STD-0 through STD-6, standards pack grid with scope badges, rules by type/severity, 6 standards gates (STD-GATE-01..06) mapped to G3_STANDARDS_RESOLVED
 - `/templates-library` — Templates Library: 4 tabs (Templates, Documents, Schemas, Registries) for TMP-0 through TMP-7, template registry with category/profile/risk badges, 8-category ordering, completeness thresholds, 6 template gates (TMP-GATE-01..06) mapped to G4/G5
+- `/planning-library` — Planning Library: 4 tabs (Planning, Documents, Schemas, Registries) for PLAN-0 through PLAN-6, planning artifacts overview (WBS/AMAP/BUILD_PLAN), 7 sequencing phases, coverage rules table, 6 planning gates (PLAN-GATE-01..06) mapped to G6_PLAN_COVERAGE
 - `/intake-library` — Intake Library: 4 tabs (Intake, Documents, Schemas, Registries) for INT-0 through INT-7, field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
@@ -323,7 +359,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `canonical/` — 47 files: 30 CAN-0 through CAN-7 docs + schemas/ (3) + registries/ (2) + 12 legacy flat files
   - `standards/` — 31 new files (24 STD-0 through STD-6 docs + schemas/ (5) + registries/ (1) + packs/ (11, 10 legacy + 1 new)) + 7 legacy flat files
   - `templates/` — 35 new files (27 TMP-0 through TMP-7 docs + schemas/ (5) + registries/ (3)) + 8 legacy flat files + 8 category directories with 533 .md template files
-  - `planning/` — work_breakdown.schema.v1.json, acceptance_map.schema.v1.json, sequencing_policy.v1.json
+  - `planning/` — 30 new files (24 PLAN-0 through PLAN-6 docs + schemas/ (5) + registries/ (1)) + 6 legacy flat files
   - `gates/` — Gates Library (GATE-0 through GATE-6). See Gates Library section below.
   - `verification/` — proof_log.schema.v1.json, command_runs.schema.v1.json
   - `kit/` — kit_tree.schema.v1.json, kit_manifest.schema.v1.json, kit_entrypoint.schema.v1.json, kit_versions.schema.v1.json

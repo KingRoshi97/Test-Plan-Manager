@@ -29,6 +29,7 @@ const links = [
   { href: "/canonical", label: "Canonical Library", icon: Network },
   { href: "/standards", label: "Standards Library", icon: BookMarked },
   { href: "/templates-library", label: "Templates Library", icon: FileText },
+  { href: "/planning-library", label: "Planning Library", icon: ClipboardList },
   { href: "/intake-library", label: "Intake Library", icon: ClipboardList },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },

@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0.0",
+  "rules_id": "plan_coverage_rules.v1",
+  "rules": [
+    { "rule_id": "COV-ENTITY-COMPONENTS", "category": "entity", "requirement": "Every component entity must map to >=1 work item.", "severity": "must" },
+    { "rule_id": "COV-ENTITY-ENDPOINTS", "category": "entity", "requirement": "Every endpoint entity must map to >=1 work item.", "severity": "must" },
+    { "rule_id": "COV-TEMPLATES-ALL", "category": "template", "requirement": "Every selected template must map to >=1 work item.", "severity": "must" },
+    { "rule_id": "COV-ACCEPTANCE-ALL", "category": "acceptance", "requirement": "Every requirement must have >=1 acceptance criterion with evidence.", "severity": "must" }
+  ]
+}

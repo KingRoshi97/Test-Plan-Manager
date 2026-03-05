@@ -1,0 +1,46 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "work_breakdown.v1",
+    "type": "object",
+    "required": ["wbs_id", "run_id", "items", "generated_at"],
+    "properties": {
+      "wbs_id": { "type": "string", "pattern": "^WBS-[A-Z0-9]{6,}$" },
+      "run_id": { "type": "string" },
+      "generated_at": { "type": "string", "format": "date-time" },
+      "items": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "$ref": "#/$defs/work_item" }
+      }
+    },
+    "$defs": {
+      "work_item": {
+        "type": "object",
+        "required": ["work_item_id", "title", "work_type", "inputs", "outputs", "depends_on", "status"],
+        "properties": {
+          "work_item_id": { "type": "string", "pattern": "^WI-[A-Z0-9]{6,}$" },
+          "title": { "type": "string", "minLength": 3 },
+          "work_type": {
+            "type": "string",
+            "enum": ["design", "implementation", "test", "docs", "data", "ops", "security"]
+          },
+          "inputs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Pointers to canonical entities, templates, or standards rules"
+          },
+          "outputs": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Contract IDs or proof requirements"
+          },
+          "depends_on": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["planned", "in_progress", "done"] },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+}

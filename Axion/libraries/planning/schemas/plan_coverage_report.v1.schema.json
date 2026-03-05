@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "plan_coverage_report.v1",
+    "type": "object",
+    "required": ["run_id", "status", "results", "evaluated_at"],
+    "properties": {
+      "run_id": { "type": "string" },
+      "status": { "type": "string", "enum": ["pass", "fail", "warn"] },
+      "results": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["rule_id", "status", "details"],
+          "properties": {
+            "rule_id": { "type": "string" },
+            "status": { "type": "string", "enum": ["pass", "fail", "warn"] },
+            "details": { "type": "object", "additionalProperties": true }
+          },
+          "additionalProperties": false
+        }
+      },
+      "evaluated_at": { "type": "string", "format": "date-time" }
+    },
+    "additionalProperties": false
+}
