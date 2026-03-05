@@ -1,0 +1,165 @@
+Control Plane Outline — Kit Control Plane (KCP / External Control Plane)
+KCP-00 Role
+
+Lives: inside the Agent Kit (ships with the kit)
+Primary user: external build agent (BA) executing the kit
+Purpose: enforce kit-local rules during build execution, keep work + proof aligned to AXION contracts, and emit an ingestible kit_run_report.
+
+KCP-01 Inputs (what it consumes)
+1.1 Kit artifacts (required)
+
+kit_manifest
+
+kit_entrypoint
+
+pinset/lockfile
+
+standards_snapshot (if included)
+
+render_envelopes[] (template outputs)
+
+verification_policy
+
+plan_units[] (when planning enabled)
+
+optional: proof type snapshot + evidence pointer rules + reuse allowlist + secrets policy
+
+1.2 Execution context (required)
+
+executor identity: external (or internal when used locally)
+
+environment descriptor (ci/local, OS, tool versions)
+
+repo target path (workspace root)
+
+1.3 Optional inputs
+
+prior kit_run_report (resume)
+
+prior RESULT_* files and proof objects (incremental)
+
+KCP-02 State Model (kit-local lifecycle)
+2.1 Kit-run states (minimum)
+
+READY → EXECUTING → VERIFYING → (BLOCKED | FAILED | COMPLETE)
+Optional: PAUSED, CANCELLED, RESUMING
+
+2.2 Work-unit states (minimum)
+
+NOT_STARTED, IN_PROGRESS, DONE, FAILED, SKIPPED
+
+2.3 Deterministic transition rules
+
+cannot leave READY unless kit validation passes
+
+cannot mark unit DONE unless:
+
+implementation_refs[] present
+
+proof_refs[] present
+
+verification results captured if required
+
+unit ordering must follow kit sequencing rules (or deterministic fallback)
+
+resume must preserve attempt history and create new attempt records (no overwrite)
+
+KCP-03 Runtime Modules (what it does)
+3.1 Kit Validator
+
+Function: validate kit integrity before execution.
+Validates: required artifacts present, schemas valid, entrypoint compliance, pinset parseable
+Produces: kit_validation_report
+Enforces: manifest completeness + schema versions match pinset expectations
+
+3.2 Work Unit Manager (1-target enforcement)
+
+Function: load plan units, enforce 1-target rule, guide “next unit.”
+Produces: unit_status_index, optional next_unit_recommendation
+Enforces: reject malformed/multi-target units, preserve attempt chains
+
+3.3 Local Verification Runner
+
+Function: run verification commands (lint/test/build/typecheck), capture logs.
+Produces: verification_run_result, logs/<command_id>.log
+Enforces: required commands must run; results recorded even on failure
+
+3.4 Result Writer / Ingestion Helper
+
+Function: produce RESULT artifacts AXION can ingest.
+Produces: RESULT_<UNIT_ID>.json, optional result_index
+Enforces: unit cannot be DONE without non-empty implementation_refs + proof_refs
+
+3.5 Proof Capture + Normalization
+
+Function: generate proof objects consistent with AXION proof types.
+Produces: proof_objects[], optional kit-local proof_ledger
+Enforces: proof types allowed; pointers resolve; redaction applies
+
+3.6 Execution Guardrails
+
+Function: enforce safety boundaries during execution.
+Enforces: forbidden paths, command allowlist, reuse rules, secrets/PII rules
+Produces: guardrail_report
+Enforces: violations → BLOCKED/FAILED with remediation + evidence pointers
+
+3.7 Kit-local Run Report
+
+Function: emit a mergeable report for ICP/MCP ingestion.
+Includes: kit validation, unit attempts/statuses, RESULT pointers, verify results/logs, proof pointers, guardrail violations
+Produces: kit_run_report
+Enforces: self-contained, pointer-linked, schema-valid
+
+KCP-04 Output Artifacts (guaranteed contract)
+Always produced
+
+kit_validation_report
+
+kit_run_report (even on failure; partial but structured)
+
+logs for executed verification commands
+
+unit_status_index (or equivalent)
+
+Produced when relevant
+
+RESULT_<UNIT_ID>.json
+
+proof objects / kit-local proof ledger (if enabled)
+
+guardrail_report (if guardrails executed)
+
+KCP-05 Determinism guarantees (kit-local)
+
+same kit + same plan units + same policy → same unit ordering decisions
+
+log/report paths follow deterministic patterns (by unit_id/attempt_id/command_id)
+
+nondeterminism (timestamps/local run ids) is isolated and excluded from comparisons
+
+KCP-06 Failure semantics
+
+On failure KCP must still emit:
+
+kit_run_report with failing phase/unit and remediation
+
+log pointers to failing command outputs
+
+partial RESULT/proof artifacts preserved (no overwrite)
+Fail-fast on:
+
+missing kit artifacts
+
+schema invalid kit artifacts
+
+multi-target units (violates 1-target rule)
+
+non-overridable guardrail violations
+
+KCP-07 Hard boundaries (locked)
+
+KCP does not modify AXION registries or standards; executes only within kit-defined policies
+
+KCP optimizes build correctness + evidence, not system design
+
+KCP cannot expand scope beyond kit targets and allowed actions

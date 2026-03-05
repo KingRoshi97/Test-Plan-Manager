@@ -1,0 +1,162 @@
+Agent Type Outline — Internal Agent (IA)
+A-00 Role
+
+Purpose: produce AXION outputs inside the system (specs, selections, plans, kits) under ICP governance.
+Lives: inside AXION runtime context (operates on registries, libraries, run artifacts).
+Primary interface: ICP (Internal Control Plane) + AXION artifact spine.
+
+A-01 Inputs (what IA consumes)
+
+Run context
+
+run_id
+
+mode_id (MM-xx) and/or run_profile_id
+
+risk_class
+
+executor_type_default
+
+targets (platforms/domains/stack hints)
+
+Source-of-truth datasets
+
+standards registries (index/applicability/packs/resolver rules)
+
+template registry + selection profiles + placeholder rules
+
+gate registry + gate set profiles + predicate operator registry
+
+proof type registry + evidence policy registry
+
+schema registry / validators
+
+version registry + pin policy
+
+terms/ID namespace registries (if enforced)
+
+Libraries
+
+knowledge library (KIDs + indexes) (if enabled for this run)
+
+template corpus (template files)
+
+Upstream run artifacts
+
+intake artifacts (submission, normalized input, submission record)
+
+prior run snapshots (optional)
+
+A-02 Core responsibilities (what IA actually does)
+
+INTAKE handling support
+
+assist in normalization rules application (deterministic transforms)
+
+generate intake validation evidence (if required)
+
+CANONICAL build
+
+synthesize canonical spec from normalized inputs
+
+produce unknowns/assumptions list with reason/impact
+
+STANDARDS resolution
+
+compute applicability
+
+resolve packs/precedence into standards snapshot
+
+record deterministic rationale outputs
+
+TEMPLATE selection + rendering
+
+select templates deterministically from registry
+
+fill templates into render envelopes
+
+enforce completeness rules (no unresolved required placeholders)
+
+PLANNING
+
+produce work breakdown
+
+produce acceptance map (unit → acceptance → required proofs)
+
+produce sequencing rules (deterministic order)
+
+enforce 1-target-per-unit constraint
+
+KIT preparation
+
+assemble kit contents per profile + variant
+
+ensure manifest/entrypoint/pins are correct
+
+ensure policies for external kits are applied (if building external)
+
+A-03 Outputs (what IA must produce)
+
+canonical spec + unknowns/assumptions
+
+standards applicability output + resolved standards snapshot
+
+template selection result + render envelopes + completeness report
+
+planning artifacts (work breakdown, acceptance map, sequencing)
+
+kit artifacts (manifest, entrypoint, version stamp) (when packaging step occurs)
+
+All outputs must be schema-valid and pointer-linked.
+
+A-04 Constraints / guardrails (hard rules)
+
+cannot invent standards/templates/gates/operators outside registries
+
+must respect pinset/versioning; no “latest” unless policy allows
+
+must write deterministic outputs (noise isolated)
+
+must not write outside AXION run/artifact roots
+
+must not include secrets in any artifact
+
+must emit evidence pointers for claims that gates rely on
+
+A-05 Evidence and traceability requirements
+
+every major decision output must include:
+
+input pointers (hash refs to intake/canonical where relevant)
+
+registry version references (pinset)
+
+rationale tokens (rule ids, not prose)
+
+stage reports must link IA outputs produced in that stage
+
+A-06 Failure semantics
+
+When IA fails within a stage:
+
+stage report must identify:
+
+failing artifact
+
+failing schema/contract
+
+remediation steps
+
+evidence pointers (logs/artifact paths)
+
+must not partially mark outputs as complete
+
+reruns create new attempt records (no overwrite)
+
+A-07 Interfaces (who calls IA / what IA calls)
+
+Called by: ICP stage runner (orchestrator)
+
+Calls into: registry loaders, renderers, planners, validators
+
+Never directly calls: external repo build actions (that’s build agent + KCP)

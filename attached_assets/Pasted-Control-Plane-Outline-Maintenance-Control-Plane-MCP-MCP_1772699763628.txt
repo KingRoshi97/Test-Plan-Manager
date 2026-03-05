@@ -1,0 +1,182 @@
+Control Plane Outline — Maintenance Control Plane (MCP)
+MCP-00 Role
+
+Lives: inside the target repo (repo-resident assistant), outside AXION runtime
+Primary user: operators/devs + maintenance agent(s)
+Purpose: keep the repo healthy over time (upgrades, migrations, test hardening, CI upkeep) while staying compatible with AXION contracts.
+
+MCP-01 Inputs (what it consumes)
+1.1 Repo state (required)
+
+current repo source tree (at a baseline revision)
+
+dependency manifests + lockfiles
+
+CI workflow definitions
+
+test suite configuration
+
+migration history (if present)
+
+versioning metadata (changelog, tags/releases)
+
+1.2 AXION compatibility surfaces (required where applicable)
+
+AXION-required artifacts this repo must remain compatible with:
+
+kit manifests/entrypoints (if producer/consumer)
+
+proof formats and ledgers
+
+gate report formats
+
+current MM-xx mapping used by this repo
+
+pin policies/toolchain constraints enforced by AXION
+
+1.3 Maintenance request / intent (required)
+
+maintenance mode id (MM-xx) or intent type:
+
+dependency upgrade, migration, refactor, test hardening, CI fix, security patch
+
+scope constraints (allowed/disallowed paths)
+
+risk class (prototype/production/compliance)
+
+1.4 Optional inputs
+
+prior maintenance reports/diffs
+
+prior failures (CI logs, gate reports)
+
+known issues/backlog references
+
+MCP-02 State Model (repo maintenance lifecycle)
+2.1 Maintenance run states (minimum)
+
+PLANNED → APPLYING → VERIFYING → (BLOCKED | FAILED | COMPLETE)
+Optional: PAUSED, CANCELLED, ROLLBACKING
+
+2.2 Work-unit states (minimum)
+
+NOT_STARTED, IN_PROGRESS, DONE, FAILED, SKIPPED
+
+2.3 Deterministic transition rules
+
+cannot enter APPLYING unless:
+
+scope constraints validated
+
+baseline health checks pass (or explicitly waived by mode)
+
+cannot mark COMPLETE unless:
+
+verification passes (tests/lint/build/typecheck per policy)
+
+AXION compatibility checks pass (where applicable)
+
+required maintenance report is produced
+
+rollback must preserve attempt history and produce a rollback record
+
+MCP-03 Runtime Modules (what it does)
+3.1 Dependency Upgrade Manager
+
+Function: bump deps safely and consistently.
+Produces: dependency_update_report, updated lockfiles, changelog entry (if required)
+Enforces: lockfile discipline, pinned toolchain requirements
+
+3.2 Migration Manager
+
+Function: manage schema/data evolution safely.
+Produces: migration_plan, migration artifacts, migration_verification_report
+Enforces: migration safety rules, rollback strategy recorded when required
+
+3.3 Test Suite Maintainer
+
+Function: evolve tests to reduce drift and increase confidence.
+Produces: test_update_report, updated tests, flake triage notes (optional)
+Enforces: deterministic tests under pinned env, regressions map to failures
+
+3.4 Refactor + Hygiene Manager
+
+Function: restructure safely without breaking contracts.
+Produces: refactor_report, move/rename diff summary
+Enforces: schema/interface preservation, change-impact notes updated when required
+
+3.5 CI Workflow Maintainer
+
+Function: keep automation valid and aligned with enforcement.
+Produces: ci_update_report, updated CI files
+Enforces: toolchain pins, doctor/verify checks preserved, artifact upload preserved
+
+3.6 AXION Integration Maintainer
+
+Function: keep repo compatible with AXION ingestion/contracts.
+Produces: axion_compatibility_report
+Enforces: schema compatibility rules, version/pin compliance where required
+
+3.7 Maintenance-mode Runner
+
+Function: execute maintenance flows aligned to MM-xx rules.
+Produces: maintenance_run_report + pointers to verification outputs/overrides
+Enforces: mode strictness, never-skip rules, override rules recorded
+
+MCP-04 Output Artifacts (guaranteed contract)
+Always produced
+
+maintenance_run_report
+
+verification logs for executed commands
+
+unit status tracking (if work is unitized)
+
+Produced when relevant
+
+dependency_update_report
+
+migration_plan + migration_verification_report
+
+test_update_report
+
+refactor_report
+
+ci_update_report
+
+axion_compatibility_report
+
+rollback record (if rollback executed)
+
+MCP-05 Determinism guarantees (repo maintenance)
+
+same baseline revision + same policies → same upgrade/migration decisions
+
+upgrade selection follows deterministic version policy (no implicit “latest”)
+
+reports/logs written to deterministic paths
+
+nondeterminism (timestamps/run ids) isolated from comparisons
+
+MCP-06 Failure semantics
+
+On failure MCP must still emit:
+
+maintenance_run_report with failing module/action, remediation, and evidence pointers
+
+partial outputs preserved (no overwrite)
+Fail-fast on:
+
+schema/contract breakage that blocks AXION compatibility (when required)
+
+missing/corrupted lockfiles when policy requires
+
+migrations that violate safety rules
+
+MCP-07 Hard boundaries (locked)
+
+MCP does not redefine AXION system rules; it operates under them
+
+MCP focuses on post-build lifecycle (hygiene, evolution, stability)
+
+MCP must respect scope constraints; cannot expand beyond declared intent

@@ -1,0 +1,192 @@
+Agent Type Outline — Maintenance Agent (MA)
+M-00 Role
+
+Purpose: perform repo maintenance work (upgrades, migrations, test hardening, refactors, CI upkeep) while preserving AXION compatibility and auditability.
+Lives: inside the target repo workspace (repo-resident), outside AXION runtime.
+Primary interface: MCP (Maintenance Control Plane) + maintenance intent (MM-xx or maintenance request).
+
+M-01 Inputs (what MA consumes)
+
+Repo state
+
+full working tree at a specific baseline revision (commit/tag)
+
+dependency manifests + lockfiles
+
+CI workflow files
+
+test suite configs and fixtures
+
+migration history (if present)
+
+release metadata (changelog, versions)
+
+Maintenance intent
+
+maintenance mode id (MM-xx) or intent type:
+
+dependency upgrade / migration / refactor / test hardening / CI fix / security patch
+
+scope constraints (allowed/disallowed paths)
+
+risk class (prototype/production/compliance)
+
+AXION compatibility surfaces (as applicable)
+
+schemas/contracts this repo must remain compatible with (kit outputs, proof formats, gate reports, etc.)
+
+toolchain pins and required commands (doctor/verify expectations)
+
+any pinned profiles/policies for this repo
+
+Optional
+
+prior maintenance run reports/diffs
+
+CI failures, gate reports, logs
+
+backlog/issue references
+
+M-02 Core responsibilities (what MA actually does)
+
+Plan maintenance actions deterministically
+
+map intent → ordered work items (units) and constraints
+
+validate scope constraints before changes begin
+
+Apply maintenance changes within scope
+
+dependency bumps (policy-driven)
+
+lockfile updates (deterministic)
+
+migrations (ordered + safety-checked)
+
+refactors/hygiene (module boundaries, lint/type fixes)
+
+CI workflow changes (pins, caching, artifact retention)
+
+Verify and prove
+
+run required verification commands (tests/lint/build/typecheck)
+
+capture logs and evidence pointers
+
+produce maintenance report artifacts
+
+Maintain AXION compatibility
+
+ensure any AXION-required artifacts remain schema-valid
+
+ensure kit/manifest/proof formats remain producible
+
+ensure compatibility rules are not violated (pins/contracts)
+
+Handle rollback when required
+
+if policy requires rollback strategy, ensure it is recorded and executable
+
+preserve attempt history
+
+M-03 Outputs (what MA must produce)
+
+Always
+
+maintenance_run_report (structured)
+
+verification logs for executed commands
+
+When relevant
+
+dependency_update_report
+
+migration_plan + migration_verification_report
+
+test_update_report
+
+refactor_report
+
+ci_update_report
+
+axion_compatibility_report
+
+rollback record (if rollback executed)
+
+All outputs must be pointer-linked, schema-valid, and preserved across attempts.
+
+M-04 Constraints / guardrails (hard rules)
+
+must not expand scope beyond declared intent and allowed paths
+
+must not introduce nondeterministic dependency states (lockfile discipline)
+
+must not violate migration safety rules (no destructive changes without plan)
+
+must not weaken AXION enforcement rules (doctor/verify cannot be removed unless mode explicitly permits and it is recorded)
+
+must not leak secrets/PII into logs/reports
+
+must preserve audit trail (no overwrites; attempts are versioned)
+
+M-05 Correctness definition (what counts as “successful maintenance”)
+
+Maintenance is correct when:
+
+changes remain within scope
+
+required verification passes
+
+AXION compatibility checks pass (when applicable)
+
+reports exist with evidence pointers
+
+any required rollback strategy is recorded (and executed if needed)
+
+M-06 Evidence and traceability requirements
+
+every change must be attributable to an intent item (maintenance unit)
+
+report must include:
+
+baseline revision
+
+files touched summary
+
+dependency/migration deltas (as applicable)
+
+verification pointers
+
+compatibility pointers
+
+M-07 Failure semantics
+
+On failure:
+
+must still emit maintenance_run_report with:
+
+failing module/action
+
+remediation steps
+
+evidence pointers
+
+preserve partial outputs (no overwrite)
+
+fail-fast on:
+
+AXION contract breakage (when required)
+
+corrupted dependency state (if policy requires)
+
+unsafe migration violations
+
+M-08 Interfaces (who calls MA / what MA calls)
+
+Guided/enforced by: MCP (Maintenance Control Plane)
+
+Consumes: repo + intent + compatibility constraints
+
+Produces for: operator/devs + AXION ingestion (reports/evidence)
+
+Does not control: AXION registries/standards/templates (only stays compatible with them)

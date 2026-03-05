@@ -1,0 +1,158 @@
+Agent Type Outline — External Build Agent (BA)
+B-00 Role
+
+Purpose: execute the Agent Kit to implement the target build in a repo, producing verifiable results and proofs.
+Lives: outside AXION runtime, operating in the target repo workspace.
+Primary interface: KCP (Kit Control Plane) + kit artifacts (plan units, policies, verification rules).
+
+B-01 Inputs (what BA consumes)
+
+Agent Kit (authoritative)
+
+kit_manifest
+
+kit_entrypoint
+
+pinset/lockfile
+
+standards snapshot (if included)
+
+render envelopes / template outputs
+
+plan units (PLAN_UNIT_*), acceptance map, sequencing (if planning enabled)
+
+verification policy (commands, required/optional, log rules)
+
+proof type snapshot + evidence pointer rules (if shipped)
+
+safety policies (reuse allowlist, secrets/PII rules, external restrictions)
+
+Execution context
+
+target repo path
+
+executor identity = external (restricts capabilities)
+
+environment descriptor (CI/local, OS, tool versions)
+
+B-02 Core responsibilities (what BA actually does)
+
+Follow kit entrypoint (no improvisation)
+
+read in declared order
+
+only work on declared targets and plan units
+
+Implement plan units
+
+execute one unit at a time (1 target per unit)
+
+perform the code changes required for that target
+
+stay within allowed scope and allowed paths
+
+Run verification (as required by kit policy)
+
+run required commands (lint/test/build/typecheck)
+
+ensure command outputs and logs are captured per policy
+
+Produce completion artifacts
+
+create RESULT_<UNIT_ID>.json for completed units
+
+attach:
+
+implementation_refs[] (paths/commits/diffs)
+
+proof_refs[] (logs, outputs, hashes)
+
+Support reruns safely
+
+if a unit fails, rerun with a new attempt record; do not overwrite evidence
+
+B-03 Outputs (what BA must produce)
+
+These are written in kit-defined output locations (usually under kit/results, kit/logs, kit/reports or repo-bound equivalents):
+
+RESULT_<UNIT_ID>.json (per unit completion)
+
+verification logs (per command id)
+
+optional proof objects (if BA is generating them vs KCP generating them)
+
+any required build outputs (compiled artifacts are usually not checked in unless required)
+
+All outputs must be pointer-linked and schema-valid.
+
+B-04 Constraints / guardrails (hard rules)
+
+cannot access AXION registries or modify AXION system rules
+
+cannot expand scope beyond:
+
+kit declared targets
+
+active plan unit
+
+cannot run commands outside verification policy allowlist
+
+cannot write outside allowed path allowlist (especially external execution)
+
+cannot include secrets/PII in logs/results
+
+reuse/plagiarism rules must be obeyed (reuse allowlist + reuse log if reuse permitted)
+
+B-05 Correctness definition (“what is correct if every build differs?”)
+
+BA correctness is contract correctness, not “identical output”:
+
+you are correct when:
+
+the unit’s acceptance criteria are satisfied
+
+required verification commands pass (as required)
+
+required proofs exist and pointers resolve
+
+RESULT file is complete and schema-valid
+
+B-06 Evidence and traceability requirements
+
+For each unit:
+
+implementation refs must point to the changes made (paths, diffs, commits)
+
+proof refs must point to verification logs and/or build outputs
+
+evidence pointers must dereference and hash-match when required
+
+B-07 Failure semantics
+
+On failure:
+
+BA must still produce:
+
+logs for executed commands
+
+partial RESULT/proof artifacts preserved (no overwrite)
+
+failure reason recorded in kit_run_report (via KCP)
+
+fail-fast on:
+
+non-overridable guardrail violations
+
+forbidden path access attempts
+
+missing kit artifacts or schema-invalid plan units
+
+B-08 Interfaces (who calls BA / what BA calls)
+
+Guided/enforced by: KCP (Kit Control Plane)
+
+Consumes: kit artifacts and policies
+
+Produces for: ICP/MCP ingestion later (RESULTs + proofs)
+
+Does not control: gate definitions, standards, template definitions, registry data

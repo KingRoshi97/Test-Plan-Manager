@@ -1,0 +1,186 @@
+Control Plane Outline — Internal Control Plane (ICP)
+ICP-00 Role
+
+Lives: inside AXION runtime (the system)
+Primary user: internal agent (IA) + operators
+Purpose: orchestrate AXION deterministically: load registries, resolve pins, run stages/gates, write proofs, package kits, and produce the run artifact spine.
+
+ICP-01 Inputs (what it consumes)
+1.1 Run request / run context
+
+run_id (provided or generated)
+
+mode_id (MM-xx) and/or run_profile_id
+
+risk_class (prototype | production | compliance)
+
+executor_type_default (internal | external)
+
+targets (platforms/domains/stack hints)
+
+1.2 System source-of-truth datasets
+
+standards registries (index/applicability/packs/resolver order)
+
+template registry + selection profiles + placeholder rules
+
+gate registry + gate set profiles + predicate operator registry
+
+proof type registry + evidence policy registry
+
+schema validators / schema registry (if used)
+
+version registry + pin policy
+
+terms registry + ID namespace registry (if used)
+
+1.3 Upstream artifacts (run-scoped)
+
+intake artifacts (submission, normalized input, submission record)
+
+prior run snapshots (optional)
+
+optional: operator overrides/approvals (if enabled)
+
+ICP-02 State Model (run state machine)
+2.1 Run states (minimum)
+
+QUEUED → RUNNING → GATED → (FAILED | RELEASED) → ARCHIVED
+Optional: PAUSED, CANCELLED, ROLLING_BACK
+
+2.2 Stage states (minimum)
+
+NOT_STARTED, IN_PROGRESS, PASS, FAIL, SKIP
+
+2.3 Deterministic transition rules
+
+cannot advance to next stage unless:
+
+prior stage PASS, or SKIP is explicitly allowed by mode/profile
+
+required stage outputs exist and validate
+
+reruns:
+
+create new attempt id
+
+write a new stage report and link to prior attempts
+
+never overwrite prior evidence
+
+ICP-03 Runtime Modules (what it does)
+3.1 Run Orchestrator
+
+Function: stage sequencing, activation by mode/profile, rerun/resume, fail-fast.
+Produces: run_manifest, stage_reports[], run_log
+Enforces: stage order contract, stage IO contract
+
+3.2 Registry Loader + Pin Resolver
+
+Function: load registries, validate, resolve pins deterministically.
+Produces: pinset/lockfile, optional registry_resolution_report
+Enforces: schema validity, referential integrity, no implicit “latest”
+
+3.3 Standards Engine
+
+Function: applicability + conflict resolution → snapshot.
+Produces: standards_applicability_output, resolved_standards_snapshot
+Enforces: deterministic resolver order, snapshot completeness
+
+3.4 Template System Driver
+
+Function: select templates + render envelopes + enforce completeness.
+Produces: template_selection_result, render_envelopes[], template_completeness_report
+Enforces: placeholder rules, completeness rules
+
+3.5 Gate Engine
+
+Function: evaluate gates at gating points with evidence requirements.
+Produces: gate_report
+Enforces: operator registry, evidence policy mapping, pointer resolution rules
+
+3.6 Proof System
+
+Function: capture proofs, write ledger, normalize verification outputs.
+Produces: proof_objects[], proof_ledger, verification_run_result
+Enforces: proof type registry, redaction rules, pointer resolution
+
+3.7 Kit Packager
+
+Function: package kits deterministically (internal/external variants).
+Produces: kit_manifest, kit_entrypoint, bundle_metadata, bundle_export
+Enforces: kit completeness, embedded pinset, secrets scan, variant filtering
+
+3.8 Operator Actions + Audit/Trace
+
+Function: record start/stop/pause/rerun/override/release actions.
+Produces: audit_log_entries[], override_records[]
+Enforces: never-overridable gate list, override expiry/scope
+
+ICP-04 Output Artifacts (guaranteed contract)
+Always produced
+
+run_manifest
+
+run_log
+
+stage_reports
+
+gate_report (even on fail)
+
+pinset/lockfile
+
+Produced when relevant
+
+standards snapshot + applicability output
+
+template selection + render envelopes
+
+proof ledger + verification results
+
+kit outputs (manifest/entrypoint/bundle)
+
+state snapshot / rollback pointer
+
+ICP-05 Determinism guarantees
+
+same inputs + same pinset → same:
+
+standards snapshot
+
+template selection result
+
+render envelopes (modulo allowed noise fields)
+
+stage order and resolver order never vary
+
+output paths are deterministic
+
+nondeterminism (timestamps/run_id) is isolated and excluded from goldens
+
+ICP-06 Failure semantics
+
+On failure ICP must still emit:
+
+gate report with remediation
+
+stage report indicating stop point and why
+
+logs + evidence pointers
+Fail-fast on:
+
+schema invalid artifacts
+
+missing required artifacts
+
+pinset/registry integrity failures
+
+ICP-07 Hard boundaries (locked)
+
+ICP does not modify target repos directly (only produces kits/artifacts)
+
+ICP does not invent standards/templates/gates; uses registered items only
+
+PASS requires evidence per policy (no unverifiable success)
+
+outputs must be self-validating without external context
