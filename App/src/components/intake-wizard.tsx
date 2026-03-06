@@ -374,7 +374,7 @@ export default function IntakeWizard() {
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-md">
+        <div className="text-sm text-red-400 px-4 py-2.5 rounded-md" style={{ background: "hsl(0 72% 55% / 0.1)" }}>
           {error}
         </div>
       )}

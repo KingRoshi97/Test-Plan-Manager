@@ -1,6 +1,7 @@
 import { Switch, Route } from "wouter";
 import { AppShell } from "./components/layout/AppShell";
 import DashboardPage from "./pages/dashboard";
+import RunsPage from "./pages/runs";
 import NewAssemblyPage from "./pages/new-assembly";
 import AssemblyPage from "./pages/assembly";
 import FilesPage from "./pages/files";
@@ -30,7 +31,7 @@ export default function App() {
     <AppShell>
       <Switch>
         <Route path="/" component={DashboardPage} />
-        <Route path="/runs" component={DashboardPage} />
+        <Route path="/runs" component={RunsPage} />
         <Route path="/new" component={NewAssemblyPage} />
         <Route path="/assembly/:id" component={AssemblyPage} />
         <Route path="/features" component={FeaturesPage} />

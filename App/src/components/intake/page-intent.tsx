@@ -61,7 +61,7 @@ export default function PageIntent({ data, onChange }: PageProps) {
             <button
               type="button"
               onClick={() => removeGoal(i)}
-              className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 transition"
+              className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition"
             >
               <X className="w-4 h-4" />
             </button>

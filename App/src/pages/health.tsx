@@ -47,12 +47,12 @@ export default function HealthPage() {
             {isHealthy && !isError ? (
               <>
                 <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-green-600">Healthy</span>
+                <span className="text-green-400">Healthy</span>
               </>
             ) : (
               <>
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                <span className="text-red-600">Unhealthy</span>
+                <span className="text-red-400">Unhealthy</span>
               </>
             )}
           </span>
@@ -190,9 +190,9 @@ export default function HealthPage() {
                 <div className="text-lg font-bold" style={{ color: "hsl(var(--foreground))" }}>{features.length}</div>
                 <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>Total</div>
               </div>
-              <div className="text-center p-3 rounded-md bg-green-50">
-                <div className="text-lg font-bold text-green-800">{activeFeatures}</div>
-                <div className="text-xs text-green-700">Active</div>
+              <div className="text-center p-3 rounded-md" style={{ background: "hsl(145 65% 48% / 0.1)" }}>
+                <div className="text-lg font-bold text-green-400">{activeFeatures}</div>
+                <div className="text-xs text-green-500">Active</div>
               </div>
               {Object.entries(categoryBreakdown).slice(0, 2).map(([cat, count]) => (
                 <div key={cat} className="text-center p-3 rounded-md" style={{ background: "hsl(var(--muted))" }}>

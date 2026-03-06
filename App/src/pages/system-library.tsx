@@ -98,7 +98,7 @@ function DocumentsTab() {
                       <BookOpen className="h-3.5 w-3.5 text-[hsl(var(--muted-foreground))]" />
                       <span className="text-sm font-mono font-medium">{filename}</span>
                       {doc?.frontmatter?.status && (
-                        <span className="ml-auto text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">
+                        <span className="ml-auto text-xs px-2 py-0.5 rounded bg-green-900/30 text-green-300">
                           {doc.frontmatter.status}
                         </span>
                       )}

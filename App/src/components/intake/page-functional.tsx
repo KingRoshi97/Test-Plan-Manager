@@ -53,7 +53,7 @@ export default function PageFunctional({ data, onChange }: PageProps) {
               placeholder={`Feature ${i + 1}`}
               className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
             />
-            <button type="button" onClick={() => removeItem("must_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 transition">
+            <button type="button" onClick={() => removeItem("must_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -76,7 +76,7 @@ export default function PageFunctional({ data, onChange }: PageProps) {
               placeholder={`Nice-to-have ${i + 1}`}
               className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
             />
-            <button type="button" onClick={() => removeItem("nice_to_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 transition">
+            <button type="button" onClick={() => removeItem("nice_to_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -109,7 +109,7 @@ export default function PageFunctional({ data, onChange }: PageProps) {
               placeholder="Permissions / capabilities"
               className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
             />
-            <button type="button" onClick={() => removeRole(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 transition">
+            <button type="button" onClick={() => removeRole(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition">
               <X className="w-4 h-4" />
             </button>
           </div>

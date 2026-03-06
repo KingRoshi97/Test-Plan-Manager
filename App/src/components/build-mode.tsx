@@ -43,14 +43,14 @@ interface BuildStatus {
 }
 
 const STATE_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-  not_requested: { label: "Not Started", color: "bg-gray-100 text-gray-600", icon: Clock },
-  requested: { label: "Requested", color: "bg-blue-100 text-blue-700", icon: Loader2 },
-  approved: { label: "Approved", color: "bg-blue-100 text-blue-700", icon: CheckCircle },
-  building: { label: "Building", color: "bg-amber-100 text-amber-700", icon: Loader2 },
-  verifying: { label: "Verifying", color: "bg-purple-100 text-purple-700", icon: Loader2 },
-  failed: { label: "Failed", color: "bg-red-100 text-red-700", icon: XCircle },
-  passed: { label: "Passed", color: "bg-green-100 text-green-700", icon: CheckCircle },
-  exported: { label: "Exported", color: "bg-emerald-100 text-emerald-700", icon: Package },
+  not_requested: { label: "Not Started", color: "bg-gray-800 text-gray-300", icon: Clock },
+  requested: { label: "Requested", color: "bg-blue-900/30 text-blue-300", icon: Loader2 },
+  approved: { label: "Approved", color: "bg-blue-900/30 text-blue-300", icon: CheckCircle },
+  building: { label: "Building", color: "bg-amber-900/30 text-amber-300", icon: Loader2 },
+  verifying: { label: "Verifying", color: "bg-purple-900/30 text-purple-300", icon: Loader2 },
+  failed: { label: "Failed", color: "bg-red-900/30 text-red-300", icon: XCircle },
+  passed: { label: "Passed", color: "bg-green-900/30 text-green-300", icon: CheckCircle },
+  exported: { label: "Exported", color: "bg-emerald-900/30 text-emerald-300", icon: Package },
 };
 
 function BuildStateBadge({ state }: { state: string }) {
@@ -194,9 +194,9 @@ function VerificationResults({ verification }: { verification: any }) {
                 </p>
               </div>
               <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                cat.result === "pass" ? "bg-green-100 text-green-700" :
-                cat.result === "fail" ? "bg-red-100 text-red-700" :
-                "bg-amber-100 text-amber-700"
+                cat.result === "pass" ? "bg-green-900/30 text-green-300" :
+                cat.result === "fail" ? "bg-red-900/30 text-red-300" :
+                "bg-amber-900/30 text-amber-300"
               }`}>
                 {cat.result}
               </span>
@@ -222,12 +222,12 @@ function FailureDisplay({ manifest }: { manifest: any }) {
   const failure = manifest?.failureEvidence;
   if (!failure) return null;
   return (
-    <div className="p-4 rounded-lg border border-red-200 bg-red-50 space-y-2">
+    <div className="p-4 rounded-lg border space-y-2" style={{ borderColor: "hsl(0 72% 55% / 0.3)", background: "hsl(0 72% 55% / 0.08)" }}>
       <div className="flex items-center gap-2">
-        <XCircle className="w-4 h-4 text-red-500" />
-        <span className="text-sm font-semibold text-red-700">Build Failed</span>
+        <XCircle className="w-4 h-4 text-red-400" />
+        <span className="text-sm font-semibold text-red-300">Build Failed</span>
       </div>
-      <div className="text-xs space-y-1 text-red-600">
+      <div className="text-xs space-y-1 text-red-400">
         <p><span className="font-medium">Class:</span> {failure.failureClass}</p>
         <p><span className="font-medium">Phase:</span> {failure.phase}</p>
         <p><span className="font-medium">Reason:</span> {failure.reason}</p>
@@ -431,7 +431,7 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
         <div className="p-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] space-y-4">
           <div className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-500" />
-            <span className="text-sm font-semibold text-green-700">
+            <span className="text-sm font-semibold text-green-400">
               Build {state === "exported" ? "Exported" : "Passed"}
             </span>
           </div>
@@ -511,13 +511,13 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
                     {slice.files?.length ?? 0} files
                   </span>
                   {slice.requiresAI && (
-                    <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-600 text-[10px]">AI</span>
+                    <span className="px-1.5 py-0.5 rounded bg-purple-900/30 text-purple-300 text-[10px]">AI</span>
                   )}
                 </div>
                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                  slice.status === "completed" ? "bg-green-100 text-green-700" :
-                  slice.status === "failed" ? "bg-red-100 text-red-700" :
-                  "bg-gray-100 text-gray-600"
+                  slice.status === "completed" ? "bg-green-900/30 text-green-300" :
+                  slice.status === "failed" ? "bg-red-900/30 text-red-300" :
+                  "bg-gray-800 text-gray-300"
                 }`}>
                   {slice.status}
                 </span>

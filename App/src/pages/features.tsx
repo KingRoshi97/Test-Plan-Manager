@@ -15,16 +15,16 @@ interface Feature {
 }
 
 const categoryColors: Record<string, string> = {
-  infrastructure: "bg-purple-100 text-purple-800",
-  interface: "bg-blue-100 text-blue-800",
-  "core-logic": "bg-amber-100 text-amber-800",
-  security: "bg-red-100 text-red-800",
+  infrastructure: "bg-purple-900/30 text-purple-300",
+  interface: "bg-blue-900/30 text-blue-300",
+  "core-logic": "bg-amber-900/30 text-amber-300",
+  security: "bg-red-900/30 text-red-300",
 };
 
 const statusColors: Record<string, string> = {
-  active: "bg-green-100 text-green-800",
-  draft: "bg-yellow-100 text-yellow-800",
-  error: "bg-red-100 text-red-800",
+  active: "bg-green-900/30 text-green-300",
+  draft: "bg-yellow-900/30 text-yellow-300",
+  error: "bg-red-900/30 text-red-300",
 };
 
 function groupByCategory(features: Feature[]): Record<string, Feature[]> {
@@ -66,9 +66,9 @@ export default function FeaturesPage() {
             <div className="text-xl font-bold text-[hsl(var(--foreground))]">{features.length}</div>
             <div className="text-xs text-[hsl(var(--muted-foreground))]">Total</div>
           </div>
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-green-50 px-4 py-2 text-center">
-            <div className="text-xl font-bold text-green-800">{activeCount}</div>
-            <div className="text-xs text-green-700">Active</div>
+          <div className="rounded-lg border border-[hsl(var(--border))] px-4 py-2 text-center" style={{ background: "hsl(145 65% 48% / 0.1)" }}>
+            <div className="text-xl font-bold text-green-400">{activeCount}</div>
+            <div className="text-xs text-green-500">Active</div>
           </div>
         </div>
       </div>
@@ -112,10 +112,10 @@ export default function FeaturesPage() {
                         <h3 className="font-medium text-[hsl(var(--card-foreground))] truncate">
                           {f.title}
                         </h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${statusColors[f.status] || "bg-gray-100 text-gray-800"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${statusColors[f.status] || "bg-gray-800 text-gray-300"}`}>
                           {f.status}
                         </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${categoryColors[f.category] || "bg-gray-100 text-gray-800"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${categoryColors[f.category] || "bg-gray-800 text-gray-300"}`}>
                           {f.category}
                         </span>
                       </div>

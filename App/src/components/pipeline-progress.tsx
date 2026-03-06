@@ -25,7 +25,7 @@ function stageStatusColor(status: string) {
     case "cancelled":
       return { bg: "bg-orange-400", border: "border-orange-400", text: "text-orange-600" };
     default:
-      return { bg: "bg-gray-300", border: "border-gray-300", text: "text-gray-500" };
+      return { bg: "bg-gray-600", border: "border-gray-600", text: "text-gray-400" };
   }
 }
 
@@ -76,7 +76,7 @@ export function PipelineProgress({
                 className={`w-2 ${lineH} ${
                   status === "passed" || status === "completed"
                     ? "bg-green-400"
-                    : "bg-gray-200"
+                    : "bg-gray-600"
                 }`}
               />
             )}

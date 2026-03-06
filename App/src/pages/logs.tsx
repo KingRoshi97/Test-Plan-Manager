@@ -5,10 +5,10 @@ import { ScrollText, Filter } from "lucide-react";
 import type { Assembly } from "../../../shared/schema";
 
 const statusColor: Record<string, string> = {
-  queued: "bg-gray-200 text-gray-800",
-  running: "bg-blue-200 text-blue-800",
-  completed: "bg-green-200 text-green-800",
-  failed: "bg-red-200 text-red-800",
+  queued: "bg-gray-800 text-gray-300",
+  running: "bg-blue-900/30 text-blue-300",
+  completed: "bg-green-900/30 text-green-300",
+  failed: "bg-red-900/30 text-red-300",
 };
 
 const statusFilters = ["all", "running", "completed", "failed", "queued"] as const;

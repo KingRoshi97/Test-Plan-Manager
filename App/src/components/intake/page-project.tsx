@@ -152,7 +152,7 @@ export default function PageProject({ data, onChange }: PageProps) {
                 <button
                   type="button"
                   onClick={() => removeAttachment(att.id)}
-                  className="p-1 rounded text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                  className="p-1 rounded text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition opacity-0 group-hover:opacity-100"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -196,7 +196,7 @@ export default function PageProject({ data, onChange }: PageProps) {
             <button
               type="button"
               onClick={() => removeLink(i)}
-              className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 transition"
+              className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition"
             >
               <X className="w-4 h-4" />
             </button>

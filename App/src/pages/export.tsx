@@ -57,7 +57,7 @@ export default function ExportPage() {
                     </span>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-200 text-green-800">
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/30 text-green-300">
                   completed
                 </span>
               </div>

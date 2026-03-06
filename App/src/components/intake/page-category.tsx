@@ -28,7 +28,7 @@ function SoftwareVariant({ data, onChange }: PageProps) {
             <input type="text" value={s} onChange={(e) => updateScreen(i, e.target.value)} placeholder={`Screen ${i + 1} (e.g. Dashboard, Settings)`}
               className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
             />
-            <button type="button" onClick={() => removeScreen(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 transition"><X className="w-4 h-4" /></button>
+            <button type="button" onClick={() => removeScreen(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition"><X className="w-4 h-4" /></button>
           </div>
         ))}
       </div>
@@ -69,7 +69,7 @@ function DataVariant({ data, onChange }: PageProps) {
             <input type="text" value={ep} onChange={(e) => updateEndpoint(i, e.target.value)} placeholder={`GET /api/resource`}
               className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
             />
-            <button type="button" onClick={() => removeEndpoint(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-50 transition"><X className="w-4 h-4" /></button>
+            <button type="button" onClick={() => removeEndpoint(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition"><X className="w-4 h-4" /></button>
           </div>
         ))}
       </div>

@@ -98,7 +98,7 @@ function DocumentsTab() {
                       <BookOpen className="h-3.5 w-3.5 text-[hsl(var(--muted-foreground))]" />
                       <span className="text-sm font-mono font-medium">{filename}</span>
                       {doc?.frontmatter?.status && (
-                        <span className="ml-auto text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">
+                        <span className="ml-auto text-xs px-2 py-0.5 rounded bg-green-900/30 text-green-300">
                           {doc.frontmatter.status}
                         </span>
                       )}
@@ -184,9 +184,9 @@ function RegistriesTab() {
 }
 
 const FAILURE_COLORS: Record<string, string> = {
-  hard_stop: "bg-red-100 text-red-800",
-  gate_pause: "bg-amber-100 text-amber-800",
-  retryable: "bg-blue-100 text-blue-800",
+  hard_stop: "bg-red-900/30 text-red-300",
+  gate_pause: "bg-amber-900/30 text-amber-300",
+  retryable: "bg-blue-900/30 text-blue-300",
 };
 
 function PipelineTab() {
@@ -238,13 +238,13 @@ function PipelineTab() {
           <div key={stageId}>
             <div className="border border-[hsl(var(--border))] rounded-lg p-4 bg-[hsl(var(--card))]">
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-xs font-mono px-2 py-0.5 rounded bg-blue-100 text-blue-800">{stageId}</span>
+                <span className="text-xs font-mono px-2 py-0.5 rounded bg-blue-900/30 text-blue-300">{stageId}</span>
                 <span className="text-sm font-medium">{stage.name}</span>
-                <span className={`text-xs px-2 py-0.5 rounded ml-auto ${FAILURE_COLORS[stage.failure_policy] ?? "bg-gray-100 text-gray-800"}`}>
+                <span className={`text-xs px-2 py-0.5 rounded ml-auto ${FAILURE_COLORS[stage.failure_policy] ?? "bg-gray-800 text-gray-300"}`}>
                   {stage.failure_policy}
                 </span>
                 {stage.can_rerun && (
-                  <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">rerunnable</span>
+                  <span className="text-xs px-2 py-0.5 rounded bg-green-900/30 text-green-300">rerunnable</span>
                 )}
               </div>
 
@@ -294,9 +294,9 @@ function PipelineTab() {
                 <div className="h-4 w-px bg-amber-400 ml-4" />
                 <span className="text-xs font-mono text-amber-600">{gate.gate_id}</span>
                 <span className={`text-xs px-1.5 py-0.5 rounded ${
-                  gate.severity === "hard_stop" ? "bg-red-100 text-red-700" :
-                  gate.severity === "pause" ? "bg-amber-100 text-amber-700" :
-                  "bg-blue-100 text-blue-700"
+                  gate.severity === "hard_stop" ? "bg-red-900/30 text-red-300" :
+                  gate.severity === "pause" ? "bg-amber-900/30 text-amber-300" :
+                  "bg-blue-900/30 text-blue-300"
                 }`}>{gate.severity}</span>
               </div>
             )}

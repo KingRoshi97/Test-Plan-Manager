@@ -37,10 +37,10 @@ const TABS = [
 ] as const;
 
 const categoryColors: Record<string, string> = {
-  infrastructure: "bg-purple-100 text-purple-800",
-  interface: "bg-blue-100 text-blue-800",
-  "core-logic": "bg-amber-100 text-amber-800",
-  security: "bg-red-100 text-red-800",
+  infrastructure: "bg-purple-900/30 text-purple-300",
+  interface: "bg-blue-900/30 text-blue-300",
+  "core-logic": "bg-amber-900/30 text-amber-300",
+  security: "bg-red-900/30 text-red-300",
 };
 
 function MarkdownBlock({ content }: { content: string }) {
@@ -275,15 +275,15 @@ export default function FeatureDetailPage() {
               <span
                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                   feature.status === "active"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-yellow-100 text-yellow-800"
+                    ? "bg-green-900/30 text-green-300"
+                    : "bg-yellow-900/30 text-yellow-300"
                 }`}
               >
                 {feature.status}
               </span>
               <span
                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  categoryColors[feature.category] || "bg-gray-100 text-gray-800"
+                  categoryColors[feature.category] || "bg-gray-800 text-gray-300"
                 }`}
               >
                 {feature.category}

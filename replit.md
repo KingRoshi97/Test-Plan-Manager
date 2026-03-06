@@ -6,7 +6,7 @@ Axion is a document-generation and compliance-enforcement system with a full-sta
 ## Current State
 Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 193 kit files produced.
 
-### UI Overhaul — AXION Lab OS (Phase 1 Complete)
+### UI Overhaul — AXION Lab OS (Phases 1–2 Complete)
 The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" — a premium dark-mode mission control interface.
 
 **Visual System** (`App/src/index.css`): Obsidian/charcoal dark theme with CSS custom properties for backgrounds, glass panels (backdrop-blur), glow borders (cyan/green/amber/red/violet), status colors (--status-processing, --status-success, --status-warning, --status-failure, --status-intelligence), animation keyframes (pulse-glow, fade-in, slide-in), utility classes (.glass-panel, .glass-panel-solid, .glow-border-*, .premium-card, .nav-item-active, .text-system-label, .font-mono-tech).
@@ -31,9 +31,21 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 
 **Command Center** (`App/src/pages/dashboard.tsx`): Mission Control dashboard with hero title + live status chip, 6 executive MetricCards, active runs strip (GlassPanel + StageRail), All Runs premium table (StatusChip + StageRail columns), Quick Actions grid (New Run, Open Workbench, Review Failures, Artifact Explorer).
 
-**Route additions**: `/runs` alias points to DashboardPage (dedicated Runs page planned for Phase C).
+**Runs Page** (`App/src/pages/runs.tsx`): Fleet management page at `/runs` with status filter chips (All/Active/Completed/Failed/Queued), premium glass-panel table with StatusChip + StageRail columns, clickable rows navigate to Workbench, delete actions, empty state with filter-aware messaging.
 
-**Remaining phases**: Phase B (Command Center enhancements), Phase C (Runs + Workbench), Phase D (Artifacts + Logs + Health), Phase E (Knowledge + Maintenance + Export), Phase F (Polish — command palette, keyboard shortcuts, motion, density tuning).
+**Workbench** (`App/src/pages/assembly.tsx`): Full operational console at `/assembly/:id`:
+- Hero header in GlassPanel with project name, StatusChip, run ID badge, duration, action buttons (Run/Stop/Kit)
+- Horizontal pipeline strip with S1–S10 rectangular stage nodes, color-coded by status, gate result indicators, clickable for future inspector
+- Overview tab: contextual status banners (running/failed/completed) in glow GlassPanels, 4 MetricCards (Status/Passed/Failed/Duration), Project Details + Pipeline Status panels, token usage display
+- Pipeline tab: vertical stage cards with glow borders per status, gate result badges, premium run history table
+- Intake tab: section sidebar with nav-item-active pattern, dark-themed form editors, save/re-run actions
+- Artifacts tab: breadcrumb file browser with dark styling, GlassPanel file list + preview pane
+- Config tab: assembly config display, JSON viewer, red-glow danger zone
+- Build tab: imported BuildTab component with dark-themed state badges
+
+**Dark Theme Harmonization**: All pages swept for light-mode remnants — health.tsx, features.tsx, feature-detail.tsx, export.tsx, logs.tsx, maintenance.tsx, pipeline-progress.tsx, intake-wizard.tsx, build-mode.tsx, intake form pages, orchestration-library.tsx, system-library.tsx all updated to use dark-appropriate color references.
+
+**Remaining phases**: Phase D (Artifacts + Logs + Health), Phase E (Knowledge + Maintenance + Export), Phase F (Polish — command palette, keyboard shortcuts, motion, density tuning).
 
 ### Build Mode (BM-00 through BM-18)
 Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip.
