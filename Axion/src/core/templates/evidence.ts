@@ -230,7 +230,8 @@ export async function writeRenderedDocs(runDir: string, runId: string, generated
   const iaConcurrency = Math.min(Math.max(parseInt(process.env.AXION_IA_CONCURRENCY ?? "3", 10) || 3, 1), 10);
   console.log(`  [IA] Rendering ${selection.selected.length} templates with ${iaConcurrency} concurrent worker(s)`);
 
-  async function processTemplate(tmpl: typeof selection.selected[0]) {
+  async function processTemplate(tmpl: typeof selection.selected[0], index: number, total: number) {
+    console.log(`  [IA] [${index + 1}/${total}] Starting template: ${tmpl.template_id}`);
     let rawContent = "";
     try {
       const absPath = join(baseDir, tmpl.source_abs_path);
@@ -260,15 +261,21 @@ export async function writeRenderedDocs(runDir: string, runId: string, generated
     ensureDir(dirname(outputAbsPath));
     writeFileSync(outputAbsPath, filled.content, "utf-8");
 
+    console.log(`  [IA] [${index + 1}/${total}] Completed template: ${tmpl.template_id} (${filled.placeholders_resolved} resolved, ${filled.placeholders_unknown} unknown)`);
     return { tmpl, filled, outputRelPath };
   }
 
   const results: Array<Awaited<ReturnType<typeof processTemplate>>> = [];
   const queue = [...selection.selected];
 
+  let globalIndex = 0;
+  const totalTemplates = selection.selected.length;
   while (queue.length > 0) {
     const batch = queue.splice(0, iaConcurrency);
-    const batchOutcomes = await Promise.allSettled(batch.map((tmpl) => processTemplate(tmpl)));
+    const batchStartIndices = batch.map((_, i) => globalIndex + i);
+    globalIndex += batch.length;
+    console.log(`  [IA] Processing batch of ${batch.length} templates...`);
+    const batchOutcomes = await Promise.allSettled(batch.map((tmpl, i) => processTemplate(tmpl, batchStartIndices[i], totalTemplates)));
     for (let i = 0; i < batchOutcomes.length; i++) {
       const outcome = batchOutcomes[i];
       if (outcome.status === "fulfilled") {

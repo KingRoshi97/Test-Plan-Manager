@@ -7,7 +7,8 @@ import { getStageOrder } from "../Axion/src/core/orchestration/loader.js";
 
 const AXION_ROOT = path.resolve(process.cwd(), "Axion");
 
-const STALL_TIMEOUT_MS = parseInt(process.env.AXION_STALL_TIMEOUT_MS || "") || 5 * 60 * 1000;
+const STALL_TIMEOUT_MS = parseInt(process.env.AXION_STALL_TIMEOUT_MS || "") || 10 * 60 * 1000;
+const STALL_WARN_MS = Math.round(STALL_TIMEOUT_MS / 2);
 const STALL_CHECK_INTERVAL_MS = 30_000;
 
 interface RunningProcess {
@@ -17,6 +18,7 @@ interface RunningProcess {
   lastActivityAt: number;
   currentStage: string;
   runId: string;
+  stallWarned: boolean;
 }
 
 const runningProcesses = new Map<number, RunningProcess>();
@@ -37,6 +39,11 @@ function startStallChecker() {
         } catch (err) {
           console.error(`[stall-detector] Failed to kill assembly ${assemblyId}:`, err);
         }
+      } else if (stalledMs > STALL_WARN_MS && !proc.stallWarned) {
+        const stalledMinutes = Math.round(stalledMs / 60000);
+        const stageInfo = proc.currentStage || "unknown stage";
+        console.log(`[stall-detector] WARNING: Assembly ${assemblyId} slow on ${stageInfo} — no activity for ${stalledMinutes}m (kill at ${Math.round(STALL_TIMEOUT_MS / 60000)}m)`);
+        proc.stallWarned = true;
       }
     }
     if (runningProcesses.size === 0) {
@@ -168,6 +175,7 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
     lastActivityAt: Date.now(),
     currentStage: "initializing",
     runId: "",
+    stallWarned: false,
   };
   runningProcesses.set(assemblyId, proc);
   startStallChecker();
@@ -190,6 +198,7 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
     stdoutBuffer += text;
 
     proc.lastActivityAt = Date.now();
+    proc.stallWarned = false;
 
     const lines = stdoutBuffer.split("\n");
     stdoutBuffer = lines.pop() ?? "";
@@ -275,6 +284,7 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
   child.stderr.on("data", (chunk: Buffer) => {
     stderr += chunk.toString();
     proc.lastActivityAt = Date.now();
+    proc.stallWarned = false;
   });
 
   return new Promise<void>((resolve) => {

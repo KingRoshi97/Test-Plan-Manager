@@ -431,6 +431,7 @@ async function synthesizeBatchSections(
   }).join("\n\n---\n\n");
 
   try {
+    console.log(`    [IA-synth] Calling LLM for "${templateTitle}" (${sections.length} sections)...`);
     const response: OpenAIResponse = await client.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -468,6 +469,8 @@ Write the content for each section. Return valid JSON with a "sections" object m
     });
 
     const usage = (response as any).usage;
+    const usedTokens = usage ? (usage.prompt_tokens ?? 0) + (usage.completion_tokens ?? 0) : 0;
+    console.log(`    [IA-synth] LLM response received for "${templateTitle}" (${usedTokens} tokens)`);
     if (usage) {
       recordUsage({
         stage: "S7_RENDER_DOCS",

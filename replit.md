@@ -9,7 +9,8 @@ Full Mechanics pipeline + web application layer with three formal control planes
 ### Pipeline Stall Detection
 Automatic watchdog in `server/pipeline-runner.ts` detects stalled pipeline runs:
 - Tracks `lastActivityAt` per running process, updated on every stdout stage-progress line
-- 30-second interval checker kills runs with >5 minutes of inactivity (configurable via `AXION_STALL_TIMEOUT_MS` env var)
+- 30-second interval checker warns at 5 minutes and kills runs with >10 minutes of inactivity (configurable via `AXION_STALL_TIMEOUT_MS` env var)
+- S7_RENDER_DOCS heartbeat logging: per-template start/complete logs and per-LLM-call logs in `evidence.ts`/`filler.ts` keep stall detector alive during long OpenAI batches
 - `getPipelineStatus()` returns live status of all running processes
 - `GET /api/pipeline/status` endpoint exposes `{assemblyId, runId, currentStage, startTime, lastActivityAt, elapsedMs, stalledMs}` per active run
 - UI polling via `App/src/hooks/use-pipeline-status.ts` — shared hook with stall level detection (warning >2min, critical >4min)
