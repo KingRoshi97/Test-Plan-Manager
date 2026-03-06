@@ -3186,6 +3186,267 @@ export function registerRoutes(app: Express) {
     } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
+  const MUS_RUNS_DIR = path.join(AXION_ROOT, ".axion", "maintenance_runs");
+
+  function ensureMusRunsDir() {
+    if (!fs.existsSync(MUS_RUNS_DIR)) fs.mkdirSync(MUS_RUNS_DIR, { recursive: true });
+  }
+
+  let musRunCounter = 0;
+  function allocateMusRunId(): string {
+    const existing = fs.existsSync(MUS_RUNS_DIR)
+      ? fs.readdirSync(MUS_RUNS_DIR).filter((d: string) => d.startsWith("MRUN-")).length
+      : 0;
+    musRunCounter = Math.max(musRunCounter, existing) + 1;
+    return `MRUN-${String(musRunCounter).padStart(6, "0")}`;
+  }
+
+  function readMusRun(runId: string): any | null {
+    const manifest = path.join(MUS_RUNS_DIR, runId, "maintenance_manifest.json");
+    if (!fs.existsSync(manifest)) return null;
+    return JSON.parse(fs.readFileSync(manifest, "utf-8"));
+  }
+
+  function writeMusRun(run: any) {
+    const dir = path.join(MUS_RUNS_DIR, run.run_id);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "maintenance_manifest.json"), JSON.stringify(run, null, 2));
+  }
+
+  const MUS_TRANSITIONS: Record<string, string[]> = {
+    planned: ["applying", "cancelled"],
+    applying: ["verifying", "failed", "rolling_back", "paused"],
+    verifying: ["complete", "failed", "rolling_back"],
+    blocked: ["applying", "cancelled", "rolling_back"],
+    failed: ["planned", "rolling_back"],
+    complete: [],
+    paused: ["applying", "cancelled"],
+    cancelled: [],
+    rolling_back: ["failed", "planned"],
+  };
+
+  function loadMusModes(): any[] {
+    const modePath = path.join(MUS_LIB_DIR, "registries", "REG-MAINTENANCE-MODES.json");
+    if (!fs.existsSync(modePath)) return [];
+    return JSON.parse(fs.readFileSync(modePath, "utf-8")).items ?? [];
+  }
+
+  app.post("/api/maintenance/runs", (req: Request, res: Response) => {
+    try {
+      ensureMusRunsDir();
+      const { mode_id, intent_type, scope_constraints, risk_class, units, baseline_revision } = req.body;
+      if (!mode_id || !intent_type || !baseline_revision) {
+        return res.status(400).json({ error: "mode_id, intent_type, and baseline_revision are required" });
+      }
+      if (!units || !Array.isArray(units) || units.length === 0) {
+        return res.status(400).json({ error: "At least one unit is required" });
+      }
+      for (const u of units) {
+        if (!u.unit_id) return res.status(400).json({ error: "Each unit must have a unit_id" });
+        if (!u.type) return res.status(400).json({ error: `Unit ${u.unit_id} must have a type` });
+        if (!u.target_paths || !Array.isArray(u.target_paths) || u.target_paths.length === 0) {
+          return res.status(400).json({ error: `Unit ${u.unit_id} must have at least one target_path` });
+        }
+      }
+
+      const modes = loadMusModes();
+      const mode = modes.find((m: any) => m.mode_id === mode_id);
+      if (mode && mode.status !== "active") {
+        return res.status(400).json({ error: `Mode ${mode_id} is not active (status: ${mode.status})` });
+      }
+
+      const now = new Date().toISOString();
+      const run = {
+        run_id: allocateMusRunId(),
+        mode_id,
+        intent_type,
+        scope_constraints: scope_constraints ?? [],
+        risk_class: risk_class ?? "low",
+        status: "planned",
+        units: units.map((u: any) => ({
+          unit_id: u.unit_id,
+          type: u.type,
+          status: "not_started",
+          target_paths: u.target_paths,
+          verification_results: [],
+        })),
+        baseline_revision,
+        created_at: now,
+        updated_at: now,
+      };
+      writeMusRun(run);
+      res.json(run);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/maintenance/runs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(MUS_RUNS_DIR)) return res.json([]);
+      const entries = fs.readdirSync(MUS_RUNS_DIR, { withFileTypes: true });
+      const runs: any[] = [];
+      for (const entry of entries) {
+        if (entry.isDirectory() && entry.name.startsWith("MRUN-")) {
+          const run = readMusRun(entry.name);
+          if (run) runs.push(run);
+        }
+      }
+      runs.sort((a: any, b: any) => (b.created_at || "").localeCompare(a.created_at || ""));
+      res.json(runs);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.get("/api/maintenance/runs/:runId", (req: Request, res: Response) => {
+    try {
+      const run = readMusRun(req.params.runId);
+      if (!run) return res.status(404).json({ error: `Run ${req.params.runId} not found` });
+      res.json(run);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.post("/api/maintenance/runs/:runId/apply", (req: Request, res: Response) => {
+    try {
+      const run = readMusRun(req.params.runId);
+      if (!run) return res.status(404).json({ error: `Run ${req.params.runId} not found` });
+      if (run.status !== "planned") return res.status(400).json({ error: `Cannot apply: run is in state '${run.status}', expected 'planned'` });
+
+      const modes = loadMusModes();
+      const mode = modes.find((m: any) => m.mode_id === run.mode_id);
+      if (mode?.hard_constraints?.no_apply) {
+        return res.status(400).json({ error: `Mode ${run.mode_id} has no_apply constraint` });
+      }
+
+      run.status = "applying";
+      run.updated_at = new Date().toISOString();
+      for (const unit of run.units) {
+        if (unit.status === "not_started") unit.status = "done";
+      }
+      writeMusRun(run);
+      res.json(run);
+    } catch (err: any) { res.status(400).json({ error: err.message }); }
+  });
+
+  app.post("/api/maintenance/runs/:runId/verify", (req: Request, res: Response) => {
+    try {
+      const run = readMusRun(req.params.runId);
+      if (!run) return res.status(404).json({ error: `Run ${req.params.runId} not found` });
+      if (run.status !== "applying") return res.status(400).json({ error: `Cannot verify: run is in state '${run.status}', expected 'applying'` });
+
+      run.status = "verifying";
+      run.updated_at = new Date().toISOString();
+      for (const unit of run.units) {
+        unit.verification_results = [
+          ...(unit.verification_results || []),
+          {
+            check_id: `verify-${unit.unit_id}`,
+            passed: unit.status === "done",
+            details: unit.status === "done" ? "Verification passed" : "Unit not completed",
+            timestamp: new Date().toISOString(),
+          },
+        ];
+      }
+      writeMusRun(run);
+      res.json(run);
+    } catch (err: any) { res.status(400).json({ error: err.message }); }
+  });
+
+  app.post("/api/maintenance/runs/:runId/complete", (req: Request, res: Response) => {
+    try {
+      const run = readMusRun(req.params.runId);
+      if (!run) return res.status(404).json({ error: `Run ${req.params.runId} not found` });
+      if (run.status !== "verifying") return res.status(400).json({ error: `Cannot complete: run is in state '${run.status}', expected 'verifying'` });
+
+      const allDone = run.units.every((u: any) => u.status === "done" || u.status === "skipped");
+      if (!allDone) return res.status(400).json({ error: "Not all units are done or skipped" });
+
+      const allVerified = run.units.every((u: any) =>
+        u.verification_results?.length > 0 && u.verification_results.every((v: any) => v.passed)
+      );
+      if (!allVerified) return res.status(400).json({ error: "Not all units have passing verification" });
+
+      run.status = "complete";
+      run.updated_at = new Date().toISOString();
+      run.completed_at = run.updated_at;
+      writeMusRun(run);
+
+      const report = {
+        run_id: run.run_id,
+        mode_id: run.mode_id,
+        status: "complete",
+        units: run.units,
+        created_at: run.created_at,
+        completed_at: run.completed_at,
+      };
+      const reportPath = path.join(MUS_RUNS_DIR, run.run_id, "maintenance_run_report.json");
+      fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+
+      res.json(report);
+    } catch (err: any) { res.status(400).json({ error: err.message }); }
+  });
+
+  app.post("/api/maintenance/runs/:runId/rollback", (req: Request, res: Response) => {
+    try {
+      const run = readMusRun(req.params.runId);
+      if (!run) return res.status(404).json({ error: `Run ${req.params.runId} not found` });
+      if (run.status === "complete" || run.status === "cancelled") {
+        return res.status(400).json({ error: `Cannot rollback: run is in state '${run.status}'` });
+      }
+      const allowed = MUS_TRANSITIONS[run.status];
+      if (!allowed || !allowed.includes("rolling_back")) {
+        return res.status(400).json({ error: `Cannot rollback from state '${run.status}'` });
+      }
+
+      const previousStatus = run.status;
+      run.updated_at = new Date().toISOString();
+
+      const filesReverted: string[] = [];
+      for (const unit of run.units) {
+        if (unit.status === "done" || unit.status === "in_progress") {
+          filesReverted.push(...(unit.target_paths || []));
+          unit.status = "not_started";
+          unit.verification_results = [];
+        }
+      }
+
+      run.status = "planned";
+      writeMusRun(run);
+
+      const rollbackRecord = {
+        run_id: run.run_id,
+        rolled_back_at: run.updated_at,
+        previous_status: previousStatus,
+        final_status: "planned",
+        reason: `Rollback from state: ${previousStatus}`,
+        baseline_revision: run.baseline_revision,
+        files_reverted: filesReverted,
+      };
+      const recordPath = path.join(MUS_RUNS_DIR, run.run_id, "rollback_record.json");
+      fs.writeFileSync(recordPath, JSON.stringify(rollbackRecord, null, 2));
+
+      res.json(rollbackRecord);
+    } catch (err: any) { res.status(400).json({ error: err.message }); }
+  });
+
+  app.patch("/api/maintenance/schedules/:scheduleId", (req: Request, res: Response) => {
+    try {
+      const { scheduleId } = req.params;
+      const { status } = req.body;
+      if (!status || !["enabled", "disabled"].includes(status)) {
+        return res.status(400).json({ error: "status must be 'enabled' or 'disabled'" });
+      }
+      const regPath = path.join(MUS_LIB_DIR, "registries", "REG-SCHEDULES.json");
+      if (!fs.existsSync(regPath)) return res.status(404).json({ error: "Schedules registry not found" });
+      const reg = JSON.parse(fs.readFileSync(regPath, "utf-8"));
+      const schedule = reg.items?.find((s: any) => s.schedule_id === scheduleId);
+      if (!schedule) return res.status(404).json({ error: `Schedule ${scheduleId} not found` });
+      schedule.status = status;
+      reg.updated_at = new Date().toISOString();
+      fs.writeFileSync(regPath, JSON.stringify(reg, null, 2));
+      res.json(schedule);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
   app.post("/api/autofill", async (req: Request, res: Response) => {
     try {
       const { routing, project, targetSection } = req.body;

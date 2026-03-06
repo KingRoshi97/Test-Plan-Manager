@@ -373,8 +373,21 @@ Maintenance and Update System (MUS) — 21 maintenance modes, 6 consent gates, 2
 - `modeRunner.ts` — enforces mode budgets (read_only, max_changes), validates required gates before execution
 - `agents/maintenance.ts` — `getMusPolicyGuardrails()` returns consent/budget/proposal rules, `getActiveModeIds()` returns active mode IDs
 
-**API**: 10 `/api/maintenance/*` endpoints (overview, modes, gates, detectors, patches, schedules, policies, schemas, registries, registries/:name)
-**UI**: `/maintenance` page with 6 tabs (Overview, Modes, Gates & Detectors, Patches & Schedules, Policies, Schemas), mode table with execution class/triggers/permissions/gates/budgets, gate rules with predicate visualization, detector packs with scope info, patch types with risk class, schedules with RRULE + enabled status, policy JSON viewer, schema property listing
+**API**: 10 read-only `/api/maintenance/*` endpoints (overview, modes, gates, detectors, patches, schedules, policies, schemas, registries, registries/:name) + 8 operational endpoints:
+  - `POST /api/maintenance/runs` — Plan new run (mode_id, intent_type, risk_class, units[], baseline_revision)
+  - `GET /api/maintenance/runs` — List all runs (sorted newest first)
+  - `GET /api/maintenance/runs/:runId` — Get run detail
+  - `POST /api/maintenance/runs/:runId/apply` — Apply planned run (enforces no_apply constraint)
+  - `POST /api/maintenance/runs/:runId/verify` — Verify applying run
+  - `POST /api/maintenance/runs/:runId/complete` — Complete verified run (all units must pass verification)
+  - `POST /api/maintenance/runs/:runId/rollback` — Rollback run (writes rollback_record.json)
+  - `PATCH /api/maintenance/schedules/:scheduleId` — Toggle schedule enabled/disabled
+**MUS Run Storage**: File-based JSON under `Axion/.axion/maintenance_runs/MRUN-XXXXXX/maintenance_manifest.json`
+**MUS Run Lifecycle**: planned → applying → verifying → complete; rollback available from applying/verifying/failed/blocked states
+**UI**: `/maintenance` page with 7 tabs (Overview, Runs, Modes, Gates & Detectors, Patches & Schedules, Policies, Schemas):
+  - **Runs tab**: Create run form (mode selector, intent type, risk class, baseline revision, work unit definition), runs list with status badges, expandable detail panels with unit tables and verification results, action buttons (Apply/Verify/Complete/Rollback) shown per state, auto-refresh every 3s
+  - **Patches & Schedules tab**: Toggle switches for schedule enable/disable (persists to registry file)
+  - Remaining tabs: mode table with execution class/triggers/permissions/gates/budgets, gate rules with predicate visualization, detector packs with scope info, patch types with risk class, policy JSON viewer, schema property listing
 **Registered in:** `schema_registry.v1.json` (23 MUS schema entries), `library_index.v1.json` (MUS entry)
 **Health endpoint:** Reports maintenance_library stats (docs, schemas, registries, gates, modes)
 
@@ -512,6 +525,14 @@ package.json      # Root package.json with all dependencies
 - `GET /api/maintenance/schemas` — all 23 contract schemas
 - `GET /api/maintenance/registries` — all 17 registries with item counts
 - `GET /api/maintenance/registries/:name` — single registry by name
+- `POST /api/maintenance/runs` — plan new maintenance run (mode_id, intent_type, risk_class, units[], baseline_revision)
+- `GET /api/maintenance/runs` — list all maintenance runs
+- `GET /api/maintenance/runs/:runId` — get run detail
+- `POST /api/maintenance/runs/:runId/apply` — apply planned run
+- `POST /api/maintenance/runs/:runId/verify` — verify applying run
+- `POST /api/maintenance/runs/:runId/complete` — complete verified run
+- `POST /api/maintenance/runs/:runId/rollback` — rollback run
+- `PATCH /api/maintenance/schedules/:scheduleId` — toggle schedule enabled/disabled
 - `POST /api/uploads` — upload files (multipart/form-data, up to 10 files, 50MB limit per file)
 - `GET /api/uploads/:id` — download uploaded file
 - `DELETE /api/uploads/:id` — delete uploaded file
