@@ -1,7 +1,7 @@
 import { type Express, type Request, type Response } from "express";
 import { storage } from "./storage.js";
 import { insertAssemblySchema } from "../shared/schema.js";
-import { startPipelineRun } from "./pipeline-runner.js";
+import { startPipelineRun, killPipeline } from "./pipeline-runner.js";
 import { generateAutofillSuggestions } from "./openai.js";
 import { getStageOrder, getStageGates, getGatesRequired, getStageNames } from "../Axion/src/core/orchestration/loader.js";
 import fs from "fs";
@@ -128,6 +128,45 @@ export function registerRoutes(app: Express) {
     try {
       const pipelineRun = await startPipelineRun(assembly);
       res.json(pipelineRun);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/assemblies/:id/kill", async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const assembly = await storage.getAssembly(id);
+    if (!assembly) return res.status(404).json({ error: "Not found" });
+    if (assembly.status !== "running") return res.status(409).json({ error: "Pipeline is not running" });
+
+    try {
+      const result = await killPipeline(id);
+      if (!result.killed) {
+        await storage.updateAssembly(id, {
+          status: "failed",
+          currentStep: "killed",
+          error: "Pipeline killed by user (stale process)",
+        });
+        const runs = await storage.getPipelineRuns(id);
+        const activeRun = runs.find((r: any) => r.status === "running");
+        if (activeRun) {
+          const stages = (activeRun.stages || {}) as Record<string, any>;
+          for (const key of Object.keys(stages)) {
+            if (stages[key].status === "pending" || stages[key].status === "running") {
+              stages[key].status = "cancelled";
+            }
+          }
+          await storage.updatePipelineRun(activeRun.id, {
+            status: "failed",
+            completedAt: new Date(),
+            error: "Pipeline killed by user (stale process)",
+            stages,
+          });
+        }
+        res.json({ killed: true, message: "Stale pipeline state cleaned up" });
+      } else {
+        res.json(result);
+      }
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

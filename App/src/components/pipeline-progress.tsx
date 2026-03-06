@@ -22,6 +22,8 @@ function stageStatusColor(status: string) {
       return { bg: "bg-red-500", border: "border-red-500", text: "text-red-700" };
     case "running":
       return { bg: "bg-blue-500 animate-pulse", border: "border-blue-500", text: "text-blue-700" };
+    case "cancelled":
+      return { bg: "bg-orange-400", border: "border-orange-400", text: "text-orange-600" };
     default:
       return { bg: "bg-gray-300", border: "border-gray-300", text: "text-gray-500" };
   }

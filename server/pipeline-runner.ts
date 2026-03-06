@@ -1,4 +1,4 @@
-import { spawn } from "child_process";
+import { spawn, type ChildProcess } from "child_process";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage.js";
@@ -6,6 +6,60 @@ import type { Assembly, PipelineRun } from "../shared/schema.js";
 import { getStageOrder } from "../Axion/src/core/orchestration/loader.js";
 
 const AXION_ROOT = path.resolve(process.cwd(), "Axion");
+
+const runningProcesses = new Map<number, { child: ChildProcess; pipelineRunId: number; startTime: number }>();
+
+export async function killPipeline(assemblyId: number): Promise<{ killed: boolean; message: string }> {
+  const entry = runningProcesses.get(assemblyId);
+  if (!entry) {
+    return { killed: false, message: "No running pipeline found for this assembly" };
+  }
+
+  const { child, pipelineRunId } = entry;
+
+  child.kill("SIGTERM");
+
+  await new Promise<void>((resolve) => {
+    const timeout = setTimeout(() => {
+      try { child.kill("SIGKILL"); } catch {}
+      resolve();
+    }, 5000);
+
+    child.once("close", () => {
+      clearTimeout(timeout);
+      resolve();
+    });
+  });
+
+  const run = await storage.getPipelineRun(pipelineRunId);
+  if (run && run.status === "running") {
+    const stages = (run.stages || {}) as Record<string, any>;
+    for (const key of Object.keys(stages)) {
+      if (stages[key].status === "pending" || stages[key].status === "running") {
+        stages[key].status = "cancelled";
+      }
+    }
+    await storage.updatePipelineRun(pipelineRunId, {
+      status: "failed",
+      completedAt: new Date(),
+      error: "Pipeline killed by user",
+      stages,
+    });
+  }
+
+  const assembly = await storage.getAssembly(assemblyId);
+  if (assembly && assembly.status === "running") {
+    await storage.updateAssembly(assemblyId, {
+      status: "failed",
+      currentStep: "killed",
+      error: "Pipeline killed by user",
+    });
+  }
+
+  runningProcesses.delete(assemblyId);
+
+  return { killed: true, message: "Pipeline terminated" };
+}
 
 const FALLBACK_STAGE_ORDER = [
   "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
@@ -63,6 +117,8 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
+  runningProcesses.set(assemblyId, { child, pipelineRunId, startTime });
+
   let stdout = "";
   let stderr = "";
   let runId = "";
@@ -112,27 +168,33 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
 
   return new Promise<void>((resolve) => {
     child.on("close", async (code) => {
+      runningProcesses.delete(assemblyId);
       await new Promise((r) => setTimeout(r, 200));
       const duration = Date.now() - startTime;
       const status = code === 0 ? "completed" : "failed";
 
       try { fs.unlinkSync(pendingIntakePath); } catch {}
 
-      await storage.updatePipelineRun(pipelineRunId, {
-        status,
-        completedAt: new Date(),
-        error: code !== 0 ? stderr || `Exit code ${code}` : undefined,
-      });
+      const currentRun = await storage.getPipelineRun(pipelineRunId);
+      const alreadyHandled = currentRun && currentRun.status !== "running";
 
-      const latestAssembly = await storage.getAssembly(assemblyId);
-      await storage.updateAssembly(assemblyId, {
-        status,
-        currentStep: code === 0 ? "done" : "failed",
-        error: code !== 0 ? stderr || `Exit code ${code}` : undefined,
-        totalRuns: (latestAssembly?.totalRuns || 0) + 1,
-        totalDurationMs: (latestAssembly?.totalDurationMs || 0) + duration,
-        verificationStatus: code === 0 ? "PASS" : "FAIL",
-      });
+      if (!alreadyHandled) {
+        await storage.updatePipelineRun(pipelineRunId, {
+          status,
+          completedAt: new Date(),
+          error: code !== 0 ? stderr || `Exit code ${code}` : undefined,
+        });
+
+        const latestAssembly = await storage.getAssembly(assemblyId);
+        await storage.updateAssembly(assemblyId, {
+          status,
+          currentStep: code === 0 ? "done" : "failed",
+          error: code !== 0 ? stderr || `Exit code ${code}` : undefined,
+          totalRuns: (latestAssembly?.totalRuns || 0) + 1,
+          totalDurationMs: (latestAssembly?.totalDurationMs || 0) + duration,
+          verificationStatus: code === 0 ? "PASS" : "FAIL",
+        });
+      }
 
       if (code === 0 && runId) {
         await storage.createReport({
@@ -146,4 +208,8 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
       resolve();
     });
   });
+}
+
+export function isRunning(assemblyId: number): boolean {
+  return runningProcesses.has(assemblyId);
 }

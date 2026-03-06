@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { apiRequest } from "../lib/queryClient";
 import {
   ChevronRight, Play, Trash2, ArrowLeft, CheckCircle, XCircle,
   Clock, Loader2, FileText, Folder, Download, Save, RotateCcw,
-  Settings, Layers, Eye, FolderArchive, PenLine
+  Settings, Layers, Eye, FolderArchive, PenLine, Square, AlertTriangle
 } from "lucide-react";
 import { PipelineProgress } from "../components/pipeline-progress";
 
@@ -474,12 +474,131 @@ function IntakeEditor({ assembly, assemblyId }: { assembly: any; assemblyId: num
   );
 }
 
-function OverviewTab({ assembly, latestStages, onRun, isRunning, stageOrder }: { assembly: any; latestStages: any; onRun: () => void; isRunning: boolean; stageOrder: string[] }) {
+function useElapsedTime(startedAt: string | null | undefined, isActive: boolean) {
+  const [elapsed, setElapsed] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isActive && startedAt) {
+      const start = new Date(startedAt).getTime();
+      const tick = () => setElapsed(Math.floor((Date.now() - start) / 1000));
+      tick();
+      intervalRef.current = setInterval(tick, 1000);
+      return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    } else {
+      setElapsed(0);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+  }, [startedAt, isActive]);
+
+  return elapsed;
+}
+
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunning, isKilling, stageOrder, stageNames }: { assembly: any; latestStages: any; latestRun: any; onRun: () => void; onKill: () => void; isRunning: boolean; isKilling: boolean; stageOrder: string[]; stageNames: Record<string, string> }) {
   const passedCount = stageOrder.filter((s) => latestStages?.[s]?.status === "passed").length;
   const failedCount = stageOrder.filter((s) => latestStages?.[s]?.status === "failed").length;
+  const cancelledCount = stageOrder.filter((s) => latestStages?.[s]?.status === "cancelled").length;
+  const pendingCount = stageOrder.length - passedCount - failedCount - cancelledCount;
+  const pipelineRunning = assembly.status === "running";
+
+  const elapsed = useElapsedTime(latestRun?.startedAt, pipelineRunning);
+
+  const currentStageKey = pipelineRunning && latestStages
+    ? stageOrder.find((s) => !latestStages[s] || latestStages[s].status === "pending")
+    : null;
+  const currentStageName = currentStageKey ? (stageNames[currentStageKey] || currentStageKey) : null;
+
+  const failedStageKey = assembly.status === "failed" && latestStages
+    ? stageOrder.find((s) => latestStages[s]?.status === "failed")
+    : null;
+  const failedStageName = failedStageKey ? (stageNames[failedStageKey] || failedStageKey) : null;
 
   return (
     <div className="space-y-6">
+      {pipelineRunning && (
+        <div className="border border-blue-300 dark:border-blue-700 rounded-lg p-4 bg-blue-50 dark:bg-blue-950/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-blue-800 dark:text-blue-200">Pipeline Running</div>
+                <div className="text-xs text-blue-600 dark:text-blue-400">
+                  {currentStageName ? (
+                    <span>Stage {passedCount + 1} of {stageOrder.length} — {currentStageName}</span>
+                  ) : (
+                    <span>Initializing...</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-lg font-mono font-bold text-blue-800 dark:text-blue-200">{formatElapsed(elapsed)}</div>
+                <div className="text-xs text-blue-600 dark:text-blue-400">elapsed</div>
+              </div>
+              <button
+                onClick={onKill}
+                disabled={isKilling}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
+              >
+                {isKilling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Square className="w-3 h-3" />}
+                Stop
+              </button>
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-1.5">
+              <div
+                className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${Math.max((passedCount / stageOrder.length) * 100, 2)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {assembly.status === "failed" && !pipelineRunning && (
+        <div className="border border-red-300 dark:border-red-700 rounded-lg p-4 bg-red-50 dark:bg-red-950/30">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <div>
+              <div className="text-sm font-semibold text-red-800 dark:text-red-200">Pipeline Failed</div>
+              <div className="text-xs text-red-600 dark:text-red-400">
+                {assembly.error === "Pipeline killed by user" ? (
+                  <span>Pipeline was stopped by user</span>
+                ) : failedStageName ? (
+                  <span>Failed at stage: {failedStageName}</span>
+                ) : (
+                  <span>{assembly.error || "An error occurred during pipeline execution"}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {assembly.status === "completed" && (
+        <div className="border border-green-300 dark:border-green-700 rounded-lg p-4 bg-green-50 dark:bg-green-950/30">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+            <div>
+              <div className="text-sm font-semibold text-green-800 dark:text-green-200">Pipeline Completed</div>
+              <div className="text-xs text-green-600 dark:text-green-400">
+                All {passedCount} stages passed in {formatMs(assembly.totalDurationMs)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="border rounded-lg p-5 border-[hsl(var(--border))] bg-[hsl(var(--card))]">
           <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-3">Project Details</h3>
@@ -537,8 +656,8 @@ function OverviewTab({ assembly, latestStages, onRun, isRunning, stageOrder }: {
                 <div className="text-xs text-red-600">Failed</div>
               </div>
               <div className="rounded-md py-2 bg-gray-50 dark:bg-gray-800/30">
-                <div className="text-lg font-bold text-gray-700 dark:text-gray-300">{10 - passedCount - failedCount}</div>
-                <div className="text-xs text-gray-500">Pending</div>
+                <div className="text-lg font-bold text-gray-700 dark:text-gray-300">{pendingCount}</div>
+                <div className="text-xs text-gray-500">{cancelledCount > 0 ? "Remaining" : "Pending"}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -556,15 +675,26 @@ function OverviewTab({ assembly, latestStages, onRun, isRunning, stageOrder }: {
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          onClick={onRun}
-          disabled={assembly.status === "running" || isRunning}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition disabled:opacity-50"
-        >
-          {isRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-          Run Pipeline
-        </button>
-        {assembly.runId && (
+        {assembly.status === "running" ? (
+          <button
+            onClick={onKill}
+            disabled={isKilling}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
+          >
+            {isKilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" />}
+            Stop Pipeline
+          </button>
+        ) : (
+          <button
+            onClick={onRun}
+            disabled={isRunning}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition disabled:opacity-50"
+          >
+            {isRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+            Run Pipeline
+          </button>
+        )}
+        {assembly.runId && assembly.status !== "running" && (
           <a
             href={`/api/assemblies/${assembly.id}/kit`}
             download
@@ -718,6 +848,14 @@ export default function AssemblyPage() {
     },
   });
 
+  const killMutation = useMutation({
+    mutationFn: () => apiRequest(`/api/assemblies/${id}/kill`, { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: () => apiRequest(`/api/assemblies/${id}`, { method: "DELETE" }),
     onSuccess: () => {
@@ -746,7 +884,7 @@ export default function AssemblyPage() {
   }
 
   const runs = assembly.runs || [];
-  const latestRun = runs.length > 0 ? runs[runs.length - 1] : null;
+  const latestRun = runs.length > 0 ? runs[0] : null;
   const latestStages = latestRun?.stages || null;
 
   return (
@@ -766,15 +904,30 @@ export default function AssemblyPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => runMutation.mutate()}
-            disabled={assembly.status === "running" || runMutation.isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] disabled:opacity-50 hover:opacity-90 transition"
-          >
-            {runMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-            Run Pipeline
-          </button>
-          {assembly.runId && (
+          {assembly.status === "running" ? (
+            <button
+              onClick={() => {
+                if (confirm("Are you sure you want to stop this pipeline? This cannot be undone.")) {
+                  killMutation.mutate();
+                }
+              }}
+              disabled={killMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
+            >
+              {killMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Square className="w-4 h-4" />}
+              Stop Pipeline
+            </button>
+          ) : (
+            <button
+              onClick={() => runMutation.mutate()}
+              disabled={runMutation.isPending}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] disabled:opacity-50 hover:opacity-90 transition"
+            >
+              {runMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              Run Pipeline
+            </button>
+          )}
+          {assembly.runId && assembly.status !== "running" && (
             <a
               href={`/api/assemblies/${assembly.id}/kit`}
               download
@@ -824,9 +977,17 @@ export default function AssemblyPage() {
         <OverviewTab
           assembly={assembly}
           latestStages={latestStages}
+          latestRun={latestRun}
           onRun={() => runMutation.mutate()}
+          onKill={() => {
+            if (confirm("Are you sure you want to stop this pipeline? This cannot be undone.")) {
+              killMutation.mutate();
+            }
+          }}
           isRunning={runMutation.isPending}
+          isKilling={killMutation.isPending}
           stageOrder={stageOrder}
+          stageNames={stageNames}
         />
       )}
 

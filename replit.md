@@ -463,6 +463,15 @@ package.json      # Root package.json with all dependencies
 - Updates `pipeline_runs` and `assemblies` in real-time
 - Stores run_id and run artifacts path on completion
 - Writes `intakePayload` to `.axion/runs/<run_id>/intake/raw_submission.json` before S1 stage if available
+- Kill switch: `killPipeline(assemblyId)` sends SIGTERM then SIGKILL after 5s, marks pending stages as `cancelled`, updates run/assembly status to `failed`. Exposed via `POST /api/assemblies/:id/kill`. Handles stale running state (no live process) by cleaning up DB directly.
+- Process tracking: `runningProcesses` Map keyed by assemblyId stores child process handle, pipelineRunId, startTime. Cleaned up on process close. `isRunning(assemblyId)` export for checking.
+
+### Assembly Detail UI (App/src/pages/assembly.tsx)
+- Status banners: Running (blue, spinner, progress bar, elapsed timer, current stage "Stage X of N — Name", Stop button), Failed (red, alert icon, error message or failed stage name), Completed (green, checkmark, stage count and duration)
+- Elapsed timer: `useElapsedTime` hook ticks every second while pipeline is running
+- Kill button: Header + Overview both show "Stop Pipeline" (red) when running, with confirm dialog. Replaces "Run Pipeline" button during execution
+- Latest run selection: `runs[0]` (API returns newest-first via `orderBy(desc(startedAt))`)
+- Cancelled stage status: Orange dots in PipelineProgress, "Remaining" label replaces "Pending" when cancelled stages exist
 
 ### Intake Wizard (App/src/components/intake-wizard.tsx)
 - 11-page multi-step wizard per INT-01 form spec (Pages 0-10)
