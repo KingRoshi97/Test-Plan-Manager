@@ -287,12 +287,6 @@
     },
 
     {
-      "schema_id": "audit.operator_actions_ledger.v1",
-      "path": "Axion/libraries/audit/operator_actions_ledger.schema.v1.json",
-      "uri": "axion://schemas/audit/operator_actions_ledger.schema.v1.json",
-      "version": "1.0.0"
-    },
-    {
       "schema_id": "audit.action.v1",
       "path": "Axion/libraries/audit/schemas/audit_action.v1.schema.json",
       "uri": "axion://schemas/audit/audit_action.v1.schema.json",

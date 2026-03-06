@@ -26,9 +26,23 @@ export interface AuditOpsPolicyV1 {
   };
 }
 
+export interface AuditGate {
+  gate_id: string;
+  name: string;
+  severity: string;
+  checks: string[];
+}
+
+export interface AuditGateSpec {
+  schema_version: string;
+  contract_id: string;
+  gates: AuditGate[];
+}
+
 export interface AuditLibrary {
   integrity: AuditIntegrityV1 | null;
   opsPolicy: AuditOpsPolicyV1 | null;
+  gateSpec: AuditGateSpec | null;
 }
 
 export interface AuditDoc {
@@ -71,8 +85,9 @@ export function loadAuditLibrary(repoRoot: string): AuditLibrary {
   const base = join(repoRoot, AUDIT_LIB_REL, "registries");
   const integrity = readJsonSafe<AuditIntegrityV1>(join(base, "audit_integrity.v1.json"));
   const opsPolicy = readJsonSafe<AuditOpsPolicyV1>(join(base, "audit_ops_policy.v1.json"));
+  const gateSpec = readJsonSafe<AuditGateSpec>(join(repoRoot, AUDIT_LIB_REL, "AUD-5_audit_gates.spec.json"));
 
-  cached = { integrity, opsPolicy };
+  cached = { integrity, opsPolicy, gateSpec };
   cacheRoot = repoRoot;
   return cached;
 }
@@ -88,6 +103,15 @@ export function getAuditIntegrity(repoRoot: string): AuditIntegrityV1 | null {
 
 export function getAuditOpsPolicy(repoRoot: string): AuditOpsPolicyV1 | null {
   return loadAuditLibrary(repoRoot).opsPolicy;
+}
+
+export function getAuditGateSpec(repoRoot: string): AuditGateSpec | null {
+  return loadAuditLibrary(repoRoot).gateSpec;
+}
+
+export function loadAuditSchema(repoRoot: string, schemaName: string): unknown | null {
+  const filePath = join(repoRoot, AUDIT_LIB_REL, "schemas", schemaName.endsWith(".json") ? schemaName : `${schemaName}.schema.json`);
+  return readJsonSafe<unknown>(filePath);
 }
 
 export function loadAuditDocs(repoRoot: string): AuditDoc[] {

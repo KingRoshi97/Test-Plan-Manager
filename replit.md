@@ -299,9 +299,9 @@ Event and metrics contracts — telemetry event schemas, run metrics, sink polic
 **Legacy files preserved:** event.schema.v1.json, run_metrics.schema.v1.json, sink_policy.v1.json
 
 ### Audit Library (`Axion/libraries/audit/`)
-Operator action tracking — audit action schemas, append-only ledgers, integrity verification, query indexing, ops workflow (retention/redaction/export), and gates (AUD-0 through AUD-7). 1 legacy flat file preserved for backward compat.
+Operator action tracking — audit action schemas, append-only ledgers, integrity verification, query indexing, ops workflow (retention/redaction/export), and gates (AUD-0 through AUD-7). Fully compliant with canonical PDF spec.
 
-**Structure (33 new files: 28 root files + 3 schemas + 2 registries):**
+**Structure (33 files: 27 docs + 1 gate spec JSON + 3 schemas + 2 registries):**
 - **AUD-0**: Purpose + boundary checklist (2 docs)
 - **AUD-1**: Audit action model + determinism rules + validation checklist (3 docs)
 - **AUD-2**: Audit log model + tamper evident rules + determinism rules + validation checklist (4 docs)
@@ -316,7 +316,9 @@ Operator action tracking — audit action schemas, append-only ledgers, integrit
 - `registries/` — 2 registry files (audit_integrity: hash_chain mode + sha256 + canonical_json + risk class requirements, audit_ops_policy: AUDOPS-BASE01 with retention windows + redaction deny_keys + export rules)
 
 **Loader** (`Axion/src/core/audit/loader.ts`):
-- `loadAuditLibrary(repoRoot)` — loads audit_integrity + audit_ops_policy registries, cached
+- `loadAuditLibrary(repoRoot)` — loads audit_integrity + audit_ops_policy registries + AUD-5 gate spec, cached
+- `getAuditGateSpec(repoRoot)` — returns typed AuditGateSpec (6 gates with checks)
+- `loadAuditSchema(repoRoot, name)` — loads a specific schema by name
 - `loadAuditDocs(repoRoot)` — all AUD-N docs with frontmatter
 - `loadAuditSchemas(repoRoot)` — all JSON schema files from schemas/
 - `loadAuditRegistries(repoRoot)` — all registry JSON files from registries/
