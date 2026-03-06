@@ -14,6 +14,7 @@ import { GlassPanel } from "../components/ui/glass-panel";
 import { MetricCard } from "../components/ui/metric-card";
 import { StageDetailCard } from "../components/workbench/StageDetailCard";
 import { GateInspector } from "../components/workbench/GateInspector";
+import { CodeViewer } from "../components/ui/code-viewer";
 
 const FALLBACK_STAGE_ORDER = [
   "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
@@ -643,42 +644,84 @@ function PipelineTab({ stages, runs, assemblyId, stageOrder, stageGates, stageNa
   );
 }
 
-function ArtifactBrowser({ runId, assemblyId }: { runId: string; assemblyId: number }) {
-  const [currentPath, setCurrentPath] = useState(runId);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+interface ArtifactTreeNode {
+  name: string;
+  type: "directory" | "file";
+  path: string;
+  size?: number;
+  children?: ArtifactTreeNode[];
+}
 
-  const { data: entries = [] } = useQuery({
-    queryKey: ["/api/files", currentPath],
-    queryFn: () => apiRequest(`/api/files?dir=${encodeURIComponent(currentPath)}`),
+function ArtifactTreeItem({ node, depth, selectedPath, onSelect, expandedDirs, onToggle }: {
+  node: ArtifactTreeNode; depth: number; selectedPath: string | null;
+  onSelect: (p: string) => void; expandedDirs: Set<string>; onToggle: (p: string) => void;
+}) {
+  const isDir = node.type === "directory";
+  const isExpanded = expandedDirs.has(node.path);
+  const isSelected = selectedPath === node.path;
+  return (
+    <>
+      <button
+        onClick={() => isDir ? onToggle(node.path) : onSelect(node.path)}
+        className={`w-full flex items-center gap-1.5 py-1 px-2 rounded text-xs text-left transition-colors ${
+          isSelected ? "bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]"
+            : "text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent)/0.5)]"
+        }`}
+        style={{ paddingLeft: `${depth * 10 + 6}px` }}
+      >
+        {isDir ? (
+          isExpanded ? <ChevronDown className="w-3 h-3 text-[hsl(var(--muted-foreground))] shrink-0" />
+            : <ChevronRight className="w-3 h-3 text-[hsl(var(--muted-foreground))] shrink-0" />
+        ) : <span className="w-3" />}
+        {isDir ? (
+          <Folder className="w-3.5 h-3.5 shrink-0 text-[hsl(var(--status-processing))]" />
+        ) : (
+          <FileText className="w-3.5 h-3.5 shrink-0 text-[hsl(var(--muted-foreground))]" />
+        )}
+        <span className="truncate">{node.name}</span>
+      </button>
+      {isDir && isExpanded && node.children?.map((c) => (
+        <ArtifactTreeItem key={c.path} node={c} depth={depth + 1}
+          selectedPath={selectedPath} onSelect={onSelect}
+          expandedDirs={expandedDirs} onToggle={onToggle} />
+      ))}
+    </>
+  );
+}
+
+function ArtifactBrowser({ runId, assemblyId }: { runId: string; assemblyId: number }) {
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+
+  const { data: tree = [], isLoading: treeLoading } = useQuery<ArtifactTreeNode[]>({
+    queryKey: ["/api/artifacts", runId, "tree"],
+    queryFn: () => apiRequest(`/api/artifacts/${runId}/tree`),
+    enabled: !!runId,
   });
 
-  const { data: fileContent } = useQuery({
+  const { data: fileContent, isLoading: fileLoading } = useQuery({
     queryKey: ["/api/files/content", selectedFile],
     queryFn: () => apiRequest(`/api/files/${encodeURIComponent(selectedFile!)}`),
     enabled: !!selectedFile,
   });
 
-  const pathParts = currentPath.split("/").filter(Boolean);
+  function toggleDir(p: string) {
+    setExpandedDirs(prev => {
+      const n = new Set(prev);
+      n.has(p) ? n.delete(p) : n.add(p);
+      return n;
+    });
+  }
+
+  const selectedFileName = selectedFile?.split("/").pop() || "";
+  const fileLang = selectedFileName.endsWith(".json") || selectedFileName.endsWith(".jsonl")
+    ? "json" as const
+    : selectedFileName.endsWith(".md") ? "markdown" as const : "text" as const;
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-3 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))]">
-          <button onClick={() => { setCurrentPath(runId); setSelectedFile(null); }} className="hover:text-[hsl(var(--primary))] transition-colors">
-            {runId}
-          </button>
-          {pathParts.slice(1).map((part, i) => (
-            <span key={i} className="flex items-center gap-1">
-              <ChevronRight className="w-3 h-3" />
-              <button
-                onClick={() => { setCurrentPath(pathParts.slice(0, i + 2).join("/")); setSelectedFile(null); }}
-                className="hover:text-[hsl(var(--primary))] transition-colors"
-              >
-                {part}
-              </button>
-            </span>
-          ))}
-        </div>
+        <span className="text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">{runId}</span>
         <a
           href={`/api/assemblies/${assemblyId}/kit`}
           download
@@ -689,48 +732,43 @@ function ArtifactBrowser({ runId, assemblyId }: { runId: string; assemblyId: num
         </a>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GlassPanel solid className="p-3 space-y-0.5 max-h-[500px] overflow-auto">
-          {(entries as any[]).length === 0 && (
+      <div className="flex gap-3" style={{ height: "500px" }}>
+        <GlassPanel solid className="w-[220px] shrink-0 overflow-y-auto scrollbar-thin p-1">
+          {treeLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--muted-foreground))]" />
+            </div>
+          ) : tree.length === 0 ? (
             <p className="text-xs text-[hsl(var(--muted-foreground))] py-4 text-center">No files found</p>
+          ) : (
+            tree.map((node) => (
+              <ArtifactTreeItem key={node.path} node={node} depth={0}
+                selectedPath={selectedFile} onSelect={setSelectedFile}
+                expandedDirs={expandedDirs} onToggle={toggleDir} />
+            ))
           )}
-          {(entries as any[]).map((entry: any) => (
-            <button
-              key={entry.path}
-              onClick={() => {
-                if (entry.type === "directory") {
-                  setCurrentPath(entry.path);
-                  setSelectedFile(null);
-                } else {
-                  setSelectedFile(entry.path);
-                }
-              }}
-              className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-md text-xs text-left transition-colors ${
-                selectedFile === entry.path
-                  ? "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
-                  : "hover:bg-[hsl(var(--accent))] text-[hsl(var(--foreground))]"
-              }`}
-            >
-              {entry.type === "directory" ? (
-                <Folder className="w-3.5 h-3.5 shrink-0 text-[hsl(var(--status-processing))]" />
-              ) : (
-                <FileText className="w-3.5 h-3.5 shrink-0 text-[hsl(var(--muted-foreground))]" />
-              )}
-              <span className="truncate">{entry.name}</span>
-            </button>
-          ))}
         </GlassPanel>
 
-        {selectedFile && fileContent && (
-          <GlassPanel solid className="p-3 overflow-auto max-h-[500px]">
-            <p className="text-[10px] font-mono-tech mb-2 text-[hsl(var(--muted-foreground))] pb-2 border-b border-[hsl(var(--border))]">{selectedFile}</p>
-            <pre className="text-xs whitespace-pre-wrap font-mono-tech text-[hsl(var(--foreground))]">
-              {typeof fileContent.content === "object"
+        <div className="flex-1 min-w-0 overflow-hidden">
+          {selectedFile && fileContent ? (
+            <CodeViewer
+              content={typeof fileContent.content === "object"
                 ? JSON.stringify(fileContent.content, null, 2)
                 : fileContent.content}
-            </pre>
-          </GlassPanel>
-        )}
+              language={fileLang}
+              title={selectedFileName}
+              maxHeight="500px"
+            />
+          ) : fileLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--muted-foreground))]" />
+            </div>
+          ) : (
+            <GlassPanel solid className="flex items-center justify-center h-full">
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">Select a file to preview</p>
+            </GlassPanel>
+          )}
+        </div>
       </div>
     </div>
   );

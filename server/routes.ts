@@ -252,6 +252,81 @@ export function registerRoutes(app: Express) {
     return res.status(404).json({ error: "Gate report not found" });
   });
 
+  app.get("/api/artifacts/:runId", (req: Request, res: Response) => {
+    const runId = req.params.runId;
+    const runDir = safePath(runId);
+    if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
+    const indexPath = path.join(runDir, "artifact_index.json");
+    if (!fs.existsSync(indexPath)) return res.status(404).json({ error: "Artifact index not found" });
+    try {
+      const content = JSON.parse(fs.readFileSync(indexPath, "utf-8"));
+      return res.json(content);
+    } catch (err) {
+      console.error(`Failed to parse artifact index for ${runId}:`, err);
+      return res.status(500).json({ error: "Malformed artifact index" });
+    }
+  });
+
+  app.get("/api/artifacts/:runId/manifest", (req: Request, res: Response) => {
+    const runId = req.params.runId;
+    const runDir = safePath(runId);
+    if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
+    const manifestPath = path.join(runDir, "run_manifest.json");
+    if (!fs.existsSync(manifestPath)) return res.status(404).json({ error: "Run manifest not found" });
+    try {
+      const content = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+      return res.json(content);
+    } catch (err) {
+      console.error(`Failed to parse run manifest for ${runId}:`, err);
+      return res.status(500).json({ error: "Malformed run manifest" });
+    }
+  });
+
+  app.get("/api/artifacts/:runId/tree", (req: Request, res: Response) => {
+    const runId = req.params.runId;
+    const runDir = safePath(runId);
+    if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
+    if (!fs.existsSync(runDir)) return res.status(404).json({ error: "Run directory not found" });
+
+    function buildTree(dirPath: string, relativeTo: string): any[] {
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+      const result: any[] = [];
+      for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
+        const relPath = path.relative(AXION_RUNS, fullPath);
+        if (entry.isDirectory()) {
+          result.push({
+            name: entry.name,
+            type: "directory",
+            path: relPath,
+            children: buildTree(fullPath, relativeTo),
+          });
+        } else {
+          const stat = fs.statSync(fullPath);
+          result.push({
+            name: entry.name,
+            type: "file",
+            path: relPath,
+            size: stat.size,
+          });
+        }
+      }
+      result.sort((a, b) => {
+        if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+      return result;
+    }
+
+    try {
+      const tree = buildTree(runDir, runDir);
+      return res.json(tree);
+    } catch (err) {
+      console.error(`Failed to build tree for ${runId}:`, err);
+      return res.status(500).json({ error: "Failed to build directory tree" });
+    }
+  });
+
   app.get("/api/reports/:assemblyId", async (req: Request, res: Response) => {
     const rpts = await storage.getReports(Number(req.params.assemblyId));
     res.json(rpts);

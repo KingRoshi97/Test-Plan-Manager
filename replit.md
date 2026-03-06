@@ -6,7 +6,7 @@ Axion is a document-generation and compliance-enforcement system with a full-sta
 ## Current State
 Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 193 kit files produced.
 
-### UI Overhaul — AXION Lab OS (Phases 1–4 Complete)
+### UI Overhaul — AXION Lab OS (Phases 1–5 Complete)
 The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" — a premium dark-mode mission control interface.
 
 **Visual System** (`App/src/index.css`): Obsidian/charcoal dark theme with CSS custom properties for backgrounds, glass panels (backdrop-blur), glow borders (cyan/green/amber/red/violet), status colors (--status-processing, --status-success, --status-warning, --status-failure, --status-intelligence), animation keyframes (pulse-glow, fade-in, slide-in), utility classes (.glass-panel, .glass-panel-solid, .glow-border-*, .premium-card, .nav-item-active, .text-system-label, .font-mono-tech).
@@ -60,7 +60,14 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 
 **CSS Utilities** (Phase 4): `.scrollbar-thin` (thin styled scrollbar for dark theme)
 
-**Remaining phases**: Phase 5 (Artifacts explorer), Phase 6 (System surfaces — Health/Logs/Maintenance), Phase 7 (New Run premium intake), Phase 8-9 (Command Center second pass), Phase 10 (Knowledge consolidation), Phase 11 (Export second pass), Phase 12 (Polish — command palette, global search, notifications, density toggle, keyboard shortcuts).
+**Phase 5 — Artifacts Explorer**:
+- `App/src/pages/files.tsx` — Premium 3-panel artifact explorer: left tree sidebar (250px, collapsible dirs, search, file size), center preview pane (CodeViewer with syntax highlighting), right metadata panel (260px, toggleable, shows artifact_id, type badge, SHA-256, timestamp, producer stage)
+- `App/src/components/ui/code-viewer.tsx` — Shared code/JSON/Markdown viewer with JSON syntax highlighting (colored keys/strings/numbers/booleans), Markdown rendering (headings, bold, code blocks, lists), line numbers toggle, copy-to-clipboard, auto-language detection
+- Workbench `ArtifactBrowser` in `assembly.tsx` upgraded to tree navigation + CodeViewer preview
+- API: `GET /api/artifacts/:runId` (artifact index), `GET /api/artifacts/:runId/manifest` (run manifest), `GET /api/artifacts/:runId/tree` (recursive directory tree with sizes)
+- Features: run selector dropdown, type filter chips (stage_report/gate_report/template/kit/intake/canonical/verification/proof), download kit button
+
+**Remaining phases**: Phase 6 (System surfaces — Health/Logs/Maintenance), Phase 7 (New Run premium intake), Phase 8-9 (Command Center second pass), Phase 10 (Knowledge consolidation), Phase 11 (Export second pass), Phase 12 (Polish — command palette, global search, notifications, density toggle, keyboard shortcuts).
 
 ### Build Mode (BM-00 through BM-18)
 Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip.
