@@ -8,7 +8,6 @@ import {
   Blocks,
   Heart,
   ArrowRight,
-  Trash2,
   ExternalLink,
   Radio,
   CheckCircle2,
@@ -18,7 +17,17 @@ import {
   Wrench,
   AlertTriangle,
   Rocket,
+  Shield,
+  Clock,
+  Package,
+  Play,
+  RotateCcw,
   Search,
+  Zap,
+  Terminal,
+  FileCheck,
+  CircleDot,
+  Timer,
 } from "lucide-react";
 import { MetricCard } from "../components/ui/metric-card";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
@@ -33,14 +42,61 @@ function formatDuration(ms: number | null | undefined) {
   return `${(ms / 60000).toFixed(1)}m`;
 }
 
-function formatDate(d: string | Date | null | undefined) {
+function formatRelativeTime(d: string | Date | null | undefined) {
   if (!d) return "—";
   const date = new Date(d);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+  if (diffMs < 60000) return "just now";
   if (diffMs < 3600000) return `${Math.floor(diffMs / 60000)}m ago`;
   if (diffMs < 86400000) return `${Math.floor(diffMs / 3600000)}h ago`;
   return date.toLocaleDateString();
+}
+
+function formatTime(d: string | Date | null | undefined) {
+  if (!d) return "—";
+  const date = new Date(d);
+  return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
+function isToday(d: string | Date | null | undefined): boolean {
+  if (!d) return false;
+  const date = new Date(d);
+  const now = new Date();
+  return date.toDateString() === now.toDateString();
+}
+
+function getActivityIcon(status: string) {
+  switch (status) {
+    case "completed":
+      return <CheckCircle2 className="w-3.5 h-3.5 text-[hsl(var(--status-success))]" />;
+    case "failed":
+      return <XCircle className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />;
+    case "running":
+      return <Radio className="w-3.5 h-3.5 text-[hsl(var(--status-processing))] animate-pulse" />;
+    case "queued":
+      return <Clock className="w-3.5 h-3.5 text-[hsl(var(--status-warning))]" />;
+    default:
+      return <CircleDot className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />;
+  }
+}
+
+function getActivityLabel(status: string) {
+  switch (status) {
+    case "completed": return "Completed";
+    case "failed": return "Failed";
+    case "running": return "Started";
+    case "queued": return "Queued";
+    default: return "Updated";
+  }
+}
+
+interface HealthData {
+  status: string;
+  pipeline: { stages: number; gates: number };
+  knowledge: { kids: number };
+  templates: number;
+  recentRuns: string[];
 }
 
 export default function DashboardPage() {
@@ -53,269 +109,339 @@ export default function DashboardPage() {
     refetchInterval: 5000,
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) =>
-      apiRequest(`/api/assemblies/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
-    },
+  const { data: health } = useQuery<HealthData>({
+    queryKey: ["/api/health"],
+    queryFn: () => apiRequest("/api/health"),
+    refetchInterval: 30000,
   });
 
-  const total = assemblies.length;
-  const completed = assemblies.filter((a) => a.status === "completed").length;
-  const running = assemblies.filter((a) => a.status === "running").length;
-  const failed = assemblies.filter((a) => a.status === "failed").length;
-  const queued = assemblies.filter((a) => a.status === "queued").length;
+  const sorted = [...assemblies].sort(
+    (a, b) => new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
+  );
 
-  const activeRuns = assemblies.filter((a) => a.status === "running");
+  const total = sorted.length;
+  const completed = sorted.filter((a) => a.status === "completed").length;
+  const running = sorted.filter((a) => a.status === "running").length;
+  const failed = sorted.filter((a) => a.status === "failed").length;
+  const queued = sorted.filter((a) => a.status === "queued").length;
+  const completedToday = sorted.filter((a) => a.status === "completed" && isToday(a.updatedAt)).length;
+
+  const activeRuns = sorted.filter((a) => a.status === "running");
+  const failedRuns = sorted.filter((a) => a.status === "failed");
+  const completedRuns = sorted.filter((a) => a.status === "completed");
+  const latestFailed = failedRuns[0];
+  const latestAssembly = sorted[0];
+
+  const completedWithKits = completedRuns.filter((a) => a.runId);
+  const recentOutputs = completedRuns.slice(0, 5);
+
+  const recentEvents = sorted.slice(0, 8);
+
+  const stageCount = health?.pipeline?.stages ?? 10;
+  const gateCount = health?.pipeline?.gates ?? 8;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--primary))]" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">
-              AXION Mission Control
-            </h1>
-            <StatusChip
-              variant={running > 0 ? "processing" : failed > 0 ? "warning" : "success"}
-              label={running > 0 ? "LIVE" : failed > 0 ? "ATTENTION" : "ALL CLEAR"}
-              pulse={running > 0}
-              size="sm"
-            />
+
+      <GlassPanel glow={running > 0 ? "cyan" : "none"} className="p-5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--primary)/0.03)] to-transparent pointer-events-none" />
+        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold text-[hsl(var(--foreground))] tracking-tight">
+                AXION Mission Control
+              </h1>
+              <StatusChip
+                variant={running > 0 ? "processing" : failed > 0 ? "warning" : "success"}
+                label={running > 0 ? "LIVE" : failed > 0 ? "ATTENTION" : "ALL CLEAR"}
+                pulse={running > 0}
+                size="sm"
+              />
+            </div>
+            <div className="flex items-center gap-4 text-xs text-[hsl(var(--muted-foreground))]">
+              <span className="flex items-center gap-1.5">
+                <Terminal className="w-3 h-3" />
+                Development
+              </span>
+              <span className="text-[hsl(var(--border))]">|</span>
+              <span>{stageCount} stages · {gateCount} gates</span>
+              <span className="text-[hsl(var(--border))]">|</span>
+              <span>{completed} completed · {total} total runs</span>
+            </div>
           </div>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            System overview and operational control
-          </p>
+          <div className="flex items-center gap-2">
+            {latestAssembly && (
+              <button
+                onClick={() => setLocation(`/assembly/${latestAssembly.id}`)}
+                className="flex items-center gap-2 px-3 py-2 rounded-md border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] transition text-sm text-[hsl(var(--foreground))]"
+              >
+                <Wrench className="w-3.5 h-3.5" />
+                Latest Workbench
+              </button>
+            )}
+            <button
+              onClick={() => setLocation("/new")}
+              className="flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              New Run
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => setLocation("/new")}
-          className="flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-sm"
-        >
-          <Plus className="w-4 h-4" />
-          New Run
-        </button>
-      </div>
+      </GlassPanel>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <MetricCard icon={Activity} label="Total Runs" value={total} accent="default" />
         <MetricCard
           icon={Radio}
-          label="Active"
+          label="Active Runs"
           value={running}
-          accent="cyan"
-          subtitle={queued > 0 ? `${queued} queued` : undefined}
+          accent={running > 0 ? "cyan" : "default"}
+          subtitle={running > 0 ? `${activeRuns[0]?.currentStep || "processing"}` : queued > 0 ? `${queued} queued` : "idle"}
+          onClick={() => setLocation("/runs")}
         />
-        <MetricCard icon={CheckCircle2} label="Completed" value={completed} accent="green" />
         <MetricCard
           icon={XCircle}
           label="Failed"
           value={failed}
           accent={failed > 0 ? "red" : "default"}
+          subtitle={latestFailed?.error ? latestFailed.error.substring(0, 30) + (latestFailed.error.length > 30 ? "…" : "") : "none"}
+          onClick={() => setLocation("/runs")}
+        />
+        <MetricCard
+          icon={CheckCircle2}
+          label="Completed Today"
+          value={completedToday}
+          accent="green"
+          subtitle={`${completed} total`}
+        />
+        <MetricCard
+          icon={Shield}
+          label="Gates"
+          value={gateCount}
+          accent="violet"
+          subtitle={`${stageCount} stages`}
+        />
+        <MetricCard
+          icon={Package}
+          label="Artifacts Ready"
+          value={completedWithKits.length}
+          accent="amber"
+          subtitle={completedWithKits.length > 0 ? "kits available" : "none ready"}
+          onClick={() => setLocation("/files")}
         />
         <MetricCard
           icon={Heart}
-          label="System"
-          value="OK"
+          label="System Health"
+          value={health?.status === "ok" ? "OK" : "—"}
           accent="green"
-          subtitle="10 stages · 8 gates"
+          subtitle={`${health?.templates ?? 0} templates`}
           onClick={() => setLocation("/health")}
         />
-        <MetricCard
-          icon={Blocks}
-          label="Features"
-          value="17"
-          accent="violet"
-          subtitle="All active"
-          onClick={() => setLocation("/features")}
-        />
       </div>
 
-      {activeRuns.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Radio className="w-4 h-4 text-[hsl(var(--status-processing))] animate-pulse-glow" />
-            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
-              Active Operations
-            </span>
-            <span className="text-xs text-[hsl(var(--muted-foreground))]">
-              {activeRuns.length} running
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {activeRuns.map((run) => (
-              <GlassPanel
-                key={run.id}
-                glow="cyan"
-                solid
-                hover
-                onClick={() => setLocation(`/assembly/${run.id}`)}
-                className="p-4"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
-                    {run.projectName}
-                  </span>
-                  <StatusChip variant="processing" label="Running" pulse size="sm" />
-                </div>
-                <div className="mb-2">
-                  <StageRail stages={parseStagesFromAssembly((run as any).latestStages)} size="md" />
-                </div>
-                <div className="flex items-center justify-between text-xs text-[hsl(var(--muted-foreground))]">
-                  <span>Started {formatDate(run.createdAt)}</span>
-                  <span className="font-mono-tech">{formatDuration(run.totalDurationMs)}</span>
-                </div>
-              </GlassPanel>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
-      <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="lg:col-span-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-[hsl(var(--status-processing))]" />
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Active Operations</span>
+            {activeRuns.length > 0 && (
+              <span className="text-xs text-[hsl(var(--muted-foreground))]">{activeRuns.length} running</span>
+            )}
+          </div>
+
+          {activeRuns.length > 0 ? (
+            <div className="space-y-2">
+              {activeRuns.map((run) => (
+                <GlassPanel
+                  key={run.id}
+                  glow="cyan"
+                  solid
+                  hover
+                  onClick={() => setLocation(`/assembly/${run.id}`)}
+                  className="p-4"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
+                      {run.projectName}
+                    </span>
+                    <StatusChip variant="processing" label="Running" pulse size="sm" />
+                  </div>
+                  <div className="mb-2">
+                    <StageRail stages={parseStagesFromAssembly((run as any).latestStages)} size="md" />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-[hsl(var(--muted-foreground))]">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Started {formatRelativeTime(run.createdAt)}
+                    </span>
+                    <span className="font-mono-tech">{formatDuration(run.totalDurationMs)}</span>
+                  </div>
+                </GlassPanel>
+              ))}
+            </div>
+          ) : (
+            <GlassPanel solid className="p-6 flex flex-col items-center justify-center text-center min-h-[140px]">
+              <div className="w-10 h-10 rounded-full bg-[hsl(var(--muted)/0.5)] flex items-center justify-center mb-2">
+                <Zap className="w-5 h-5 text-[hsl(var(--muted-foreground))] opacity-50" />
+              </div>
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">No active operations</p>
+              <button
+                onClick={() => setLocation("/new")}
+                className="mt-2 text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Start a new run
+              </button>
+            </GlassPanel>
+          )}
+        </div>
+
+        <div className="lg:col-span-4 space-y-3">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
-              All Runs
-            </span>
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Activity Timeline</span>
           </div>
+          <GlassPanel solid className="p-4 min-h-[140px]">
+            {recentEvents.length > 0 ? (
+              <div className="space-y-0">
+                {recentEvents.map((event, idx) => (
+                  <div
+                    key={event.id}
+                    className="flex items-start gap-3 py-2 cursor-pointer hover:bg-[hsl(var(--accent)/0.3)] rounded px-1.5 -mx-1.5 transition-colors"
+                    onClick={() => setLocation(`/assembly/${event.id}`)}
+                  >
+                    <div className="flex flex-col items-center mt-0.5">
+                      {getActivityIcon(event.status)}
+                      {idx < recentEvents.length - 1 && (
+                        <div className="w-px h-4 bg-[hsl(var(--border)/0.5)] mt-1" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-[hsl(var(--foreground))] truncate">
+                          {event.projectName}
+                        </span>
+                        <span className="text-[10px] text-[hsl(var(--muted-foreground))] whitespace-nowrap font-mono-tech">
+                          {formatRelativeTime(event.updatedAt)}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                        {getActivityLabel(event.status)}
+                        {event.totalDurationMs ? ` · ${formatDuration(event.totalDurationMs)}` : ""}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full py-8 text-sm text-[hsl(var(--muted-foreground))]">
+                No recent activity
+              </div>
+            )}
+          </GlassPanel>
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--muted-foreground))]" />
+        <div className="lg:col-span-3 space-y-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-[hsl(var(--status-warning))]" />
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Alerts</span>
+            {failedRuns.length > 0 && (
+              <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-[hsl(var(--status-failure)/0.15)] text-[hsl(var(--status-failure))]">
+                {failedRuns.length}
+              </span>
+            )}
           </div>
-        ) : assemblies.length === 0 ? (
-          <GlassPanel solid className="p-12 text-center">
-            <div className="w-12 h-12 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center mx-auto mb-3">
-              <Rocket className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
-            </div>
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">
-              No runs yet. Launch your first run to get started.
-            </p>
-            <button
-              onClick={() => setLocation("/new")}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              New Run
-            </button>
-          </GlassPanel>
-        ) : (
-          <div className="glass-panel-solid overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[hsl(var(--border))]">
-                  <th className="text-left px-4 py-2.5 text-system-label">Project</th>
-                  <th className="text-left px-4 py-2.5 text-system-label">Status</th>
-                  <th className="text-left px-4 py-2.5 text-system-label hidden md:table-cell">Pipeline</th>
-                  <th className="text-left px-4 py-2.5 text-system-label hidden md:table-cell">Preset</th>
-                  <th className="text-left px-4 py-2.5 text-system-label hidden lg:table-cell">Duration</th>
-                  <th className="text-left px-4 py-2.5 text-system-label hidden lg:table-cell">Updated</th>
-                  <th className="text-right px-4 py-2.5 text-system-label">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assemblies.map((a) => (
-                  <tr
-                    key={a.id}
-                    className="border-t border-[hsl(var(--border)/0.5)] hover:bg-[hsl(var(--accent)/0.5)] cursor-pointer transition-colors"
-                    onClick={() => setLocation(`/assembly/${a.id}`)}
+          <GlassPanel solid className="p-4 min-h-[140px]">
+            {failedRuns.length > 0 ? (
+              <div className="space-y-2">
+                {failedRuns.slice(0, 4).map((run) => (
+                  <div
+                    key={run.id}
+                    className="p-2.5 rounded-md bg-[hsl(var(--status-failure)/0.05)] border border-[hsl(var(--status-failure)/0.15)] cursor-pointer hover:bg-[hsl(var(--status-failure)/0.1)] transition-colors"
+                    onClick={() => setLocation(`/assembly/${run.id}`)}
                   >
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-[hsl(var(--foreground))] text-[13px]">
-                        {a.projectName}
-                      </div>
-                      {a.idea && (
-                        <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[200px] mt-0.5">
-                          {a.idea}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusChip
-                        variant={getStatusVariant(a.status)}
-                        label={a.status}
-                        pulse={a.status === "running"}
-                      />
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <StageRail stages={parseStagesFromAssembly((a as any).latestStages)} />
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">
-                        {a.preset || "—"}
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-[hsl(var(--foreground))] truncate">
+                        {run.projectName}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech">
-                        {formatDuration(a.totalDurationMs)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {formatDate(a.updatedAt)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => setLocation(`/assembly/${a.id}`)}
-                          className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
-                          title="Open Workbench"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm("Delete this assembly?")) deleteMutation.mutate(a.id);
-                          }}
-                          disabled={deleteMutation.isPending}
-                          className="p-1.5 rounded hover:bg-[hsl(var(--status-failure)/0.15)] transition-colors disabled:opacity-50"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      <XCircle className="w-3 h-3 text-[hsl(var(--status-failure))] shrink-0" />
+                    </div>
+                    <p className="text-[11px] text-[hsl(var(--muted-foreground))] line-clamp-2">
+                      {run.error || "Unknown error"}
+                    </p>
+                    <span className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1 inline-block">
+                      {formatRelativeTime(run.updatedAt)}
+                    </span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full py-8">
+                <CheckCircle2 className="w-6 h-6 text-[hsl(var(--status-success))] opacity-50 mb-2" />
+                <span className="text-sm text-[hsl(var(--muted-foreground))]">All clear</span>
+              </div>
+            )}
+          </GlassPanel>
+        </div>
       </div>
 
-      <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Rocket className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-          <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Quick Actions</span>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Rocket className="w-4 h-4 text-[hsl(var(--primary))]" />
+          <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Command Modules</span>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
             {
               label: "Start New Run",
               icon: Plus,
               desc: "Launch a new assembly",
               href: "/new",
+              accent: "primary" as const,
             },
             {
-              label: "Open Workbench",
+              label: "Resume Run",
+              icon: RotateCcw,
+              desc: failedRuns.length > 0 ? `${failedRuns.length} to resume` : "No pending runs",
+              href: failedRuns[0] ? `/assembly/${failedRuns[0].id}` : latestAssembly ? `/assembly/${latestAssembly.id}` : "/new",
+              accent: "default" as const,
+            },
+            {
+              label: "Latest Workbench",
               icon: Wrench,
-              desc: "Latest assembly workspace",
-              href: assemblies[0] ? `/assembly/${assemblies[0].id}` : "/new",
+              desc: latestAssembly?.projectName || "Open workspace",
+              href: latestAssembly ? `/assembly/${latestAssembly.id}` : "/new",
+              accent: "default" as const,
             },
             {
               label: "Review Failures",
               icon: AlertTriangle,
               desc: `${failed} failed run${failed !== 1 ? "s" : ""}`,
-              href: "/",
+              href: "/runs",
+              accent: "default" as const,
             },
             {
               label: "Artifact Explorer",
               icon: FolderOpen,
               desc: "Browse generated files",
               href: "/files",
+              accent: "default" as const,
+            },
+            {
+              label: "Maintenance",
+              icon: Gauge,
+              desc: "System diagnostics",
+              href: "/maintenance",
+              accent: "default" as const,
             },
           ].map((action) => (
             <GlassPanel
@@ -325,17 +451,83 @@ export default function DashboardPage() {
               onClick={() => setLocation(action.href)}
               className="p-4 group"
             >
-              <action.icon className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors mb-2" />
+              <action.icon className={`w-5 h-5 mb-2 transition-colors ${
+                action.accent === "primary"
+                  ? "text-[hsl(var(--primary))]"
+                  : "text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))]"
+              }`} />
               <div className="text-[13px] font-medium text-[hsl(var(--foreground))]">
                 {action.label}
               </div>
-              <div className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
+              <div className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5 truncate">
                 {action.desc}
               </div>
             </GlassPanel>
           ))}
         </div>
       </div>
+
+      {recentOutputs.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileCheck className="w-4 h-4 text-[hsl(var(--status-success))]" />
+              <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Recent Output</span>
+            </div>
+            <button
+              onClick={() => setLocation("/runs")}
+              className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline"
+            >
+              View All Runs
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-thin">
+            {recentOutputs.map((run) => (
+              <GlassPanel
+                key={run.id}
+                solid
+                hover
+                onClick={() => setLocation(`/assembly/${run.id}`)}
+                className="p-3 min-w-[200px] max-w-[240px] shrink-0"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-[hsl(var(--foreground))] truncate">
+                    {run.projectName}
+                  </span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[hsl(var(--status-success))] shrink-0" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-[hsl(var(--muted-foreground))]">
+                    <span className="flex items-center gap-1">
+                      <Timer className="w-3 h-3" />
+                      {formatDuration(run.totalDurationMs)}
+                    </span>
+                    <span>{formatRelativeTime(run.updatedAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {run.preset && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-mono-tech rounded bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))]">
+                        {run.preset}
+                      </span>
+                    )}
+                    {run.verificationStatus && (
+                      <StatusChip
+                        variant={run.verificationStatus === "pass" ? "success" : "warning"}
+                        label={String(run.verificationStatus).toUpperCase()}
+                        size="sm"
+                      />
+                    )}
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <StageRail stages={parseStagesFromAssembly((run as any).latestStages)} size="sm" />
+                </div>
+              </GlassPanel>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

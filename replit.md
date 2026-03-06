@@ -6,7 +6,7 @@ Axion is a document-generation and compliance-enforcement system with a full-sta
 ## Current State
 Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 193 kit files produced.
 
-### UI Overhaul — AXION Lab OS (Phases 1–2 Complete)
+### UI Overhaul — AXION Lab OS (Phases 1–4 Complete)
 The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" — a premium dark-mode mission control interface.
 
 **Visual System** (`App/src/index.css`): Obsidian/charcoal dark theme with CSS custom properties for backgrounds, glass panels (backdrop-blur), glow borders (cyan/green/amber/red/violet), status colors (--status-processing, --status-success, --status-warning, --status-failure, --status-intelligence), animation keyframes (pulse-glow, fade-in, slide-in), utility classes (.glass-panel, .glass-panel-solid, .glow-border-*, .premium-card, .nav-item-active, .text-system-label, .font-mono-tech).
@@ -29,13 +29,20 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - `status-chip.tsx` — StatusChip badge with semantic variants (processing/success/warning/failure/intelligence/neutral), optional pulse animation; getStatusVariant() maps assembly status strings
 - `stage-rail.tsx` — StageRail horizontal 10-stage pipeline indicator with per-stage tooltips, parseStagesFromAssembly() helper
 
-**Command Center** (`App/src/pages/dashboard.tsx`): Mission Control dashboard with hero title + live status chip, 6 executive MetricCards, active runs strip (GlassPanel + StageRail), All Runs premium table (StatusChip + StageRail columns), Quick Actions grid (New Run, Open Workbench, Review Failures, Artifact Explorer).
+**Command Center** (`App/src/pages/dashboard.tsx`): Premium mission control dashboard with 4 rows:
+- Hero strip: GlassPanel with "AXION Mission Control" title, live StatusChip (LIVE/ATTENTION/ALL CLEAR), environment label, stage/gate summary, "Latest Workbench" + "New Run" action buttons
+- Row 1: 6 executive MetricCards (Active Runs, Failed, Completed Today, Gates, Artifacts Ready, System Health) — all with live data, subtitles, click navigation
+- Row 2: 3-column live operations area — Active Operations (running assembly cards with StageRail), Activity Timeline (8 recent events with status icons), Alerts panel (failed runs with error messages, badge count)
+- Row 3: 6 Command Modules (Start New Run, Resume Run, Latest Workbench, Review Failures, Artifact Explorer, Maintenance)
+- Row 4: Recent Output strip (horizontal scroll of completed run cards with preset, duration, verification status, StageRail)
+- Fetches `/api/health` for system stats, `/api/assemblies` with 5s polling; no All Runs table (moved to /runs page)
 
 **Runs Page** (`App/src/pages/runs.tsx`): Fleet management page at `/runs` with status filter chips (All/Active/Completed/Failed/Queued), premium glass-panel table with StatusChip + StageRail columns, clickable rows navigate to Workbench, delete actions, empty state with filter-aware messaging.
 
 **Workbench** (`App/src/pages/assembly.tsx`): Full operational console at `/assembly/:id`:
 - Hero header in GlassPanel with project name, StatusChip, run ID badge, duration, action buttons (Run/Stop/Kit)
-- Horizontal pipeline strip with S1–S10 rectangular stage nodes, color-coded by status, gate result indicators, clickable for future inspector
+- Horizontal pipeline strip with S1–S10 rectangular stage nodes, color-coded by status, gate result indicators, clickable to open inspector
+- Inspector panel: 320px right-side sticky panel with StageDetailCard (timing, artifacts, notes, gate summary) and GateInspector (checks, evidence, issues, completeness). Selection model: click stage/gate toggles inspector, X closes it. Error states for failed fetches
 - Overview tab: contextual status banners (running/failed/completed) in glow GlassPanels, 4 MetricCards (Status/Passed/Failed/Duration), Project Details + Pipeline Status panels, token usage display
 - Pipeline tab: vertical stage cards with glow borders per status, gate result badges, premium run history table
 - Intake tab: section sidebar with nav-item-active pattern, dark-themed form editors, save/re-run actions
@@ -45,7 +52,15 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 
 **Dark Theme Harmonization**: All pages swept for light-mode remnants — health.tsx, features.tsx, feature-detail.tsx, export.tsx, logs.tsx, maintenance.tsx, pipeline-progress.tsx, intake-wizard.tsx, build-mode.tsx, intake form pages, orchestration-library.tsx, system-library.tsx all updated to use dark-appropriate color references.
 
-**Remaining phases**: Phase D (Artifacts + Logs + Health), Phase E (Knowledge + Maintenance + Export), Phase F (Polish — command palette, keyboard shortcuts, motion, density tuning).
+**Phase 3 Components** (`App/src/components/workbench/`):
+- `StageDetailCard.tsx` — Stage detail card for inspector: status, timing, consumed/produced artifacts, notes (supports both severity/level fields), gate summary with check pass/fail counts
+- `GateInspector.tsx` — Gate inspection panel: verdict chip, checks table with evidence links, issues with severity/remediation, evidence completeness (satisfied/missing proof types), engine info
+
+**API Endpoints** (Phase 3): `GET /api/assemblies/:id/stages/:stageKey` (reads stage report JSON, falls back to normalized run.stages data), `GET /api/assemblies/:id/gates/:gateId` (reads gate report JSON, falls back to reports table). Both log parse errors and return 500 for malformed files.
+
+**CSS Utilities** (Phase 4): `.scrollbar-thin` (thin styled scrollbar for dark theme)
+
+**Remaining phases**: Phase 5 (Artifacts explorer), Phase 6 (System surfaces — Health/Logs/Maintenance), Phase 7 (New Run premium intake), Phase 8-9 (Command Center second pass), Phase 10 (Knowledge consolidation), Phase 11 (Export second pass), Phase 12 (Polish — command palette, global search, notifications, density toggle, keyboard shortcuts).
 
 ### Build Mode (BM-00 through BM-18)
 Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip.
