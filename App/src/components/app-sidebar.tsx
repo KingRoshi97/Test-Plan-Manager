@@ -17,6 +17,7 @@ import {
   FileText,
   ClipboardList,
   ShieldCheck,
+  Package,
 } from "lucide-react";
 
 const links = [
@@ -32,6 +33,7 @@ const links = [
   { href: "/templates-library", label: "Templates Library", icon: FileText },
   { href: "/planning-library", label: "Planning Library", icon: ClipboardList },
   { href: "/verification-library", label: "Verification Library", icon: ShieldCheck },
+  { href: "/kit-library", label: "Kit Library", icon: Package },
   { href: "/intake-library", label: "Intake Library", icon: ClipboardList },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },

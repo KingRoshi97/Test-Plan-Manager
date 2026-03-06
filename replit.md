@@ -217,6 +217,37 @@ Proof and completion system — proof types, proof ledger, command run tracking,
 
 **Legacy files preserved:** VER-01..VER-03 JSON files, proof_log.schema.v1.json, command_runs.schema.v1.json
 
+### Kit Library (`Axion/libraries/kit/`)
+Kit packaging contract — kit folder tree, manifest schema, versioning, export rules, and gates (KIT-0 through KIT-6). 9 legacy flat files preserved for backward compat (pipeline code: build.ts, manifest.ts, packager.ts, validate.ts, etc.).
+
+**Structure (28 new files: 24 root files + 1 schema + 3 registries):**
+- **KIT-0**: Purpose + boundary checklist (2 docs)
+- **KIT-1**: Kit tree model + determinism rules + validation checklist (3 docs)
+- **KIT-2**: Kit manifest model + determinism rules + validation checklist (3 docs)
+- **KIT-3**: Versioning model + compatibility rules + determinism rules + validation checklist (4 docs)
+- **KIT-4**: Export rules + determinism rules + validation checklist (3 docs)
+- **KIT-5**: Kit gates + gate mapping + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON) — KIT-GATE-01..06
+- **KIT-6**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
+
+**Subdirectories:**
+- `schemas/` — 1 JSON Schema file (kit_manifest: kit_id/run_id/kit_version/created_at/export_class/entrypoints/contents[] with path/kind/contract_id/source/hash/classification)
+- `registries/` — 3 registry files (kit_tree: 4 folders + 2 files with required/optional, kit_compatibility: kit format v1.0.0 requires + schema support, kit_export_filter: 2 rules deny restricted+internal_only / allow public)
+
+**Loader** (`Axion/src/core/kit/loader.ts`):
+- `loadKitLibrary(repoRoot)` — loads kit_tree + kit_compatibility + kit_export_filter registries, cached
+- `loadKitDocs(repoRoot)` — all KIT-N docs with frontmatter
+- `loadKitSchemas(repoRoot)` — all JSON schema files from schemas/
+- `loadKitRegistries(repoRoot)` — all registry JSON files from registries/
+- `getKitTree(repoRoot)` — returns kit tree registry
+- `getKitCompatibility(repoRoot)` — returns compatibility registry
+- `getKitExportFilter(repoRoot)` — returns export filter registry
+
+**API**: 6 `/api/kit-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
+**UI**: `/kit-library` page with 4 tabs (Kit, Documents, Schemas, Registries), kit tree structure table, manifest schema summary, export rules, 6 kit gates (KIT-GATE-01..06) with severity badges, compatibility info
+**Registered in:** `schema_registry.v1.json` (kit.manifest.v1 path updated to schemas/), `library_index.v1.json` (3 new entries: kit.tree, kit.compatibility, kit.export_filter)
+
+**Legacy files preserved:** KIT-01..KIT-04 JSON files, kit_tree.schema.v1.json, kit_manifest.schema.v1.json, kit_entrypoint.schema.v1.json, kit_versions.schema.v1.json
+
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 
@@ -257,7 +288,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning/verification library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning/verification/kit library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -317,6 +348,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/verification-library/registries/:name` — single registry by name
 - `GET /api/verification-library/docs` — all verification documents with frontmatter
 - `GET /api/verification-library/docs/:filename` — single document by filename
+- `GET /api/kit-library` — kit library overview (groups, schemas, registries, counts: docs/schemas/registries/gates/exportRules)
+- `GET /api/kit-library/schemas` — all 1 kit schema with content
+- `GET /api/kit-library/registries` — all 3 registries with content
+- `GET /api/kit-library/registries/:name` — single registry by name
+- `GET /api/kit-library/docs` — all kit documents with frontmatter
+- `GET /api/kit-library/docs/:filename` — single document by filename
 - `GET /api/intake-library` — intake library overview (groups, schema/registry/doc/enum/crossFieldRule/normalizationRule counts)
 - `GET /api/intake-library/schemas` — all 7 intake schemas with content
 - `GET /api/intake-library/registries` — all 3 registries with content
@@ -359,6 +396,7 @@ package.json      # Root package.json with all dependencies
 - `/templates-library` — Templates Library: 4 tabs (Templates, Documents, Schemas, Registries) for TMP-0 through TMP-7, template registry with category/profile/risk badges, 8-category ordering, completeness thresholds, 6 template gates (TMP-GATE-01..06) mapped to G4/G5
 - `/planning-library` — Planning Library: 4 tabs (Planning, Documents, Schemas, Registries) for PLAN-0 through PLAN-6, planning artifacts overview (WBS/AMAP/BUILD_PLAN), 7 sequencing phases, coverage rules table, 6 planning gates (PLAN-GATE-01..06) mapped to G6_PLAN_COVERAGE
 - `/verification-library` — Verification Library: 4 tabs (Verification, Documents, Schemas, Registries) for VER-0 through VER-7, proof types table, completion criteria (unit_done + run_done), command policy rules, 7 verification gates (VER-GATE-01..07) mapped to G7_VERIFICATION
+- `/kit-library` — Kit Library: 4 tabs (Kit, Documents, Schemas, Registries) for KIT-0 through KIT-6, kit tree structure (4 folders + 2 files), manifest schema summary, export rules, 6 kit gates (KIT-GATE-01..06) with severity badges, compatibility info
 - `/intake-library` — Intake Library: 4 tabs (Intake, Documents, Schemas, Registries) for INT-0 through INT-7, field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
@@ -401,7 +439,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `planning/` — 30 new files (24 PLAN-0 through PLAN-6 docs + schemas/ (5) + registries/ (1)) + 6 legacy flat files
   - `gates/` — Gates Library (GATE-0 through GATE-6). See Gates Library section below.
   - `verification/` — 35 new files (26 VER-0 through VER-7 docs + schemas/ (6) + registries/ (3)) + 8 legacy flat files
-  - `kit/` — kit_tree.schema.v1.json, kit_manifest.schema.v1.json, kit_entrypoint.schema.v1.json, kit_versions.schema.v1.json
+  - `kit/` — 28 new files (24 KIT-0 through KIT-6 docs + schemas/ (1) + registries/ (3)) + 9 legacy flat files
   - `orchestration/` — Pipeline execution contracts and run lifecycle (ORC-0 through ORC-7). See Orchestration Library section below.
   - `policy/` — Policy Library (POL-0 through POL-5). See Policy Library section below.
   - `audit/` — operator_actions_ledger.schema.v1.json

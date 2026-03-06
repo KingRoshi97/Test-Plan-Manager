@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "KIT-5b",
+  "gates": [
+    { "gate_id": "KIT-GATE-01", "name": "Kit tree conforms", "severity": "hard_stop", "checks": ["kit_tree pinned", "required folders/files exist"] },
+    { "gate_id": "KIT-GATE-02", "name": "Kit manifest valid", "severity": "hard_stop", "checks": ["KIT_MANIFEST exists", "schema_valid(kit_manifest.v1)"] },
+    { "gate_id": "KIT-GATE-03", "name": "Manifest matches filesystem", "severity": "warn", "checks": ["manifest paths exist", "no extra files if strict"] },
+    { "gate_id": "KIT-GATE-04", "name": "Required artifacts included", "severity": "hard_stop", "checks": ["required contract_ids present in manifest"] },
+    { "gate_id": "KIT-GATE-05", "name": "Export classification correct", "severity": "hard_stop", "checks": ["classifications comply with export_class + export filter"] },
+    { "gate_id": "KIT-GATE-06", "name": "Policy compliance for export", "severity": "policy_controlled", "checks": ["if external export then policy allows or approved override"] }
+  ]
+}

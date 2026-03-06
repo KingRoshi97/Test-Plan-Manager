@@ -207,8 +207,8 @@
     },
     {
       "schema_id": "kit.manifest.v1",
-      "path": "Axion/libraries/kit/kit_manifest.schema.v1.json",
-      "uri": "axion://schemas/kit/kit_manifest.schema.v1.json",
+      "path": "Axion/libraries/kit/schemas/kit_manifest.v1.schema.json",
+      "uri": "axion://schemas/kit/kit_manifest.v1.schema.json",
       "version": "1.0.0"
     },
     {

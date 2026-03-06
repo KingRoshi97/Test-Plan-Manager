@@ -1,0 +1,14 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "kit_compatibility.v1",
+    "kit_format": {
+      "kit_version": "1.0.0",
+      "requires": {
+        "folders": ["docs", "artifacts", "metadata"],
+        "files": ["kit_manifest.json", "README.md"]
+      }
+    },
+    "schema_support": {
+      "kit_manifest": ["1.0.0"]
+    }
+}

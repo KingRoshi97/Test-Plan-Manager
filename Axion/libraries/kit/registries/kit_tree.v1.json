@@ -1,0 +1,14 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "kit_tree.v1",
+    "folders": [
+    { "path": "docs", "required": true, "purpose": "Rendered templates (human-facing docs/specs)." },
+    { "path": "artifacts", "required": true, "purpose": "Core run artifacts (canonical, standards snapshot, plans, gate reports, proof ledger)." },
+    { "path": "metadata", "required": true, "purpose": "Pinned refs, run manifest snapshot, and kit-level metadata." },
+    { "path": "scripts", "required": false, "purpose": "Optional scripts for verification/build/run." }
+  ],
+  "files": [
+    { "path": "kit_manifest.json", "required": true, "purpose": "Authoritative manifest of kit contents." },
+    { "path": "README.md", "required": true, "purpose": "How to use this kit." }
+  ]
+}

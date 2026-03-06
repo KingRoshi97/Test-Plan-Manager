@@ -1,0 +1,16 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "kit_export_filter.v1",
+    "rules": [
+      {
+        "rule_id": "EXPORT-EXTERNAL-STRIP-RESTRICTED",
+        "export_class": "external",
+        "deny_classifications": ["restricted", "internal_only"]
+      },
+      {
+        "rule_id": "EXPORT-EXTERNAL-ALLOW-PUBLIC",
+        "export_class": "external",
+        "allow_classifications": ["public"]
+      }
+    ]
+}
