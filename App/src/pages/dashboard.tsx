@@ -1,26 +1,46 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "../lib/queryClient";
-import { Plus, Loader2, Activity, Blocks, Heart, ArrowRight, Trash2, ExternalLink, Clock } from "lucide-react";
-import { PipelineProgress } from "../components/pipeline-progress";
+import {
+  Plus,
+  Loader2,
+  Activity,
+  Blocks,
+  Heart,
+  ArrowRight,
+  Trash2,
+  ExternalLink,
+  Radio,
+  CheckCircle2,
+  XCircle,
+  Gauge,
+  FolderOpen,
+  Wrench,
+  AlertTriangle,
+  Rocket,
+  Search,
+} from "lucide-react";
+import { MetricCard } from "../components/ui/metric-card";
+import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
+import { GlassPanel } from "../components/ui/glass-panel";
+import { StageRail, parseStagesFromAssembly } from "../components/ui/stage-rail";
 import type { Assembly } from "../../../shared/schema";
-
-const statusBadge: Record<string, string> = {
-  queued: "bg-gray-100 text-gray-700",
-  running: "bg-blue-100 text-blue-700",
-  completed: "bg-green-100 text-green-700",
-  failed: "bg-red-100 text-red-700",
-};
 
 function formatDuration(ms: number | null | undefined) {
   if (!ms) return "—";
   if (ms < 1000) return `${ms}ms`;
-  return `${(ms / 1000).toFixed(1)}s`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${(ms / 60000).toFixed(1)}m`;
 }
 
 function formatDate(d: string | Date | null | undefined) {
   if (!d) return "—";
-  return new Date(d).toLocaleDateString();
+  const date = new Date(d);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  if (diffMs < 3600000) return `${Math.floor(diffMs / 60000)}m ago`;
+  if (diffMs < 86400000) return `${Math.floor(diffMs / 3600000)}h ago`;
+  return date.toLocaleDateString();
 }
 
 export default function DashboardPage() {
@@ -30,6 +50,7 @@ export default function DashboardPage() {
   const { data: assemblies = [], isLoading } = useQuery<Assembly[]>({
     queryKey: ["/api/assemblies"],
     queryFn: () => apiRequest("/api/assemblies"),
+    refetchInterval: 5000,
   });
 
   const deleteMutation = useMutation({
@@ -44,168 +65,204 @@ export default function DashboardPage() {
   const completed = assemblies.filter((a) => a.status === "completed").length;
   const running = assemblies.filter((a) => a.status === "running").length;
   const failed = assemblies.filter((a) => a.status === "failed").length;
+  const queued = assemblies.filter((a) => a.status === "queued").length;
 
-  const latestCompleted = assemblies
-    .filter((a) => a.status === "completed")
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0];
+  const activeRuns = assemblies.filter((a) => a.status === "running");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Dashboard</h1>
-          <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5">Command center overview</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">
+              AXION Mission Control
+            </h1>
+            <StatusChip
+              variant={running > 0 ? "processing" : failed > 0 ? "warning" : "success"}
+              label={running > 0 ? "LIVE" : failed > 0 ? "ATTENTION" : "ALL CLEAR"}
+              pulse={running > 0}
+              size="sm"
+            />
+          </div>
+          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
+            System overview and operational control
+          </p>
         </div>
         <button
           onClick={() => setLocation("/new")}
           className="flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-sm"
         >
           <Plus className="w-4 h-4" />
-          New Assembly
+          New Run
         </button>
       </div>
 
-      <div className="flex items-center gap-3">
-        {[
-          { label: "Total", value: total, cls: "text-[hsl(var(--foreground))]", dot: "bg-gray-400" },
-          { label: "Completed", value: completed, cls: "text-green-700", dot: "bg-green-500" },
-          { label: "Running", value: running, cls: "text-blue-700", dot: "bg-blue-500" },
-          { label: "Failed", value: failed, cls: "text-red-700", dot: "bg-red-500" },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-sm"
-          >
-            <span className={`w-2 h-2 rounded-full ${s.dot}`} />
-            <span className={`font-semibold tabular-nums ${s.cls}`}>{s.value}</span>
-            <span className="text-[hsl(var(--muted-foreground))]">{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {latestCompleted && (
-          <button
-            onClick={() => setLocation(`/assembly/${latestCompleted.id}`)}
-            className="text-left border border-[hsl(var(--border))] rounded-lg p-4 bg-[hsl(var(--card))] hover:border-[hsl(var(--primary)/0.5)] transition-colors group"
-          >
-            <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))] mb-2">
-              <Clock className="w-3.5 h-3.5" />
-              Latest Run
-            </div>
-            <div className="font-semibold text-sm text-[hsl(var(--card-foreground))] truncate">{latestCompleted.projectName}</div>
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">completed</span>
-              <span className="text-xs text-[hsl(var(--muted-foreground))]">{formatDuration(latestCompleted.totalDurationMs)}</span>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              Open workspace <ArrowRight className="w-3 h-3" />
-            </div>
-          </button>
-        )}
-
-        <button
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <MetricCard icon={Activity} label="Total Runs" value={total} accent="default" />
+        <MetricCard
+          icon={Radio}
+          label="Active"
+          value={running}
+          accent="cyan"
+          subtitle={queued > 0 ? `${queued} queued` : undefined}
+        />
+        <MetricCard icon={CheckCircle2} label="Completed" value={completed} accent="green" />
+        <MetricCard
+          icon={XCircle}
+          label="Failed"
+          value={failed}
+          accent={failed > 0 ? "red" : "default"}
+        />
+        <MetricCard
+          icon={Heart}
+          label="System"
+          value="OK"
+          accent="green"
+          subtitle="10 stages · 8 gates"
           onClick={() => setLocation("/health")}
-          className="text-left border border-[hsl(var(--border))] rounded-lg p-4 bg-[hsl(var(--card))] hover:border-[hsl(var(--primary)/0.5)] transition-colors group"
-        >
-          <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))] mb-2">
-            <Heart className="w-3.5 h-3.5" />
-            System Health
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="font-semibold text-sm text-[hsl(var(--card-foreground))]">All Systems OK</span>
-          </div>
-          <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1.5">10 stages / 8 gates</div>
-          <div className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            View details <ArrowRight className="w-3 h-3" />
-          </div>
-        </button>
-
-        <button
+        />
+        <MetricCard
+          icon={Blocks}
+          label="Features"
+          value="17"
+          accent="violet"
+          subtitle="All active"
           onClick={() => setLocation("/features")}
-          className="text-left border border-[hsl(var(--border))] rounded-lg p-4 bg-[hsl(var(--card))] hover:border-[hsl(var(--primary)/0.5)] transition-colors group"
-        >
-          <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))] mb-2">
-            <Blocks className="w-3.5 h-3.5" />
-            Feature Packs
-          </div>
-          <div className="font-semibold text-sm text-[hsl(var(--card-foreground))]">17 / 17 Active</div>
-          <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1.5">All feature packs operational</div>
-          <div className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            Browse features <ArrowRight className="w-3 h-3" />
-          </div>
-        </button>
+        />
       </div>
+
+      {activeRuns.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Radio className="w-4 h-4 text-[hsl(var(--status-processing))] animate-pulse-glow" />
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              Active Operations
+            </span>
+            <span className="text-xs text-[hsl(var(--muted-foreground))]">
+              {activeRuns.length} running
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {activeRuns.map((run) => (
+              <GlassPanel
+                key={run.id}
+                glow="cyan"
+                solid
+                hover
+                onClick={() => setLocation(`/assembly/${run.id}`)}
+                className="p-4"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
+                    {run.projectName}
+                  </span>
+                  <StatusChip variant="processing" label="Running" pulse size="sm" />
+                </div>
+                <div className="mb-2">
+                  <StageRail stages={parseStagesFromAssembly((run as any).latestStages)} size="md" />
+                </div>
+                <div className="flex items-center justify-between text-xs text-[hsl(var(--muted-foreground))]">
+                  <span>Started {formatDate(run.createdAt)}</span>
+                  <span className="font-mono-tech">{formatDuration(run.totalDurationMs)}</span>
+                </div>
+              </GlassPanel>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
-        <h2 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3 flex items-center gap-2">
-          <Activity className="w-4 h-4" />
-          Assemblies
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
+              All Runs
+            </span>
+          </div>
+        </div>
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-[hsl(var(--muted-foreground))]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--muted-foreground))]" />
           </div>
         ) : assemblies.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-[hsl(var(--border))] rounded-lg">
-            <p className="text-[hsl(var(--muted-foreground))] text-sm">No assemblies yet. Create one to get started.</p>
-          </div>
+          <GlassPanel solid className="p-12 text-center">
+            <div className="w-12 h-12 rounded-full bg-[hsl(var(--muted))] flex items-center justify-center mx-auto mb-3">
+              <Rocket className="w-6 h-6 text-[hsl(var(--muted-foreground))]" />
+            </div>
+            <p className="text-sm text-[hsl(var(--muted-foreground))]">
+              No runs yet. Launch your first run to get started.
+            </p>
+            <button
+              onClick={() => setLocation("/new")}
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              New Run
+            </button>
+          </GlassPanel>
         ) : (
-          <div className="border border-[hsl(var(--border))] rounded-lg overflow-hidden bg-[hsl(var(--card))]">
+          <div className="glass-panel-solid overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-[hsl(var(--muted))]">
-                  <th className="text-left px-4 py-2.5 font-medium text-[hsl(var(--muted-foreground))]">Project</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-[hsl(var(--muted-foreground))]">Status</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-[hsl(var(--muted-foreground))] hidden md:table-cell">Pipeline</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-[hsl(var(--muted-foreground))] hidden md:table-cell">Preset</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-[hsl(var(--muted-foreground))] hidden lg:table-cell">Runs</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-[hsl(var(--muted-foreground))] hidden lg:table-cell">Duration</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-[hsl(var(--muted-foreground))] hidden lg:table-cell">Updated</th>
-                  <th className="text-right px-4 py-2.5 font-medium text-[hsl(var(--muted-foreground))]">Actions</th>
+                <tr className="border-b border-[hsl(var(--border))]">
+                  <th className="text-left px-4 py-2.5 text-system-label">Project</th>
+                  <th className="text-left px-4 py-2.5 text-system-label">Status</th>
+                  <th className="text-left px-4 py-2.5 text-system-label hidden md:table-cell">Pipeline</th>
+                  <th className="text-left px-4 py-2.5 text-system-label hidden md:table-cell">Preset</th>
+                  <th className="text-left px-4 py-2.5 text-system-label hidden lg:table-cell">Duration</th>
+                  <th className="text-left px-4 py-2.5 text-system-label hidden lg:table-cell">Updated</th>
+                  <th className="text-right px-4 py-2.5 text-system-label">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {assemblies.map((a) => (
                   <tr
                     key={a.id}
-                    className="border-t border-[hsl(var(--border))] hover:bg-[hsl(var(--accent)/0.5)] cursor-pointer transition-colors"
+                    className="border-t border-[hsl(var(--border)/0.5)] hover:bg-[hsl(var(--accent)/0.5)] cursor-pointer transition-colors"
                     onClick={() => setLocation(`/assembly/${a.id}`)}
                   >
                     <td className="px-4 py-3">
-                      <div className="font-medium text-[hsl(var(--card-foreground))]">{a.projectName}</div>
+                      <div className="font-medium text-[hsl(var(--foreground))] text-[13px]">
+                        {a.projectName}
+                      </div>
                       {a.idea && (
-                        <div className="text-xs text-[hsl(var(--muted-foreground))] truncate max-w-[200px]">{a.idea}</div>
+                        <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[200px] mt-0.5">
+                          {a.idea}
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge[a.status] || "bg-gray-100 text-gray-700"}`}>
-                        {a.status}
+                      <StatusChip
+                        variant={getStatusVariant(a.status)}
+                        label={a.status}
+                        pulse={a.status === "running"}
+                      />
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <StageRail stages={parseStagesFromAssembly((a as any).latestStages)} />
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <span className="text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">
+                        {a.preset || "—"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <PipelineProgress stages={(a as any).latestStages || null} size="sm" />
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="text-xs font-mono text-[hsl(var(--muted-foreground))]">{a.preset || "—"}</span>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech">
+                        {formatDuration(a.totalDurationMs)}
+                      </span>
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="tabular-nums">{a.totalRuns ?? 0}</span>
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-[hsl(var(--muted-foreground))]">{formatDuration(a.totalDurationMs)}</span>
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="text-[hsl(var(--muted-foreground))]">{formatDate(a.updatedAt)}</span>
+                      <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                        {formatDate(a.updatedAt)}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => setLocation(`/assembly/${a.id}`)}
                           className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
-                          title="Open"
+                          title="Open Workbench"
                         >
                           <ExternalLink className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
                         </button>
@@ -214,10 +271,10 @@ export default function DashboardPage() {
                             if (confirm("Delete this assembly?")) deleteMutation.mutate(a.id);
                           }}
                           disabled={deleteMutation.isPending}
-                          className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950 transition-colors disabled:opacity-50"
+                          className="p-1.5 rounded hover:bg-[hsl(var(--status-failure)/0.15)] transition-colors disabled:opacity-50"
                           title="Delete"
                         >
-                          <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--destructive))]" />
+                          <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
                         </button>
                       </div>
                     </td>
@@ -227,6 +284,57 @@ export default function DashboardPage() {
             </table>
           </div>
         )}
+      </div>
+
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Rocket className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Quick Actions</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            {
+              label: "Start New Run",
+              icon: Plus,
+              desc: "Launch a new assembly",
+              href: "/new",
+            },
+            {
+              label: "Open Workbench",
+              icon: Wrench,
+              desc: "Latest assembly workspace",
+              href: assemblies[0] ? `/assembly/${assemblies[0].id}` : "/new",
+            },
+            {
+              label: "Review Failures",
+              icon: AlertTriangle,
+              desc: `${failed} failed run${failed !== 1 ? "s" : ""}`,
+              href: "/",
+            },
+            {
+              label: "Artifact Explorer",
+              icon: FolderOpen,
+              desc: "Browse generated files",
+              href: "/files",
+            },
+          ].map((action) => (
+            <GlassPanel
+              key={action.label}
+              solid
+              hover
+              onClick={() => setLocation(action.href)}
+              className="p-4 group"
+            >
+              <action.icon className="w-5 h-5 text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors mb-2" />
+              <div className="text-[13px] font-medium text-[hsl(var(--foreground))]">
+                {action.label}
+              </div>
+              <div className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                {action.desc}
+              </div>
+            </GlassPanel>
+          ))}
+        </div>
       </div>
     </div>
   );

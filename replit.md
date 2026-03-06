@@ -6,6 +6,35 @@ Axion is a document-generation and compliance-enforcement system with a full-sta
 ## Current State
 Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 193 kit files produced.
 
+### UI Overhaul — AXION Lab OS (Phase 1 Complete)
+The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" — a premium dark-mode mission control interface.
+
+**Visual System** (`App/src/index.css`): Obsidian/charcoal dark theme with CSS custom properties for backgrounds, glass panels (backdrop-blur), glow borders (cyan/green/amber/red/violet), status colors (--status-processing, --status-success, --status-warning, --status-failure, --status-intelligence), animation keyframes (pulse-glow, fade-in, slide-in), utility classes (.glass-panel, .glass-panel-solid, .glow-border-*, .premium-card, .nav-item-active, .text-system-label, .font-mono-tech).
+
+**App Shell** (`App/src/components/layout/`):
+- `AppShell.tsx` — 3-zone layout wrapper: fixed left sidebar + fixed top command bar + scrollable main canvas
+- `Topbar.tsx` — Top command bar with search/command palette trigger (Ctrl+K), active run chip (pulsing cyan when a run is active), environment badge ("Development")
+- Sidebar and topbar are position-fixed; content area uses margin offsets via CSS vars (--sidebar-width, --topbar-height)
+
+**Grouped Sidebar** (`App/src/components/app-sidebar.tsx`):
+- AXION branding header with gradient AX logo
+- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts), Intelligence (Features, Doc Inventory, Knowledge Library with 13 sub-items), System (Health, Logs, Maintenance), Output (Export)
+- Knowledge Library sub-group auto-expands when any library route is active
+- Live badge counts (active runs count with cyan badge)
+- Active item uses left-border glow via .nav-item-active
+
+**Premium UI Components** (`App/src/components/ui/`):
+- `glass-panel.tsx` — GlassPanel container with configurable glow color (cyan/green/amber/red/violet/none), solid or blur variants
+- `metric-card.tsx` — MetricCard stat card with icon, value, label, accent color, optional subtitle and onClick
+- `status-chip.tsx` — StatusChip badge with semantic variants (processing/success/warning/failure/intelligence/neutral), optional pulse animation; getStatusVariant() maps assembly status strings
+- `stage-rail.tsx` — StageRail horizontal 10-stage pipeline indicator with per-stage tooltips, parseStagesFromAssembly() helper
+
+**Command Center** (`App/src/pages/dashboard.tsx`): Mission Control dashboard with hero title + live status chip, 6 executive MetricCards, active runs strip (GlassPanel + StageRail), All Runs premium table (StatusChip + StageRail columns), Quick Actions grid (New Run, Open Workbench, Review Failures, Artifact Explorer).
+
+**Route additions**: `/runs` alias points to DashboardPage (dedicated Runs page planned for Phase C).
+
+**Remaining phases**: Phase B (Command Center enhancements), Phase C (Runs + Workbench), Phase D (Artifacts + Logs + Health), Phase E (Knowledge + Maintenance + Export), Phase F (Polish — command palette, keyboard shortcuts, motion, density tuning).
+
 ### Build Mode (BM-00 through BM-18)
 Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip.
 

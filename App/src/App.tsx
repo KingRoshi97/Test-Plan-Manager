@@ -1,5 +1,5 @@
 import { Switch, Route } from "wouter";
-import { AppSidebar } from "./components/app-sidebar";
+import { AppShell } from "./components/layout/AppShell";
 import DashboardPage from "./pages/dashboard";
 import NewAssemblyPage from "./pages/new-assembly";
 import AssemblyPage from "./pages/assembly";
@@ -27,41 +27,39 @@ import MaintenancePage from "./pages/maintenance";
 
 export default function App() {
   return (
-    <div className="flex min-h-screen">
-      <AppSidebar />
-      <main className="flex-1 p-6 overflow-auto">
-        <Switch>
-          <Route path="/" component={DashboardPage} />
-          <Route path="/new" component={NewAssemblyPage} />
-          <Route path="/assembly/:id" component={AssemblyPage} />
-          <Route path="/features" component={FeaturesPage} />
-          <Route path="/features/:id" component={FeatureDetailPage} />
-          <Route path="/files" component={FilesPage} />
-          <Route path="/health" component={HealthPage} />
-          <Route path="/logs" component={LogsPage} />
-          <Route path="/system" component={SystemLibraryPage} />
-          <Route path="/orchestration" component={OrchestrationLibraryPage} />
-          <Route path="/gates" component={GatesLibraryPage} />
-          <Route path="/policy" component={PolicyLibraryPage} />
-          <Route path="/canonical" component={CanonicalLibraryPage} />
-          <Route path="/standards" component={StandardsLibraryPage} />
-          <Route path="/templates-library" component={TemplatesLibraryPage} />
-          <Route path="/planning-library" component={PlanningLibraryPage} />
-          <Route path="/verification-library" component={VerificationLibraryPage} />
-          <Route path="/kit-library" component={KitLibraryPage} />
-          <Route path="/telemetry-library" component={TelemetryLibraryPage} />
-          <Route path="/audit-library" component={AuditLibraryPage} />
-          <Route path="/maintenance" component={MaintenancePage} />
-          <Route path="/intake-library" component={IntakeLibraryPage} />
-          <Route path="/docs" component={DocInventoryPage} />
-          <Route path="/export" component={ExportPage} />
-          <Route>
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">Page not found</p>
-            </div>
-          </Route>
-        </Switch>
-      </main>
-    </div>
+    <AppShell>
+      <Switch>
+        <Route path="/" component={DashboardPage} />
+        <Route path="/runs" component={DashboardPage} />
+        <Route path="/new" component={NewAssemblyPage} />
+        <Route path="/assembly/:id" component={AssemblyPage} />
+        <Route path="/features" component={FeaturesPage} />
+        <Route path="/features/:id" component={FeatureDetailPage} />
+        <Route path="/files" component={FilesPage} />
+        <Route path="/health" component={HealthPage} />
+        <Route path="/logs" component={LogsPage} />
+        <Route path="/system" component={SystemLibraryPage} />
+        <Route path="/orchestration" component={OrchestrationLibraryPage} />
+        <Route path="/gates" component={GatesLibraryPage} />
+        <Route path="/policy" component={PolicyLibraryPage} />
+        <Route path="/canonical" component={CanonicalLibraryPage} />
+        <Route path="/standards" component={StandardsLibraryPage} />
+        <Route path="/templates-library" component={TemplatesLibraryPage} />
+        <Route path="/planning-library" component={PlanningLibraryPage} />
+        <Route path="/verification-library" component={VerificationLibraryPage} />
+        <Route path="/kit-library" component={KitLibraryPage} />
+        <Route path="/telemetry-library" component={TelemetryLibraryPage} />
+        <Route path="/audit-library" component={AuditLibraryPage} />
+        <Route path="/maintenance" component={MaintenancePage} />
+        <Route path="/intake-library" component={IntakeLibraryPage} />
+        <Route path="/docs" component={DocInventoryPage} />
+        <Route path="/export" component={ExportPage} />
+        <Route>
+          <div className="flex items-center justify-center h-full">
+            <p className="text-[hsl(var(--muted-foreground))]">Page not found</p>
+          </div>
+        </Route>
+      </Switch>
+    </AppShell>
   );
 }
