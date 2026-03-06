@@ -58,17 +58,31 @@ function extractCodeBlock(text: string): string {
   return text.trim();
 }
 
+interface DocFile {
+  name: string;
+  content: string;
+}
+
 interface KitContext {
   projectName: string;
   specId: string;
   features: Array<{ feature_id: string; name: string; description: string }>;
   roles: Array<{ role_id: string; name: string; description: string }>;
   workflows: Array<{ workflow_id: string; name: string; steps: string[] }>;
-  apiDocs: string;
-  dataDocs: string;
-  designDocs: string;
-  archDocs: string;
-  implDocs: string;
+  workBreakdown: Array<{ unit_id: string; title: string; type: string; deliverables: string[]; scope_refs: string[] }>;
+  requirementsDocs: DocFile[];
+  designDocs: DocFile[];
+  archDocs: DocFile[];
+  implDocs: DocFile[];
+  securityDocs: DocFile[];
+  qualityDocs: DocFile[];
+  opsDocs: DocFile[];
+  dataDocs: DocFile[];
+  apiDocs: DocFile[];
+  analyticsDocs: DocFile[];
+  governanceDocs: DocFile[];
+  releaseDocs: DocFile[];
+  allPages: Array<{ path: string; routePath: string; name: string; role: string; sourceRef?: string }>;
   stackProfile: StackProfile;
   routing: { type_preset?: string; build_target?: string };
 }
@@ -80,21 +94,57 @@ function loadKitContext(runDir: string, plan: BuildPlan): KitContext {
   let spec: any = {};
   try { spec = JSON.parse(fs.readFileSync(path.join(coreDir, "03_canonical_spec.json"), "utf-8")); } catch {}
 
+  let wb: any = {};
+  try { wb = JSON.parse(fs.readFileSync(path.join(coreDir, "04_work_breakdown.json"), "utf-8")); } catch {}
+
   const features = spec.entities?.features ?? [];
   const roles = spec.entities?.roles ?? [];
   const workflows = spec.entities?.workflows ?? [];
+  const workBreakdown = wb.units ?? [];
   const projectName = spec.meta?.project_name ?? spec.run_id ?? "Project";
   const specId = spec.meta?.spec_id ?? "";
   const routing = spec.routing ?? {};
 
-  function readSlotDocs(slotName: string): string {
+  function readSlotDocs(slotName: string): DocFile[] {
     const slotDir = path.join(kitRoot, "10_app", slotName);
-    if (!fs.existsSync(slotDir)) return "";
-    const files = fs.readdirSync(slotDir).filter(f => f.endsWith(".md") && !f.startsWith("00_"));
-    return files.map(f => {
-      try { return fs.readFileSync(path.join(slotDir, f), "utf-8"); } catch { return ""; }
-    }).filter(Boolean).join("\n\n---\n\n");
+    if (!fs.existsSync(slotDir)) return [];
+    const fileNames = fs.readdirSync(slotDir).filter((f: string) => f.endsWith(".md") && !f.startsWith("00_"));
+    return fileNames.map((f: string) => {
+      try {
+        return { name: f, content: fs.readFileSync(path.join(slotDir, f), "utf-8") };
+      } catch { return null; }
+    }).filter(Boolean) as DocFile[];
   }
+
+  const allPages: KitContext["allPages"] = [];
+  for (const slice of plan.slices) {
+    for (const file of slice.files) {
+      if (file.relativePath.startsWith("src/pages/") && file.relativePath.endsWith(".tsx")) {
+        const name = path.basename(file.relativePath, ".tsx");
+        const routePath = name === "Home" ? "/" : name === "NotFound" ? "*" : `/${name.replace(/([A-Z])/g, (m, c, i) => i === 0 ? c.toLowerCase() : `-${c.toLowerCase()}`)}`;
+        allPages.push({ path: file.relativePath, routePath, name, role: file.role, sourceRef: file.sourceRef });
+      }
+    }
+  }
+
+  const totalDocs = {
+    requirements: readSlotDocs("01_requirements"),
+    design: readSlotDocs("02_design"),
+    architecture: readSlotDocs("03_architecture"),
+    implementation: readSlotDocs("04_implementation"),
+    security: readSlotDocs("05_security"),
+    quality: readSlotDocs("06_quality"),
+    ops: readSlotDocs("07_ops"),
+    data: readSlotDocs("08_data"),
+    api: readSlotDocs("09_api_contracts"),
+    release: readSlotDocs("10_release"),
+    governance: readSlotDocs("11_governance"),
+    analytics: readSlotDocs("12_analytics"),
+  };
+
+  console.log(`  [BUILD] Kit context loaded: ${features.length} features, ${roles.length} roles, ${workflows.length} workflows, ${workBreakdown.length} work units`);
+  console.log(`  [BUILD] Doc slots: requirements=${totalDocs.requirements.length}, design=${totalDocs.design.length}, arch=${totalDocs.architecture.length}, impl=${totalDocs.implementation.length}, security=${totalDocs.security.length}, quality=${totalDocs.quality.length}, ops=${totalDocs.ops.length}, data=${totalDocs.data.length}, api=${totalDocs.api.length}, analytics=${totalDocs.analytics.length}, governance=${totalDocs.governance.length}, release=${totalDocs.release.length}`);
+  console.log(`  [BUILD] Pages planned: ${allPages.map(p => p.name).join(", ")}`);
 
   return {
     projectName,
@@ -102,11 +152,20 @@ function loadKitContext(runDir: string, plan: BuildPlan): KitContext {
     features,
     roles,
     workflows,
-    apiDocs: readSlotDocs("09_api_contracts"),
-    dataDocs: readSlotDocs("08_data"),
-    designDocs: readSlotDocs("02_design"),
-    archDocs: readSlotDocs("03_architecture"),
-    implDocs: readSlotDocs("04_implementation"),
+    workBreakdown,
+    requirementsDocs: totalDocs.requirements,
+    designDocs: totalDocs.design,
+    archDocs: totalDocs.architecture,
+    implDocs: totalDocs.implementation,
+    securityDocs: totalDocs.security,
+    qualityDocs: totalDocs.quality,
+    opsDocs: totalDocs.ops,
+    dataDocs: totalDocs.data,
+    apiDocs: totalDocs.api,
+    analyticsDocs: totalDocs.analytics,
+    governanceDocs: totalDocs.governance,
+    releaseDocs: totalDocs.release,
+    allPages,
     stackProfile: plan.stackProfile,
     routing,
   };
@@ -141,6 +200,8 @@ export async function generateRepo(
 
     for (let i = 0; i < slice.files.length; i++) {
       const file = slice.files[i];
+      const method = file.generationMethod === "ai_assisted" ? "AI" : "DET";
+      console.log(`  [BUILD] [${filesGenerated + filesFailed + 1}/${plan.totalFiles}] Generating ${file.relativePath} (${method}, role=${file.role})`);
       const progress: GeneratorProgress = {
         sliceId: slice.sliceId,
         sliceName: slice.name,
@@ -159,18 +220,20 @@ export async function generateRepo(
           file.sizeBytes = Buffer.byteLength(content, "utf-8");
           filesGenerated++;
           progress.status = "generated";
+          console.log(`  [BUILD] [${filesGenerated + filesFailed}/${plan.totalFiles}] ✓ ${file.relativePath} (${file.sizeBytes} bytes)`);
         } else {
           file.status = "failed";
           filesFailed++;
           errors.push(`Failed to generate: ${file.relativePath}`);
           progress.status = "failed";
+          console.log(`  [BUILD] [${filesGenerated + filesFailed}/${plan.totalFiles}] ✗ ${file.relativePath} — generation returned null`);
         }
       } catch (err: any) {
         file.status = "failed";
         filesFailed++;
         const msg = `Error generating ${file.relativePath}: ${err.message}`;
         errors.push(msg);
-        console.log(`  [BUILD] ${msg}`);
+        console.log(`  [BUILD] [${filesGenerated + filesFailed}/${plan.totalFiles}] ✗ ${msg}`);
         progress.status = "failed";
       }
       onProgress?.(progress);
@@ -209,6 +272,12 @@ function generateDeterministic(ctx: KitContext, slice: BuildSlice, file: BuildFi
   if (role === "db_schema") return genDbSchema(ctx, file);
   if (role === "entity_model") return genEntityModel(ctx, file);
 
+  if (p === "src/main.tsx") return genMainTsx(ctx);
+  if (p === "src/pages/NotFound.tsx") return genNotFoundPage();
+  if (p === "src/styles/globals.css") return genGlobalStyles(ctx);
+  if (p === "src/components/ui/LoadingSpinner.tsx") return genLoadingSpinner();
+  if (p === "tests/setup.ts") return genTestSetup(ctx);
+
   if (role === "directory") return null;
 
   return `// ${file.relativePath}\n// Generated by Axion Build Mode\n// Role: ${role}\n`;
@@ -218,17 +287,23 @@ async function generateWithAI(ctx: KitContext, slice: BuildSlice, file: BuildFil
   const systemPrompt = buildSystemPrompt(ctx, slice, file);
   const userPrompt = buildUserPrompt(ctx, slice, file);
 
+  console.log(`    [BUILD-AI] Calling LLM for ${file.relativePath} (role=${file.role})...`);
   const result = await generateCode(
     [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    4096,
+    6144,
     `BUILD_${slice.sliceId}`,
   );
 
-  if (!result) return null;
-  return extractCodeBlock(result);
+  if (!result) {
+    console.log(`    [BUILD-AI] LLM returned empty for ${file.relativePath}`);
+    return null;
+  }
+  const code = extractCodeBlock(result);
+  console.log(`    [BUILD-AI] LLM response received for ${file.relativePath} (${code.length} chars)`);
+  return code;
 }
 
 function buildSystemPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget): string {
@@ -252,11 +327,41 @@ File: ${file.relativePath}
 Role: ${file.role}`;
 }
 
+function joinDocs(docs: DocFile[], maxChars: number): string {
+  let result = "";
+  for (const doc of docs) {
+    const entry = `### ${doc.name}\n${doc.content}\n\n---\n\n`;
+    if (result.length + entry.length > maxChars) {
+      const remaining = maxChars - result.length;
+      if (remaining > 200) result += entry.slice(0, remaining) + "\n[truncated]";
+      break;
+    }
+    result += entry;
+  }
+  return result;
+}
+
+function findRelevantDocs(docs: DocFile[], searchTerms: string[], maxChars: number): string {
+  const scored = docs.map(doc => {
+    const lower = (doc.name + " " + doc.content.slice(0, 500)).toLowerCase();
+    let score = 0;
+    for (const term of searchTerms) {
+      if (lower.includes(term.toLowerCase())) score += 1;
+    }
+    return { doc, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  const relevant = scored.filter(s => s.score > 0).map(s => s.doc);
+  if (relevant.length === 0) return joinDocs(docs.slice(0, 5), maxChars);
+  return joinDocs(relevant, maxChars);
+}
+
 function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget): string {
   const parts: string[] = [];
+  const role = file.role;
 
   parts.push(`Generate the file: ${file.relativePath}`);
-  parts.push(`Role: ${file.role}`);
+  parts.push(`Role: ${role}`);
   parts.push(`Slice: ${slice.name}`);
 
   if (file.sourceRef) {
@@ -264,36 +369,128 @@ function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarg
   }
 
   parts.push("\n--- PROJECT CONTEXT ---");
-  parts.push(`Features: ${ctx.features.map(f => `${f.feature_id}: ${f.name} - ${f.description}`).join("; ")}`);
-  parts.push(`Roles: ${ctx.roles.map(r => `${r.role_id}: ${r.name}`).join("; ")}`);
-
-  if (slice.name === "api_routes" || file.role.includes("route") || file.role.includes("api")) {
-    parts.push("\n--- API CONTRACTS ---");
-    parts.push(ctx.apiDocs.slice(0, 3000));
+  parts.push(`Project: ${ctx.projectName}`);
+  parts.push(`Features: ${ctx.features.map(f => `${f.feature_id}: ${f.name} — ${f.description}`).join("\n  ")}`);
+  parts.push(`Roles: ${ctx.roles.map(r => `${r.role_id}: ${r.name}${r.description ? " — " + r.description : ""}`).join("; ")}`);
+  if (ctx.workflows.length > 0) {
+    parts.push(`Workflows: ${ctx.workflows.map(w => `${w.workflow_id}: ${w.name} (${w.steps.length} steps: ${w.steps.join(" → ")})`).join("\n  ")}`);
   }
 
-  if (slice.name === "data_layer" || file.role.includes("model") || file.role.includes("schema") || file.role.includes("data")) {
-    parts.push("\n--- DATA MODELS ---");
-    parts.push(ctx.dataDocs.slice(0, 3000));
-  }
+  const feat = file.sourceRef ? ctx.features.find(f => f.feature_id === file.sourceRef) : null;
+  const featureTerms = feat ? [feat.name, feat.feature_id, ...feat.description.split(/\s+/).filter(w => w.length > 4)] : [];
 
-  if (slice.name === "components" || file.role.includes("component") || file.role.includes("page")) {
+  if (role === "app_entry") {
+    parts.push("\n--- ROUTING MANIFEST ---");
+    parts.push("Generate React Router routes for ALL of the following pages:");
+    for (const page of ctx.allPages) {
+      parts.push(`  <Route path="${page.routePath}" element={<${page.name} />} />`);
+    }
+    parts.push("\nImport all page components. Use <Routes> from react-router-dom.");
+    parts.push("Wrap authenticated routes in a layout component (AppLayout) with Header and Sidebar.");
+    parts.push("Login and Register pages should NOT be wrapped in the layout.");
+    parts.push("\n--- FEATURES ---");
+    parts.push(ctx.features.map(f => `- ${f.name}: ${f.description}`).join("\n"));
+    parts.push("\n--- DESIGN SYSTEM ---");
+    parts.push(findRelevantDocs(ctx.designDocs, ["design system", "navigation", "layout", "DSYS", "IXD"], 3000));
+  } else if (role === "feature_page" || role === "feature_component") {
+    if (feat) {
+      parts.push(`\n--- TARGET FEATURE ---`);
+      parts.push(`Feature: ${feat.name} (${feat.feature_id})`);
+      parts.push(`Description: ${feat.description}`);
+      const relatedWU = ctx.workBreakdown.filter(wu => wu.scope_refs?.some(ref => ref.includes(feat.feature_id)));
+      if (relatedWU.length > 0) {
+        parts.push(`Work Units: ${relatedWU.map(wu => `${wu.unit_id}: ${wu.title} — deliverables: ${wu.deliverables.join(", ")}`).join("\n  ")}`);
+      }
+    }
     parts.push("\n--- DESIGN SPECS ---");
-    parts.push(ctx.designDocs.slice(0, 2000));
-    parts.push("\n--- ARCHITECTURE ---");
-    parts.push(ctx.archDocs.slice(0, 1500));
-  }
-
-  if (slice.name === "integration" || file.role.includes("hook") || file.role.includes("client") || file.role.includes("util")) {
-    parts.push("\n--- ARCHITECTURE ---");
-    parts.push(ctx.archDocs.slice(0, 2000));
+    parts.push(findRelevantDocs(ctx.designDocs, featureTerms.length > 0 ? featureTerms : ["design", "UI", "component"], 4000));
+    parts.push("\n--- IMPLEMENTATION GUIDANCE ---");
+    parts.push(findRelevantDocs(ctx.implDocs, featureTerms.length > 0 ? featureTerms : ["frontend", "component", "page"], 3000));
+    parts.push("\n--- REQUIREMENTS ---");
+    parts.push(findRelevantDocs(ctx.requirementsDocs, featureTerms.length > 0 ? featureTerms : ["requirement", "user"], 2000));
+    if (role === "feature_page") {
+      parts.push("\nGenerate a full React page component with proper state management, data fetching hooks, and UI rendering.");
+      parts.push("Use the UI components from src/components/ui/ (Button, Card, Input, Modal, Table).");
+      parts.push("Import the feature component from src/components/features/ if needed.");
+    }
+  } else if (role === "auth_page") {
+    parts.push("\n--- SECURITY & AUTH ---");
+    parts.push(findRelevantDocs(ctx.securityDocs, ["auth", "login", "IAM", "session", "token", "permission"], 5000));
+    parts.push("\n--- ROLES & PERMISSIONS ---");
+    parts.push(`Roles: ${ctx.roles.map(r => `${r.role_id}: ${r.name}${r.description ? " — " + r.description : ""}`).join("\n  ")}`);
+    parts.push("\n--- DESIGN ---");
+    parts.push(findRelevantDocs(ctx.designDocs, ["login", "auth", "form", "sign"], 2000));
+    if (file.relativePath.includes("Login")) {
+      parts.push("\nGenerate a login page with email/password form, validation, error handling, and a link to the register page.");
+    } else {
+      parts.push("\nGenerate a registration page with name/email/password fields, validation, terms acceptance, and a link to the login page.");
+    }
+  } else if (role === "settings_page") {
+    parts.push("\n--- SECURITY & GOVERNANCE ---");
+    parts.push(findRelevantDocs(ctx.securityDocs, ["settings", "admin", "config", "permission"], 3000));
+    parts.push(findRelevantDocs(ctx.governanceDocs, ["governance", "compliance", "policy"], 2000));
+    parts.push("\n--- DESIGN ---");
+    parts.push(findRelevantDocs(ctx.designDocs, ["settings", "admin", "configuration"], 2000));
+  } else if (role === "layout_component") {
+    parts.push("\n--- NAVIGATION & LAYOUT ---");
+    const pageNames = ctx.allPages.filter(p => p.role !== "error_page").map(p => `${p.name} (${p.routePath})`);
+    parts.push(`Pages to navigate to: ${pageNames.join(", ")}`);
+    parts.push("\n--- DESIGN SYSTEM ---");
+    parts.push(findRelevantDocs(ctx.designDocs, ["navigation", "layout", "sidebar", "header", "design system", "DSYS", "IXD"], 4000));
+    parts.push("\n--- REQUIREMENTS ---");
+    parts.push(findRelevantDocs(ctx.requirementsDocs, ["navigation", "layout", "menu", "workflow"], 2000));
+  } else if (role === "ui_component") {
+    parts.push("\n--- DESIGN SYSTEM ---");
+    parts.push(findRelevantDocs(ctx.designDocs, ["design system", "component", "DSYS", "button", "card", "input", "modal", "table", "accessibility", "A11Y"], 5000));
+    parts.push("\nGenerate a reusable, well-typed React component with proper props interface, Tailwind CSS styling, and accessibility attributes.");
+  } else if (role === "api_route" || role === "route_index" || role === "workflow_middleware" || role === "middleware") {
     parts.push("\n--- API CONTRACTS ---");
-    parts.push(ctx.apiDocs.slice(0, 2000));
-  }
-
-  if (slice.name === "tests" || file.role.includes("test")) {
+    parts.push(findRelevantDocs(ctx.apiDocs, featureTerms.length > 0 ? featureTerms : ["API", "endpoint", "route", "REST"], 5000));
+    parts.push("\n--- DATA MODELS ---");
+    parts.push(findRelevantDocs(ctx.dataDocs, featureTerms.length > 0 ? featureTerms : ["data", "schema", "model"], 2000));
+    if (role === "workflow_middleware") {
+      const wf = ctx.workflows.find(w => w.workflow_id === file.sourceRef);
+      if (wf) {
+        parts.push(`\n--- WORKFLOW ---`);
+        parts.push(`Workflow: ${wf.name} (${wf.workflow_id})`);
+        parts.push(`Steps: ${wf.steps.join(" → ")}`);
+      }
+    }
+    parts.push("\n--- SECURITY ---");
+    parts.push(findRelevantDocs(ctx.securityDocs, ["auth", "middleware", "permission", "rate limit"], 2000));
+  } else if (role === "db_schema" || role === "entity_model" || role === "model_index") {
+    parts.push("\n--- DATA MODELS ---");
+    parts.push(findRelevantDocs(ctx.dataDocs, featureTerms.length > 0 ? featureTerms : ["data", "schema", "model", "entity"], 5000));
+    parts.push("\n--- REQUIREMENTS ---");
+    parts.push(findRelevantDocs(ctx.requirementsDocs, featureTerms.length > 0 ? featureTerms : ["data", "requirement"], 2000));
+  } else if (role === "test" || role === "test_setup") {
     parts.push("\n--- API CONTRACTS ---");
-    parts.push(ctx.apiDocs.slice(0, 2000));
+    parts.push(findRelevantDocs(ctx.apiDocs, featureTerms.length > 0 ? featureTerms : ["API", "endpoint"], 3000));
+    parts.push("\n--- QUALITY ---");
+    parts.push(findRelevantDocs(ctx.qualityDocs, ["test", "quality", "coverage", "assertion"], 2000));
+    if (feat) {
+      parts.push(`\nWrite comprehensive tests for the ${feat.name} feature including happy path, error cases, and edge cases.`);
+    }
+  } else if (role === "hook" || role === "api_client" || role === "utilities") {
+    parts.push("\n--- ARCHITECTURE ---");
+    parts.push(findRelevantDocs(ctx.archDocs, featureTerms.length > 0 ? featureTerms : ["architecture", "service", "hook", "client"], 3000));
+    parts.push("\n--- API CONTRACTS ---");
+    parts.push(findRelevantDocs(ctx.apiDocs, featureTerms.length > 0 ? featureTerms : ["API", "endpoint", "contract"], 3000));
+  } else if (role === "page") {
+    parts.push("\n--- DESIGN ---");
+    parts.push(findRelevantDocs(ctx.designDocs, ["home", "landing", "overview", "navigation"], 3000));
+    parts.push("\n--- REQUIREMENTS ---");
+    parts.push(findRelevantDocs(ctx.requirementsDocs, ["overview", "home", "landing"], 2000));
+    parts.push("\nThis is the landing/home page. It should provide an overview of the application and quick navigation to key features.");
+    const featureLinks = ctx.allPages.filter(p => p.role !== "error_page" && p.name !== "Home" && p.name !== "Login" && p.name !== "Register");
+    if (featureLinks.length > 0) {
+      parts.push(`Feature pages to link to: ${featureLinks.map(p => `${p.name} (${p.routePath})`).join(", ")}`);
+    }
+  } else {
+    parts.push("\n--- ARCHITECTURE ---");
+    parts.push(findRelevantDocs(ctx.archDocs, ["architecture"], 2000));
+    parts.push("\n--- IMPLEMENTATION ---");
+    parts.push(findRelevantDocs(ctx.implDocs, ["implementation"], 2000));
   }
 
   return parts.join("\n");
@@ -307,6 +504,7 @@ function genPackageJson(ctx: KitContext): string {
   if (ctx.stackProfile.framework.includes("react") || ctx.stackProfile.framework.includes("next")) {
     deps["react"] = "^18.2.0";
     deps["react-dom"] = "^18.2.0";
+    deps["react-router-dom"] = "^6.20.0";
     devDeps["@types/react"] = "^18.2.0";
     devDeps["@types/react-dom"] = "^18.2.0";
   }
@@ -644,4 +842,117 @@ export interface Update${name}Input {
   data?: Record<string, unknown>;
 }
 `;
+}
+
+function genMainTsx(ctx: KitContext): string {
+  if (ctx.stackProfile.framework.includes("react")) {
+    return `import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
+import "./styles/globals.css";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+);
+`;
+  }
+  return `import App from "./App";\n\nconst app = new App();\napp.start();\n`;
+}
+
+function genNotFoundPage(): string {
+  return `import { Link } from "react-router-dom";
+
+export default function NotFound() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <h1 className="text-6xl font-bold text-gray-900">404</h1>
+        <p className="mt-4 text-xl text-gray-600">Page not found</p>
+        <p className="mt-2 text-gray-500">The page you're looking for doesn't exist or has been moved.</p>
+        <Link
+          to="/"
+          className="mt-6 inline-block rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+        >
+          Go Home
+        </Link>
+      </div>
+    </div>
+  );
+}
+`;
+}
+
+function genGlobalStyles(ctx: KitContext): string {
+  if (ctx.stackProfile.cssFramework?.includes("tailwind")) {
+    return `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 59 130 246;
+    --color-secondary: 100 116 139;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors;
+  }
+
+  .btn-secondary {
+    @apply rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-colors;
+  }
+
+  .input-field {
+    @apply block w-full rounded-lg border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm;
+  }
+
+  .card {
+    @apply rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-200;
+  }
+}
+`;
+  }
+  return `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #f9fafb; color: #111827; }
+`;
+}
+
+function genLoadingSpinner(): string {
+  return `interface LoadingSpinnerProps {
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}
+
+export default function LoadingSpinner({ size = "md", className = "" }: LoadingSpinnerProps) {
+  const sizeClasses = { sm: "h-4 w-4", md: "h-8 w-8", lg: "h-12 w-12" };
+  return (
+    <div className={\`flex items-center justify-center \${className}\`}>
+      <div className={\`\${sizeClasses[size]} animate-spin rounded-full border-2 border-gray-300 border-t-blue-600\`} />
+    </div>
+  );
+}
+`;
+}
+
+function genTestSetup(ctx: KitContext): string {
+  if (ctx.stackProfile.testFramework?.includes("vitest")) {
+    return `import { afterEach } from "vitest";
+
+afterEach(() => {
+  // Cleanup after each test
+});
+`;
+  }
+  return `// Test setup\n`;
 }

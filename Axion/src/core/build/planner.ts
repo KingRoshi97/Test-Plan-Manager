@@ -381,7 +381,47 @@ function buildApiRouteFiles(
     status: "pending",
   });
 
-  return files;
+  files.push({
+    relativePath: "src/server/middleware/validation.ts",
+    role: "middleware",
+    generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
+  if (workflows) {
+    for (const wf of workflows) {
+      if (wf.steps && wf.steps.length > 2) {
+        const slug = wf.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        files.push({
+          relativePath: `src/server/middleware/${slug}.ts`,
+          role: "workflow_middleware",
+          sourceRef: wf.workflow_id,
+          generationMethod: "ai_assisted",
+          status: "pending",
+        });
+      }
+    }
+  }
+
+  return dedupeFiles(files);
+}
+
+function classifyFeature(feat: FeatureEntry): string {
+  const lower = (feat.name + " " + feat.description).toLowerCase();
+  if (lower.includes("auth") || lower.includes("login") || lower.includes("register") || lower.includes("sign in") || lower.includes("sign up")) return "auth";
+  if (lower.includes("dashboard") || lower.includes("overview") || lower.includes("home screen")) return "dashboard";
+  if (lower.includes("settings") || lower.includes("admin") || lower.includes("configuration") || lower.includes("preferences")) return "settings";
+  if (lower.includes("analytics") || lower.includes("report") || lower.includes("metrics")) return "analytics";
+  if (lower.includes("profile") || lower.includes("account")) return "profile";
+  return "feature";
+}
+
+function featureToPageSlug(feat: FeatureEntry): string {
+  return feat.name.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "");
+}
+
+function featureToRouteSlug(feat: FeatureEntry): string {
+  return feat.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 function buildComponentFiles(
@@ -412,6 +452,54 @@ function buildComponentFiles(
     status: "pending",
   });
 
+  files.push({
+    relativePath: "src/components/ui/Button.tsx",
+    role: "ui_component",
+    generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/components/ui/Card.tsx",
+    role: "ui_component",
+    generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/components/ui/Input.tsx",
+    role: "ui_component",
+    generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/components/ui/Modal.tsx",
+    role: "ui_component",
+    generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/components/ui/Table.tsx",
+    role: "ui_component",
+    generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/components/ui/LoadingSpinner.tsx",
+    role: "ui_component",
+    generationMethod: "deterministic",
+    status: "pending",
+  });
+
+  const hasAuth = features.some(f => classifyFeature(f) === "auth");
+  const hasDashboard = features.some(f => classifyFeature(f) === "dashboard");
+  const hasSettings = features.some(f => classifyFeature(f) === "settings");
+  const hasAnalytics = features.some(f => classifyFeature(f) === "analytics");
+  const hasProfile = features.some(f => classifyFeature(f) === "profile");
+
   if (features) {
     for (const feat of features) {
       const slug = feat.name.replace(/\s+/g, "");
@@ -422,13 +510,98 @@ function buildComponentFiles(
         generationMethod: "ai_assisted",
         status: "pending",
       });
+
+      const category = classifyFeature(feat);
+
+      if (category === "auth") {
+        if (!files.some(f => f.relativePath === "src/pages/Login.tsx")) {
+          files.push({
+            relativePath: "src/pages/Login.tsx",
+            role: "auth_page",
+            sourceRef: feat.feature_id,
+            generationMethod: "ai_assisted",
+            status: "pending",
+          });
+          files.push({
+            relativePath: "src/pages/Register.tsx",
+            role: "auth_page",
+            sourceRef: feat.feature_id,
+            generationMethod: "ai_assisted",
+            status: "pending",
+          });
+        }
+      } else if (category === "dashboard") {
+        files.push({
+          relativePath: "src/pages/Dashboard.tsx",
+          role: "feature_page",
+          sourceRef: feat.feature_id,
+          generationMethod: "ai_assisted",
+          status: "pending",
+        });
+      } else if (category === "settings") {
+        files.push({
+          relativePath: "src/pages/Settings.tsx",
+          role: "settings_page",
+          sourceRef: feat.feature_id,
+          generationMethod: "ai_assisted",
+          status: "pending",
+        });
+      } else if (category === "analytics") {
+        files.push({
+          relativePath: "src/pages/Analytics.tsx",
+          role: "feature_page",
+          sourceRef: feat.feature_id,
+          generationMethod: "ai_assisted",
+          status: "pending",
+        });
+      } else if (category === "profile") {
+        files.push({
+          relativePath: "src/pages/Profile.tsx",
+          role: "feature_page",
+          sourceRef: feat.feature_id,
+          generationMethod: "ai_assisted",
+          status: "pending",
+        });
+      } else {
+        const pageSlug = featureToPageSlug(feat);
+        files.push({
+          relativePath: `src/pages/${pageSlug}.tsx`,
+          role: "feature_page",
+          sourceRef: feat.feature_id,
+          generationMethod: "ai_assisted",
+          status: "pending",
+        });
+      }
     }
+  }
+
+  if (!hasDashboard && !files.some(f => f.relativePath === "src/pages/Dashboard.tsx")) {
+    files.push({
+      relativePath: "src/pages/Dashboard.tsx",
+      role: "feature_page",
+      generationMethod: "ai_assisted",
+      status: "pending",
+    });
   }
 
   files.push({
     relativePath: "src/pages/Home.tsx",
     role: "page",
     generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/pages/NotFound.tsx",
+    role: "error_page",
+    generationMethod: "deterministic",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/styles/globals.css",
+    role: "styles",
+    generationMethod: "deterministic",
     status: "pending",
   });
 
@@ -446,7 +619,7 @@ function buildComponentFiles(
     status: "pending",
   });
 
-  return files;
+  return dedupeFiles(files);
 }
 
 function buildIntegrationFiles(
