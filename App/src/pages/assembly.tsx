@@ -1404,7 +1404,7 @@ export default function AssemblyPage() {
           )}
 
           {activeTab === "build" && (
-            <BuildTab assemblyId={Number(id)} runId={assembly.runId} pipelineStatus={assembly.status} />
+            <BuildTab assemblyId={Number(id)} runId={assembly.runId} pipelineStatus={assembly.status} onRerunPipeline={() => runMutation.mutate()} isRerunning={runMutation.isPending} />
           )}
 
           {activeTab === "config" && (

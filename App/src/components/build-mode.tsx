@@ -3,13 +3,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../lib/queryClient";
 import {
   Play, Download, Loader2, CheckCircle, XCircle, AlertTriangle,
-  Package, FileCode, ChevronRight, RefreshCw, Clock, Zap
+  Package, FileCode, ChevronRight, RefreshCw, Clock, Zap, RotateCcw
 } from "lucide-react";
 
 interface BuildTabProps {
   assemblyId: number;
   runId: string | null;
   pipelineStatus: string;
+  onRerunPipeline?: () => void;
+  isRerunning?: boolean;
 }
 
 type BuildState = "not_requested" | "requested" | "approved" | "building" | "verifying" | "failed" | "passed" | "exported";
@@ -246,7 +248,7 @@ function FailureDisplay({ manifest }: { manifest: any }) {
   );
 }
 
-export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
+export function BuildTab({ assemblyId, runId, pipelineStatus, onRerunPipeline, isRerunning }: BuildTabProps) {
   const queryClient = useQueryClient();
   const [selectedMode, setSelectedMode] = useState<"build_repo" | "build_and_export">("build_and_export");
 
@@ -362,18 +364,41 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
             </button>
           </div>
 
-          <button
-            onClick={() => buildMutation.mutate()}
-            disabled={buildMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {buildMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Play className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => buildMutation.mutate()}
+              disabled={buildMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {buildMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Play className="w-4 h-4" />
+              )}
+              Start Build
+            </button>
+
+            {onRerunPipeline && (
+              <button
+                onClick={onRerunPipeline}
+                disabled={isRerunning}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--muted))] disabled:opacity-50 transition-colors"
+              >
+                {isRerunning ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-4 h-4" />
+                )}
+                Re-run Pipeline
+              </button>
             )}
-            Start Build
-          </button>
+          </div>
+
+          {onRerunPipeline && (
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              Re-run Pipeline will re-execute the full pipeline to generate a fresh Agent Kit before building.
+            </p>
+          )}
 
           {buildMutation.isError && (
             <p className="text-xs text-red-500">
@@ -416,14 +441,30 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
       {isFailed && (
         <div className="space-y-4">
           <FailureDisplay manifest={buildStatus?.manifest} />
-          <button
-            onClick={() => buildMutation.mutate()}
-            disabled={buildMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--muted))] transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Retry Build
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => buildMutation.mutate()}
+              disabled={buildMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--muted))] transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Retry Build
+            </button>
+            {onRerunPipeline && (
+              <button
+                onClick={onRerunPipeline}
+                disabled={isRerunning}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-700/50 text-amber-300 text-sm font-medium hover:bg-amber-900/20 disabled:opacity-50 transition-colors"
+              >
+                {isRerunning ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-4 h-4" />
+                )}
+                Re-run Pipeline
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -469,19 +510,35 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
             </a>
           )}
 
-          {state === "passed" && (
-            <button
-              onClick={() => {
-                setSelectedMode("build_and_export");
-                buildMutation.mutate();
-              }}
-              disabled={buildMutation.isPending}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--muted))] transition-colors"
-            >
-              <Package className="w-4 h-4" />
-              Export as Zip
-            </button>
-          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            {state === "passed" && (
+              <button
+                onClick={() => {
+                  setSelectedMode("build_and_export");
+                  buildMutation.mutate();
+                }}
+                disabled={buildMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--muted))] transition-colors"
+              >
+                <Package className="w-4 h-4" />
+                Export as Zip
+              </button>
+            )}
+            {onRerunPipeline && (
+              <button
+                onClick={onRerunPipeline}
+                disabled={isRerunning}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-700/50 text-amber-300 text-sm font-medium hover:bg-amber-900/20 disabled:opacity-50 transition-colors"
+              >
+                {isRerunning ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-4 h-4" />
+                )}
+                Re-run Pipeline
+              </button>
+            )}
+          </div>
         </div>
       )}
 
