@@ -113,7 +113,9 @@ function KnowledgeSubgroup() {
     { href: "/intake-library", label: "Intake", icon: Library },
   ];
 
-  const anyActive = libraryLinks.some(({ href }) => location.startsWith(href));
+  const dashboardActive = location === "/knowledge";
+  const anySubActive = libraryLinks.some(({ href }) => location.startsWith(href));
+  const anyActive = dashboardActive || anySubActive;
   const [open, setOpen] = useState(anyActive);
 
   useEffect(() => {
@@ -122,20 +124,31 @@ function KnowledgeSubgroup() {
 
   return (
     <div>
-      <button
-        onClick={() => setOpen(!open)}
+      <div
         className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] transition-all duration-150 ${
-          anyActive && !open
+          dashboardActive
             ? "nav-item-active font-medium"
-            : "text-[hsl(var(--muted-foreground))] nav-item-hover"
+            : anySubActive && !open
+              ? "nav-item-active font-medium"
+              : "text-[hsl(var(--muted-foreground))] nav-item-hover"
         }`}
       >
-        <BookOpen className="w-4 h-4 shrink-0" />
-        <span className="truncate flex-1 text-left">Knowledge Library</span>
-        <ChevronDown
-          className={`w-3 h-3 transition-transform duration-200 ${open ? "" : "-rotate-90"}`}
-        />
-      </button>
+        <button
+          onClick={() => setLocation("/knowledge")}
+          className="flex items-center gap-2.5 flex-1 text-left min-w-0"
+        >
+          <BookOpen className="w-4 h-4 shrink-0" />
+          <span className="truncate flex-1">Knowledge Library</span>
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+          className="p-0.5 rounded hover:bg-[hsl(var(--muted))] transition-colors"
+        >
+          <ChevronDown
+            className={`w-3 h-3 transition-transform duration-200 ${open ? "" : "-rotate-90"}`}
+          />
+        </button>
+      </div>
       {open && (
         <nav className="ml-4 mt-0.5 space-y-0.5 border-l border-[hsl(var(--border))]">
           {libraryLinks.map(({ href, label }) => {

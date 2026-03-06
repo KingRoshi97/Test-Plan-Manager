@@ -29,9 +29,24 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 **Grouped Sidebar** (`App/src/components/app-sidebar.tsx`):
 - AXION branding header with gradient AX logo
 - 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts), Intelligence (Features, Doc Inventory, Knowledge Library with 13 sub-items), System (Health, Logs, Maintenance), Output (Export)
+- Knowledge Library label is a clickable nav link → `/knowledge` (Upgrade Matrix Dashboard); chevron toggle separately expands/collapses sub-library list
 - Knowledge Library sub-group auto-expands when any library route is active
 - Live badge counts (active runs count with cyan badge)
 - Active item uses left-border glow via .nav-item-active
+
+**Knowledge Library Upgrade Matrix Dashboard** (`App/src/pages/knowledge-dashboard.tsx`):
+- Route: `/knowledge` — accessed by clicking "Knowledge Library" in sidebar
+- Hero section with overall progress bar (artifact completion %)
+- 6 MetricCards: Libraries, Avg Score, Critical count, Phase 1/2/3 counts
+- 3-phase timeline showing progress per phase with library chips
+- All Libraries table: sortable by phase/order, showing score bar (current→target), phase badge, priority chip, maturity tier, artifact completion, status dropdown
+- Library names link to existing library detail pages
+- Phase detail panels (expandable): target outcomes, expected results, per-library artifact checklists with checkboxes
+- Fastest Lift section: top 5 highest-ROI libraries with rationale
+- Hard Blockers section: 4 cross-library blockers to solve early
+- Cross-Phase Rules section: 5 governance rules (ALG-1 through ALG-5)
+- Data: `App/src/data/upgrade-matrix.ts` — full structured dataset from PDF (16 libraries, 3 phases, artifacts, scores, blockers, tiers)
+- Progress persistence: `App/src/hooks/use-upgrade-progress.ts` — localStorage-backed hook for artifact checkmarks and library status overrides
 
 **Premium UI Components** (`App/src/components/ui/`):
 - `glass-panel.tsx` — GlassPanel container with configurable glow color (cyan/green/amber/red/violet/none), solid or blur variants

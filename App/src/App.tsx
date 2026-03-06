@@ -25,12 +25,14 @@ import KitLibraryPage from "./pages/kit-library";
 import TelemetryLibraryPage from "./pages/telemetry-library";
 import AuditLibraryPage from "./pages/audit-library";
 import MaintenancePage from "./pages/maintenance";
+import KnowledgeDashboardPage from "./pages/knowledge-dashboard";
 
 export default function App() {
   return (
     <AppShell>
       <Switch>
         <Route path="/" component={DashboardPage} />
+        <Route path="/knowledge" component={KnowledgeDashboardPage} />
         <Route path="/runs" component={RunsPage} />
         <Route path="/new" component={NewAssemblyPage} />
         <Route path="/assembly/:id" component={AssemblyPage} />
