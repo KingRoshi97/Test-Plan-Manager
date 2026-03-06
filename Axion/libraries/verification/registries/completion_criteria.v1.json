@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "criteria_id": "completion_criteria.v1",
+    "unit_done": {
+      "requires": [
+        { "kind": "proof", "ref": "proof:required_for_work_item" }
+      ]
+    },
+    "run_done": {
+      "requires": [
+        { "kind": "gate_pass", "ref": "G1_INTAKE_VALIDITY" },
+        { "kind": "gate_pass", "ref": "G2_CANONICAL_INTEGRITY" },
+        { "kind": "gate_pass", "ref": "G3_STANDARDS_RESOLVED" },
+        { "kind": "gate_pass", "ref": "G4_TEMPLATE_SELECTION" },
+        { "kind": "gate_pass", "ref": "G5_TEMPLATE_COMPLETENESS" },
+        { "kind": "gate_pass", "ref": "G6_PLAN_COVERAGE" },
+        { "kind": "gate_pass", "ref": "G7_VERIFICATION" },
+        { "kind": "artifact", "ref": "KIT_MANIFEST" },
+        { "kind": "artifact", "ref": "PROOF_LEDGER" }
+      ]
+    }
+}

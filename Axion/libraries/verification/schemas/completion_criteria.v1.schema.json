@@ -1,0 +1,50 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "completion_criteria.v1",
+    "type": "object",
+    "required": ["criteria_id", "schema_version", "unit_done", "run_done"],
+    "properties": {
+      "criteria_id": { "type": "string", "minLength": 3 },
+      "schema_version": { "type": "string", "minLength": 1 },
+      "unit_done": {
+        "type": "object",
+        "required": ["requires"],
+        "properties": {
+          "requires": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/requirement" }
+          }
+        },
+        "additionalProperties": false
+      },
+      "run_done": {
+        "type": "object",
+        "required": ["requires"],
+        "properties": {
+          "requires": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/requirement" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "$defs": {
+      "requirement": {
+        "type": "object",
+        "required": ["kind", "ref"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["proof", "artifact", "gate_pass", "manual_attestation"] },
+          "ref": { "type": "string", "minLength": 2 },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "additionalProperties": false
+}

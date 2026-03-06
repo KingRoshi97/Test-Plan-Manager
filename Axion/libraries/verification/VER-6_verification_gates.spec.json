@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0.0",
+  "gate_id": "G7_VERIFICATION",
+  "description": "Composite verification gate — passes when all VER-GATE sub-gates pass.",
+  "sub_gates": [
+    {
+      "gate_id": "VER-GATE-01",
+      "name": "Proof Types Valid",
+      "inputs": ["proof_types_registry", "proof_types_schema"],
+      "pass_condition": "Registry validates against schema; proof_type values are from closed enum; registry is pinned.",
+      "evidence": ["schema_validation_result", "pinning_confirmation"]
+    },
+    {
+      "gate_id": "VER-GATE-02",
+      "name": "Proof Ledger Valid",
+      "inputs": ["proof_ledger", "proof_ledger_schema", "proof_types_registry"],
+      "pass_condition": "Ledger validates against schema; all proof_type refs exist in registry; evidence_refs present; append-only integrity.",
+      "evidence": ["schema_validation_result", "proof_type_cross_ref", "append_only_check"]
+    },
+    {
+      "gate_id": "VER-GATE-03",
+      "name": "Command Runs Tracked",
+      "inputs": ["command_run_log", "command_run_schema"],
+      "pass_condition": "Log validates; all non-skipped runs have logs_ref; deterministic ordering applied.",
+      "evidence": ["schema_validation_result", "logs_ref_presence", "ordering_check"]
+    },
+    {
+      "gate_id": "VER-GATE-04",
+      "name": "Completion Criteria Met",
+      "inputs": ["completion_criteria", "proof_ledger", "gate_reports"],
+      "pass_condition": "unit_done and run_done requirements all satisfied.",
+      "evidence": ["unit_done_evaluation", "run_done_evaluation", "missing_requirements"]
+    },
+    {
+      "gate_id": "VER-GATE-05",
+      "name": "Command Policy Enforced",
+      "inputs": ["command_run_log", "verification_command_policy"],
+      "pass_condition": "No command runs violated deny rules; require_approval decisions recorded.",
+      "evidence": ["deny_violations", "approval_decisions"]
+    },
+    {
+      "gate_id": "VER-GATE-06",
+      "name": "Evidence Coverage",
+      "inputs": ["proof_ledger", "acceptance_map"],
+      "pass_condition": "All required proofs have non-empty evidence_refs with valid paths.",
+      "evidence": ["coverage_ratio", "missing_evidence"]
+    },
+    {
+      "gate_id": "VER-GATE-07",
+      "name": "Determinism Check",
+      "inputs": ["all_verification_artifacts"],
+      "pass_condition": "All artifacts deterministically ordered; registries pinned; no mutations detected.",
+      "evidence": ["pinning_check", "ordering_check", "mutation_check"]
+    }
+  ]
+}

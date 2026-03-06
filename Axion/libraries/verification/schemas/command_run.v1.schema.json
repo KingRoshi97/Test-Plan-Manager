@@ -1,0 +1,50 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "command_run.v1",
+    "type": "object",
+    "required": [
+      "command_run_id",
+      "run_id",
+      "command",
+      "cwd",
+      "adapter_profile_id",
+      "status",
+      "exit_code",
+      "started_at",
+      "ended_at",
+      "logs_ref"
+    ],
+    "properties": {
+      "command_run_id": { "type": "string", "pattern": "^CMD-[A-Z0-9]{6,}$" },
+      "run_id": { "type": "string" },
+      "command": { "type": "string", "minLength": 1 },
+      "cwd": { "type": "string", "minLength": 1 },
+      "adapter_profile_id": { "type": "string" },
+      "status": { "type": "string", "enum": ["succeeded", "failed", "skipped"] },
+      "exit_code": { "type": "integer" },
+      "started_at": { "type": "string", "format": "date-time" },
+      "ended_at": { "type": "string", "format": "date-time" },
+      "stdout_ref": { "$ref": "#/$defs/ref" },
+      "stderr_ref": { "$ref": "#/$defs/ref" },
+      "logs_ref": { "$ref": "#/$defs/ref" },
+      "artifacts_produced": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/ref" }
+      }
+    },
+
+    "$defs": {
+      "ref": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string" },
+          "hash": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "additionalProperties": false
+}

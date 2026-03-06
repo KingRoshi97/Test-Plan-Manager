@@ -1,0 +1,36 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "proof_types.v1",
+    "types": [
+      {
+        "proof_type": "command_run",
+        "description": "Evidence that a command was executed with recorded outputs/log refs.",
+        "required_fields": ["command_run_id", "command", "exit_code", "logs_ref"]
+      },
+      {
+        "proof_type": "test_suite",
+        "description": "Evidence that a test suite ran and produced results.",
+        "required_fields": ["suite", "passed", "failed", "results_ref"]
+      },
+      {
+        "proof_type": "lint_check",
+        "description": "Evidence that lint/format checks ran.",
+        "required_fields": ["tool", "status", "logs_ref"]
+      },
+      {
+        "proof_type": "build_artifact",
+        "description": "Evidence that a build produced an artifact.",
+        "required_fields": ["artifact_kind", "artifact_ref"]
+      },
+      {
+        "proof_type": "security_scan",
+        "description": "Evidence that a security scan ran (SAST/DAST/deps).",
+        "required_fields": ["scan_type", "status", "report_ref"]
+      },
+      {
+        "proof_type": "manual_attestation",
+        "description": "Human attestation/approval for a requirement.",
+        "required_fields": ["actor_id", "role", "statement", "expires_at"]
+      }
+    ]
+}

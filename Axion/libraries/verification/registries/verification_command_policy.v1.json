@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0.0",
+  "policy_id": "VERPOL-BASE01",
+  "rules": [
+    {
+      "rule_id": "VRULE-ALLOW-NPM-TEST",
+      "match": {
+        "pattern": "^npm\\s+test(\\s+.*)?$",
+        "profiles": ["PROFILE-API", "PROFILE-WEB", "PROFILE-MOBILE"],
+        "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"],
+        "adapter_types": ["local", "replit", "ci"]
+      },
+      "decision": { "outcome": "allow", "reason": "Standard test execution." }
+    },
+    {
+      "rule_id": "VRULE-ALLOW-NPM-LINT",
+      "match": {
+        "pattern": "^npm\\s+run\\s+(lint|format)(\\s+.*)?$",
+        "profiles": ["PROFILE-API", "PROFILE-WEB", "PROFILE-MOBILE"],
+        "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"],
+        "adapter_types": ["local", "replit", "ci"]
+      },
+      "decision": { "outcome": "allow", "reason": "Lint/format verification." }
+    },
+    {
+      "rule_id": "VRULE-DENY-DESTRUCTIVE",
+      "match": {
+        "pattern": "^(rm\\s+-rf|del\\s+/s|shutdown|reboot|mkfs).*",
+        "profiles": ["PROFILE-API", "PROFILE-WEB", "PROFILE-MOBILE", "PROFILE-INFRA", "PROFILE-DATA", "PROFILE-MIXED"],
+        "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"],
+        "adapter_types": ["local", "replit", "ci", "container"]
+      },
+      "decision": { "outcome": "deny", "reason": "Destructive commands are forbidden." }
+    }
+  ]
+}

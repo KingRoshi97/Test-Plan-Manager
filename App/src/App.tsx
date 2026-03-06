@@ -19,6 +19,7 @@ import CanonicalLibraryPage from "./pages/canonical-library";
 import StandardsLibraryPage from "./pages/standards-library";
 import TemplatesLibraryPage from "./pages/templates-library";
 import PlanningLibraryPage from "./pages/planning-library";
+import VerificationLibraryPage from "./pages/verification-library";
 
 export default function App() {
   return (
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/standards" component={StandardsLibraryPage} />
           <Route path="/templates-library" component={TemplatesLibraryPage} />
           <Route path="/planning-library" component={PlanningLibraryPage} />
+          <Route path="/verification-library" component={VerificationLibraryPage} />
           <Route path="/intake-library" component={IntakeLibraryPage} />
           <Route path="/docs" component={DocInventoryPage} />
           <Route path="/export" component={ExportPage} />

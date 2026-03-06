@@ -1,0 +1,49 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "proof_ledger.v1",
+    "type": "object",
+    "required": ["ledger_id", "run_id", "proofs", "append_only"],
+    "properties": {
+      "ledger_id": { "type": "string", "minLength": 3 },
+      "run_id": { "type": "string", "minLength": 1 },
+      "proofs": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/proof_entry" }
+      },
+      "append_only": { "type": "boolean" }
+    },
+
+    "$defs": {
+      "proof_entry": {
+        "type": "object",
+        "required": ["proof_id", "proof_type", "work_item_id", "status", "evidence_refs", "recorded_at"],
+        "properties": {
+          "proof_id": { "type": "string", "minLength": 1 },
+          "proof_type": {
+            "type": "string",
+            "enum": ["command_run", "test_suite", "lint_check", "build_artifact", "security_scan", "manual_attestation"]
+          },
+          "work_item_id": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "enum": ["pass", "fail", "warn"] },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path"],
+              "properties": {
+                "path": { "type": "string" },
+                "hash": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "recorded_at": { "type": "string", "format": "date-time" },
+          "metadata": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    },
+
+    "additionalProperties": false
+}

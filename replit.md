@@ -185,6 +185,38 @@ Work planning mechanics — WBS, acceptance map, build plan, sequencing policies
 
 **Legacy files preserved:** PLAN-01..PLAN-03 JSON schemas, sequencing_policy.v1.json, acceptance_map.schema.v1.json, work_breakdown.schema.v1.json
 
+### Verification Library (`Axion/libraries/verification/`)
+Proof and completion system — proof types, proof ledger, command run tracking, completion criteria, command policy, and gates (VER-0 through VER-7). 8 legacy flat files preserved for backward compat (pipeline code: runner.ts, completion.ts, policy.ts).
+
+**Structure (35 new files: 26 root files + 6 schemas + 3 registries):**
+- **VER-0**: Purpose + boundary checklist (2 docs)
+- **VER-1**: Proof types model + determinism rules + validation checklist (3 docs) + `proof_types.v1.schema.json` + `proof_types.v1.json` registry
+- **VER-2**: Proof ledger model + determinism rules + validation checklist (3 docs) + `proof_ledger.v1.schema.json`
+- **VER-3**: Command run model + determinism rules + validation checklist (3 docs) + `command_run.v1.schema.json` + `command_run_log.v1.schema.json`
+- **VER-4**: Completion model + determinism rules + validation checklist (3 docs) + `completion_criteria.v1.schema.json` + `completion_criteria.v1.json` registry
+- **VER-5**: Command policy model + determinism rules + validation checklist (3 docs) + `verification_command_policy.v1.schema.json` + `verification_command_policy.v1.json` registry
+- **VER-6**: Verification gates + gate mapping + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON)
+- **VER-7**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
+
+**Subdirectories:**
+- `schemas/` — 6 JSON Schema files (proof_types: registry with proof_type enum, proof_ledger: ledger_id/proofs[]/append_only, command_run: command_run_id/status/exit_code/logs_ref, command_run_log: log_id/runs[], completion_criteria: unit_done+run_done with requirement kind enum, verification_command_policy: policy_id/rules[] with match patterns + decision outcomes)
+- `registries/` — 3 registry files (proof_types: 6 types command_run/test_suite/lint_check/build_artifact/security_scan/manual_attestation, completion_criteria: unit_done proof + run_done G1-G7 gates + KIT_MANIFEST + PROOF_LEDGER, verification_command_policy: 3 rules allow-npm-test/allow-npm-lint/deny-destructive)
+
+**Loader** (`Axion/src/core/verification/loader.ts`):
+- `loadVerificationLibrary(repoRoot)` — loads proof_types + completion_criteria + command_policy registries, cached
+- `loadVerificationDocs(repoRoot)` — all VER-N docs with frontmatter
+- `loadVerificationSchemas(repoRoot)` — all JSON schema files from schemas/
+- `loadVerificationRegistries(repoRoot)` — all registry JSON files from registries/
+- `getProofTypes(repoRoot)` — returns proof types registry
+- `getCompletionCriteria(repoRoot)` — returns completion criteria registry
+- `getCommandPolicy(repoRoot)` — returns command policy registry
+
+**API**: 6 `/api/verification-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
+**UI**: `/verification-library` page with 4 tabs (Verification, Documents, Schemas, Registries), proof types table with required fields, completion criteria (unit_done + run_done), command policy rules, 7 verification gates (VER-GATE-01..07) mapped to G7_VERIFICATION
+**Registered in:** `schema_registry.v1.json` (2 updated + 4 new entries = 6 total), `library_index.v1.json` (3 new entries)
+
+**Legacy files preserved:** VER-01..VER-03 JSON files, proof_log.schema.v1.json, command_runs.schema.v1.json
+
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 
@@ -225,7 +257,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning/verification library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -279,6 +311,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/planning-library/registries/:name` — single registry by name
 - `GET /api/planning-library/docs` — all planning documents with frontmatter
 - `GET /api/planning-library/docs/:filename` — single document by filename
+- `GET /api/verification-library` — verification library overview (groups, schemas, registries, counts: docs/schemas/registries/gates/proofTypes)
+- `GET /api/verification-library/schemas` — all 6 verification schemas with content
+- `GET /api/verification-library/registries` — all 3 registries with content
+- `GET /api/verification-library/registries/:name` — single registry by name
+- `GET /api/verification-library/docs` — all verification documents with frontmatter
+- `GET /api/verification-library/docs/:filename` — single document by filename
 - `GET /api/intake-library` — intake library overview (groups, schema/registry/doc/enum/crossFieldRule/normalizationRule counts)
 - `GET /api/intake-library/schemas` — all 7 intake schemas with content
 - `GET /api/intake-library/registries` — all 3 registries with content
@@ -320,6 +358,7 @@ package.json      # Root package.json with all dependencies
 - `/standards` — Standards Library: 4 tabs (Standards, Documents, Schemas, Packs) for STD-0 through STD-6, standards pack grid with scope badges, rules by type/severity, 6 standards gates (STD-GATE-01..06) mapped to G3_STANDARDS_RESOLVED
 - `/templates-library` — Templates Library: 4 tabs (Templates, Documents, Schemas, Registries) for TMP-0 through TMP-7, template registry with category/profile/risk badges, 8-category ordering, completeness thresholds, 6 template gates (TMP-GATE-01..06) mapped to G4/G5
 - `/planning-library` — Planning Library: 4 tabs (Planning, Documents, Schemas, Registries) for PLAN-0 through PLAN-6, planning artifacts overview (WBS/AMAP/BUILD_PLAN), 7 sequencing phases, coverage rules table, 6 planning gates (PLAN-GATE-01..06) mapped to G6_PLAN_COVERAGE
+- `/verification-library` — Verification Library: 4 tabs (Verification, Documents, Schemas, Registries) for VER-0 through VER-7, proof types table, completion criteria (unit_done + run_done), command policy rules, 7 verification gates (VER-GATE-01..07) mapped to G7_VERIFICATION
 - `/intake-library` — Intake Library: 4 tabs (Intake, Documents, Schemas, Registries) for INT-0 through INT-7, field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
@@ -361,7 +400,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `templates/` — 35 new files (27 TMP-0 through TMP-7 docs + schemas/ (5) + registries/ (3)) + 8 legacy flat files + 8 category directories with 533 .md template files
   - `planning/` — 30 new files (24 PLAN-0 through PLAN-6 docs + schemas/ (5) + registries/ (1)) + 6 legacy flat files
   - `gates/` — Gates Library (GATE-0 through GATE-6). See Gates Library section below.
-  - `verification/` — proof_log.schema.v1.json, command_runs.schema.v1.json
+  - `verification/` — 35 new files (26 VER-0 through VER-7 docs + schemas/ (6) + registries/ (3)) + 8 legacy flat files
   - `kit/` — kit_tree.schema.v1.json, kit_manifest.schema.v1.json, kit_entrypoint.schema.v1.json, kit_versions.schema.v1.json
   - `orchestration/` — Pipeline execution contracts and run lifecycle (ORC-0 through ORC-7). See Orchestration Library section below.
   - `policy/` — Policy Library (POL-0 through POL-5). See Policy Library section below.

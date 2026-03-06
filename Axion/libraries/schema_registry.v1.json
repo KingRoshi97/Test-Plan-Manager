@@ -145,16 +145,58 @@
     },
 
     {
-      "schema_id": "verification.proof_log.v1",
-      "path": "Axion/libraries/verification/proof_log.schema.v1.json",
-      "uri": "axion://schemas/verification/proof_log.schema.v1.json",
+      "schema_id": "verification.proof_ledger.v1",
+      "path": "Axion/libraries/verification/schemas/proof_ledger.v1.schema.json",
+      "uri": "axion://schemas/verification/proof_ledger.v1.schema.json",
       "version": "1.0.0"
     },
     {
-      "schema_id": "verification.command_runs.v1",
-      "path": "Axion/libraries/verification/command_runs.schema.v1.json",
-      "uri": "axion://schemas/verification/command_runs.schema.v1.json",
+      "schema_id": "verification.command_run.v1",
+      "path": "Axion/libraries/verification/schemas/command_run.v1.schema.json",
+      "uri": "axion://schemas/verification/command_run.v1.schema.json",
       "version": "1.0.0"
+    },
+    {
+      "schema_id": "verification.proof_types.v1",
+      "path": "Axion/libraries/verification/schemas/proof_types.v1.schema.json",
+      "uri": "axion://schemas/verification/proof_types.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "verification.command_run_log.v1",
+      "path": "Axion/libraries/verification/schemas/command_run_log.v1.schema.json",
+      "uri": "axion://schemas/verification/command_run_log.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "verification.completion_criteria.v1",
+      "path": "Axion/libraries/verification/schemas/completion_criteria.v1.schema.json",
+      "uri": "axion://schemas/verification/completion_criteria.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "verification.verification_command_policy.v1",
+      "path": "Axion/libraries/verification/schemas/verification_command_policy.v1.schema.json",
+      "uri": "axion://schemas/verification/verification_command_policy.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "verification.proof_log.v1",
+      "alias_of": "verification.proof_ledger.v1",
+      "path": "Axion/libraries/verification/schemas/proof_ledger.v1.schema.json",
+      "uri": "axion://schemas/verification/proof_ledger.v1.schema.json",
+      "version": "1.0.0",
+      "deprecated": true,
+      "note": "Legacy alias — use verification.proof_ledger.v1"
+    },
+    {
+      "schema_id": "verification.command_runs.v1",
+      "alias_of": "verification.command_run.v1",
+      "path": "Axion/libraries/verification/schemas/command_run.v1.schema.json",
+      "uri": "axion://schemas/verification/command_run.v1.schema.json",
+      "version": "1.0.0",
+      "deprecated": true,
+      "note": "Legacy alias — use verification.command_run.v1"
     },
 
     {

@@ -1,0 +1,16 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "command_run_log.v1",
+    "type": "object",
+    "required": ["log_id", "run_id", "runs"],
+    "properties": {
+      "log_id": { "type": "string", "pattern": "^CMDLOG-[A-Z0-9]{6,}$" },
+      "run_id": { "type": "string" },
+      "runs": {
+        "type": "array",
+        "items": { "$ref": "command_run.v1.schema.json" }
+      }
+    },
+    "additionalProperties": false
+}
