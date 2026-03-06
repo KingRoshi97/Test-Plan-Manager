@@ -9,6 +9,7 @@ import path from "path";
 import archiver from "archiver";
 import multer from "multer";
 import crypto from "crypto";
+import { spawn, type ChildProcess } from "child_process";
 
 const AXION_ROOT = path.resolve(process.cwd(), "Axion");
 const AXION_RUNS = path.resolve(AXION_ROOT, ".axion", "runs");
@@ -3468,6 +3469,225 @@ export function registerRoutes(app: Express) {
     } catch (err: any) {
       console.error("Autofill error:", err.message || err);
       res.status(500).json({ error: "Failed to generate suggestions" });
+    }
+  });
+
+  const runningBuilds = new Map<number, { child: ChildProcess; runId: string; buildState: any; startTime: number }>();
+
+  app.post("/api/assemblies/:id/build", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+      if (!assembly.runId) return res.status(400).json({ error: "No completed run for this assembly" });
+
+      if (runningBuilds.has(id)) {
+        return res.status(409).json({ error: "Build already in progress for this assembly" });
+      }
+
+      const mode = req.body?.mode;
+      if (!mode || !["build_repo", "build_and_export"].includes(mode)) {
+        return res.status(400).json({ error: "mode must be 'build_repo' or 'build_and_export'" });
+      }
+
+      const runId = assembly.runId;
+      const runDir = path.join(AXION_RUNS, runId);
+      if (!fs.existsSync(runDir)) {
+        return res.status(400).json({ error: `Run directory not found: ${runId}` });
+      }
+
+      const buildState: any = {
+        state: "requested",
+        buildId: null,
+        runId,
+        mode,
+        startedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        slicesCompleted: 0,
+        totalSlices: 0,
+        filesGenerated: 0,
+        totalFiles: 0,
+        currentSlice: null,
+        error: null,
+        failureClass: null,
+      };
+
+      const child = spawn("npx", ["tsx", "src/cli/axion.ts", "build", "--run", runId, "--mode", mode], {
+        cwd: AXION_ROOT,
+        env: { ...process.env },
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      runningBuilds.set(id, { child, runId, buildState, startTime: Date.now() });
+
+      let stdoutBuffer = "";
+
+      child.stdout.on("data", (chunk: Buffer) => {
+        const text = chunk.toString();
+        stdoutBuffer += text;
+        const lines = stdoutBuffer.split("\n");
+        stdoutBuffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          const progressMatch = line.match(/^BUILD_PROGRESS: (.+)$/);
+          if (progressMatch) {
+            try {
+              const progress = JSON.parse(progressMatch[1]);
+              const entry = runningBuilds.get(id);
+              if (entry) {
+                entry.buildState.buildId = progress.buildId || entry.buildState.buildId;
+                entry.buildState.state = progress.state || entry.buildState.state;
+                entry.buildState.slicesCompleted = progress.slicesCompleted ?? entry.buildState.slicesCompleted;
+                entry.buildState.totalSlices = progress.totalSlices ?? entry.buildState.totalSlices;
+                entry.buildState.filesGenerated = progress.filesGenerated ?? entry.buildState.filesGenerated;
+                entry.buildState.totalFiles = progress.totalFiles ?? entry.buildState.totalFiles;
+                entry.buildState.currentSlice = progress.currentSlice || entry.buildState.currentSlice;
+                entry.buildState.updatedAt = progress.updatedAt || new Date().toISOString();
+                if (progress.error) entry.buildState.error = progress.error;
+                if (progress.failureClass) entry.buildState.failureClass = progress.failureClass;
+              }
+            } catch {}
+          }
+        }
+      });
+
+      child.stderr.on("data", () => {});
+
+      child.on("close", (code) => {
+        const entry = runningBuilds.get(id);
+        if (entry) {
+          if (code !== 0 && entry.buildState.state !== "failed") {
+            entry.buildState.state = "failed";
+            entry.buildState.error = entry.buildState.error || `Build process exited with code ${code}`;
+          }
+          entry.buildState.updatedAt = new Date().toISOString();
+          setTimeout(() => {
+            runningBuilds.delete(id);
+          }, 30000);
+        }
+      });
+
+      res.json({ status: "started", runId, mode, message: "Build started" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/assemblies/:id/build", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+      if (!assembly.runId) return res.status(404).json({ error: "No completed run" });
+
+      const runId = assembly.runId;
+      const buildDir = path.join(AXION_RUNS, runId, "build");
+
+      const runningEntry = runningBuilds.get(id);
+      if (runningEntry) {
+        const bs = runningEntry.buildState;
+        const result: any = {
+          state: bs.state,
+          buildId: bs.buildId,
+          runId: bs.runId,
+          progress: {
+            currentSlice: bs.currentSlice,
+            slicesCompleted: bs.slicesCompleted,
+            totalSlices: bs.totalSlices,
+            filesGenerated: bs.filesGenerated,
+            totalFiles: bs.totalFiles,
+            tokenUsage: bs.tokenUsage,
+          },
+          errors: bs.error ? [bs.error] : [],
+        };
+        const manifestPath = path.join(buildDir, "build_manifest.json");
+        if (fs.existsSync(manifestPath)) {
+          try { result.manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")); } catch {}
+        }
+        const verificationPath = path.join(buildDir, "verification_report.json");
+        if (fs.existsSync(verificationPath)) {
+          try { result.verification = JSON.parse(fs.readFileSync(verificationPath, "utf-8")); } catch {}
+        }
+        const planPath = path.join(buildDir, "build_plan.json");
+        if (fs.existsSync(planPath)) {
+          try { result.plan = JSON.parse(fs.readFileSync(planPath, "utf-8")); } catch {}
+        }
+        return res.json(result);
+      }
+
+      if (!fs.existsSync(buildDir)) {
+        return res.json({ state: "not_requested", runId });
+      }
+
+      const result: any = { runId };
+
+      const manifestPath = path.join(buildDir, "build_manifest.json");
+      if (fs.existsSync(manifestPath)) {
+        try {
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+          result.buildId = manifest.buildId;
+          result.state = manifest.status;
+          result.manifest = manifest;
+        } catch {}
+      }
+
+      const verificationPath = path.join(buildDir, "verification_report.json");
+      if (fs.existsSync(verificationPath)) {
+        try { result.verification = JSON.parse(fs.readFileSync(verificationPath, "utf-8")); } catch {}
+      }
+
+      const repoManifestPath = path.join(buildDir, "repo_manifest.json");
+      if (fs.existsSync(repoManifestPath)) {
+        try { result.repoManifest = JSON.parse(fs.readFileSync(repoManifestPath, "utf-8")); } catch {}
+      }
+
+      const buildPlanPath = path.join(buildDir, "build_plan.json");
+      if (fs.existsSync(buildPlanPath)) {
+        try { result.plan = JSON.parse(fs.readFileSync(buildPlanPath, "utf-8")); } catch {}
+      }
+
+      const zipPath = path.join(buildDir, "project_repo.zip");
+      result.hasExportZip = fs.existsSync(zipPath);
+
+      if (!result.state) {
+        result.state = result.hasExportZip ? "exported" : fs.existsSync(path.join(buildDir, "repo")) ? "passed" : "not_requested";
+      }
+
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/assemblies/:id/build/download", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+      if (!assembly.runId) return res.status(404).json({ error: "No completed run" });
+
+      const runId = assembly.runId;
+      const zipPath = path.join(AXION_RUNS, runId, "build", "project_repo.zip");
+
+      if (!fs.existsSync(zipPath)) {
+        return res.status(404).json({ error: "Export zip not found. Build with mode 'build_and_export' first." });
+      }
+
+      const stat = fs.statSync(zipPath);
+      const projectName = assembly.projectName?.replace(/[^a-zA-Z0-9_-]/g, "_") || "project";
+
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", `attachment; filename="${projectName}_build.zip"`);
+      res.setHeader("Content-Length", stat.size.toString());
+
+      const stream = fs.createReadStream(zipPath);
+      stream.pipe(res);
+      stream.on("error", () => {
+        if (!res.headersSent) res.status(500).json({ error: "Failed to stream zip" });
+        else res.end();
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
     }
   });
 }

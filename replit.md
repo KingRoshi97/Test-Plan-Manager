@@ -6,6 +6,42 @@ Axion is a document-generation and compliance-enforcement system with a full-sta
 ## Current State
 Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 193 kit files produced.
 
+### Build Mode (BM-00 through BM-18)
+Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip.
+
+**Flow**: Agent Kit → Eligibility → Plan → Workspace → Generate (slices) → Manifests → Verify → Export → Finalize
+
+**Build States (BM-08)**: `not_requested → requested → approved → building → verifying → passed → exported`; `failed` reachable from any active state
+
+**Modules** (`Axion/src/core/build/`):
+- `types.ts` — Build states, transitions, failure classes, manifest/plan/verification interfaces
+- `eligibility.ts` — BM-09 entry condition checker (kit exists, 8 gates passed, canonical spec, work breakdown, rendered docs, no critical blockers)
+- `planner.ts` — Derives build plan from kit: stack profile, repo shape, 8 ordered build slices (scaffold → types_contracts → data_layer → api_routes → components → integration → tests → config)
+- `workspace.ts` — Creates/manages `Axion/.axion/runs/RUN-XXXXXX/build/` with repo/, manifests, verification report, zip
+- `generator.ts` — Core code generation engine: deterministic slices (scaffold, types, data, config) + AI-assisted slices (routes, components, integration, tests) using OpenAI via tracker
+- `verifier.ts` — BM-13 verification: output presence, structure correctness, placeholder scan, manifest completeness, file integrity, output consistency
+- `manifest.ts` — BM-15 audit records: build_manifest.json, repo_manifest.json, file_index.json with lifecycle transitions
+- `packager.ts` — BM-14 export: creates project_repo.zip with repo contents + manifests (uses archiver, max compression)
+- `runner.ts` — BM-06 orchestrator: full lifecycle from request through eligibility → plan → generate → verify → export with state machine enforcement and failure handling
+
+**CLI**: `tsx src/cli/axion.ts build --run RUN-XXXXXX --mode build_and_export` (modes: kit_only, build_repo, build_and_export)
+
+**API Endpoints**:
+- `POST /api/assemblies/:id/build` — Trigger build (body: `{ mode: "build_repo" | "build_and_export" }`)
+- `GET /api/assemblies/:id/build` — Get build status (state, progress, manifests, verification)
+- `GET /api/assemblies/:id/build/download` — Download project_repo.zip (only when exported)
+
+**UI**: Build tab on assembly page with mode selection, progress bars (slices/files), verification results, failure display with categorized reasons, download button, retry controls
+
+**Build Workspace** (`Axion/.axion/runs/RUN-XXXXXX/build/`):
+- `repo/` — Generated project repository
+- `build_manifest.json` — Build identity, input provenance, lifecycle transitions, timestamps, status, output refs
+- `repo_manifest.json` — Repo structure summary, file inventory with roles, dependency summary, build commands
+- `file_index.json` — All generated files with paths, roles, source references, sizes, generation methods
+- `build_plan.json` — Ordered slices, file targets, generation instructions
+- `verification_report.json` — Per-category verification results
+- `project_repo.zip` — Downloadable archive (when export requested)
+
 ### Control Planes
 - **ICP (Internal Control Plane)** — `Axion/src/core/controlPlane/`: Run orchestrator (api.ts), model/store (model.ts, store.ts), policies (policies.ts), releases (releases.ts), pins (pins.ts), audit (audit.ts). States: QUEUED → RUNNING → GATED → (FAILED | RELEASED) → ARCHIVED. CLI wired via RunController.
 - **KCP (Kit Control Plane)** — `Axion/src/core/kcp/`: 10 modules — model, store, controller, validator, unitManager, verificationRunner, resultWriter, proofCapture, guardrails, runReport. States: READY → EXECUTING → VERIFYING → (BLOCKED | FAILED | COMPLETE). Enforces kit-local rules during build execution.

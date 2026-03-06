@@ -15,5 +15,9 @@
   "engines": {
     "node": ">=18"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@types/archiver": "^7.0.0",
+    "archiver": "^7.0.1"
+  }
 }

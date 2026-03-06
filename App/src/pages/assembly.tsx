@@ -5,9 +5,10 @@ import { apiRequest } from "../lib/queryClient";
 import {
   ChevronRight, Play, Trash2, ArrowLeft, CheckCircle, XCircle,
   Clock, Loader2, FileText, Folder, Download, Save, RotateCcw,
-  Settings, Layers, Eye, FolderArchive, PenLine, Square, AlertTriangle
+  Settings, Layers, Eye, FolderArchive, PenLine, Square, AlertTriangle, Hammer
 } from "lucide-react";
 import { PipelineProgress } from "../components/pipeline-progress";
+import { BuildTab } from "../components/build-mode";
 
 const FALLBACK_STAGE_ORDER = [
   "S1_INGEST_NORMALIZE",
@@ -105,6 +106,7 @@ const TABS = [
   { id: "pipeline", label: "Pipeline", icon: Layers },
   { id: "intake", label: "Intake", icon: PenLine },
   { id: "artifacts", label: "Artifacts", icon: FolderArchive },
+  { id: "build", label: "Build", icon: Hammer },
   { id: "config", label: "Config", icon: Settings },
 ] as const;
 
@@ -1077,6 +1079,14 @@ export default function AssemblyPage() {
           <FolderArchive className="w-8 h-8 mx-auto mb-3 opacity-50" />
           <p className="text-sm">No artifacts yet. Run the pipeline to generate output files.</p>
         </div>
+      )}
+
+      {activeTab === "build" && (
+        <BuildTab
+          assemblyId={Number(id)}
+          runId={assembly.runId}
+          pipelineStatus={assembly.status}
+        />
       )}
 
       {activeTab === "config" && (

@@ -4,6 +4,7 @@ import { cmdInit } from "./commands/initAxion.js";
 import { cmdRunStart, cmdRunFull } from "./commands/runControlPlane.js";
 import { cmdRunStage } from "./commands/runStage.js";
 import { cmdRunGates } from "./commands/runGates.js";
+import { cmdBuild } from "./commands/build.js";
 
 function resolveBaseDir(): string {
   if (existsSync("registries")) return ".";
@@ -20,6 +21,7 @@ Usage:
   axion run start                             Create a new run (allocate RUN-NNNNNN)
   axion run stage <run_id> <stage_id>         Execute a single stage for a run
   axion run gates <run_id> <stage_id>         Run gates for a stage
+  axion build --run <run_id> --mode <mode>     Build repo from completed run
   axion help                                  Show this help message
 
 Pipeline Stages (Mechanics order):
@@ -36,6 +38,11 @@ Gate Registry (stage → gate):
   S8_BUILD_PLAN           → G6_PLAN_COVERAGE
   S9_VERIFY_PROOF         → G7_VERIFICATION (not enforced yet)
   S10_PACKAGE             → G8_PACKAGE_INTEGRITY
+
+Build Modes:
+  kit_only          — No build, kit already available
+  build_repo        — Generate project repo from kit
+  build_and_export  — Generate repo and create zip archive
 
 Control Planes:
   ICP — Internal Control Plane (orchestrates pipeline)
@@ -109,6 +116,24 @@ async function main(): Promise<void> {
           console.log(`  ${entry}`);
         }
       }
+      break;
+    }
+
+    case "build": {
+      let runId = "";
+      let mode = "build_and_export";
+      for (let i = 1; i < args.length; i++) {
+        if (args[i] === "--run" && args[i + 1]) {
+          runId = args[++i];
+        } else if (args[i] === "--mode" && args[i + 1]) {
+          mode = args[++i];
+        }
+      }
+      if (!runId) {
+        console.error("Usage: axion build --run <run_id> --mode <mode>");
+        process.exit(1);
+      }
+      await cmdBuild(runId, mode);
       break;
     }
 
