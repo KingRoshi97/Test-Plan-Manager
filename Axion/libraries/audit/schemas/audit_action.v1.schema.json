@@ -1,0 +1,114 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "audit_action.v1",
+    "type": "object",
+    "required": [
+      "audit_event_id",
+      "action_type",
+      "actor",
+      "occurred_at",
+      "target",
+      "refs"
+    ],
+    "properties": {
+      "audit_event_id": {
+        "type": "string",
+        "pattern": "^AUD-[A-Z0-9]{6,}$"
+      },
+
+     "action_type": {
+      "type": "string",
+  "enum": [
+    "run_started",
+    "run_paused",
+    "run_resumed",
+    "run_cancelled",
+    "stage_rerun_requested",
+    "override_requested",
+    "override_approved",
+    "override_denied",
+    "export_requested",
+    "export_approved",
+    "export_denied",
+    "policy_decision_applied",
+    "manual_attestation_recorded"
+  ]
+},
+
+"actor": {
+  "type": "object",
+  "required": ["actor_id", "role"],
+  "properties": {
+    "actor_id": { "type": "string", "minLength": 2 },
+    "role": {
+      "type": "string",
+      "enum": ["owner", "maintainer", "operator", "system"]
+    }
+  },
+  "additionalProperties": false
+},
+
+"occurred_at": {
+  "type": "string",
+  "format": "date-time"
+},
+
+"target": {
+  "type": "object",
+  "required": ["target_type"],
+  "properties": {
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "run",
+        "stage",
+       "gate",
+       "override",
+       "export",
+       "policy_decision",
+       "proof"
+       ]
+     },
+     "run_id": { "type": "string" },
+     "stage_id": { "type": "string" },
+     "gate_id": { "type": "string" },
+     "override_request_id": { "type": "string" },
+     "override_decision_id": { "type": "string" },
+     "policy_decision_id": { "type": "string" },
+     "proof_id": { "type": "string" }
+   },
+   "additionalProperties": false
+ },
+
+ "reason": {
+   "type": "string",
+   "minLength": 3
+ },
+
+  "refs": {
+    "type": "object",
+    "properties": {
+      "run_manifest_ref": { "$ref": "#/$defs/ref" },
+      "gate_report_ref": { "$ref": "#/$defs/ref" },
+      "proof_ref": { "$ref": "#/$defs/ref" },
+      "policy_ref": { "$ref": "#/$defs/ref" }
+    },
+    "additionalProperties": false
+  }
+},
+
+"$defs": {
+ "ref": {
+   "type": "object",
+   "required": ["path"],
+   "properties": {
+     "path": { "type": "string" },
+     "hash": { "type": "string" }
+   },
+   "additionalProperties": false
+      }
+    },
+
+    "additionalProperties": false
+}

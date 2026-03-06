@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "policy_id": "AUDOPS-BASE01",
+  "retention": {
+    "PROTOTYPE": {
+      "active_days": 30,
+      "archive_days": 180
+    },
+    "PROD": {
+      "active_days": 90,
+      "archive_days": 365
+    },
+    "COMPLIANCE": {
+      "active_days": 365,
+      "archive_days": 2555
+    }
+  },
+  "redaction": {
+    "deny_keys": [
+      "actor_email",
+      "actor_ip",
+      "session",
+      "token",
+      "authorization",
+      "cookie"
+    ],
+    "mask_actor_ids_on_external_export": false,
+    "strip_internal_refs_on_external_export": true
+  },
+  "export": {
+    "allowed_formats": ["json"],
+    "external_export_requires_approval": true,
+    "include_hashes": true
+  }
+}

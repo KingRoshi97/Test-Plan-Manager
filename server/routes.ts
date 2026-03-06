@@ -454,6 +454,28 @@ export function registerRoutes(app: Express) {
         } catch {}
         return { docs: telDocCount, schemas: telSchemaCount, registries: telRegistryCount, gates: telGateCount, eventTypes: telEventTypeCount };
       })(),
+      audit_library: (() => {
+        let audDocCount = 0, audSchemaCount = 0, audRegistryCount = 0, audGateCount = 0, audActionTypeCount = 0;
+        try {
+          const audDir = path.join(AXION_ROOT, "libraries", "audit");
+          if (fs.existsSync(audDir)) audDocCount = fs.readdirSync(audDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+          const audSchDir = path.join(audDir, "schemas");
+          if (fs.existsSync(audSchDir)) audSchemaCount = fs.readdirSync(audSchDir).filter((f) => f.endsWith(".json")).length;
+          const audRegDir = path.join(audDir, "registries");
+          if (fs.existsSync(audRegDir)) audRegistryCount = fs.readdirSync(audRegDir).filter((f) => f.endsWith(".json")).length;
+          const gsPath = path.join(audDir, "AUD-5_audit_gates.spec.json");
+          if (fs.existsSync(gsPath)) {
+            const gs = JSON.parse(fs.readFileSync(gsPath, "utf-8"));
+            audGateCount = gs.gates?.length ?? 0;
+          }
+          const actionSchemaPath = path.join(audSchDir, "audit_action.v1.schema.json");
+          if (fs.existsSync(actionSchemaPath)) {
+            const as2 = JSON.parse(fs.readFileSync(actionSchemaPath, "utf-8"));
+            audActionTypeCount = as2.properties?.action_type?.enum?.length ?? 0;
+          }
+        } catch {}
+        return { docs: audDocCount, schemas: audSchemaCount, registries: audRegistryCount, gates: audGateCount, actionTypes: audActionTypeCount };
+      })(),
       recentRuns,
     });
   });
@@ -2738,6 +2760,177 @@ export function registerRoutes(app: Express) {
       }
       const filePath = path.join(TELEMETRY_LIB_DIR, filename);
       if (!filePath.startsWith(TELEMETRY_LIB_DIR) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Document '${filename}' not found` });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+      let frontmatter: Record<string, string> = {};
+      let content = raw;
+      if (fmMatch) {
+        const lines = fmMatch[1].split("\n");
+        for (const line of lines) {
+          const idx = line.indexOf(":");
+          if (idx > 0) {
+            frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          }
+        }
+        content = fmMatch[2];
+      }
+      res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  const AUDIT_LIB_DIR = path.join(AXION_ROOT, "libraries", "audit");
+
+  app.get("/api/audit-library", (_req: Request, res: Response) => {
+    try {
+      const groups: Record<string, string[]> = {};
+      const schemas: string[] = [];
+      const registries: string[] = [];
+      let gateCount = 0;
+      let actionTypeCount = 0;
+
+      if (fs.existsSync(AUDIT_LIB_DIR)) {
+        for (const f of fs.readdirSync(AUDIT_LIB_DIR)) {
+          if (f.endsWith(".md") || f.endsWith(".txt") || (f.endsWith(".json") && f.startsWith("AUD-"))) {
+            const prefix = f.match(/^(AUD-\d+)/)?.[1] ?? "other";
+            if (!groups[prefix]) groups[prefix] = [];
+            groups[prefix].push(f);
+          }
+        }
+      }
+      const schemasDir = path.join(AUDIT_LIB_DIR, "schemas");
+      if (fs.existsSync(schemasDir)) {
+        for (const f of fs.readdirSync(schemasDir)) {
+          if (f.endsWith(".json")) schemas.push(f);
+        }
+      }
+      const registriesDir = path.join(AUDIT_LIB_DIR, "registries");
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
+          if (f.endsWith(".json")) registries.push(f);
+        }
+      }
+
+      const gateSpecPath = path.join(AUDIT_LIB_DIR, "AUD-5_audit_gates.spec.json");
+      if (fs.existsSync(gateSpecPath)) {
+        try {
+          const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
+          gateCount = gs.gates?.length ?? 0;
+        } catch {}
+      }
+
+      const actionSchemaPath = path.join(schemasDir, "audit_action.v1.schema.json");
+      if (fs.existsSync(actionSchemaPath)) {
+        try {
+          const as2 = JSON.parse(fs.readFileSync(actionSchemaPath, "utf-8"));
+          actionTypeCount = as2.properties?.action_type?.enum?.length ?? 0;
+        } catch {}
+      }
+
+      const docCount = Object.values(groups).flat().length;
+
+      res.json({
+        groups,
+        schemas,
+        registries,
+        counts: {
+          docs: docCount,
+          schemas: schemas.length,
+          registries: registries.length,
+          gates: gateCount,
+          actionTypes: actionTypeCount,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/audit-library/schemas", (_req: Request, res: Response) => {
+    try {
+      const schemasDir = path.join(AUDIT_LIB_DIR, "schemas");
+      if (!fs.existsSync(schemasDir)) return res.json([]);
+      const files = fs.readdirSync(schemasDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(schemasDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/audit-library/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      if (name.includes("..") || name.includes("/")) return res.status(400).json({ error: "Invalid name" });
+      const filePath = path.join(AUDIT_LIB_DIR, "registries", name.endsWith(".json") ? name : `${name}.json`);
+      if (!fs.existsSync(filePath)) return res.status(404).json({ error: `Registry '${name}' not found` });
+      res.json({ filename: path.basename(filePath), content: JSON.parse(fs.readFileSync(filePath, "utf-8")) });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/audit-library/registries", (_req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(AUDIT_LIB_DIR, "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const files = fs.readdirSync(registriesDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/audit-library/docs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(AUDIT_LIB_DIR)) return res.json([]);
+      const files = fs.readdirSync(AUDIT_LIB_DIR)
+        .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
+        .sort();
+      const result = files.map((filename) => {
+        const raw = fs.readFileSync(path.join(AUDIT_LIB_DIR, filename), "utf-8");
+        const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+        let frontmatter: Record<string, string> = {};
+        let content = raw;
+        if (fmMatch) {
+          const lines = fmMatch[1].split("\n");
+          for (const line of lines) {
+            const idx = line.indexOf(":");
+            if (idx > 0) {
+              frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            }
+          }
+          content = fmMatch[2];
+        }
+        return { filename, frontmatter, content };
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/audit-library/docs/:filename", (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      if (!filename.endsWith(".md") && !filename.endsWith(".txt")) {
+        return res.status(400).json({ error: "Only .md and .txt files are accessible" });
+      }
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      const filePath = path.join(AUDIT_LIB_DIR, filename);
+      if (!filePath.startsWith(AUDIT_LIB_DIR) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: `Document '${filename}' not found` });
       }
       const raw = fs.readFileSync(filePath, "utf-8");

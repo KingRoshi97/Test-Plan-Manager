@@ -279,6 +279,37 @@ Event and metrics contracts — telemetry event schemas, run metrics, sink polic
 
 **Legacy files preserved:** event.schema.v1.json, run_metrics.schema.v1.json, sink_policy.v1.json
 
+### Audit Library (`Axion/libraries/audit/`)
+Operator action tracking — audit action schemas, append-only ledgers, integrity verification, query indexing, ops workflow (retention/redaction/export), and gates (AUD-0 through AUD-7). 1 legacy flat file preserved for backward compat.
+
+**Structure (33 new files: 28 root files + 3 schemas + 2 registries):**
+- **AUD-0**: Purpose + boundary checklist (2 docs)
+- **AUD-1**: Audit action model + determinism rules + validation checklist (3 docs)
+- **AUD-2**: Audit log model + tamper evident rules + determinism rules + validation checklist (4 docs)
+- **AUD-3**: Audit index model + determinism rules + validation checklist (3 docs)
+- **AUD-4**: Integrity model + hash chain rules + determinism rules + validation checklist (4 docs)
+- **AUD-5**: Audit gates + evidence requirements + determinism rules + validation checklist (4 docs + 1 gate spec JSON) — AUD-GATE-01..06
+- **AUD-6**: Ops workflow + redaction export rules + determinism rules + validation checklist (4 docs)
+- **AUD-7**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
+
+**Subdirectories:**
+- `schemas/` — 3 JSON Schema files (audit_action: audit_event_id/action_type(13 enum)/actor/occurred_at/target/reason/refs, audit_log: audit_log_id/scope/events[]/tamper_evident/timestamps, audit_index: index_id/entries[scope+audit_log_ref+query_keys])
+- `registries/` — 2 registry files (audit_integrity: hash_chain mode + sha256 + canonical_json + risk class requirements, audit_ops_policy: AUDOPS-BASE01 with retention windows + redaction deny_keys + export rules)
+
+**Loader** (`Axion/src/core/audit/loader.ts`):
+- `loadAuditLibrary(repoRoot)` — loads audit_integrity + audit_ops_policy registries, cached
+- `loadAuditDocs(repoRoot)` — all AUD-N docs with frontmatter
+- `loadAuditSchemas(repoRoot)` — all JSON schema files from schemas/
+- `loadAuditRegistries(repoRoot)` — all registry JSON files from registries/
+- `getAuditIntegrity(repoRoot)` — returns integrity registry
+- `getAuditOpsPolicy(repoRoot)` — returns ops policy registry
+
+**API**: 6 `/api/audit-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
+**UI**: `/audit-library` page with 4 tabs (Audit, Documents, Schemas, Registries), action types table (13 types across 6 categories), actor roles (4), target types (7), audit log overview, integrity levels (3 with risk class requirements), retention policy table, redaction + export rules, 6 audit gates (AUD-GATE-01..06)
+**Registered in:** `schema_registry.v1.json` (3 new entries + 1 legacy preserved), `library_index.v1.json` (2 new entries)
+
+**Legacy files preserved:** operator_actions_ledger.schema.v1.json
+
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 
@@ -319,7 +350,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning/verification/kit/telemetry library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning/verification/kit/telemetry/audit library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -391,6 +422,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/telemetry-library/registries/:name` — single registry by name
 - `GET /api/telemetry-library/docs` — all telemetry documents with frontmatter
 - `GET /api/telemetry-library/docs/:filename` — single document by filename
+- `GET /api/audit-library` — audit library overview (groups, schemas, registries, counts: docs/schemas/registries/gates/actionTypes)
+- `GET /api/audit-library/schemas` — all 3 audit schemas with content
+- `GET /api/audit-library/registries` — all 2 registries with content
+- `GET /api/audit-library/registries/:name` — single registry by name
+- `GET /api/audit-library/docs` — all audit documents with frontmatter
+- `GET /api/audit-library/docs/:filename` — single document by filename
 - `GET /api/intake-library` — intake library overview (groups, schema/registry/doc/enum/crossFieldRule/normalizationRule counts)
 - `GET /api/intake-library/schemas` — all 7 intake schemas with content
 - `GET /api/intake-library/registries` — all 3 registries with content
@@ -435,6 +472,7 @@ package.json      # Root package.json with all dependencies
 - `/verification-library` — Verification Library: 4 tabs (Verification, Documents, Schemas, Registries) for VER-0 through VER-7, proof types table, completion criteria (unit_done + run_done), command policy rules, 7 verification gates (VER-GATE-01..07) mapped to G7_VERIFICATION
 - `/kit-library` — Kit Library: 4 tabs (Kit, Documents, Schemas, Registries) for KIT-0 through KIT-6, kit tree structure (4 folders + 2 files), manifest schema summary, export rules, 6 kit gates (KIT-GATE-01..06) with severity badges, compatibility info
 - `/telemetry-library` — Telemetry Library: 4 tabs (Telemetry, Documents, Schemas, Registries) for TEL-0 through TEL-6, event types table, run metrics overview, sink policy cards, redaction overview, privacy policy summary, 5 telemetry gates (TEL-GATE-01..05)
+- `/audit-library` — Audit Library: 4 tabs (Audit, Documents, Schemas, Registries) for AUD-0 through AUD-7, action types table (13 types across 6 categories), actor roles (4), target types (7), audit log overview, integrity levels (3), retention policy, redaction + export rules, 6 audit gates (AUD-GATE-01..06)
 - `/intake-library` — Intake Library: 4 tabs (Intake, Documents, Schemas, Registries) for INT-0 through INT-7, field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
@@ -480,7 +518,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `kit/` — 28 new files (24 KIT-0 through KIT-6 docs + schemas/ (1) + registries/ (3)) + 9 legacy flat files
   - `orchestration/` — Pipeline execution contracts and run lifecycle (ORC-0 through ORC-7). See Orchestration Library section below.
   - `policy/` — Policy Library (POL-0 through POL-5). See Policy Library section below.
-  - `audit/` — operator_actions_ledger.schema.v1.json
+  - `audit/` — 33 new files (28 AUD-0 through AUD-7 docs + schemas/ (3) + registries/ (2)) + 1 legacy flat file
   - `telemetry/` — 30 new files (22 TEL-0 through TEL-6 docs + schemas/ (5) + registries/ (3)) + 3 legacy flat files
   - `system/` — Control-plane configuration and runtime contracts (SYS-0 through SYS-7). See System Library section below.
   - `library_index.v1.json` — single registry for versioned libraries

@@ -1,0 +1,41 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "audit_log.v1",
+    "type": "object",
+    "required": ["audit_log_id", "scope", "events", "created_at", "updated_at"],
+    "properties": {
+      "audit_log_id": { "type": "string", "pattern": "^AUDLOG-[A-Z0-9]{6,}$" },
+
+     "scope": {
+       "type": "object",
+       "required": ["scope_type"],
+       "properties": {
+         "scope_type": { "type": "string", "enum": ["run", "project", "workspace"] },
+         "run_id": { "type": "string" },
+         "project_id": { "type": "string" },
+         "workspace_id": { "type": "string" }
+       },
+       "additionalProperties": false
+     },
+
+     "events": {
+       "type": "array",
+       "items": { "$ref": "audit_action.v1.schema.json" }
+     },
+
+     "tamper_evident": {
+       "type": "object",
+       "properties": {
+         "enabled": { "type": "boolean" },
+         "chain_hash_algo": { "type": "string" },
+         "root_hash": { "type": "string" }
+       },
+       "additionalProperties": false
+     },
+
+      "created_at": { "type": "string", "format": "date-time" },
+      "updated_at": { "type": "string", "format": "date-time" }
+    },
+    "additionalProperties": false
+}

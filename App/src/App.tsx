@@ -22,6 +22,7 @@ import PlanningLibraryPage from "./pages/planning-library";
 import VerificationLibraryPage from "./pages/verification-library";
 import KitLibraryPage from "./pages/kit-library";
 import TelemetryLibraryPage from "./pages/telemetry-library";
+import AuditLibraryPage from "./pages/audit-library";
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/verification-library" component={VerificationLibraryPage} />
           <Route path="/kit-library" component={KitLibraryPage} />
           <Route path="/telemetry-library" component={TelemetryLibraryPage} />
+          <Route path="/audit-library" component={AuditLibraryPage} />
           <Route path="/intake-library" component={IntakeLibraryPage} />
           <Route path="/docs" component={DocInventoryPage} />
           <Route path="/export" component={ExportPage} />

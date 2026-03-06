@@ -292,6 +292,24 @@
       "uri": "axion://schemas/audit/operator_actions_ledger.schema.v1.json",
       "version": "1.0.0"
     },
+    {
+      "schema_id": "audit.action.v1",
+      "path": "Axion/libraries/audit/schemas/audit_action.v1.schema.json",
+      "uri": "axion://schemas/audit/audit_action.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "audit.log.v1",
+      "path": "Axion/libraries/audit/schemas/audit_log.v1.schema.json",
+      "uri": "axion://schemas/audit/audit_log.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "audit.index.v1",
+      "path": "Axion/libraries/audit/schemas/audit_index.v1.schema.json",
+      "uri": "axion://schemas/audit/audit_index.v1.schema.json",
+      "version": "1.0.0"
+    },
 
     {
       "schema_id": "telemetry.event.v1",

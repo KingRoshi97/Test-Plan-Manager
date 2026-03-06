@@ -1,0 +1,62 @@
+{
+    "schema_version": "1.0.0",
+    "contract_id": "AUD-5a",
+    "gates": [
+     {
+       "gate_id": "AUD-GATE-01",
+       "name": "Audit log schema valid",
+       "severity": "hard_stop",
+       "checks": [
+         "AUDIT_LOG exists",
+         "schema_valid(audit_log.v1)",
+         "all events schema_valid(audit_action.v1)"
+       ]
+     },
+     {
+       "gate_id": "AUD-GATE-02",
+       "name": "Actor present",
+       "severity": "hard_stop",
+       "checks": [
+         "every event has actor.actor_id",
+         "every event has actor.role"
+       ]
+     },
+     {
+       "gate_id": "AUD-GATE-03",
+       "name": "Monotonic timestamps",
+       "severity": "hard_stop",
+       "checks": [
+         "occurred_at monotonic in serialized event order"
+       ]
+     },
+     {
+          "gate_id": "AUD-GATE-04",
+          "name": "Target/reference coherence",
+          "severity": "hard_stop",
+          "checks": [
+            "target fields match target_type",
+            "required refs present for sensitive actions"
+          ]
+        },
+        {
+          "gate_id": "AUD-GATE-05",
+          "name": "Sensitive actions include reason",
+          "severity": "hard_stop",
+          "checks": [
+            "overrides require reason",
+            "exports require reason",
+            "reruns require reason",
+            "manual attestations require reason"
+          ]
+        },
+        {
+          "gate_id": "AUD-GATE-06",
+          "name": "Integrity mode satisfied",
+          "severity": "policy_controlled",
+          "checks": [
+            "if integrity enabled then integrity verification passes",
+            "risk-class minimum integrity level satisfied"
+          ]
+        }
+    ]
+}

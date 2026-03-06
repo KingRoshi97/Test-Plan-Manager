@@ -1,0 +1,61 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "schema_version": "1.0.0",
+ "id": "audit_index.v1",
+"type": "object",
+"required": ["index_id", "schema_version", "entries", "updated_at"],
+"properties": {
+  "index_id": { "type": "string", "pattern": "^AUDINDEX-[A-Z0-9]{6,}$" },
+  "schema_version": { "type": "string", "minLength": 1 },
+  "updated_at": { "type": "string", "format": "date-time" },
+
+  "entries": {
+    "type": "array",
+    "items": { "$ref": "#/$defs/entry" }
+  }
+},
+"$defs": {
+  "entry": {
+    "type": "object",
+    "required": ["scope", "audit_log_ref", "query_keys"],
+    "properties": {
+      "scope": {
+        "type": "object",
+        "required": ["scope_type"],
+        "properties": {
+          "scope_type": { "type": "string", "enum": ["run", "project", "workspace"] },
+          "run_id": { "type": "string" },
+          "project_id": { "type": "string" },
+          "workspace_id": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+
+    "audit_log_ref": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "hash": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "query_keys": {
+     "type": "object",
+     "properties": {
+       "run_id": { "type": "string" },
+       "stage_ids": { "type": "array", "items": { "type": "string" } },
+        "gate_ids": { "type": "array", "items": { "type": "string" } },
+        "action_types": { "type": "array", "items": { "type": "string" } },
+        "actor_ids": { "type": "array", "items": { "type": "string" } },
+        "policy_decision_ids": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+     }
+   },
+   "additionalProperties": false
+   }
+ },
+ "additionalProperties": false
+}

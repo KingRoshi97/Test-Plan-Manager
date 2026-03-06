@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "audit_integrity.v1",
+  "integrity_mode": "hash_chain",
+  "hash_algorithm": "sha256",
+  "canonical_json": true,
+  "required_for_risk_classes": {
+    "PROTOTYPE": "file_hash",
+    "PROD": "hash_chain",
+    "COMPLIANCE": "hash_chain"
+  }
+}
