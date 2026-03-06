@@ -156,12 +156,19 @@ interface OutputHeading {
   tableColumns: string[];
 }
 
+function isGarbledHeading(title: string): boolean {
+  const t = title.trim();
+  if (/^\d/.test(t)) return false;
+  if (/[A-Z]/.test(t)) return false;
+  return true;
+}
+
 function extractOutputFormat(templateContent: string): OutputHeading[] {
   const section7Match = templateContent.match(/## 7\.\s*Output Format\b([\s\S]*?)(?=\n## \d+\.|$)/);
   if (!section7Match) return [];
 
   const lines = section7Match[1].split("\n");
-  const headings: OutputHeading[] = [];
+  const rawHeadings: OutputHeading[] = [];
   let inHeadings = false;
   let lastHeading: OutputHeading | null = null;
 
@@ -181,7 +188,7 @@ function extractOutputFormat(templateContent: string): OutputHeading[] {
           description: "",
           tableColumns: [],
         };
-        headings.push(lastHeading);
+        rawHeadings.push(lastHeading);
         continue;
       }
 
@@ -193,7 +200,7 @@ function extractOutputFormat(templateContent: string): OutputHeading[] {
           description: "",
           tableColumns: [],
         };
-        headings.push(lastHeading);
+        rawHeadings.push(lastHeading);
         continue;
       }
     }
@@ -205,7 +212,7 @@ function extractOutputFormat(templateContent: string): OutputHeading[] {
         description: "",
         tableColumns: [],
       };
-      headings.push(lastHeading);
+      rawHeadings.push(lastHeading);
       continue;
     }
 
@@ -214,6 +221,20 @@ function extractOutputFormat(templateContent: string): OutputHeading[] {
       if (cols.length > 0 && !cols[0].includes("---")) {
         lastHeading.tableColumns = cols;
       }
+    }
+  }
+
+  const headings: OutputHeading[] = [];
+  for (let i = 0; i < rawHeadings.length; i++) {
+    const h = rawHeadings[i];
+    if (isGarbledHeading(h.title) && headings.length > 0) {
+      const parent = headings[headings.length - 1];
+      parent.tableColumns.push(h.title.replace(/\s+/g, ""));
+    } else if (headings.length > 0 && !(/^\d/.test(h.title.trim())) && /^\d/.test(headings[headings.length - 1].title.trim())) {
+      const parent = headings[headings.length - 1];
+      parent.description = parent.description ? `${parent.description}; ${h.title}` : h.title;
+    } else {
+      headings.push(h);
     }
   }
 
@@ -401,9 +422,12 @@ async function synthesizeBatchSections(
   const client = await getOpenAIClient();
   if (!client) return {};
 
-  const sectionList = sections.map((s, i) =>
-    `### SECTION_${i}: ${s.title}\nReference Material:\n${s.knowledgeContent.substring(0, 800)}`
-  ).join("\n\n---\n\n");
+  const sectionList = sections.map((s, i) => {
+    if (s.knowledgeContent && s.knowledgeContent.length > 50) {
+      return `### SECTION_${i}: ${s.title}\nReference Material:\n${s.knowledgeContent.substring(0, 800)}`;
+    }
+    return `### SECTION_${i}: ${s.title}\n(No reference material — synthesize from project context and template purpose)`;
+  }).join("\n\n---\n\n");
 
   try {
     const response: OpenAIResponse = await client.chat.completions.create({
@@ -411,16 +435,18 @@ async function synthesizeBatchSections(
       messages: [
         {
           role: "system",
-          content: `You are an Internal Agent (IA) filling documentation template sections for a software project. Write content for multiple sections at once using the provided knowledge library content as source material.
+          content: `You are an Internal Agent (IA) filling documentation template sections for a software project. Write content for multiple sections at once. Use reference material from the knowledge library when provided; otherwise synthesize content from the project context and the section's purpose.
 
 Rules:
-- Write concrete, project-specific content — not generic placeholders
-- Adapt knowledge to this specific project
-- Professional technical documentation style with markdown formatting
+- Write concrete, project-specific content — not generic placeholders or filler
+- Adapt knowledge and project context to produce substantive technical documentation
+- When no reference material is provided, derive content from the project name, features, constraints, audience, and the section title's implied purpose
+- Professional technical documentation style with markdown formatting (use bullet lists, tables, bold headings as appropriate)
 - Do not reference KIDs, knowledge library identifiers, or cite sources
+- Never write "to be determined" or "to be filled" — always write actionable content based on available context
 - Keep each section concise but substantive (50-200 words each)
 - Respond with valid JSON: { "sections": { "SECTION_0": "content...", "SECTION_1": "content...", ... } }
-- If you cannot write meaningful content for a section, set its value to null`,
+- If you truly cannot write meaningful content for a section, set its value to null`,
         },
         {
           role: "user",
@@ -437,7 +463,7 @@ Write the content for each section. Return valid JSON with a "sections" object m
         },
       ],
       response_format: { type: "json_object" },
-      max_completion_tokens: 4096,
+      max_completion_tokens: 8192,
     });
 
     const result = response.choices[0]?.message?.content ?? null;
@@ -498,17 +524,44 @@ function buildProjectContext(ctx: FillContext): string {
   if (constraints.auth) lines.push(`Auth: ${JSON.stringify(constraints.auth)}`);
   if (constraints.nfr) lines.push(`NFR: ${JSON.stringify(constraints.nfr)}`);
 
+  const workflows = (entities.workflows ?? []) as Array<Record<string, unknown>>;
+  if (workflows.length > 0) {
+    lines.push(`Workflows: ${workflows.map((w) => `${w.workflow_id ?? w.name}: ${w.description ?? ""}`).join("; ")}`);
+  }
+
+  const roles = (entities.roles ?? []) as Array<Record<string, unknown>>;
+  if (roles.length > 0) {
+    lines.push(`Roles: ${roles.map((r) => `${r.role_id ?? r.name}: ${r.description ?? ""}`).join("; ")}`);
+  }
+
+  const dataObjects = (entities.data_objects ?? entities.data_entities ?? []) as Array<Record<string, unknown>>;
+  if (dataObjects.length > 0) {
+    lines.push(`Data Objects: ${dataObjects.map((d) => `${d.name ?? d.entity_id}: ${d.description ?? ""}`).join("; ")}`);
+  }
+
   return lines.join("\n");
 }
 
 const PLACEHOLDER_TEXT = "_Content to be filled during build execution._\n";
 
 function isPlaceholderContent(text: string): boolean {
-  return text.includes("_Content to be filled during build execution._") ||
-    text.includes("_To be determined_") ||
-    text.includes("_to be determined during") ||
-    text.includes("_to be defined during") ||
-    text.includes("_to be defined per");
+  const lower = text.toLowerCase();
+  return lower.includes("content to be filled during build execution") ||
+    lower.includes("to be determined") ||
+    lower.includes("to be defined during") ||
+    lower.includes("to be defined per") ||
+    lower.includes("no items defined") ||
+    lower.includes("no specific risks identified") ||
+    lower.includes("standards resolved per standards snapshot") ||
+    lower.includes("work breakdown defined in planning artifacts") ||
+    lower.includes("deployment model to be determined") ||
+    lower.includes("security and authentication requirements to be defined") ||
+    lower.includes("no integration points defined") ||
+    lower.includes("no explicit constraints defined") ||
+    lower.includes("no non-functional requirements defined") ||
+    lower.includes("dependencies to be determined") ||
+    lower.includes("no overview provided") ||
+    lower.includes("no unknowns identified");
 }
 
 function collectPlaceholderSections(
@@ -520,12 +573,8 @@ function collectPlaceholderSections(
   for (let i = 0; i < headings.length; i++) {
     if (isPlaceholderContent(headingContents[i])) {
       const relevantKids = getRelevantKnowledge(headings[i].title, knowledge);
-      if (relevantKids.length > 0) {
-        const knowledgeSource = buildKnowledgeSourceMaterial(relevantKids);
-        if (knowledgeSource.length > 50) {
-          sections.push({ index: i, title: headings[i].title, knowledgeContent: knowledgeSource });
-        }
-      }
+      const knowledgeSource = relevantKids.length > 0 ? buildKnowledgeSourceMaterial(relevantKids) : "";
+      sections.push({ index: i, title: headings[i].title, knowledgeContent: knowledgeSource });
     }
   }
   return sections;
@@ -852,61 +901,6 @@ function buildHeadingContentInner(
     } else {
       lines.push("_Security and authentication requirements to be defined._\n");
     }
-    resolvedCount.n += 1;
-    return lines.join("\n");
-  }
-
-  if (titleLower.includes("caching") || titleLower.includes("cache")) {
-    lines.push(PLACEHOLDER_TEXT);
-    resolvedCount.n += 1;
-    return lines.join("\n");
-  }
-
-  if (titleLower.includes("search")) {
-    lines.push(PLACEHOLDER_TEXT);
-    resolvedCount.n += 1;
-    return lines.join("\n");
-  }
-
-  if (titleLower.includes("test") || titleLower.includes("verification")) {
-    lines.push(PLACEHOLDER_TEXT);
-    resolvedCount.n += 1;
-    return lines.join("\n");
-  }
-
-  if (titleLower.includes("monitoring") || titleLower.includes("observability") || titleLower.includes("metric") || titleLower.includes("analytic")) {
-    lines.push(PLACEHOLDER_TEXT);
-    resolvedCount.n += 1;
-    return lines.join("\n");
-  }
-
-  if (titleLower.includes("error") || titleLower.includes("exception")) {
-    lines.push(PLACEHOLDER_TEXT);
-    resolvedCount.n += 1;
-    return lines.join("\n");
-  }
-
-  if (titleLower.includes("api") || titleLower.includes("interface") || titleLower.includes("contract")) {
-    const feats = (entities.features ?? []) as Array<Record<string, unknown>>;
-    if (feats.length > 0) {
-      lines.push("**API surface derived from features:**\n");
-      feats.forEach((f) => lines.push(`- \`${f.feature_id}\`: ${f.name}`));
-      lines.push("");
-    } else {
-      lines.push(PLACEHOLDER_TEXT);
-    }
-    resolvedCount.n += 1;
-    return lines.join("\n");
-  }
-
-  if (titleLower.includes("design") || titleLower.includes("visual") || titleLower.includes("ui")) {
-    lines.push(PLACEHOLDER_TEXT);
-    resolvedCount.n += 1;
-    return lines.join("\n");
-  }
-
-  if (titleLower.includes("accessibility")) {
-    lines.push(PLACEHOLDER_TEXT);
     resolvedCount.n += 1;
     return lines.join("\n");
   }
