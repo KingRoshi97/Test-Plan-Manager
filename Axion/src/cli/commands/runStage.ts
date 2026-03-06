@@ -266,7 +266,7 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
 
     writeSelectionResult(runDir, runId, generatedAt, baseDir, canonicalSpec, standardsSnapshot);
   } else if (stageId === "S7_RENDER_DOCS") {
-    writeRenderedDocs(runDir, runId, generatedAt, baseDir);
+    await writeRenderedDocs(runDir, runId, generatedAt, baseDir);
   } else if (stageId === "S8_BUILD_PLAN") {
     const specPath = join(runDir, "canonical", "canonical_spec.json");
     let canonicalSpec: CanonicalSpec;

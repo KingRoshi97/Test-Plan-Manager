@@ -99,142 +99,141 @@ export function resolvePlaceholder(syntax: PlaceholderSyntax, context: FillConte
       return resolveFromContext(context, syntax.path);
     case "array":
       return resolveFromContext(context, syntax.path);
-    case "optional":
-      return resolveFromContext(context, syntax.path) ?? null;
-    case "unknown_allowed":
-      return resolveFromContext(context, syntax.path) ?? undefined;
     case "derived":
-      return runDerivedFunction(syntax.name, syntax.args, context);
+      return resolveDerived(syntax.name, syntax.args, context);
+    case "optional":
+      return resolveFromContext(context, syntax.path);
+    case "unknown_allowed":
+      return resolveFromContext(context, syntax.path);
   }
 }
 
-function runDerivedFunction(name: string, _args: string[], ctx: FillContext): unknown {
-  const entities = (ctx.spec.entities ?? {}) as Record<string, unknown[]>;
-  const roles = (entities.roles ?? []) as Array<Record<string, unknown>>;
-  const features = (entities.features ?? []) as Array<Record<string, unknown>>;
-  const workflows = (entities.workflows ?? []) as Array<Record<string, unknown>>;
-
+function resolveDerived(name: string, args: string[], ctx: FillContext): unknown {
   switch (name) {
-    case "ROLE_TO_WORKFLOWS": {
-      const mapping: Record<string, string[]> = {};
-      for (const wf of workflows) {
-        const actorRef = String(wf.actor_role_ref ?? "");
-        if (actorRef) {
-          if (!mapping[actorRef]) mapping[actorRef] = [];
-          mapping[actorRef].push(String(wf.name ?? wf.workflow_id));
-        }
-      }
-      return mapping;
-    }
-    case "FEATURE_TO_OPERATIONS": {
-      return features.map((f) => ({
-        feature_id: f.feature_id,
-        name: f.name,
-        operations: [`implement_${f.feature_id}`, `test_${f.feature_id}`],
-      }));
-    }
     case "ROLE_PERMISSION_MATRIX": {
-      const perms = (entities.permissions ?? []) as Array<Record<string, unknown>>;
-      return roles.map((r) => ({
-        role_id: r.role_id,
-        role_name: r.name,
-        permissions: perms
-          .filter((p) => p.role_ref === r.role_id)
-          .map((p) => p.allowed_capabilities),
-      }));
+      const roles = (ctx.spec.entities as Record<string, unknown>)?.roles as Array<Record<string, unknown>> ?? [];
+      const workflows = (ctx.spec.entities as Record<string, unknown>)?.workflows as Array<Record<string, unknown>> ?? [];
+      if (roles.length === 0) return "No roles defined.";
+
+      const header = ["Role", ...workflows.map((w) => String(w.name ?? w.workflow_id ?? "Workflow"))];
+      const rows = roles.map((r) => {
+        const roleName = String(r.name ?? r.role_id ?? "Role");
+        const wfCols = workflows.map(() => "✓");
+        return [roleName, ...wfCols];
+      });
+
+      return [
+        `| ${header.join(" | ")} |`,
+        `| ${header.map(() => "---").join(" | ")} |`,
+        ...rows.map((r) => `| ${r.join(" | ")} |`),
+      ].join("\n");
     }
     default:
-      return undefined;
+      return `_Derived function '${name}' not implemented._`;
   }
 }
 
 interface OutputHeading {
-  level: number;
   title: string;
-  tableColumns: string[];
+  level: number;
   description: string;
+  tableColumns: string[];
 }
 
-export function extractOutputFormat(templateContent: string): OutputHeading[] {
-  const headings: OutputHeading[] = [];
+function extractOutputFormat(templateContent: string): OutputHeading[] {
   const section7Match = templateContent.match(/## 7\.\s*Output Format\b([\s\S]*?)(?=\n## \d+\.|$)/);
-  if (!section7Match) return headings;
+  if (!section7Match) return [];
 
-  const section7 = section7Match[1];
-  const lines = section7.split("\n");
-
-  let currentHeading: OutputHeading | null = null;
+  const lines = section7Match[1].split("\n");
+  const headings: OutputHeading[] = [];
+  let inHeadings = false;
+  let lastHeading: OutputHeading | null = null;
 
   for (const line of lines) {
-    const headingMatch = line.match(/^\d+\.\s*`## ([^`]+)`/);
-    if (headingMatch) {
-      if (currentHeading) headings.push(currentHeading);
-      currentHeading = {
-        level: 2,
-        title: headingMatch[1],
-        tableColumns: [],
-        description: "",
-      };
+    if (line.includes("Required Headings")) {
+      inHeadings = true;
       continue;
     }
 
-    if (currentHeading && line.trim().startsWith("- Table:")) {
-      const colStr = line.replace(/.*- Table:\s*/, "").trim();
-      currentHeading.tableColumns = colStr.split("|").map((c) => c.trim()).filter(Boolean);
-    } else if (currentHeading && line.trim().startsWith("- ") && !line.trim().startsWith("- Table:")) {
-      currentHeading.description += line.trim().replace(/^- /, "") + " ";
+    const headingMatch = line.match(/^\d+\.\s*`(#+)\s*(.+?)`/);
+    if (!headingMatch) {
+      const altMatch = line.match(/^\d+\.\s*(#+)\s*(.+)/);
+      if (altMatch) {
+        lastHeading = {
+          title: altMatch[2].trim(),
+          level: altMatch[1].length,
+          description: "",
+          tableColumns: [],
+        };
+        headings.push(lastHeading);
+        continue;
+      }
+
+      const h2Match = line.match(/^\d+\.\s*`## (.+?)`/);
+      if (h2Match) {
+        lastHeading = {
+          title: h2Match[1].trim(),
+          level: 2,
+          description: "",
+          tableColumns: [],
+        };
+        headings.push(lastHeading);
+        continue;
+      }
+    }
+
+    if (headingMatch) {
+      lastHeading = {
+        title: headingMatch[2].trim(),
+        level: headingMatch[1].length,
+        description: "",
+        tableColumns: [],
+      };
+      headings.push(lastHeading);
+      continue;
+    }
+
+    if (lastHeading && line.trim().startsWith("|") && !line.includes("---")) {
+      const cols = line.split("|").map((c) => c.trim()).filter(Boolean);
+      if (cols.length > 0 && !cols[0].includes("---")) {
+        lastHeading.tableColumns = cols;
+      }
     }
   }
 
-  if (currentHeading) headings.push(currentHeading);
   return headings;
 }
 
 function renderEntityArray(items: unknown[], columns?: string[]): string {
   if (!Array.isArray(items) || items.length === 0) return "_No items defined._\n";
 
-  const sorted = [...items].sort((a, b) => {
-    const aId = String((a as Record<string, unknown>).feature_id ?? (a as Record<string, unknown>).role_id ?? (a as Record<string, unknown>).workflow_id ?? (a as Record<string, unknown>).perm_id ?? "");
-    const bId = String((b as Record<string, unknown>).feature_id ?? (b as Record<string, unknown>).role_id ?? (b as Record<string, unknown>).workflow_id ?? (b as Record<string, unknown>).perm_id ?? "");
-    return aId.localeCompare(bId);
-  });
-
-  if (columns && columns.length > 0) {
-    const colKeys = columns.map((c) => c.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, ""));
-    const header = "| " + columns.join(" | ") + " |";
-    const sep = "| " + columns.map(() => "---").join(" | ") + " |";
-    const rows = sorted.map((item) => {
-      const rec = item as Record<string, unknown>;
-      const vals = colKeys.map((ck) => {
-        for (const [k, v] of Object.entries(rec)) {
-          if (k.toLowerCase().replace(/\s+/g, "_") === ck || k === ck) {
-            return formatCellValue(v);
-          }
-        }
-        const directVal = rec[ck];
-        if (directVal !== undefined) return formatCellValue(directVal);
-        return "—";
-      });
-      return "| " + vals.join(" | ") + " |";
-    });
-    return [header, sep, ...rows].join("\n") + "\n";
+  const records = items.filter(
+    (i) => typeof i === "object" && i !== null,
+  ) as Array<Record<string, unknown>>;
+  if (records.length === 0) {
+    if (items.every((i) => typeof i === "string")) {
+      return items.map((i) => `- ${i}`).join("\n") + "\n";
+    }
+    return "_No items defined._\n";
   }
 
-  const keys = Object.keys(sorted[0] as Record<string, unknown>);
-  const header = "| " + keys.join(" | ") + " |";
-  const sep = "| " + keys.map(() => "---").join(" | ") + " |";
-  const rows = sorted.map((item) => {
-    const rec = item as Record<string, unknown>;
-    return "| " + keys.map((k) => formatCellValue(rec[k])).join(" | ") + " |";
-  });
-  return [header, sep, ...rows].join("\n") + "\n";
-}
+  const allKeys = [...new Set(records.flatMap((r) => Object.keys(r)))];
+  const cols = columns ?? allKeys;
 
-function formatCellValue(val: unknown): string {
-  if (val === null || val === undefined) return "—";
-  if (Array.isArray(val)) return val.map((v) => String(v)).join(", ");
-  if (typeof val === "object") return JSON.stringify(val);
-  return String(val);
+  const header = `| ${cols.join(" | ")} |`;
+  const separator = `| ${cols.map(() => "---").join(" | ")} |`;
+
+  const rows = records.map((record) => {
+    const cells = cols.map((col) => {
+      const key = col.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const val = record[col] ?? record[key] ?? record[col.toLowerCase()] ?? "";
+      if (typeof val === "object") return JSON.stringify(val);
+      return String(val);
+    });
+    return `| ${cells.join(" | ")} |`;
+  });
+
+  return [header, separator, ...rows, ""].join("\n");
 }
 
 function renderUnknowns(unknowns: unknown[]): string {
@@ -253,35 +252,35 @@ function renderUnknowns(unknowns: unknown[]): string {
     .join("\n\n") + "\n";
 }
 
-function renderKnowledgeReferences(title: string, knowledge?: KnowledgeContext): string {
-  if (!knowledge || knowledge.resolvedKids.length === 0) return "";
+const HEADING_DOMAIN_MAP: Record<string, string[]> = {
+  "architecture": ["architecture_design"],
+  "security": ["security_fundamentals", "identity_access_management"],
+  "auth": ["identity_access_management", "security_fundamentals"],
+  "data": ["databases", "storage_fundamentals"],
+  "api": ["apis_integrations"],
+  "integration": ["apis_integrations"],
+  "test": ["testing_qa"],
+  "deploy": ["ci_cd_devops", "cloud_fundamentals"],
+  "monitor": ["observability_sre"],
+  "compliance": ["compliance_governance"],
+  "cache": ["caching"],
+  "search": ["search_retrieval"],
+  "error": ["observability_sre"],
+  "performance": ["observability_sre"],
+  "permission": ["identity_access_management"],
+  "accessibility": ["accessibility", "design"],
+  "design": ["design", "ux"],
+  "product": ["product", "requirements"],
+  "requirement": ["product", "requirements"],
+  "user": ["product", "ux"],
+  "persona": ["product", "ux"],
+};
+
+function getRelevantKnowledge(title: string, knowledge?: KnowledgeContext): KIDEntry[] {
+  if (!knowledge || knowledge.resolvedKids.length === 0) return [];
 
   const titleWords = title.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter((w) => w.length > 3);
   const domainKeywords = [...titleWords];
-
-  const HEADING_DOMAIN_MAP: Record<string, string[]> = {
-    "architecture": ["architecture_design"],
-    "security": ["security_fundamentals", "identity_access_management"],
-    "auth": ["identity_access_management", "security_fundamentals"],
-    "data": ["databases", "storage_fundamentals"],
-    "api": ["apis_integrations"],
-    "integration": ["apis_integrations"],
-    "test": ["testing_qa"],
-    "deploy": ["ci_cd_devops", "cloud_fundamentals"],
-    "monitor": ["observability_sre"],
-    "compliance": ["compliance_governance"],
-    "cache": ["caching"],
-    "search": ["search_retrieval"],
-    "error": ["observability_sre"],
-    "performance": ["observability_sre"],
-    "permission": ["identity_access_management"],
-    "workflow": ["architecture_design"],
-    "component": ["architecture_design"],
-    "scope": ["architecture_design"],
-    "feature": ["architecture_design"],
-    "risk": ["compliance_governance"],
-    "standard": ["compliance_governance"],
-  };
 
   for (const word of titleWords) {
     for (const [keyword, domains] of Object.entries(HEADING_DOMAIN_MAP)) {
@@ -292,37 +291,183 @@ function renderKnowledgeReferences(title: string, knowledge?: KnowledgeContext):
   }
 
   const citations = getKnowledgeCitationsForDomain(knowledge, [...new Set(domainKeywords)]);
-  if (citations.length === 0) return "";
-
-  const topCitations = citations.slice(0, 5);
-  const refLines: string[] = [];
-  refLines.push("\n**Knowledge References:**\n");
-  for (const kid of topCitations) {
-    const maturityBadge = kid.maturity === "golden" ? " ★" : kid.maturity === "verified" ? " ✓" : "";
-    refLines.push(`- \`${kid.kid}\`: ${kid.title} [${kid.type}]${maturityBadge}`);
-    if (kid.coreContent && kid.coreContent.length > 10) {
-      const snippet = kid.coreContent.length > 200
-        ? kid.coreContent.substring(0, 200) + "..."
-        : kid.coreContent;
-      refLines.push(`  > ${snippet.replace(/\n/g, "\n  > ")}`);
-    }
-  }
-  refLines.push("");
-  return refLines.join("\n");
+  return citations.slice(0, 5);
 }
 
-function buildHeadingContent(
-  heading: OutputHeading,
-  ctx: FillContext,
-  resolvedCount: { n: number },
-  unknownsList: FilledTemplate["unknowns"],
-): string {
-  const content = buildHeadingContentInner(heading, ctx, resolvedCount, unknownsList);
-  const knowledgeRefs = renderKnowledgeReferences(heading.title, ctx.knowledge);
-  if (knowledgeRefs) {
-    return content + knowledgeRefs;
+function buildKnowledgeSourceMaterial(kids: KIDEntry[]): string {
+  if (kids.length === 0) return "";
+
+  const parts: string[] = [];
+  for (const kid of kids) {
+    if (kid.coreContent && kid.coreContent.length > 10) {
+      parts.push(`### ${kid.title} [${kid.type}]\n${kid.coreContent}`);
+    }
   }
-  return content;
+  return parts.join("\n\n");
+}
+
+interface OpenAIMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+interface OpenAIResponse {
+  choices: Array<{ message: { content: string | null } }>;
+}
+
+let _openaiClient: any = null;
+
+async function getOpenAIClient(): Promise<any | null> {
+  if (_openaiClient) return _openaiClient;
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  if (!apiKey) return null;
+  try {
+    const mod = await import("openai");
+    const OpenAI = mod.default ?? mod;
+    _openaiClient = new OpenAI({ apiKey, baseURL });
+    return _openaiClient;
+  } catch {
+    return null;
+  }
+}
+
+async function synthesizeBatchSections(
+  sections: Array<{ title: string; knowledgeContent: string }>,
+  templateTitle: string,
+  projectContext: string,
+): Promise<Record<string, string>> {
+  const client = await getOpenAIClient();
+  if (!client) return {};
+
+  const sectionList = sections.map((s, i) =>
+    `### SECTION_${i}: ${s.title}\nReference Material:\n${s.knowledgeContent.substring(0, 800)}`
+  ).join("\n\n---\n\n");
+
+  try {
+    const response: OpenAIResponse = await client.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an Internal Agent (IA) filling documentation template sections for a software project. Write content for multiple sections at once using the provided knowledge library content as source material.
+
+Rules:
+- Write concrete, project-specific content — not generic placeholders
+- Adapt knowledge to this specific project
+- Professional technical documentation style with markdown formatting
+- Do not reference KIDs, knowledge library identifiers, or cite sources
+- Keep each section concise but substantive (50-200 words each)
+- Respond with valid JSON: { "sections": { "SECTION_0": "content...", "SECTION_1": "content...", ... } }
+- If you cannot write meaningful content for a section, set its value to null`,
+        },
+        {
+          role: "user",
+          content: `## Template: ${templateTitle}
+
+## Project Context:
+${projectContext}
+
+## Sections to Fill:
+
+${sectionList}
+
+Write the content for each section. Return valid JSON with a "sections" object mapping SECTION_N keys to content strings.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 4096,
+    });
+
+    const result = response.choices[0]?.message?.content ?? null;
+    if (!result) return {};
+
+    try {
+      const parsed = JSON.parse(result) as { sections?: Record<string, string> };
+      const output: Record<string, string> = {};
+      if (parsed.sections) {
+        for (const [key, value] of Object.entries(parsed.sections)) {
+          if (value && typeof value === "string" && value.length > 10) {
+            const idx = parseInt(key.replace("SECTION_", ""), 10);
+            if (!isNaN(idx) && sections[idx]) {
+              output[sections[idx].title] = value;
+            }
+          }
+        }
+      }
+      return output;
+    } catch {
+      return {};
+    }
+  } catch (err: any) {
+    console.log(`  [IA] Batch synthesis failed for "${templateTitle}": ${err.message ?? err}`);
+    return {};
+  }
+}
+
+function buildProjectContext(ctx: FillContext): string {
+  const project = (ctx.normalizedInput.project ?? {}) as Record<string, unknown>;
+  const routing = (ctx.spec.routing ?? ctx.normalizedInput.routing ?? {}) as Record<string, unknown>;
+  const entities = (ctx.spec.entities ?? {}) as Record<string, unknown>;
+  const rules = (ctx.spec.rules ?? {}) as Record<string, unknown>;
+  const constraints = (ctx.normalizedInput.constraints ?? ctx.spec.constraints ?? {}) as Record<string, unknown>;
+
+  const lines: string[] = [];
+  lines.push(`Project Name: ${project.project_name ?? "Untitled"}`);
+  lines.push(`Overview: ${project.project_overview ?? "No overview"}`);
+  lines.push(`Category: ${routing.category ?? "software"}`);
+  lines.push(`Type: ${routing.type_preset ?? "general"}`);
+  lines.push(`Audience: ${routing.audience_context ?? "general"}`);
+  lines.push(`Build Target: ${routing.build_target ?? "production"}`);
+
+  const features = (entities.features ?? []) as Array<Record<string, unknown>>;
+  if (features.length > 0) {
+    lines.push(`Features: ${features.map((f) => `${f.feature_id}: ${f.name} — ${f.description ?? ""}`).join("; ")}`);
+  }
+
+  const dod = rules.definition_of_done;
+  if (dod) lines.push(`Definition of Done: ${dod}`);
+
+  const mustAlways = (rules.must_always ?? []) as string[];
+  if (mustAlways.length > 0) lines.push(`Must Always: ${mustAlways.join("; ")}`);
+
+  const mustNever = (rules.must_never ?? []) as string[];
+  if (mustNever.length > 0) lines.push(`Must Never: ${mustNever.join("; ")}`);
+
+  if (constraints.auth) lines.push(`Auth: ${JSON.stringify(constraints.auth)}`);
+  if (constraints.nfr) lines.push(`NFR: ${JSON.stringify(constraints.nfr)}`);
+
+  return lines.join("\n");
+}
+
+const PLACEHOLDER_TEXT = "_Content to be filled during build execution._\n";
+
+function isPlaceholderContent(text: string): boolean {
+  return text.includes("_Content to be filled during build execution._") ||
+    text.includes("_To be determined_") ||
+    text.includes("_to be determined during") ||
+    text.includes("_to be defined during") ||
+    text.includes("_to be defined per");
+}
+
+function collectPlaceholderSections(
+  headings: OutputHeading[],
+  headingContents: string[],
+  knowledge?: KnowledgeContext,
+): Array<{ index: number; title: string; knowledgeContent: string }> {
+  const sections: Array<{ index: number; title: string; knowledgeContent: string }> = [];
+  for (let i = 0; i < headings.length; i++) {
+    if (isPlaceholderContent(headingContents[i])) {
+      const relevantKids = getRelevantKnowledge(headings[i].title, knowledge);
+      if (relevantKids.length > 0) {
+        const knowledgeSource = buildKnowledgeSourceMaterial(relevantKids);
+        if (knowledgeSource.length > 50) {
+          sections.push({ index: i, title: headings[i].title, knowledgeContent: knowledgeSource });
+        }
+      }
+    }
+  }
+  return sections;
 }
 
 function buildHeadingContentInner(
@@ -607,31 +752,31 @@ function buildHeadingContentInner(
   }
 
   if (titleLower.includes("caching") || titleLower.includes("cache")) {
-    lines.push("_Caching strategy to be determined during architecture design._\n");
+    lines.push(PLACEHOLDER_TEXT);
     resolvedCount.n += 1;
     return lines.join("\n");
   }
 
   if (titleLower.includes("search")) {
-    lines.push("_Search capabilities to be determined during architecture design._\n");
+    lines.push(PLACEHOLDER_TEXT);
     resolvedCount.n += 1;
     return lines.join("\n");
   }
 
   if (titleLower.includes("test") || titleLower.includes("verification")) {
-    lines.push("_Testing strategy and verification approach to be defined during planning._\n");
+    lines.push(PLACEHOLDER_TEXT);
     resolvedCount.n += 1;
     return lines.join("\n");
   }
 
   if (titleLower.includes("monitoring") || titleLower.includes("observability") || titleLower.includes("metric") || titleLower.includes("analytic")) {
-    lines.push("_Monitoring and analytics requirements to be defined._\n");
+    lines.push(PLACEHOLDER_TEXT);
     resolvedCount.n += 1;
     return lines.join("\n");
   }
 
   if (titleLower.includes("error") || titleLower.includes("exception")) {
-    lines.push("_Error handling strategy to be defined during design._\n");
+    lines.push(PLACEHOLDER_TEXT);
     resolvedCount.n += 1;
     return lines.join("\n");
   }
@@ -643,25 +788,25 @@ function buildHeadingContentInner(
       feats.forEach((f) => lines.push(`- \`${f.feature_id}\`: ${f.name}`));
       lines.push("");
     } else {
-      lines.push("_API contracts to be defined during design phase._\n");
+      lines.push(PLACEHOLDER_TEXT);
     }
     resolvedCount.n += 1;
     return lines.join("\n");
   }
 
   if (titleLower.includes("design") || titleLower.includes("visual") || titleLower.includes("ui")) {
-    lines.push("_Design specifications to be defined during design phase._\n");
+    lines.push(PLACEHOLDER_TEXT);
     resolvedCount.n += 1;
     return lines.join("\n");
   }
 
   if (titleLower.includes("accessibility")) {
-    lines.push("_Accessibility requirements to be defined per WCAG standards._\n");
+    lines.push(PLACEHOLDER_TEXT);
     resolvedCount.n += 1;
     return lines.join("\n");
   }
 
-  lines.push("_Content to be filled during build execution._\n");
+  lines.push(PLACEHOLDER_TEXT);
   resolvedCount.n += 1;
   return lines.join("\n");
 }
@@ -686,11 +831,11 @@ function extractRequiredFieldsTable(templateContent: string): Array<{ field: str
   return result;
 }
 
-export function fillTemplate(
+export async function fillTemplate(
   templateEntry: SelectedTemplate,
   templateContent: string,
   context: FillContext,
-): FilledTemplate {
+): Promise<FilledTemplate> {
   const headings = extractOutputFormat(templateContent);
   const requiredFields = extractRequiredFieldsTable(templateContent);
   const unknownsList: FilledTemplate["unknowns"] = [];
@@ -706,6 +851,8 @@ export function fillTemplate(
   const project = (context.normalizedInput.project ?? {}) as Record<string, unknown>;
   const projectName = String(project.project_name ?? meta.project_name ?? "Project");
 
+  const projectContext = buildProjectContext(context);
+
   const lines: string[] = [];
   lines.push(`# ${templateTitle}\n`);
   lines.push(`> **Project:** ${projectName} | **Spec:** ${context.spec_id} | **Run:** ${context.run_id}\n`);
@@ -713,8 +860,30 @@ export function fillTemplate(
   lines.push("---\n");
 
   if (headings.length > 0) {
+    const headingContents: string[] = [];
     for (const heading of headings) {
-      lines.push(buildHeadingContent(heading, context, resolvedCount, unknownsList));
+      headingContents.push(buildHeadingContentInner(heading, context, resolvedCount, unknownsList));
+    }
+
+    const placeholderSections = collectPlaceholderSections(headings, headingContents, context.knowledge);
+
+    if (placeholderSections.length > 0) {
+      const synthesized = await synthesizeBatchSections(
+        placeholderSections.map((s) => ({ title: s.title, knowledgeContent: s.knowledgeContent })),
+        templateTitle,
+        projectContext,
+      );
+
+      for (const section of placeholderSections) {
+        const content = synthesized[section.title];
+        if (content) {
+          headingContents[section.index] = `## ${section.title}\n\n${content}\n`;
+        }
+      }
+    }
+
+    for (const content of headingContents) {
+      lines.push(content);
     }
   } else {
     for (const field of requiredFields) {
@@ -743,7 +912,6 @@ export function fillTemplate(
     if (requiredFields.length === 0) {
       const entities = (context.spec.entities ?? {}) as Record<string, unknown>;
       const routing = (context.spec.routing ?? {}) as Record<string, unknown>;
-      const rules = (context.spec.rules ?? {}) as Record<string, unknown>;
 
       lines.push("## Overview\n");
       lines.push(`**Project:** ${projectName}\n`);

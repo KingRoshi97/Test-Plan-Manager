@@ -1,0 +1,318 @@
+{
+  "$schema": "feature_packs.v1",
+  "version": "1.0.0",
+  "description": "Feature pack definitions for modular template selection. Each pack groups related templates and defines activation conditions based on project routing and constraints.",
+  "packs": [
+    {
+      "pack_id": "core",
+      "name": "Core Product",
+      "description": "Essential product definition templates. Always included.",
+      "template_prefixes": ["PRD", "DMG"],
+      "activation": { "always": true }
+    },
+    {
+      "pack_id": "design_core",
+      "name": "Core Design",
+      "description": "Core UX/UI design templates for consumer-facing projects.",
+      "template_prefixes": ["DES"],
+      "activation": { "always": true }
+    },
+    {
+      "pack_id": "design_extended",
+      "name": "Extended Design",
+      "description": "Content design, interaction design, responsive layout, visual assets.",
+      "template_prefixes": ["CDX", "IXD", "RLB", "VAP", "IAN", "DSYS"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.audience_context", "values": ["consumer", "prosumer"] },
+          { "field": "routing.type_preset", "values": ["web_app", "mobile_app", "saas"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "accessibility",
+      "name": "Accessibility",
+      "description": "WCAG-aligned accessibility requirements and specs.",
+      "template_prefixes": ["A11YD", "YD"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.audience_context", "values": ["consumer", "prosumer"] },
+          { "field": "constraints.nfr.compliance", "contains": "WCAG" },
+          { "field": "constraints.nfr.compliance", "contains": "ADA" }
+        ]
+      }
+    },
+    {
+      "pack_id": "architecture_core",
+      "name": "Core Architecture",
+      "description": "System architecture, service boundaries, interfaces.",
+      "template_prefixes": ["ARC", "SIC"],
+      "activation": { "always": true }
+    },
+    {
+      "pack_id": "architecture_extended",
+      "name": "Extended Architecture",
+      "description": "Deployment topology, error models, workflow orchestration.",
+      "template_prefixes": ["SBDT", "ERR", "WFO"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.build_target", "values": ["production"] },
+          { "field": "routing.type_preset", "values": ["saas", "api_service"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "data_core",
+      "name": "Core Data",
+      "description": "Data architecture, entity definitions, persistence.",
+      "template_prefixes": ["DATA"],
+      "activation": { "always": true }
+    },
+    {
+      "pack_id": "data_governance",
+      "name": "Data Governance & Lifecycle",
+      "description": "Data governance, lifecycle management, quality validation, reporting.",
+      "template_prefixes": ["DGL", "DLR", "DQV", "RPT"],
+      "activation": {
+        "match_any": [
+          { "field": "constraints.nfr.compliance", "contains": "GDPR" },
+          { "field": "constraints.nfr.compliance", "contains": "HIPAA" },
+          { "field": "constraints.nfr.compliance", "contains": "SOX" },
+          { "field": "routing.build_target", "values": ["production"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "auth_security",
+      "name": "Auth & Security",
+      "description": "Identity management, access control, secrets, audit trails.",
+      "template_prefixes": ["IAM", "SEC", "SKM", "PMAD", "AUDIT"],
+      "activation": {
+        "match_any": [
+          { "field": "constraints.auth.enabled", "equals": true }
+        ]
+      }
+    },
+    {
+      "pack_id": "compliance",
+      "name": "Compliance & Privacy",
+      "description": "Compliance programs, privacy, threat modeling.",
+      "template_prefixes": ["COMP", "CPR", "PRIV", "TMA"],
+      "activation": {
+        "match_any": [
+          { "field": "constraints.nfr.compliance", "not_empty": true },
+          { "field": "constraints.auth.two_factor", "equals": true }
+        ]
+      }
+    },
+    {
+      "pack_id": "api",
+      "name": "API & Contracts",
+      "description": "API endpoints, governance, pagination/filtering.",
+      "template_prefixes": ["API", "APIG", "PFS"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.type_preset", "values": ["web_app", "api_service", "saas", "mobile_app"] },
+          { "field": "routing.category", "values": ["software"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "frontend",
+      "name": "Frontend & Build",
+      "description": "Frontend components, forms, routing, state management, UI composition, error recovery.",
+      "template_prefixes": ["FE", "FORM", "ROUTE", "SMD", "UICP", "CER"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.type_preset", "values": ["web_app", "mobile_app", "saas"] },
+          { "field": "routing.audience_context", "values": ["consumer", "prosumer"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "mobile",
+      "name": "Mobile",
+      "description": "Mobile-specific templates: capabilities, deep links, performance, push notifications, offline support, signing.",
+      "template_prefixes": ["MOB", "MDC", "MDL", "MBAT", "MPUSH", "OFS", "SIGN"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.type_preset", "values": ["mobile_app", "mobile"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "caching",
+      "name": "Caching",
+      "description": "Caching strategy, invalidation, consistency models.",
+      "template_prefixes": ["CACHE"],
+      "activation": {
+        "match_any": [
+          { "field": "constraints.nfr.concurrent_sessions", "greater_than": 100 },
+          { "field": "routing.type_preset", "values": ["saas", "api_service"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "search",
+      "name": "Search",
+      "description": "Search surfaces, indexing, result quality, abuse controls.",
+      "template_prefixes": ["SRCH"],
+      "activation": {
+        "match_any": [
+          { "field": "features.has_search", "equals": true }
+        ]
+      }
+    },
+    {
+      "pack_id": "realtime",
+      "name": "Realtime & Events",
+      "description": "Realtime communication, event systems, messaging.",
+      "template_prefixes": ["RTM", "EVT"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.type_preset", "values": ["chat", "realtime"] },
+          { "field": "features.has_realtime", "equals": true }
+        ]
+      }
+    },
+    {
+      "pack_id": "integrations_core",
+      "name": "External Integrations",
+      "description": "External system integration patterns.",
+      "template_prefixes": ["IXS"],
+      "activation": {
+        "match_any": [
+          { "field": "features.has_integrations", "equals": true },
+          { "field": "constraints.auth.methods", "contains": "google_oauth" }
+        ]
+      }
+    },
+    {
+      "pack_id": "integrations_payments",
+      "name": "Payments",
+      "description": "Payment processing integration.",
+      "template_prefixes": ["PAY"],
+      "activation": {
+        "match_any": [
+          { "field": "features.has_payments", "equals": true }
+        ]
+      }
+    },
+    {
+      "pack_id": "integrations_notifications",
+      "name": "Notifications",
+      "description": "Notification system integration.",
+      "template_prefixes": ["NOTIF"],
+      "activation": {
+        "match_any": [
+          { "field": "features.has_notifications", "equals": true },
+          { "field": "routing.type_preset", "values": ["mobile_app"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "integrations_files",
+      "name": "File & Media Storage",
+      "description": "File upload, media processing, storage.",
+      "template_prefixes": ["FMS", "FPMP"],
+      "activation": {
+        "match_any": [
+          { "field": "features.has_file_upload", "equals": true }
+        ]
+      }
+    },
+    {
+      "pack_id": "integrations_auth",
+      "name": "SSO & Identity Federation",
+      "description": "Single sign-on and identity provider integration.",
+      "template_prefixes": ["SSO"],
+      "activation": {
+        "match_any": [
+          { "field": "constraints.auth.methods", "contains": "sso" },
+          { "field": "constraints.auth.methods", "contains": "saml" }
+        ]
+      }
+    },
+    {
+      "pack_id": "integrations_webhooks",
+      "name": "Webhooks",
+      "description": "Webhook contract and delivery.",
+      "template_prefixes": ["WHCP"],
+      "activation": {
+        "match_any": [
+          { "field": "features.has_webhooks", "equals": true }
+        ]
+      }
+    },
+    {
+      "pack_id": "integrations_crm",
+      "name": "CRM & ERP",
+      "description": "CRM and ERP system integration.",
+      "template_prefixes": ["CRMERP"],
+      "activation": {
+        "match_any": [
+          { "field": "features.has_crm", "equals": true },
+          { "field": "routing.type_preset", "values": ["saas"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "ops_core",
+      "name": "Core Operations",
+      "description": "Observability, logging, alerting.",
+      "template_prefixes": ["OBS", "LTS", "ALRT"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.build_target", "values": ["production"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "ops_extended",
+      "name": "Extended Operations",
+      "description": "Analytics, SLOs, performance, load testing, cost management.",
+      "template_prefixes": ["ANL", "SLO", "PERF", "LOAD", "COST"],
+      "activation": {
+        "match_any": [
+          { "field": "constraints.nfr.expected_users", "greater_than": 1000 },
+          { "field": "routing.type_preset", "values": ["saas", "api_service"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "admin",
+      "name": "Admin Tools",
+      "description": "Admin panels, moderation tools.",
+      "template_prefixes": ["ADMIN"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.type_preset", "values": ["saas"] },
+          { "field": "features.has_admin", "equals": true }
+        ]
+      }
+    },
+    {
+      "pack_id": "product_extended",
+      "name": "Extended Product",
+      "description": "Stakeholder management, business rules, roadmap, risk analysis, metrics, user research.",
+      "template_prefixes": ["STK", "BRP", "RSC", "RISK", "SMIP", "URD"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.build_target", "values": ["production"] }
+        ]
+      }
+    },
+    {
+      "pack_id": "build_patterns",
+      "name": "Build Patterns",
+      "description": "Playbook patterns, background jobs, feature flags, rate limiting.",
+      "template_prefixes": ["PBP", "JBS", "FFCFG", "RLIM"],
+      "activation": {
+        "match_any": [
+          { "field": "routing.build_target", "values": ["production"] },
+          { "field": "routing.type_preset", "values": ["saas", "api_service"] }
+        ]
+      }
+    }
+  ]
+}

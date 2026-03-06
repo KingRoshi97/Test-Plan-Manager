@@ -33,7 +33,12 @@ export function writeSelectionResult(
     knowledgeContext = resolveKnowledge(baseDir, routing, constraints);
   } catch { /* empty */ }
 
-  const { selected, index, knowledgeBoostedIds } = selectTemplates(baseDir, routing, constraints, canonicalSpec, standardsSnapshot, knowledgeContext);
+  let normalizedInput: Record<string, unknown> = {};
+  try {
+    normalizedInput = readJson<Record<string, unknown>>(join(runDir, "intake", "normalized_input.json"));
+  } catch { /* empty */ }
+
+  const { selected, index, activePacks } = selectTemplates(baseDir, routing, constraints, canonicalSpec, standardsSnapshot, knowledgeContext, normalizedInput);
   const selectionHash = computeSelectionHash(selected);
   const now = isoNow();
 
@@ -45,23 +50,22 @@ export function writeSelectionResult(
     template_library_version: index.template_library_version,
     selected,
     selected_templates: selected,
+    active_packs: activePacks,
   };
 
   writeCanonicalJson(join(runDir, "templates", "selection_result.json"), result);
 
+  const activePackNames = Object.keys(activePacks);
   const notes: Array<{ level: string; message: string }> = [
     {
       level: "info",
-      message: `Selected ${selected.length} templates with registry-driven selection (selection_hash=${selectionHash})`,
+      message: `Selected ${selected.length} templates via ${activePackNames.length} active feature packs (selection_hash=${selectionHash})`,
+    },
+    {
+      level: "info",
+      message: `Active packs: ${activePackNames.join(", ")}`,
     },
   ];
-
-  if (knowledgeBoostedIds.length > 0) {
-    notes.push({
-      level: "info",
-      message: `Knowledge-boosted ${knowledgeBoostedIds.length} templates: ${knowledgeBoostedIds.join(", ")}`,
-    });
-  }
 
   if (knowledgeContext) {
     notes.push({
@@ -72,13 +76,12 @@ export function writeSelectionResult(
 
   writeCanonicalJson(join(runDir, "templates", "selection_report.json"), {
     generated_at: now,
-    knowledge_citations: knowledgeContext?.citationRefs ?? [],
-    knowledge_boosted_templates: knowledgeBoostedIds,
+    active_packs: activePacks,
     notes,
     run_id: runId,
     selected_count: selected.length,
     selection_hash: selectionHash,
-    selection_profile: "registry-driven",
+    selection_profile: "feature-pack-driven",
     total_in_index: index.templates.length,
   });
 }
@@ -128,7 +131,7 @@ function assertNotTemplateLibrary(targetPath: string, baseDir: string): void {
   }
 }
 
-export function writeRenderedDocs(runDir: string, runId: string, generatedAt: string, baseDir: string): void {
+export async function writeRenderedDocs(runDir: string, runId: string, generatedAt: string, baseDir: string): Promise<void> {
   assertNotTemplateLibrary(runDir, baseDir);
 
   const selectionPath = join(runDir, "templates", "selection_result.json");
@@ -212,7 +215,7 @@ export function writeRenderedDocs(runDir: string, runId: string, generatedAt: st
       rawContent = "";
     }
 
-    const filled = fillTemplate(
+    const filled = await fillTemplate(
       {
         template_id: tmpl.template_id,
         template_version: tmpl.template_version,
