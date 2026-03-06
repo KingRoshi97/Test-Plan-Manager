@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../lib/queryClient";
 import {
   Play, Download, Loader2, CheckCircle, XCircle, AlertTriangle,
-  Package, FileCode, ChevronRight, RefreshCw, Clock
+  Package, FileCode, ChevronRight, RefreshCw, Clock, Zap
 } from "lucide-react";
 
 interface BuildTabProps {
@@ -14,6 +14,15 @@ interface BuildTabProps {
 
 type BuildState = "not_requested" | "requested" | "approved" | "building" | "verifying" | "failed" | "passed" | "exported";
 
+interface TokenUsageData {
+  total_prompt_tokens?: number;
+  total_completion_tokens?: number;
+  total_tokens: number;
+  total_cost_usd: number;
+  api_calls: number;
+  by_stage?: Record<string, { prompt_tokens: number; completion_tokens: number; total_tokens: number; cost_usd: number; calls: number }>;
+}
+
 interface BuildStatus {
   state: BuildState;
   buildId?: string;
@@ -23,7 +32,7 @@ interface BuildStatus {
     totalSlices: number;
     filesGenerated: number;
     totalFiles: number;
-    tokenUsage?: { total_tokens: number; total_cost_usd: number; api_calls: number };
+    tokenUsage?: TokenUsageData;
   };
   manifest?: any;
   verification?: any;
@@ -56,6 +65,15 @@ function BuildStateBadge({ state }: { state: string }) {
   );
 }
 
+function LiveBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white">
+      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+      LIVE
+    </span>
+  );
+}
+
 function ProgressBar({ value, max, label }: { value: number; max: number; label?: string }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
@@ -72,6 +90,78 @@ function ProgressBar({ value, max, label }: { value: number; max: number; label?
           style={{ width: `${pct}%` }}
         />
       </div>
+    </div>
+  );
+}
+
+function TokenUsageCard({ tokenUsage, isLive }: { tokenUsage: TokenUsageData; isLive: boolean }) {
+  return (
+    <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Zap className="w-4 h-4 text-amber-500" />
+          <h4 className="text-sm font-semibold text-[hsl(var(--foreground))]">Token Usage</h4>
+        </div>
+        {isLive && <LiveBadge />}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
+          <p className="text-lg font-bold text-[hsl(var(--foreground))]">
+            {tokenUsage.total_tokens.toLocaleString()}
+          </p>
+          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Total Tokens</p>
+        </div>
+        {tokenUsage.total_prompt_tokens != null && (
+          <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
+            <p className="text-lg font-bold text-blue-600">
+              {tokenUsage.total_prompt_tokens.toLocaleString()}
+            </p>
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Input Tokens</p>
+          </div>
+        )}
+        {tokenUsage.total_completion_tokens != null && (
+          <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
+            <p className="text-lg font-bold text-purple-600">
+              {tokenUsage.total_completion_tokens.toLocaleString()}
+            </p>
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Output Tokens</p>
+          </div>
+        )}
+        <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
+          <p className="text-lg font-bold text-emerald-600">
+            ${tokenUsage.total_cost_usd.toFixed(4)}
+          </p>
+          <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Estimated Cost</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 text-xs text-[hsl(var(--muted-foreground))]">
+        <span>API Calls: {tokenUsage.api_calls}</span>
+        {tokenUsage.total_prompt_tokens != null && tokenUsage.total_completion_tokens != null && (
+          <span>Ratio: {tokenUsage.total_tokens > 0 ? ((tokenUsage.total_completion_tokens / tokenUsage.total_tokens) * 100).toFixed(0) : 0}% output</span>
+        )}
+      </div>
+
+      {tokenUsage.by_stage && Object.keys(tokenUsage.by_stage).length > 0 && (
+        <div className="mt-2">
+          <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2">Per-Stage Breakdown</p>
+          <div className="space-y-1 max-h-40 overflow-y-auto">
+            {Object.entries(tokenUsage.by_stage)
+              .sort(([, a], [, b]) => (b.total_tokens ?? 0) - (a.total_tokens ?? 0))
+              .map(([stage, data]) => (
+              <div key={stage} className="flex items-center justify-between py-1 px-2 rounded text-xs bg-[hsl(var(--muted)/0.5)]">
+                <span className="font-mono text-[hsl(var(--foreground))] truncate max-w-[200px]">{stage}</span>
+                <div className="flex items-center gap-3 text-[hsl(var(--muted-foreground))]">
+                  <span>{(data.total_tokens ?? 0).toLocaleString()} tok</span>
+                  <span>${(data.cost_usd ?? 0).toFixed(4)}</span>
+                  <span>{data.calls ?? 0} calls</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -190,6 +280,9 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
   const isActive = ["requested", "approved", "building", "verifying"].includes(state);
   const isDone = ["passed", "exported"].includes(state);
   const isFailed = state === "failed";
+
+  const liveTokenUsage = isActive ? buildStatus?.progress?.tokenUsage : null;
+  const finalTokenUsage = buildStatus?.manifest?.tokenUsage;
 
   if (!canBuild) {
     return (
@@ -313,15 +406,11 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
             max={buildStatus.progress.totalFiles}
             label="Files"
           />
-
-          {buildStatus.progress.tokenUsage && (
-            <div className="flex gap-4 text-xs text-[hsl(var(--muted-foreground))]">
-              <span>Tokens: {buildStatus.progress.tokenUsage.total_tokens.toLocaleString()}</span>
-              <span>Cost: ${buildStatus.progress.tokenUsage.total_cost_usd.toFixed(4)}</span>
-              <span>API Calls: {buildStatus.progress.tokenUsage.api_calls}</span>
-            </div>
-          )}
         </div>
+      )}
+
+      {liveTokenUsage && (liveTokenUsage.api_calls > 0 || liveTokenUsage.total_tokens > 0) && (
+        <TokenUsageCard tokenUsage={liveTokenUsage} isLive={true} />
       )}
 
       {isFailed && (
@@ -347,38 +436,26 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
             </span>
           </div>
 
-          {buildStatus?.manifest && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {buildStatus.manifest.tokenUsage && (
-                <>
-                  <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
-                    <p className="text-lg font-bold text-[hsl(var(--foreground))]">
-                      {buildStatus.manifest.tokenUsage.total_tokens.toLocaleString()}
-                    </p>
-                    <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Tokens</p>
-                  </div>
-                  <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
-                    <p className="text-lg font-bold text-[hsl(var(--foreground))]">
-                      ${buildStatus.manifest.tokenUsage.total_cost_usd.toFixed(4)}
-                    </p>
-                    <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Cost</p>
-                  </div>
-                  <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
-                    <p className="text-lg font-bold text-[hsl(var(--foreground))]">
-                      {buildStatus.manifest.tokenUsage.api_calls}
-                    </p>
-                    <p className="text-[10px] text-[hsl(var(--muted-foreground))]">API Calls</p>
-                  </div>
-                </>
-              )}
-              {buildStatus.repoManifest?.structure && (
-                <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
-                  <p className="text-lg font-bold text-[hsl(var(--foreground))]">
-                    {buildStatus.repoManifest.structure.totalFiles}
-                  </p>
-                  <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Files</p>
-                </div>
-              )}
+          {buildStatus.repoManifest?.structure && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
+                <p className="text-lg font-bold text-[hsl(var(--foreground))]">
+                  {buildStatus.repoManifest.structure.totalFiles}
+                </p>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Files Generated</p>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
+                <p className="text-lg font-bold text-[hsl(var(--foreground))]">
+                  {buildStatus.repoManifest.structure.directories?.length ?? 0}
+                </p>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Directories</p>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
+                <p className="text-lg font-bold text-[hsl(var(--foreground))]">
+                  {(buildStatus.repoManifest.structure.totalSizeBytes / 1024).toFixed(1)}KB
+                </p>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Total Size</p>
+              </div>
             </div>
           )}
 
@@ -406,6 +483,10 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
             </button>
           )}
         </div>
+      )}
+
+      {finalTokenUsage && (isDone || isFailed) && (
+        <TokenUsageCard tokenUsage={finalTokenUsage} isLive={false} />
       )}
 
       {buildStatus?.verification && (isDone || isFailed) && (

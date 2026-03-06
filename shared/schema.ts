@@ -21,6 +21,7 @@ export const assemblies = pgTable("assemblies", {
   totalRuns: integer("total_runs").default(0),
   totalDurationMs: integer("total_duration_ms").default(0),
   intakePayload: jsonb("intake_payload"),
+  buildTokenUsage: jsonb("build_token_usage"),
 });
 
 export const pipelineRuns = pgTable("pipeline_runs", {

@@ -31,7 +31,9 @@ Internal Build Mode takes an approved Agent Kit from a completed pipeline run an
 - `GET /api/assemblies/:id/build` — Get build status (state, progress, manifests, verification)
 - `GET /api/assemblies/:id/build/download` — Download project_repo.zip (only when exported)
 
-**UI**: Build tab on assembly page with mode selection, progress bars (slices/files), verification results, failure display with categorized reasons, download button, retry controls
+**UI**: Build tab on assembly page with mode selection, progress bars (slices/files), live token tracking with pulsing LIVE badge and per-stage breakdown, verification results, failure display with categorized reasons, download button, retry controls
+
+**Build Token Tracking**: Matches pipeline token tracking pattern — `TOKEN_USAGE:` stdout lines parsed in POST build endpoint with monotonic `api_calls` guard, serialized DB updates via `enqueueBuildUpdate` queue to `assemblies.buildTokenUsage` (jsonb column), live display via `progress.tokenUsage` in GET response, final persistence on process close. UI shows `TokenUsageCard` component with input/output token split, per-stage breakdown, cost, and API call count.
 
 **Build Workspace** (`Axion/.axion/runs/RUN-XXXXXX/build/`):
 - `repo/` — Generated project repository

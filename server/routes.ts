@@ -3510,6 +3510,7 @@ export function registerRoutes(app: Express) {
         currentSlice: null,
         error: null,
         failureClass: null,
+        tokenUsage: null,
       };
 
       const child = spawn("npx", ["tsx", "src/cli/axion.ts", "build", "--run", runId, "--mode", mode], {
@@ -3521,6 +3522,12 @@ export function registerRoutes(app: Express) {
       runningBuilds.set(id, { child, runId, buildState, startTime: Date.now() });
 
       let stdoutBuffer = "";
+      let lastTokenApiCalls = 0;
+      let buildUpdateQueue = Promise.resolve();
+
+      function enqueueBuildUpdate(fn: () => Promise<void>) {
+        buildUpdateQueue = buildUpdateQueue.then(fn).catch(() => {});
+      }
 
       child.stdout.on("data", (chunk: Buffer) => {
         const text = chunk.toString();
@@ -3548,6 +3555,34 @@ export function registerRoutes(app: Express) {
               }
             } catch {}
           }
+
+          const tokenMatch = line.match(/^TOKEN_USAGE: (.+)$/);
+          if (tokenMatch) {
+            try {
+              const usage = JSON.parse(tokenMatch[1]);
+              const calls = usage.api_calls ?? 0;
+              if (calls > lastTokenApiCalls) {
+                lastTokenApiCalls = calls;
+                const tokenUsage = {
+                  total_prompt_tokens: usage.total_prompt_tokens ?? 0,
+                  total_completion_tokens: usage.total_completion_tokens ?? 0,
+                  total_tokens: usage.total_tokens ?? 0,
+                  total_cost_usd: usage.total_cost_usd ?? 0,
+                  api_calls: calls,
+                  by_stage: usage.by_stage ?? {},
+                };
+                const entry = runningBuilds.get(id);
+                if (entry) {
+                  entry.buildState.tokenUsage = tokenUsage;
+                }
+                enqueueBuildUpdate(async () => {
+                  await storage.updateAssembly(id, { buildTokenUsage: tokenUsage } as any);
+                });
+              }
+            } catch (err: any) {
+              console.error(`[build] Malformed TOKEN_USAGE line: ${err.message}`);
+            }
+          }
         }
       });
 
@@ -3561,6 +3596,11 @@ export function registerRoutes(app: Express) {
             entry.buildState.error = entry.buildState.error || `Build process exited with code ${code}`;
           }
           entry.buildState.updatedAt = new Date().toISOString();
+          if (entry.buildState.tokenUsage) {
+            enqueueBuildUpdate(async () => {
+              await storage.updateAssembly(id, { buildTokenUsage: entry.buildState.tokenUsage } as any);
+            });
+          }
           setTimeout(() => {
             runningBuilds.delete(id);
           }, 30000);
@@ -3651,6 +3691,11 @@ export function registerRoutes(app: Express) {
 
       if (!result.state) {
         result.state = result.hasExportZip ? "exported" : fs.existsSync(path.join(buildDir, "repo")) ? "passed" : "not_requested";
+      }
+
+      if (!result.manifest?.tokenUsage && assembly.buildTokenUsage) {
+        if (!result.manifest) result.manifest = {};
+        result.manifest.tokenUsage = assembly.buildTokenUsage;
       }
 
       res.json(result);
