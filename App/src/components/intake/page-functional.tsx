@@ -8,13 +8,13 @@ export default function PageFunctional({ data, onChange }: PageProps) {
   const f = data.functional;
   const set = (field: string, value: unknown) => onChange("functional", { [field]: value });
 
-  const addItem = (field: "must_have_features" | "nice_to_have_features") => {
+  const addItem = (field: "must_have_features") => {
     set(field, [...f[field], ""]);
   };
-  const removeItem = (field: "must_have_features" | "nice_to_have_features", i: number) => {
+  const removeItem = (field: "must_have_features", i: number) => {
     set(field, f[field].filter((_, idx) => idx !== i));
   };
-  const updateItem = (field: "must_have_features" | "nice_to_have_features", i: number, val: string) => {
+  const updateItem = (field: "must_have_features", i: number, val: string) => {
     const updated = [...f[field]];
     updated[i] = val;
     set(field, updated);
@@ -57,29 +57,6 @@ export default function PageFunctional({ data, onChange }: PageProps) {
               className={inputCls}
             />
             <button type="button" onClick={() => removeItem("must_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-900/20 transition">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-system-label">Nice-to-Have Features</label>
-          <button type="button" onClick={() => addItem("nice_to_have_features")} className="flex items-center gap-1 text-xs text-[hsl(var(--glow-cyan))] hover:text-[hsl(var(--glow-cyan)/0.8)] transition">
-            <Plus className="w-3 h-3" /> Add
-          </button>
-        </div>
-        {f.nice_to_have_features.map((feat, i) => (
-          <div key={i} className="flex gap-2">
-            <input
-              type="text"
-              value={feat}
-              onChange={(e) => updateItem("nice_to_have_features", i, e.target.value)}
-              placeholder={`Nice-to-have ${i + 1}`}
-              className={inputCls}
-            />
-            <button type="button" onClick={() => removeItem("nice_to_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-900/20 transition">
               <X className="w-4 h-4" />
             </button>
           </div>

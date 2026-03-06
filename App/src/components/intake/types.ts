@@ -38,7 +38,6 @@ export interface IntakeData {
   };
   functional: {
     must_have_features: string[];
-    nice_to_have_features: string[];
     roles: { name: string; permissions: string }[];
     core_workflows: string;
     business_rules: string;
@@ -133,7 +132,6 @@ export function createEmptyIntakeData(): IntakeData {
     },
     functional: {
       must_have_features: [],
-      nice_to_have_features: [],
       roles: [],
       core_workflows: "",
       business_rules: "",

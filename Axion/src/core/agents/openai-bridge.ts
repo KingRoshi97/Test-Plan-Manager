@@ -71,22 +71,60 @@ export async function enrichCanonicalSpec(
   spec: CanonicalSpec,
   normalizedInput: Record<string, unknown>,
 ): Promise<CanonicalSpec> {
-  const projectName = (normalizedInput as any)?.project?.project_name ?? "Unknown Project";
-  const projectOverview = (normalizedInput as any)?.project?.project_overview ?? "";
-  const problemStatement = (normalizedInput as any)?.project?.problem_statement ?? "";
+  const ni = normalizedInput as any;
+  const projectName = ni?.project?.project_name ?? "Unknown Project";
+  const projectOverview = ni?.project?.project_overview ?? "";
+  const problemStatement = ni?.project?.problem_statement ?? "";
+  const targetAudience = ni?.project?.target_audience ?? "";
+  const projectIdea = ni?.project?.idea ?? ni?.project?.project_idea ?? "";
 
-  const featureSummary = spec.entities.features.map((f) => `- ${f.name}: ${f.description ?? "no description"}`).join("\n");
-  const roleSummary = spec.entities.roles.map((r) => `- ${r.name}: ${r.description ?? r.primary_goal ?? "no description"}`).join("\n");
-  const workflowSummary = spec.entities.workflows.map((w) => `- ${w.name}: ${w.steps.join(" → ")}`).join("\n");
+  const functionalSection = ni?.functional ?? ni?.raw?.functional ?? {};
+  const authSection = ni?.auth ?? ni?.raw?.auth ?? {};
+  const techSection = ni?.tech ?? ni?.raw?.tech ?? {};
+
+  const intakeContext = [
+    projectIdea ? `Project Idea: ${typeof projectIdea === "string" ? projectIdea : JSON.stringify(projectIdea)}` : "",
+    targetAudience ? `Target Audience: ${typeof targetAudience === "string" ? targetAudience : JSON.stringify(targetAudience)}` : "",
+    Object.keys(functionalSection).length > 0 ? `Functional Requirements: ${JSON.stringify(functionalSection)}` : "",
+    Object.keys(authSection).length > 0 ? `Auth Requirements: ${JSON.stringify(authSection)}` : "",
+    Object.keys(techSection).length > 0 ? `Tech Requirements: ${JSON.stringify(techSection)}` : "",
+  ].filter(Boolean).join("\n");
+
+  const featureSummary = spec.entities.features.map((f) => `- ${f.feature_id}: ${f.name}: ${f.description ?? "no description"}`).join("\n");
+  const roleSummary = spec.entities.roles.map((r) => `- ${r.role_id}: ${r.name}: ${r.description ?? r.primary_goal ?? "no description"}`).join("\n");
+  const workflowSummary = spec.entities.workflows.map((w) => `- ${w.workflow_id}: ${w.name} (actor: ${w.actor_role_ref}): ${w.steps.join(" → ")}`).join("\n");
+
+  const existingFeatureCount = spec.entities.features.length;
+  const nextFeatureIndex = existingFeatureCount;
+  const existingRoleCount = spec.entities.roles.length;
+  const nextRoleIndex = existingRoleCount;
+  const existingWorkflowCount = spec.entities.workflows.length;
+  const nextWorkflowIndex = existingWorkflowCount;
 
   const messages: OpenAIMessage[] = [
     {
       role: "system",
-      content: `You are the Internal Agent (IA) of the Axion pipeline. Your job is to enrich a canonical specification with detailed, project-specific descriptions. Return a JSON object with:
-- "features": array of objects with "feature_id" and "description" (enriched description for each feature)
-- "workflows": array of objects with "workflow_id" and "failure_states" (what can go wrong)
+      content: `You are the Internal Agent (IA) of the Axion pipeline. Your job is to ENRICH and EXPAND a canonical specification to enterprise-grade completeness.
+
+You MUST:
+1. ENRICH existing features with detailed, project-specific descriptions
+2. IDENTIFY and ADD missing features that are essential for the described project. Decompose vague or broad features into specific, implementable sub-features (e.g., "Search functionality" → "Search with Filters", "Search Results Display", "Saved Searches")
+3. Ensure the total feature count (existing + new) is at least 8 for any non-trivial project. Aim for 8-12 features.
+4. IDENTIFY and ADD missing roles beyond just "User" — consider Admin, Moderator, Manager, or domain-specific roles based on the project context
+5. IDENTIFY and ADD missing workflows that cover key user journeys, admin operations, and edge cases
+6. Provide failure_states for all workflows (existing and new)
+
+For NEW features, use feature_ids starting from FEAT-${String(nextFeatureIndex + 1).padStart(3, "0")}.
+For NEW roles, use role_ids starting from ROLE-${String(nextRoleIndex + 1).padStart(3, "0")}.
+For NEW workflows, use workflow_ids starting from WF-${String(nextWorkflowIndex + 1).padStart(3, "0")}. New workflows must reference a role_id in actor_role_ref.
+
+Return a JSON object with:
+- "features": array of ALL features (existing enriched + new ones), each with "feature_id", "name", "description", "priority_tier" ("must" or "nice")
+- "roles": array of ALL roles (existing enriched + new ones), each with "role_id", "name", "description", "primary_goal"
+- "workflows": array of ALL workflows (existing enriched + new ones), each with "workflow_id", "name", "actor_role_ref" (a role_id), "steps" (array of strings), "success_outcome", "failure_states"
 - "rules": object with "must_always" (array of 3-5 project-specific rules) and "must_never" (array of 3-5 things to avoid)
 - "definition_of_done": a concise definition of done specific to this project
+
 Only return valid JSON.`,
     },
     {
@@ -95,23 +133,31 @@ Only return valid JSON.`,
 Overview: ${projectOverview}
 Problem: ${problemStatement}
 
-Current Features:
+${intakeContext}
+
+Current Features (${existingFeatureCount}):
 ${featureSummary}
 
-Roles:
+Current Roles (${existingRoleCount}):
 ${roleSummary}
 
-Workflows:
+Current Workflows (${existingWorkflowCount}):
 ${workflowSummary}
 
-Enrich this specification with better descriptions, failure states, and project-specific rules.`,
+Analyze the project context and:
+1. Enrich all existing features with detailed descriptions
+2. Add missing features to reach at least 8 total (decompose broad features into specific ones)
+3. Add missing roles (Admin, and any domain-specific roles)
+4. Add missing workflows for complete user journeys
+5. Provide project-specific rules and definition of done`,
     },
   ];
 
-  const result = await chatCompletion(messages, 4096, "S3_CANONICAL_SPEC");
+  const result = await chatCompletion(messages, 6144, "S3_CANONICAL_SPEC");
   const parsed = safeJsonParse<{
-    features?: Array<{ feature_id: string; description: string }>;
-    workflows?: Array<{ workflow_id: string; failure_states: string }>;
+    features?: Array<{ feature_id: string; name: string; description: string; priority_tier?: string }>;
+    roles?: Array<{ role_id: string; name: string; description?: string; primary_goal?: string }>;
+    workflows?: Array<{ workflow_id: string; name: string; actor_role_ref: string; steps: string[]; success_outcome: string; failure_states?: string }>;
     rules?: { must_always?: string[]; must_never?: string[] };
     definition_of_done?: string;
   }>(result);
@@ -119,27 +165,90 @@ Enrich this specification with better descriptions, failure states, and project-
   if (!parsed) return spec;
 
   const enriched = { ...spec };
+  enriched.entities = { ...enriched.entities };
 
-  if (parsed.features) {
-    enriched.entities = { ...enriched.entities };
-    enriched.entities.features = enriched.entities.features.map((f) => {
+  if (parsed.features && parsed.features.length > 0) {
+    const existingIds = new Set(spec.entities.features.map((f) => f.feature_id));
+    const updatedFeatures = spec.entities.features.map((f) => {
       const match = parsed.features!.find((pf) => pf.feature_id === f.feature_id);
-      if (match?.description) {
-        return { ...f, description: match.description };
+      if (match) {
+        return {
+          ...f,
+          description: match.description ?? f.description,
+          name: match.name ?? f.name,
+        };
       }
       return f;
     });
+
+    const newFeatures = parsed.features
+      .filter((pf) => !existingIds.has(pf.feature_id) && pf.name && typeof pf.name === "string")
+      .map((pf, i) => ({
+        feature_id: pf.feature_id || `FEAT-${String(nextFeatureIndex + i + 1).padStart(3, "0")}`,
+        name: pf.name,
+        description: pf.description || pf.name,
+        priority_tier: (pf.priority_tier === "nice" ? "nice" : "must") as "must" | "nice" | "future",
+        priority_rank: updatedFeatures.length + i + 1,
+      }));
+
+    enriched.entities.features = [...updatedFeatures, ...newFeatures];
   }
 
-  if (parsed.workflows) {
-    enriched.entities = { ...enriched.entities };
-    enriched.entities.workflows = enriched.entities.workflows.map((w) => {
+  if (parsed.roles && parsed.roles.length > 0) {
+    const existingRoleIds = new Set(spec.entities.roles.map((r) => r.role_id));
+    const updatedRoles = spec.entities.roles.map((r) => {
+      const match = parsed.roles!.find((pr) => pr.role_id === r.role_id);
+      if (match) {
+        return {
+          ...r,
+          description: match.description ?? r.description,
+          primary_goal: match.primary_goal ?? r.primary_goal,
+        };
+      }
+      return r;
+    });
+
+    const newRoles = parsed.roles
+      .filter((pr) => !existingRoleIds.has(pr.role_id) && pr.name && typeof pr.name === "string")
+      .map((pr, i) => ({
+        role_id: pr.role_id || `ROLE-${String(nextRoleIndex + i + 1).padStart(3, "0")}`,
+        name: pr.name,
+        description: pr.description || pr.name,
+        ...(pr.primary_goal ? { primary_goal: pr.primary_goal } : {}),
+      }));
+
+    enriched.entities.roles = [...updatedRoles, ...newRoles];
+  }
+
+  if (parsed.workflows && parsed.workflows.length > 0) {
+    const existingWfIds = new Set(spec.entities.workflows.map((w) => w.workflow_id));
+    const updatedWorkflows = spec.entities.workflows.map((w) => {
       const match = parsed.workflows!.find((pw) => pw.workflow_id === w.workflow_id);
-      if (match?.failure_states) {
-        return { ...w, failure_states: match.failure_states };
+      if (match) {
+        return {
+          ...w,
+          failure_states: match.failure_states ?? w.failure_states,
+          steps: match.steps && match.steps.length > 0 ? match.steps : w.steps,
+        };
       }
       return w;
     });
+
+    const validRoleIds = new Set(enriched.entities.roles.map((r) => r.role_id));
+    const defaultRoleId = enriched.entities.roles[0]?.role_id ?? "ROLE-001";
+
+    const newWorkflows = parsed.workflows
+      .filter((pw) => !existingWfIds.has(pw.workflow_id))
+      .map((pw, i) => ({
+        workflow_id: pw.workflow_id || `WF-${String(nextWorkflowIndex + i + 1).padStart(3, "0")}`,
+        name: pw.name,
+        actor_role_ref: validRoleIds.has(pw.actor_role_ref) ? pw.actor_role_ref : defaultRoleId,
+        steps: pw.steps ?? [],
+        success_outcome: pw.success_outcome ?? `${pw.name} completed successfully`,
+        ...(pw.failure_states ? { failure_states: pw.failure_states } : {}),
+      }));
+
+    enriched.entities.workflows = [...updatedWorkflows, ...newWorkflows];
   }
 
   if (parsed.rules) {
@@ -152,7 +261,72 @@ Enrich this specification with better descriptions, failure states, and project-
     enriched.rules = { ...enriched.rules, definition_of_done: parsed.definition_of_done };
   }
 
-  console.log("  [IA] Canonical spec enriched via OpenAI");
+  const allRoles = enriched.entities.roles;
+  const allFeatures = enriched.entities.features;
+  const allWorkflows = enriched.entities.workflows;
+
+  const roles_by_id: Record<string, typeof allRoles[0]> = {};
+  for (const r of allRoles) roles_by_id[r.role_id] = r;
+
+  const features_by_id: Record<string, typeof allFeatures[0]> = {};
+  for (const f of allFeatures) features_by_id[f.feature_id] = f;
+
+  const workflows_by_id: Record<string, typeof allWorkflows[0]> = {};
+  for (const w of allWorkflows) workflows_by_id[w.workflow_id] = w;
+
+  const role_to_workflows: Record<string, string[]> = {};
+  const workflow_to_features: Record<string, string[]> = {};
+  const feature_to_workflows: Record<string, string[]> = {};
+  const role_to_permissions: Record<string, string[]> = {};
+
+  for (const w of allWorkflows) {
+    if (!role_to_workflows[w.actor_role_ref]) role_to_workflows[w.actor_role_ref] = [];
+    role_to_workflows[w.actor_role_ref].push(w.workflow_id);
+    workflow_to_features[w.workflow_id] = [];
+  }
+  for (const f of allFeatures) {
+    feature_to_workflows[f.feature_id] = [];
+  }
+  for (const p of enriched.entities.permissions ?? []) {
+    if (!role_to_permissions[p.role_ref]) role_to_permissions[p.role_ref] = [];
+    role_to_permissions[p.role_ref].push(p.perm_id);
+  }
+
+  enriched.index = {
+    roles_by_id,
+    features_by_id,
+    workflows_by_id,
+    cross_maps: {
+      workflow_to_features,
+      feature_to_workflows,
+      feature_to_operations: enriched.index?.cross_maps?.feature_to_operations ?? {},
+      role_to_workflows,
+      role_to_permissions,
+    },
+  };
+
+  enriched.rules = {
+    ...enriched.rules,
+    acceptance_criteria: allFeatures.map(
+      (f) => `${f.feature_id}: ${f.name} is functional and tested`
+    ),
+  };
+
+  const newRoleEntities = allRoles.filter(
+    (r) => !spec.entities.permissions?.some((p) => p.role_ref === r.role_id)
+  );
+  if (newRoleEntities.length > 0) {
+    const existingPerms = enriched.entities.permissions ?? [];
+    const maxPermIndex = existingPerms.length;
+    const newPerms = newRoleEntities.map((r, i) => ({
+      perm_id: `PERM-${String(maxPermIndex + i + 1).padStart(3, "0")}`,
+      role_ref: r.role_id,
+      allowed_capabilities: r.primary_goal ? [r.primary_goal] : ["default_access"],
+    }));
+    enriched.entities.permissions = [...existingPerms, ...newPerms];
+  }
+
+  console.log(`  [IA] Canonical spec enriched via OpenAI — ${allFeatures.length} features, ${allRoles.length} roles, ${allWorkflows.length} workflows`);
   return enriched;
 }
 

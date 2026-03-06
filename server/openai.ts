@@ -26,7 +26,6 @@ Return JSON with these fields.`,
 
   functional: `Based on the project context, suggest:
 - must_have_features: 3-5 must-have features (as an array of strings)
-- nice_to_have_features: 2-3 nice-to-have features (as an array of strings)
 - roles: 2-3 user roles (as an array of objects with "name" and "permissions" fields)
 - core_workflows: Brief description of core workflows
 - business_rules: Key business rules

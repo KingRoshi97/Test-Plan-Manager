@@ -199,7 +199,7 @@ function deriveRepoShape(stack: StackProfile): RepoShape {
         "src/components": ["ui", "features", "layout"],
         "src/pages": [],
         "src/hooks": [],
-        "src/lib": ["api", "utils"],
+        "src/lib": ["api", "utils", "auth", "validators", "store"],
         "src/types": [],
         "src/styles": [],
         "src/server": ["routes", "middleware", "models"],
@@ -424,6 +424,28 @@ function featureToRouteSlug(feat: FeatureEntry): string {
   return feat.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function featureNeedsForm(feat: FeatureEntry): boolean {
+  const lower = (feat.name + " " + feat.description).toLowerCase();
+  return lower.includes("create") || lower.includes("add") || lower.includes("edit") || lower.includes("submit") || lower.includes("upload") || lower.includes("form") || lower.includes("input") || lower.includes("manage") || lower.includes("cms") || lower.includes("register") || lower.includes("setting") || lower.includes("config") || lower.includes("profile");
+}
+
+function featureNeedsList(feat: FeatureEntry): boolean {
+  const lower = (feat.name + " " + feat.description).toLowerCase();
+  return lower.includes("list") || lower.includes("browse") || lower.includes("search") || lower.includes("view all") || lower.includes("catalog") || lower.includes("archive") || lower.includes("collection") || lower.includes("inventory") || lower.includes("manage") || lower.includes("cms") || lower.includes("history") || lower.includes("feed");
+}
+
+function featureNeedsDetail(feat: FeatureEntry): boolean {
+  const lower = (feat.name + " " + feat.description).toLowerCase();
+  return lower.includes("detail") || lower.includes("view") || lower.includes("item") || lower.includes("record") || lower.includes("article") || lower.includes("content") || lower.includes("archive") || lower.includes("document") || lower.includes("profile") || lower.includes("page");
+}
+
+function featureNeedsSearch(features: FeatureEntry[]): boolean {
+  return features.some(f => {
+    const lower = (f.name + " " + f.description).toLowerCase();
+    return lower.includes("search") || lower.includes("filter") || lower.includes("find") || lower.includes("query") || lower.includes("browse");
+  });
+}
+
 function buildComponentFiles(
   designDocs: string[],
   implDocs: string[],
@@ -494,24 +516,90 @@ function buildComponentFiles(
     status: "pending",
   });
 
+  files.push({
+    relativePath: "src/components/ui/ErrorBoundary.tsx",
+    role: "error_boundary",
+    generationMethod: "deterministic",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/components/ui/EmptyState.tsx",
+    role: "ui_component",
+    generationMethod: "deterministic",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/components/ui/Pagination.tsx",
+    role: "ui_component",
+    generationMethod: "deterministic",
+    status: "pending",
+  });
+
+  if (featureNeedsSearch(features)) {
+    files.push({
+      relativePath: "src/components/ui/SearchInput.tsx",
+      role: "ui_component",
+      generationMethod: "ai_assisted",
+      status: "pending",
+    });
+  }
+
   const hasAuth = features.some(f => classifyFeature(f) === "auth");
   const hasDashboard = features.some(f => classifyFeature(f) === "dashboard");
-  const hasSettings = features.some(f => classifyFeature(f) === "settings");
-  const hasAnalytics = features.some(f => classifyFeature(f) === "analytics");
-  const hasProfile = features.some(f => classifyFeature(f) === "profile");
+
+  if (hasAuth) {
+    files.push({
+      relativePath: "src/components/layout/AuthLayout.tsx",
+      role: "auth_layout",
+      generationMethod: "ai_assisted",
+      status: "pending",
+    });
+  }
 
   if (features) {
     for (const feat of features) {
       const slug = feat.name.replace(/\s+/g, "");
+      const category = classifyFeature(feat);
+
       files.push({
-        relativePath: `src/components/features/${slug}.tsx`,
+        relativePath: `src/components/features/${slug}/index.tsx`,
         role: "feature_component",
         sourceRef: feat.feature_id,
         generationMethod: "ai_assisted",
         status: "pending",
       });
 
-      const category = classifyFeature(feat);
+      if (category !== "auth" && featureNeedsForm(feat)) {
+        files.push({
+          relativePath: `src/components/features/${slug}/${slug}Form.tsx`,
+          role: "feature_form",
+          sourceRef: feat.feature_id,
+          generationMethod: "ai_assisted",
+          status: "pending",
+        });
+      }
+
+      if (featureNeedsList(feat)) {
+        files.push({
+          relativePath: `src/components/features/${slug}/${slug}List.tsx`,
+          role: "feature_list",
+          sourceRef: feat.feature_id,
+          generationMethod: "ai_assisted",
+          status: "pending",
+        });
+      }
+
+      if (featureNeedsDetail(feat)) {
+        files.push({
+          relativePath: `src/components/features/${slug}/${slug}Detail.tsx`,
+          role: "feature_detail",
+          sourceRef: feat.feature_id,
+          generationMethod: "ai_assisted",
+          status: "pending",
+        });
+      }
 
       if (category === "auth") {
         if (!files.some(f => f.relativePath === "src/pages/Login.tsx")) {
@@ -524,6 +612,13 @@ function buildComponentFiles(
           });
           files.push({
             relativePath: "src/pages/Register.tsx",
+            role: "auth_page",
+            sourceRef: feat.feature_id,
+            generationMethod: "ai_assisted",
+            status: "pending",
+          });
+          files.push({
+            relativePath: "src/pages/ForgotPassword.tsx",
             role: "auth_page",
             sourceRef: feat.feature_id,
             generationMethod: "ai_assisted",
@@ -635,6 +730,20 @@ function buildIntegrationFiles(
     status: "pending",
   });
 
+  files.push({
+    relativePath: "src/lib/api/endpoints.ts",
+    role: "api_endpoints",
+    generationMethod: "deterministic",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "src/lib/api/interceptors.ts",
+    role: "api_interceptor",
+    generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
   if (features) {
     for (const feat of features) {
       const slug = feat.name.toLowerCase().replace(/\s+/g, "-");
@@ -655,6 +764,55 @@ function buildIntegrationFiles(
     status: "pending",
   });
 
+  files.push({
+    relativePath: "src/lib/validators/index.ts",
+    role: "validation",
+    generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
+  if (features) {
+    for (const feat of features) {
+      const slug = feat.name.toLowerCase().replace(/\s+/g, "-");
+      files.push({
+        relativePath: `src/lib/validators/${slug}.ts`,
+        role: "feature_validation",
+        sourceRef: feat.feature_id,
+        generationMethod: "ai_assisted",
+        status: "pending",
+      });
+    }
+  }
+
+  const hasAuth = features.some(f => classifyFeature(f) === "auth");
+  if (hasAuth) {
+    files.push({
+      relativePath: "src/lib/auth/AuthContext.tsx",
+      role: "auth_context",
+      generationMethod: "deterministic",
+      status: "pending",
+    });
+    files.push({
+      relativePath: "src/lib/auth/useAuth.ts",
+      role: "auth_hook",
+      generationMethod: "ai_assisted",
+      status: "pending",
+    });
+    files.push({
+      relativePath: "src/lib/auth/ProtectedRoute.tsx",
+      role: "route_guard",
+      generationMethod: "deterministic",
+      status: "pending",
+    });
+  }
+
+  files.push({
+    relativePath: "src/lib/store/index.ts",
+    role: "state_store",
+    generationMethod: "ai_assisted",
+    status: "pending",
+  });
+
   return files;
 }
 
@@ -668,7 +826,15 @@ function buildTestFiles(
     for (const feat of features) {
       const slug = feat.name.toLowerCase().replace(/\s+/g, "-");
       files.push({
-        relativePath: `tests/${slug}.test.ts`,
+        relativePath: `tests/unit/${slug}.test.ts`,
+        role: "test",
+        sourceRef: feat.feature_id,
+        generationMethod: "ai_assisted",
+        status: "pending",
+      });
+
+      files.push({
+        relativePath: `tests/integration/${slug}.integration.test.ts`,
         role: "test",
         sourceRef: feat.feature_id,
         generationMethod: "ai_assisted",
@@ -681,6 +847,13 @@ function buildTestFiles(
     relativePath: "tests/setup.ts",
     role: "test_setup",
     generationMethod: "deterministic",
+    status: "pending",
+  });
+
+  files.push({
+    relativePath: "tests/helpers.ts",
+    role: "test_setup",
+    generationMethod: "ai_assisted",
     status: "pending",
   });
 

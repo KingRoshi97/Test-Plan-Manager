@@ -208,7 +208,6 @@
             }
           }
         },
-        "nice_to_have_features": { "type": "array", "required": false, "items": { "type": "object", "fields": { "name": { "type": "string", "required": true }, "description": { "type": "string", "required": false } } } },
         "future_features": { "type": "array", "required": false, "items": { "type": "object", "fields": { "name": { "type": "string", "required": true }, "description": { "type": "string", "required": false } } } },
         "feature_priority_rank": { "type": "array", "required": true, "items": { "type": "string" } },
         "roles": {

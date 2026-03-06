@@ -218,7 +218,6 @@ export default function IntakeWizard() {
         },
         functional: {
           must_have_features: data.functional.must_have_features.filter(Boolean),
-          nice_to_have_features: data.functional.nice_to_have_features.filter(Boolean),
           roles: data.functional.roles.filter((r) => r.name),
           core_workflows: data.functional.core_workflows || undefined,
           business_rules: data.functional.business_rules || undefined,
