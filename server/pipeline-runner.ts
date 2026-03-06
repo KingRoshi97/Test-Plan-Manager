@@ -7,15 +7,59 @@ import { getStageOrder } from "../Axion/src/core/orchestration/loader.js";
 
 const AXION_ROOT = path.resolve(process.cwd(), "Axion");
 
-const runningProcesses = new Map<number, { child: ChildProcess; pipelineRunId: number; startTime: number }>();
+const STALL_TIMEOUT_MS = parseInt(process.env.AXION_STALL_TIMEOUT_MS || "") || 5 * 60 * 1000;
+const STALL_CHECK_INTERVAL_MS = 30_000;
 
-export async function killPipeline(assemblyId: number): Promise<{ killed: boolean; message: string }> {
+interface RunningProcess {
+  child: ChildProcess;
+  pipelineRunId: number;
+  startTime: number;
+  lastActivityAt: number;
+  currentStage: string;
+  runId: string;
+}
+
+const runningProcesses = new Map<number, RunningProcess>();
+let stallCheckTimer: ReturnType<typeof setInterval> | null = null;
+
+function startStallChecker() {
+  if (stallCheckTimer) return;
+  stallCheckTimer = setInterval(async () => {
+    const now = Date.now();
+    for (const [assemblyId, proc] of runningProcesses.entries()) {
+      const stalledMs = now - proc.lastActivityAt;
+      if (stalledMs > STALL_TIMEOUT_MS) {
+        const stalledMinutes = Math.round(stalledMs / 60000);
+        const stageInfo = proc.currentStage || "unknown stage";
+        console.log(`[stall-detector] Assembly ${assemblyId} stalled on ${stageInfo} for ${stalledMinutes}m — killing`);
+        try {
+          await killPipeline(assemblyId, `Pipeline stalled on ${stageInfo} — no activity for ${stalledMinutes} minutes`);
+        } catch (err) {
+          console.error(`[stall-detector] Failed to kill assembly ${assemblyId}:`, err);
+        }
+      }
+    }
+    if (runningProcesses.size === 0) {
+      stopStallChecker();
+    }
+  }, STALL_CHECK_INTERVAL_MS);
+}
+
+function stopStallChecker() {
+  if (stallCheckTimer) {
+    clearInterval(stallCheckTimer);
+    stallCheckTimer = null;
+  }
+}
+
+export async function killPipeline(assemblyId: number, errorMessage?: string): Promise<{ killed: boolean; message: string }> {
   const entry = runningProcesses.get(assemblyId);
   if (!entry) {
     return { killed: false, message: "No running pipeline found for this assembly" };
   }
 
   const { child, pipelineRunId } = entry;
+  const killReason = errorMessage || "Pipeline killed by user";
 
   child.kill("SIGTERM");
 
@@ -42,7 +86,7 @@ export async function killPipeline(assemblyId: number): Promise<{ killed: boolea
     await storage.updatePipelineRun(pipelineRunId, {
       status: "failed",
       completedAt: new Date(),
-      error: "Pipeline killed by user",
+      error: killReason,
       stages,
     });
   }
@@ -52,7 +96,7 @@ export async function killPipeline(assemblyId: number): Promise<{ killed: boolea
     await storage.updateAssembly(assemblyId, {
       status: "failed",
       currentStep: "killed",
-      error: "Pipeline killed by user",
+      error: killReason,
     });
   }
 
@@ -117,7 +161,16 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  runningProcesses.set(assemblyId, { child, pipelineRunId, startTime });
+  const proc: RunningProcess = {
+    child,
+    pipelineRunId,
+    startTime,
+    lastActivityAt: Date.now(),
+    currentStage: "initializing",
+    runId: "",
+  };
+  runningProcesses.set(assemblyId, proc);
+  startStallChecker();
 
   let stdout = "";
   let stderr = "";
@@ -136,6 +189,8 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
     stdout += text;
     stdoutBuffer += text;
 
+    proc.lastActivityAt = Date.now();
+
     const lines = stdoutBuffer.split("\n");
     stdoutBuffer = lines.pop() ?? "";
 
@@ -143,6 +198,7 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
       const runMatch = line.match(/Created run: (RUN-\d+)/);
       if (runMatch) {
         runId = runMatch[1];
+        proc.runId = runId;
         enqueueUpdate(async () => {
           await storage.updatePipelineRun(pipelineRunId, { runId });
           await storage.updateAssembly(assemblyId, { runId });
@@ -156,6 +212,8 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
           status: result === "pass" ? "passed" : "failed",
           completedAt: new Date().toISOString(),
         };
+        proc.currentStage = stageId;
+        proc.lastActivityAt = Date.now();
         enqueueUpdate(async () => {
           await storage.updatePipelineRun(pipelineRunId, {
             stages,
@@ -165,10 +223,18 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
         });
       }
 
+      const stageStartMatch = line.match(/Running stage:\s*(S\d+_\w+)/i) || line.match(/\[S(\d+)\]\s*Starting/i);
+      if (stageStartMatch) {
+        const stageName = stageStartMatch[1];
+        proc.currentStage = stageName;
+        proc.lastActivityAt = Date.now();
+      }
+
       const gateMatch = line.match(/(PASS|FAIL) (G\d+_\w+)/);
       if (gateMatch) {
         const gate = gateMatch[2];
         const status = gateMatch[1].toLowerCase();
+        proc.lastActivityAt = Date.now();
         enqueueUpdate(async () => {
           await storage.createReport({
             assemblyId,
@@ -181,6 +247,7 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
 
       const tokenMatch = line.match(/^TOKEN_USAGE: (.+)$/);
       if (tokenMatch) {
+        proc.lastActivityAt = Date.now();
         try {
           const usage = JSON.parse(tokenMatch[1]);
           const calls = usage.api_calls ?? 0;
@@ -207,6 +274,7 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
 
   child.stderr.on("data", (chunk: Buffer) => {
     stderr += chunk.toString();
+    proc.lastActivityAt = Date.now();
   });
 
   return new Promise<void>((resolve) => {
@@ -268,4 +336,31 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
 
 export function isRunning(assemblyId: number): boolean {
   return runningProcesses.has(assemblyId);
+}
+
+export function getPipelineStatus(): Array<{
+  assemblyId: number;
+  runId: string;
+  currentStage: string;
+  startTime: number;
+  lastActivityAt: number;
+  elapsedMs: number;
+  inactiveMs: number;
+  stallTimeoutMs: number;
+}> {
+  const now = Date.now();
+  const result = [];
+  for (const [assemblyId, proc] of runningProcesses.entries()) {
+    result.push({
+      assemblyId,
+      runId: proc.runId,
+      currentStage: proc.currentStage,
+      startTime: proc.startTime,
+      lastActivityAt: proc.lastActivityAt,
+      elapsedMs: now - proc.startTime,
+      inactiveMs: now - proc.lastActivityAt,
+      stallTimeoutMs: STALL_TIMEOUT_MS,
+    });
+  }
+  return result;
 }

@@ -14,10 +14,13 @@ import {
   XCircle,
   Clock,
   Filter,
+  AlertTriangle,
+  Timer,
 } from "lucide-react";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
 import { GlassPanel } from "../components/ui/glass-panel";
 import { StageRail, parseStagesFromAssembly } from "../components/ui/stage-rail";
+import { usePipelineStatus, getStallLevel, formatStallTime } from "../hooks/use-pipeline-status";
 import type { Assembly } from "../../../shared/schema";
 
 type FilterStatus = "all" | "running" | "completed" | "failed" | "queued";
@@ -57,6 +60,9 @@ export default function RunsPage() {
     queryFn: () => apiRequest("/api/assemblies"),
     refetchInterval: 5000,
   });
+
+  const hasActiveRuns = assemblies.some((a) => a.status === "running");
+  const { data: pipelineStatus } = usePipelineStatus(hasActiveRuns);
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) =>
@@ -164,76 +170,114 @@ export default function RunsPage() {
                 <th className="text-left px-4 py-2.5 text-system-label">Status</th>
                 <th className="text-left px-4 py-2.5 text-system-label hidden md:table-cell">Pipeline</th>
                 <th className="text-left px-4 py-2.5 text-system-label hidden md:table-cell">Preset</th>
+                <th className="text-left px-4 py-2.5 text-system-label hidden lg:table-cell">Elapsed</th>
                 <th className="text-left px-4 py-2.5 text-system-label hidden lg:table-cell">Duration</th>
                 <th className="text-left px-4 py-2.5 text-system-label hidden lg:table-cell">Updated</th>
                 <th className="text-right px-4 py-2.5 text-system-label">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((a) => (
-                <tr
-                  key={a.id}
-                  className="border-t border-[hsl(var(--border)/0.5)] hover:bg-[hsl(var(--accent)/0.5)] cursor-pointer transition-colors"
-                  onClick={() => setLocation(`/assembly/${a.id}`)}
-                >
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-[hsl(var(--foreground))] text-[13px]">
-                      {a.projectName}
-                    </div>
-                    {a.idea && (
-                      <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[200px] mt-0.5">
-                        {a.idea}
+              {filtered.map((a) => {
+                const statusEntry = a.status === "running"
+                  ? pipelineStatus?.activeRuns?.find((s) => s.assemblyId === a.id)
+                  : undefined;
+                const stallLevel = statusEntry ? getStallLevel(statusEntry.stalledMs) : "none";
+
+                return (
+                  <tr
+                    key={a.id}
+                    className="border-t border-[hsl(var(--border)/0.5)] hover:bg-[hsl(var(--accent)/0.5)] cursor-pointer transition-colors"
+                    onClick={() => setLocation(`/assembly/${a.id}`)}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-[hsl(var(--foreground))] text-[13px]">
+                        {a.projectName}
                       </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusChip
-                      variant={getStatusVariant(a.status)}
-                      label={a.status}
-                      pulse={a.status === "running"}
-                    />
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <StageRail stages={parseStagesFromAssembly((a as any).latestStages)} />
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <span className="text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">
-                      {a.preset || "\u2014"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    <span className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech">
-                      {formatDuration(a.totalDurationMs)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                      {formatDate(a.updatedAt)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => setLocation(`/assembly/${a.id}`)}
-                        className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
-                        title="Open Workbench"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm("Delete this assembly?")) deleteMutation.mutate(a.id);
-                        }}
-                        disabled={deleteMutation.isPending}
-                        className="p-1.5 rounded hover:bg-[hsl(var(--status-failure)/0.15)] transition-colors disabled:opacity-50"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                      {a.idea && (
+                        <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[200px] mt-0.5">
+                          {a.idea}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <StatusChip
+                          variant={stallLevel === "critical" ? "failure" : stallLevel === "warning" ? "warning" : getStatusVariant(a.status)}
+                          label={stallLevel === "critical" ? "Stalled" : stallLevel === "warning" ? "Slow" : a.status}
+                          pulse={a.status === "running"}
+                        />
+                        {stallLevel !== "none" && statusEntry && (
+                          <span className={`text-[10px] flex items-center gap-1 ${
+                            stallLevel === "critical" ? "text-[hsl(var(--status-failure))]" : "text-[hsl(var(--status-warning))]"
+                          }`}>
+                            <AlertTriangle className="w-2.5 h-2.5" />
+                            {stallLevel === "critical" ? "Stalled" : "Possibly stalled"}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <StageRail stages={parseStagesFromAssembly((a as any).latestStages)} />
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <span className="text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">
+                        {a.preset || "\u2014"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      {statusEntry ? (
+                        <div className="flex flex-col">
+                          <span className="text-xs font-mono-tech text-[hsl(var(--status-processing))]">
+                            {formatStallTime(statusEntry.elapsedMs)}
+                          </span>
+                          {statusEntry.stalledMs > 0 && (
+                            <span className={`text-[10px] font-mono-tech ${
+                              stallLevel === "critical" ? "text-[hsl(var(--status-failure))]" : stallLevel === "warning" ? "text-[hsl(var(--status-warning))]" : "text-[hsl(var(--muted-foreground))]"
+                            }`}>
+                              {formatStallTime(statusEntry.stalledMs)} idle
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech">
+                          {"\u2014"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech">
+                        {formatDuration(a.totalDurationMs)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                        {formatDate(a.updatedAt)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => setLocation(`/assembly/${a.id}`)}
+                          className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
+                          title="Open Workbench"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm("Delete this assembly?")) deleteMutation.mutate(a.id);
+                          }}
+                          disabled={deleteMutation.isPending}
+                          className="p-1.5 rounded hover:bg-[hsl(var(--status-failure)/0.15)] transition-colors disabled:opacity-50"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

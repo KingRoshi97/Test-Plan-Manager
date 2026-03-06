@@ -1,7 +1,7 @@
 import { type Express, type Request, type Response } from "express";
 import { storage } from "./storage.js";
 import { insertAssemblySchema } from "../shared/schema.js";
-import { startPipelineRun, killPipeline } from "./pipeline-runner.js";
+import { startPipelineRun, killPipeline, getPipelineStatus } from "./pipeline-runner.js";
 import { generateAutofillSuggestions } from "./openai.js";
 import { getStageOrder, getStageGates, getGatesRequired, getStageNames } from "../Axion/src/core/orchestration/loader.js";
 import fs from "fs";
@@ -171,6 +171,21 @@ export function registerRoutes(app: Express) {
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
+  });
+
+  app.get("/api/pipeline/status", (_req: Request, res: Response) => {
+    const raw = getPipelineStatus();
+    const activeRuns = raw.map((r) => ({
+      assemblyId: r.assemblyId,
+      runId: r.runId,
+      currentStage: r.currentStage,
+      startTime: new Date(r.startTime).toISOString(),
+      lastActivityAt: new Date(r.lastActivityAt).toISOString(),
+      elapsedMs: r.elapsedMs,
+      stalledMs: r.inactiveMs,
+      stallTimeoutMs: r.stallTimeoutMs,
+    }));
+    res.json({ activeRuns });
   });
 
   app.get("/api/assemblies/:id/runs", async (req: Request, res: Response) => {

@@ -6,7 +6,7 @@ import {
   ChevronRight, Play, Trash2, ArrowLeft, CheckCircle, XCircle, X,
   Clock, Loader2, FileText, Folder, Download, Save, RotateCcw,
   Settings, Layers, Eye, FolderArchive, PenLine, Square, AlertTriangle, Hammer,
-  Radio, Hash, Timer, Gauge, Activity, Zap, Shield, ChevronDown, ChevronUp
+  Radio, Hash, Timer, Gauge, Activity, Zap, Shield, ChevronDown, ChevronUp, Skull
 } from "lucide-react";
 import { BuildTab } from "../components/build-mode";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
@@ -15,6 +15,7 @@ import { MetricCard } from "../components/ui/metric-card";
 import { StageDetailCard } from "../components/workbench/StageDetailCard";
 import { GateInspector } from "../components/workbench/GateInspector";
 import { CodeViewer } from "../components/ui/code-viewer";
+import { usePipelineStatus, getStallLevel, formatStallTime, getAutoKillCountdown } from "../hooks/use-pipeline-status";
 
 const FALLBACK_STAGE_ORDER = [
   "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
@@ -203,6 +204,12 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
   const pipelineRunning = assembly.status === "running";
   const elapsed = useElapsedTime(latestRun?.startedAt, pipelineRunning);
 
+  const { data: pipelineStatus } = usePipelineStatus(pipelineRunning);
+  const statusEntry = pipelineStatus?.activeRuns?.find(
+    (s) => s.assemblyId === assembly.id
+  );
+  const stallLevel = statusEntry ? getStallLevel(statusEntry.stalledMs) : "none";
+
   const currentStageKey = pipelineRunning && latestStages
     ? stageOrder.find((s) => !latestStages[s] || latestStages[s].status === "pending")
     : null;
@@ -215,8 +222,40 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
 
   return (
     <div className="space-y-5 animate-fade-in">
+      {pipelineRunning && stallLevel !== "none" && statusEntry && (
+        <GlassPanel glow={stallLevel === "critical" ? "red" : "amber"} solid className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {stallLevel === "critical" ? (
+                <Skull className="w-5 h-5 text-[hsl(var(--status-failure))] animate-pulse" />
+              ) : (
+                <AlertTriangle className="w-5 h-5 text-[hsl(var(--status-warning))]" />
+              )}
+              <div>
+                <div className={`text-sm font-semibold ${stallLevel === "critical" ? "text-[hsl(var(--status-failure))]" : "text-[hsl(var(--status-warning))]"}`}>
+                  {stallLevel === "critical" ? "Run Stalled" : "Possibly Stalled"}
+                </div>
+                <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                  {stallLevel === "critical"
+                    ? `This run appears stalled on ${statusEntry.currentStage} — it will be automatically killed in ${getAutoKillCountdown(statusEntry.stalledMs, statusEntry.stallTimeoutMs)}s`
+                    : `No stage progress for ${formatStallTime(statusEntry.stalledMs)} on ${statusEntry.currentStage}`}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={onKill}
+              disabled={isKilling}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-[hsl(var(--status-failure))] text-white hover:opacity-90 transition disabled:opacity-50"
+            >
+              {isKilling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Square className="w-3 h-3" />}
+              Kill Run
+            </button>
+          </div>
+        </GlassPanel>
+      )}
+
       {pipelineRunning && (
-        <GlassPanel glow="cyan" solid className="p-4">
+        <GlassPanel glow={stallLevel === "critical" ? "red" : stallLevel === "warning" ? "amber" : "cyan"} solid className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Loader2 className="w-5 h-5 text-[hsl(var(--status-processing))] animate-spin" />

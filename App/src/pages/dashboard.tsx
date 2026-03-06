@@ -28,11 +28,13 @@ import {
   FileCheck,
   CircleDot,
   Timer,
+  Skull,
 } from "lucide-react";
 import { MetricCard } from "../components/ui/metric-card";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
 import { GlassPanel } from "../components/ui/glass-panel";
 import { StageRail, parseStagesFromAssembly } from "../components/ui/stage-rail";
+import { usePipelineStatus, getStallLevel, formatStallTime, getAutoKillCountdown } from "../hooks/use-pipeline-status";
 import type { Assembly } from "../../../shared/schema";
 
 function formatDuration(ms: number | null | undefined) {
@@ -114,6 +116,9 @@ export default function DashboardPage() {
     queryFn: () => apiRequest("/api/health"),
     refetchInterval: 30000,
   });
+
+  const hasActiveRuns = assemblies.some((a) => a.status === "running");
+  const { data: pipelineStatus } = usePipelineStatus(hasActiveRuns);
 
   const sorted = [...assemblies].sort(
     (a, b) => new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime()
@@ -260,33 +265,76 @@ export default function DashboardPage() {
 
           {activeRuns.length > 0 ? (
             <div className="space-y-2">
-              {activeRuns.map((run) => (
-                <GlassPanel
-                  key={run.id}
-                  glow="cyan"
-                  solid
-                  hover
-                  onClick={() => setLocation(`/assembly/${run.id}`)}
-                  className="p-4"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
-                      {run.projectName}
-                    </span>
-                    <StatusChip variant="processing" label="Running" pulse size="sm" />
-                  </div>
-                  <div className="mb-2">
-                    <StageRail stages={parseStagesFromAssembly((run as any).latestStages)} size="md" />
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-[hsl(var(--muted-foreground))]">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Started {formatRelativeTime(run.createdAt)}
-                    </span>
-                    <span className="font-mono-tech">{formatDuration(run.totalDurationMs)}</span>
-                  </div>
-                </GlassPanel>
-              ))}
+              {activeRuns.map((run) => {
+                const statusEntry = pipelineStatus?.activeRuns?.find(
+                  (s) => s.assemblyId === run.id
+                );
+                const stallLevel = statusEntry ? getStallLevel(statusEntry.stalledMs) : "none";
+                const glowColor = stallLevel === "critical" ? "red" : stallLevel === "warning" ? "amber" : "cyan";
+
+                return (
+                  <GlassPanel
+                    key={run.id}
+                    glow={glowColor}
+                    solid
+                    hover
+                    onClick={() => setLocation(`/assembly/${run.id}`)}
+                    className="p-4"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-[hsl(var(--foreground))] truncate">
+                        {run.projectName}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {stallLevel === "critical" && (
+                          <StatusChip variant="failure" label="Stalled" pulse size="sm" />
+                        )}
+                        {stallLevel === "warning" && (
+                          <StatusChip variant="warning" label="Possibly Stalled" size="sm" />
+                        )}
+                        {stallLevel === "none" && (
+                          <StatusChip variant="processing" label="Running" pulse size="sm" />
+                        )}
+                      </div>
+                    </div>
+                    {stallLevel === "critical" && statusEntry && (
+                      <div className="mb-2 px-2 py-1.5 rounded bg-[hsl(var(--status-failure)/0.08)] border border-[hsl(var(--status-failure)/0.2)] text-[11px] text-[hsl(var(--status-failure))]">
+                        <div className="flex items-center gap-1.5">
+                          <Skull className="w-3 h-3 flex-shrink-0" />
+                          <span>
+                            Stalled on {statusEntry.currentStage} — auto-kill in {getAutoKillCountdown(statusEntry.stalledMs, statusEntry.stallTimeoutMs)}s
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {stallLevel === "warning" && statusEntry && (
+                      <div className="mb-2 px-2 py-1.5 rounded bg-[hsl(var(--status-warning)/0.08)] border border-[hsl(var(--status-warning)/0.2)] text-[11px] text-[hsl(var(--status-warning))]">
+                        <div className="flex items-center gap-1.5">
+                          <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                          <span>No activity for {formatStallTime(statusEntry.stalledMs)}</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="mb-2">
+                      <StageRail stages={parseStagesFromAssembly((run as any).latestStages)} size="md" />
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-[hsl(var(--muted-foreground))]">
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Started {formatRelativeTime(run.createdAt)}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        {statusEntry && (
+                          <span className="font-mono-tech text-[hsl(var(--status-processing))]">
+                            {formatStallTime(statusEntry.elapsedMs)} elapsed
+                          </span>
+                        )}
+                        <span className="font-mono-tech">{formatDuration(run.totalDurationMs)}</span>
+                      </div>
+                    </div>
+                  </GlassPanel>
+                );
+              })}
             </div>
           ) : (
             <GlassPanel solid className="p-6 flex flex-col items-center justify-center text-center min-h-[140px]">

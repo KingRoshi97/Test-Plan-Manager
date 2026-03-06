@@ -6,6 +6,15 @@ Axion is a document-generation and compliance-enforcement system with a full-sta
 ## Current State
 Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 193 kit files produced.
 
+### Pipeline Stall Detection
+Automatic watchdog in `server/pipeline-runner.ts` detects stalled pipeline runs:
+- Tracks `lastActivityAt` per running process, updated on every stdout stage-progress line
+- 30-second interval checker kills runs with >5 minutes of inactivity (configurable via `AXION_STALL_TIMEOUT_MS` env var)
+- `getPipelineStatus()` returns live status of all running processes
+- `GET /api/pipeline/status` endpoint exposes `{assemblyId, runId, currentStage, startTime, lastActivityAt, elapsedMs, stalledMs}` per active run
+- UI polling via `App/src/hooks/use-pipeline-status.ts` — shared hook with stall level detection (warning >2min, critical >4min)
+- Dashboard, Workbench, and Runs pages show stall warnings, auto-kill countdown, and "Kill Run" buttons
+
 ### UI Overhaul — AXION Lab OS (Phases 1–6 Complete)
 The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" — a premium dark-mode mission control interface.
 
