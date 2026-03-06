@@ -674,42 +674,50 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
         </div>
       </div>
 
-      {latestRun?.tokenUsage && (
+      {latestRun && (
         <div className="border rounded-lg p-5 border-[hsl(var(--border))] bg-[hsl(var(--card))]">
           <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-3">Token Usage</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <div className="rounded-md p-3 bg-purple-50 dark:bg-purple-950/30 text-center">
-              <div className="text-lg font-bold text-purple-700 dark:text-purple-300">{(latestRun.tokenUsage.total_tokens ?? 0).toLocaleString()}</div>
-              <div className="text-xs text-purple-600 dark:text-purple-400">Total Tokens</div>
-            </div>
-            <div className="rounded-md p-3 bg-blue-50 dark:bg-blue-950/30 text-center">
-              <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{(latestRun.tokenUsage.total_prompt_tokens ?? 0).toLocaleString()}</div>
-              <div className="text-xs text-blue-600 dark:text-blue-400">Input Tokens</div>
-            </div>
-            <div className="rounded-md p-3 bg-green-50 dark:bg-green-950/30 text-center">
-              <div className="text-lg font-bold text-green-700 dark:text-green-300">{(latestRun.tokenUsage.total_completion_tokens ?? 0).toLocaleString()}</div>
-              <div className="text-xs text-green-600 dark:text-green-400">Output Tokens</div>
-            </div>
-            <div className="rounded-md p-3 bg-amber-50 dark:bg-amber-950/30 text-center">
-              <div className="text-lg font-bold text-amber-700 dark:text-amber-300">${(latestRun.tokenUsage.total_cost_usd ?? 0).toFixed(4)}</div>
-              <div className="text-xs text-amber-600 dark:text-amber-400">Estimated Cost</div>
-            </div>
-          </div>
-          {latestRun.tokenUsage.by_stage && Object.keys(latestRun.tokenUsage.by_stage).length > 0 && (
-            <div>
-              <div className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2">By Stage ({latestRun.tokenUsage.api_calls ?? 0} API calls)</div>
-              <div className="space-y-1.5">
-                {Object.entries(latestRun.tokenUsage.by_stage).map(([stage, data]: [string, any]) => (
-                  <div key={stage} className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-[hsl(var(--muted-foreground))]">{stage}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[hsl(var(--foreground))]">{(data.total_tokens ?? 0).toLocaleString()} tokens</span>
-                      <span className="text-[hsl(var(--muted-foreground))]">{data.calls} call{data.calls !== 1 ? "s" : ""}</span>
-                      <span className="font-medium text-amber-700 dark:text-amber-300">${(data.cost_usd ?? 0).toFixed(4)}</span>
-                    </div>
-                  </div>
-                ))}
+          {latestRun.tokenUsage && latestRun.tokenUsage.total_tokens > 0 ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div className="rounded-md p-3 bg-purple-50 dark:bg-purple-950/30 text-center">
+                  <div className="text-lg font-bold text-purple-700 dark:text-purple-300">{(latestRun.tokenUsage.total_tokens ?? 0).toLocaleString()}</div>
+                  <div className="text-xs text-purple-600 dark:text-purple-400">Total Tokens</div>
+                </div>
+                <div className="rounded-md p-3 bg-blue-50 dark:bg-blue-950/30 text-center">
+                  <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{(latestRun.tokenUsage.total_prompt_tokens ?? 0).toLocaleString()}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">Input Tokens</div>
+                </div>
+                <div className="rounded-md p-3 bg-green-50 dark:bg-green-950/30 text-center">
+                  <div className="text-lg font-bold text-green-700 dark:text-green-300">{(latestRun.tokenUsage.total_completion_tokens ?? 0).toLocaleString()}</div>
+                  <div className="text-xs text-green-600 dark:text-green-400">Output Tokens</div>
+                </div>
+                <div className="rounded-md p-3 bg-amber-50 dark:bg-amber-950/30 text-center">
+                  <div className="text-lg font-bold text-amber-700 dark:text-amber-300">${(latestRun.tokenUsage.total_cost_usd ?? 0).toFixed(4)}</div>
+                  <div className="text-xs text-amber-600 dark:text-amber-400">Estimated Cost</div>
+                </div>
               </div>
+              {latestRun.tokenUsage.by_stage && Object.keys(latestRun.tokenUsage.by_stage).length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-[hsl(var(--muted-foreground))] mb-2">By Stage ({latestRun.tokenUsage.api_calls ?? 0} API calls)</div>
+                  <div className="space-y-1.5">
+                    {Object.entries(latestRun.tokenUsage.by_stage).map(([stage, data]: [string, any]) => (
+                      <div key={stage} className="flex items-center justify-between text-xs">
+                        <span className="font-mono text-[hsl(var(--muted-foreground))]">{stage}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[hsl(var(--foreground))]">{(data.total_tokens ?? 0).toLocaleString()} tokens</span>
+                          <span className="text-[hsl(var(--muted-foreground))]">{data.calls} call{data.calls !== 1 ? "s" : ""}</span>
+                          <span className="font-medium text-amber-700 dark:text-amber-300">${(data.cost_usd ?? 0).toFixed(4)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-sm text-[hsl(var(--muted-foreground))] py-4 text-center">
+              Token usage tracking is active. Data will appear after the next pipeline run.
             </div>
           )}
         </div>
