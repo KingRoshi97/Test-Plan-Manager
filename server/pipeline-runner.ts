@@ -38,19 +38,28 @@ export async function startPipelineRun(assembly: Assembly): Promise<PipelineRun>
     currentStage: "initializing",
   });
 
-  runPipeline(assembly.id, pipelineRun.id).catch((err) => {
+  runPipeline(assembly, pipelineRun.id).catch((err) => {
     console.error("Pipeline error:", err);
   });
 
   return pipelineRun;
 }
 
-async function runPipeline(assemblyId: number, pipelineRunId: number) {
+async function runPipeline(assembly: Assembly, pipelineRunId: number) {
+  const assemblyId = assembly.id;
   const startTime = Date.now();
+
+  const pendingIntakeFilename = `pending_intake_${assemblyId}_${Date.now()}.json`;
+  const pendingIntakePath = path.join(AXION_ROOT, ".axion", pendingIntakeFilename);
+  fs.mkdirSync(path.dirname(pendingIntakePath), { recursive: true });
+
+  if (assembly.intakePayload) {
+    fs.writeFileSync(pendingIntakePath, JSON.stringify(assembly.intakePayload, null, 2));
+  }
 
   const child = spawn("npx", ["tsx", "src/cli/axion.ts", "run"], {
     cwd: AXION_ROOT,
-    env: { ...process.env },
+    env: { ...process.env, AXION_PENDING_INTAKE: pendingIntakePath },
     stdio: ["ignore", "pipe", "pipe"],
   });
 
@@ -68,16 +77,6 @@ async function runPipeline(assemblyId: number, pipelineRunId: number) {
       runId = runMatch[1];
       await storage.updatePipelineRun(pipelineRunId, { runId });
       await storage.updateAssembly(assemblyId, { runId });
-
-      const assembly = await storage.getAssembly(assemblyId);
-      if (assembly?.intakePayload) {
-        const intakeDir = path.join(AXION_ROOT, ".axion", "runs", runId, "intake");
-        fs.mkdirSync(intakeDir, { recursive: true });
-        fs.writeFileSync(
-          path.join(intakeDir, "raw_submission.json"),
-          JSON.stringify(assembly.intakePayload, null, 2),
-        );
-      }
     }
 
     for (const line of text.split("\n")) {
@@ -113,8 +112,11 @@ async function runPipeline(assemblyId: number, pipelineRunId: number) {
 
   return new Promise<void>((resolve) => {
     child.on("close", async (code) => {
+      await new Promise((r) => setTimeout(r, 200));
       const duration = Date.now() - startTime;
       const status = code === 0 ? "completed" : "failed";
+
+      try { fs.unlinkSync(pendingIntakePath); } catch {}
 
       await storage.updatePipelineRun(pipelineRunId, {
         status,
@@ -122,13 +124,13 @@ async function runPipeline(assemblyId: number, pipelineRunId: number) {
         error: code !== 0 ? stderr || `Exit code ${code}` : undefined,
       });
 
-      const assembly = await storage.getAssembly(assemblyId);
+      const latestAssembly = await storage.getAssembly(assemblyId);
       await storage.updateAssembly(assemblyId, {
         status,
         currentStep: code === 0 ? "done" : "failed",
         error: code !== 0 ? stderr || `Exit code ${code}` : undefined,
-        totalRuns: (assembly?.totalRuns || 0) + 1,
-        totalDurationMs: (assembly?.totalDurationMs || 0) + duration,
+        totalRuns: (latestAssembly?.totalRuns || 0) + 1,
+        totalDurationMs: (latestAssembly?.totalDurationMs || 0) + duration,
         verificationStatus: code === 0 ? "PASS" : "FAIL",
       });
 

@@ -132,7 +132,7 @@ ${knowledgeSection ? `You have access to the following knowledge from the AXION 
 ${sectionPrompt}`;
 
   const response = await client.chat.completions.create({
-    model: "gpt-5.2",
+    model: "gpt-4o",
     messages: [
       { role: "system", content: systemMessage },
       { role: "user", content: userMessage },

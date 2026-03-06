@@ -85,7 +85,7 @@ async function main(): Promise<void> {
           console.error("Usage: axion run stage <run_id> <stage_id>");
           process.exit(1);
         }
-        cmdRunStage(baseDir, runId, stageId);
+        await cmdRunStage(baseDir, runId, stageId);
 
       } else if (subCommand === "gates") {
         const runId = args[2];

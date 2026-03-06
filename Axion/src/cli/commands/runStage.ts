@@ -34,6 +34,7 @@ import { writeCompletionReport } from "../../core/verification/completion.js";
 import { createProofsFromGateReports } from "../../core/proof/create.js";
 import { ProofLedger } from "../../core/proofLedger/ledger.js";
 import { validatePointers, collectRunPointers } from "../../core/evidence/pointers.js";
+import { isOpenAIAvailable, enrichCanonicalSpec, enrichWorkBreakdown } from "../../core/agents/openai-bridge.js";
 
 export const STAGE_IO: Record<string, { consumed: string[]; produced: string[] }> = {
   S1_INGEST_NORMALIZE: {
@@ -90,7 +91,7 @@ export const STAGE_IO: Record<string, { consumed: string[]; produced: string[] }
   },
 };
 
-export function executeStageWork(baseDir: string, runDir: string, runId: string, stageId: StageId, generatedAt: string): void {
+export async function executeStageWork(baseDir: string, runDir: string, runId: string, stageId: StageId, generatedAt: string): Promise<void> {
   if (stageId === "S1_INGEST_NORMALIZE") {
     const rawSubmissionPath = join(runDir, "intake", "raw_submission.json");
     let rawSubmission: Record<string, unknown>;
@@ -182,10 +183,18 @@ export function executeStageWork(baseDir: string, runDir: string, runId: string,
       throw new Error("Cannot run S3: normalized_input.json not found. Run S1 first.");
     }
 
-    const canonicalSpec = buildSpec(normalizedInput, null, baseDir);
+    let canonicalSpec = buildSpec(normalizedInput, null, baseDir);
 
     const unknownsResult = extractUnknowns(normalizedInput, canonicalSpec);
     canonicalSpec.unknowns = mergeUnknowns(canonicalSpec.unknowns, unknownsResult.unknowns);
+
+    if (isOpenAIAvailable()) {
+      try {
+        canonicalSpec = await enrichCanonicalSpec(canonicalSpec, normalizedInput);
+      } catch (err: any) {
+        console.log(`  [IA] OpenAI enrichment skipped: ${err.message ?? err}`);
+      }
+    }
 
     writeCanonicalJson(join(runDir, "canonical", "canonical_spec.json"), {
       run_id: runId,
@@ -267,7 +276,16 @@ export function executeStageWork(baseDir: string, runDir: string, runId: string,
       throw new Error("Cannot run S8: canonical_spec.json not found. Run S3 first.");
     }
 
-    const workBreakdown = buildWorkBreakdown(canonicalSpec, runId, baseDir);
+    let workBreakdown = buildWorkBreakdown(canonicalSpec, runId, baseDir);
+
+    if (isOpenAIAvailable()) {
+      try {
+        workBreakdown = await enrichWorkBreakdown(workBreakdown, canonicalSpec);
+      } catch (err: any) {
+        console.log(`  [IA] OpenAI work breakdown enrichment skipped: ${err.message ?? err}`);
+      }
+    }
+
     writeCanonicalJson(join(runDir, "planning", "work_breakdown.json"), workBreakdown);
 
     const acceptanceMap = buildAcceptanceMap(canonicalSpec, workBreakdown, runId, baseDir);
@@ -329,11 +347,11 @@ export interface StageExecutionResult {
   reportRelPath: string;
 }
 
-export function executeStageWithGates(baseDir: string, runDir: string, runId: string, stageId: StageId, generatedAt: string): StageExecutionResult {
+export async function executeStageWithGates(baseDir: string, runDir: string, runId: string, stageId: StageId, generatedAt: string): Promise<StageExecutionResult> {
   const io = STAGE_IO[stageId] ?? { consumed: [], produced: [] };
   const now = isoNow();
 
-  executeStageWork(baseDir, runDir, runId, stageId, generatedAt);
+  await executeStageWork(baseDir, runDir, runId, stageId, generatedAt);
 
   const orchGates = getStageGates(baseDir);
   const effectiveGates = Object.keys(orchGates).length > 0 ? orchGates : STAGE_GATES;
@@ -403,7 +421,7 @@ export function executeStageWithGates(baseDir: string, runDir: string, runId: st
   return { passed: true, reportRelPath };
 }
 
-export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string): void {
+export async function cmdRunStage(baseDir: string, runId: string, stageIdArg: string): Promise<void> {
   const resolved = resolveStageId(stageIdArg);
   if (!resolved) {
     const orchOrder = getStageOrder(baseDir);
@@ -432,7 +450,7 @@ export function cmdRunStage(baseDir: string, runId: string, stageIdArg: string):
   }
 
   const generatedAt = manifest.created_at;
-  const result = executeStageWithGates(baseDir, runDir, runId, stageId, generatedAt);
+  const result = await executeStageWithGates(baseDir, runDir, runId, stageId, generatedAt);
 
   manifest = readJson<RunManifest>(manifestPath);
   const currentStageEntry = manifest.stages.find((s) => s.stage_id === stageId);

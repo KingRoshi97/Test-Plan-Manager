@@ -27,9 +27,16 @@ Full Mechanics pipeline + web application layer with three formal control planes
 - Health page shows Feature Packs summary card with total/active counts and category breakdown
 
 ### OpenAI Autofill Integration
-- `server/openai.ts` — OpenAI client using Replit AI Integrations (AI_INTEGRATIONS_OPENAI_BASE_URL + AI_INTEGRATIONS_OPENAI_API_KEY)
+- `server/openai.ts` — OpenAI client using Replit AI Integrations (AI_INTEGRATIONS_OPENAI_BASE_URL + AI_INTEGRATIONS_OPENAI_API_KEY), model: `gpt-4o`
 - `POST /api/autofill` — returns structured suggestions for intake sections based on routing + project info
 - Opt-in toggle on Page 0 (routing); "AI-drafted" badge on auto-filled fields; all values editable
+
+### Pipeline OpenAI Integration (IA Agent)
+- `Axion/src/core/agents/openai-bridge.ts` — OpenAI bridge for pipeline stages, wraps OpenAI client for use within Axion CLI
+- **S3 (Build Canonical)**: After deterministic spec building, calls OpenAI to enrich feature descriptions, add failure states to workflows, and generate project-specific rules
+- **S8 (Build Plan)**: After deterministic work breakdown, calls OpenAI to enrich work unit descriptions with implementation details and acceptance criteria
+- All OpenAI calls are gracefully optional — if API key is missing or call fails, pipeline falls back to deterministic output
+- Intake data race condition fixed: `pipeline-runner.ts` writes `pending_intake.json` BEFORE spawning CLI; `runControlPlane.ts` copies it into run dir before S1 executes
 
 ### Intake Library (`Axion/libraries/intake/`)
 Form spec, field enums, validation rules, submission records, normalization contracts, and intake gates (INT-0 through INT-7). 12 legacy flat files preserved for backward compat (pipeline code: normalizer.ts, validator.ts, submissionRecord.ts).

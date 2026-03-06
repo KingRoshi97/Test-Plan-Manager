@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync, unlinkSync, copyFileSync } from "node:fs";
 import { sha256 } from "../../utils/hash.js";
 import { writeJson, ensureDir } from "../../utils/fs.js";
 import { isoNow } from "../../utils/time.js";
@@ -87,6 +87,15 @@ export async function cmdRunFull(baseDir: string = "."): Promise<void> {
   index.push(artifactEntry("artifact_index_001", "artifact_index", "artifact_index.json", hashFile(indexPath), "S1_INGEST_NORMALIZE", now));
   writeJson(indexPath, index);
 
+  const pendingIntakePath = process.env.AXION_PENDING_INTAKE || join(baseDir, ".axion", "pending_intake.json");
+  if (existsSync(pendingIntakePath)) {
+    const intakeDir = join(runDir, "intake");
+    ensureDir(intakeDir);
+    copyFileSync(pendingIntakePath, join(intakeDir, "raw_submission.json"));
+    try { unlinkSync(pendingIntakePath); } catch {}
+    console.log("  Intake payload loaded from pending submission");
+  }
+
   const orchOrder = getStageOrder(baseDir);
   const effectiveOrder = orchOrder.length > 0 ? orchOrder : [...STAGE_ORDER];
 
@@ -96,7 +105,7 @@ export async function cmdRunFull(baseDir: string = "."): Promise<void> {
     await controller.advanceStage(runId, stageId);
 
     const generatedAt = run.created_at;
-    const result = executeStageWithGates(baseDir, runDir, runId, stageId as StageId, generatedAt);
+    const result = await executeStageWithGates(baseDir, runDir, runId, stageId as StageId, generatedAt);
 
     const stageResult = result.passed ? "pass" : "fail";
     await controller.recordStageResult(runId, stageId, stageResult as "pass" | "fail", result.reportRelPath);
