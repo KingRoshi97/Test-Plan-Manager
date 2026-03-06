@@ -16,8 +16,20 @@ Full Mechanics pipeline + web application layer with three formal control planes
 - **BA (Build Agent)** — `Axion/src/core/agents/build.ts`: Executes Agent Kit under KCP governance (1-target-per-unit, RESULT artifacts, verification, reruns).
 - **MA (Maintenance Agent)** — `Axion/src/core/agents/maintenance.ts`: Performs repo maintenance under MCP governance (dependency upgrades, migrations, test hardening, CI, rollback).
 
-### Kit Template Slot Mapping Fix
-`Axion/src/core/kit/build.ts` — SUBDIR_TO_SLOT lookup table maps all 77 template prefix groups to correct domain slots (01_requirements through 12_analytics). Zero fallthrough to `11_documentation`.
+### Kit Slot & Pack Infrastructure (KIT-01/TMP-06 Compliant)
+`Axion/src/core/kit/build.ts` — 12 locked KIT-01 slots: 01_requirements, 02_design, 03_architecture, 04_implementation, 05_security, 06_quality, 07_ops, 08_data, 09_api_contracts, 10_release, 11_governance, 12_analytics. SUBDIR_TO_SLOT maps all template prefix groups to correct slots. Pack root files generated: 00_pack_meta.md (pack_level, pack_id, scope_refs, required_slots, status in machine-readable JSON), 00_pack_index.md (TOC with links), 00_gate_checklist.md (pass/fail). Empty slots get 00_NA.md with reason and trigger condition.
+
+### Template Selector (TMP-03 Compliant)
+`Axion/src/core/templates/selector.ts` — Global type ordering (Product → Design → Architecture → Data → API → Security → Implementation → Quality → Ops → Release → Governance → Analytics) with template_id tie-breaker. Baseline coverage enforcement (always-required: product, architecture, implementation, security, quality; conditional: design, data, api, ops). Selection result includes `omitted_templates[]` with reasons (not_applicable, skill_level_omit, pack_not_active), `na_slots[]`, and `baseline_warnings[]`.
+
+### Template Completeness Gate (TMP-05 Compliant)
+`Axion/src/core/templates/completeness.ts` — `runTemplateGate()` performs 5 checks per filled template: TMP5-STRUCT-01 (sections exist), TMP5-FILL-01 (no unresolved {{placeholder}} tokens), TMP5-FILL-02 (no empty required sections), TMP5-REF-01 (entity ID reference validation), TMP5-UNK-01 (UNKNOWN block ID validation). Produces per-template gate report with rule_id, pointer, error_code, message, remediation. Aggregate gate report written to `template_gate_report.json`.
+
+### Version Stamping (KIT-04 Compliant)
+`Axion/src/core/kit/build.ts` — 00_VERSIONS.md contains machine-readable JSON block with all 7 KIT-04 categories: V-01 System, V-02 Intake (form/schema/ruleset versions), V-03 Standards (library/packs/resolver), V-04 Templates (library/templates_used[]/index/fill_rules), V-05 Canonical Model (spec/id_rules/unknowns), V-06 Planning/Verification (planning/proof rules), V-07 Kit Contracts (folder_structure/manifest/entrypoint). 00_KIT_MANIFEST.md includes version_cross_check block.
+
+### CAN-03 Unknown Format
+`Axion/src/core/templates/filler.ts` — When the IA genuinely can't resolve content, generates CAN-03 compliant unknowns with unk_ prefix IDs, unknown_type, severity, blocking, summary, detail, impact, what_is_needed_to_resolve. Rendered in TMP-02 Section 11 format. `fill_unknowns_audit.json` written when unknowns exist. UNKNOWNs are the fallback — AI synthesis fills content whenever possible.
 
 ### Feature Registry UI
 - `GET /api/features` — Returns all 17 feature pack registries from `Axion/features/FEAT-*/00_registry.json`

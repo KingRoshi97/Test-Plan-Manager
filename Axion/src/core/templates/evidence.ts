@@ -11,9 +11,11 @@ import {
   loadPlaceholderCatalog,
   checkTemplateCompleteness,
   buildCompletenessReport,
+  runTemplateGate,
+  buildTemplateGateReport,
 } from "./completeness.js";
-import type { TemplateCompletenessEntry } from "./completeness.js";
-import { fillTemplate, type FillContext } from "./filler.js";
+import type { TemplateCompletenessEntry, TemplateGateEntry } from "./completeness.js";
+import { fillTemplate, type FillContext, type CAN03Unknown } from "./filler.js";
 import { resolveKnowledge } from "../knowledge/resolver.js";
 import type { KnowledgeContext } from "../knowledge/resolver.js";
 
@@ -38,7 +40,7 @@ export function writeSelectionResult(
     normalizedInput = readJson<Record<string, unknown>>(join(runDir, "intake", "normalized_input.json"));
   } catch { /* empty */ }
 
-  const { selected, index, activePacks } = selectTemplates(baseDir, routing, constraints, canonicalSpec, standardsSnapshot, knowledgeContext, normalizedInput);
+  const { selected, index, activePacks, omitted_templates, na_slots, baseline_warnings } = selectTemplates(baseDir, routing, constraints, canonicalSpec, standardsSnapshot, knowledgeContext, normalizedInput);
   const selectionHash = computeSelectionHash(selected);
   const now = isoNow();
 
@@ -51,6 +53,9 @@ export function writeSelectionResult(
     selected,
     selected_templates: selected,
     active_packs: activePacks,
+    omitted_templates,
+    na_slots,
+    baseline_warnings,
   };
 
   writeCanonicalJson(join(runDir, "templates", "selection_result.json"), result);
@@ -66,6 +71,17 @@ export function writeSelectionResult(
       message: `Active packs: ${activePackNames.join(", ")}`,
     },
   ];
+
+  for (const warning of baseline_warnings) {
+    notes.push({ level: warning.level, message: warning.message });
+  }
+
+  if (na_slots.length > 0) {
+    notes.push({
+      level: "info",
+      message: `N/A slots (no templates selected): ${na_slots.join(", ")}`,
+    });
+  }
 
   if (knowledgeContext) {
     notes.push({
@@ -83,6 +99,9 @@ export function writeSelectionResult(
     selection_hash: selectionHash,
     selection_profile: "feature-pack-driven",
     total_in_index: index.templates.length,
+    omitted_count: omitted_templates.length,
+    na_slots,
+    baseline_warnings,
   });
 }
 
@@ -204,6 +223,8 @@ export async function writeRenderedDocs(runDir: string, runId: string, generated
   }> = [];
 
   const completenessEntries: TemplateCompletenessEntry[] = [];
+  const gateEntries: TemplateGateEntry[] = [];
+  const allGeneratedUnknowns: CAN03Unknown[] = [];
   const now = isoNow();
 
   for (const tmpl of selection.selected) {
@@ -263,6 +284,18 @@ export async function writeRenderedDocs(runDir: string, runId: string, generated
       unknownAllowedFields,
     );
     completenessEntries.push(completenessEntry);
+
+    if (filled.generated_unknowns && filled.generated_unknowns.length > 0) {
+      allGeneratedUnknowns.push(...filled.generated_unknowns);
+    }
+
+    const gateEntry = runTemplateGate(
+      tmpl.template_id,
+      tmpl.template_version,
+      filled.content,
+      canonicalSpec,
+    );
+    gateEntries.push(gateEntry);
   }
 
   writeCanonicalJson(join(runDir, "templates", "render_envelopes.json"), {
@@ -299,4 +332,18 @@ export async function writeRenderedDocs(runDir: string, runId: string, generated
 
   const completenessReport = buildCompletenessReport(runId, now, completenessEntries);
   writeCanonicalJson(join(runDir, "templates", "template_completeness_report.json"), completenessReport);
+
+  const gateReport = buildTemplateGateReport(runId, now, gateEntries);
+  writeCanonicalJson(join(runDir, "templates", "template_gate_report.json"), gateReport);
+
+  if (allGeneratedUnknowns.length > 0) {
+    writeCanonicalJson(join(runDir, "templates", "fill_unknowns_audit.json"), {
+      run_id: runId,
+      generated_at: now,
+      total_unknowns: allGeneratedUnknowns.length,
+      blocking_count: allGeneratedUnknowns.filter((u) => u.blocking).length,
+      non_blocking_count: allGeneratedUnknowns.filter((u) => !u.blocking).length,
+      unknowns: allGeneratedUnknowns,
+    });
+  }
 }

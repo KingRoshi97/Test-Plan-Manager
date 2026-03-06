@@ -38,8 +38,8 @@ export function cmdBuildSpec(runDir: string): void {
   writeCanonicalJson(join(runDir, "canonical", "unknowns.json"), unknownsResult);
 
   const entityCount =
-    (canonicalSpec.roles?.length ?? 0) +
-    (canonicalSpec.features?.length ?? 0) +
-    (canonicalSpec.workflows?.length ?? 0);
+    (canonicalSpec.entities?.roles?.length ?? 0) +
+    (canonicalSpec.entities?.features?.length ?? 0) +
+    (canonicalSpec.entities?.workflows?.length ?? 0);
   console.log(`Built canonical spec with ${entityCount} entities, ${unknownsResult.unknowns.length} unknowns`);
 }

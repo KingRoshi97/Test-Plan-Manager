@@ -11,18 +11,18 @@ export interface KitBuildResult {
 }
 
 const APP_SLOTS = [
-  { num: "01", name: "requirements", label: "Requirements & Scope" },
-  { num: "02", name: "architecture", label: "Architecture & Design" },
-  { num: "03", name: "data_models", label: "Data Models & Schemas" },
-  { num: "04", name: "api_contracts", label: "API Contracts & Interfaces" },
-  { num: "05", name: "auth_security", label: "Auth & Security" },
-  { num: "06", name: "frontend", label: "Frontend & UI" },
-  { num: "07", name: "backend", label: "Backend & Services" },
-  { num: "08", name: "devops", label: "DevOps & Deployment" },
-  { num: "09", name: "testing", label: "Testing & QA" },
-  { num: "10", name: "integrations", label: "Integrations" },
-  { num: "11", name: "documentation", label: "Documentation" },
-  { num: "12", name: "analytics", label: "Analytics & Monitoring" },
+  { num: "01", name: "requirements", label: "Requirements", trigger: "Product/requirements templates selected" },
+  { num: "02", name: "design", label: "Design", trigger: "UI/UX or consumer-facing project detected" },
+  { num: "03", name: "architecture", label: "Architecture", trigger: "System architecture templates selected" },
+  { num: "04", name: "implementation", label: "Implementation", trigger: "Build/implementation templates selected" },
+  { num: "05", name: "security", label: "Security", trigger: "Auth enabled or security templates selected" },
+  { num: "06", name: "quality", label: "Quality", trigger: "Testing/QA templates selected" },
+  { num: "07", name: "ops", label: "Operations", trigger: "Production build target or ops templates selected" },
+  { num: "08", name: "data", label: "Data", trigger: "Data models or data governance templates selected" },
+  { num: "09", name: "api_contracts", label: "API Contracts", trigger: "API or contract templates selected" },
+  { num: "10", name: "release", label: "Release", trigger: "Release/deployment templates selected" },
+  { num: "11", name: "governance", label: "Governance", trigger: "Compliance or governance templates selected" },
+  { num: "12", name: "analytics", label: "Analytics", trigger: "Analytics or observability templates selected" },
 ];
 
 function safeRead(filePath: string): string | null {
@@ -200,26 +200,39 @@ ${slotLines}
 
 function buildVersionsMd(versions: Record<string, unknown>): string {
   const versionsData = {
-    "V-01_system_version": versions.system_version ?? "1.0.0",
+    "V-01_system": {
+      system_version: versions.system_version ?? "1.0.0",
+    },
     "V-02_intake": {
-      form_version: versions.intake_form_version ?? "1.0.0",
-      schema_version: versions.intake_schema_version ?? "1.0.0",
-      int_ruleset: versions.intake_ruleset_version ?? "1.0.0",
+      form_version_used: versions.intake_form_version ?? "1.0.0",
+      schema_version_used: versions.intake_schema_version ?? "1.0.0",
+      int_ruleset_version_used: versions.intake_ruleset_version ?? "1.0.0",
     },
     "V-03_standards": {
-      library_version: versions.standards_library_version ?? "1.0.0",
-      resolver_version: versions.resolver_version ?? "1.0.0",
-      packs_version: versions.packs_version ?? "1.0.0",
+      standards_library_version_used: versions.standards_library_version ?? "1.0.0",
+      standards_packs_used: versions.standards_packs_used ?? [],
+      standards_resolver_version_used: versions.resolver_version ?? "1.0.0",
     },
     "V-04_templates": {
-      library_version: versions.template_library_version ?? "1.0.0",
-      index_version: versions.template_index_version ?? "1.0.0",
-      fill_rules_version: versions.fill_rules_version ?? "1.0.0",
-      templates_used: versions.templates_used ?? 0,
+      template_library_version_used: versions.template_library_version ?? "1.0.0",
+      templates_used: versions.templates_used ?? [],
+      template_index_version_used: versions.template_index_version ?? "1.0.0",
+      template_fill_rules_version_used: versions.fill_rules_version ?? "1.0.0",
     },
-    "V-05_canonical_model": versions.canonical_model_version ?? "1.0.0",
-    "V-06_planning_verification": versions.planning_version ?? "1.0.0",
-    "V-07_kit_contracts": versions.kit_contracts_version ?? "1.0.0",
+    "V-05_canonical_model": {
+      canonical_spec_model_version: versions.canonical_spec_model_version ?? "1.0.0",
+      id_rules_version_used: versions.id_rules_version ?? "1.0.0",
+      unknowns_model_version_used: versions.unknowns_model_version ?? "1.0.0",
+    },
+    "V-06_planning_verification": {
+      planning_rules_version_used: versions.planning_rules_version ?? "1.0.0",
+      proof_rules_version_used: versions.proof_rules_version ?? "1.0.0",
+    },
+    "V-07_kit_contracts": {
+      kit_folder_structure_version: versions.kit_folder_structure_version ?? "1.0.0",
+      manifest_format_version: versions.manifest_format_version ?? "1.0.0",
+      entrypoint_contract_version: versions.entrypoint_contract_version ?? "1.0.0",
+    },
   };
 
   return `# 00 — Versions
@@ -255,13 +268,41 @@ function buildProofLogMd(runId: string): string {
 `;
 }
 
-function buildPackMetaMd(runId: string, projectName: string): string {
+function buildPackMetaMd(
+  runId: string,
+  projectName: string,
+  specId: string,
+  selectedSlots: string[],
+  versions: Record<string, unknown>
+): string {
+  const packId = `PACK-APP-${runId}`;
+  const metaBlock = {
+    pack_id: packId,
+    pack_level: "APP",
+    run_id: runId,
+    spec_id: specId,
+    scope_refs: [specId],
+    required_slots: selectedSlots,
+    total_slots: APP_SLOTS.length,
+    status: "generated",
+    generated_at: isoNow(),
+    system_version: versions.system_version ?? "1.0.0",
+    kit_contracts_version: versions.kit_contracts_version ?? "1.0.0",
+  };
+
   return `# App Pack — Metadata
 
+**Pack ID**: \`${packId}\`
+**Pack Level**: APP
 **Run ID**: \`${runId}\`
-**Project**: \`${projectName}\`
+**Project**: ${projectName}
+**Spec ID**: \`${specId}\`
 
-This pack contains rendered documents organized by domain slot.
+\`\`\`json
+${JSON.stringify(metaBlock, null, 2)}
+\`\`\`
+
+This pack contains rendered documents organized by the 12 locked KIT-01 slot folders.
 `;
 }
 
@@ -299,16 +340,17 @@ function buildGateChecklistMd(runId: string): string {
 `;
 }
 
-function buildNaMd(slot: string, reason: string): string {
+function buildNaMd(slot: string, reason: string, trigger: string): string {
   return `# Not Applicable
 
 **Slot**: \`${slot}\`
 **Reason**: ${reason}
+**What would have triggered this slot**: ${trigger}
 `;
 }
 
 const SUBDIR_TO_SLOT: Record<string, string> = {
-  // Product Definition
+  // 01_requirements — Product Definition
   requirements: "01_requirements",
   domain: "01_requirements",
   workflows: "01_requirements",
@@ -324,122 +366,124 @@ const SUBDIR_TO_SLOT: Record<string, string> = {
   brp: "01_requirements",
   smip: "01_requirements",
 
-  // System Architecture
-  architecture: "02_architecture",
-  topology: "02_architecture",
-  arc: "02_architecture",
-  sic: "02_architecture",
-  sbdt: "02_architecture",
-  wfo: "02_architecture",
-  rtm: "02_architecture",
-  err: "02_architecture",
-  apig: "04_api_contracts",
+  // 02_design — Experience Design
+  design: "02_design",
+  design_system: "02_design",
+  assets: "02_design",
+  accessibility: "02_design",
+  responsive: "02_design",
+  ia: "02_design",
+  des: "02_design",
+  ixd: "02_design",
+  cdx: "02_design",
+  dsys: "02_design",
+  ian: "02_design",
+  a11yd: "02_design",
+  yd: "02_design",
+  rlb: "02_design",
+  vap: "02_design",
 
-  // Data & Information
-  data: "03_data_models",
-  data_governance: "03_data_models",
-  data_lifecycle: "03_data_models",
-  data_quality: "03_data_models",
-  dlr: "03_data_models",
-  dgl: "03_data_models",
-  dqv: "03_data_models",
-  cache: "03_data_models",
-  srch: "03_data_models",
-  rpt: "03_data_models",
+  // 03_architecture — System Architecture
+  architecture: "03_architecture",
+  topology: "03_architecture",
+  arc: "03_architecture",
+  sic: "03_architecture",
+  sbdt: "03_architecture",
+  wfo: "03_architecture",
+  rtm: "03_architecture",
+  err: "03_architecture",
 
-  // API & Contracts
-  api_governance: "04_api_contracts",
-  api: "04_api_contracts",
-  pfs: "04_api_contracts",
+  // 04_implementation — Build / Frontend / Backend / Mobile
+  fe: "04_implementation",
+  smd: "04_implementation",
+  uicp: "04_implementation",
+  cer: "04_implementation",
+  form: "04_implementation",
+  route: "04_implementation",
+  errors: "04_implementation",
+  caching: "04_implementation",
+  realtime: "04_implementation",
+  search: "04_implementation",
+  jbs: "04_implementation",
+  evt: "04_implementation",
+  rlim: "04_implementation",
+  ffcfg: "04_implementation",
+  fpmp: "04_implementation",
+  admin: "04_implementation",
+  pbp: "04_implementation",
+  mob: "04_implementation",
+  mdc: "04_implementation",
+  ofs: "04_implementation",
+  mbat: "04_implementation",
+  mdl: "04_implementation",
+  mpush: "04_implementation",
 
-  // Auth & Security
-  policy: "05_auth_security",
-  governance: "05_auth_security",
-  authz: "05_auth_security",
-  pmad: "05_auth_security",
-  sec: "05_auth_security",
-  iam: "05_auth_security",
-  tma: "05_auth_security",
-  skm: "05_auth_security",
-  priv: "05_auth_security",
-  audit: "05_auth_security",
-  comp: "05_auth_security",
-  cpr: "05_auth_security",
-  csec: "05_auth_security",
+  // 05_security — Auth & Security
+  policy: "05_security",
+  authz: "05_security",
+  pmad: "05_security",
+  sec: "05_security",
+  iam: "05_security",
+  tma: "05_security",
+  skm: "05_security",
+  priv: "05_security",
+  audit: "05_security",
+  csec: "05_security",
 
-  // Experience Design / Frontend
-  design: "06_frontend",
-  design_system: "06_frontend",
-  assets: "06_frontend",
-  accessibility: "06_frontend",
-  responsive: "06_frontend",
-  ia: "06_frontend",
-  des: "06_frontend",
-  ixd: "06_frontend",
-  cdx: "06_frontend",
-  dsys: "06_frontend",
-  ian: "06_frontend",
-  a11yd: "06_frontend",
-  yd: "06_frontend",
-  rlb: "06_frontend",
-  vap: "06_frontend",
-  fe: "06_frontend",
-  smd: "06_frontend",
-  uicp: "06_frontend",
-  cer: "06_frontend",
-  form: "06_frontend",
-  route: "06_frontend",
+  // 06_quality — Testing & QA
+  qa: "06_quality",
 
-  // Backend
-  errors: "07_backend",
-  caching: "07_backend",
-  realtime: "07_backend",
-  search: "07_backend",
-  jbs: "07_backend",
-  evt: "07_backend",
-  rlim: "07_backend",
-  ffcfg: "07_backend",
-  fpmp: "07_backend",
-  admin: "07_backend",
-  pbp: "07_backend",
+  // 07_ops — Operations & Reliability
+  obs: "07_ops",
+  lts: "07_ops",
+  alrt: "07_ops",
+  slo: "07_ops",
+  perf: "07_ops",
+  irp: "07_ops",
+  load: "07_ops",
 
-  // DevOps
-  load: "08_devops",
-  rel: "08_devops",
-  qa: "09_testing",
+  // 08_data — Data & Information
+  data: "08_data",
+  data_governance: "08_data",
+  data_lifecycle: "08_data",
+  data_quality: "08_data",
+  dlr: "08_data",
+  dgl: "08_data",
+  dqv: "08_data",
+  cache: "08_data",
+  srch: "08_data",
+  rpt: "08_data",
 
-  // Integrations & External Services
-  integrations: "10_integrations",
-  ixs: "10_integrations",
-  sso: "10_integrations",
-  crmerp: "10_integrations",
-  whcp: "10_integrations",
-  pay: "10_integrations",
-  notif: "10_integrations",
-  fms: "10_integrations",
+  // 09_api_contracts — API & Contracts
+  api_governance: "09_api_contracts",
+  api: "09_api_contracts",
+  apig: "09_api_contracts",
+  pfs: "09_api_contracts",
 
-  // Mobile
-  mob: "06_frontend",
-  mdc: "06_frontend",
-  ofs: "06_frontend",
-  mbat: "06_frontend",
-  mdl: "06_frontend",
-  mpush: "06_frontend",
-  sign: "08_devops",
+  // 10_release — Release & Deployment
+  rel: "10_release",
+  sign: "10_release",
 
-  // Operations & Reliability
-  obs: "12_analytics",
+  // 11_governance — Compliance & Governance
+  governance: "11_governance",
+  comp: "11_governance",
+  cpr: "11_governance",
+
+  // 12_analytics — Analytics & Monitoring
   anl: "12_analytics",
-  lts: "12_analytics",
-  alrt: "12_analytics",
-  slo: "12_analytics",
-  perf: "12_analytics",
-  irp: "12_analytics",
   cost: "12_analytics",
-
-  // Analytics / Reporting
   reporting: "12_analytics",
   metrics: "12_analytics",
+
+  // Integrations route to implementation
+  integrations: "04_implementation",
+  ixs: "04_implementation",
+  sso: "04_implementation",
+  crmerp: "04_implementation",
+  whcp: "04_implementation",
+  pay: "04_implementation",
+  notif: "04_implementation",
+  fms: "04_implementation",
 };
 
 function slotForOutputPath(outputPath: string): string | null {
@@ -452,18 +496,18 @@ function slotForOutputPath(outputPath: string): string | null {
     }
   }
 
-  if (lower.includes("requirements") || lower.includes("prd") || lower.includes("scope")) return "01_requirements";
-  if (lower.includes("architecture") || lower.includes("design") || lower.includes("system")) return "02_architecture";
-  if (lower.includes("data") || lower.includes("model") || lower.includes("schema") || lower.includes("erd")) return "03_data_models";
-  if (lower.includes("api") || lower.includes("contract") || lower.includes("interface")) return "04_api_contracts";
-  if (lower.includes("auth") || lower.includes("security") || lower.includes("rbac") || lower.includes("permission")) return "05_auth_security";
-  if (lower.includes("frontend") || lower.includes("ui") || lower.includes("ux") || lower.includes("component")) return "06_frontend";
-  if (lower.includes("backend") || lower.includes("service") || lower.includes("server") || lower.includes("api")) return "07_backend";
-  if (lower.includes("devops") || lower.includes("deploy") || lower.includes("infra") || lower.includes("ci")) return "08_devops";
-  if (lower.includes("test") || lower.includes("qa") || lower.includes("quality")) return "09_testing";
-  if (lower.includes("integration") || lower.includes("webhook") || lower.includes("connector")) return "10_integrations";
-  if (lower.includes("doc") || lower.includes("readme") || lower.includes("guide") || lower.includes("reference")) return "11_documentation";
-  if (lower.includes("analytics") || lower.includes("monitoring") || lower.includes("metric") || lower.includes("log")) return "12_analytics";
+  if (lower.includes("requirements") || lower.includes("prd") || lower.includes("scope") || lower.includes("stakeholder") || lower.includes("roadmap")) return "01_requirements";
+  if (lower.includes("design") || lower.includes("ux") || lower.includes("ui") || lower.includes("accessibility") || lower.includes("a11y")) return "02_design";
+  if (lower.includes("architecture") || lower.includes("topology") || lower.includes("system")) return "03_architecture";
+  if (lower.includes("frontend") || lower.includes("backend") || lower.includes("service") || lower.includes("component") || lower.includes("build") || lower.includes("integration") || lower.includes("webhook") || lower.includes("connector")) return "04_implementation";
+  if (lower.includes("auth") || lower.includes("security") || lower.includes("rbac") || lower.includes("permission") || lower.includes("threat")) return "05_security";
+  if (lower.includes("test") || lower.includes("qa") || lower.includes("quality")) return "06_quality";
+  if (lower.includes("ops") || lower.includes("observability") || lower.includes("alerting") || lower.includes("slo") || lower.includes("incident")) return "07_ops";
+  if (lower.includes("data") || lower.includes("model") || lower.includes("schema") || lower.includes("erd") || lower.includes("cache")) return "08_data";
+  if (lower.includes("api") || lower.includes("contract") || lower.includes("interface")) return "09_api_contracts";
+  if (lower.includes("release") || lower.includes("deploy") || lower.includes("infra") || lower.includes("ci") || lower.includes("devops")) return "10_release";
+  if (lower.includes("governance") || lower.includes("compliance") || lower.includes("policy") || lower.includes("doc") || lower.includes("readme") || lower.includes("guide")) return "11_governance";
+  if (lower.includes("analytics") || lower.includes("monitoring") || lower.includes("metric") || lower.includes("log") || lower.includes("cost")) return "12_analytics";
   return null;
 }
 
@@ -511,21 +555,36 @@ export function buildRealKit(
   const stdSnapshot = safeReadJson<Record<string, unknown>>(join(runDir, "standards", "resolved_standards_snapshot.json"));
   const selectionResult = safeReadJson<Record<string, unknown>>(join(runDir, "templates", "selection_result.json"));
 
+  const selectedTemplates = Array.isArray(selectionResult?.selected)
+    ? (selectionResult!.selected as Array<{ template_id: string; template_version?: string }>).map(
+        (t) => `${t.template_id}@${t.template_version ?? "1.0.0"}`
+      )
+    : [];
+
+  const standardsPacks = Array.isArray((stdSnapshot as Record<string, unknown> | null)?.standards_packs_used)
+    ? (stdSnapshot as Record<string, unknown>).standards_packs_used as string[]
+    : [];
+
   const versions: Record<string, unknown> = {
     system_version: "1.0.0",
     intake_form_version: "1.0.0",
     intake_schema_version: "1.0.0",
     intake_ruleset_version: "1.0.0",
     standards_library_version: (stdSnapshot?.standards_library_version_used as string) ?? "1.0.0",
+    standards_packs_used: standardsPacks,
     resolver_version: (stdSnapshot?.resolver_version as string) ?? "1.0.0",
-    packs_version: "1.0.0",
     template_library_version: (selectionResult?.template_library_version as string) ?? "1.0.0",
     template_index_version: (selectionResult?.template_index_version as string) ?? "1.0.0",
     fill_rules_version: "1.0.0",
-    templates_used: Array.isArray(selectionResult?.selected) ? (selectionResult!.selected as unknown[]).length : 0,
-    canonical_model_version: "1.0.0",
-    planning_version: "1.0.0",
-    kit_contracts_version: "1.0.0",
+    templates_used: selectedTemplates,
+    canonical_spec_model_version: "1.0.0",
+    id_rules_version: "1.0.0",
+    unknowns_model_version: "1.0.0",
+    planning_rules_version: "1.0.0",
+    proof_rules_version: "1.0.0",
+    kit_folder_structure_version: "1.0.0",
+    manifest_format_version: "1.0.0",
+    entrypoint_contract_version: "1.0.0",
   };
 
   const kitId = `KIT-${runId}`;
@@ -588,7 +647,6 @@ export function buildRealKit(
   const appDir = join(agentKitDir, "10_app");
   ensureDir(appDir);
 
-  writeFile(join(appDir, "00_pack_meta.md"), buildPackMetaMd(runId, projectName));
   writeFile(join(appDir, "00_gate_checklist.md"), buildGateChecklistMd(runId));
 
   const slotContents: Record<string, string[]> = {};
@@ -617,7 +675,6 @@ export function buildRealKit(
         const slotDir = join(appDir, targetSlot);
         ensureDir(slotDir);
         writeFileSync(join(slotDir, file), content, "utf-8");
-        const slotKey = targetSlot.substring(3);
         for (const slot of APP_SLOTS) {
           if (`${slot.num}_${slot.name}` === targetSlot) {
             slotContents[targetSlot].push(file);
@@ -625,10 +682,10 @@ export function buildRealKit(
           }
         }
       } else {
-        const slotDir = join(appDir, "11_documentation");
+        const slotDir = join(appDir, "11_governance");
         ensureDir(slotDir);
         writeFileSync(join(slotDir, file), content, "utf-8");
-        slotContents["11_documentation"].push(file);
+        slotContents["11_governance"].push(file);
       }
     }
   }
@@ -638,10 +695,15 @@ export function buildRealKit(
     const slotDir = join(appDir, slotKey);
     ensureDir(slotDir);
     if (slotContents[slotKey].length === 0) {
-      writeFile(join(slotDir, "00_NA.md"), buildNaMd(slotKey, "No templates selected for this domain slot"));
+      writeFile(join(slotDir, "00_NA.md"), buildNaMd(slotKey, `Not applicable for this project — no templates were selected for the ${slot.label} slot`, slot.trigger));
     }
   }
 
+  const selectedSlots = APP_SLOTS
+    .filter((s) => slotContents[`${s.num}_${s.name}`].length > 0)
+    .map((s) => `${s.num}_${s.name}`);
+
+  writeFile(join(appDir, "00_pack_meta.md"), buildPackMetaMd(runId, projectName, specId, selectedSlots, versions));
   writeFile(join(appDir, "00_pack_index.md"), buildPackIndexMd(slotContents));
 
   const allFiles: Array<{ path: string; hash: string; bytes: number }> = [];

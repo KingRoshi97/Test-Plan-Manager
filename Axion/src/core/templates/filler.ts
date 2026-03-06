@@ -16,6 +16,21 @@ export interface FillContext {
   knowledge?: KnowledgeContext;
 }
 
+export interface CAN03Unknown {
+  unknown_id: string;
+  created_at: string;
+  status: "open" | "resolved";
+  unknown_type: "missing_requirement" | "ambiguous_requirement" | "contradiction" | "unresolved_decision" | "missing_reference" | "missing_constraint";
+  severity: "low" | "medium" | "high";
+  blocking: boolean;
+  summary: string;
+  detail: string;
+  impact: string;
+  what_is_needed_to_resolve: string;
+  template_ref?: { template_id: string; section_title: string };
+  field_path?: string;
+}
+
 export interface FilledTemplate {
   template_id: string;
   template_version: string;
@@ -28,6 +43,7 @@ export interface FilledTemplate {
     placeholder: string;
     status: "UNKNOWN_ALLOWED" | "BLOCKED";
   }>;
+  generated_unknowns: CAN03Unknown[];
 }
 
 export type PlaceholderSyntax =
@@ -236,16 +252,61 @@ function renderEntityArray(items: unknown[], columns?: string[]): string {
   return [header, separator, ...rows, ""].join("\n");
 }
 
+let _unknownCounter = 0;
+
+function generateUnknown(opts: {
+  templateId: string;
+  sectionTitle: string;
+  fieldPath?: string;
+  unknownType?: CAN03Unknown["unknown_type"];
+  severity?: CAN03Unknown["severity"];
+  blocking?: boolean;
+  summary: string;
+  detail?: string;
+  impact?: string;
+  whatIsNeeded?: string;
+}): CAN03Unknown {
+  _unknownCounter += 1;
+  const id = `unk_fill_${String(_unknownCounter).padStart(3, "0")}`;
+  return {
+    unknown_id: id,
+    created_at: isoNow(),
+    status: "open",
+    unknown_type: opts.unknownType ?? "missing_requirement",
+    severity: opts.severity ?? "medium",
+    blocking: opts.blocking ?? false,
+    summary: opts.summary,
+    detail: opts.detail ?? opts.summary,
+    impact: opts.impact ?? "Section content incomplete; may require follow-up during build execution.",
+    what_is_needed_to_resolve: opts.whatIsNeeded ?? "Provide missing project details or clarify requirements.",
+    template_ref: { template_id: opts.templateId, section_title: opts.sectionTitle },
+    field_path: opts.fieldPath,
+  };
+}
+
+function renderCAN03Unknown(unk: CAN03Unknown): string {
+  return [
+    `**${unk.unknown_id}**: [${unk.unknown_type}] ${unk.summary}`,
+    `- Impact: ${unk.severity.charAt(0).toUpperCase() + unk.severity.slice(1)}`,
+    `- Blocking: ${unk.blocking ? "Yes" : "No"}`,
+    `- Needs: ${unk.what_is_needed_to_resolve}`,
+    `- Refs: ${unk.template_ref ? `${unk.template_ref.template_id}/${unk.template_ref.section_title}` : "—"}${unk.field_path ? ` (${unk.field_path})` : ""}`,
+  ].join("\n");
+}
+
 function renderUnknowns(unknowns: unknown[]): string {
   if (!Array.isArray(unknowns) || unknowns.length === 0) return "_No unknowns identified._\n";
   return unknowns
     .map((u) => {
       const unk = u as Record<string, unknown>;
+      if (unk.unknown_id && String(unk.unknown_id).startsWith("unk_")) {
+        return renderCAN03Unknown(unk as unknown as CAN03Unknown);
+      }
       return [
-        `**${unk.unknown_id ?? "UNKNOWN"}**: [${unk.area ?? "General"}] ${unk.summary ?? "Unknown item"}`,
-        `- Impact: ${unk.impact ?? "Unknown"}`,
+        `**${unk.unknown_id ?? "UNKNOWN"}**: [${unk.unknown_type ?? unk.area ?? "General"}] ${unk.summary ?? "Unknown item"}`,
+        `- Impact: ${unk.severity ?? unk.impact ?? "Unknown"}`,
         `- Blocking: ${unk.blocking ?? "No"}`,
-        `- Needs: ${unk.needs ?? "Further analysis"}`,
+        `- Needs: ${unk.what_is_needed_to_resolve ?? unk.needs ?? "Further analysis"}`,
         `- Refs: ${unk.refs ?? "—"}`,
       ].join("\n");
     })
@@ -475,6 +536,8 @@ function buildHeadingContentInner(
   ctx: FillContext,
   resolvedCount: { n: number },
   unknownsList: FilledTemplate["unknowns"],
+  generatedUnknowns?: CAN03Unknown[],
+  templateId?: string,
 ): string {
   const lines: string[] = [];
   lines.push(`## ${heading.title}\n`);
@@ -659,6 +722,20 @@ function buildHeadingContentInner(
     lines.push(`| Database | _To be determined_ | — | — |`);
     lines.push("");
     unknownsList.push({ placeholder: "technology_stack", status: "UNKNOWN_ALLOWED" });
+    if (generatedUnknowns && templateId) {
+      generatedUnknowns.push(generateUnknown({
+        templateId,
+        sectionTitle: heading.title,
+        fieldPath: "technology_stack",
+        unknownType: "unresolved_decision",
+        severity: "low",
+        blocking: false,
+        summary: "Technology stack not yet determined",
+        detail: "Specific technology choices for frontend, backend, and database layers have not been specified in the project input.",
+        impact: "Technology decisions deferred to build execution phase.",
+        whatIsNeeded: "Specify preferred technologies for each layer or allow defaults from standards.",
+      }));
+    }
     return lines.join("\n");
   }
 
@@ -669,6 +746,20 @@ function buildHeadingContentInner(
     } else {
       lines.push("_No integration points defined. To be determined during design phase._\n");
       unknownsList.push({ placeholder: "integration_points", status: "UNKNOWN_ALLOWED" });
+      if (generatedUnknowns && templateId) {
+        generatedUnknowns.push(generateUnknown({
+          templateId,
+          sectionTitle: heading.title,
+          fieldPath: "integration_points",
+          unknownType: "missing_requirement",
+          severity: "low",
+          blocking: false,
+          summary: "Integration points not defined",
+          detail: "No external integration points were specified in the project input.",
+          impact: "Integration design deferred to later phase.",
+          whatIsNeeded: "Identify external systems, APIs, or services this project integrates with.",
+        }));
+      }
     }
     resolvedCount.n += 1;
     return lines.join("\n");
@@ -677,6 +768,20 @@ function buildHeadingContentInner(
   if (titleLower.includes("deployment") || titleLower.includes("infrastructure")) {
     lines.push("_Deployment model to be determined during architecture design phase._\n");
     unknownsList.push({ placeholder: "deployment_model", status: "UNKNOWN_ALLOWED" });
+    if (generatedUnknowns && templateId) {
+      generatedUnknowns.push(generateUnknown({
+        templateId,
+        sectionTitle: heading.title,
+        fieldPath: "deployment_model",
+        unknownType: "unresolved_decision",
+        severity: "low",
+        blocking: false,
+        summary: "Deployment model not yet determined",
+        detail: "Deployment and infrastructure details have not been specified in the project input.",
+        impact: "Deployment architecture deferred to design phase.",
+        whatIsNeeded: "Define deployment target (cloud, on-prem, hybrid) and infrastructure requirements.",
+      }));
+    }
     resolvedCount.n += 1;
     return lines.join("\n");
   }
@@ -839,6 +944,8 @@ export async function fillTemplate(
   const headings = extractOutputFormat(templateContent);
   const requiredFields = extractRequiredFieldsTable(templateContent);
   const unknownsList: FilledTemplate["unknowns"] = [];
+  const generatedUnknowns: CAN03Unknown[] = [];
+  _unknownCounter = 0;
   const resolvedCount = { n: 0 };
 
   const titleMatch = templateContent.match(/^# (.+)/m);
@@ -862,7 +969,7 @@ export async function fillTemplate(
   if (headings.length > 0) {
     const headingContents: string[] = [];
     for (const heading of headings) {
-      headingContents.push(buildHeadingContentInner(heading, context, resolvedCount, unknownsList));
+      headingContents.push(buildHeadingContentInner(heading, context, resolvedCount, unknownsList, generatedUnknowns, templateEntry.template_id));
     }
 
     const placeholderSections = collectPlaceholderSections(headings, headingContents, context.knowledge);
@@ -901,10 +1008,36 @@ export async function fillTemplate(
         }
         resolvedCount.n += 1;
       } else if (field.unknownAllowed) {
-        lines.push("_UNKNOWN — To be determined._\n");
+        const unk = generateUnknown({
+          templateId: templateEntry.template_id,
+          sectionTitle: field.field,
+          fieldPath: field.source,
+          unknownType: "missing_requirement",
+          severity: "low",
+          blocking: false,
+          summary: `${field.field} not resolved from project input`,
+          detail: `The field "${field.field}" (source: ${field.source}) could not be resolved from available context data.`,
+          impact: "Section left as unknown; may require follow-up.",
+          whatIsNeeded: `Provide data for "${field.field}" or update project input.`,
+        });
+        generatedUnknowns.push(unk);
+        lines.push(`> **${unk.unknown_id}**: [${unk.unknown_type}] ${unk.summary}\n> - Impact: ${unk.severity}\n> - Blocking: ${unk.blocking ? "Yes" : "No"}\n> - Needs: ${unk.what_is_needed_to_resolve}\n`);
         unknownsList.push({ placeholder: field.field, status: "UNKNOWN_ALLOWED" });
       } else {
-        lines.push("_Required field — not yet resolved._\n");
+        const unk = generateUnknown({
+          templateId: templateEntry.template_id,
+          sectionTitle: field.field,
+          fieldPath: field.source,
+          unknownType: "missing_requirement",
+          severity: "high",
+          blocking: true,
+          summary: `Required field "${field.field}" not resolved`,
+          detail: `The required field "${field.field}" (source: ${field.source}) could not be resolved and is not allowed to remain unknown.`,
+          impact: "Template completeness blocked; this field must be resolved.",
+          whatIsNeeded: `Provide data for required field "${field.field}".`,
+        });
+        generatedUnknowns.push(unk);
+        lines.push(`> **${unk.unknown_id}**: [${unk.unknown_type}] ${unk.summary}\n> - Impact: ${unk.severity}\n> - Blocking: Yes\n> - Needs: ${unk.what_is_needed_to_resolve}\n`);
         unknownsList.push({ placeholder: field.field, status: "BLOCKED" });
       }
     }
@@ -951,5 +1084,6 @@ export async function fillTemplate(
     placeholders_resolved: resolvedCount.n,
     placeholders_unknown: unknownsList.length,
     unknowns: unknownsList,
+    generated_unknowns: generatedUnknowns,
   };
 }
