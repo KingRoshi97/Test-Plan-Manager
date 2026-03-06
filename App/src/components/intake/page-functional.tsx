@@ -1,6 +1,9 @@
 import { Plus, X } from "lucide-react";
 import type { PageProps } from "./types";
 
+const inputCls = "flex-1 px-3 py-2 rounded-md bg-[hsl(var(--card))] border border-[hsl(var(--glass-border))] text-[hsl(var(--foreground))] font-mono-tech text-sm focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition placeholder:text-[hsl(var(--muted-foreground)/0.5)]";
+const textareaCls = "w-full px-3 py-2 rounded-md bg-[hsl(var(--card))] border border-[hsl(var(--glass-border))] text-[hsl(var(--foreground))] font-mono-tech text-sm focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition placeholder:text-[hsl(var(--muted-foreground)/0.5)] resize-none";
+
 export default function PageFunctional({ data, onChange }: PageProps) {
   const f = data.functional;
   const set = (field: string, value: unknown) => onChange("functional", { [field]: value });
@@ -28,7 +31,7 @@ export default function PageFunctional({ data, onChange }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-1">Functional Specification</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-[hsl(var(--foreground))] mb-1">Functional Specification</h2>
         <p className="text-sm text-[hsl(var(--muted-foreground))]">
           Define the features, roles, workflows, and business rules.
         </p>
@@ -36,8 +39,8 @@ export default function PageFunctional({ data, onChange }: PageProps) {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Must-Have Features</label>
-          <button type="button" onClick={() => addItem("must_have_features")} className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline">
+          <label className="text-system-label">Must-Have Features</label>
+          <button type="button" onClick={() => addItem("must_have_features")} className="flex items-center gap-1 text-xs text-[hsl(var(--glow-cyan))] hover:text-[hsl(var(--glow-cyan)/0.8)] transition">
             <Plus className="w-3 h-3" /> Add
           </button>
         </div>
@@ -51,9 +54,9 @@ export default function PageFunctional({ data, onChange }: PageProps) {
               value={feat}
               onChange={(e) => updateItem("must_have_features", i, e.target.value)}
               placeholder={`Feature ${i + 1}`}
-              className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className={inputCls}
             />
-            <button type="button" onClick={() => removeItem("must_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition">
+            <button type="button" onClick={() => removeItem("must_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-900/20 transition">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -62,8 +65,8 @@ export default function PageFunctional({ data, onChange }: PageProps) {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Nice-to-Have Features</label>
-          <button type="button" onClick={() => addItem("nice_to_have_features")} className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline">
+          <label className="text-system-label">Nice-to-Have Features</label>
+          <button type="button" onClick={() => addItem("nice_to_have_features")} className="flex items-center gap-1 text-xs text-[hsl(var(--glow-cyan))] hover:text-[hsl(var(--glow-cyan)/0.8)] transition">
             <Plus className="w-3 h-3" /> Add
           </button>
         </div>
@@ -74,9 +77,9 @@ export default function PageFunctional({ data, onChange }: PageProps) {
               value={feat}
               onChange={(e) => updateItem("nice_to_have_features", i, e.target.value)}
               placeholder={`Nice-to-have ${i + 1}`}
-              className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className={inputCls}
             />
-            <button type="button" onClick={() => removeItem("nice_to_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition">
+            <button type="button" onClick={() => removeItem("nice_to_have_features", i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-900/20 transition">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -85,8 +88,8 @@ export default function PageFunctional({ data, onChange }: PageProps) {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Roles & Permissions</label>
-          <button type="button" onClick={addRole} className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline">
+          <label className="text-system-label">Roles & Permissions</label>
+          <button type="button" onClick={addRole} className="flex items-center gap-1 text-xs text-[hsl(var(--glow-cyan))] hover:text-[hsl(var(--glow-cyan)/0.8)] transition">
             <Plus className="w-3 h-3" /> Add role
           </button>
         </div>
@@ -100,16 +103,16 @@ export default function PageFunctional({ data, onChange }: PageProps) {
               value={role.name}
               onChange={(e) => updateRole(i, "name", e.target.value)}
               placeholder="Role name"
-              className="w-1/3 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className="w-1/3 px-3 py-2 rounded-md bg-[hsl(var(--card))] border border-[hsl(var(--glass-border))] text-[hsl(var(--foreground))] font-mono-tech text-sm focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition placeholder:text-[hsl(var(--muted-foreground)/0.5)]"
             />
             <input
               type="text"
               value={role.permissions}
               onChange={(e) => updateRole(i, "permissions", e.target.value)}
               placeholder="Permissions / capabilities"
-              className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className={inputCls}
             />
-            <button type="button" onClick={() => removeRole(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition">
+            <button type="button" onClick={() => removeRole(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-900/20 transition">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -117,29 +120,29 @@ export default function PageFunctional({ data, onChange }: PageProps) {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Core Workflows</label>
+        <label className="text-system-label">Core Workflows</label>
         <textarea
           value={f.core_workflows}
           onChange={(e) => set("core_workflows", e.target.value)}
           placeholder="Describe the key user journeys and workflows..."
           rows={4}
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+          className={textareaCls}
         />
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Business Rules</label>
+        <label className="text-system-label">Business Rules</label>
         <textarea
           value={f.business_rules}
           onChange={(e) => set("business_rules", e.target.value)}
           placeholder="Must-always / Must-never / Validation rules..."
           rows={4}
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+          className={textareaCls}
         />
       </div>
 
-      <div className="space-y-3 border-t border-[hsl(var(--border))] pt-4 mt-4">
-        <p className="text-sm font-medium text-[hsl(var(--foreground))]">Optional Modules</p>
+      <div className="space-y-3 border-t border-[hsl(var(--glass-border))] pt-4 mt-4">
+        <p className="text-system-label">Optional Modules</p>
         <p className="text-xs text-[hsl(var(--muted-foreground))]">Enable these to add dedicated pages for each area.</p>
 
         <GateToggle
@@ -167,7 +170,11 @@ export default function PageFunctional({ data, onChange }: PageProps) {
 
 function GateToggle({ label, description, enabled, onToggle }: { label: string; description: string; enabled: boolean; onToggle: (v: boolean) => void }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border border-[hsl(var(--border))]">
+    <div className={`flex items-center gap-3 p-3 rounded-lg border transition ${
+      enabled
+        ? "border-[hsl(var(--glow-cyan)/0.3)] bg-[hsl(var(--glow-cyan)/0.03)] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.06)]"
+        : "border-[hsl(var(--glass-border))] bg-[hsl(var(--card))]"
+    }`}>
       <div className="flex-1">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-[hsl(var(--muted-foreground))]">{description}</p>
@@ -175,8 +182,8 @@ function GateToggle({ label, description, enabled, onToggle }: { label: string; 
       <button
         type="button"
         onClick={() => onToggle(!enabled)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${
-          enabled ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--border))]"
+        className={`relative w-11 h-6 rounded-full transition-all ${
+          enabled ? "bg-[hsl(var(--glow-cyan))] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.3)]" : "bg-[hsl(var(--glass-border))]"
         }`}
       >
         <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${enabled ? "translate-x-5" : ""}`} />

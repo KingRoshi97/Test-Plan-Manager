@@ -2,8 +2,9 @@ import { useState, useCallback, useMemo, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "../lib/queryClient";
-import { ArrowLeft, ArrowRight, Loader2, Check, SkipForward, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Check, SkipForward, Sparkles, Rocket } from "lucide-react";
 import { createEmptyIntakeData, type IntakeData } from "./intake/types";
+import { GlassPanel } from "./ui/glass-panel";
 import PageRouting from "./intake/page-routing";
 import PageProject from "./intake/page-project";
 import PageIntent from "./intake/page-intent";
@@ -321,62 +322,97 @@ export default function IntakeWizard() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setLocation("/")}
-          className="p-2 rounded-md hover:bg-[hsl(var(--accent))] transition"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">New Assembly</h1>
-      </div>
-
-      <div className="flex items-center gap-1 overflow-x-auto pb-2">
-        {visiblePages.map((page, stepIdx) => {
-          const isCurrent = stepIdx === currentStep;
-          const isCompleted = stepIdx < currentStep;
-          const isSkippedConditional = page.id >= 5 && page.id <= 7;
-
-          return (
-            <button
-              key={page.id}
-              onClick={() => goToStep(stepIdx)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition ${
-                isCurrent
-                  ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                  : isCompleted
-                    ? "text-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))] cursor-pointer"
-                    : "text-[hsl(var(--muted-foreground))] cursor-default"
-              }`}
-            >
-              {isCompleted && <Check className="w-3 h-3" />}
-              {isSkippedConditional && !isCurrent && !isCompleted && <SkipForward className="w-3 h-3" />}
-              <span>{page.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] p-6">
-        {autofillLoading && (
-          <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)]">
-            <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--primary))]" />
-            <span className="text-sm text-[hsl(var(--primary))]">AI is drafting suggestions...</span>
+      <GlassPanel glow="cyan" className="p-5">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setLocation("/")}
+            className="p-2 rounded-md hover:bg-[hsl(var(--accent))] transition"
+          >
+            <ArrowLeft className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+          </button>
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--status-processing)/0.12)] flex items-center justify-center">
+              <Rocket className="w-5 h-5 text-[hsl(var(--status-processing))]" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">New Run</h1>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">Configure and launch a new pipeline run</p>
+            </div>
           </div>
+          <span className="font-mono-tech text-xs text-[hsl(var(--muted-foreground))] bg-[hsl(var(--secondary))] px-2.5 py-1 rounded">
+            Step {currentStep + 1} of {totalSteps}
+          </span>
+        </div>
+      </GlassPanel>
+
+      <div className="px-2">
+        <div className="flex items-start justify-between">
+          {visiblePages.map((page, stepIdx) => {
+            const isCurrent = stepIdx === currentStep;
+            const isCompleted = stepIdx < currentStep;
+            const isFuture = stepIdx > currentStep;
+            const isLast = stepIdx === visiblePages.length - 1;
+
+            return (
+              <div key={page.id} className="flex items-start flex-1 last:flex-none">
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={() => goToStep(stepIdx)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 ${
+                      isCompleted
+                        ? "bg-[hsl(var(--status-success)/0.15)] border-2 border-[hsl(var(--status-success)/0.5)] text-[hsl(var(--status-success))] cursor-pointer hover:border-[hsl(var(--status-success))]"
+                        : isCurrent
+                          ? "bg-[hsl(var(--status-processing)/0.15)] border-2 border-[hsl(var(--status-processing)/0.5)] text-[hsl(var(--status-processing))] animate-pulse-glow"
+                          : "bg-[hsl(var(--secondary))] border-2 border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] cursor-default"
+                    }`}
+                  >
+                    {isCompleted ? <Check className="w-3.5 h-3.5" /> : stepIdx + 1}
+                  </button>
+                  <span className={`mt-1.5 text-[10px] font-medium whitespace-nowrap ${
+                    isCurrent
+                      ? "text-[hsl(var(--status-processing))]"
+                      : isCompleted
+                        ? "text-[hsl(var(--status-success))]"
+                        : "text-[hsl(var(--muted-foreground)/0.6)]"
+                  }`}>
+                    {page.label}
+                  </span>
+                </div>
+                {!isLast && (
+                  <div className="flex-1 mt-4 mx-1.5">
+                    <div className={`h-0.5 rounded-full transition-all duration-300 ${
+                      isCompleted
+                        ? "bg-[hsl(var(--status-success)/0.4)]"
+                        : "bg-[hsl(var(--border))]"
+                    }`} />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <GlassPanel glow="none" className="p-6">
+        {autofillLoading && (
+          <GlassPanel glow="violet" className="flex items-center gap-2 mb-4 px-3 py-2.5">
+            <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--status-intelligence))]" />
+            <span className="text-sm text-[hsl(var(--status-intelligence))]">AI is drafting suggestions...</span>
+          </GlassPanel>
         )}
         {currentPageDef && autofilledSections.has(PAGE_ID_TO_SECTION[currentPageDef.id] || "") && (
-          <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-md bg-[hsl(var(--primary)/0.05)] border border-[hsl(var(--primary)/0.2)]">
-            <Sparkles className="w-4 h-4 text-[hsl(var(--primary))]" />
-            <span className="text-sm text-[hsl(var(--primary))]">AI-drafted — review and edit as needed</span>
-          </div>
+          <GlassPanel glow="violet" className="flex items-center gap-2 mb-4 px-3 py-2.5">
+            <Sparkles className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
+            <span className="text-sm text-[hsl(var(--status-intelligence))]">AI-drafted — review and edit as needed</span>
+          </GlassPanel>
         )}
         {renderPage()}
-      </div>
+      </GlassPanel>
 
       {error && (
-        <div className="text-sm text-red-400 px-4 py-2.5 rounded-md" style={{ background: "hsl(0 72% 55% / 0.1)" }}>
-          {error}
-        </div>
+        <GlassPanel glow="red" className="flex items-center gap-2 px-4 py-2.5">
+          <span className="text-sm text-[hsl(var(--status-failure))]">{error}</span>
+        </GlassPanel>
       )}
 
       <div className="flex items-center justify-between">
@@ -384,13 +420,13 @@ export default function IntakeWizard() {
           type="button"
           onClick={goBack}
           disabled={currentStep === 0}
-          className="flex items-center gap-2 px-4 py-2 rounded-md border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] transition disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg glass-panel-solid text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:border-[hsl(var(--primary)/0.2)] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
         </button>
 
-        <span className="text-sm text-[hsl(var(--muted-foreground))]">
+        <span className="font-mono-tech text-xs text-[hsl(var(--muted-foreground))]">
           {currentStep + 1} / {totalSteps}
         </span>
 
@@ -398,17 +434,18 @@ export default function IntakeWizard() {
           <button
             type="button"
             onClick={goNext}
-            className="flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-[hsl(var(--status-processing)/0.15)] text-[hsl(var(--status-processing))] border border-[hsl(var(--status-processing)/0.3)] hover:bg-[hsl(var(--status-processing)/0.2)] hover:border-[hsl(var(--status-processing)/0.5)] hover:shadow-[0_0_12px_hsl(var(--glow-cyan)/0.12)] transition-all duration-200"
           >
             Next
             <ArrowRight className="w-4 h-4" />
+            <span className="text-[10px] font-normal text-[hsl(var(--muted-foreground))] ml-1">Enter ↵</span>
           </button>
         ) : (
           <button
             type="button"
             onClick={handleSubmit}
             disabled={createMutation.isPending || !data.final.confirmed_priorities || !data.final.confirmed_binding || !data.final.confirmed_ready}
-            className="flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-[hsl(var(--status-success)/0.15)] text-[hsl(var(--status-success))] border border-[hsl(var(--status-success)/0.3)] hover:bg-[hsl(var(--status-success)/0.2)] hover:border-[hsl(var(--status-success)/0.5)] hover:shadow-[0_0_12px_hsl(var(--glow-green)/0.12)] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none"
           >
             {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
             {createMutation.isPending ? "Submitting..." : "Submit Intake"}

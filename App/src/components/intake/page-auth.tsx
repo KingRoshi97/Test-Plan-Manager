@@ -1,5 +1,8 @@
 import type { PageProps } from "./types";
 
+const inputCls = "w-full px-3 py-2 rounded-md bg-[hsl(var(--card))] border border-[hsl(var(--glass-border))] text-[hsl(var(--foreground))] font-mono-tech text-sm focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition placeholder:text-[hsl(var(--muted-foreground)/0.5)]";
+const textareaCls = `${inputCls} resize-none`;
+
 const AUTH_METHODS = [
   { value: "email_password", label: "Email / Password" },
   { value: "oauth", label: "OAuth (Google, GitHub, etc.)" },
@@ -25,13 +28,13 @@ export default function PageAuth({ data, onChange }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-1">Authentication & Authorization</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-[hsl(var(--foreground))] mb-1">Authentication & Authorization</h2>
         <p className="text-sm text-[hsl(var(--muted-foreground))]">
           Configure how users authenticate and what they can access.
         </p>
       </div>
 
-      <div className="flex items-center gap-3 p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+      <div className="flex items-center gap-3 p-4 rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--card))]">
         <label className="text-sm font-medium flex-1">Does this project require authentication?</label>
         <div className="flex gap-2">
           <button
@@ -39,8 +42,8 @@ export default function PageAuth({ data, onChange }: PageProps) {
             onClick={() => set("requires_auth", true)}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
               a.requires_auth
-                ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                : "border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))]"
+                ? "bg-[hsl(var(--glow-cyan))] text-[hsl(var(--background))] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.3)]"
+                : "border border-[hsl(var(--glass-border))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
             }`}
           >
             Yes
@@ -50,8 +53,8 @@ export default function PageAuth({ data, onChange }: PageProps) {
             onClick={() => set("requires_auth", false)}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
               !a.requires_auth
-                ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                : "border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))]"
+                ? "bg-[hsl(var(--glow-cyan))] text-[hsl(var(--background))] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.3)]"
+                : "border border-[hsl(var(--glass-border))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
             }`}
           >
             No
@@ -66,15 +69,15 @@ export default function PageAuth({ data, onChange }: PageProps) {
       ) : (
         <>
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Authentication Methods</legend>
+            <legend className="text-system-label">Authentication Methods</legend>
             <div className="flex flex-wrap gap-2">
               {AUTH_METHODS.map((m) => (
                 <label
                   key={m.value}
                   className={`px-3 py-1.5 rounded-md text-sm cursor-pointer border transition ${
                     a.methods.includes(m.value)
-                      ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)] text-[hsl(var(--primary))]"
-                      : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]"
+                      ? "border-[hsl(var(--glow-cyan)/0.5)] bg-[hsl(var(--glow-cyan)/0.08)] text-[hsl(var(--glow-cyan))] shadow-[0_0_6px_hsl(var(--glow-cyan)/0.1)]"
+                      : "border-[hsl(var(--glass-border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
                   }`}
                 >
                   <input type="checkbox" checked={a.methods.includes(m.value)} onChange={() => toggleMethod(m.value)} className="sr-only" />
@@ -85,23 +88,27 @@ export default function PageAuth({ data, onChange }: PageProps) {
           </fieldset>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Account Lifecycle</label>
+            <label className="text-system-label">Account Lifecycle</label>
             <textarea
               value={a.account_lifecycle}
               onChange={(e) => set("account_lifecycle", e.target.value)}
               placeholder="Signup flow, email verification, password reset, account deletion..."
               rows={3}
-              className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+              className={textareaCls}
             />
           </div>
 
-          <div className="flex items-center gap-3 p-3 rounded-lg border border-[hsl(var(--border))]">
+          <div className={`flex items-center gap-3 p-3 rounded-lg border transition ${
+            a.two_factor
+              ? "border-[hsl(var(--glow-cyan)/0.3)] bg-[hsl(var(--glow-cyan)/0.03)] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.06)]"
+              : "border-[hsl(var(--glass-border))] bg-[hsl(var(--card))]"
+          }`}>
             <label className="text-sm font-medium flex-1">Two-Factor Authentication (2FA)</label>
             <button
               type="button"
               onClick={() => set("two_factor", !a.two_factor)}
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                a.two_factor ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--border))]"
+              className={`relative w-11 h-6 rounded-full transition-all ${
+                a.two_factor ? "bg-[hsl(var(--glow-cyan))] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.3)]" : "bg-[hsl(var(--glass-border))]"
               }`}
             >
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${a.two_factor ? "translate-x-5" : ""}`} />
@@ -109,26 +116,26 @@ export default function PageAuth({ data, onChange }: PageProps) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Session Rules</label>
+            <label className="text-system-label">Session Rules</label>
             <input
               type="text"
               value={a.session_rules}
               onChange={(e) => set("session_rules", e.target.value)}
               placeholder="e.g. 24h expiry, single-device, remember me option"
-              className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className={inputCls}
             />
           </div>
 
           <fieldset className="space-y-3">
-            <legend className="text-sm font-medium">Authorization Model</legend>
+            <legend className="text-system-label">Authorization Model</legend>
             <div className="grid grid-cols-3 gap-3">
               {AUTH_MODELS.map((m) => (
                 <label
                   key={m.value}
                   className={`flex flex-col p-3 rounded-lg border cursor-pointer transition ${
                     a.authorization_model === m.value
-                      ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]"
-                      : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]"
+                      ? "border-[hsl(var(--glow-cyan)/0.5)] bg-[hsl(var(--glow-cyan)/0.05)] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.1)]"
+                      : "border-[hsl(var(--glass-border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
                   }`}
                 >
                   <input

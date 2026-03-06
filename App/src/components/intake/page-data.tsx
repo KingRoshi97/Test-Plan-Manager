@@ -1,6 +1,9 @@
 import { Plus, X } from "lucide-react";
 import type { PageProps } from "./types";
 
+const inputCls = "w-full px-3 py-2 rounded-md bg-[hsl(var(--card))] border border-[hsl(var(--glass-border))] text-[hsl(var(--foreground))] font-mono-tech text-sm focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition placeholder:text-[hsl(var(--muted-foreground)/0.5)]";
+const textareaCls = `${inputCls} resize-none`;
+
 const RETENTION_OPTIONS = [
   { value: "", label: "Select..." },
   { value: "ephemeral", label: "Ephemeral (session only)" },
@@ -36,13 +39,13 @@ export default function PageData({ data, onChange }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-1">Data Model</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-[hsl(var(--foreground))] mb-1">Data Model</h2>
         <p className="text-sm text-[hsl(var(--muted-foreground))]">
           Define the data entities, sensitivity, and retention policies.
         </p>
       </div>
 
-      <div className="flex items-center gap-3 p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+      <div className="flex items-center gap-3 p-4 rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--card))]">
         <label className="text-sm font-medium flex-1">Does this project manage persistent data?</label>
         <div className="flex gap-2">
           <button
@@ -50,8 +53,8 @@ export default function PageData({ data, onChange }: PageProps) {
             onClick={() => set("manages_data", true)}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
               d.manages_data
-                ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                : "border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))]"
+                ? "bg-[hsl(var(--glow-cyan))] text-[hsl(var(--background))] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.3)]"
+                : "border border-[hsl(var(--glass-border))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
             }`}
           >
             Yes
@@ -61,8 +64,8 @@ export default function PageData({ data, onChange }: PageProps) {
             onClick={() => set("manages_data", false)}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
               !d.manages_data
-                ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                : "border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))]"
+                ? "bg-[hsl(var(--glow-cyan))] text-[hsl(var(--background))] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.3)]"
+                : "border border-[hsl(var(--glass-border))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
             }`}
           >
             No
@@ -78,8 +81,8 @@ export default function PageData({ data, onChange }: PageProps) {
         <>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Data Entities</label>
-              <button type="button" onClick={addEntity} className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline">
+              <label className="text-system-label">Data Entities</label>
+              <button type="button" onClick={addEntity} className="flex items-center gap-1 text-xs text-[hsl(var(--glow-cyan))] hover:text-[hsl(var(--glow-cyan)/0.8)] transition">
                 <Plus className="w-3 h-3" /> Add entity
               </button>
             </div>
@@ -87,16 +90,16 @@ export default function PageData({ data, onChange }: PageProps) {
               <p className="text-xs text-[hsl(var(--muted-foreground))]">No entities defined yet.</p>
             )}
             {d.entities.map((entity, i) => (
-              <div key={i} className="p-3 rounded-lg border border-[hsl(var(--border))] space-y-2">
+              <div key={i} className="p-3 rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--card))] space-y-2">
                 <div className="flex items-center justify-between">
                   <input
                     type="text"
                     value={entity.name}
                     onChange={(e) => updateEntity(i, "name", e.target.value)}
                     placeholder="Entity name (e.g. User, Order)"
-                    className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                    className={`flex-1 ${inputCls}`}
                   />
-                  <button type="button" onClick={() => removeEntity(i)} className="ml-2 p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition">
+                  <button type="button" onClick={() => removeEntity(i)} className="ml-2 p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-900/20 transition">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -105,29 +108,29 @@ export default function PageData({ data, onChange }: PageProps) {
                   value={entity.fields}
                   onChange={(e) => updateEntity(i, "fields", e.target.value)}
                   placeholder="Key fields (e.g. name, email, status)"
-                  className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                  className={inputCls}
                 />
                 <input
                   type="text"
                   value={entity.relationships}
                   onChange={(e) => updateEntity(i, "relationships", e.target.value)}
                   placeholder="Relationships (e.g. belongs to Organization)"
-                  className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                  className={inputCls}
                 />
               </div>
             ))}
           </div>
 
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Sensitive Data Flags</legend>
+            <legend className="text-system-label">Sensitive Data Flags</legend>
             <div className="flex flex-wrap gap-2">
               {SENSITIVE_FLAGS.map((flag) => (
                 <label
                   key={flag}
                   className={`px-3 py-1.5 rounded-md text-sm cursor-pointer border transition ${
                     d.sensitive_flags.includes(flag)
-                      ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)] text-[hsl(var(--primary))]"
-                      : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]"
+                      ? "border-[hsl(var(--glow-cyan)/0.5)] bg-[hsl(var(--glow-cyan)/0.08)] text-[hsl(var(--glow-cyan))] shadow-[0_0_6px_hsl(var(--glow-cyan)/0.1)]"
+                      : "border-[hsl(var(--glass-border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
                   }`}
                 >
                   <input type="checkbox" checked={d.sensitive_flags.includes(flag)} onChange={() => toggleFlag(flag)} className="sr-only" />
@@ -138,11 +141,11 @@ export default function PageData({ data, onChange }: PageProps) {
           </fieldset>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Retention Policy</label>
+            <label className="text-system-label">Retention Policy</label>
             <select
               value={d.retention}
               onChange={(e) => set("retention", e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className={inputCls}
             >
               {RETENTION_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -151,13 +154,13 @@ export default function PageData({ data, onChange }: PageProps) {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Data Ownership Notes</label>
+            <label className="text-system-label">Data Ownership Notes</label>
             <textarea
               value={d.ownership}
               onChange={(e) => set("ownership", e.target.value)}
               placeholder="Who owns the data? Any access control requirements?"
               rows={2}
-              className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+              className={textareaCls}
             />
           </div>
         </>

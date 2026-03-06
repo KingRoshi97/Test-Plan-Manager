@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from "react";
-import { Plus, X, Paperclip, Upload, FileText, Loader2 } from "lucide-react";
+import { Plus, X, Paperclip, Upload, FileText, Loader2, Link, FolderOpen } from "lucide-react";
 import type { PageProps } from "./types";
 
 function formatFileSize(bytes: number): string {
@@ -7,6 +7,12 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+const inputClass =
+  "w-full px-3 py-2.5 rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(220_14%_9%)] text-[hsl(var(--foreground))] font-mono-tech text-sm placeholder:text-[hsl(var(--muted-foreground)/0.5)] focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition-all duration-200";
+
+const textareaClass =
+  "w-full px-3 py-2.5 rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(220_14%_9%)] text-[hsl(var(--foreground))] font-mono-tech text-sm placeholder:text-[hsl(var(--muted-foreground)/0.5)] focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition-all duration-200 resize-none";
 
 export default function PageProject({ data, onChange }: PageProps) {
   const p = data.project;
@@ -66,38 +72,41 @@ export default function PageProject({ data, onChange }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-1">Project Basics</h2>
-        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+        <h2 className="text-lg font-semibold text-[hsl(var(--foreground))] mb-1 flex items-center gap-2">
+          <FolderOpen className="w-5 h-5 text-[hsl(var(--glow-cyan))]" />
+          Project Basics
+        </h2>
+        <p className="text-sm text-[hsl(var(--muted-foreground))] ml-7">
           Define your project identity and what you want to build.
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Project Name *</label>
+        <label className="text-system-label">Project Name *</label>
         <input
           type="text"
           value={p.project_name}
           onChange={(e) => set("project_name", e.target.value)}
           placeholder="my-awesome-project"
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          className={inputClass}
         />
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Project Description *</label>
+        <label className="text-system-label">Project Description *</label>
         <textarea
           value={p.problem_statement}
           onChange={(e) => set("problem_statement", e.target.value)}
           placeholder="Describe your project — what it does, what problem it solves, and what you want to build."
           rows={4}
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+          className={textareaClass}
         />
 
         <div
-          className={`relative mt-2 rounded-md border-2 border-dashed transition-colors ${
+          className={`relative mt-3 rounded-lg border-2 border-dashed transition-all duration-200 ${
             dragOver
-              ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]"
-              : "border-[hsl(var(--border))] hover:border-[hsl(var(--muted-foreground))]"
+              ? "border-[hsl(var(--glow-cyan)/0.5)] bg-[hsl(var(--glow-cyan)/0.05)] shadow-[0_0_16px_hsl(var(--glow-cyan)/0.1)]"
+              : "border-[hsl(var(--glass-border))] hover:border-[hsl(var(--glow-cyan)/0.3)] hover:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.06)]"
           }`}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
@@ -115,44 +124,50 @@ export default function PageProject({ data, onChange }: PageProps) {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+            className="w-full flex flex-col items-center justify-center gap-1.5 px-4 py-5 text-sm transition-colors"
           >
             {uploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--glow-cyan))]" />
             ) : (
-              <Paperclip className="w-4 h-4" />
+              <Upload className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
             )}
-            <span>{uploading ? "Uploading..." : "Attach files"}</span>
-            <span className="text-xs opacity-60 ml-1">PDF, TXT, ZIP, DOC, MD, CSV</span>
+            <span className={uploading ? "text-[hsl(var(--glow-cyan))]" : "text-[hsl(var(--muted-foreground))]"}>
+              {uploading ? "Uploading..." : "Drop files here or click to attach"}
+            </span>
+            <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)] font-mono-tech">
+              PDF, TXT, ZIP, DOC, MD, CSV, JSON
+            </span>
           </button>
         </div>
 
         {uploadError && (
-          <p className="mt-1 text-xs text-red-600">{uploadError}</p>
+          <div className="mt-2 px-3 py-2 rounded-md border border-[hsl(var(--glow-red)/0.3)] bg-[hsl(var(--glow-red)/0.05)] text-xs text-[hsl(var(--glow-red))]">
+            {uploadError}
+          </div>
         )}
 
         {p.attachments && p.attachments.length > 0 && (
-          <div className="mt-2 space-y-1">
+          <div className="mt-3 space-y-1.5">
             {p.attachments.map((att: any) => (
               <div
                 key={att.id}
-                className="flex items-center gap-2 px-3 py-2 rounded-md bg-[hsl(var(--muted))] text-sm group"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(220_14%_9%)] text-sm group transition-all duration-200 hover:border-[hsl(var(--glow-cyan)/0.2)]"
               >
-                <FileText className="w-4 h-4 text-[hsl(var(--muted-foreground))] shrink-0" />
+                <FileText className="w-4 h-4 text-[hsl(var(--glow-cyan)/0.6)] shrink-0" />
                 <a
                   href={`/api/uploads/${att.id}`}
                   download={att.originalName}
-                  className="flex-1 truncate text-[hsl(var(--foreground))] hover:underline"
+                  className="flex-1 truncate text-[hsl(var(--foreground))] hover:text-[hsl(var(--glow-cyan))] transition-colors font-mono-tech text-xs"
                 >
                   {att.originalName}
                 </a>
-                <span className="text-xs text-[hsl(var(--muted-foreground))] shrink-0">
+                <span className="text-xs text-[hsl(var(--muted-foreground))] shrink-0 font-mono-tech">
                   {formatFileSize(att.size)}
                 </span>
                 <button
                   type="button"
                   onClick={() => removeAttachment(att.id)}
-                  className="p-1 rounded text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition opacity-0 group-hover:opacity-100"
+                  className="p-1 rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--glow-red))] hover:bg-[hsl(var(--glow-red)/0.1)] transition-all opacity-0 group-hover:opacity-100"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -163,94 +178,100 @@ export default function PageProject({ data, onChange }: PageProps) {
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Overview / One-Liner</label>
+        <label className="text-system-label">Overview / One-Liner</label>
         <textarea
           value={p.overview}
           onChange={(e) => set("overview", e.target.value)}
           placeholder="A brief description of the project..."
           rows={2}
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+          className={textareaClass}
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Reference Links</label>
+          <label className="text-system-label flex items-center gap-1.5">
+            <Link className="w-3 h-3" />
+            Reference Links
+          </label>
           <button
             type="button"
             onClick={addLink}
-            className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-[hsl(var(--glow-cyan))] border border-[hsl(var(--glow-cyan)/0.2)] bg-[hsl(var(--glow-cyan)/0.05)] hover:bg-[hsl(var(--glow-cyan)/0.1)] hover:border-[hsl(var(--glow-cyan)/0.3)] transition-all duration-200"
           >
             <Plus className="w-3 h-3" /> Add link
           </button>
         </div>
         {p.links.map((link, i) => (
-          <div key={i} className="flex gap-2">
+          <div key={i} className="flex gap-2 items-center">
             <input
               type="url"
               value={link}
               onChange={(e) => updateLink(i, e.target.value)}
               placeholder="https://..."
-              className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className={`flex-1 ${inputClass}`}
             />
             <button
               type="button"
               onClick={() => removeLink(i)}
-              className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition"
+              className="p-2 rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(220_14%_9%)] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--glow-red))] hover:border-[hsl(var(--glow-red)/0.3)] hover:bg-[hsl(var(--glow-red)/0.05)] transition-all duration-200"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         ))}
+        {p.links.length === 0 && (
+          <p className="text-xs text-[hsl(var(--muted-foreground)/0.4)] italic pl-1">No links added yet</p>
+        )}
       </div>
 
       {isExisting && (
-        <div className="space-y-4 border-t border-[hsl(var(--border))] pt-4 mt-4">
-          <p className="text-sm font-medium text-[hsl(var(--primary))]">
+        <div className="space-y-4 border-t border-[hsl(var(--glass-border))] pt-5 mt-5">
+          <p className="text-system-label text-[hsl(var(--glow-cyan))]">
             Existing Project Details
           </p>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Repository Link</label>
+            <label className="text-system-label">Repository Link</label>
             <input
               type="url"
               value={p.existing_repo}
               onChange={(e) => set("existing_repo", e.target.value)}
               placeholder="https://github.com/..."
-              className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className={inputClass}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Current State Summary</label>
+            <label className="text-system-label">Current State Summary</label>
             <textarea
               value={p.existing_state}
               onChange={(e) => set("existing_state", e.target.value)}
               placeholder="Describe the current state of the project..."
               rows={3}
-              className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+              className={textareaClass}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Must Not Change</label>
+            <label className="text-system-label">Must Not Change</label>
             <textarea
               value={p.must_not_change}
               onChange={(e) => set("must_not_change", e.target.value)}
               placeholder="List things that should not be modified..."
               rows={2}
-              className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+              className={textareaClass}
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Known Issues</label>
+            <label className="text-system-label">Known Issues</label>
             <textarea
               value={p.known_issues}
               onChange={(e) => set("known_issues", e.target.value)}
               placeholder="Any known bugs or technical debt..."
               rows={2}
-              className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+              className={textareaClass}
             />
           </div>
         </div>

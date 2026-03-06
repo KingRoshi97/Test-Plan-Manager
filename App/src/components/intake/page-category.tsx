@@ -1,6 +1,9 @@
 import { Plus, X } from "lucide-react";
 import type { PageProps } from "./types";
 
+const inputCls = "w-full px-3 py-2 rounded-md bg-[hsl(var(--card))] border border-[hsl(var(--glass-border))] text-[hsl(var(--foreground))] font-mono-tech text-sm focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition placeholder:text-[hsl(var(--muted-foreground)/0.5)]";
+const textareaCls = `${inputCls} resize-none`;
+
 function SoftwareVariant({ data, onChange }: PageProps) {
   const cs = data.category_specific;
   const set = (field: string, value: unknown) => onChange("category_specific", { [field]: value });
@@ -17,8 +20,8 @@ function SoftwareVariant({ data, onChange }: PageProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Screens / Pages</label>
-          <button type="button" onClick={addScreen} className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline">
+          <label className="text-system-label">Screens / Pages</label>
+          <button type="button" onClick={addScreen} className="flex items-center gap-1 text-xs text-[hsl(var(--glow-cyan))] hover:text-[hsl(var(--glow-cyan)/0.8)] transition">
             <Plus className="w-3 h-3" /> Add screen
           </button>
         </div>
@@ -26,16 +29,16 @@ function SoftwareVariant({ data, onChange }: PageProps) {
         {cs.screens.map((s, i) => (
           <div key={i} className="flex gap-2">
             <input type="text" value={s} onChange={(e) => updateScreen(i, e.target.value)} placeholder={`Screen ${i + 1} (e.g. Dashboard, Settings)`}
-              className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className={`flex-1 ${inputCls}`}
             />
-            <button type="button" onClick={() => removeScreen(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition"><X className="w-4 h-4" /></button>
+            <button type="button" onClick={() => removeScreen(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-900/20 transition"><X className="w-4 h-4" /></button>
           </div>
         ))}
       </div>
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Navigation Summary</label>
+        <label className="text-system-label">Navigation Summary</label>
         <textarea value={cs.navigation_summary} onChange={(e) => set("navigation_summary", e.target.value)} placeholder="Describe the overall navigation flow..."
-          rows={3} className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+          rows={3} className={textareaCls}
         />
       </div>
     </div>
@@ -58,8 +61,8 @@ function DataVariant({ data, onChange }: PageProps) {
     <div className="space-y-4">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Operations / Endpoints</label>
-          <button type="button" onClick={addEndpoint} className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline">
+          <label className="text-system-label">Operations / Endpoints</label>
+          <button type="button" onClick={addEndpoint} className="flex items-center gap-1 text-xs text-[hsl(var(--glow-cyan))] hover:text-[hsl(var(--glow-cyan)/0.8)] transition">
             <Plus className="w-3 h-3" /> Add endpoint
           </button>
         </div>
@@ -67,16 +70,16 @@ function DataVariant({ data, onChange }: PageProps) {
         {cs.endpoints.map((ep, i) => (
           <div key={i} className="flex gap-2">
             <input type="text" value={ep} onChange={(e) => updateEndpoint(i, e.target.value)} placeholder={`GET /api/resource`}
-              className="flex-1 px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+              className={`flex-1 ${inputCls}`}
             />
-            <button type="button" onClick={() => removeEndpoint(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-red-900/20 transition"><X className="w-4 h-4" /></button>
+            <button type="button" onClick={() => removeEndpoint(i)} className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-red-400 hover:bg-red-900/20 transition"><X className="w-4 h-4" /></button>
           </div>
         ))}
       </div>
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Webhooks</label>
+        <label className="text-system-label">Webhooks</label>
         <textarea value={cs.webhooks} onChange={(e) => set("webhooks", e.target.value)} placeholder="Describe webhook events and consumers..."
-          rows={3} className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+          rows={3} className={textareaCls}
         />
       </div>
     </div>
@@ -90,21 +93,21 @@ function DocsVariant({ data, onChange }: PageProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Environments</label>
+        <label className="text-system-label">Environments</label>
         <input type="text" value={cs.environments} onChange={(e) => set("environments", e.target.value)} placeholder="e.g. dev, staging, production"
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          className={inputCls}
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Runtime</label>
+        <label className="text-system-label">Runtime</label>
         <input type="text" value={cs.runtime} onChange={(e) => set("runtime", e.target.value)} placeholder="e.g. Node.js 20, Python 3.12"
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          className={inputCls}
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Observability</label>
+        <label className="text-system-label">Observability</label>
         <textarea value={cs.observability} onChange={(e) => set("observability", e.target.value)} placeholder="Logging, metrics, tracing preferences..."
-          rows={3} className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+          rows={3} className={textareaCls}
         />
       </div>
     </div>
@@ -118,15 +121,15 @@ function OtherVariant({ data, onChange }: PageProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Target Languages / Platforms</label>
+        <label className="text-system-label">Target Languages / Platforms</label>
         <input type="text" value={cs.target_languages} onChange={(e) => set("target_languages", e.target.value)} placeholder="e.g. TypeScript, Python, Go"
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          className={inputCls}
         />
       </div>
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">API Surface</label>
+        <label className="text-system-label">API Surface</label>
         <textarea value={cs.api_surface} onChange={(e) => set("api_surface", e.target.value)} placeholder="Describe the public API your library/SDK exposes..."
-          rows={4} className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] resize-none"
+          rows={4} className={textareaCls}
         />
       </div>
     </div>
@@ -147,7 +150,7 @@ export default function PageCategory({ data, onChange }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-1">{label}</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-[hsl(var(--foreground))] mb-1">{label}</h2>
         <p className="text-sm text-[hsl(var(--muted-foreground))]">
           Additional details specific to your project type.
         </p>

@@ -2,6 +2,8 @@ import { useState, useRef } from "react";
 import { X, Plus, Palette } from "lucide-react";
 import type { PageProps } from "./types";
 
+const inputCls = "w-full px-3 py-2 rounded-md bg-[hsl(var(--card))] border border-[hsl(var(--glass-border))] text-[hsl(var(--foreground))] font-mono-tech text-sm focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition placeholder:text-[hsl(var(--muted-foreground)/0.5)]";
+
 const VISUAL_PRESETS = [
   { value: "minimal", label: "Minimal" },
   { value: "corporate", label: "Corporate" },
@@ -53,7 +55,7 @@ function ColorSwatch({ color, onRemove, onChange }: { color: string; onRemove: (
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="w-10 h-10 rounded-lg border-2 border-[hsl(var(--border))] cursor-pointer transition hover:scale-110 hover:shadow-md"
+        className="w-10 h-10 rounded-lg border-2 border-[hsl(var(--glass-border))] cursor-pointer transition hover:scale-110 hover:shadow-[0_0_12px_hsl(var(--glow-cyan)/0.2)]"
         style={{ backgroundColor: color }}
         title={color}
       />
@@ -71,7 +73,7 @@ function ColorSwatch({ color, onRemove, onChange }: { color: string; onRemove: (
       >
         <X className="w-2.5 h-2.5" />
       </button>
-      <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-mono text-[hsl(var(--muted-foreground))] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+      <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-mono-tech text-[hsl(var(--muted-foreground))] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
         {color.toUpperCase()}
       </span>
     </div>
@@ -113,11 +115,11 @@ function BrandColorPicker({ value, onChangeValue }: { value: string; onChangeVal
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-sm font-medium">Brand Colors</label>
+        <label className="text-system-label">Brand Colors</label>
         <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">Click a swatch to change it, or add new colors below</p>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap min-h-[48px] p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))]">
+      <div className="flex items-center gap-3 flex-wrap min-h-[48px] p-3 rounded-lg border border-[hsl(var(--glass-border))] bg-[hsl(var(--card))]">
         {colors.map((color, i) =>
           isValidHex(color) ? (
             <ColorSwatch
@@ -128,7 +130,7 @@ function BrandColorPicker({ value, onChangeValue }: { value: string; onChangeVal
             />
           ) : (
             <div key={`${i}-${color}`} className="relative group">
-              <div className="px-2 py-1 rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--accent))] text-xs font-mono text-[hsl(var(--foreground))]">
+              <div className="px-2 py-1 rounded-md border border-dashed border-[hsl(var(--glass-border))] bg-[hsl(var(--accent))] text-xs font-mono-tech text-[hsl(var(--foreground))]">
                 {color}
               </div>
               <button
@@ -145,7 +147,7 @@ function BrandColorPicker({ value, onChangeValue }: { value: string; onChangeVal
           <button
             type="button"
             onClick={() => addNewRef.current?.click()}
-            className="w-10 h-10 rounded-lg border-2 border-dashed border-[hsl(var(--border))] flex items-center justify-center cursor-pointer transition hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.05)]"
+            className="w-10 h-10 rounded-lg border-2 border-dashed border-[hsl(var(--glass-border))] flex items-center justify-center cursor-pointer transition hover:border-[hsl(var(--glow-cyan)/0.5)] hover:bg-[hsl(var(--glow-cyan)/0.05)]"
             title="Add color"
           >
             <Plus className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
@@ -170,13 +172,13 @@ function BrandColorPicker({ value, onChangeValue }: { value: string; onChangeVal
           onChange={(e) => setManualHex(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addColor(manualHex); } }}
           placeholder="#3B82F6"
-          className="w-32 px-3 py-1.5 text-sm rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          className="w-32 px-3 py-1.5 text-sm rounded-md bg-[hsl(var(--card))] border border-[hsl(var(--glass-border))] text-[hsl(var(--foreground))] font-mono-tech focus:outline-none focus:border-[hsl(var(--glow-cyan)/0.5)] focus:shadow-[0_0_8px_hsl(var(--glow-cyan)/0.15)] transition"
         />
         <button
           type="button"
           onClick={() => addColor(manualHex)}
           disabled={!manualHex.trim()}
-          className="px-3 py-1.5 text-sm rounded-md border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] transition disabled:opacity-30 disabled:cursor-not-allowed"
+          className="px-3 py-1.5 text-sm rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--glow-cyan)/0.3)] transition disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Add
         </button>
@@ -185,7 +187,7 @@ function BrandColorPicker({ value, onChangeValue }: { value: string; onChangeVal
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Palette className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-          <span className="text-sm font-medium">Preset Palettes</span>
+          <span className="text-system-label">Preset Palettes</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {COLOR_PRESETS.map((preset) => {
@@ -197,8 +199,8 @@ function BrandColorPicker({ value, onChangeValue }: { value: string; onChangeVal
                 onClick={() => applyPreset(preset.colors)}
                 className={`flex items-center gap-3 p-2.5 rounded-lg border transition text-left ${
                   isActive
-                    ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]"
-                    : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]"
+                    ? "border-[hsl(var(--glow-cyan)/0.5)] bg-[hsl(var(--glow-cyan)/0.05)] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.1)]"
+                    : "border-[hsl(var(--glass-border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
                 }`}
               >
                 <div className="flex -space-x-1 shrink-0">
@@ -227,33 +229,33 @@ export default function PageDesign({ data, onChange }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-[hsl(var(--foreground))] mb-1">Design Direction</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-[hsl(var(--foreground))] mb-1">Design Direction</h2>
         <p className="text-sm text-[hsl(var(--muted-foreground))]">
           Set the visual tone and UI preferences for your project.
         </p>
       </div>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Style Adjectives</label>
+        <label className="text-system-label">Style Adjectives</label>
         <input
           type="text"
           value={d.style_adjectives}
           onChange={(e) => set("style_adjectives", e.target.value)}
           placeholder="e.g. clean, modern, vibrant, professional"
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          className={inputCls}
         />
       </div>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium text-[hsl(var(--foreground))]">Visual Preset</legend>
+        <legend className="text-system-label">Visual Preset</legend>
         <div className="grid grid-cols-4 gap-3">
           {VISUAL_PRESETS.map((v) => (
             <label
               key={v.value}
               className={`flex items-center justify-center p-3 rounded-lg border cursor-pointer transition text-center ${
                 d.visual_preset === v.value
-                  ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]"
-                  : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]"
+                  ? "border-[hsl(var(--glow-cyan)/0.5)] bg-[hsl(var(--glow-cyan)/0.05)] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.1)]"
+                  : "border-[hsl(var(--glass-border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
               }`}
             >
               <input
@@ -271,40 +273,40 @@ export default function PageDesign({ data, onChange }: PageProps) {
       </fieldset>
 
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">Avoid List</label>
+        <label className="text-system-label">Avoid List</label>
         <input
           type="text"
           value={d.avoid_list}
           onChange={(e) => set("avoid_list", e.target.value)}
           placeholder="Styles or elements to avoid, e.g. gradients, dark mode"
-          className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          className={inputCls}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <BrandColorPicker value={d.brand_colors} onChangeValue={(v) => set("brand_colors", v)} />
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Brand Fonts</label>
+          <label className="text-system-label">Brand Fonts</label>
           <input
             type="text"
             value={d.brand_fonts}
             onChange={(e) => set("brand_fonts", e.target.value)}
             placeholder="Inter, Roboto Mono"
-            className="w-full px-3 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+            className={inputCls}
           />
         </div>
       </div>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-[hsl(var(--foreground))]">UI Density</legend>
+        <legend className="text-system-label">UI Density</legend>
         <div className="grid grid-cols-3 gap-3">
           {DENSITY_OPTIONS.map((o) => (
             <label
               key={o.value}
               className={`flex flex-col p-3 rounded-lg border cursor-pointer transition ${
                 d.ui_density === o.value
-                  ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]"
-                  : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]"
+                  ? "border-[hsl(var(--glow-cyan)/0.5)] bg-[hsl(var(--glow-cyan)/0.05)] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.1)]"
+                  : "border-[hsl(var(--glass-border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
               }`}
             >
               <input
@@ -323,15 +325,15 @@ export default function PageDesign({ data, onChange }: PageProps) {
       </fieldset>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-[hsl(var(--foreground))]">Navigation Preference</legend>
+        <legend className="text-system-label">Navigation Preference</legend>
         <div className="grid grid-cols-3 gap-3">
           {NAV_OPTIONS.map((o) => (
             <label
               key={o.value}
               className={`flex flex-col p-3 rounded-lg border cursor-pointer transition ${
                 d.navigation_pref === o.value
-                  ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]"
-                  : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]"
+                  ? "border-[hsl(var(--glow-cyan)/0.5)] bg-[hsl(var(--glow-cyan)/0.05)] shadow-[0_0_8px_hsl(var(--glow-cyan)/0.1)]"
+                  : "border-[hsl(var(--glass-border))] bg-[hsl(var(--card))] hover:border-[hsl(var(--glow-cyan)/0.3)]"
               }`}
             >
               <input

@@ -82,7 +82,13 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - `App/src/pages/maintenance.tsx` — Premium glass upgrade: GlassPanel hero with amber glow + summary badges, pill-style tabs, MetricCards for overview stats, GlassPanel throughout all 7 tabs (overview/runs/modes/gates/patches/policies/schemas), StatusChip for all status indicators
 - API: `GET /api/audit-log` (supports `?limit=`, `?run_id=`, `?action=` filters), enhanced `/api/health` with `engineVersion`, `totalRuns`, `auditEntries`
 
-**Remaining phases**: Phase 7 (New Run premium intake), Phase 8-9 (Command Center second pass), Phase 10 (Knowledge consolidation), Phase 11 (Export second pass), Phase 12 (Polish — command palette, global search, notifications, density toggle, keyboard shortcuts).
+**Phase 7 — New Run Premium Intake** (Complete):
+- `App/src/components/intake-wizard.tsx` — Premium shell: GlassPanel hero header with Rocket icon + "Step X of Y" badge, numbered progress rail with connecting lines (green completed/cyan current/muted future), glass-wrapped form area, cyan Next button with "Enter ↵" hint, green Submit button, violet AI autofill banners, red glow error banners
+- `App/src/components/intake/page-routing.tsx` — GlassPanel selection cards with icons and cyan glow selected state, card grid replacing dropdown for Project Category, violet glow AI autofill toggle with custom switch
+- `App/src/components/intake/page-project.tsx` — Dark glass-themed inputs with cyan focus glow, premium file upload drop zone, glass-styled link manager, mono-tech fonts
+- All 9 remaining form pages (`page-intent/design/functional/data/auth/integrations/nfr/category/final.tsx`) — Consistent `text-system-label` labels, glass-themed inputs with cyan focus glow, premium chip/tag selection, custom toggle switches with glow, green glow "Start Pipeline" toggle on final page
+
+**Remaining phases**: Phase 8-9 (Command Center second pass), Phase 10 (Knowledge consolidation), Phase 11 (Export second pass), Phase 12 (Polish — command palette, global search, notifications, density toggle, keyboard shortcuts).
 
 ### Build Mode (BM-00 through BM-18)
 Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip.
