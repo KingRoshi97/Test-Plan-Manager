@@ -683,7 +683,53 @@ export function registerRoutes(app: Express) {
         return { docs: musDocCount, schemas: musSchemaCount, registries: musRegistryCount, gates: musGateCount, modes: musModeCount };
       })(),
       recentRuns,
+      engineVersion: (() => {
+        try {
+          const pkg = JSON.parse(fs.readFileSync(path.join(AXION_ROOT, "package.json"), "utf-8"));
+          return pkg.version || "0.0.0";
+        } catch { return "0.0.0"; }
+      })(),
+      totalRuns: (() => {
+        try {
+          const rc = JSON.parse(fs.readFileSync(path.join(AXION_ROOT, ".axion", "run_counter.json"), "utf-8"));
+          return (rc.next ?? 1) - 1;
+        } catch { return 0; }
+      })(),
+      auditEntries: (() => {
+        try {
+          const auditPath = path.join(AXION_ROOT, ".axion", "audit.jsonl");
+          if (!fs.existsSync(auditPath)) return 0;
+          return fs.readFileSync(auditPath, "utf-8").split("\n").filter(Boolean).length;
+        } catch { return 0; }
+      })(),
     });
+  });
+
+  app.get("/api/audit-log", (_req: Request, res: Response) => {
+    try {
+      const auditPath = path.join(AXION_ROOT, ".axion", "audit.jsonl");
+      if (!fs.existsSync(auditPath)) return res.json([]);
+      const lines = fs.readFileSync(auditPath, "utf-8").split("\n").filter(Boolean);
+      let entries = lines.map((line) => {
+        try { return JSON.parse(line); } catch { return null; }
+      }).filter(Boolean);
+
+      const runId = _req.query.run_id as string | undefined;
+      if (runId) entries = entries.filter((e: any) => e.run_id === runId);
+
+      const action = _req.query.action as string | undefined;
+      if (action) entries = entries.filter((e: any) => e.action === action);
+
+      entries.reverse();
+
+      const limit = parseInt(_req.query.limit as string) || 100;
+      entries = entries.slice(0, limit);
+
+      return res.json(entries);
+    } catch (err) {
+      console.error("Failed to read audit log:", err);
+      return res.status(500).json({ error: "Failed to read audit log" });
+    }
   });
 
   app.get("/api/config", (_req: Request, res: Response) => {
