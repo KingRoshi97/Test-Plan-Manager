@@ -184,6 +184,74 @@ export function registerRoutes(app: Express) {
     res.json(run);
   });
 
+  app.get("/api/assemblies/:id/stages/:stageKey", async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const stageKey = req.params.stageKey;
+    const assembly = await storage.getAssembly(id);
+    if (!assembly) return res.status(404).json({ error: "Assembly not found" });
+    if (!assembly.runId) return res.status(404).json({ error: "No run available" });
+
+    const reportPath = path.join(AXION_RUNS, assembly.runId, "stage_reports", `${stageKey}.json`);
+    if (fs.existsSync(reportPath)) {
+      try {
+        const content = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
+        return res.json(content);
+      } catch (err) {
+        console.error(`Failed to parse stage report at ${reportPath}:`, err);
+        return res.status(500).json({ error: "Malformed stage report file" });
+      }
+    }
+
+    const run = await storage.getPipelineRunByRunId(assembly.runId);
+    if (!run) return res.status(404).json({ error: "Run not found" });
+    const stages = (run.stages || {}) as Record<string, any>;
+    if (stages[stageKey]) {
+      const s = stages[stageKey];
+      return res.json({
+        stage_id: stageKey,
+        run_id: assembly.runId,
+        status: s.status,
+        started_at: s.startedAt || s.started_at || null,
+        finished_at: s.completedAt || s.finished_at || null,
+        consumed: s.consumed || [],
+        produced: s.produced || [],
+        notes: s.notes || [],
+        gate_reports: s.gate_reports || [],
+      });
+    }
+
+    return res.status(404).json({ error: "Stage not found" });
+  });
+
+  app.get("/api/assemblies/:id/gates/:gateId", async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const gateId = req.params.gateId;
+    const assembly = await storage.getAssembly(id);
+    if (!assembly) return res.status(404).json({ error: "Assembly not found" });
+    if (!assembly.runId) return res.status(404).json({ error: "No run available" });
+
+    const reportPath = path.join(AXION_RUNS, assembly.runId, "gates", `${gateId}.gate_report.json`);
+    if (fs.existsSync(reportPath)) {
+      try {
+        const content = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
+        return res.json(content);
+      } catch (err) {
+        console.error(`Failed to parse gate report at ${reportPath}:`, err);
+        return res.status(500).json({ error: "Malformed gate report file" });
+      }
+    }
+
+    const rpts = await storage.getReports(id);
+    const gateReport = rpts.find(
+      (r) => r.reportType === "gate_result" && (r.content as any)?.gate === gateId
+    );
+    if (gateReport) {
+      return res.json(gateReport.content);
+    }
+
+    return res.status(404).json({ error: "Gate report not found" });
+  });
+
   app.get("/api/reports/:assemblyId", async (req: Request, res: Response) => {
     const rpts = await storage.getReports(Number(req.params.assemblyId));
     res.json(rpts);

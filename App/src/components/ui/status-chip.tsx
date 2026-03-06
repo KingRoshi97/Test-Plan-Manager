@@ -1,4 +1,4 @@
-type StatusVariant = "processing" | "success" | "warning" | "failure" | "intelligence" | "neutral";
+export type StatusVariant = "processing" | "success" | "warning" | "failure" | "intelligence" | "neutral";
 
 interface StatusChipProps {
   variant: StatusVariant;

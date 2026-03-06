@@ -3,15 +3,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { apiRequest } from "../lib/queryClient";
 import {
-  ChevronRight, Play, Trash2, ArrowLeft, CheckCircle, XCircle,
+  ChevronRight, Play, Trash2, ArrowLeft, CheckCircle, XCircle, X,
   Clock, Loader2, FileText, Folder, Download, Save, RotateCcw,
   Settings, Layers, Eye, FolderArchive, PenLine, Square, AlertTriangle, Hammer,
-  Radio, Hash, Timer, Gauge, Activity, Zap
+  Radio, Hash, Timer, Gauge, Activity, Zap, Shield, ChevronDown, ChevronUp
 } from "lucide-react";
 import { BuildTab } from "../components/build-mode";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
 import { GlassPanel } from "../components/ui/glass-panel";
 import { MetricCard } from "../components/ui/metric-card";
+import { StageDetailCard } from "../components/workbench/StageDetailCard";
+import { GateInspector } from "../components/workbench/GateInspector";
 
 const FALLBACK_STAGE_ORDER = [
   "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
@@ -424,69 +426,178 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
   );
 }
 
-function PipelineTab({ stages, runs, assemblyId, stageOrder, stageGates, stageNames }: {
+function PipelineTab({ stages, runs, assemblyId, stageOrder, stageGates, stageNames, onSelectStage, onSelectGate, selectedStage }: {
   stages: any; runs: any[]; assemblyId: string;
   stageOrder: string[]; stageGates: Record<string, string>; stageNames: Record<string, string>;
+  onSelectStage: (key: string) => void; onSelectGate: (gateId: string) => void; selectedStage: string | null;
 }) {
+  const [pipelineSubTab, setPipelineSubTab] = useState<"stages" | "gates">("stages");
+
+  const allGates = stageOrder
+    .filter((s) => stageGates[s])
+    .map((s) => ({
+      stageKey: s,
+      stageName: stageNames[s] || s,
+      gateId: stageGates[s],
+      status: stages?.[s]?.status || "pending",
+      gateResult: stages?.[s]?.gateResult,
+    }));
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <GlassPanel solid className="p-4">
-        <h3 className="text-system-label mb-4">Stage Timeline</h3>
-        <div className="space-y-2">
-          {stageOrder.map((stageKey) => {
-            const stageData = stages?.[stageKey];
-            const status = stageData?.status || "pending";
-            const info = stageStatusInfo(status);
-            const gate = stageGates[stageKey];
-            const gateResult = stageData?.gateResult;
+      <div className="flex items-center gap-1 mb-1">
+        <button
+          onClick={() => setPipelineSubTab("stages")}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            pipelineSubTab === "stages"
+              ? "bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]"
+              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+          }`}
+        >
+          <Layers className="w-3 h-3 inline mr-1.5" />Stages
+        </button>
+        <button
+          onClick={() => setPipelineSubTab("gates")}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+            pipelineSubTab === "gates"
+              ? "bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]"
+              : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+          }`}
+        >
+          <Shield className="w-3 h-3 inline mr-1.5" />Gates ({allGates.length})
+        </button>
+      </div>
 
-            return (
-              <GlassPanel
-                key={stageKey}
-                solid
-                glow={status === "passed" ? "green" : status === "failed" ? "red" : status === "running" ? "cyan" : "none"}
-                className="p-3"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-7 h-7 rounded-md" style={{ backgroundColor: `hsl(${info.color} / 0.12)` }}>
-                      {status === "passed" || status === "completed" ? (
-                        <CheckCircle className="w-3.5 h-3.5" style={{ color: `hsl(${info.color})` }} />
-                      ) : status === "failed" ? (
-                        <XCircle className="w-3.5 h-3.5" style={{ color: `hsl(${info.color})` }} />
-                      ) : status === "running" ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: `hsl(${info.color})` }} />
-                      ) : (
-                        <Clock className="w-3.5 h-3.5" style={{ color: `hsl(${info.color})` }} />
-                      )}
+      {pipelineSubTab === "stages" && (
+        <GlassPanel solid className="p-4">
+          <h3 className="text-system-label mb-4">Stage Timeline</h3>
+          <div className="space-y-2">
+            {stageOrder.map((stageKey) => {
+              const stageData = stages?.[stageKey];
+              const status = stageData?.status || "pending";
+              const info = stageStatusInfo(status);
+              const gate = stageGates[stageKey];
+              const gateResult = stageData?.gateResult;
+              const isSelected = selectedStage === stageKey;
+
+              return (
+                <button
+                  key={stageKey}
+                  onClick={() => onSelectStage(stageKey)}
+                  className="w-full text-left"
+                >
+                  <GlassPanel
+                    solid
+                    glow={isSelected ? "violet" : status === "passed" ? "green" : status === "failed" ? "red" : status === "running" ? "cyan" : "none"}
+                    className={`p-3 transition-all duration-200 ${isSelected ? "ring-1 ring-[hsl(var(--primary)/0.4)]" : "hover:ring-1 hover:ring-[hsl(var(--border))]"}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-7 h-7 rounded-md" style={{ backgroundColor: `hsl(${info.color} / 0.12)` }}>
+                          {status === "passed" || status === "completed" ? (
+                            <CheckCircle className="w-3.5 h-3.5" style={{ color: `hsl(${info.color})` }} />
+                          ) : status === "failed" ? (
+                            <XCircle className="w-3.5 h-3.5" style={{ color: `hsl(${info.color})` }} />
+                          ) : status === "running" ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: `hsl(${info.color})` }} />
+                          ) : (
+                            <Clock className="w-3.5 h-3.5" style={{ color: `hsl(${info.color})` }} />
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-[hsl(var(--foreground))]">
+                            {stageNames[stageKey] || stageKey}
+                          </span>
+                          <span className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))] ml-2">{stageKey}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {stageData?.startedAt && stageData?.completedAt && (
+                          <span className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))]">
+                            {formatDuration(stageData.startedAt, stageData.completedAt)}
+                          </span>
+                        )}
+                        {gate && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onSelectGate(gate); }}
+                            className={`text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors hover:opacity-80 ${
+                              gateResult === "PASS"
+                                ? "bg-[hsl(var(--status-success)/0.12)] text-[hsl(var(--status-success))]"
+                                : gateResult === "FAIL"
+                                ? "bg-[hsl(var(--status-failure)/0.12)] text-[hsl(var(--status-failure))]"
+                                : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
+                            }`}
+                          >
+                            {gate}{gateResult ? ` · ${gateResult}` : ""}
+                          </button>
+                        )}
+                        <StatusChip variant={getStatusVariant(status === "passed" ? "completed" : status)} label={info.label} size="sm" pulse={status === "running"} />
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-sm font-medium text-[hsl(var(--foreground))]">
-                        {stageNames[stageKey] || stageKey}
-                      </span>
-                      <span className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))] ml-2">{stageKey}</span>
+                  </GlassPanel>
+                </button>
+              );
+            })}
+          </div>
+        </GlassPanel>
+      )}
+
+      {pipelineSubTab === "gates" && (
+        <GlassPanel solid className="p-4">
+          <h3 className="text-system-label mb-4">Gate Results</h3>
+          {allGates.length === 0 ? (
+            <p className="text-xs text-[hsl(var(--muted-foreground))] text-center py-8">No gates configured</p>
+          ) : (
+            <div className="space-y-2">
+              {allGates.map((g) => (
+                <button
+                  key={g.gateId}
+                  onClick={() => onSelectGate(g.gateId)}
+                  className="w-full text-left"
+                >
+                  <GlassPanel
+                    solid
+                    glow={g.gateResult === "PASS" ? "green" : g.gateResult === "FAIL" ? "red" : "none"}
+                    className="p-3 hover:ring-1 hover:ring-[hsl(var(--border))] transition-all duration-200"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`flex items-center justify-center w-7 h-7 rounded-md ${
+                          g.gateResult === "PASS" ? "bg-[hsl(var(--status-success)/0.12)]"
+                          : g.gateResult === "FAIL" ? "bg-[hsl(var(--status-failure)/0.12)]"
+                          : "bg-[hsl(var(--muted))]"
+                        }`}>
+                          <Shield className={`w-3.5 h-3.5 ${
+                            g.gateResult === "PASS" ? "text-[hsl(var(--status-success))]"
+                            : g.gateResult === "FAIL" ? "text-[hsl(var(--status-failure))]"
+                            : "text-[hsl(var(--muted-foreground))]"
+                          }`} />
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-[hsl(var(--foreground))]">{g.gateId}</span>
+                          <span className="text-[10px] text-[hsl(var(--muted-foreground))] ml-2">after {g.stageName}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {g.gateResult ? (
+                          <StatusChip
+                            variant={g.gateResult === "PASS" ? "success" : "failure"}
+                            label={g.gateResult}
+                            size="sm"
+                          />
+                        ) : (
+                          <StatusChip variant="neutral" label="Pending" size="sm" />
+                        )}
+                        <ChevronRight className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {gate && (
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                        gateResult === "PASS"
-                          ? "bg-[hsl(var(--status-success)/0.12)] text-[hsl(var(--status-success))]"
-                          : gateResult === "FAIL"
-                          ? "bg-[hsl(var(--status-failure)/0.12)] text-[hsl(var(--status-failure))]"
-                          : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]"
-                      }`}>
-                        {gate}{gateResult ? ` · ${gateResult}` : ""}
-                      </span>
-                    )}
-                    <StatusChip variant={getStatusVariant(status === "passed" ? "completed" : status)} label={info.label} size="sm" pulse={status === "running"} />
-                  </div>
-                </div>
-              </GlassPanel>
-            );
-          })}
-        </div>
-      </GlassPanel>
+                  </GlassPanel>
+                </button>
+              ))}
+            </div>
+          )}
+        </GlassPanel>
+      )}
 
       <div>
         <h3 className="text-system-label mb-3">Run History</h3>
@@ -873,6 +984,109 @@ function ConfigTab({ assembly, onDelete, isDeleting }: { assembly: any; onDelete
   );
 }
 
+function WorkbenchInspector({ assemblyId, selectedStage, selectedGate, stageNames, stageGates, onClose, onSelectGate }: {
+  assemblyId: string;
+  selectedStage: string | null;
+  selectedGate: string | null;
+  stageNames: Record<string, string>;
+  stageGates: Record<string, string>;
+  onClose: () => void;
+  onSelectGate: (gateId: string) => void;
+}) {
+  const activeStage = selectedGate ? null : selectedStage;
+  const activeGateId = selectedGate || (selectedStage ? stageGates[selectedStage] : null);
+
+  const { data: stageDetail, isLoading: stageLoading, error: stageError } = useQuery({
+    queryKey: ["/api/assemblies", assemblyId, "stages", activeStage],
+    queryFn: () => apiRequest(`/api/assemblies/${assemblyId}/stages/${activeStage}`),
+    enabled: !!activeStage,
+  });
+
+  const { data: gateDetail, isLoading: gateLoading, error: gateError } = useQuery({
+    queryKey: ["/api/assemblies", assemblyId, "gates", selectedGate],
+    queryFn: () => apiRequest(`/api/assemblies/${assemblyId}/gates/${selectedGate}`),
+    enabled: !!selectedGate,
+  });
+
+  const inspectorMode = selectedGate ? "gate" : "stage";
+  const title = selectedGate
+    ? selectedGate
+    : selectedStage
+    ? (stageNames[selectedStage] || selectedStage)
+    : "";
+
+  return (
+    <div className="animate-slide-in h-full flex flex-col">
+      <div className="flex items-center justify-between p-3 border-b border-[hsl(var(--border))]">
+        <div className="flex items-center gap-2">
+          {inspectorMode === "gate" ? (
+            <Shield className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
+          ) : (
+            <Layers className="w-4 h-4 text-[hsl(var(--primary))]" />
+          )}
+          <div>
+            <div className="text-xs font-semibold text-[hsl(var(--foreground))] uppercase tracking-wider">
+              {inspectorMode === "gate" ? "Gate Inspector" : "Stage Inspector"}
+            </div>
+            <div className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))] truncate max-w-[200px]">{title}</div>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-md hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3">
+        {inspectorMode === "gate" && selectedGate && (
+          gateError ? (
+            <div className="glass-panel p-4 flex items-center gap-3 text-[hsl(var(--status-failure))]">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Failed to load gate report</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{selectedGate}</p>
+              </div>
+            </div>
+          ) : (
+            <GateInspector data={gateDetail} loading={gateLoading} />
+          )
+        )}
+        {inspectorMode === "stage" && activeStage && (
+          stageError ? (
+            <div className="glass-panel p-4 flex items-center gap-3 text-[hsl(var(--status-failure))]">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <div>
+                <p className="text-sm font-medium">Failed to load stage details</p>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{activeStage}</p>
+              </div>
+            </div>
+          ) : (
+          <>
+            <StageDetailCard
+              data={stageDetail}
+              stageName={stageNames[activeStage]}
+              gateId={stageGates[activeStage]}
+              isLoading={stageLoading}
+            />
+            {stageGates[activeStage] && (
+              <button
+                onClick={() => onSelectGate(stageGates[activeStage])}
+                className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-medium border border-[hsl(var(--border))] hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--foreground))]"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                View Gate: {stageGates[activeStage]}
+              </button>
+            )}
+          </>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AssemblyPage() {
   const [, params] = useRoute("/assembly/:id");
   const [, navigate] = useLocation();
@@ -880,7 +1094,25 @@ export default function AssemblyPage() {
   const id = params?.id;
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
+  const [selectedGate, setSelectedGate] = useState<string | null>(null);
   const { stageOrder, stageGates, stageNames } = usePipelineConfig();
+
+  const inspectorOpen = !!(selectedStage || selectedGate);
+
+  function handleSelectStage(key: string) {
+    setSelectedGate(null);
+    setSelectedStage((prev) => (prev === key ? null : key));
+  }
+
+  function handleSelectGate(gateId: string) {
+    setSelectedStage(null);
+    setSelectedGate((prev) => (prev === gateId ? null : gateId));
+  }
+
+  function handleCloseInspector() {
+    setSelectedStage(null);
+    setSelectedGate(null);
+  }
 
   const { data: assembly, isLoading, error } = useQuery({
     queryKey: ["/api/assemblies", id],
@@ -1007,7 +1239,7 @@ export default function AssemblyPage() {
           stageGates={stageGates}
           stageNames={stageNames}
           selectedStage={selectedStage}
-          onSelectStage={setSelectedStage}
+          onSelectStage={handleSelectStage}
         />
       </GlassPanel>
 
@@ -1039,56 +1271,81 @@ export default function AssemblyPage() {
         </div>
       </div>
 
-      {activeTab === "overview" && (
-        <OverviewTab
-          assembly={assembly}
-          latestStages={latestStages}
-          latestRun={latestRun}
-          onRun={() => runMutation.mutate()}
-          onKill={() => {
-            if (confirm("Stop this pipeline?")) killMutation.mutate();
-          }}
-          isRunning={runMutation.isPending}
-          isKilling={killMutation.isPending}
-          stageOrder={stageOrder}
-          stageNames={stageNames}
-        />
-      )}
+      <div className={`flex gap-4 ${inspectorOpen ? "" : ""}`}>
+        <div className={`flex-1 min-w-0 ${inspectorOpen ? "max-w-[calc(100%-340px)]" : ""}`}>
+          {activeTab === "overview" && (
+            <OverviewTab
+              assembly={assembly}
+              latestStages={latestStages}
+              latestRun={latestRun}
+              onRun={() => runMutation.mutate()}
+              onKill={() => {
+                if (confirm("Stop this pipeline?")) killMutation.mutate();
+              }}
+              isRunning={runMutation.isPending}
+              isKilling={killMutation.isPending}
+              stageOrder={stageOrder}
+              stageNames={stageNames}
+            />
+          )}
 
-      {activeTab === "pipeline" && (
-        <PipelineTab
-          stages={latestStages}
-          runs={runs}
-          assemblyId={id!}
-          stageOrder={stageOrder}
-          stageGates={stageGates}
-          stageNames={stageNames}
-        />
-      )}
+          {activeTab === "pipeline" && (
+            <PipelineTab
+              stages={latestStages}
+              runs={runs}
+              assemblyId={id!}
+              stageOrder={stageOrder}
+              stageGates={stageGates}
+              stageNames={stageNames}
+              onSelectStage={handleSelectStage}
+              onSelectGate={handleSelectGate}
+              selectedStage={selectedStage}
+            />
+          )}
 
-      {activeTab === "intake" && <IntakeEditor assembly={assembly} assemblyId={Number(id)} />}
+          {activeTab === "intake" && <IntakeEditor assembly={assembly} assemblyId={Number(id)} />}
 
-      {activeTab === "artifacts" && assembly.runId && <ArtifactBrowser runId={assembly.runId} assemblyId={assembly.id} />}
-      {activeTab === "artifacts" && !assembly.runId && (
-        <div className="text-center py-12 text-[hsl(var(--muted-foreground))]">
-          <FolderArchive className="w-8 h-8 mx-auto mb-3 opacity-50" />
-          <p className="text-sm">No artifacts yet. Run the pipeline to generate output files.</p>
+          {activeTab === "artifacts" && assembly.runId && <ArtifactBrowser runId={assembly.runId} assemblyId={assembly.id} />}
+          {activeTab === "artifacts" && !assembly.runId && (
+            <div className="text-center py-12 text-[hsl(var(--muted-foreground))]">
+              <FolderArchive className="w-8 h-8 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">No artifacts yet. Run the pipeline to generate output files.</p>
+            </div>
+          )}
+
+          {activeTab === "build" && (
+            <BuildTab assemblyId={Number(id)} runId={assembly.runId} pipelineStatus={assembly.status} />
+          )}
+
+          {activeTab === "config" && (
+            <ConfigTab
+              assembly={assembly}
+              onDelete={() => {
+                if (confirm("Delete this assembly?")) deleteMutation.mutate();
+              }}
+              isDeleting={deleteMutation.isPending}
+            />
+          )}
         </div>
-      )}
 
-      {activeTab === "build" && (
-        <BuildTab assemblyId={Number(id)} runId={assembly.runId} pipelineStatus={assembly.status} />
-      )}
-
-      {activeTab === "config" && (
-        <ConfigTab
-          assembly={assembly}
-          onDelete={() => {
-            if (confirm("Delete this assembly?")) deleteMutation.mutate();
-          }}
-          isDeleting={deleteMutation.isPending}
-        />
-      )}
+        {inspectorOpen && (
+          <div className="w-[320px] flex-shrink-0">
+            <div className="sticky top-4">
+              <GlassPanel solid className="overflow-hidden max-h-[calc(100vh-200px)]">
+                <WorkbenchInspector
+                  assemblyId={id!}
+                  selectedStage={selectedStage}
+                  selectedGate={selectedGate}
+                  stageNames={stageNames}
+                  stageGates={stageGates}
+                  onClose={handleCloseInspector}
+                  onSelectGate={handleSelectGate}
+                />
+              </GlassPanel>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
