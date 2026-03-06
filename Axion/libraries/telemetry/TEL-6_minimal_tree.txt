@@ -1,0 +1,34 @@
+Axion/libraries/telemetry/
+TEL-0_purpose.md
+TEL-0_boundary_checklist.md
+TEL-1_event_model.md
+TEL-1_determinism_rules.md
+TEL-1_validation_checklist.md
+TEL-2_run_metrics_model.md
+TEL-2_determinism_rules.md
+TEL-2_validation_checklist.md
+TEL-3_sink_policy_model.md
+TEL-3_determinism_rules.md
+TEL-3_validation_checklist.md
+TEL-4_privacy_model.md
+TEL-4_redaction_rules.md
+TEL-4_determinism_rules.md
+TEL-4_validation_checklist.md
+TEL-5_telemetry_gates.md
+TEL-5_telemetry_gates.spec.json
+TEL-5_determinism_rules.md
+TEL-5_validation_checklist.md
+TEL-6_minimum_viable_set.md
+TEL-6_definition_of_done.md
+TEL-6_minimal_tree.txt
+
+schemas/
+ telemetry_event_base.v1.schema.json
+ telemetry_event_types.v1.schema.json
+ run_metrics.v1.schema.json
+ telemetry_sink_policy.v1.schema.json
+ telemetry_privacy_policy.v1.schema.json
+registries/
+ telemetry_event_types.v1.json
+ telemetry_sink_policy.v1.json
+ telemetry_privacy_policy.v1.json

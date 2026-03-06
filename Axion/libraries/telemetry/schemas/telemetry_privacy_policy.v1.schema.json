@@ -1,0 +1,36 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "telemetry_privacy_policy.v1",
+    "type": "object",
+    "required": ["policy_id", "schema_version", "deny_keys", "deny_patterns", "free_text", "external_sink_rules"],
+    "properties": {
+      "policy_id": { "type": "string", "minLength": 6 },
+      "schema_version": { "type": "string", "minLength": 1 },
+
+      "deny_keys": { "type": "array", "items": { "type": "string" } },
+      "deny_patterns": { "type": "array", "items": { "type": "string" } },
+
+      "free_text": {
+        "type": "object",
+        "required": ["internal_allowlist_keys", "max_chars_internal", "external_allowed"],
+        "properties": {
+          "internal_allowlist_keys": { "type": "array", "items": { "type": "string" } },
+          "max_chars_internal": { "type": "integer", "minimum": 0 },
+          "external_allowed": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      },
+
+      "external_sink_rules": {
+        "type": "object",
+        "required": ["block_on_unknown_keys", "block_on_free_text"],
+        "properties": {
+          "block_on_unknown_keys": { "type": "boolean" },
+          "block_on_free_text": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+}

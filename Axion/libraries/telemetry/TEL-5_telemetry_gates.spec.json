@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "contract_id": "TEL-5a",
+  "gates": [
+    { "gate_id": "TEL-GATE-01", "name": "Event types registry pinned + valid", "severity": "hard_stop", "checks": ["pinned(telemetry_event_types)", "schema_valid(telemetry_event_types.v1)"] },
+    { "gate_id": "TEL-GATE-02", "name": "Emitted events validate", "severity": "warn", "checks": ["events schema_valid(telemetry_event_base.v1)", "event_type exists in registry"] },
+    { "gate_id": "TEL-GATE-03", "name": "Sink policy pinned + valid", "severity": "hard_stop", "checks": ["pinned(telemetry_sink_policy)", "schema_valid(telemetry_sink_policy.v1)"] },
+    { "gate_id": "TEL-GATE-04", "name": "Redaction compliance", "severity": "hard_stop", "checks": ["deny_keys removed", "deny_patterns scrubbed", "external_strict_mode enforced"] },
+    { "gate_id": "TEL-GATE-05", "name": "Non-interference", "severity": "policy_controlled", "checks": ["telemetry failures do not fail run unless strict policy"] }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "telemetry_event_base.v1",
+    "type": "object",
+    "required": ["event_id", "event_type", "schema_version", "run_id", "timestamp", "payload"],
+    "properties": {
+      "event_id": { "type": "string", "pattern": "^EVT-[A-Z0-9]{6,}$" },
+      "event_type": { "type": "string", "minLength": 3 },
+      "schema_version": { "type": "string", "minLength": 1 },
+      "run_id": { "type": "string" },
+      "stage_id": { "type": "string" },
+      "timestamp": { "type": "string", "format": "date-time" },
+      "payload": { "type": "object", "additionalProperties": true }
+    },
+    "additionalProperties": false
+}

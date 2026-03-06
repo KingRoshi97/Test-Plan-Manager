@@ -248,6 +248,37 @@ Kit packaging contract — kit folder tree, manifest schema, versioning, export 
 
 **Legacy files preserved:** KIT-01..KIT-04 JSON files, kit_tree.schema.v1.json, kit_manifest.schema.v1.json, kit_entrypoint.schema.v1.json, kit_versions.schema.v1.json
 
+### Telemetry Library (`Axion/libraries/telemetry/`)
+Event and metrics contracts — telemetry event schemas, run metrics, sink policies, privacy/redaction rules, and gates (TEL-0 through TEL-6). 3 legacy flat files preserved for backward compat.
+
+**Structure (30 new files: 22 root files + 5 schemas + 3 registries):**
+- **TEL-0**: Purpose + boundary checklist (2 docs)
+- **TEL-1**: Event model + determinism rules + validation checklist (3 docs)
+- **TEL-2**: Run metrics model + determinism rules + validation checklist (3 docs)
+- **TEL-3**: Sink policy model + determinism rules + validation checklist (3 docs)
+- **TEL-4**: Privacy model + redaction rules + determinism rules + validation checklist (4 docs)
+- **TEL-5**: Telemetry gates + determinism rules + validation checklist (3 docs + 1 gate spec JSON) — TEL-GATE-01..05
+- **TEL-6**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
+
+**Subdirectories:**
+- `schemas/` — 5 JSON Schema files (telemetry_event_base: event_id/event_type/run_id/timestamp/payload, telemetry_event_types: registry with types[], run_metrics: metrics_id/run/stages[]/gates[], telemetry_sink_policy: sinks[]/redaction, telemetry_privacy_policy: deny_keys/deny_patterns/free_text/external_sink_rules)
+- `registries/` — 3 registry files (telemetry_event_types: 5 event types run.started/stage.started/stage.ended/gate.evaluated/run.ended, telemetry_sink_policy: TELPOL-BASE01 with 3 sinks + redaction rules, telemetry_privacy_policy: TELPRIV-BASE01 with data classes + deny keys/patterns + free-text rules)
+
+**Loader** (`Axion/src/core/telemetry/loader.ts`):
+- `loadTelemetryLibrary(repoRoot)` — loads event_types + sink_policy + privacy_policy registries, cached
+- `loadTelemetryDocs(repoRoot)` — all TEL-N docs with frontmatter
+- `loadTelemetrySchemas(repoRoot)` — all JSON schema files from schemas/
+- `loadTelemetryRegistries(repoRoot)` — all registry JSON files from registries/
+- `getEventTypes(repoRoot)` — returns event types registry
+- `getSinkPolicy(repoRoot)` — returns sink policy registry
+- `getPrivacyPolicy(repoRoot)` — returns privacy policy registry
+
+**API**: 6 `/api/telemetry-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
+**UI**: `/telemetry-library` page with 4 tabs (Telemetry, Documents, Schemas, Registries), event types table, run metrics overview, sink policy cards, redaction overview, privacy policy summary, 5 telemetry gates (TEL-GATE-01..05)
+**Registered in:** `schema_registry.v1.json` (5 new entries + 2 legacy preserved), `library_index.v1.json` (3 new entries + 1 legacy preserved)
+
+**Legacy files preserved:** event.schema.v1.json, run_metrics.schema.v1.json, sink_policy.v1.json
+
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 
@@ -288,7 +319,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning/verification/kit library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning/verification/kit/telemetry library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -354,6 +385,12 @@ package.json      # Root package.json with all dependencies
 - `GET /api/kit-library/registries/:name` — single registry by name
 - `GET /api/kit-library/docs` — all kit documents with frontmatter
 - `GET /api/kit-library/docs/:filename` — single document by filename
+- `GET /api/telemetry-library` — telemetry library overview (groups, schemas, registries, counts: docs/schemas/registries/gates/eventTypes/sinks)
+- `GET /api/telemetry-library/schemas` — all 5 telemetry schemas with content
+- `GET /api/telemetry-library/registries` — all 3 registries with content
+- `GET /api/telemetry-library/registries/:name` — single registry by name
+- `GET /api/telemetry-library/docs` — all telemetry documents with frontmatter
+- `GET /api/telemetry-library/docs/:filename` — single document by filename
 - `GET /api/intake-library` — intake library overview (groups, schema/registry/doc/enum/crossFieldRule/normalizationRule counts)
 - `GET /api/intake-library/schemas` — all 7 intake schemas with content
 - `GET /api/intake-library/registries` — all 3 registries with content
@@ -397,6 +434,7 @@ package.json      # Root package.json with all dependencies
 - `/planning-library` — Planning Library: 4 tabs (Planning, Documents, Schemas, Registries) for PLAN-0 through PLAN-6, planning artifacts overview (WBS/AMAP/BUILD_PLAN), 7 sequencing phases, coverage rules table, 6 planning gates (PLAN-GATE-01..06) mapped to G6_PLAN_COVERAGE
 - `/verification-library` — Verification Library: 4 tabs (Verification, Documents, Schemas, Registries) for VER-0 through VER-7, proof types table, completion criteria (unit_done + run_done), command policy rules, 7 verification gates (VER-GATE-01..07) mapped to G7_VERIFICATION
 - `/kit-library` — Kit Library: 4 tabs (Kit, Documents, Schemas, Registries) for KIT-0 through KIT-6, kit tree structure (4 folders + 2 files), manifest schema summary, export rules, 6 kit gates (KIT-GATE-01..06) with severity badges, compatibility info
+- `/telemetry-library` — Telemetry Library: 4 tabs (Telemetry, Documents, Schemas, Registries) for TEL-0 through TEL-6, event types table, run metrics overview, sink policy cards, redaction overview, privacy policy summary, 5 telemetry gates (TEL-GATE-01..05)
 - `/intake-library` — Intake Library: 4 tabs (Intake, Documents, Schemas, Registries) for INT-0 through INT-7, field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
 - `/docs` — Document inventory: 533 templates + 395 KIDs
 - `/export` — Export completed kit bundles
@@ -443,7 +481,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `orchestration/` — Pipeline execution contracts and run lifecycle (ORC-0 through ORC-7). See Orchestration Library section below.
   - `policy/` — Policy Library (POL-0 through POL-5). See Policy Library section below.
   - `audit/` — operator_actions_ledger.schema.v1.json
-  - `telemetry/` — event.schema.v1.json, run_metrics.schema.v1.json, sink_policy.v1.json
+  - `telemetry/` — 30 new files (22 TEL-0 through TEL-6 docs + schemas/ (5) + registries/ (3)) + 3 legacy flat files
   - `system/` — Control-plane configuration and runtime contracts (SYS-0 through SYS-7). See System Library section below.
   - `library_index.v1.json` — single registry for versioned libraries
   - `schema_registry.v1.json` — single registry for JSON Schemas

@@ -36,6 +36,9 @@
     { "id": "policy.policy_sets", "path": "Axion/libraries/policy/registries/policy_sets.v1.json", "version": "1.0.0" },
 
     { "id": "telemetry.sink_policy", "path": "Axion/libraries/telemetry/sink_policy.v1.json", "version": "1.0.0" },
+    { "id": "telemetry.event_types", "path": "Axion/libraries/telemetry/registries/telemetry_event_types.v1.json", "version": "1.0.0" },
+    { "id": "telemetry.sink_policy_registry", "path": "Axion/libraries/telemetry/registries/telemetry_sink_policy.v1.json", "version": "1.0.0" },
+    { "id": "telemetry.privacy_policy", "path": "Axion/libraries/telemetry/registries/telemetry_privacy_policy.v1.json", "version": "1.0.0" },
 
     { "id": "system.run_profiles", "path": "Axion/libraries/system/registries/run_profiles.v1.json", "version": "1.0.0" },
     { "id": "system.capabilities", "path": "Axion/libraries/system/registries/capabilities.v1.json", "version": "1.0.0" },

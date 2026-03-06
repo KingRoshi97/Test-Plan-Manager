@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "policy_id": "TELPRIV-BASE01",
+  "data_classes": {
+    "forbidden_always": ["secrets"],
+    "forbidden_by_default": ["pii", "sensitive_business", "content_dumps"],
+    "allowed": ["operational_metadata"]
+  },
+  "deny_keys": [
+    "api_key",
+    "token",
+    "password",
+    "secret",
+    "authorization",
+    "cookie",
+    "session",
+    "private_key",
+    "access_key",
+    "refresh_token",
+    "id_token"
+  ],
+  "deny_patterns": [
+    "(?i)bearer\\s+[a-z0-9\\-\\._]+",
+    "(?i)api[_-]?key\\s*[:=]\\s*.+",
+    "(?i)secret\\s*[:=]\\s*.+",
+    "-----BEGIN[\\s\\S]+?-----END[\\s\\S]+?-----"
+  ],
+  "free_text": {
+    "internal_allowlist_keys": ["reason", "error_summary"],
+    "max_chars_internal": 280,
+    "external_allowed": false
+  },
+  "external_sink_rules": {
+    "block_on_unknown_keys": true,
+    "block_on_free_text": true
+  }
+}

@@ -1,0 +1,54 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "run_metrics.v1",
+    "type": "object",
+    "required": ["metrics_id", "run_id", "computed_at", "run", "stages", "gates"],
+    "properties": {
+      "metrics_id": { "type": "string", "pattern": "^MET-[A-Z0-9]{6,}$" },
+      "run_id": { "type": "string" },
+      "computed_at": { "type": "string", "format": "date-time" },
+
+      "run": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": { "type": "string", "enum": ["succeeded", "failed", "paused"] },
+          "duration_ms": { "type": "integer", "minimum": 0 },
+          "tokens_in": { "type": "integer", "minimum": 0 },
+          "tokens_out": { "type": "integer", "minimum": 0 },
+          "cost_usd": { "type": "number", "minimum": 0 }
+        },
+        "additionalProperties": false
+      },
+
+      "stages": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["stage_id", "status"],
+          "properties": {
+            "stage_id": { "type": "string" },
+            "status": { "type": "string", "enum": ["succeeded", "failed", "skipped"] },
+            "duration_ms": { "type": "integer", "minimum": 0 },
+            "artifacts_produced": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+
+      "gates": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["gate_id", "status"],
+          "properties": {
+            "gate_id": { "type": "string" },
+            "status": { "type": "string", "enum": ["pass", "fail", "warn"] }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+}

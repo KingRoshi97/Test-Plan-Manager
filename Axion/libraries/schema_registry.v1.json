@@ -305,6 +305,36 @@
       "uri": "axion://schemas/telemetry/run_metrics.schema.v1.json",
       "version": "1.0.0"
     },
+    {
+      "schema_id": "telemetry.event_base.v1",
+      "path": "Axion/libraries/telemetry/schemas/telemetry_event_base.v1.schema.json",
+      "uri": "axion://schemas/telemetry/telemetry_event_base.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "telemetry.event_types.v1",
+      "path": "Axion/libraries/telemetry/schemas/telemetry_event_types.v1.schema.json",
+      "uri": "axion://schemas/telemetry/telemetry_event_types.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "telemetry.run_metrics_new.v1",
+      "path": "Axion/libraries/telemetry/schemas/run_metrics.v1.schema.json",
+      "uri": "axion://schemas/telemetry/run_metrics.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "telemetry.sink_policy.v1",
+      "path": "Axion/libraries/telemetry/schemas/telemetry_sink_policy.v1.schema.json",
+      "uri": "axion://schemas/telemetry/telemetry_sink_policy.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "telemetry.privacy_policy.v1",
+      "path": "Axion/libraries/telemetry/schemas/telemetry_privacy_policy.v1.schema.json",
+      "uri": "axion://schemas/telemetry/telemetry_privacy_policy.v1.schema.json",
+      "version": "1.0.0"
+    },
 
     {
       "schema_id": "system.workspace.v1",

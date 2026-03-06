@@ -1,0 +1,31 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "telemetry_event_types.v1",
+    "types": [
+      {
+        "event_type": "run.started",
+        "schema_ref": "telemetry_event_base.v1",
+        "description": "Run started event."
+      },
+      {
+        "event_type": "stage.started",
+        "schema_ref": "telemetry_event_base.v1",
+        "description": "Stage started event."
+      },
+      {
+        "event_type": "stage.ended",
+        "schema_ref": "telemetry_event_base.v1",
+        "description": "Stage ended event (duration and status)."
+      },
+      {
+        "event_type": "gate.evaluated",
+        "schema_ref": "telemetry_event_base.v1",
+        "description": "Gate evaluation result."
+      },
+      {
+        "event_type": "run.ended",
+        "schema_ref": "telemetry_event_base.v1",
+        "description": "Run ended event."
+      }
+    ]
+}

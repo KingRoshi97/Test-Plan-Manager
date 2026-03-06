@@ -18,6 +18,7 @@ import {
   ClipboardList,
   ShieldCheck,
   Package,
+  Activity,
 } from "lucide-react";
 
 const links = [
@@ -34,6 +35,7 @@ const links = [
   { href: "/planning-library", label: "Planning Library", icon: ClipboardList },
   { href: "/verification-library", label: "Verification Library", icon: ShieldCheck },
   { href: "/kit-library", label: "Kit Library", icon: Package },
+  { href: "/telemetry-library", label: "Telemetry Library", icon: Activity },
   { href: "/intake-library", label: "Intake Library", icon: ClipboardList },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },

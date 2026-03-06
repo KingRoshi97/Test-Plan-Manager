@@ -1,0 +1,46 @@
+{
+    "schema_version": "1.0.0",
+    "policy_id": "TELPOL-BASE01",
+    "sinks": [
+      {
+        "sink_id": "sink-local-dev",
+        "type": "local_file",
+        "enabled": true,
+        "endpoint": "telemetry/events.jsonl",
+        "notes": "Local dev sink only."
+      },
+      {
+        "sink_id": "sink-internal-collector",
+        "type": "internal_http",
+        "enabled": false,
+        "endpoint": "http://internal-collector/ingest",
+        "notes": "Internal telemetry collector (if deployed)."
+      },
+      {
+        "sink_id": "sink-external",
+        "type": "external_http",
+        "enabled": false,
+        "endpoint": "",
+        "notes": "External sinks disabled by default."
+      }
+    ],
+    "redaction": {
+      "deny_keys": [
+        "api_key",
+        "token",
+        "password",
+        "secret",
+        "authorization",
+        "cookie",
+        "session",
+        "private_key",
+        "access_key"
+      ],
+      "deny_patterns": [
+        "(?i)bearer\\s+[a-z0-9\\-\\._]+",
+        "(?i)api[_-]?key\\s*[:=]\\s*.+",
+        "(?i)secret\\s*[:=]\\s*.+"
+      ],
+      "external_strict_mode": true
+    }
+}

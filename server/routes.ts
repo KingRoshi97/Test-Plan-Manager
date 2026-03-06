@@ -432,6 +432,28 @@ export function registerRoutes(app: Express) {
         } catch {}
         return { docs: kitDocCount, schemas: kitSchemaCount, registries: kitRegistryCount, gates: kitGateCount };
       })(),
+      telemetry_library: (() => {
+        let telDocCount = 0, telSchemaCount = 0, telRegistryCount = 0, telGateCount = 0, telEventTypeCount = 0;
+        try {
+          const telDir = path.join(AXION_ROOT, "libraries", "telemetry");
+          if (fs.existsSync(telDir)) telDocCount = fs.readdirSync(telDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+          const telSchDir = path.join(telDir, "schemas");
+          if (fs.existsSync(telSchDir)) telSchemaCount = fs.readdirSync(telSchDir).filter((f) => f.endsWith(".json")).length;
+          const telRegDir = path.join(telDir, "registries");
+          if (fs.existsSync(telRegDir)) telRegistryCount = fs.readdirSync(telRegDir).filter((f) => f.endsWith(".json")).length;
+          const gsPath = path.join(telDir, "TEL-5_telemetry_gates.spec.json");
+          if (fs.existsSync(gsPath)) {
+            const gs = JSON.parse(fs.readFileSync(gsPath, "utf-8"));
+            telGateCount = gs.gates?.length ?? 0;
+          }
+          const etPath = path.join(telRegDir, "telemetry_event_types.v1.json");
+          if (fs.existsSync(etPath)) {
+            const et = JSON.parse(fs.readFileSync(etPath, "utf-8"));
+            telEventTypeCount = et.types?.length ?? 0;
+          }
+        } catch {}
+        return { docs: telDocCount, schemas: telSchemaCount, registries: telRegistryCount, gates: telGateCount, eventTypes: telEventTypeCount };
+      })(),
       recentRuns,
     });
   });
@@ -2535,6 +2557,187 @@ export function registerRoutes(app: Express) {
       }
       const filePath = path.join(KIT_LIB_DIR, filename);
       if (!filePath.startsWith(KIT_LIB_DIR) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Document '${filename}' not found` });
+      }
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+      let frontmatter: Record<string, string> = {};
+      let content = raw;
+      if (fmMatch) {
+        const lines = fmMatch[1].split("\n");
+        for (const line of lines) {
+          const idx = line.indexOf(":");
+          if (idx > 0) {
+            frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+          }
+        }
+        content = fmMatch[2];
+      }
+      res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  const TELEMETRY_LIB_DIR = path.join(AXION_ROOT, "libraries", "telemetry");
+
+  app.get("/api/telemetry-library", (_req: Request, res: Response) => {
+    try {
+      const groups: Record<string, string[]> = {};
+      const schemas: string[] = [];
+      const registries: string[] = [];
+      let gateCount = 0;
+      let eventTypeCount = 0;
+      let sinkCount = 0;
+
+      if (fs.existsSync(TELEMETRY_LIB_DIR)) {
+        for (const f of fs.readdirSync(TELEMETRY_LIB_DIR)) {
+          if (f.endsWith(".md") || f.endsWith(".txt") || (f.endsWith(".json") && f.startsWith("TEL-"))) {
+            const prefix = f.match(/^(TEL-\d+)/)?.[1] ?? "other";
+            if (!groups[prefix]) groups[prefix] = [];
+            groups[prefix].push(f);
+          }
+        }
+      }
+      const schemasDir = path.join(TELEMETRY_LIB_DIR, "schemas");
+      if (fs.existsSync(schemasDir)) {
+        for (const f of fs.readdirSync(schemasDir)) {
+          if (f.endsWith(".json")) schemas.push(f);
+        }
+      }
+      const registriesDir = path.join(TELEMETRY_LIB_DIR, "registries");
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
+          if (f.endsWith(".json")) registries.push(f);
+        }
+      }
+
+      const gateSpecPath = path.join(TELEMETRY_LIB_DIR, "TEL-5_telemetry_gates.spec.json");
+      if (fs.existsSync(gateSpecPath)) {
+        try {
+          const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
+          gateCount = gs.gates?.length ?? 0;
+        } catch {}
+      }
+
+      const etPath = path.join(registriesDir, "telemetry_event_types.v1.json");
+      if (fs.existsSync(etPath)) {
+        try {
+          const et = JSON.parse(fs.readFileSync(etPath, "utf-8"));
+          eventTypeCount = et.types?.length ?? 0;
+        } catch {}
+      }
+
+      const spPath = path.join(registriesDir, "telemetry_sink_policy.v1.json");
+      if (fs.existsSync(spPath)) {
+        try {
+          const sp = JSON.parse(fs.readFileSync(spPath, "utf-8"));
+          sinkCount = sp.sinks?.length ?? 0;
+        } catch {}
+      }
+
+      const docCount = Object.values(groups).flat().length;
+
+      res.json({
+        groups,
+        schemas,
+        registries,
+        counts: {
+          docs: docCount,
+          schemas: schemas.length,
+          registries: registries.length,
+          gates: gateCount,
+          eventTypes: eventTypeCount,
+          sinks: sinkCount,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/telemetry-library/schemas", (_req: Request, res: Response) => {
+    try {
+      const schemasDir = path.join(TELEMETRY_LIB_DIR, "schemas");
+      if (!fs.existsSync(schemasDir)) return res.json([]);
+      const files = fs.readdirSync(schemasDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(schemasDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/telemetry-library/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      if (name.includes("..") || name.includes("/")) return res.status(400).json({ error: "Invalid name" });
+      const filePath = path.join(TELEMETRY_LIB_DIR, "registries", name.endsWith(".json") ? name : `${name}.json`);
+      if (!fs.existsSync(filePath)) return res.status(404).json({ error: `Registry '${name}' not found` });
+      res.json({ filename: path.basename(filePath), content: JSON.parse(fs.readFileSync(filePath, "utf-8")) });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/telemetry-library/registries", (_req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(TELEMETRY_LIB_DIR, "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const files = fs.readdirSync(registriesDir).filter((f) => f.endsWith(".json")).sort();
+      const result = files.map((filename) => ({
+        filename,
+        content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/telemetry-library/docs", (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(TELEMETRY_LIB_DIR)) return res.json([]);
+      const files = fs.readdirSync(TELEMETRY_LIB_DIR)
+        .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
+        .sort();
+      const result = files.map((filename) => {
+        const raw = fs.readFileSync(path.join(TELEMETRY_LIB_DIR, filename), "utf-8");
+        const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+        let frontmatter: Record<string, string> = {};
+        let content = raw;
+        if (fmMatch) {
+          const lines = fmMatch[1].split("\n");
+          for (const line of lines) {
+            const idx = line.indexOf(":");
+            if (idx > 0) {
+              frontmatter[line.slice(0, idx).trim()] = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+            }
+          }
+          content = fmMatch[2];
+        }
+        return { filename, frontmatter, content };
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/telemetry-library/docs/:filename", (req: Request, res: Response) => {
+    try {
+      const filename = req.params.filename;
+      if (!filename.endsWith(".md") && !filename.endsWith(".txt")) {
+        return res.status(400).json({ error: "Only .md and .txt files are accessible" });
+      }
+      if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+        return res.status(400).json({ error: "Invalid filename" });
+      }
+      const filePath = path.join(TELEMETRY_LIB_DIR, filename);
+      if (!filePath.startsWith(TELEMETRY_LIB_DIR) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: `Document '${filename}' not found` });
       }
       const raw = fs.readFileSync(filePath, "utf-8");
