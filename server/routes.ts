@@ -202,7 +202,8 @@ export function registerRoutes(app: Express) {
   });
 
   app.get("/api/files/{*filePath}", (req: Request, res: Response) => {
-    const filePath = (req.params as any).filePath;
+    const rawPath = (req.params as any).filePath;
+    const filePath = Array.isArray(rawPath) ? rawPath.join("/") : String(rawPath || "");
     const full = safePath(filePath);
     if (!full) return res.status(403).json({ error: "Forbidden" });
     if (!fs.existsSync(full)) return res.status(404).json({ error: "File not found" });

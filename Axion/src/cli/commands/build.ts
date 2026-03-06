@@ -29,9 +29,7 @@ export async function cmdBuild(runId: string, mode: string): Promise<void> {
 
   console.log(`[build] Starting build for ${runId} (mode=${outputMode})`);
 
-  const result = await runBuild(request, (progress) => {
-    console.log(`TOKEN_USAGE: ${JSON.stringify({ phase: "build", state: progress.state })}`);
-  });
+  const result = await runBuild(request);
 
   if (result.success) {
     console.log(`[build] Build completed successfully: ${result.buildId}`);

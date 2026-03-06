@@ -35,6 +35,8 @@ Internal Build Mode takes an approved Agent Kit from a completed pipeline run an
 
 **Build Token Tracking**: Matches pipeline token tracking pattern — `TOKEN_USAGE:` stdout lines parsed in POST build endpoint with monotonic `api_calls` guard, serialized DB updates via `enqueueBuildUpdate` queue to `assemblies.buildTokenUsage` (jsonb column), live display via `progress.tokenUsage` in GET response, final persistence on process close. UI shows `TokenUsageCard` component with input/output token split, per-stage breakdown, cost, and API call count.
 
+**Path Resolution**: Build runner and eligibility module auto-detect whether they're running from workspace root (`Axion/.axion`) or from within the `Axion/` directory (`.axion`), since the CLI spawns with `cwd: Axion/`.
+
 **Build Workspace** (`Axion/.axion/runs/RUN-XXXXXX/build/`):
 - `repo/` — Generated project repository
 - `build_manifest.json` — Build identity, input provenance, lifecycle transitions, timestamps, status, output refs

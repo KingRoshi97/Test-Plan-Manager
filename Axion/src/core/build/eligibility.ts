@@ -2,7 +2,9 @@ import * as fs from "fs";
 import * as path from "path";
 import { EligibilityResult, EligibilityCondition } from "./types.js";
 
-const AXION_RUNS_DIR = path.resolve("Axion/.axion/runs");
+const AXION_RUNS_DIR = fs.existsSync(path.resolve("Axion", ".axion"))
+  ? path.resolve("Axion/.axion/runs")
+  : path.resolve(".axion/runs");
 
 const REQUIRED_GATES = [
   "G1_INTAKE_VALIDITY",

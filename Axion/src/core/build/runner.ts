@@ -34,9 +34,11 @@ import {
   writeAllManifests,
 } from "./manifest.js";
 import { createExportZip, isExportEligible } from "./packager.js";
-import { getRunUsage } from "../usage/tracker.js";
+import { getRunUsage, setActiveRun } from "../usage/tracker.js";
 
-const AXION_BASE = path.resolve("Axion");
+const AXION_BASE = fs.existsSync(path.resolve("Axion", ".axion"))
+  ? path.resolve("Axion")
+  : path.resolve(".");
 const AXION_RUNS_DIR = path.join(AXION_BASE, ".axion", "runs");
 
 export interface BuildResult {
@@ -62,6 +64,8 @@ export async function runBuild(
   const { runId, outputMode } = request;
   const runDir = path.join(AXION_RUNS_DIR, runId);
   const buildId = generateBuildId();
+
+  setActiveRun(runId);
 
   const result: BuildResult = {
     success: false,
@@ -182,15 +186,17 @@ export async function runBuild(
     await writeBuildPlan(runDir, plan);
 
     let slicesCompleted = 0;
+    let filesGenCount = 0;
     const genResult = await generateRepo(runDir, plan, paths, (progress) => {
       if (progress.status === "generated" || progress.status === "failed") {
+        if (progress.status === "generated") filesGenCount++;
         const completed = plan.slices.filter(s => s.status === "completed").length;
         slicesCompleted = completed;
         emitProgress("building", {
           currentSlice: progress.sliceName,
           slicesCompleted: completed,
           totalSlices: plan.totalSlices,
-          filesGenerated: result.filesGenerated + (progress.status === "generated" ? 1 : 0),
+          filesGenerated: filesGenCount,
           totalFiles: plan.totalFiles,
         });
       }
