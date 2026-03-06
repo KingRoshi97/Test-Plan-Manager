@@ -53,9 +53,18 @@ async function generateCode(messages: OpenAIMessage[], maxTokens = 4096, stage =
 }
 
 function extractCodeBlock(text: string): string {
-  const fenced = text.match(/```(?:typescript|javascript|tsx|jsx|json|css|html|yaml|yml|markdown|md|sh|bash|dockerfile)?\s*\n([\s\S]*?)```/);
-  if (fenced) return fenced[1].trim();
-  return text.trim();
+  const fencePattern = /```(?:[a-zA-Z0-9]*)\s*\n([\s\S]*?)```/g;
+  let best = "";
+  let match;
+  while ((match = fencePattern.exec(text)) !== null) {
+    if (match[1].length > best.length) {
+      best = match[1];
+    }
+  }
+  if (best) {
+    return best.replace(/^```[a-zA-Z0-9]*\s*$/gm, "").trim();
+  }
+  return text.replace(/^```[a-zA-Z0-9]*\s*$/gm, "").trim();
 }
 
 interface DocFile {
@@ -261,6 +270,10 @@ function generateDeterministic(ctx: KitContext, slice: BuildSlice, file: BuildFi
 
   if (p === "package.json") return genPackageJson(ctx);
   if (p === "tsconfig.json") return genTsConfig();
+  if (p === "vite.config.ts") return genViteConfig();
+  if (p === "tailwind.config.ts") return genTailwindConfig();
+  if (p === "postcss.config.js") return genPostcssConfig();
+  if (p === "index.html") return genIndexHtml(ctx);
   if (p === ".env.example") return genEnvExample(ctx);
   if (p === ".gitignore") return genGitignore();
   if (p === "README.md") return genReadme(ctx);
@@ -316,6 +329,43 @@ async function generateWithAI(ctx: KitContext, slice: BuildSlice, file: BuildFil
   return code;
 }
 
+function buildFileManifest(ctx: KitContext, slice: BuildSlice): string {
+  const lines: string[] = [];
+  for (const page of ctx.allPages) {
+    lines.push(`- ${page.path} (${page.role}) → default export: ${page.name}`);
+  }
+  for (const f of slice.files) {
+    if (!lines.some(l => l.includes(f.relativePath))) {
+      lines.push(`- ${f.relativePath} (${f.role})`);
+    }
+  }
+  const infraFiles = [
+    "src/main.tsx (entry_point — wraps App in BrowserRouter)",
+    "src/App.tsx (app_entry — Routes only, NO Router)",
+    "src/styles/globals.css (styles)",
+    "src/lib/api/client.ts (api_client)",
+    "src/lib/api/endpoints.ts (api_endpoints)",
+    "src/lib/api/interceptors.ts (api_interceptor)",
+    "src/lib/auth/AuthContext.tsx (auth_context)",
+    "src/lib/auth/ProtectedRoute.tsx (route_guard)",
+    "src/lib/auth/useAuth.ts (auth_hook)",
+    "src/lib/validators/index.ts (validation)",
+    "src/lib/store/index.ts (state_store)",
+    "src/lib/utils/index.ts (utilities)",
+    "src/components/ui/LoadingSpinner.tsx (ui_component)",
+    "src/components/ui/ErrorBoundary.tsx (error_boundary)",
+    "src/components/ui/EmptyState.tsx (ui_component)",
+    "src/components/ui/Pagination.tsx (ui_component)",
+  ];
+  for (const inf of infraFiles) {
+    const p = inf.split(" (")[0];
+    if (!lines.some(l => l.includes(p))) {
+      lines.push(`- ${inf}`);
+    }
+  }
+  return lines.join("\n");
+}
+
 function buildSystemPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget): string {
   const lang = ctx.stackProfile.language === "typescript" ? "TypeScript" : "JavaScript";
   const framework = ctx.stackProfile.framework;
@@ -329,35 +379,44 @@ function buildSystemPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTa
   const availablePackages = [
     "react", "react-dom", "react-router-dom",
     "zod", "@tanstack/react-query", "clsx",
+    "axios", "lucide-react", "date-fns", "react-hook-form",
   ];
   if (ctx.stackProfile.cssFramework?.includes("tailwind")) availablePackages.push("tailwindcss");
 
+  const fileManifest = buildFileManifest(ctx, slice);
+
   return `You are a code generator for the Axion Build System. You generate production-quality ${lang} code for a ${framework} application.
 
-RULES:
-- Generate ONLY the file content. No explanations, no markdown fencing unless the file IS markdown.
+CRITICAL RULES:
+- Generate ONLY the raw file content. NEVER wrap output in markdown code fences (\`\`\`). No explanations.
 - Follow the project's stack: ${framework}, ${lang}, ${ctx.stackProfile.runtime}
 - Use the provided API contracts, data models, and specs as the source of truth
 - Do NOT invent features, routes, or entities not in the spec
-- Do NOT add dependencies not listed in the project config
+- ONLY import packages from the AVAILABLE PACKAGES list below. Do NOT use any package not in this list.
+- When importing project files, use ONLY paths from the FILE MANIFEST below. Do not guess or invent import paths.
+- All page and component files use default exports. Import them as: import ComponentName from "./path"
 - Use clean, idiomatic code with proper error handling
 - Include necessary imports
+- IMPORTANT: BrowserRouter is already configured in src/main.tsx. Do NOT import or use BrowserRouter, HashRouter, or MemoryRouter in any component. App.tsx should only use <Routes> and <Route>.
 - If information is missing, use a clear placeholder: "// TODO: [AXION] Requires spec clarification"
+
+AVAILABLE PACKAGES (ONLY use these — do not import anything else):
+${availablePackages.join(", ")}
 
 AVAILABLE UI COMPONENTS (import from these paths):
 ${uiComponents.map(c => `- ${c}`).join("\n")}
 
-AVAILABLE PACKAGES:
-${availablePackages.join(", ")}
-
 AUTH INFRASTRUCTURE (when applicable):
 - AuthProvider & useAuthContext from src/lib/auth/AuthContext
 - ProtectedRoute from src/lib/auth/ProtectedRoute
-- useAuth hook from src/hooks/useAuth
+- useAuth hook from src/lib/auth/useAuth
 
 VALIDATION:
 - Use zod for schema validation (import { z } from "zod")
 - Per-feature validators in src/lib/validators/
+
+FILE MANIFEST (all files in this project — use these exact paths for imports):
+${fileManifest}
 
 Project: ${ctx.projectName}
 File: ${file.relativePath}
@@ -422,9 +481,10 @@ function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarg
     for (const page of ctx.allPages) {
       parts.push(`  <Route path="${page.routePath}" element={<${page.name} />} />`);
     }
-    parts.push("\nImport all page components. Use <Routes> from react-router-dom.");
+    parts.push("\nImport all page components using default imports from the paths shown above.");
+    parts.push("Use <Routes> and <Route> from react-router-dom. Do NOT import or use BrowserRouter — it is already in main.tsx.");
     parts.push("Wrap authenticated routes in a layout component (AppLayout) with Header and Sidebar.");
-    parts.push("Login and Register pages should NOT be wrapped in the layout.");
+    parts.push("Login, Register, and ForgotPassword pages should NOT be wrapped in the layout.");
     parts.push("\n--- FEATURES ---");
     parts.push(ctx.features.map(f => `- ${f.name}: ${f.description}`).join("\n"));
     parts.push("\n--- DESIGN SYSTEM ---");
@@ -663,6 +723,11 @@ function genPackageJson(ctx: KitContext): string {
   deps["zod"] = "^3.22.0";
   deps["@tanstack/react-query"] = "^5.17.0";
   deps["clsx"] = "^2.1.0";
+  deps["axios"] = "^1.6.0";
+  deps["lucide-react"] = "^0.303.0";
+  deps["date-fns"] = "^3.2.0";
+  deps["react-hook-form"] = "^7.49.0";
+  devDeps["@vitejs/plugin-react"] = "^4.2.0";
 
   const slug = ctx.projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -700,6 +765,88 @@ function genTsConfig(): string {
     include: ["src/**/*"],
     exclude: ["node_modules", "dist"],
   }, null, 2);
+}
+
+function genViteConfig(): string {
+  return `import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    port: 3000,
+    open: true,
+  },
+  build: {
+    outDir: "dist",
+    sourcemap: true,
+  },
+});
+`;
+}
+
+function genTailwindConfig(): string {
+  return `/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: "#eff6ff",
+          100: "#dbeafe",
+          200: "#bfdbfe",
+          300: "#93c5fd",
+          400: "#60a5fa",
+          500: "#3b82f6",
+          600: "#2563eb",
+          700: "#1d4ed8",
+          800: "#1e40af",
+          900: "#1e3a8a",
+        },
+      },
+    },
+  },
+  plugins: [],
+};
+`;
+}
+
+function genPostcssConfig(): string {
+  return `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+`;
+}
+
+function genIndexHtml(ctx: KitContext): string {
+  const title = ctx.projectName || "App";
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+`;
 }
 
 function genEnvExample(ctx: KitContext): string {

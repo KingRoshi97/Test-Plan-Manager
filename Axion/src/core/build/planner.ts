@@ -210,6 +210,7 @@ function deriveRepoShape(stack: StackProfile): RepoShape {
         "vite.config.ts",
         "tailwind.config.ts",
         "postcss.config.js",
+        "index.html",
         ".env.example",
         ".gitignore",
       ],
