@@ -12,6 +12,7 @@ import { AuditLogger } from "../../core/controlPlane/audit.js";
 import { icpRunToManifest } from "../../core/controlPlane/model.js";
 import { executeStageWithGates } from "./runStage.js";
 import { getStageOrder } from "../../core/orchestration/loader.js";
+import { setActiveRun, getRunUsage } from "../../core/usage/tracker.js";
 
 function hashFile(absolutePath: string): string {
   return sha256(readFileSync(absolutePath, "utf-8"));
@@ -99,6 +100,8 @@ export async function cmdRunFull(baseDir: string = "."): Promise<void> {
   const orchOrder = getStageOrder(baseDir);
   const effectiveOrder = orchOrder.length > 0 ? orchOrder : [...STAGE_ORDER];
 
+  setActiveRun(runId);
+
   console.log(`\n[2/2] Executing ${effectiveOrder.length} stages via ICP control plane...`);
 
   for (const stageId of effectiveOrder) {
@@ -117,6 +120,21 @@ export async function cmdRunFull(baseDir: string = "."): Promise<void> {
   }
 
   await controller.completeRun(runId);
+
+  const usageSummary = getRunUsage(runId) ?? {
+    run_id: runId,
+    total_prompt_tokens: 0,
+    total_completion_tokens: 0,
+    total_tokens: 0,
+    total_cost_usd: 0,
+    api_calls: 0,
+    by_stage: {},
+    entries: [],
+  };
+  writeJson(join(runDir, "token_usage.json"), usageSummary);
+  if (usageSummary.api_calls > 0) {
+    console.log(`  [IA] Token usage: ${usageSummary.total_tokens} tokens, $${usageSummary.total_cost_usd.toFixed(4)} estimated cost, ${usageSummary.api_calls} API calls`);
+  }
 
   console.log(`\nDone. Run ${runId} released. Artifacts in: ${runDir}`);
 }

@@ -1,5 +1,6 @@
 import type { CanonicalSpec } from "../canonical/specBuilder.js";
 import type { WorkBreakdownOutput, WorkUnit } from "../planning/workBreakdown.js";
+import { recordUsage } from "../usage/tracker.js";
 
 interface OpenAIMessage {
   role: "system" | "user" | "assistant";
@@ -27,7 +28,7 @@ async function getClient(): Promise<any | null> {
   }
 }
 
-async function chatCompletion(messages: OpenAIMessage[], maxTokens = 4096): Promise<string | null> {
+async function chatCompletion(messages: OpenAIMessage[], maxTokens = 4096, stage = "pipeline"): Promise<string | null> {
   const client = await getClient();
   if (!client) return null;
   try {
@@ -37,6 +38,15 @@ async function chatCompletion(messages: OpenAIMessage[], maxTokens = 4096): Prom
       response_format: { type: "json_object" },
       max_completion_tokens: maxTokens,
     });
+    const usage = (response as any).usage;
+    if (usage) {
+      recordUsage({
+        stage,
+        model: "gpt-4o",
+        promptTokens: usage.prompt_tokens ?? 0,
+        completionTokens: usage.completion_tokens ?? 0,
+      });
+    }
     return response.choices[0]?.message?.content ?? null;
   } catch (err: any) {
     console.log(`  [IA] OpenAI call failed: ${err.message ?? err}`);
@@ -98,7 +108,7 @@ Enrich this specification with better descriptions, failure states, and project-
     },
   ];
 
-  const result = await chatCompletion(messages);
+  const result = await chatCompletion(messages, 4096, "S3_CANONICAL_SPEC");
   const parsed = safeJsonParse<{
     features?: Array<{ feature_id: string; description: string }>;
     workflows?: Array<{ workflow_id: string; failure_states: string }>;
@@ -183,7 +193,7 @@ Enrich each work unit with implementation details and acceptance criteria.`,
     },
   ];
 
-  const result = await chatCompletion(messages);
+  const result = await chatCompletion(messages, 4096, "S5_WORK_BREAKDOWN");
   const parsed = safeJsonParse<{
     units?: Array<{ unit_id: string; description?: string; acceptance_criteria?: string }>;
   }>(result);
@@ -256,7 +266,7 @@ Provide appropriate values for each placeholder.`,
     },
   ];
 
-  const result = await chatCompletion(messages, 2048);
+  const result = await chatCompletion(messages, 2048, "S7_TEMPLATE_ENRICH");
   const parsed = safeJsonParse<{ replacements?: Record<string, string> }>(result);
 
   if (!parsed?.replacements) return templateContent;

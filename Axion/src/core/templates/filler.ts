@@ -2,6 +2,7 @@ import type { SelectedTemplate } from "./selector.js";
 import { isoNow } from "../../utils/time.js";
 import type { KnowledgeContext, KIDEntry } from "../knowledge/resolver.js";
 import { getKnowledgeCitationsForDomain } from "../knowledge/resolver.js";
+import { recordUsage } from "../usage/tracker.js";
 
 export interface FillContext {
   spec: Record<string, unknown>;
@@ -465,6 +466,17 @@ Write the content for each section. Return valid JSON with a "sections" object m
       response_format: { type: "json_object" },
       max_completion_tokens: 8192,
     });
+
+    const usage = (response as any).usage;
+    if (usage) {
+      recordUsage({
+        stage: "S7_RENDER_DOCS",
+        templateId: templateTitle.split(" — ")[0]?.trim(),
+        model: "gpt-4o",
+        promptTokens: usage.prompt_tokens ?? 0,
+        completionTokens: usage.completion_tokens ?? 0,
+      });
+    }
 
     const result = response.choices[0]?.message?.content ?? null;
     if (!result) return {};

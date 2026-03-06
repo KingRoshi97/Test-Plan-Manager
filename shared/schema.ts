@@ -34,6 +34,7 @@ export const pipelineRuns = pgTable("pipeline_runs", {
   stages: jsonb("stages"),
   currentStage: varchar("current_stage", { length: 100 }),
   error: text("error"),
+  tokenUsage: jsonb("token_usage"),
 });
 
 export const moduleStatuses = pgTable("module_statuses", {

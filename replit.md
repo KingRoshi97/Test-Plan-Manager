@@ -49,6 +49,14 @@ Full Mechanics pipeline + web application layer with three formal control planes
 - **S8 (Build Plan)**: After deterministic work breakdown, calls OpenAI to enrich work unit descriptions with implementation details and acceptance criteria
 - All OpenAI calls are gracefully optional — if API key is missing or call fails, pipeline falls back to deterministic output
 - Intake data race condition fixed: `pipeline-runner.ts` writes `pending_intake.json` BEFORE spawning CLI; `runControlPlane.ts` copies it into run dir before S1 executes
+- **Parallel rendering**: S7 template rendering uses configurable concurrency (env `AXION_IA_CONCURRENCY`, default 3, max 10) — batches of N templates rendered concurrently via `Promise.all`, results sorted deterministically by template_id
+
+### Token Usage Tracking
+- `Axion/src/core/usage/tracker.ts` — In-memory accumulator for OpenAI token usage per pipeline run
+- **Tracked call sites**: `filler.ts` (S7_RENDER_DOCS stage), `openai-bridge.ts` (S3_CANONICAL_SPEC, S5_WORK_BREAKDOWN, S7_TEMPLATE_ENRICH stages), `server/openai.ts` (AUTOFILL stage)
+- **Cost model**: gpt-4o at $2.50/1M input, $10/1M output; gpt-4o-mini at $0.15/1M input, $0.60/1M output
+- **Persistence**: `cmdRunFull()` writes `token_usage.json` to run dir; `pipeline-runner.ts` reads it on completion and stores in `pipeline_runs.token_usage` (jsonb column)
+- **UI**: Assembly overview shows Token Usage card (total/input/output tokens + estimated cost) with per-stage breakdown; Pipeline tab run history table includes Tokens and Cost columns
 
 ### Intake Library (`Axion/libraries/intake/`)
 Form spec, field enums, validation rules, submission records, normalization contracts, and intake gates (INT-0 through INT-7). 12 legacy flat files preserved for backward compat (pipeline code: normalizer.ts, validator.ts, submissionRecord.ts).

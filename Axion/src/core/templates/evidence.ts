@@ -227,7 +227,10 @@ export async function writeRenderedDocs(runDir: string, runId: string, generated
   const allGeneratedUnknowns: CAN03Unknown[] = [];
   const now = isoNow();
 
-  for (const tmpl of selection.selected) {
+  const iaConcurrency = Math.min(Math.max(parseInt(process.env.AXION_IA_CONCURRENCY ?? "3", 10) || 3, 1), 10);
+  console.log(`  [IA] Rendering ${selection.selected.length} templates with ${iaConcurrency} concurrent worker(s)`);
+
+  async function processTemplate(tmpl: typeof selection.selected[0]) {
     let rawContent = "";
     try {
       const absPath = join(baseDir, tmpl.source_abs_path);
@@ -257,6 +260,31 @@ export async function writeRenderedDocs(runDir: string, runId: string, generated
     ensureDir(dirname(outputAbsPath));
     writeFileSync(outputAbsPath, filled.content, "utf-8");
 
+    return { tmpl, filled, outputRelPath };
+  }
+
+  const results: Array<Awaited<ReturnType<typeof processTemplate>>> = [];
+  const queue = [...selection.selected];
+
+  while (queue.length > 0) {
+    const batch = queue.splice(0, iaConcurrency);
+    const batchOutcomes = await Promise.allSettled(batch.map((tmpl) => processTemplate(tmpl)));
+    for (let i = 0; i < batchOutcomes.length; i++) {
+      const outcome = batchOutcomes[i];
+      if (outcome.status === "fulfilled") {
+        results.push(outcome.value);
+      } else {
+        console.error(`  [IA] Template ${batch[i].template_id} failed: ${outcome.reason?.message ?? outcome.reason}`);
+      }
+    }
+    if (queue.length > 0) {
+      console.log(`  [IA] Rendered ${results.length}/${selection.selected.length} templates...`);
+    }
+  }
+
+  results.sort((a, b) => a.tmpl.template_id.localeCompare(b.tmpl.template_id));
+
+  for (const { tmpl, filled, outputRelPath } of results) {
     const totalFields = filled.placeholders_resolved + filled.placeholders_unknown;
     const unresolvedFields = filled.unknowns.map((u) => u.placeholder);
     const unknownAllowedFields = filled.unknowns
@@ -297,6 +325,8 @@ export async function writeRenderedDocs(runDir: string, runId: string, generated
     );
     gateEntries.push(gateEntry);
   }
+
+  console.log(`  [IA] All ${results.length} templates rendered successfully`);
 
   writeCanonicalJson(join(runDir, "templates", "render_envelopes.json"), {
     run_id: runId,

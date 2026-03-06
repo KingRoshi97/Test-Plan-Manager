@@ -197,6 +197,18 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
       }
 
       if (code === 0 && runId) {
+        let tokenUsage = null;
+        try {
+          const usagePath = path.join(AXION_ROOT, ".axion", "runs", runId, "token_usage.json");
+          if (fs.existsSync(usagePath)) {
+            tokenUsage = JSON.parse(fs.readFileSync(usagePath, "utf-8"));
+          }
+        } catch {}
+
+        if (tokenUsage) {
+          await storage.updatePipelineRun(pipelineRunId, { tokenUsage });
+        }
+
         await storage.createReport({
           assemblyId,
           runId,
