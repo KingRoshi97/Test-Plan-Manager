@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 import { apiRequest } from "../lib/queryClient";
 import {
   Plus,
@@ -68,7 +69,11 @@ export default function RunsPage() {
     mutationFn: (id: number) =>
       apiRequest(`/api/assemblies/${id}`, { method: "DELETE" }),
     onSuccess: () => {
+      toast.success("Assembly deleted");
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to delete assembly");
     },
   });
 

@@ -3,7 +3,11 @@ import { apiRequest } from "../../lib/queryClient";
 import { Search, Command, Radio, Server } from "lucide-react";
 import type { Assembly } from "../../../../shared/schema";
 
-export function Topbar() {
+interface TopbarProps {
+  onSearchClick?: () => void;
+}
+
+export function Topbar({ onSearchClick }: TopbarProps) {
   const { data: assemblies = [] } = useQuery<Assembly[]>({
     queryKey: ["/api/assemblies"],
     queryFn: () => apiRequest("/api/assemblies"),
@@ -25,6 +29,7 @@ export function Topbar() {
     >
       <div className="flex items-center gap-3">
         <button
+          onClick={onSearchClick}
           className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-[hsl(var(--muted-foreground))] bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] transition-colors"
           title="Command Palette (Ctrl+K)"
         >

@@ -1,3 +1,5 @@
+import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "../lib/queryClient";
@@ -29,6 +31,7 @@ import {
   CircleDot,
   Timer,
   Skull,
+  X,
 } from "lucide-react";
 import { MetricCard } from "../components/ui/metric-card";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
@@ -101,9 +104,24 @@ interface HealthData {
   recentRuns: string[];
 }
 
+interface StatsData {
+  totalRuns: number;
+  completedRuns: number;
+  failedRuns: number;
+  successRate: number;
+  avgDurationMs: number;
+  totalTokensUsed: number;
+  runsToday: number;
+  completedToday: number;
+  failedToday: number;
+  longestRun: { durationMs: number; projectName: string } | null;
+  recentFailureRate: number;
+}
+
 export default function DashboardPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<number>>(new Set());
 
   const { data: assemblies = [], isLoading } = useQuery<Assembly[]>({
     queryKey: ["/api/assemblies"],
@@ -115,6 +133,25 @@ export default function DashboardPage() {
     queryKey: ["/api/health"],
     queryFn: () => apiRequest("/api/health"),
     refetchInterval: 30000,
+  });
+
+  const { data: stats } = useQuery<StatsData>({
+    queryKey: ["/api/stats"],
+    queryFn: () => apiRequest("/api/stats"),
+    refetchInterval: 30000,
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: (assemblyId: number) =>
+      apiRequest(`/api/assemblies/${assemblyId}/run`, { method: "POST" }),
+    onSuccess: () => {
+      toast.success("Pipeline restarted");
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+    },
+    onError: (err: Error) => {
+      toast.error(`Failed to retry: ${err.message}`);
+    },
   });
 
   const hasActiveRuns = assemblies.some((a) => a.status === "running");
@@ -217,15 +254,15 @@ export default function DashboardPage() {
           label="Failed"
           value={failed}
           accent={failed > 0 ? "red" : "default"}
-          subtitle={latestFailed?.error ? latestFailed.error.substring(0, 30) + (latestFailed.error.length > 30 ? "…" : "") : "none"}
+          subtitle={stats ? `${stats.recentFailureRate}% failure rate` : latestFailed?.error ? latestFailed.error.substring(0, 30) + (latestFailed.error.length > 30 ? "…" : "") : "none"}
           onClick={() => setLocation("/runs")}
         />
         <MetricCard
           icon={CheckCircle2}
           label="Completed Today"
-          value={completedToday}
+          value={stats?.completedToday ?? completedToday}
           accent="green"
-          subtitle={`${completed} total`}
+          subtitle={stats?.avgDurationMs ? `avg ${formatDuration(stats.avgDurationMs)}` : `${completed} total`}
         />
         <MetricCard
           icon={Shield}
@@ -247,7 +284,7 @@ export default function DashboardPage() {
           label="System Health"
           value={health?.status === "ok" ? "OK" : "—"}
           accent="green"
-          subtitle={`${health?.templates ?? 0} templates`}
+          subtitle={stats?.totalTokensUsed ? `${stats.totalTokensUsed.toLocaleString()} tokens used` : `${health?.templates ?? 0} templates`}
           onClick={() => setLocation("/health")}
         />
       </div>
@@ -409,35 +446,65 @@ export default function DashboardPage() {
             )}
           </div>
           <GlassPanel solid className="p-4 min-h-[140px]">
-            {failedRuns.length > 0 ? (
-              <div className="space-y-2">
-                {failedRuns.slice(0, 4).map((run) => (
-                  <div
-                    key={run.id}
-                    className="p-2.5 rounded-md bg-[hsl(var(--status-failure)/0.05)] border border-[hsl(var(--status-failure)/0.15)] cursor-pointer hover:bg-[hsl(var(--status-failure)/0.1)] transition-colors"
-                    onClick={() => setLocation(`/assembly/${run.id}`)}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-[hsl(var(--foreground))] truncate">
-                        {run.projectName}
-                      </span>
-                      <XCircle className="w-3 h-3 text-[hsl(var(--status-failure))] shrink-0" />
+            {(() => {
+              const visibleFailed = failedRuns.filter((r) => !dismissedAlerts.has(r.id));
+              return visibleFailed.length > 0 ? (
+                <div className="space-y-2">
+                  {visibleFailed.slice(0, 4).map((run) => (
+                    <div
+                      key={run.id}
+                      className="p-2.5 rounded-md bg-[hsl(var(--status-failure)/0.05)] border border-[hsl(var(--status-failure)/0.15)] transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span
+                          className="text-xs font-medium text-[hsl(var(--foreground))] truncate cursor-pointer hover:underline"
+                          onClick={() => setLocation(`/assembly/${run.id}`)}
+                        >
+                          {run.projectName}
+                        </span>
+                        <XCircle className="w-3 h-3 text-[hsl(var(--status-failure))] shrink-0" />
+                      </div>
+                      <p className="text-[11px] text-[hsl(var(--muted-foreground))] line-clamp-2">
+                        {run.error || "Unknown error"}
+                      </p>
+                      <div className="flex items-center justify-between mt-1.5">
+                        <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                          {formatRelativeTime(run.updatedAt)}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              retryMutation.mutate(run.id);
+                            }}
+                            disabled={retryMutation.isPending}
+                            className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.2)] transition-colors disabled:opacity-50"
+                          >
+                            <RotateCcw className="w-2.5 h-2.5" />
+                            Retry
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDismissedAlerts((prev) => new Set(prev).add(run.id));
+                            }}
+                            className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
+                          >
+                            <X className="w-2.5 h-2.5" />
+                            Dismiss
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-[11px] text-[hsl(var(--muted-foreground))] line-clamp-2">
-                      {run.error || "Unknown error"}
-                    </p>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1 inline-block">
-                      {formatRelativeTime(run.updatedAt)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full py-8">
-                <CheckCircle2 className="w-6 h-6 text-[hsl(var(--status-success))] opacity-50 mb-2" />
-                <span className="text-sm text-[hsl(var(--muted-foreground))]">All clear</span>
-              </div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full py-8">
+                  <CheckCircle2 className="w-6 h-6 text-[hsl(var(--status-success))] opacity-50 mb-2" />
+                  <span className="text-sm text-[hsl(var(--muted-foreground))]">All clear</span>
+                </div>
+              );
+            })()}
           </GlassPanel>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 import { apiRequest } from "../lib/queryClient";
 import { ArrowLeft, ArrowRight, Loader2, Check, SkipForward, Sparkles, Rocket } from "lucide-react";
 import { createEmptyIntakeData, type IntakeData } from "./intake/types";
@@ -285,9 +286,11 @@ export default function IntakeWizard() {
       return assembly;
     },
     onSuccess: (assembly) => {
+      toast.success("Assembly created — navigating to workbench");
       setLocation(`/assembly/${assembly.id}`);
     },
     onError: (err: Error) => {
+      toast.error(err.message || "Failed to create assembly");
       setError(err.message);
     },
   });

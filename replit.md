@@ -88,7 +88,17 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - `App/src/components/intake/page-project.tsx` — Dark glass-themed inputs with cyan focus glow, premium file upload drop zone, glass-styled link manager, mono-tech fonts
 - All 9 remaining form pages (`page-intent/design/functional/data/auth/integrations/nfr/category/final.tsx`) — Consistent `text-system-label` labels, glass-themed inputs with cyan focus glow, premium chip/tag selection, custom toggle switches with glow, green glow "Start Pipeline" toggle on final page
 
-**Remaining phases**: Phase 8-9 (Command Center second pass), Phase 10 (Knowledge consolidation), Phase 11 (Export second pass), Phase 12 (Polish — command palette, global search, notifications, density toggle, keyboard shortcuts).
+**Phase 8 — Command Center Second Pass** (Complete):
+- `App/src/components/command-palette.tsx` — Full command palette (Cmd+K / Ctrl+K): search input with cmdk, Navigation/Actions/Recent Assemblies categories, dark glass aesthetic, cyan selection highlight, Escape to close
+- `App/src/components/layout/AppShell.tsx` — Global keyboard shortcut listener (Cmd+K), `<Toaster />` from sonner with dark theme
+- `App/src/components/layout/Topbar.tsx` — Search button wired to open command palette via `onSearchClick` prop
+- Toast notifications: success/error toasts on assembly create, pipeline start/kill, assembly delete (intake-wizard.tsx, assembly.tsx, runs.tsx)
+- `GET /api/stats` endpoint — Server-side aggregated analytics: totalRuns, completedRuns, failedRuns, successRate, avgDurationMs, totalTokensUsed, runsToday/completedToday/failedToday, longestRun, recentFailureRate
+- Dashboard metric cards enhanced: "Failed" shows failure rate %, "Completed Today" shows avg duration, "System Health" shows token usage
+- Alert cards: "Retry" button (re-runs pipeline) and "Dismiss" button (client-side filter)
+- `App/vite.config.ts` — React deduplication via `resolve.dedupe` for sonner compatibility
+
+**Remaining phases**: Phase 9 (further Command Center refinements if needed), Phase 10 (Knowledge consolidation), Phase 11 (Export second pass), Phase 12 (Polish — density toggle, keyboard shortcuts).
 
 ### Build Mode (BM-00 through BM-18)
 Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip.

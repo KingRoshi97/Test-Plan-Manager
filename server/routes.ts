@@ -720,6 +720,16 @@ export function registerRoutes(app: Express) {
     });
   });
 
+  app.get("/api/stats", async (_req: Request, res: Response) => {
+    try {
+      const stats = await storage.getStats();
+      res.json(stats);
+    } catch (err: any) {
+      console.error("Failed to fetch stats:", err);
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
   app.get("/api/audit-log", (_req: Request, res: Response) => {
     try {
       const auditPath = path.join(AXION_ROOT, ".axion", "audit.jsonl");

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
+import { toast } from "sonner";
 import { apiRequest } from "../lib/queryClient";
 import {
   ChevronRight, Play, Trash2, ArrowLeft, CheckCircle, XCircle, X,
@@ -1204,24 +1205,36 @@ export default function AssemblyPage() {
   const runMutation = useMutation({
     mutationFn: () => apiRequest(`/api/assemblies/${id}/run`, { method: "POST" }),
     onSuccess: () => {
+      toast.success(`Pipeline started for ${assembly?.projectName || "assembly"}`);
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to start pipeline");
     },
   });
 
   const killMutation = useMutation({
     mutationFn: () => apiRequest(`/api/assemblies/${id}/kill`, { method: "POST" }),
     onSuccess: () => {
+      toast.success(`Pipeline killed for ${assembly?.projectName || "assembly"}`);
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to kill pipeline");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => apiRequest(`/api/assemblies/${id}`, { method: "DELETE" }),
     onSuccess: () => {
+      toast.success("Assembly deleted");
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
       navigate("/");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to delete assembly");
     },
   });
 
