@@ -1,4 +1,4 @@
-import type { MaintenanceRun, MaintenanceRunReport, MaintenanceRunStatus } from "./model.js";
+import type { MaintenanceRun, MaintenanceRunReport, MaintenanceRunStatus, MaintenanceMode } from "./model.js";
 import type { JSONMaintenanceRunStore } from "./store.js";
 import { DependencyManager } from "./dependencyManager.js";
 import { MigrationManager } from "./migrationManager.js";
@@ -9,6 +9,7 @@ import { AxionIntegrationMaintainer } from "./axionIntegration.js";
 import { isoNow } from "../../utils/time.js";
 import { writeJson } from "../../utils/fs.js";
 import { join } from "node:path";
+import { getMaintenanceModes, getGates } from "../maintenance/loader.js";
 
 export interface ModeRunnerOptions {
   outputDir: string;
@@ -59,7 +60,42 @@ export class ModeRunner {
     });
   }
 
+  private resolveMode(modeId: string): MaintenanceMode | undefined {
+    const modes = getMaintenanceModes();
+    return modes.find((m) => m.mode_id === modeId);
+  }
+
+  private enforceModeBudgets(run: MaintenanceRun): { allowed: boolean; reason?: string } {
+    const mode = this.resolveMode(run.mode_id);
+    if (!mode) return { allowed: true };
+
+    if (mode.hard_constraints?.read_only) {
+      return { allowed: false, reason: `Mode ${mode.mode_id} (${mode.name}) is read-only` };
+    }
+    if (mode.default_budgets?.max_assets_touched > 0 && run.units.length > mode.default_budgets.max_assets_touched) {
+      return { allowed: false, reason: `Unit count (${run.units.length}) exceeds mode budget max_assets_touched (${mode.default_budgets.max_assets_touched})` };
+    }
+    return { allowed: true };
+  }
+
   async executeMaintenanceFlow(run: MaintenanceRun): Promise<MaintenanceRunReport> {
+    const budgetCheck = this.enforceModeBudgets(run);
+    if (!budgetCheck.allowed) {
+      throw new Error(`Mode budget violation: ${budgetCheck.reason}`);
+    }
+
+    const mode = this.resolveMode(run.mode_id);
+    const requiredGates = mode?.required_gates ?? [];
+    if (requiredGates.length > 0) {
+      const allGates = getGates();
+      for (const gateId of requiredGates) {
+        const gate = allGates.find((g) => g.gate_rule_id === gateId);
+        if (gate && gate.status !== "active") {
+          throw new Error(`Required gate ${gateId} is not active (status: ${gate.status})`);
+        }
+      }
+    }
+
     const report: MaintenanceRunReport = {
       run_id: run.run_id,
       mode_id: run.mode_id,

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Standard",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "standard_id",
+    "version",
+    "status",
+    "name",
+    "scope",
+    "rules_ref",
+    "updated_at"
+  ],
+  "properties": {
+    "standard_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "rules_ref": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

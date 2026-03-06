@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ChangeSet",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "changeset_id",
+    "status",
+    "source",
+    "summary",
+    "patches",
+    "proof_refs",
+    "updated_at"
+  ],
+  "properties": {
+    "changeset_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "patches": {
+      "type": "string"
+    },
+    "proof_refs": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

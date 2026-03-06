@@ -1,0 +1,960 @@
+{
+  "registry_id": "REG-MAINTENANCE-MODES",
+  "schema_version": "1.0.0",
+  "registry_version": "0.1.0",
+  "description": "Maintenance modes registry",
+  "items": [
+    {
+      "mode_id": "MM-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Health Check",
+      "execution_class": "scheduled_allowed",
+      "allowed_triggers": [
+        "manual",
+        "scheduled"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": false
+      },
+      "default_budgets": {
+        "token_cap": 5000,
+        "time_cap_ms": 30000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": true,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-02",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Full Verification Run",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": false
+      },
+      "default_budgets": {
+        "token_cap": 20000,
+        "time_cap_ms": 120000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": true,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-03",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Coverage Audit",
+      "execution_class": "scheduled_allowed",
+      "allowed_triggers": [
+        "manual",
+        "scheduled"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": false
+      },
+      "default_budgets": {
+        "token_cap": 8000,
+        "time_cap_ms": 45000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": true,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-04",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Drift Detection",
+      "execution_class": "scheduled_allowed",
+      "allowed_triggers": [
+        "manual",
+        "scheduled"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-DRIFT-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": true,
+        "proof_bundle": true,
+        "snapshot": false
+      },
+      "default_budgets": {
+        "token_cap": 15000,
+        "time_cap_ms": 60000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": true,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-05",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Planned Upgrade",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-DRIFT-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": true,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 25000,
+        "time_cap_ms": 180000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-06",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Hotfix",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 20000,
+        "time_cap_ms": 120000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-07",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Deprecation Rollout",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 12000,
+        "time_cap_ms": 90000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-08",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Breaking Upgrade (Major)",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-DRIFT-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": true,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 30000,
+        "time_cap_ms": 240000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-09",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Artifact Migration",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 25000,
+        "time_cap_ms": 240000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-10",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Backcompat Validation",
+      "execution_class": "scheduled_allowed",
+      "allowed_triggers": [
+        "manual",
+        "scheduled"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": false
+      },
+      "default_budgets": {
+        "token_cap": 12000,
+        "time_cap_ms": 120000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": true,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-11",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Data Repair / Salvage",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": true,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 20000,
+        "time_cap_ms": 180000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-12",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Rebuild Indexes/Registries",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 20000,
+        "time_cap_ms": 180000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-13",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Registry Integrity Cleanup",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": true,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 20000,
+        "time_cap_ms": 180000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-14",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Release Packaging",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 15000,
+        "time_cap_ms": 120000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-06",
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": false
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-15",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Rollback / Revert Release",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 15000,
+        "time_cap_ms": 120000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-06",
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": false
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-16",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Snapshot / Archive",
+      "execution_class": "scheduled_allowed",
+      "allowed_triggers": [
+        "manual",
+        "scheduled"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 8000,
+        "time_cap_ms": 60000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": true,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-17",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Dependency Refresh",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": true,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 25000,
+        "time_cap_ms": 180000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-18",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Workspace Compatibility Check",
+      "execution_class": "scheduled_allowed",
+      "allowed_triggers": [
+        "manual",
+        "scheduled"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": false
+      },
+      "default_budgets": {
+        "token_cap": 12000,
+        "time_cap_ms": 120000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": true,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-19",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "CI Sanity Run",
+      "execution_class": "scheduled_allowed",
+      "allowed_triggers": [
+        "manual",
+        "scheduled"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": false
+      },
+      "default_budgets": {
+        "token_cap": 6000,
+        "time_cap_ms": 30000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": true,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-20",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Failure Triage Mode",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-DRIFT-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": true,
+        "proof_bundle": true,
+        "snapshot": false
+      },
+      "default_budgets": {
+        "token_cap": 20000,
+        "time_cap_ms": 180000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": true,
+        "no_publish": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "mode_id": "MM-21",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Emergency Recovery Mode",
+      "execution_class": "manual_only",
+      "allowed_triggers": [
+        "manual"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "standards",
+          "registries",
+          "gates",
+          "verification_commands"
+        ]
+      },
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true,
+        "snapshot": true
+      },
+      "default_budgets": {
+        "token_cap": 20000,
+        "time_cap_ms": 180000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "required_gates": [
+        "G-MUS-05"
+      ],
+      "hard_constraints": {
+        "no_apply": false,
+        "no_publish": false
+      },
+      "updated_at": "2026-03-05"
+    }
+  ],
+  "active_map": {
+    "MM-01": "0.1.0",
+    "MM-02": "0.1.0",
+    "MM-03": "0.1.0",
+    "MM-04": "0.1.0",
+    "MM-05": "0.1.0",
+    "MM-06": "0.1.0",
+    "MM-07": "0.1.0",
+    "MM-08": "0.1.0",
+    "MM-09": "0.1.0",
+    "MM-10": "0.1.0",
+    "MM-11": "0.1.0",
+    "MM-12": "0.1.0",
+    "MM-13": "0.1.0",
+    "MM-14": "0.1.0",
+    "MM-15": "0.1.0",
+    "MM-16": "0.1.0",
+    "MM-17": "0.1.0",
+    "MM-18": "0.1.0",
+    "MM-19": "0.1.0",
+    "MM-20": "0.1.0",
+    "MM-21": "0.1.0"
+  },
+  "invariants": [
+    "No duplicate (id, version) pairs",
+    "active_map versions must exist in items",
+    "All references must resolve (no orphans)"
+  ],
+  "updated_at": "2026-03-05"
+}

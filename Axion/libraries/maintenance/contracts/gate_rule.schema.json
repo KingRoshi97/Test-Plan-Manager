@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GateRule",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "gate_rule_id",
+    "version",
+    "status",
+    "name",
+    "predicate",
+    "evidence_requirements",
+    "applies_to",
+    "updated_at"
+  ],
+  "properties": {
+    "gate_rule_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "predicate": {
+      "type": "string"
+    },
+    "evidence_requirements": {
+      "type": "string"
+    },
+    "applies_to": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

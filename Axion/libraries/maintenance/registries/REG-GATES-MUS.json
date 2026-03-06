@@ -1,0 +1,183 @@
+{
+  "registry_id": "REG-GATES-MUS",
+  "schema_version": "1.0.0",
+  "registry_version": "0.1.0",
+  "description": "Maintenance gate rules registry",
+  "items": [
+    {
+      "gate_rule_id": "G-MUS-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Apply Gate",
+      "predicate": {
+        "type": "and",
+        "clauses": [
+          {
+            "type": "approval_exists",
+            "approval_type": "apply"
+          },
+          {
+            "type": "diff_hash_matches"
+          },
+          {
+            "type": "actor_authorized"
+          },
+          {
+            "type": "apply_lock_off"
+          }
+        ]
+      },
+      "evidence_requirements": [
+        "approval_event_ref",
+        "diff_hash",
+        "policy_snapshot_ref"
+      ],
+      "applies_to": {
+        "actions": [
+          "apply"
+        ]
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "gate_rule_id": "G-MUS-02",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Publish Gate",
+      "predicate": {
+        "type": "and",
+        "clauses": [
+          {
+            "type": "approval_exists",
+            "approval_type": "publish"
+          },
+          {
+            "type": "diff_hash_matches"
+          },
+          {
+            "type": "required_gates_passed"
+          },
+          {
+            "type": "not_scheduled_trigger"
+          },
+          {
+            "type": "actor_authorized"
+          },
+          {
+            "type": "publish_lock_off"
+          }
+        ]
+      },
+      "evidence_requirements": [
+        "approval_event_ref",
+        "diff_hash",
+        "proof_bundle_ref",
+        "policy_snapshot_ref"
+      ],
+      "applies_to": {
+        "actions": [
+          "publish"
+        ]
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "gate_rule_id": "G-MUS-03",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Scheduled Publish Hard Block",
+      "predicate": {
+        "type": "not",
+        "clause": {
+          "type": "trigger_is",
+          "value": "scheduled"
+        }
+      },
+      "evidence_requirements": [
+        "run_metadata_ref"
+      ],
+      "applies_to": {
+        "actions": [
+          "publish"
+        ]
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "gate_rule_id": "G-MUS-04",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Automation Actor Hard Block",
+      "predicate": {
+        "type": "not",
+        "clause": {
+          "type": "actor_type_is",
+          "value": "automation"
+        }
+      },
+      "evidence_requirements": [
+        "actor_ref"
+      ],
+      "applies_to": {
+        "actions": [
+          "apply",
+          "publish"
+        ]
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "gate_rule_id": "G-MUS-05",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Budget Compliance",
+      "predicate": {
+        "type": "budget_compliance"
+      },
+      "evidence_requirements": [
+        "run_metrics_ref",
+        "budget_snapshot_ref"
+      ],
+      "applies_to": {
+        "runs": [
+          "*"
+        ]
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "gate_rule_id": "G-MUS-06",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Registry Integrity",
+      "predicate": {
+        "type": "registry_integrity_pass"
+      },
+      "evidence_requirements": [
+        "integrity_report_ref"
+      ],
+      "applies_to": {
+        "actions": [
+          "publish",
+          "release_package",
+          "rollback"
+        ]
+      },
+      "updated_at": "2026-03-05"
+    }
+  ],
+  "active_map": {
+    "G-MUS-01": "0.1.0",
+    "G-MUS-02": "0.1.0",
+    "G-MUS-03": "0.1.0",
+    "G-MUS-04": "0.1.0",
+    "G-MUS-05": "0.1.0",
+    "G-MUS-06": "0.1.0"
+  },
+  "invariants": [
+    "No duplicate (id, version) pairs",
+    "active_map versions must exist in items",
+    "All references must resolve (no orphans)"
+  ],
+  "updated_at": "2026-03-05"
+}

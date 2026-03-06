@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VerificationCommand",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "command_id",
+    "version",
+    "status",
+    "name",
+    "command_line",
+    "allowed_envs",
+    "safety_class",
+    "updated_at"
+  ],
+  "properties": {
+    "command_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "command_line": {
+      "type": "string"
+    },
+    "allowed_envs": {
+      "type": "string"
+    },
+    "safety_class": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

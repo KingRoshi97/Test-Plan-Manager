@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KnowledgeItem",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "kid",
+    "version",
+    "status",
+    "type",
+    "title",
+    "category_id",
+    "tags",
+    "content",
+    "policy_flags",
+    "citations",
+    "updated_at"
+  ],
+  "properties": {
+    "kid": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "category_id": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "policy_flags": {
+      "type": "string"
+    },
+    "citations": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

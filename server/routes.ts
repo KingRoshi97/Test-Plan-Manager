@@ -515,6 +515,28 @@ export function registerRoutes(app: Express) {
         } catch {}
         return { docs: audDocCount, schemas: audSchemaCount, registries: audRegistryCount, gates: audGateCount, actionTypes: audActionTypeCount };
       })(),
+      maintenance_library: (() => {
+        let musDocCount = 0, musSchemaCount = 0, musRegistryCount = 0, musGateCount = 0, musModeCount = 0;
+        try {
+          const musDir = path.join(AXION_ROOT, "libraries", "maintenance");
+          if (fs.existsSync(musDir)) musDocCount = fs.readdirSync(musDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+          const musContractsDir = path.join(musDir, "contracts");
+          if (fs.existsSync(musContractsDir)) musSchemaCount = fs.readdirSync(musContractsDir).filter((f) => f.endsWith(".json") && f !== "contract.meta.json").length;
+          const musRegDir = path.join(musDir, "registries");
+          if (fs.existsSync(musRegDir)) musRegistryCount = fs.readdirSync(musRegDir).filter((f) => f.endsWith(".json")).length;
+          const gatesPath = path.join(musRegDir, "REG-GATES-MUS.json");
+          if (fs.existsSync(gatesPath)) {
+            const g = JSON.parse(fs.readFileSync(gatesPath, "utf-8"));
+            musGateCount = g.items?.length ?? 0;
+          }
+          const modesPath = path.join(musRegDir, "REG-MAINTENANCE-MODES.json");
+          if (fs.existsSync(modesPath)) {
+            const m = JSON.parse(fs.readFileSync(modesPath, "utf-8"));
+            musModeCount = m.items?.length ?? 0;
+          }
+        } catch {}
+        return { docs: musDocCount, schemas: musSchemaCount, registries: musRegistryCount, gates: musGateCount, modes: musModeCount };
+      })(),
       recentRuns,
     });
   });
@@ -2990,6 +3012,178 @@ export function registerRoutes(app: Express) {
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
+  });
+
+  const MUS_LIB_DIR = path.join(AXION_ROOT, "libraries", "maintenance");
+
+  app.get("/api/maintenance", (_req: Request, res: Response) => {
+    try {
+      const regDir = path.join(MUS_LIB_DIR, "registries");
+      const contractsDir = path.join(MUS_LIB_DIR, "contracts");
+      const policiesDir = path.join(MUS_LIB_DIR, "policies");
+
+      const modesReg = fs.existsSync(path.join(regDir, "REG-MAINTENANCE-MODES.json"))
+        ? JSON.parse(fs.readFileSync(path.join(regDir, "REG-MAINTENANCE-MODES.json"), "utf-8"))
+        : { items: [] };
+      const gatesReg = fs.existsSync(path.join(regDir, "REG-GATES-MUS.json"))
+        ? JSON.parse(fs.readFileSync(path.join(regDir, "REG-GATES-MUS.json"), "utf-8"))
+        : { items: [] };
+      const detectorsReg = fs.existsSync(path.join(regDir, "REG-DETECTOR-PACKS.json"))
+        ? JSON.parse(fs.readFileSync(path.join(regDir, "REG-DETECTOR-PACKS.json"), "utf-8"))
+        : { items: [] };
+      const patchesReg = fs.existsSync(path.join(regDir, "REG-PATCH-TYPES.json"))
+        ? JSON.parse(fs.readFileSync(path.join(regDir, "REG-PATCH-TYPES.json"), "utf-8"))
+        : { items: [] };
+      const schedulesReg = fs.existsSync(path.join(regDir, "REG-SCHEDULES.json"))
+        ? JSON.parse(fs.readFileSync(path.join(regDir, "REG-SCHEDULES.json"), "utf-8"))
+        : { items: [] };
+
+      const policies: Record<string, unknown>[] = [];
+      if (fs.existsSync(policiesDir)) {
+        for (const f of fs.readdirSync(policiesDir).filter((f: string) => f.endsWith(".json"))) {
+          try { policies.push(JSON.parse(fs.readFileSync(path.join(policiesDir, f), "utf-8"))); } catch {}
+        }
+      }
+
+      let schemaCount = 0;
+      if (fs.existsSync(contractsDir)) {
+        schemaCount = fs.readdirSync(contractsDir).filter((f: string) => f.endsWith(".json") && f !== "contract.meta.json").length;
+      }
+
+      let registryCount = 0;
+      if (fs.existsSync(regDir)) {
+        registryCount = fs.readdirSync(regDir).filter((f: string) => f.endsWith(".json")).length;
+      }
+
+      res.json({
+        modes: modesReg.items,
+        gates: gatesReg.items,
+        detectorPacks: detectorsReg.items,
+        patchTypes: patchesReg.items,
+        schedules: schedulesReg.items,
+        policies,
+        schemaCount,
+        registryCount,
+        summary: {
+          modes: modesReg.items.length,
+          gates: gatesReg.items.length,
+          detectorPacks: detectorsReg.items.length,
+          patchTypes: patchesReg.items.length,
+          schedules: schedulesReg.items.length,
+          policies: policies.length,
+          schemas: schemaCount,
+          registries: registryCount,
+        },
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/maintenance/modes", (_req: Request, res: Response) => {
+    try {
+      const filePath = path.join(MUS_LIB_DIR, "registries", "REG-MAINTENANCE-MODES.json");
+      if (!fs.existsSync(filePath)) return res.json([]);
+      const reg = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      res.json(reg.items ?? []);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.get("/api/maintenance/gates", (_req: Request, res: Response) => {
+    try {
+      const filePath = path.join(MUS_LIB_DIR, "registries", "REG-GATES-MUS.json");
+      if (!fs.existsSync(filePath)) return res.json([]);
+      const reg = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      res.json(reg.items ?? []);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.get("/api/maintenance/detectors", (_req: Request, res: Response) => {
+    try {
+      const filePath = path.join(MUS_LIB_DIR, "registries", "REG-DETECTOR-PACKS.json");
+      if (!fs.existsSync(filePath)) return res.json([]);
+      const reg = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      res.json(reg.items ?? []);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.get("/api/maintenance/patches", (_req: Request, res: Response) => {
+    try {
+      const filePath = path.join(MUS_LIB_DIR, "registries", "REG-PATCH-TYPES.json");
+      if (!fs.existsSync(filePath)) return res.json([]);
+      const reg = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      res.json(reg.items ?? []);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.get("/api/maintenance/schedules", (_req: Request, res: Response) => {
+    try {
+      const filePath = path.join(MUS_LIB_DIR, "registries", "REG-SCHEDULES.json");
+      if (!fs.existsSync(filePath)) return res.json([]);
+      const reg = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      res.json(reg.items ?? []);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.get("/api/maintenance/policies", (_req: Request, res: Response) => {
+    try {
+      const policiesDir = path.join(MUS_LIB_DIR, "policies");
+      if (!fs.existsSync(policiesDir)) return res.json([]);
+      const policies = fs.readdirSync(policiesDir)
+        .filter((f: string) => f.endsWith(".json"))
+        .map((f: string) => {
+          try { return JSON.parse(fs.readFileSync(path.join(policiesDir, f), "utf-8")); } catch { return null; }
+        })
+        .filter(Boolean);
+      res.json(policies);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.get("/api/maintenance/schemas", (_req: Request, res: Response) => {
+    try {
+      const contractsDir = path.join(MUS_LIB_DIR, "contracts");
+      if (!fs.existsSync(contractsDir)) return res.json([]);
+      const schemas = fs.readdirSync(contractsDir)
+        .filter((f: string) => f.endsWith(".json") && f !== "contract.meta.json")
+        .map((f: string) => {
+          try {
+            const content = JSON.parse(fs.readFileSync(path.join(contractsDir, f), "utf-8"));
+            return { filename: f, properties: Object.keys(content.properties ?? {}), required: content.required ?? [] };
+          } catch { return null; }
+        })
+        .filter(Boolean);
+      res.json(schemas);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.get("/api/maintenance/registries/:name", (req: Request, res: Response) => {
+    try {
+      const name = req.params.name;
+      if (name.includes("..") || name.includes("/")) return res.status(400).json({ error: "Invalid name" });
+      const fileName = name.endsWith(".json") ? name : `${name}.json`;
+      const filePath = path.join(MUS_LIB_DIR, "registries", fileName);
+      if (!filePath.startsWith(path.join(MUS_LIB_DIR, "registries")) || !fs.existsSync(filePath)) {
+        return res.status(404).json({ error: `Registry '${name}' not found` });
+      }
+      res.json(JSON.parse(fs.readFileSync(filePath, "utf-8")));
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
+  });
+
+  app.get("/api/maintenance/registries", (_req: Request, res: Response) => {
+    try {
+      const regDir = path.join(MUS_LIB_DIR, "registries");
+      if (!fs.existsSync(regDir)) return res.json([]);
+      const registries = fs.readdirSync(regDir)
+        .filter((f: string) => f.endsWith(".json"))
+        .map((f: string) => {
+          try {
+            const content = JSON.parse(fs.readFileSync(path.join(regDir, f), "utf-8"));
+            return { filename: f, registry_id: content.registry_id, items: content.items?.length ?? 0, version: content.registry_version };
+          } catch { return null; }
+        })
+        .filter(Boolean);
+      res.json(registries);
+    } catch (err: any) { res.status(500).json({ error: err.message }); }
   });
 
   app.post("/api/autofill", async (req: Request, res: Response) => {

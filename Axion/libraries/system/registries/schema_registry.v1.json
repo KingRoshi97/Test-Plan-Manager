@@ -1,0 +1,32 @@
+{
+  "registry_id": "SYS-REG-SCHEMA-REGISTRY",
+  "schema_version": "1.0.0",
+  "registry_version": "1.12.0",
+  "description": "Global schema registry — all JSON Schema contracts across Axion libraries",
+  "items": [
+    { "schema_id": "MUS-SCH-001", "filename": "approval_event.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/approval_event.schema.json" },
+    { "schema_id": "MUS-SCH-002", "filename": "blast_radius.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/blast_radius.schema.json" },
+    { "schema_id": "MUS-SCH-003", "filename": "changeset.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/changeset.schema.json" },
+    { "schema_id": "MUS-SCH-004", "filename": "constraint_pack.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/constraint_pack.schema.json" },
+    { "schema_id": "MUS-SCH-005", "filename": "detector_pack.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/detector_pack.schema.json" },
+    { "schema_id": "MUS-SCH-006", "filename": "finding.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/finding.schema.json" },
+    { "schema_id": "MUS-SCH-007", "filename": "gate_rule.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/gate_rule.schema.json" },
+    { "schema_id": "MUS-SCH-008", "filename": "kid.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/kid.schema.json" },
+    { "schema_id": "MUS-SCH-009", "filename": "kl_category.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/kl_category.schema.json" },
+    { "schema_id": "MUS-SCH-010", "filename": "kl_tag.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/kl_tag.schema.json" },
+    { "schema_id": "MUS-SCH-011", "filename": "maintenance_run.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/maintenance_run.schema.json" },
+    { "schema_id": "MUS-SCH-012", "filename": "patch.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/patch.schema.json" },
+    { "schema_id": "MUS-SCH-013", "filename": "patch_type.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/patch_type.schema.json" },
+    { "schema_id": "MUS-SCH-014", "filename": "proof_bundle.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/proof_bundle.schema.json" },
+    { "schema_id": "MUS-SCH-015", "filename": "proposal_pack.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/proposal_pack.schema.json" },
+    { "schema_id": "MUS-SCH-016", "filename": "release.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/release.schema.json" },
+    { "schema_id": "MUS-SCH-017", "filename": "schedule_entry.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/schedule_entry.schema.json" },
+    { "schema_id": "MUS-SCH-018", "filename": "snapshot.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/snapshot.schema.json" },
+    { "schema_id": "MUS-SCH-019", "filename": "standard.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/standard.schema.json" },
+    { "schema_id": "MUS-SCH-020", "filename": "suppression_rule.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/suppression_rule.schema.json" },
+    { "schema_id": "MUS-SCH-021", "filename": "template_pack.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/template_pack.schema.json" },
+    { "schema_id": "MUS-SCH-022", "filename": "template.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/template.schema.json" },
+    { "schema_id": "MUS-SCH-023", "filename": "verification_command.schema.json", "library": "MUS", "path": "libraries/maintenance/contracts/verification_command.schema.json" }
+  ],
+  "updated_at": "2026-03-06T00:00:00Z"
+}

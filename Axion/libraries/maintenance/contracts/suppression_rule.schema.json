@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SuppressionRule",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "suppression_id",
+    "finding_type",
+    "scope_selectors",
+    "reason",
+    "expires_at",
+    "created_by",
+    "updated_at"
+  ],
+  "properties": {
+    "suppression_id": {
+      "type": "string"
+    },
+    "finding_type": {
+      "type": "string"
+    },
+    "scope_selectors": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

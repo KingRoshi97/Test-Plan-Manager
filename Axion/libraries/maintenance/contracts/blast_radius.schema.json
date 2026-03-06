@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BlastRadius",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "blast_radius_id",
+    "targets",
+    "downstream",
+    "risk_notes",
+    "updated_at"
+  ],
+  "properties": {
+    "blast_radius_id": {
+      "type": "string"
+    },
+    "targets": {
+      "type": "string"
+    },
+    "downstream": {
+      "type": "string"
+    },
+    "risk_notes": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

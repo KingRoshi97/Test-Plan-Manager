@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Release",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "release_id",
+    "version",
+    "status",
+    "changesets",
+    "manifest_ref",
+    "release_notes_ref",
+    "snapshot_ref",
+    "updated_at"
+  ],
+  "properties": {
+    "release_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "changesets": {
+      "type": "string"
+    },
+    "manifest_ref": {
+      "type": "string"
+    },
+    "release_notes_ref": {
+      "type": "string"
+    },
+    "snapshot_ref": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

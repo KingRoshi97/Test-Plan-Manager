@@ -1,0 +1,60 @@
+{
+  "policy_id": "MUS-POLICY",
+  "version": "0.1.0",
+  "updated_at": "2026-03-05",
+  "consent": {
+    "apply_required": true,
+    "publish_required": true
+  },
+  "scheduled_restrictions": {
+    "scheduled_publish_allowed": false,
+    "scheduled_apply_allowed": false
+  },
+  "actor_restrictions": {
+    "automation_can_apply": false,
+    "automation_can_publish": false
+  },
+  "proposal_rules": {
+    "patch_type_required": true,
+    "min_confidence_score_to_propose": 60,
+    "max_proposal_packs_per_run": 5,
+    "max_patches_per_proposal_pack": 25,
+    "max_assets_touched_per_run": 50,
+    "max_diff_bytes_per_patch": 20000
+  },
+  "budgets_default": {
+    "token_cap": 15000,
+    "time_cap_ms": 60000
+  },
+  "required_gates": {
+    "apply": [
+      "G-MUS-01",
+      "G-MUS-04",
+      "G-MUS-05"
+    ],
+    "publish": [
+      "G-MUS-02",
+      "G-MUS-03",
+      "G-MUS-04",
+      "G-MUS-05",
+      "G-MUS-06"
+    ]
+  },
+  "change_classification": {
+    "class_a_safe_patch_types": [
+      "PT-REG-01",
+      "PT-REG-02",
+      "PT-TPL-01",
+      "PT-KL-01",
+      "PT-KL-02"
+    ],
+    "class_b_patch_types": [
+      "PT-TPL-02",
+      "PT-DEP-01"
+    ],
+    "requires_blast_radius_for_classes": [
+      "B",
+      "C"
+    ]
+  }
+}

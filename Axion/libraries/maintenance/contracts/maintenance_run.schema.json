@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MaintenanceRun",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "run_id",
+    "mode_id",
+    "trigger",
+    "requested_by",
+    "scope_selectors",
+    "pinned_versions",
+    "budgets",
+    "status",
+    "outputs_refs",
+    "updated_at"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string"
+    },
+    "mode_id": {
+      "type": "string"
+    },
+    "trigger": {
+      "type": "string"
+    },
+    "requested_by": {
+      "type": "string"
+    },
+    "scope_selectors": {
+      "type": "string"
+    },
+    "pinned_versions": {
+      "type": "string"
+    },
+    "budgets": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "outputs_refs": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

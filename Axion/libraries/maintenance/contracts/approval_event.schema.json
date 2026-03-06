@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ApprovalEvent",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "approval_id",
+    "approval_type",
+    "target",
+    "approver",
+    "reason",
+    "diff_hash",
+    "evidence_refs",
+    "updated_at"
+  ],
+  "properties": {
+    "approval_id": {
+      "type": "string"
+    },
+    "approval_type": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "approver": {
+      "type": "string"
+    },
+    "reason": {
+      "type": "string"
+    },
+    "diff_hash": {
+      "type": "string"
+    },
+    "evidence_refs": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

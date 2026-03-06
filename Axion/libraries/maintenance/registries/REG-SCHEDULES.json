@@ -1,0 +1,69 @@
+{
+  "registry_id": "REG-SCHEDULES",
+  "schema_version": "1.0.0",
+  "registry_version": "0.1.0",
+  "description": "Schedule registry",
+  "items": [
+    {
+      "schedule_id": "SCH-NIGHTLY-REG-INTEGRITY",
+      "version": "0.1.0",
+      "status": "disabled",
+      "rrule": "RRULE:FREQ=DAILY;BYHOUR=2;BYMINUTE=0;BYSECOND=0",
+      "allowed_modes": [
+        "MM-01"
+      ],
+      "allowed_detector_packs": [
+        "DP-REG-01"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "registries"
+        ]
+      },
+      "budgets": {
+        "token_cap": 5000,
+        "time_cap_ms": 30000,
+        "max_findings": 200,
+        "max_proposals": 0,
+        "max_assets_touched": 0
+      },
+      "blackout_windows": [],
+      "updated_at": "2026-03-05"
+    },
+    {
+      "schedule_id": "SCH-WEEKLY-DRIFT",
+      "version": "0.1.0",
+      "status": "disabled",
+      "rrule": "RRULE:FREQ=WEEKLY;BYDAY=SU;BYHOUR=3;BYMINUTE=0;BYSECOND=0",
+      "allowed_modes": [
+        "MM-04"
+      ],
+      "allowed_detector_packs": [
+        "DP-DRIFT-01"
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "registries"
+        ]
+      },
+      "budgets": {
+        "token_cap": 15000,
+        "time_cap_ms": 60000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "blackout_windows": [],
+      "updated_at": "2026-03-05"
+    }
+  ],
+  "active_map": {},
+  "invariants": [
+    "No duplicate (id, version) pairs",
+    "active_map versions must exist in items",
+    "All references must resolve (no orphans)"
+  ],
+  "updated_at": "2026-03-05"
+}

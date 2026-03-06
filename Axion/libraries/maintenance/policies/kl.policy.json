@@ -1,0 +1,11 @@
+{
+  "policy_id": "KL-POLICY",
+  "version": "0.1.0",
+  "updated_at": "2026-03-05",
+  "defaults": {
+    "pattern_only": true,
+    "citations_required": true,
+    "example_restricted": true,
+    "visibility_default": "internal"
+  }
+}

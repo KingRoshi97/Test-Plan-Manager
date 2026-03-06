@@ -38,6 +38,7 @@ const links = [
   { href: "/telemetry-library", label: "Telemetry Library", icon: Activity },
   { href: "/audit-library", label: "Audit Library", icon: ClipboardList },
   { href: "/intake-library", label: "Intake Library", icon: ClipboardList },
+  { href: "/maintenance", label: "Maintenance", icon: Activity },
   { href: "/files", label: "Files", icon: FolderOpen },
   { href: "/health", label: "Health", icon: Heart },
   { href: "/logs", label: "Logs", icon: ScrollText },

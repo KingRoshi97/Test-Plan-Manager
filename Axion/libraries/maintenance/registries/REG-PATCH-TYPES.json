@@ -1,0 +1,184 @@
+{
+  "registry_id": "REG-PATCH-TYPES",
+  "schema_version": "1.0.0",
+  "registry_version": "0.1.0",
+  "description": "Patch types registry",
+  "items": [
+    {
+      "patch_type_id": "PT-REG-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Fix broken registry reference",
+      "description": "Modify reference fields only to point to existing (id,version) targets.",
+      "allowed_targets": [
+        "registry_item"
+      ],
+      "schema": {
+        "allowed_fields": [
+          "*ref",
+          "*refs"
+        ]
+      },
+      "validators": [
+        "refs_resolve",
+        "no_new_orphans"
+      ],
+      "risk_class_default": "safe",
+      "updated_at": "2026-03-05"
+    },
+    {
+      "patch_type_id": "PT-REG-02",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Normalize slug/name",
+      "description": "Normalize name/slug to deterministic formatting; enforce uniqueness.",
+      "allowed_targets": [
+        "template",
+        "kl_category",
+        "kl_tag",
+        "standard"
+      ],
+      "schema": {
+        "allowed_fields": [
+          "name",
+          "slug"
+        ]
+      },
+      "validators": [
+        "slug_unique",
+        "no_collision"
+      ],
+      "risk_class_default": "safe",
+      "updated_at": "2026-03-05"
+    },
+    {
+      "patch_type_id": "PT-TPL-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Add missing required template section",
+      "description": "Insert required section blocks where missing (bounded insert only).",
+      "allowed_targets": [
+        "template"
+      ],
+      "schema": {
+        "allowed_fields": [
+          "content_ref"
+        ],
+        "constraints": {
+          "bounded_insert": true
+        }
+      },
+      "validators": [
+        "template_completeness",
+        "placeholder_lint"
+      ],
+      "risk_class_default": "safe",
+      "updated_at": "2026-03-05"
+    },
+    {
+      "patch_type_id": "PT-TPL-02",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Tighten placeholder syntax",
+      "description": "Rewrite placeholders to allowed forms only (no semantic rewrite).",
+      "allowed_targets": [
+        "template"
+      ],
+      "schema": {
+        "allowed_fields": [
+          "content_ref"
+        ],
+        "constraints": {
+          "placeholder_only": true
+        }
+      },
+      "validators": [
+        "placeholder_lint"
+      ],
+      "risk_class_default": "caution",
+      "updated_at": "2026-03-05"
+    },
+    {
+      "patch_type_id": "PT-KL-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Add citation / mark needs-citation",
+      "description": "Add citations array entries or mark item as needing citations.",
+      "allowed_targets": [
+        "knowledge_item"
+      ],
+      "schema": {
+        "allowed_fields": [
+          "citations",
+          "policy_flags.needs_citation"
+        ]
+      },
+      "validators": [
+        "citation_format"
+      ],
+      "risk_class_default": "safe",
+      "updated_at": "2026-03-05"
+    },
+    {
+      "patch_type_id": "PT-KL-02",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Tag/category mapping correction",
+      "description": "Adjust category_id and/or tags to valid deterministic values.",
+      "allowed_targets": [
+        "knowledge_item"
+      ],
+      "schema": {
+        "allowed_fields": [
+          "category_id",
+          "tags"
+        ]
+      },
+      "validators": [
+        "tags_exist",
+        "category_exists"
+      ],
+      "risk_class_default": "safe",
+      "updated_at": "2026-03-05"
+    },
+    {
+      "patch_type_id": "PT-DEP-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Deprecate with replacement pointer",
+      "description": "Mark asset deprecated and add replacement reference + deadline.",
+      "allowed_targets": [
+        "template",
+        "knowledge_item",
+        "standard"
+      ],
+      "schema": {
+        "allowed_fields": [
+          "status",
+          "replacement_ref",
+          "deprecation_deadline"
+        ]
+      },
+      "validators": [
+        "replacement_exists"
+      ],
+      "risk_class_default": "caution",
+      "updated_at": "2026-03-05"
+    }
+  ],
+  "active_map": {
+    "PT-REG-01": "0.1.0",
+    "PT-REG-02": "0.1.0",
+    "PT-TPL-01": "0.1.0",
+    "PT-TPL-02": "0.1.0",
+    "PT-KL-01": "0.1.0",
+    "PT-KL-02": "0.1.0",
+    "PT-DEP-01": "0.1.0"
+  },
+  "invariants": [
+    "No duplicate (id, version) pairs",
+    "active_map versions must exist in items",
+    "All references must resolve (no orphans)"
+  ],
+  "updated_at": "2026-03-05"
+}

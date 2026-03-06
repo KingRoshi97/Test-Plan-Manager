@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KnowledgeCategory",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "category_id",
+    "version",
+    "status",
+    "name",
+    "slug",
+    "default_policy",
+    "updated_at"
+  ],
+  "properties": {
+    "category_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "default_policy": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

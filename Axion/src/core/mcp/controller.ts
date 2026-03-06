@@ -5,6 +5,8 @@ import type {
   MaintenanceUnit,
   RollbackRecord,
   AxionCompatibilityReport,
+  MaintenanceMode,
+  MusGateRule,
 } from "./model.js";
 import type { MaintenanceRunStore } from "./store.js";
 import { JSONMaintenanceRunStore } from "./store.js";
@@ -13,6 +15,7 @@ import { AxionIntegrationMaintainer } from "./axionIntegration.js";
 import { isoNow } from "../../utils/time.js";
 import { writeJson } from "../../utils/fs.js";
 import { join } from "node:path";
+import { getMaintenanceModes, getGates, loadMaintenanceLibrary } from "../maintenance/loader.js";
 
 export interface MaintenanceIntent {
   mode_id: string;
@@ -47,12 +50,48 @@ export class MaintenanceController {
   private modeRunner: ModeRunner;
   private axionIntegration: AxionIntegrationMaintainer;
   private outputDir: string;
+  private musLoaded = false;
 
   constructor(basePath: string) {
     this.outputDir = basePath;
     this.store = new JSONMaintenanceRunStore(basePath);
     this.modeRunner = new ModeRunner({ outputDir: basePath, store: this.store });
     this.axionIntegration = new AxionIntegrationMaintainer({ outputDir: basePath });
+  }
+
+  private ensureMusLoaded(repoRoot?: string): void {
+    if (!this.musLoaded) {
+      try {
+        loadMaintenanceLibrary(repoRoot ?? process.cwd());
+        this.musLoaded = true;
+      } catch {}
+    }
+  }
+
+  private resolveMode(modeId: string): MaintenanceMode | undefined {
+    this.ensureMusLoaded();
+    const modes = getMaintenanceModes();
+    return modes.find((m) => m.mode_id === modeId);
+  }
+
+  private validateModeConstraints(intent: MaintenanceIntent, phase: "plan" | "apply" | "publish" = "plan"): string[] {
+    const violations: string[] = [];
+    const mode = this.resolveMode(intent.mode_id);
+    if (!mode) return violations;
+
+    if (mode.status !== "active") {
+      violations.push(`Mode ${intent.mode_id} is not active (status: ${mode.status})`);
+    }
+    if (phase === "apply" && mode.hard_constraints?.no_apply) {
+      violations.push(`Mode ${intent.mode_id} has no_apply constraint — cannot apply changes`);
+    }
+    if (phase === "publish" && mode.hard_constraints?.no_publish) {
+      violations.push(`Mode ${intent.mode_id} has no_publish constraint — cannot publish`);
+    }
+    if (mode.hard_constraints?.read_only && (phase === "apply" || phase === "publish")) {
+      violations.push(`Mode ${intent.mode_id} is read_only — cannot ${phase}`);
+    }
+    return violations;
   }
 
   private validateTransition(from: MaintenanceRunStatus, to: MaintenanceRunStatus): void {
@@ -105,6 +144,11 @@ export class MaintenanceController {
       throw new Error(`Scope validation failed: ${scopeValidation.violations.join("; ")}`);
     }
 
+    const modeViolations = this.validateModeConstraints(intent);
+    if (modeViolations.length > 0) {
+      throw new Error(`Mode constraint violations: ${modeViolations.join("; ")}`);
+    }
+
     const runId = allocateMaintenanceRunId();
     const now = isoNow();
 
@@ -149,6 +193,18 @@ export class MaintenanceController {
     });
     if (!scopeValidation.valid) {
       throw new Error(`Baseline health check failed: ${scopeValidation.violations.join("; ")}`);
+    }
+
+    const applyViolations = this.validateModeConstraints({
+      mode_id: run.mode_id,
+      intent_type: run.intent_type,
+      scope_constraints: run.scope_constraints,
+      risk_class: run.risk_class,
+      units: run.units,
+      baseline_revision: run.baseline_revision,
+    }, "apply");
+    if (applyViolations.length > 0) {
+      throw new Error(`Mode apply constraint violations: ${applyViolations.join("; ")}`);
     }
 
     let updated = await this.transition(run, "applying");

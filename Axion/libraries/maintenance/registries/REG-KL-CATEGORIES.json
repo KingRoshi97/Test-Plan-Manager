@@ -1,0 +1,14 @@
+{
+  "registry_id": "REG-KL-CATEGORIES",
+  "schema_version": "1.0.0",
+  "registry_version": "0.1.0",
+  "description": "Knowledge Library category registry",
+  "items": [],
+  "active_map": {},
+  "invariants": [
+    "No duplicate (id, version) pairs",
+    "active_map versions must exist in items",
+    "All references must resolve (no orphans)"
+  ],
+  "updated_at": "2026-03-05"
+}

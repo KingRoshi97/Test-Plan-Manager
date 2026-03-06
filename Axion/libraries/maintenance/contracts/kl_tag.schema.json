@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KnowledgeTag",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "tag_id",
+    "version",
+    "status",
+    "category_id",
+    "name",
+    "slug",
+    "updated_at"
+  ],
+  "properties": {
+    "tag_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "category_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

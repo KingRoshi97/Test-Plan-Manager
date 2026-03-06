@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "created_at": "2026-03-05",
+  "id_conventions": {
+    "modes": "MM-01..MM-21",
+    "gates": "G-MUS-## (and special G-MUS-APPLY, G-MUS-PUBLISH)",
+    "detector_packs": "DP-<GROUP>-##",
+    "patch_types": "PT-<GROUP>-##",
+    "runs": "RUN-YYYYMMDD-XXXX",
+    "proposals": "PPK-YYYYMMDD-XXXX",
+    "changesets": "CS-YYYYMMDD-XXXX",
+    "releases": "REL-<semver>",
+    "snapshots": "SNP-YYYYMMDD-XXXX"
+  },
+  "versioning": "semver",
+  "status_enum": [
+    "draft",
+    "reviewed",
+    "active",
+    "deprecated",
+    "archived"
+  ]
+}

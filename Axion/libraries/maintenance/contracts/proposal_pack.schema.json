@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProposalPack",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "proposal_pack_id",
+    "run_id",
+    "status",
+    "summary",
+    "risk_class",
+    "confidence_score",
+    "impact_score",
+    "patches",
+    "proof_refs",
+    "updated_at"
+  ],
+  "properties": {
+    "proposal_pack_id": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "risk_class": {
+      "type": "string"
+    },
+    "confidence_score": {
+      "type": "string"
+    },
+    "impact_score": {
+      "type": "string"
+    },
+    "patches": {
+      "type": "string"
+    },
+    "proof_refs": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

@@ -339,6 +339,45 @@ Operator action tracking — audit action schemas, append-only ledgers, integrit
 
 **Legacy files preserved:** operator_actions_ledger.schema.v1.json
 
+### Maintenance Library (`Axion/libraries/maintenance/`)
+Maintenance and Update System (MUS) — 21 maintenance modes, 6 consent gates, 2 detector packs, 7 patch types, 2 schedules, 4 policies, 23 JSON Schema contracts (MUS-0 through MUS-7 equivalent). Bootstrap-extracted from MUS governance package.
+
+**Structure (46 files: 2 docs + 23 contracts + 17 registries + 4 policies):**
+- **MUS-0**: Purpose boundary doc (1 .md)
+- **Contracts** (`contracts/`): 23 JSON Schema files — approval_event, blast_radius, changeset, constraint_pack, detector_pack, finding, gate_rule, kid, kl_category, kl_tag, maintenance_run, patch, patch_type, proof_bundle, proposal_pack, release, schedule_entry, snapshot, standard, suppression_rule, template_pack, template, verification_command + contract.meta.json
+- **Registries** (`registries/`): 17 registry files — REG-MAINTENANCE-MODES (21 modes MM-01..MM-21), REG-GATES-MUS (6 gates G-MUS-01..06), REG-DETECTOR-PACKS (2 packs), REG-PATCH-TYPES (7 types), REG-SCHEDULES (2 schedules, disabled by default), plus starter registries for baselines, constraint-packs, deprecations, KIDs, KL-categories, KL-tags, releases, standards, suppressions, template-packs, templates, verification-commands
+- **Policies** (`policies/`): 4 policy files — MUS-POLICY (consent gates: apply_required + publish_required, budgets_default: 15k token cap, proposal_rules: max 5 per run), KL-POLICY (versioning, review, freshness defaults), TEMPLATE-POLICY (placeholder rules, naming), SECURITY-POLICY (roles, locks, audit requirements)
+
+**Maintenance Modes (21):** MM-01 Health Check through MM-21 Emergency Recovery. Each mode has: execution_class (manual_only|scheduled_allowed), allowed_triggers, allowed_scopes (asset_classes), allowed_detector_packs, hard_constraints (no_apply, no_publish, read_only), required_gates, default_budgets (token_cap, time_limit_ms, max_changes).
+
+**MUS Gates (6):** G-MUS-01 Apply Gate, G-MUS-02 Publish Gate, G-MUS-03 Blast Radius Gate, G-MUS-04 Snapshot Gate, G-MUS-05 Proof Bundle Gate, G-MUS-06 Registry Integrity Gate. Each has predicate (AND/OR clauses), evidence requirements.
+
+**Consent Rules:** Apply requires G-MUS-01; Publish requires G-MUS-02; automation cannot apply/publish per policy.
+
+**Loader** (`Axion/src/core/maintenance/loader.ts`):
+- `loadMaintenanceLibrary(repoRoot)` — loads all registries + policies, cached
+- `loadMaintenanceDocs(repoRoot)` — all MUS docs
+- `loadMaintenanceSchemas(repoRoot)` — all 23 contract schemas from contracts/
+- `loadMaintenanceRegistries(repoRoot)` — all 17 registries from registries/
+- `loadMaintenancePolicies(repoRoot)` — all 4 policies from policies/
+- `getMaintenanceModes()` — returns 21 mode items
+- `getGates()` — returns 6 gate rule items
+- `getDetectorPacks()` — returns 2 detector pack items
+- `getPatchTypes()` — returns 7 patch type items
+- `getSchedules()` — returns 2 schedule items
+- `getMusPolicy()` — returns MUS-POLICY
+
+**MCP Integration** (`Axion/src/core/mcp/`):
+- `model.ts` — MaintenanceMode, MusGateRule, DetectorPack, PatchType types exported
+- `controller.ts` — loads MUS library on init, validates mode constraints (status, no_apply) before planning
+- `modeRunner.ts` — enforces mode budgets (read_only, max_changes), validates required gates before execution
+- `agents/maintenance.ts` — `getMusPolicyGuardrails()` returns consent/budget/proposal rules, `getActiveModeIds()` returns active mode IDs
+
+**API**: 10 `/api/maintenance/*` endpoints (overview, modes, gates, detectors, patches, schedules, policies, schemas, registries, registries/:name)
+**UI**: `/maintenance` page with 6 tabs (Overview, Modes, Gates & Detectors, Patches & Schedules, Policies, Schemas), mode table with execution class/triggers/permissions/gates/budgets, gate rules with predicate visualization, detector packs with scope info, patch types with risk class, schedules with RRULE + enabled status, policy JSON viewer, schema property listing
+**Registered in:** `schema_registry.v1.json` (23 MUS schema entries), `library_index.v1.json` (MUS entry)
+**Health endpoint:** Reports maintenance_library stats (docs, schemas, registries, gates, modes)
+
 ### Template Rendering (evidence.ts)
 `writeRenderedDocs` loads `intake/normalized_input.json` to supply real `project_name`, `project_overview`, routing fields, and constraint sections (nfr, auth, data, integrations, delivery) to the rendering context. Eliminates `__AXION_VALUE__` sentinel from rendered output.
 
@@ -379,7 +418,7 @@ package.json      # Root package.json with all dependencies
 - `GET /api/assemblies/:id/runs/:runId` — get run detail
 - `GET /api/files?dir=` — browse artifact directories
 - `GET /api/files/{path}` — read artifact file content
-- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning/verification/kit/telemetry/audit library stats, recent runs)
+- `GET /api/health` — system health (stages, gates, KIDs, system/orchestration/gates/policy/intake/canonical/standards/templates/planning/verification/kit/telemetry/audit/maintenance library stats, recent runs)
 - `GET /api/config` — pipeline configuration (loads from orchestration library registry with fallback)
 - `GET /api/status` — assembly status summary
 - `GET /api/reports/:assemblyId` — get reports
@@ -463,6 +502,16 @@ package.json      # Root package.json with all dependencies
 - `GET /api/intake-library/registries/:name` — single registry by name
 - `GET /api/intake-library/docs` — all intake documents with frontmatter
 - `GET /api/intake-library/docs/:filename` — single document by filename
+- `GET /api/maintenance` — maintenance library overview (modes, gates, detectors, patches, schedules, policies, schemas, registries summary)
+- `GET /api/maintenance/modes` — all 21 maintenance modes
+- `GET /api/maintenance/gates` — all 6 MUS gates
+- `GET /api/maintenance/detectors` — detector packs
+- `GET /api/maintenance/patches` — patch types
+- `GET /api/maintenance/schedules` — schedules
+- `GET /api/maintenance/policies` — all 4 policies
+- `GET /api/maintenance/schemas` — all 23 contract schemas
+- `GET /api/maintenance/registries` — all 17 registries with item counts
+- `GET /api/maintenance/registries/:name` — single registry by name
 - `POST /api/uploads` — upload files (multipart/form-data, up to 10 files, 50MB limit per file)
 - `GET /api/uploads/:id` — download uploaded file
 - `DELETE /api/uploads/:id` — delete uploaded file

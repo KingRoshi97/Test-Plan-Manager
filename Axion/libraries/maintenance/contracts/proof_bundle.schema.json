@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProofBundle",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "proof_bundle_id",
+    "run_id",
+    "inputs_pinned",
+    "evidence",
+    "hash",
+    "updated_at"
+  ],
+  "properties": {
+    "proof_bundle_id": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "inputs_pinned": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "string"
+    },
+    "hash": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "registry_id": "REG-DETECTOR-PACKS",
+  "schema_version": "1.0.0",
+  "registry_version": "0.1.0",
+  "description": "Detector packs registry",
+  "items": [
+    {
+      "detector_pack_id": "DP-REG-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Registry Integrity Pack",
+      "description": "Detect-only checks for registry structure and reference integrity.",
+      "checks": [
+        {
+          "check_id": "reg.no_orphans",
+          "severity": "high"
+        },
+        {
+          "check_id": "reg.no_duplicates",
+          "severity": "high"
+        },
+        {
+          "check_id": "reg.active_map_valid",
+          "severity": "high"
+        },
+        {
+          "check_id": "reg.status_valid",
+          "severity": "medium"
+        }
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "registries"
+        ]
+      },
+      "default_budgets": {
+        "token_cap": 5000,
+        "time_cap_ms": 30000,
+        "max_findings": 200,
+        "max_proposals": 0,
+        "max_assets_touched": 0
+      },
+      "outputs": {
+        "findings": true,
+        "proposal_packs": false,
+        "proof_bundle": true
+      },
+      "updated_at": "2026-03-05"
+    },
+    {
+      "detector_pack_id": "DP-DRIFT-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Drift Detection Pack",
+      "description": "Detect drift across templates/KL/registries and propose bounded safe fixes.",
+      "checks": [
+        {
+          "check_id": "tpl.missing_required_sections",
+          "severity": "medium",
+          "propose": [
+            "PT-TPL-01"
+          ]
+        },
+        {
+          "check_id": "tpl.placeholder_violations",
+          "severity": "medium",
+          "propose": [
+            "PT-TPL-02"
+          ]
+        },
+        {
+          "check_id": "kl.missing_citations",
+          "severity": "medium",
+          "propose": [
+            "PT-KL-01"
+          ]
+        },
+        {
+          "check_id": "kl.tag_category_invalid",
+          "severity": "low",
+          "propose": [
+            "PT-KL-02"
+          ]
+        },
+        {
+          "check_id": "slug.inconsistency",
+          "severity": "low",
+          "propose": [
+            "PT-REG-02"
+          ]
+        }
+      ],
+      "allowed_scopes": {
+        "asset_classes": [
+          "templates",
+          "knowledge_library",
+          "registries"
+        ]
+      },
+      "default_budgets": {
+        "token_cap": 15000,
+        "time_cap_ms": 60000,
+        "max_findings": 500,
+        "max_proposals": 25,
+        "max_assets_touched": 50
+      },
+      "outputs": {
+        "findings": true,
+        "proposal_packs": true,
+        "proof_bundle": true
+      },
+      "updated_at": "2026-03-05"
+    }
+  ],
+  "active_map": {
+    "DP-REG-01": "0.1.0",
+    "DP-DRIFT-01": "0.1.0"
+  },
+  "invariants": [
+    "No duplicate (id, version) pairs",
+    "active_map versions must exist in items",
+    "All references must resolve (no orphans)"
+  ],
+  "updated_at": "2026-03-05"
+}

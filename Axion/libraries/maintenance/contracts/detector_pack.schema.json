@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DetectorPack",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "detector_pack_id",
+    "version",
+    "status",
+    "name",
+    "checks",
+    "allowed_scopes",
+    "default_budgets",
+    "outputs",
+    "updated_at"
+  ],
+  "properties": {
+    "detector_pack_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "checks": {
+      "type": "string"
+    },
+    "allowed_scopes": {
+      "type": "string"
+    },
+    "default_budgets": {
+      "type": "string"
+    },
+    "outputs": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

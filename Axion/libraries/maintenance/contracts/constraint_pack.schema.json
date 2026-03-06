@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ConstraintPack",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "constraint_pack_id",
+    "version",
+    "status",
+    "name",
+    "constraints",
+    "updated_at"
+  ],
+  "properties": {
+    "constraint_pack_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "constraints": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

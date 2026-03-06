@@ -1,0 +1,25 @@
+{
+  "policy_id": "SECURITY-POLICY",
+  "version": "0.1.0",
+  "updated_at": "2026-03-05",
+  "locks": {
+    "global_apply_lock": false,
+    "global_publish_lock": false,
+    "asset_class_locks": {},
+    "scope_locks": {}
+  },
+  "roles": [
+    "operator",
+    "maintainer",
+    "auditor",
+    "automation"
+  ],
+  "elevated_approvals": {
+    "asset_classes": [
+      "verification_commands",
+      "gate_rules",
+      "contracts"
+    ],
+    "require_dual_approval": false
+  }
+}

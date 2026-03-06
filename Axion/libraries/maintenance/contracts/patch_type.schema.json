@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PatchType",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "patch_type_id",
+    "version",
+    "status",
+    "name",
+    "allowed_targets",
+    "schema",
+    "validators",
+    "risk_class_default",
+    "updated_at"
+  ],
+  "properties": {
+    "patch_type_id": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "allowed_targets": {
+      "type": "string"
+    },
+    "schema": {
+      "type": "string"
+    },
+    "validators": {
+      "type": "string"
+    },
+    "risk_class_default": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

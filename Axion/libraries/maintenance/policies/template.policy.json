@@ -1,0 +1,18 @@
+{
+  "policy_id": "TEMPLATE-POLICY",
+  "version": "0.1.0",
+  "updated_at": "2026-03-05",
+  "placeholder_rules": {
+    "allowed_forms": [
+      "{{field:path}}",
+      "{{derive:name(args)}}",
+      "{{ref:KID-####}}"
+    ]
+  },
+  "completeness": {
+    "requires_required_sections": true
+  },
+  "test_render": {
+    "required_on_publish": true
+  }
+}

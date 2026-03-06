@@ -1,3 +1,57 @@
+export interface MaintenanceMode {
+  mode_id: string;
+  version: string;
+  status: string;
+  name: string;
+  execution_class: "manual_only" | "scheduled_allowed";
+  allowed_triggers: string[];
+  allowed_scopes: { asset_classes: string[] };
+  allowed_detector_packs: string[];
+  hard_constraints: {
+    no_apply?: boolean;
+    no_publish?: boolean;
+    read_only?: boolean;
+    [key: string]: boolean | undefined;
+  };
+  required_gates: string[];
+  default_budgets: {
+    token_cap: number;
+    time_cap_ms: number;
+    max_findings: number;
+    max_proposals: number;
+    max_assets_touched: number;
+  };
+}
+
+export interface MusGateRule {
+  gate_rule_id: string;
+  version: string;
+  status: string;
+  name: string;
+  predicate: {
+    type: string;
+    clauses: { type: string; approval_type?: string }[];
+  };
+  evidence_requirements: string[];
+}
+
+export interface DetectorPack {
+  detector_pack_id: string;
+  version: string;
+  name: string;
+  allowed_scopes: { asset_classes: string[] };
+  checks: { check_id: string; description: string; severity: string }[];
+}
+
+export interface PatchType {
+  patch_type_id: string;
+  version: string;
+  name: string;
+  allowed_targets: string[];
+  validators: string[];
+  risk_class_default: string;
+}
+
 export type MaintenanceRunStatus =
   | "planned"
   | "applying"

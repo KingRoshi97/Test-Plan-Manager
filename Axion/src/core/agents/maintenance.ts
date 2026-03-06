@@ -1,4 +1,5 @@
 import { BaseAgent, type AgentContext, type AgentGuardrail, type AgentIdentity, type GuardrailResult } from "./model.js";
+import { getMusPolicy, getMaintenanceModes } from "../maintenance/loader.js";
 
 const MA_CAPABILITIES = [
   "plan_maintenance",
@@ -206,4 +207,28 @@ export interface RollbackStrategy {
 export interface RollbackValidationResult {
   valid: boolean;
   errors: string[];
+}
+
+export function getMusPolicyGuardrails(): { applyRequiresConsent: boolean; publishRequiresConsent: boolean; tokenCap: number; maxProposals: number } {
+  try {
+    const policy = getMusPolicy();
+    if (!policy) return { applyRequiresConsent: true, publishRequiresConsent: true, tokenCap: 50000, maxProposals: 5 };
+    return {
+      applyRequiresConsent: policy.consent?.apply_required ?? true,
+      publishRequiresConsent: policy.consent?.publish_required ?? true,
+      tokenCap: policy.budgets_default?.token_cap ?? 50000,
+      maxProposals: policy.proposal_rules?.max_proposal_packs_per_run ?? 5,
+    };
+  } catch {
+    return { applyRequiresConsent: true, publishRequiresConsent: true, tokenCap: 50000, maxProposals: 5 };
+  }
+}
+
+export function getActiveModeIds(): string[] {
+  try {
+    const modes = getMaintenanceModes();
+    return modes.filter((m) => m.status === "active").map((m) => m.mode_id);
+  } catch {
+    return [];
+  }
 }

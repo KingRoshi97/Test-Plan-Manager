@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ScheduleEntry",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schedule_id",
+    "status",
+    "rrule",
+    "allowed_modes",
+    "allowed_detector_packs",
+    "budgets",
+    "updated_at"
+  ],
+  "properties": {
+    "schedule_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "rrule": {
+      "type": "string"
+    },
+    "allowed_modes": {
+      "type": "string"
+    },
+    "allowed_detector_packs": {
+      "type": "string"
+    },
+    "budgets": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

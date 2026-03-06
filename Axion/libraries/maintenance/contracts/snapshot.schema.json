@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Snapshot",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "snapshot_id",
+    "created_from",
+    "registries_pinned",
+    "asset_refs",
+    "integrity_hash",
+    "updated_at"
+  ],
+  "properties": {
+    "snapshot_id": {
+      "type": "string"
+    },
+    "created_from": {
+      "type": "string"
+    },
+    "registries_pinned": {
+      "type": "string"
+    },
+    "asset_refs": {
+      "type": "string"
+    },
+    "integrity_hash": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

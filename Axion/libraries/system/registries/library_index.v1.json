@@ -1,0 +1,24 @@
+{
+  "registry_id": "SYS-REG-LIBRARY-INDEX",
+  "schema_version": "1.0.0",
+  "registry_version": "1.12.0",
+  "description": "Index of all Axion libraries with paths and asset counts",
+  "items": [
+    { "library_id": "SYS", "name": "System Library", "path": "libraries/system", "status": "active" },
+    { "library_id": "ORC", "name": "Orchestration Library", "path": "libraries/orchestration", "status": "active" },
+    { "library_id": "GATE", "name": "Gates Library", "path": "libraries/gates", "status": "active" },
+    { "library_id": "POL", "name": "Policy Library", "path": "libraries/policy", "status": "active" },
+    { "library_id": "CAN", "name": "Canonical Library", "path": "libraries/canonical", "status": "active" },
+    { "library_id": "STD", "name": "Standards Library", "path": "libraries/standards", "status": "active" },
+    { "library_id": "TMP", "name": "Templates Library", "path": "libraries/templates", "status": "active" },
+    { "library_id": "PLN", "name": "Planning Library", "path": "libraries/planning", "status": "active" },
+    { "library_id": "VER", "name": "Verification Library", "path": "libraries/verification", "status": "active" },
+    { "library_id": "KIT", "name": "Kit Library", "path": "libraries/kit", "status": "active" },
+    { "library_id": "TEL", "name": "Telemetry Library", "path": "libraries/telemetry", "status": "active" },
+    { "library_id": "AUD", "name": "Audit Library", "path": "libraries/audit", "status": "active" },
+    { "library_id": "INT", "name": "Intake Library", "path": "libraries/intake", "status": "active" },
+    { "library_id": "KL", "name": "Knowledge Library", "path": "libraries/knowledge", "status": "active" },
+    { "library_id": "MUS", "name": "Maintenance Library", "path": "libraries/maintenance", "status": "active" }
+  ],
+  "updated_at": "2026-03-06T00:00:00Z"
+}
