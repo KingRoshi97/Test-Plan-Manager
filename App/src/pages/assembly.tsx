@@ -676,7 +676,15 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
 
       {latestRun && (
         <div className="border rounded-lg p-5 border-[hsl(var(--border))] bg-[hsl(var(--card))]">
-          <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-3">Token Usage</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Token Usage</h3>
+            {assembly.status === "running" && latestRun.tokenUsage && latestRun.tokenUsage.total_tokens > 0 && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                LIVE
+              </span>
+            )}
+          </div>
           {latestRun.tokenUsage && latestRun.tokenUsage.total_tokens > 0 ? (
             <>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -717,7 +725,9 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
             </>
           ) : (
             <div className="text-sm text-[hsl(var(--muted-foreground))] py-4 text-center">
-              Token usage tracking is active. Data will appear after the next pipeline run.
+              {assembly.status === "running"
+                ? "Waiting for AI calls... Token data will appear as each API call completes."
+                : "Token usage tracking is active. Data will appear after the next pipeline run."}
             </div>
           )}
         </div>

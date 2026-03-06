@@ -55,8 +55,9 @@ Full Mechanics pipeline + web application layer with three formal control planes
 - `Axion/src/core/usage/tracker.ts` — In-memory accumulator for OpenAI token usage per pipeline run
 - **Tracked call sites**: `filler.ts` (S7_RENDER_DOCS stage), `openai-bridge.ts` (S3_CANONICAL_SPEC, S5_WORK_BREAKDOWN, S7_TEMPLATE_ENRICH stages), `server/openai.ts` (AUTOFILL stage)
 - **Cost model**: gpt-4o at $2.50/1M input, $10/1M output; gpt-4o-mini at $0.15/1M input, $0.60/1M output
-- **Persistence**: `cmdRunFull()` writes `token_usage.json` to run dir; `pipeline-runner.ts` reads it on completion and stores in `pipeline_runs.token_usage` (jsonb column)
-- **UI**: Assembly overview shows Token Usage card (total/input/output tokens + estimated cost) with per-stage breakdown; Pipeline tab run history table includes Tokens and Cost columns
+- **Live streaming**: `recordUsage()` emits `TOKEN_USAGE: {...}` to stdout after each API call with cumulative totals and per-stage breakdown; `pipeline-runner.ts` parses these lines in real-time and updates `pipeline_runs.tokenUsage` (jsonb) incrementally during the run
+- **Persistence**: `cmdRunFull()` writes final `token_usage.json` to run dir; `pipeline-runner.ts` also reads it on completion as reconciliation
+- **UI**: Assembly overview shows Token Usage card (total/input/output tokens + estimated cost) with per-stage breakdown and pulsing "LIVE" badge during active runs; auto-refreshes every 2s while running; Pipeline tab run history table includes Tokens and Cost columns
 
 ### Intake Library (`Axion/libraries/intake/`)
 Form spec, field enums, validation rules, submission records, normalization contracts, and intake gates (INT-0 through INT-7). 12 legacy flat files preserved for backward compat (pipeline code: normalizer.ts, validator.ts, submissionRecord.ts).

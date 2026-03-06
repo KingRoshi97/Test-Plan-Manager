@@ -122,20 +122,33 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
   let stdout = "";
   let stderr = "";
   let runId = "";
+  let stdoutBuffer = "";
+  let lastTokenApiCalls = 0;
   const stages = buildInitialStages();
+  let updateQueue = Promise.resolve();
 
-  child.stdout.on("data", async (chunk: Buffer) => {
+  function enqueueUpdate(fn: () => Promise<void>) {
+    updateQueue = updateQueue.then(fn).catch(() => {});
+  }
+
+  child.stdout.on("data", (chunk: Buffer) => {
     const text = chunk.toString();
     stdout += text;
+    stdoutBuffer += text;
 
-    const runMatch = text.match(/Created run: (RUN-\d+)/);
-    if (runMatch) {
-      runId = runMatch[1];
-      await storage.updatePipelineRun(pipelineRunId, { runId });
-      await storage.updateAssembly(assemblyId, { runId });
-    }
+    const lines = stdoutBuffer.split("\n");
+    stdoutBuffer = lines.pop() ?? "";
 
-    for (const line of text.split("\n")) {
+    for (const line of lines) {
+      const runMatch = line.match(/Created run: (RUN-\d+)/);
+      if (runMatch) {
+        runId = runMatch[1];
+        enqueueUpdate(async () => {
+          await storage.updatePipelineRun(pipelineRunId, { runId });
+          await storage.updateAssembly(assemblyId, { runId });
+        });
+      }
+
       const stageMatch = line.match(/Stage (S\d+_\w+): (pass|fail)/);
       if (stageMatch) {
         const [, stageId, result] = stageMatch;
@@ -143,21 +156,51 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
           status: result === "pass" ? "passed" : "failed",
           completedAt: new Date().toISOString(),
         };
-        await storage.updatePipelineRun(pipelineRunId, {
-          stages,
-          currentStage: stageId,
+        enqueueUpdate(async () => {
+          await storage.updatePipelineRun(pipelineRunId, {
+            stages,
+            currentStage: stageId,
+          });
+          await storage.updateAssembly(assemblyId, { currentStep: stageId });
         });
-        await storage.updateAssembly(assemblyId, { currentStep: stageId });
       }
 
       const gateMatch = line.match(/(PASS|FAIL) (G\d+_\w+)/);
       if (gateMatch) {
-        await storage.createReport({
-          assemblyId,
-          runId,
-          reportType: "gate_result",
-          content: { gate: gateMatch[2], status: gateMatch[1].toLowerCase() },
+        const gate = gateMatch[2];
+        const status = gateMatch[1].toLowerCase();
+        enqueueUpdate(async () => {
+          await storage.createReport({
+            assemblyId,
+            runId,
+            reportType: "gate_result",
+            content: { gate, status },
+          });
         });
+      }
+
+      const tokenMatch = line.match(/^TOKEN_USAGE: (.+)$/);
+      if (tokenMatch) {
+        try {
+          const usage = JSON.parse(tokenMatch[1]);
+          const calls = usage.api_calls ?? 0;
+          if (calls > lastTokenApiCalls) {
+            lastTokenApiCalls = calls;
+            const tokenUsage = {
+              total_prompt_tokens: usage.total_prompt_tokens ?? 0,
+              total_completion_tokens: usage.total_completion_tokens ?? 0,
+              total_tokens: usage.total_tokens ?? 0,
+              total_cost_usd: usage.total_cost_usd ?? 0,
+              api_calls: calls,
+              by_stage: usage.by_stage ?? {},
+            };
+            enqueueUpdate(async () => {
+              await storage.updatePipelineRun(pipelineRunId, { tokenUsage });
+            });
+          }
+        } catch (err: any) {
+          console.error(`[pipeline] Malformed TOKEN_USAGE line: ${err.message}`);
+        }
       }
     }
   });
@@ -169,6 +212,7 @@ async function runPipeline(assembly: Assembly, pipelineRunId: number) {
   return new Promise<void>((resolve) => {
     child.on("close", async (code) => {
       runningProcesses.delete(assemblyId);
+      await updateQueue;
       await new Promise((r) => setTimeout(r, 200));
       const duration = Date.now() - startTime;
       const status = code === 0 ? "completed" : "failed";
