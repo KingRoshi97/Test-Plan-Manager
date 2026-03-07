@@ -1,0 +1,105 @@
+You are the Axion UI Agent. Rebuild the Maintenance page to match the MUS (Maintenance & Updating System) model.
+
+FILES
+- Refactor/rewrite: /mnt/data/maintenance.tsx
+- MUS bootstrap folder contains registries/policies/contracts (agent can assume it will be placed in-repo; UI should consume via API endpoints, not read files directly).
+
+NON-NEGOTIABLE MUS RULES
+1) Proposal-first: runs may produce Findings + Proposal Packs; they MUST NOT apply or publish automatically.
+2) Consent gates: Apply and Publish are separate explicit approvals. UI must show these gates and block actions unless approved.
+3) Scheduling constraint: Automations do NOT run continuously. Only:
+   - on an allowed schedule (enabled schedule entry), OR
+   - manual custom run
+   Scheduled runs are ALWAYS proposal-only and can NEVER publish.
+4) Automation actor can never apply/publish.
+
+GOAL
+Replace the current "units" and "apply/verify/complete" workflow with MUS concepts:
+- Maintenance Modes (MM-01 Health Check, MM-04 Drift Detection, plus others later)
+- Detector Packs (DP-REG-01, DP-DRIFT-01, etc.)
+- Findings
+- Proposal Packs (with scores, explain-why, blast radius)
+- ChangeSets (conversion from proposals; partial acceptance of patches)
+- Approvals (Apply Approval, Publish Approval, Waivers)
+- Releases/Rollbacks (placeholders acceptable if backend not built yet)
+- Schedules (enable/disable; display “proposal-only” constraint)
+
+IA / TABS (minimum)
+Create these tabs (or equivalent sections):
+1) Overview
+2) Run
+3) Findings
+4) Proposals
+5) Approvals
+6) Schedules
+7) Registries & Policies (read-only viewer)
+
+RUN TAB REQUIREMENTS (replace unit model)
+- Form fields:
+  - Mode (dropdown: MM-01, MM-04; allow others)
+  - Trigger: manual only (scheduled runs are managed through Schedule tab)
+  - Scope: asset classes (templates/KL/standards/gates/registries) + optional include/exclude selectors
+  - Budgets: token cap, time cap, max findings, max proposal packs, max assets touched
+- Run action:
+  - "Run now" button calls POST /api/mus/runs with {mode_id, trigger:"manual", scope, budgets}
+  - After run, show run summary + links to Findings/Proposals
+
+FINDINGS TAB
+- List findings with severity badges, status (open/acknowledged/suppressed/resolved), pointers, and evidence refs
+- Actions:
+  - Acknowledge (PATCH finding status)
+  - Suppress (create suppression rule with expiry + reason)
+- No “apply” actions here.
+
+PROPOSALS TAB
+- List Proposal Packs with risk_class, confidence_score, impact_score, patch_count
+- Detail view includes:
+  - Explain-why trace
+  - Blast radius (affected asset counts)
+  - Patch list (each patch has patch_type_id and target)
+  - Partial acceptance: checkbox per patch + “Create ChangeSet from selection”
+- “Create ChangeSet” calls POST /api/mus/changesets from selected patches
+- No direct apply/publish here unless approvals exist (see Approvals tab)
+
+APPROVALS TAB (must exist even if backend is stubbed)
+- Show two required approvals:
+  - Apply Approval (for a ChangeSet)
+  - Publish Approval (for a Release or ChangeSet)
+- UX:
+  - Request Apply Approval / Request Publish Approval (create ApprovalEvent)
+  - Display approval status and required evidence
+- Hard UI blocks:
+  - If trigger == scheduled: show publish disabled permanently
+  - If actor == automation: show apply/publish disabled
+
+SCHEDULES TAB
+- List schedule entries with enabled toggle
+- Each schedule displays:
+  - allowed modes, detector packs, budgets, blackout windows
+  - a clear label: “Scheduled runs are proposal-only; publish disabled.”
+- Enable/disable calls PATCH /api/mus/schedules/{id}
+
+REGISTRIES & POLICIES TAB
+- Read-only viewer for loaded registries and policies (JSON viewer)
+- Include “last loaded version” and “registry_version” fields
+
+AESTHETIC / COMPONENTS
+- Preserve the existing visual style and component patterns in maintenance.tsx (GlassPanel, MetricCard, StatRow, etc.) where possible.
+- Keep it Tony Stark / lab-console: clean, fast, functional, but do NOT add extra dashboards that don’t map to MUS.
+- Replace only what’s necessary: remove unit model and apply/verify/complete buttons.
+
+BACKEND ASSUMPTION
+If endpoints don’t exist yet, stub with a small in-file mock client that:
+- uses local state and fake data
+- BUT wraps calls in functions named like the real endpoints so it’s easy to swap later.
+Do not read registry JSON files from disk in the browser.
+
+OUTPUT
+- Provide the updated maintenance.tsx (single file)
+- Ensure it compiles
+- No unused code; remove UNIT_TYPES and legacy run planner concepts.
+
+DEFINITION OF DONE
+- The page expresses MUS correctly: Mode-driven runs, findings, proposals, approvals, schedules, registries/policies.
+- No apply/publish happens without approvals.
+- Scheduled run UI cannot publish (hard blocked).

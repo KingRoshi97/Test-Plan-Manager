@@ -1,0 +1,163 @@
+You are the Axion Backend Agent. Implement the minimum MUS API surface so the rebuilt Maintenance UI can function without mocks.
+
+CONTEXT
+- MUS is proposal-first and consent-gated:
+  - Runs can generate Findings + Proposal Packs + Proof Bundles.
+  - No apply/publish without explicit approvals.
+  - Scheduled runs can NEVER publish.
+  - Automation actors can NEVER apply/publish.
+- MUS bootstrap files (registries/policies/contracts) exist in-repo (agent will place them). Backend must read them from disk (server-side), validate, and use them as the source of truth.
+
+PRIMARY GOAL
+Provide a minimal backend that supports:
+- validate registries/policies
+- create and run MM-01 and MM-04 (manual runs)
+- list/get run outputs (findings, proposal packs, proofs)
+- create changesets from selected proposal patches
+- create approvals (apply/publish) and list approvals
+- manage schedules (list + enable/disable)
+- create suppressions for findings
+
+DO NOT BUILD UI. DO NOT BUILD CONTINUOUS RUNNERS. DO NOT BUILD APPLY/PUBLISH EXECUTION YET (can stub gated endpoints).
+
+DATA STORAGE
+For v1:
+- Store results and mutable objects on disk under a MUS data folder, not in DB (unless project already uses DB and it’s trivial).
+- Required writable directories:
+  - mus_data/runs/RUN-.../
+  - mus_data/findings/
+  - mus_data/proposals/
+  - mus_data/changesets/
+  - mus_data/approvals/
+  - mus_data/suppressions/
+  - mus_data/logs/ledger.jsonl (append-only)
+- Bootstrap registries/policies remain read-only inputs (do not mutate them from API yet).
+
+LOAD PATH
+- Add config/env: MUS_ROOT (defaults to ./axion_mus_creation/)
+  - must contain registries/, policies/, contracts/
+- Add config/env: MUS_DATA_ROOT (defaults to ./mus_data/)
+
+ENDPOINTS (MINIMUM)
+1) GET  /api/mus/status
+   - returns MUS_ROOT, versions (registry_version/policy version), lock flags, last validation status
+
+2) POST /api/mus/validate
+   - validates all registries/policies against contracts
+   - returns {pass:boolean, errors:[{file, json_pointer, message}]}
+
+3) POST /api/mus/runs
+   - body: { mode_id, trigger:"manual"|"scheduled", scope, budgets }
+   - For v1:
+     - allow mode_id MM-01 and MM-04 only (others return 400 "Not implemented")
+     - allow trigger "manual" only via this endpoint
+   - Creates run_id and persists run.json
+
+4) POST /api/mus/runs/:runId/start
+   - Executes the run:
+     - MM-01 => DP-REG-01 checks only
+     - MM-04 => DP-DRIFT-01 checks only (generate proposals bounded by Patch Types)
+   - Writes outputs:
+     - findings.json
+     - proposal_packs.json (MM-04)
+     - proof_bundle.json
+     - blast_radius.json if proposals exist
+   - Enforce budgets/caps:
+     - if exceeded => status "COMPLETED_WITH_LIMITS" + include limit reasons in proof bundle
+
+5) GET /api/mus/runs
+   - lists runs with summary
+
+6) GET /api/mus/runs/:runId
+   - returns run.json + pointers to outputs
+
+7) GET /api/mus/runs/:runId/findings
+   - returns findings.json (apply suppressions where relevant)
+
+8) PATCH /api/mus/findings/:findingId
+   - update finding status: open/acknowledged/resolved (no deletes)
+
+9) POST /api/mus/suppressions
+   - body: { finding_type, scope_selectors, reason, expires_at }
+   - persists suppression rule; applies to subsequent findings listings
+
+10) GET /api/mus/proposals
+    - lists proposal packs across runs
+
+11) GET /api/mus/proposals/:proposalPackId
+    - returns proposal pack + patches + explain_why + blast radius refs
+
+12) POST /api/mus/changesets
+    - body: { source_proposal_pack_id, selected_patch_ids[], summary }
+    - creates changeset.json with selected patches only (partial acceptance supported)
+
+13) GET /api/mus/changesets
+    - list changesets
+
+14) GET /api/mus/changesets/:changesetId
+    - get detail
+
+15) POST /api/mus/approvals
+    - body: { approval_type:"apply"|"publish"|"waiver", target_type:"changeset"|"release", target_id, reason, diff_hash }
+    - persists approval event
+    - IMPORTANT: creating approval does not apply/publish anything
+
+16) GET /api/mus/approvals
+    - list approvals, filter by target_id optional
+
+17) GET /api/mus/schedules
+    - list schedule entries from REG-SCHEDULES.json (read-only)
+
+18) PATCH /api/mus/schedules/:scheduleId
+    - enable/disable ONLY by writing an override file in MUS_DATA_ROOT (do NOT mutate bootstrap registry)
+    - Ensure schedules remain proposal-only; no publish endpoints
+
+OPTIONAL (STUB, BUT GATED)
+19) POST /api/mus/changesets/:changesetId/apply
+    - MUST enforce Apply Gate:
+      - must have approval_type="apply" for this changeset
+      - must not be automation actor
+    - For v1: return 501 Not Implemented AFTER validating gates. (Proves wiring.)
+
+20) POST /api/mus/releases/:releaseId/publish
+    - MUST enforce Publish Gate and Scheduled hard block:
+      - fail if any scheduled trigger
+      - must have publish approval
+      - must not be automation actor
+    - For v1: return 501 Not Implemented AFTER validating gates.
+
+CHECK IMPLEMENTATION DETAILS
+A) DP-REG-01 (registry integrity)
+- validate:
+  - duplicate (id, version) in items
+  - active_map points to existing item version
+  - registry_id matches filename
+B) DP-DRIFT-01 (drift minimal)
+- For v1, implement drift checks that can work with current bootstrap:
+  - mismatched references between detector packs ↔ patch types ↔ modes
+  - missing required fields in seeded items
+- Proposals:
+  - Only propose PT-REG-01/02 fixes for reference/slug issues
+  - If you cannot safely construct diffs, output findings only (still valid).
+
+AUDIT LEDGER
+- Append JSON lines to mus_data/logs/ledger.jsonl for:
+  - validate requests
+  - run created/started/completed
+  - approvals created
+  - suppression created
+  - any blocked apply/publish attempts
+
+ERROR HANDLING
+- Return clear, actionable messages with which rule failed.
+- No silent failures.
+
+DEFINITION OF DONE
+- The UI can:
+  - validate
+  - create/start MM-01 and MM-04 runs
+  - view findings and proposals
+  - create changesets from proposal patches
+  - create approvals (apply/publish) and see them listed
+  - enable/disable schedules via override
+- Apply/publish endpoints exist but are gated and return 501 after passing gating checks.

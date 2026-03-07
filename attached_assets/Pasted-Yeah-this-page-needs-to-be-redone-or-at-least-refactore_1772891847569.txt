@@ -1,0 +1,113 @@
+Yeah — this page needs to be redone (or at least refactored heavily) to match the MUS model we just built.
+
+Right now maintenance.tsx is a hybrid “governance dashboard + run planner” that assumes a different run lifecycle (planned → applying → verifying → complete, with “units”, “intent_type”, “risk_class”, “baseline_revision”, and buttons like Apply/Verify/Complete/Rollback). That workflow is not the MUS workflow (proposal-first + consent gates + scheduled/manual-only + no auto-apply/publish). You can see that mismatch directly in the “Runs” tab form and actions. 
+
+maintenance
+
+ 
+
+maintenance
+
+What’s wrong with the current page (relative to MUS)
+
+It models runs as “work units” (units, UNIT_TYPES, target_paths) 
+
+maintenance
+
+ 
+
+maintenance
+
+ — MUS runs are mode + scope + detector packs + budgets + pinned versions (units can exist later, but it’s not the core UX).
+
+It exposes “apply/verify/complete” buttons 
+
+maintenance
+
+ — MUS should instead expose:
+
+Run (MM-01/MM-04)
+
+View Findings
+
+View Proposal Packs
+
+(Optional) Shadow Mode
+
+Convert Proposal → ChangeSet
+
+Approvals (Apply Gate / Publish Gate)
+
+Release packaging / rollback
+
+No explicit consent-gate UX. The page shows policy booleans, but doesn’t provide an approval workflow view for Apply vs Publish (which is central to MUS). 
+
+maintenance
+
+Schedules toggle is fine conceptually (enable/disable) 
+
+maintenance
+
+ but it must also reflect the hard rule: scheduled runs can never publish (UI should communicate/lock those controls).
+
+What the redesigned page should be (minimum, non-bloat)
+
+Keep the vibe/visual style (GlassPanel, MetricCard), but restructure into MUS-native workflows:
+
+1) Tabs (replace/rename to MUS semantics)
+
+Overview
+
+Run (create/run MM-01/MM-04 with scope + budgets)
+
+Findings
+
+Proposals
+
+ChangeSets (optional v1, but helpful)
+
+Approvals (Apply / Publish events)
+
+Releases / Rollbacks
+
+Registries & Policies (read-only viewers like you already have)
+
+Schedules (keep your toggle UI, but add constraints + “proposal-only” labeling)
+
+2) Run creation form (fix the inputs)
+
+Replace the current “unit” model with MUS inputs:
+
+Mode (MM-01, MM-04, etc.)
+
+Trigger: manual (scheduled only shows if you’re editing a schedule entry)
+
+Scope selectors: asset classes + include/exclude tags/categories/domains
+
+Budgets: token/time/proposal/asset caps
+
+Pinned versions: optional for now (baseline: HEAD or a snapshot)
+
+3) Run results (what to show after a run)
+
+Instead of “Apply/Verify/Complete” buttons:
+
+Show Findings summary
+
+Show Proposal Packs summary (count, confidence/risk/impact)
+
+“Open Proposal Pack” → diff + explain-why + blast radius
+
+“Convert accepted patches → ChangeSet”
+
+“Run Shadow Mode” (if/when implemented)
+
+“Request Apply Approval” / “Request Publish Approval” (gated)
+
+4) Guardrails in UI (must be explicit)
+
+Scheduled runs: show “Proposal-only / Publish disabled”
+
+Automation actor: show “Cannot apply/publish”
+
+Locks: show global/apply/publish lock status as a prominent banner
