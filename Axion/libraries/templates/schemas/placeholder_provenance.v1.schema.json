@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "placeholder_provenance.v1",
+  "description": "Schema for placeholder provenance tracking. Records where each placeholder value originates from (canonical, standards, knowledge, intake, derived) and enforces forbidden guessing zones.",
+  "type": "object",
+  "required": [
+    "provenance_id",
+    "template_id",
+    "run_id",
+    "timestamp",
+    "entries"
+  ],
+  "properties": {
+    "provenance_id": {
+      "type": "string",
+      "pattern": "^TMP-PROV-[A-Z0-9_-]+$",
+      "description": "Unique provenance record identifier."
+    },
+    "template_id": {
+      "type": "string",
+      "description": "The template this provenance record applies to."
+    },
+    "template_version": {
+      "type": "string",
+      "description": "Version of the template at render time."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Pipeline run that produced this provenance record."
+    },
+    "assembly_id": {
+      "type": ["string", "null"],
+      "description": "Assembly ID if applicable."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/provenance_entry" },
+      "minItems": 1,
+      "description": "Provenance record for each placeholder in the template."
+    },
+    "forbidden_zone_violations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/forbidden_zone_violation" },
+      "description": "Any violations of forbidden guessing zones detected during rendering."
+    },
+    "coverage": {
+      "type": "object",
+      "description": "Summary coverage statistics for placeholder provenance.",
+      "properties": {
+        "total_placeholders": { "type": "integer", "minimum": 0 },
+        "resolved_count": { "type": "integer", "minimum": 0 },
+        "unresolved_count": { "type": "integer", "minimum": 0 },
+        "forbidden_zone_count": { "type": "integer", "minimum": 0 },
+        "resolution_rate": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["clean", "has_violations", "incomplete"],
+      "description": "Overall provenance assessment."
+    }
+  },
+  "$defs": {
+    "provenance_entry": {
+      "type": "object",
+      "required": ["placeholder_id", "provenance_type", "resolved"],
+      "properties": {
+        "placeholder_id": {
+          "type": "string",
+          "pattern": "^PH-[A-Z0-9_\\-]+$",
+          "description": "The placeholder this entry tracks."
+        },
+        "provenance_type": {
+          "type": "string",
+          "enum": ["canonical", "standards", "knowledge", "intake", "derived", "manual", "default", "unresolved"],
+          "description": "Where the placeholder value originates from."
+        },
+        "source_field": {
+          "type": "string",
+          "description": "The specific field or path in the source that provided this value."
+        },
+        "source_unit_id": {
+          "type": "string",
+          "description": "The unit ID of the source (e.g., a standards ID, KID, or canonical field)."
+        },
+        "source_library": {
+          "type": "string",
+          "enum": ["canonical", "standards", "knowledge", "intake", "ops", "gates", "templates"],
+          "description": "Which library the source belongs to."
+        },
+        "resolved": {
+          "type": "boolean",
+          "description": "Whether the placeholder was successfully resolved."
+        },
+        "value_hash": {
+          "type": "string",
+          "description": "Hash of the resolved value for integrity verification."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence score for derived or computed values."
+        },
+        "is_forbidden_zone": {
+          "type": "boolean",
+          "description": "Whether this placeholder falls in a forbidden guessing zone."
+        },
+        "derivation_chain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Chain of derivation steps if provenance_type is 'derived'."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional context about this provenance entry."
+        }
+      },
+      "additionalProperties": false
+    },
+    "forbidden_zone_violation": {
+      "type": "object",
+      "required": ["placeholder_id", "zone_id", "severity", "message"],
+      "properties": {
+        "placeholder_id": {
+          "type": "string",
+          "description": "The placeholder that violated a forbidden zone."
+        },
+        "zone_id": {
+          "type": "string",
+          "description": "Identifier of the forbidden guessing zone."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["blocker", "warning", "info"]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 5
+        },
+        "attempted_provenance_type": {
+          "type": "string",
+          "description": "The provenance type that was attempted in the forbidden zone."
+        },
+        "required_provenance_type": {
+          "type": "string",
+          "description": "The provenance type that is required for this zone."
+        },
+        "remediation": {
+          "type": "string",
+          "description": "How to fix this violation."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "gate_decision_report.v1",
+  "description": "Schema for gate decision reports. Emitted when a gate evaluates artifacts, providing explainability, verdict justification, affected artifacts, and replay metadata.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "report_type",
+    "run_id",
+    "gate_id",
+    "timestamp",
+    "verdict",
+    "evaluated_predicates",
+    "affected_artifacts",
+    "justification"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^GAT-RPT-[A-Z0-9_-]+$",
+      "description": "Unique report identifier."
+    },
+    "report_type": {
+      "type": "string",
+      "enum": ["gate_evaluation", "gate_override", "gate_replay", "gate_drift_check"],
+      "description": "What kind of gate decision this report covers."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Pipeline run this report belongs to."
+    },
+    "assembly_id": {
+      "type": ["string", "null"],
+      "description": "Assembly ID if applicable."
+    },
+    "gate_id": {
+      "type": "string",
+      "description": "The gate that was evaluated."
+    },
+    "gate_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Version of the gate definition used."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "context": {
+      "type": "object",
+      "description": "Contextual inputs that influenced the gate decision.",
+      "properties": {
+        "project_type": { "type": "string" },
+        "risk_class": { "type": "string" },
+        "environment": { "type": "string" },
+        "stage": { "type": "string" },
+        "profile": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "fail", "warn", "skip"],
+      "description": "Overall gate evaluation outcome."
+    },
+    "justification": {
+      "$ref": "#/$defs/justification",
+      "description": "Structured justification for the verdict."
+    },
+    "evaluated_predicates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/predicate_result" },
+      "minItems": 1,
+      "description": "Results of each predicate evaluation."
+    },
+    "affected_artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/affected_artifact" },
+      "description": "Artifacts that were evaluated by this gate."
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" },
+      "description": "Specific findings from the gate evaluation."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence_ref" },
+      "description": "Evidence artifacts referenced during evaluation."
+    },
+    "override": {
+      "type": "object",
+      "description": "Present when an override was requested or granted.",
+      "properties": {
+        "requested": { "type": "boolean" },
+        "granted": { "type": "boolean" },
+        "decision_id": { "type": "string" },
+        "reason": { "type": "string" },
+        "approved_by": { "type": "string" },
+        "expires_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "replay_metadata": {
+      "$ref": "#/$defs/replay_metadata",
+      "description": "Metadata enabling deterministic replay of this evaluation."
+    },
+    "recommendations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Recommended actions based on findings."
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How long the gate evaluation took."
+    }
+  },
+  "$defs": {
+    "justification": {
+      "type": "object",
+      "required": ["summary", "decision_factors"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 10,
+          "description": "Human-readable summary of why this verdict was reached."
+        },
+        "decision_factors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["factor", "weight", "contribution"],
+            "properties": {
+              "factor": { "type": "string" },
+              "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+              "contribution": { "type": "string", "enum": ["positive", "negative", "neutral"] },
+              "detail": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "description": "Factors that contributed to the decision."
+        },
+        "operator_notes": {
+          "type": "string",
+          "description": "Notes for operator review."
+        }
+      },
+      "additionalProperties": false
+    },
+    "predicate_result": {
+      "type": "object",
+      "required": ["predicate_id", "result"],
+      "properties": {
+        "predicate_id": { "type": "string" },
+        "result": {
+          "type": "string",
+          "enum": ["pass", "fail", "warn", "skip", "not_applicable", "error"]
+        },
+        "message": { "type": "string" },
+        "evidence_ref": { "type": "string" },
+        "execution_ms": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "affected_artifact": {
+      "type": "object",
+      "required": ["artifact_id", "artifact_class"],
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "artifact_class": {
+          "type": "string",
+          "description": "Class of artifact (e.g., source_code, config, schema, document)."
+        },
+        "path": { "type": "string" },
+        "hash": { "type": "string" },
+        "impact": {
+          "type": "string",
+          "enum": ["blocking", "degraded", "unaffected"],
+          "description": "How this artifact was impacted by the gate result."
+        }
+      },
+      "additionalProperties": false
+    },
+    "finding": {
+      "type": "object",
+      "required": ["finding_id", "severity", "message"],
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^GAT-FIND-[A-Z0-9]+$"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["blocker", "warning", "info"]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 5
+        },
+        "affected_predicate": { "type": "string" },
+        "affected_artifact": { "type": "string" },
+        "remediation": { "type": "string" },
+        "evidence_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "evidence_ref": {
+      "type": "object",
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["pointer", "diff", "proof", "snapshot", "trace"]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 3
+        },
+        "hash": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "replay_metadata": {
+      "type": "object",
+      "required": ["deterministic", "input_hash"],
+      "properties": {
+        "deterministic": {
+          "type": "boolean",
+          "description": "Whether this evaluation is deterministically replayable."
+        },
+        "input_hash": {
+          "type": "string",
+          "description": "Hash of all inputs used for this evaluation."
+        },
+        "gate_definition_hash": {
+          "type": "string",
+          "description": "Hash of the gate definition used."
+        },
+        "snapshot_path": {
+          "type": "string",
+          "description": "Path to the evaluation snapshot for replay."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

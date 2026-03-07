@@ -495,6 +495,37 @@
       "version": "1.0.0"
     },
     {
+      "schema_id": "templates.template_unit.v1",
+      "path": "Axion/libraries/templates/schemas/template_unit.v1.schema.json",
+      "uri": "axion://schemas/templates/template_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "templates.template_decision_report.v1",
+      "path": "Axion/libraries/templates/schemas/template_decision_report.v1.schema.json",
+      "uri": "axion://schemas/templates/template_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "templates.placeholder_provenance.v1",
+      "path": "Axion/libraries/templates/schemas/placeholder_provenance.v1.schema.json",
+      "uri": "axion://schemas/templates/placeholder_provenance.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "gates.gate_unit.v1",
+      "path": "Axion/libraries/gates/schemas/gate_unit.v1.schema.json",
+      "uri": "axion://schemas/gates/gate_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "gates.gate_decision_report.v1",
+      "path": "Axion/libraries/gates/schemas/gate_decision_report.v1.schema.json",
+      "uri": "axion://schemas/gates/gate_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
       "schema_id": "ops.ops_unit.v1",
       "path": "Axion/libraries/ops/schemas/ops_unit.v1.schema.json",
       "uri": "axion://schemas/ops/ops_unit.v1.schema.json",
@@ -528,6 +559,18 @@
       "schema_id": "ops.run_metrics.v1",
       "path": "Axion/libraries/ops/schemas/OBS-02.run_metrics.schema.v1.json",
       "uri": "axion://schemas/ops/OBS-02.run_metrics.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "knowledge.knowledge_unit.v1",
+      "path": "Axion/libraries/knowledge/contracts/knowledge_unit.v1.schema.json",
+      "uri": "axion://schemas/knowledge/knowledge_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "knowledge.knowledge_retrieval_report.v1",
+      "path": "Axion/libraries/knowledge/contracts/knowledge_retrieval_report.v1.schema.json",
+      "uri": "axion://schemas/knowledge/knowledge_retrieval_report.v1.schema.json",
       "version": "1.0.0"
     }
   ]

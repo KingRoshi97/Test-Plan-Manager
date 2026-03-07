@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "knowledge_retrieval_report.v1",
+  "description": "Schema for knowledge retrieval decision reports. Emitted when the knowledge library evaluates a query, scores candidates, and selects knowledge units for a run.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "report_type",
+    "run_id",
+    "timestamp",
+    "query",
+    "candidates",
+    "selected",
+    "verdict"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^KNO-RPT-[A-Z0-9_-]+$",
+      "description": "Unique report identifier."
+    },
+    "report_type": {
+      "type": "string",
+      "enum": ["retrieval", "selection", "resolution", "evaluation", "freshness_audit", "coverage_check"],
+      "description": "What kind of knowledge decision this report covers."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Pipeline run this report belongs to."
+    },
+    "assembly_id": {
+      "type": ["string", "null"],
+      "description": "Assembly ID if applicable."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "query": {
+      "type": "object",
+      "description": "The retrieval query that initiated this report.",
+      "required": ["intent"],
+      "properties": {
+        "intent": {
+          "type": "string",
+          "minLength": 3,
+          "description": "What knowledge was being sought."
+        },
+        "project_type": { "type": "string" },
+        "risk_class": { "type": "string" },
+        "profile": { "type": "string" },
+        "domains": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "pillars": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "authority_tier_minimum": {
+          "type": "string",
+          "enum": ["golden", "verified", "reviewed", "draft"],
+          "description": "Minimum authority tier required for results."
+        },
+        "max_results": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "candidates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scored_candidate" },
+      "description": "All knowledge units considered during retrieval."
+    },
+    "selected": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/selected_unit" },
+      "description": "Knowledge units selected for the run."
+    },
+    "rejected": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rejected_unit" },
+      "description": "Knowledge units considered but not selected, with reasons."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "fail", "warn", "skip", "partial"],
+      "description": "Overall retrieval outcome."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score for the retrieval result (0.0-1.0)."
+    },
+    "coverage": {
+      "type": "object",
+      "description": "Coverage metrics for the retrieval.",
+      "properties": {
+        "domains_covered": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "domains_missing": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "coverage_ratio": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" },
+      "description": "Specific findings from the retrieval evaluation."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Paths or IDs of evidence artifacts referenced."
+    },
+    "recommendations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Recommended actions based on retrieval results."
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How long the retrieval took."
+    }
+  },
+  "$defs": {
+    "scored_candidate": {
+      "type": "object",
+      "required": ["unit_id", "score"],
+      "properties": {
+        "unit_id": { "type": "string" },
+        "title": { "type": "string" },
+        "unit_class": {
+          "type": "string",
+          "enum": ["authoritative", "guidance", "example", "anti_pattern", "reference"]
+        },
+        "authority_tier": {
+          "type": "string",
+          "enum": ["golden", "verified", "reviewed", "draft"]
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Relevance score for this candidate."
+        },
+        "scoring_factors": {
+          "type": "object",
+          "properties": {
+            "domain_match": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "authority_weight": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "freshness_weight": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "tag_overlap": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+            "risk_alignment": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+          },
+          "additionalProperties": true
+        },
+        "matched_by": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Which query criteria this candidate matched on."
+        }
+      },
+      "additionalProperties": false
+    },
+    "selected_unit": {
+      "type": "object",
+      "required": ["unit_id", "reason"],
+      "properties": {
+        "unit_id": { "type": "string" },
+        "title": { "type": "string" },
+        "score": { "type": "number" },
+        "reason": {
+          "type": "string",
+          "description": "Why this unit was selected."
+        },
+        "authority_tier": { "type": "string" },
+        "source_path": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "rejected_unit": {
+      "type": "object",
+      "required": ["unit_id", "reason"],
+      "properties": {
+        "unit_id": { "type": "string" },
+        "title": { "type": "string" },
+        "score": { "type": "number" },
+        "reason": {
+          "type": "string",
+          "description": "Why this unit was rejected."
+        },
+        "rejection_code": {
+          "type": "string",
+          "enum": ["below_threshold", "stale", "wrong_domain", "wrong_risk_class", "superseded", "deprecated", "authority_insufficient", "excluded"],
+          "description": "Machine-readable rejection reason."
+        }
+      },
+      "additionalProperties": false
+    },
+    "finding": {
+      "type": "object",
+      "required": ["finding_id", "severity", "message"],
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^KNO-FIND-[A-Z0-9]+$"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["blocker", "warning", "info"]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 5
+        },
+        "affected_unit": { "type": "string" },
+        "remediation": { "type": "string" },
+        "evidence_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

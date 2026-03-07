@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "gate_unit.v1",
+  "description": "Schema for a governed gate unit. Every gate in the gates library must conform to this envelope, providing governance metadata, applicability rules, predicate maturity, replay contract, and proof requirements.",
+  "type": "object",
+  "required": [
+    "library_id",
+    "unit_id",
+    "title",
+    "version",
+    "status",
+    "owner",
+    "created_at",
+    "updated_at",
+    "purpose",
+    "scope",
+    "authority_tier",
+    "gate_domain",
+    "applicability",
+    "predicate_maturity_tier",
+    "governing_standards",
+    "validated_artifact_classes"
+  ],
+  "properties": {
+    "library_id": {
+      "type": "string",
+      "const": "gates",
+      "description": "Always 'gates' for gate library units."
+    },
+    "unit_id": {
+      "type": "string",
+      "pattern": "^GAT-[A-Z0-9_-]+$",
+      "description": "Unique gate unit identifier (e.g., GAT-STRUCT-01, GAT-SEC-01)."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "candidate", "active", "restricted", "deprecated", "retired", "superseded"]
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 2
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 10,
+      "description": "What this gate governs and why it exists."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Boundary of what this gate covers."
+    },
+    "authority_tier": {
+      "type": "string",
+      "enum": ["A0", "A1", "A2", "A3", "A4"],
+      "description": "A0=system-critical, A1=production-authoritative, A2=recommended, A3=reference, A4=experimental."
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "Risk classification for this gate."
+    },
+    "gate_domain": {
+      "type": "string",
+      "enum": ["structural", "security", "compliance", "performance", "operational", "data_integrity", "release", "custom"],
+      "description": "Which gate domain this unit belongs to."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["hard_stop", "pause", "warn"],
+      "description": "Enforcement severity when this gate fails."
+    },
+    "predicate_maturity_tier": {
+      "type": "string",
+      "enum": ["stable", "verified", "provisional", "experimental"],
+      "description": "Maturity tier of the gate's predicates. stable=battle-tested, verified=reviewed, provisional=in-trial, experimental=new."
+    },
+    "governing_standards": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Standard IDs (from the standards library) that this gate enforces."
+    },
+    "validated_artifact_classes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Classes of artifacts this gate validates (e.g., 'source_code', 'config', 'schema', 'document', 'deployment_manifest')."
+    },
+    "applicability": {
+      "type": "object",
+      "description": "When this gate applies.",
+      "properties": {
+        "project_types": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "stages": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "risk_classes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "environments": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "exclusions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "predicates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/predicate_spec" },
+      "minItems": 1,
+      "description": "Predicate specifications for this gate."
+    },
+    "required_proofs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Proof types needed to validate gate passage."
+    },
+    "error_taxonomy": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/error_class" },
+      "description": "Classification of errors this gate can produce."
+    },
+    "replay_contract": {
+      "$ref": "#/$defs/replay_contract",
+      "description": "Contract for deterministic replay of gate evaluations."
+    },
+    "evidence_policy": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["minimal", "standard", "trace"] },
+        "include_pointers": { "type": "boolean" },
+        "include_diff": { "type": "boolean" },
+        "include_verification_proof": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "override_policy": {
+      "type": "object",
+      "properties": {
+        "overridable": { "type": "boolean" },
+        "requires_reason": { "type": "boolean" },
+        "approval_required": { "type": "boolean" },
+        "max_override_duration_hours": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependency_edge" },
+      "description": "What this gate depends on."
+    },
+    "dependents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependency_edge" },
+      "description": "What depends on this gate."
+    },
+    "maintenance_class": {
+      "type": "string",
+      "enum": ["coverage_audit", "drift_detection", "backcompat_validation", "registry_rebuild", "registry_cleanup"],
+      "description": "Primary maintenance mode for this gate."
+    },
+    "compatibility_label": {
+      "type": "string",
+      "enum": ["compatible", "breaking", "migration-required", "rerun-required", "rebuild-required"]
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "description": "Unit ID this replaces, or null."
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "description": "Unit ID that replaces this, or null."
+    },
+    "deprecated_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "retired_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "change_summary": {
+      "type": "string",
+      "description": "Summary of last change."
+    },
+    "source_gate_id": {
+      "type": "string",
+      "description": "Reference to the underlying gate definition (e.g., G01_STRUCTURAL_INTEGRITY)."
+    }
+  },
+  "$defs": {
+    "predicate_spec": {
+      "type": "object",
+      "required": ["predicate_id", "expr", "message_on_fail"],
+      "properties": {
+        "predicate_id": {
+          "type": "string",
+          "pattern": "^PRED-[A-Z0-9]{4,}$"
+        },
+        "expr": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Gate DSL expression string."
+        },
+        "message_on_fail": {
+          "type": "string",
+          "minLength": 3
+        },
+        "maturity": {
+          "type": "string",
+          "enum": ["stable", "verified", "provisional", "experimental"]
+        },
+        "evidence_tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "error_class": {
+      "type": "object",
+      "required": ["error_code", "severity", "description"],
+      "properties": {
+        "error_code": {
+          "type": "string",
+          "pattern": "^GAT-ERR-[A-Z0-9_]+$"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["blocker", "warning", "info"]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 5
+        },
+        "remediation": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "replay_contract": {
+      "type": "object",
+      "required": ["deterministic", "idempotent"],
+      "properties": {
+        "deterministic": {
+          "type": "boolean",
+          "description": "Whether same inputs always produce same outputs."
+        },
+        "idempotent": {
+          "type": "boolean",
+          "description": "Whether repeated evaluations produce same result."
+        },
+        "required_inputs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Input artifacts required for replay."
+        },
+        "snapshot_policy": {
+          "type": "string",
+          "enum": ["full", "delta", "none"],
+          "description": "What to snapshot for replay."
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependency_edge": {
+      "type": "object",
+      "required": ["target_id", "edge_type"],
+      "properties": {
+        "target_id": { "type": "string" },
+        "edge_type": {
+          "type": "string",
+          "enum": ["requires", "constrains", "derives_from", "validates", "evidences", "produces_for", "conflicts_with", "supersedes"]
+        },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

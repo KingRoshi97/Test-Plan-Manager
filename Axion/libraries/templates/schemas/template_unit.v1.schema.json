@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "template_unit.v1",
+  "description": "Schema for a governed template unit. Every template asset must conform to this envelope for lifecycle governance, applicability filtering, and proof tracking.",
+  "type": "object",
+  "required": [
+    "library_id",
+    "unit_id",
+    "title",
+    "version",
+    "status",
+    "owner",
+    "created_at",
+    "updated_at",
+    "purpose",
+    "scope",
+    "authority_tier",
+    "template_domain",
+    "applicability",
+    "required_inputs",
+    "section_rules"
+  ],
+  "properties": {
+    "library_id": {
+      "type": "string",
+      "const": "templates",
+      "description": "Always 'templates' for template library units."
+    },
+    "unit_id": {
+      "type": "string",
+      "pattern": "^TMP-[A-Z0-9_-]+$",
+      "description": "Stable unique template unit identifier (e.g., TMP-PRD-01, TMP-ARCH-03)."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "candidate", "active", "restricted", "deprecated", "retired", "superseded"]
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 2
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 10,
+      "description": "What this template governs and why it exists."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Boundary of what this template covers."
+    },
+    "authority_tier": {
+      "type": "string",
+      "enum": ["A0", "A1", "A2", "A3", "A4"],
+      "description": "A0=system-critical, A1=production-authoritative, A2=recommended, A3=reference, A4=experimental."
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "Risk classification for this template."
+    },
+    "template_domain": {
+      "type": "string",
+      "enum": [
+        "PRODUCT_DEFINITION",
+        "APPLICATION_BUILD",
+        "SYSTEM_ARCHITECTURE",
+        "DATA_AND_INFORMATION",
+        "EXPERIENCE_DESIGN",
+        "INTEGRATIONS_AND_EXTERNAL",
+        "SECURITY_PRIVACY_COMPLIANCE",
+        "OPERATIONS_AND_RELIABILITY"
+      ],
+      "description": "Which template domain this unit belongs to."
+    },
+    "template_type": {
+      "type": "string",
+      "enum": ["doc_template", "schema_template", "checklist_template"],
+      "description": "The structural type of this template."
+    },
+    "applicability": {
+      "type": "object",
+      "description": "When and where this template applies.",
+      "properties": {
+        "project_types": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "stages": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "risk_classes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "environments": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "domains": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Industry or functional domains where this template is applicable."
+        },
+        "exclusions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "required_inputs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Contract IDs required to render this template (e.g., CANONICAL_SPEC, STANDARDS_SNAPSHOT)."
+    },
+    "required_standards": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Standards library unit IDs that this template requires for rendering."
+    },
+    "required_proofs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Proof types needed to validate rendered output from this template."
+    },
+    "section_rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/section_rule" },
+      "minItems": 1,
+      "description": "Section-level completion and quality rules."
+    },
+    "backcompat_tier": {
+      "type": "string",
+      "enum": ["stable", "evolving", "experimental", "breaking"],
+      "description": "Backward compatibility tier: stable=no breaking changes, evolving=additive only, experimental=may change, breaking=migration required."
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependency_edge" },
+      "description": "What this template depends on."
+    },
+    "dependents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependency_edge" },
+      "description": "What depends on this template."
+    },
+    "maintenance_class": {
+      "type": "string",
+      "enum": ["coverage_audit", "drift_detection", "backcompat_validation", "registry_rebuild", "registry_cleanup"],
+      "description": "Primary maintenance mode for this template."
+    },
+    "compatibility_label": {
+      "type": "string",
+      "enum": ["compatible", "breaking", "migration-required", "rerun-required", "rebuild-required"]
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "description": "Unit ID this replaces, or null."
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "description": "Unit ID that replaces this, or null."
+    },
+    "deprecated_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "retired_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "change_summary": {
+      "type": "string",
+      "description": "Summary of last change."
+    },
+    "source_template_id": {
+      "type": "string",
+      "description": "Reference to the underlying template definition (e.g., TMP-PRD-01)."
+    }
+  },
+  "$defs": {
+    "dependency_edge": {
+      "type": "object",
+      "required": ["target_id", "edge_type"],
+      "properties": {
+        "target_id": { "type": "string" },
+        "edge_type": {
+          "type": "string",
+          "enum": ["requires", "constrains", "derives_from", "validates", "evidences", "produces_for", "conflicts_with", "supersedes"]
+        },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "section_rule": {
+      "type": "object",
+      "required": ["section_id", "required"],
+      "properties": {
+        "section_id": {
+          "type": "string",
+          "description": "Identifier of the template section."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this section must be completed."
+        },
+        "min_words": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum word count for section content."
+        },
+        "required_placeholders": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Placeholder IDs that must be filled in this section."
+        },
+        "proof_required": {
+          "type": "boolean",
+          "description": "Whether proof/evidence is required for this section."
+        },
+        "validation_rule": {
+          "type": "string",
+          "description": "Description of the validation rule for this section."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

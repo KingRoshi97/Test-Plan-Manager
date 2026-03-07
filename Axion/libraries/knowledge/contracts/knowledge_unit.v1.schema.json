@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "knowledge_unit.v1",
+  "description": "Schema for a governed knowledge unit (KID). Every knowledge asset must conform to this envelope for lifecycle governance, retrieval, and trust tracking.",
+  "type": "object",
+  "required": [
+    "library_id",
+    "unit_id",
+    "title",
+    "version",
+    "status",
+    "owner",
+    "created_at",
+    "updated_at",
+    "purpose",
+    "unit_class",
+    "authority_tier",
+    "scope",
+    "applicability"
+  ],
+  "properties": {
+    "library_id": {
+      "type": "string",
+      "const": "knowledge",
+      "description": "Always 'knowledge' for knowledge library units."
+    },
+    "unit_id": {
+      "type": "string",
+      "pattern": "^KID-[A-Z0-9_]+-[A-Z0-9_]+-[A-Z0-9_]+-\\d{4,}$",
+      "description": "Stable Knowledge Item ID (e.g., KID-IT-SEC-CONCEPTS-0001)."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "candidate", "active", "restricted", "deprecated", "retired", "superseded"]
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 2
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 10,
+      "description": "What this knowledge unit teaches or governs and why."
+    },
+    "unit_class": {
+      "type": "string",
+      "enum": ["authoritative", "guidance", "example", "anti_pattern", "reference"],
+      "description": "Classification of knowledge unit content type."
+    },
+    "authority_tier": {
+      "type": "string",
+      "enum": ["golden", "verified", "reviewed", "draft"],
+      "description": "Trust level: golden=highest confidence, verified=validated, reviewed=peer-checked, draft=unvalidated."
+    },
+    "quality_tier": {
+      "type": "string",
+      "enum": ["production", "curated", "community", "experimental"],
+      "description": "Quality classification for content fidelity and maintenance commitment."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Boundary of what this knowledge unit covers."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 2 },
+      "minItems": 1,
+      "description": "Taxonomy tags for discovery and filtering."
+    },
+    "applicability": {
+      "type": "object",
+      "description": "When and where this knowledge unit applies.",
+      "properties": {
+        "project_types": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "risk_classes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "pillars": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["IT_END_TO_END", "INDUSTRY_PLAYBOOKS", "LANGUAGES_AND_LIBRARIES"]
+          }
+        },
+        "domains": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 2 }
+        },
+        "subdomains": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 2 }
+        },
+        "stages": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "exclusions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependency_edge" },
+      "description": "What this knowledge unit depends on (standards, other KIDs, templates)."
+    },
+    "dependents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependency_edge" },
+      "description": "What depends on this knowledge unit."
+    },
+    "freshness": {
+      "type": "object",
+      "description": "Freshness and staleness tracking for this knowledge unit.",
+      "properties": {
+        "freshness_window_days": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of days before this unit is considered potentially stale."
+        },
+        "last_reviewed_at": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "When the content was last reviewed for accuracy."
+        },
+        "staleness_status": {
+          "type": "string",
+          "enum": ["fresh", "aging", "stale", "expired"],
+          "description": "Current freshness classification."
+        },
+        "review_cadence": {
+          "type": "string",
+          "enum": ["monthly", "quarterly", "semi_annual", "annual", "on_change"],
+          "description": "Expected review cadence."
+        }
+      },
+      "additionalProperties": false
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "description": "KID this unit replaces, or null."
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "description": "KID that replaces this unit, or null."
+    },
+    "required_proofs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Proof types needed to validate claims in this knowledge unit."
+    },
+    "use_policy": {
+      "type": "string",
+      "enum": ["pattern_only", "reusable_with_allowlist", "restricted_internal_only"],
+      "description": "Usage policy governing how this knowledge can be consumed."
+    },
+    "executor_access": {
+      "type": "string",
+      "enum": ["internal_only", "internal_and_external"],
+      "description": "Who can access this knowledge unit."
+    },
+    "license": {
+      "type": "string",
+      "minLength": 2,
+      "description": "License governing this knowledge content."
+    },
+    "allowed_excerpt": {
+      "type": "object",
+      "properties": {
+        "max_words": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_lines": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": ["max_words", "max_lines"],
+      "additionalProperties": false
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "Risk classification for this knowledge unit."
+    },
+    "maintenance_class": {
+      "type": "string",
+      "enum": ["coverage_audit", "drift_detection", "backcompat_validation", "registry_rebuild", "registry_cleanup"],
+      "description": "Primary maintenance mode for this unit."
+    },
+    "compatibility_label": {
+      "type": "string",
+      "enum": ["compatible", "breaking", "migration-required", "rerun-required", "rebuild-required"]
+    },
+    "deprecated_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "retired_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "change_summary": {
+      "type": "string",
+      "description": "Summary of last change."
+    },
+    "source_path": {
+      "type": "string",
+      "description": "Relative path to the underlying knowledge content file."
+    }
+  },
+  "$defs": {
+    "dependency_edge": {
+      "type": "object",
+      "required": ["target_id", "edge_type"],
+      "properties": {
+        "target_id": { "type": "string" },
+        "edge_type": {
+          "type": "string",
+          "enum": ["requires", "constrains", "derives_from", "validates", "evidences", "produces_for", "conflicts_with", "supersedes", "references", "informs"]
+        },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

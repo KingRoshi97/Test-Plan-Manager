@@ -28,7 +28,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 
 **Grouped Sidebar** (`App/src/components/app-sidebar.tsx`):
 - AXION branding header with gradient AX logo
-- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts), Intelligence (Features, Doc Inventory, Knowledge Library with 13 sub-items), System (Health, Logs, Maintenance), Output (Export)
+- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts), Intelligence (Features, Doc Inventory, Knowledge Library with 15 sub-items), System (Health, Logs, Maintenance), Output (Export)
 - Knowledge Library label is a clickable nav link → `/knowledge` (Upgrade Matrix Dashboard); chevron toggle separately expands/collapses sub-library list
 - Knowledge Library sub-group auto-expands when any library route is active
 - Live badge counts (active runs count with cyan badge)
@@ -844,12 +844,13 @@ Fully governed operational authority library (OPS-0 through OPS-7) covering moni
 **Registered in:** `schema_registry.v1.json` (6 entries), `library_index.v1.json` (7 entries)
 
 ### Gates Library (`Axion/libraries/gates/`)
-Formal Gate DSL and evaluation contract library (GATE-0 through GATE-6) defining how pass/fail checks are expressed, what data gates read, how evidence is collected, and how gate outcomes interact with run control.
+Formal Gate DSL and evaluation contract library with two layers: structural doctrine (GATE-0 through GATE-6) and governance doctrine (GAT-0 through GAT-6) defining how pass/fail checks are expressed, validated, governed, and maintained.
 
-**Structure (31 files):**
-- 22 docs (GATE-0: purpose/boundaries, GATE-1: gate definition model/determinism/validation, GATE-2: DSL grammar/expression validation/determinism/validation, GATE-3: evaluation runtime/evidence collection/determinism/validation, GATE-4: gate report model/determinism/validation, GATE-5: determinism+replay/replay evidence/validation, GATE-6: minimum viable set/definition of done/minimal tree)
-- 6 schemas: `gate_definition.v1`, `gate_registry.v1`, `gate_eval_request.v1`, `gate_eval_trace.v1`, `gate_report.v1`, `gate_replay_request.v1`
-- 2 registries: `gate_dsl_functions.v1.json` (6 DSL functions: has_artifact, coverage, maturity_at_least, targets_contains, ledger_has, allow_override), `gate_registry.axion.v1.json` (8 gate definitions for PIPE-AXION-V1)
+**Structure (40+ files):**
+- 22 structural docs (GATE-0 through GATE-6: purpose/boundaries, gate definition model, DSL grammar, evaluation runtime, gate report model, determinism+replay, minimum viable set)
+- 7 governance docs (GAT-0 through GAT-6: governance purpose, registry rules/predicate maturity tiers, applicability/stage bindings, decision report/explainability, evidence/replay contracts, backcompat/drift detection, gate health metrics)
+- 8 schemas: `gate_definition.v1`, `gate_registry.v1`, `gate_eval_request.v1`, `gate_eval_trace.v1`, `gate_report.v1`, `gate_replay_request.v1`, `gate_unit.v1` (governance envelope), `gate_decision_report.v1` (explainability model)
+- 3 registries: `gate_dsl_functions.v1.json`, `gate_registry.axion.v1.json` (8 gate definitions), `gate_registry.v1.json` (8 governed gate units with lifecycle fields)
 - 1 template: `gate_report.example.json`
 
 **Loader** (`Axion/src/core/gates/loader.ts`):
@@ -861,7 +862,7 @@ Formal Gate DSL and evaluation contract library (GATE-0 through GATE-6) defining
 - `getAllGateDefinitions(repoRoot)` — all 8 gate definitions
 - `getDSLFunctions(repoRoot)` — DSL function catalog
 
-**Registered in:** `schema_registry.v1.json` (6 entries), `library_index.v1.json` (2 entries)
+**Registered in:** `schema_registry.v1.json` (8 entries), `library_index.v1.json` (3 entries)
 
 ### Policy Library (`Axion/libraries/policy/`)
 Risk class governance, override policies, precedence rules, and enforcement points (POL-0 through POL-5) defining how policy tiers control gate strictness, override permissions, and executor behavior across the pipeline.
@@ -885,6 +886,7 @@ Risk class governance, override policies, precedence rules, and enforcement poin
 
 ### Template System
 - **Source Templates**: `libraries/templates/` (533 TMP-02 contract files in 8 categories: Product Definition, System Architecture, Experience Design, Data & Information, Integrations & External Services, Operations & Reliability, Security Privacy & Compliance, Application Build). These are READ-ONLY — never modified by runs. Each contains: Header Block, Purpose, Inputs Required, Required Fields, Optional Fields, Rules, Output Format, Cross-References, Skill Level Rules, Unknown Handling, Completeness Gate.
+- **Governance Layer (Phase 1 upgrade):** 6 governance docs (TMP-1: registry rules, TMP-2: applicability/selection, TMP-3: placeholder provenance/forbidden guessing, TMP-4: completeness/proofs, TMP-5: backcompat/migrations with tiers BC-0 through BC-4, TMP-6: template health metrics). 3 governance schemas: `template_unit.v1`, `template_decision_report.v1`, `placeholder_provenance.v1`. Governed template registry with 8 domain entries. Registered in `schema_registry.v1.json` (3 entries), `library_index.v1.json` (1 entry).
 - **Filler Engine**: `filler.ts` reads each template's Output Format (Section 7) and produces a filled document using canonical spec entities (features, roles, workflows, permissions), standards, constraints, and intake data. Supports 5 placeholder types: direct, array, derived, optional, unknown-allowed. TMP-04 precedence: Canonical Spec → Standards → Work Breakdown → Acceptance Map. Garbled heading detection (`isGarbledHeading`) folds broken column-name fragments back under parent headings as tableColumns. Instruction-like sub-headings (no leading digit) fold under preceding numbered heading as description. ALL placeholder sections sent to OpenAI for synthesis (not just knowledge-matched ones); knowledge provides supplementary reference material when available.
 - **Selector**: `template_index.json` → registry-driven selection with rationale
 - **Rendered Output**: Filled documents written to `.axion/runs/<runId>/templates/rendered_docs/` — contain real project data (entity tables, requirements, cross-references), not template instruction text
@@ -910,7 +912,15 @@ Produces full `agent_kit/` folder hierarchy inside `kit/bundle/`:
 - `10_app/` — 12 domain slot folders (01_requirements through 12_analytics), each with rendered templates or `00_NA.md`
 
 ## Knowledge Library (`Axion/libraries/knowledge/`)
-Structured, policy-governed knowledge base providing KID files (Knowledge Items) across three pillars with full KL-1 through KL-7 contract system.
+Fully governed knowledge authority with doctrine docs (KNO-0 through KNO-7), governance schemas, governed registry, and structured KID files (Knowledge Items) across three pillars with full KL-1 through KL-7 contract system.
+
+**Governance Layer (Phase 1 upgrade):**
+- 8 doctrine docs: KNO-0 (purpose/boundaries), KNO-1 (unit classes: authoritative/guidance/example/anti-pattern/reference), KNO-2 (authority tiers: golden/verified/reviewed/draft), KNO-3 (freshness/supersession), KNO-4 (retrieval/resolution rules), KNO-5 (dependency mapping), KNO-6 (proof/trust), KNO-7 (definition of done)
+- 2 governance schemas: `knowledge_unit.v1.schema.json`, `knowledge_retrieval_report.v1.schema.json`
+- 1 governed registry: `knowledge_registry.v1.json` (12 governed units with full lifecycle fields)
+- **API:** `GET /api/knowledge-library` (overview), `/api/knowledge-library/docs`, `/api/knowledge-library/schemas`, `/api/knowledge-library/registries`
+- **UI:** `/knowledge-library` — Knowledge Library page with Documents/Schemas/Registries tabs
+- **Registered in:** `schema_registry.v1.json` (2 entries), `library_index.v1.json` (3 entries)
 
 ### Structure
 - `contracts/` — 76 contract files (KL-1 through KL-7): schemas, rules, validation checklists, gate specs

@@ -116,7 +116,7 @@ export const libraries: LibraryUpgrade[] = [
       "Add freshness and supersession logic",
       "Add retrieval policy based on run profile and risk class",
     ],
-    route: "",
+    route: "/knowledge-library",
   },
   {
     id: "templates",

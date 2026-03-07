@@ -1,0 +1,706 @@
+{
+  "registry_id": "gate_registry.v1",
+  "registry_version": "1.0.0",
+  "library_id": "gates",
+  "description": "Governed gate registry with full governance envelope fields per gate unit. Each entry conforms to gate_unit.v1.schema.json.",
+  "created_at": "2026-03-05T00:00:00Z",
+  "updated_at": "2026-03-05T00:00:00Z",
+  "owner": "axion-core",
+  "units": [
+    {
+      "library_id": "gates",
+      "unit_id": "GAT-INTAKE-01",
+      "title": "Intake Validity Gate",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "purpose": "Validates that intake data has been fully captured and validated before downstream processing begins.",
+      "scope": "Intake stage artifacts: intake_validation_result, intake field coverage",
+      "authority_tier": "A0",
+      "risk_class": "critical",
+      "gate_domain": "structural",
+      "severity": "hard_stop",
+      "predicate_maturity_tier": "stable",
+      "governing_standards": ["STD-INTAKE-COMPLETENESS"],
+      "validated_artifact_classes": ["intake_validation_result"],
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["intake"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["all"],
+        "exclusions": []
+      },
+      "predicates": [
+        {
+          "predicate_id": "PRED-G1A1",
+          "expr": "has_artifact(\"INTAKE_VALIDATION_RESULT\")",
+          "message_on_fail": "Intake validation result artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["intake/validation_result.json"]
+        },
+        {
+          "predicate_id": "PRED-G1A2",
+          "expr": "coverage(\"intake_fields\") >= 100",
+          "message_on_fail": "Intake field coverage is below 100%.",
+          "maturity": "stable",
+          "evidence_tags": ["intake/validation_result.json#coverage"]
+        }
+      ],
+      "required_proofs": ["intake_validation_proof"],
+      "error_taxonomy": [
+        {
+          "error_code": "GAT-ERR-INTAKE_MISSING",
+          "severity": "blocker",
+          "description": "Intake validation result artifact is missing from the run.",
+          "remediation": "Re-run intake validation stage."
+        },
+        {
+          "error_code": "GAT-ERR-INTAKE_COVERAGE",
+          "severity": "blocker",
+          "description": "Intake field coverage is below the required threshold.",
+          "remediation": "Complete all required intake fields."
+        }
+      ],
+      "replay_contract": {
+        "deterministic": true,
+        "idempotent": true,
+        "required_inputs": ["intake_validation_result"],
+        "snapshot_policy": "full"
+      },
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": false
+      },
+      "override_policy": {
+        "overridable": true,
+        "requires_reason": true,
+        "approval_required": false,
+        "max_override_duration_hours": 24
+      },
+      "dependencies": [],
+      "dependents": [
+        { "target_id": "GAT-CANONICAL-01", "edge_type": "produces_for", "description": "Intake validity feeds canonical spec building." }
+      ],
+      "maintenance_class": "coverage_audit",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "source_gate_id": "G1_INTAKE_VALIDITY",
+      "change_summary": "Initial governed registration."
+    },
+    {
+      "library_id": "gates",
+      "unit_id": "GAT-CANONICAL-01",
+      "title": "Canonical Spec Integrity Gate",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "purpose": "Validates that the canonical spec is complete, structurally sound, and includes all required entity relationships.",
+      "scope": "Canonical stage artifacts: canonical_spec, entity relationships, field coverage",
+      "authority_tier": "A0",
+      "risk_class": "critical",
+      "gate_domain": "structural",
+      "severity": "hard_stop",
+      "predicate_maturity_tier": "stable",
+      "governing_standards": ["STD-CANONICAL-INTEGRITY"],
+      "validated_artifact_classes": ["canonical_spec"],
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["canonical"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["all"],
+        "exclusions": []
+      },
+      "predicates": [
+        {
+          "predicate_id": "PRED-G2A1",
+          "expr": "has_artifact(\"CANONICAL_SPEC\")",
+          "message_on_fail": "Canonical spec artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["canonical/canonical_spec.json"]
+        },
+        {
+          "predicate_id": "PRED-G2A2",
+          "expr": "coverage(\"canonical_fields\") >= 100",
+          "message_on_fail": "Canonical spec field coverage is below 100%.",
+          "maturity": "stable",
+          "evidence_tags": ["canonical/canonical_spec.json#fields"]
+        },
+        {
+          "predicate_id": "PRED-G2A3",
+          "expr": "has_artifact(\"CANONICAL_SPEC\") and coverage(\"relationships\") >= 100",
+          "message_on_fail": "Canonical spec must include entity relationships.",
+          "maturity": "stable",
+          "evidence_tags": ["canonical/canonical_spec.json#relationships"]
+        }
+      ],
+      "required_proofs": ["canonical_spec_proof", "relationship_proof"],
+      "error_taxonomy": [
+        {
+          "error_code": "GAT-ERR-CANONICAL_MISSING",
+          "severity": "blocker",
+          "description": "Canonical spec artifact is missing from the run.",
+          "remediation": "Re-run canonical spec building stage."
+        },
+        {
+          "error_code": "GAT-ERR-CANONICAL_COVERAGE",
+          "severity": "blocker",
+          "description": "Canonical spec field coverage is below the required threshold.",
+          "remediation": "Complete all required canonical spec fields."
+        }
+      ],
+      "replay_contract": {
+        "deterministic": true,
+        "idempotent": true,
+        "required_inputs": ["canonical_spec"],
+        "snapshot_policy": "full"
+      },
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": true
+      },
+      "override_policy": {
+        "overridable": true,
+        "requires_reason": true,
+        "approval_required": true,
+        "max_override_duration_hours": 12
+      },
+      "dependencies": [
+        { "target_id": "GAT-INTAKE-01", "edge_type": "requires", "description": "Requires intake to be validated first." }
+      ],
+      "dependents": [
+        { "target_id": "GAT-STANDARDS-01", "edge_type": "produces_for", "description": "Canonical spec feeds standards resolution." }
+      ],
+      "maintenance_class": "coverage_audit",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "source_gate_id": "G2_CANONICAL_INTEGRITY",
+      "change_summary": "Initial governed registration."
+    },
+    {
+      "library_id": "gates",
+      "unit_id": "GAT-STANDARDS-01",
+      "title": "Standards Resolution Gate",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "purpose": "Validates that all applicable standards have been resolved and a complete standards snapshot exists.",
+      "scope": "Standards stage artifacts: resolved_standards_snapshot, standards coverage",
+      "authority_tier": "A0",
+      "risk_class": "critical",
+      "gate_domain": "compliance",
+      "severity": "hard_stop",
+      "predicate_maturity_tier": "stable",
+      "governing_standards": ["STD-STANDARDS-RESOLUTION"],
+      "validated_artifact_classes": ["resolved_standards_snapshot"],
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["standards"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["all"],
+        "exclusions": []
+      },
+      "predicates": [
+        {
+          "predicate_id": "PRED-G3A1",
+          "expr": "has_artifact(\"RESOLVED_STANDARDS_SNAPSHOT\")",
+          "message_on_fail": "Resolved standards snapshot artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["standards/resolved_standards_snapshot.json"]
+        },
+        {
+          "predicate_id": "PRED-G3A2",
+          "expr": "coverage(\"standards\") >= 100",
+          "message_on_fail": "Standards resolution coverage is below 100%.",
+          "maturity": "stable",
+          "evidence_tags": ["standards/resolved_standards_snapshot.json#coverage"]
+        }
+      ],
+      "required_proofs": ["standards_resolution_proof"],
+      "error_taxonomy": [
+        {
+          "error_code": "GAT-ERR-STANDARDS_MISSING",
+          "severity": "blocker",
+          "description": "Resolved standards snapshot is missing.",
+          "remediation": "Re-run standards resolution stage."
+        }
+      ],
+      "replay_contract": {
+        "deterministic": true,
+        "idempotent": true,
+        "required_inputs": ["resolved_standards_snapshot"],
+        "snapshot_policy": "full"
+      },
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": true
+      },
+      "override_policy": {
+        "overridable": true,
+        "requires_reason": true,
+        "approval_required": true,
+        "max_override_duration_hours": 12
+      },
+      "dependencies": [
+        { "target_id": "GAT-CANONICAL-01", "edge_type": "requires", "description": "Requires canonical spec to be valid." }
+      ],
+      "dependents": [
+        { "target_id": "GAT-TEMPLATE-SELECT-01", "edge_type": "produces_for", "description": "Standards feed template selection." }
+      ],
+      "maintenance_class": "coverage_audit",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "source_gate_id": "G3_STANDARDS_RESOLVED",
+      "change_summary": "Initial governed registration."
+    },
+    {
+      "library_id": "gates",
+      "unit_id": "GAT-TEMPLATE-SELECT-01",
+      "title": "Template Selection Gate",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "purpose": "Validates that templates have been correctly selected for the project based on applicable criteria.",
+      "scope": "Template selection stage artifacts: template_selection_result, selected_templates",
+      "authority_tier": "A1",
+      "risk_class": "high",
+      "gate_domain": "structural",
+      "severity": "hard_stop",
+      "predicate_maturity_tier": "stable",
+      "governing_standards": ["STD-TEMPLATE-SELECTION"],
+      "validated_artifact_classes": ["template_selection_result"],
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["template_selection"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["all"],
+        "exclusions": []
+      },
+      "predicates": [
+        {
+          "predicate_id": "PRED-G4A1",
+          "expr": "has_artifact(\"TEMPLATE_SELECTION_RESULT\")",
+          "message_on_fail": "Template selection result artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["templates/selection_result.json"]
+        },
+        {
+          "predicate_id": "PRED-G4A2",
+          "expr": "targets_contains(\"selected_templates\")",
+          "message_on_fail": "Template selection must include selected templates.",
+          "maturity": "stable",
+          "evidence_tags": ["templates/selection_result.json#selected_templates"]
+        }
+      ],
+      "required_proofs": ["template_selection_proof"],
+      "error_taxonomy": [
+        {
+          "error_code": "GAT-ERR-TEMPLATE_SELECT_MISSING",
+          "severity": "blocker",
+          "description": "Template selection result is missing.",
+          "remediation": "Re-run template selection stage."
+        }
+      ],
+      "replay_contract": {
+        "deterministic": true,
+        "idempotent": true,
+        "required_inputs": ["template_selection_result"],
+        "snapshot_policy": "full"
+      },
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": false
+      },
+      "override_policy": {
+        "overridable": true,
+        "requires_reason": true,
+        "approval_required": false,
+        "max_override_duration_hours": 24
+      },
+      "dependencies": [
+        { "target_id": "GAT-STANDARDS-01", "edge_type": "requires", "description": "Requires standards to be resolved." }
+      ],
+      "dependents": [
+        { "target_id": "GAT-TEMPLATE-COMPLETE-01", "edge_type": "produces_for", "description": "Selected templates feed completeness check." }
+      ],
+      "maintenance_class": "coverage_audit",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "source_gate_id": "G4_TEMPLATE_SELECTION",
+      "change_summary": "Initial governed registration."
+    },
+    {
+      "library_id": "gates",
+      "unit_id": "GAT-TEMPLATE-COMPLETE-01",
+      "title": "Template Completeness Gate",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "purpose": "Validates that all selected templates have been fully rendered with 100% completeness.",
+      "scope": "Template rendering stage artifacts: render_report, template_completeness_report",
+      "authority_tier": "A0",
+      "risk_class": "critical",
+      "gate_domain": "structural",
+      "severity": "hard_stop",
+      "predicate_maturity_tier": "stable",
+      "governing_standards": ["STD-TEMPLATE-COMPLETENESS"],
+      "validated_artifact_classes": ["render_report", "template_completeness_report"],
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["template_rendering"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["all"],
+        "exclusions": []
+      },
+      "predicates": [
+        {
+          "predicate_id": "PRED-G5A1",
+          "expr": "has_artifact(\"RENDER_REPORT\")",
+          "message_on_fail": "Template render report artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["templates/render_report.json"]
+        },
+        {
+          "predicate_id": "PRED-G5A2",
+          "expr": "has_artifact(\"TEMPLATE_COMPLETENESS_REPORT\")",
+          "message_on_fail": "Template completeness report artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["templates/template_completeness_report.json"]
+        },
+        {
+          "predicate_id": "PRED-G5A3",
+          "expr": "coverage(\"template_completeness\") >= 100",
+          "message_on_fail": "Template completeness must be 100%.",
+          "maturity": "stable",
+          "evidence_tags": ["templates/template_completeness_report.json#pass"]
+        }
+      ],
+      "required_proofs": ["render_proof", "completeness_proof"],
+      "error_taxonomy": [
+        {
+          "error_code": "GAT-ERR-RENDER_MISSING",
+          "severity": "blocker",
+          "description": "Template render report is missing.",
+          "remediation": "Re-run template rendering stage."
+        },
+        {
+          "error_code": "GAT-ERR-COMPLETENESS_FAIL",
+          "severity": "blocker",
+          "description": "Template completeness is below 100%.",
+          "remediation": "Complete all template sections and placeholders."
+        }
+      ],
+      "replay_contract": {
+        "deterministic": true,
+        "idempotent": true,
+        "required_inputs": ["render_report", "template_completeness_report"],
+        "snapshot_policy": "full"
+      },
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": true
+      },
+      "override_policy": {
+        "overridable": true,
+        "requires_reason": true,
+        "approval_required": true,
+        "max_override_duration_hours": 12
+      },
+      "dependencies": [
+        { "target_id": "GAT-TEMPLATE-SELECT-01", "edge_type": "requires", "description": "Requires templates to be selected." }
+      ],
+      "dependents": [
+        { "target_id": "GAT-PLAN-COVERAGE-01", "edge_type": "produces_for", "description": "Completed templates feed plan coverage." }
+      ],
+      "maintenance_class": "coverage_audit",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "source_gate_id": "G5_TEMPLATE_COMPLETENESS",
+      "change_summary": "Initial governed registration."
+    },
+    {
+      "library_id": "gates",
+      "unit_id": "GAT-PLAN-COVERAGE-01",
+      "title": "Plan Coverage Gate",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "purpose": "Validates that the build plan achieves full coverage of all required deliverables.",
+      "scope": "Planning stage artifacts: coverage_report, plan coverage percentage",
+      "authority_tier": "A0",
+      "risk_class": "critical",
+      "gate_domain": "structural",
+      "severity": "hard_stop",
+      "predicate_maturity_tier": "stable",
+      "governing_standards": ["STD-PLAN-COVERAGE"],
+      "validated_artifact_classes": ["coverage_report"],
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["planning"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["all"],
+        "exclusions": []
+      },
+      "predicates": [
+        {
+          "predicate_id": "PRED-G6A1",
+          "expr": "has_artifact(\"COVERAGE_REPORT\")",
+          "message_on_fail": "Plan coverage report artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["planning/coverage_report.json"]
+        },
+        {
+          "predicate_id": "PRED-G6A2",
+          "expr": "coverage(\"plan\") >= 100",
+          "message_on_fail": "Plan coverage must be at least 100%.",
+          "maturity": "stable",
+          "evidence_tags": ["planning/coverage_report.json#coverage_percent"]
+        }
+      ],
+      "required_proofs": ["plan_coverage_proof"],
+      "error_taxonomy": [
+        {
+          "error_code": "GAT-ERR-PLAN_COVERAGE_MISSING",
+          "severity": "blocker",
+          "description": "Plan coverage report is missing.",
+          "remediation": "Re-run planning coverage stage."
+        }
+      ],
+      "replay_contract": {
+        "deterministic": true,
+        "idempotent": true,
+        "required_inputs": ["coverage_report"],
+        "snapshot_policy": "full"
+      },
+      "evidence_policy": {
+        "mode": "standard",
+        "include_pointers": true,
+        "include_diff": false,
+        "include_verification_proof": true
+      },
+      "override_policy": {
+        "overridable": true,
+        "requires_reason": true,
+        "approval_required": true,
+        "max_override_duration_hours": 12
+      },
+      "dependencies": [
+        { "target_id": "GAT-TEMPLATE-COMPLETE-01", "edge_type": "requires", "description": "Requires templates to be complete." }
+      ],
+      "dependents": [
+        { "target_id": "GAT-VERIFICATION-01", "edge_type": "produces_for", "description": "Plan coverage feeds verification." }
+      ],
+      "maintenance_class": "coverage_audit",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "source_gate_id": "G6_PLAN_COVERAGE",
+      "change_summary": "Initial governed registration."
+    },
+    {
+      "library_id": "gates",
+      "unit_id": "GAT-VERIFICATION-01",
+      "title": "Verification Gate",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "purpose": "Validates that verification has been completed with all proofs recorded in the proof ledger.",
+      "scope": "Verification stage artifacts: verification_run_result, proof_ledger, completion_report",
+      "authority_tier": "A0",
+      "risk_class": "critical",
+      "gate_domain": "compliance",
+      "severity": "hard_stop",
+      "predicate_maturity_tier": "stable",
+      "governing_standards": ["STD-VERIFICATION-COMPLETENESS"],
+      "validated_artifact_classes": ["verification_run_result", "proof_ledger", "completion_report"],
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["verification"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["all"],
+        "exclusions": []
+      },
+      "predicates": [
+        {
+          "predicate_id": "PRED-G7A1",
+          "expr": "has_artifact(\"VERIFICATION_RUN_RESULT\")",
+          "message_on_fail": "Verification run result artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["verification/verification_run_result.json"]
+        },
+        {
+          "predicate_id": "PRED-G7A2",
+          "expr": "ledger_has(\"proof_ledger\")",
+          "message_on_fail": "Proof ledger artifact is missing or incomplete.",
+          "maturity": "stable",
+          "evidence_tags": ["proof/proof_ledger.jsonl"]
+        },
+        {
+          "predicate_id": "PRED-G7A3",
+          "expr": "has_artifact(\"COMPLETION_REPORT\")",
+          "message_on_fail": "Verification completion report artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["verification/completion_report.json"]
+        }
+      ],
+      "required_proofs": ["verification_proof", "ledger_proof", "completion_proof"],
+      "error_taxonomy": [
+        {
+          "error_code": "GAT-ERR-VERIFICATION_MISSING",
+          "severity": "blocker",
+          "description": "Verification run result is missing.",
+          "remediation": "Re-run verification stage."
+        },
+        {
+          "error_code": "GAT-ERR-LEDGER_INCOMPLETE",
+          "severity": "blocker",
+          "description": "Proof ledger is missing or incomplete.",
+          "remediation": "Ensure all proofs are recorded in the proof ledger."
+        }
+      ],
+      "replay_contract": {
+        "deterministic": true,
+        "idempotent": true,
+        "required_inputs": ["verification_run_result", "proof_ledger", "completion_report"],
+        "snapshot_policy": "full"
+      },
+      "evidence_policy": {
+        "mode": "trace",
+        "include_pointers": true,
+        "include_diff": true,
+        "include_verification_proof": true
+      },
+      "override_policy": {
+        "overridable": false,
+        "requires_reason": true,
+        "approval_required": true,
+        "max_override_duration_hours": 4
+      },
+      "dependencies": [
+        { "target_id": "GAT-PLAN-COVERAGE-01", "edge_type": "requires", "description": "Requires plan coverage to pass." }
+      ],
+      "dependents": [
+        { "target_id": "GAT-PACKAGE-01", "edge_type": "produces_for", "description": "Verification feeds packaging." }
+      ],
+      "maintenance_class": "coverage_audit",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "source_gate_id": "G7_VERIFICATION",
+      "change_summary": "Initial governed registration."
+    },
+    {
+      "library_id": "gates",
+      "unit_id": "GAT-PACKAGE-01",
+      "title": "Package Integrity Gate",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-05T00:00:00Z",
+      "purpose": "Validates that the final package is complete, hashed, and integrity-verified before delivery.",
+      "scope": "Packaging stage artifacts: packaging_manifest, package hashes, bundle contents",
+      "authority_tier": "A0",
+      "risk_class": "critical",
+      "gate_domain": "release",
+      "severity": "hard_stop",
+      "predicate_maturity_tier": "stable",
+      "governing_standards": ["STD-PACKAGE-INTEGRITY"],
+      "validated_artifact_classes": ["packaging_manifest", "bundle"],
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["packaging"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["all"],
+        "exclusions": []
+      },
+      "predicates": [
+        {
+          "predicate_id": "PRED-G8A1",
+          "expr": "has_artifact(\"PACKAGING_MANIFEST\")",
+          "message_on_fail": "Packaging manifest artifact is missing.",
+          "maturity": "stable",
+          "evidence_tags": ["kit/packaging_manifest.json"]
+        },
+        {
+          "predicate_id": "PRED-G8A2",
+          "expr": "has_artifact(\"PACKAGING_MANIFEST\") and coverage(\"package_hashes\") >= 100",
+          "message_on_fail": "Package hash verification failed or incomplete.",
+          "maturity": "stable",
+          "evidence_tags": ["kit/packaging_manifest.json#hashes", "kit/bundle/"]
+        }
+      ],
+      "required_proofs": ["package_integrity_proof", "hash_verification_proof"],
+      "error_taxonomy": [
+        {
+          "error_code": "GAT-ERR-PACKAGE_MISSING",
+          "severity": "blocker",
+          "description": "Packaging manifest is missing.",
+          "remediation": "Re-run packaging stage."
+        },
+        {
+          "error_code": "GAT-ERR-HASH_MISMATCH",
+          "severity": "blocker",
+          "description": "Package hash verification failed.",
+          "remediation": "Rebuild the package and verify hashes."
+        }
+      ],
+      "replay_contract": {
+        "deterministic": true,
+        "idempotent": true,
+        "required_inputs": ["packaging_manifest"],
+        "snapshot_policy": "full"
+      },
+      "evidence_policy": {
+        "mode": "trace",
+        "include_pointers": true,
+        "include_diff": true,
+        "include_verification_proof": true
+      },
+      "override_policy": {
+        "overridable": false,
+        "requires_reason": true,
+        "approval_required": true,
+        "max_override_duration_hours": 4
+      },
+      "dependencies": [
+        { "target_id": "GAT-VERIFICATION-01", "edge_type": "requires", "description": "Requires verification to pass." }
+      ],
+      "dependents": [],
+      "maintenance_class": "coverage_audit",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "source_gate_id": "G8_PACKAGE_INTEGRITY",
+      "change_summary": "Initial governed registration."
+    }
+  ]
+}

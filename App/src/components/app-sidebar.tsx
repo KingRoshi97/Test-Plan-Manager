@@ -111,6 +111,7 @@ function KnowledgeSubgroup() {
     { href: "/telemetry-library", label: "Telemetry", icon: Library },
     { href: "/audit-library", label: "Audit", icon: Library },
     { href: "/ops", label: "Ops", icon: Library },
+    { href: "/knowledge-library", label: "Knowledge", icon: Library },
     { href: "/intake-library", label: "Intake", icon: Library },
   ];
 

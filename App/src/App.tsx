@@ -25,6 +25,7 @@ import KitLibraryPage from "./pages/kit-library";
 import TelemetryLibraryPage from "./pages/telemetry-library";
 import AuditLibraryPage from "./pages/audit-library";
 import OpsLibraryPage from "./pages/ops-library";
+import KnowledgeLibraryPage from "./pages/knowledge-library";
 import MaintenancePage from "./pages/maintenance";
 import KnowledgeDashboardPage from "./pages/knowledge-dashboard";
 
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/telemetry-library" component={TelemetryLibraryPage} />
         <Route path="/audit-library" component={AuditLibraryPage} />
         <Route path="/ops" component={OpsLibraryPage} />
+        <Route path="/knowledge-library" component={KnowledgeLibraryPage} />
         <Route path="/maintenance" component={MaintenancePage} />
         <Route path="/intake-library" component={IntakeLibraryPage} />
         <Route path="/docs" component={DocInventoryPage} />

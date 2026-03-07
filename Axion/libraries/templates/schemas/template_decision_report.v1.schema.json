@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "template_decision_report.v1",
+  "description": "Schema for template decision reports. Emitted when the templates library evaluates template selection, applicability, or rendered output completeness.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "report_type",
+    "run_id",
+    "timestamp",
+    "evaluated_templates",
+    "verdict",
+    "findings"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^TMP-RPT-[A-Z0-9_-]+$",
+      "description": "Unique report identifier."
+    },
+    "report_type": {
+      "type": "string",
+      "enum": ["selection", "applicability", "completeness", "proof", "rendering", "drift_check", "backcompat_check"],
+      "description": "What kind of decision this report covers."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Pipeline run this report belongs to."
+    },
+    "assembly_id": {
+      "type": ["string", "null"],
+      "description": "Assembly ID if applicable."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "context": {
+      "type": "object",
+      "description": "Contextual inputs that influenced the decision.",
+      "properties": {
+        "project_type": { "type": "string" },
+        "risk_class": { "type": "string" },
+        "environment": { "type": "string" },
+        "stage": { "type": "string" },
+        "profile": { "type": "string" },
+        "domain": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "evaluated_templates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evaluated_template" },
+      "minItems": 1,
+      "description": "Templates that were evaluated in this decision."
+    },
+    "selected_templates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/selected_template" },
+      "description": "Templates that were selected as a result of the evaluation."
+    },
+    "rejected_templates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/rejected_template" },
+      "description": "Templates that were considered but not selected."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "fail", "warn", "skip"],
+      "description": "Overall decision outcome."
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" },
+      "description": "Specific findings from the evaluation."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Paths or IDs of evidence artifacts referenced."
+    },
+    "scoring": {
+      "type": "object",
+      "description": "Scoring details for template selection.",
+      "properties": {
+        "method": { "type": "string" },
+        "weights": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "threshold": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "recommendations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Recommended actions based on findings."
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How long the evaluation took."
+    }
+  },
+  "$defs": {
+    "evaluated_template": {
+      "type": "object",
+      "required": ["unit_id", "result"],
+      "properties": {
+        "unit_id": { "type": "string" },
+        "version": { "type": "string" },
+        "result": {
+          "type": "string",
+          "enum": ["pass", "fail", "warn", "skip", "not_applicable"]
+        },
+        "score": { "type": "number" },
+        "reason": { "type": "string" },
+        "evidence_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "selected_template": {
+      "type": "object",
+      "required": ["unit_id", "version", "reason"],
+      "properties": {
+        "unit_id": { "type": "string" },
+        "version": { "type": "string" },
+        "path": { "type": "string" },
+        "reason": { "type": "string" },
+        "score": { "type": "number" },
+        "applicability_match": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "rejected_template": {
+      "type": "object",
+      "required": ["unit_id", "reason"],
+      "properties": {
+        "unit_id": { "type": "string" },
+        "version": { "type": "string" },
+        "reason": { "type": "string" },
+        "score": { "type": "number" },
+        "disqualification_rule": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "finding": {
+      "type": "object",
+      "required": ["finding_id", "severity", "message"],
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^TMP-FIND-[A-Z0-9]+$"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["blocker", "warning", "info"]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 5
+        },
+        "affected_template": { "type": "string" },
+        "affected_section": { "type": "string" },
+        "remediation": { "type": "string" },
+        "evidence_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

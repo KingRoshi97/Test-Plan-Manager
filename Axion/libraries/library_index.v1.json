@@ -49,6 +49,7 @@
 
     { "id": "gates.gate_dsl_functions", "path": "Axion/libraries/gates/registries/gate_dsl_functions.v1.json", "version": "1.0.0" },
     { "id": "gates.gate_registry", "path": "Axion/libraries/gates/registries/gate_registry.axion.v1.json", "version": "1.0.0" },
+    { "id": "gates.gate_registry_governed", "path": "Axion/libraries/gates/registries/gate_registry.v1.json", "version": "1.0.0" },
 
     { "id": "orchestration.pipeline_definition", "path": "Axion/libraries/orchestration/registries/pipeline_definition.axion.v1.json", "version": "1.0.0" },
     { "id": "orchestration.stage_io_registry", "path": "Axion/libraries/orchestration/registries/stage_io_registry.axion.v1.json", "version": "1.0.0" },
@@ -63,7 +64,11 @@
     { "id": "ops.logging_standards", "path": "Axion/libraries/ops/registries/LTS-01.logging_tracing_standards.v1.json", "version": "1.0.0" },
     { "id": "ops.slo_policy", "path": "Axion/libraries/ops/registries/SLO-01.slo_policy.v1.json", "version": "1.0.0" },
     { "id": "ops.perf_budgets", "path": "Axion/libraries/ops/registries/PERF-01.performance_budgets.v1.json", "version": "1.0.0" },
-    { "id": "ops.cost_model", "path": "Axion/libraries/ops/registries/COST-01.capacity_cost_model.v1.json", "version": "1.0.0" }
+    { "id": "ops.cost_model", "path": "Axion/libraries/ops/registries/COST-01.capacity_cost_model.v1.json", "version": "1.0.0" },
+
+    { "id": "knowledge.registry", "path": "Axion/libraries/knowledge/INDEX/knowledge_registry.v1.json", "version": "1.0.0" },
+    { "id": "knowledge.index", "path": "Axion/libraries/knowledge/INDEX/knowledge.index.json", "version": "1.0.0" },
+    { "id": "knowledge.taxonomy", "path": "Axion/libraries/knowledge/INDEX/taxonomy.json", "version": "1.0.0" }
   ],
   "notes": [
     "Schema files are registered in schema_registry.v1.json (separate).",
