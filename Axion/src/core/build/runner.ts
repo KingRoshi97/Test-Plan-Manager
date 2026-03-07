@@ -9,10 +9,14 @@ import type {
   BuildFailureClass,
   EligibilityResult,
   VerificationReport,
+  KitExtraction,
+  RepoBlueprint,
 } from "./types.js";
 import { generateBuildId, isValidTransition } from "./types.js";
 import { checkBuildEligibility } from "./eligibility.js";
 import { createBuildPlan, writeBuildPlan } from "./planner.js";
+import { extractKit, checkExtractionGate } from "./extractor.js";
+import { buildRepoBlueprint, checkBlueprintGate } from "./blueprint.js";
 import {
   initWorkspace,
   getWorkspaceStatus,
@@ -136,11 +140,51 @@ export async function runBuild(
       return result;
     }
 
-    console.log("  [BUILD] Eligibility passed. Planning...");
+    console.log("  [BUILD] Eligibility passed. Extracting kit...");
+
+    let extraction: KitExtraction | null = null;
+    let blueprint: RepoBlueprint | null = null;
+
+    try {
+      extraction = await extractKit(runDir);
+      const extractionGate = checkExtractionGate(extraction);
+      if (!extractionGate.passed) {
+        console.log(`  [BUILD] Kit extraction gate did not pass: ${extractionGate.blockers.join("; ")} — falling back to legacy planning`);
+        extraction = null;
+      } else {
+        const extractionPath = path.join(runDir, "build", "kit_extraction.json");
+        manifest = updateOutputRefs(manifest, { kitExtractionPath: extractionPath });
+        console.log(`  [BUILD] Kit extraction passed: ${extraction.extraction_coverage_summary.total_extracted_files}/${extraction.extraction_coverage_summary.total_kit_files} files, ${extraction.derived_build_implications.derived_expected_total_file_count} expected repo files`);
+      }
+    } catch (err: any) {
+      console.log(`  [BUILD] Kit extraction error: ${err.message} — falling back to legacy planning`);
+      extraction = null;
+    }
+
+    if (extraction) {
+      console.log("  [BUILD] Building repo blueprint...");
+      try {
+        blueprint = await buildRepoBlueprint(extraction, runDir);
+        const blueprintGate = checkBlueprintGate(blueprint);
+        if (!blueprintGate.passed) {
+          console.log(`  [BUILD] Blueprint gate did not pass: ${blueprintGate.blockers.join("; ")} — falling back to legacy planning`);
+          blueprint = null;
+        } else {
+          const blueprintPath = path.join(runDir, "build", "repo_blueprint.json");
+          manifest = updateOutputRefs(manifest, { repoBlueprintPath: blueprintPath });
+          console.log(`  [BUILD] Blueprint ready: ${blueprint.file_inventory.length} files in inventory, ${blueprint.module_map.length} modules, ${blueprint.subsystems.length} subsystems`);
+        }
+      } catch (err: any) {
+        console.log(`  [BUILD] Blueprint derivation error: ${err.message} — falling back to legacy planning`);
+        blueprint = null;
+      }
+    }
+
+    console.log(`  [BUILD] Planning${blueprint ? " from blueprint" : " (legacy mode)"}...`);
 
     let plan: BuildPlan;
     try {
-      plan = await createBuildPlan(runDir);
+      plan = await createBuildPlan(runDir, blueprint ?? undefined);
       plan.buildId = buildId;
     } catch (err: any) {
       const reason = `Planning failed: ${err.message}`;

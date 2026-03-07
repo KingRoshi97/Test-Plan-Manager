@@ -14,6 +14,8 @@ export type BuildFailureClass =
   | "missing_kit"
   | "invalid_inputs"
   | "eligibility"
+  | "extraction"
+  | "blueprint"
   | "planning"
   | "workspace"
   | "generation"
@@ -55,6 +57,7 @@ export interface BuildFileTarget {
   relativePath: string;
   role: string;
   sourceRef?: string;
+  traceRef?: string;
   generationMethod: "deterministic" | "ai_assisted";
   status: "pending" | "generated" | "failed" | "skipped";
   sizeBytes?: number;
@@ -113,6 +116,8 @@ export interface BuildManifest {
     buildPlanPath?: string;
     fileIndexPath?: string;
     exportZipPath?: string;
+    kitExtractionPath?: string;
+    repoBlueprintPath?: string;
   };
   tokenUsage?: {
     total_prompt_tokens: number;
@@ -235,4 +240,257 @@ export function isValidTransition(from: BuildState, to: BuildState): boolean {
 export function generateBuildId(): string {
   const num = Math.floor(Math.random() * 999999).toString().padStart(6, "0");
   return `BLD-${num}`;
+}
+
+export interface SourceLayerResult {
+  source_layer: string;
+  required: boolean;
+  source_refs: string[];
+  extracted: boolean;
+  extracted_count: number;
+  gap_count: number;
+  notes: string | null;
+}
+
+export interface ExtractionGap {
+  gap_id: string;
+  source_layer: string;
+  source_ref: string;
+  gap_type: "not_extracted" | "partially_extracted" | "projection_not_derived" | "trace_not_formed" | "file_implication_missing";
+  severity: "warning" | "error";
+  description: string;
+  blocks_build: boolean;
+}
+
+export interface ExtractionCoverageSummary {
+  total_kit_files: number;
+  total_extracted_files: number;
+  total_ignored_files: number;
+  required_source_layers: number;
+  extracted_source_layers: number;
+  failed_source_layers: number;
+}
+
+export interface ProjectionArtifactSummary {
+  artifact_name: string;
+  produced: boolean;
+  artifact_ref: string;
+  completeness_status: "complete" | "partial" | "missing";
+}
+
+export interface DerivedBuildImplications {
+  derived_subsystem_count: number;
+  derived_module_count: number;
+  derived_screen_count: number;
+  derived_endpoint_count: number;
+  derived_entity_count: number;
+  derived_file_group_count: number;
+  derived_expected_total_file_count: number;
+  derived_repo_type: string;
+  derived_repo_shape: string;
+}
+
+export interface DomainEntity {
+  entity_id: string;
+  name: string;
+  fields: string[];
+  relationships: string[];
+  source_ref: string;
+}
+
+export interface DomainModel {
+  entities: DomainEntity[];
+  relationships: Array<{ from: string; to: string; type: string }>;
+  state_machines: Array<{ entity: string; states: string[]; transitions: string[] }>;
+}
+
+export interface AppIdentity {
+  app_name: string;
+  app_type: string;
+  description: string;
+  project_overview: string;
+}
+
+export interface FeatureMapEntry {
+  feature_id: string;
+  name: string;
+  description: string;
+  priority: string;
+  deliverables: string[];
+  scope_refs: string[];
+}
+
+export interface InterfaceContracts {
+  routes: Array<{ path: string; method: string; handler: string; source_ref: string }>;
+  endpoints: Array<{ endpoint_id: string; path: string; method: string; request_schema?: string; response_schema?: string; source_ref: string }>;
+  events: Array<{ event_id: string; name: string; payload: string; source_ref: string }>;
+}
+
+export interface DataSchemas {
+  schemas: Array<{ schema_id: string; name: string; fields: string[]; source_ref: string }>;
+  storage_types: string[];
+  migrations: string[];
+}
+
+export interface SecurityModel {
+  auth_model: string;
+  auth_flows: string[];
+  rbac_rules: Array<{ role: string; permissions: string[] }>;
+  security_requirements: string[];
+  source_refs: string[];
+}
+
+export interface VerificationExpectations {
+  acceptance_criteria: Array<{ criteria_id: string; description: string; feature_ref: string }>;
+  test_categories: string[];
+  coverage_targets: Record<string, number>;
+}
+
+export interface DerivedBuildInputs {
+  app_identity: AppIdentity;
+  domain_model: DomainModel;
+  subsystems: Array<{ subsystem_id: string; name: string; description: string; layer: string; source_refs: string[] }>;
+  feature_map: FeatureMapEntry[];
+  interfaces: InterfaceContracts;
+  data: DataSchemas;
+  security: SecurityModel;
+  verification: VerificationExpectations;
+}
+
+export interface RepoInventory {
+  expected_directories: string[];
+  expected_modules: Array<{ module_id: string; path: string; layer: string; purpose: string }>;
+  expected_files: Array<{ path: string; role: string; layer: string; source_ref: string }>;
+  expected_file_count: number;
+}
+
+export interface RequirementTraceEntry {
+  requirement_id: string;
+  description: string;
+  module_refs: string[];
+  file_refs: string[];
+  verification_refs: string[];
+}
+
+export interface KitExtraction {
+  kit_extraction_report_id: string;
+  run_id: string;
+  kit_ref: string;
+  kit_manifest_ref: string;
+  kit_version: string;
+  kit_file_count: number;
+  kit_root_path: string;
+  extraction_coverage_summary: ExtractionCoverageSummary;
+  source_layer_results: SourceLayerResult[];
+  projection_artifact_summary: ProjectionArtifactSummary[];
+  derived_build_implications: DerivedBuildImplications;
+  derived_inputs: DerivedBuildInputs;
+  repo_inventory: RepoInventory;
+  requirement_trace_map: RequirementTraceEntry[];
+  extraction_gaps: ExtractionGap[];
+  extraction_result: "passed" | "failed" | "partial";
+  build_gate_recommendation: "allow_build" | "block_build" | "allow_with_warnings";
+  created_at: string;
+  updated_at: string;
+  status: "active" | "superseded";
+}
+
+export interface ExtractionGateResult {
+  passed: boolean;
+  conditions: Array<{ condition_id: string; description: string; passed: boolean; detail?: string }>;
+  blockers: string[];
+}
+
+export interface BlueprintModule {
+  module_id: string;
+  name: string;
+  layer: "frontend" | "backend" | "shared" | "data" | "security" | "test" | "config" | "docs";
+  purpose: string;
+  path: string;
+  inputs: string[];
+  outputs: string[];
+  dependencies: string[];
+  source_refs: string[];
+}
+
+export interface BlueprintSubsystem {
+  subsystem_id: string;
+  name: string;
+  modules: string[];
+  responsibilities: string[];
+  dependencies: string[];
+  layer: string;
+}
+
+export interface BlueprintFileEntry {
+  file_id: string;
+  path: string;
+  role: string;
+  layer: "frontend" | "backend" | "shared" | "data" | "security" | "test" | "config" | "docs";
+  module_ref: string;
+  subsystem_ref: string;
+  generation_method: "deterministic" | "ai_assisted";
+  source_refs: string[];
+  trace_refs: string[];
+  description: string;
+}
+
+export interface DirectoryLayout {
+  directories: Array<{ path: string; purpose: string; layer: string; required: boolean }>;
+  top_level_roots: string[];
+  repo_type: string;
+  repo_shape: string;
+}
+
+export interface BlueprintDataModel {
+  entities: DomainEntity[];
+  schemas: DataSchemas;
+  migration_strategy: string;
+}
+
+export interface BlueprintVerificationTargets {
+  test_files: Array<{ path: string; type: string; covers: string[] }>;
+  coverage_expectations: Record<string, number>;
+  acceptance_criteria: Array<{ criteria_id: string; description: string; test_refs: string[] }>;
+}
+
+export interface FileCountBreakdown {
+  frontend: number;
+  backend: number;
+  shared: number;
+  data: number;
+  test: number;
+  config: number;
+  docs: number;
+  total: number;
+}
+
+export interface RepoBlueprint {
+  blueprint_id: string;
+  run_id: string;
+  kit_ref: string;
+  extraction_ref: string;
+  system_identity: AppIdentity;
+  domain_model: DomainModel;
+  subsystems: BlueprintSubsystem[];
+  module_map: BlueprintModule[];
+  directory_layout: DirectoryLayout;
+  file_inventory: BlueprintFileEntry[];
+  interface_contracts: InterfaceContracts;
+  data_model: BlueprintDataModel;
+  security_model: SecurityModel;
+  feature_map: FeatureMapEntry[];
+  verification_targets: BlueprintVerificationTargets;
+  expected_file_count: number;
+  file_count_breakdown: FileCountBreakdown;
+  traceability_map: RequirementTraceEntry[];
+  created_at: string;
+  updated_at: string;
+  status: "active" | "superseded";
+}
+
+export interface BlueprintGateResult {
+  passed: boolean;
+  conditions: Array<{ condition_id: string; description: string; passed: boolean; detail?: string }>;
+  blockers: string[];
 }

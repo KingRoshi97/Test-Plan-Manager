@@ -7,6 +7,8 @@ import {
   StackProfile,
   RepoShape,
   generateBuildId,
+  RepoBlueprint,
+  BlueprintFileEntry,
 } from "./types.js";
 
 interface FeatureEntry {
@@ -80,7 +82,7 @@ interface Entrypoint {
   version: string;
 }
 
-export async function createBuildPlan(runDir: string): Promise<BuildPlan> {
+export async function createBuildPlan(runDir: string, blueprint?: RepoBlueprint): Promise<BuildPlan> {
   const entrypoint = readJsonFile<Entrypoint>(path.join(runDir, "kit", "entrypoint.json"));
   if (!entrypoint) {
     throw new Error("Missing kit/entrypoint.json — cannot plan build");
@@ -89,16 +91,21 @@ export async function createBuildPlan(runDir: string): Promise<BuildPlan> {
   const kitRoot = path.join(runDir, entrypoint.kit_root);
   const runId = entrypoint.run_id;
 
-  const kitManifest = readJsonFile<KitManifest>(path.join(runDir, "kit", "kit_manifest.json"));
   const canonicalSpec = readJsonFile<CanonicalSpec>(
     path.join(kitRoot, "01_core_artifacts", "03_canonical_spec.json")
-  );
-  const workBreakdown = readJsonFile<WorkBreakdown>(
-    path.join(kitRoot, "01_core_artifacts", "04_work_breakdown.json")
   );
 
   const stackProfile = deriveStackProfile(canonicalSpec);
   const repoShape = deriveRepoShape(stackProfile);
+
+  if (blueprint) {
+    return createBlueprintDrivenPlan(runId, entrypoint.kit_root, stackProfile, repoShape, blueprint);
+  }
+
+  const kitManifest = readJsonFile<KitManifest>(path.join(runDir, "kit", "kit_manifest.json"));
+  const workBreakdown = readJsonFile<WorkBreakdown>(
+    path.join(kitRoot, "01_core_artifacts", "04_work_breakdown.json")
+  );
 
   const apiDocs = scanKitDocs(kitRoot, "09_api_contracts");
   const dataDocs = scanKitDocs(kitRoot, "08_data");
@@ -153,6 +160,91 @@ export async function createBuildPlan(runDir: string): Promise<BuildPlan> {
   };
 
   return buildPlan;
+}
+
+function createBlueprintDrivenPlan(
+  runId: string,
+  kitRef: string,
+  stackProfile: StackProfile,
+  repoShape: RepoShape,
+  blueprint: RepoBlueprint,
+): BuildPlan {
+  const layerSliceMap: Record<string, { name: string; requiresAI: boolean }> = {
+    config: { name: "scaffold", requiresAI: false },
+    docs: { name: "scaffold", requiresAI: false },
+    shared: { name: "types_contracts", requiresAI: false },
+    data: { name: "data_layer", requiresAI: false },
+    backend: { name: "api_routes", requiresAI: true },
+    security: { name: "api_routes", requiresAI: true },
+    frontend: { name: "components", requiresAI: true },
+    test: { name: "tests", requiresAI: true },
+  };
+
+  const sliceGroups: Record<string, BuildFileTarget[]> = {};
+  const sliceOrder: string[] = [
+    "scaffold",
+    "types_contracts",
+    "data_layer",
+    "api_routes",
+    "components",
+    "tests",
+  ];
+
+  for (const sliceName of sliceOrder) {
+    sliceGroups[sliceName] = [];
+  }
+
+  const traceIndex = new Map<string, string>();
+  for (const trace of blueprint.traceability_map) {
+    for (const fileRef of trace.file_refs) {
+      traceIndex.set(fileRef, trace.requirement_id);
+    }
+  }
+
+  for (const entry of blueprint.file_inventory) {
+    const mapping = layerSliceMap[entry.layer] ?? { name: "components", requiresAI: true };
+    const sliceName = mapping.name;
+
+    if (!sliceGroups[sliceName]) {
+      sliceGroups[sliceName] = [];
+    }
+
+    const target: BuildFileTarget = {
+      relativePath: entry.path,
+      role: entry.role,
+      sourceRef: entry.source_refs.length > 0 ? entry.source_refs.join(", ") : undefined,
+      traceRef: traceIndex.get(entry.path) ?? (entry.trace_refs.length > 0 ? entry.trace_refs.join(", ") : undefined),
+      generationMethod: entry.generation_method,
+      status: "pending",
+    };
+
+    sliceGroups[sliceName].push(target);
+  }
+
+  const slices: BuildSlice[] = [];
+  let order = 0;
+
+  for (const sliceName of sliceOrder) {
+    const files = dedupeFiles(sliceGroups[sliceName] ?? []);
+    if (files.length === 0) continue;
+
+    const requiresAI = files.some(f => f.generationMethod === "ai_assisted");
+    slices.push(createSlice(`slice-${sliceName}`, sliceName, order++, requiresAI, files));
+  }
+
+  const totalFiles = slices.reduce((sum, s) => sum + s.files.length, 0);
+
+  return {
+    buildId: generateBuildId(),
+    runId,
+    kitRef,
+    stackProfile,
+    repoShape,
+    slices,
+    totalFiles,
+    totalSlices: slices.length,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 function deriveStackProfile(spec: CanonicalSpec | null): StackProfile {
