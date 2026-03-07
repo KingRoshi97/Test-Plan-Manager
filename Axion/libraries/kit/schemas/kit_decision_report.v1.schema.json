@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/kit/kit_decision_report.v1.schema.json",
+  "title": "Kit Decision Report",
+  "description": "Schema for a kit governance decision report capturing promotion, demotion, and health evaluation outcomes.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "unit_id",
+    "decision_type",
+    "timestamp",
+    "outcome"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^kdr-[a-z0-9-]+$",
+      "description": "Unique identifier for this decision report."
+    },
+    "unit_id": {
+      "type": "string",
+      "description": "The kit unit this decision applies to."
+    },
+    "decision_type": {
+      "type": "string",
+      "enum": ["promotion", "demotion", "health_evaluation", "contract_validation"],
+      "description": "Type of governance decision."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the decision."
+    },
+    "from_release_class": {
+      "type": "string",
+      "enum": ["dev", "candidate", "certified", "enterprise-ready"],
+      "description": "Release class before the decision (for promotion/demotion)."
+    },
+    "to_release_class": {
+      "type": "string",
+      "enum": ["dev", "candidate", "certified", "enterprise-ready"],
+      "description": "Release class after the decision (for promotion/demotion)."
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["approved", "rejected", "deferred"],
+      "description": "Result of the decision."
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Human-readable explanation of the decision."
+    },
+    "proof_summary": {
+      "type": "object",
+      "description": "Summary of proof evaluations that informed the decision.",
+      "properties": {
+        "structural_pass": { "type": "boolean" },
+        "functional_pass": { "type": "boolean" },
+        "compliance_pass": { "type": "boolean" },
+        "health_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "additionalProperties": false
+    },
+    "consumer_impacts": {
+      "type": "array",
+      "description": "List of consumer contracts affected by this decision.",
+      "items": {
+        "type": "object",
+        "required": ["consumer_id", "impact"],
+        "properties": {
+          "consumer_id": { "type": "string" },
+          "impact": {
+            "type": "string",
+            "enum": ["none", "minor", "breaking"]
+          },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

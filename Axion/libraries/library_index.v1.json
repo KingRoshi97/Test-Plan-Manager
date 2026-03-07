@@ -68,7 +68,15 @@
 
     { "id": "knowledge.registry", "path": "Axion/libraries/knowledge/INDEX/knowledge_registry.v1.json", "version": "1.0.0" },
     { "id": "knowledge.index", "path": "Axion/libraries/knowledge/INDEX/knowledge.index.json", "version": "1.0.0" },
-    { "id": "knowledge.taxonomy", "path": "Axion/libraries/knowledge/INDEX/taxonomy.json", "version": "1.0.0" }
+    { "id": "knowledge.taxonomy", "path": "Axion/libraries/knowledge/INDEX/taxonomy.json", "version": "1.0.0" },
+
+    { "id": "maintenance.library_health_registry", "path": "Axion/libraries/maintenance/registries/library_health_registry.v1.json", "version": "1.0.0" },
+
+    { "id": "policy.policy_registry", "path": "Axion/libraries/policy/registries/policy_registry.v1.json", "version": "1.0.0" },
+
+    { "id": "telemetry.telemetry_registry", "path": "Axion/libraries/telemetry/registries/telemetry_registry.v1.json", "version": "1.0.0" },
+
+    { "id": "kit.kit_registry", "path": "Axion/libraries/kit/registries/kit_registry.v1.json", "version": "1.0.0" }
   ],
   "notes": [
     "Schema files are registered in schema_registry.v1.json (separate).",

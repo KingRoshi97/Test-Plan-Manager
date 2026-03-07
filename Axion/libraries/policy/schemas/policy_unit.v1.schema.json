@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/policy/policy_unit.v1",
+  "title": "Policy Unit",
+  "description": "Schema for an Axion policy unit — the atomic governance primitive.",
+  "type": "object",
+  "required": [
+    "unit_id",
+    "name",
+    "version",
+    "status",
+    "owner",
+    "risk_class",
+    "applicability"
+  ],
+  "properties": {
+    "unit_id": {
+      "type": "string",
+      "pattern": "^PU-[A-Z0-9_]+-[0-9]{3}$",
+      "description": "Stable policy unit identifier (e.g. PU-AUTH-001)."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Human-readable name of the policy unit."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of the policy unit."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "deprecated", "superseded"],
+      "description": "Lifecycle status."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Responsible team or role."
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": ["PROTOTYPE", "PROD", "COMPLIANCE"],
+      "description": "Minimum risk class where this unit is enforced."
+    },
+    "applicability": {
+      "type": "object",
+      "description": "Scoping rules for where the unit is evaluated.",
+      "properties": {
+        "stages": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Orchestration stages. Empty means all."
+        },
+        "gates": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Gate IDs. Empty means all."
+        },
+        "libraries": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Library scopes. Empty means all."
+        },
+        "run_profiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Run profile selectors. Empty means all."
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "IDs of other policy units this unit depends on."
+    },
+    "supersedes": {
+      "type": "string",
+      "description": "unit_id of the policy unit this one replaces."
+    }
+  },
+  "additionalProperties": false
+}

@@ -572,6 +572,58 @@
       "path": "Axion/libraries/knowledge/contracts/knowledge_retrieval_report.v1.schema.json",
       "uri": "axion://schemas/knowledge/knowledge_retrieval_report.v1.schema.json",
       "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "maintenance.library_health_report.v1",
+      "path": "Axion/libraries/maintenance/contracts/library_health_report.schema.json",
+      "uri": "axion://schemas/maintenance/library_health_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "maintenance.doctrine_compliance_finding.v1",
+      "path": "Axion/libraries/maintenance/contracts/doctrine_compliance_finding.schema.json",
+      "uri": "axion://schemas/maintenance/doctrine_compliance_finding.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "policy.policy_unit.v1",
+      "path": "Axion/libraries/policy/schemas/policy_unit.v1.schema.json",
+      "uri": "axion://schemas/policy/policy_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "policy.policy_decision_report.v1",
+      "path": "Axion/libraries/policy/schemas/policy_decision_report.v1.schema.json",
+      "uri": "axion://schemas/policy/policy_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "telemetry.telemetry_signal.v1",
+      "path": "Axion/libraries/telemetry/schemas/telemetry_signal.v1.schema.json",
+      "uri": "axion://schemas/telemetry/telemetry_signal.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "telemetry.telemetry_decision_report.v1",
+      "path": "Axion/libraries/telemetry/schemas/telemetry_decision_report.v1.schema.json",
+      "uri": "axion://schemas/telemetry/telemetry_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "kit.kit_unit.v1",
+      "path": "Axion/libraries/kit/schemas/kit_unit.v1.schema.json",
+      "uri": "axion://schemas/kit/kit_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "kit.kit_decision_report.v1",
+      "path": "Axion/libraries/kit/schemas/kit_decision_report.v1.schema.json",
+      "uri": "axion://schemas/kit/kit_decision_report.v1.schema.json",
+      "version": "1.0.0"
     }
   ]
 }

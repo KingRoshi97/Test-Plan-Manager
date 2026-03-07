@@ -396,20 +396,20 @@ Proof and completion system — proof types, proof ledger, command run tracking,
 **Legacy files preserved:** VER-01..VER-03 JSON files, proof_log.schema.v1.json, command_runs.schema.v1.json
 
 ### Kit Library (`Axion/libraries/kit/`)
-Kit packaging contract — kit folder tree, manifest schema, versioning, export rules, and gates (KIT-0 through KIT-6). 9 legacy flat files preserved for backward compat (pipeline code: build.ts, manifest.ts, packager.ts, validate.ts, etc.).
+Kit packaging contract — kit folder tree, manifest schema, versioning, export rules, and gates (KIT-0 through KIT-6). 9 legacy flat files preserved for backward compat (pipeline code: build.ts, manifest.ts, packager.ts, validate.ts, etc.). **Phase 2 governance upgrade** adds 5 governance-layer KIT docs + 2 governance schemas + 1 governed kit registry with release class tags.
 
-**Structure (28 new files: 24 root files + 1 schema + 3 registries):**
+**Structure (35 files: 29 root files + 3 schemas + 4 registries):**
 - **KIT-0**: Purpose + boundary checklist (2 docs)
-- **KIT-1**: Kit tree model + determinism rules + validation checklist (3 docs)
-- **KIT-2**: Kit manifest model + determinism rules + validation checklist (3 docs)
-- **KIT-3**: Versioning model + compatibility rules + determinism rules + validation checklist (4 docs)
-- **KIT-4**: Export rules + determinism rules + validation checklist (3 docs)
-- **KIT-5**: Kit gates + gate mapping + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON) — KIT-GATE-01..06
+- **KIT-1**: Kit tree model + determinism rules + validation checklist (3 docs) + **KIT-1_release_classes.md** (governance: dev/candidate/certified/enterprise-ready tiers, promotion rules, quality gates per class)
+- **KIT-2**: Kit manifest model + determinism rules + validation checklist (3 docs) + **KIT-2_package_dependency_rules.md** (governance: compatibility matrix, dependency pinning, circular dependency prohibition)
+- **KIT-3**: Versioning model + compatibility rules + determinism rules + validation checklist (4 docs) + **KIT-3_proof_bundle_requirements.md** (governance: minimum proof artifacts per release class, verification evidence, completeness gates)
+- **KIT-4**: Export rules + determinism rules + validation checklist (3 docs) + **KIT-4_backcompat_and_consumer_contracts.md** (governance: semver enforcement, breaking change detection, consumer contract stability)
+- **KIT-5**: Kit gates + gate mapping + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON) — KIT-GATE-01..06 + **KIT-5_kit_health.md** (governance: health scoring across 4 dimensions, thresholds per release class)
 - **KIT-6**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
 
 **Subdirectories:**
-- `schemas/` — 1 JSON Schema file (kit_manifest: kit_id/run_id/kit_version/created_at/export_class/entrypoints/contents[] with path/kind/contract_id/source/hash/classification)
-- `registries/` — 3 registry files (kit_tree: 4 folders + 2 files with required/optional, kit_compatibility: kit format v1.0.0 requires + schema support, kit_export_filter: 2 rules deny restricted+internal_only / allow public)
+- `schemas/` — 3 JSON Schema files: kit_manifest (existing) + **kit_unit.v1** (governed kit unit: unit_id, name, release_class, version, status, compatibility_matrix, proof_requirements) + **kit_decision_report.v1** (governance decision reports: promotion, demotion, health evaluation)
+- `registries/` — 4 registry files: 3 existing (kit_tree, kit_compatibility, kit_export_filter) + **kit_registry.v1.json** (6 governed kit units across all 4 release classes with compatibility matrices and proof requirements)
 
 **Loader** (`Axion/src/core/kit/loader.ts`):
 - `loadKitLibrary(repoRoot)` — loads kit_tree + kit_compatibility + kit_export_filter registries, cached
@@ -422,25 +422,25 @@ Kit packaging contract — kit folder tree, manifest schema, versioning, export 
 
 **API**: 6 `/api/kit-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
 **UI**: `/kit-library` page with 4 tabs (Kit, Documents, Schemas, Registries), kit tree structure table, manifest schema summary, export rules, 6 kit gates (KIT-GATE-01..06) with severity badges, compatibility info
-**Registered in:** `schema_registry.v1.json` (kit.manifest.v1 path updated to schemas/), `library_index.v1.json` (3 new entries: kit.tree, kit.compatibility, kit.export_filter)
+**Registered in:** `schema_registry.v1.json` (kit.manifest.v1 + kit.kit_unit.v1 + kit.kit_decision_report.v1), `library_index.v1.json` (4 entries: kit.tree, kit.compatibility, kit.export_filter, kit.kit_registry)
 
 **Legacy files preserved:** KIT-01..KIT-04 JSON files, kit_tree.schema.v1.json, kit_manifest.schema.v1.json, kit_entrypoint.schema.v1.json, kit_versions.schema.v1.json
 
 ### Telemetry Library (`Axion/libraries/telemetry/`)
-Event and metrics contracts — telemetry event schemas, run metrics, sink policies, privacy/redaction rules, and gates (TEL-0 through TEL-6). 3 legacy flat files preserved for backward compat.
+Event and metrics contracts — telemetry event schemas, run metrics, sink policies, privacy/redaction rules, and gates (TEL-0 through TEL-6). 3 legacy flat files preserved for backward compat. **Phase 2 governance upgrade** adds 5 governance-layer TEL docs + 2 governance schemas + 1 governed telemetry registry.
 
-**Structure (30 new files: 22 root files + 5 schemas + 3 registries):**
+**Structure (38 files: 27 root files + 7 schemas + 4 registries):**
 - **TEL-0**: Purpose + boundary checklist (2 docs)
-- **TEL-1**: Event model + determinism rules + validation checklist (3 docs)
-- **TEL-2**: Run metrics model + determinism rules + validation checklist (3 docs)
-- **TEL-3**: Sink policy model + determinism rules + validation checklist (3 docs)
-- **TEL-4**: Privacy model + redaction rules + determinism rules + validation checklist (4 docs)
-- **TEL-5**: Telemetry gates + determinism rules + validation checklist (3 docs + 1 gate spec JSON) — TEL-GATE-01..05
+- **TEL-1**: Event model + determinism rules + validation checklist (3 docs) + **TEL-1_signal_registry_rules.md** (governance: signal registration, ID stability, versioning, producer ownership)
+- **TEL-2**: Run metrics model + determinism rules + validation checklist (3 docs) + **TEL-2_producer_consumer_mapping.md** (governance: producer-consumer mapping, cross-library dependency tracking, edge types)
+- **TEL-3**: Sink policy model + determinism rules + validation checklist (3 docs) + **TEL-3_signal_integrity_and_routing.md** (governance: routing rules, delivery guarantees, ordering, deduplication)
+- **TEL-4**: Privacy model + redaction rules + determinism rules + validation checklist (4 docs) + **TEL-4_backcompat_and_redaction.md** (governance: backward compatibility for signal changes, redaction policy, PII handling)
+- **TEL-5**: Telemetry gates + determinism rules + validation checklist (3 docs + 1 gate spec JSON) — TEL-GATE-01..05 + **TEL-5_telemetry_health.md** (governance: signal coverage, stale signals, orphaned producers, health dashboards)
 - **TEL-6**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
 
 **Subdirectories:**
-- `schemas/` — 5 JSON Schema files (telemetry_event_base: event_id/event_type/run_id/timestamp/payload, telemetry_event_types: registry with types[], run_metrics: metrics_id/run/stages[]/gates[], telemetry_sink_policy: sinks[]/redaction, telemetry_privacy_policy: deny_keys/deny_patterns/free_text/external_sink_rules)
-- `registries/` — 3 registry files (telemetry_event_types: 5 event types run.started/stage.started/stage.ended/gate.evaluated/run.ended, telemetry_sink_policy: TELPOL-BASE01 with 3 sinks + redaction rules, telemetry_privacy_policy: TELPRIV-BASE01 with data classes + deny keys/patterns + free-text rules)
+- `schemas/` — 7 JSON Schema files: 5 existing (telemetry_event_base, telemetry_event_types, run_metrics, telemetry_sink_policy, telemetry_privacy_policy) + **telemetry_signal.v1** (governed signal unit: signal_id, signal_type, producer_library, consumer_libraries, schema_version, payload, metadata) + **telemetry_decision_report.v1** (health assessment reports: report_id, status, metrics, findings)
+- `registries/` — 4 registry files: 3 existing (telemetry_event_types, telemetry_sink_policy, telemetry_privacy_policy) + **telemetry_registry.v1.json** (10 governed signal units with producer/consumer mappings across libraries)
 
 **Loader** (`Axion/src/core/telemetry/loader.ts`):
 - `loadTelemetryLibrary(repoRoot)` — loads event_types + sink_policy + privacy_policy registries, cached
@@ -453,7 +453,7 @@ Event and metrics contracts — telemetry event schemas, run metrics, sink polic
 
 **API**: 6 `/api/telemetry-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
 **UI**: `/telemetry-library` page with 4 tabs (Telemetry, Documents, Schemas, Registries), event types table, run metrics overview, sink policy cards, redaction overview, privacy policy summary, 5 telemetry gates (TEL-GATE-01..05)
-**Registered in:** `schema_registry.v1.json` (5 new entries + 2 legacy preserved), `library_index.v1.json` (3 new entries + 1 legacy preserved)
+**Registered in:** `schema_registry.v1.json` (7 entries + 2 legacy preserved: +telemetry.telemetry_signal.v1, +telemetry.telemetry_decision_report.v1), `library_index.v1.json` (4 entries + 1 legacy preserved: +telemetry.telemetry_registry)
 
 **Legacy files preserved:** event.schema.v1.json, run_metrics.schema.v1.json, sink_policy.v1.json
 
@@ -491,12 +491,17 @@ Operator action tracking — audit action schemas, append-only ledgers, integrit
 **Legacy files preserved:** operator_actions_ledger.schema.v1.json
 
 ### Maintenance Library (`Axion/libraries/maintenance/`)
-Maintenance and Update System (MUS) — 21 maintenance modes, 6 consent gates, 2 detector packs, 7 patch types, 2 schedules, 4 policies, 23 JSON Schema contracts (MUS-0 through MUS-7 equivalent). Bootstrap-extracted from MUS governance package.
+Maintenance and Update System (MUS) — 21 maintenance modes, 6 consent gates, 2 detector packs, 7 patch types, 2 schedules, 4 policies, 25 JSON Schema contracts (MUS-0 through MUS-7 equivalent). Bootstrap-extracted from MUS governance package. **Phase 2 governance upgrade** adds MNT-8 through MNT-12 library health governance docs + 2 governance schemas + 1 governed health registry.
 
-**Structure (46 files: 2 docs + 23 contracts + 17 registries + 4 policies):**
+**Structure (53 files: 7 docs + 25 contracts + 18 registries + 4 policies):**
 - **MUS-0**: Purpose boundary doc (1 .md)
-- **Contracts** (`contracts/`): 23 JSON Schema files — approval_event, blast_radius, changeset, constraint_pack, detector_pack, finding, gate_rule, kid, kl_category, kl_tag, maintenance_run, patch, patch_type, proof_bundle, proposal_pack, release, schedule_entry, snapshot, standard, suppression_rule, template_pack, template, verification_command + contract.meta.json
-- **Registries** (`registries/`): 17 registry files — REG-MAINTENANCE-MODES (21 modes MM-01..MM-21), REG-GATES-MUS (6 gates G-MUS-01..06), REG-DETECTOR-PACKS (2 packs), REG-PATCH-TYPES (7 types), REG-SCHEDULES (2 schedules, disabled by default), plus starter registries for baselines, constraint-packs, deprecations, KIDs, KL-categories, KL-tags, releases, standards, suppressions, template-packs, templates, verification-commands
+- **MNT-8**: Library health contract — per-library health dimensions (completeness, dependency integrity, stale references, supersession hygiene, backcompat, proof sufficiency), scoring model, threshold levels
+- **MNT-9**: Doctrine compliance rules — required artifacts per library (purpose doc, boundary checklist, schemas, registries, determinism rules, validation checklists, gate mapping, definition of done), compliance checking methodology, automatic findings
+- **MNT-10**: Backward compatibility validation — consumer impact analysis, version pinning rules, migration paths, breaking change protocol
+- **MNT-11**: Registry rebuild integrity — rebuild invariants, integrity checks, orphan detection, determinism rules
+- **MNT-12**: Remediation and patch governance — patch classification (Class A-D), remediation workflow, blast radius analysis, rollback policy, definition of done
+- **Contracts** (`contracts/`): 25 JSON Schema files — 23 existing (approval_event through verification_command) + **library_health_report.schema.json** (library health assessment: library_id, dimensions, scores, findings, verdict) + **doctrine_compliance_finding.schema.json** (compliance finding: finding_id, library_id, rule_violated, severity, remediation)
+- **Registries** (`registries/`): 18 registry files — 17 existing (REG-MAINTENANCE-MODES through REG-VERIFICATION-COMMANDS) + **library_health_registry.v1.json** (per-library health assessments for all 16 Axion libraries with current scores, target scores, health dimensions)
 - **Policies** (`policies/`): 4 policy files — MUS-POLICY (consent gates: apply_required + publish_required, budgets_default: 15k token cap, proposal_rules: max 5 per run), KL-POLICY (versioning, review, freshness defaults), TEMPLATE-POLICY (placeholder rules, naming), SECURITY-POLICY (roles, locks, audit requirements)
 
 **Maintenance Modes (21):** MM-01 Health Check through MM-21 Emergency Recovery. Each mode has: execution_class (manual_only|scheduled_allowed), allowed_triggers, allowed_scopes (asset_classes), allowed_detector_packs, hard_constraints (no_apply, no_publish, read_only), required_gates, default_budgets (token_cap, time_limit_ms, max_changes).
@@ -539,7 +544,7 @@ Maintenance and Update System (MUS) — 21 maintenance modes, 6 consent gates, 2
   - **Runs tab**: Create run form (mode selector, intent type, risk class, baseline revision, work unit definition), runs list with status badges, expandable detail panels with unit tables and verification results, action buttons (Apply/Verify/Complete/Rollback) shown per state, auto-refresh every 3s
   - **Patches & Schedules tab**: Toggle switches for schedule enable/disable (persists to registry file)
   - Remaining tabs: mode table with execution class/triggers/permissions/gates/budgets, gate rules with predicate visualization, detector packs with scope info, patch types with risk class, policy JSON viewer, schema property listing
-**Registered in:** `schema_registry.v1.json` (23 MUS schema entries), `library_index.v1.json` (MUS entry)
+**Registered in:** `schema_registry.v1.json` (23 MUS schema entries + maintenance.library_health_report.v1 + maintenance.doctrine_compliance_finding.v1), `library_index.v1.json` (MUS entry + maintenance.library_health_registry)
 **Health endpoint:** Reports maintenance_library stats (docs, schemas, registries, gates, modes)
 
 ### Template Rendering (evidence.ts)
@@ -865,12 +870,17 @@ Formal Gate DSL and evaluation contract library with two layers: structural doct
 **Registered in:** `schema_registry.v1.json` (8 entries), `library_index.v1.json` (3 entries)
 
 ### Policy Library (`Axion/libraries/policy/`)
-Risk class governance, override policies, precedence rules, and enforcement points (POL-0 through POL-5) defining how policy tiers control gate strictness, override permissions, and executor behavior across the pipeline.
+Risk class governance, override policies, precedence rules, and enforcement points (POL-0 through POL-5) defining how policy tiers control gate strictness, override permissions, and executor behavior across the pipeline. **Phase 2 governance upgrade** adds 5 governance-layer POL docs + 2 governance schemas + 1 governed policy registry.
 
-**Structure (25 files):**
-- 19 docs (POL-0: purpose/boundary checklist, POL-1: risk class model/determinism/validation, POL-2: override policy model/override rules/validation, POL-3: precedence model/conflict rules/determinism/validation, POL-4: enforcement points/enforcement matrix/determinism/validation, POL-5: minimum viable set/definition of done/minimal tree)
-- 4 schemas: `risk_classes.v1`, `override_request.v1`, `override_decision.v1`, `policy_set.v1`
-- 2 registries: `risk_classes.v1.json` (3 risk classes: PROTOTYPE/PROD/COMPLIANCE with thresholds, gate_strictness, executor_rules), `policy_sets.v1.json` (baseline POLSET-BASE01 with override_permissions per hook point per risk class)
+**Structure (33 files):**
+- 24 docs: 19 existing structural docs (POL-0: purpose/boundary checklist, POL-1: risk class model/determinism/validation, POL-2: override policy model/override rules/validation, POL-3: precedence model/conflict rules/determinism/validation, POL-4: enforcement points/enforcement matrix/determinism/validation, POL-5: minimum viable set/definition of done/minimal tree) + 5 new governance docs:
+  - **POL-1_policy_unit_model.md** — Every policy as a governed unit with stable ID, version, status, owner, applicability, dependencies
+  - **POL-2_decision_report.md** — Policy decision report model: evaluation inputs, verdicts, overrides applied, justification
+  - **POL-3_override_expiry_supersession.md** — Override lifecycle: expiry windows per risk class, supersession chains, automatic revocation, audit trail
+  - **POL-4_backcompat_and_migration.md** — Backward compatibility for policy changes: migration paths, simulation mode, blast radius analysis
+  - **POL-5_policy_health.md** — Policy health metrics: coverage, freshness, override rate, conflict rate, drift detection, validation checklist
+- 6 schemas: 4 existing (`risk_classes.v1`, `override_request.v1`, `override_decision.v1`, `policy_set.v1`) + **policy_unit.v1** + **policy_decision_report.v1**
+- 3 registries: 2 existing (`risk_classes.v1.json`, `policy_sets.v1.json`) + **policy_registry.v1.json** (8 governed policy units: PU-RISK-001, PU-GATE-001, PU-OVRD-001, PU-KNOW-001, PU-EXEC-001, PU-STD-001, PU-TMPL-001, PU-AUDIT-001)
 
 **Loader** (`Axion/src/core/policy/loader.ts`):
 - `loadPolicyLibrary(repoRoot)` — loads risk_classes + policy_sets registries, cached
@@ -882,7 +892,7 @@ Risk class governance, override policies, precedence rules, and enforcement poin
 - `getPolicySet(repoRoot, policySetId)` — specific policy set
 - `getDefaultPolicySet(repoRoot)` — first/default policy set
 
-**Registered in:** `schema_registry.v1.json` (4 entries), `library_index.v1.json` (2 entries)
+**Registered in:** `schema_registry.v1.json` (6 entries), `library_index.v1.json` (3 entries)
 
 ### Template System
 - **Source Templates**: `libraries/templates/` (533 TMP-02 contract files in 8 categories: Product Definition, System Architecture, Experience Design, Data & Information, Integrations & External Services, Operations & Reliability, Security Privacy & Compliance, Application Build). These are READ-ONLY — never modified by runs. Each contains: Header Block, Purpose, Inputs Required, Required Fields, Optional Fields, Rules, Output Format, Cross-References, Skill Level Rules, Unknown Handling, Completeness Gate.

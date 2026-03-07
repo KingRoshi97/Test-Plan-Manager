@@ -1,0 +1,214 @@
+{
+  "version": "1.0.0",
+  "description": "Health assessment registry tracking the health status of all 16 Axion libraries",
+  "units": [
+    {
+      "library_id": "audit",
+      "current_score": 0.80,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.80,
+        "schema_validity": 0.80,
+        "registry_integrity": 0.75,
+        "documentation_coverage": 0.80
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "canonical",
+      "current_score": 0.82,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.80,
+        "schema_validity": 0.85,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.80
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "gates",
+      "current_score": 0.84,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.90,
+        "doctrine_compliance": 0.85,
+        "schema_validity": 0.80,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.85
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "intake",
+      "current_score": 0.83,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.85,
+        "schema_validity": 0.80,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.85
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "kit",
+      "current_score": 0.81,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.80,
+        "schema_validity": 0.80,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.80
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "knowledge",
+      "current_score": 0.85,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.90,
+        "doctrine_compliance": 0.85,
+        "schema_validity": 0.85,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.85
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "maintenance",
+      "current_score": 0.86,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.90,
+        "doctrine_compliance": 0.85,
+        "schema_validity": 0.85,
+        "registry_integrity": 0.85,
+        "documentation_coverage": 0.85
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "ops",
+      "current_score": 0.79,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.80,
+        "doctrine_compliance": 0.80,
+        "schema_validity": 0.75,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.80
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "orchestration",
+      "current_score": 0.80,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.80,
+        "schema_validity": 0.80,
+        "registry_integrity": 0.75,
+        "documentation_coverage": 0.80
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "planning",
+      "current_score": 0.82,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.80,
+        "schema_validity": 0.85,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.80
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "policy",
+      "current_score": 0.83,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.85,
+        "schema_validity": 0.80,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.85
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "standards",
+      "current_score": 0.84,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.90,
+        "doctrine_compliance": 0.85,
+        "schema_validity": 0.80,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.85
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "system",
+      "current_score": 0.81,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.80,
+        "schema_validity": 0.80,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.80
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "telemetry",
+      "current_score": 0.80,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.80,
+        "schema_validity": 0.80,
+        "registry_integrity": 0.75,
+        "documentation_coverage": 0.80
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "templates",
+      "current_score": 0.85,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.90,
+        "doctrine_compliance": 0.85,
+        "schema_validity": 0.85,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.85
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    },
+    {
+      "library_id": "verification",
+      "current_score": 0.84,
+      "target_score": 0.85,
+      "health_dimensions": {
+        "structural_completeness": 0.85,
+        "doctrine_compliance": 0.85,
+        "schema_validity": 0.85,
+        "registry_integrity": 0.80,
+        "documentation_coverage": 0.85
+      },
+      "last_assessed": "2026-03-05T00:00:00Z"
+    }
+  ]
+}

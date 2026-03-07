@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/telemetry/telemetry_signal.v1",
+  "title": "Telemetry Signal",
+  "type": "object",
+  "required": [
+    "signal_id",
+    "signal_type",
+    "schema_version",
+    "producer_library",
+    "timestamp",
+    "payload"
+  ],
+  "properties": {
+    "signal_id": {
+      "type": "string",
+      "description": "Unique identifier for this signal instance.",
+      "pattern": "^SIG-[A-Za-z0-9_-]{6,}$"
+    },
+    "signal_type": {
+      "type": "string",
+      "description": "Type of telemetry signal.",
+      "enum": ["event", "metric", "trace", "decision"]
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Version of the signal schema.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "producer_library": {
+      "type": "string",
+      "description": "The Axion library that emitted this signal."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Identifier of the pipeline run associated with this signal."
+    },
+    "stage_id": {
+      "type": "string",
+      "description": "Identifier of the pipeline stage, if applicable."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of signal emission."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Signal-specific data payload.",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata for routing and classification.",
+      "properties": {
+        "priority": {
+          "type": "string",
+          "enum": ["low", "normal", "high"]
+        },
+        "redacted": {
+          "type": "boolean",
+          "description": "Whether redaction filters have been applied."
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

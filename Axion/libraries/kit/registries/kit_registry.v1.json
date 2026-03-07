@@ -1,0 +1,113 @@
+{
+  "version": "1.0.0",
+  "description": "Governed registry of kit units with release class tags, compatibility matrices, and proof requirements.",
+  "units": [
+    {
+      "unit_id": "kit-unit-core-manifest",
+      "name": "Core Manifest Package",
+      "release_class": "certified",
+      "version": "1.0.0",
+      "status": "active",
+      "compatibility_matrix": {
+        "platforms": [
+          { "platform": "axion-control-plane", "min_version": "1.0.0" },
+          { "platform": "axion-operator-ui", "min_version": "1.0.0" }
+        ]
+      },
+      "proof_requirements": {
+        "structural": true,
+        "functional": true,
+        "compliance": true
+      }
+    },
+    {
+      "unit_id": "kit-unit-tree-structure",
+      "name": "Kit Tree Structure",
+      "release_class": "certified",
+      "version": "1.0.0",
+      "status": "active",
+      "compatibility_matrix": {
+        "platforms": [
+          { "platform": "axion-control-plane", "min_version": "1.0.0" }
+        ]
+      },
+      "proof_requirements": {
+        "structural": true,
+        "functional": true,
+        "compliance": true
+      }
+    },
+    {
+      "unit_id": "kit-unit-versioning",
+      "name": "Kit Versioning Model",
+      "release_class": "candidate",
+      "version": "1.0.0",
+      "status": "active",
+      "compatibility_matrix": {
+        "platforms": [
+          { "platform": "axion-control-plane", "min_version": "1.0.0" }
+        ]
+      },
+      "proof_requirements": {
+        "structural": true,
+        "functional": true,
+        "compliance": false
+      }
+    },
+    {
+      "unit_id": "kit-unit-export-rules",
+      "name": "Kit Export Rules",
+      "release_class": "candidate",
+      "version": "1.0.0",
+      "status": "active",
+      "compatibility_matrix": {
+        "platforms": [
+          { "platform": "axion-control-plane", "min_version": "1.0.0" },
+          { "platform": "axion-export-engine", "min_version": "1.0.0" }
+        ]
+      },
+      "proof_requirements": {
+        "structural": true,
+        "functional": true,
+        "compliance": false
+      }
+    },
+    {
+      "unit_id": "kit-unit-gate-evaluation",
+      "name": "Kit Gate Evaluation",
+      "release_class": "dev",
+      "version": "0.1.0",
+      "status": "active",
+      "compatibility_matrix": {
+        "platforms": [
+          { "platform": "axion-gate-engine", "min_version": "1.0.0" }
+        ]
+      },
+      "proof_requirements": {
+        "structural": true,
+        "functional": false,
+        "compliance": false
+      }
+    },
+    {
+      "unit_id": "kit-unit-release-governance",
+      "name": "Release Governance Bundle",
+      "release_class": "enterprise-ready",
+      "version": "1.0.0",
+      "status": "active",
+      "compatibility_matrix": {
+        "platforms": [
+          { "platform": "axion-control-plane", "min_version": "1.0.0" },
+          { "platform": "axion-operator-ui", "min_version": "1.0.0" },
+          { "platform": "axion-gate-engine", "min_version": "1.0.0" },
+          { "platform": "axion-export-engine", "min_version": "1.0.0" }
+        ]
+      },
+      "proof_requirements": {
+        "structural": true,
+        "functional": true,
+        "compliance": true
+      }
+    }
+  ]
+}

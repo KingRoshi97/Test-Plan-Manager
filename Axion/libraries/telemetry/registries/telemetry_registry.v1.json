@@ -1,0 +1,96 @@
+{
+  "version": "1.0.0",
+  "description": "Governed telemetry signal unit registry. Tracks all registered telemetry signals with their producer-consumer mappings and lifecycle status.",
+  "units": [
+    {
+      "unit_id": "TEL-SIG-001",
+      "name": "run.started",
+      "signal_type": "event",
+      "producer_library": "orchestration",
+      "consumer_libraries": ["telemetry", "audit"],
+      "version": "1.0.0",
+      "status": "active"
+    },
+    {
+      "unit_id": "TEL-SIG-002",
+      "name": "run.ended",
+      "signal_type": "event",
+      "producer_library": "orchestration",
+      "consumer_libraries": ["telemetry", "audit"],
+      "version": "1.0.0",
+      "status": "active"
+    },
+    {
+      "unit_id": "TEL-SIG-003",
+      "name": "stage.started",
+      "signal_type": "event",
+      "producer_library": "orchestration",
+      "consumer_libraries": ["telemetry"],
+      "version": "1.0.0",
+      "status": "active"
+    },
+    {
+      "unit_id": "TEL-SIG-004",
+      "name": "stage.ended",
+      "signal_type": "event",
+      "producer_library": "orchestration",
+      "consumer_libraries": ["telemetry"],
+      "version": "1.0.0",
+      "status": "active"
+    },
+    {
+      "unit_id": "TEL-SIG-005",
+      "name": "gate.evaluated",
+      "signal_type": "decision",
+      "producer_library": "gates",
+      "consumer_libraries": ["telemetry", "audit"],
+      "version": "1.0.0",
+      "status": "active"
+    },
+    {
+      "unit_id": "TEL-SIG-006",
+      "name": "run.duration",
+      "signal_type": "metric",
+      "producer_library": "orchestration",
+      "consumer_libraries": ["telemetry"],
+      "version": "1.0.0",
+      "status": "active"
+    },
+    {
+      "unit_id": "TEL-SIG-007",
+      "name": "stage.duration",
+      "signal_type": "metric",
+      "producer_library": "orchestration",
+      "consumer_libraries": ["telemetry"],
+      "version": "1.0.0",
+      "status": "active"
+    },
+    {
+      "unit_id": "TEL-SIG-008",
+      "name": "telemetry.health",
+      "signal_type": "metric",
+      "producer_library": "telemetry",
+      "consumer_libraries": ["telemetry"],
+      "version": "1.0.0",
+      "status": "active"
+    },
+    {
+      "unit_id": "TEL-SIG-009",
+      "name": "intake.received",
+      "signal_type": "event",
+      "producer_library": "intake",
+      "consumer_libraries": ["telemetry", "audit"],
+      "version": "1.0.0",
+      "status": "active"
+    },
+    {
+      "unit_id": "TEL-SIG-010",
+      "name": "artifact.stored",
+      "signal_type": "event",
+      "producer_library": "canonical",
+      "consumer_libraries": ["telemetry", "audit"],
+      "version": "1.0.0",
+      "status": "active"
+    }
+  ]
+}

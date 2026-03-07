@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/policy/policy_decision_report.v1",
+  "title": "Policy Decision Report",
+  "description": "Schema for an immutable policy evaluation decision report.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "run_id",
+    "timestamp",
+    "risk_class",
+    "evaluated_units",
+    "results",
+    "overall_outcome"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier for this decision report."
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The run that triggered policy evaluation."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when evaluation completed."
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": ["PROTOTYPE", "PROD", "COMPLIANCE"],
+      "description": "Effective risk class for the run."
+    },
+    "evaluated_units": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of policy unit IDs that were evaluated."
+    },
+    "results": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/result_entry" },
+      "description": "Per-unit evaluation outcomes."
+    },
+    "overrides_applied": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/override_record" },
+      "description": "Override records applied during evaluation."
+    },
+    "overall_outcome": {
+      "type": "string",
+      "enum": ["pass", "fail", "conditional_pass"],
+      "description": "Aggregate outcome of the evaluation."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-text explanation or context."
+    }
+  },
+  "definitions": {
+    "result_entry": {
+      "type": "object",
+      "required": ["unit_id", "outcome"],
+      "properties": {
+        "unit_id": {
+          "type": "string",
+          "description": "The policy unit evaluated."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": ["pass", "fail", "override", "skip"],
+          "description": "Evaluation outcome."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable explanation."
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "References to artifacts that informed the decision."
+        }
+      },
+      "additionalProperties": false
+    },
+    "override_record": {
+      "type": "object",
+      "required": ["override_id", "unit_id", "approver", "expires_at"],
+      "properties": {
+        "override_id": {
+          "type": "string",
+          "description": "Stable override identifier."
+        },
+        "unit_id": {
+          "type": "string",
+          "description": "Which policy unit was overridden."
+        },
+        "approver": {
+          "type": "string",
+          "description": "Identity that approved the override."
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 expiry timestamp."
+        },
+        "justification": {
+          "type": "string",
+          "description": "Why the override was granted."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

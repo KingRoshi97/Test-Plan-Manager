@@ -1,0 +1,126 @@
+{
+  "version": "1.0.0",
+  "description": "Governed registry of Axion policy units. Each entry represents an atomic governance rule with lifecycle tracking.",
+  "units": [
+    {
+      "unit_id": "PU-RISK-001",
+      "name": "Risk Class Enforcement",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "governance",
+      "risk_class": "PROTOTYPE",
+      "applicability": {
+        "stages": [],
+        "gates": [],
+        "libraries": [],
+        "run_profiles": []
+      },
+      "dependencies": []
+    },
+    {
+      "unit_id": "PU-GATE-001",
+      "name": "Gate Hard-Stop Compliance",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "governance",
+      "risk_class": "PROD",
+      "applicability": {
+        "stages": [],
+        "gates": ["G1_INTAKE_VALIDITY", "G2_CANONICAL_INTEGRITY", "G7_VERIFICATION"],
+        "libraries": ["gates"],
+        "run_profiles": []
+      },
+      "dependencies": ["PU-RISK-001"]
+    },
+    {
+      "unit_id": "PU-OVRD-001",
+      "name": "Override Expiry Enforcement",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "governance",
+      "risk_class": "PROTOTYPE",
+      "applicability": {
+        "stages": [],
+        "gates": [],
+        "libraries": ["policy"],
+        "run_profiles": []
+      },
+      "dependencies": ["PU-RISK-001"]
+    },
+    {
+      "unit_id": "PU-KNOW-001",
+      "name": "Knowledge Maturity Floor",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "governance",
+      "risk_class": "PROD",
+      "applicability": {
+        "stages": ["build", "verify"],
+        "gates": [],
+        "libraries": ["knowledge"],
+        "run_profiles": ["full"]
+      },
+      "dependencies": ["PU-RISK-001"]
+    },
+    {
+      "unit_id": "PU-EXEC-001",
+      "name": "External Executor Restrictions",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "governance",
+      "risk_class": "COMPLIANCE",
+      "applicability": {
+        "stages": [],
+        "gates": [],
+        "libraries": [],
+        "run_profiles": []
+      },
+      "dependencies": ["PU-RISK-001"]
+    },
+    {
+      "unit_id": "PU-STD-001",
+      "name": "Standards Strictness Enforcement",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "governance",
+      "risk_class": "PROD",
+      "applicability": {
+        "stages": ["build"],
+        "gates": [],
+        "libraries": ["standards"],
+        "run_profiles": []
+      },
+      "dependencies": ["PU-RISK-001"]
+    },
+    {
+      "unit_id": "PU-TMPL-001",
+      "name": "Template Completeness Check",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "governance",
+      "risk_class": "PROD",
+      "applicability": {
+        "stages": ["build"],
+        "gates": [],
+        "libraries": ["templates"],
+        "run_profiles": ["full"]
+      },
+      "dependencies": ["PU-RISK-001"]
+    },
+    {
+      "unit_id": "PU-AUDIT-001",
+      "name": "Decision Report Immutability",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "governance",
+      "risk_class": "PROTOTYPE",
+      "applicability": {
+        "stages": [],
+        "gates": [],
+        "libraries": ["audit", "policy"],
+        "run_profiles": []
+      },
+      "dependencies": []
+    }
+  ]
+}
