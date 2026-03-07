@@ -134,13 +134,13 @@ const SOURCE_LAYERS = [
   { id: "canonical_spec", required: true, type: "json" as const, corePath: "01_core_artifacts/03_canonical_spec.json", appPath: null },
   { id: "work_breakdown", required: true, type: "json" as const, corePath: "01_core_artifacts/04_work_breakdown.json", appPath: null },
   { id: "acceptance_map", required: true, type: "json" as const, corePath: "01_core_artifacts/05_acceptance_map.json", appPath: null },
-  { id: "architecture_pack", required: true, type: "dir" as const, corePath: null, appPath: "10_app/02_architecture" },
-  { id: "implementation_pack", required: false, type: "dir" as const, corePath: null, appPath: "10_app/07_backend" },
-  { id: "data_pack", required: true, type: "dir" as const, corePath: null, appPath: "10_app/03_data_models" },
-  { id: "api_pack", required: true, type: "dir" as const, corePath: null, appPath: "10_app/04_api_contracts" },
-  { id: "security_pack", required: true, type: "dir" as const, corePath: null, appPath: "10_app/05_auth_security" },
-  { id: "design_pack", required: false, type: "dir" as const, corePath: null, appPath: "10_app/06_frontend" },
-  { id: "ops_governance_pack", required: false, type: "dir" as const, corePath: null, appPath: "10_app/08_devops" },
+  { id: "architecture_pack", required: true, type: "dir" as const, corePath: null, appPath: "10_app/03_architecture" },
+  { id: "implementation_pack", required: false, type: "dir" as const, corePath: null, appPath: "10_app/04_implementation" },
+  { id: "data_pack", required: true, type: "dir" as const, corePath: null, appPath: "10_app/08_data" },
+  { id: "api_pack", required: true, type: "dir" as const, corePath: null, appPath: "10_app/09_api_contracts" },
+  { id: "security_pack", required: true, type: "dir" as const, corePath: null, appPath: "10_app/05_security" },
+  { id: "design_pack", required: false, type: "dir" as const, corePath: null, appPath: "10_app/02_design" },
+  { id: "ops_governance_pack", required: false, type: "dir" as const, corePath: null, appPath: "10_app/07_ops" },
 ] as const;
 
 export async function extractKit(runDir: string): Promise<KitExtraction> {
@@ -179,9 +179,9 @@ export async function extractKit(runDir: string): Promise<KitExtraction> {
   }
 
   const requirementsFiles = scanDirFiles(path.join(kitRoot, "10_app", "01_requirements"));
-  const testingFiles = scanDirFiles(path.join(kitRoot, "10_app", "09_testing"));
-  const integrationsFiles = scanDirFiles(path.join(kitRoot, "10_app", "10_integrations"));
-  const docsFiles = scanDirFiles(path.join(kitRoot, "10_app", "11_documentation"));
+  const qualityFiles = scanDirFiles(path.join(kitRoot, "10_app", "06_quality"));
+  const releaseFiles = scanDirFiles(path.join(kitRoot, "10_app", "10_release"));
+  const governanceFiles = scanDirFiles(path.join(kitRoot, "10_app", "11_governance"));
   const analyticsFiles = scanDirFiles(path.join(kitRoot, "10_app", "12_analytics"));
 
   const appIdentity = deriveAppIdentity(canonicalSpec, normalizedInput);
