@@ -94,6 +94,10 @@ interface KitContext {
   allPages: Array<{ path: string; routePath: string; name: string; role: string; sourceRef?: string }>;
   stackProfile: StackProfile;
   routing: { type_preset?: string; build_target?: string };
+  buildBrief: string | null;
+  designIdentity: string | null;
+  normalizedDesign: any | null;
+  normalizedIntent: any | null;
 }
 
 function loadKitContext(runDir: string, plan: BuildPlan): KitContext {
@@ -151,8 +155,23 @@ function loadKitContext(runDir: string, plan: BuildPlan): KitContext {
     analytics: readSlotDocs("12_analytics"),
   };
 
+  let buildBrief: string | null = null;
+  try { buildBrief = fs.readFileSync(path.join(kitRoot, "00_BUILD_BRIEF.md"), "utf-8"); } catch {}
+
+  let designIdentity: string | null = null;
+  try { designIdentity = fs.readFileSync(path.join(kitRoot, "00_DESIGN_IDENTITY.md"), "utf-8"); } catch {}
+
+  let normalizedDesign: any = null;
+  let normalizedIntent: any = null;
+  try {
+    const nir = JSON.parse(fs.readFileSync(path.join(coreDir, "01_normalized_input_record.json"), "utf-8"));
+    if (nir.design && typeof nir.design === "object" && Object.keys(nir.design).length > 0) normalizedDesign = nir.design;
+    if (nir.intent && typeof nir.intent === "object" && Object.keys(nir.intent).length > 0) normalizedIntent = nir.intent;
+  } catch {}
+
   console.log(`  [BUILD] Kit context loaded: ${features.length} features, ${roles.length} roles, ${workflows.length} workflows, ${workBreakdown.length} work units`);
   console.log(`  [BUILD] Doc slots: requirements=${totalDocs.requirements.length}, design=${totalDocs.design.length}, arch=${totalDocs.architecture.length}, impl=${totalDocs.implementation.length}, security=${totalDocs.security.length}, quality=${totalDocs.quality.length}, ops=${totalDocs.ops.length}, data=${totalDocs.data.length}, api=${totalDocs.api.length}, analytics=${totalDocs.analytics.length}, governance=${totalDocs.governance.length}, release=${totalDocs.release.length}`);
+  console.log(`  [BUILD] Kit enrichment: buildBrief=${!!buildBrief}, designIdentity=${!!designIdentity}, design=${!!normalizedDesign}, intent=${!!normalizedIntent}`);
   console.log(`  [BUILD] Pages planned: ${allPages.map(p => p.name).join(", ")}`);
 
   return {
@@ -177,6 +196,10 @@ function loadKitContext(runDir: string, plan: BuildPlan): KitContext {
     allPages,
     stackProfile: plan.stackProfile,
     routing,
+    buildBrief,
+    designIdentity,
+    normalizedDesign,
+    normalizedIntent,
   };
 }
 
@@ -271,7 +294,7 @@ function generateDeterministic(ctx: KitContext, slice: BuildSlice, file: BuildFi
   if (p === "package.json") return genPackageJson(ctx);
   if (p === "tsconfig.json") return genTsConfig();
   if (p === "vite.config.ts") return genViteConfig();
-  if (p === "tailwind.config.ts") return genTailwindConfig();
+  if (p === "tailwind.config.ts") return genTailwindConfig(ctx);
   if (p === "postcss.config.js") return genPostcssConfig();
   if (p === "index.html") return genIndexHtml(ctx);
   if (p === ".env.example") return genEnvExample(ctx);
@@ -289,10 +312,10 @@ function generateDeterministic(ctx: KitContext, slice: BuildSlice, file: BuildFi
   if (p === "src/pages/NotFound.tsx") return genNotFoundPage();
   if (p === "src/pages/ForgotPassword.tsx") return genForgotPasswordPage();
   if (p === "src/styles/globals.css") return genGlobalStyles(ctx);
-  if (p === "src/components/ui/LoadingSpinner.tsx") return genLoadingSpinner();
-  if (p === "src/components/ui/ErrorBoundary.tsx") return genErrorBoundary();
+  if (p === "src/components/ui/LoadingSpinner.tsx") return genLoadingSpinner(ctx);
+  if (p === "src/components/ui/ErrorBoundary.tsx") return genErrorBoundary(ctx);
   if (p === "src/components/ui/EmptyState.tsx") return genEmptyState();
-  if (p === "src/components/ui/Pagination.tsx") return genPagination();
+  if (p === "src/components/ui/Pagination.tsx") return genPagination(ctx);
   if (p === "src/lib/api/endpoints.ts") return genApiEndpoints(ctx);
   if (p === "src/lib/auth/AuthContext.tsx") return genAuthContext();
   if (p === "src/lib/auth/ProtectedRoute.tsx") return genProtectedRoute();
@@ -366,6 +389,124 @@ function buildFileManifest(ctx: KitContext, slice: BuildSlice): string {
   return lines.join("\n");
 }
 
+function normalizeHex(hex: string): string | null {
+  if (/^#[0-9a-fA-F]{6}$/.test(hex)) return hex.toLowerCase();
+  if (/^#[0-9a-fA-F]{3}$/.test(hex)) return `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`.toLowerCase();
+  if (/^#[0-9a-fA-F]{8}$/.test(hex)) return hex.slice(0, 7).toLowerCase();
+  return null;
+}
+
+function extractBrandColors(ctx: KitContext): Record<string, string> | null {
+  let raw: Record<string, string> | null = null;
+
+  if (ctx.normalizedDesign?.brand_colors && typeof ctx.normalizedDesign.brand_colors === "object") {
+    const src = ctx.normalizedDesign.brand_colors as Record<string, string>;
+    if (Object.keys(src).length > 0) raw = src;
+  }
+
+  if (!raw && ctx.designIdentity) {
+    const parsed: Record<string, string> = {};
+    const hexPattern = /\|\s*(\w+)\s*\|\s*`(#[0-9a-fA-F]{3,8})`/g;
+    let m;
+    while ((m = hexPattern.exec(ctx.designIdentity)) !== null) {
+      parsed[m[1]] = m[2];
+    }
+    if (Object.keys(parsed).length > 0) raw = parsed;
+  }
+
+  if (!raw) return null;
+
+  const normalized: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    const hex = normalizeHex(String(value));
+    if (hex) normalized[key] = hex;
+  }
+
+  return Object.keys(normalized).length > 0 ? normalized : null;
+}
+
+function extractDesignPreset(ctx: KitContext): string | null {
+  if (ctx.normalizedDesign?.visual_preset) return String(ctx.normalizedDesign.visual_preset);
+  if (ctx.designIdentity) {
+    const m = ctx.designIdentity.match(/## Visual Preset\s*\n+\*\*Preset\*\*:\s*`?(\w+)`?/);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function extractNavPattern(ctx: KitContext): string | null {
+  if (ctx.normalizedDesign?.navigation_pref) return String(ctx.normalizedDesign.navigation_pref);
+  if (ctx.designIdentity) {
+    const m = ctx.designIdentity.match(/## Navigation Pattern\s*\n+\*\*Pattern\*\*:\s*`?(\w+)`?/);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function extractProjectOverview(ctx: KitContext): string | null {
+  if (ctx.buildBrief) {
+    const m = ctx.buildBrief.match(/## What This App Does\s*\n+([\s\S]*?)(?=\n##|\n---|\n$)/);
+    if (m) return m[1].trim().split("\n").slice(0, 3).join(" ").slice(0, 300);
+  }
+  if (ctx.normalizedIntent?.primary_goals) {
+    const goals = ctx.normalizedIntent.primary_goals;
+    if (Array.isArray(goals)) return goals.slice(0, 3).join(". ");
+    if (typeof goals === "string") return goals.slice(0, 300);
+  }
+  return null;
+}
+
+function buildDesignDirective(ctx: KitContext): string {
+  const parts: string[] = [];
+  const colors = extractBrandColors(ctx);
+  const preset = extractDesignPreset(ctx);
+  const navPattern = extractNavPattern(ctx);
+
+  if (!colors && !preset && !navPattern) return "";
+
+  parts.push("\nDESIGN DIRECTION (apply to all generated UI):");
+
+  if (colors) {
+    const colorLines = Object.entries(colors).map(([role, hex]) => `  ${role}: ${hex}`).join("\n");
+    parts.push(`Brand Colors:\n${colorLines}`);
+    if (colors.primary) {
+      parts.push("Use these brand colors via Tailwind classes: bg-primary-600, text-primary-700, ring-primary-500, etc.");
+      parts.push("Do NOT default to generic blue (#3b82f6) or Tailwind blue-* classes. Use the primary-* palette defined in tailwind.config.ts.");
+    }
+    if (colors.secondary) parts.push("Secondary palette available: bg-secondary-600, text-secondary-700, etc.");
+    if (colors.accent) parts.push("Accent palette available: bg-accent-500, text-accent-600, etc.");
+  }
+
+  if (preset) {
+    const presetMap: Record<string, string> = {
+      professional: "Clean lines, 4px inputs/8px cards radius, subtle shadows, 150-200ms transitions, system/Inter font",
+      playful: "Rounded 12px buttons/16px cards, bouncy 300ms transitions, generous whitespace, Nunito/Poppins font",
+      minimalist: "Sharp edges (0-2px radius), minimal decoration, tight spacing, 100ms fade only, monospace accents",
+      bold: "High contrast, 8px standard/24px hero radius, confident 250ms transitions, heavy headings (700-900)",
+      elegant: "Subtle 6px curves, generous margins, refined serif/sans-serif, 200ms ease transitions, muted palette",
+      modern: "8px radius, clean shadows, 200ms transitions, 14px Inter/system font, balanced whitespace",
+      corporate: "4px radius, structured grid, minimal animation, 14px system font, neutral grays",
+    };
+    const style = presetMap[preset.toLowerCase()] ?? `Apply "${preset}" visual style consistently`;
+    parts.push(`Visual Preset: ${preset} — ${style}`);
+  }
+
+  if (navPattern) {
+    const navMap: Record<string, string> = {
+      sidebar: "Fixed left sidebar (240px expanded, 64px collapsed), logo top, nav items with icons, user at bottom",
+      topnav: "Horizontal top bar (56-64px), logo left, nav centered/left, user right, hamburger on mobile",
+      tabs: "Tab-based content switching, top-aligned, max 5-7 tabs, icons+labels",
+      bottom_nav: "Bottom bar (56px) on mobile with 3-5 destinations, convert to sidebar on desktop",
+      hybrid: "Sidebar (240px) for sections + top bar (56px) for global actions/search/user",
+    };
+    const navKey = navPattern.toLowerCase().replace(/[\s-]/g, "_");
+    const navStyle = navMap[navKey] ?? `Use "${navPattern}" navigation pattern`;
+    parts.push(`Navigation: ${navStyle}`);
+  }
+
+  return parts.join("\n");
+}
+
 function buildSystemPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget): string {
   const lang = ctx.stackProfile.language === "typescript" ? "TypeScript" : "JavaScript";
   const framework = ctx.stackProfile.framework;
@@ -384,8 +525,16 @@ function buildSystemPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTa
   if (ctx.stackProfile.cssFramework?.includes("tailwind")) availablePackages.push("tailwindcss");
 
   const fileManifest = buildFileManifest(ctx, slice);
+  const overview = extractProjectOverview(ctx);
+  const designDirective = buildDesignDirective(ctx);
+
+  let projectIdentity = `Project: ${ctx.projectName}`;
+  if (overview) projectIdentity += `\nOverview: ${overview}`;
 
   return `You are a code generator for the Axion Build System. You generate production-quality ${lang} code for a ${framework} application.
+
+${projectIdentity}
+${designDirective}
 
 CRITICAL RULES:
 - Generate ONLY the raw file content. NEVER wrap output in markdown code fences (\`\`\`). No explanations.
@@ -418,7 +567,6 @@ VALIDATION:
 FILE MANIFEST (all files in this project — use these exact paths for imports):
 ${fileManifest}
 
-Project: ${ctx.projectName}
 File: ${file.relativePath}
 Role: ${file.role}`;
 }
@@ -466,10 +614,27 @@ function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarg
 
   parts.push("\n--- PROJECT CONTEXT ---");
   parts.push(`Project: ${ctx.projectName}`);
+  const briefOverview = extractProjectOverview(ctx);
+  if (briefOverview) parts.push(`Overview: ${briefOverview}`);
   parts.push(`Features: ${ctx.features.map(f => `${f.feature_id}: ${f.name} — ${f.description}`).join("\n  ")}`);
   parts.push(`Roles: ${ctx.roles.map(r => `${r.role_id}: ${r.name}${r.description ? " — " + r.description : ""}`).join("; ")}`);
   if (ctx.workflows.length > 0) {
     parts.push(`Workflows: ${ctx.workflows.map(w => `${w.workflow_id}: ${w.name} (${w.steps.length} steps: ${w.steps.join(" → ")})`).join("\n  ")}`);
+  }
+  if (ctx.buildBrief) {
+    const oosMatch = ctx.buildBrief.match(/## Out of Scope\s*\n+([\s\S]*?)(?=\n##|\n---|\n$)/);
+    if (oosMatch) parts.push(`\nOUT OF SCOPE (do NOT implement these):\n${oosMatch[1].trim()}`);
+    const techMatch = ctx.buildBrief.match(/## Technical Profile\s*\n+([\s\S]*?)(?=\n##|\n---|\n$)/);
+    if (techMatch) parts.push(`\nTechnical Profile:\n${techMatch[1].trim().slice(0, 400)}`);
+  } else if (ctx.normalizedIntent) {
+    if (ctx.normalizedIntent.out_of_scope) {
+      const oos = Array.isArray(ctx.normalizedIntent.out_of_scope) ? ctx.normalizedIntent.out_of_scope.join(", ") : String(ctx.normalizedIntent.out_of_scope);
+      parts.push(`\nOUT OF SCOPE (do NOT implement these): ${oos}`);
+    }
+    if (ctx.normalizedIntent.primary_goals) {
+      const goals = Array.isArray(ctx.normalizedIntent.primary_goals) ? ctx.normalizedIntent.primary_goals.join("; ") : String(ctx.normalizedIntent.primary_goals);
+      parts.push(`Primary Goals: ${goals}`);
+    }
   }
 
   const feat = file.sourceRef ? ctx.features.find(f => f.feature_id === file.sourceRef) : null;
@@ -485,6 +650,8 @@ function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarg
     parts.push("Use <Routes> and <Route> from react-router-dom. Do NOT import or use BrowserRouter — it is already in main.tsx.");
     parts.push("Wrap authenticated routes in a layout component (AppLayout) with Header and Sidebar.");
     parts.push("Login, Register, and ForgotPassword pages should NOT be wrapped in the layout.");
+    const navPat = extractNavPattern(ctx);
+    if (navPat) parts.push(`\nNavigation pattern: ${navPat}. Structure the layout wrapper accordingly.`);
     parts.push("\n--- FEATURES ---");
     parts.push(ctx.features.map(f => `- ${f.name}: ${f.description}`).join("\n"));
     parts.push("\n--- DESIGN SYSTEM ---");
@@ -532,6 +699,11 @@ function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarg
     parts.push("\n--- NAVIGATION & LAYOUT ---");
     const pageNames = ctx.allPages.filter(p => p.role !== "error_page").map(p => `${p.name} (${p.routePath})`);
     parts.push(`Pages to navigate to: ${pageNames.join(", ")}`);
+    const layoutNav = extractNavPattern(ctx);
+    if (layoutNav) parts.push(`Navigation pattern: ${layoutNav}`);
+    const layoutColors = extractBrandColors(ctx);
+    if (layoutColors?.primary) parts.push(`Primary brand color: ${layoutColors.primary} — use for active nav items, sidebar accent, header highlights`);
+    if (layoutColors?.surface) parts.push(`Surface color: ${layoutColors.surface} — use for sidebar/header background`);
     parts.push("\n--- DESIGN SYSTEM ---");
     parts.push(findRelevantDocs(ctx.designDocs, ["navigation", "layout", "sidebar", "header", "design system", "DSYS", "IXD"], 4000));
     parts.push("\n--- REQUIREMENTS ---");
@@ -633,7 +805,10 @@ function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarg
   } else if (role === "auth_layout") {
     parts.push("\n--- DESIGN ---");
     parts.push(findRelevantDocs(ctx.designDocs, ["auth", "login", "form", "layout"], 3000));
-    parts.push("\nGenerate a centered auth layout for login/register/forgot-password pages. Includes logo, app name, and a centered card container for the form.");
+    const authColors = extractBrandColors(ctx);
+    if (authColors?.primary) parts.push(`Brand primary color: ${authColors.primary} — use for submit buttons, links, focus rings`);
+    if (authColors?.background) parts.push(`Background: ${authColors.background}`);
+    parts.push(`\nGenerate a centered auth layout for login/register/forgot-password pages for "${ctx.projectName}". Includes logo/brand mark, app name, and a centered card container for the form.`);
   } else if (role === "api_interceptor") {
     parts.push("\n--- ARCHITECTURE ---");
     parts.push(findRelevantDocs(ctx.archDocs, ["API", "client", "interceptor", "middleware"], 3000));
@@ -791,7 +966,56 @@ export default defineConfig({
 `;
 }
 
-function genTailwindConfig(): string {
+function hexToShades(hex: string): Record<string, string> {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const mix = (c: number, w: number, t: number) => Math.round(c + (t - c) * w);
+  const toHex = (rv: number, gv: number, bv: number) => `#${[rv, gv, bv].map(c => Math.max(0, Math.min(255, c)).toString(16).padStart(2, "0")).join("")}`;
+  return {
+    50: toHex(mix(r, 0.95, 255), mix(g, 0.95, 255), mix(b, 0.95, 255)),
+    100: toHex(mix(r, 0.88, 255), mix(g, 0.88, 255), mix(b, 0.88, 255)),
+    200: toHex(mix(r, 0.75, 255), mix(g, 0.75, 255), mix(b, 0.75, 255)),
+    300: toHex(mix(r, 0.55, 255), mix(g, 0.55, 255), mix(b, 0.55, 255)),
+    400: toHex(mix(r, 0.3, 255), mix(g, 0.3, 255), mix(b, 0.3, 255)),
+    500: hex,
+    600: toHex(mix(r, 0.15, 0), mix(g, 0.15, 0), mix(b, 0.15, 0)),
+    700: toHex(mix(r, 0.3, 0), mix(g, 0.3, 0), mix(b, 0.3, 0)),
+    800: toHex(mix(r, 0.45, 0), mix(g, 0.45, 0), mix(b, 0.45, 0)),
+    900: toHex(mix(r, 0.6, 0), mix(g, 0.6, 0), mix(b, 0.6, 0)),
+  };
+}
+
+function genTailwindConfig(ctx: KitContext): string {
+  const brandColors = extractBrandColors(ctx);
+  let primaryShades: Record<string, string>;
+  let secondaryShades: Record<string, string> | null = null;
+  let accentShades: Record<string, string> | null = null;
+
+  if (brandColors?.primary && /^#[0-9a-fA-F]{6}$/.test(brandColors.primary)) {
+    primaryShades = hexToShades(brandColors.primary);
+    if (brandColors.secondary && /^#[0-9a-fA-F]{6}$/.test(brandColors.secondary)) {
+      secondaryShades = hexToShades(brandColors.secondary);
+    }
+    if (brandColors.accent && /^#[0-9a-fA-F]{6}$/.test(brandColors.accent)) {
+      accentShades = hexToShades(brandColors.accent);
+    }
+  } else {
+    primaryShades = {
+      50: "#eff6ff", 100: "#dbeafe", 200: "#bfdbfe", 300: "#93c5fd", 400: "#60a5fa",
+      500: "#3b82f6", 600: "#2563eb", 700: "#1d4ed8", 800: "#1e40af", 900: "#1e3a8a",
+    };
+  }
+
+  const indent = (obj: Record<string, string>, depth: number): string => {
+    const pad = " ".repeat(depth * 2);
+    return Object.entries(obj).map(([k, v]) => `${pad}${k}: "${v}",`).join("\n");
+  };
+
+  let colorsBlock = `        primary: {\n${indent(primaryShades, 5)}\n        },`;
+  if (secondaryShades) colorsBlock += `\n        secondary: {\n${indent(secondaryShades, 5)}\n        },`;
+  if (accentShades) colorsBlock += `\n        accent: {\n${indent(accentShades, 5)}\n        },`;
+
   return `/** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -801,18 +1025,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          800: "#1e40af",
-          900: "#1e3a8a",
-        },
+${colorsBlock}
       },
     },
   },
@@ -1154,24 +1367,28 @@ export default function NotFound() {
 
 function genGlobalStyles(ctx: KitContext): string {
   if (ctx.stackProfile.cssFramework?.includes("tailwind")) {
+    const brandColors = extractBrandColors(ctx);
+    const hasBrand = !!brandColors?.primary;
+    const bgClass = hasBrand && brandColors.background ? `bg-[${brandColors.background}]` : "bg-gray-50";
+    const textClass = hasBrand && brandColors.text ? `text-[${brandColors.text}]` : "text-gray-900";
+    const primaryBtn = hasBrand ? "bg-primary-600" : "bg-blue-600";
+    const primaryBtnHover = hasBrand ? "hover:bg-primary-700" : "hover:bg-blue-700";
+    const primaryRing = hasBrand ? "ring-primary-500" : "ring-blue-500";
+    const primaryFocus = hasBrand ? "focus:ring-primary-600" : "focus:ring-blue-600";
+
     return `@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --color-primary: 59 130 246;
-    --color-secondary: 100 116 139;
-  }
-
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply ${bgClass} ${textClass} antialiased;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors;
+    @apply rounded-lg ${primaryBtn} px-4 py-2 text-sm font-semibold text-white shadow-sm ${primaryBtnHover} focus:outline-none focus:ring-2 focus:${primaryRing} focus:ring-offset-2 transition-colors;
   }
 
   .btn-secondary {
@@ -1179,7 +1396,7 @@ function genGlobalStyles(ctx: KitContext): string {
   }
 
   .input-field {
-    @apply block w-full rounded-lg border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm;
+    @apply block w-full rounded-lg border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset ${primaryFocus} sm:text-sm;
   }
 
   .card {
@@ -1193,7 +1410,9 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #f9fafb; c
 `;
 }
 
-function genLoadingSpinner(): string {
+function genLoadingSpinner(ctx: KitContext): string {
+  const brandColors = extractBrandColors(ctx);
+  const spinnerColor = brandColors?.primary ? "border-t-primary-600" : "border-t-blue-600";
   return `interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -1203,7 +1422,7 @@ export default function LoadingSpinner({ size = "md", className = "" }: LoadingS
   const sizeClasses = { sm: "h-4 w-4", md: "h-8 w-8", lg: "h-12 w-12" };
   return (
     <div className={\`flex items-center justify-center \${className}\`}>
-      <div className={\`\${sizeClasses[size]} animate-spin rounded-full border-2 border-gray-300 border-t-blue-600\`} />
+      <div className={\`\${sizeClasses[size]} animate-spin rounded-full border-2 border-gray-300 ${spinnerColor}\`} />
     </div>
   );
 }
@@ -1222,7 +1441,10 @@ afterEach(() => {
   return `// Test setup\n`;
 }
 
-function genErrorBoundary(): string {
+function genErrorBoundary(ctx: KitContext): string {
+  const brandColors = extractBrandColors(ctx);
+  const btnBg = brandColors?.primary ? "bg-primary-600" : "bg-blue-600";
+  const btnHover = brandColors?.primary ? "hover:bg-primary-700" : "hover:bg-blue-700";
   return `import React, { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
@@ -1259,7 +1481,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
             <p className="mt-2 text-sm text-gray-500">{this.state.error?.message}</p>
             <button
               onClick={() => this.setState({ hasError: false, error: null })}
-              className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className="mt-4 rounded-lg ${btnBg} px-4 py-2 text-sm font-semibold text-white ${btnHover}"
             >
               Try Again
             </button>
@@ -1301,7 +1523,9 @@ export default function EmptyState({
 `;
 }
 
-function genPagination(): string {
+function genPagination(ctx: KitContext): string {
+  const brandColors = extractBrandColors(ctx);
+  const activeBg = brandColors?.primary ? "bg-primary-600" : "bg-blue-600";
   return `interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -1343,7 +1567,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, clas
             onClick={() => onPageChange(page)}
             className={\`rounded-lg px-3 py-2 text-sm font-medium \${
               page === currentPage
-                ? "bg-blue-600 text-white"
+                ? "${activeBg} text-white"
                 : "text-gray-700 hover:bg-gray-100"
             }\`}
           >

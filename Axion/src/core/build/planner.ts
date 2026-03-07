@@ -41,6 +41,8 @@ interface CanonicalSpec {
   meta?: {
     spec_id?: string;
     submission_id?: string;
+    project_name?: string;
+    project_overview?: string;
   };
   run_id?: string;
 }
