@@ -397,6 +397,7 @@ Enrich each work unit with implementation details and acceptance criteria.`,
       return {
         ...u,
         description: match.description ?? u.description,
+        name: u.name,
       };
     }
     return u;

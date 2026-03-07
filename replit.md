@@ -169,6 +169,43 @@ Internal Build Mode takes an approved Agent Kit from a completed pipeline run an
 ### Kit Slot & Pack Infrastructure (KIT-01/TMP-06 Compliant)
 `Axion/src/core/kit/build.ts` — 12 locked KIT-01 slots: 01_requirements, 02_design, 03_architecture, 04_implementation, 05_security, 06_quality, 07_ops, 08_data, 09_api_contracts, 10_release, 11_governance, 12_analytics. SUBDIR_TO_SLOT maps all template prefix groups to correct slots. Pack root files generated: 00_pack_meta.md (pack_level, pack_id, scope_refs, required_slots, status in machine-readable JSON), 00_pack_index.md (TOC with links), 00_gate_checklist.md (pass/fail). Empty slots get 00_NA.md with reason and trigger condition.
 
+### BA Kit Quality — Rich Data Preservation & Instruction Files
+The normalizer, spec builder, and kit builder have been enhanced so the Builder Agent (BA) receives focused, product-specific guidance:
+
+**Normalizer Data Preservation** (`Axion/src/core/intake/normalizer.ts`):
+- `NormalizedInputRecord` now includes 5 optional fields: `design`, `intent`, `data_model`, `integrations`, `category_specific` (all `Record<string, unknown>`)
+- `normalizeSubmission()` extracts these from the raw submission and includes them only when non-empty
+- `design` carries brand_colors, visual_preset, navigation_pref, style_adjectives, ui_density
+- `intent` carries primary_goals, success_metrics, out_of_scope, alternatives
+- Previously these were silently dropped, leaving the BA with no design or intent context
+
+**Project Name Flow** (`Axion/src/core/canonical/specBuilder.ts`, `Axion/src/core/kit/build.ts`):
+- `CanonicalSpecMeta` now has optional `project_name` and `project_overview` fields
+- `buildSpec()` populates these from the normalized input's `project` block
+- `buildRealKit()` uses 3-level fallback: `meta.project_name` → `project.project_name` → read `normalized_input.json` from intake dir
+- Eliminates "Axion Generated Project" as the default — real project name flows through to all kit files
+
+**WorkUnit `name` Field** (`Axion/src/core/planning/workBreakdown.ts`):
+- `WorkUnit` interface has optional `name` field alongside `title`
+- Feature-based units get `name` from the feature name; non-feature units get `name` from their label
+- `enrichWorkBreakdown()` in openai-bridge preserves the `name` field when mapping AI responses
+
+**00_BUILD_BRIEF.md** (`Axion/src/core/kit/build.ts`):
+- `buildBuildBriefMd()` generates the BA's primary instruction file — deterministic, no LLM
+- Sections: Project Identity, What This App Does, Core Features (table), Design Direction, Technical Profile (auth/compliance/NFRs), User Roles, Key Workflows (top 3), Data Model, Integrations, Build Priority (first 5 work units), What NOT To Build, Success Metrics
+- All content extracted from canonical spec, normalized input, and work breakdown JSON
+
+**00_DESIGN_IDENTITY.md** (`Axion/src/core/kit/build.ts`):
+- `buildDesignIdentityMd()` generates actionable visual direction — deterministic, no LLM
+- Sections: Color System (hex + usage guidance), Visual Preset (preset → implementation mapping for 7 presets), Navigation Pattern (pattern → layout guidance), Typography & Density (compact/comfortable/spacious → specific values), Style Adjectives Applied
+- Only generated when design data exists in normalized input
+
+**Enhanced 00_START_HERE.md** (`Axion/src/core/kit/build.ts`):
+- `buildStartHereMd()` now accepts projectOverview, featureCount, roleCount, hasDesignIdentity, hasBuildBrief
+- Opens with project name and description instead of generic "This kit contains..."
+- Reading order puts BUILD_BRIEF first, DESIGN_IDENTITY second
+- Includes feature/role count summary and prominent callout to read BUILD_BRIEF first
+
 ### Template Selector (TMP-03 Compliant)
 `Axion/src/core/templates/selector.ts` — Global type ordering (Product → Design → Architecture → Data → API → Security → Implementation → Quality → Ops → Release → Governance → Analytics) with template_id tie-breaker. Baseline coverage enforcement (always-required: product, architecture, implementation, security, quality; conditional: design, data, api, ops). Selection result includes `omitted_templates[]` with reasons (not_applicable, skill_level_omit, pack_not_active), `na_slots[]`, and `baseline_warnings[]`.
 

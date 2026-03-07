@@ -7,6 +7,7 @@ import type { CanonicalSpec, FeatureEntity, WorkflowEntity, RoleEntity } from ".
 export interface WorkUnit {
   unit_id: string;
   title: string;
+  name?: string;
   type: "spec" | "design" | "frontend" | "backend" | "contracts" | "data" | "security" | "qa" | "devops" | "docs";
   description?: string;
   scope_refs: string[];
@@ -89,6 +90,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
   const specUnit: WorkUnit = {
     unit_id: `WU-${String(++unitCounter).padStart(3, "0")}`,
     title: "Specification & Requirements",
+    name: "Specification & Requirements",
     type: "spec",
     description: "Define and validate project requirements from canonical spec",
     scope_refs: [specId],
@@ -102,6 +104,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
     const backendUnit: WorkUnit = {
       unit_id: `WU-${String(++unitCounter).padStart(3, "0")}`,
       title: `Backend: ${feature.name}`,
+      name: feature.name,
       type: "backend",
       description: feature.description ?? `Implement backend logic for ${feature.name}`,
       scope_refs: [feature.feature_id],
@@ -114,6 +117,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
     const frontendUnit: WorkUnit = {
       unit_id: `WU-${String(++unitCounter).padStart(3, "0")}`,
       title: `Frontend: ${feature.name}`,
+      name: feature.name,
       type: "frontend",
       description: `Build UI components for ${feature.name}`,
       scope_refs: [feature.feature_id],
@@ -128,6 +132,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
     const contractsUnit: WorkUnit = {
       unit_id: `WU-${String(++unitCounter).padStart(3, "0")}`,
       title: "API Contracts & Interfaces",
+      name: "API Contracts & Interfaces",
       type: "contracts",
       description: "Define API contracts for all workflows",
       scope_refs: canonicalSpec.entities.workflows.map((w) => w.workflow_id),
@@ -142,6 +147,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
     const rolesUnit: WorkUnit = {
       unit_id: `WU-${String(++unitCounter).padStart(3, "0")}`,
       title: "Roles & Access Control",
+      name: "Roles & Access Control",
       type: "security",
       description: "Define and implement user roles and access levels",
       scope_refs: canonicalSpec.entities.roles.map((r) => r.role_id),
@@ -156,6 +162,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
     const securityUnit: WorkUnit = {
       unit_id: `WU-${String(++unitCounter).padStart(3, "0")}`,
       title: "Security & Permissions",
+      name: "Security & Permissions",
       type: "security",
       description: "Implement role-based permissions and security controls",
       scope_refs: canonicalSpec.entities.permissions.map((p) => p.perm_id),
@@ -169,6 +176,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
   const qaUnit: WorkUnit = {
     unit_id: `WU-${String(++unitCounter).padStart(3, "0")}`,
     title: "Quality Assurance & Testing",
+    name: "Quality Assurance & Testing",
     type: "qa",
     description: "Write and run tests for all features and workflows",
     scope_refs: canonicalSpec.entities.features.map((f) => f.feature_id),
@@ -181,6 +189,7 @@ export function buildWorkBreakdown(canonicalSpec: CanonicalSpec, runId: string, 
   const docsUnit: WorkUnit = {
     unit_id: `WU-${String(++unitCounter).padStart(3, "0")}`,
     title: "Documentation",
+    name: "Documentation",
     type: "docs",
     description: "Generate project documentation from templates and specs",
     scope_refs: [specId],

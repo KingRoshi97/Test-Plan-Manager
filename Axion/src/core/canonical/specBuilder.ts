@@ -11,6 +11,8 @@ export interface CanonicalSpecMeta {
   standards_version_used: string;
   spec_version: string;
   created_at: string;
+  project_name?: string;
+  project_overview?: string;
 }
 
 export interface RoleEntity {
@@ -305,6 +307,8 @@ export function buildSpec(normalizedInput: unknown, _standardsSnapshot: unknown,
     ),
   };
 
+  const projectRecord = input.project as unknown as Record<string, unknown> | undefined;
+
   const meta: CanonicalSpecMeta = {
     spec_id: `SPEC-${input.submission_id}`,
     submission_id: input.submission_id,
@@ -313,6 +317,8 @@ export function buildSpec(normalizedInput: unknown, _standardsSnapshot: unknown,
     standards_version_used: "1.0.0",
     spec_version: "1.0.0",
     created_at: isoNow(),
+    ...(projectRecord?.project_name ? { project_name: projectRecord.project_name as string } : {}),
+    ...(projectRecord?.project_overview ? { project_overview: projectRecord.project_overview as string } : {}),
   };
 
   return {

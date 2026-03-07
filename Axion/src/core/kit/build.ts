@@ -48,9 +48,50 @@ function writeFile(destPath: string, content: string): void {
   writeFileSync(destPath, content, "utf-8");
 }
 
-function buildStartHereMd(runId: string, specId: string, projectName: string): string {
+function buildStartHereMd(
+  runId: string,
+  specId: string,
+  projectName: string,
+  projectOverview: string,
+  featureCount: number,
+  roleCount: number,
+  hasDesignIdentity: boolean,
+  hasBuildBrief: boolean
+): string {
+  const featureRoleSummary = `This project defines ${featureCount} feature${featureCount !== 1 ? "s" : ""} and ${roleCount} user role${roleCount !== 1 ? "s" : ""}.`;
+
+  const readingOrderItems: string[] = [];
+  let step = 1;
+  if (hasBuildBrief) {
+    readingOrderItems.push(`${step}. **Read \`00_BUILD_BRIEF.md\` first** — it contains the complete product specification summary`);
+    step++;
+  }
+  if (hasDesignIdentity) {
+    readingOrderItems.push(`${step}. Read \`00_DESIGN_IDENTITY.md\` for visual direction, color system, and UI guidelines`);
+    step++;
+  }
+  readingOrderItems.push(`${step}. Read \`00_KIT_MANIFEST.md\` for file listing and structure`);
+  step++;
+  readingOrderItems.push(`${step}. Read \`01_core_artifacts/03_canonical_spec.json\` for the full project specification`);
+  step++;
+  readingOrderItems.push(`${step}. Read \`01_core_artifacts/04_work_breakdown.json\` for work units`);
+  step++;
+  readingOrderItems.push(`${step}. Read \`01_core_artifacts/05_acceptance_map.json\` for acceptance criteria`);
+  step++;
+  readingOrderItems.push(`${step}. Browse \`10_app/\` for rendered documents by domain`);
+
+  const briefNote = hasBuildBrief
+    ? `\n> **Read \`00_BUILD_BRIEF.md\` first** — it contains the complete product specification, feature list, design direction, technical profile, and build priorities.\n`
+    : "";
+
   return `# 00 — START HERE
 
+## Project: ${projectName}
+
+${projectOverview ? projectOverview : `This is the build kit for ${projectName}.`}
+
+${featureRoleSummary}
+${briefNote}
 ## Purpose & How to Use
 This kit contains all artifacts produced by the Axion pipeline for run \`${runId}\`.
 It is the authoritative source for the project specification, standards, work breakdown, and acceptance criteria.
@@ -64,12 +105,7 @@ It is the authoritative source for the project specification, standards, work br
 - \`01_core_artifacts/06_state_snapshot.json\` — current state
 
 ## Reading Order
-1. Read \`00_KIT_MANIFEST.md\` for file listing and structure
-2. Read \`00_VERSIONS.md\` for version information
-3. Read \`01_core_artifacts/03_canonical_spec.json\` for project specification
-4. Read \`01_core_artifacts/04_work_breakdown.json\` for work units
-5. Read \`01_core_artifacts/05_acceptance_map.json\` for acceptance criteria
-6. Browse \`10_app/\` for rendered documents by domain
+${readingOrderItems.join("\n")}
 
 ## Execution Loop
 1. Load \`01_core_artifacts/06_state_snapshot.json\` to find \`current_unit_id\`
@@ -126,6 +162,8 @@ function buildKitManifestMd(
     state_id: stateId,
     reading_order: [
       "00_START_HERE.md",
+      "00_BUILD_BRIEF.md",
+      "00_DESIGN_IDENTITY.md",
       "00_KIT_MANIFEST.md",
       "00_KIT_INDEX.md",
       "00_VERSIONS.md",
@@ -178,6 +216,13 @@ function buildKitIndexMd(runId: string, projectName: string): string {
 
 **Run ID**: \`${runId}\`
 **Project**: \`${projectName}\`
+
+## Instruction Files
+
+| File | Description |
+|------|-------------|
+| \`00_BUILD_BRIEF.md\` | Product specification summary — read first |
+| \`00_DESIGN_IDENTITY.md\` | Visual direction and design system |
 
 ## Core Artifacts
 
@@ -338,6 +383,396 @@ function buildGateChecklistMd(runId: string): string {
 | G7_VERIFICATION | verification/verification_run_result.json | (check run) |
 | G8_PACKAGE_INTEGRITY | kit/kit_manifest.json | (check run) |
 `;
+}
+
+function buildBuildBriefMd(runDir: string, projectName: string): string {
+  const canonicalSpec = safeReadJson<Record<string, unknown>>(join(runDir, "canonical", "canonical_spec.json"));
+  const normalizedInput = safeReadJson<Record<string, unknown>>(join(runDir, "intake", "normalized_input.json"));
+  const workBreakdown = safeReadJson<Record<string, unknown>>(join(runDir, "planning", "work_breakdown.json"));
+
+  const meta = (canonicalSpec?.meta ?? {}) as Record<string, unknown>;
+  const entities = (canonicalSpec?.entities ?? {}) as Record<string, unknown>;
+  const constraints = (canonicalSpec?.constraints ?? {}) as Record<string, unknown>;
+  const normalizedConstraints = (normalizedInput?.constraints ?? {}) as Record<string, unknown>;
+
+  const intent = (normalizedInput?.intent ?? {}) as Record<string, unknown>;
+  const design = (normalizedInput?.design ?? {}) as Record<string, unknown>;
+  const dataModel = (normalizedInput?.data_model ?? {}) as Record<string, unknown>;
+  const integrations = (normalizedInput?.integrations ?? {}) as Record<string, unknown>;
+  const project = (normalizedInput?.project ?? {}) as Record<string, unknown>;
+
+  const features = (Array.isArray(entities.features) ? entities.features : []) as Array<Record<string, unknown>>;
+  const roles = (Array.isArray(entities.roles) ? entities.roles : []) as Array<Record<string, unknown>>;
+  const workflows = (Array.isArray(entities.workflows) ? entities.workflows : []) as Array<Record<string, unknown>>;
+  const units = (Array.isArray((workBreakdown as Record<string, unknown> | null)?.units) ? (workBreakdown as Record<string, unknown>).units : []) as Array<Record<string, unknown>>;
+
+  const primaryGoals = Array.isArray(intent.primary_goals) ? intent.primary_goals as string[] : [];
+  const successMetrics = Array.isArray(intent.success_metrics) ? intent.success_metrics as string[] : [];
+  const outOfScope = Array.isArray(intent.out_of_scope) ? intent.out_of_scope as string[] : [];
+
+  const sections: string[] = [];
+
+  sections.push(`# 00 — BUILD BRIEF\n`);
+
+  sections.push(`## Project Identity\n`);
+  sections.push(`**Name**: ${projectName}`);
+  if (project.project_overview) {
+    sections.push(`**Overview**: ${project.project_overview}`);
+  }
+  if (primaryGoals.length > 0) {
+    sections.push(`**Primary Goals**:`);
+    for (const goal of primaryGoals) {
+      sections.push(`- ${goal}`);
+    }
+  }
+  sections.push(``);
+
+  const featureSummaries = features.slice(0, 5).map((f) => String(f.name ?? "")).filter(Boolean);
+  if (featureSummaries.length > 0 || project.project_overview) {
+    sections.push(`## What This App Does\n`);
+    const overview = project.project_overview ? String(project.project_overview) : projectName;
+    const featureList = featureSummaries.length > 0 ? ` Core capabilities include ${featureSummaries.join(", ")}.` : "";
+    sections.push(`${overview}${featureList}\n`);
+  }
+
+  if (features.length > 0) {
+    sections.push(`## Core Features\n`);
+    sections.push(`| Feature ID | Name | Description | Priority |`);
+    sections.push(`|-----------|------|-------------|----------|`);
+    for (const f of features) {
+      const fid = String(f.feature_id ?? "");
+      const fname = String(f.name ?? "");
+      const fdesc = String(f.description ?? "").replace(/\|/g, "-").slice(0, 120);
+      const fpri = String(f.priority_tier ?? "must");
+      sections.push(`| ${fid} | ${fname} | ${fdesc} | ${fpri} |`);
+    }
+    sections.push(``);
+  }
+
+  if (Object.keys(design).length > 0) {
+    sections.push(`## Design Direction\n`);
+    if (design.brand_colors && typeof design.brand_colors === "object") {
+      const colors = design.brand_colors as Record<string, unknown>;
+      sections.push(`**Brand Colors**:`);
+      for (const [key, val] of Object.entries(colors)) {
+        sections.push(`- ${key}: \`${val}\``);
+      }
+    }
+    if (design.visual_preset) sections.push(`**Visual Preset**: ${design.visual_preset}`);
+    if (design.navigation_pref) sections.push(`**Navigation Preference**: ${design.navigation_pref}`);
+    if (Array.isArray(design.style_adjectives) && (design.style_adjectives as string[]).length > 0) {
+      sections.push(`**Style Adjectives**: ${(design.style_adjectives as string[]).join(", ")}`);
+    }
+    if (design.ui_density) sections.push(`**UI Density**: ${design.ui_density}`);
+    sections.push(``);
+  }
+
+  sections.push(`## Technical Profile\n`);
+  const auth = normalizedConstraints.auth as Record<string, unknown> | undefined;
+  const nfr = normalizedConstraints.nfr as Record<string, unknown> | undefined;
+  if (auth) {
+    if (auth.auth_provider) sections.push(`**Auth Provider**: ${auth.auth_provider}`);
+    if (auth.authorization_model) sections.push(`**Authorization Model**: ${auth.authorization_model}`);
+    if (auth.session_handling) sections.push(`**Session Handling**: ${auth.session_handling}`);
+  }
+  if (nfr) {
+    if (nfr.expected_users) sections.push(`**Expected Users**: ${nfr.expected_users}`);
+    if (nfr.throughput) sections.push(`**Throughput**: ${nfr.throughput}`);
+    if (nfr.response_time) sections.push(`**Response Time**: ${nfr.response_time}`);
+    if (nfr.offline_support !== undefined) sections.push(`**Offline Support**: ${nfr.offline_support}`);
+    if (Array.isArray(nfr.compliance) && (nfr.compliance as string[]).length > 0) {
+      sections.push(`**Compliance**: ${(nfr.compliance as string[]).join(", ")}`);
+    }
+  }
+  sections.push(``);
+
+  if (roles.length > 0) {
+    sections.push(`## User Roles\n`);
+    sections.push(`| Role | Primary Goal |`);
+    sections.push(`|------|-------------|`);
+    for (const r of roles) {
+      const rname = String(r.name ?? "");
+      const rgoal = String(r.primary_goal ?? r.description ?? "");
+      sections.push(`| ${rname} | ${rgoal} |`);
+    }
+    sections.push(``);
+  }
+
+  if (workflows.length > 0) {
+    const topWorkflows = workflows.slice(0, 3);
+    sections.push(`## Key Workflows\n`);
+    for (const w of topWorkflows) {
+      sections.push(`### ${w.name}`);
+      sections.push(`**Actor**: ${w.actor_role_ref ?? "User"}`);
+      if (Array.isArray(w.steps)) {
+        sections.push(`**Steps**:`);
+        for (const step of w.steps as string[]) {
+          sections.push(`1. ${step}`);
+        }
+      }
+      if (w.success_outcome) sections.push(`**Success Outcome**: ${w.success_outcome}`);
+      sections.push(``);
+    }
+  }
+
+  if (dataModel && Object.keys(dataModel).length > 0) {
+    sections.push(`## Data Model\n`);
+    if (Array.isArray(dataModel.entities)) {
+      for (const entity of dataModel.entities as Array<Record<string, unknown>>) {
+        const ename = String(entity.name ?? "");
+        sections.push(`**${ename}**`);
+        if (Array.isArray(entity.fields)) {
+          for (const field of entity.fields as Array<Record<string, unknown>>) {
+            sections.push(`- ${field.name}: ${field.type ?? "unknown"}`);
+          }
+        }
+      }
+    } else {
+      for (const [key, val] of Object.entries(dataModel)) {
+        sections.push(`- **${key}**: ${typeof val === "object" ? JSON.stringify(val) : val}`);
+      }
+    }
+    sections.push(``);
+  }
+
+  if (integrations && Object.keys(integrations).length > 0) {
+    sections.push(`## Integrations\n`);
+    if (Array.isArray(integrations.platforms)) {
+      for (const platform of integrations.platforms as Array<Record<string, unknown>>) {
+        sections.push(`- **${platform.name ?? platform}**: ${platform.purpose ?? ""}`);
+      }
+    } else {
+      for (const [key, val] of Object.entries(integrations)) {
+        sections.push(`- **${key}**: ${typeof val === "object" ? JSON.stringify(val) : val}`);
+      }
+    }
+    sections.push(``);
+  }
+
+  if (units.length > 0) {
+    const topUnits = units.slice(0, 5);
+    sections.push(`## Build Priority\n`);
+    sections.push(`| Unit ID | Name | Description |`);
+    sections.push(`|---------|------|-------------|`);
+    for (const u of topUnits) {
+      const uid = String(u.unit_id ?? "");
+      const uname = String(u.name ?? u.title ?? "");
+      const udesc = String(u.description ?? "").replace(/\|/g, "-").slice(0, 120);
+      sections.push(`| ${uid} | ${uname} | ${udesc} |`);
+    }
+    sections.push(``);
+  }
+
+  if (outOfScope.length > 0) {
+    sections.push(`## What NOT To Build\n`);
+    for (const item of outOfScope) {
+      sections.push(`- ${item}`);
+    }
+    sections.push(``);
+  }
+
+  if (successMetrics.length > 0) {
+    sections.push(`## Success Metrics\n`);
+    for (const metric of successMetrics) {
+      sections.push(`- ${metric}`);
+    }
+    sections.push(``);
+  }
+
+  return sections.join("\n");
+}
+
+function buildDesignIdentityMd(design: Record<string, unknown>): string {
+  const brandColors = design.brand_colors as Record<string, string> | undefined;
+  const visualPreset = String(design.visual_preset ?? "");
+  const navigationPref = String(design.navigation_pref ?? "");
+  const styleAdjectives = (design.style_adjectives ?? []) as string[];
+  const uiDensity = String(design.ui_density ?? "comfortable");
+
+  let md = `# 00 — DESIGN IDENTITY\n\n`;
+
+  md += `## Color System\n\n`;
+  if (brandColors && Object.keys(brandColors).length > 0) {
+    md += `| Role | Hex | Usage |\n|------|-----|-------|\n`;
+    const colorUsage: Record<string, string> = {
+      primary: "Primary actions, active states, key CTAs, focused elements",
+      secondary: "Supporting UI, secondary buttons, tags, badges",
+      accent: "Highlights, notifications, progress indicators, links",
+      background: "Page background, card surfaces, modal overlays",
+      text: "Body text, headings, labels, input values",
+      surface: "Card backgrounds, dropdown menus, sidebar fill",
+      error: "Error states, destructive actions, validation failures",
+      success: "Success states, confirmations, positive indicators",
+      warning: "Warning states, caution indicators, pending status",
+    };
+    for (const [role, hex] of Object.entries(brandColors)) {
+      const usage = colorUsage[role] ?? `Used for ${role} elements`;
+      md += `| ${role} | \`${hex}\` | ${usage} |\n`;
+    }
+  } else {
+    md += `No brand colors specified. Use a neutral professional palette.\n`;
+  }
+  md += `\n`;
+
+  md += `## Visual Preset\n\n`;
+  const presetGuidance: Record<string, { description: string; borderRadius: string; spacing: string; animation: string; typography: string }> = {
+    professional: {
+      description: "Clean, structured, trust-building. Suitable for B2B, enterprise, and business tools.",
+      borderRadius: "4px for inputs/buttons, 8px for cards",
+      spacing: "16px base unit, consistent 8px grid",
+      animation: "Subtle transitions (150-200ms), no playful animations",
+      typography: "System fonts or Inter/Roboto. 14px base, 1.5 line-height",
+    },
+    playful: {
+      description: "Energetic, friendly, approachable. Suitable for consumer apps, social, and gamified experiences.",
+      borderRadius: "12px for buttons, 16px for cards, pill-shaped tags",
+      spacing: "20px base unit, generous whitespace",
+      animation: "Bouncy transitions (300ms), micro-interactions on hover/click",
+      typography: "Rounded fonts (Nunito, Poppins). 16px base, 1.6 line-height",
+    },
+    minimalist: {
+      description: "Stripped-back, content-focused, maximum clarity. Suitable for productivity tools and dashboards.",
+      borderRadius: "2px or 0px for sharp edges",
+      spacing: "12px base unit, tight but breathable",
+      animation: "Minimal (100ms fade only), no decorative motion",
+      typography: "Monospace accents, clean sans-serif body. 14px base, 1.4 line-height",
+    },
+    bold: {
+      description: "High-contrast, statement-making, attention-grabbing. Suitable for marketing, media, and creative tools.",
+      borderRadius: "8px standard, 24px for hero elements",
+      spacing: "24px base unit, dramatic section breaks",
+      animation: "Confident transitions (250ms), scale transforms on interaction",
+      typography: "Heavy-weight headings (700-900), large sizes. 16px base, 1.5 line-height",
+    },
+    elegant: {
+      description: "Refined, luxurious, sophisticated. Suitable for premium products, fashion, and high-end services.",
+      borderRadius: "6px subtle curves",
+      spacing: "20px base unit, generous margins, centered layouts",
+      animation: "Smooth ease-in-out (300ms), parallax scrolling acceptable",
+      typography: "Serif headings (Playfair, Georgia), light-weight body. 15px base, 1.7 line-height",
+    },
+    technical: {
+      description: "Data-dense, precise, information-rich. Suitable for developer tools, analytics, and admin panels.",
+      borderRadius: "4px consistent",
+      spacing: "8px base unit, compact layouts, dense tables",
+      animation: "Instant transitions (100ms), no decorative motion",
+      typography: "Monospace for data (JetBrains Mono), sans-serif UI. 13px base, 1.4 line-height",
+    },
+    warm: {
+      description: "Inviting, human, comfortable. Suitable for community platforms, wellness, and education.",
+      borderRadius: "10px rounded, soft edges throughout",
+      spacing: "18px base unit, comfortable gaps",
+      animation: "Gentle transitions (250ms), fade and slide",
+      typography: "Humanist sans-serif (Lato, Source Sans). 15px base, 1.6 line-height",
+    },
+  };
+  const preset = presetGuidance[visualPreset.toLowerCase()];
+  if (preset) {
+    md += `**Preset**: ${visualPreset}\n\n`;
+    md += `${preset.description}\n\n`;
+    md += `| Property | Value |\n|----------|-------|\n`;
+    md += `| Border Radius | ${preset.borderRadius} |\n`;
+    md += `| Spacing Scale | ${preset.spacing} |\n`;
+    md += `| Animation | ${preset.animation} |\n`;
+    md += `| Typography | ${preset.typography} |\n`;
+  } else if (visualPreset) {
+    md += `**Preset**: ${visualPreset}\n\nApply the "${visualPreset}" aesthetic consistently across all components.\n`;
+  } else {
+    md += `No visual preset specified. Default to a professional, clean aesthetic.\n`;
+  }
+  md += `\n`;
+
+  md += `## Navigation Pattern\n\n`;
+  const navGuidance: Record<string, string> = {
+    sidebar: "**Fixed left sidebar** with collapsible navigation groups. Width: 240-280px expanded, 64px collapsed. Include logo/brand at top, primary nav items with icons, collapsible sub-groups, and user profile/settings at bottom. Support keyboard navigation and responsive collapse to hamburger on mobile.",
+    topnav: "**Horizontal top navigation bar** with dropdown menus. Height: 56-64px. Logo on left, primary nav items centered or left-aligned, user actions on right. Use dropdowns for sub-items (max 2 levels). Sticky on scroll. Collapse to hamburger menu on mobile with slide-out drawer.",
+    tabs: "**Tab-based navigation** for content switching within a view. Use top-aligned tabs with clear active state. Support swipe gestures on mobile. Keep tab count to 5-7 maximum. Use icons + labels for clarity.",
+    bottom_nav: "**Bottom navigation bar** (mobile-first). Height: 56px. 3-5 primary destinations with icons and labels. Highlight active tab. Fixed position at viewport bottom. On desktop, convert to sidebar or top nav.",
+    breadcrumb: "**Breadcrumb-driven navigation** for deep hierarchies. Show full path with clickable ancestors. Combine with sidebar for primary navigation. Use separator characters (/ or >) between levels.",
+    hybrid: "**Hybrid navigation** combining sidebar for primary sections and top bar for global actions/search/user menu. Sidebar width: 240px. Top bar height: 56px. This is the most common pattern for complex applications.",
+  };
+  const navKey = navigationPref.toLowerCase().replace(/[\s-]/g, "_");
+  const navGuide = navGuidance[navKey];
+  if (navGuide) {
+    md += `${navGuide}\n`;
+  } else if (navigationPref) {
+    md += `**Pattern**: ${navigationPref}\n\nImplement the "${navigationPref}" navigation pattern consistently across all views.\n`;
+  } else {
+    md += `No navigation preference specified. Default to sidebar navigation for desktop, bottom nav for mobile.\n`;
+  }
+  md += `\n`;
+
+  md += `## Typography & Density\n\n`;
+  const densityGuidance: Record<string, { padding: string; gap: string; fontSize: string; rowHeight: string; description: string }> = {
+    compact: {
+      description: "Maximum information density. Best for power users and data-heavy interfaces.",
+      padding: "4px vertical, 8px horizontal on interactive elements",
+      gap: "4-8px between elements, 12px between sections",
+      fontSize: "12-13px body, 11px captions, 16px headings",
+      rowHeight: "32px table rows, 28px list items",
+    },
+    comfortable: {
+      description: "Balanced density. Good default for most applications.",
+      padding: "8px vertical, 16px horizontal on interactive elements",
+      gap: "8-12px between elements, 20px between sections",
+      fontSize: "14px body, 12px captions, 20px headings",
+      rowHeight: "44px table rows, 40px list items",
+    },
+    spacious: {
+      description: "Generous whitespace. Best for content-focused and consumer-facing interfaces.",
+      padding: "12px vertical, 24px horizontal on interactive elements",
+      gap: "16-20px between elements, 32px between sections",
+      fontSize: "16px body, 14px captions, 24px headings",
+      rowHeight: "56px table rows, 48px list items",
+    },
+  };
+  const density = densityGuidance[uiDensity.toLowerCase()];
+  if (density) {
+    md += `**UI Density**: ${uiDensity}\n\n`;
+    md += `${density.description}\n\n`;
+    md += `| Property | Value |\n|----------|-------|\n`;
+    md += `| Padding | ${density.padding} |\n`;
+    md += `| Gap / Spacing | ${density.gap} |\n`;
+    md += `| Font Size | ${density.fontSize} |\n`;
+    md += `| Row Height | ${density.rowHeight} |\n`;
+  } else {
+    md += `**UI Density**: ${uiDensity}\n\nApply "${uiDensity}" spacing throughout the interface.\n`;
+  }
+  md += `\n`;
+
+  md += `## Style Adjectives Applied\n\n`;
+  if (styleAdjectives.length > 0) {
+    const adjectiveGuidance: Record<string, string> = {
+      modern: "Use current design trends: flat design with subtle shadows, rounded corners, gradient accents. Avoid skeuomorphic elements.",
+      clean: "Maximize whitespace, use clear visual hierarchy, avoid clutter. Every element must earn its place on screen.",
+      corporate: "Conservative color usage, structured grid layouts, formal typography. Prioritize readability and professionalism over creativity.",
+      creative: "Allow asymmetric layouts, unexpected color combinations, custom illustrations. Break grid occasionally for visual interest.",
+      friendly: "Use warm colors, rounded shapes, conversational copy. Add personality through micro-copy and empty states.",
+      serious: "Muted palette, structured layouts, minimal decoration. Focus on data clarity and task completion.",
+      luxurious: "Rich colors, ample whitespace, serif typography for headings. Use subtle animations and high-quality imagery.",
+      trustworthy: "Blue-leaning palette, consistent patterns, clear CTAs. Show security badges, testimonials, and certifications prominently.",
+      innovative: "Gradient backgrounds, glassmorphism effects, animated transitions. Push visual boundaries while maintaining usability.",
+      accessible: "High contrast ratios (WCAG AAA), large touch targets (48px+), clear focus indicators. Screen reader optimized.",
+      dark: "Dark background theme as default. Light text on dark surfaces. Ensure sufficient contrast for readability.",
+      light: "Light background theme as default. Dark text on light surfaces. Clean and open feel.",
+      futuristic: "Neon accents on dark backgrounds, geometric shapes, monospace fonts for data. Sci-fi inspired aesthetics.",
+      organic: "Earth tones, natural textures, flowing shapes. Avoid sharp corners and harsh contrasts.",
+      minimal: "Reduce to essentials. Single accent color, ample whitespace, typography-driven hierarchy.",
+      vibrant: "Saturated colors, bold contrasts, energetic compositions. Use color to create visual hierarchy.",
+    };
+    for (const adj of styleAdjectives) {
+      const guidance = adjectiveGuidance[adj.toLowerCase()];
+      if (guidance) {
+        md += `**${adj}**: ${guidance}\n\n`;
+      } else {
+        md += `**${adj}**: Apply "${adj}" aesthetic throughout the interface design.\n\n`;
+      }
+    }
+  } else {
+    md += `No style adjectives specified. Apply a neutral, professional aesthetic.\n`;
+  }
+
+  return md;
 }
 
 function buildNaMd(slot: string, reason: string, trigger: string): string {
@@ -533,10 +968,21 @@ export function buildRealKit(
     const meta = canonicalSpecData.meta as Record<string, unknown> | undefined;
     if (meta?.spec_id) specId = meta.spec_id as string;
     if (meta?.submission_id) submissionId = meta.submission_id as string;
-    const routing = canonicalSpecData.routing as Record<string, unknown> | undefined;
-    if (routing) {
+    if (meta?.project_name) {
+      projectName = meta.project_name as string;
+    } else {
       const proj = (canonicalSpecData as Record<string, unknown>).project as Record<string, unknown> | undefined;
       if (proj?.project_name) projectName = proj.project_name as string;
+    }
+  }
+
+  if (projectName === "Axion Generated Project") {
+    const normalizedInputData = safeReadJson<Record<string, unknown>>(join(runDir, "intake", "normalized_input.json"));
+    if (normalizedInputData) {
+      const proj = normalizedInputData.project as Record<string, unknown> | undefined;
+      if (proj?.project_name && typeof proj.project_name === "string" && proj.project_name.trim()) {
+        projectName = proj.project_name as string;
+      }
     }
   }
 
@@ -589,7 +1035,24 @@ export function buildRealKit(
 
   const kitId = `KIT-${runId}`;
 
-  writeFile(join(agentKitDir, "00_START_HERE.md"), buildStartHereMd(runId, specId, projectName));
+  writeFile(join(agentKitDir, "00_BUILD_BRIEF.md"), buildBuildBriefMd(runDir, projectName));
+  const hasBuildBrief = true;
+
+  const normalizedForDesign = safeReadJson<Record<string, unknown>>(join(runDir, "intake", "normalized_input.json"));
+  const designData = normalizedForDesign?.design as Record<string, unknown> | undefined;
+  const hasDesignIdentity = !!(designData && typeof designData === "object" && Object.keys(designData).length > 0);
+  if (hasDesignIdentity) {
+    writeFile(join(agentKitDir, "00_DESIGN_IDENTITY.md"), buildDesignIdentityMd(designData!));
+  }
+
+  const canonicalForStart = safeReadJson<Record<string, unknown>>(join(runDir, "canonical", "canonical_spec.json"));
+  const startEntities = (canonicalForStart?.entities ?? {}) as Record<string, unknown>;
+  const startMeta = (canonicalForStart?.meta ?? {}) as Record<string, unknown>;
+  const startFeatures = Array.isArray(startEntities.features) ? startEntities.features as unknown[] : [];
+  const startRoles = Array.isArray(startEntities.roles) ? startEntities.roles as unknown[] : [];
+  const projectOverview = String(startMeta.project_overview ?? (normalizedForDesign?.project as Record<string, unknown> | undefined)?.project_overview ?? "");
+
+  writeFile(join(agentKitDir, "00_START_HERE.md"), buildStartHereMd(runId, specId, projectName, projectOverview, startFeatures.length, startRoles.length, hasDesignIdentity, hasBuildBrief));
   writeFile(
     join(agentKitDir, "00_KIT_MANIFEST.md"),
     buildKitManifestMd(runId, specId, projectName, kitId, workBreakdownId, acceptanceMapId, stateId, versions)

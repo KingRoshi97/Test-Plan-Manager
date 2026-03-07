@@ -12,6 +12,11 @@ export interface NormalizedInputRecord {
   spec: SpecSnapshot;
   constraints: Record<string, unknown>;
   raw_hash: string;
+  design?: Record<string, unknown>;
+  intent?: Record<string, unknown>;
+  data_model?: Record<string, unknown>;
+  integrations?: Record<string, unknown>;
+  category_specific?: Record<string, unknown>;
 }
 
 export interface RoutingSnapshot {
@@ -307,6 +312,22 @@ export function normalizeSubmission(rawSubmission: unknown, repoRoot?: string): 
     constraints,
     raw_hash: rawHash,
   };
+
+  if (raw.design && typeof raw.design === "object" && Object.keys(raw.design as Record<string, unknown>).length > 0) {
+    normalized.design = raw.design as Record<string, unknown>;
+  }
+  if (raw.intent && typeof raw.intent === "object" && Object.keys(raw.intent as Record<string, unknown>).length > 0) {
+    normalized.intent = raw.intent as Record<string, unknown>;
+  }
+  if (raw.data_model && typeof raw.data_model === "object" && Object.keys(raw.data_model as Record<string, unknown>).length > 0) {
+    normalized.data_model = raw.data_model as Record<string, unknown>;
+  }
+  if (raw.integrations && typeof raw.integrations === "object" && Object.keys(raw.integrations as Record<string, unknown>).length > 0) {
+    normalized.integrations = raw.integrations as Record<string, unknown>;
+  }
+  if (raw.category_specific && typeof raw.category_specific === "object" && Object.keys(raw.category_specific as Record<string, unknown>).length > 0) {
+    normalized.category_specific = raw.category_specific as Record<string, unknown>;
+  }
 
   return deepSortKeys(normalized) as NormalizedInputRecord;
 }
