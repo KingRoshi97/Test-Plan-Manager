@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/planning/planning_unit.v1",
+  "title": "Planning Unit",
+  "description": "Schema for a governed planning unit within an Axion run.",
+  "type": "object",
+  "required": [
+    "plan_item_id",
+    "run_id",
+    "mapped_canonical_entity",
+    "template_output",
+    "standards_obligation",
+    "acceptance_evidence",
+    "status"
+  ],
+  "properties": {
+    "plan_item_id": {
+      "type": "string",
+      "pattern": "^PU-[A-Z0-9]{6,}$",
+      "description": "Unique identifier for this plan unit."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "The run this plan unit belongs to."
+    },
+    "mapped_canonical_entity": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to the canonical entity this unit addresses."
+    },
+    "template_output": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The template artifact this unit is expected to produce."
+    },
+    "standards_obligation": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The standards rule(s) this unit must satisfy."
+    },
+    "acceptance_evidence": {
+      "type": "string",
+      "description": "The acceptance criterion or proof artifact that demonstrates completion."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "active", "satisfied", "failed"],
+      "description": "Current lifecycle status of the plan unit."
+    },
+    "failure_reason": {
+      "type": "string",
+      "description": "Required when status is failed. Explanation of why the unit could not be satisfied."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp when this plan unit was created."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of last update to this plan unit."
+    }
+  },
+  "additionalProperties": false
+}

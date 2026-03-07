@@ -1,0 +1,174 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/orchestration/orchestration_decision_report.v1",
+  "title": "Orchestration Decision Report",
+  "description": "Schema for the orchestration decision report capturing execution plan, stage results, dependency resolution, and verdict.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "execution_plan",
+    "stage_results",
+    "dependency_resolution",
+    "verdict"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_plan": { "$ref": "#/definitions/execution_plan" },
+    "stage_results": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/stage_result" }
+    },
+    "dependency_resolution": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/dependency_resolution_entry" }
+    },
+    "verdict": { "$ref": "#/definitions/verdict" }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "execution_plan": {
+      "type": "object",
+      "required": [
+        "plan_id",
+        "pipeline_id",
+        "pipeline_version",
+        "run_id",
+        "planned_stages",
+        "skipped_stages",
+        "activation_evaluations",
+        "created_at"
+      ],
+      "properties": {
+        "plan_id": { "type": "string", "minLength": 1 },
+        "pipeline_id": { "type": "string", "minLength": 1 },
+        "pipeline_version": { "type": "string", "minLength": 1 },
+        "run_id": { "type": "string", "minLength": 1 },
+        "planned_stages": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "skipped_stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["stage_id", "reason"],
+            "properties": {
+              "stage_id": { "type": "string" },
+              "reason": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "activation_evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["stage_id", "activated", "rule"],
+            "properties": {
+              "stage_id": { "type": "string" },
+              "activated": { "type": "boolean" },
+              "rule": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "stage_result": {
+      "type": "object",
+      "required": ["stage_id", "status", "started_at", "artifacts_produced"],
+      "properties": {
+        "stage_id": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["success", "failed", "skipped", "cancelled"]
+        },
+        "started_at": { "type": "string", "format": "date-time" },
+        "completed_at": { "type": "string", "format": "date-time" },
+        "artifacts_produced": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "duration_ms": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "dependency_resolution_entry": {
+      "type": "object",
+      "required": ["stage_id", "resolved_dependencies"],
+      "properties": {
+        "stage_id": { "type": "string" },
+        "resolved_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["depends_on_stage", "resolution"],
+            "properties": {
+              "depends_on_stage": { "type": "string" },
+              "resolution": {
+                "type": "string",
+                "enum": ["satisfied", "skipped_with_override", "failed_blocking"]
+              },
+              "artifact_refs": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "verdict": {
+      "type": "object",
+      "required": [
+        "verdict",
+        "reason",
+        "gates_passed",
+        "gates_failed",
+        "total_stages",
+        "stages_succeeded",
+        "stages_failed",
+        "decided_at"
+      ],
+      "properties": {
+        "verdict": {
+          "type": "string",
+          "enum": ["pass", "fail", "partial", "aborted"]
+        },
+        "reason": { "type": "string" },
+        "gates_passed": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "gates_failed": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "total_stages": { "type": "integer", "minimum": 0 },
+        "stages_succeeded": { "type": "integer", "minimum": 0 },
+        "stages_failed": { "type": "integer", "minimum": 0 },
+        "decided_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

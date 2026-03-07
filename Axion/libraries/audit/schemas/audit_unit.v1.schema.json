@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/audit/audit_unit.v1",
+  "title": "Audit Unit",
+  "description": "Schema for a governed audit unit within the Axion audit library.",
+  "type": "object",
+  "required": [
+    "audit_unit_id",
+    "schema_ref",
+    "mutation_class",
+    "blast_radius",
+    "backcompat_result",
+    "created_at"
+  ],
+  "properties": {
+    "audit_unit_id": {
+      "type": "string",
+      "pattern": "^AUD-UNIT-[A-Z0-9]{10,}$",
+      "description": "Globally unique identifier for the audit unit."
+    },
+    "schema_ref": {
+      "type": "string",
+      "description": "Reference to the schema version governing this unit."
+    },
+    "mutation_class": {
+      "type": "string",
+      "enum": ["create", "revise", "supersede", "deprecate", "retire"],
+      "description": "The lifecycle mutation class of this audit unit."
+    },
+    "mutation_description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable description of the mutation."
+    },
+    "blast_radius": {
+      "type": "string",
+      "enum": ["local", "cross-library", "system-wide"],
+      "description": "Scope of impact for this mutation."
+    },
+    "backcompat_result": {
+      "type": "string",
+      "enum": ["compatible", "migration_required", "breaking"],
+      "description": "Backward compatibility assessment of the mutation."
+    },
+    "prior_version_ref": {
+      "type": ["string", "null"],
+      "description": "Reference to the prior version of this unit. Null for create."
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "description": "Forward pointer to the unit that supersedes this one."
+    },
+    "deprecation_reason": {
+      "type": "string",
+      "description": "Required when mutation_class is deprecate."
+    },
+    "sunset_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date after which the deprecated unit will be retired."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of initial creation."
+    },
+    "last_mutated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent mutation."
+    },
+    "actor": {
+      "type": "object",
+      "required": ["actor_id", "role"],
+      "properties": {
+        "actor_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "role": {
+          "type": "string",
+          "enum": ["owner", "maintainer", "operator", "system"]
+        }
+      },
+      "additionalProperties": false,
+      "description": "The actor who performed the mutation."
+    },
+    "refs": {
+      "type": "object",
+      "properties": {
+        "audit_event_ref": { "$ref": "#/definitions/ref" },
+        "decision_report_ref": { "$ref": "#/definitions/ref" },
+        "artifact_ref": { "$ref": "#/definitions/ref" }
+      },
+      "additionalProperties": false,
+      "description": "References to related artifacts."
+    }
+  },
+  "definitions": {
+    "ref": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "hash": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

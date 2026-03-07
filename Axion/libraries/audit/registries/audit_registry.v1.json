@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "audit_registry.v1",
+  "description": "Registry of governed audit unit entries within the Axion audit library.",
+  "governed_units": [
+    {
+      "audit_unit_id": "AUD-UNIT-0001000001",
+      "name": "audit_action_schema",
+      "artifact_type": "schema",
+      "artifact_ref": "Axion/libraries/audit/schemas/audit_action.v1.schema.json",
+      "schema_ref": "axion://schemas/audit/audit_unit.v1",
+      "mutation_class": "create",
+      "blast_radius": "system-wide",
+      "backcompat_result": "compatible",
+      "status": "active"
+    },
+    {
+      "audit_unit_id": "AUD-UNIT-0001000002",
+      "name": "audit_unit_schema",
+      "artifact_type": "schema",
+      "artifact_ref": "Axion/libraries/audit/schemas/audit_unit.v1.schema.json",
+      "schema_ref": "axion://schemas/audit/audit_unit.v1",
+      "mutation_class": "create",
+      "blast_radius": "cross-library",
+      "backcompat_result": "compatible",
+      "status": "active"
+    },
+    {
+      "audit_unit_id": "AUD-UNIT-0001000003",
+      "name": "audit_decision_report_schema",
+      "artifact_type": "schema",
+      "artifact_ref": "Axion/libraries/audit/schemas/audit_decision_report.v1.schema.json",
+      "schema_ref": "axion://schemas/audit/audit_unit.v1",
+      "mutation_class": "create",
+      "blast_radius": "cross-library",
+      "backcompat_result": "compatible",
+      "status": "active"
+    },
+    {
+      "audit_unit_id": "AUD-UNIT-0001000004",
+      "name": "audit_unit_model_doctrine",
+      "artifact_type": "doctrine_doc",
+      "artifact_ref": "Axion/libraries/audit/AUD-1_audit_unit_model.md",
+      "schema_ref": "axion://schemas/audit/audit_unit.v1",
+      "mutation_class": "create",
+      "blast_radius": "local",
+      "backcompat_result": "compatible",
+      "status": "active"
+    },
+    {
+      "audit_unit_id": "AUD-UNIT-0001000005",
+      "name": "audit_decision_report_doctrine",
+      "artifact_type": "doctrine_doc",
+      "artifact_ref": "Axion/libraries/audit/AUD-2_audit_decision_report.md",
+      "schema_ref": "axion://schemas/audit/audit_unit.v1",
+      "mutation_class": "create",
+      "blast_radius": "local",
+      "backcompat_result": "compatible",
+      "status": "active"
+    },
+    {
+      "audit_unit_id": "AUD-UNIT-0001000006",
+      "name": "producer_consumer_mapping_doctrine",
+      "artifact_type": "doctrine_doc",
+      "artifact_ref": "Axion/libraries/audit/AUD-3_producer_consumer_mapping.md",
+      "schema_ref": "axion://schemas/audit/audit_unit.v1",
+      "mutation_class": "create",
+      "blast_radius": "local",
+      "backcompat_result": "compatible",
+      "status": "active"
+    },
+    {
+      "audit_unit_id": "AUD-UNIT-0001000007",
+      "name": "backcompat_and_retention_doctrine",
+      "artifact_type": "doctrine_doc",
+      "artifact_ref": "Axion/libraries/audit/AUD-4_backcompat_and_retention.md",
+      "schema_ref": "axion://schemas/audit/audit_unit.v1",
+      "mutation_class": "create",
+      "blast_radius": "local",
+      "backcompat_result": "compatible",
+      "status": "active"
+    },
+    {
+      "audit_unit_id": "AUD-UNIT-0001000008",
+      "name": "audit_health_doctrine",
+      "artifact_type": "doctrine_doc",
+      "artifact_ref": "Axion/libraries/audit/AUD-5_audit_health.md",
+      "schema_ref": "axion://schemas/audit/audit_unit.v1",
+      "mutation_class": "create",
+      "blast_radius": "local",
+      "backcompat_result": "compatible",
+      "status": "active"
+    },
+    {
+      "audit_unit_id": "AUD-UNIT-0001000009",
+      "name": "audit_integrity_registry",
+      "artifact_type": "registry_entry",
+      "artifact_ref": "Axion/libraries/audit/registries/audit_integrity.v1.json",
+      "schema_ref": "axion://schemas/audit/audit_unit.v1",
+      "mutation_class": "create",
+      "blast_radius": "cross-library",
+      "backcompat_result": "compatible",
+      "status": "active"
+    }
+  ]
+}

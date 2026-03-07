@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/system/system_unit.v1",
+  "title": "System Unit",
+  "description": "Schema for an Axion governed system unit as defined in SYS-1.",
+  "type": "object",
+  "required": [
+    "component_id",
+    "component_type",
+    "display_name",
+    "version",
+    "status",
+    "resolution_order",
+    "pin_behavior",
+    "capabilities_required",
+    "capabilities_provided"
+  ],
+  "properties": {
+    "component_id": {
+      "type": "string",
+      "pattern": "^SYSUNIT-[A-Z0-9_]{4,}$"
+    },
+    "component_type": {
+      "type": "string",
+      "enum": ["resolver", "adapter", "policy_hook", "quota_engine", "notification_router", "loader", "registry"]
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 2
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "deprecated", "disabled"]
+    },
+    "resolution_order": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "pin_behavior": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["pinned", "locked", "floating", "inherit"]
+        },
+        "pinned_version": {
+          "type": "string"
+        },
+        "locked_range": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "capabilities_required": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "capabilities_provided": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "labels": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

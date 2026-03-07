@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/orchestration/orchestration_unit.v1",
+  "title": "Orchestration Unit",
+  "description": "Schema for a governed stage unit in the orchestration pipeline.",
+  "type": "object",
+  "required": [
+    "stage_id",
+    "name",
+    "library_consumption",
+    "artifact_production",
+    "gate_evidence_origins",
+    "dependency_declarations"
+  ],
+  "properties": {
+    "stage_id": {
+      "type": "string",
+      "pattern": "^S\\d{1,2}_[A-Z0-9_]+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 2
+    },
+    "library_consumption": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/library_consumption_entry" }
+    },
+    "artifact_production": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/artifact_production_entry" }
+    },
+    "gate_evidence_origins": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/gate_evidence_entry" }
+    },
+    "dependency_declarations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/dependency_entry" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "library_consumption_entry": {
+      "type": "object",
+      "required": ["library", "contract_ref", "version"],
+      "properties": {
+        "library": { "type": "string", "minLength": 1 },
+        "contract_ref": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "artifact_production_entry": {
+      "type": "object",
+      "required": ["artifact_id", "schema_ref", "persistence"],
+      "properties": {
+        "artifact_id": { "type": "string", "minLength": 1 },
+        "schema_ref": { "type": "string", "minLength": 1 },
+        "persistence": {
+          "type": "string",
+          "enum": ["run_store", "ledger", "manifest"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "gate_evidence_entry": {
+      "type": "object",
+      "required": ["gate_id", "evidence_artifact", "evidence_type"],
+      "properties": {
+        "gate_id": { "type": "string", "minLength": 1 },
+        "evidence_artifact": { "type": "string", "minLength": 1 },
+        "evidence_type": {
+          "type": "string",
+          "enum": ["report", "validation", "proof", "bundle"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependency_entry": {
+      "type": "object",
+      "required": ["depends_on_stage", "dependency_type", "required"],
+      "properties": {
+        "depends_on_stage": {
+          "type": "string",
+          "pattern": "^S\\d{1,2}_[A-Z0-9_]+$"
+        },
+        "dependency_type": {
+          "type": "string",
+          "enum": ["data", "ordering", "gate"]
+        },
+        "required": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

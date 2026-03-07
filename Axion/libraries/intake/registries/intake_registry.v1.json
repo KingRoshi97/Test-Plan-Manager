@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "intake_registry.v1",
+  "description": "Governed intake unit entries for all intake fields",
+  "units": [
+    {
+      "field_id": "F-PROJECT_NAME",
+      "label": "Project Name",
+      "field_type": "text",
+      "required": true,
+      "canonical_mapping": {
+        "canonical_field": "canonical.meta.project_name",
+        "mapping_type": "direct",
+        "transform": "none"
+      },
+      "standards_applicability": [],
+      "ambiguity_class": "AMB-0",
+      "normalization_rule": "passthrough"
+    },
+    {
+      "field_id": "F-RUN_PROFILE",
+      "label": "Run Profile",
+      "field_type": "enum",
+      "required": true,
+      "enum_ref": "ENUM-RUN_PROFILE",
+      "canonical_mapping": {
+        "canonical_field": "canonical.meta.run_profile",
+        "mapping_type": "direct",
+        "transform": "alias_resolve"
+      },
+      "standards_applicability": ["all"],
+      "ambiguity_class": "AMB-1",
+      "normalization_rule": "alias_resolve"
+    },
+    {
+      "field_id": "F-RISK_CLASS",
+      "label": "Risk Class",
+      "field_type": "enum",
+      "required": true,
+      "enum_ref": "ENUM-RISK_CLASS",
+      "canonical_mapping": {
+        "canonical_field": "canonical.meta.risk_class",
+        "mapping_type": "direct",
+        "transform": "alias_resolve"
+      },
+      "standards_applicability": ["all"],
+      "ambiguity_class": "AMB-1",
+      "normalization_rule": "alias_resolve"
+    },
+    {
+      "field_id": "F-EXECUTOR_TYPE",
+      "label": "Executor Type",
+      "field_type": "enum",
+      "required": true,
+      "enum_ref": "ENUM-EXECUTOR_TYPE",
+      "canonical_mapping": {
+        "canonical_field": "canonical.meta.executor_type",
+        "mapping_type": "direct",
+        "transform": "alias_resolve"
+      },
+      "standards_applicability": ["deployment"],
+      "ambiguity_class": "AMB-1",
+      "normalization_rule": "alias_resolve"
+    },
+    {
+      "field_id": "F-INDUSTRY",
+      "label": "Industry",
+      "field_type": "text",
+      "required": false,
+      "canonical_mapping": {
+        "canonical_field": "canonical.meta.industry",
+        "mapping_type": "direct",
+        "transform": "slug"
+      },
+      "standards_applicability": ["industry_playbooks"],
+      "ambiguity_class": "AMB-2",
+      "normalization_rule": "slug_normalize"
+    },
+    {
+      "field_id": "F-TECH_STACK",
+      "label": "Tech Stack",
+      "field_type": "multi_enum",
+      "required": false,
+      "canonical_mapping": {
+        "canonical_field": "canonical.tech.stack",
+        "mapping_type": "direct",
+        "transform": "lowercase"
+      },
+      "standards_applicability": ["tech_standards"],
+      "ambiguity_class": "AMB-1",
+      "normalization_rule": "lowercase_normalize"
+    },
+    {
+      "field_id": "F-DEPLOYMENT_TARGET",
+      "label": "Deployment Target",
+      "field_type": "text",
+      "required": false,
+      "canonical_mapping": {
+        "canonical_field": "canonical.infra.deployment_target",
+        "mapping_type": "direct",
+        "transform": "slug"
+      },
+      "standards_applicability": ["infra_standards"],
+      "ambiguity_class": "AMB-2",
+      "normalization_rule": "slug_normalize"
+    },
+    {
+      "field_id": "F-COMPLIANCE_REQS",
+      "label": "Compliance Requirements",
+      "field_type": "multi_enum",
+      "required": false,
+      "canonical_mapping": {
+        "canonical_field": "canonical.compliance.requirements",
+        "mapping_type": "direct",
+        "transform": "none"
+      },
+      "standards_applicability": ["compliance_standards"],
+      "ambiguity_class": "AMB-0",
+      "normalization_rule": "passthrough"
+    },
+    {
+      "field_id": "F-TEAM_SIZE",
+      "label": "Team Size",
+      "field_type": "number",
+      "required": false,
+      "canonical_mapping": {
+        "canonical_field": "canonical.meta.team_size",
+        "mapping_type": "direct",
+        "transform": "none"
+      },
+      "standards_applicability": ["process_standards"],
+      "ambiguity_class": "AMB-0",
+      "normalization_rule": "passthrough"
+    },
+    {
+      "field_id": "F-DESCRIPTION",
+      "label": "Project Description",
+      "field_type": "textarea",
+      "required": false,
+      "canonical_mapping": {
+        "canonical_field": "canonical.meta.description",
+        "mapping_type": "direct",
+        "transform": "none"
+      },
+      "standards_applicability": [],
+      "ambiguity_class": "AMB-0",
+      "normalization_rule": "passthrough"
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/audit/audit_decision_report.v1",
+  "title": "Audit Decision Report",
+  "description": "Schema for an audit decision report capturing what was audited, mutation details, policy compliance, and verdict.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "audit_unit_id",
+    "audited_artifact_type",
+    "audited_artifact_ref",
+    "audit_timestamp",
+    "mutation_class",
+    "mutation_description",
+    "new_version_ref",
+    "blast_radius",
+    "backcompat_result",
+    "verdict",
+    "verdict_reason",
+    "decided_by"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^AUD-DR-[A-Z0-9]{10,}$",
+      "description": "Unique identifier for this decision report."
+    },
+    "audit_unit_id": {
+      "type": "string",
+      "description": "The governed audit unit under review."
+    },
+    "audited_artifact_type": {
+      "type": "string",
+      "enum": [
+        "schema",
+        "registry_entry",
+        "doctrine_doc",
+        "gate_report",
+        "run_manifest",
+        "policy_decision"
+      ],
+      "description": "Type of artifact being audited."
+    },
+    "audited_artifact_ref": {
+      "type": "string",
+      "description": "Path or URI to the artifact under audit."
+    },
+    "audit_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the audit decision was rendered."
+    },
+    "mutation_class": {
+      "type": "string",
+      "enum": ["create", "revise", "supersede", "deprecate", "retire"],
+      "description": "The mutation class applied."
+    },
+    "mutation_description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable description of what changed."
+    },
+    "prior_version_ref": {
+      "type": ["string", "null"],
+      "description": "Reference to the previous version. Null for create."
+    },
+    "new_version_ref": {
+      "type": "string",
+      "description": "Reference to the new or current version."
+    },
+    "blast_radius": {
+      "type": "string",
+      "enum": ["local", "cross-library", "system-wide"],
+      "description": "Scope of impact."
+    },
+    "fields_affected": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of schema fields or sections modified."
+    },
+    "policies_evaluated": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "List of policy IDs that were checked."
+    },
+    "compliance_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["policy_id", "result"],
+        "properties": {
+          "policy_id": { "type": "string" },
+          "result": {
+            "type": "string",
+            "enum": ["pass", "fail", "warn"]
+          },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "description": "Per-policy compliance results."
+    },
+    "backcompat_result": {
+      "type": "string",
+      "enum": ["compatible", "migration_required", "breaking"],
+      "description": "Backward compatibility assessment."
+    },
+    "retention_compliant": {
+      "type": "boolean",
+      "description": "Whether the mutation respects retention policy constraints."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["approved", "approved_with_conditions", "rejected", "deferred"],
+      "description": "The audit verdict."
+    },
+    "verdict_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Explanation of the verdict."
+    },
+    "conditions": {
+      "type": ["array", "null"],
+      "items": { "type": "string" },
+      "description": "Conditions for approved_with_conditions verdicts."
+    },
+    "decided_by": {
+      "type": "object",
+      "required": ["actor_id", "role"],
+      "properties": {
+        "actor_id": {
+          "type": "string",
+          "minLength": 2
+        },
+        "role": {
+          "type": "string",
+          "enum": ["owner", "maintainer", "operator", "system"]
+        }
+      },
+      "additionalProperties": false,
+      "description": "Actor who rendered the verdict."
+    }
+  },
+  "additionalProperties": false
+}

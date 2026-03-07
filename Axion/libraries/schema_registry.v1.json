@@ -624,6 +624,110 @@
       "path": "Axion/libraries/kit/schemas/kit_decision_report.v1.schema.json",
       "uri": "axion://schemas/kit/kit_decision_report.v1.schema.json",
       "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "standards.standards_unit.v1",
+      "path": "Axion/libraries/standards/schemas/standards_unit.v1.schema.json",
+      "uri": "axion://schemas/standards/standards_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "standards.standards_decision_report.v1",
+      "path": "Axion/libraries/standards/schemas/standards_decision_report.v1.schema.json",
+      "uri": "axion://schemas/standards/standards_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "verification.verification_unit.v1",
+      "path": "Axion/libraries/verification/schemas/verification_unit.v1.schema.json",
+      "uri": "axion://schemas/verification/verification_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "verification.verification_decision_report.v1",
+      "path": "Axion/libraries/verification/schemas/verification_decision_report.v1.schema.json",
+      "uri": "axion://schemas/verification/verification_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "planning.planning_unit.v1",
+      "path": "Axion/libraries/planning/schemas/planning_unit.v1.schema.json",
+      "uri": "axion://schemas/planning/planning_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "planning.planning_decision_report.v1",
+      "path": "Axion/libraries/planning/schemas/planning_decision_report.v1.schema.json",
+      "uri": "axion://schemas/planning/planning_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "orchestration.orchestration_unit.v1",
+      "path": "Axion/libraries/orchestration/schemas/orchestration_unit.v1.schema.json",
+      "uri": "axion://schemas/orchestration/orchestration_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "orchestration.orchestration_decision_report.v1",
+      "path": "Axion/libraries/orchestration/schemas/orchestration_decision_report.v1.schema.json",
+      "uri": "axion://schemas/orchestration/orchestration_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "intake.intake_unit.v1",
+      "path": "Axion/libraries/intake/schemas/intake_unit.v1.schema.json",
+      "uri": "axion://schemas/intake/intake_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "intake.intake_decision_report.v1",
+      "path": "Axion/libraries/intake/schemas/intake_decision_report.v1.schema.json",
+      "uri": "axion://schemas/intake/intake_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "canonical.canonical_unit.v1",
+      "path": "Axion/libraries/canonical/schemas/canonical_unit.v1.schema.json",
+      "uri": "axion://schemas/canonical/canonical_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "canonical.canonical_decision_report.v1",
+      "path": "Axion/libraries/canonical/schemas/canonical_decision_report.v1.schema.json",
+      "uri": "axion://schemas/canonical/canonical_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "audit.audit_unit.v1",
+      "path": "Axion/libraries/audit/schemas/audit_unit.v1.schema.json",
+      "uri": "axion://schemas/audit/audit_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "audit.audit_decision_report.v1",
+      "path": "Axion/libraries/audit/schemas/audit_decision_report.v1.schema.json",
+      "uri": "axion://schemas/audit/audit_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+
+    {
+      "schema_id": "system.system_unit.v1",
+      "path": "Axion/libraries/system/schemas/system_unit.v1.schema.json",
+      "uri": "axion://schemas/system/system_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "system.system_decision_report.v1",
+      "path": "Axion/libraries/system/schemas/system_decision_report.v1.schema.json",
+      "uri": "axion://schemas/system/system_decision_report.v1.schema.json",
+      "version": "1.0.0"
     }
   ]
 }

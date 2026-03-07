@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/verification/verification_unit.v1",
+  "title": "Verification Unit",
+  "description": "Schema for a governed proof unit in the Axion verification system.",
+  "type": "object",
+  "required": [
+    "proof_id",
+    "proof_class",
+    "strength_tier",
+    "reusability",
+    "evidence_model",
+    "work_item_id",
+    "status",
+    "recorded_at"
+  ],
+  "properties": {
+    "proof_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Globally unique identifier for this proof instance."
+    },
+    "proof_class": {
+      "type": "string",
+      "enum": ["functional", "security", "compliance", "performance", "operational"],
+      "description": "Classification of the proof."
+    },
+    "strength_tier": {
+      "type": "string",
+      "enum": ["assertion", "automated", "witnessed", "audited"],
+      "description": "Strength tier per VER-3."
+    },
+    "reusability": {
+      "type": "string",
+      "enum": ["single_use", "reusable_within_run", "reusable_across_runs", "evergreen"],
+      "description": "Reusability contract for this proof."
+    },
+    "evidence_model": {
+      "$ref": "#/definitions/evidence_model",
+      "description": "Evidence backing this proof."
+    },
+    "work_item_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The work item or claim this proof satisfies."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pass", "fail", "warn", "expired"],
+      "description": "Current status of the proof."
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of proof creation."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional expiry for time-bound proofs."
+    },
+    "supersedes": {
+      "type": "string",
+      "description": "proof_id of the proof this unit replaces, if any."
+    },
+    "promoted_from": {
+      "type": "string",
+      "description": "proof_id of the lower-tier proof this was promoted from."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Arbitrary key-value pairs for tooling."
+    }
+  },
+  "definitions": {
+    "evidence_model": {
+      "type": "object",
+      "required": ["evidence_refs", "evidence_kind", "reproducible"],
+      "properties": {
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path"],
+            "properties": {
+              "path": { "type": "string" },
+              "hash": { "type": "string" },
+              "media_type": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "evidence_kind": {
+          "type": "string",
+          "enum": ["log_output", "report", "artifact", "attestation", "screenshot"]
+        },
+        "reproducible": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

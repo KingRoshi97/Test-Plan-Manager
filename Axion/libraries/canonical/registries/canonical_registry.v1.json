@@ -1,0 +1,132 @@
+{
+  "registry_id": "canonical_registry.v1",
+  "schema_version": "1.0.0",
+  "description": "Registry of governed canonical entity entries with provenance governance metadata",
+  "governed_entities": [
+    {
+      "entity_type": "project",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S5", "S6", "S7", "S8", "S9"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "domain",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S5", "S6", "S7", "S8"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "capability",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S5", "S6", "S7", "S8"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "component",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S5", "S6", "S7", "S8", "S9"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "data_entity",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S5", "S6", "S7", "S8"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "endpoint",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S5", "S7", "S8"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "integration",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S5", "S6", "S7", "S8", "S9"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "workflow",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S5", "S6", "S7", "S8"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "requirement",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S6", "S7", "S8"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "constraint",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S6", "S7", "S8"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    },
+    {
+      "entity_type": "risk",
+      "governance_doc": "CAN-1_canonical_unit_model.md",
+      "provenance_classes": ["hard_fact", "inferred_fact", "unresolved_unknown"],
+      "downstream_stages": ["S6", "S8", "S9"],
+      "unit_schema": "axion://schemas/canonical/canonical_unit.v1",
+      "decision_report_schema": "axion://schemas/canonical/canonical_decision_report.v1"
+    }
+  ],
+  "governance_documents": [
+    {
+      "id": "CAN-1-GOV",
+      "title": "Canonical Unit Model",
+      "path": "CAN-1_canonical_unit_model.md"
+    },
+    {
+      "id": "CAN-2-GOV",
+      "title": "Canonical Decision Report",
+      "path": "CAN-2_canonical_decision_report.md"
+    },
+    {
+      "id": "CAN-3-GOV",
+      "title": "Provenance Class Model",
+      "path": "CAN-3_provenance_class_model.md"
+    },
+    {
+      "id": "CAN-4-GOV",
+      "title": "Backward Compatibility and Invalidation",
+      "path": "CAN-4_backcompat_and_invalidation.md"
+    },
+    {
+      "id": "CAN-5-GOV",
+      "title": "Canonical Health",
+      "path": "CAN-5_canonical_health.md"
+    }
+  ],
+  "schemas": [
+    {
+      "id": "axion://schemas/canonical/canonical_unit.v1",
+      "path": "schemas/canonical_unit.v1.schema.json"
+    },
+    {
+      "id": "axion://schemas/canonical/canonical_decision_report.v1",
+      "path": "schemas/canonical_decision_report.v1.schema.json"
+    }
+  ]
+}

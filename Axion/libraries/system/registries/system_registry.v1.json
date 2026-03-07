@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "system_registry.v1",
+  "components": [
+    {
+      "component_id": "SYSUNIT-SCHEMA_REGISTRY",
+      "component_type": "registry",
+      "display_name": "Schema Registry",
+      "version": "1.0.0",
+      "status": "active",
+      "resolution_order": 100,
+      "pin_behavior": { "mode": "pinned", "pinned_version": "1.0.0" },
+      "capabilities_required": ["CAP-FS_READ"],
+      "capabilities_provided": ["CAP-FS_READ"]
+    },
+    {
+      "component_id": "SYSUNIT-CAPABILITY_REGISTRY",
+      "component_type": "registry",
+      "display_name": "Capability Registry",
+      "version": "1.0.0",
+      "status": "active",
+      "resolution_order": 101,
+      "pin_behavior": { "mode": "pinned", "pinned_version": "1.0.0" },
+      "capabilities_required": ["CAP-FS_READ"],
+      "capabilities_provided": ["CAP-FS_READ"]
+    },
+    {
+      "component_id": "SYSUNIT-LIBRARY_RESOLVER",
+      "component_type": "resolver",
+      "display_name": "Library Resolver",
+      "version": "1.0.0",
+      "status": "active",
+      "resolution_order": 200,
+      "pin_behavior": { "mode": "locked", "locked_range": "1.x" },
+      "capabilities_required": ["CAP-FS_READ"],
+      "capabilities_provided": []
+    },
+    {
+      "component_id": "SYSUNIT-DEPENDENCY_RESOLVER",
+      "component_type": "resolver",
+      "display_name": "Dependency Resolver",
+      "version": "1.0.0",
+      "status": "active",
+      "resolution_order": 201,
+      "pin_behavior": { "mode": "locked", "locked_range": "1.x" },
+      "capabilities_required": ["CAP-FS_READ"],
+      "capabilities_provided": []
+    },
+    {
+      "component_id": "SYSUNIT-ARTIFACT_LOADER",
+      "component_type": "loader",
+      "display_name": "Artifact Loader",
+      "version": "1.0.0",
+      "status": "active",
+      "resolution_order": 300,
+      "pin_behavior": { "mode": "floating" },
+      "capabilities_required": ["CAP-FS_READ"],
+      "capabilities_provided": []
+    },
+    {
+      "component_id": "SYSUNIT-ENV_ADAPTER",
+      "component_type": "adapter",
+      "display_name": "Environment Adapter",
+      "version": "1.0.0",
+      "status": "active",
+      "resolution_order": 400,
+      "pin_behavior": { "mode": "floating" },
+      "capabilities_required": ["CAP-FS_READ", "CAP-PROC_SPAWN"],
+      "capabilities_provided": ["CAP-FS_READ", "CAP-FS_WRITE", "CAP-PROC_SPAWN", "CAP-GIT_READ"]
+    },
+    {
+      "component_id": "SYSUNIT-POLICY_HOOK",
+      "component_type": "policy_hook",
+      "display_name": "Policy Evaluation Hook",
+      "version": "1.0.0",
+      "status": "active",
+      "resolution_order": 500,
+      "pin_behavior": { "mode": "inherit" },
+      "capabilities_required": ["CAP-FS_READ"],
+      "capabilities_provided": []
+    },
+    {
+      "component_id": "SYSUNIT-QUOTA_ENGINE",
+      "component_type": "quota_engine",
+      "display_name": "Quota and Rate Limit Engine",
+      "version": "1.0.0",
+      "status": "active",
+      "resolution_order": 600,
+      "pin_behavior": { "mode": "inherit" },
+      "capabilities_required": ["CAP-FS_READ"],
+      "capabilities_provided": []
+    },
+    {
+      "component_id": "SYSUNIT-NOTIFICATION_ROUTER",
+      "component_type": "notification_router",
+      "display_name": "Notification Router",
+      "version": "1.0.0",
+      "status": "active",
+      "resolution_order": 700,
+      "pin_behavior": { "mode": "floating" },
+      "capabilities_required": ["CAP-FS_READ", "CAP-NET_RESTRICTED"],
+      "capabilities_provided": []
+    }
+  ]
+}

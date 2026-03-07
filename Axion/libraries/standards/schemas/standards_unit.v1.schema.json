@@ -1,0 +1,201 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/standards/standards_unit.v1",
+  "title": "Standards Unit",
+  "description": "Schema for a governed standard unit in the Axion standards library.",
+  "type": "object",
+  "required": [
+    "unit_id",
+    "name",
+    "version",
+    "status",
+    "applicability",
+    "dependency_edges",
+    "created_at",
+    "updated_at",
+    "owner"
+  ],
+  "properties": {
+    "unit_id": {
+      "type": "string",
+      "pattern": "^STDU-[A-Z0-9_\\-]+$",
+      "description": "Stable unique identifier for the standard unit."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "description": "Human-readable name."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "SemVer version string."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "deprecated", "superseded", "retired"],
+      "description": "Lifecycle status of the unit."
+    },
+    "applicability": {
+      "$ref": "#/definitions/applicability",
+      "description": "Predicates determining where this standard applies."
+    },
+    "dependency_edges": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/dependency_edge" },
+      "description": "Typed edges to other governed artifacts."
+    },
+    "compatibility": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/compatibility_entry" },
+      "description": "Compatibility declarations with other units."
+    },
+    "cross_library_deps": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/cross_library_dep" },
+      "description": "Dependencies on artifacts in other Axion libraries."
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "description": "Unit ID of the predecessor this unit replaces."
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "description": "Unit ID of the successor that replaces this unit."
+    },
+    "supersession_reason": {
+      "type": ["string", "null"],
+      "description": "Reason for supersession."
+    },
+    "supersession_date": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "Date when supersession took effect."
+    },
+    "migration_path": {
+      "oneOf": [
+        { "$ref": "#/definitions/migration_path" },
+        { "type": "null" }
+      ],
+      "description": "Migration path from predecessor, if this unit supersedes another."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 creation timestamp."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 last-modified timestamp."
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 2,
+      "description": "Responsible party or team."
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "applicability": {
+      "type": "object",
+      "properties": {
+        "profiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Run profiles where the standard applies."
+        },
+        "risk_classes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["PROTOTYPE", "PROD", "COMPLIANCE"] },
+          "description": "Risk classes."
+        },
+        "stacks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Technology families."
+        },
+        "domains": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Canonical domains."
+        },
+        "exclusions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Contexts explicitly excluded."
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependency_edge": {
+      "type": "object",
+      "required": ["edge_type", "target_id"],
+      "properties": {
+        "edge_type": {
+          "type": "string",
+          "enum": ["gate", "template", "proof", "pack", "requires"]
+        },
+        "target_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "compatibility_entry": {
+      "type": "object",
+      "required": ["target_unit_id", "label"],
+      "properties": {
+        "target_unit_id": { "type": "string" },
+        "label": {
+          "type": "string",
+          "enum": ["compatible", "incompatible", "conditional", "unknown"]
+        },
+        "version_constraint": { "type": "string" },
+        "conditions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "cross_library_dep": {
+      "type": "object",
+      "required": ["library", "artifact_id", "required"],
+      "properties": {
+        "library": { "type": "string" },
+        "artifact_id": { "type": "string" },
+        "version_constraint": { "type": "string" },
+        "required": { "type": "boolean" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "migration_path": {
+      "type": "object",
+      "required": ["from_unit_id", "from_version", "to_unit_id", "to_version", "steps", "breaking_changes", "automated"],
+      "properties": {
+        "from_unit_id": { "type": "string" },
+        "from_version": { "type": "string" },
+        "to_unit_id": { "type": "string" },
+        "to_version": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "breaking_changes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "automated": { "type": "boolean" },
+        "tooling_ref": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

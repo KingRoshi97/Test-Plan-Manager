@@ -210,21 +210,21 @@ Internal Build Mode takes an approved Agent Kit from a completed pipeline run an
 - **UI**: Assembly overview shows Token Usage card (total/input/output tokens + estimated cost) with per-stage breakdown and pulsing "LIVE" badge during active runs; auto-refreshes every 2s while running; Pipeline tab run history table includes Tokens and Cost columns
 
 ### Intake Library (`Axion/libraries/intake/`)
-Form spec, field enums, validation rules, submission records, normalization contracts, and intake gates (INT-0 through INT-7). 12 legacy flat files preserved for backward compat (pipeline code: normalizer.ts, validator.ts, submissionRecord.ts).
+Form spec, field enums, validation rules, submission records, normalization contracts, and intake gates (INT-0 through INT-7). 12 legacy flat files preserved for backward compat (pipeline code: normalizer.ts, validator.ts, submissionRecord.ts). **Phase 3 governance upgrade** adds 5 governance-layer INT docs + 2 governance schemas + 1 governed intake registry with canonical mappings and ambiguity classes.
 
-**Structure (47 files: 25 new root files + 7 schemas + 3 registries + 12 legacy):**
+**Structure (55 files: 30 new root files + 9 schemas + 4 registries + 12 legacy):**
 - **INT-0**: Purpose + boundary checklist (2 docs)
-- **INT-1**: Form spec model + determinism rules + validation checklist (3 docs) + `intake_form_spec.v1.schema.json`
-- **INT-2**: Enum registry model + determinism rules + validation checklist (3 docs) + `intake_enums.v1.schema.json` + `intake_enums.v1.json` registry
-- **INT-3**: Validation model + determinism rules + validation checklist (3 docs) + `intake_cross_field_rules.v1.schema.json` + `intake_validation_report.v1.schema.json` + `intake_cross_field_rules.v1.json` registry
-- **INT-4**: Submission record model + determinism rules + validation checklist (3 docs) + `intake_submission.v1.schema.json` + `normalized_input.v1.schema.json`
-- **INT-5**: Stable ID rules + determinism checklist + validation checklist (3 docs) + `normalization_rules.v1.schema.json` + `normalization_rules.v1.json` registry
+- **INT-1**: Form spec model + determinism rules + validation checklist (3 docs) + `intake_form_spec.v1.schema.json` + **INT-1_intake_unit_model.md** (governance: every intake field as governed unit with field_id, canonical mapping, standards applicability, ambiguity class)
+- **INT-2**: Enum registry model + determinism rules + validation checklist (3 docs) + `intake_enums.v1.schema.json` + `intake_enums.v1.json` registry + **INT-2_intake_decision_report.md** (governance: normalization results, validation outcomes, ambiguity resolution, verdict)
+- **INT-3**: Validation model + determinism rules + validation checklist (3 docs) + `intake_cross_field_rules.v1.schema.json` + `intake_validation_report.v1.schema.json` + `intake_cross_field_rules.v1.json` registry + **INT-3_intake_canonical_mapping.md** (governance: field-level dependency map from intake to canonical fields)
+- **INT-4**: Submission record model + determinism rules + validation checklist (3 docs) + `intake_submission.v1.schema.json` + `normalized_input.v1.schema.json` + **INT-4_backcompat_and_migration.md** (governance: backward compatibility for form changes, field deprecation, migration paths)
+- **INT-5**: Stable ID rules + determinism checklist + validation checklist (3 docs) + `normalization_rules.v1.schema.json` + `normalization_rules.v1.json` registry + **INT-5_intake_health.md** (governance: field coverage, normalization success rate, validation pass rate, ambiguity rate)
 - **INT-6**: Intake gates + gate mapping + evidence requirements + validation checklist (4 docs) + `INT-6_intake_gates.spec.json`
 - **INT-7**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
 
 **Subdirectories:**
-- `schemas/` — 7 JSON Schema files (intake_form_spec, intake_enums, intake_cross_field_rules, intake_validation_report, intake_submission, normalized_input, normalization_rules)
-- `registries/` — 3 starter registry files (intake_enums: 3 enums with aliases, intake_cross_field_rules: 2 conditional rules, normalization_rules: 4 transforms)
+- `schemas/` — 9 JSON Schema files (intake_form_spec, intake_enums, intake_cross_field_rules, intake_validation_report, intake_submission, normalized_input, normalization_rules + governance: intake_unit, intake_decision_report)
+- `registries/` — 4 registry files (intake_enums: 3 enums with aliases, intake_cross_field_rules: 2 conditional rules, normalization_rules: 4 transforms + governance: intake_registry with governed intake units, canonical mappings, ambiguity classes)
 
 **Loader** (`Axion/src/core/intake/loader.ts`):
 - `loadIntakeLibrary(repoRoot)` — loads enums + cross-field rules + normalization rules registries, cached
@@ -237,24 +237,24 @@ Form spec, field enums, validation rules, submission records, normalization cont
 
 **API**: 6 `/api/intake-library/*` endpoints (prefix `-library` to avoid collision with intake wizard endpoints)
 **UI**: `/intake-library` page with 4 tabs (Intake, Documents, Schemas, Registries), field enum tables with aliases, cross-field rules IF/THEN visualization, normalization rule cards
-**Registered in:** `schema_registry.v1.json` (7 entries), `library_index.v1.json` (3 entries + 1 existing)
+**Registered in:** `schema_registry.v1.json` (7 structural + 2 governance entries = 9 total), `library_index.v1.json` (3 structural + 1 governance + 1 existing entries = 5 total)
 
 ### Canonical Library (`Axion/libraries/canonical/`)
-Entity model, stable IDs, reference integrity, unknowns/assumptions, canonical gates (CAN-0 through CAN-7). 12 legacy flat files preserved for backward compat (pipeline code: validate.ts, specBuilder.ts).
+Entity model, stable IDs, reference integrity, unknowns/assumptions, canonical gates (CAN-0 through CAN-7). 12 legacy flat files preserved for backward compat (pipeline code: validate.ts, specBuilder.ts). **Phase 3 governance upgrade** adds 5 governance-layer CAN docs + 2 governance schemas + 1 governed canonical registry with provenance classes and downstream dependencies.
 
-**Structure (47 files: 30 new root files + 3 schemas + 2 registries + 12 legacy):**
+**Structure (55 files: 35 new root files + 5 schemas + 3 registries + 12 legacy):**
 - **CAN-0**: Purpose + boundary checklist (2 docs)
-- **CAN-1**: Entity model + determinism rules + validation checklist (3 docs) + `canonical_spec.v1.schema.json`
-- **CAN-2**: ID rules + ID generation spec + dedupe rules + determinism rules + validation checklist (5 docs) + `id_rules.v1.json` registry
-- **CAN-3**: Reference integrity + integrity checks + determinism rules + validation checklist (4 docs) + `relationship_constraints.v1.json` registry
-- **CAN-4**: Unknowns/assumptions model + rules + determinism rules + validation checklist (4 docs) + `unknown_assumptions.v1.schema.json`
-- **CAN-5**: Artifacts + manifest requirements + determinism rules + validation checklist (4 docs) + `canonical_build_report.v1.schema.json`
+- **CAN-1**: Entity model + determinism rules + validation checklist (3 docs) + `canonical_spec.v1.schema.json` + **CAN-1_canonical_unit_model.md** (governance: every canonical entity as governed unit with entity_id, provenance class, downstream dependencies)
+- **CAN-2**: ID rules + ID generation spec + dedupe rules + determinism rules + validation checklist (5 docs) + `id_rules.v1.json` registry + **CAN-2_canonical_decision_report.md** (governance: entity resolution, provenance assignments, downstream invalidation, verdict)
+- **CAN-3**: Reference integrity + integrity checks + determinism rules + validation checklist (4 docs) + `relationship_constraints.v1.json` registry + **CAN-3_provenance_class_model.md** (governance: hard_fact/inferred_fact/unresolved_unknown taxonomy, promotion/demotion rules, evidence requirements)
+- **CAN-4**: Unknowns/assumptions model + rules + determinism rules + validation checklist (4 docs) + `unknown_assumptions.v1.schema.json` + **CAN-4_backcompat_and_invalidation.md** (governance: backward compatibility for canonical changes, downstream invalidation map)
+- **CAN-5**: Artifacts + manifest requirements + determinism rules + validation checklist (4 docs) + `canonical_build_report.v1.schema.json` + **CAN-5_canonical_health.md** (governance: entity coverage, provenance distribution, stale entities, downstream impact)
 - **CAN-6**: Canonical gates + gate mapping + evidence requirements + determinism rules + validation checklist (5 docs) + `CAN-6_canonical_gates.spec.json`
 - **CAN-7**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
 
 **Subdirectories:**
-- `schemas/` — 3 JSON Schema files (canonical_spec: 11 entity types + 7 relationship types, unknown_assumptions: ua_items with severity/pointer/prompt, canonical_build_report: counts + refs)
-- `registries/` — 2 registry files (id_rules: deterministic ID generation with 6 canonical key templates + namespace mode, relationship_constraints: 7 type constraints with from/to rules)
+- `schemas/` — 5 JSON Schema files (canonical_spec, unknown_assumptions, canonical_build_report + governance: canonical_unit, canonical_decision_report)
+- `registries/` — 3 registry files (id_rules: deterministic ID generation with 6 canonical key templates + namespace mode, relationship_constraints: 7 type constraints + governance: canonical_registry with governed entity units, provenance classes, downstream dependencies)
 
 **Loader** (`Axion/src/core/canonical/loader.ts`):
 - `loadCanonicalLibrary(repoRoot)` — loads id_rules + relationship_constraints registries, cached
@@ -266,25 +266,25 @@ Entity model, stable IDs, reference integrity, unknowns/assumptions, canonical g
 
 **API**: 6 `/api/canonical/*` endpoints
 **UI**: `/canonical` page with 4 tabs (Canonical, Documents, Schemas, Registries), entity type grid with canonical key templates, relationship type constraints table, unknowns model overview, canonical gates list
-**Registered in:** `schema_registry.v1.json` (3 new + 2 legacy entries), `library_index.v1.json` (2 new + 1 legacy entry)
+**Registered in:** `schema_registry.v1.json` (3 structural + 2 governance + 2 legacy entries = 7 total), `library_index.v1.json` (2 structural + 1 governance + 1 legacy entries = 4 total)
 
 **Code wired to CAN-02 (legacy):** `validate.ts` and `specBuilder.ts` load from `CAN-02.id_rules.v1.json` (10 entity types) and `CAN-02.reference_integrity_rules.v1.json` (split ref integrity), with fallback to legacy files.
 
 ### Standards Library (`Axion/libraries/standards/`)
-Standards pack system, index, applicability, resolution, snapshots, and gates (STD-0 through STD-6). 7 legacy flat files preserved for backward compat (pipeline code: registryLoader.ts, applicability.ts, resolver.ts, selector.ts, snapshot.ts).
+Standards pack system, index, applicability, resolution, snapshots, and gates (STD-0 through STD-6). 7 legacy flat files preserved for backward compat (pipeline code: registryLoader.ts, applicability.ts, resolver.ts, selector.ts, snapshot.ts). **Phase 3 governance upgrade** adds 5 governance-layer STD docs + 2 governance schemas + 1 governed standards registry with applicability predicates and supersession chains.
 
-**Structure (31 new files: 22 .md docs + 1 .txt + 1 gate spec JSON = 24 root files, 5 schemas, 1 registry, 1 new pack):**
+**Structure (39 new files: 27 .md docs + 1 .txt + 1 gate spec JSON = 29 root files, 7 schemas, 2 registries, 1 new pack):**
 - **STD-0**: Purpose + boundary checklist (2 docs)
-- **STD-1**: Standards pack model + determinism rules + validation checklist (3 docs) + `standards_pack.v1.schema.json` + `standards_index_entry.v1.schema.json`
-- **STD-2**: Standards index model + applicability rules + determinism rules + validation checklist (4 docs) + `standards_index.v1.schema.json` + `standards_index.v1.json` registry
-- **STD-3**: Resolution model + resolver order rules + determinism rules + validation checklist (4 docs) + `standards_conflict.v1.schema.json`
-- **STD-4**: Snapshot model + determinism rules + validation checklist (3 docs) + `standards_snapshot.v1.schema.json`
-- **STD-5**: Standards gates + gate mapping + gate spec JSON + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON)
+- **STD-1**: Standards pack model + determinism rules + validation checklist (3 docs) + `standards_pack.v1.schema.json` + `standards_index_entry.v1.schema.json` + **STD-1_standards_unit_model.md** (governance: every standard as governed unit with stable ID, version, status, applicability predicates, dependency edges, deprecation/supersession chain)
+- **STD-2**: Standards index model + applicability rules + determinism rules + validation checklist (4 docs) + `standards_index.v1.schema.json` + `standards_index.v1.json` registry + **STD-2_standards_decision_report.md** (governance: resolution inputs, conflict detection, override logic, verdict)
+- **STD-3**: Resolution model + resolver order rules + determinism rules + validation checklist (4 docs) + `standards_conflict.v1.schema.json` + **STD-3_standards_compatibility.md** (governance: compatibility labels, version constraints, cross-library dependency declarations)
+- **STD-4**: Snapshot model + determinism rules + validation checklist (3 docs) + `standards_snapshot.v1.schema.json` + **STD-4_backcompat_and_supersession.md** (governance: backward compatibility for standard changes, supersession chains, migration paths)
+- **STD-5**: Standards gates + gate mapping + gate spec JSON + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON) + **STD-5_standards_health.md** (governance: coverage, staleness, conflict rate, orphaned standards, validation checklist)
 - **STD-6**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
 
 **Subdirectories:**
-- `schemas/` — 5 JSON Schema files (standards_pack: pack_id/scope/rules with 6 rule types, standards_index_entry: maturity lifecycle, standards_index: index_id/packs[], standards_conflict: conflict resolution modes, standards_snapshot: resolved packs/rules/conflicts)
-- `registries/` — 1 registry file (standards_index: starter index with 1 pack entry)
+- `schemas/` — 7 JSON Schema files (standards_pack, standards_index_entry, standards_index, standards_conflict, standards_snapshot + governance: standards_unit, standards_decision_report)
+- `registries/` — 2 registry files (standards_index: starter index with 1 pack entry + governance: standards_registry with governed standard units, applicability predicates, supersession chains)
 - `packs/` — 11 pack files (10 legacy + 1 new STD-SECURITY_BASELINE with 5 security rules)
 
 **Loader** (`Axion/src/core/standards/loader.ts`):
@@ -298,7 +298,7 @@ Standards pack system, index, applicability, resolution, snapshots, and gates (S
 
 **API**: 7 `/api/standards/*` endpoints (overview, schemas, registries, registries/:name, packs, docs, docs/:filename)
 **UI**: `/standards` page with 4 tabs (Standards, Documents, Schemas, Packs), standards pack grid with scope badges, rules by type/severity, 6 standards gates (STD-GATE-01..06) mapped to G3_STANDARDS_RESOLVED
-**Registered in:** `schema_registry.v1.json` (5 new entries), `library_index.v1.json` (1 new + 2 existing entries)
+**Registered in:** `schema_registry.v1.json` (5 structural + 2 governance entries = 7 total), `library_index.v1.json` (1 structural + 1 governance + 2 existing entries = 4 total)
 
 **Legacy files preserved:** STD-01.categories.v1.json, STD-01.pack_contract.v1.json, STD-01.library_index.schema.v1.json, STD-02.resolution_rules.v1.json, STD-03.snapshot.schema.v1.json, resolver_rules.v1.json, standards_index.json
 
@@ -335,20 +335,20 @@ Document template library system, registry, selection rules, render envelopes, c
 **Legacy files preserved:** TMP-01..TMP-05 JSON files, placeholder_catalog.v1.json, template_index.json, 8 category directories with 533 .md templates
 
 ### Planning Library (`Axion/libraries/planning/`)
-Work planning mechanics — WBS, acceptance map, build plan, sequencing policies, coverage rules, and gates (PLAN-0 through PLAN-6). 6 legacy flat files preserved for backward compat (pipeline code: plan.ts, workBreakdown.ts, acceptanceMap.ts, sequencing.ts, coverage.ts, outputs.ts).
+Work planning mechanics — WBS, acceptance map, build plan, sequencing policies, coverage rules, and gates (PLAN-0 through PLAN-6). 6 legacy flat files preserved for backward compat (pipeline code: plan.ts, workBreakdown.ts, acceptanceMap.ts, sequencing.ts, coverage.ts, outputs.ts). **Phase 3 governance upgrade** adds 5 governance-layer PLAN docs + 2 governance schemas + 1 governed planning registry with mapping references and drift detection.
 
-**Structure (30 new files: 24 root files + 5 schemas + 1 registry):**
+**Structure (38 new files: 29 root files + 7 schemas + 2 registries):**
 - **PLAN-0**: Purpose + boundary checklist (2 docs)
-- **PLAN-1**: WBS model + determinism rules + validation checklist (3 docs) + `work_breakdown.v1.schema.json`
-- **PLAN-2**: Acceptance map model + determinism rules + validation checklist (3 docs) + `acceptance_map.v1.schema.json`
-- **PLAN-3**: Build plan model + sequencing policies + determinism rules + validation checklist (4 docs) + `build_plan.v1.schema.json`
-- **PLAN-4**: Coverage model + determinism rules + validation checklist (3 docs) + `plan_coverage_rules.v1.schema.json` + `plan_coverage_report.v1.schema.json` + `plan_coverage_rules.v1.json` registry
-- **PLAN-5**: Planning gates + gate mapping + gate spec JSON + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON)
+- **PLAN-1**: WBS model + determinism rules + validation checklist (3 docs) + `work_breakdown.v1.schema.json` + **PLAN-1_plan_unit_model.md** (governance: every plan item as governed unit with plan_item_id, mapped canonical entity, template output, standards obligation, acceptance evidence)
+- **PLAN-2**: Acceptance map model + determinism rules + validation checklist (3 docs) + `acceptance_map.v1.schema.json` + **PLAN-2_planning_decision_report.md** (governance: planning decision report with gap analysis, coverage verdict)
+- **PLAN-3**: Build plan model + sequencing policies + determinism rules + validation checklist (4 docs) + `build_plan.v1.schema.json` + **PLAN-3_plan_drift_detection.md** (governance: stale-plan detection, plan gap classes: unmapped, under-scoped, unverifiable)
+- **PLAN-4**: Coverage model + determinism rules + validation checklist (3 docs) + `plan_coverage_rules.v1.schema.json` + `plan_coverage_report.v1.schema.json` + `plan_coverage_rules.v1.json` registry + **PLAN-4_backcompat_and_replanning.md** (governance: backward compatibility for plan changes, replanning triggers, migration paths)
+- **PLAN-5**: Planning gates + gate mapping + gate spec JSON + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON) + **PLAN-5_planning_health.md** (governance: plan coverage, stale items, unmapped entities, drift detection)
 - **PLAN-6**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
 
 **Subdirectories:**
-- `schemas/` — 5 JSON Schema files (work_breakdown: wbs_id/items[]/work_item with work_type enum + depends_on + status + priority, acceptance_map: amap_id/requirements[]/acceptance_criteria[]/evidence, build_plan: plan_id/phases[]/milestones[], plan_coverage_rules: rules_id/rules[] with category enum entity/template/acceptance + severity must/should, plan_coverage_report: run_id/status/results[])
-- `registries/` — 1 registry file (plan_coverage_rules: 4 starter rules COV-ENTITY-COMPONENTS/COV-ENTITY-ENDPOINTS/COV-TEMPLATES-ALL/COV-ACCEPTANCE-ALL)
+- `schemas/` — 7 JSON Schema files (work_breakdown, acceptance_map, build_plan, plan_coverage_rules, plan_coverage_report + governance: planning_unit, planning_decision_report)
+- `registries/` — 2 registry files (plan_coverage_rules: 4 starter rules + governance: planning_registry with governed plan units, mapping references, drift detection)
 
 **Loader** (`Axion/src/core/planning/loader.ts`):
 - `loadPlanningLibrary(repoRoot)` — loads coverage rules registry, cached
@@ -359,26 +359,26 @@ Work planning mechanics — WBS, acceptance map, build plan, sequencing policies
 
 **API**: 6 `/api/planning-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
 **UI**: `/planning-library` page with 4 tabs (Planning, Documents, Schemas, Registries), planning artifacts overview (WBS/AMAP/BUILD_PLAN), 7 default sequencing phases, coverage rules table, 6 planning gates (PLAN-GATE-01..06) mapped to G6_PLAN_COVERAGE
-**Registered in:** `schema_registry.v1.json` (2 updated + 3 new entries = 5 total), `library_index.v1.json` (1 existing + 1 new entry)
+**Registered in:** `schema_registry.v1.json` (2 updated + 3 structural + 2 governance entries = 7 total), `library_index.v1.json` (1 existing + 1 structural + 1 governance entries = 3 total)
 
 **Legacy files preserved:** PLAN-01..PLAN-03 JSON schemas, sequencing_policy.v1.json, acceptance_map.schema.v1.json, work_breakdown.schema.v1.json
 
 ### Verification Library (`Axion/libraries/verification/`)
-Proof and completion system — proof types, proof ledger, command run tracking, completion criteria, command policy, and gates (VER-0 through VER-7). 8 legacy flat files preserved for backward compat (pipeline code: runner.ts, completion.ts, policy.ts).
+Proof and completion system — proof types, proof ledger, command run tracking, completion criteria, command policy, and gates (VER-0 through VER-7). 8 legacy flat files preserved for backward compat (pipeline code: runner.ts, completion.ts, policy.ts). **Phase 3 governance upgrade** adds 5 governance-layer VER docs + 2 governance schemas + 1 governed verification registry with strength tiers and reusability flags.
 
-**Structure (35 new files: 26 root files + 6 schemas + 3 registries):**
+**Structure (43 new files: 31 root files + 8 schemas + 4 registries):**
 - **VER-0**: Purpose + boundary checklist (2 docs)
-- **VER-1**: Proof types model + determinism rules + validation checklist (3 docs) + `proof_types.v1.schema.json` + `proof_types.v1.json` registry
-- **VER-2**: Proof ledger model + determinism rules + validation checklist (3 docs) + `proof_ledger.v1.schema.json`
-- **VER-3**: Command run model + determinism rules + validation checklist (3 docs) + `command_run.v1.schema.json` + `command_run_log.v1.schema.json`
-- **VER-4**: Completion model + determinism rules + validation checklist (3 docs) + `completion_criteria.v1.schema.json` + `completion_criteria.v1.json` registry
-- **VER-5**: Command policy model + determinism rules + validation checklist (3 docs) + `verification_command_policy.v1.schema.json` + `verification_command_policy.v1.json` registry
+- **VER-1**: Proof types model + determinism rules + validation checklist (3 docs) + `proof_types.v1.schema.json` + `proof_types.v1.json` registry + **VER-1_proof_unit_model.md** (governance: every proof as governed unit with proof_id, proof_class, strength tier, reusability, evidence model)
+- **VER-2**: Proof ledger model + determinism rules + validation checklist (3 docs) + `proof_ledger.v1.schema.json` + **VER-2_verification_decision_report.md** (governance: verification decision report with proof results, coverage gaps, verdict)
+- **VER-3**: Command run model + determinism rules + validation checklist (3 docs) + `command_run.v1.schema.json` + `command_run_log.v1.schema.json` + **VER-3_proof_strength_tiers.md** (governance: assertion < automated < witnessed < audited, promotion rules)
+- **VER-4**: Completion model + determinism rules + validation checklist (3 docs) + `completion_criteria.v1.schema.json` + `completion_criteria.v1.json` registry + **VER-4_backcompat_and_reuse.md** (governance: backward compatibility for proof changes, reusable proof bundles)
+- **VER-5**: Command policy model + determinism rules + validation checklist (3 docs) + `verification_command_policy.v1.schema.json` + `verification_command_policy.v1.json` registry + **VER-5_verification_health.md** (governance: proof coverage, stale proofs, unverified claims, orphaned evidence)
 - **VER-6**: Verification gates + gate mapping + evidence requirements + determinism rules + validation checklist (5 docs + 1 gate spec JSON)
 - **VER-7**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
 
 **Subdirectories:**
-- `schemas/` — 6 JSON Schema files (proof_types: registry with proof_type enum, proof_ledger: ledger_id/proofs[]/append_only, command_run: command_run_id/status/exit_code/logs_ref, command_run_log: log_id/runs[], completion_criteria: unit_done+run_done with requirement kind enum, verification_command_policy: policy_id/rules[] with match patterns + decision outcomes)
-- `registries/` — 3 registry files (proof_types: 6 types command_run/test_suite/lint_check/build_artifact/security_scan/manual_attestation, completion_criteria: unit_done proof + run_done G1-G7 gates + KIT_MANIFEST + PROOF_LEDGER, verification_command_policy: 3 rules allow-npm-test/allow-npm-lint/deny-destructive)
+- `schemas/` — 8 JSON Schema files (proof_types, proof_ledger, command_run, command_run_log, completion_criteria, verification_command_policy + governance: verification_unit, verification_decision_report)
+- `registries/` — 4 registry files (proof_types: 6 types, completion_criteria: unit_done + run_done, verification_command_policy: 3 rules + governance: verification_registry with governed proof units, strength tiers, reusability flags)
 
 **Loader** (`Axion/src/core/verification/loader.ts`):
 - `loadVerificationLibrary(repoRoot)` — loads proof_types + completion_criteria + command_policy registries, cached
@@ -391,7 +391,7 @@ Proof and completion system — proof types, proof ledger, command run tracking,
 
 **API**: 6 `/api/verification-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
 **UI**: `/verification-library` page with 4 tabs (Verification, Documents, Schemas, Registries), proof types table with required fields, completion criteria (unit_done + run_done), command policy rules, 7 verification gates (VER-GATE-01..07) mapped to G7_VERIFICATION
-**Registered in:** `schema_registry.v1.json` (2 updated + 4 new entries = 6 total), `library_index.v1.json` (3 new entries)
+**Registered in:** `schema_registry.v1.json` (2 updated + 4 structural + 2 governance entries = 8 total), `library_index.v1.json` (3 structural + 1 governance entries = 4 total)
 
 **Legacy files preserved:** VER-01..VER-03 JSON files, proof_log.schema.v1.json, command_runs.schema.v1.json
 
@@ -458,21 +458,21 @@ Event and metrics contracts — telemetry event schemas, run metrics, sink polic
 **Legacy files preserved:** event.schema.v1.json, run_metrics.schema.v1.json, sink_policy.v1.json
 
 ### Audit Library (`Axion/libraries/audit/`)
-Operator action tracking — audit action schemas, append-only ledgers, integrity verification, query indexing, ops workflow (retention/redaction/export), and gates (AUD-0 through AUD-7). Fully compliant with canonical PDF spec.
+Operator action tracking — audit action schemas, append-only ledgers, integrity verification, query indexing, ops workflow (retention/redaction/export), and gates (AUD-0 through AUD-7). Fully compliant with canonical PDF spec. **Phase 3 governance upgrade** adds 5 governance-layer AUD docs + 2 governance schemas + 1 governed audit registry with mutation classes and producer mappings.
 
-**Structure (33 files: 27 docs + 1 gate spec JSON + 3 schemas + 2 registries):**
+**Structure (41 files: 32 docs + 1 gate spec JSON + 5 schemas + 3 registries):**
 - **AUD-0**: Purpose + boundary checklist (2 docs)
-- **AUD-1**: Audit action model + determinism rules + validation checklist (3 docs)
-- **AUD-2**: Audit log model + tamper evident rules + determinism rules + validation checklist (4 docs)
-- **AUD-3**: Audit index model + determinism rules + validation checklist (3 docs)
-- **AUD-4**: Integrity model + hash chain rules + determinism rules + validation checklist (4 docs)
-- **AUD-5**: Audit gates + evidence requirements + determinism rules + validation checklist (4 docs + 1 gate spec JSON) — AUD-GATE-01..06
+- **AUD-1**: Audit action model + determinism rules + validation checklist (3 docs) + **AUD-1_audit_unit_model.md** (governance: every audit entry as governed unit with audit_unit_id, mutation class, blast radius, backcompat result)
+- **AUD-2**: Audit log model + tamper evident rules + determinism rules + validation checklist (4 docs) + **AUD-2_audit_decision_report.md** (governance: audit decision report with mutation details, policy compliance, verdict)
+- **AUD-3**: Audit index model + determinism rules + validation checklist (3 docs) + **AUD-3_producer_consumer_mapping.md** (governance: producer-consumer mapping, event routing, cross-library audit flows)
+- **AUD-4**: Integrity model + hash chain rules + determinism rules + validation checklist (4 docs) + **AUD-4_backcompat_and_retention.md** (governance: backward compatibility for audit schema changes, retention policy enforcement, redaction lifecycle)
+- **AUD-5**: Audit gates + evidence requirements + determinism rules + validation checklist (4 docs + 1 gate spec JSON) — AUD-GATE-01..06 + **AUD-5_audit_health.md** (governance: audit coverage, integrity verification success rate, retention compliance, gap detection)
 - **AUD-6**: Ops workflow + redaction export rules + determinism rules + validation checklist (4 docs)
 - **AUD-7**: Minimum viable set + definition of done + minimal tree (2 docs + 1 .txt)
 
 **Subdirectories:**
-- `schemas/` — 3 JSON Schema files (audit_action: audit_event_id/action_type(13 enum)/actor/occurred_at/target/reason/refs, audit_log: audit_log_id/scope/events[]/tamper_evident/timestamps, audit_index: index_id/entries[scope+audit_log_ref+query_keys])
-- `registries/` — 2 registry files (audit_integrity: hash_chain mode + sha256 + canonical_json + risk class requirements, audit_ops_policy: AUDOPS-BASE01 with retention windows + redaction deny_keys + export rules)
+- `schemas/` — 5 JSON Schema files (audit_action, audit_log, audit_index + governance: audit_unit, audit_decision_report)
+- `registries/` — 3 registry files (audit_integrity: hash_chain mode + sha256 + canonical_json, audit_ops_policy: AUDOPS-BASE01 with retention/redaction/export + governance: audit_registry with governed audit units, mutation classes, producer mappings)
 
 **Loader** (`Axion/src/core/audit/loader.ts`):
 - `loadAuditLibrary(repoRoot)` — loads audit_integrity + audit_ops_policy registries + AUD-5 gate spec, cached
@@ -486,7 +486,7 @@ Operator action tracking — audit action schemas, append-only ledgers, integrit
 
 **API**: 6 `/api/audit-library/*` endpoints (overview, schemas, registries, registries/:name, docs, docs/:filename)
 **UI**: `/audit-library` page with 4 tabs (Audit, Documents, Schemas, Registries), action types table (13 types across 6 categories), actor roles (4), target types (7), audit log overview, integrity levels (3 with risk class requirements), retention policy table, redaction + export rules, 6 audit gates (AUD-GATE-01..06)
-**Registered in:** `schema_registry.v1.json` (3 new entries + 1 legacy preserved), `library_index.v1.json` (2 new entries)
+**Registered in:** `schema_registry.v1.json` (3 structural + 2 governance + 1 legacy entries = 6 total), `library_index.v1.json` (2 structural + 1 governance entries = 3 total)
 
 **Legacy files preserved:** operator_actions_ledger.schema.v1.json
 
@@ -989,21 +989,21 @@ The Knowledge Library is wired into the IA through three integration points:
 - `render_report.json`: `knowledge_citations[]`, `knowledge_bundle`, `knowledge_domains_used[]`
 
 ## System Library (`Axion/libraries/system/`)
-Control-plane configuration and runtime contracts for Axion. Defines the stable "operating environment" that every run depends on.
+Control-plane configuration and runtime contracts for Axion. Defines the stable "operating environment" that every run depends on. **Phase 3 governance upgrade** adds 5 governance-layer SYS docs + 2 governance schemas + 1 governed system registry with resolution order and dependency graph.
 
 ### Structure (SYS-0 through SYS-7)
 - **SYS-0**: Purpose + boundaries — what system/ governs (in scope) and what it does not (out of scope), boundary checklist
-- **SYS-1**: Workspace / Project model — workspace, project, and profile entities; workspace.v1 and project.v1 schemas; run_profiles registry; determinism rules
-- **SYS-2**: Pin / Lock policies — deterministic resolution via pins (explicit version refs) and locks (enforcement rules); pin_policy.v1 and pin_set.v1 schemas; resolution rules (workspace → project → run-level)
-- **SYS-3**: Adapter manager — capability discovery for execution environments (local/Replit/CI/container); capability_registry.v1, adapter_profile.v1, command_policy.v1 schemas; capabilities registry
-- **SYS-4**: Quotas + rate limits — per project/profile constraints (runs/day, tokens, compute, storage, network); quota_set.v1 and quota_profile_modifiers.v1 schemas; starter quota sets
-- **SYS-5**: Notification routing — deterministic event→destination routing with throttle/dedupe; notification_event_types.v1, notification_destinations.v1, notification_routes.v1 schemas and registries
+- **SYS-1**: Workspace / Project model — workspace, project, and profile entities; workspace.v1 and project.v1 schemas; run_profiles registry; determinism rules + **SYS-1_system_unit_model.md** (governance: every system component as governed unit with component_id, resolution order, pin/lock behavior, capability filtering)
+- **SYS-2**: Pin / Lock policies — deterministic resolution via pins (explicit version refs) and locks (enforcement rules); pin_policy.v1 and pin_set.v1 schemas; resolution rules (workspace → project → run-level) + **SYS-2_system_decision_report.md** (governance: library resolution order, pin decisions, capability filtering results, verdict)
+- **SYS-3**: Adapter manager — capability discovery for execution environments (local/Replit/CI/container); capability_registry.v1, adapter_profile.v1, command_policy.v1 schemas; capabilities registry + **SYS-3_cross_library_dependency_graph.md** (governance: formalized resolution order, dependency edges, circular dependency detection)
+- **SYS-4**: Quotas + rate limits — per project/profile constraints (runs/day, tokens, compute, storage, network); quota_set.v1 and quota_profile_modifiers.v1 schemas; starter quota sets + **SYS-4_backcompat_and_resolution.md** (governance: backward compatibility for system changes, resolver authority contract, deterministic loader behavior)
+- **SYS-5**: Notification routing — deterministic event→destination routing with throttle/dedupe; notification_event_types.v1, notification_destinations.v1, notification_routes.v1 schemas and registries + **SYS-5_system_health.md** (governance: resolution success rate, dependency staleness, capability coverage, pin compliance)
 - **SYS-6**: Policy engine hooks — how runtime invokes policy at 6 hook points (RUN_START, PIN_RESOLUTION, ADAPTER_SELECTION, QUOTA_CHECK, GATE_OVERRIDE, KIT_EXPORT); policy_hook_request.v1 and policy_hook_decision.v1 schemas
 - **SYS-7**: Minimum viable set — required files inventory, definition of done checklist, minimal folder tree
 
 ### Subdirectories
-- `schemas/` — 14 JSON Schema files (workspace, project, pin_policy, pin_set, capability_registry, adapter_profile, command_policy, quota_set, quota_profile_modifiers, notification_event_types, notification_destinations, notification_routes, policy_hook_request, policy_hook_decision)
-- `registries/` — 6 starter registry files (run_profiles, capabilities, quota_sets, notification_event_types, notification_destinations, notification_routes)
+- `schemas/` — 16 JSON Schema files (workspace, project, pin_policy, pin_set, capability_registry, adapter_profile, command_policy, quota_set, quota_profile_modifiers, notification_event_types, notification_destinations, notification_routes, policy_hook_request, policy_hook_decision + governance: system_unit, system_decision_report)
+- `registries/` — 7 registry files (run_profiles, capabilities, quota_sets, notification_event_types, notification_destinations, notification_routes + governance: system_registry with governed system components, resolution order, dependency graph)
 
 ### Runtime Integration
 - **Loader module**: `Axion/src/core/system/loader.ts` — loads and caches all 6 registries, exports typed accessors:
@@ -1017,6 +1017,7 @@ Control-plane configuration and runtime contracts for Axion. Defines the stable 
 - **ICPRun model**: Added optional `system_profile?: string` and `quota_set?: string` fields
 - **API**: 6 new `/api/system/*` endpoints expose system library data to the UI
 - **UI**: `/system` page with 3 tabs (Documents, Schemas, Registries), overview cards, expandable content viewers
+- **Registered in:** `schema_registry.v1.json` (14 structural + 2 governance entries = 16 total), `library_index.v1.json` (6 structural + 1 governance entries = 7 total)
 
 ### Key ID patterns
 - Workspace: `WS-[A-Z0-9]{6,}`
@@ -1034,21 +1035,21 @@ Control-plane configuration and runtime contracts for Axion. Defines the stable 
 - Policy decision: `POLDEC-[A-Z0-9]{6,}`
 
 ## Orchestration Library (`Axion/libraries/orchestration/`)
-Pipeline execution contracts and run lifecycle definitions. Defines the authoritative model for pipeline stages, IO contracts, run manifests, stage reports, and rerun/resume rules.
+Pipeline execution contracts and run lifecycle definitions. Defines the authoritative model for pipeline stages, IO contracts, run manifests, stage reports, and rerun/resume rules. **Phase 3 governance upgrade** adds 5 governance-layer ORC docs + 2 governance schemas + 1 governed orchestration registry with dependency maps and artifact production.
 
 ### Structure (ORC-0 through ORC-7)
 - **ORC-0**: Purpose + boundaries — what orchestration/ governs (pipeline execution contract) and boundary checklist
-- **ORC-1**: Pipeline definition model — stages, ordering, activation rules, gating points; `pipeline_definition.v1.schema.json`; starter pipeline `PIPE-AXION` with 11 stages (S0-S10); determinism rules; validation checklist
-- **ORC-2**: Stage IO contracts — consumes/produces model; `stage_io_contract.v1.schema.json` and `stage_io_registry.v1.schema.json`; 15 IO contracts in starter registry; determinism rules
-- **ORC-3**: Run manifest format — single authoritative run record; `run_manifest.v1.schema.json`; append-only event semantics; invariants
-- **ORC-4**: Stage report schema — standard report per stage; `stage_report.v1.schema.json`; example template; determinism rules
-- **ORC-5**: Rerun/resume rules — deterministic resume, stage rerun, partial run; `rerun_request.v1.schema.json`; rerun policies registry with downstream invalidation lists; invariants; manifest event requirements
+- **ORC-1**: Pipeline definition model — stages, ordering, activation rules, gating points; `pipeline_definition.v1.schema.json`; starter pipeline `PIPE-AXION` with 11 stages (S0-S10); determinism rules; validation checklist + **ORC-1_stage_unit_model.md** (governance: every stage as governed unit with stage_id, library consumption, artifact production, gate evidence origins, dependency declarations)
+- **ORC-2**: Stage IO contracts — consumes/produces model; `stage_io_contract.v1.schema.json` and `stage_io_registry.v1.schema.json`; 15 IO contracts in starter registry; determinism rules + **ORC-2_orchestration_decision_report.md** (governance: execution plan, stage results, dependency resolution, verdict)
+- **ORC-3**: Run manifest format — single authoritative run record; `run_manifest.v1.schema.json`; append-only event semantics; invariants + **ORC-3_execution_dependency_map.md** (governance: stage-to-library dependency declarations, artifact production graph, rerun invalidation rules)
+- **ORC-4**: Stage report schema — standard report per stage; `stage_report.v1.schema.json`; example template; determinism rules + **ORC-4_backcompat_and_rerun.md** (governance: backward compatibility for pipeline changes, rerun/resume invalidation rules, migration paths)
+- **ORC-5**: Rerun/resume rules — deterministic resume, stage rerun, partial run; `rerun_request.v1.schema.json`; rerun policies registry with downstream invalidation lists; invariants; manifest event requirements + **ORC-5_orchestration_health.md** (governance: stage coverage, dependency freshness, rerun success rate, orphaned stages)
 - **ORC-6**: Orchestration gates (ORC-GATE-01 through 06) — stage order integrity, consumes/produces validation, report emission, manifest coherence, rerun invariants; gate spec JSON; evidence format
 - **ORC-7**: Minimum viable set — required files inventory, definition of done checklist, minimal folder tree
 
 ### Subdirectories
-- `schemas/` — 6 JSON Schema files (pipeline_definition, stage_io_contract, stage_io_registry, run_manifest, stage_report, rerun_request)
-- `registries/` — 3 starter registry files (pipeline_definition.axion.v1, stage_io_registry.axion.v1, rerun_policies.axion.v1)
+- `schemas/` — 8 JSON Schema files (pipeline_definition, stage_io_contract, stage_io_registry, run_manifest, stage_report, rerun_request + governance: orchestration_unit, orchestration_decision_report)
+- `registries/` — 4 registry files (pipeline_definition.axion.v1, stage_io_registry.axion.v1, rerun_policies.axion.v1 + governance: orchestration_registry with governed stage units, dependency maps, artifact production)
 - `templates/` — 1 example (stage_report.example.json)
 
 ### Runtime Integration
@@ -1071,6 +1072,7 @@ Pipeline execution contracts and run lifecycle definitions. Defines the authorit
 - **ICPRun model**: `pipeline_ref?: { pipeline_id, version, source }` field; preserved in manifest round-trip via `config.__pipeline_ref`
 - **API**: 6 `/api/orchestration/*` endpoints expose orchestration library data to the UI
 - **UI**: `/orchestration` page with 4 tabs (Pipeline, Documents, Schemas, Registries), overview cards, pipeline stage visualization with IO contract labels and gate points
+- **Registered in:** `schema_registry.v1.json` (6 structural + 2 governance entries = 8 total), `library_index.v1.json` (3 structural + 1 governance entries = 4 total)
 
 ### Architecture: Registry-Driven Pipeline
 The orchestration library's `pipeline_definition.axion.v1.json` is the **single source of truth** for pipeline execution. All runtime consumers load from the registry via the orchestration loader, with hardcoded fallbacks in `types/run.ts` (marked `@deprecated`) for resilience if the registry file is missing.

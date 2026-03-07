@@ -1,0 +1,77 @@
+{
+  "registry_id": "planning_registry.v1",
+  "library": "planning",
+  "schema_version": "1.0.0",
+  "description": "Registry of governed plan unit types and their governance bindings.",
+  "entries": [
+    {
+      "unit_type": "plan_unit",
+      "schema": "axion://schemas/planning/planning_unit.v1",
+      "doctrine": "PLAN-1_plan_unit_model",
+      "id_pattern": "^PU-[A-Z0-9]{6,}$",
+      "required_fields": [
+        "plan_item_id",
+        "mapped_canonical_entity",
+        "template_output",
+        "standards_obligation",
+        "acceptance_evidence",
+        "status"
+      ],
+      "lifecycle_states": ["pending", "active", "satisfied", "failed"]
+    },
+    {
+      "unit_type": "planning_decision_report",
+      "schema": "axion://schemas/planning/planning_decision_report.v1",
+      "doctrine": "PLAN-2_planning_decision_report",
+      "id_pattern": "^PDR-[A-Z0-9]{6,}$",
+      "required_fields": [
+        "report_id",
+        "run_id",
+        "generated_at",
+        "total_canonical_entities",
+        "total_plan_units",
+        "mapped_entities",
+        "unmapped_entities",
+        "gap_analysis",
+        "coverage_verdict",
+        "verdict_reason"
+      ],
+      "coverage_verdicts": ["full", "partial", "insufficient"]
+    },
+    {
+      "unit_type": "drift_report",
+      "doctrine": "PLAN-3_plan_drift_detection",
+      "gap_classes": ["unmapped", "under_scoped", "unverifiable"],
+      "triggers": [
+        "canonical_spec_change",
+        "standards_rule_change",
+        "template_version_bump",
+        "coverage_rule_change"
+      ]
+    },
+    {
+      "unit_type": "replan_event",
+      "doctrine": "PLAN-4_backcompat_and_replanning",
+      "triggers": [
+        "canonical_spec_change",
+        "standards_rule_change",
+        "template_version_bump",
+        "coverage_rule_change",
+        "manual_override"
+      ]
+    },
+    {
+      "unit_type": "health_check",
+      "doctrine": "PLAN-5_planning_health",
+      "health_statuses": ["healthy", "degraded", "unhealthy", "unknown"],
+      "metrics": [
+        "plan_coverage_ratio",
+        "stale_item_ratio",
+        "unmapped_entity_count",
+        "unverifiable_unit_count",
+        "drift_detected",
+        "under_scoped_count"
+      ]
+    }
+  ]
+}

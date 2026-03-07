@@ -1,0 +1,123 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/planning/planning_decision_report.v1",
+  "title": "Planning Decision Report",
+  "description": "Schema for a planning decision report capturing coverage analysis and verdict.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "run_id",
+    "generated_at",
+    "total_canonical_entities",
+    "total_plan_units",
+    "mapped_entities",
+    "unmapped_entities",
+    "gap_analysis",
+    "coverage_verdict",
+    "verdict_reason"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^PDR-[A-Z0-9]{6,}$",
+      "description": "Unique identifier for this planning decision report."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "The run this report belongs to."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of report generation."
+    },
+    "total_canonical_entities": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of entities in the canonical spec."
+    },
+    "total_plan_units": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of plan units generated."
+    },
+    "mapped_entities": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of canonical entities with at least one plan unit."
+    },
+    "unmapped_entities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of canonical entity IDs with no plan unit."
+    },
+    "gap_analysis": {
+      "type": "object",
+      "required": [
+        "unmapped_count",
+        "under_scoped_count",
+        "unverifiable_count"
+      ],
+      "properties": {
+        "unmapped_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Entities with zero plan units."
+        },
+        "under_scoped_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Entities mapped but missing required template outputs or standards obligations."
+        },
+        "unverifiable_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Plan units with no acceptance evidence path defined."
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["entity_id", "gap_class"],
+            "properties": {
+              "entity_id": {
+                "type": "string",
+                "description": "The canonical entity ID."
+              },
+              "gap_class": {
+                "type": "string",
+                "enum": ["unmapped", "under_scoped", "unverifiable"],
+                "description": "Classification of the gap."
+              },
+              "detail": {
+                "type": "string",
+                "description": "Human-readable explanation of the gap."
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Per-entity gap detail records."
+        }
+      },
+      "additionalProperties": false
+    },
+    "coverage_verdict": {
+      "type": "string",
+      "enum": ["full", "partial", "insufficient"],
+      "description": "Overall coverage verdict."
+    },
+    "verdict_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable explanation of the verdict."
+    },
+    "health_status": {
+      "type": "string",
+      "enum": ["healthy", "degraded", "unhealthy", "unknown"],
+      "description": "Planning health status at time of report generation."
+    }
+  },
+  "additionalProperties": false
+}

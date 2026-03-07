@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://schemas/intake/intake_decision_report.v1",
+  "title": "Intake Decision Report",
+  "description": "Schema for the governance artifact produced after intake processing, capturing normalization results, validation outcomes, ambiguity resolutions, and the final verdict.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "submission_id",
+    "form_version",
+    "timestamp",
+    "normalization_results",
+    "validation_outcomes",
+    "ambiguity_resolutions",
+    "verdict"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^RPT-[A-Z0-9_-]+$"
+    },
+    "submission_id": {
+      "type": "string",
+      "description": "Reference to the submission record"
+    },
+    "form_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "normalization_results": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/normalization_entry" }
+    },
+    "validation_outcomes": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/validation_entry" }
+    },
+    "ambiguity_resolutions": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/ambiguity_entry" }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "VERDICT-ACCEPT",
+        "VERDICT-ACCEPT-WARN",
+        "VERDICT-REJECT",
+        "VERDICT-PENDING"
+      ]
+    }
+  },
+  "definitions": {
+    "normalization_entry": {
+      "type": "object",
+      "required": ["field_id", "raw_value", "normalized_value", "normalization_rule", "status"],
+      "properties": {
+        "field_id": {
+          "type": "string",
+          "pattern": "^F-[A-Z0-9_]+$"
+        },
+        "raw_value": {},
+        "normalized_value": {},
+        "normalization_rule": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["resolved", "passthrough", "failed", "skipped"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "validation_entry": {
+      "type": "object",
+      "required": ["rule_id", "passed"],
+      "properties": {
+        "rule_id": {
+          "type": "string"
+        },
+        "field_id": {
+          "type": "string",
+          "pattern": "^F-[A-Z0-9_]+$"
+        },
+        "fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "For cross-field validations, the participating field IDs"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ambiguity_entry": {
+      "type": "object",
+      "required": [
+        "field_id",
+        "ambiguity_class",
+        "raw_value",
+        "resolution_strategy",
+        "resolved_value",
+        "requires_operator_review"
+      ],
+      "properties": {
+        "field_id": {
+          "type": "string",
+          "pattern": "^F-[A-Z0-9_]+$"
+        },
+        "ambiguity_class": {
+          "type": "string",
+          "enum": ["AMB-1", "AMB-2", "AMB-3"]
+        },
+        "raw_value": {},
+        "resolution_strategy": {
+          "type": "string"
+        },
+        "resolved_value": {},
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "requires_operator_review": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

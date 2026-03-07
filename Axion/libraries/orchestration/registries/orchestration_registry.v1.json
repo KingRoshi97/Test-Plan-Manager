@@ -1,0 +1,177 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "orchestration_registry",
+  "pipeline_id": "PIPE-AXION",
+  "governed_units": [
+    {
+      "stage_id": "S1_INGEST_NORMALIZE",
+      "name": "Ingest & Normalize",
+      "library_consumption": [
+        { "library": "intake", "contract_ref": "intake_submission.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "NORMALIZED_INPUT", "schema_ref": "axion://schemas/intake/normalized_input.v1", "persistence": "run_store" }
+      ],
+      "gate_evidence_origins": [],
+      "dependency_declarations": []
+    },
+    {
+      "stage_id": "S2_VALIDATE_INTAKE",
+      "name": "Validate Intake",
+      "library_consumption": [
+        { "library": "intake", "contract_ref": "intake_validation.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "INTAKE_VALIDATION_REPORT", "schema_ref": "axion://schemas/intake/validation_report.v1", "persistence": "run_store" }
+      ],
+      "gate_evidence_origins": [
+        { "gate_id": "G1_INTAKE_VALIDITY", "evidence_artifact": "INTAKE_VALIDATION_REPORT", "evidence_type": "validation" }
+      ],
+      "dependency_declarations": [
+        { "depends_on_stage": "S1_INGEST_NORMALIZE", "dependency_type": "data", "required": true }
+      ]
+    },
+    {
+      "stage_id": "S3_BUILD_CANONICAL",
+      "name": "Build Canonical Spec",
+      "library_consumption": [
+        { "library": "canonical", "contract_ref": "canonical_spec.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "CANONICAL_SPEC", "schema_ref": "axion://schemas/canonical/canonical_spec.v1", "persistence": "run_store" },
+        { "artifact_id": "UNKNOWN_ASSUMPTIONS", "schema_ref": "axion://schemas/canonical/unknown_assumptions.v1", "persistence": "run_store" }
+      ],
+      "gate_evidence_origins": [],
+      "dependency_declarations": [
+        { "depends_on_stage": "S1_INGEST_NORMALIZE", "dependency_type": "data", "required": true }
+      ]
+    },
+    {
+      "stage_id": "S4_VALIDATE_CANONICAL",
+      "name": "Validate Canonical Spec",
+      "library_consumption": [
+        { "library": "canonical", "contract_ref": "canonical_validation.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "CANONICAL_VALIDATION_REPORT", "schema_ref": "axion://schemas/canonical/validation_report.v1", "persistence": "run_store" }
+      ],
+      "gate_evidence_origins": [
+        { "gate_id": "G2_CANONICAL_INTEGRITY", "evidence_artifact": "CANONICAL_VALIDATION_REPORT", "evidence_type": "validation" }
+      ],
+      "dependency_declarations": [
+        { "depends_on_stage": "S3_BUILD_CANONICAL", "dependency_type": "data", "required": true }
+      ]
+    },
+    {
+      "stage_id": "S5_RESOLVE_STANDARDS",
+      "name": "Resolve Standards",
+      "library_consumption": [
+        { "library": "canonical", "contract_ref": "canonical_spec.v1", "version": "1.0.0" },
+        { "library": "intake", "contract_ref": "normalized_input.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "STANDARDS_SNAPSHOT", "schema_ref": "axion://schemas/orchestration/standards_snapshot.v1", "persistence": "run_store" }
+      ],
+      "gate_evidence_origins": [
+        { "gate_id": "G3_STANDARDS_RESOLVED", "evidence_artifact": "STANDARDS_SNAPSHOT", "evidence_type": "report" }
+      ],
+      "dependency_declarations": [
+        { "depends_on_stage": "S1_INGEST_NORMALIZE", "dependency_type": "data", "required": true },
+        { "depends_on_stage": "S3_BUILD_CANONICAL", "dependency_type": "data", "required": true }
+      ]
+    },
+    {
+      "stage_id": "S6_SELECT_TEMPLATES",
+      "name": "Select Templates",
+      "library_consumption": [
+        { "library": "canonical", "contract_ref": "canonical_spec.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "TEMPLATE_SELECTION", "schema_ref": "axion://schemas/orchestration/template_selection.v1", "persistence": "run_store" }
+      ],
+      "gate_evidence_origins": [
+        { "gate_id": "G4_TEMPLATE_SELECTION", "evidence_artifact": "TEMPLATE_SELECTION", "evidence_type": "report" }
+      ],
+      "dependency_declarations": [
+        { "depends_on_stage": "S3_BUILD_CANONICAL", "dependency_type": "data", "required": true },
+        { "depends_on_stage": "S5_RESOLVE_STANDARDS", "dependency_type": "data", "required": true }
+      ]
+    },
+    {
+      "stage_id": "S7_RENDER_DOCS",
+      "name": "Render Docs",
+      "library_consumption": [
+        { "library": "canonical", "contract_ref": "canonical_spec.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "RENDERED_TEMPLATES", "schema_ref": "axion://schemas/orchestration/rendered_templates.v1", "persistence": "run_store" },
+        { "artifact_id": "RENDER_ENVELOPES", "schema_ref": "axion://schemas/orchestration/render_envelopes.v1", "persistence": "run_store" }
+      ],
+      "gate_evidence_origins": [
+        { "gate_id": "G5_TEMPLATE_COMPLETENESS", "evidence_artifact": "RENDERED_TEMPLATES", "evidence_type": "report" }
+      ],
+      "dependency_declarations": [
+        { "depends_on_stage": "S6_SELECT_TEMPLATES", "dependency_type": "data", "required": true },
+        { "depends_on_stage": "S3_BUILD_CANONICAL", "dependency_type": "data", "required": true }
+      ]
+    },
+    {
+      "stage_id": "S8_BUILD_PLAN",
+      "name": "Build Plan",
+      "library_consumption": [
+        { "library": "canonical", "contract_ref": "canonical_spec.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "BUILD_PLAN", "schema_ref": "axion://schemas/orchestration/build_plan.v1", "persistence": "run_store" },
+        { "artifact_id": "ACCEPTANCE_MAP", "schema_ref": "axion://schemas/orchestration/acceptance_map.v1", "persistence": "run_store" },
+        { "artifact_id": "WORK_BREAKDOWN", "schema_ref": "axion://schemas/orchestration/work_breakdown.v1", "persistence": "run_store" }
+      ],
+      "gate_evidence_origins": [
+        { "gate_id": "G6_PLAN_COVERAGE", "evidence_artifact": "BUILD_PLAN", "evidence_type": "report" }
+      ],
+      "dependency_declarations": [
+        { "depends_on_stage": "S3_BUILD_CANONICAL", "dependency_type": "data", "required": true },
+        { "depends_on_stage": "S6_SELECT_TEMPLATES", "dependency_type": "data", "required": true },
+        { "depends_on_stage": "S5_RESOLVE_STANDARDS", "dependency_type": "data", "required": true }
+      ]
+    },
+    {
+      "stage_id": "S9_VERIFY_PROOF",
+      "name": "Verify Proof",
+      "library_consumption": [
+        { "library": "canonical", "contract_ref": "canonical_spec.v1", "version": "1.0.0" },
+        { "library": "gates", "contract_ref": "gate_evaluation.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "GATE_REPORT", "schema_ref": "axion://schemas/gates/gate_report.v1", "persistence": "run_store" },
+        { "artifact_id": "PROOF_LEDGER", "schema_ref": "axion://schemas/orchestration/proof_ledger.v1", "persistence": "ledger" }
+      ],
+      "gate_evidence_origins": [
+        { "gate_id": "G7_VERIFICATION", "evidence_artifact": "GATE_REPORT", "evidence_type": "proof" }
+      ],
+      "dependency_declarations": [
+        { "depends_on_stage": "S7_RENDER_DOCS", "dependency_type": "data", "required": true },
+        { "depends_on_stage": "S8_BUILD_PLAN", "dependency_type": "data", "required": true },
+        { "depends_on_stage": "S3_BUILD_CANONICAL", "dependency_type": "data", "required": true }
+      ]
+    },
+    {
+      "stage_id": "S10_PACKAGE",
+      "name": "Package Kit",
+      "library_consumption": [
+        { "library": "kit", "contract_ref": "kit_bundle.v1", "version": "1.0.0" }
+      ],
+      "artifact_production": [
+        { "artifact_id": "KIT_BUNDLE", "schema_ref": "axion://schemas/kit/kit_bundle.v1", "persistence": "run_store" },
+        { "artifact_id": "KIT_MANIFEST", "schema_ref": "axion://schemas/kit/kit_manifest.v1", "persistence": "manifest" }
+      ],
+      "gate_evidence_origins": [
+        { "gate_id": "G8_PACKAGE_INTEGRITY", "evidence_artifact": "KIT_BUNDLE", "evidence_type": "bundle" }
+      ],
+      "dependency_declarations": [
+        { "depends_on_stage": "S7_RENDER_DOCS", "dependency_type": "data", "required": true },
+        { "depends_on_stage": "S9_VERIFY_PROOF", "dependency_type": "data", "required": true }
+      ]
+    }
+  ]
+}

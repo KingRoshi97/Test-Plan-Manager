@@ -76,7 +76,16 @@
 
     { "id": "telemetry.telemetry_registry", "path": "Axion/libraries/telemetry/registries/telemetry_registry.v1.json", "version": "1.0.0" },
 
-    { "id": "kit.kit_registry", "path": "Axion/libraries/kit/registries/kit_registry.v1.json", "version": "1.0.0" }
+    { "id": "kit.kit_registry", "path": "Axion/libraries/kit/registries/kit_registry.v1.json", "version": "1.0.0" },
+
+    { "id": "standards.standards_registry", "path": "Axion/libraries/standards/registries/standards_registry.v1.json", "version": "1.0.0" },
+    { "id": "verification.verification_registry", "path": "Axion/libraries/verification/registries/verification_registry.v1.json", "version": "1.0.0" },
+    { "id": "planning.planning_registry", "path": "Axion/libraries/planning/registries/planning_registry.v1.json", "version": "1.0.0" },
+    { "id": "orchestration.orchestration_registry", "path": "Axion/libraries/orchestration/registries/orchestration_registry.v1.json", "version": "1.0.0" },
+    { "id": "intake.intake_registry", "path": "Axion/libraries/intake/registries/intake_registry.v1.json", "version": "1.0.0" },
+    { "id": "canonical.canonical_registry", "path": "Axion/libraries/canonical/registries/canonical_registry.v1.json", "version": "1.0.0" },
+    { "id": "audit.audit_registry", "path": "Axion/libraries/audit/registries/audit_registry.v1.json", "version": "1.0.0" },
+    { "id": "system.system_registry", "path": "Axion/libraries/system/registries/system_registry.v1.json", "version": "1.0.0" }
   ],
   "notes": [
     "Schema files are registered in schema_registry.v1.json (separate).",

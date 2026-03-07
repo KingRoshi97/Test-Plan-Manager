@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "verification_registry.v1",
+  "description": "Registry of governed proof unit entries for the Axion verification system.",
+  "proof_units": [
+    {
+      "proof_id": "proof-functional-unit-tests-001",
+      "proof_class": "functional",
+      "strength_tier": "automated",
+      "reusability": "single_use",
+      "evidence_kind": "log_output",
+      "description": "Unit test suite execution proof. Created per run from test runner output."
+    },
+    {
+      "proof_id": "proof-functional-integration-tests-001",
+      "proof_class": "functional",
+      "strength_tier": "automated",
+      "reusability": "single_use",
+      "evidence_kind": "log_output",
+      "description": "Integration test suite execution proof. Created per run from integration test output."
+    },
+    {
+      "proof_id": "proof-security-sast-scan-001",
+      "proof_class": "security",
+      "strength_tier": "automated",
+      "reusability": "single_use",
+      "evidence_kind": "report",
+      "description": "SAST security scan proof. Produced by static analysis tooling."
+    },
+    {
+      "proof_id": "proof-security-dependency-audit-001",
+      "proof_class": "security",
+      "strength_tier": "automated",
+      "reusability": "reusable_within_run",
+      "evidence_kind": "report",
+      "description": "Dependency vulnerability audit proof. Reusable within a run for multiple claims."
+    },
+    {
+      "proof_id": "proof-compliance-code-review-001",
+      "proof_class": "compliance",
+      "strength_tier": "witnessed",
+      "reusability": "single_use",
+      "evidence_kind": "attestation",
+      "description": "Code review approval proof. Requires independent reviewer sign-off."
+    },
+    {
+      "proof_id": "proof-compliance-audit-attestation-001",
+      "proof_class": "compliance",
+      "strength_tier": "audited",
+      "reusability": "reusable_across_runs",
+      "evidence_kind": "attestation",
+      "description": "Formal audit attestation proof. Issued by authorized auditor, reusable until expiry."
+    },
+    {
+      "proof_id": "proof-performance-load-test-001",
+      "proof_class": "performance",
+      "strength_tier": "automated",
+      "reusability": "single_use",
+      "evidence_kind": "report",
+      "description": "Load test execution proof. Validates performance targets are met."
+    },
+    {
+      "proof_id": "proof-operational-health-check-001",
+      "proof_class": "operational",
+      "strength_tier": "automated",
+      "reusability": "single_use",
+      "evidence_kind": "log_output",
+      "description": "Health check proof. Validates service readiness and operational status."
+    },
+    {
+      "proof_id": "proof-functional-build-artifact-001",
+      "proof_class": "functional",
+      "strength_tier": "automated",
+      "reusability": "reusable_within_run",
+      "evidence_kind": "artifact",
+      "description": "Build artifact proof. Confirms successful build with artifact hash."
+    },
+    {
+      "proof_id": "proof-operational-manual-attestation-001",
+      "proof_class": "operational",
+      "strength_tier": "assertion",
+      "reusability": "single_use",
+      "evidence_kind": "attestation",
+      "description": "Manual attestation proof. Self-declared operational readiness for low-risk items."
+    }
+  ]
+}

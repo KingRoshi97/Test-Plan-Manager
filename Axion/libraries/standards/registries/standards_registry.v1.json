@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "standards_registry.v1",
+  "description": "Registry of governed standard units in the Axion standards library.",
+  "units": [
+    {
+      "unit_id": "STDU-SECURITY_BASELINE",
+      "name": "Security Baseline Standard",
+      "version": "1.0.0",
+      "status": "active",
+      "applicability": {
+        "profiles": ["PROFILE-API", "PROFILE-WEB"],
+        "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"],
+        "stacks": [],
+        "domains": ["auth", "security"]
+      },
+      "dependency_edges": [
+        { "edge_type": "pack", "target_id": "STD-SECURITY_BASELINE", "description": "Parent standards pack." },
+        { "edge_type": "gate", "target_id": "GATE-SEC-001", "description": "Security gate enforcement." }
+      ],
+      "supersedes": null
+    },
+    {
+      "unit_id": "STDU-API_DESIGN",
+      "name": "API Design Standard",
+      "version": "1.0.0",
+      "status": "active",
+      "applicability": {
+        "profiles": ["PROFILE-API"],
+        "risk_classes": ["PROD", "COMPLIANCE"],
+        "stacks": ["node", "python"],
+        "domains": []
+      },
+      "dependency_edges": [
+        { "edge_type": "template", "target_id": "TPL-API-REST", "description": "REST API template." },
+        { "edge_type": "proof", "target_id": "PROOF-API-CONTRACT", "description": "API contract proof." }
+      ],
+      "supersedes": null
+    },
+    {
+      "unit_id": "STDU-DATA_INTEGRITY",
+      "name": "Data Integrity Standard",
+      "version": "1.0.0",
+      "status": "active",
+      "applicability": {
+        "profiles": ["PROFILE-API", "PROFILE-WEB"],
+        "risk_classes": ["PROD", "COMPLIANCE"],
+        "stacks": [],
+        "domains": ["data", "storage"]
+      },
+      "dependency_edges": [
+        { "edge_type": "gate", "target_id": "GATE-DATA-001", "description": "Data integrity gate." },
+        { "edge_type": "proof", "target_id": "PROOF-DATA-VALIDATION", "description": "Data validation proof." }
+      ],
+      "supersedes": null
+    },
+    {
+      "unit_id": "STDU-AUTH_BASELINE",
+      "name": "Authentication Baseline Standard",
+      "version": "1.0.0",
+      "status": "active",
+      "applicability": {
+        "profiles": ["PROFILE-API", "PROFILE-WEB"],
+        "risk_classes": ["PROD", "COMPLIANCE"],
+        "stacks": [],
+        "domains": ["auth"]
+      },
+      "dependency_edges": [
+        { "edge_type": "gate", "target_id": "GATE-AUTH-001", "description": "Authentication gate." },
+        { "edge_type": "template", "target_id": "TPL-AUTH-SESSION", "description": "Session auth template." },
+        { "edge_type": "proof", "target_id": "PROOF-AUTH-FLOW", "description": "Auth flow proof." }
+      ],
+      "supersedes": null
+    },
+    {
+      "unit_id": "STDU-OBSERVABILITY",
+      "name": "Observability Standard",
+      "version": "1.0.0",
+      "status": "draft",
+      "applicability": {
+        "profiles": ["PROFILE-API", "PROFILE-WEB"],
+        "risk_classes": ["PROD", "COMPLIANCE"],
+        "stacks": [],
+        "domains": ["observability", "logging"]
+      },
+      "dependency_edges": [
+        { "edge_type": "gate", "target_id": "GATE-OBS-001", "description": "Observability gate." }
+      ],
+      "supersedes": null
+    }
+  ]
+}
