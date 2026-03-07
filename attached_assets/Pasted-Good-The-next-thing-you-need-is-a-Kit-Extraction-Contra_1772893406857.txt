@@ -1,0 +1,284 @@
+Good. The next thing you need is a Kit Extraction Contract.
+This is what forces the Build Mode to prove it actually consumed the Agent Kit before it starts generating code.
+
+Right now the build agent is probably doing something like:
+
+read brief
+read features
+infer stack
+generate repo
+
+What you want is:
+
+load kit
+extract build inputs
+resolve authoritative artifacts
+derive repo plan
+generate repo
+verify repo
+
+The Kit Extraction Contract sits between “load kit” and “derive repo plan.”
+
+Kit Extraction Contract (KEX)
+Purpose
+
+Define the minimum required information that must be extracted from the Agent Kit before Build Mode is allowed to generate a repo.
+
+If extraction fails → build stops.
+
+This prevents the builder from ignoring most of the kit.
+
+KEX-00 — Extraction Scope
+
+The build system must extract data from these Agent Kit layers:
+
+Build Brief
+
+Canonical Spec
+
+Work Breakdown
+
+Acceptance Map
+
+Architecture Pack
+
+Implementation Pack
+
+Data Pack
+
+API Pack
+
+Security Pack
+
+Design Pack
+
+Ops / Governance Pack
+
+If any of these layers exist in the kit but are not extracted, the builder must either:
+
+explain why it was not applicable
+
+or fail extraction
+
+KEX-01 — Required Extracted Artifacts
+
+The build planner must produce a Kit Extraction Report containing these fields:
+
+kit_extraction_report
+
+Required sections:
+
+kit_manifest_ref
+canonical_spec_ref
+work_breakdown_ref
+acceptance_map_ref
+architecture_refs
+implementation_refs
+data_refs
+api_refs
+security_refs
+design_refs
+ops_refs
+
+Each field must list the actual files consumed.
+
+Example:
+
+architecture_refs:
+  - ARCH-01-system-boundaries.md
+  - ARCH-02-module-map.md
+  - ARCH-03-service-communication.md
+KEX-02 — Derived Build Inputs
+
+From the extracted artifacts, the planner must derive:
+
+App identity
+app_name
+app_type
+target_stack
+repo_shape
+Domain model
+entities
+relationships
+state machines
+Subsystems
+frontend_modules
+backend_modules
+shared_modules
+Feature map
+features
+work_units
+user_flows
+Interfaces
+routes
+api_endpoints
+events
+Data
+schemas
+storage_types
+migrations
+Security
+auth_model
+rbac_rules
+data_protection_rules
+Verification expectations
+acceptance_conditions
+test_requirements
+proof_requirements
+
+If the planner cannot derive these → extraction is incomplete.
+
+KEX-03 — Repo Inventory Derivation
+
+After extraction the planner must generate:
+
+repo_inventory
+
+This contains:
+
+expected_directories
+expected_modules
+expected_files
+
+Example:
+
+frontend
+  components
+  hooks
+  pages
+  state
+
+backend
+  routes
+  services
+  models
+  middleware
+
+shared
+  contracts
+  types
+
+And the expected file count.
+
+Example:
+
+expected_file_count: 650
+
+This prevents the generator from producing a 130-file repo when the kit clearly implies hundreds.
+
+KEX-04 — Traceability Map
+
+The build planner must produce:
+
+requirement_trace_map
+
+Mapping:
+
+requirement -> file/module
+
+Example:
+
+REQ-DOC-EDIT-001
+  -> src/server/services/documentService.ts
+  -> src/app/pages/Editor.tsx
+
+REQ-COLLAB-002
+  -> src/server/services/realtimeService.ts
+  -> src/server/routes/collaboration.ts
+
+If requirements cannot be mapped → the build is incomplete.
+
+KEX-05 — Extraction Proof
+
+The planner must write a runtime artifact:
+
+kit_extraction.json
+
+Stored in:
+
+runs/<RUN_ID>/build/kit_extraction.json
+
+Example structure:
+
+{
+  kit_id: "...",
+  extracted_files: 287,
+  layers_extracted: [
+    "brief",
+    "canonical",
+    "architecture",
+    "implementation",
+    "data",
+    "api",
+    "security",
+    "design",
+    "ops"
+  ],
+  derived_entities: 12,
+  derived_modules: 24,
+  derived_routes: 18,
+  derived_features: 8,
+  derived_expected_file_count: 640
+}
+KEX-06 — Build Gate
+
+Build Mode must not start generation until extraction passes.
+
+Gate rule:
+
+G_BUILD_KIT_EXTRACTION
+
+Pass condition:
+
+all required kit layers extracted
+repo_inventory derived
+requirement_trace_map generated
+expected_file_count >= minimum threshold
+
+If this gate fails → build aborts.
+
+KEX-07 — Anti-Drift Rule
+
+The generator may not create modules that cannot be traced to the kit.
+
+If a generated file cannot be traced to:
+
+requirement
+architecture artifact
+implementation artifact
+data artifact
+API artifact
+
+then it must be flagged as:
+
+derived_or_inferred
+
+And the system should limit those.
+
+Why this fixes your problem
+
+Right now your build system likely does:
+
+kit -> summarize -> generate repo
+
+The extraction contract forces:
+
+kit
+ ↓
+deep extraction
+ ↓
+repo inventory
+ ↓
+file targets
+ ↓
+repo generation
+
+This forces the system to use far more of the kit.
+
+Important insight
+
+The weakness is not the build agent itself.
+
+The weakness is that the system does not force the planner to prove kit consumption.
+
+Once you enforce extraction contracts, the builder cannot ignore 70% of the kit anymore.

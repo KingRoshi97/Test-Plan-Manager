@@ -4,6 +4,7 @@ import { insertAssemblySchema } from "../shared/schema.js";
 import { startPipelineRun, killPipeline, getPipelineStatus } from "./pipeline-runner.js";
 import { generateAutofillSuggestions } from "./openai.js";
 import { getStageOrder, getStageGates, getGatesRequired, getStageNames } from "../Axion/src/core/orchestration/loader.js";
+import { registerMusRoutes } from "./mus-routes.js";
 import fs from "fs";
 import path from "path";
 import archiver from "archiver";
@@ -4290,4 +4291,6 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ error: err.message });
     }
   });
+
+  registerMusRoutes(app);
 }

@@ -1135,9 +1135,75 @@ Data flow: `registry JSON → loader.ts → RunController / CLI / pipeline-runne
 - The ORC-3 run_manifest.v1 schema defines the *target* manifest format (pipeline_ref, pins, runtime, stage_timeline, artifacts). The current runtime uses the legacy `RunManifest` type from `types/run.ts` with different field names. Full alignment requires a pipeline migration task.
 - `pipeline_ref` is stored on `ICPRun` as a first-class field and round-tripped through manifests via `config.__pipeline_ref` for backward compatibility with the legacy `RunManifest` type.
 
+### Maintenance & Updating System (MUS)
+Full MUS implementation: CLI + backend API + frontend UI. Replaces the old unit-based maintenance lifecycle with a proposal-first, consent-gated model.
+
+**Core Engine** (`Axion/src/core/mus/`):
+- `types.ts` — TypeScript interfaces: MusRun, MusFinding, MusProposalPack, MusPatch, MusBlastRadius, MusChangeSet, MusApprovalEvent, MusSuppressionRule, MusProofBundle, MusScheduleEntry, RegistryEnvelope, LedgerEntry
+- `engine.ts` — `validateRegistries(root)` validates all REG-*.json (structure, duplicates, active_map, cross-registry refs); `executeRun()` orchestrates DP-REG-01 (orphan refs, duplicates, status checks) and DP-DRIFT-01 (slug inconsistencies, reference mismatches, missing fields + proposals); budget enforcement stops at caps with COMPLETED_WITH_LIMITS; proof bundle generation; blast radius calculation
+- `store.ts` — File-based `MusStore` class for runs/findings/proposals/changesets/approvals/suppressions under `mus_data/`
+- `ledger.ts` — Append-only JSONL audit ledger at `mus_data/logs/ledger.jsonl`
+
+**Safety Constraints** (hard-enforced):
+- Scheduled runs are always proposal-only; publish is always blocked for scheduled triggers
+- Automation actors cannot create apply or publish approvals
+- Apply requires explicit Apply Approval event on the changeset
+- Publish requires explicit Publish Approval event (+ scheduled hard block)
+- Apply/Publish execution gated and disabled in v1 (501 after gate validation)
+
+**CLI Commands** (`Axion/src/cli/commands/mus.ts`, wired via `axion.ts`):
+- `axion mus validate --root <path>` — validate registries/policies, exit 0/1
+- `axion mus run --mode MM-01 --trigger manual --scope all --root <path>` — health check (DP-REG-01, findings only)
+- `axion mus run --mode MM-04 --trigger manual --scope all --root <path>` — drift detection (DP-DRIFT-01, findings + proposals)
+- `axion mus apply` / `axion mus publish` — stubbed with gate validation, not implemented in v1
+- Default root: `./axion_mus_creation/` or `./Axion/libraries/maintenance/`
+- Usage docs: `Axion/MUS_USAGE.md`
+
+**API Endpoints** (`server/mus-routes.ts`, registered via `registerMusRoutes()` in `routes.ts`):
+- `GET /api/mus/status` — MUS_ROOT, registry versions, consent/lock flags, last validation, last run
+- `POST /api/mus/validate` — validate registries, saves last_validation.json
+- `POST /api/mus/runs` — create run (mode_id MM-01/MM-04, trigger, scope, budgets)
+- `POST /api/mus/runs/:runId/start` — execute the run
+- `GET /api/mus/runs` / `GET /api/mus/runs/:runId` — list/get runs
+- `GET /api/mus/runs/:runId/findings` — findings with suppression filtering + query params (status, severity)
+- `PATCH /api/mus/findings/:findingId` — update status (open/acknowledged/resolved)
+- `POST /api/mus/suppressions` / `GET /api/mus/suppressions` — create/list suppression rules
+- `GET /api/mus/proposals` / `GET /api/mus/proposals/:id` — list/get proposal packs
+- `GET /api/mus/runs/:runId/proposals` / `GET /api/mus/runs/:runId/blast-radius` / `GET /api/mus/runs/:runId/proof` — run-specific data
+- `POST /api/mus/changesets` / `GET /api/mus/changesets` / `GET /api/mus/changesets/:id` — create/list/get changesets
+- `POST /api/mus/changesets/:id/apply` — 501 after gate validation (v1)
+- `POST /api/mus/releases/:id/publish` — 501 after gate validation + scheduled hard block (v1)
+- `POST /api/mus/approvals` / `GET /api/mus/approvals` — create/list approval events
+- `GET /api/mus/schedules` / `PATCH /api/mus/schedules/:id` — list/toggle schedules (override file, not mutate registry)
+- Old `/api/maintenance/` read-only endpoints kept for backward compatibility (modes, gates, detectors, patches, schedules, policies, schemas, registries)
+
+**Frontend** (`App/src/pages/maintenance.tsx`):
+- 7 tabs: Overview, Run, Findings, Proposals, Approvals, Schedules, Registries & Policies
+- Overview: MetricCards (runs, findings, registries, policy), consent/safety gates banner, last validation/run, recent runs list
+- Run: Mode selector (MM-01/MM-04), trigger, scope checkboxes, budget inputs, Validate Registries button, Run Now button with results display
+- Findings: Run selector, severity/status filters, table with acknowledge/suppress/resolve actions
+- Proposals: Expandable proposal packs with risk/confidence/impact, patch list with checkboxes, Create ChangeSet button (partial acceptance)
+- Approvals: Apply/Publish approval form, approval events table, automation actor + scheduled trigger hard blocks
+- Schedules: Toggle switches, proposal-only banner
+- Registries & Policies: Expandable read-only JSON viewers
+
+**Data Storage Layout** (`Axion/mus_data/` or `Axion/libraries/mus_data/`):
+- `runs/RUN-YYYYMMDD-XXXX/` — run.json, findings.json, proposal_packs.json, blast_radius.json, proof_bundle.json
+- `findings/FND-*.json` — individual finding files
+- `proposals/PP-*.json` — individual proposal packs
+- `changesets/CS-*.json` — changeset files
+- `approvals/APR-*.json` — approval event files
+- `suppressions/SUP-*.json` — suppression rule files
+- `logs/ledger.jsonl` — append-only audit ledger
+
 ### Key ID patterns
 - Pipeline: `PIPE-[A-Z0-9_]+`
 - Stage: `S\d{1,2}_[A-Z0-9_]+`
-- Run: `RUN-[A-Z0-9]{6,}`
+- Run: `RUN-[A-Z0-9]{6,}` (pipeline) / `RUN-YYYYMMDD-XXXX` (MUS)
 - IO Contract: `[A-Z0-9_-]+`
 - Rerun request: `RERUN-[A-Z0-9]{6,}`
+- MUS Finding: `FND-*`
+- MUS Proposal Pack: `PP-*`
+- MUS ChangeSet: `CS-*`
+- MUS Approval: `APR-*`
+- MUS Suppression: `SUP-*`

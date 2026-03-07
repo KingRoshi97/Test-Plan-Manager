@@ -1,0 +1,368 @@
+The Agent Kit is probably document-rich but build-poor
+
+Meaning it has a lot of information, but not enough of that information is expressed in a form that a build system can turn directly into code targets.
+
+That is why the build agent collapses the kit into:
+
+feature summaries
+
+page names
+
+route guesses
+
+generic scaffolding
+
+instead of producing a deep repo.
+
+The real issue
+
+Most kits are strong at:
+
+explaining
+
+describing
+
+specifying
+
+justifying
+
+But weak at:
+
+enumerating file targets
+
+defining module boundaries
+
+defining code contracts
+
+defining implementation units
+
+defining exact repo obligations
+
+So the build agent reads 300 files, but only maybe 20–40 of those files are in a shape that can directly drive generation.
+
+That makes the rest of the kit “informative,” but not “materializable.”
+
+The pattern that causes the collapse
+
+The builder sees a kit like this:
+
+requirements docs
+
+design docs
+
+architecture docs
+
+workflows
+
+acceptance docs
+
+security docs
+
+data docs
+
+But not enough of these:
+
+module inventory
+
+service inventory
+
+endpoint inventory
+
+screen inventory
+
+entity inventory
+
+file inventory
+
+contract inventory
+
+implementation units
+
+dependency graph
+
+code-generation targets
+
+So it does the only thing it can do:
+it compresses the knowledge into a smaller app.
+
+That is why 309 kit files turned into a 134-file repo.
+
+In plain language
+
+The kit tells the builder a lot about the app.
+
+But it may not tell the builder enough about the repo.
+
+That distinction is huge.
+
+You can have an excellent product kit and still have a weak build kit if the information is not translated into build-ready structures.
+
+What “build-poor” looks like
+
+A build-poor kit usually has these symptoms:
+
+1. Requirements are prose-heavy
+
+Example:
+
+“Users can collaboratively edit documents in real time with AI assistance…”
+
+That is useful product truth.
+
+But the builder still needs that translated into:
+
+collaboration service
+
+websocket layer
+
+edit session state
+
+document version model
+
+conflict resolver
+
+AI suggestion endpoint
+
+editor UI components
+
+presence model
+
+tests
+
+If that translation is not explicit, the builder compresses it.
+
+2. Architecture is conceptual, not executable
+
+Example:
+
+“The system should support modular services and scalable collaboration.”
+
+That is useful architecture intent.
+
+But the builder needs:
+
+exact subsystems
+
+exact modules
+
+exact service boundaries
+
+exact interfaces
+
+exact ownership
+
+Without those, it improvises.
+
+3. Acceptance is not mapped to implementation units
+
+You may have a strong acceptance map, but if it is not tied to:
+
+module
+
+route
+
+page
+
+service
+
+test file
+
+then the builder cannot use it to drive repo shape.
+
+4. Design is not broken into screen/component contracts
+
+If the design pack describes the UX well but does not enumerate:
+
+pages
+
+layouts
+
+components
+
+states
+
+interactions
+
+then the builder turns it into a generic UI.
+
+5. Data/API/security are not translated into concrete inventories
+
+You can have strong data and security docs, but if they do not become:
+
+entity list
+
+schema list
+
+migration list
+
+endpoint list
+
+permission matrix
+
+middleware map
+
+then they remain advisory instead of generative.
+
+The actual missing layer
+
+What your system likely needs inside the Agent Kit is a Build Projection Layer.
+
+That means the kit should not stop at:
+
+product truth
+
+architecture truth
+
+acceptance truth
+
+It should also include:
+
+repo truth
+
+module truth
+
+file truth
+
+The fix
+
+You need to add a layer of artifacts whose job is to translate the kit into buildable units.
+
+These are the missing artifact types
+1. Module Inventory
+
+Lists every major module the repo must contain.
+
+Example:
+
+auth_service
+
+workspace_service
+
+document_service
+
+collaboration_service
+
+ai_suggestion_service
+
+search_service
+
+notification_service
+
+2. Screen / UI Inventory
+
+Lists every page/screen/layout/component family.
+
+Example:
+
+login page
+
+workspace dashboard
+
+editor page
+
+document detail panel
+
+collaborator sidebar
+
+settings page
+
+3. Endpoint Inventory
+
+Lists every API endpoint or handler contract.
+
+Example:
+
+POST /auth/login
+
+POST /workspaces
+
+GET /documents/:id
+
+PUT /documents/:id
+
+POST /documents/:id/comments
+
+4. Entity / Schema Inventory
+
+Lists:
+
+entities
+
+schema fields
+
+relationships
+
+migration expectations
+
+5. File Inventory
+
+Lists the expected files or at least the expected file classes.
+
+This is the big one.
+
+6. Requirement-to-Module Map
+
+Maps:
+
+requirement → module
+
+requirement → route
+
+requirement → page
+
+requirement → test
+
+This stops loss during translation.
+
+7. Verification-to-File Map
+
+Maps:
+
+acceptance criteria → proof target
+
+proof target → file/test/check
+
+This stops verification from being abstract.
+
+Why this matters so much
+
+Right now your build agent likely has to do too much hidden translation:
+
+requirements prose
+→ infer architecture
+→ infer modules
+→ infer repo
+→ infer files
+→ generate app
+
+That is too lossy.
+
+What you want is:
+
+requirements
+→ module inventory
+→ repo blueprint
+→ file inventory
+→ generate files
+
+That keeps the kit from collapsing during build.
+
+The honest diagnosis
+
+So the second major flaw is not that the Agent Kit is weak overall.
+
+It is that the Agent Kit is probably missing enough build-projection artifacts to make the full knowledge base executable.
+
+That means the problem is:
+
+the kit is rich as documentation, but under-compiled as a build authority.
+
+That is why the build system underuses it.
+
+Best design sentence
+
+Use this:
+
+The current Agent Kit is strong as a requirements and design authority, but too much of its knowledge remains in descriptive form rather than being compiled into executable build projections such as module inventories, endpoint inventories, UI inventories, schema inventories, and file-target maps.
+
+That is the exact problem.

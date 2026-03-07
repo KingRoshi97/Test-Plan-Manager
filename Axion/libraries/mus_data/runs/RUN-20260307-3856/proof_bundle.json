@@ -1,0 +1,116 @@
+{
+  "run_id": "RUN-20260307-3856",
+  "mode_id": "MM-01",
+  "detector_packs_executed": [
+    "DP-REG-01"
+  ],
+  "checks_run": [
+    "reg.no_orphans",
+    "reg.no_duplicates",
+    "reg.active_map_valid",
+    "reg.status_valid"
+  ],
+  "files_pinned": [
+    {
+      "path": "registries/REG-BASELINES.json",
+      "hash": "a265ca9b17bdd47c"
+    },
+    {
+      "path": "registries/REG-CONSTRAINT-PACKS.json",
+      "hash": "c2aae21b6c7ed585"
+    },
+    {
+      "path": "registries/REG-DEPRECATIONS.json",
+      "hash": "d997d5f1c5565b7e"
+    },
+    {
+      "path": "registries/REG-DETECTOR-PACKS.json",
+      "hash": "add68b24bbfe018d"
+    },
+    {
+      "path": "registries/REG-GATES-MUS.json",
+      "hash": "67dda533ed8767ec"
+    },
+    {
+      "path": "registries/REG-KIDS.json",
+      "hash": "537fb8eba2820cea"
+    },
+    {
+      "path": "registries/REG-KL-CATEGORIES.json",
+      "hash": "bbae2460bad2ff77"
+    },
+    {
+      "path": "registries/REG-KL-TAGS.json",
+      "hash": "a2f6d79d00a58cf9"
+    },
+    {
+      "path": "registries/REG-MAINTENANCE-MODES.json",
+      "hash": "384b5fc2f0e59482"
+    },
+    {
+      "path": "registries/REG-PATCH-TYPES.json",
+      "hash": "6bcb932d6cb99bc4"
+    },
+    {
+      "path": "registries/REG-RELEASES.json",
+      "hash": "80a8ef7ebcfebde4"
+    },
+    {
+      "path": "registries/REG-SCHEDULES.json",
+      "hash": "f24f2a6cae1b6a2c"
+    },
+    {
+      "path": "registries/REG-STANDARDS.json",
+      "hash": "f2a1ea7a44118a9b"
+    },
+    {
+      "path": "registries/REG-SUPPRESSIONS.json",
+      "hash": "f60ae476fc0dd9b9"
+    },
+    {
+      "path": "registries/REG-TEMPLATE-PACKS.json",
+      "hash": "377c05b63e558099"
+    },
+    {
+      "path": "registries/REG-TEMPLATES.json",
+      "hash": "2e2315b4f0b77cd4"
+    },
+    {
+      "path": "registries/REG-VERIFICATION-COMMANDS.json",
+      "hash": "fb14e5e28fe87bbf"
+    },
+    {
+      "path": "policies/kl.policy.json",
+      "hash": "ab5d4195e7ecf253"
+    },
+    {
+      "path": "policies/mus.policy.json",
+      "hash": "f5f9dc717194b375"
+    },
+    {
+      "path": "policies/security.policy.json",
+      "hash": "77bbbff7ace6e142"
+    },
+    {
+      "path": "policies/template.policy.json",
+      "hash": "ccdb41f60eb804a2"
+    }
+  ],
+  "findings_count": 25,
+  "proposals_count": 0,
+  "budgets_used": {
+    "max_findings": 25,
+    "max_proposals": 0
+  },
+  "budgets_allowed": {
+    "token_cap": 5000,
+    "time_cap_ms": 30000,
+    "max_findings": 500,
+    "max_proposals": 25,
+    "max_assets_touched": 50
+  },
+  "limit_reasons": [],
+  "status": "completed",
+  "started_at": "2026-03-07T14:29:09.650Z",
+  "completed_at": "2026-03-07T14:29:09.716Z"
+}

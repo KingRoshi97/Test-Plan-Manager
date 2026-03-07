@@ -5,6 +5,7 @@ import { cmdRunStart, cmdRunFull } from "./commands/runControlPlane.js";
 import { cmdRunStage } from "./commands/runStage.js";
 import { cmdRunGates } from "./commands/runGates.js";
 import { cmdBuild } from "./commands/build.js";
+import { runMusCommand } from "./commands/mus.js";
 
 function resolveBaseDir(): string {
   if (existsSync("registries")) return ".";
@@ -22,6 +23,7 @@ Usage:
   axion run stage <run_id> <stage_id>         Execute a single stage for a run
   axion run gates <run_id> <stage_id>         Run gates for a stage
   axion build --run <run_id> --mode <mode>     Build repo from completed run
+  axion mus <subcommand>                      Maintenance & Updating System
   axion help                                  Show this help message
 
 Pipeline Stages (Mechanics order):
@@ -134,6 +136,11 @@ async function main(): Promise<void> {
         process.exit(1);
       }
       await cmdBuild(runId, mode);
+      break;
+    }
+
+    case "mus": {
+      await runMusCommand(args.slice(1));
       break;
     }
 

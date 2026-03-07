@@ -1,0 +1,123 @@
+{
+  "pass": false,
+  "errors": [
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/0/required_gates",
+      "message": "Mode MM-01 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/1/required_gates",
+      "message": "Mode MM-02 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/2/required_gates",
+      "message": "Mode MM-03 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/3/required_gates",
+      "message": "Mode MM-04 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/4/required_gates",
+      "message": "Mode MM-05 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/5/required_gates",
+      "message": "Mode MM-06 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/6/required_gates",
+      "message": "Mode MM-07 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/7/required_gates",
+      "message": "Mode MM-08 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/8/required_gates",
+      "message": "Mode MM-09 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/9/required_gates",
+      "message": "Mode MM-10 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/10/required_gates",
+      "message": "Mode MM-11 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/11/required_gates",
+      "message": "Mode MM-12 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/12/required_gates",
+      "message": "Mode MM-13 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/13/required_gates",
+      "message": "Mode MM-14 references gate \"G-MUS-06\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/13/required_gates",
+      "message": "Mode MM-14 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/14/required_gates",
+      "message": "Mode MM-15 references gate \"G-MUS-06\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/14/required_gates",
+      "message": "Mode MM-15 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/15/required_gates",
+      "message": "Mode MM-16 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/16/required_gates",
+      "message": "Mode MM-17 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/17/required_gates",
+      "message": "Mode MM-18 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/18/required_gates",
+      "message": "Mode MM-19 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/19/required_gates",
+      "message": "Mode MM-20 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    },
+    {
+      "file": "registries/REG-MAINTENANCE-MODES.json",
+      "json_pointer": "/items/20/required_gates",
+      "message": "Mode MM-21 references gate \"G-MUS-05\" not found in REG-GATES-MUS"
+    }
+  ],
+  "registries_checked": 17,
+  "items_checked": 38,
+  "checked_at": "2026-03-07T14:31:01.894Z"
+}

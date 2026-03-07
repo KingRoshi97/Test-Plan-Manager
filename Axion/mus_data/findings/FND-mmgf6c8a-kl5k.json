@@ -1,0 +1,15 @@
+{
+  "finding_id": "FND-mmgf6c8a-kl5k",
+  "run_id": "RUN-20260307-0007",
+  "check_id": "reg.status_valid",
+  "detector_pack_id": "DP-REG-01",
+  "severity": "medium",
+  "status": "open",
+  "title": "Invalid status \"enabled\" for SCH-WEEKLY-DRIFT",
+  "description": "Status must be one of: active, deprecated, draft, retired",
+  "file_path": "registries/REG-SCHEDULES.json",
+  "json_pointer": "/items/1/status",
+  "evidence_refs": [],
+  "created_at": "2026-03-07T14:29:30.346Z",
+  "updated_at": "2026-03-07T14:29:30.346Z"
+}

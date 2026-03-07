@@ -1,0 +1,322 @@
+You’re right — based on the two zips, the Build Kit is not extracting the Agent Kit to the furthest extent.
+
+What the comparison shows
+
+The Agent Kit is much richer than the Build Kit is acting on.
+
+Agent Kit shape
+
+The Agent Kit has:
+
+309 files total
+
+303 markdown docs
+
+6 core JSON artifacts
+
+And it is not just fluff. It includes:
+
+requirements
+
+design
+
+architecture
+
+implementation
+
+security
+
+quality
+
+ops
+
+data
+
+API contracts
+
+governance
+
+core artifacts like canonical spec, work breakdown, acceptance map, state snapshot
+
+Build Kit shape
+
+The Build Kit has:
+
+134 files total
+
+a generated React/Vite project
+
+manifests and a verification report
+
+frontend pages/components/hooks
+
+some backend-ish src/server/* stubs
+
+unit and integration tests
+
+So the Build Kit clearly used some of the Agent Kit, but it did not operationalize the full instruction surface.
+
+The real problem
+
+The build looks like it extracted the Agent Kit mostly at the level of:
+
+feature names
+
+high-level app theme
+
+broad tech profile
+
+some route/model/test scaffolding
+
+But it does not look like it deeply consumed:
+
+the full requirements corpus
+
+architecture pack
+
+implementation pack
+
+security pack
+
+data pack
+
+API contract pack
+
+governance/ops/quality requirements
+
+work breakdown and acceptance map as build-driving constraints
+
+That means the build is acting more like:
+
+feature summarizer + scaffold generator
+
+instead of:
+
+Kit-driven repo materializer
+
+And that is exactly the weakness you’re pointing at.
+
+Specific signs it is under-extracting
+1. It is over-indexing on feature titles
+
+The generated repo is strongly shaped around the 8 feature names:
+
+pages
+
+hooks
+
+tests
+
+routes
+
+models
+
+That means it definitely read the feature list.
+
+But it does not look like it deeply translated the dozens and dozens of lower-level requirement/design/architecture docs into actual repo structure.
+
+2. The build profile is too generic
+
+The build manifest shows a very generic profile:
+
+React
+
+TypeScript
+
+Node
+
+Vite
+
+Vitest
+
+Tailwind
+
+PostgreSQL
+
+That is fine as a starting profile, but it looks like the build mostly reduced the Kit into a generic modern stack choice rather than letting the Kit drive a deeper structure.
+
+3. The repo is too small relative to the instruction surface
+
+A 309-file Agent Kit producing a 134-file repo is not automatically wrong.
+
+But in this case, given the amount of:
+
+requirements
+
+security rules
+
+design rules
+
+API rules
+
+governance docs
+
+data docs
+
+implementation docs
+
+the output looks too compressed.
+
+That usually means the builder is:
+
+collapsing many instructions into broad stubs
+
+ignoring a lot of detail
+
+not turning enough requirements into concrete files/modules
+
+4. The backend looks shallow
+
+The build created:
+
+src/server/models/*
+
+src/server/routes/*
+
+some middleware
+
+But from the Agent Kit, this app should likely have much deeper treatment of:
+
+collaboration/versioning
+
+AI workflow orchestration
+
+search/tagging indexing logic
+
+integrations
+
+RBAC
+
+audit logs
+
+offline sync/conflict resolution
+
+compliance/security handling
+
+The generated backend shape looks more like feature placeholders than a repo truly derived from the full implementation + architecture + security + data packs.
+
+5. The naming shows weak semantic extraction
+
+There are generated server middleware files with names like:
+
+contributors-draft-and-edit-documents-collaboratively-in-real-time-using-ai-powered-suggestions-to-refine-content-and-structure.ts
+
+users-create-a-new-workspace-or-join-an-existing-one-to-start-organizing-their-documentation-projects.ts
+
+That is a big signal the builder is lifting workflow prose too directly instead of converting the Kit into proper architectural units.
+
+That usually means:
+
+shallow extraction
+
+weak normalization
+
+weak mapping from kit knowledge to repo objects
+
+A strong build system would convert those into bounded modules, not long sentence filenames.
+
+6. The Kit’s control artifacts are not visibly driving the build enough
+
+The Agent Kit explicitly tells the executor to use:
+
+canonical spec
+
+work breakdown
+
+acceptance map
+
+state snapshot
+
+But the Build Kit mostly looks like it used:
+
+the brief
+
+the feature list
+
+maybe some workflow text
+
+maybe some design flavor
+
+It does not look like the build was truly driven by:
+
+work units
+
+acceptance criteria
+
+hard-gate proof requirements
+
+structured canonical artifact resolution
+
+That is one of the biggest gaps.
+
+Clean conclusion
+
+So the answer is:
+
+No, it is almost certainly not extracting all of the data in the Agent Kit.
+
+More precisely:
+
+It is extracting the Kit at a summary level, not at a build-authority level.
+
+That is the core issue.
+
+What the build is probably doing now
+
+It looks like the build agent is using the Agent Kit more like this:
+
+read build brief
+
+read feature list
+
+infer tech stack
+
+scaffold app around major features
+
+create shallow backend/frontend/test coverage
+
+stop
+
+But what you want is more like:
+
+read kit manifest
+
+load canonical spec
+
+load work breakdown
+
+load acceptance map
+
+load design/architecture/implementation/security/data/API packs
+
+derive explicit repo inventory
+
+derive explicit module map
+
+derive explicit file targets
+
+generate per work unit / per contract / per subsystem
+
+verify against acceptance map and build gates
+
+That is a completely different level of extraction.
+
+The actual system flaw
+
+The flaw is probably one of these, or a mix:
+
+1. The build agent is reading the brief instead of the whole kit
+
+It is likely anchoring too hard on 00_BUILD_BRIEF.md.
+
+2. The build planner is not turning the kit into a file inventory
+
+So the generator is improvising around features instead of following a kit-derived repo plan.
+
+3. The build agent has no requirement-to-file trace model
+
+So many kit docs never become concrete code targets.
+
+4. The build system is kit-informed, not kit-driven
+
+Which is the exact problem you said you don’t want.

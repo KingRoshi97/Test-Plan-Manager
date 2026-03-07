@@ -1,0 +1,334 @@
+Your system currently has no formal step that converts the Agent Kit into a Repo Blueprint.
+
+So the build agent is forced to improvise the repo structure, which causes:
+
+under-extraction of the kit
+
+shallow repo generation
+
+missing modules
+
+compressed file counts
+
+feature-level scaffolding instead of system-level builds
+
+The fix is a mandatory intermediate artifact between the Kit and the generator.
+
+That artifact is called:
+
+Repo Blueprint (RBP)
+
+This becomes the true build authority for the generator.
+
+The flow becomes:
+
+Agent Kit
+   ↓
+Kit Extraction
+   ↓
+Repo Blueprint
+   ↓
+Build Plan
+   ↓
+Repo Generation
+
+Right now your system jumps from:
+
+Agent Kit → Build Plan
+
+Which is why the planner collapses the kit.
+
+RBP-00 — Repo Blueprint Purpose
+
+The Repo Blueprint converts the entire Agent Kit into a fully specified repository design.
+
+It defines:
+
+repo architecture
+
+module boundaries
+
+directory layout
+
+file inventory
+
+subsystem responsibilities
+
+contracts
+
+verification targets
+
+The generator should never guess structure.
+It should only materialize the blueprint.
+
+RBP-01 — Repo Blueprint Artifact
+
+Artifact name:
+
+repo_blueprint.json
+
+Location:
+
+runs/<RUN_ID>/build/repo_blueprint.json
+RBP-02 — Required Blueprint Sections
+
+The blueprint must contain these sections.
+
+System Identity
+app_name
+app_type
+repo_type
+repo_shape
+stack
+
+Example:
+
+app_type: "saas"
+repo_shape: "fullstack_monorepo"
+stack:
+  frontend: react
+  backend: node
+  database: postgres
+Domain Model
+
+Derived from canonical + data pack.
+
+entities
+relationships
+state_machines
+
+Example:
+
+entities:
+  - User
+  - Workspace
+  - Document
+  - Comment
+Subsystems
+
+Derived from architecture pack.
+
+subsystems
+
+Example:
+
+frontend
+backend
+realtime
+search
+ai_services
+auth
+collaboration
+
+Each subsystem must list:
+
+modules
+responsibilities
+dependencies
+Module Map
+
+Each module must include:
+
+module_id
+layer
+purpose
+inputs
+outputs
+dependencies
+
+Example:
+
+module_id: document_service
+layer: backend
+purpose: document lifecycle management
+Directory Layout
+
+This is the actual repo structure.
+
+Example:
+
+src/
+  app/
+  components/
+  hooks/
+
+src/server/
+  routes/
+  services/
+  models/
+
+src/shared/
+  contracts/
+  types/
+
+tests/
+docs/
+scripts/
+
+The generator should exactly follow this.
+
+File Inventory
+
+This is the most important section.
+
+The blueprint must list every expected file.
+
+Example:
+
+expected_files:
+  src/server/routes/document.ts
+  src/server/services/documentService.ts
+  src/app/pages/Editor.tsx
+  src/app/components/EditorToolbar.tsx
+
+This solves the 200-file problem.
+
+Because the system now knows:
+
+expected_file_count
+
+Example:
+
+expected_file_count: 720
+
+The generator runs until the inventory is complete.
+
+Interface Contracts
+
+Derived from API pack.
+
+routes
+endpoints
+events
+
+Example:
+
+POST /documents
+GET /documents/:id
+PUT /documents/:id
+Data Model
+
+Derived from data pack.
+
+schemas
+tables
+indexes
+migrations
+Security Model
+
+Derived from security pack.
+
+auth_model
+roles
+permissions
+data_protection_rules
+Feature Map
+
+Derived from work breakdown.
+
+features
+work_units
+user_flows
+Verification Targets
+
+Derived from acceptance map.
+
+required_tests
+required_checks
+required_proofs
+
+Example:
+
+tests_required:
+  unit
+  integration
+  e2e
+RBP-03 — File Count Derivation
+
+The blueprint must produce:
+
+expected_file_count
+
+This is calculated from:
+
+modules
+routes
+entities
+features
+tests
+configs
+
+Example:
+
+frontend: 280 files
+backend: 210 files
+shared: 70 files
+tests: 120 files
+configs/docs: 60 files
+
+expected_total: 740
+
+Now the generator cannot stop at 134 files.
+
+RBP-04 — Traceability Map
+
+The blueprint must map:
+
+requirement → module → file
+
+Example:
+
+REQ-DOC-COLLAB-001
+  module: realtime_service
+  files:
+    - src/server/services/realtimeService.ts
+    - src/server/events/collaboration.ts
+
+This forces the system to actually use the kit.
+
+RBP-05 — Build Gate
+
+Before repo generation starts:
+
+G_BUILD_BLUEPRINT_READY
+
+Conditions:
+
+repo_blueprint exists
+expected_file_count defined
+modules defined
+directory_layout defined
+trace_map defined
+
+If not → build stops.
+
+Why this fixes your system
+
+Right now the generator probably does:
+
+generate components
+generate routes
+generate tests
+done
+
+Which leads to:
+
+134 files
+
+With a blueprint, the generator does:
+
+for file in blueprint.file_inventory
+    generate(file)
+
+Which produces:
+
+600–1000 files
+Key insight
+
+Your Agent Kit is already good enough.
+
+The real missing piece is:
+
+Agent Kit → Repo Blueprint
+
+Once you add that artifact, the build system stops behaving like a scaffold generator and starts behaving like a controlled repo synthesizer.
