@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "ops_unit.v1",
+  "description": "Schema for an Ops governed unit. Every ops asset (alert rule set, logging standard, SLO policy, performance budget, cost model) must conform to this envelope.",
+  "type": "object",
+  "required": [
+    "library_id",
+    "unit_id",
+    "title",
+    "version",
+    "status",
+    "owner",
+    "created_at",
+    "updated_at",
+    "purpose",
+    "scope",
+    "authority_tier",
+    "ops_domain",
+    "applicability"
+  ],
+  "properties": {
+    "library_id": {
+      "type": "string",
+      "const": "ops",
+      "description": "Always 'ops' for ops library units."
+    },
+    "unit_id": {
+      "type": "string",
+      "pattern": "^OPS-[A-Z0-9_-]+$",
+      "description": "Unique ops unit identifier (e.g., OPS-ALRT-01, OPS-SLO-01)."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "candidate", "active", "restricted", "deprecated", "retired", "superseded"]
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 2
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 10,
+      "description": "What this unit governs and why."
+    },
+    "scope": {
+      "type": "string",
+      "description": "Boundary of what this unit covers."
+    },
+    "authority_tier": {
+      "type": "string",
+      "enum": ["A0", "A1", "A2", "A3", "A4"],
+      "description": "A0=system-critical, A1=production-authoritative, A2=recommended, A3=reference, A4=experimental."
+    },
+    "risk_class": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "Risk classification for this unit."
+    },
+    "ops_domain": {
+      "type": "string",
+      "enum": ["monitoring_alerting", "logging_tracing", "slo_error_budget", "perf_budgets", "cost_quota", "ops_gates"],
+      "description": "Which ops domain this unit belongs to."
+    },
+    "applicability": {
+      "type": "object",
+      "description": "When this unit applies.",
+      "properties": {
+        "project_types": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "stages": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "risk_classes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "environments": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "exclusions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "dependencies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependency_edge" },
+      "description": "What this unit depends on."
+    },
+    "dependents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependency_edge" },
+      "description": "What depends on this unit."
+    },
+    "required_proofs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Proof types needed to validate this unit."
+    },
+    "maintenance_class": {
+      "type": "string",
+      "enum": ["coverage_audit", "drift_detection", "backcompat_validation", "registry_rebuild", "registry_cleanup"],
+      "description": "Primary maintenance mode for this unit."
+    },
+    "compatibility_label": {
+      "type": "string",
+      "enum": ["compatible", "breaking", "migration-required", "rerun-required", "rebuild-required"]
+    },
+    "supersedes": {
+      "type": ["string", "null"],
+      "description": "Unit ID this replaces, or null."
+    },
+    "superseded_by": {
+      "type": ["string", "null"],
+      "description": "Unit ID that replaces this, or null."
+    },
+    "deprecated_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "retired_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "change_summary": {
+      "type": "string",
+      "description": "Summary of last change."
+    },
+    "source_doc_id": {
+      "type": "string",
+      "description": "Reference to the underlying data file (e.g., ALRT-01, SLO-01)."
+    }
+  },
+  "$defs": {
+    "dependency_edge": {
+      "type": "object",
+      "required": ["target_id", "edge_type"],
+      "properties": {
+        "target_id": { "type": "string" },
+        "edge_type": {
+          "type": "string",
+          "enum": ["requires", "constrains", "derives_from", "validates", "evidences", "produces_for", "conflicts_with", "supersedes"]
+        },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

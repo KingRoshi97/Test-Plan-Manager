@@ -1,0 +1,188 @@
+{
+  "registry_id": "ops_registry.v1",
+  "schema_version": "1.0.0",
+  "description": "Unified registry of all Ops governed units. Each entry conforms to ops_unit.v1.schema.json.",
+  "units": [
+    {
+      "library_id": "ops",
+      "unit_id": "OPS-ALRT-01",
+      "title": "Monitoring Alert Rules",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-07T00:00:00Z",
+      "purpose": "Defines conditions under which the system raises alerts for run failures, gate failures, and budget overruns.",
+      "scope": "Alert rule definitions, severity levels, cooldown windows, escalation channels.",
+      "authority_tier": "A1",
+      "risk_class": "high",
+      "ops_domain": "monitoring_alerting",
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["S1_INGEST_NORMALIZE", "S2_INTAKE_VALIDATION", "S3_STANDARDS_RESOLUTION", "S4_CANONICAL_BUILD", "S5_TEMPLATE_SELECTION", "S6_PLAN_GENERATION", "S7_TEMPLATE_FILL", "S8_GATE_EVALUATION", "S9_KIT_PACKAGE", "S10_CLOSE"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["development", "staging", "production"]
+      },
+      "dependencies": [
+        { "target_id": "telemetry.event_types", "edge_type": "requires", "description": "Alert conditions reference telemetry event counters." },
+        { "target_id": "gates.gate_registry", "edge_type": "requires", "description": "Gate failure alerts reference gate IDs." }
+      ],
+      "dependents": [
+        { "target_id": "telemetry.sink_policy", "edge_type": "produces_for", "description": "Alert events are routed through telemetry sinks." }
+      ],
+      "required_proofs": ["schema_validity", "condition_parseable"],
+      "maintenance_class": "drift_detection",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "deprecated_at": null,
+      "retired_at": null,
+      "change_summary": "Initial governed unit elevation from ALRT-01.",
+      "source_doc_id": "ALRT-01"
+    },
+    {
+      "library_id": "ops",
+      "unit_id": "OPS-LTS-01",
+      "title": "Logging & Tracing Standards",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-07T00:00:00Z",
+      "purpose": "Defines required log fields, correlation IDs, log levels, and redaction policy for all pipeline logging.",
+      "scope": "Log field schema, trace/span ID requirements, redaction patterns, log level semantics.",
+      "authority_tier": "A0",
+      "risk_class": "critical",
+      "ops_domain": "logging_tracing",
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["S1_INGEST_NORMALIZE", "S2_INTAKE_VALIDATION", "S3_STANDARDS_RESOLUTION", "S4_CANONICAL_BUILD", "S5_TEMPLATE_SELECTION", "S6_PLAN_GENERATION", "S7_TEMPLATE_FILL", "S8_GATE_EVALUATION", "S9_KIT_PACKAGE", "S10_CLOSE"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["development", "staging", "production"]
+      },
+      "dependencies": [
+        { "target_id": "telemetry.event_types", "edge_type": "requires", "description": "Log events conform to telemetry event schema." }
+      ],
+      "dependents": [
+        { "target_id": "audit.integrity", "edge_type": "produces_for", "description": "Audit trail depends on log field integrity." },
+        { "target_id": "telemetry.privacy_policy", "edge_type": "constrains", "description": "Redaction rules constrain what telemetry can expose." }
+      ],
+      "required_proofs": ["schema_validity", "redaction_coverage"],
+      "maintenance_class": "coverage_audit",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "deprecated_at": null,
+      "retired_at": null,
+      "change_summary": "Initial governed unit elevation from LTS-01.",
+      "source_doc_id": "LTS-01"
+    },
+    {
+      "library_id": "ops",
+      "unit_id": "OPS-SLO-01",
+      "title": "SLO/SLA & Error Budget Policy",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-07T00:00:00Z",
+      "purpose": "Defines service-level objectives for run success rate and latency, plus error budget burn alert thresholds and enforcement actions.",
+      "scope": "SLO definitions, measurement windows, error budget calculations, burn alert thresholds, enforcement actions (tighten_gates, freeze_changes).",
+      "authority_tier": "A1",
+      "risk_class": "high",
+      "ops_domain": "slo_error_budget",
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["S10_CLOSE"],
+        "risk_classes": ["critical", "high", "medium"],
+        "environments": ["staging", "production"]
+      },
+      "dependencies": [
+        { "target_id": "policy.risk_classes", "edge_type": "requires", "description": "Error budget enforcement depends on risk classification." },
+        { "target_id": "gates.gate_registry", "edge_type": "constrains", "description": "tighten_gates action references gate evaluation severity." }
+      ],
+      "dependents": [
+        { "target_id": "telemetry.event_types", "edge_type": "produces_for", "description": "SLO violation events feed telemetry." }
+      ],
+      "required_proofs": ["schema_validity", "objective_range_valid"],
+      "maintenance_class": "drift_detection",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "deprecated_at": null,
+      "retired_at": null,
+      "change_summary": "Initial governed unit elevation from SLO-01.",
+      "source_doc_id": "SLO-01"
+    },
+    {
+      "library_id": "ops",
+      "unit_id": "OPS-PERF-01",
+      "title": "Performance Budgets & Profiling Policy",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-07T00:00:00Z",
+      "purpose": "Defines per-stage and per-run time budgets, profiling capture thresholds, and output paths.",
+      "scope": "Stage budget values (ms), run total budget, profiling enable/threshold, profile output path.",
+      "authority_tier": "A1",
+      "risk_class": "medium",
+      "ops_domain": "perf_budgets",
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["S1_INGEST_NORMALIZE", "S2_INTAKE_VALIDATION", "S3_STANDARDS_RESOLUTION", "S4_CANONICAL_BUILD", "S5_TEMPLATE_SELECTION", "S6_PLAN_GENERATION", "S7_TEMPLATE_FILL", "S8_GATE_EVALUATION", "S9_KIT_PACKAGE", "S10_CLOSE"],
+        "risk_classes": ["critical", "high", "medium", "low"],
+        "environments": ["development", "staging", "production"]
+      },
+      "dependencies": [
+        { "target_id": "orchestration.pipeline_definition", "edge_type": "requires", "description": "Stage budgets reference pipeline stage IDs." }
+      ],
+      "dependents": [
+        { "target_id": "OPS-ALRT-01", "edge_type": "produces_for", "description": "Budget overrun triggers alert rules." }
+      ],
+      "required_proofs": ["schema_validity", "stage_coverage_complete"],
+      "maintenance_class": "backcompat_validation",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "deprecated_at": null,
+      "retired_at": null,
+      "change_summary": "Initial governed unit elevation from PERF-01.",
+      "source_doc_id": "PERF-01"
+    },
+    {
+      "library_id": "ops",
+      "unit_id": "OPS-COST-01",
+      "title": "Capacity & Cost Model",
+      "version": "1.0.0",
+      "status": "active",
+      "owner": "axion-core",
+      "created_at": "2026-03-05T00:00:00Z",
+      "updated_at": "2026-03-07T00:00:00Z",
+      "purpose": "Defines capacity assumptions, compute/storage units, and cost estimation model for Axion runs.",
+      "scope": "CPU/memory/storage assumptions, unit definitions, per-run and per-day cost estimates, quota hook points.",
+      "authority_tier": "A2",
+      "risk_class": "medium",
+      "ops_domain": "cost_quota",
+      "applicability": {
+        "project_types": ["all"],
+        "stages": ["S10_CLOSE"],
+        "risk_classes": ["critical", "high", "medium"],
+        "environments": ["staging", "production"]
+      },
+      "dependencies": [
+        { "target_id": "system.quota_sets", "edge_type": "requires", "description": "Cost estimates feed into system quota enforcement." }
+      ],
+      "dependents": [],
+      "required_proofs": ["schema_validity", "estimate_consistency"],
+      "maintenance_class": "drift_detection",
+      "compatibility_label": "compatible",
+      "supersedes": null,
+      "superseded_by": null,
+      "deprecated_at": null,
+      "retired_at": null,
+      "change_summary": "Initial governed unit elevation from COST-01.",
+      "source_doc_id": "COST-01"
+    }
+  ]
+}

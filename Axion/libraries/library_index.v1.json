@@ -55,7 +55,15 @@
     { "id": "orchestration.rerun_policies", "path": "Axion/libraries/orchestration/registries/rerun_policies.axion.v1.json", "version": "1.0.0" },
 
     { "id": "audit.integrity", "path": "Axion/libraries/audit/registries/audit_integrity.v1.json", "version": "1.0.0" },
-    { "id": "audit.ops_policy", "path": "Axion/libraries/audit/registries/audit_ops_policy.v1.json", "version": "1.0.0" }
+    { "id": "audit.ops_policy", "path": "Axion/libraries/audit/registries/audit_ops_policy.v1.json", "version": "1.0.0" },
+
+    { "id": "ops.registry", "path": "Axion/libraries/ops/registries/ops_registry.v1.json", "version": "1.0.0" },
+    { "id": "ops.metrics_catalog", "path": "Axion/libraries/ops/registries/ops_metrics_catalog.v1.json", "version": "1.0.0" },
+    { "id": "ops.alert_rules", "path": "Axion/libraries/ops/registries/ALRT-01.monitoring_alert_rules.v1.json", "version": "1.0.0" },
+    { "id": "ops.logging_standards", "path": "Axion/libraries/ops/registries/LTS-01.logging_tracing_standards.v1.json", "version": "1.0.0" },
+    { "id": "ops.slo_policy", "path": "Axion/libraries/ops/registries/SLO-01.slo_policy.v1.json", "version": "1.0.0" },
+    { "id": "ops.perf_budgets", "path": "Axion/libraries/ops/registries/PERF-01.performance_budgets.v1.json", "version": "1.0.0" },
+    { "id": "ops.cost_model", "path": "Axion/libraries/ops/registries/COST-01.capacity_cost_model.v1.json", "version": "1.0.0" }
   ],
   "notes": [
     "Schema files are registered in schema_registry.v1.json (separate).",

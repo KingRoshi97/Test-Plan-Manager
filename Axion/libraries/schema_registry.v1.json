@@ -493,6 +493,42 @@
       "path": "Axion/libraries/templates/schemas/render_envelope.v1.schema.json",
       "uri": "axion://schemas/templates/render_envelope.v1.schema.json",
       "version": "1.0.0"
+    },
+    {
+      "schema_id": "ops.ops_unit.v1",
+      "path": "Axion/libraries/ops/schemas/ops_unit.v1.schema.json",
+      "uri": "axion://schemas/ops/ops_unit.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "ops.ops_decision_report.v1",
+      "path": "Axion/libraries/ops/schemas/ops_decision_report.v1.schema.json",
+      "uri": "axion://schemas/ops/ops_decision_report.v1.schema.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "ops.alert_rules.v1",
+      "path": "Axion/libraries/ops/schemas/ALRT-01.monitoring_alert_rules.schema.v1.json",
+      "uri": "axion://schemas/ops/ALRT-01.monitoring_alert_rules.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "ops.cost_model.v1",
+      "path": "Axion/libraries/ops/schemas/COST-01.capacity_cost_model.schema.v1.json",
+      "uri": "axion://schemas/ops/COST-01.capacity_cost_model.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "ops.telemetry_event.v1",
+      "path": "Axion/libraries/ops/schemas/OBS-01.telemetry_event.schema.v1.json",
+      "uri": "axion://schemas/ops/OBS-01.telemetry_event.schema.v1.json",
+      "version": "1.0.0"
+    },
+    {
+      "schema_id": "ops.run_metrics.v1",
+      "path": "Axion/libraries/ops/schemas/OBS-02.run_metrics.schema.v1.json",
+      "uri": "axion://schemas/ops/OBS-02.run_metrics.schema.v1.json",
+      "version": "1.0.0"
     }
   ]
 }

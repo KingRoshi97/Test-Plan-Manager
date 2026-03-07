@@ -78,7 +78,7 @@ export const libraries: LibraryUpgrade[] = [
       "Expand ops into a full doctrine library with purpose, boundaries, determinism rules, validation checklist, evidence requirements, gate mapping, minimum viable ops set",
       "Split ops into governed areas: observability, logging/tracing, alerting, SLO/error budgets, perf budgets, load/capacity, cost/quota policy hooks",
     ],
-    route: "",
+    route: "/ops",
   },
   {
     id: "knowledge",

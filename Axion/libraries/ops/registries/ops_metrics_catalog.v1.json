@@ -1,0 +1,94 @@
+{
+  "catalog_id": "ops_metrics_catalog.v1",
+  "schema_version": "1.0.0",
+  "description": "Catalog of ops library health metrics. Each metric corresponds to a governance dimension from ALG-13.",
+  "scoring_model": {
+    "scale": "0-100",
+    "green_threshold": 80,
+    "amber_threshold": 60,
+    "red_threshold": 0,
+    "weight_model": "equal"
+  },
+  "dimensions": [
+    {
+      "dimension_id": "OPS-DIM-01",
+      "name": "Identity Completeness",
+      "description": "All ops units have stable IDs, versions, owners, and lifecycle states.",
+      "measurement": "count(units_with_complete_identity) / count(all_units) * 100",
+      "required_fields": ["unit_id", "version", "owner", "status", "created_at", "updated_at"],
+      "weight": 1.0
+    },
+    {
+      "dimension_id": "OPS-DIM-02",
+      "name": "Registry Integrity",
+      "description": "All active ops units are present in the ops registry with no duplicates or orphans.",
+      "measurement": "registry_valid_entries / expected_entries * 100",
+      "checks": ["no_duplicate_ids", "no_orphaned_units", "no_broken_supersession_chains", "all_active_units_have_owner"],
+      "weight": 1.0
+    },
+    {
+      "dimension_id": "OPS-DIM-03",
+      "name": "Applicability Precision",
+      "description": "All ops units have explicit applicability declarations (project types, stages, risk classes).",
+      "measurement": "count(units_with_applicability) / count(all_units) * 100",
+      "required_fields": ["applicability.project_types", "applicability.stages", "applicability.risk_classes"],
+      "weight": 1.0
+    },
+    {
+      "dimension_id": "OPS-DIM-04",
+      "name": "Dependency Clarity",
+      "description": "All cross-library dependencies are explicitly declared with typed edges.",
+      "measurement": "count(units_with_declared_deps) / count(units_with_actual_deps) * 100",
+      "allowed_edge_types": ["requires", "constrains", "derives_from", "validates", "evidences", "produces_for", "conflicts_with", "supersedes"],
+      "weight": 1.0
+    },
+    {
+      "dimension_id": "OPS-DIM-05",
+      "name": "Proof Sufficiency",
+      "description": "All ops units have defined proof requirements and those proofs can be satisfied.",
+      "measurement": "count(units_with_satisfied_proofs) / count(all_units) * 100",
+      "proof_classes": ["schema_validity", "structural_completeness", "dependency_integrity", "applicability_validity", "backcompat_status"],
+      "weight": 1.0
+    },
+    {
+      "dimension_id": "OPS-DIM-06",
+      "name": "Backcompat Discipline",
+      "description": "All ops unit changes carry a compatibility label and supersession chain is intact.",
+      "measurement": "count(units_with_compat_label) / count(all_units) * 100",
+      "allowed_labels": ["compatible", "breaking", "migration-required", "rerun-required", "rebuild-required"],
+      "weight": 1.0
+    },
+    {
+      "dimension_id": "OPS-DIM-07",
+      "name": "Maintenance Readiness",
+      "description": "Ops library is compatible with all required maintenance modes (coverage audit, drift detection, backcompat validation, registry rebuild, registry cleanup).",
+      "measurement": "count(supported_maintenance_modes) / count(required_maintenance_modes) * 100",
+      "required_modes": ["MM-03", "MM-04", "MM-10", "MM-12", "MM-13"],
+      "weight": 1.0
+    },
+    {
+      "dimension_id": "OPS-DIM-08",
+      "name": "Observability Coverage",
+      "description": "Ops library emits decision reports, health signals, and is observable by telemetry.",
+      "measurement": "count(observable_units) / count(all_units) * 100",
+      "required_signals": ["decision_report_emitted", "health_metric_exposed", "telemetry_event_defined"],
+      "weight": 1.0
+    }
+  ],
+  "current_assessment": {
+    "assessed_at": "2026-03-07T00:00:00Z",
+    "overall_score": 56,
+    "target_score": 85,
+    "dimension_scores": {
+      "OPS-DIM-01": 70,
+      "OPS-DIM-02": 40,
+      "OPS-DIM-03": 50,
+      "OPS-DIM-04": 45,
+      "OPS-DIM-05": 55,
+      "OPS-DIM-06": 50,
+      "OPS-DIM-07": 60,
+      "OPS-DIM-08": 65
+    },
+    "notes": "Score reflects pre-upgrade state. Target is 85 after full Phase 1 doctrine upgrade."
+  }
+}

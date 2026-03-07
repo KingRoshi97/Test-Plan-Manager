@@ -831,6 +831,18 @@ S1_INGEST_NORMALIZE → S2_VALIDATE_INTAKE → S3_BUILD_CANONICAL → S4_VALIDAT
 - Evidence policy: gates require associated proof types from PROOF_TYPE_REGISTRY
 - Gate reports include evidence completeness sections
 
+### Ops Library (`Axion/libraries/ops/`)
+Fully governed operational authority library (OPS-0 through OPS-7) covering monitoring/alerting, logging/tracing, SLO/error budgets, performance budgets, cost models, and ops gates/evidence.
+
+**Structure (37 files):**
+- 24 docs (OPS-0: purpose/boundary checklist, OPS-1: monitoring alert model/determinism/validation, OPS-2: logging tracing model/determinism/validation, OPS-3: SLO error budget model/determinism/validation, OPS-4: perf budgets model/determinism/validation, OPS-5: cost quota model/determinism/validation, OPS-6: ops gates evidence/gate mapping/determinism/validation, OPS-7: minimum viable ops/definition of done/minimal tree)
+- 6 schemas: `ops_unit.v1`, `ops_decision_report.v1`, `ALRT-01.monitoring_alert_rules`, `COST-01.capacity_cost_model`, `OBS-01.telemetry_event`, `OBS-02.run_metrics`
+- 7 registries: `ops_registry.v1` (5 governed units), `ops_metrics_catalog.v1` (8 health dimensions), `ALRT-01`, `COST-01`, `LTS-01`, `PERF-01`, `SLO-01`
+
+**API:** `GET /api/ops` (overview), `/api/ops/docs`, `/api/ops/schemas`, `/api/ops/registries`, `/api/ops/registries/:name`, `/api/ops/docs/:filename`
+**UI:** `/ops` — Ops Library page with Documents/Schemas/Registries tabs
+**Registered in:** `schema_registry.v1.json` (6 entries), `library_index.v1.json` (7 entries)
+
 ### Gates Library (`Axion/libraries/gates/`)
 Formal Gate DSL and evaluation contract library (GATE-0 through GATE-6) defining how pass/fail checks are expressed, what data gates read, how evidence is collected, and how gate outcomes interact with run control.
 

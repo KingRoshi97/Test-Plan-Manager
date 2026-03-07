@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "id": "ops_decision_report.v1",
+  "description": "Schema for ops decision reports. Emitted when the ops library evaluates operational readiness, selects policies, or assesses compliance.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "report_type",
+    "run_id",
+    "timestamp",
+    "evaluated_units",
+    "verdict",
+    "findings"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "pattern": "^OPS-RPT-[A-Z0-9_-]+$",
+      "description": "Unique report identifier."
+    },
+    "report_type": {
+      "type": "string",
+      "enum": ["selection", "resolution", "evaluation", "proof", "packaging", "retrieval", "mutation_impact"],
+      "description": "What kind of decision this report covers."
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Pipeline run this report belongs to."
+    },
+    "assembly_id": {
+      "type": ["string", "null"],
+      "description": "Assembly ID if applicable."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "context": {
+      "type": "object",
+      "description": "Contextual inputs that influenced the decision.",
+      "properties": {
+        "project_type": { "type": "string" },
+        "risk_class": { "type": "string" },
+        "environment": { "type": "string" },
+        "stage": { "type": "string" },
+        "profile": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "evaluated_units": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evaluated_unit" },
+      "minItems": 1,
+      "description": "Ops units that were evaluated."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["pass", "fail", "warn", "skip"],
+      "description": "Overall decision outcome."
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" },
+      "description": "Specific findings from the evaluation."
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Paths or IDs of evidence artifacts referenced."
+    },
+    "recommendations": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Recommended actions based on findings."
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How long the evaluation took."
+    }
+  },
+  "$defs": {
+    "evaluated_unit": {
+      "type": "object",
+      "required": ["unit_id", "result"],
+      "properties": {
+        "unit_id": { "type": "string" },
+        "result": {
+          "type": "string",
+          "enum": ["pass", "fail", "warn", "skip", "not_applicable"]
+        },
+        "reason": { "type": "string" },
+        "evidence_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "finding": {
+      "type": "object",
+      "required": ["finding_id", "severity", "message"],
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^OPS-FIND-[A-Z0-9]+$"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["blocker", "warning", "info"]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 5
+        },
+        "affected_unit": { "type": "string" },
+        "remediation": { "type": "string" },
+        "evidence_ref": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
