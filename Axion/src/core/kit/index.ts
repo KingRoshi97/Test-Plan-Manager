@@ -4,7 +4,7 @@ export { createPlaceholderVersionStamp, writeVersionStamp } from "./versions.js"
 export { createKitLayout } from "./layout.js";
 export { buildRealKit as buildKit } from "./build.js";
 export type { KitBuildResult } from "./build.js";
-export { validateKit } from "./validate.js";
+export { validateKit, validateKitOnDisk } from "./validate.js";
 export type { KitValidationResult } from "./validate.js";
 export { packageKit } from "./packager.js";
 export type { KitManifest, KitArtifactEntry, Entrypoint, VersionStamp } from "./schemas.js";

@@ -107,12 +107,18 @@ export async function enrichCanonicalSpec(
       content: `You are the Internal Agent (IA) of the Axion pipeline. Your job is to ENRICH and EXPAND a canonical specification to enterprise-grade completeness.
 
 You MUST:
-1. ENRICH existing features with detailed, project-specific descriptions
-2. IDENTIFY and ADD missing features that are essential for the described project. Decompose vague or broad features into specific, implementable sub-features (e.g., "Search functionality" → "Search with Filters", "Search Results Display", "Saved Searches")
+1. ENRICH existing features with detailed, project-specific descriptions that include: what the feature does, what data it operates on, what UI/API surfaces it exposes, and what constraints apply
+2. IDENTIFY and ADD missing features that are essential for the described project. Decompose vague or broad features into specific, implementable sub-features (e.g., "Search functionality" → "Search with Filters", "Search Results Display", "Saved Searches"). Each feature MUST have a description of at least 2 sentences describing concrete behavior.
 3. Ensure the total feature count (existing + new) is at least 8 for any non-trivial project. Aim for 8-12 features.
-4. IDENTIFY and ADD missing roles beyond just "User" — consider Admin, Moderator, Manager, or domain-specific roles based on the project context
-5. IDENTIFY and ADD missing workflows that cover key user journeys, admin operations, and edge cases
-6. Provide failure_states for all workflows (existing and new)
+4. IDENTIFY and ADD missing roles beyond just "User" — consider Admin, Moderator, Manager, or domain-specific roles based on the project context. Each role MUST have a primary_goal that describes specific capabilities (not just "manage the system").
+5. IDENTIFY and ADD missing workflows that cover key user journeys, admin operations, and edge cases. Each workflow MUST have at least 4 specific steps that describe concrete actions (not vague phrases like "process data").
+6. Provide failure_states for ALL workflows (existing and new). Failure states MUST be specific failure modes with causes — not just "error occurs". Example: "Payment gateway timeout after 30s → show retry with saved cart state" instead of "Payment fails".
+
+QUALITY REQUIREMENTS:
+- Every feature description must mention specific data fields, UI elements, or API endpoints it involves
+- Every workflow step must be an actionable verb phrase (e.g., "Validate email format and check uniqueness against users table" not "Validate input")
+- Rules must be specific and measurable (e.g., "All API responses must return within 500ms p95" not "System should be fast")
+- NEVER use vague phrases: "as needed", "as appropriate", "various", "etc.", "and more", "other features"
 
 For NEW features, use feature_ids starting from FEAT-${String(nextFeatureIndex + 1).padStart(3, "0")}.
 For NEW roles, use role_ids starting from ROLE-${String(nextRoleIndex + 1).padStart(3, "0")}.
@@ -345,14 +351,24 @@ export async function enrichWorkBreakdown(
   const messages: OpenAIMessage[] = [
     {
       role: "system",
-      content: `You are the Internal Agent (IA) enriching a work breakdown for a software project. For each work unit, provide a detailed implementation description and practical acceptance criteria. Return JSON:
+      content: `You are the Internal Agent (IA) enriching a work breakdown for a software project. For each work unit, provide implementation-level detail and specific, testable acceptance criteria.
+
+QUALITY REQUIREMENTS:
+- Each description MUST specify: what components/files to create, what patterns/technologies to use, what data structures are involved, and how it connects to other units
+- Each acceptance_criteria MUST be a specific, testable statement — not "works correctly" but "POST /api/users returns 201 with user object containing id, email, created_at fields"
+- Include at least 2 acceptance criteria per unit, separated by semicolons
+- Descriptions must be 3-5 sentences with concrete technical details (specific API endpoints, database tables, UI components, state management patterns)
+- NEVER use vague phrases: "implement feature", "add functionality", "handle errors properly", "write tests". Be specific about WHAT to implement and HOW.
+- For test-related units, specify exact test scenarios (e.g., "Test login with valid credentials returns JWT token; Test login with wrong password returns 401; Test login with locked account returns 403")
+
+Return JSON:
 {
   "units": [
     { "unit_id": "WU-001", "description": "...", "acceptance_criteria": "..." },
     ...
   ]
 }
-Only return valid JSON. Keep descriptions actionable and specific (2-3 sentences each).`,
+Only return valid JSON.`,
     },
     {
       role: "user",

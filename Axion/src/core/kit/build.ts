@@ -310,9 +310,9 @@ function buildPackIndexMd(slotContents: Record<string, string[]>): string {
   const rows = APP_SLOTS.map((s) => {
     const key = `${s.num}_${s.name}`;
     const files = slotContents[key] ?? [];
-    const fileList = files.length > 0 ? files.join(", ") : "00_NA.md";
-    return `| \`${key}/\` | ${s.label} | ${fileList} |`;
-  }).join("\n");
+    if (files.length === 0) return null;
+    return `| \`${key}/\` | ${s.label} | ${files.join(", ")} |`;
+  }).filter(Boolean).join("\n");
 
   return `# App Pack — Index
 
@@ -690,14 +690,6 @@ export function buildRealKit(
     }
   }
 
-  for (const slot of APP_SLOTS) {
-    const slotKey = `${slot.num}_${slot.name}`;
-    const slotDir = join(appDir, slotKey);
-    ensureDir(slotDir);
-    if (slotContents[slotKey].length === 0) {
-      writeFile(join(slotDir, "00_NA.md"), buildNaMd(slotKey, `Not applicable for this project — no templates were selected for the ${slot.label} slot`, slot.trigger));
-    }
-  }
 
   const selectedSlots = APP_SLOTS
     .filter((s) => slotContents[`${s.num}_${s.name}`].length > 0)

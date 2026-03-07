@@ -16,6 +16,8 @@ import {
 } from "./completeness.js";
 import type { TemplateCompletenessEntry, TemplateGateEntry } from "./completeness.js";
 import { fillTemplate, type FillContext, type CAN03Unknown } from "./filler.js";
+import type { FilledTemplate } from "./filler.js";
+import { checkAllTemplates } from "./completenessGate.js";
 import { resolveKnowledge } from "../knowledge/resolver.js";
 import type { KnowledgeContext } from "../knowledge/resolver.js";
 
@@ -334,6 +336,32 @@ export async function writeRenderedDocs(runDir: string, runId: string, generated
   }
 
   console.log(`  [IA] All ${results.length} templates rendered successfully`);
+
+  const allFilledTemplates: FilledTemplate[] = results.map(({ filled }) => filled);
+  const deepCompletenessResults = checkAllTemplates(allFilledTemplates, canonicalSpec);
+  const weakTemplates = deepCompletenessResults.filter((r) => !r.is_complete);
+  if (weakTemplates.length > 0) {
+    console.log(`  [IA] Completeness gate: ${weakTemplates.length}/${deepCompletenessResults.length} templates have weak sections`);
+    for (const wt of weakTemplates) {
+      if (wt.weak_sections.length > 0) {
+        console.log(`    - ${wt.template_id}: ${wt.completeness_percentage}% complete, weak sections: ${wt.weak_sections.join(", ")}`);
+      }
+    }
+  } else {
+    console.log(`  [IA] Completeness gate: all ${deepCompletenessResults.length} templates pass deep completeness checks`);
+  }
+
+  writeCanonicalJson(join(runDir, "templates", "deep_completeness_report.json"), {
+    run_id: runId,
+    checked_at: now,
+    total_templates: deepCompletenessResults.length,
+    complete_count: deepCompletenessResults.filter((r) => r.is_complete).length,
+    incomplete_count: weakTemplates.length,
+    average_completeness: deepCompletenessResults.length > 0
+      ? Math.round(deepCompletenessResults.reduce((sum, r) => sum + r.completeness_percentage, 0) / deepCompletenessResults.length)
+      : 100,
+    results: deepCompletenessResults,
+  });
 
   writeCanonicalJson(join(runDir, "templates", "render_envelopes.json"), {
     run_id: runId,

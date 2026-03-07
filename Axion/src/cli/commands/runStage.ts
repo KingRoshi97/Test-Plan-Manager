@@ -8,6 +8,8 @@ import { STAGE_ORDER, STAGE_GATES, resolveStageId } from "../../types/run.js";
 import { getStageOrder, getStageGates } from "../../core/orchestration/loader.js";
 import type { ArtifactIndexEntry } from "../../types/artifacts.js";
 import { buildRealKit } from "../../core/kit/build.js";
+import { validateKitOnDisk } from "../../core/kit/validate.js";
+import { packageKit } from "../../core/kit/packager.js";
 import { buildWorkBreakdown } from "../../core/planning/workBreakdown.js";
 import { buildAcceptanceMap } from "../../core/planning/acceptanceMap.js";
 import { calculateCoverage } from "../../core/planning/coverage.js";
@@ -338,7 +340,52 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
     console.log(`  S9: Verified ${gateReports.length} gates, created ${proofObjects.length} proof objects, pointers: ${pointerReport.resolved}/${pointerReport.total} resolved`);
   } else if (stageId === "S10_PACKAGE") {
     const kitResult = buildRealKit(runDir, runId, generatedAt, baseDir);
-    console.log(`  S10: Packaged kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
+    console.log(`  S10: Built kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
+
+    const pmPath = join(runDir, "kit", "packaging_manifest.json");
+    if (!existsSync(pmPath)) {
+      console.log(`  S10: WARNING — packaging_manifest.json not found, skipping kit validation`);
+    }
+    const pm = existsSync(pmPath)
+      ? readJson<{ files: Array<{ path: string; sha256: string }> }>(pmPath)
+      : { files: [] };
+    const packagingFiles = pm.files ?? [];
+
+    const kitManifest = {
+      kit_id: `KIT-${runId}`,
+      run_id: runId,
+      version: "1.0.0",
+      created_at: generatedAt,
+      artifacts: packagingFiles.map((f, i) => ({
+        artifact_id: `ART-${String(i + 1).padStart(3, "0")}`,
+        path: f.path,
+        type: f.path.endsWith(".json") ? "json" : f.path.endsWith(".md") ? "markdown" : "file",
+        hash: f.sha256,
+      })),
+      metadata: { packaged_by: "axion-pipeline", run_id: runId },
+    };
+
+    const validationResult = validateKitOnDisk(join(runDir, "kit"), kitManifest);
+    writeJson(join(runDir, "kit", "kit_validation_report.json"), {
+      run_id: runId,
+      validated_at: isoNow(),
+      valid: validationResult.valid,
+      error_count: validationResult.errorCount,
+      errors: validationResult.errors,
+    });
+
+    if (!validationResult.valid) {
+      console.log(`  S10: Kit validation found ${validationResult.errorCount} issue(s):`);
+      for (const err of validationResult.errors) {
+        console.log(`    - ${err}`);
+      }
+    } else {
+      console.log(`  S10: Kit validation passed`);
+    }
+
+    const packageOutputPath = join(runDir, "kit", "packaged");
+    packageKit(runDir, packageOutputPath);
+    console.log(`  S10: Kit packaged to ${packageOutputPath}`);
   }
 }
 

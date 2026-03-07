@@ -4,7 +4,7 @@
 Axion is a document-generation and compliance-enforcement system with a full-stack web application. It takes intake submissions through a 10-stage Mechanics pipeline (S1_INGEST_NORMALIZE → S10_PACKAGE), resolves standards, builds canonical specs, selects and renders templates, plans work, verifies proofs, runs gates, and packages everything into versioned "kits." The web dashboard provides a UI for creating assemblies, triggering pipeline runs, and browsing artifacts.
 
 ## Current State
-Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass, 193 kit files produced.
+Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass. Output quality enforcement: 200+ keyword HEADING_DOMAIN_MAP for knowledge bridge, kit bloat elimination (empty slots skipped), deep template completeness gate (18 placeholder patterns), sharpened AI prompts (vague language banned, concrete details required), kit validation on disk, kit packager with SHA-256 manifests.
 
 ### Pipeline Stall Detection
 Automatic watchdog in `server/pipeline-runner.ts` detects stalled pipeline runs:
@@ -1073,6 +1073,21 @@ Pipeline execution contracts and run lifecycle definitions. Defines the authorit
 - **API**: 6 `/api/orchestration/*` endpoints expose orchestration library data to the UI
 - **UI**: `/orchestration` page with 4 tabs (Pipeline, Documents, Schemas, Registries), overview cards, pipeline stage visualization with IO contract labels and gate points
 - **Registered in:** `schema_registry.v1.json` (6 structural + 2 governance entries = 8 total), `library_index.v1.json` (3 structural + 1 governance entries = 4 total)
+
+### Output Quality Enforcement
+The pipeline enforces output quality through several mechanisms:
+
+**HEADING_DOMAIN_MAP** (`Axion/src/core/templates/filler.ts`): Maps 200+ heading keywords to taxonomy domain names across all three knowledge pillars (IT Domains, Industry Playbooks, Cross-Cutting). This bridge connects template section headings to the knowledge library so the LLM receives relevant reference material when filling sections. Keywords cover: databases, APIs, auth, security, CI/CD, observability, ML/AI, all industry verticals (healthcare, finance, legal, education, etc.), and infrastructure topics.
+
+**Kit Bloat Prevention** (`Axion/src/core/kit/build.ts`): Empty slots (APP_SLOTS with zero rendered documents) no longer produce directories or placeholder `00_NA.md` files. Only slots with actual content get created. The pack index skips empty slots entirely.
+
+**Template Completeness Gate** (`Axion/src/core/templates/completenessGate.ts`): Deep per-section analysis that scans for 18 placeholder patterns (`_Content to be filled_`, `_To be determined_`, `{{...}}`, `TBD`, etc.), checks section length, and computes per-template completeness percentage. Results written to `deep_completeness_report.json`. Gate G5 enforces the shallower `template_completeness_report.json` with `pass: true` check.
+
+**AI Prompt Quality** (`Axion/src/core/templates/filler.ts`, `Axion/src/core/agents/openai-bridge.ts`): LLM prompts explicitly ban vague language ("to be determined", "as needed", "TBD", etc.), require minimum 3 actionable items per section, mandate concrete project-specific details (endpoints, fields, configs), require explicit `**UNKNOWN:**` flags instead of vague placeholders, and set 100-300 word section targets. Spec enrichment prompt requires specific data fields, testable acceptance criteria, and concrete failure states. Work breakdown enrichment requires implementation-level detail with specific test scenarios.
+
+**Kit Validation** (`Axion/src/core/kit/validate.ts`): Validates kit structure on disk — checks for `00_START_HERE.md`, all 6 required core artifacts in `01_core_artifacts/`, JSON artifact parsing, manifest-to-disk cross-reference, and acceptance map → work breakdown cross-reference. Wired into S10; results in `kit_validation_report.json`. Gate G8 enforces `valid: true`.
+
+**Kit Packager** (`Axion/src/core/kit/packager.ts`): Copies kit bundle to output path, generates `manifest.json` with SHA-256 hashes per file, content hash, file counts, and metadata. Ensures `00_START_HERE.md` fallback exists.
 
 ### Architecture: Registry-Driven Pipeline
 The orchestration library's `pipeline_definition.axion.v1.json` is the **single source of truth** for pipeline execution. All runtime consumers load from the registry via the orchestration loader, with hardcoded fallbacks in `types/run.ts` (marked `@deprecated`) for resilience if the registry file is missing.

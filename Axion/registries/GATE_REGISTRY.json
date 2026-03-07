@@ -84,7 +84,10 @@
           "op": "verify_hash_manifest",
           "manifest_path": ".axion/runs/{{run_id}}/kit/packaging_manifest.json",
           "bundle_root": ".axion/runs/{{run_id}}/kit/bundle"
-        }
+        },
+        { "op": "file_exists", "path": ".axion/runs/{{run_id}}/kit/kit_validation_report.json" },
+        { "op": "json_valid", "path": ".axion/runs/{{run_id}}/kit/kit_validation_report.json" },
+        { "op": "json_eq", "path": ".axion/runs/{{run_id}}/kit/kit_validation_report.json", "pointer": "/valid", "expected": true }
       ]
     }
   ]
