@@ -4,3 +4,10 @@
 {"timestamp":"2026-03-07T14:29:30.343Z","event":"run_started","actor":"operator","details":{"run_id":"RUN-20260307-0007","mode_id":"MM-01"}}
 {"timestamp":"2026-03-07T14:29:30.355Z","event":"run_completed","actor":"operator","details":{"run_id":"RUN-20260307-0007","status":"completed","findings_count":25,"proposals_count":0}}
 {"timestamp":"2026-03-07T14:31:01.894Z","event":"validate","actor":"operator","details":{"root":"/home/runner/workspace/Axion/libraries/maintenance","pass":false,"error_count":23}}
+{"timestamp":"2026-03-07T14:32:28.139Z","event":"run_created","actor":"operator","details":{"run_id":"RUN-20260307-9964","mode_id":"MM-04","trigger":"manual"}}
+{"timestamp":"2026-03-07T14:32:28.247Z","event":"run_started","actor":"operator","details":{"run_id":"RUN-20260307-9964","mode_id":"MM-04"}}
+{"timestamp":"2026-03-07T14:32:28.252Z","event":"run_completed","actor":"operator","details":{"run_id":"RUN-20260307-9964","status":"completed","findings_count":0,"proposals_count":0}}
+{"timestamp":"2026-03-07T14:32:30.964Z","event":"validate","actor":"operator","details":{"root":"/home/runner/workspace/Axion/libraries/maintenance","pass":false,"error_count":23}}
+{"timestamp":"2026-03-07T14:32:37.703Z","event":"run_created","actor":"operator","details":{"run_id":"RUN-20260307-8486","mode_id":"MM-04","trigger":"manual"}}
+{"timestamp":"2026-03-07T14:32:37.772Z","event":"run_started","actor":"operator","details":{"run_id":"RUN-20260307-8486","mode_id":"MM-04"}}
+{"timestamp":"2026-03-07T14:32:37.774Z","event":"run_completed","actor":"operator","details":{"run_id":"RUN-20260307-8486","status":"completed","findings_count":0,"proposals_count":0}}

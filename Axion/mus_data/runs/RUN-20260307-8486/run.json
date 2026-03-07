@@ -1,0 +1,44 @@
+{
+  "run_id": "RUN-20260307-8486",
+  "mode_id": "MM-04",
+  "trigger": "manual",
+  "scope": {
+    "asset_classes": [
+      "registries",
+      "knowledge_library",
+      "templates"
+    ]
+  },
+  "budgets": {
+    "token_cap": 15000,
+    "time_cap_ms": 60000,
+    "max_findings": 500,
+    "max_proposals": 25,
+    "max_assets_touched": 50
+  },
+  "status": "completed",
+  "created_at": "2026-03-07T14:32:37.703Z",
+  "started_at": "2026-03-07T14:32:37.772Z",
+  "pinned_versions": {
+    "REG-BASELINES": "0.1.0",
+    "REG-CONSTRAINT-PACKS": "0.1.0",
+    "REG-DEPRECATIONS": "0.1.0",
+    "REG-DETECTOR-PACKS": "0.1.0",
+    "REG-GATES-MUS": "0.1.0",
+    "REG-KIDS": "0.1.0",
+    "REG-KL-CATEGORIES": "0.1.0",
+    "REG-KL-TAGS": "0.1.0",
+    "REG-MAINTENANCE-MODES": "0.1.0",
+    "REG-PATCH-TYPES": "0.1.0",
+    "REG-RELEASES": "0.1.0",
+    "REG-SCHEDULES": "0.1.0",
+    "REG-STANDARDS": "0.1.0",
+    "REG-SUPPRESSIONS": "0.1.0",
+    "REG-TEMPLATE-PACKS": "0.1.0",
+    "REG-TEMPLATES": "0.1.0",
+    "REG-VERIFICATION-COMMANDS": "0.1.0"
+  },
+  "findings_count": 0,
+  "proposals_count": 0,
+  "completed_at": "2026-03-07T14:32:37.774Z"
+}
