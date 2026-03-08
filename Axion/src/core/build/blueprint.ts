@@ -450,10 +450,23 @@ function buildDirectoryLayout(
     "src/server/routes",
     "src/server/middleware",
     "src/server/models",
+    "src/server/repositories",
+    "src/server/services",
+    "src/server/controllers",
+    "src/server/workflows",
+    "src/server/config",
+    "src/server/errors",
+    "src/server/lib",
+    "src/contexts",
     "public",
     "tests",
     "tests/unit",
+    "tests/unit/services",
+    "tests/unit/repositories",
+    "tests/unit/controllers",
     "tests/integration",
+    "tests/e2e",
+    "tests/acceptance",
     "docs",
   ];
 
@@ -509,6 +522,12 @@ function buildFileInventory(
   addMiddlewareFiles(files, nextId, inputs);
   addModelFiles(files, nextId, inputs);
   addEntityFiles(files, nextId, inputs);
+  addRepositoryFiles(files, nextId, inputs);
+  addServiceFiles(files, nextId, inputs);
+  addControllerFiles(files, nextId, inputs);
+  addWorkflowFiles(files, nextId, inputs);
+  addServerInfraFiles(files, nextId);
+  addContextFiles(files, nextId, inputs);
   addEndpointDerivedFiles(files, nextId, inputs);
   addTestFiles(files, nextId, inputs);
   addDocFiles(files, nextId);
@@ -945,7 +964,12 @@ function addFeatureFiles(
     const lower = (feat.name + " " + feat.description).toLowerCase();
     const isAuth = lower.includes("auth") || lower.includes("login") || lower.includes("register") || lower.includes("sign in");
 
-    if (!isAuth && needsForm(lower)) {
+    const wantsForm = isAuth ? false : (needsForm(lower) || true);
+    const wantsList = needsList(lower) || !isAuth;
+    const wantsDetail = needsDetail(lower) || !isAuth;
+    const wantsCard = needsCard(lower);
+
+    if (wantsForm) {
       files.push({
         file_id: nextId(),
         path: `${featureDir}/${slug}Form.tsx`,
@@ -960,7 +984,7 @@ function addFeatureFiles(
       });
     }
 
-    if (needsList(lower)) {
+    if (wantsList) {
       files.push({
         file_id: nextId(),
         path: `${featureDir}/${slug}List.tsx`,
@@ -975,7 +999,7 @@ function addFeatureFiles(
       });
     }
 
-    if (needsDetail(lower)) {
+    if (wantsDetail) {
       files.push({
         file_id: nextId(),
         path: `${featureDir}/${slug}Detail.tsx`,
@@ -990,7 +1014,7 @@ function addFeatureFiles(
       });
     }
 
-    if (needsCard(lower)) {
+    if (wantsCard) {
       files.push({
         file_id: nextId(),
         path: `${featureDir}/${slug}Card.tsx`,
@@ -1294,6 +1318,179 @@ function addEntityFiles(
   }
 }
 
+function addRepositoryFiles(
+  files: BlueprintFileEntry[],
+  nextId: () => string,
+  inputs: KitExtraction["derived_inputs"]
+) {
+  files.push({
+    file_id: nextId(),
+    path: "src/server/repositories/index.ts",
+    role: "barrel_export",
+    layer: "backend",
+    module_ref: "mod-routes",
+    subsystem_ref: "sub-backend",
+    generation_method: "deterministic",
+    source_refs: [],
+    trace_refs: [],
+    description: "Repositories barrel export",
+  });
+
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "-");
+    files.push({
+      file_id: nextId(),
+      path: `src/server/repositories/${slug}.repository.ts`,
+      role: "entity_repository",
+      layer: "backend",
+      module_ref: "mod-routes",
+      subsystem_ref: "sub-backend",
+      generation_method: "ai_assisted",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Repository for ${entity.name} entity`,
+    });
+  }
+}
+
+function addServiceFiles(
+  files: BlueprintFileEntry[],
+  nextId: () => string,
+  inputs: KitExtraction["derived_inputs"]
+) {
+  files.push({
+    file_id: nextId(),
+    path: "src/server/services/index.ts",
+    role: "barrel_export",
+    layer: "backend",
+    module_ref: "mod-routes",
+    subsystem_ref: "sub-backend",
+    generation_method: "deterministic",
+    source_refs: [],
+    trace_refs: [],
+    description: "Services barrel export",
+  });
+
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "-");
+    files.push({
+      file_id: nextId(),
+      path: `src/server/services/${slug}.service.ts`,
+      role: "service_module",
+      layer: "backend",
+      module_ref: "mod-routes",
+      subsystem_ref: "sub-backend",
+      generation_method: "ai_assisted",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Service for ${entity.name} entity`,
+    });
+  }
+}
+
+function addControllerFiles(
+  files: BlueprintFileEntry[],
+  nextId: () => string,
+  inputs: KitExtraction["derived_inputs"]
+) {
+  files.push({
+    file_id: nextId(),
+    path: "src/server/controllers/index.ts",
+    role: "barrel_export",
+    layer: "backend",
+    module_ref: "mod-routes",
+    subsystem_ref: "sub-backend",
+    generation_method: "deterministic",
+    source_refs: [],
+    trace_refs: [],
+    description: "Controllers barrel export",
+  });
+
+  for (const feat of inputs.feature_map) {
+    const slug = feat.name.toLowerCase().replace(/\s+/g, "-");
+    files.push({
+      file_id: nextId(),
+      path: `src/server/controllers/${slug}.controller.ts`,
+      role: "route_handler",
+      layer: "backend",
+      module_ref: "mod-routes",
+      subsystem_ref: "sub-backend",
+      generation_method: "ai_assisted",
+      source_refs: [feat.feature_id],
+      trace_refs: [],
+      description: `Controller for ${feat.name}`,
+    });
+  }
+}
+
+function addWorkflowFiles(
+  files: BlueprintFileEntry[],
+  nextId: () => string,
+  inputs: KitExtraction["derived_inputs"]
+) {
+  files.push({
+    file_id: nextId(),
+    path: "src/server/workflows/index.ts",
+    role: "barrel_export",
+    layer: "backend",
+    module_ref: "mod-routes",
+    subsystem_ref: "sub-backend",
+    generation_method: "deterministic",
+    source_refs: [],
+    trace_refs: [],
+    description: "Workflows barrel export",
+  });
+
+  const workflows = inputs.verification?.acceptance_criteria ?? [];
+  const workflowSlugs = new Set<string>();
+
+  for (const feat of inputs.feature_map) {
+    const slug = feat.name.toLowerCase().replace(/\s+/g, "-");
+    if (!workflowSlugs.has(slug)) {
+      workflowSlugs.add(slug);
+      files.push({
+        file_id: nextId(),
+        path: `src/server/workflows/${slug}.workflow.ts`,
+        role: "event_handler",
+        layer: "backend",
+        module_ref: "mod-routes",
+        subsystem_ref: "sub-backend",
+        generation_method: "ai_assisted",
+        source_refs: [feat.feature_id],
+        trace_refs: [],
+        description: `Workflow handler for ${feat.name}`,
+      });
+    }
+  }
+}
+
+function addServerInfraFiles(files: BlueprintFileEntry[], nextId: () => string) {
+  const infraFiles = [
+    { path: "src/server/index.ts", role: "entry_point", desc: "Server entry point" },
+    { path: "src/server/app.ts", role: "app_entry", desc: "Express app configuration" },
+    { path: "src/server/config/index.ts", role: "config_env", desc: "Server configuration index" },
+    { path: "src/server/config/database.ts", role: "db_connection", desc: "Database connection configuration" },
+    { path: "src/server/errors/index.ts", role: "barrel_export", desc: "Error classes barrel export" },
+    { path: "src/server/errors/AppError.ts", role: "utility", desc: "Application error base class" },
+    { path: "src/server/lib/logger.ts", role: "utility", desc: "Server logging utility" },
+  ];
+
+  for (const f of infraFiles) {
+    files.push({
+      file_id: nextId(),
+      path: f.path,
+      role: f.role,
+      layer: "backend",
+      module_ref: "mod-routes",
+      subsystem_ref: "sub-backend",
+      generation_method: f.role === "barrel_export" ? "deterministic" : "ai_assisted",
+      source_refs: [],
+      trace_refs: [],
+      description: f.desc,
+    });
+  }
+}
+
 function addEndpointDerivedFiles(
   files: BlueprintFileEntry[],
   nextId: () => string,
@@ -1395,6 +1592,86 @@ function addTestFiles(
       source_refs: [criteria.feature_ref],
       trace_refs: [criteria.criteria_id],
       description: `Acceptance test: ${criteria.description}`,
+    });
+  }
+
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "-");
+    files.push({
+      file_id: nextId(),
+      path: `tests/unit/services/${slug}.service.test.ts`,
+      role: "unit_test",
+      layer: "test",
+      module_ref: "mod-tests",
+      subsystem_ref: "sub-test",
+      generation_method: "ai_assisted",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Service tests for ${entity.name}`,
+    });
+
+    files.push({
+      file_id: nextId(),
+      path: `tests/unit/repositories/${slug}.repository.test.ts`,
+      role: "unit_test",
+      layer: "test",
+      module_ref: "mod-tests",
+      subsystem_ref: "sub-test",
+      generation_method: "ai_assisted",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Repository tests for ${entity.name}`,
+    });
+  }
+
+  for (const feat of inputs.feature_map) {
+    const slug = feat.name.toLowerCase().replace(/\s+/g, "-");
+    files.push({
+      file_id: nextId(),
+      path: `tests/unit/controllers/${slug}.controller.test.ts`,
+      role: "unit_test",
+      layer: "test",
+      module_ref: "mod-tests",
+      subsystem_ref: "sub-test",
+      generation_method: "ai_assisted",
+      source_refs: [feat.feature_id],
+      trace_refs: [],
+      description: `Controller tests for ${feat.name}`,
+    });
+
+    files.push({
+      file_id: nextId(),
+      path: `tests/e2e/${slug}.e2e.test.ts`,
+      role: "e2e_test",
+      layer: "test",
+      module_ref: "mod-tests",
+      subsystem_ref: "sub-test",
+      generation_method: "ai_assisted",
+      source_refs: [feat.feature_id],
+      trace_refs: [],
+      description: `E2E tests for ${feat.name}`,
+    });
+  }
+}
+
+function addContextFiles(
+  files: BlueprintFileEntry[],
+  nextId: () => string,
+  inputs: KitExtraction["derived_inputs"]
+) {
+  for (const feat of inputs.feature_map) {
+    const slug = feat.name.toLowerCase().replace(/\s+/g, "-");
+    files.push({
+      file_id: nextId(),
+      path: `src/contexts/${slug}.context.tsx`,
+      role: "feature_store",
+      layer: "frontend",
+      module_ref: "mod-store",
+      subsystem_ref: "sub-frontend",
+      generation_method: "ai_assisted",
+      source_refs: [feat.feature_id],
+      trace_refs: [],
+      description: `Context provider for ${feat.name}`,
     });
   }
 }
@@ -1656,7 +1933,7 @@ export function checkBlueprintGate(blueprint: RepoBlueprint): BlueprintGateResul
 
 function inferLayerFromPath(dirPath: string): string {
   if (dirPath.startsWith("src/server") || dirPath.startsWith("src/lib/auth")) return "backend";
-  if (dirPath.startsWith("src/components") || dirPath.startsWith("src/pages") || dirPath.startsWith("src/hooks") || dirPath.startsWith("src/styles") || dirPath.startsWith("src/lib/store") || dirPath.startsWith("src/lib/api")) return "frontend";
+  if (dirPath.startsWith("src/components") || dirPath.startsWith("src/pages") || dirPath.startsWith("src/hooks") || dirPath.startsWith("src/styles") || dirPath.startsWith("src/lib/store") || dirPath.startsWith("src/lib/api") || dirPath.startsWith("src/contexts")) return "frontend";
   if (dirPath.startsWith("src/types") || dirPath.startsWith("src/lib/validators")) return "shared";
   if (dirPath.startsWith("tests")) return "test";
   if (dirPath.startsWith("docs") || dirPath.startsWith("public")) return "docs";
@@ -1684,6 +1961,14 @@ function inferPurposeFromPath(dirPath: string): string {
     "src/server/routes": "API route handlers",
     "src/server/middleware": "Express middleware",
     "src/server/models": "Database models",
+    "src/server/repositories": "Data access repositories",
+    "src/server/services": "Business logic services",
+    "src/server/controllers": "Request controllers",
+    "src/server/workflows": "Workflow handlers",
+    "src/server/config": "Server configuration",
+    "src/server/errors": "Error classes",
+    "src/server/lib": "Server utilities",
+    "src/contexts": "React context providers",
     public: "Static assets",
     tests: "Test files",
     "tests/unit": "Unit tests",

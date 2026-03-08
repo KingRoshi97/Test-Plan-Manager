@@ -125,8 +125,23 @@ Internal Build Mode takes an approved Agent Kit from a completed pipeline run an
 The build system now includes two mandatory pre-planning stages that solve the under-extraction problem (309 kit files → only 134 repo files). These stages prove the kit was deeply consumed and derive file targets from structured inventories rather than feature-name heuristics.
 
 - **B1: Kit Extraction (KEX)** — `extractor.ts`: Reads all 11 required kit layers (brief, canonical, work_breakdown, acceptance, architecture, implementation, data, api, security, design, ops). Records actual files consumed per layer. Derives `DerivedBuildInputs` (app identity, domain model with entities/relationships/state machines, subsystems, feature map, interfaces with routes/endpoints/events, data schemas, security model with RBAC, verification expectations). Produces `RepoInventory` with expected directories/modules/files and estimated file count. Generates `RequirementTraceEntry[]` mapping requirements → modules → files. Writes `kit_extraction.json` to `runs/<RUN_ID>/build/`. Gate: `checkExtractionGate()` validates all required layers extracted, inventory derived, trace map generated, file count above threshold.
+  - **Derive function paths**: All derive functions use correct kit slot paths matching SOURCE_LAYERS: `03_architecture`, `08_data`, `09_api_contracts`, `05_security`, `06_quality`. Entity extraction from data files uses `#{1,2}` headings only, filtered by a SECTION_WORDS exclusion set to avoid treating section headings as entities.
 - **B2: Repo Blueprint (RBP)** — `blueprint.ts`: Converts extraction into a fully specified repo design. Produces `RepoBlueprint` with: system identity, domain model, subsystems with modules/responsibilities/dependencies, module map (module_id, layer, purpose, inputs, outputs, dependencies), directory layout (exact folder structure), **file inventory** (every expected file with role, layer, source trace — the key artifact that drives generation), interface contracts, data model, security model, feature map, verification targets. File count derivation broken down by layer (frontend/backend/shared/data/test/config/docs). Traceability map: requirement → module → file. Writes `repo_blueprint.json` to `runs/<RUN_ID>/build/`. Gate: `checkBlueprintGate()` validates blueprint completeness (file_inventory populated, modules defined, directory_layout defined, trace_map defined, expected_file_count above threshold).
+  - **Build-unit patterns (GSE-02)**: Blueprint uses entity cluster, endpoint family, and screen bundle patterns:
+    - **Entity clusters** (per entity): `entity_model` + `entity_repository` + `service_module` + `entity_type` + model/repo/service tests
+    - **Endpoint families** (per feature): `route_handler` (controller) + `api_route` + controller test + E2E test
+    - **Workflow handlers** (per workflow from canonical spec): `event_handler` workflow files
+    - **Server infrastructure**: `entry_point`, `app_entry`, `config_env`, `db_connection`, `barrel_export`, `utility` (errors, logger)
+    - **Frontend context providers** (per feature): `feature_store` context files
+    - **Loosened feature heuristics**: Non-auth features always get Form + List + Detail components; Card remains keyword-driven
+  - **New add functions**: `addRepositoryFiles()`, `addServiceFiles()`, `addControllerFiles()`, `addWorkflowFiles()`, `addServerInfraFiles()`, `addContextFiles()`
 - **B3: Blueprint-Driven Planning** — When a `RepoBlueprint` is provided, `planner.ts` derives ALL file targets from `blueprint.file_inventory` instead of static `buildScaffoldFiles()`/`buildApiRouteFiles()`/etc. functions. Files are grouped by layer into BuildSlices, with `sourceRef` and `traceRef` from blueprint traceability. Old static derivation remains as fallback when no blueprint is provided.
+
+**Build Pipeline Metrics** (RUN-000036, 309-file kit with 8 features / 4 roles / 5 workflows / 22 work units / 22 acceptance criteria):
+- Legacy fallback: 134 files
+- Blueprint pipeline: 701 files (423% improvement) — frontend 111, backend 197, shared 90, data 62, test 229, config 10, docs 2
+- Extraction: 11/11 layers, 58 entities, 82 endpoints, 6 subsystems
+- Generation: 543 AI-assisted + 158 deterministic across 6 slices
 
 **Build States (BM-08)**: `not_requested → requested → approved → building → verifying → passed → exported`; `failed` reachable from any active state
 

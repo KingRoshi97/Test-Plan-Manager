@@ -29,7 +29,7 @@ async function main() {
     console.log(`  Ignored files:   ${extraction.extraction_coverage_summary.total_ignored_files}`);
     console.log(`  Entities:        ${extraction.derived_inputs.domain_model?.entities?.length ?? 0}`);
     console.log(`  Modules:         ${extraction.derived_inputs.subsystems?.length ?? 0}`);
-    console.log(`  Endpoints:       ${extraction.derived_build_implications.endpoint_count ?? 0}`);
+    console.log(`  Endpoints:       ${extraction.derived_build_implications.derived_endpoint_count ?? 0}`);
     console.log(`  Gate:            ${gate.passed ? "PASSED" : "FAILED"}`);
     if (gate.blockers.length > 0) {
       console.log(`  Blockers:        ${gate.blockers.join(", ")}`);

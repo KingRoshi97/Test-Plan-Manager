@@ -464,9 +464,9 @@ function deriveDomainModel(spec: CanonicalSpec | null, kitRoot: string): DomainM
     }
   }
 
-  const dataFiles = scanDirFiles(path.join(kitRoot, "10_app", "03_data_models"));
+  const dataFiles = scanDirFiles(path.join(kitRoot, "10_app", "08_data"));
   for (const dataFile of dataFiles) {
-    const content = readFileContent(path.join(kitRoot, "10_app", "03_data_models", dataFile));
+    const content = readFileContent(path.join(kitRoot, "10_app", "08_data", dataFile));
     if (content) {
       const extractedEntities = extractEntitiesFromMd(content, dataFile);
       for (const ent of extractedEntities) {
@@ -491,54 +491,54 @@ function deriveSubsystems(spec: CanonicalSpec | null, kitRoot: string): DerivedB
     source_refs: ["canonical_spec"],
   });
 
-  const archFiles = scanDirFiles(path.join(kitRoot, "10_app", "02_architecture"));
+  const archFiles = scanDirFiles(path.join(kitRoot, "10_app", "03_architecture"));
   if (archFiles.length > 0) {
     subsystems.push({
       subsystem_id: "SS-FRONTEND",
       name: "Frontend",
       description: "UI components, pages, layout, and client-side logic",
       layer: "frontend",
-      source_refs: archFiles.map(f => `10_app/02_architecture/${f}`),
+      source_refs: archFiles.map(f => `10_app/03_architecture/${f}`),
     });
     subsystems.push({
       subsystem_id: "SS-BACKEND",
       name: "Backend",
       description: "API routes, middleware, business logic, and data access",
       layer: "backend",
-      source_refs: archFiles.map(f => `10_app/02_architecture/${f}`),
+      source_refs: archFiles.map(f => `10_app/03_architecture/${f}`),
     });
   }
 
-  const dataFiles = scanDirFiles(path.join(kitRoot, "10_app", "03_data_models"));
+  const dataFiles = scanDirFiles(path.join(kitRoot, "10_app", "08_data"));
   if (dataFiles.length > 0) {
     subsystems.push({
       subsystem_id: "SS-DATA",
       name: "Data Layer",
       description: "Database models, schemas, and data access",
       layer: "data",
-      source_refs: dataFiles.map(f => `10_app/03_data_models/${f}`),
+      source_refs: dataFiles.map(f => `10_app/08_data/${f}`),
     });
   }
 
-  const securityFiles = scanDirFiles(path.join(kitRoot, "10_app", "05_auth_security"));
+  const securityFiles = scanDirFiles(path.join(kitRoot, "10_app", "05_security"));
   if (securityFiles.length > 0) {
     subsystems.push({
       subsystem_id: "SS-AUTH",
       name: "Authentication & Security",
       description: "Auth flows, RBAC, security middleware",
       layer: "security",
-      source_refs: securityFiles.map(f => `10_app/05_auth_security/${f}`),
+      source_refs: securityFiles.map(f => `10_app/05_security/${f}`),
     });
   }
 
-  const testFiles = scanDirFiles(path.join(kitRoot, "10_app", "09_testing"));
-  if (testFiles.length > 0) {
+  const qualityFiles = scanDirFiles(path.join(kitRoot, "10_app", "06_quality"));
+  if (qualityFiles.length > 0) {
     subsystems.push({
-      subsystem_id: "SS-TEST",
-      name: "Testing",
-      description: "Unit tests, integration tests, test utilities",
+      subsystem_id: "SS-QUALITY",
+      name: "Quality & Testing",
+      description: "Quality standards, test strategies, test utilities",
       layer: "test",
-      source_refs: testFiles.map(f => `10_app/09_testing/${f}`),
+      source_refs: qualityFiles.map(f => `10_app/06_quality/${f}`),
     });
   }
 
@@ -583,9 +583,9 @@ function deriveInterfaces(spec: CanonicalSpec | null, kitRoot: string): Interfac
     endpoints.push({ endpoint_id: `EP-${feat.feature_id}-DELETE`, path: `/api/${slug}/:id`, method: "DELETE", source_ref: feat.feature_id });
   }
 
-  const apiFiles = scanDirFiles(path.join(kitRoot, "10_app", "04_api_contracts"));
+  const apiFiles = scanDirFiles(path.join(kitRoot, "10_app", "09_api_contracts"));
   for (const apiFile of apiFiles) {
-    const content = readFileContent(path.join(kitRoot, "10_app", "04_api_contracts", apiFile));
+    const content = readFileContent(path.join(kitRoot, "10_app", "09_api_contracts", apiFile));
     if (content) {
       const extracted = extractEndpointsFromMd(content, apiFile);
       for (const ep of extracted) {
@@ -614,16 +614,16 @@ function deriveDataSchemas(kitRoot: string): DataSchemas {
   const storageTypes: string[] = ["postgresql"];
   const migrations: string[] = [];
 
-  const dataFiles = scanDirFiles(path.join(kitRoot, "10_app", "03_data_models"));
+  const dataFiles = scanDirFiles(path.join(kitRoot, "10_app", "08_data"));
   for (const dataFile of dataFiles) {
-    const content = readFileContent(path.join(kitRoot, "10_app", "03_data_models", dataFile));
+    const content = readFileContent(path.join(kitRoot, "10_app", "08_data", dataFile));
     if (content) {
       const fileId = dataFile.replace(/\.md$/, "");
       schemas.push({
         schema_id: `SCH-${fileId}`,
         name: fileId,
         fields: extractFieldsFromMd(content),
-        source_ref: `10_app/03_data_models/${dataFile}`,
+        source_ref: `10_app/08_data/${dataFile}`,
       });
     }
   }
@@ -648,12 +648,12 @@ function deriveSecurityModel(spec: CanonicalSpec | null, kitRoot: string): Secur
     });
   }
 
-  const securityFiles = scanDirFiles(path.join(kitRoot, "10_app", "05_auth_security"));
-  const sourceRefs = securityFiles.map(f => `10_app/05_auth_security/${f}`);
+  const securityFiles = scanDirFiles(path.join(kitRoot, "10_app", "05_security"));
+  const sourceRefs = securityFiles.map(f => `10_app/05_security/${f}`);
 
   const securityRequirements: string[] = [];
   for (const sf of securityFiles) {
-    const content = readFileContent(path.join(kitRoot, "10_app", "05_auth_security", sf));
+    const content = readFileContent(path.join(kitRoot, "10_app", "05_security", sf));
     if (content) {
       const reqs = extractRequirementsFromMd(content);
       securityRequirements.push(...reqs);
@@ -1015,20 +1015,34 @@ function readFileContent(filePath: string): string | null {
 
 function extractEntitiesFromMd(content: string, sourceFile: string): DomainEntity[] {
   const entities: DomainEntity[] = [];
-  const headingMatch = content.match(/^#+\s+(.+)/gm);
+  const SECTION_WORDS = new Set([
+    "overview", "introduction", "summary", "description", "appendix",
+    "references", "notes", "changelog", "migration", "strategy",
+    "validation", "rules", "constraints", "guidelines", "requirements",
+    "configuration", "setup", "installation", "usage", "examples",
+    "conventions", "standards", "best practices", "considerations",
+    "relationships", "indexes", "queries", "operations", "crud",
+    "table of contents", "data model", "data models", "schema design",
+    "database", "storage", "access patterns", "api", "endpoints",
+  ]);
+  const headingMatch = content.match(/^#{1,2}\s+(.+)/gm);
   if (headingMatch) {
     for (const heading of headingMatch) {
       const name = heading.replace(/^#+\s+/, "").trim();
-      if (name.length > 2 && name.length < 60 && !name.toLowerCase().includes("overview") && !name.toLowerCase().includes("introduction")) {
-        const slug = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
-        entities.push({
-          entity_id: `ENT-${slug}`,
-          name,
-          fields: ["id", "created_at", "updated_at"],
-          relationships: [],
-          source_ref: sourceFile,
-        });
-      }
+      const lower = name.toLowerCase();
+      if (name.length < 3 || name.length > 50) continue;
+      if (SECTION_WORDS.has(lower)) continue;
+      if (lower.split(/\s+/).length > 4) continue;
+      if (/^\d+\./.test(name)) continue;
+      const slug = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+      if (slug.length < 2) continue;
+      entities.push({
+        entity_id: `ENT-${slug}`,
+        name,
+        fields: ["id", "created_at", "updated_at"],
+        relationships: [],
+        source_ref: sourceFile,
+      });
     }
   }
   return entities;
