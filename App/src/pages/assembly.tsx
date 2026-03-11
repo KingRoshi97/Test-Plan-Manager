@@ -7,7 +7,8 @@ import {
   ChevronRight, Play, Trash2, ArrowLeft, CheckCircle, XCircle, X,
   Clock, Loader2, FileText, Folder, Download, Save, RotateCcw,
   Settings, Layers, Eye, FolderArchive, PenLine, Square, AlertTriangle, Hammer,
-  Radio, Hash, Timer, Gauge, Activity, Zap, Shield, ChevronDown, ChevronUp, Skull
+  Radio, Hash, Timer, Gauge, Activity, Zap, Shield, ChevronDown, ChevronUp, Skull,
+  ArrowUpCircle, Monitor
 } from "lucide-react";
 import { BuildTab } from "../components/build-mode";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
@@ -131,6 +132,8 @@ const TABS = [
   { id: "intake", label: "Intake", icon: PenLine },
   { id: "artifacts", label: "Artifacts", icon: FolderArchive },
   { id: "build", label: "Build", icon: Hammer },
+  { id: "upgrade", label: "Upgrade", icon: ArrowUpCircle },
+  { id: "preview", label: "Preview", icon: Monitor },
   { id: "config", label: "Config", icon: Settings },
 ] as const;
 
@@ -1405,6 +1408,50 @@ export default function AssemblyPage() {
 
           {activeTab === "build" && (
             <BuildTabWithRuns assemblyId={Number(id)} runId={assembly.runId} pipelineStatus={assembly.status} />
+          )}
+
+          {activeTab === "upgrade" && (
+            <GlassPanel solid>
+              <div className="p-8 space-y-4">
+                <div className="flex items-center gap-3">
+                  <ArrowUpCircle className="w-6 h-6 text-violet-400" />
+                  <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">Upgrade</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-violet-900/30 border border-violet-500/30 text-violet-300 text-[10px] font-medium uppercase tracking-wider">Coming Soon</span>
+                </div>
+                <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-lg">
+                  Upgrade analysis and transformation tools for this assembly. Compare versions, plan migrations, and execute upgrades with full traceability.
+                </p>
+                <div className="grid grid-cols-3 gap-3 pt-4">
+                  {["Version Analysis", "Migration Plan", "Upgrade Execution"].map(label => (
+                    <div key={label} className="p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 text-center">
+                      <div className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </GlassPanel>
+          )}
+
+          {activeTab === "preview" && (
+            <GlassPanel solid>
+              <div className="p-8 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Monitor className="w-6 h-6 text-cyan-400" />
+                  <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">Preview</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-900/30 border border-cyan-500/30 text-cyan-300 text-[10px] font-medium uppercase tracking-wider">Coming Soon</span>
+                </div>
+                <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-lg">
+                  Live preview of generated artifacts and documents. Render templates, inspect output quality, and validate formatting before export.
+                </p>
+                <div className="grid grid-cols-3 gap-3 pt-4">
+                  {["Document Preview", "Template Render", "Output Validation"].map(label => (
+                    <div key={label} className="p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 text-center">
+                      <div className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </GlassPanel>
           )}
 
           {activeTab === "config" && (
