@@ -18,6 +18,7 @@ import { StageDetailCard } from "../components/workbench/StageDetailCard";
 import { GateInspector } from "../components/workbench/GateInspector";
 import { CodeViewer } from "../components/ui/code-viewer";
 import { usePipelineStatus, getStallLevel, formatStallTime, getAutoKillCountdown } from "../hooks/use-pipeline-status";
+import { AssemblyPreviewTab } from "../components/assembly/AssemblyPreviewTab";
 
 const FALLBACK_STAGE_ORDER = [
   "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
@@ -1433,25 +1434,11 @@ export default function AssemblyPage() {
           )}
 
           {activeTab === "preview" && (
-            <GlassPanel solid>
-              <div className="p-8 space-y-4">
-                <div className="flex items-center gap-3">
-                  <Monitor className="w-6 h-6 text-cyan-400" />
-                  <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">Preview</h2>
-                  <span className="px-2 py-0.5 rounded-full bg-cyan-900/30 border border-cyan-500/30 text-cyan-300 text-[10px] font-medium uppercase tracking-wider">Coming Soon</span>
-                </div>
-                <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-lg">
-                  Live preview of generated artifacts and documents. Render templates, inspect output quality, and validate formatting before export.
-                </p>
-                <div className="grid grid-cols-3 gap-3 pt-4">
-                  {["Document Preview", "Template Render", "Output Validation"].map(label => (
-                    <div key={label} className="p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 text-center">
-                      <div className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </GlassPanel>
+            <AssemblyPreviewTab
+              assemblyId={Number(id)}
+              runId={assembly.runId}
+              pipelineStatus={assembly.status}
+            />
           )}
 
           {activeTab === "config" && (

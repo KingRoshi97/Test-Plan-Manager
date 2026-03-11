@@ -69,6 +69,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" â€
 - Artifacts tab: breadcrumb file browser with dark styling, GlassPanel file list + preview pane
 - Config tab: assembly config display, JSON viewer, red-glow danger zone
 - Build tab: imported BuildTab component with dark-themed state badges, run selector for building from any completed pipeline run (not just the latest)
+- Preview tab: `AssemblyPreviewTab` controller (`App/src/components/assembly/AssemblyPreviewTab.tsx`) with 4 child components: `PreviewToolbar` (status badge, device mode toggle, refresh/reload/open/copy actions), `PreviewViewport` (iframe embed with desktop/tablet/mobile widths, reload nonce), `PreviewMetaPanel` (4-section metadata: Source, Preview Target, Timing, Diagnostics), `PreviewStateCard` (7 variants: none/building/preparing/failed/expired/loadError/nonEmbeddable). Backend: `GET /api/assemblies/:id/preview` (status resolution), `POST /api/assemblies/:id/preview/refresh`, `GET /api/preview/:runId/*` (static file serve from build repo). Polls at 2s when building/preparing. Uses GlassPanel/StatusChip design system.
 
 **Dark Theme Harmonization**: All pages swept for light-mode remnants â€” health.tsx, features.tsx, feature-detail.tsx, export.tsx, logs.tsx, maintenance.tsx, pipeline-progress.tsx, intake-wizard.tsx, build-mode.tsx, intake form pages, orchestration-library.tsx, system-library.tsx all updated to use dark-appropriate color references.
 
