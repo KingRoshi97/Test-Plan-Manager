@@ -9,6 +9,18 @@ import type {
 } from "./types.js";
 import { MusStore } from "./store.js";
 import { appendLedger } from "./ledger.js";
+import {
+  mapTaskRunToMcpRun,
+  mapCompatibilityReportToFindings,
+  mapCompatibilityReportToInsight,
+  mapTestReportToInsight,
+  mapDependencyReportToInsight,
+  mapDependencyReportToFindings,
+  createMcpBridgeContext,
+  createAxionIntegrationMaintainer,
+  createDependencyManager,
+  createTestMaintainer,
+} from "./mcp-bridge.js";
 
 function readJson<T>(filePath: string): T | null {
   try { return JSON.parse(fs.readFileSync(filePath, "utf-8")); } catch { return null; }
@@ -770,11 +782,11 @@ export interface TaskRunResult {
   recommendations: Recommendation[];
 }
 
-export function startTaskRun(
+export async function startTaskRun(
   root: string,
   store: MusStore,
   taskRun: TaskRun,
-): TaskRunResult {
+): Promise<TaskRunResult> {
   const startedAt = new Date().toISOString();
   taskRun.status = "running";
   taskRun.started_at = startedAt;
@@ -796,7 +808,7 @@ export function startTaskRun(
       continue;
     }
 
-    const result = executeTask(root, store, taskRun, taskDef);
+    const result = await executeTask(root, store, taskRun, taskDef);
     allFindings.push(...result.findings);
     allInsights.push(...result.insights);
     allBottlenecks.push(...result.bottlenecks);
@@ -853,12 +865,12 @@ interface TaskExecutionResult {
   recommendations: Recommendation[];
 }
 
-function executeTask(
+async function executeTask(
   root: string,
   store: MusStore,
   taskRun: TaskRun,
   taskDef: TaskDefinition,
-): TaskExecutionResult {
+): Promise<TaskExecutionResult> {
   switch (taskDef.task_id) {
     case "TASK-OPS-01":
     case "TASK-SYS-01":
@@ -872,31 +884,55 @@ function executeTask(
     case "TASK-COST-01":
       return executeCostTask(root, store, taskRun, taskDef);
     default:
-      return {
-        findings: [],
-        insights: [{
-          insight_id: store.generateId("INS"),
-          run_id: taskRun.run_id,
-          task_id: taskDef.task_id,
-          category: "general",
-          narrative: `Task ${taskDef.task_id} (${taskDef.name}) does not have an executor implementation yet.`,
-          evidence_refs: [],
-          confidence: 0,
-          suggested_next_actions: ["Implement task executor"],
-          created_at: new Date().toISOString(),
-        }],
-        bottlenecks: [],
-        recommendations: [],
-      };
+      return executeMcpFallback(root, store, taskRun, taskDef);
   }
 }
 
-function executeOpsTask(
+async function executeMcpFallback(
   root: string,
   store: MusStore,
   taskRun: TaskRun,
   taskDef: TaskDefinition,
-): TaskExecutionResult {
+): Promise<TaskExecutionResult> {
+  const insights: Insight[] = [];
+  const findings: MusFinding[] = [];
+
+  try {
+    const ctx = createMcpBridgeContext(root);
+    const mcpRun = mapTaskRunToMcpRun(taskRun, taskDef);
+
+    const maintainer = createAxionIntegrationMaintainer(ctx);
+    const compatReport = await maintainer.checkCompatibility(mcpRun);
+    insights.push(mapCompatibilityReportToInsight(compatReport, store, taskRun, taskDef.task_id));
+    findings.push(...mapCompatibilityReportToFindings(compatReport, store, taskRun, taskDef.task_id));
+
+    const depManager = createDependencyManager(ctx);
+    const depReport = await depManager.produceReport(mcpRun);
+    insights.push(mapDependencyReportToInsight(depReport, store, taskRun, taskDef.task_id));
+    findings.push(...mapDependencyReportToFindings(depReport, store, taskRun, taskDef.task_id));
+  } catch {
+    insights.push({
+      insight_id: store.generateId("INS"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      category: "general",
+      narrative: `Task ${taskDef.task_id} (${taskDef.name}) routed through MCP fallback but encountered errors. No dedicated executor is available.`,
+      evidence_refs: [],
+      confidence: 0,
+      suggested_next_actions: ["Implement a dedicated task executor"],
+      created_at: new Date().toISOString(),
+    });
+  }
+
+  return { findings, insights, bottlenecks: [], recommendations: [] };
+}
+
+async function executeOpsTask(
+  root: string,
+  store: MusStore,
+  taskRun: TaskRun,
+  taskDef: TaskDefinition,
+): Promise<TaskExecutionResult> {
   const findings: MusFinding[] = [];
   const insights: Insight[] = [];
   const recommendations: Recommendation[] = [];
@@ -914,6 +950,27 @@ function executeOpsTask(
   if (taskDef.task_id === "TASK-SYS-01") {
     const driftResult = runDpDrift01(root, fakeMusRun, store, taskRun.budgets);
     findings.push(...driftResult.findings);
+
+    try {
+      const ctx = createMcpBridgeContext(root);
+      const maintainer = createAxionIntegrationMaintainer(ctx);
+      const mcpRun = mapTaskRunToMcpRun(taskRun, taskDef);
+      const compatReport = await maintainer.checkCompatibility(mcpRun);
+      findings.push(...mapCompatibilityReportToFindings(compatReport, store, taskRun, taskDef.task_id));
+      insights.push(mapCompatibilityReportToInsight(compatReport, store, taskRun, taskDef.task_id));
+    } catch (err: any) {
+      insights.push({
+        insight_id: store.generateId("INS"),
+        run_id: taskRun.run_id,
+        task_id: taskDef.task_id,
+        category: "reliability",
+        narrative: `MCP contract compatibility check skipped due to error: ${err?.message ?? "unknown"}`,
+        evidence_refs: [],
+        confidence: 0,
+        suggested_next_actions: ["Check MCP configuration and retry"],
+        created_at: new Date().toISOString(),
+      });
+    }
   } else {
     const regFindings = runDpReg01(root, fakeMusRun, store, taskRun.budgets);
     findings.push(...regFindings);
@@ -961,12 +1018,12 @@ function executeOpsTask(
   return { findings, insights, bottlenecks: [], recommendations };
 }
 
-function executePerfTask(
+async function executePerfTask(
   root: string,
   store: MusStore,
   taskRun: TaskRun,
   taskDef: TaskDefinition,
-): TaskExecutionResult {
+): Promise<TaskExecutionResult> {
   const insights: Insight[] = [];
   const bottlenecks: BottleneckReport[] = [];
   const recommendations: Recommendation[] = [];
@@ -1263,6 +1320,29 @@ function executePerfTask(
     });
   }
 
+  try {
+    const ctx = createMcpBridgeContext(root);
+    const maintainer = createAxionIntegrationMaintainer(ctx);
+    const mcpRun = mapTaskRunToMcpRun(taskRun, taskDef);
+    const compatReport = await maintainer.produceReport(mcpRun);
+    if (!compatReport.all_compatible) {
+      insights.push(mapCompatibilityReportToInsight(compatReport, store, taskRun, taskDef.task_id));
+      findings.push(...mapCompatibilityReportToFindings(compatReport, store, taskRun, taskDef.task_id));
+    }
+  } catch (err: any) {
+    insights.push({
+      insight_id: store.generateId("INS"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      category: "reliability",
+      narrative: `MCP perf-integration correlation check skipped due to error: ${err?.message ?? "unknown"}`,
+      evidence_refs: [],
+      confidence: 0,
+      suggested_next_actions: ["Check MCP configuration and retry"],
+      created_at: new Date().toISOString(),
+    });
+  }
+
   return { findings, insights, bottlenecks, recommendations };
 }
 
@@ -1285,12 +1365,12 @@ function computeTrend(values: number[]): string {
   return "stable";
 }
 
-function executeQualDepthTask(
+async function executeQualDepthTask(
   root: string,
   store: MusStore,
   taskRun: TaskRun,
   taskDef: TaskDefinition,
-): TaskExecutionResult {
+): Promise<TaskExecutionResult> {
   const insights: Insight[] = [];
   const recommendations: Recommendation[] = [];
   const findings: MusFinding[] = [];
@@ -1453,12 +1533,12 @@ function findLatestCompletedRun(pipelineRunsDir: string): string | null {
   return null;
 }
 
-function executeQualTemplateTask(
+async function executeQualTemplateTask(
   root: string,
   store: MusStore,
   taskRun: TaskRun,
   taskDef: TaskDefinition,
-): TaskExecutionResult {
+): Promise<TaskExecutionResult> {
   const findings: MusFinding[] = [];
   const insights: Insight[] = [];
   const recommendations: Recommendation[] = [];
@@ -1627,15 +1707,35 @@ function executeQualTemplateTask(
     });
   }
 
+  try {
+    const ctx = createMcpBridgeContext(root);
+    const testMaintainer = createTestMaintainer(ctx);
+    const mcpRun = mapTaskRunToMcpRun(taskRun, taskDef);
+    const testReport = await testMaintainer.produceReport(mcpRun);
+    insights.push(mapTestReportToInsight(testReport, store, taskRun, taskDef.task_id));
+  } catch (err: any) {
+    insights.push({
+      insight_id: store.generateId("INS"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      category: "quality",
+      narrative: `MCP test determinism check skipped due to error: ${err?.message ?? "unknown"}`,
+      evidence_refs: [],
+      confidence: 0,
+      suggested_next_actions: ["Check MCP TestMaintainer configuration and retry"],
+      created_at: new Date().toISOString(),
+    });
+  }
+
   return { findings, insights, bottlenecks: [], recommendations };
 }
 
-function executeCostTask(
+async function executeCostTask(
   root: string,
   store: MusStore,
   taskRun: TaskRun,
   taskDef: TaskDefinition,
-): TaskExecutionResult {
+): Promise<TaskExecutionResult> {
   const insights: Insight[] = [];
   const bottlenecks: BottleneckReport[] = [];
   const recommendations: Recommendation[] = [];
@@ -1869,6 +1969,30 @@ function executeCostTask(
       estimated_impact: `Reduce pipeline cost by up to ${Math.round(hotspots[0].percentage_of_total * 0.3)}%`,
       suggested_task_ids: ["TASK-PERF-01"],
       convertible_to_changeset: false,
+      created_at: new Date().toISOString(),
+    });
+  }
+
+  try {
+    const ctx = createMcpBridgeContext(root);
+    const depManager = createDependencyManager(ctx);
+    const mcpRun = mapTaskRunToMcpRun(taskRun, taskDef);
+    const depReport = await depManager.produceReport(mcpRun);
+    insights.push(mapDependencyReportToInsight(depReport, store, taskRun, taskDef.task_id));
+    const depFindings = mapDependencyReportToFindings(depReport, store, taskRun, taskDef.task_id);
+    if (depFindings.length > 0) {
+      return { findings: depFindings, insights, bottlenecks, recommendations };
+    }
+  } catch (err: any) {
+    insights.push({
+      insight_id: store.generateId("INS"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      category: "cost",
+      narrative: `MCP dependency analysis skipped due to error: ${err?.message ?? "unknown"}`,
+      evidence_refs: [],
+      confidence: 0,
+      suggested_next_actions: ["Check MCP DependencyManager configuration and retry"],
       created_at: new Date().toISOString(),
     });
   }

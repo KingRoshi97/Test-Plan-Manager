@@ -1205,7 +1205,8 @@ Full MUS implementation: CLI + backend API + frontend UI. Replaces the old unit-
 
 **Core Engine** (`Axion/src/core/mus/`):
 - `types.ts` — TypeScript interfaces: MusRun, MusFinding, MusProposalPack, MusPatch, MusBlastRadius, MusChangeSet, MusApprovalEvent, MusSuppressionRule, MusProofBundle, MusScheduleEntry, RegistryEnvelope, LedgerEntry; **MUS v2 types**: AgentDefinition, TaskDefinition, TaskRun, Insight, BottleneckReport, Recommendation
-- `engine.ts` — v1: `validateRegistries(root)`, `executeRun()` (DP-REG-01, DP-DRIFT-01); **v2**: `listAgents(root)`, `listTasks(root)`, `createTaskRun()`, `startTaskRun()` with task executors for TASK-OPS-01 (ops monitor), TASK-PERF-01 (pipeline bottleneck finder — reads real pipeline stage timing from `.axion/runs/`), TASK-QUAL-01 (depth analysis), TASK-QUAL-02 (template audit), TASK-COST-01 (cost analysis), TASK-SYS-01 (integrity/drift)
+- `engine.ts` — v1: `validateRegistries(root)`, `executeRun()` (DP-REG-01, DP-DRIFT-01); **v2**: `listAgents(root)`, `listTasks(root)`, `createTaskRun()`, `startTaskRun()` (async) with task executors for TASK-OPS-01 (ops monitor), TASK-PERF-01 (pipeline bottleneck finder — reads real pipeline stage timing from `.axion/runs/` + MCP AxionIntegrationMaintainer perf correlation), TASK-QUAL-01 (depth analysis), TASK-QUAL-02 (template audit + MCP TestMaintainer determinism), TASK-COST-01 (cost analysis + MCP DependencyManager tracking), TASK-SYS-01 (integrity/drift + MCP AxionIntegrationMaintainer contract breaks); unknown task IDs fall through to MCP fallback executor
+- `mcp-bridge.ts` — Bridge layer: `mapTaskRunToMcpRun()`, `mapCompatibilityReportToFindings/Insight()`, `mapTestReportToInsight()`, `mapDependencyReportToInsight/Findings()`, factory functions for MCP managers
 - `store.ts` — File-based `MusStore` class for runs/findings/proposals/changesets/approvals/suppressions under `mus_data/`; **v2**: task-run persistence under `mus_data/task-runs/TRUN-*/`, `saveInsights()`, `saveBottlenecks()`, `saveRecommendations()`, `getInsights()`, `getBottlenecks()`, `getRecommendations()`
 - `ledger.ts` — Append-only JSONL audit ledger at `mus_data/logs/ledger.jsonl`
 
@@ -1220,6 +1221,9 @@ Full MUS implementation: CLI + backend API + frontend UI. Replaces the old unit-
 - `axion mus validate --root <path>` — validate registries/policies, exit 0/1
 - `axion mus run --mode MM-01 --trigger manual --scope all --root <path>` — health check (DP-REG-01, findings only)
 - `axion mus run --mode MM-04 --trigger manual --scope all --root <path>` — drift detection (DP-DRIFT-01, findings + proposals)
+- `axion mus task-run --task TASK-PERF-01 [--agent AGT-PERF-01] [--scope all] [--token-cap N] [--time-cap N] [--max-findings N]` — execute task-based run
+- `axion mus tasks` — list available tasks from REG-TASKS.json
+- `axion mus agents` — list available agents from REG-AGENTS.json
 - `axion mus apply` / `axion mus publish` — stubbed with gate validation, not implemented in v1
 - Default root: `./axion_mus_creation/` or `./Axion/libraries/maintenance/`
 - Usage docs: `Axion/MUS_USAGE.md`

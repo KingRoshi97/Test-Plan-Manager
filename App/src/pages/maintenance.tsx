@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
-  Loader2, Wrench, Shield, Search, Zap, Calendar, FileText, Settings, Play,
+  Loader2, Wrench, Shield, Search, Zap, Calendar, FileText, Play,
   AlertTriangle, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Eye,
   Lock, XCircle, Filter, Package, Stamp, BarChart3, Activity, ListChecks,
   Lightbulb, Bot, Target, Clock, ArrowRightCircle
@@ -225,175 +225,6 @@ function OverviewTab({ status, runs, findings }: { status: any; runs: any[]; fin
               </div>
             ))}
           </div>
-        </GlassPanel>
-      )}
-    </div>
-  );
-}
-
-function RunTab({ modes }: { modes: any[] }) {
-  const queryClient = useQueryClient();
-  const [mode, setMode] = useState("MM-01");
-  const [trigger, setTrigger] = useState("manual");
-  const [scopeClasses, setScopeClasses] = useState<string[]>(["registries"]);
-  const [tokenCap, setTokenCap] = useState(15000);
-  const [timeCap, setTimeCap] = useState(60000);
-  const [maxFindings, setMaxFindings] = useState(500);
-  const [maxProposals, setMaxProposals] = useState(25);
-  const [runResult, setRunResult] = useState<any>(null);
-
-  const createAndStart = useMutation({
-    mutationFn: async () => {
-      const createRes = await fetch("/api/mus/runs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode_id: mode,
-          trigger,
-          scope: { asset_classes: scopeClasses },
-          budgets: { token_cap: tokenCap, time_cap_ms: timeCap, max_findings: maxFindings, max_proposals: maxProposals, max_assets_touched: 50 },
-        }),
-      });
-      if (!createRes.ok) { const err = await createRes.json(); throw new Error(err.error); }
-      const run = await createRes.json();
-
-      const startRes = await fetch(`/api/mus/runs/${run.run_id}/start`, { method: "POST" });
-      if (!startRes.ok) { const err = await startRes.json(); throw new Error(err.error); }
-      return startRes.json();
-    },
-    onSuccess: (data) => {
-      setRunResult(data);
-      queryClient.invalidateQueries({ queryKey: ["/api/mus"] });
-    },
-  });
-
-  const validate = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/mus/validate", { method: "POST" });
-      if (!res.ok) throw new Error("Validation failed");
-      return res.json();
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/mus"] }),
-  });
-
-  const selectedMode = modes.find((m: any) => m.mode_id === mode);
-  const assetOptions = ["registries", "templates", "knowledge_library"];
-
-  return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex gap-3">
-        <button onClick={() => validate.mutate()} disabled={validate.isPending} className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium border border-[hsl(var(--glass-border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] disabled:opacity-50 transition-colors">
-          {validate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
-          Validate Registries
-        </button>
-        {validate.data && (
-          <StatusChip variant={validate.data.pass ? "success" : "failure"} label={validate.data.pass ? `PASS (${validate.data.errors?.length ?? 0} errors)` : `FAIL (${validate.data.errors?.length ?? 0} errors)`} />
-        )}
-      </div>
-
-      {trigger === "scheduled" && (
-        <GlassPanel solid glow="amber" className="p-3">
-          <div className="flex items-center gap-2 text-xs text-[hsl(var(--status-warning))]">
-            <AlertTriangle className="w-4 h-4" />
-            Scheduled runs are proposal-only. Publish is always disabled for scheduled triggers.
-          </div>
-        </GlassPanel>
-      )}
-
-      <GlassPanel solid glow="cyan" className="p-4 space-y-4">
-        <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Execute MUS Run</h3>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-system-label mb-1">Mode</label>
-            <select value={mode} onChange={(e) => setMode(e.target.value)} className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-3 py-1.5 text-sm text-[hsl(var(--foreground))]">
-              <option value="MM-01">MM-01 - Health Check (detect only)</option>
-              <option value="MM-04">MM-04 - Drift Detection (detect + propose)</option>
-            </select>
-            {selectedMode && (
-              <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{selectedMode.name}: {selectedMode.description?.slice(0, 100)}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-system-label mb-1">Trigger</label>
-            <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-3 py-1.5 text-sm text-[hsl(var(--foreground))]">
-              <option value="manual">Manual</option>
-              <option value="scheduled">Scheduled</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-system-label mb-1">Scope (Asset Classes)</label>
-          <div className="flex gap-3">
-            {assetOptions.map((ac) => (
-              <label key={ac} className="flex items-center gap-1.5 text-sm text-[hsl(var(--foreground))]">
-                <input
-                  type="checkbox"
-                  checked={scopeClasses.includes(ac)}
-                  onChange={(e) => {
-                    if (e.target.checked) setScopeClasses([...scopeClasses, ac]);
-                    else setScopeClasses(scopeClasses.filter(c => c !== ac));
-                  }}
-                  className="rounded border-[hsl(var(--glass-border))]"
-                />
-                {ac}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-system-label mb-2">Budgets</label>
-          <div className="grid grid-cols-4 gap-3">
-            <div>
-              <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-1">Token Cap</label>
-              <input type="number" value={tokenCap} onChange={(e) => setTokenCap(Number(e.target.value))} className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-2 py-1 text-sm text-[hsl(var(--foreground))] font-mono-tech" />
-            </div>
-            <div>
-              <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-1">Time Cap (ms)</label>
-              <input type="number" value={timeCap} onChange={(e) => setTimeCap(Number(e.target.value))} className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-2 py-1 text-sm text-[hsl(var(--foreground))] font-mono-tech" />
-            </div>
-            <div>
-              <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-1">Max Findings</label>
-              <input type="number" value={maxFindings} onChange={(e) => setMaxFindings(Number(e.target.value))} className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-2 py-1 text-sm text-[hsl(var(--foreground))] font-mono-tech" />
-            </div>
-            <div>
-              <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-1">Max Proposals</label>
-              <input type="number" value={maxProposals} onChange={(e) => setMaxProposals(Number(e.target.value))} className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-2 py-1 text-sm text-[hsl(var(--foreground))] font-mono-tech" />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end">
-          <button onClick={() => createAndStart.mutate()} disabled={createAndStart.isPending} className="flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 disabled:opacity-50 transition-opacity">
-            {createAndStart.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-            Run Now
-          </button>
-        </div>
-
-        {createAndStart.error && (
-          <div className="text-sm text-[hsl(var(--status-failure))] bg-[hsl(var(--status-failure)/0.1)] rounded p-2">{(createAndStart.error as Error).message}</div>
-        )}
-      </GlassPanel>
-
-      {runResult && (
-        <GlassPanel solid glow="green" className="p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-[hsl(var(--status-success))]" />
-            <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Run Results</h3>
-          </div>
-          <div className="grid grid-cols-4 gap-3 text-xs">
-            <div><span className="text-[hsl(var(--muted-foreground))]">Run ID:</span> <span className="font-mono-tech text-[hsl(var(--foreground))]">{runResult.run?.run_id}</span></div>
-            <div><span className="text-[hsl(var(--muted-foreground))]">Status:</span> <StatusChip variant={runStatusVariant(runResult.run?.status)} label={runResult.run?.status} /></div>
-            <div><span className="text-[hsl(var(--muted-foreground))]">Findings:</span> <span className="font-mono-tech text-[hsl(var(--foreground))]">{runResult.findings_count}</span></div>
-            <div><span className="text-[hsl(var(--muted-foreground))]">Proposals:</span> <span className="font-mono-tech text-[hsl(var(--foreground))]">{runResult.proposals_count}</span></div>
-          </div>
-          {runResult.blast_radius && (
-            <div className="text-xs text-[hsl(var(--muted-foreground))]">
-              Blast radius: {runResult.blast_radius.affected_asset_count} file(s) affected — {runResult.blast_radius.risk_summary}
-            </div>
-          )}
         </GlassPanel>
       )}
     </div>
@@ -1621,11 +1452,6 @@ export default function MaintenancePage() {
       return res.ok ? res.json() : [];
     },
     enabled: runs.length > 0,
-  });
-
-  const { data: modes = [] } = useQuery<any[]>({
-    queryKey: ["/api/maintenance/modes"],
-    queryFn: () => fetch("/api/maintenance/modes").then(r => r.json()),
   });
 
   if (statusLoading) {

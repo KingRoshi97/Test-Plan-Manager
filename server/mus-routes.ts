@@ -622,7 +622,7 @@ export function registerMusRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/mus/task-runs/:runId/start", (req: Request, res: Response) => {
+  app.post("/api/mus/task-runs/:runId/start", async (req: Request, res: Response) => {
     try {
       const store = ensureStore();
       const taskRun = store.getTaskRun(req.params.runId);
@@ -631,7 +631,7 @@ export function registerMusRoutes(app: Express): void {
         return res.status(400).json({ error: `Task run is in state '${taskRun.status}', expected 'created'` });
       }
 
-      const result = startTaskRun(MUS_LIB_DIR, store, taskRun);
+      const result = await startTaskRun(MUS_LIB_DIR, store, taskRun);
       res.json({
         taskRun: result.taskRun,
         findings_count: result.findings.length,

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { validateRegistries, executeRun, loadMusPolicy, getRegistryVersions } from "../../core/mus/engine.js";
+import { validateRegistries, executeRun, loadMusPolicy, getRegistryVersions, createTaskRun, startTaskRun, listTasks, listAgents } from "../../core/mus/engine.js";
 import { MusStore } from "../../core/mus/store.js";
 import { initLedger, appendLedger } from "../../core/mus/ledger.js";
 import type { MusRun, MusBudgets, MusScope } from "../../core/mus/types.js";
@@ -38,6 +38,12 @@ export async function runMusCommand(args: string[]): Promise<void> {
     await cmdValidate(args.slice(1));
   } else if (subcommand === "run") {
     await cmdRun(args.slice(1));
+  } else if (subcommand === "task-run") {
+    await cmdTaskRun(args.slice(1));
+  } else if (subcommand === "tasks") {
+    cmdListTasks(args.slice(1));
+  } else if (subcommand === "agents") {
+    cmdListAgents(args.slice(1));
   } else if (subcommand === "apply") {
     cmdApplyStub();
   } else if (subcommand === "publish") {
@@ -189,6 +195,180 @@ async function cmdRun(args: string[]): Promise<void> {
   console.log();
 }
 
+async function cmdTaskRun(args: string[]): Promise<void> {
+  const root = resolveMusRoot(args);
+  const dataRoot = resolveDataRoot(root);
+  initLedger(dataRoot);
+  const store = new MusStore(dataRoot);
+
+  const taskId = getArg(args, "--task");
+  if (!taskId) {
+    console.error("ERROR: --task is required (e.g., --task TASK-PERF-01)");
+    process.exit(1);
+  }
+
+  const agentArg = getArg(args, "--agent");
+  const scopeArg = getArg(args, "--scope") ?? "all";
+  const tokenCap = getArg(args, "--token-cap");
+  const timeCap = getArg(args, "--time-cap");
+  const maxFindings = getArg(args, "--max-findings");
+
+  const budgetOverrides: Partial<MusBudgets> = {};
+  if (tokenCap) {
+    const v = parseInt(tokenCap, 10);
+    if (!Number.isFinite(v) || v <= 0) { console.error("ERROR: --token-cap must be a positive integer"); process.exit(1); }
+    budgetOverrides.token_cap = v;
+  }
+  if (timeCap) {
+    const v = parseInt(timeCap, 10);
+    if (!Number.isFinite(v) || v <= 0) { console.error("ERROR: --time-cap must be a positive integer"); process.exit(1); }
+    budgetOverrides.time_cap_ms = v;
+  }
+  if (maxFindings) {
+    const v = parseInt(maxFindings, 10);
+    if (!Number.isFinite(v) || v <= 0) { console.error("ERROR: --max-findings must be a positive integer"); process.exit(1); }
+    budgetOverrides.max_findings = v;
+  }
+
+  const scope: MusScope | undefined = scopeArg === "all"
+    ? undefined
+    : { asset_classes: scopeArg.split(",") };
+
+  const taskRun = createTaskRun(root, store, {
+    task_ids: [taskId],
+    agent_ids: agentArg ? [agentArg] : undefined,
+    scope,
+    budgets: Object.keys(budgetOverrides).length > 0 ? budgetOverrides : undefined,
+  });
+
+  console.log(`\n  MUS TASK-RUN`);
+  console.log(`  Root:    ${root}`);
+  console.log(`  Task:    ${taskId}`);
+  console.log(`  Agents:  ${taskRun.assigned_agents.length > 0 ? taskRun.assigned_agents.join(", ") : "(none resolved)"}`);
+  console.log(`  Run ID:  ${taskRun.run_id}`);
+  console.log(`  ${"─".repeat(50)}`);
+
+  const result = await startTaskRun(root, store, taskRun);
+
+  console.log(`\n  Status:            ${result.taskRun.status}`);
+  console.log(`  Findings:          ${result.findings.length}`);
+  console.log(`  Insights:          ${result.insights.length}`);
+  console.log(`  Bottlenecks:       ${result.bottlenecks.length}`);
+  console.log(`  Recommendations:   ${result.recommendations.length}`);
+
+  if (result.taskRun.telemetry_summary) {
+    console.log(`  Elapsed:           ${result.taskRun.telemetry_summary.total_time_ms}ms`);
+  }
+
+  if (result.taskRun.limit_reasons && result.taskRun.limit_reasons.length > 0) {
+    console.log(`\n  Budget limits reached:`);
+    for (const reason of result.taskRun.limit_reasons) {
+      console.log(`    - ${reason}`);
+    }
+  }
+
+  if (result.findings.length > 0) {
+    console.log(`\n  Findings:`);
+    const bySeverity: Record<string, number> = {};
+    for (const f of result.findings) {
+      bySeverity[f.severity] = (bySeverity[f.severity] ?? 0) + 1;
+    }
+    for (const [sev, count] of Object.entries(bySeverity)) {
+      console.log(`    ${sev}: ${count}`);
+    }
+    console.log();
+    for (const f of result.findings.slice(0, 10)) {
+      const sevIcon = f.severity === "critical" || f.severity === "high" ? "✗" : f.severity === "medium" ? "!" : "·";
+      console.log(`    ${sevIcon} [${f.severity.toUpperCase()}] ${f.title}`);
+      console.log(`      ${f.file_path ?? ""} ${f.json_pointer ?? ""}`);
+    }
+    if (result.findings.length > 10) {
+      console.log(`    ... and ${result.findings.length - 10} more`);
+    }
+  }
+
+  if (result.insights.length > 0) {
+    console.log(`\n  Top Insight:`);
+    const topInsight = result.insights[0];
+    console.log(`    [${topInsight.category.toUpperCase()}] confidence=${topInsight.confidence}%`);
+    console.log(`    ${topInsight.narrative.slice(0, 200)}`);
+    if (topInsight.suggested_next_actions.length > 0) {
+      console.log(`    Next actions:`);
+      for (const action of topInsight.suggested_next_actions) {
+        console.log(`      → ${action}`);
+      }
+    }
+  }
+
+  if (result.recommendations.length > 0) {
+    console.log(`\n  Recommendations:`);
+    for (const rec of result.recommendations.slice(0, 5)) {
+      console.log(`    [${rec.priority.toUpperCase()}] ${rec.title}`);
+      console.log(`      ${rec.description.slice(0, 120)}`);
+    }
+  }
+
+  const runDir = path.join(dataRoot, "task-runs", taskRun.run_id);
+  console.log(`\n  Output: ${runDir}/`);
+  const outputFiles = fs.existsSync(runDir) ? fs.readdirSync(runDir) : [];
+  for (const f of outputFiles) {
+    console.log(`    - ${f}`);
+  }
+  console.log();
+}
+
+function cmdListTasks(args: string[]): void {
+  const root = resolveMusRoot(args);
+  const tasks = listTasks(root);
+
+  console.log(`\n  MUS TASKS`);
+  console.log(`  Root: ${root}`);
+  console.log(`  ${"─".repeat(50)}`);
+  console.log(`  ${tasks.length} task(s) registered\n`);
+
+  if (tasks.length === 0) {
+    console.log("  No tasks found in REG-TASKS.json\n");
+    return;
+  }
+
+  const idW = Math.max(12, ...tasks.map(t => t.task_id.length));
+  const nameW = Math.max(8, ...tasks.map(t => t.name.length));
+
+  console.log(`  ${"ID".padEnd(idW)}  ${"NAME".padEnd(nameW)}  INTENT         SCHEDULE`);
+  console.log(`  ${"─".repeat(idW)}  ${"─".repeat(nameW)}  ${"─".repeat(13)}  ${"─".repeat(8)}`);
+
+  for (const t of tasks) {
+    console.log(`  ${t.task_id.padEnd(idW)}  ${t.name.padEnd(nameW)}  ${t.intent.padEnd(13)}  ${t.schedule_allowed ? "yes" : "no"}`);
+  }
+  console.log();
+}
+
+function cmdListAgents(args: string[]): void {
+  const root = resolveMusRoot(args);
+  const agents = listAgents(root);
+
+  console.log(`\n  MUS AGENTS`);
+  console.log(`  Root: ${root}`);
+  console.log(`  ${"─".repeat(50)}`);
+  console.log(`  ${agents.length} agent(s) registered\n`);
+
+  if (agents.length === 0) {
+    console.log("  No agents found in REG-AGENTS.json\n");
+    return;
+  }
+
+  const idW = Math.max(12, ...agents.map(a => a.agent_id.length));
+  const nameW = Math.max(8, ...agents.map(a => a.name.length));
+
+  console.log(`  ${"ID".padEnd(idW)}  ${"NAME".padEnd(nameW)}  STATUS     CAPABILITIES`);
+  console.log(`  ${"─".repeat(idW)}  ${"─".repeat(nameW)}  ${"─".repeat(9)}  ${"─".repeat(30)}`);
+
+  for (const a of agents) {
+    console.log(`  ${a.agent_id.padEnd(idW)}  ${a.name.padEnd(nameW)}  ${a.status.padEnd(9)}  ${a.capabilities.join(", ")}`);
+  }
+  console.log();
+}
+
 function cmdApplyStub(): void {
   console.log("\n  MUS APPLY");
   console.log("  Status: Apply Approval gate required.");
@@ -216,25 +396,40 @@ function printHelp(): void {
   USAGE:
     axion mus validate [--root <path>]
     axion mus run --mode <MM-XX> [--trigger manual] [--scope all] [--root <path>]
+    axion mus task-run --task <TASK-ID> [--agent <AGT-ID>] [--scope all] [--token-cap N] [--time-cap N] [--max-findings N] [--root <path>]
+    axion mus tasks [--root <path>]
+    axion mus agents [--root <path>]
     axion mus apply    (gated, not implemented in v1)
     axion mus publish  (gated, not implemented in v1)
 
   COMMANDS:
     validate   Validate all registries and policies under the MUS root
     run        Execute a maintenance mode (MM-01 Health Check, MM-04 Drift Detection)
+    task-run   Execute a task-based run (v2 task system)
+    tasks      List available tasks from the task catalog
+    agents     List available agents from the agent registry
     apply      Apply a changeset (requires Apply Approval — disabled in v1)
     publish    Publish a release (requires Publish Approval — disabled in v1)
 
   OPTIONS:
-    --root <path>     Path to MUS bootstrap folder (default: ./axion_mus_creation/ or ./Axion/libraries/maintenance/)
-    --mode <MM-XX>    Maintenance mode to run (MM-01 or MM-04 in v1)
-    --trigger <type>  manual (default) or scheduled
-    --scope <scope>   Comma-separated asset classes or "all"
+    --root <path>        Path to MUS bootstrap folder (default: ./axion_mus_creation/ or ./Axion/libraries/maintenance/)
+    --mode <MM-XX>       Maintenance mode to run (MM-01 or MM-04 in v1)
+    --task <TASK-ID>     Task ID to execute (e.g., TASK-PERF-01)
+    --agent <AGT-ID>     Agent ID to assign (optional, auto-resolved if omitted)
+    --trigger <type>     manual (default) or scheduled
+    --scope <scope>      Comma-separated asset classes or "all"
+    --token-cap <N>      Override token budget cap
+    --time-cap <N>       Override time budget cap (ms)
+    --max-findings <N>   Override max findings limit
 
   EXAMPLES:
     axion mus validate --root ./Axion/libraries/maintenance
     axion mus run --root ./Axion/libraries/maintenance --mode MM-01 --trigger manual --scope all
     axion mus run --root ./Axion/libraries/maintenance --mode MM-04 --trigger manual --scope all
+    axion mus task-run --root ./Axion/libraries/maintenance --task TASK-PERF-01
+    axion mus task-run --root ./Axion/libraries/maintenance --task TASK-SYS-01 --agent AGT-OPS-01 --max-findings 20
+    axion mus tasks --root ./Axion/libraries/maintenance
+    axion mus agents --root ./Axion/libraries/maintenance
 
   SAFETY:
     - Scheduled runs are proposal-only; publish is always blocked
