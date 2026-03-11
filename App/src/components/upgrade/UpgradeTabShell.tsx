@@ -60,6 +60,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
   const revisions = bootData?.revisions ?? [];
   const activeRevision = bootData?.activeRevision ?? null;
   const candidateRevision = bootData?.candidateRevision ?? null;
+  const sourceRevision = bootData?.sourceRevision ?? activeRevision;
   const verificationSummary = bootData?.verificationSummary ?? null;
 
   const rollbackTarget = revisions.find(r =>
@@ -78,12 +79,12 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
   const planData = planWrapper?.plan ?? null;
 
   const { data: diffWrapper } = useQuery<{ diff: RevisionDiffData | null }>({
-    queryKey: [base, "upgrade", "diff", activeRevision?.id, candidateRevision?.id],
+    queryKey: [base, "upgrade", "diff", sourceRevision?.id, candidateRevision?.id],
     queryFn: () =>
-      activeRevision && candidateRevision
-        ? apiRequest(`${base}/upgrades/diffs/${activeRevision.id}/${candidateRevision.id}`)
+      sourceRevision && candidateRevision
+        ? apiRequest(`${base}/upgrades/diffs/${sourceRevision.id}/${candidateRevision.id}`)
         : Promise.resolve({ diff: null }),
-    enabled: !!activeRevision && !!candidateRevision,
+    enabled: !!sourceRevision && !!candidateRevision,
   });
   const diffData = diffWrapper?.diff ?? null;
 
@@ -154,10 +155,10 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
 
   const generateDiffMutation = useMutation({
     mutationFn: () => {
-      if (!activeRevision || !candidateRevision) return Promise.reject(new Error("Missing revisions"));
+      if (!sourceRevision || !candidateRevision) return Promise.reject(new Error("Missing revisions"));
       return apiRequest(`${base}/upgrades/diffs/generate`, {
         method: "POST",
-        body: JSON.stringify({ sourceRevisionId: activeRevision.id, candidateRevisionId: candidateRevision.id }),
+        body: JSON.stringify({ sourceRevisionId: sourceRevision.id, candidateRevisionId: candidateRevision.id }),
         headers: { "Content-Type": "application/json" },
       });
     },
@@ -228,6 +229,22 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
     onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to cancel session"),
   });
 
+  const keepAsCandidateMutation = useMutation({
+    mutationFn: () => {
+      if (!activeSession) return Promise.reject(new Error("No active session"));
+      return apiRequest(`${base}/upgrades/sessions/${activeSession.id}/archive`, { method: "POST" });
+    },
+    onSuccess: () => { toast.success("Session archived — candidate kept"); invalidateAll(); },
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to keep candidate"),
+  });
+
+  const discardCandidateMutation = useMutation({
+    mutationFn: (revisionId: string) =>
+      apiRequest(`${base}/revisions/${revisionId}/archive`, { method: "POST" }),
+    onSuccess: () => { toast.success("Candidate discarded"); invalidateAll(); },
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to discard candidate"),
+  });
+
   const archiveSessionMutation = useMutation({
     mutationFn: (sessionId: string) =>
       apiRequest(`${base}/upgrades/sessions/${sessionId}/archive`, { method: "POST" }),
@@ -284,7 +301,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
     <div className="space-y-4">
       <UpgradeHeaderRail
         activeRevision={activeRevision}
-        sourceRevision={activeRevision}
+        sourceRevision={sourceRevision}
         candidateRevision={candidateRevision}
         activeSession={activeSession}
         verificationSummary={verificationSummary}
@@ -388,7 +405,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
 
             {internalTab === "compare" && (
               <RevisionComparePanel
-                sourceRevision={activeRevision}
+                sourceRevision={sourceRevision}
                 candidateRevision={candidateRevision}
                 diff={diffData}
                 isLoading={generateDiffMutation.isPending}
@@ -419,9 +436,13 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
                 rollbackTarget={rollbackTarget}
                 isPromoting={promoteMutation.isPending}
                 isRollingBack={rollbackMutation.isPending}
-                error={getErrorMessage(promoteMutation.error) || getErrorMessage(rollbackMutation.error)}
+                isKeeping={keepAsCandidateMutation.isPending}
+                isDiscarding={discardCandidateMutation.isPending}
+                error={getErrorMessage(promoteMutation.error) || getErrorMessage(rollbackMutation.error) || getErrorMessage(keepAsCandidateMutation.error) || getErrorMessage(discardCandidateMutation.error)}
                 onPromote={(notes) => promoteMutation.mutate(notes)}
                 onRollback={(targetRevisionId, reason) => rollbackMutation.mutate({ targetRevisionId, reason })}
+                onKeepAsCandidate={() => keepAsCandidateMutation.mutate()}
+                onDiscardCandidate={(revisionId) => discardCandidateMutation.mutate(revisionId)}
               />
             )}
           </div>

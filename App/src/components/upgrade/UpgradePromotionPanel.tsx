@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUpCircle, RotateCcw, Loader2, AlertTriangle, Shield, Check } from "lucide-react";
+import { ArrowUpCircle, RotateCcw, Loader2, AlertTriangle, Shield, Check, Archive, XCircle } from "lucide-react";
 import { GlassPanel } from "../ui/glass-panel";
 import { RevisionStatusChip, VerificationVerdictCard, DiffStatStrip, formatTimeAgo } from "./shared";
 import type {
@@ -17,16 +17,20 @@ interface UpgradePromotionPanelProps {
   rollbackTarget: UpgradeRevisionSummary | null;
   isPromoting?: boolean;
   isRollingBack?: boolean;
+  isKeeping?: boolean;
+  isDiscarding?: boolean;
   error?: string | null;
   onPromote: (notes: string) => void;
   onRollback: (targetRevisionId: string, reason: string) => void;
+  onKeepAsCandidate?: () => void;
+  onDiscardCandidate?: (revisionId: string) => void;
 }
 
 export function UpgradePromotionPanel({
   session, candidateRevision, activeRevision,
   verificationSummary, diffStats, lineagePreview, rollbackTarget,
-  isPromoting, isRollingBack, error,
-  onPromote, onRollback,
+  isPromoting, isRollingBack, isKeeping, isDiscarding, error,
+  onPromote, onRollback, onKeepAsCandidate, onDiscardCandidate,
 }: UpgradePromotionPanelProps) {
   const [promotionNotes, setPromotionNotes] = useState("");
   const [rollbackReason, setRollbackReason] = useState("");
@@ -190,6 +194,41 @@ export function UpgradePromotionPanel({
               {isRollingBack ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
               Execute Rollback
             </button>
+          </div>
+        </GlassPanel>
+      )}
+
+      {candidateRevision && (onKeepAsCandidate || onDiscardCandidate) && (
+        <GlassPanel solid>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <Archive className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+              <h4 className="text-sm font-semibold text-[hsl(var(--foreground))]">Other Actions</h4>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {onKeepAsCandidate && (
+                <button
+                  onClick={onKeepAsCandidate}
+                  disabled={isKeeping}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))] disabled:opacity-40 disabled:cursor-not-allowed text-sm text-[hsl(var(--muted-foreground))] transition-colors"
+                >
+                  {isKeeping ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Archive className="w-3.5 h-3.5" />}
+                  Keep as Candidate
+                </button>
+              )}
+
+              {onDiscardCandidate && (
+                <button
+                  onClick={() => onDiscardCandidate(candidateRevision.id)}
+                  disabled={isDiscarding}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-500/30 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed text-sm text-red-400 transition-colors"
+                >
+                  {isDiscarding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                  Discard Candidate
+                </button>
+              )}
+            </div>
           </div>
         </GlassPanel>
       )}
