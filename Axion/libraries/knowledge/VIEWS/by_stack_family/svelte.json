@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGSVEL-CHECK-0001",
+    "title": "Svelte Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSVEL-CONCEPT-0001",
+    "title": "Svelte Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSVEL-PATTERN-0001",
+    "title": "Svelte Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

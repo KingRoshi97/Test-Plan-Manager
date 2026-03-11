@@ -1,0 +1,46 @@
+[
+  {
+    "relPath": "INDUSTRY_PLAYBOOKS/government_public_sector/_meta.md",
+    "reason": "Duplicate collection key: industry.government_public_sector"
+  },
+  {
+    "relPath": "INDUSTRY_PLAYBOOKS/healthcare/_meta.md",
+    "reason": "Duplicate collection key: industry.healthcare"
+  },
+  {
+    "relPath": "INDUSTRY_PLAYBOOKS/logistics_supply_chain/_meta.md",
+    "reason": "Duplicate collection key: industry.logistics_supply_chain"
+  },
+  {
+    "relPath": "IT_END_TO_END/03_data_systems/distributed_systems/_meta.md",
+    "reason": "Duplicate collection key: domain.distributed_systems"
+  },
+  {
+    "relPath": "IT_END_TO_END/05_infrastructure_and_platform/cloud_fundamentals/_meta.md",
+    "reason": "Duplicate collection key: domain.cloud_fundamentals"
+  },
+  {
+    "relPath": "LANGUAGES_AND_LIBRARIES/go/_meta.md",
+    "reason": "Duplicate collection key: stack_family.go"
+  },
+  {
+    "relPath": "LANGUAGES_AND_LIBRARIES/javascript_typescript/nextjs/_meta.md",
+    "reason": "Duplicate collection key: stack_family.nextjs"
+  },
+  {
+    "relPath": "LANGUAGES_AND_LIBRARIES/javascript_typescript/nodejs/_meta.md",
+    "reason": "Duplicate collection key: stack_family.nodejs"
+  },
+  {
+    "relPath": "LANGUAGES_AND_LIBRARIES/javascript_typescript/react/_meta.md",
+    "reason": "Duplicate collection key: stack_family.react"
+  },
+  {
+    "relPath": "LANGUAGES_AND_LIBRARIES/python/_meta.md",
+    "reason": "Duplicate collection key: stack_family.python"
+  },
+  {
+    "relPath": "LANGUAGES_AND_LIBRARIES/rust/_meta.md",
+    "reason": "Duplicate collection key: stack_family.rust"
+  }
+]

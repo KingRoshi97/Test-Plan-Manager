@@ -1,0 +1,86 @@
+[
+  {
+    "kid": "KID-LANG-GO-WEB-0001",
+    "title": "Go API Structure Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0002",
+    "title": "Middleware + Logging Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0003",
+    "title": "Security Checklist (Go services)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0004",
+    "title": "Deployment Notes (Go)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0001",
+    "title": "FastAPI Overview (why/when)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0002",
+    "title": "API Structure Pattern (routers/services)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0003",
+    "title": "Validation + Schemas Pattern (pydantic)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0004",
+    "title": "Security Checklist (FastAPI)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0005",
+    "title": "Testing Strategy (FastAPI)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0006",
+    "title": "Deployment Notes (FastAPI)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-WEB-0001",
+    "title": "Rust Web Service Structure Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-WEB-0002",
+    "title": "Security Checklist (Rust services)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

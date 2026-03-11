@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDRETA-CHECK-0001",
+    "title": "Retail Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDRETA-CONCEPT-0001",
+    "title": "Retail Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDRETA-PATTERN-0001",
+    "title": "Retail Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

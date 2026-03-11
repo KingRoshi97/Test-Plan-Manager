@@ -1,0 +1,16 @@
+[
+  {
+    "kid": "KID-LANGDJAN-CHECK-0001",
+    "title": "Django Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGDJAN-PATTERN-0001",
+    "title": "Django Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "kid": "KID-INDCYPR-CONCEPT-0001",
+    "title": "Cybersecurity Products Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCYPR-PATTERN-0001",
+    "title": "Cybersecurity Products Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

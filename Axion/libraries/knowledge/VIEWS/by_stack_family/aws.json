@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGAWS-CHECK-0001",
+    "title": "Aws Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGAWS-CONCEPT-0001",
+    "title": "Aws Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGAWS-PATTERN-0001",
+    "title": "Aws Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,86 @@
+[
+  {
+    "kid": "KID-IND-GOV-COMP-0001",
+    "title": "Audit + Access Controls Expectations (public sector)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-COMP-0002",
+    "title": "Retention + Records Management Overview",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-DM-0001",
+    "title": "Citizen / Case / Document Entity Map",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-DM-0002",
+    "title": "Sensitive Data Classification Map (public sector)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-INT-0001",
+    "title": "Identity Provider + SSO Integration Overview",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-INT-0002",
+    "title": "Inter-agency Data Sharing Patterns (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-KPI-0001",
+    "title": "Case Throughput + Backlog KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-KPI-0002",
+    "title": "Availability Targets for Citizen-Facing Services",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-RISK-0001",
+    "title": "Threat Highlights (PII exposure, insider risk)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-WF-0001",
+    "title": "Case Intake → Review → Decision Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-WF-0002",
+    "title": "Benefits Eligibility Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-WF-0003",
+    "title": "Records Requests Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

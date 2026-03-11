@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGPOLY-CHECK-0001",
+    "title": "Polygon Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPOLY-CONCEPT-0001",
+    "title": "Polygon Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPOLY-PATTERN-0001",
+    "title": "Polygon Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

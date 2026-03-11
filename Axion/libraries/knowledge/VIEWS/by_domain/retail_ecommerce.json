@@ -1,0 +1,79 @@
+[
+  {
+    "kid": "KID-IND-ECOM-COMP-0001",
+    "title": "Privacy + Retention Overview (ecom lens)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-DM-0001",
+    "title": "Product / Cart / Order Entity Map",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-DM-0002",
+    "title": "Customer Data Sensitivity Map",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-INT-0001",
+    "title": "Payment/Tax/Shipping Integrations Overview",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-INT-0002",
+    "title": "Marketplace Integration Patterns (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-KPI-0001",
+    "title": "Conversion Funnel KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-KPI-0002",
+    "title": "Fulfillment Cycle Time KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-RISK-0001",
+    "title": "Checkout Fraud + Bot Abuse Patterns",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-WF-0001",
+    "title": "Browse → Cart → Checkout Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-WF-0002",
+    "title": "Orders → Fulfillment → Returns Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-WF-0003",
+    "title": "Inventory Sync Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

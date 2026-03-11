@@ -1,0 +1,583 @@
+[
+  {
+    "kid": "KID-LANG-EVM-CORE-0001",
+    "title": "EVM Mental Model (state, gas, transactions)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-CORE-0001",
+    "title": "Go Mental Model (packages, concurrency)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-CORE-0002",
+    "title": "Project Structure Norms (cmd/internal/pkg)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-CORE-0003",
+    "title": "Testing Norms (go test baseline)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-CORE-0004",
+    "title": "Common Pitfalls (context, goroutines)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0001",
+    "title": "Go API Structure Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0002",
+    "title": "Middleware + Logging Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0003",
+    "title": "Security Checklist (Go services)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0004",
+    "title": "Deployment Notes (Go)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0001",
+    "title": "Next.js Overview (routing + rendering modes)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0002",
+    "title": "App Structure Pattern (app router)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0003",
+    "title": "Data Fetching + Caching Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0004",
+    "title": "Auth Pattern (Next)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0005",
+    "title": "Security Checklist (Next)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0006",
+    "title": "Performance Checklist (Next)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0007",
+    "title": "Deployment Notes (Next)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0001",
+    "title": "Node Server Architecture Overview",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0002",
+    "title": "API Structure Pattern (routes/services/data)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0003",
+    "title": "Auth + Sessions Pattern (Node)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0004",
+    "title": "Error Handling + Logging Pattern (Node)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0005",
+    "title": "Background Jobs Pattern (Node)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0006",
+    "title": "Testing Strategy (Node APIs)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0007",
+    "title": "Deployment Notes (Node)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-SEC-0001",
+    "title": "SSRF/RCE/Injection Risks in Node (high level)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-SEC-0002",
+    "title": "Rate Limits + Abuse Controls (Node apps)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PG-PERF-0001",
+    "title": "Slow Query Triage (EXPLAIN basics)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PG-REF-0001",
+    "title": "Postgres Defaults Reference (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PG-REF-0002",
+    "title": "Common Query Anti-Patterns Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PG-SEC-0001",
+    "title": "SQL Injection Prevention (parameterization)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-CORE-0001",
+    "title": "Python Mental Model (runtime, packaging)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-CORE-0002",
+    "title": "Project Structure Norms (venv, deps)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-CORE-0003",
+    "title": "Testing Norms (pytest baseline)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-CORE-0004",
+    "title": "Common Pitfalls (env drift, typing gaps)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0001",
+    "title": "FastAPI Overview (why/when)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0002",
+    "title": "API Structure Pattern (routers/services)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0003",
+    "title": "Validation + Schemas Pattern (pydantic)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0004",
+    "title": "Security Checklist (FastAPI)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0005",
+    "title": "Testing Strategy (FastAPI)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0006",
+    "title": "Deployment Notes (FastAPI)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0001",
+    "title": "React App Model (components, state, effects)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0002",
+    "title": "UI Architecture Pattern (pages/components/hooks)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0003",
+    "title": "Data Fetching Pattern (query caching)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0004",
+    "title": "Accessibility Checklist (React UI)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0005",
+    "title": "Performance Checklist (React)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0006",
+    "title": "Testing Strategy (React)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0007",
+    "title": "Deployment Notes (React SPA)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-SEC-0001",
+    "title": "XSS + Injection Prevention (UI)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-CORE-0001",
+    "title": "Rust Mental Model (ownership/borrowing)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-CORE-0002",
+    "title": "Project Structure Norms (cargo, crates)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-CORE-0003",
+    "title": "Testing Norms (cargo test baseline)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-CORE-0004",
+    "title": "Common Pitfalls (lifetimes, async)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-WEB-0001",
+    "title": "Rust Web Service Structure Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-WEB-0002",
+    "title": "Security Checklist (Rust services)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-CORE-0001",
+    "title": "Solidity Basics (types, storage/memory)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-CORE-0002",
+    "title": "Contract Architecture Patterns (modules, libraries)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-CORE-0003",
+    "title": "Testing Norms (unit tests + forks)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-PATTERN-0001",
+    "title": "Checks-Effects-Interactions Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-PATTERN-0002",
+    "title": "Role-Based Access Pattern (contracts)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-PATTERN-0003",
+    "title": "Pausable/Emergency Stop Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-REF-0001",
+    "title": "Gas Cost Awareness Reference (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-REF-0002",
+    "title": "Tooling Baseline (Foundry/Hardhat choices)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0001",
+    "title": "Smart Contract Threat Model Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0002",
+    "title": "Common Vulnerabilities Reference (reentrancy, access control)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0003",
+    "title": "Upgradeability Risks (proxy patterns)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0004",
+    "title": "Key Management + Admin Control Risks",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SQL-CORE-0001",
+    "title": "Relational Model Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SQL-CORE-0002",
+    "title": "Query Shape + Indexing Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SQL-CORE-0003",
+    "title": "Transaction Isolation (practical)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SQL-CORE-0004",
+    "title": "Migrations Discipline (baseline)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0001",
+    "title": "TypeScript Mental Model (types vs runtime)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0002",
+    "title": "Module Systems (ESM/CJS) Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0003",
+    "title": "Project Structure Norms (monorepo vs single)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0004",
+    "title": "Testing Norms (unit/integration in JS land)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0005",
+    "title": "Common TypeScript Pitfalls (any, inference, build drift)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-PERF-0001",
+    "title": "Node Performance Basics (event loop)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-PERF-0002",
+    "title": "Common Bottlenecks (JSON, I/O, DB)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-REF-0001",
+    "title": "TS Project Baseline Reference (recommended defaults)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-SEC-0001",
+    "title": "Dependency Risk in JS Ecosystem (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-SEC-0002",
+    "title": "Secrets Handling in Node/JS Apps",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-SEC-0003",
+    "title": "Input Validation + Serialization Footguns",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-TOOL-0001",
+    "title": "Toolchain Baseline (tsc + bundler)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-TOOL-0002",
+    "title": "Lint/Format Norms (eslint/prettier)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-TOOL-0003",
+    "title": "Package Lock Discipline (npm/pnpm/yarn)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,779 @@
+[
+  {
+    "kid": "KID-IND-ECOM-DM-0002",
+    "title": "Customer Data Sensitivity Map",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-KPI-0001",
+    "title": "Conversion Funnel KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-KPI-0002",
+    "title": "Fulfillment Cycle Time KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-RISK-0001",
+    "title": "Checkout Fraud + Bot Abuse Patterns",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-DM-0002",
+    "title": "Sensitive Data Map (PCI-adjacent, tokens)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-KPI-0001",
+    "title": "Settlement/Reconciliation KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-KPI-0002",
+    "title": "Fraud Rate + Review Latency KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-RISK-0001",
+    "title": "Fraud/Abuse Threat Highlights (finance)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-DM-0002",
+    "title": "Sensitive Data Classification Map (public sector)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-KPI-0001",
+    "title": "Case Throughput + Backlog KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-KPI-0002",
+    "title": "Availability Targets for Citizen-Facing Services",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-RISK-0001",
+    "title": "Threat Highlights (PII exposure, insider risk)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-DM-0002",
+    "title": "PHI/PII Classification Map (HIPAA lens)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-KPI-0001",
+    "title": "Throughput + Cycle Time KPIs (claims/scheduling)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-KPI-0002",
+    "title": "Availability Targets for Critical Systems",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-RISK-0001",
+    "title": "Common Healthcare Threats (ransomware, access abuse)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-KPI-0001",
+    "title": "On-time Delivery + Delay KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-KPI-0002",
+    "title": "Inventory Accuracy KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-RISK-0001",
+    "title": "Fraud/Abuse Patterns (shipping diversion, access abuse)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PITFALL-0001",
+    "title": "Breaking changes without versioning",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PITFALL-0002",
+    "title": "Unbounded list endpoints (DoS risk)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-REF-0001",
+    "title": "HTTP Method Semantics Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PITFALL-0001",
+    "title": "\\\"Microservices by default\\\" failure modes",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PITFALL-0002",
+    "title": "Shared DB coupling across services",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-REF-0001",
+    "title": "Common Architecture Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PITFALL-0001",
+    "title": "Stale cache serving critical data",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PITFALL-0002",
+    "title": "Cache stampede",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-REF-0001",
+    "title": "Caching Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PITFALL-0001",
+    "title": "Unpinned dependencies in CI",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PITFALL-0002",
+    "title": "\\\"Green build\\\" but broken deploy",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-REF-0001",
+    "title": "CI Artifact Types Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PITFALL-0001",
+    "title": "Over-permissive IAM policies",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PITFALL-0002",
+    "title": "Public storage buckets by accident",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-REF-0001",
+    "title": "Common Cloud Services Reference (compute/storage/net)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PITFALL-0001",
+    "title": "Tag Drift (latest) in Deployments",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PITFALL-0002",
+    "title": "Missing Resource Limits — Noisy Neighbor",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-REF-0001",
+    "title": "Common Container/Orchestration Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PITFALL-0001",
+    "title": "Hidden egress costs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PITFALL-0002",
+    "title": "Unbounded logs/metrics bills",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-REF-0001",
+    "title": "Common Cloud Cost Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PITFALL-0001",
+    "title": "Missing indexes on high-traffic queries",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PITFALL-0002",
+    "title": "Migration locks that take prod down",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-REF-0001",
+    "title": "SQL Anti-Patterns Reference (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PITFALL-0001",
+    "title": "Exactly-once assumptions (why it's hard)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PITFALL-0002",
+    "title": "Retry storms and thundering herds",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-REF-0001",
+    "title": "Common Distributed Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PITFALL-0001",
+    "title": "\\\"We'll redact later\\\" (why it fails)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PITFALL-0002",
+    "title": "Retention policy exists but isn't enforced",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-REF-0001",
+    "title": "Data Handling Terms Reference (retention, deletion)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PITFALL-0001",
+    "title": "\\\"Admin\\\" role creep over time",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PITFALL-0002",
+    "title": "Missing audit logs for privileged actions",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-REF-0001",
+    "title": "Auth Terminology Reference (OAuth/OIDC glossary)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-EXAMPLE-0001",
+    "title": "Example Network Diagram (simple web app)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PITFALL-0001",
+    "title": "DNS Misconfigurations That Break Prod",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PITFALL-0002",
+    "title": "CORS Misunderstandings (what it does/doesn't do)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-REF-0001",
+    "title": "Common Ports and Protocols Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-REF-0002",
+    "title": "HTTP Status Codes Reference (operational meaning)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PITFALL-0001",
+    "title": "Permissions Misconfig That Exposes Secrets",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PITFALL-0002",
+    "title": "Works on my machine Environment Drift",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-REF-0001",
+    "title": "Common Linux Commands Reference (ops focus)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PITFALL-0001",
+    "title": "\\\"Minor change\\\" that breaks clients",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PITFALL-0002",
+    "title": "No rollback plan",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-REF-0001",
+    "title": "Release Artifact Reference (what must exist)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PITFALL-0001",
+    "title": "Stale index causes missing data",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PITFALL-0002",
+    "title": "Unbounded queries melt clusters",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-REF-0001",
+    "title": "Search Metrics Reference (CTR, zero-result rate)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-EXAMPLE-0001",
+    "title": "Example Threat Model (small web app)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-EXAMPLE-0002",
+    "title": "Example Audit Log Event Schema",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-EXAMPLE-0003",
+    "title": "Example RBAC Permission Matrix",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0001",
+    "title": "JWT Everywhere Failure Modes",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0002",
+    "title": "Secrets in Logs (how it happens, prevention)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0003",
+    "title": "Broken Access Control (most common causes)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0004",
+    "title": "Missing Idempotency on Webhooks",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0005",
+    "title": "Over-permissive CORS and Public RPC",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0006",
+    "title": "Insecure Defaults in Dev That Ship to Prod",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0001",
+    "title": "Security Terminology Reference (canonical definitions + aliases)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0002",
+    "title": "Common HTTP Security Headers Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0003",
+    "title": "Password Storage Reference (hashing requirements, anti-patterns)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0004",
+    "title": "OWASP Top Risks Reference (mapped to common app modules)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PITFALL-0001",
+    "title": "No correlation IDs → no debugging",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PITFALL-0002",
+    "title": "Alert fatigue from noisy alerts",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-REF-0001",
+    "title": "Common Metrics Reference (latency, error rate, saturation)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PITFALL-0001",
+    "title": "Backups exist but restores fail",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PITFALL-0002",
+    "title": "Orphaned data with no retention owner",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-REF-0001",
+    "title": "Backup RPO/RTO Reference (practical definitions)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PITFALL-0001",
+    "title": "Over-mocking (tests pass, system fails)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PITFALL-0002",
+    "title": "Flaky tests ignored until they kill velocity",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-REF-0001",
+    "title": "Common Test Types Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-CORE-0004",
+    "title": "Common Pitfalls (context, goroutines)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0004",
+    "title": "Deployment Notes (Go)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0007",
+    "title": "Deployment Notes (Next)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0007",
+    "title": "Deployment Notes (Node)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-SEC-0001",
+    "title": "SSRF/RCE/Injection Risks in Node (high level)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PG-REF-0001",
+    "title": "Postgres Defaults Reference (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PG-REF-0002",
+    "title": "Common Query Anti-Patterns Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-CORE-0004",
+    "title": "Common Pitfalls (env drift, typing gaps)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0006",
+    "title": "Deployment Notes (FastAPI)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0007",
+    "title": "Deployment Notes (React SPA)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-CORE-0004",
+    "title": "Common Pitfalls (lifetimes, async)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-REF-0001",
+    "title": "Gas Cost Awareness Reference (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-REF-0002",
+    "title": "Tooling Baseline (Foundry/Hardhat choices)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0002",
+    "title": "Common Vulnerabilities Reference (reentrancy, access control)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0003",
+    "title": "Upgradeability Risks (proxy patterns)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0004",
+    "title": "Key Management + Admin Control Risks",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0005",
+    "title": "Common TypeScript Pitfalls (any, inference, build drift)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-PERF-0002",
+    "title": "Common Bottlenecks (JSON, I/O, DB)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-REF-0001",
+    "title": "TS Project Baseline Reference (recommended defaults)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-SEC-0001",
+    "title": "Dependency Risk in JS Ecosystem (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-SEC-0003",
+    "title": "Input Validation + Serialization Footguns",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-TOOL-0001",
+    "title": "Toolchain Baseline (tsc + bundler)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-TOOL-0002",
+    "title": "Lint/Format Norms (eslint/prettier)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

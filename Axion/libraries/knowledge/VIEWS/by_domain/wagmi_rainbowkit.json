@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGWARA-CHECK-0001",
+    "title": "Wagmi Rainbowkit Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGWARA-CONCEPT-0001",
+    "title": "Wagmi Rainbowkit Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGWARA-PATTERN-0001",
+    "title": "Wagmi Rainbowkit Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

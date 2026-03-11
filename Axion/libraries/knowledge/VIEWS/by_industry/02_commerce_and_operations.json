@@ -1,0 +1,170 @@
+[
+  {
+    "kid": "KID-INDCONS-CHECK-0001",
+    "title": "Construction Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCONS-CONCEPT-0001",
+    "title": "Construction Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCONS-PATTERN-0001",
+    "title": "Construction Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDECOM-CHECK-0001",
+    "title": "Ecommerce Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDECOM-CONCEPT-0001",
+    "title": "Ecommerce Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDECOM-PATTERN-0001",
+    "title": "Ecommerce Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAB-CHECK-0001",
+    "title": "Food And Beverage Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAB-CONCEPT-0001",
+    "title": "Food And Beverage Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAB-PATTERN-0001",
+    "title": "Food And Beverage Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDHOTR-CHECK-0001",
+    "title": "Hospitality Travel Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDHOTR-CONCEPT-0001",
+    "title": "Hospitality Travel Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDHOTR-PATTERN-0001",
+    "title": "Hospitality Travel Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLSC-CHECK-0001",
+    "title": "Logistics Supply Chain Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLSC-CONCEPT-0001",
+    "title": "Logistics Supply Chain Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLSC-PATTERN-0001",
+    "title": "Logistics Supply Chain Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMANU-CHECK-0001",
+    "title": "Manufacturing Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMANU-CONCEPT-0001",
+    "title": "Manufacturing Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMANU-PATTERN-0001",
+    "title": "Manufacturing Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDREES-CHECK-0001",
+    "title": "Real Estate Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDREES-CONCEPT-0001",
+    "title": "Real Estate Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDREES-PATTERN-0001",
+    "title": "Real Estate Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDRETA-CHECK-0001",
+    "title": "Retail Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDRETA-CONCEPT-0001",
+    "title": "Retail Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDRETA-PATTERN-0001",
+    "title": "Retail Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

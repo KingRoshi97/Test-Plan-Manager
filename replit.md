@@ -884,7 +884,7 @@ The pipeline is fully registry-driven with deterministic library loading:
   - `system/` — Control-plane configuration and runtime contracts (SYS-0 through SYS-7). See System Library section below.
   - `library_index.v1.json` — single registry for versioned libraries
   - `schema_registry.v1.json` — single registry for JSON Schemas
-  - `knowledge/` — Knowledge Library (395+ KIDs across 3 pillars)
+  - `knowledge/` — Knowledge Library (635 KIDs, registry-based 4-layer org: SYSTEM/CONTENT/VIEWS/BUNDLES)
 - `Axion/registries/` — Global registry JSON files (GATE_REGISTRY, PINS_DEFAULT, PROOF_TYPE_REGISTRY, pipelines, gates)
 - `Axion/features/` — 17 feature packs (FEAT-001 through FEAT-017), all `status: "active"` with production-quality specs
 - `Axion/test/` — Unit tests, integration tests, fixtures, helpers
@@ -1019,47 +1019,63 @@ Produces full `agent_kit/` folder hierarchy inside `kit/bundle/`:
 - `10_app/` — 12 domain slot folders (01_requirements through 12_analytics), each with rendered templates or `00_NA.md`
 
 ## Knowledge Library (`Axion/libraries/knowledge/`)
-Fully governed knowledge authority with doctrine docs (KNO-0 through KNO-7), governance schemas, governed registry, and structured KID files (Knowledge Items) across three pillars with full KL-1 through KL-7 contract system.
+Registry-based knowledge authority with 4-layer metadata-driven organization (SYSTEM/CONTENT/VIEWS/BUNDLES), 635 canonical KIDs, faceted classification, and new resolver module. Migrated from folder-based PILLARS/ tree to flat canonical items with rich frontmatter metadata.
 
-**Governance Layer (Phase 1 upgrade):**
-- 8 doctrine docs: KNO-0 (purpose/boundaries), KNO-1 (unit classes: authoritative/guidance/example/anti-pattern/reference), KNO-2 (authority tiers: golden/verified/reviewed/draft), KNO-3 (freshness/supersession), KNO-4 (retrieval/resolution rules), KNO-5 (dependency mapping), KNO-6 (proof/trust), KNO-7 (definition of done)
-- 2 governance schemas: `knowledge_unit.v1.schema.json`, `knowledge_retrieval_report.v1.schema.json`
-- 1 governed registry: `knowledge_registry.v1.json` (12 governed units with full lifecycle fields)
-- **API:** `GET /api/knowledge-library` (overview), `/api/knowledge-library/docs`, `/api/knowledge-library/schemas`, `/api/knowledge-library/registries`
-- **UI:** `/knowledge-library` — Knowledge Library page with Documents/Schemas/Registries tabs
-- **Registered in:** `schema_registry.v1.json` (2 entries), `library_index.v1.json` (3 entries)
+**Organizational Model (v2 — registry-based):**
+- Canonical items live in `CONTENT/ITEMS/{kid}.md` with enriched frontmatter (kid, title, content_type, primary_domain, industry_refs, stack_family_refs, pillar_refs, status, authority_tier, tags, legacy_path)
+- Resolution is metadata-first: direct KID → alias → legacy path → legacy filename → search
+- `PILLARS/` tree is frozen (legacy, read-only fallback only)
 
-### Structure
-- `contracts/` — 76 contract files (KL-1 through KL-7): schemas, rules, validation checklists, gate specs
-- `INDEX/` — Registries: knowledge.index.json (395 items), taxonomy.json (216 domains, 362 tags, 30 industries, 23 stacks), bundles.index.json (10 bundles), sources.index.json, deprecations.json, changelog.md
-- `PILLARS/` — 1,923 directories across 3 pillars with 395 KID files
-- `POLICIES/` — 5 policy files aligned with KL-4/KL-5 contracts
+**Directory Structure:**
+- `SYSTEM/doctrine/` — 8 doctrine docs (KNO-0 through KNO-7)
+- `SYSTEM/contracts/` — 17+ contract files (KL-1 through KL-7): schemas, rules, validation checklists, gate specs
+- `SYSTEM/registries/` — knowledge.index.json (635 items), aliases.index.json, relationships.index.json, bundles.index.json, knowledge_registry.v1.json, sources.index.json, deprecations.json, changelog.md
+- `SYSTEM/taxonomy/` — taxonomy.json, tags.json, quality_tiers.json, vocab.*.json (8 vocabulary files for controlled enums)
+- `SYSTEM/policies/` — 5 policy files
+- `SYSTEM/templates/` — 8 templates
+- `CONTENT/ITEMS/` — 635 canonical KID files with enriched frontmatter
+- `CONTENT/META/collections/` — 236 collection descriptors (domain/industry/stack)
+- `VIEWS/` — Generated browsing views: by_pillar/, by_domain/ (111), by_content_type/ (5), by_industry/ (9), by_stack_family/ (77), by_status/, by_authority/
 - `BUNDLES/` — 10 bundle files (by run_profile, risk_class, executor)
-- `TEMPLATES/` — 8 templates including KID frontmatter, selection input/output, ingestion checklist, MVKL starter set
 - `REUSE/` — Allowlist and reuse log
-- `OUTPUTS/` — Selection and export schemas
+- `OUTPUTS/` — Migration reports, selection and export schemas
+- `PILLARS/` — FROZEN legacy tree (639 KID files, kept for fallback only)
 
-### Pillars (395 KID files total)
-- **IT_END_TO_END** (254 KIDs): 92 domains across 8 groups (01_foundations through 08_security_operations_and_compliance)
-- **INDUSTRY_PLAYBOOKS** (58 KIDs): 30 industries across 4 groups (01_regulated_industries through 04_emerging_tech_industries)
-- **LANGUAGES_AND_LIBRARIES** (83 KIDs): 94 domains across 9 groups (01_programming_languages through 09_video_streaming_and_realtime)
+**API Endpoints:**
+- `GET /api/knowledge-library` — overview (groups, schemas, registries, counts from SYSTEM/)
+- `GET /api/knowledge-library/docs` — doctrine docs from SYSTEM/doctrine/
+- `GET /api/knowledge-library/docs/:filename` — individual doctrine doc
+- `GET /api/knowledge-library/schemas` — contract schemas from SYSTEM/contracts/
+- `GET /api/knowledge-library/registries` — all registries from SYSTEM/registries/
+- `GET /api/knowledge-library/registries/:name` — individual registry
+- `GET /api/knowledge-library/search?text=&content_type=&primary_domain=&status=&authority_tier=&limit=` — faceted metadata search
+- **UI:** `/knowledge-library` — Knowledge Library page with Documents/Schemas/Registries tabs
 
-### KID File Contract (KL-1)
-- YAML frontmatter: kid, title, type, pillar, domains[], subdomains[], tags[], maturity, use_policy, executor_access, license, allowed_excerpt {max_words, max_lines}, supersedes, deprecated_by, created_at, updated_at, owner
-- Required sections (exact order): Summary, When to use, Do / Don't, Core content, Links, Proof / confidence
-- Types: concept, pattern, procedure, checklist, reference, pitfall, example, glossary_term
-- Maturity: draft → reviewed → verified → golden
-- Use policies: pattern_only (default), reusable_with_allowlist, restricted_internal_only
+**New Resolver Module** (`Axion/src/knowledge/resolver/`):
+- `types.ts` — KnowledgeFrontmatter, KnowledgeItem, AliasIndex (flat map), RelationshipIndex, KnowledgeIndexEntry, CollectionDescriptor, ResolveSource, ResolveResult, SearchFilters, SearchResult
+- `paths.ts` — centralized filesystem paths
+- `registry.ts` — cached loaders for knowledge.index.json, aliases.index.json, relationships.index.json with clearResolverCaches()
+- `resolveKid.ts` — multi-step resolution: direct KID → alias → legacy path → legacy filename → null
+- `loadItem.ts` — load canonical item from CONTENT/ITEMS using gray-matter
+- `loadRelationships.ts` — load from relationships.index.json
+- `loadCollections.ts` — match collections by item metadata scopes
+- `searchItems.ts` — faceted search on metadata fields with scoring
+- `legacyFallback.ts` — infer search filters from old PILLARS/ paths
+- `index.ts` — public API: resolveKnowledge(), re-exports
 
-### Enforcement Gates (KL-5)
-- KL-GATE-01: Referenced KIDs exist in KNOWLEDGE_INDEX
-- KL-GATE-02: KID metadata valid per KL-1.3
-- KL-GATE-03: Deprecated KIDs not used unless repro mode
-- KL-GATE-04: External executor cannot access internal_only KIDs
-- KL-GATE-05: Kit export excludes restricted content
-- KL-GATE-06: Allowlisted reuse requires reuse_log
-- KL-GATE-07: Block verbatim copying beyond excerpt limits
-- KL-GATE-08: Production runs require maturity >= reviewed
+**Migration Scripts** (`Axion/scripts/knowledge/`):
+- `migrate-kids-to-canonical.ts` — migrates KIDs from PILLARS/ to CONTENT/ITEMS/ with enriched frontmatter, builds aliases.index.json and relationships.index.json (--dry-run / --apply)
+- `migrate-meta-to-collections.ts` — converts _meta.md files to collection descriptors in CONTENT/META/collections/ (--dry-run / --apply)
+- `build-knowledge-index.ts` — rebuilds knowledge.index.json from CONTENT/ITEMS/ frontmatter
+- `generate-views.ts` — generates VIEWS/by_*/ browsing index files from knowledge.index.json
+
+**Legacy Core Resolver** (`Axion/src/core/knowledge/resolver.ts`):
+- Updated to read from SYSTEM/registries/ and SYSTEM/taxonomy/ (new paths)
+- Handles both old format ({ items: [...] }) and new format (flat array) for knowledge.index.json
+- Maps new field names (content_type→type, authority_tier→maturity, pillar_refs→pillar, primary_domain→domains) for backward compatibility
+- `resolveKnowledge(baseDir, routing, constraints)` → loads index, matches bundle, filters KIDs by domain, returns `KnowledgeContext`
+- `summarizeKnowledgeForPrompt(knowledge, maxKids)` → formats KIDs for OpenAI system prompt injection
+- `getKnowledgeCitationsForDomain(knowledge, domainKeywords)` → per-heading KID lookup
 
 ### Knowledge Library Integration (IA wiring)
 The Knowledge Library is wired into the IA through three integration points:
@@ -1070,10 +1086,15 @@ The Knowledge Library is wired into the IA through three integration points:
 
 3. **Template Filling (S7)** — `Axion/src/core/templates/filler.ts` accepts `knowledge?: KnowledgeContext` in `FillContext`. `buildHeadingContent()` wraps inner content with `renderKnowledgeReferences()`, appending matching KID citations (up to 5 per heading) with maturity badges and content snippets.
 
-**Knowledge Resolver** (`Axion/src/core/knowledge/resolver.ts`):
-- `resolveKnowledge(baseDir, routing, constraints)` → loads index, matches bundle by run_profile, filters KIDs by domain, returns `KnowledgeContext`
-- `summarizeKnowledgeForPrompt(knowledge, maxKids)` → formats KIDs for OpenAI system prompt injection
-- `getKnowledgeCitationsForDomain(knowledge, domainKeywords)` → per-heading KID lookup
+### Enforcement Gates (KL-5)
+- KL-GATE-01: Referenced KIDs exist in KNOWLEDGE_INDEX
+- KL-GATE-02: KID metadata valid per KL-1.3
+- KL-GATE-03: Deprecated KIDs not used unless repro mode
+- KL-GATE-04: External executor cannot access internal_only KIDs
+- KL-GATE-05: Kit export excludes restricted content
+- KL-GATE-06: Allowlisted reuse requires reuse_log
+- KL-GATE-07: Block verbatim copying beyond excerpt limits
+- KL-GATE-08: Production runs require maturity >= reviewed
 
 **IA Registration** (`Axion/src/core/agents/internal.ts`):
 - Capability: `knowledge_resolution`

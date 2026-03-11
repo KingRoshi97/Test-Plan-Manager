@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGPRIS-CHECK-0001",
+    "title": "Prisma Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPRIS-CONCEPT-0001",
+    "title": "Prisma Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPRIS-PATTERN-0001",
+    "title": "Prisma Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

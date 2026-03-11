@@ -1,0 +1,86 @@
+[
+  {
+    "kid": "KID-IND-HC-COMP-0001",
+    "title": "HIPAA Tech Requirements Overview",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-COMP-0002",
+    "title": "Audit Logs + Access Controls Expectations (healthcare)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-DM-0001",
+    "title": "Patient / Provider / Encounter Entity Map",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-DM-0002",
+    "title": "PHI/PII Classification Map (HIPAA lens)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-INT-0001",
+    "title": "EHR/EMR Integration Overview (tech-facing)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-INT-0002",
+    "title": "HL7/FHIR Integration Patterns (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-KPI-0001",
+    "title": "Throughput + Cycle Time KPIs (claims/scheduling)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-KPI-0002",
+    "title": "Availability Targets for Critical Systems",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-RISK-0001",
+    "title": "Common Healthcare Threats (ransomware, access abuse)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-WF-0001",
+    "title": "Patient Intake → Care → Billing Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-WF-0002",
+    "title": "Claims Submission + Denial Management Workflow",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-WF-0003",
+    "title": "Scheduling + Provider Assignment Workflow",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

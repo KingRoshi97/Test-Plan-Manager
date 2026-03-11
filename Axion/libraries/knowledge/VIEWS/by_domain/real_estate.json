@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDREES-CHECK-0001",
+    "title": "Real Estate Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDREES-CONCEPT-0001",
+    "title": "Real Estate Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDREES-PATTERN-0001",
+    "title": "Real Estate Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

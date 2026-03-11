@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGCIRC-CHECK-0001",
+    "title": "Circleci Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCIRC-CONCEPT-0001",
+    "title": "Circleci Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCIRC-PATTERN-0001",
+    "title": "Circleci Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

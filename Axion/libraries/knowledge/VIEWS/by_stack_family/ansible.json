@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGANSI-CHECK-0001",
+    "title": "Ansible Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANSI-CONCEPT-0001",
+    "title": "Ansible Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANSI-PATTERN-0001",
+    "title": "Ansible Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

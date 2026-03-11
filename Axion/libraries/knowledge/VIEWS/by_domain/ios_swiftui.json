@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGIOSW-CHECK-0001",
+    "title": "Ios Swiftui Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGIOSW-CONCEPT-0001",
+    "title": "Ios Swiftui Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGIOSW-PATTERN-0001",
+    "title": "Ios Swiftui Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGANKO-CHECK-0001",
+    "title": "Android Kotlin Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANKO-CONCEPT-0001",
+    "title": "Android Kotlin Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANKO-PATTERN-0001",
+    "title": "Android Kotlin Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

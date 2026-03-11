@@ -1,0 +1,16 @@
+[
+  {
+    "kid": "KID-INDLIPL-CONCEPT-0001",
+    "title": "Livestreaming Platforms Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLIPL-PATTERN-0001",
+    "title": "Livestreaming Platforms Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

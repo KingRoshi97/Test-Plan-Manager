@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANG-PG-PERF-0001",
+    "title": "Slow Query Triage (EXPLAIN basics)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-PERF-0001",
+    "title": "Node Performance Basics (event loop)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-PERF-0002",
+    "title": "Common Bottlenecks (JSON, I/O, DB)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

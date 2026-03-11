@@ -1,0 +1,1178 @@
+[
+  {
+    "kid": "KID-IND-ECOM-INT-0002",
+    "title": "Marketplace Integration Patterns (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-WF-0001",
+    "title": "Browse → Cart → Checkout Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-WF-0002",
+    "title": "Orders → Fulfillment → Returns Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-ECOM-WF-0003",
+    "title": "Inventory Sync Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-INT-0001",
+    "title": "Payment Processor Integration Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-INT-0002",
+    "title": "Webhook Idempotency + Reconciliation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-WF-0001",
+    "title": "KYC → Account → Transactions Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-WF-0002",
+    "title": "Disputes/Chargebacks Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-WF-0003",
+    "title": "Fraud Review Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-INT-0002",
+    "title": "Inter-agency Data Sharing Patterns (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-WF-0001",
+    "title": "Case Intake → Review → Decision Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-WF-0002",
+    "title": "Benefits Eligibility Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-WF-0003",
+    "title": "Records Requests Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-INT-0002",
+    "title": "HL7/FHIR Integration Patterns (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-WF-0001",
+    "title": "Patient Intake → Care → Billing Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-WF-0002",
+    "title": "Claims Submission + Denial Management Workflow",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-WF-0003",
+    "title": "Scheduling + Provider Assignment Workflow",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-INT-0001",
+    "title": "Carrier API Integration Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-WF-0001",
+    "title": "Order → Warehouse → Shipment Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-WF-0002",
+    "title": "Receiving + Putaway Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-WF-0003",
+    "title": "Exceptions (lost/damaged/backorder) Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDAIPR-PATTERN-0001",
+    "title": "Ai Products Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDBLWE-PATTERN-0001",
+    "title": "Blockchain Web3 Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCONS-PATTERN-0001",
+    "title": "Construction Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCRTO-PATTERN-0001",
+    "title": "Creator Tools Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCYPR-PATTERN-0001",
+    "title": "Cybersecurity Products Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDDEVT-PATTERN-0001",
+    "title": "Devtools Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDDIPU-PATTERN-0001",
+    "title": "Digital Publishing Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDECOM-PATTERN-0001",
+    "title": "Ecommerce Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDEDUC-PATTERN-0001",
+    "title": "Education Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDENUT-PATTERN-0001",
+    "title": "Energy Utilities Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAB-PATTERN-0001",
+    "title": "Food And Beverage Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAV-PATTERN-0001",
+    "title": "Film And Video Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDGAMI-PATTERN-0001",
+    "title": "Gaming Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDGPS-PATTERN-0001",
+    "title": "Government Public Sector Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDHOTR-PATTERN-0001",
+    "title": "Hospitality Travel Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDINSU-PATTERN-0001",
+    "title": "Insurance Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDIOT-PATTERN-0001",
+    "title": "Iot Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLESE-PATTERN-0001",
+    "title": "Legal Services Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLIPL-PATTERN-0001",
+    "title": "Livestreaming Platforms Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLSC-PATTERN-0001",
+    "title": "Logistics Supply Chain Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMANU-PATTERN-0001",
+    "title": "Manufacturing Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMARK-PATTERN-0001",
+    "title": "Marketplaces Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDPAYM-PATTERN-0001",
+    "title": "Payments Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDREES-PATTERN-0001",
+    "title": "Real Estate Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDRETA-PATTERN-0001",
+    "title": "Retail Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDSAB2-PATTERN-0001",
+    "title": "Saas B2b Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDSOPL-PATTERN-0001",
+    "title": "Social Platforms Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0001",
+    "title": "Consistent Error Shape Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0002",
+    "title": "Idempotent Write Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0003",
+    "title": "Webhook Signature + Replay Protection Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0004",
+    "title": "Versioning Strategy Pattern (URL/header)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PATTERN-0001",
+    "title": "Layered Architecture Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PATTERN-0002",
+    "title": "Modular Monolith Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PATTERN-0003",
+    "title": "Event-Driven Integration Pattern (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PATTERN-0001",
+    "title": "Cache-aside Pattern (with TTL)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PATTERN-0002",
+    "title": "Request Coalescing Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PATTERN-0001",
+    "title": "Trunk-Based Development Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PATTERN-0002",
+    "title": "Artifact Promotion Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PATTERN-0003",
+    "title": "Feature Flags Pattern (release safety)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PATTERN-0001",
+    "title": "Least Privilege IAM Pattern (cloud)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PATTERN-0002",
+    "title": "Multi-Environment Pattern (dev/stage/prod)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PATTERN-0001",
+    "title": "Immutable Image Build Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PATTERN-0002",
+    "title": "Multi-Stage Build Pattern (lean images)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PATTERN-0001",
+    "title": "Budget Guardrail Pattern (alerts/limits)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PATTERN-0002",
+    "title": "Cost Attribution Pattern (tags/labels)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PATTERN-0001",
+    "title": "Migration Discipline Pattern (forward-only)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PATTERN-0002",
+    "title": "Soft Delete Pattern (with retention)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PATTERN-0003",
+    "title": "Outbox Pattern (reliable events)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PATTERN-0001",
+    "title": "Idempotent Consumer Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PATTERN-0002",
+    "title": "Retry with Backoff Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PATTERN-0003",
+    "title": "Circuit Breaker Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PATTERN-0001",
+    "title": "PII Minimization Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PATTERN-0002",
+    "title": "Redaction-at-Source Pattern (logs/proofs)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PATTERN-0001",
+    "title": "Permission Matrix Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PATTERN-0002",
+    "title": "Audit Trail for Privileged Actions Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PATTERN-0001",
+    "title": "Public/Private Network Segmentation Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PATTERN-0002",
+    "title": "Zero-Trust Network Access Pattern (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PATTERN-0003",
+    "title": "Rate-Limit at Edge Pattern (CDN/WAF)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PATTERN-0001",
+    "title": "Least-Privilege Service Account Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PATTERN-0002",
+    "title": "Immutable Infrastructure Mindset (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PATTERN-0001",
+    "title": "Deprecation Window Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PATTERN-0002",
+    "title": "Migration-First Release Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PATTERN-0001",
+    "title": "Search Index Sync Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PATTERN-0002",
+    "title": "Faceted Search Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0001",
+    "title": "Security Baseline by Default (secure defaults checklist)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0002",
+    "title": "Auth Session Hardening Pattern (rotation, expiry, refresh)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0003",
+    "title": "RBAC Pattern (roles, permissions, least privilege)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0004",
+    "title": "ABAC Pattern (attributes + policy evaluation)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0005",
+    "title": "API Key Management Pattern (issue, rotate, revoke)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0006",
+    "title": "Rate Limit + Abuse Control Pattern (token bucket + bans)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0007",
+    "title": "Audit Logging Pattern (what to log, what not to log)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0008",
+    "title": "Input Validation + Output Encoding Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0009",
+    "title": "Webhook Verification Pattern (signatures, replay protection)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PATTERN-0001",
+    "title": "Structured Logging Pattern (correlation IDs)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PATTERN-0002",
+    "title": "Health Check Pattern (liveness/readiness)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PATTERN-0003",
+    "title": "Alerting Hygiene Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PATTERN-0001",
+    "title": "Backup + Restore Validation Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PATTERN-0002",
+    "title": "Data Retention Policy Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PATTERN-0001",
+    "title": "Contract Testing Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PATTERN-0002",
+    "title": "Golden Fixture Testing Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PATTERN-0003",
+    "title": "Property-Based Testing Pattern (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0001",
+    "title": "Go API Structure Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0002",
+    "title": "Middleware + Logging Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0002",
+    "title": "App Structure Pattern (app router)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0003",
+    "title": "Data Fetching + Caching Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0004",
+    "title": "Auth Pattern (Next)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0002",
+    "title": "API Structure Pattern (routes/services/data)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0003",
+    "title": "Auth + Sessions Pattern (Node)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0004",
+    "title": "Error Handling + Logging Pattern (Node)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0005",
+    "title": "Background Jobs Pattern (Node)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0002",
+    "title": "API Structure Pattern (routers/services)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0003",
+    "title": "Validation + Schemas Pattern (pydantic)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0002",
+    "title": "UI Architecture Pattern (pages/components/hooks)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0003",
+    "title": "Data Fetching Pattern (query caching)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-WEB-0001",
+    "title": "Rust Web Service Structure Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-CORE-0002",
+    "title": "Contract Architecture Patterns (modules, libraries)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-PATTERN-0001",
+    "title": "Checks-Effects-Interactions Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-PATTERN-0002",
+    "title": "Role-Based Access Pattern (contracts)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-PATTERN-0003",
+    "title": "Pausable/Emergency Stop Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGABLI-PATTERN-0001",
+    "title": "Ableton Live Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANGU-PATTERN-0001",
+    "title": "Angular Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANKO-PATTERN-0001",
+    "title": "Android Kotlin Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANSI-PATTERN-0001",
+    "title": "Ansible Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGAWS-PATTERN-0001",
+    "title": "Aws Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGAZUR-PATTERN-0001",
+    "title": "Azure Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGBASH-PATTERN-0001",
+    "title": "Bash Shell Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGC-PATTERN-0001",
+    "title": "C Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCIRC-PATTERN-0001",
+    "title": "Circleci Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCLPL-PATTERN-0001",
+    "title": "Cloudflare Platform Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCPP-PATTERN-0001",
+    "title": "Cpp Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCSDO-PATTERN-0001",
+    "title": "Csharp Dotnet Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGDJAN-PATTERN-0001",
+    "title": "Django Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGDOCK-PATTERN-0001",
+    "title": "Docker Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGDROR-PATTERN-0001",
+    "title": "Drizzle Orm Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGEXPO-PATTERN-0001",
+    "title": "Expo Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGEXPR-PATTERN-0001",
+    "title": "Express Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFAST-PATTERN-0001",
+    "title": "Fastapi Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFLAS-PATTERN-0001",
+    "title": "Flask Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFLUT-PATTERN-0001",
+    "title": "Flutter Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGCP-PATTERN-0001",
+    "title": "Gcp Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGIAC-PATTERN-0001",
+    "title": "Github Actions Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGO-PATTERN-0001",
+    "title": "Go Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGIOSW-PATTERN-0001",
+    "title": "Ios Swiftui Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGIPFS-PATTERN-0001",
+    "title": "Ipfs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGJAVA-PATTERN-0001",
+    "title": "Java Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGKOTL-PATTERN-0001",
+    "title": "Kotlin Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEST-PATTERN-0001",
+    "title": "Nestjs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEXT-PATTERN-0001",
+    "title": "Nextjs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNODE-PATTERN-0001",
+    "title": "Nodejs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGOPEN-PATTERN-0001",
+    "title": "Openzeppelin Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPODR-PATTERN-0001",
+    "title": "Postgres Drivers Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPOLY-PATTERN-0001",
+    "title": "Polygon Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPRIS-PATTERN-0001",
+    "title": "Prisma Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGREAC-PATTERN-0001",
+    "title": "React Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGRECL-PATTERN-0001",
+    "title": "Redis Clients Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGRENA-PATTERN-0001",
+    "title": "React Native Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSEQU-PATTERN-0001",
+    "title": "Sequelize Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSOLA-PATTERN-0001",
+    "title": "Solana Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSPBO-PATTERN-0001",
+    "title": "Spring Boot Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSQLA-PATTERN-0001",
+    "title": "Sqlalchemy Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSUPO-PATTERN-0001",
+    "title": "Substrate Polkadot Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSVEL-PATTERN-0001",
+    "title": "Svelte Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSWIF-PATTERN-0001",
+    "title": "Swift Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGTYPE-PATTERN-0001",
+    "title": "Typeorm Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGVUE-PATTERN-0001",
+    "title": "Vue Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGWALL-PATTERN-0001",
+    "title": "Walletconnect Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGWARA-PATTERN-0001",
+    "title": "Wagmi Rainbowkit Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

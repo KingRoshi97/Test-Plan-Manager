@@ -1,0 +1,86 @@
+[
+  {
+    "kid": "KID-ITSTO-CHECK-0001",
+    "title": "Backup Coverage Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CHECK-0002",
+    "title": "Retention/Deletion Checklist (compliance-safe)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CONCEPT-0001",
+    "title": "Block vs File vs Object Storage",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CONCEPT-0002",
+    "title": "Durability, Backups, and Recovery Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CONCEPT-0003",
+    "title": "Encryption at Rest Concepts",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PATTERN-0001",
+    "title": "Backup + Restore Validation Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PATTERN-0002",
+    "title": "Data Retention Policy Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PITFALL-0001",
+    "title": "Backups exist but restores fail",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PITFALL-0002",
+    "title": "Orphaned data with no retention owner",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PROCEDURE-0001",
+    "title": "Backup Restore Drill Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PROCEDURE-0002",
+    "title": "Data Recovery Workflow (high level)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-REF-0001",
+    "title": "Backup RPO/RTO Reference (practical definitions)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

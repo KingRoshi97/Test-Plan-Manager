@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDCRTO-CHECK-0001",
+    "title": "Creator Tools Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCRTO-CONCEPT-0001",
+    "title": "Creator Tools Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCRTO-PATTERN-0001",
+    "title": "Creator Tools Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

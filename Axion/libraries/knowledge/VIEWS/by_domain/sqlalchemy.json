@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGSQLA-CHECK-0001",
+    "title": "Sqlalchemy Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSQLA-CONCEPT-0001",
+    "title": "Sqlalchemy Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSQLA-PATTERN-0001",
+    "title": "Sqlalchemy Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

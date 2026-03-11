@@ -1,0 +1,1780 @@
+[
+  {
+    "kid": "KID-ITAPI-CHECK-0001",
+    "title": "Endpoint Checklist (auth, validation, errors, logging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CHECK-0002",
+    "title": "Integration Checklist (retries, idempotency, limits)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CONCEPT-0001",
+    "title": "REST vs RPC vs Events",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CONCEPT-0002",
+    "title": "Idempotency (why it matters)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CONCEPT-0003",
+    "title": "Pagination/Filtering/Sorting Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CONCEPT-0004",
+    "title": "Webhooks Basics (delivery, retries)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0001",
+    "title": "Consistent Error Shape Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0002",
+    "title": "Idempotent Write Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0003",
+    "title": "Webhook Signature + Replay Protection Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0004",
+    "title": "Versioning Strategy Pattern (URL/header)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PITFALL-0001",
+    "title": "Breaking changes without versioning",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PITFALL-0002",
+    "title": "Unbounded list endpoints (DoS risk)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PROCEDURE-0001",
+    "title": "API Contract Change Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PROCEDURE-0002",
+    "title": "Webhook Failure Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-REF-0001",
+    "title": "HTTP Method Semantics Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CHECK-0001",
+    "title": "Architecture Baseline Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CHECK-0002",
+    "title": "Dependency Hygiene Checklist (cycles, boundaries)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CONCEPT-0001",
+    "title": "System Boundaries (what is a \\\"service/module\\\")",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CONCEPT-0002",
+    "title": "DDD Basics (entities, value objects, bounded contexts)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CONCEPT-0003",
+    "title": "Coupling vs Cohesion (practical)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PATTERN-0001",
+    "title": "Layered Architecture Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PATTERN-0002",
+    "title": "Modular Monolith Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PATTERN-0003",
+    "title": "Event-Driven Integration Pattern (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PITFALL-0001",
+    "title": "\\\"Microservices by default\\\" failure modes",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PITFALL-0002",
+    "title": "Shared DB coupling across services",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PROCEDURE-0001",
+    "title": "Architecture Review Procedure (what to check)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-REF-0001",
+    "title": "Common Architecture Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-CHECK-0001",
+    "title": "Caching Checklist (keys, TTLs, invalidation)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-CONCEPT-0001",
+    "title": "Cache-aside vs Write-through",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-CONCEPT-0002",
+    "title": "Invalidation (why it's the hard part)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PATTERN-0001",
+    "title": "Cache-aside Pattern (with TTL)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PATTERN-0002",
+    "title": "Request Coalescing Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PITFALL-0001",
+    "title": "Stale cache serving critical data",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PITFALL-0002",
+    "title": "Cache stampede",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PROCEDURE-0001",
+    "title": "Cache Incident Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-REF-0001",
+    "title": "Caching Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CHECK-0001",
+    "title": "CI Baseline Checklist (lint/test/build)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CHECK-0002",
+    "title": "Deploy Readiness Checklist (observability, rollback)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CONCEPT-0001",
+    "title": "Pipeline Stages (build/test/package/deploy)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CONCEPT-0002",
+    "title": "Environments (dev/stage/prod parity)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CONCEPT-0003",
+    "title": "Rollback vs Rollforward",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PATTERN-0001",
+    "title": "Trunk-Based Development Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PATTERN-0002",
+    "title": "Artifact Promotion Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PATTERN-0003",
+    "title": "Feature Flags Pattern (release safety)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PITFALL-0001",
+    "title": "Unpinned dependencies in CI",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PITFALL-0002",
+    "title": "\\\"Green build\\\" but broken deploy",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PROCEDURE-0001",
+    "title": "Safe Deploy Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PROCEDURE-0002",
+    "title": "Rollback Procedure (with verification)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-REF-0001",
+    "title": "CI Artifact Types Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-CHECK-0001",
+    "title": "Cloud Baseline Checklist (network, IAM, logging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-CONCEPT-0001",
+    "title": "Shared Responsibility Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-CONCEPT-0002",
+    "title": "IAM Basics in Cloud (high level)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-CONCEPT-0003",
+    "title": "VPC/VNet Basics (subnets, routing)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PATTERN-0001",
+    "title": "Least Privilege IAM Pattern (cloud)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PATTERN-0002",
+    "title": "Multi-Environment Pattern (dev/stage/prod)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PITFALL-0001",
+    "title": "Over-permissive IAM policies",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PITFALL-0002",
+    "title": "Public storage buckets by accident",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PROCEDURE-0001",
+    "title": "Cloud Cost Spike Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-REF-0001",
+    "title": "Common Cloud Services Reference (compute/storage/net)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CHECK-0001",
+    "title": "Container Security Checklist (least privilege, no root)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CHECK-0002",
+    "title": "Deploy Readiness Checklist (health checks, rollbacks)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CONCEPT-0001",
+    "title": "VMs vs Containers (what changes)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CONCEPT-0002",
+    "title": "Container Image Basics (layers, tags)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CONCEPT-0003",
+    "title": "Scheduling Basics (why pods move)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PATTERN-0001",
+    "title": "Immutable Image Build Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PATTERN-0002",
+    "title": "Multi-Stage Build Pattern (lean images)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PITFALL-0001",
+    "title": "Tag Drift (latest) in Deployments",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PITFALL-0002",
+    "title": "Missing Resource Limits — Noisy Neighbor",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PROCEDURE-0001",
+    "title": "Debug Container Runtime Issues",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PROCEDURE-0002",
+    "title": "Rollback Deployment Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-REF-0001",
+    "title": "Common Container/Orchestration Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-CHECK-0001",
+    "title": "Cost Baseline Checklist (monitoring + tagging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-CONCEPT-0001",
+    "title": "Cost Drivers (compute, storage, egress)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-CONCEPT-0002",
+    "title": "Capacity Planning Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PATTERN-0001",
+    "title": "Budget Guardrail Pattern (alerts/limits)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PATTERN-0002",
+    "title": "Cost Attribution Pattern (tags/labels)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PITFALL-0001",
+    "title": "Hidden egress costs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PITFALL-0002",
+    "title": "Unbounded logs/metrics bills",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PROCEDURE-0001",
+    "title": "Cost Spike Investigation Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-REF-0001",
+    "title": "Common Cloud Cost Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CHECK-0001",
+    "title": "Schema Design Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CHECK-0002",
+    "title": "Migration Checklist (safe deploy)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CONCEPT-0001",
+    "title": "Transactions + Isolation Levels (practical)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CONCEPT-0002",
+    "title": "Indexing Basics (why queries are slow)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CONCEPT-0003",
+    "title": "Migrations Basics (safe schema evolution)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PATTERN-0001",
+    "title": "Migration Discipline Pattern (forward-only)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PATTERN-0002",
+    "title": "Soft Delete Pattern (with retention)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PATTERN-0003",
+    "title": "Outbox Pattern (reliable events)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PITFALL-0001",
+    "title": "Missing indexes on high-traffic queries",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PITFALL-0002",
+    "title": "Migration locks that take prod down",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PROCEDURE-0001",
+    "title": "Migration Rollout Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PROCEDURE-0002",
+    "title": "Slow Query Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-REF-0001",
+    "title": "SQL Anti-Patterns Reference (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-CHECK-0001",
+    "title": "Distributed Workflow Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-CONCEPT-0001",
+    "title": "Consistency Models (eventual vs strong)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-CONCEPT-0002",
+    "title": "Replication + Failover Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-CONCEPT-0003",
+    "title": "Queues vs Streams (when to use)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PATTERN-0001",
+    "title": "Idempotent Consumer Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PATTERN-0002",
+    "title": "Retry with Backoff Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PATTERN-0003",
+    "title": "Circuit Breaker Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PITFALL-0001",
+    "title": "Exactly-once assumptions (why it's hard)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PITFALL-0002",
+    "title": "Retry storms and thundering herds",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PROCEDURE-0001",
+    "title": "Message Processing Failure Triage",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-REF-0001",
+    "title": "Common Distributed Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CHECK-0001",
+    "title": "Data Handling Checklist (retention, redaction)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CHECK-0002",
+    "title": "Audit Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CONCEPT-0001",
+    "title": "Data Classification Basics (PII, secrets, internal)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CONCEPT-0002",
+    "title": "Retention + Deletion Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CONCEPT-0003",
+    "title": "Auditability Basics (what \\\"audit-ready\\\" means)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PATTERN-0001",
+    "title": "PII Minimization Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PATTERN-0002",
+    "title": "Redaction-at-Source Pattern (logs/proofs)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PITFALL-0001",
+    "title": "\\\"We'll redact later\\\" (why it fails)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PITFALL-0002",
+    "title": "Retention policy exists but isn't enforced",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PROCEDURE-0001",
+    "title": "Compliance Change Procedure (policy update)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PROCEDURE-0002",
+    "title": "Data Deletion Request Procedure (high level)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-REF-0001",
+    "title": "Data Handling Terms Reference (retention, deletion)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-CHECK-0001",
+    "title": "IAM Implementation Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-CONCEPT-0001",
+    "title": "OAuth/OIDC Basics (flows at a high level)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-CONCEPT-0002",
+    "title": "RBAC vs ABAC (when to use)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-CONCEPT-0003",
+    "title": "SSO Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PATTERN-0001",
+    "title": "Permission Matrix Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PATTERN-0002",
+    "title": "Audit Trail for Privileged Actions Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PITFALL-0001",
+    "title": "\\\"Admin\\\" role creep over time",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PITFALL-0002",
+    "title": "Missing audit logs for privileged actions",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PROCEDURE-0001",
+    "title": "Access Review Procedure (IAM-focused)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-REF-0001",
+    "title": "Auth Terminology Reference (OAuth/OIDC glossary)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CHECK-0001",
+    "title": "Service Exposure Checklist (ports, ingress, egress)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CHECK-0002",
+    "title": "DNS Change Checklist (TTL, propagation, rollback)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0001",
+    "title": "Networking Mental Model (packets, layers, boundaries)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0002",
+    "title": "DNS Basics (records, resolution, TTL)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0003",
+    "title": "HTTP/HTTPS Basics (requests, TLS, certs)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0004",
+    "title": "Load Balancing Basics (L4 vs L7)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0005",
+    "title": "Firewalls/NAT/VPN Basics (traffic control)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-EXAMPLE-0001",
+    "title": "Example Network Diagram (simple web app)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PATTERN-0001",
+    "title": "Public/Private Network Segmentation Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PATTERN-0002",
+    "title": "Zero-Trust Network Access Pattern (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PATTERN-0003",
+    "title": "Rate-Limit at Edge Pattern (CDN/WAF)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PITFALL-0001",
+    "title": "DNS Misconfigurations That Break Prod",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PITFALL-0002",
+    "title": "CORS Misunderstandings (what it does/doesn't do)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PROCEDURE-0001",
+    "title": "Debugging Connectivity (DNS to TCP to TLS to HTTP)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PROCEDURE-0002",
+    "title": "TLS Certificate Rotation Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-REF-0001",
+    "title": "Common Ports and Protocols Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-REF-0002",
+    "title": "HTTP Status Codes Reference (operational meaning)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CHECK-0001",
+    "title": "Minimal Server Baseline Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CHECK-0002",
+    "title": "Runtime Config Checklist (no secrets in repo)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CONCEPT-0001",
+    "title": "Processes/Threads Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CONCEPT-0002",
+    "title": "Filesystems + Permissions (ownership, modes)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CONCEPT-0003",
+    "title": "Environment Variables + Runtime Config",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CONCEPT-0004",
+    "title": "Resource Limits (CPU/RAM/FDs)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PATTERN-0001",
+    "title": "Least-Privilege Service Account Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PATTERN-0002",
+    "title": "Immutable Infrastructure Mindset (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PITFALL-0001",
+    "title": "Permissions Misconfig That Exposes Secrets",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PITFALL-0002",
+    "title": "Works on my machine Environment Drift",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PROCEDURE-0001",
+    "title": "Basic Linux Debug Workflow (logs, ps, netstat)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PROCEDURE-0002",
+    "title": "Service Hardening Procedure (permissions, limits)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-REF-0001",
+    "title": "Common Linux Commands Reference (ops focus)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-CHECK-0001",
+    "title": "Release Checklist (pre/post)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-CONCEPT-0001",
+    "title": "Semantic Versioning (practical)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-CONCEPT-0002",
+    "title": "Breaking Change vs Non-Breaking Change",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PATTERN-0001",
+    "title": "Deprecation Window Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PATTERN-0002",
+    "title": "Migration-First Release Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PITFALL-0001",
+    "title": "\\\"Minor change\\\" that breaks clients",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PITFALL-0002",
+    "title": "No rollback plan",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PROCEDURE-0001",
+    "title": "Breaking Change Release Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PROCEDURE-0002",
+    "title": "Rollback Decision Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-REF-0001",
+    "title": "Release Artifact Reference (what must exist)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-CHECK-0001",
+    "title": "Search Implementation Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-CONCEPT-0001",
+    "title": "Indexing Basics (tokens, analyzers)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-CONCEPT-0002",
+    "title": "Relevance Basics (precision/recall)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PATTERN-0001",
+    "title": "Search Index Sync Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PATTERN-0002",
+    "title": "Faceted Search Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PITFALL-0001",
+    "title": "Stale index causes missing data",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PITFALL-0002",
+    "title": "Unbounded queries melt clusters",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PROCEDURE-0001",
+    "title": "Search Quality Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-REF-0001",
+    "title": "Search Metrics Reference (CTR, zero-result rate)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0001",
+    "title": "Auth System Checklist (sessions, tokens, MFA readiness)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0002",
+    "title": "API Security Checklist (auth, rate limit, input validation, logging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0003",
+    "title": "Data Handling Checklist (PII, retention, redaction)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0004",
+    "title": "Logging Checklist (no secrets, correlation IDs, audit fields)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0005",
+    "title": "Dependency Hygiene Checklist (lockfiles, updates, license notes)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0006",
+    "title": "Threat Model Checklist (assets, actors, mitigations)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0007",
+    "title": "External Agent Execution Checklist (least privilege + no copy rules)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0001",
+    "title": "Threat Modeling Basics (assets, actors, attack surfaces)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0002",
+    "title": "AuthN vs AuthZ (what they are, common failure patterns)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0003",
+    "title": "Principle of Least Privilege (POLP)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0004",
+    "title": "Defense in Depth",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0005",
+    "title": "CIA Triad + Practical Mapping to Systems",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0006",
+    "title": "Secrets vs Credentials vs Tokens (taxonomy)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0007",
+    "title": "Encryption Basics (at rest, in transit, key roles)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-EXAMPLE-0001",
+    "title": "Example Threat Model (small web app)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-EXAMPLE-0002",
+    "title": "Example Audit Log Event Schema",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-EXAMPLE-0003",
+    "title": "Example RBAC Permission Matrix",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0001",
+    "title": "Security Baseline by Default (secure defaults checklist)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0002",
+    "title": "Auth Session Hardening Pattern (rotation, expiry, refresh)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0003",
+    "title": "RBAC Pattern (roles, permissions, least privilege)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0004",
+    "title": "ABAC Pattern (attributes + policy evaluation)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0005",
+    "title": "API Key Management Pattern (issue, rotate, revoke)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0006",
+    "title": "Rate Limit + Abuse Control Pattern (token bucket + bans)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0007",
+    "title": "Audit Logging Pattern (what to log, what not to log)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0008",
+    "title": "Input Validation + Output Encoding Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0009",
+    "title": "Webhook Verification Pattern (signatures, replay protection)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0001",
+    "title": "JWT Everywhere Failure Modes",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0002",
+    "title": "Secrets in Logs (how it happens, prevention)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0003",
+    "title": "Broken Access Control (most common causes)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0004",
+    "title": "Missing Idempotency on Webhooks",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0005",
+    "title": "Over-permissive CORS and Public RPC",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0006",
+    "title": "Insecure Defaults in Dev That Ship to Prod",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0001",
+    "title": "Secrets Handling Procedure (dev, CI, prod)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0002",
+    "title": "Incident Triage Procedure (containment to recovery)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0003",
+    "title": "Key Rotation Procedure (what triggers rotation)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0004",
+    "title": "Vulnerability Response Procedure (patch cycle + verification)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0005",
+    "title": "Access Review Procedure (who has what, why)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0006",
+    "title": "Secure Release Checklist Procedure (pre-release checks)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0001",
+    "title": "Security Terminology Reference (canonical definitions + aliases)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0002",
+    "title": "Common HTTP Security Headers Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0003",
+    "title": "Password Storage Reference (hashing requirements, anti-patterns)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0004",
+    "title": "OWASP Top Risks Reference (mapped to common app modules)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CHECK-0001",
+    "title": "Observability Baseline Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CHECK-0002",
+    "title": "Incident Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CONCEPT-0001",
+    "title": "Logs/Metrics/Traces (what each is for)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CONCEPT-0002",
+    "title": "SLO/SLI Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CONCEPT-0003",
+    "title": "Incident Response Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PATTERN-0001",
+    "title": "Structured Logging Pattern (correlation IDs)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PATTERN-0002",
+    "title": "Health Check Pattern (liveness/readiness)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PATTERN-0003",
+    "title": "Alerting Hygiene Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PITFALL-0001",
+    "title": "No correlation IDs → no debugging",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PITFALL-0002",
+    "title": "Alert fatigue from noisy alerts",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PROCEDURE-0001",
+    "title": "Incident Triage Procedure (ops view)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PROCEDURE-0002",
+    "title": "Postmortem Procedure (blameless)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-REF-0001",
+    "title": "Common Metrics Reference (latency, error rate, saturation)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CHECK-0001",
+    "title": "Backup Coverage Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CHECK-0002",
+    "title": "Retention/Deletion Checklist (compliance-safe)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CONCEPT-0001",
+    "title": "Block vs File vs Object Storage",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CONCEPT-0002",
+    "title": "Durability, Backups, and Recovery Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CONCEPT-0003",
+    "title": "Encryption at Rest Concepts",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PATTERN-0001",
+    "title": "Backup + Restore Validation Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PATTERN-0002",
+    "title": "Data Retention Policy Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PITFALL-0001",
+    "title": "Backups exist but restores fail",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PITFALL-0002",
+    "title": "Orphaned data with no retention owner",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PROCEDURE-0001",
+    "title": "Backup Restore Drill Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PROCEDURE-0002",
+    "title": "Data Recovery Workflow (high level)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-REF-0001",
+    "title": "Backup RPO/RTO Reference (practical definitions)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CHECK-0001",
+    "title": "Test Coverage Checklist (what matters)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CHECK-0002",
+    "title": "Release Test Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CONCEPT-0001",
+    "title": "Test Pyramid (unit/integration/e2e)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CONCEPT-0002",
+    "title": "Deterministic Tests (flakiness causes)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CONCEPT-0003",
+    "title": "Test Data Strategy",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PATTERN-0001",
+    "title": "Contract Testing Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PATTERN-0002",
+    "title": "Golden Fixture Testing Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PATTERN-0003",
+    "title": "Property-Based Testing Pattern (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PITFALL-0001",
+    "title": "Over-mocking (tests pass, system fails)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PITFALL-0002",
+    "title": "Flaky tests ignored until they kill velocity",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PROCEDURE-0001",
+    "title": "Flaky Test Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-REF-0001",
+    "title": "Common Test Types Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

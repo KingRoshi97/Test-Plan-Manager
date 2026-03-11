@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGRECL-CHECK-0001",
+    "title": "Redis Clients Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGRECL-CONCEPT-0001",
+    "title": "Redis Clients Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGRECL-PATTERN-0001",
+    "title": "Redis Clients Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGREAC-CHECK-0001",
+    "title": "React Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGREAC-CONCEPT-0001",
+    "title": "React Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGREAC-PATTERN-0001",
+    "title": "React Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

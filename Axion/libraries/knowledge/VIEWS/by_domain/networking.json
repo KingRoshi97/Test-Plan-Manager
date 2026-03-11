@@ -1,0 +1,121 @@
+[
+  {
+    "kid": "KID-ITNET-CHECK-0001",
+    "title": "Service Exposure Checklist (ports, ingress, egress)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CHECK-0002",
+    "title": "DNS Change Checklist (TTL, propagation, rollback)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0001",
+    "title": "Networking Mental Model (packets, layers, boundaries)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0002",
+    "title": "DNS Basics (records, resolution, TTL)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0003",
+    "title": "HTTP/HTTPS Basics (requests, TLS, certs)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0004",
+    "title": "Load Balancing Basics (L4 vs L7)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CONCEPT-0005",
+    "title": "Firewalls/NAT/VPN Basics (traffic control)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-EXAMPLE-0001",
+    "title": "Example Network Diagram (simple web app)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PATTERN-0001",
+    "title": "Public/Private Network Segmentation Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PATTERN-0002",
+    "title": "Zero-Trust Network Access Pattern (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PATTERN-0003",
+    "title": "Rate-Limit at Edge Pattern (CDN/WAF)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PITFALL-0001",
+    "title": "DNS Misconfigurations That Break Prod",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PITFALL-0002",
+    "title": "CORS Misunderstandings (what it does/doesn't do)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PROCEDURE-0001",
+    "title": "Debugging Connectivity (DNS to TCP to TLS to HTTP)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PROCEDURE-0002",
+    "title": "TLS Certificate Rotation Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-REF-0001",
+    "title": "Common Ports and Protocols Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-REF-0002",
+    "title": "HTTP Status Codes Reference (operational meaning)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDENUT-CHECK-0001",
+    "title": "Energy Utilities Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDENUT-CONCEPT-0001",
+    "title": "Energy Utilities Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDENUT-PATTERN-0001",
+    "title": "Energy Utilities Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

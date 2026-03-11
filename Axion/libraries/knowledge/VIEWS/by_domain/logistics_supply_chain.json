@@ -1,0 +1,100 @@
+[
+  {
+    "kid": "KID-IND-LOG-COMP-0001",
+    "title": "Audit + Retention Expectations (logistics)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-DM-0001",
+    "title": "Shipment / SKU / Location Entity Map",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-DM-0002",
+    "title": "Scan Event Model (audit-ready)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-INT-0001",
+    "title": "Carrier API Integration Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-INT-0002",
+    "title": "EDI Integration Overview (high level)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-KPI-0001",
+    "title": "On-time Delivery + Delay KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-KPI-0002",
+    "title": "Inventory Accuracy KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-RISK-0001",
+    "title": "Fraud/Abuse Patterns (shipping diversion, access abuse)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-WF-0001",
+    "title": "Order → Warehouse → Shipment Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-WF-0002",
+    "title": "Receiving + Putaway Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-WF-0003",
+    "title": "Exceptions (lost/damaged/backorder) Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLSC-CHECK-0001",
+    "title": "Logistics Supply Chain Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLSC-CONCEPT-0001",
+    "title": "Logistics Supply Chain Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLSC-PATTERN-0001",
+    "title": "Logistics Supply Chain Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGVUE-CHECK-0001",
+    "title": "Vue Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGVUE-CONCEPT-0001",
+    "title": "Vue Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGVUE-PATTERN-0001",
+    "title": "Vue Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

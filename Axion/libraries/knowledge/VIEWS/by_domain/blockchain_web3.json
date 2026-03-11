@@ -1,0 +1,16 @@
+[
+  {
+    "kid": "KID-INDBLWE-CONCEPT-0001",
+    "title": "Blockchain Web3 Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDBLWE-PATTERN-0001",
+    "title": "Blockchain Web3 Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

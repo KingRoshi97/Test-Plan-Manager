@@ -1,0 +1,93 @@
+[
+  {
+    "kid": "KID-ITOS-CHECK-0001",
+    "title": "Minimal Server Baseline Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CHECK-0002",
+    "title": "Runtime Config Checklist (no secrets in repo)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CONCEPT-0001",
+    "title": "Processes/Threads Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CONCEPT-0002",
+    "title": "Filesystems + Permissions (ownership, modes)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CONCEPT-0003",
+    "title": "Environment Variables + Runtime Config",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CONCEPT-0004",
+    "title": "Resource Limits (CPU/RAM/FDs)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PATTERN-0001",
+    "title": "Least-Privilege Service Account Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PATTERN-0002",
+    "title": "Immutable Infrastructure Mindset (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PITFALL-0001",
+    "title": "Permissions Misconfig That Exposes Secrets",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PITFALL-0002",
+    "title": "Works on my machine Environment Drift",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PROCEDURE-0001",
+    "title": "Basic Linux Debug Workflow (logs, ps, netstat)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PROCEDURE-0002",
+    "title": "Service Hardening Procedure (permissions, limits)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-REF-0001",
+    "title": "Common Linux Commands Reference (ops focus)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

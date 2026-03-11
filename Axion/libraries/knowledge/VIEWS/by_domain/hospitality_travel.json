@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDHOTR-CHECK-0001",
+    "title": "Hospitality Travel Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDHOTR-CONCEPT-0001",
+    "title": "Hospitality Travel Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDHOTR-PATTERN-0001",
+    "title": "Hospitality Travel Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

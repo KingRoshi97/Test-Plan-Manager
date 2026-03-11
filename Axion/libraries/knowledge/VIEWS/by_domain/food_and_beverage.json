@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDFAB-CHECK-0001",
+    "title": "Food And Beverage Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAB-CONCEPT-0001",
+    "title": "Food And Beverage Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAB-PATTERN-0001",
+    "title": "Food And Beverage Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

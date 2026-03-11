@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGCSDO-CHECK-0001",
+    "title": "Csharp Dotnet Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCSDO-CONCEPT-0001",
+    "title": "Csharp Dotnet Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCSDO-PATTERN-0001",
+    "title": "Csharp Dotnet Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

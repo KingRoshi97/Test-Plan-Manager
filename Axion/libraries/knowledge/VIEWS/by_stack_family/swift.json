@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGSWIF-CHECK-0001",
+    "title": "Swift Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSWIF-CONCEPT-0001",
+    "title": "Swift Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSWIF-PATTERN-0001",
+    "title": "Swift Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

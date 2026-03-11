@@ -1,0 +1,849 @@
+[
+  {
+    "kid": "KID-IND-ECOM-COMP-0001",
+    "title": "Privacy + Retention Overview (ecom lens)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-COMP-0001",
+    "title": "Audit + Access Controls Expectations (finance)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-COMP-0002",
+    "title": "Data Retention Expectations (finance lens)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-COMP-0001",
+    "title": "Audit + Access Controls Expectations (public sector)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-GOV-COMP-0002",
+    "title": "Retention + Records Management Overview",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-COMP-0001",
+    "title": "HIPAA Tech Requirements Overview",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-HC-COMP-0002",
+    "title": "Audit Logs + Access Controls Expectations (healthcare)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-LOG-COMP-0001",
+    "title": "Audit + Retention Expectations (logistics)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCONS-CHECK-0001",
+    "title": "Construction Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCRTO-CHECK-0001",
+    "title": "Creator Tools Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDDIPU-CHECK-0001",
+    "title": "Digital Publishing Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDECOM-CHECK-0001",
+    "title": "Ecommerce Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDEDUC-CHECK-0001",
+    "title": "Education Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDENUT-CHECK-0001",
+    "title": "Energy Utilities Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAB-CHECK-0001",
+    "title": "Food And Beverage Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDGPS-CHECK-0001",
+    "title": "Government Public Sector Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDHOTR-CHECK-0001",
+    "title": "Hospitality Travel Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDINSU-CHECK-0001",
+    "title": "Insurance Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDIOT-CHECK-0001",
+    "title": "Iot Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLESE-CHECK-0001",
+    "title": "Legal Services Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLSC-CHECK-0001",
+    "title": "Logistics Supply Chain Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMANU-CHECK-0001",
+    "title": "Manufacturing Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMARK-CHECK-0001",
+    "title": "Marketplaces Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDPAYM-CHECK-0001",
+    "title": "Payments Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDREES-CHECK-0001",
+    "title": "Real Estate Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDRETA-CHECK-0001",
+    "title": "Retail Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDSAB2-CHECK-0001",
+    "title": "Saas B2b Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDSOPL-CHECK-0001",
+    "title": "Social Platforms Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CHECK-0001",
+    "title": "Endpoint Checklist (auth, validation, errors, logging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CHECK-0002",
+    "title": "Integration Checklist (retries, idempotency, limits)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CHECK-0001",
+    "title": "Architecture Baseline Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CHECK-0002",
+    "title": "Dependency Hygiene Checklist (cycles, boundaries)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-CHECK-0001",
+    "title": "Caching Checklist (keys, TTLs, invalidation)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CHECK-0001",
+    "title": "CI Baseline Checklist (lint/test/build)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CHECK-0002",
+    "title": "Deploy Readiness Checklist (observability, rollback)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-CHECK-0001",
+    "title": "Cloud Baseline Checklist (network, IAM, logging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CHECK-0001",
+    "title": "Container Security Checklist (least privilege, no root)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CHECK-0002",
+    "title": "Deploy Readiness Checklist (health checks, rollbacks)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-CHECK-0001",
+    "title": "Cost Baseline Checklist (monitoring + tagging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CHECK-0001",
+    "title": "Schema Design Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CHECK-0002",
+    "title": "Migration Checklist (safe deploy)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-CHECK-0001",
+    "title": "Distributed Workflow Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CHECK-0001",
+    "title": "Data Handling Checklist (retention, redaction)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CHECK-0002",
+    "title": "Audit Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-CHECK-0001",
+    "title": "IAM Implementation Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CHECK-0001",
+    "title": "Service Exposure Checklist (ports, ingress, egress)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-CHECK-0002",
+    "title": "DNS Change Checklist (TTL, propagation, rollback)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CHECK-0001",
+    "title": "Minimal Server Baseline Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-CHECK-0002",
+    "title": "Runtime Config Checklist (no secrets in repo)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-CHECK-0001",
+    "title": "Release Checklist (pre/post)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-CHECK-0001",
+    "title": "Search Implementation Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0001",
+    "title": "Auth System Checklist (sessions, tokens, MFA readiness)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0002",
+    "title": "API Security Checklist (auth, rate limit, input validation, logging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0003",
+    "title": "Data Handling Checklist (PII, retention, redaction)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0004",
+    "title": "Logging Checklist (no secrets, correlation IDs, audit fields)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0005",
+    "title": "Dependency Hygiene Checklist (lockfiles, updates, license notes)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0006",
+    "title": "Threat Model Checklist (assets, actors, mitigations)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0007",
+    "title": "External Agent Execution Checklist (least privilege + no copy rules)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CHECK-0001",
+    "title": "Observability Baseline Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CHECK-0002",
+    "title": "Incident Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CHECK-0001",
+    "title": "Backup Coverage Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-CHECK-0002",
+    "title": "Retention/Deletion Checklist (compliance-safe)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CHECK-0001",
+    "title": "Test Coverage Checklist (what matters)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CHECK-0002",
+    "title": "Release Test Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-WEB-0003",
+    "title": "Security Checklist (Go services)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0005",
+    "title": "Security Checklist (Next)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0006",
+    "title": "Performance Checklist (Next)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-SEC-0002",
+    "title": "Rate Limits + Abuse Controls (Node apps)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PG-SEC-0001",
+    "title": "SQL Injection Prevention (parameterization)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0004",
+    "title": "Security Checklist (FastAPI)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0004",
+    "title": "Accessibility Checklist (React UI)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0005",
+    "title": "Performance Checklist (React)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-SEC-0001",
+    "title": "XSS + Injection Prevention (UI)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-WEB-0002",
+    "title": "Security Checklist (Rust services)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGABLI-CHECK-0001",
+    "title": "Ableton Live Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANGU-CHECK-0001",
+    "title": "Angular Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANKO-CHECK-0001",
+    "title": "Android Kotlin Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGANSI-CHECK-0001",
+    "title": "Ansible Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGAWS-CHECK-0001",
+    "title": "Aws Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGAZUR-CHECK-0001",
+    "title": "Azure Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGBASH-CHECK-0001",
+    "title": "Bash Shell Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGC-CHECK-0001",
+    "title": "C Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCIRC-CHECK-0001",
+    "title": "Circleci Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCPP-CHECK-0001",
+    "title": "Cpp Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCSDO-CHECK-0001",
+    "title": "Csharp Dotnet Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGDJAN-CHECK-0001",
+    "title": "Django Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGDOCK-CHECK-0001",
+    "title": "Docker Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGDROR-CHECK-0001",
+    "title": "Drizzle Orm Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGEXPO-CHECK-0001",
+    "title": "Expo Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGEXPR-CHECK-0001",
+    "title": "Express Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFAST-CHECK-0001",
+    "title": "Fastapi Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFLAS-CHECK-0001",
+    "title": "Flask Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFLUT-CHECK-0001",
+    "title": "Flutter Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGCP-CHECK-0001",
+    "title": "Gcp Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGIAC-CHECK-0001",
+    "title": "Github Actions Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGO-CHECK-0001",
+    "title": "Go Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGIOSW-CHECK-0001",
+    "title": "Ios Swiftui Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGIPFS-CHECK-0001",
+    "title": "Ipfs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGJAVA-CHECK-0001",
+    "title": "Java Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGKOTL-CHECK-0001",
+    "title": "Kotlin Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEST-CHECK-0001",
+    "title": "Nestjs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEXT-CHECK-0001",
+    "title": "Nextjs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNODE-CHECK-0001",
+    "title": "Nodejs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGOPEN-CHECK-0001",
+    "title": "Openzeppelin Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPODR-CHECK-0001",
+    "title": "Postgres Drivers Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPOLY-CHECK-0001",
+    "title": "Polygon Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPRIS-CHECK-0001",
+    "title": "Prisma Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGREAC-CHECK-0001",
+    "title": "React Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGRECL-CHECK-0001",
+    "title": "Redis Clients Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGRENA-CHECK-0001",
+    "title": "React Native Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSEQU-CHECK-0001",
+    "title": "Sequelize Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSOLA-CHECK-0001",
+    "title": "Solana Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSPBO-CHECK-0001",
+    "title": "Spring Boot Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSQLA-CHECK-0001",
+    "title": "Sqlalchemy Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSUPO-CHECK-0001",
+    "title": "Substrate Polkadot Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSVEL-CHECK-0001",
+    "title": "Svelte Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSWIF-CHECK-0001",
+    "title": "Swift Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGTYPE-CHECK-0001",
+    "title": "Typeorm Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGVUE-CHECK-0001",
+    "title": "Vue Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGWALL-CHECK-0001",
+    "title": "Walletconnect Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGWARA-CHECK-0001",
+    "title": "Wagmi Rainbowkit Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

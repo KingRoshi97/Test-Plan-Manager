@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGSPBO-CHECK-0001",
+    "title": "Spring Boot Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSPBO-CONCEPT-0001",
+    "title": "Spring Boot Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSPBO-PATTERN-0001",
+    "title": "Spring Boot Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

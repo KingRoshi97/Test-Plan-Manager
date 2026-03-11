@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGFLAS-CHECK-0001",
+    "title": "Flask Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFLAS-CONCEPT-0001",
+    "title": "Flask Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFLAS-PATTERN-0001",
+    "title": "Flask Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,86 @@
+[
+  {
+    "kid": "KID-LANG-NODE-NODE-0001",
+    "title": "Node Server Architecture Overview",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0002",
+    "title": "API Structure Pattern (routes/services/data)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0003",
+    "title": "Auth + Sessions Pattern (Node)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0004",
+    "title": "Error Handling + Logging Pattern (Node)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0005",
+    "title": "Background Jobs Pattern (Node)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0006",
+    "title": "Testing Strategy (Node APIs)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0007",
+    "title": "Deployment Notes (Node)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-SEC-0001",
+    "title": "SSRF/RCE/Injection Risks in Node (high level)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-SEC-0002",
+    "title": "Rate Limits + Abuse Controls (Node apps)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNODE-CHECK-0001",
+    "title": "Nodejs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNODE-CONCEPT-0001",
+    "title": "Nodejs Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNODE-PATTERN-0001",
+    "title": "Nodejs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

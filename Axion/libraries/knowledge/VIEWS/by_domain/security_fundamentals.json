@@ -1,0 +1,296 @@
+[
+  {
+    "kid": "KID-ITSEC-CHECK-0001",
+    "title": "Auth System Checklist (sessions, tokens, MFA readiness)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0002",
+    "title": "API Security Checklist (auth, rate limit, input validation, logging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0003",
+    "title": "Data Handling Checklist (PII, retention, redaction)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0004",
+    "title": "Logging Checklist (no secrets, correlation IDs, audit fields)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0005",
+    "title": "Dependency Hygiene Checklist (lockfiles, updates, license notes)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0006",
+    "title": "Threat Model Checklist (assets, actors, mitigations)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CHECK-0007",
+    "title": "External Agent Execution Checklist (least privilege + no copy rules)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0001",
+    "title": "Threat Modeling Basics (assets, actors, attack surfaces)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0002",
+    "title": "AuthN vs AuthZ (what they are, common failure patterns)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0003",
+    "title": "Principle of Least Privilege (POLP)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0004",
+    "title": "Defense in Depth",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0005",
+    "title": "CIA Triad + Practical Mapping to Systems",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0006",
+    "title": "Secrets vs Credentials vs Tokens (taxonomy)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-CONCEPT-0007",
+    "title": "Encryption Basics (at rest, in transit, key roles)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-EXAMPLE-0001",
+    "title": "Example Threat Model (small web app)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-EXAMPLE-0002",
+    "title": "Example Audit Log Event Schema",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-EXAMPLE-0003",
+    "title": "Example RBAC Permission Matrix",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0001",
+    "title": "Security Baseline by Default (secure defaults checklist)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0002",
+    "title": "Auth Session Hardening Pattern (rotation, expiry, refresh)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0003",
+    "title": "RBAC Pattern (roles, permissions, least privilege)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0004",
+    "title": "ABAC Pattern (attributes + policy evaluation)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0005",
+    "title": "API Key Management Pattern (issue, rotate, revoke)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0006",
+    "title": "Rate Limit + Abuse Control Pattern (token bucket + bans)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0007",
+    "title": "Audit Logging Pattern (what to log, what not to log)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0008",
+    "title": "Input Validation + Output Encoding Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PATTERN-0009",
+    "title": "Webhook Verification Pattern (signatures, replay protection)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0001",
+    "title": "JWT Everywhere Failure Modes",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0002",
+    "title": "Secrets in Logs (how it happens, prevention)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0003",
+    "title": "Broken Access Control (most common causes)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0004",
+    "title": "Missing Idempotency on Webhooks",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0005",
+    "title": "Over-permissive CORS and Public RPC",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PITFALL-0006",
+    "title": "Insecure Defaults in Dev That Ship to Prod",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0001",
+    "title": "Secrets Handling Procedure (dev, CI, prod)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0002",
+    "title": "Incident Triage Procedure (containment to recovery)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0003",
+    "title": "Key Rotation Procedure (what triggers rotation)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0004",
+    "title": "Vulnerability Response Procedure (patch cycle + verification)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0005",
+    "title": "Access Review Procedure (who has what, why)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0006",
+    "title": "Secure Release Checklist Procedure (pre-release checks)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0001",
+    "title": "Security Terminology Reference (canonical definitions + aliases)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0002",
+    "title": "Common HTTP Security Headers Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0003",
+    "title": "Password Storage Reference (hashing requirements, anti-patterns)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-REF-0004",
+    "title": "OWASP Top Risks Reference (mapped to common app modules)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

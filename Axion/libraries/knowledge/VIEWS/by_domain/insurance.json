@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDINSU-CHECK-0001",
+    "title": "Insurance Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDINSU-CONCEPT-0001",
+    "title": "Insurance Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDINSU-PATTERN-0001",
+    "title": "Insurance Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

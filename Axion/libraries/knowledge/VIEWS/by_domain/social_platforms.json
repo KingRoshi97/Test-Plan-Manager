@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDSOPL-CHECK-0001",
+    "title": "Social Platforms Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDSOPL-CONCEPT-0001",
+    "title": "Social Platforms Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDSOPL-PATTERN-0001",
+    "title": "Social Platforms Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

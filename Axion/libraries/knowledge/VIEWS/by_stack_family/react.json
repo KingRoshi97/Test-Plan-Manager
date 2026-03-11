@@ -1,0 +1,79 @@
+[
+  {
+    "kid": "KID-LANG-REACT-REACT-0001",
+    "title": "React App Model (components, state, effects)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0002",
+    "title": "UI Architecture Pattern (pages/components/hooks)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0003",
+    "title": "Data Fetching Pattern (query caching)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0004",
+    "title": "Accessibility Checklist (React UI)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0005",
+    "title": "Performance Checklist (React)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0006",
+    "title": "Testing Strategy (React)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0007",
+    "title": "Deployment Notes (React SPA)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-SEC-0001",
+    "title": "XSS + Injection Prevention (UI)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGREAC-CHECK-0001",
+    "title": "React Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGREAC-CONCEPT-0001",
+    "title": "React Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGREAC-PATTERN-0001",
+    "title": "React Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

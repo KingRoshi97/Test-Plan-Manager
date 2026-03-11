@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGEXPO-CHECK-0001",
+    "title": "Expo Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGEXPO-CONCEPT-0001",
+    "title": "Expo Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGEXPO-PATTERN-0001",
+    "title": "Expo Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

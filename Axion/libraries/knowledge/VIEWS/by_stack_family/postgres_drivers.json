@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGPODR-CHECK-0001",
+    "title": "Postgres Drivers Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPODR-CONCEPT-0001",
+    "title": "Postgres Drivers Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGPODR-PATTERN-0001",
+    "title": "Postgres Drivers Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

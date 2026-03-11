@@ -1,0 +1,93 @@
+[
+  {
+    "kid": "KID-INDCRTO-CHECK-0001",
+    "title": "Creator Tools Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCRTO-CONCEPT-0001",
+    "title": "Creator Tools Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDCRTO-PATTERN-0001",
+    "title": "Creator Tools Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDDIPU-CHECK-0001",
+    "title": "Digital Publishing Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDDIPU-CONCEPT-0001",
+    "title": "Digital Publishing Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDDIPU-PATTERN-0001",
+    "title": "Digital Publishing Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAV-CONCEPT-0001",
+    "title": "Film And Video Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAV-PATTERN-0001",
+    "title": "Film And Video Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDGAMI-CONCEPT-0001",
+    "title": "Gaming Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDGAMI-PATTERN-0001",
+    "title": "Gaming Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLIPL-CONCEPT-0001",
+    "title": "Livestreaming Platforms Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLIPL-PATTERN-0001",
+    "title": "Livestreaming Platforms Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMAA-CONCEPT-0001",
+    "title": "Music And Audio Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "kid": "KID-LANG-PG-SEC-0001",
+    "title": "SQL Injection Prevention (parameterization)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0001",
+    "title": "Smart Contract Threat Model Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0002",
+    "title": "Common Vulnerabilities Reference (reentrancy, access control)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0003",
+    "title": "Upgradeability Risks (proxy patterns)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-SEC-0004",
+    "title": "Key Management + Admin Control Risks",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-SEC-0001",
+    "title": "Dependency Risk in JS Ecosystem (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-SEC-0002",
+    "title": "Secrets Handling in Node/JS Apps",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-SEC-0003",
+    "title": "Input Validation + Serialization Footguns",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

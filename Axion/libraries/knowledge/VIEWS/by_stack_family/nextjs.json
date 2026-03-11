@@ -1,0 +1,72 @@
+[
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0001",
+    "title": "Next.js Overview (routing + rendering modes)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0002",
+    "title": "App Structure Pattern (app router)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0003",
+    "title": "Data Fetching + Caching Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0004",
+    "title": "Auth Pattern (Next)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0005",
+    "title": "Security Checklist (Next)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0006",
+    "title": "Performance Checklist (Next)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NEXT-NEXT-0007",
+    "title": "Deployment Notes (Next)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEXT-CHECK-0001",
+    "title": "Nextjs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEXT-CONCEPT-0001",
+    "title": "Nextjs Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEXT-PATTERN-0001",
+    "title": "Nextjs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

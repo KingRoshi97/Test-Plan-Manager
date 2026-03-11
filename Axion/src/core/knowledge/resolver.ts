@@ -174,8 +174,8 @@ export function resolveKnowledge(
   constraints: Record<string, unknown>,
 ): KnowledgeContext {
   const knowledgeBase = join(baseDir, "libraries", "knowledge");
-  const indexPath = join(knowledgeBase, "INDEX", "knowledge.index.json");
-  const taxonomyPath = join(knowledgeBase, "INDEX", "taxonomy.json");
+  const indexPath = join(knowledgeBase, "SYSTEM", "registries", "knowledge.index.json");
+  const taxonomyPath = join(knowledgeBase, "SYSTEM", "taxonomy", "taxonomy.json");
 
   if (!existsSync(indexPath)) {
     return {
@@ -187,7 +187,10 @@ export function resolveKnowledge(
     };
   }
 
-  const index = readJson<KnowledgeIndex>(indexPath);
+  const rawIndex = readJson<KnowledgeIndex | KIDEntry[]>(indexPath);
+  const index: KnowledgeIndex = Array.isArray(rawIndex)
+    ? { schema_version: "2.0", total_items: rawIndex.length, items: rawIndex as unknown as KIDEntry[] }
+    : rawIndex;
   let taxonomy: Taxonomy = { pillars: {} };
   try {
     taxonomy = readJson<Taxonomy>(taxonomyPath);
@@ -198,19 +201,34 @@ export function resolveKnowledge(
 
   let bundleKidIds = new Set<string>();
   if (bundleId) {
-    const bundlesIndexPath = join(knowledgeBase, "INDEX", "bundles.index.json");
+    const bundlesIndexPath = join(knowledgeBase, "SYSTEM", "registries", "bundles.index.json");
     try {
       const bundlesIndex = readJson<BundlesIndex>(bundlesIndexPath);
       const bundleEntry = bundlesIndex.bundles.find((b) => b.bundle_id === bundleId);
       if (bundleEntry) {
-        const bundlePath = join(knowledgeBase, bundleEntry.path);
-        if (existsSync(bundlePath)) {
-          const bundle = readJson<Bundle>(bundlePath);
-          if (bundle.kids && bundle.kids.length > 0) {
-            bundleKidIds = new Set(bundle.kids);
+        const inlineEntry = bundleEntry as unknown as Record<string, unknown>;
+        if (inlineEntry.kids && Array.isArray(inlineEntry.kids)) {
+          const kidsList = inlineEntry.kids as string[];
+          if (kidsList.length > 0 && kidsList[0] !== "*") {
+            bundleKidIds = new Set(kidsList);
           }
-          if (bundle.tags) {
-            bundle.tags.forEach((t) => targetDomains.add(t));
+        }
+        if (inlineEntry.tags && Array.isArray(inlineEntry.tags)) {
+          (inlineEntry.tags as string[]).forEach((t) => targetDomains.add(t));
+        }
+        if (inlineEntry.domains && Array.isArray(inlineEntry.domains)) {
+          (inlineEntry.domains as string[]).forEach((d) => targetDomains.add(d));
+        }
+        if (bundleEntry.path) {
+          const bundlePath = join(knowledgeBase, bundleEntry.path);
+          if (existsSync(bundlePath)) {
+            const bundle = readJson<Bundle>(bundlePath);
+            if (bundle.kids && bundle.kids.length > 0) {
+              bundleKidIds = new Set(bundle.kids);
+            }
+            if (bundle.tags) {
+              bundle.tags.forEach((t) => targetDomains.add(t));
+            }
           }
         }
       }
@@ -220,7 +238,17 @@ export function resolveKnowledge(
   const resolved: KIDEntry[] = [];
   const domainMap: Record<string, string[]> = {};
 
-  for (const kid of index.items) {
+  for (const rawKid of index.items) {
+    const kid: KIDEntry = {
+      ...rawKid,
+      type: rawKid.type || (rawKid as any).content_type || "reference",
+      maturity: rawKid.maturity || (rawKid as any).authority_tier || "draft",
+      pillar: rawKid.pillar || ((rawKid as any).pillar_refs?.[0]) || "unknown",
+      use_policy: rawKid.use_policy || "pattern_only",
+      executor_access: rawKid.executor_access || "internal_and_external",
+      domains: rawKid.domains || ((rawKid as any).primary_domain ? [(rawKid as any).primary_domain] : []),
+      tags: rawKid.tags || [],
+    };
     const inBundle = bundleKidIds.size > 0 && bundleKidIds.has(kid.kid);
     const domainMatch = kidMatchesDomains(kid, targetDomains, taxonomy);
 
@@ -232,7 +260,7 @@ export function resolveKnowledge(
     const entry: KIDEntry = { ...kid, coreContent };
     resolved.push(entry);
 
-    const kidDomain = kid.path.split("/").slice(-2, -1)[0] ?? "general";
+    const kidDomain = kid.domains?.[0] ?? kid.path.split("/").slice(-2, -1)[0] ?? "general";
     if (!domainMap[kidDomain]) domainMap[kidDomain] = [];
     domainMap[kidDomain].push(kid.kid);
   }

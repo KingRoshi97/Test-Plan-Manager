@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDPAYM-CHECK-0001",
+    "title": "Payments Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDPAYM-CONCEPT-0001",
+    "title": "Payments Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDPAYM-PATTERN-0001",
+    "title": "Payments Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

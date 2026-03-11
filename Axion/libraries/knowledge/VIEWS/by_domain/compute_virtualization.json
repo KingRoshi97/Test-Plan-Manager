@@ -1,0 +1,86 @@
+[
+  {
+    "kid": "KID-ITCMP-CHECK-0001",
+    "title": "Container Security Checklist (least privilege, no root)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CHECK-0002",
+    "title": "Deploy Readiness Checklist (health checks, rollbacks)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CONCEPT-0001",
+    "title": "VMs vs Containers (what changes)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CONCEPT-0002",
+    "title": "Container Image Basics (layers, tags)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-CONCEPT-0003",
+    "title": "Scheduling Basics (why pods move)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PATTERN-0001",
+    "title": "Immutable Image Build Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PATTERN-0002",
+    "title": "Multi-Stage Build Pattern (lean images)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PITFALL-0001",
+    "title": "Tag Drift (latest) in Deployments",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PITFALL-0002",
+    "title": "Missing Resource Limits — Noisy Neighbor",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PROCEDURE-0001",
+    "title": "Debug Container Runtime Issues",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PROCEDURE-0002",
+    "title": "Rollback Deployment Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-REF-0001",
+    "title": "Common Container/Orchestration Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

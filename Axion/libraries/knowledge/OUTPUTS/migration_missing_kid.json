@@ -1,0 +1,22 @@
+[
+  {
+    "relPath": "INDUSTRY_PLAYBOOKS/_meta/pillar.md",
+    "reason": "No kid field"
+  },
+  {
+    "relPath": "IT_END_TO_END/_meta/bundles.md",
+    "reason": "No kid field"
+  },
+  {
+    "relPath": "IT_END_TO_END/_meta/pillar.md",
+    "reason": "No kid field"
+  },
+  {
+    "relPath": "IT_END_TO_END/_meta/selection_rules.md",
+    "reason": "No kid field"
+  },
+  {
+    "relPath": "LANGUAGES_AND_LIBRARIES/_meta/pillar.md",
+    "reason": "No kid field"
+  }
+]

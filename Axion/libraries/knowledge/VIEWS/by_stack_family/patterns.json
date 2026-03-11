@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANG-SOL-PATTERN-0001",
+    "title": "Checks-Effects-Interactions Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-PATTERN-0002",
+    "title": "Role-Based Access Pattern (contracts)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-PATTERN-0003",
+    "title": "Pausable/Emergency Stop Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

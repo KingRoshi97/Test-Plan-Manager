@@ -1,0 +1,16 @@
+[
+  {
+    "kid": "KID-LANGCLPL-CONCEPT-0001",
+    "title": "Cloudflare Platform Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCLPL-PATTERN-0001",
+    "title": "Cloudflare Platform Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

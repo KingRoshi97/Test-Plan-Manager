@@ -1,0 +1,296 @@
+[
+  {
+    "kid": "KID-ITCACHE-CHECK-0001",
+    "title": "Caching Checklist (keys, TTLs, invalidation)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-CONCEPT-0001",
+    "title": "Cache-aside vs Write-through",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-CONCEPT-0002",
+    "title": "Invalidation (why it's the hard part)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PATTERN-0001",
+    "title": "Cache-aside Pattern (with TTL)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PATTERN-0002",
+    "title": "Request Coalescing Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PITFALL-0001",
+    "title": "Stale cache serving critical data",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PITFALL-0002",
+    "title": "Cache stampede",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PROCEDURE-0001",
+    "title": "Cache Incident Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-REF-0001",
+    "title": "Caching Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CHECK-0001",
+    "title": "Schema Design Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CHECK-0002",
+    "title": "Migration Checklist (safe deploy)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CONCEPT-0001",
+    "title": "Transactions + Isolation Levels (practical)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CONCEPT-0002",
+    "title": "Indexing Basics (why queries are slow)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-CONCEPT-0003",
+    "title": "Migrations Basics (safe schema evolution)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PATTERN-0001",
+    "title": "Migration Discipline Pattern (forward-only)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PATTERN-0002",
+    "title": "Soft Delete Pattern (with retention)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PATTERN-0003",
+    "title": "Outbox Pattern (reliable events)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PITFALL-0001",
+    "title": "Missing indexes on high-traffic queries",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PITFALL-0002",
+    "title": "Migration locks that take prod down",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PROCEDURE-0001",
+    "title": "Migration Rollout Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PROCEDURE-0002",
+    "title": "Slow Query Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-REF-0001",
+    "title": "SQL Anti-Patterns Reference (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-CHECK-0001",
+    "title": "Distributed Workflow Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-CONCEPT-0001",
+    "title": "Consistency Models (eventual vs strong)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-CONCEPT-0002",
+    "title": "Replication + Failover Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-CONCEPT-0003",
+    "title": "Queues vs Streams (when to use)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PATTERN-0001",
+    "title": "Idempotent Consumer Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PATTERN-0002",
+    "title": "Retry with Backoff Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PATTERN-0003",
+    "title": "Circuit Breaker Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PITFALL-0001",
+    "title": "Exactly-once assumptions (why it's hard)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PITFALL-0002",
+    "title": "Retry storms and thundering herds",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PROCEDURE-0001",
+    "title": "Message Processing Failure Triage",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-REF-0001",
+    "title": "Common Distributed Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-CHECK-0001",
+    "title": "Search Implementation Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-CONCEPT-0001",
+    "title": "Indexing Basics (tokens, analyzers)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-CONCEPT-0002",
+    "title": "Relevance Basics (precision/recall)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PATTERN-0001",
+    "title": "Search Index Sync Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PATTERN-0002",
+    "title": "Faceted Search Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PITFALL-0001",
+    "title": "Stale index causes missing data",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PITFALL-0002",
+    "title": "Unbounded queries melt clusters",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PROCEDURE-0001",
+    "title": "Search Quality Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-REF-0001",
+    "title": "Search Metrics Reference (CTR, zero-result rate)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGNEXT-CHECK-0001",
+    "title": "Nextjs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEXT-CONCEPT-0001",
+    "title": "Nextjs Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEXT-PATTERN-0001",
+    "title": "Nextjs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

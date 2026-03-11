@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGNEST-CHECK-0001",
+    "title": "Nestjs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEST-CONCEPT-0001",
+    "title": "Nestjs Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNEST-PATTERN-0001",
+    "title": "Nestjs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

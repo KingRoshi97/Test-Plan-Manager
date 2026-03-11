@@ -1,0 +1,289 @@
+[
+  {
+    "kid": "KID-ITAPI-PROCEDURE-0001",
+    "title": "API Contract Change Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PROCEDURE-0002",
+    "title": "Webhook Failure Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PROCEDURE-0001",
+    "title": "Architecture Review Procedure (what to check)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCACHE-PROCEDURE-0001",
+    "title": "Cache Incident Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PROCEDURE-0001",
+    "title": "Safe Deploy Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PROCEDURE-0002",
+    "title": "Rollback Procedure (with verification)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PROCEDURE-0001",
+    "title": "Cloud Cost Spike Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PROCEDURE-0001",
+    "title": "Debug Container Runtime Issues",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCMP-PROCEDURE-0002",
+    "title": "Rollback Deployment Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PROCEDURE-0001",
+    "title": "Cost Spike Investigation Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PROCEDURE-0001",
+    "title": "Migration Rollout Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDB-PROCEDURE-0002",
+    "title": "Slow Query Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITDIST-PROCEDURE-0001",
+    "title": "Message Processing Failure Triage",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PROCEDURE-0001",
+    "title": "Compliance Change Procedure (policy update)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PROCEDURE-0002",
+    "title": "Data Deletion Request Procedure (high level)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PROCEDURE-0001",
+    "title": "Access Review Procedure (IAM-focused)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PROCEDURE-0001",
+    "title": "Debugging Connectivity (DNS to TCP to TLS to HTTP)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITNET-PROCEDURE-0002",
+    "title": "TLS Certificate Rotation Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PROCEDURE-0001",
+    "title": "Basic Linux Debug Workflow (logs, ps, netstat)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITOS-PROCEDURE-0002",
+    "title": "Service Hardening Procedure (permissions, limits)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PROCEDURE-0001",
+    "title": "Breaking Change Release Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PROCEDURE-0002",
+    "title": "Rollback Decision Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEARCH-PROCEDURE-0001",
+    "title": "Search Quality Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0001",
+    "title": "Secrets Handling Procedure (dev, CI, prod)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0002",
+    "title": "Incident Triage Procedure (containment to recovery)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0003",
+    "title": "Key Rotation Procedure (what triggers rotation)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0004",
+    "title": "Vulnerability Response Procedure (patch cycle + verification)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0005",
+    "title": "Access Review Procedure (who has what, why)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSEC-PROCEDURE-0006",
+    "title": "Secure Release Checklist Procedure (pre-release checks)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PROCEDURE-0001",
+    "title": "Incident Triage Procedure (ops view)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PROCEDURE-0002",
+    "title": "Postmortem Procedure (blameless)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PROCEDURE-0001",
+    "title": "Backup Restore Drill Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSTO-PROCEDURE-0002",
+    "title": "Data Recovery Workflow (high level)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PROCEDURE-0001",
+    "title": "Flaky Test Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-NODE-NODE-0006",
+    "title": "Testing Strategy (Node APIs)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PG-PERF-0001",
+    "title": "Slow Query Triage (EXPLAIN basics)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-FASTAPI-0005",
+    "title": "Testing Strategy (FastAPI)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-REACT-REACT-0006",
+    "title": "Testing Strategy (React)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SQL-CORE-0004",
+    "title": "Migrations Discipline (baseline)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-SEC-0002",
+    "title": "Secrets Handling in Node/JS Apps",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-TOOL-0003",
+    "title": "Package Lock Discipline (npm/pnpm/yarn)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

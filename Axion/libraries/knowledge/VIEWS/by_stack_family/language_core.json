@@ -1,0 +1,177 @@
+[
+  {
+    "kid": "KID-LANG-EVM-CORE-0001",
+    "title": "EVM Mental Model (state, gas, transactions)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-CORE-0001",
+    "title": "Go Mental Model (packages, concurrency)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-CORE-0002",
+    "title": "Project Structure Norms (cmd/internal/pkg)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-CORE-0003",
+    "title": "Testing Norms (go test baseline)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-GO-CORE-0004",
+    "title": "Common Pitfalls (context, goroutines)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-CORE-0001",
+    "title": "Python Mental Model (runtime, packaging)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-CORE-0002",
+    "title": "Project Structure Norms (venv, deps)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-CORE-0003",
+    "title": "Testing Norms (pytest baseline)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PY-CORE-0004",
+    "title": "Common Pitfalls (env drift, typing gaps)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-CORE-0001",
+    "title": "Rust Mental Model (ownership/borrowing)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-CORE-0002",
+    "title": "Project Structure Norms (cargo, crates)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-CORE-0003",
+    "title": "Testing Norms (cargo test baseline)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-RUST-CORE-0004",
+    "title": "Common Pitfalls (lifetimes, async)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-CORE-0001",
+    "title": "Solidity Basics (types, storage/memory)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-CORE-0002",
+    "title": "Contract Architecture Patterns (modules, libraries)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-CORE-0003",
+    "title": "Testing Norms (unit tests + forks)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SQL-CORE-0001",
+    "title": "Relational Model Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SQL-CORE-0002",
+    "title": "Query Shape + Indexing Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SQL-CORE-0003",
+    "title": "Transaction Isolation (practical)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SQL-CORE-0004",
+    "title": "Migrations Discipline (baseline)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0001",
+    "title": "TypeScript Mental Model (types vs runtime)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0002",
+    "title": "Module Systems (ESM/CJS) Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0003",
+    "title": "Project Structure Norms (monorepo vs single)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0004",
+    "title": "Testing Norms (unit/integration in JS land)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-CORE-0005",
+    "title": "Common TypeScript Pitfalls (any, inference, build drift)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

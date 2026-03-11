@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGOPEN-CHECK-0001",
+    "title": "Openzeppelin Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGOPEN-CONCEPT-0001",
+    "title": "Openzeppelin Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGOPEN-PATTERN-0001",
+    "title": "Openzeppelin Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

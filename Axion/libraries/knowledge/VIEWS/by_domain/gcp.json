@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGGCP-CHECK-0001",
+    "title": "Gcp Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGCP-CONCEPT-0001",
+    "title": "Gcp Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGCP-PATTERN-0001",
+    "title": "Gcp Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

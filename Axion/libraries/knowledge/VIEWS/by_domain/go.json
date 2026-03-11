@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGGO-CHECK-0001",
+    "title": "Go Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGO-CONCEPT-0001",
+    "title": "Go Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGO-PATTERN-0001",
+    "title": "Go Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

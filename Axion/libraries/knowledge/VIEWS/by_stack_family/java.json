@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGJAVA-CHECK-0001",
+    "title": "Java Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGJAVA-CONCEPT-0001",
+    "title": "Java Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGJAVA-PATTERN-0001",
+    "title": "Java Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

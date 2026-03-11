@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDIOT-CHECK-0001",
+    "title": "Iot Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDIOT-CONCEPT-0001",
+    "title": "Iot Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDIOT-PATTERN-0001",
+    "title": "Iot Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

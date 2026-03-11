@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDSAB2-CHECK-0001",
+    "title": "Saas B2b Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDSAB2-CONCEPT-0001",
+    "title": "Saas B2b Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDSAB2-PATTERN-0001",
+    "title": "Saas B2b Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

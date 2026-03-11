@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDMARK-CHECK-0001",
+    "title": "Marketplaces Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMARK-CONCEPT-0001",
+    "title": "Marketplaces Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMARK-PATTERN-0001",
+    "title": "Marketplaces Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

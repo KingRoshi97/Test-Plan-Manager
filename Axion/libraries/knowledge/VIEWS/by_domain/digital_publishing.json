@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDDIPU-CHECK-0001",
+    "title": "Digital Publishing Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDDIPU-CONCEPT-0001",
+    "title": "Digital Publishing Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDDIPU-PATTERN-0001",
+    "title": "Digital Publishing Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

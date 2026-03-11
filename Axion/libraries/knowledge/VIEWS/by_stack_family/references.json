@@ -1,0 +1,37 @@
+[
+  {
+    "kid": "KID-LANG-PG-REF-0001",
+    "title": "Postgres Defaults Reference (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-PG-REF-0002",
+    "title": "Common Query Anti-Patterns Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-REF-0001",
+    "title": "Gas Cost Awareness Reference (practical)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-SOL-REF-0002",
+    "title": "Tooling Baseline (Foundry/Hardhat choices)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-REF-0001",
+    "title": "TS Project Baseline Reference (recommended defaults)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

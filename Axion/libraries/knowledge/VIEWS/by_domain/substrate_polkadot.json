@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGSUPO-CHECK-0001",
+    "title": "Substrate Polkadot Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSUPO-CONCEPT-0001",
+    "title": "Substrate Polkadot Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSUPO-PATTERN-0001",
+    "title": "Substrate Polkadot Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

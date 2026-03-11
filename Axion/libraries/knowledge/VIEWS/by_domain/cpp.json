@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGCPP-CHECK-0001",
+    "title": "Cpp Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCPP-CONCEPT-0001",
+    "title": "Cpp Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGCPP-PATTERN-0001",
+    "title": "Cpp Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

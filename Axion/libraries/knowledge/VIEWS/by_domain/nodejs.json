@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGNODE-CHECK-0001",
+    "title": "Nodejs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNODE-CONCEPT-0001",
+    "title": "Nodejs Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGNODE-PATTERN-0001",
+    "title": "Nodejs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

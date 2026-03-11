@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGSEQU-CHECK-0001",
+    "title": "Sequelize Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSEQU-CONCEPT-0001",
+    "title": "Sequelize Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSEQU-PATTERN-0001",
+    "title": "Sequelize Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

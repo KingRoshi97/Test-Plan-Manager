@@ -1,0 +1,16 @@
+[
+  {
+    "kid": "KID-INDFAV-CONCEPT-0001",
+    "title": "Film And Video Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDFAV-PATTERN-0001",
+    "title": "Film And Video Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

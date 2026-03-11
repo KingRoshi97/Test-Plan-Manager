@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGFLUT-CHECK-0001",
+    "title": "Flutter Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFLUT-CONCEPT-0001",
+    "title": "Flutter Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFLUT-PATTERN-0001",
+    "title": "Flutter Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

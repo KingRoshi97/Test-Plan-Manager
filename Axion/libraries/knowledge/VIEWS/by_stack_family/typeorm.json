@@ -1,0 +1,16 @@
+[
+  {
+    "kid": "KID-LANGTYPE-CHECK-0001",
+    "title": "Typeorm Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGTYPE-PATTERN-0001",
+    "title": "Typeorm Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANG-TS-TOOL-0001",
+    "title": "Toolchain Baseline (tsc + bundler)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-TOOL-0002",
+    "title": "Lint/Format Norms (eslint/prettier)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANG-TS-TOOL-0003",
+    "title": "Package Lock Discipline (npm/pnpm/yarn)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

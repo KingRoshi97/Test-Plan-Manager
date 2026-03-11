@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGEXPR-CHECK-0001",
+    "title": "Express Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGEXPR-CONCEPT-0001",
+    "title": "Express Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGEXPR-PATTERN-0001",
+    "title": "Express Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

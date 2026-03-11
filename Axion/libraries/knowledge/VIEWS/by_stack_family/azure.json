@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGAZUR-CHECK-0001",
+    "title": "Azure Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGAZUR-CONCEPT-0001",
+    "title": "Azure Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGAZUR-PATTERN-0001",
+    "title": "Azure Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGGIAC-CHECK-0001",
+    "title": "Github Actions Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGIAC-CONCEPT-0001",
+    "title": "Github Actions Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGGIAC-PATTERN-0001",
+    "title": "Github Actions Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

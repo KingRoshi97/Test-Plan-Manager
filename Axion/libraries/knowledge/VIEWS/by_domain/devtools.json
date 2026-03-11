@@ -1,0 +1,16 @@
+[
+  {
+    "kid": "KID-INDDEVT-CONCEPT-0001",
+    "title": "Devtools Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDDEVT-PATTERN-0001",
+    "title": "Devtools Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

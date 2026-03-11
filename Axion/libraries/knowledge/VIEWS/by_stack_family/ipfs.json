@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGIPFS-CHECK-0001",
+    "title": "Ipfs Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGIPFS-CONCEPT-0001",
+    "title": "Ipfs Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGIPFS-PATTERN-0001",
+    "title": "Ipfs Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

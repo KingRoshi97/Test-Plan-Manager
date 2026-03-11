@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDECOM-CHECK-0001",
+    "title": "Ecommerce Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDECOM-CONCEPT-0001",
+    "title": "Ecommerce Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDECOM-PATTERN-0001",
+    "title": "Ecommerce Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

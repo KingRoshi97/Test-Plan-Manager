@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGSOLA-CHECK-0001",
+    "title": "Solana Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSOLA-CONCEPT-0001",
+    "title": "Solana Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGSOLA-PATTERN-0001",
+    "title": "Solana Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

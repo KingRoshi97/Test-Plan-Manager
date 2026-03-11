@@ -1,0 +1,30 @@
+[
+  {
+    "kid": "KID-LANGJAVA-CHECK-0001",
+    "paths": [
+      "LANGUAGES_AND_LIBRARIES/01_programming_languages/java/checklists/KID-LANGJAVA-CHECK-0001.md",
+      "LANGUAGES_AND_LIBRARIES/01_programming_languages/javascript/checklists/KID-LANGJAVA-CHECK-0001.md"
+    ]
+  },
+  {
+    "kid": "KID-LANGJAVA-CONCEPT-0001",
+    "paths": [
+      "LANGUAGES_AND_LIBRARIES/01_programming_languages/java/concepts/KID-LANGJAVA-CONCEPT-0001.md",
+      "LANGUAGES_AND_LIBRARIES/01_programming_languages/javascript/concepts/KID-LANGJAVA-CONCEPT-0001.md"
+    ]
+  },
+  {
+    "kid": "KID-LANGJAVA-PATTERN-0001",
+    "paths": [
+      "LANGUAGES_AND_LIBRARIES/01_programming_languages/java/patterns/KID-LANGJAVA-PATTERN-0001.md",
+      "LANGUAGES_AND_LIBRARIES/01_programming_languages/javascript/patterns/KID-LANGJAVA-PATTERN-0001.md"
+    ]
+  },
+  {
+    "kid": "KID-LANGTYPE-CONCEPT-0001",
+    "paths": [
+      "LANGUAGES_AND_LIBRARIES/01_programming_languages/typescript/concepts/KID-LANGTYPE-CONCEPT-0001.md",
+      "LANGUAGES_AND_LIBRARIES/04_databases_and_orms/typeorm/concepts/KID-LANGTYPE-CONCEPT-0001.md"
+    ]
+  }
+]

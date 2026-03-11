@@ -1,0 +1,16 @@
+[
+  {
+    "kid": "KID-INDGAMI-CONCEPT-0001",
+    "title": "Gaming Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDGAMI-PATTERN-0001",
+    "title": "Gaming Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

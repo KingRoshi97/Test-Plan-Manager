@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGABLI-CHECK-0001",
+    "title": "Ableton Live Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGABLI-CONCEPT-0001",
+    "title": "Ableton Live Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGABLI-PATTERN-0001",
+    "title": "Ableton Live Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

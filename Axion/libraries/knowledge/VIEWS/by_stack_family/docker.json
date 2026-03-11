@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGDOCK-CHECK-0001",
+    "title": "Docker Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGDOCK-CONCEPT-0001",
+    "title": "Docker Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGDOCK-PATTERN-0001",
+    "title": "Docker Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

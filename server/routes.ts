@@ -434,7 +434,7 @@ export function registerRoutes(app: Express) {
 
   app.get("/api/health", (_req: Request, res: Response) => {
     const gateRegistryPath = path.join(AXION_ROOT, "registries", "GATE_REGISTRY.json");
-    const knowledgeIndexPath = path.join(AXION_ROOT, "libraries", "knowledge", "INDEX", "knowledge.index.json");
+    const knowledgeIndexPath = path.join(AXION_ROOT, "libraries", "knowledge", "SYSTEM", "registries", "knowledge.index.json");
     let gateCount = 0;
     let kidCount = 0;
     try {
@@ -443,7 +443,7 @@ export function registerRoutes(app: Express) {
     } catch {}
     try {
       const kl = JSON.parse(fs.readFileSync(knowledgeIndexPath, "utf-8"));
-      kidCount = kl.total_items || 0;
+      kidCount = Array.isArray(kl) ? kl.length : (kl.total_items || 0);
     } catch {}
 
     const runsDir = AXION_RUNS;
@@ -3459,24 +3459,26 @@ export function registerRoutes(app: Express) {
 
   app.get("/api/knowledge-library", (_req: Request, res: Response) => {
     try {
+      const doctrineDir = path.join(KNO_LIB_DIR, "SYSTEM", "doctrine");
+      const contractsDir = path.join(KNO_LIB_DIR, "SYSTEM", "contracts");
+      const registriesDir = path.join(KNO_LIB_DIR, "SYSTEM", "registries");
+
       const docs: string[] = [];
       const schemaFiles: string[] = [];
       const registryFiles: string[] = [];
 
-      if (fs.existsSync(KNO_LIB_DIR)) {
-        for (const f of fs.readdirSync(KNO_LIB_DIR)) {
+      if (fs.existsSync(doctrineDir)) {
+        for (const f of fs.readdirSync(doctrineDir)) {
           if (f.endsWith(".md") || f.endsWith(".txt")) docs.push(f);
         }
       }
-      const contractsDir = path.join(KNO_LIB_DIR, "contracts");
       if (fs.existsSync(contractsDir)) {
         for (const f of fs.readdirSync(contractsDir)) {
           if (f.endsWith(".json")) schemaFiles.push(f);
         }
       }
-      const indexDir = path.join(KNO_LIB_DIR, "INDEX");
-      if (fs.existsSync(indexDir)) {
-        for (const f of fs.readdirSync(indexDir)) {
+      if (fs.existsSync(registriesDir)) {
+        for (const f of fs.readdirSync(registriesDir)) {
           if (f.endsWith(".json")) registryFiles.push(f);
         }
       }
@@ -3490,10 +3492,10 @@ export function registerRoutes(app: Express) {
 
       let unitCount = 0;
       try {
-        const regPath = path.join(indexDir, "knowledge_registry.v1.json");
-        if (fs.existsSync(regPath)) {
-          const reg = JSON.parse(fs.readFileSync(regPath, "utf-8"));
-          unitCount = reg.units?.length ?? 0;
+        const knowledgeIndexPath = path.join(registriesDir, "knowledge.index.json");
+        if (fs.existsSync(knowledgeIndexPath)) {
+          const idx = JSON.parse(fs.readFileSync(knowledgeIndexPath, "utf-8"));
+          unitCount = Array.isArray(idx) ? idx.length : 0;
         }
       } catch {}
 
@@ -3510,7 +3512,7 @@ export function registerRoutes(app: Express) {
 
   app.get("/api/knowledge-library/schemas", (_req: Request, res: Response) => {
     try {
-      const contractsDir = path.join(KNO_LIB_DIR, "contracts");
+      const contractsDir = path.join(KNO_LIB_DIR, "SYSTEM", "contracts");
       if (!fs.existsSync(contractsDir)) return res.json([]);
       const schemas = fs.readdirSync(contractsDir)
         .filter((f) => f.endsWith(".json"))
@@ -3527,14 +3529,14 @@ export function registerRoutes(app: Express) {
 
   app.get("/api/knowledge-library/registries", (_req: Request, res: Response) => {
     try {
-      const indexDir = path.join(KNO_LIB_DIR, "INDEX");
-      if (!fs.existsSync(indexDir)) return res.json([]);
-      const registries = fs.readdirSync(indexDir)
+      const registriesDir = path.join(KNO_LIB_DIR, "SYSTEM", "registries");
+      if (!fs.existsSync(registriesDir)) return res.json([]);
+      const registries = fs.readdirSync(registriesDir)
         .filter((f) => f.endsWith(".json"))
         .sort()
         .map((filename) => ({
           filename,
-          content: JSON.parse(fs.readFileSync(path.join(indexDir, filename), "utf-8")),
+          content: JSON.parse(fs.readFileSync(path.join(registriesDir, filename), "utf-8")),
         }));
       res.json(registries);
     } catch (err: any) {
@@ -3545,12 +3547,12 @@ export function registerRoutes(app: Express) {
   app.get("/api/knowledge-library/registries/:name", (req: Request, res: Response) => {
     try {
       const name = req.params.name;
-      const indexDir = path.join(KNO_LIB_DIR, "INDEX");
+      const registriesDir = path.join(KNO_LIB_DIR, "SYSTEM", "registries");
       const candidates = [name, `${name}.json`, `${name}.v1.json`];
       let filePath: string | null = null;
       for (const c of candidates) {
-        const p = path.join(indexDir, c);
-        if (fs.existsSync(p) && p.startsWith(indexDir)) {
+        const p = path.join(registriesDir, c);
+        if (fs.existsSync(p) && p.startsWith(registriesDir)) {
           filePath = p;
           break;
         }
@@ -3565,12 +3567,13 @@ export function registerRoutes(app: Express) {
 
   app.get("/api/knowledge-library/docs", (_req: Request, res: Response) => {
     try {
-      if (!fs.existsSync(KNO_LIB_DIR)) return res.json([]);
-      const files = fs.readdirSync(KNO_LIB_DIR)
+      const doctrineDir = path.join(KNO_LIB_DIR, "SYSTEM", "doctrine");
+      if (!fs.existsSync(doctrineDir)) return res.json([]);
+      const files = fs.readdirSync(doctrineDir)
         .filter((f) => f.endsWith(".md") || f.endsWith(".txt"))
         .sort();
       const docs = files.map((filename) => {
-        const raw = fs.readFileSync(path.join(KNO_LIB_DIR, filename), "utf-8");
+        const raw = fs.readFileSync(path.join(doctrineDir, filename), "utf-8");
         const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
         let frontmatter: Record<string, string> = {};
         let content = raw;
@@ -3601,8 +3604,9 @@ export function registerRoutes(app: Express) {
       if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
         return res.status(400).json({ error: "Invalid filename" });
       }
-      const filePath = path.join(KNO_LIB_DIR, filename);
-      if (!filePath.startsWith(KNO_LIB_DIR) || !fs.existsSync(filePath)) {
+      const doctrineDir = path.join(KNO_LIB_DIR, "SYSTEM", "doctrine");
+      const filePath = path.join(doctrineDir, filename);
+      if (!filePath.startsWith(doctrineDir) || !fs.existsSync(filePath)) {
         return res.status(404).json({ error: `Document '${filename}' not found` });
       }
       const raw = fs.readFileSync(filePath, "utf-8");
@@ -3620,6 +3624,66 @@ export function registerRoutes(app: Express) {
         content = fmMatch[2];
       }
       res.json({ filename, frontmatter, content });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/knowledge-library/search", (req: Request, res: Response) => {
+    try {
+      const registriesDir = path.join(KNO_LIB_DIR, "SYSTEM", "registries");
+      const indexPath = path.join(registriesDir, "knowledge.index.json");
+      const aliasPath = path.join(registriesDir, "aliases.index.json");
+
+      if (!fs.existsSync(indexPath)) return res.json({ results: [], total: 0 });
+
+      const knowledgeIndex = JSON.parse(fs.readFileSync(indexPath, "utf-8")) as any[];
+      const aliasIndex = fs.existsSync(aliasPath)
+        ? (JSON.parse(fs.readFileSync(aliasPath, "utf-8")) as Record<string, string>)
+        : {};
+
+      const text = (req.query.text as string) || "";
+      const contentType = req.query.content_type as string | undefined;
+      const primaryDomain = req.query.primary_domain as string | undefined;
+      const status = req.query.status as string | undefined;
+      const authorityTier = req.query.authority_tier as string | undefined;
+      const limit = Math.min(parseInt(req.query.limit as string) || 25, 100);
+
+      const results: any[] = [];
+
+      for (const entry of knowledgeIndex) {
+        if (contentType && entry.content_type !== contentType) continue;
+        if (primaryDomain && entry.primary_domain !== primaryDomain) continue;
+        if (status && entry.status !== status) continue;
+        if (authorityTier && entry.authority_tier !== authorityTier) continue;
+
+        let score = 1;
+        const matchedFields: string[] = [];
+
+        if (text) {
+          const q = text.toLowerCase();
+          let textScore = 0;
+          if (entry.kid?.toLowerCase().includes(q)) { textScore += 10; matchedFields.push("kid"); }
+          if (entry.title?.toLowerCase().includes(q)) { textScore += 8; matchedFields.push("title"); }
+          if (entry.primary_domain?.toLowerCase().includes(q)) { textScore += 6; matchedFields.push("primary_domain"); }
+          if (entry.tags?.some((t: string) => t.toLowerCase().includes(q))) { textScore += 5; matchedFields.push("tags"); }
+
+          const aliasesForKid = Object.entries(aliasIndex)
+            .filter(([, kid]) => kid === entry.kid)
+            .map(([alias]) => alias);
+          if (aliasesForKid.some((a) => a.toLowerCase().includes(q))) { textScore += 7; matchedFields.push("aliases"); }
+
+          if (textScore === 0) continue;
+          score += textScore;
+        }
+
+        results.push({ item: entry, score, matched_fields: matchedFields });
+      }
+
+      results.sort((a, b) => b.score - a.score);
+      const sliced = results.slice(0, limit);
+
+      res.json({ results: sliced, total: results.length });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

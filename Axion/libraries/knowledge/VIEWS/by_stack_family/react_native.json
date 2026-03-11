@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGRENA-CHECK-0001",
+    "title": "React Native Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGRENA-CONCEPT-0001",
+    "title": "React Native Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGRENA-PATTERN-0001",
+    "title": "React Native Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

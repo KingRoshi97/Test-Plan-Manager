@@ -1,0 +1,86 @@
+[
+  {
+    "kid": "KID-IND-FIN-COMP-0001",
+    "title": "Audit + Access Controls Expectations (finance)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-COMP-0002",
+    "title": "Data Retention Expectations (finance lens)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-DM-0001",
+    "title": "Account / Ledger / Transaction Entity Map",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-DM-0002",
+    "title": "Sensitive Data Map (PCI-adjacent, tokens)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-INT-0001",
+    "title": "Payment Processor Integration Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-INT-0002",
+    "title": "Webhook Idempotency + Reconciliation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-KPI-0001",
+    "title": "Settlement/Reconciliation KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-KPI-0002",
+    "title": "Fraud Rate + Review Latency KPIs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-RISK-0001",
+    "title": "Fraud/Abuse Threat Highlights (finance)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-WF-0001",
+    "title": "KYC → Account → Transactions Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-WF-0002",
+    "title": "Disputes/Chargebacks Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-IND-FIN-WF-0003",
+    "title": "Fraud Review Workflow Map",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

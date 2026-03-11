@@ -1,0 +1,359 @@
+[
+  {
+    "kid": "KID-ITCLOUD-CHECK-0001",
+    "title": "Cloud Baseline Checklist (network, IAM, logging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-CONCEPT-0001",
+    "title": "Shared Responsibility Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-CONCEPT-0002",
+    "title": "IAM Basics in Cloud (high level)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-CONCEPT-0003",
+    "title": "VPC/VNet Basics (subnets, routing)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PATTERN-0001",
+    "title": "Least Privilege IAM Pattern (cloud)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PATTERN-0002",
+    "title": "Multi-Environment Pattern (dev/stage/prod)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PITFALL-0001",
+    "title": "Over-permissive IAM policies",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PITFALL-0002",
+    "title": "Public storage buckets by accident",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-PROCEDURE-0001",
+    "title": "Cloud Cost Spike Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCLOUD-REF-0001",
+    "title": "Common Cloud Services Reference (compute/storage/net)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-CHECK-0001",
+    "title": "Cost Baseline Checklist (monitoring + tagging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-CONCEPT-0001",
+    "title": "Cost Drivers (compute, storage, egress)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-CONCEPT-0002",
+    "title": "Capacity Planning Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PATTERN-0001",
+    "title": "Budget Guardrail Pattern (alerts/limits)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PATTERN-0002",
+    "title": "Cost Attribution Pattern (tags/labels)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PITFALL-0001",
+    "title": "Hidden egress costs",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PITFALL-0002",
+    "title": "Unbounded logs/metrics bills",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-PROCEDURE-0001",
+    "title": "Cost Spike Investigation Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCOST-REF-0001",
+    "title": "Common Cloud Cost Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CHECK-0001",
+    "title": "Data Handling Checklist (retention, redaction)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CHECK-0002",
+    "title": "Audit Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CONCEPT-0001",
+    "title": "Data Classification Basics (PII, secrets, internal)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CONCEPT-0002",
+    "title": "Retention + Deletion Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-CONCEPT-0003",
+    "title": "Auditability Basics (what \\\"audit-ready\\\" means)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PATTERN-0001",
+    "title": "PII Minimization Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PATTERN-0002",
+    "title": "Redaction-at-Source Pattern (logs/proofs)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PITFALL-0001",
+    "title": "\\\"We'll redact later\\\" (why it fails)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PITFALL-0002",
+    "title": "Retention policy exists but isn't enforced",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PROCEDURE-0001",
+    "title": "Compliance Change Procedure (policy update)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-PROCEDURE-0002",
+    "title": "Data Deletion Request Procedure (high level)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITGOV-REF-0001",
+    "title": "Data Handling Terms Reference (retention, deletion)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-CHECK-0001",
+    "title": "IAM Implementation Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-CONCEPT-0001",
+    "title": "OAuth/OIDC Basics (flows at a high level)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-CONCEPT-0002",
+    "title": "RBAC vs ABAC (when to use)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-CONCEPT-0003",
+    "title": "SSO Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PATTERN-0001",
+    "title": "Permission Matrix Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PATTERN-0002",
+    "title": "Audit Trail for Privileged Actions Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PITFALL-0001",
+    "title": "\\\"Admin\\\" role creep over time",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PITFALL-0002",
+    "title": "Missing audit logs for privileged actions",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-PROCEDURE-0001",
+    "title": "Access Review Procedure (IAM-focused)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITIAM-REF-0001",
+    "title": "Auth Terminology Reference (OAuth/OIDC glossary)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-CHECK-0001",
+    "title": "Release Checklist (pre/post)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-CONCEPT-0001",
+    "title": "Semantic Versioning (practical)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-CONCEPT-0002",
+    "title": "Breaking Change vs Non-Breaking Change",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PATTERN-0001",
+    "title": "Deprecation Window Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PATTERN-0002",
+    "title": "Migration-First Release Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PITFALL-0001",
+    "title": "\\\"Minor change\\\" that breaks clients",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PITFALL-0002",
+    "title": "No rollback plan",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PROCEDURE-0001",
+    "title": "Breaking Change Release Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-PROCEDURE-0002",
+    "title": "Rollback Decision Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITREL-REF-0001",
+    "title": "Release Artifact Reference (what must exist)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

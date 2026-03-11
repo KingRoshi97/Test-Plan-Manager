@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGC-CHECK-0001",
+    "title": "C Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGC-CONCEPT-0001",
+    "title": "C Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGC-PATTERN-0001",
+    "title": "C Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

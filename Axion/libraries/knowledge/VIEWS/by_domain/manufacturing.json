@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDMANU-CHECK-0001",
+    "title": "Manufacturing Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMANU-CONCEPT-0001",
+    "title": "Manufacturing Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDMANU-PATTERN-0001",
+    "title": "Manufacturing Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

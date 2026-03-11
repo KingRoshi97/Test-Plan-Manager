@@ -1,0 +1,1182 @@
+[
+  {
+    "key": "industry.education",
+    "path": "industry.education.md",
+    "title": "Education (FERPA)"
+  },
+  {
+    "key": "industry.energy_utilities",
+    "path": "industry.energy_utilities.md",
+    "title": "Energy & Utilities"
+  },
+  {
+    "key": "industry.financial_services",
+    "path": "industry.financial_services.md",
+    "title": "Financial Services"
+  },
+  {
+    "key": "industry.government_public_sector",
+    "path": "industry.government_public_sector.md",
+    "title": "Government / Public Sector"
+  },
+  {
+    "key": "industry.healthcare",
+    "path": "industry.healthcare.md",
+    "title": "Healthcare (HIPAA)"
+  },
+  {
+    "key": "industry.insurance",
+    "path": "industry.insurance.md",
+    "title": "Insurance"
+  },
+  {
+    "key": "industry.legal_services",
+    "path": "industry.legal_services.md",
+    "title": "Legal Services"
+  },
+  {
+    "key": "industry.payments",
+    "path": "industry.payments.md",
+    "title": "Payments (PCI DSS)"
+  },
+  {
+    "key": "industry.construction",
+    "path": "industry.construction.md",
+    "title": "Construction"
+  },
+  {
+    "key": "industry.ecommerce",
+    "path": "industry.ecommerce.md",
+    "title": "E-commerce"
+  },
+  {
+    "key": "industry.food_and_beverage",
+    "path": "industry.food_and_beverage.md",
+    "title": "Food & Beverage"
+  },
+  {
+    "key": "industry.hospitality_travel",
+    "path": "industry.hospitality_travel.md",
+    "title": "Hospitality & Travel"
+  },
+  {
+    "key": "industry.logistics_supply_chain",
+    "path": "industry.logistics_supply_chain.md",
+    "title": "Logistics & Supply Chain"
+  },
+  {
+    "key": "industry.manufacturing",
+    "path": "industry.manufacturing.md",
+    "title": "Manufacturing"
+  },
+  {
+    "key": "industry.real_estate",
+    "path": "industry.real_estate.md",
+    "title": "Real Estate"
+  },
+  {
+    "key": "industry.retail",
+    "path": "industry.retail.md",
+    "title": "Retail"
+  },
+  {
+    "key": "industry.creator_tools",
+    "path": "industry.creator_tools.md",
+    "title": "Creator Tools"
+  },
+  {
+    "key": "industry.digital_publishing",
+    "path": "industry.digital_publishing.md",
+    "title": "Digital Publishing"
+  },
+  {
+    "key": "industry.film_and_video",
+    "path": "industry.film_and_video.md",
+    "title": "Film & Video"
+  },
+  {
+    "key": "industry.gaming",
+    "path": "industry.gaming.md",
+    "title": "Gaming"
+  },
+  {
+    "key": "industry.livestreaming_platforms",
+    "path": "industry.livestreaming_platforms.md",
+    "title": "Livestreaming Platforms"
+  },
+  {
+    "key": "industry.music_and_audio",
+    "path": "industry.music_and_audio.md",
+    "title": "Music & Audio"
+  },
+  {
+    "key": "industry.ai_products",
+    "path": "industry.ai_products.md",
+    "title": "AI Products"
+  },
+  {
+    "key": "industry.blockchain_web3",
+    "path": "industry.blockchain_web3.md",
+    "title": "Blockchain / Web3"
+  },
+  {
+    "key": "industry.cybersecurity_products",
+    "path": "industry.cybersecurity_products.md",
+    "title": "Cybersecurity Products"
+  },
+  {
+    "key": "industry.devtools",
+    "path": "industry.devtools.md",
+    "title": "Developer Tools"
+  },
+  {
+    "key": "industry.iot",
+    "path": "industry.iot.md",
+    "title": "Internet of Things (IoT)"
+  },
+  {
+    "key": "industry.marketplaces",
+    "path": "industry.marketplaces.md",
+    "title": "Marketplaces"
+  },
+  {
+    "key": "industry.saas_b2b",
+    "path": "industry.saas_b2b.md",
+    "title": "B2B SaaS"
+  },
+  {
+    "key": "industry.social_platforms",
+    "path": "industry.social_platforms.md",
+    "title": "Social Platforms / Communities"
+  },
+  {
+    "key": "industry.finance",
+    "path": "industry.finance.md",
+    "title": "Finance (Banking/Payments)"
+  },
+  {
+    "key": "industry.retail_ecommerce",
+    "path": "industry.retail_ecommerce.md",
+    "title": "Retail & Ecommerce"
+  },
+  {
+    "key": "domain.application_security",
+    "path": "domain.application_security.md",
+    "title": "Application Security (AppSec)"
+  },
+  {
+    "key": "domain.compute_virtualization",
+    "path": "domain.compute_virtualization.md",
+    "title": "Compute & Virtualization"
+  },
+  {
+    "key": "domain.cryptography_and_key_management",
+    "path": "domain.cryptography_and_key_management.md",
+    "title": "Cryptography & Key Management"
+  },
+  {
+    "key": "domain.data_structures_and_algorithms",
+    "path": "domain.data_structures_and_algorithms.md",
+    "title": "Data Structures & Algorithms"
+  },
+  {
+    "key": "domain.distributed_systems",
+    "path": "domain.distributed_systems.md",
+    "title": "Distributed Systems Fundamentals"
+  },
+  {
+    "key": "domain.http_and_web_platform",
+    "path": "domain.http_and_web_platform.md",
+    "title": "HTTP & Web Platform Fundamentals"
+  },
+  {
+    "key": "domain.identity_and_access_management",
+    "path": "domain.identity_and_access_management.md",
+    "title": "Identity & Access Management (IAM)"
+  },
+  {
+    "key": "domain.internet_protocols",
+    "path": "domain.internet_protocols.md",
+    "title": "Internet Protocols (TCP/IP, UDP, DNS)"
+  },
+  {
+    "key": "domain.networking",
+    "path": "domain.networking.md",
+    "title": "Networking"
+  },
+  {
+    "key": "domain.networking_fundamentals",
+    "path": "domain.networking_fundamentals.md",
+    "title": "Networking Fundamentals"
+  },
+  {
+    "key": "domain.operating_systems",
+    "path": "domain.operating_systems.md",
+    "title": "Operating Systems"
+  },
+  {
+    "key": "domain.security_fundamentals",
+    "path": "domain.security_fundamentals.md",
+    "title": "Security Fundamentals"
+  },
+  {
+    "key": "domain.shell_and_cli",
+    "path": "domain.shell_and_cli.md",
+    "title": "Shell & CLI Fundamentals"
+  },
+  {
+    "key": "domain.software_architecture",
+    "path": "domain.software_architecture.md",
+    "title": "Software Architecture"
+  },
+  {
+    "key": "domain.storage_fundamentals",
+    "path": "domain.storage_fundamentals.md",
+    "title": "Storage Fundamentals"
+  },
+  {
+    "key": "domain.backup_restore_and_dr",
+    "path": "domain.backup_restore_and_dr.md",
+    "title": "Backup, Restore & Disaster Recovery"
+  },
+  {
+    "key": "domain.data_lakes_and_lakehouse",
+    "path": "domain.data_lakes_and_lakehouse.md",
+    "title": "Data Lakes / Lakehouse"
+  },
+  {
+    "key": "domain.data_warehousing",
+    "path": "domain.data_warehousing.md",
+    "title": "Data Warehousing"
+  },
+  {
+    "key": "domain.document_databases",
+    "path": "domain.document_databases.md",
+    "title": "Document Databases (MongoDB etc.)"
+  },
+  {
+    "key": "domain.key_value_stores",
+    "path": "domain.key_value_stores.md",
+    "title": "Key-Value Stores (Redis etc.)"
+  },
+  {
+    "key": "domain.mysql_mariadb",
+    "path": "domain.mysql_mariadb.md",
+    "title": "MySQL / MariaDB"
+  },
+  {
+    "key": "domain.nosql_datastores",
+    "path": "domain.nosql_datastores.md",
+    "title": "NoSQL Datastores"
+  },
+  {
+    "key": "domain.object_storage",
+    "path": "domain.object_storage.md",
+    "title": "Object Storage (S3-compatible)"
+  },
+  {
+    "key": "domain.postgresql",
+    "path": "domain.postgresql.md",
+    "title": "PostgreSQL"
+  },
+  {
+    "key": "domain.relational_databases",
+    "path": "domain.relational_databases.md",
+    "title": "Relational Databases (RDBMS)"
+  },
+  {
+    "key": "domain.search_and_indexing",
+    "path": "domain.search_and_indexing.md",
+    "title": "Search & Indexing (Elasticsearch/OpenSearch)"
+  },
+  {
+    "key": "domain.sql_modeling_and_migrations",
+    "path": "domain.sql_modeling_and_migrations.md",
+    "title": "SQL Modeling & Migrations"
+  },
+  {
+    "key": "domain.apis_integrations",
+    "path": "domain.apis_integrations.md",
+    "title": "APIs & Integrations"
+  },
+  {
+    "key": "domain.architecture_design",
+    "path": "domain.architecture_design.md",
+    "title": "Architecture & Design"
+  },
+  {
+    "key": "domain.ci_cd_devops",
+    "path": "domain.ci_cd_devops.md",
+    "title": "CI/CD & DevOps"
+  },
+  {
+    "key": "domain.observability_sre",
+    "path": "domain.observability_sre.md",
+    "title": "Observability & SRE"
+  },
+  {
+    "key": "domain.testing_qa",
+    "path": "domain.testing_qa.md",
+    "title": "Testing & QA"
+  },
+  {
+    "key": "domain.api_design",
+    "path": "domain.api_design.md",
+    "title": "API Design"
+  },
+  {
+    "key": "domain.api_observability",
+    "path": "domain.api_observability.md",
+    "title": "API Observability"
+  },
+  {
+    "key": "domain.authentication_and_sessions",
+    "path": "domain.authentication_and_sessions.md",
+    "title": "Authentication & Sessions"
+  },
+  {
+    "key": "domain.authorization_models",
+    "path": "domain.authorization_models.md",
+    "title": "Authorization Models (RBAC/ABAC/ReBAC)"
+  },
+  {
+    "key": "domain.background_jobs_and_queues",
+    "path": "domain.background_jobs_and_queues.md",
+    "title": "Background Jobs & Queues"
+  },
+  {
+    "key": "domain.caching_strategies",
+    "path": "domain.caching_strategies.md",
+    "title": "Caching Strategies"
+  },
+  {
+    "key": "domain.feature_flags_and_config",
+    "path": "domain.feature_flags_and_config.md",
+    "title": "Feature Flags & Configuration"
+  },
+  {
+    "key": "domain.graphql",
+    "path": "domain.graphql.md",
+    "title": "GraphQL"
+  },
+  {
+    "key": "domain.grpc_and_rpc",
+    "path": "domain.grpc_and_rpc.md",
+    "title": "gRPC / RPC"
+  },
+  {
+    "key": "domain.input_validation_and_sanitization",
+    "path": "domain.input_validation_and_sanitization.md",
+    "title": "Input Validation & Sanitization"
+  },
+  {
+    "key": "domain.rate_limiting_and_abuse_controls",
+    "path": "domain.rate_limiting_and_abuse_controls.md",
+    "title": "Rate Limiting & Abuse Controls"
+  },
+  {
+    "key": "domain.rest_apis",
+    "path": "domain.rest_apis.md",
+    "title": "REST APIs"
+  },
+  {
+    "key": "domain.webhooks_and_event_delivery",
+    "path": "domain.webhooks_and_event_delivery.md",
+    "title": "Webhooks & Event Delivery"
+  },
+  {
+    "key": "domain.caching",
+    "path": "domain.caching.md",
+    "title": "Caching"
+  },
+  {
+    "key": "domain.databases",
+    "path": "domain.databases.md",
+    "title": "Databases"
+  },
+  {
+    "key": "domain.search_retrieval",
+    "path": "domain.search_retrieval.md",
+    "title": "Search Retrieval"
+  },
+  {
+    "key": "domain.accessibility",
+    "path": "domain.accessibility.md",
+    "title": "Accessibility (a11y)"
+  },
+  {
+    "key": "domain.design_systems",
+    "path": "domain.design_systems.md",
+    "title": "Design Systems"
+  },
+  {
+    "key": "domain.desktop_applications",
+    "path": "domain.desktop_applications.md",
+    "title": "Desktop Applications"
+  },
+  {
+    "key": "domain.internationalization",
+    "path": "domain.internationalization.md",
+    "title": "Internationalization (i18n)"
+  },
+  {
+    "key": "domain.mobile_engineering",
+    "path": "domain.mobile_engineering.md",
+    "title": "Mobile Engineering"
+  },
+  {
+    "key": "domain.offline_and_sync",
+    "path": "domain.offline_and_sync.md",
+    "title": "Offline & Sync"
+  },
+  {
+    "key": "domain.performance_frontend",
+    "path": "domain.performance_frontend.md",
+    "title": "Frontend Performance"
+  },
+  {
+    "key": "domain.push_notifications",
+    "path": "domain.push_notifications.md",
+    "title": "Push Notifications"
+  },
+  {
+    "key": "domain.security_frontend",
+    "path": "domain.security_frontend.md",
+    "title": "Frontend Security (XSS/CSRF/CSP)"
+  },
+  {
+    "key": "domain.ui_architecture",
+    "path": "domain.ui_architecture.md",
+    "title": "UI Architecture (State, Routing, Data Fetching)"
+  },
+  {
+    "key": "domain.web_frontend_engineering",
+    "path": "domain.web_frontend_engineering.md",
+    "title": "Web Frontend Engineering"
+  },
+  {
+    "key": "domain.cloud_fundamentals",
+    "path": "domain.cloud_fundamentals.md",
+    "title": "cloud fundamentals"
+  },
+  {
+    "key": "domain.compliance_governance",
+    "path": "domain.compliance_governance.md",
+    "title": "compliance governance"
+  },
+  {
+    "key": "domain.finops_cost",
+    "path": "domain.finops_cost.md",
+    "title": "finops cost"
+  },
+  {
+    "key": "domain.identity_access_management",
+    "path": "domain.identity_access_management.md",
+    "title": "identity access management"
+  },
+  {
+    "key": "domain.release_management",
+    "path": "domain.release_management.md",
+    "title": "release management"
+  },
+  {
+    "key": "domain.containers",
+    "path": "domain.containers.md",
+    "title": "Containers (Docker)"
+  },
+  {
+    "key": "domain.infrastructure_as_code",
+    "path": "domain.infrastructure_as_code.md",
+    "title": "Infrastructure as Code (IaC)"
+  },
+  {
+    "key": "domain.internal_developer_platforms",
+    "path": "domain.internal_developer_platforms.md",
+    "title": "Internal Developer Platforms (IDPs)"
+  },
+  {
+    "key": "domain.kubernetes",
+    "path": "domain.kubernetes.md",
+    "title": "Kubernetes"
+  },
+  {
+    "key": "domain.load_balancing_and_edge",
+    "path": "domain.load_balancing_and_edge.md",
+    "title": "Load Balancing & Edge/CDN"
+  },
+  {
+    "key": "domain.networking_cloud",
+    "path": "domain.networking_cloud.md",
+    "title": "Cloud Networking"
+  },
+  {
+    "key": "domain.observability_platform",
+    "path": "domain.observability_platform.md",
+    "title": "Observability (Platform)"
+  },
+  {
+    "key": "domain.platform_engineering",
+    "path": "domain.platform_engineering.md",
+    "title": "Platform Engineering"
+  },
+  {
+    "key": "domain.secrets_and_config_platform",
+    "path": "domain.secrets_and_config_platform.md",
+    "title": "Secrets & Config (Platform)"
+  },
+  {
+    "key": "domain.service_mesh",
+    "path": "domain.service_mesh.md",
+    "title": "Service Mesh"
+  },
+  {
+    "key": "domain.capacity_planning",
+    "path": "domain.capacity_planning.md",
+    "title": "Capacity Planning"
+  },
+  {
+    "key": "domain.ci_cd",
+    "path": "domain.ci_cd.md",
+    "title": "CI/CD"
+  },
+  {
+    "key": "domain.cost_optimization",
+    "path": "domain.cost_optimization.md",
+    "title": "Cost Optimization (FinOps)"
+  },
+  {
+    "key": "domain.incident_response",
+    "path": "domain.incident_response.md",
+    "title": "Incident Response"
+  },
+  {
+    "key": "domain.logging_and_tracing",
+    "path": "domain.logging_and_tracing.md",
+    "title": "Logging & Tracing"
+  },
+  {
+    "key": "domain.monitoring_and_alerting",
+    "path": "domain.monitoring_and_alerting.md",
+    "title": "Monitoring & Alerting"
+  },
+  {
+    "key": "domain.performance_and_scalability",
+    "path": "domain.performance_and_scalability.md",
+    "title": "Performance & Scalability"
+  },
+  {
+    "key": "domain.quality_engineering",
+    "path": "domain.quality_engineering.md",
+    "title": "Quality Engineering (QE)"
+  },
+  {
+    "key": "domain.release_engineering",
+    "path": "domain.release_engineering.md",
+    "title": "Release Engineering"
+  },
+  {
+    "key": "domain.site_reliability_engineering",
+    "path": "domain.site_reliability_engineering.md",
+    "title": "Site Reliability Engineering (SRE)"
+  },
+  {
+    "key": "domain.slo_sla_error_budgets",
+    "path": "domain.slo_sla_error_budgets.md",
+    "title": "SLO/SLA & Error Budgets"
+  },
+  {
+    "key": "domain.testing_strategies",
+    "path": "domain.testing_strategies.md",
+    "title": "Testing Strategies"
+  },
+  {
+    "key": "domain.ai_safety_and_governance",
+    "path": "domain.ai_safety_and_governance.md",
+    "title": "AI Safety & Governance"
+  },
+  {
+    "key": "domain.analytics_and_telemetry",
+    "path": "domain.analytics_and_telemetry.md",
+    "title": "Analytics & Telemetry"
+  },
+  {
+    "key": "domain.data_engineering",
+    "path": "domain.data_engineering.md",
+    "title": "Data Engineering"
+  },
+  {
+    "key": "domain.etl_elt_pipelines",
+    "path": "domain.etl_elt_pipelines.md",
+    "title": "ETL/ELT Pipelines"
+  },
+  {
+    "key": "domain.event_streaming",
+    "path": "domain.event_streaming.md",
+    "title": "Event Streaming (Kafka/Pulsar)"
+  },
+  {
+    "key": "domain.llm_applications",
+    "path": "domain.llm_applications.md",
+    "title": "LLM Applications"
+  },
+  {
+    "key": "domain.ml_engineering",
+    "path": "domain.ml_engineering.md",
+    "title": "ML Engineering"
+  },
+  {
+    "key": "domain.mlops",
+    "path": "domain.mlops.md",
+    "title": "MLOps"
+  },
+  {
+    "key": "domain.model_serving",
+    "path": "domain.model_serving.md",
+    "title": "Model Serving"
+  },
+  {
+    "key": "domain.retrieval_and_rag",
+    "path": "domain.retrieval_and_rag.md",
+    "title": "Retrieval & RAG"
+  },
+  {
+    "key": "domain.stream_processing",
+    "path": "domain.stream_processing.md",
+    "title": "Stream Processing"
+  },
+  {
+    "key": "domain.vector_databases",
+    "path": "domain.vector_databases.md",
+    "title": "Vector Databases"
+  },
+  {
+    "key": "domain.audit_and_logging",
+    "path": "domain.audit_and_logging.md",
+    "title": "Audit & Logging"
+  },
+  {
+    "key": "domain.compliance_frameworks",
+    "path": "domain.compliance_frameworks.md",
+    "title": "Compliance Frameworks (SOC2/ISO/HIPAA/PCI)"
+  },
+  {
+    "key": "domain.governance_risk_and_compliance",
+    "path": "domain.governance_risk_and_compliance.md",
+    "title": "GRC (Governance, Risk & Compliance)"
+  },
+  {
+    "key": "domain.penetration_testing",
+    "path": "domain.penetration_testing.md",
+    "title": "Penetration Testing"
+  },
+  {
+    "key": "domain.privacy_and_data_protection",
+    "path": "domain.privacy_and_data_protection.md",
+    "title": "Privacy & Data Protection"
+  },
+  {
+    "key": "domain.secure_sdlc",
+    "path": "domain.secure_sdlc.md",
+    "title": "Secure SDLC"
+  },
+  {
+    "key": "domain.security_operations",
+    "path": "domain.security_operations.md",
+    "title": "Security Operations (SecOps)"
+  },
+  {
+    "key": "domain.threat_detection_and_response",
+    "path": "domain.threat_detection_and_response.md",
+    "title": "Threat Detection & Response"
+  },
+  {
+    "key": "domain.vulnerability_management",
+    "path": "domain.vulnerability_management.md",
+    "title": "Vulnerability Management"
+  },
+  {
+    "key": "stack_family.bash_shell",
+    "path": "stack_family.bash_shell.md",
+    "title": "Bash / Shell Scripting"
+  },
+  {
+    "key": "stack_family.c",
+    "path": "stack_family.c.md",
+    "title": "C"
+  },
+  {
+    "key": "stack_family.cpp",
+    "path": "stack_family.cpp.md",
+    "title": "C++"
+  },
+  {
+    "key": "stack_family.csharp_dotnet",
+    "path": "stack_family.csharp_dotnet.md",
+    "title": "C# / .NET"
+  },
+  {
+    "key": "stack_family.go",
+    "path": "stack_family.go.md",
+    "title": "Go"
+  },
+  {
+    "key": "stack_family.java",
+    "path": "stack_family.java.md",
+    "title": "Java"
+  },
+  {
+    "key": "stack_family.javascript",
+    "path": "stack_family.javascript.md",
+    "title": "JavaScript"
+  },
+  {
+    "key": "stack_family.kotlin",
+    "path": "stack_family.kotlin.md",
+    "title": "Kotlin"
+  },
+  {
+    "key": "stack_family.move",
+    "path": "stack_family.move.md",
+    "title": "Move (Aptos/Sui ecosystems)"
+  },
+  {
+    "key": "stack_family.python",
+    "path": "stack_family.python.md",
+    "title": "Python"
+  },
+  {
+    "key": "stack_family.rust",
+    "path": "stack_family.rust.md",
+    "title": "Rust"
+  },
+  {
+    "key": "stack_family.solidity",
+    "path": "stack_family.solidity.md",
+    "title": "Solidity"
+  },
+  {
+    "key": "stack_family.sql",
+    "path": "stack_family.sql.md",
+    "title": "SQL"
+  },
+  {
+    "key": "stack_family.swift",
+    "path": "stack_family.swift.md",
+    "title": "Swift"
+  },
+  {
+    "key": "stack_family.typescript",
+    "path": "stack_family.typescript.md",
+    "title": "TypeScript"
+  },
+  {
+    "key": "stack_family.vyper",
+    "path": "stack_family.vyper.md",
+    "title": "Vyper"
+  },
+  {
+    "key": "stack_family.angular",
+    "path": "stack_family.angular.md",
+    "title": "Angular"
+  },
+  {
+    "key": "stack_family.django",
+    "path": "stack_family.django.md",
+    "title": "Django"
+  },
+  {
+    "key": "stack_family.express",
+    "path": "stack_family.express.md",
+    "title": "Express"
+  },
+  {
+    "key": "stack_family.fastapi",
+    "path": "stack_family.fastapi.md",
+    "title": "FastAPI"
+  },
+  {
+    "key": "stack_family.flask",
+    "path": "stack_family.flask.md",
+    "title": "Flask"
+  },
+  {
+    "key": "stack_family.nestjs",
+    "path": "stack_family.nestjs.md",
+    "title": "NestJS"
+  },
+  {
+    "key": "stack_family.nextjs",
+    "path": "stack_family.nextjs.md",
+    "title": "Next.js"
+  },
+  {
+    "key": "stack_family.nodejs",
+    "path": "stack_family.nodejs.md",
+    "title": "Node.js"
+  },
+  {
+    "key": "stack_family.react",
+    "path": "stack_family.react.md",
+    "title": "React"
+  },
+  {
+    "key": "stack_family.spring_boot",
+    "path": "stack_family.spring_boot.md",
+    "title": "Spring Boot"
+  },
+  {
+    "key": "stack_family.svelte",
+    "path": "stack_family.svelte.md",
+    "title": "Svelte"
+  },
+  {
+    "key": "stack_family.vue",
+    "path": "stack_family.vue.md",
+    "title": "Vue"
+  },
+  {
+    "key": "stack_family.android_kotlin",
+    "path": "stack_family.android_kotlin.md",
+    "title": "Android (Kotlin/Jetpack)"
+  },
+  {
+    "key": "stack_family.expo",
+    "path": "stack_family.expo.md",
+    "title": "Expo"
+  },
+  {
+    "key": "stack_family.flutter",
+    "path": "stack_family.flutter.md",
+    "title": "Flutter"
+  },
+  {
+    "key": "stack_family.ios_swiftui",
+    "path": "stack_family.ios_swiftui.md",
+    "title": "iOS (SwiftUI/UIKit)"
+  },
+  {
+    "key": "stack_family.react_native",
+    "path": "stack_family.react_native.md",
+    "title": "React Native"
+  },
+  {
+    "key": "stack_family.drizzle_orm",
+    "path": "stack_family.drizzle_orm.md",
+    "title": "Drizzle ORM"
+  },
+  {
+    "key": "stack_family.postgres_drivers",
+    "path": "stack_family.postgres_drivers.md",
+    "title": "PostgreSQL Drivers"
+  },
+  {
+    "key": "stack_family.prisma",
+    "path": "stack_family.prisma.md",
+    "title": "Prisma"
+  },
+  {
+    "key": "stack_family.redis_clients",
+    "path": "stack_family.redis_clients.md",
+    "title": "Redis Clients"
+  },
+  {
+    "key": "stack_family.sequelize",
+    "path": "stack_family.sequelize.md",
+    "title": "Sequelize"
+  },
+  {
+    "key": "stack_family.sqlalchemy",
+    "path": "stack_family.sqlalchemy.md",
+    "title": "SQLAlchemy"
+  },
+  {
+    "key": "stack_family.typeorm",
+    "path": "stack_family.typeorm.md",
+    "title": "TypeORM"
+  },
+  {
+    "key": "stack_family.ansible",
+    "path": "stack_family.ansible.md",
+    "title": "Ansible"
+  },
+  {
+    "key": "stack_family.aws",
+    "path": "stack_family.aws.md",
+    "title": "Amazon Web Services (AWS)"
+  },
+  {
+    "key": "stack_family.azure",
+    "path": "stack_family.azure.md",
+    "title": "Microsoft Azure"
+  },
+  {
+    "key": "stack_family.circleci",
+    "path": "stack_family.circleci.md",
+    "title": "CircleCI"
+  },
+  {
+    "key": "stack_family.cloudflare_platform",
+    "path": "stack_family.cloudflare_platform.md",
+    "title": "Cloudflare Platform"
+  },
+  {
+    "key": "stack_family.docker",
+    "path": "stack_family.docker.md",
+    "title": "Docker"
+  },
+  {
+    "key": "stack_family.gcp",
+    "path": "stack_family.gcp.md",
+    "title": "Google Cloud Platform (GCP)"
+  },
+  {
+    "key": "stack_family.github_actions",
+    "path": "stack_family.github_actions.md",
+    "title": "GitHub Actions"
+  },
+  {
+    "key": "stack_family.gitlab_ci",
+    "path": "stack_family.gitlab_ci.md",
+    "title": "GitLab CI"
+  },
+  {
+    "key": "stack_family.kubernetes_tools",
+    "path": "stack_family.kubernetes_tools.md",
+    "title": "Kubernetes Tooling"
+  },
+  {
+    "key": "stack_family.pulumi",
+    "path": "stack_family.pulumi.md",
+    "title": "Pulumi"
+  },
+  {
+    "key": "stack_family.terraform",
+    "path": "stack_family.terraform.md",
+    "title": "Terraform"
+  },
+  {
+    "key": "stack_family.chainlink",
+    "path": "stack_family.chainlink.md",
+    "title": "Chainlink"
+  },
+  {
+    "key": "stack_family.cosmos_sdk",
+    "path": "stack_family.cosmos_sdk.md",
+    "title": "Cosmos SDK"
+  },
+  {
+    "key": "stack_family.ethereum",
+    "path": "stack_family.ethereum.md",
+    "title": "Ethereum"
+  },
+  {
+    "key": "stack_family.hardhat_foundry",
+    "path": "stack_family.hardhat_foundry.md",
+    "title": "Hardhat / Foundry"
+  },
+  {
+    "key": "stack_family.ipfs",
+    "path": "stack_family.ipfs.md",
+    "title": "IPFS"
+  },
+  {
+    "key": "stack_family.openzeppelin",
+    "path": "stack_family.openzeppelin.md",
+    "title": "OpenZeppelin"
+  },
+  {
+    "key": "stack_family.polygon",
+    "path": "stack_family.polygon.md",
+    "title": "Polygon"
+  },
+  {
+    "key": "stack_family.solana",
+    "path": "stack_family.solana.md",
+    "title": "Solana"
+  },
+  {
+    "key": "stack_family.substrate_polkadot",
+    "path": "stack_family.substrate_polkadot.md",
+    "title": "Substrate / Polkadot"
+  },
+  {
+    "key": "stack_family.wagmi_rainbowkit",
+    "path": "stack_family.wagmi_rainbowkit.md",
+    "title": "Wagmi / RainbowKit"
+  },
+  {
+    "key": "stack_family.walletconnect",
+    "path": "stack_family.walletconnect.md",
+    "title": "WalletConnect"
+  },
+  {
+    "key": "stack_family.ableton_live",
+    "path": "stack_family.ableton_live.md",
+    "title": "Ableton Live"
+  },
+  {
+    "key": "stack_family.audio_plugins_vst_au_aax",
+    "path": "stack_family.audio_plugins_vst_au_aax.md",
+    "title": "Audio Plugins (VST/AU/AAX)"
+  },
+  {
+    "key": "stack_family.audio_routing_and_latency",
+    "path": "stack_family.audio_routing_and_latency.md",
+    "title": "Audio Routing & Latency"
+  },
+  {
+    "key": "stack_family.daw_concepts",
+    "path": "stack_family.daw_concepts.md",
+    "title": "Digital Audio Workstations (DAW) Concepts"
+  },
+  {
+    "key": "stack_family.dsp_audio",
+    "path": "stack_family.dsp_audio.md",
+    "title": "Digital Signal Processing (DSP) for Audio"
+  },
+  {
+    "key": "stack_family.fl_studio",
+    "path": "stack_family.fl_studio.md",
+    "title": "FL Studio"
+  },
+  {
+    "key": "stack_family.logic_pro",
+    "path": "stack_family.logic_pro.md",
+    "title": "Logic Pro"
+  },
+  {
+    "key": "stack_family.midi",
+    "path": "stack_family.midi.md",
+    "title": "MIDI"
+  },
+  {
+    "key": "stack_family.pro_tools",
+    "path": "stack_family.pro_tools.md",
+    "title": "Avid Pro Tools"
+  },
+  {
+    "key": "stack_family.reaper",
+    "path": "stack_family.reaper.md",
+    "title": "REAPER"
+  },
+  {
+    "key": "stack_family.studio_one",
+    "path": "stack_family.studio_one.md",
+    "title": "Studio One"
+  },
+  {
+    "key": "stack_family.3ds_max",
+    "path": "stack_family.3ds_max.md",
+    "title": "Autodesk 3ds Max"
+  },
+  {
+    "key": "stack_family.blender",
+    "path": "stack_family.blender.md",
+    "title": "Blender"
+  },
+  {
+    "key": "stack_family.cinema_4d",
+    "path": "stack_family.cinema_4d.md",
+    "title": "Cinema 4D"
+  },
+  {
+    "key": "stack_family.houdini",
+    "path": "stack_family.houdini.md",
+    "title": "Houdini"
+  },
+  {
+    "key": "stack_family.maya",
+    "path": "stack_family.maya.md",
+    "title": "Autodesk Maya"
+  },
+  {
+    "key": "stack_family.pbr_materials",
+    "path": "stack_family.pbr_materials.md",
+    "title": "Physically Based Rendering (PBR) Materials"
+  },
+  {
+    "key": "stack_family.photogrammetry",
+    "path": "stack_family.photogrammetry.md",
+    "title": "Photogrammetry"
+  },
+  {
+    "key": "stack_family.rendering_pipelines",
+    "path": "stack_family.rendering_pipelines.md",
+    "title": "Rendering Pipelines"
+  },
+  {
+    "key": "stack_family.rigging_and_animation",
+    "path": "stack_family.rigging_and_animation.md",
+    "title": "Rigging & Animation"
+  },
+  {
+    "key": "stack_family.substance_3d",
+    "path": "stack_family.substance_3d.md",
+    "title": "Adobe Substance 3D"
+  },
+  {
+    "key": "stack_family.unity",
+    "path": "stack_family.unity.md",
+    "title": "Unity"
+  },
+  {
+    "key": "stack_family.unreal_engine",
+    "path": "stack_family.unreal_engine.md",
+    "title": "Unreal Engine"
+  },
+  {
+    "key": "stack_family.ffmpeg",
+    "path": "stack_family.ffmpeg.md",
+    "title": "FFmpeg"
+  },
+  {
+    "key": "stack_family.hls_dash",
+    "path": "stack_family.hls_dash.md",
+    "title": "HLS / MPEG-DASH"
+  },
+  {
+    "key": "stack_family.media_storage_delivery",
+    "path": "stack_family.media_storage_delivery.md",
+    "title": "Media Storage & Delivery"
+  },
+  {
+    "key": "stack_family.realtime_messaging",
+    "path": "stack_family.realtime_messaging.md",
+    "title": "Realtime Messaging (WebSockets)"
+  },
+  {
+    "key": "stack_family.rtmp",
+    "path": "stack_family.rtmp.md",
+    "title": "RTMP"
+  },
+  {
+    "key": "stack_family.signaling_systems",
+    "path": "stack_family.signaling_systems.md",
+    "title": "Signaling Systems"
+  },
+  {
+    "key": "stack_family.streaming_architecture",
+    "path": "stack_family.streaming_architecture.md",
+    "title": "Streaming Architecture"
+  },
+  {
+    "key": "stack_family.webrtc",
+    "path": "stack_family.webrtc.md",
+    "title": "WebRTC"
+  },
+  {
+    "key": "stack_family.databases_postgres",
+    "path": "stack_family.databases_postgres.md",
+    "title": "SQL / Postgres"
+  },
+  {
+    "key": "stack_family.javascript_typescript",
+    "path": "stack_family.javascript_typescript.md",
+    "title": "JavaScript / TypeScript"
+  },
+  {
+    "key": "stack_family.solidity_evm",
+    "path": "stack_family.solidity_evm.md",
+    "title": "Solidity / EVM"
+  }
+]

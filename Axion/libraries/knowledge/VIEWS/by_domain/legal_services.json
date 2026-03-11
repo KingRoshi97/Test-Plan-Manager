@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDLESE-CHECK-0001",
+    "title": "Legal Services Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLESE-CONCEPT-0001",
+    "title": "Legal Services Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDLESE-PATTERN-0001",
+    "title": "Legal Services Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

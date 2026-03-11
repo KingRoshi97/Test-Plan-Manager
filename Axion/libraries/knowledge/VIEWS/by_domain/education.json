@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-INDEDUC-CHECK-0001",
+    "title": "Education Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDEDUC-CONCEPT-0001",
+    "title": "Education Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-INDEDUC-PATTERN-0001",
+    "title": "Education Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

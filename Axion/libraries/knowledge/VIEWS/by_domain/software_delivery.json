@@ -1,0 +1,457 @@
+[
+  {
+    "kid": "KID-ITAPI-CHECK-0001",
+    "title": "Endpoint Checklist (auth, validation, errors, logging)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CHECK-0002",
+    "title": "Integration Checklist (retries, idempotency, limits)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CONCEPT-0001",
+    "title": "REST vs RPC vs Events",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CONCEPT-0002",
+    "title": "Idempotency (why it matters)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CONCEPT-0003",
+    "title": "Pagination/Filtering/Sorting Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-CONCEPT-0004",
+    "title": "Webhooks Basics (delivery, retries)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0001",
+    "title": "Consistent Error Shape Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0002",
+    "title": "Idempotent Write Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0003",
+    "title": "Webhook Signature + Replay Protection Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PATTERN-0004",
+    "title": "Versioning Strategy Pattern (URL/header)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PITFALL-0001",
+    "title": "Breaking changes without versioning",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PITFALL-0002",
+    "title": "Unbounded list endpoints (DoS risk)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PROCEDURE-0001",
+    "title": "API Contract Change Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-PROCEDURE-0002",
+    "title": "Webhook Failure Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITAPI-REF-0001",
+    "title": "HTTP Method Semantics Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CHECK-0001",
+    "title": "Architecture Baseline Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CHECK-0002",
+    "title": "Dependency Hygiene Checklist (cycles, boundaries)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CONCEPT-0001",
+    "title": "System Boundaries (what is a \\\"service/module\\\")",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CONCEPT-0002",
+    "title": "DDD Basics (entities, value objects, bounded contexts)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-CONCEPT-0003",
+    "title": "Coupling vs Cohesion (practical)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PATTERN-0001",
+    "title": "Layered Architecture Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PATTERN-0002",
+    "title": "Modular Monolith Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PATTERN-0003",
+    "title": "Event-Driven Integration Pattern (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PITFALL-0001",
+    "title": "\\\"Microservices by default\\\" failure modes",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PITFALL-0002",
+    "title": "Shared DB coupling across services",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-PROCEDURE-0001",
+    "title": "Architecture Review Procedure (what to check)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITARCH-REF-0001",
+    "title": "Common Architecture Terms Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CHECK-0001",
+    "title": "CI Baseline Checklist (lint/test/build)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CHECK-0002",
+    "title": "Deploy Readiness Checklist (observability, rollback)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CONCEPT-0001",
+    "title": "Pipeline Stages (build/test/package/deploy)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CONCEPT-0002",
+    "title": "Environments (dev/stage/prod parity)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-CONCEPT-0003",
+    "title": "Rollback vs Rollforward",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PATTERN-0001",
+    "title": "Trunk-Based Development Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PATTERN-0002",
+    "title": "Artifact Promotion Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PATTERN-0003",
+    "title": "Feature Flags Pattern (release safety)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PITFALL-0001",
+    "title": "Unpinned dependencies in CI",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PITFALL-0002",
+    "title": "\\\"Green build\\\" but broken deploy",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PROCEDURE-0001",
+    "title": "Safe Deploy Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-PROCEDURE-0002",
+    "title": "Rollback Procedure (with verification)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITCICD-REF-0001",
+    "title": "CI Artifact Types Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CHECK-0001",
+    "title": "Observability Baseline Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CHECK-0002",
+    "title": "Incident Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CONCEPT-0001",
+    "title": "Logs/Metrics/Traces (what each is for)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CONCEPT-0002",
+    "title": "SLO/SLI Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-CONCEPT-0003",
+    "title": "Incident Response Basics",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PATTERN-0001",
+    "title": "Structured Logging Pattern (correlation IDs)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PATTERN-0002",
+    "title": "Health Check Pattern (liveness/readiness)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PATTERN-0003",
+    "title": "Alerting Hygiene Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PITFALL-0001",
+    "title": "No correlation IDs → no debugging",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PITFALL-0002",
+    "title": "Alert fatigue from noisy alerts",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PROCEDURE-0001",
+    "title": "Incident Triage Procedure (ops view)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-PROCEDURE-0002",
+    "title": "Postmortem Procedure (blameless)",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITSRE-REF-0001",
+    "title": "Common Metrics Reference (latency, error rate, saturation)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CHECK-0001",
+    "title": "Test Coverage Checklist (what matters)",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CHECK-0002",
+    "title": "Release Test Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CONCEPT-0001",
+    "title": "Test Pyramid (unit/integration/e2e)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CONCEPT-0002",
+    "title": "Deterministic Tests (flakiness causes)",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-CONCEPT-0003",
+    "title": "Test Data Strategy",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PATTERN-0001",
+    "title": "Contract Testing Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PATTERN-0002",
+    "title": "Golden Fixture Testing Pattern",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PATTERN-0003",
+    "title": "Property-Based Testing Pattern (high level)",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PITFALL-0001",
+    "title": "Over-mocking (tests pass, system fails)",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PITFALL-0002",
+    "title": "Flaky tests ignored until they kill velocity",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-PROCEDURE-0001",
+    "title": "Flaky Test Triage Procedure",
+    "content_type": "workflow",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-ITTEST-REF-0001",
+    "title": "Common Test Types Reference",
+    "content_type": "reference",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]

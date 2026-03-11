@@ -1,0 +1,23 @@
+[
+  {
+    "kid": "KID-LANGFAST-CHECK-0001",
+    "title": "Fastapi Production Readiness Checklist",
+    "content_type": "checklist",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFAST-CONCEPT-0001",
+    "title": "Fastapi Fundamentals and Mental Model",
+    "content_type": "concept",
+    "status": "active",
+    "authority_tier": "reviewed"
+  },
+  {
+    "kid": "KID-LANGFAST-PATTERN-0001",
+    "title": "Fastapi Common Implementation Patterns",
+    "content_type": "pattern",
+    "status": "active",
+    "authority_tier": "reviewed"
+  }
+]
