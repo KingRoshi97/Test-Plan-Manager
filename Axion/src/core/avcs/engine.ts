@@ -6,6 +6,7 @@ import {
   evaluateFunctional,
   evaluateSecurity,
   evaluatePerformance,
+  evaluateDeploymentReadiness,
 } from "./evaluators.js";
 import type { EvaluatorContext } from "./evaluators.js";
 import type {
@@ -233,6 +234,7 @@ function getEvaluator(domain: CertificationDomain) {
     case "functional": return evaluateFunctional;
     case "security": return evaluateSecurity;
     case "performance": return evaluatePerformance;
+    case "deployment_readiness": return evaluateDeploymentReadiness;
     default: return null;
   }
 }
@@ -319,7 +321,7 @@ function computeCoverage(
     });
   }
 
-  const allDomains: CertificationDomain[] = ["build_integrity", "functional", "security", "performance"];
+  const allDomains: CertificationDomain[] = ["build_integrity", "functional", "security", "performance", "deployment_readiness"];
   for (const d of allDomains) {
     if (!domainResults.find(dr => dr.domain === d)) {
       entries.push({

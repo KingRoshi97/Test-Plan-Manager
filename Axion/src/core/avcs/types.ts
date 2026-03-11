@@ -10,7 +10,8 @@ export type CertificationDomain =
   | "build_integrity"
   | "functional"
   | "security"
-  | "performance";
+  | "performance"
+  | "deployment_readiness";
 
 export type CertificationVerdict =
   | "PASS"
@@ -37,6 +38,96 @@ export type CoverageState =
 export type CertRunStatus = "planned" | "running" | "completed" | "failed";
 
 export type FindingStatus = "open" | "acknowledged" | "resolved" | "suppressed";
+
+export type TestPhase = "MVP" | "Later";
+
+export type AVCSTestDomain =
+  | "BUILD_INTEGRITY"
+  | "FUNCTIONAL"
+  | "SECURITY"
+  | "PERFORMANCE"
+  | "DEPLOYMENT"
+  | "UI"
+  | "UX"
+  | "ACCESSIBILITY"
+  | "ENTERPRISE";
+
+export type ToolInstallMethod = "npm" | "binary" | "docker" | "builtin";
+
+export type AdapterStatus = "available" | "not_available" | "error";
+
+export type ToolAvailability = {
+  toolId: string;
+  name: string;
+  status: AdapterStatus;
+  message?: string;
+};
+
+export interface AVCSTestDefinition {
+  id: string;
+  domain: AVCSTestDomain;
+  name: string;
+  description: string;
+  phase: TestPhase;
+  primaryTools: string[];
+  runTypes: CertificationRunType[];
+  evidenceOutput: string;
+  failExamples: string[];
+}
+
+export interface AVCSToolDefinition {
+  id: string;
+  name: string;
+  category: string;
+  officialSource: string;
+  installMethod: ToolInstallMethod;
+  allowedRunTypes: CertificationRunType[];
+  domains: AVCSTestDomain[];
+  defaultTimeoutSeconds: number;
+}
+
+export interface AVCSTestPlan {
+  id: string;
+  runType: CertificationRunType;
+  tests: AVCSTestDefinition[];
+  estimatedDurationSeconds: number;
+  requiredTools: string[];
+  domainCoverage: Record<AVCSTestDomain, number>;
+  mvpOnly: boolean;
+  createdAt: string;
+}
+
+export interface AVCSTestResult {
+  testId: string;
+  toolId: string;
+  status: "pass" | "fail" | "warn" | "skip" | "not_available" | "error";
+  message: string;
+  score: number;
+  durationMs: number;
+  evidence?: Record<string, unknown>;
+  findings?: Array<{
+    severity: FindingSeverity;
+    title: string;
+    description: string;
+    affectedFiles?: string[];
+  }>;
+}
+
+export interface AVCSToolAdapter {
+  id: string;
+  toolId: string;
+  isAvailable(): Promise<boolean>;
+  execute(test: AVCSTestDefinition, context: ToolAdapterContext): Promise<AVCSTestResult>;
+}
+
+export interface ToolAdapterContext {
+  certRunId: string;
+  buildDir: string;
+  targetDir: string;
+  planFiles: string[];
+  blueprintFeatures: string[];
+  timeoutSeconds: number;
+}
 
 export interface CertificationRun {
   id: string;
@@ -73,6 +164,7 @@ export interface CertificationFinding {
 
 export interface DomainCheck {
   check_id: string;
+  test_id?: string;
   description: string;
   result: "pass" | "fail" | "warn" | "skip";
   detail?: string;
@@ -143,6 +235,8 @@ export interface CertificationReport {
   evidence_manifest: string[];
   remediation_manifest: RemediationManifest;
   findings?: CertificationFinding[];
+  test_plan?: AVCSTestPlan;
+  adapter_status?: ToolAvailability[];
   created_at: string;
 }
 
@@ -165,17 +259,18 @@ export interface AVCSStatus {
 }
 
 export const DOMAIN_WEIGHTS: Record<CertificationDomain, number> = {
-  build_integrity: 0.25,
-  functional: 0.30,
-  security: 0.25,
-  performance: 0.20,
+  build_integrity: 0.20,
+  functional: 0.25,
+  security: 0.20,
+  performance: 0.15,
+  deployment_readiness: 0.20,
 };
 
 export const RUN_TYPE_DOMAINS: Record<CertificationRunType, CertificationDomain[]> = {
-  smoke: ["build_integrity", "functional"],
+  smoke: ["build_integrity", "functional", "deployment_readiness"],
   functional: ["build_integrity", "functional"],
   security: ["build_integrity", "security"],
   performance: ["build_integrity", "performance"],
-  full_certification: ["build_integrity", "functional", "security", "performance"],
-  pre_deployment: ["build_integrity", "functional", "security", "performance"],
+  full_certification: ["build_integrity", "functional", "security", "performance", "deployment_readiness"],
+  pre_deployment: ["build_integrity", "functional", "security", "performance", "deployment_readiness"],
 };

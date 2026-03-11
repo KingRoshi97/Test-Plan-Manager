@@ -4,7 +4,11 @@ import fs from "fs";
 import { AVCSStore } from "../Axion/src/core/avcs/store.js";
 import { planRun, executeRun, getAVCSStatus } from "../Axion/src/core/avcs/engine.js";
 import { remediateFromReport } from "../Axion/src/core/build/runner.js";
-import type { CertificationRunType } from "../Axion/src/core/avcs/types.js";
+import type { CertificationRunType, AVCSTestDomain } from "../Axion/src/core/avcs/types.js";
+import { TEST_CATALOG, getTestById, getTestsByDomain, getMVPTests } from "../Axion/src/core/avcs/test-catalog.js";
+import { TOOL_REGISTRY } from "../Axion/src/core/avcs/tool-registry.js";
+import { buildTestPlan } from "../Axion/src/core/avcs/test-plan-builder.js";
+import { getAdapterStatus } from "../Axion/src/core/avcs/tool-adapters.js";
 
 const AXION_ROOT = path.resolve(process.cwd(), "Axion");
 const AVCS_DATA_DIR = path.join(AXION_ROOT, "avcs_data");
@@ -225,6 +229,83 @@ export function registerAVCSRoutes(app: Express): void {
     try {
       const status = getAVCSStatus();
       res.json(status);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/avcs/catalog", (req: Request, res: Response) => {
+    try {
+      const { domain, mvpOnly } = req.query;
+      let tests = [...TEST_CATALOG];
+      if (domain) {
+        tests = getTestsByDomain(String(domain).toUpperCase() as AVCSTestDomain);
+      }
+      if (mvpOnly === "true") {
+        const mvpIds = new Set(getMVPTests().map(t => t.id));
+        tests = tests.filter(t => mvpIds.has(t.id));
+      }
+      res.json({ total: tests.length, tests });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/avcs/catalog/:testId", (req: Request, res: Response) => {
+    try {
+      const test = getTestById(req.params.testId.toUpperCase());
+      if (!test) {
+        return res.status(404).json({ error: `Test ${req.params.testId} not found in catalog` });
+      }
+      res.json(test);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/avcs/tools", async (req: Request, res: Response) => {
+    try {
+      const adapterStatuses = await getAdapterStatus();
+      const tools = TOOL_REGISTRY.map(tool => {
+        const adapterInfo = adapterStatuses.find(s => s.toolId === tool.id);
+        return {
+          ...tool,
+          adapterStatus: adapterInfo?.status ?? "not_available",
+          adapterMessage: adapterInfo?.message,
+        };
+      });
+      res.json({ total: tools.length, tools });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/avcs/tools/status", async (_req: Request, res: Response) => {
+    try {
+      const statuses = await getAdapterStatus();
+      const available = statuses.filter(s => s.status === "available").length;
+      const total = statuses.length;
+      res.json({
+        summary: { available, total, stubbed: total - available },
+        tools: statuses,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/avcs/plan", (req: Request, res: Response) => {
+    try {
+      const { runType, mvpOnly, includeDomains, excludeTests } = req.body;
+      if (!runType || !VALID_RUN_TYPES.includes(runType)) {
+        return res.status(400).json({ error: `runType required and must be one of: ${VALID_RUN_TYPES.join(", ")}` });
+      }
+      const plan = buildTestPlan(runType as CertificationRunType, {
+        mvpOnly: mvpOnly !== false,
+        includeDomains: includeDomains as AVCSTestDomain[] | undefined,
+        excludeTests: excludeTests as string[] | undefined,
+      });
+      res.json(plan);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

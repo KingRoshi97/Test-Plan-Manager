@@ -141,11 +141,40 @@ export function evaluateBuildIntegrity(ctx: EvaluatorContext): EvaluatorOutput {
   const repoDir = path.join(ctx.buildDir, "repo");
   const targetDir = fs.existsSync(repoDir) ? repoDir : ctx.buildDir;
 
+  const artifactExists = fs.existsSync(targetDir);
+  let artifactReadable = false;
+  if (artifactExists) {
+    try {
+      fs.accessSync(targetDir, fs.constants.R_OK);
+      artifactReadable = true;
+    } catch { /* not readable */ }
+  }
+  checks.push({
+    check_id: "BI-01",
+    test_id: "BI-01",
+    description: "Artifact location exists and is readable",
+    result: artifactExists && artifactReadable ? "pass" : "fail",
+    detail: !artifactExists ? "Build artifact directory does not exist" : !artifactReadable ? "Build artifact directory is not readable" : undefined,
+    affected_files: !artifactExists ? [targetDir] : undefined,
+  });
+  if (!artifactExists || !artifactReadable) {
+    findings.push(makeFinding(ctx, "build_integrity", "critical", "release_blocker",
+      "Build artifact location missing or unreadable",
+      !artifactExists ? "Build artifact directory does not exist" : "Build artifact directory exists but is not readable",
+      "artifact_location", [targetDir],
+      "Build process did not create or left an inaccessible artifact directory",
+      "Ensure the build process creates a readable output directory"));
+  }
+
   const pkgPath = path.join(targetDir, "package.json");
   const pkgExists = fileExists(pkgPath);
   const pkgValid = pkgExists && isValidJson(pkgPath);
+  const tsconfigPath = path.join(targetDir, "tsconfig.json");
+  const tsconfigExists = fileExists(tsconfigPath);
+
   checks.push({
-    check_id: "bi-001",
+    check_id: "BI-02-pkg",
+    test_id: "BI-02",
     description: "package.json exists and is valid JSON",
     result: pkgValid ? "pass" : "fail",
     detail: !pkgExists ? "package.json not found" : !pkgValid ? "package.json is not valid JSON" : undefined,
@@ -160,10 +189,9 @@ export function evaluateBuildIntegrity(ctx: EvaluatorContext): EvaluatorOutput {
       "Ensure package.json is generated with valid JSON content"));
   }
 
-  const tsconfigPath = path.join(targetDir, "tsconfig.json");
-  const tsconfigExists = fileExists(tsconfigPath);
   checks.push({
-    check_id: "bi-002",
+    check_id: "BI-02-tsconfig",
+    test_id: "BI-02",
     description: "tsconfig.json exists",
     result: tsconfigExists ? "pass" : "fail",
     detail: tsconfigExists ? undefined : "tsconfig.json not found",
@@ -188,7 +216,8 @@ export function evaluateBuildIntegrity(ctx: EvaluatorContext): EvaluatorOutput {
     const exists = fileExists(path.join(targetDir, cfg.name)) ||
       (cfg.alt ? fileExists(path.join(targetDir, cfg.alt)) : false);
     checks.push({
-      check_id: `bi-003-${cfg.name.replace(/[^a-z0-9]/gi, "_")}`,
+      check_id: `BI-02-${cfg.name.replace(/[^a-z0-9]/gi, "_")}`,
+      test_id: "BI-02",
       description: `Config file present: ${cfg.name}`,
       result: exists ? "pass" : "warn",
       detail: exists ? undefined : `${cfg.name} not found${cfg.alt ? ` (also checked ${cfg.alt})` : ""}`,
@@ -208,29 +237,63 @@ export function evaluateBuildIntegrity(ctx: EvaluatorContext): EvaluatorOutput {
     fileExists(path.join(targetDir, ".env.template")) ||
     fileExists(path.join(targetDir, ".env.sample"));
   checks.push({
-    check_id: "bi-004",
-    description: "Environment template present (.env.example)",
+    check_id: "BI-03",
+    test_id: "BI-03",
+    description: "Environment contract exists (.env.example or template)",
     result: envTemplateExists ? "pass" : "warn",
     detail: envTemplateExists ? undefined : "No .env.example, .env.template, or .env.sample found",
     affected_files: envTemplateExists ? undefined : [".env.example"],
   });
   if (!envTemplateExists) {
     findings.push(makeFinding(ctx, "build_integrity", "low", "observation",
-      "No environment template file",
-      "No .env.example or .env.template found for developer onboarding",
+      "No environment contract file",
+      "No .env.example or .env.template found for environment variable documentation",
       "project_config", [".env.example"],
-      "Environment template was not included in build output",
+      "Environment contract was not included in build output",
       "Add .env.example listing required environment variables with placeholder values"));
   }
 
+  const pkgContent = readFileContent(pkgPath);
+  let hasStartScript = false;
+  if (pkgContent) {
+    try {
+      const pkg = JSON.parse(pkgContent);
+      hasStartScript = !!(pkg.scripts?.start || pkg.scripts?.dev || pkg.scripts?.build);
+    } catch { /* invalid JSON */ }
+  }
   const entryPoints = [
     { paths: ["src/main.tsx", "src/main.ts", "src/index.tsx", "src/index.ts", "src/App.tsx"], label: "Frontend entry" },
     { paths: ["src/server/index.ts", "server/index.ts", "src/server.ts"], label: "Server entry" },
   ];
+  const hasEntryPoint = entryPoints.some(ep => ep.paths.some(p => fileExists(path.join(targetDir, p))));
+
+  checks.push({
+    check_id: "BI-04",
+    test_id: "BI-04",
+    description: "Startup script declared in package.json",
+    result: hasStartScript && hasEntryPoint ? "pass" : hasStartScript || hasEntryPoint ? "warn" : "fail",
+    detail: !hasStartScript && !hasEntryPoint
+      ? "No startup script in package.json and no entry point found"
+      : !hasStartScript
+        ? "No start/dev/build script in package.json"
+        : !hasEntryPoint
+          ? "Startup script exists but no entry point file found"
+          : undefined,
+  });
+  if (!hasStartScript) {
+    findings.push(makeFinding(ctx, "build_integrity", "high", "conditional_blocker",
+      "No startup script declared",
+      "package.json does not define start, dev, or build scripts",
+      "startup_config", ["package.json"],
+      "Build process did not generate startup scripts",
+      "Add start/dev/build scripts to package.json"));
+  }
+
   for (const ep of entryPoints) {
     const found = ep.paths.find(p => fileExists(path.join(targetDir, p)));
     checks.push({
-      check_id: `bi-005-${ep.label.replace(/\s+/g, "_").toLowerCase()}`,
+      check_id: `BI-04-${ep.label.replace(/\s+/g, "_").toLowerCase()}`,
+      test_id: "BI-04",
       description: `Entry point exists: ${ep.label}`,
       result: found ? "pass" : "fail",
       detail: found ? `Found: ${found}` : `None of ${ep.paths.join(", ")} found`,
@@ -256,7 +319,8 @@ export function evaluateBuildIntegrity(ctx: EvaluatorContext): EvaluatorOutput {
     }
     const missingDirsList = Array.from(missingDirs);
     checks.push({
-      check_id: "bi-006",
+      check_id: "BI-01-dirs",
+      test_id: "BI-01",
       description: "Critical directories from build plan exist",
       result: missingDirsList.length === 0 ? "pass" : "warn",
       detail: missingDirsList.length > 0 ? `Missing directories: ${missingDirsList.slice(0, 5).join(", ")}` : undefined,
@@ -291,7 +355,8 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
     const missingPct = ctx.planFiles.length > 0 ? Math.round((missingFiles.length / ctx.planFiles.length) * 100) : 0;
     const severity: FindingSeverity = missingPct > 50 ? "critical" : missingPct > 20 ? "high" : missingPct > 0 ? "medium" : "info";
     checks.push({
-      check_id: "fn-001",
+      check_id: "FUNC-01-files",
+      test_id: "FUNC-01",
       description: "All planned files exist on disk",
       result: missingFiles.length === 0 ? "pass" : missingPct > 50 ? "fail" : "warn",
       detail: missingFiles.length > 0 ? `${missingFiles.length}/${ctx.planFiles.length} planned files missing (${missingPct}%)` : "All planned files present",
@@ -308,7 +373,8 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
     }
   } else {
     checks.push({
-      check_id: "fn-001",
+      check_id: "FUNC-01-files",
+      test_id: "FUNC-01",
       description: "All planned files exist on disk",
       result: "skip",
       detail: "No plan files provided for comparison",
@@ -323,7 +389,8 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
     } catch { return false; }
   });
   checks.push({
-    check_id: "fn-002",
+    check_id: "FUNC-03-zerobyte",
+    test_id: "FUNC-03",
     description: "No zero-byte generated files",
     result: zeroByteFiles.length === 0 ? "pass" : "warn",
     detail: zeroByteFiles.length > 0 ? `${zeroByteFiles.length} zero-byte files found` : undefined,
@@ -357,7 +424,8 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
   }
   const allTodoFiles = [...highTodoFiles, ...moderateTodoFiles];
   checks.push({
-    check_id: "fn-003",
+    check_id: "FUNC-04-todos",
+    test_id: "FUNC-04",
     description: "Placeholder/TODO density within acceptable limits",
     result: highTodoFiles.length > 0 ? "fail" : moderateTodoFiles.length > 0 ? "warn" : "pass",
     detail: allTodoFiles.length > 0 ? `${highTodoFiles.length} files with >10 TODOs, ${moderateTodoFiles.length} with >3 TODOs` : undefined,
@@ -401,7 +469,8 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
     }
   }
   checks.push({
-    check_id: "fn-004",
+    check_id: "FUNC-02-imports",
+    test_id: "FUNC-02",
     description: "Import resolution (no broken local imports)",
     result: brokenImports.length === 0 ? "pass" : brokenImports.length > 5 ? "fail" : "warn",
     detail: brokenImports.length > 0 ? `${brokenImports.length} files with unresolvable imports` : undefined,
@@ -426,7 +495,8 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
     return content && content.length > 50;
   });
   checks.push({
-    check_id: "fn-005",
+    check_id: "FUNC-02-routes",
+    test_id: "FUNC-02",
     description: "Route/endpoint files have substantive content",
     result: routeFiles.length === 0 ? "skip" :
       nonEmptyRouteFiles.length === routeFiles.length ? "pass" : "warn",
@@ -464,7 +534,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
     }
   }
   checks.push({
-    check_id: "sec-001",
+    check_id: "SEC-02-secrets",
+    test_id: "SEC-02",
     description: "No hardcoded secrets or API keys",
     result: filesWithSecrets.length === 0 ? "pass" : "fail",
     detail: filesWithSecrets.length > 0 ? `${filesWithSecrets.length} files contain potential hardcoded secrets` : undefined,
@@ -489,7 +560,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
     }
   }
   checks.push({
-    check_id: "sec-002",
+    check_id: "SEC-05-eval",
+    test_id: "SEC-05",
     description: "No eval(), Function(), or dangerous dynamic code",
     result: filesWithDangerousCode.length === 0 ? "pass" : "fail",
     detail: filesWithDangerousCode.length > 0 ? `${filesWithDangerousCode.length} files use eval/Function` : undefined,
@@ -512,7 +584,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
       f.includes("auth") || f.includes("guard") || f.includes("middleware") || f.includes("protect")
     );
     checks.push({
-      check_id: "sec-003",
+      check_id: "SEC-03-auth",
+      test_id: "SEC-03",
       description: "Auth guard/middleware present (RBAC in blueprint)",
       result: authFiles.length > 0 ? "pass" : "fail",
       detail: authFiles.length > 0 ? `Found auth files: ${authFiles.slice(0, 3).join(", ")}` : "No auth guard/middleware files found despite RBAC in blueprint",
@@ -528,7 +601,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
     }
   } else {
     checks.push({
-      check_id: "sec-003",
+      check_id: "SEC-03-auth",
+      test_id: "SEC-03",
       description: "Auth guard/middleware present (RBAC in blueprint)",
       result: "skip",
       detail: "RBAC not specified in blueprint",
@@ -543,7 +617,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
     return content ? /cors/i.test(content) : false;
   });
   checks.push({
-    check_id: "sec-004",
+    check_id: "SEC-05-cors",
+    test_id: "SEC-05",
     description: "CORS configuration present",
     result: serverFiles.length === 0 ? "skip" : corsPresent ? "pass" : "warn",
     detail: !corsPresent && serverFiles.length > 0 ? "No CORS configuration found in server files" : undefined,
@@ -566,7 +641,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
     return content ? /(?:zod|joi|yup|validate|schema\.parse|\.safeParse)/i.test(content) : false;
   });
   checks.push({
-    check_id: "sec-005",
+    check_id: "SEC-05-validation",
+    test_id: "SEC-05",
     description: "Input validation in route handlers",
     result: routeHandlerFiles.length === 0 ? "skip" : validationPresent ? "pass" : "warn",
     detail: !validationPresent && routeHandlerFiles.length > 0 ? "No input validation library usage found in route handlers" : undefined,
@@ -591,7 +667,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
     }
   }
   checks.push({
-    check_id: "sec-006",
+    check_id: "SEC-02-logging",
+    test_id: "SEC-02",
     description: "No console.log of sensitive data patterns",
     result: filesWithSensitiveLogs.length === 0 ? "pass" : "warn",
     detail: filesWithSensitiveLogs.length > 0 ? `${filesWithSensitiveLogs.length} files log potentially sensitive data` : undefined,
@@ -610,7 +687,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
   const gitignoreContent = readFileContent(gitignorePath);
   const envIgnored = gitignoreContent ? /\.env(?:\s|$)/m.test(gitignoreContent) : false;
   checks.push({
-    check_id: "sec-007",
+    check_id: "SEC-02-gitignore",
+    test_id: "SEC-02",
     description: ".env not committed (check .gitignore)",
     result: !gitignoreContent ? "warn" : envIgnored ? "pass" : "warn",
     detail: !gitignoreContent ? "No .gitignore found" : !envIgnored ? ".env not listed in .gitignore" : undefined,
@@ -650,7 +728,8 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
     return content ? /(?:React\.lazy|lazy\s*\(|import\s*\()/i.test(content) : false;
   });
   checks.push({
-    check_id: "perf-001",
+    check_id: "PERF-01-lazy",
+    test_id: "PERF-01",
     description: "Lazy loading patterns for routes",
     result: routeFiles.length === 0 ? "skip" : lazyLoadPresent ? "pass" : "warn",
     detail: !lazyLoadPresent && routeFiles.length > 0 ? "No lazy loading or dynamic imports found for route components" : undefined,
@@ -676,7 +755,8 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
     }
   }
   checks.push({
-    check_id: "perf-002",
+    check_id: "PERF-02-barrel",
+    test_id: "PERF-02",
     description: "No barrel re-exports with >20 exports",
     result: barrelReexportFiles.length === 0 ? "pass" : "warn",
     detail: barrelReexportFiles.length > 0 ? `${barrelReexportFiles.length} index files with >20 re-exports` : undefined,
@@ -704,7 +784,8 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
     }
   }
   checks.push({
-    check_id: "perf-003",
+    check_id: "PERF-03-filesize",
+    test_id: "PERF-03",
     description: "Individual file size within budget (warn >500, high >1000 lines)",
     result: veryOversizedFiles.length > 0 ? "fail" : oversizedFiles.length > 0 ? "warn" : "pass",
     detail: (veryOversizedFiles.length + oversizedFiles.length) > 0
@@ -736,7 +817,8 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
     const plannedCount = ctx.planFiles.length;
     const drift = plannedCount > 0 ? Math.abs(actualCount - plannedCount) / plannedCount : 0;
     checks.push({
-      check_id: "perf-004",
+      check_id: "PERF-03-drift",
+      test_id: "PERF-03",
       description: "File count vs plan (drift detection)",
       result: drift < 0.1 ? "pass" : drift < 0.3 ? "warn" : "fail",
       detail: `Planned: ${plannedCount}, Actual: ${actualCount} (${Math.round(drift * 100)}% drift)`,
@@ -751,7 +833,8 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
     }
   } else {
     checks.push({
-      check_id: "perf-004",
+      check_id: "PERF-03-drift",
+      test_id: "PERF-03",
       description: "File count vs plan (drift detection)",
       result: "skip",
       detail: "No plan files provided for comparison",
@@ -771,7 +854,8 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
     }
   }
   checks.push({
-    check_id: "perf-005",
+    check_id: "PERF-03-syncio",
+    test_id: "PERF-03",
     description: "No synchronous file I/O in server files",
     result: filesWithSyncIo.length === 0 ? "pass" : "warn",
     detail: filesWithSyncIo.length > 0 ? `${filesWithSyncIo.length} server files use synchronous I/O` : undefined,
@@ -787,4 +871,184 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
   }
 
   return { result: computeDomainResult("performance", checks, findings.length), findings };
+}
+
+export function evaluateDeploymentReadiness(ctx: EvaluatorContext): EvaluatorOutput {
+  const checks: DomainCheck[] = [];
+  const findings: CertificationFinding[] = [];
+  const repoDir = path.join(ctx.buildDir, "repo");
+  const targetDir = fs.existsSync(repoDir) ? repoDir : ctx.buildDir;
+
+  const envContractFiles = [".env.example", ".env.template", ".env.sample", "env.contract.json", ".env.schema.json"];
+  const foundEnvContract = envContractFiles.find(f => fileExists(path.join(targetDir, f)));
+
+  const allFiles = listFilesRecursive(targetDir);
+  const sourceFiles = allFiles.filter(f =>
+    f.endsWith(".ts") || f.endsWith(".tsx") || f.endsWith(".js") || f.endsWith(".jsx")
+  );
+
+  const envVarUsages = new Set<string>();
+  const envVarPattern = /process\.env\.([A-Z_][A-Z0-9_]*)/g;
+  for (const f of sourceFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (!content) continue;
+    let match;
+    while ((match = envVarPattern.exec(content)) !== null) {
+      envVarUsages.add(match[1]);
+    }
+  }
+
+  let envContractVars = new Set<string>();
+  if (foundEnvContract) {
+    const contractContent = readFileContent(path.join(targetDir, foundEnvContract));
+    if (contractContent) {
+      if (foundEnvContract.endsWith(".json")) {
+        try {
+          const parsed = JSON.parse(contractContent);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((v: any) => envContractVars.add(v.name || v));
+          } else if (typeof parsed === "object") {
+            Object.keys(parsed).forEach(k => envContractVars.add(k));
+          }
+        } catch { /* not valid JSON */ }
+      } else {
+        const lines = contractContent.split("\n");
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith("#")) {
+            const varName = trimmed.split("=")[0]?.trim();
+            if (varName) envContractVars.add(varName);
+          }
+        }
+      }
+    }
+  }
+
+  const undocumentedVars = Array.from(envVarUsages).filter(v =>
+    !envContractVars.has(v) && !["NODE_ENV", "PORT", "HOST"].includes(v)
+  );
+
+  checks.push({
+    check_id: "DEP-01",
+    test_id: "DEP-01",
+    description: "Environment variables declared in contract",
+    result: !foundEnvContract ? "fail" : undocumentedVars.length === 0 ? "pass" : undocumentedVars.length <= 3 ? "warn" : "fail",
+    detail: !foundEnvContract
+      ? "No environment contract file found"
+      : undocumentedVars.length > 0
+        ? `${undocumentedVars.length} env vars used in code but not in contract: ${undocumentedVars.slice(0, 5).join(", ")}`
+        : `${envVarUsages.size} env vars documented in ${foundEnvContract}`,
+    affected_files: !foundEnvContract ? envContractFiles : undocumentedVars.length > 0 ? [foundEnvContract] : undefined,
+  });
+  if (!foundEnvContract) {
+    findings.push(makeFinding(ctx, "deployment_readiness", "high", "conditional_blocker",
+      "No environment contract file",
+      "No .env.example, .env.template, or env.contract.json found to document required environment variables",
+      "env_contract", envContractFiles,
+      "Build did not include an environment variable contract",
+      "Add .env.example or env.contract.json listing all required environment variables"));
+  } else if (undocumentedVars.length > 3) {
+    findings.push(makeFinding(ctx, "deployment_readiness", "medium", "warning",
+      `${undocumentedVars.length} undocumented environment variables`,
+      `Environment variables used in code but not in contract: ${undocumentedVars.join(", ")}`,
+      "env_contract", [foundEnvContract],
+      "Code references environment variables not listed in the contract file",
+      "Add missing variables to the environment contract file"));
+  }
+
+  const pkgPath = path.join(targetDir, "package.json");
+  const pkgContent = readFileContent(pkgPath);
+  let hasStartScript = false;
+  let hasDevScript = false;
+  let startupScriptName = "";
+  if (pkgContent) {
+    try {
+      const pkg = JSON.parse(pkgContent);
+      hasStartScript = !!pkg.scripts?.start;
+      hasDevScript = !!pkg.scripts?.dev;
+      startupScriptName = hasStartScript ? "start" : hasDevScript ? "dev" : "";
+    } catch { /* invalid */ }
+  }
+
+  const entryPaths = [
+    "src/main.tsx", "src/main.ts", "src/index.tsx", "src/index.ts",
+    "src/server/index.ts", "server/index.ts", "src/server.ts", "index.ts", "index.js",
+  ];
+  const foundEntry = entryPaths.find(p => fileExists(path.join(targetDir, p)));
+
+  checks.push({
+    check_id: "DEP-02",
+    test_id: "DEP-02",
+    description: "Startup path works (script + entry point)",
+    result: (hasStartScript || hasDevScript) && foundEntry ? "pass"
+      : (hasStartScript || hasDevScript) || foundEntry ? "warn"
+        : "fail",
+    detail: !(hasStartScript || hasDevScript) && !foundEntry
+      ? "No startup script and no entry point found"
+      : !(hasStartScript || hasDevScript)
+        ? `Entry point found (${foundEntry}) but no start/dev script in package.json`
+        : !foundEntry
+          ? `Script '${startupScriptName}' exists but no entry point file found`
+          : `Startup: npm run ${startupScriptName}, entry: ${foundEntry}`,
+  });
+  if (!(hasStartScript || hasDevScript)) {
+    findings.push(makeFinding(ctx, "deployment_readiness", "high", "conditional_blocker",
+      "No startup script in package.json",
+      "Neither 'start' nor 'dev' script defined in package.json",
+      "startup_path", ["package.json"],
+      "Build did not generate startup scripts",
+      "Add start or dev script to package.json scripts"));
+  }
+  if (!foundEntry) {
+    findings.push(makeFinding(ctx, "deployment_readiness", "high", "conditional_blocker",
+      "No application entry point found",
+      `Checked: ${entryPaths.join(", ")}`,
+      "startup_path", entryPaths,
+      "Build did not generate an application entry point file",
+      "Create an entry point file (e.g., src/main.tsx or server/index.ts)"));
+  }
+
+  const healthPatterns = [
+    /app\.(get|use)\s*\(\s*['"]\/health['"z]?/,
+    /app\.(get|use)\s*\(\s*['"]\/api\/health['"]/,
+    /router\.(get|use)\s*\(\s*['"]\/health['"z]?/,
+    /['"]\/health['"]|['"]\/healthz['"]|['"]\/api\/health['"]/,
+  ];
+
+  const serverFiles = sourceFiles.filter(f =>
+    f.includes("server") || f.includes("api/") || f.includes("routes") || f.includes("app")
+  );
+
+  let healthEndpointFound = false;
+  let healthFile = "";
+  for (const f of serverFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (!content) continue;
+    if (healthPatterns.some(p => p.test(content))) {
+      healthEndpointFound = true;
+      healthFile = f;
+      break;
+    }
+  }
+
+  checks.push({
+    check_id: "DEP-03",
+    test_id: "DEP-03",
+    description: "Health endpoint exists (/health, /healthz, /api/health)",
+    result: healthEndpointFound ? "pass" : "warn",
+    detail: healthEndpointFound
+      ? `Health endpoint found in ${healthFile}`
+      : "No health/readiness endpoint detected in server files",
+    affected_files: healthEndpointFound ? undefined : serverFiles.slice(0, 3),
+  });
+  if (!healthEndpointFound && serverFiles.length > 0) {
+    findings.push(makeFinding(ctx, "deployment_readiness", "medium", "warning",
+      "No health endpoint detected",
+      "No /health, /healthz, or /api/health endpoint found in server files",
+      "health_endpoint", serverFiles.slice(0, 3),
+      "Server does not expose a health check endpoint for deployment monitoring",
+      "Add a /health or /healthz endpoint that returns 200 OK when the service is ready"));
+  }
+
+  return { result: computeDomainResult("deployment_readiness", checks, findings.length), findings };
 }

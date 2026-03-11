@@ -1265,20 +1265,39 @@ Full MUS implementation: CLI + backend API + frontend UI. Replaces the old unit-
 Post-build quality gate system. Lifecycle position: Build Mode produces → AVCS verifies/certifies → operator decides → remediation if needed. Not a deployment system — purely verification and certification.
 
 **Core Modules** (`Axion/src/core/avcs/`):
-- `types.ts` — TypeScript interfaces: CertificationRun, CertificationFinding, DomainResult, DomainCheck, CoverageEntry, CertificationReport, RemediationManifest, CertificationEvidence, ScoreBreakdown. Constants: DOMAIN_WEIGHTS, RUN_TYPE_DOMAINS.
+- `types.ts` — TypeScript interfaces: CertificationRun, CertificationFinding, DomainResult, DomainCheck (with test_id field), CoverageEntry, CertificationReport (with test_plan, adapter_status), RemediationManifest, CertificationEvidence, ScoreBreakdown. New types: AVCSTestDefinition, AVCSToolDefinition, AVCSTestPlan, AVCSTestResult, AVCSToolAdapter, ToolAdapterContext, ToolAvailability, TestPhase. Constants: DOMAIN_WEIGHTS, RUN_TYPE_DOMAINS.
 - `store.ts` — File-based AVCSStore class for runs/findings/evidence/reports under `avcs_data/`. IDs: CR-XXXXXX (runs), CF-XXXXXX (findings), CE-XXXXXX (evidence).
-- `evaluators.ts` — 4 domain evaluators: evaluateBuildIntegrity (package.json, tsconfig, config files, entry points), evaluateFunctional (planned files exist, no empty files, placeholder/TODO density, import resolution), evaluateSecurity (hardcoded secrets, eval/Function, CORS, input validation, .gitignore), evaluatePerformance (lazy loading, barrel exports, file size budget, sync I/O).
+- `test-catalog.ts` — Formal test catalog: 37 tests across 9 domains (BI, FUNC, SEC, PERF, DEP, UI, UX, ACC, ENT) with stable IDs (DOMAIN-NN format). 17 MVP tests. Exports: TEST_CATALOG, getTestById(), getTestsByDomain(), getMVPTests(), getTestsByRunType(), getTestsByTool().
+- `tool-registry.ts` — Approved tool registry: 9 tools (internal, lighthouse, k6, trivy, zap, semgrep, playwright, backstop, axe). Exports: TOOL_REGISTRY, resolveTool(), validateToolForRunType(), getToolsByDomain().
+- `tool-adapters.ts` — Tool adapter layer: InternalAdapter (always available, wraps evaluator logic), StubAdapter (for external tools not yet installed), AdapterFactory (getAdapter, getAdapterForTest with fallback to internal). registerAdapter() for plugging in real tool implementations. getAdapterStatus() reports availability.
+- `test-plan-builder.ts` — Test plan builder: buildTestPlan(runType, options) → AVCSTestPlan. Options: mvpOnly (default true), includeDomains, excludeTests. Plans include ordered test list, estimated duration, tool requirements, domain coverage percentages.
+- `evaluators.ts` — 5 domain evaluators with formal test IDs: evaluateBuildIntegrity (BI-01 through BI-04), evaluateFunctional (FUNC-01 through FUNC-04), evaluateSecurity (SEC-01, SEC-02, SEC-05), evaluatePerformance (PERF-01 through PERF-03), evaluateDeploymentReadiness (DEP-01 through DEP-03).
 - `engine.ts` — Run orchestrator: planRun, executeRun, computeVerdict, computeRemediationManifest, getAVCSStatus.
 
+**Formal Test ID Scheme**: DOMAIN-NN (e.g., BI-01, FUNC-02, SEC-05, DEP-03). Each DomainCheck has a test_id field linking to the catalog.
+
+**9 Test Domains** (5 MVP, 4 Later):
+- BUILD_INTEGRITY (BI-01 through BI-05): Artifact location, required files, env contract, startup script, build output
+- FUNCTIONAL (FUNC-01 through FUNC-05): Primary workflow, API contract, CRUD ops, error handling, state transitions
+- SECURITY (SEC-01 through SEC-05): Dependency vulns, secrets exposure, auth boundary, permissions, unsafe config
+- PERFORMANCE (PERF-01 through PERF-05): Startup time, route load, repeated action stability, resource budget, concurrency
+- DEPLOYMENT (DEP-01 through DEP-04): Env vars declared, startup path, health endpoint, deployment config
+- UI (UI-01 through UI-03): Layout render, responsive layout, visual regression (Later)
+- UX (UX-01 through UX-03): Workflow completion, error recovery, empty state actionability (Later)
+- ACCESSIBILITY (ACC-01 through ACC-04): Keyboard nav, focus visibility, accessible labels, color contrast (Later)
+- ENTERPRISE (ENT-01 through ENT-03): Audit trail, structured logging, observability signals (Later)
+
+**Tool Adapter Architecture**: Test → Tool Resolver → Policy Validation → Tool Adapter → Result. External tools (Playwright, Trivy, Lighthouse, k6, Semgrep, ZAP, BackstopJS, axe-core) have stub adapters returning "not_available". Internal adapter wraps existing evaluator checks. To import a real tool: implement AVCSToolAdapter interface, call registerAdapter(toolId, adapter).
+
 **Run Types → Domains**:
-- smoke: build_integrity + functional
-- functional: build_integrity + functional (full)
+- smoke: build_integrity + functional + deployment_readiness
+- functional: build_integrity + functional
 - security: build_integrity + security
 - performance: build_integrity + performance
-- full_certification / pre_deployment: all 4 domains
+- full_certification / pre_deployment: all 5 domains
 
 **Certification Verdict Logic**:
-- Domain weights: functional=30%, security=25%, build_integrity=25%, performance=20%
+- Domain weights: functional=25%, security=20%, build_integrity=20%, performance=15%, deployment_readiness=20%
 - Hard-stop rules: no entry point → BLOCKED, critical security finding → FAIL, >50% planned files missing → FAIL
 - PASS: score ≥ 80, no critical/high findings
 - PASS_WITH_WARNINGS: score ≥ 70, ≤2 high findings
@@ -1302,6 +1321,11 @@ Post-build quality gate system. Lifecycle position: Build Mode produces → AVCS
 - `PATCH /api/avcs/findings/:findingId` — update finding status (open/acknowledged/resolved/suppressed)
 - `POST /api/avcs/runs/:certRunId/remediate` — trigger targeted remediation rebuild
 - `GET /api/avcs/status` — global AVCS status
+- `GET /api/avcs/catalog` — test catalog (optional ?domain=, ?mvpOnly=true)
+- `GET /api/avcs/catalog/:testId` — single test definition
+- `GET /api/avcs/tools` — tool registry with adapter availability
+- `GET /api/avcs/tools/status` — adapter availability report (available vs stubbed)
+- `POST /api/avcs/plan` — build test plan ({runType, mvpOnly?, includeDomains?, excludeTests?})
 
 **Frontend**:
 - `App/src/pages/certification.tsx` — Dedicated AVCS Certification Center at `/certification` (+ `/certification/:certRunId` deep link). 4 tabs: Overview (hero + MetricCards + recent runs table), Run Detail (domain results grid, findings list with severity/domain filters, coverage matrix, evidence panel), Release Gate (verdict display, hard-stops, score breakdown bars, remediation summary), History (all past runs, recurring findings).

@@ -1,0 +1,248 @@
+Here are the official links for every external tool used in the AVCS test mapping. These are the safest sources (official docs or official GitHub repos) so you can integrate them into AVCS without supply-chain surprises.
+
+AVCS Tool Links (Official Sources)
+Functional / UX / UI Testing
+Playwright
+
+Used for:
+
+FUNC-01 Primary Workflow
+
+FUNC-02 API Contract
+
+FUNC-03 CRUD Operations
+
+FUNC-04 Error Handling
+
+UX-01 Workflow Completion
+
+UX-02 Error Recovery
+
+UX-03 Empty State
+
+UI-01 Layout Integrity
+
+UI-02 Responsive Layout
+
+Official site
+https://playwright.dev/
+
+Documentation
+https://playwright.dev/docs/intro
+
+GitHub
+https://github.com/microsoft/playwright
+
+BackstopJS
+
+Used for:
+
+UI-01 Layout Integrity
+
+UI-02 Responsive Layout
+
+UI-03 Visual Regression
+
+Official site
+https://garris.github.io/BackstopJS/
+
+GitHub
+https://github.com/garris/BackstopJS
+
+Docs
+https://github.com/garris/BackstopJS#documentation
+
+Security Testing
+Trivy
+
+Used for:
+
+SEC-01 Dependency Vulnerabilities
+
+SEC-02 Secrets Exposure
+
+SEC-05 Unsafe Config Exposure
+
+DEP security checks
+
+Official site
+https://trivy.dev/
+
+Docs
+https://trivy.dev/latest/
+
+GitHub
+https://github.com/aquasecurity/trivy
+
+OWASP ZAP
+
+Used for:
+
+SEC-03 Authentication Boundary
+
+SEC-04 Permission Enforcement
+
+SEC-05 Config Exposure
+
+Official site
+https://www.zaproxy.org/
+
+Docs
+https://www.zaproxy.org/docs/
+
+GitHub
+https://github.com/zaproxy/zaproxy
+
+OWASP Dependency-Check
+
+Used for:
+
+SEC-01 Dependency Vulnerabilities
+
+Official site
+https://owasp.org/www-project-dependency-check/
+
+Docs
+https://jeremylong.github.io/DependencyCheck/
+
+GitHub
+https://github.com/jeremylong/DependencyCheck
+
+Semgrep
+
+Used for:
+
+SEC-05 Unsafe Config Exposure
+
+Static code security patterns
+
+Official site
+https://semgrep.dev/
+
+Docs
+https://semgrep.dev/docs/
+
+GitHub
+https://github.com/semgrep/semgrep
+
+Performance Testing
+Lighthouse
+
+Used for:
+
+PERF-01 Startup Time
+
+PERF-02 Route Load Time
+
+PERF-04 Resource Budgets
+
+ACC-04 Contrast checks
+
+Official site
+https://developer.chrome.com/docs/lighthouse/
+
+GitHub
+https://github.com/GoogleChrome/lighthouse
+
+CLI docs
+https://github.com/GoogleChrome/lighthouse#using-the-node-cli
+
+k6
+
+Used for:
+
+PERF-03 Repeated Action Stability
+
+PERF-05 Concurrency Stability
+
+Official site
+https://k6.io/
+
+Docs
+https://grafana.com/docs/k6/latest/
+
+GitHub
+https://github.com/grafana/k6
+
+Accessibility Testing
+axe-core
+
+Used for:
+
+ACC-01 Keyboard Navigation
+
+ACC-02 Focus Visibility
+
+ACC-03 Accessible Labels
+
+ACC-04 Contrast
+
+Official site
+https://www.deque.com/axe/
+
+GitHub
+https://github.com/dequelabs/axe-core
+
+Docs
+https://github.com/dequelabs/axe-core/blob/develop/doc/API.md
+
+Pa11y
+
+Used for:
+
+ACC-03 Accessible Labels
+
+ACC-04 Contrast
+
+Official site
+https://pa11y.org/
+
+Docs
+https://pa11y.org/docs/
+
+GitHub
+https://github.com/pa11y/pa11y
+
+Summary of the AVCS Tool Stack
+
+Your AVCS system will integrate:
+
+Functional / UX
+
+Playwright
+
+UI / Visual
+
+BackstopJS
+
+Security
+
+Trivy
+
+OWASP ZAP
+
+Dependency-Check
+
+Semgrep
+
+Performance
+
+Lighthouse
+
+k6
+
+Accessibility
+
+axe-core
+
+Pa11y
+
+Internal AVCS checks
+
+Build Integrity
+
+Deployment Readiness
+
+Enterprise Readiness
+
+✅ This stack is fully open-source, widely used in enterprise CI pipelines, and safe to integrate.

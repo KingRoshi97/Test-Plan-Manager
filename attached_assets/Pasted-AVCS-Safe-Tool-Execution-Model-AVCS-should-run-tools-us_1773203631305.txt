@@ -1,0 +1,238 @@
+AVCS Safe Tool Execution Model
+
+AVCS should run tools using three controlled methods:
+
+Node tools (npm)
+
+Docker containers
+
+Standalone binaries
+
+Each tool from your stack fits into one of these.
+
+1. Node-Based Tools (npm)
+
+These install inside your repo but should be isolated in a tools environment.
+
+Tools that fit this model:
+
+Playwright
+
+Lighthouse
+
+BackstopJS
+
+axe-core
+
+Pa11y
+
+Semgrep (optional npm wrapper)
+
+Example install:
+
+npm install --save-dev playwright
+npm install --save-dev lighthouse
+npm install --save-dev backstopjs
+npm install --save-dev axe-core
+npm install --save-dev pa11y
+
+Recommended folder:
+
+tools/
+   playwright/
+   lighthouse/
+   backstop/
+
+AVCS runs them through adapter scripts, not directly.
+
+Example adapter call:
+
+node tools/playwright/run-tests.js
+2. Docker Tools (Security Tools)
+
+Security scanners should ideally run in containers so they cannot affect your system.
+
+Tools that should run in Docker:
+
+OWASP ZAP
+
+Trivy
+
+Dependency-Check
+
+Example Trivy run:
+
+docker run aquasec/trivy fs .
+
+Example ZAP scan:
+
+docker run owasp/zap2docker-stable zap-baseline.py -t http://localhost:3000
+
+Benefits:
+
+isolation
+
+reproducible scans
+
+no dependency conflicts
+
+3. Binary Tools
+
+These are compiled tools installed on the system.
+
+Tools:
+
+k6
+
+Semgrep (CLI)
+
+Example install (Mac/Linux):
+
+brew install k6
+
+Example run:
+
+k6 run performance-test.js
+Recommended AVCS Tool Structure
+
+Inside your repo:
+
+Axion/
+
+server/
+avcs/
+
+tools/
+   adapters/
+      playwright-adapter.ts
+      lighthouse-adapter.ts
+      trivy-adapter.ts
+      zap-adapter.ts
+      k6-adapter.ts
+      semgrep-adapter.ts
+
+scripts/
+   run-playwright.ts
+   run-lighthouse.ts
+   run-k6.ts
+
+AVCS never runs the tools directly.
+
+Instead it runs:
+
+AVCS → Tool Adapter → Tool Script → Tool
+Example Adapter Flow
+
+Example for Lighthouse.
+
+Adapter:
+
+server/avcs/tools/lighthouse-adapter.ts
+
+Flow:
+
+Test Runner
+   ↓
+Lighthouse Adapter
+   ↓
+Spawn CLI Process
+   ↓
+Capture JSON Output
+   ↓
+Normalize Results
+   ↓
+AVCS Findings/Evidence
+
+Example command:
+
+lighthouse http://localhost:3000 --output=json
+Output Handling (Very Important)
+
+Every tool should output machine-readable results.
+
+Examples:
+
+Tool	Output
+Lighthouse	JSON
+k6	JSON
+Trivy	JSON
+ZAP	JSON
+Playwright	JSON + screenshots
+BackstopJS	visual diff + JSON
+axe-core	JSON
+Pa11y	JSON
+
+AVCS then converts those into:
+
+Findings
+Evidence
+Coverage
+Verdict inputs
+Security Rules for AVCS Tools
+
+Your system should enforce:
+
+Tool allowlist
+
+Only tools in the registry can run.
+
+Version pinning
+
+Example:
+
+lighthouse@11.7
+playwright@1.42
+Timeout protection
+
+Example:
+
+max runtime 5 minutes
+Output size limits
+
+Prevent runaway logs.
+
+Network boundaries
+
+Security scanners should only target test environments, not arbitrary hosts.
+
+Recommended AVCS MVP Tool Set
+
+Start with this minimal stack:
+
+Functional
+
+Playwright
+
+Security
+
+Trivy
+Dependency-Check
+
+Performance
+
+Lighthouse
+k6
+
+Accessibility
+
+axe-core
+
+This is enough to produce real enterprise-grade certification signals without overcomplicating the first version.
+
+Where You Are Now
+
+You now have defined:
+
+AVCS test catalog
+
+test IDs
+
+tool mapping
+
+integration matrix
+
+official tool sources
+
+safe execution model
+
+That is enough to start building the AVCS integration layer.
