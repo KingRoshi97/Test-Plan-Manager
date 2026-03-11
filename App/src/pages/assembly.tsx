@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
@@ -158,7 +158,8 @@ function WorkbenchPipelineStrip({ stages, stageOrder, stageGates, stageNames, se
         const gate = stageGates[stageKey];
         const gateResult = stageData?.gateResult;
         const isSelected = selectedStage === stageKey;
-        const shortLabel = SHORT_LABELS[stageKey] || `S${i + 1}`;
+        const shortLabel = SHORT_LABELS[stageKey] ?? `S${i + 1}`;
+        const hasUnknownStage = !SHORT_LABELS[stageKey];
 
         return (
           <div key={stageKey} className="flex items-center">
@@ -174,9 +175,12 @@ function WorkbenchPipelineStrip({ stages, stageOrder, stageGates, stageNames, se
                 className={`w-3 h-3 rounded-full mb-1 ${status === "running" ? "animate-pulse-glow" : ""}`}
                 style={{ backgroundColor: `hsl(${info.color})` }}
               />
-              <span className={`font-mono-tech font-semibold ${isSelected ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--muted-foreground))]"}`}>
+              <span className={`font-mono-tech font-semibold ${hasUnknownStage ? "text-[hsl(var(--status-warning))]" : isSelected ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--muted-foreground))]"}`}>
                 {shortLabel}
               </span>
+              {hasUnknownStage && (
+                <span className="text-[8px] font-bold text-[hsl(var(--status-warning))]" title={`Unknown stage: ${stageKey}`}>⚠</span>
+              )}
               {gate && gateResult && (
                 <span className={`text-[8px] font-bold mt-0.5 ${
                   gateResult === "PASS" ? "text-[hsl(var(--status-success))]" : "text-[hsl(var(--status-failure))]"
@@ -1027,7 +1031,9 @@ function IntakeEditor({ assembly, assemblyId }: { assembly: any; assemblyId: num
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies", String(assemblyId)] });
       setHasChanges(false);
+      toast.success("Intake saved");
     },
+    onError: (err: Error) => toast.error(err.message || "Failed to save intake"),
   });
 
   const saveAndRunMutation = useMutation({
@@ -1042,7 +1048,9 @@ function IntakeEditor({ assembly, assemblyId }: { assembly: any; assemblyId: num
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies", String(assemblyId)] });
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
       setHasChanges(false);
+      toast.success("Intake saved and pipeline started");
     },
+    onError: (err: Error) => toast.error(err.message || "Failed to save and run"),
   });
 
   const currentSectionData = editedPayload[activeSection];

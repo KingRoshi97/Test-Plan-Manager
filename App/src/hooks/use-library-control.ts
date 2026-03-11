@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { toast } from "sonner";
 import type {
   AuthorityStatus,
   ControlState,
@@ -206,10 +207,12 @@ export function useLibraryControl() {
     }
   }, [filteredLibraries]);
 
-  const runControlAction = useCallback((_actionType: ControlActionType) => {
+  const runControlAction = useCallback((actionType: ControlActionType) => {
+    toast.info(`Control action "${actionType}" is not yet connected to a backend endpoint.`);
   }, []);
 
-  const assignMaintenanceMode = useCallback((_libraryId: string, _modeId: string) => {
+  const assignMaintenanceMode = useCallback((_libraryId: string, modeId: string) => {
+    toast.info(`Maintenance mode "${modeId}" is not yet connected to a backend endpoint.`);
   }, []);
 
   const getLibraryControlScore = useCallback((lib: LibraryControlRecord) => {

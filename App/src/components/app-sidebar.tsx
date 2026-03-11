@@ -116,7 +116,7 @@ function KnowledgeSubgroup() {
     { href: "/intake-library", label: "Intake", icon: Library },
   ];
 
-  const dashboardActive = location === "/library-control" || location === "/knowledge";
+  const dashboardActive = location === "/library-control" || location === "/knowledge-library";
   const anySubActive = libraryLinks.some(({ href }) => location.startsWith(href));
   const anyActive = dashboardActive || anySubActive;
   const [open, setOpen] = useState(anyActive);

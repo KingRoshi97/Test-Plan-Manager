@@ -282,7 +282,16 @@ export default function LibraryControlCenterPage() {
         <LibraryDetailPanel
           detail={ctrl.selectedLibrary}
           onClose={ctrl.clearSelectedLibrary}
-          onAction={(actionType) => ctrl.runControlAction(actionType)}
+          onAction={(actionType) => {
+            const validActions: ControlActionType[] = [
+              "health-check", "coverage-audit", "drift-detection",
+              "rebuild-registries", "review-authority-gaps", "dependency-refresh",
+              "open-unsafe", "resolve-blockers",
+            ];
+            if (validActions.includes(actionType as ControlActionType)) {
+              ctrl.runControlAction(actionType as ControlActionType);
+            }
+          }}
         />
       )}
 
@@ -419,7 +428,7 @@ export default function LibraryControlCenterPage() {
         <MaintenanceModes
           modes={maintenanceModes}
           onLaunch={(modeId) => {
-            console.log(`[LCC] Launch maintenance mode: ${modeId}`);
+            ctrl.assignMaintenanceMode("", modeId);
           }}
         />
       </div>

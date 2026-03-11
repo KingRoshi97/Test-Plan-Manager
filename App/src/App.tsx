@@ -38,7 +38,7 @@ export default function App() {
       <Switch>
         <Route path="/" component={DashboardPage} />
         <Route path="/library-control" component={LibraryControlCenterPage} />
-        <Route path="/knowledge" component={LibraryControlCenterPage} />
+        <Route path="/knowledge"><Redirect to="/knowledge-library" /></Route>
         <Route path="/assemblies" component={AssembliesPage} />
         <Route path="/runs"><Redirect to="/assemblies" /></Route>
         <Route path="/new" component={NewAssemblyPage} />

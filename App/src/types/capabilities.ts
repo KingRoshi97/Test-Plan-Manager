@@ -146,19 +146,3 @@ export interface CapabilityPageModel {
   groupedByRisk: Record<RiskLevel, CapabilityRecord[]>;
 }
 
-export interface BadgeToken {
-  label: string;
-  tone: "success" | "warning" | "danger" | "info" | "neutral" | "muted";
-}
-
-export interface MetricToken {
-  label: string;
-  value: number;
-  tone: "success" | "warning" | "danger" | "info" | "neutral" | "muted";
-}
-
-export interface WarningToken {
-  flag: AttentionFlag;
-  message: string;
-  severity: "info" | "warning" | "error";
-}

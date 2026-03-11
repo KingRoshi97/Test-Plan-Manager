@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Loader2, Wrench, Shield, Search, Zap, Calendar, FileText, Play,
   AlertTriangle, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Eye,
   Lock, XCircle, Filter, Package, Stamp, BarChart3, Activity, ListChecks,
   Lightbulb, Bot, Target, Clock, ArrowRightCircle
 } from "lucide-react";
+
+async function safeFetch(url: string, init?: RequestInit) {
+  const res = await fetch(url, init);
+  if (!res.ok) throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+  return res.json();
+}
 import { GlassPanel } from "../components/ui/glass-panel";
 import { StatusChip } from "../components/ui/status-chip";
 import { MetricCard } from "../components/ui/metric-card";
@@ -45,17 +52,17 @@ function findingStatusVariant(status: string) {
 function OverviewTab({ status, runs, findings }: { status: any; runs: any[]; findings: any[] }) {
   const { data: taskRuns = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/task-runs"],
-    queryFn: () => fetch("/api/mus/task-runs").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/task-runs"),
   });
 
   const { data: insights = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/insights"],
-    queryFn: () => fetch("/api/mus/insights").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/insights"),
   });
 
   const { data: bottlenecks = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/bottlenecks"],
-    queryFn: () => fetch("/api/mus/bottlenecks").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/bottlenecks"),
   });
 
   const openFindings = findings.filter((f: any) => f.status === "open").length;
@@ -239,7 +246,7 @@ function FindingsTab() {
 
   const { data: runs = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/runs"],
-    queryFn: () => fetch("/api/mus/runs").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/runs"),
   });
 
   const { data: findings = [], isLoading } = useQuery<any[]>({
@@ -249,7 +256,7 @@ function FindingsTab() {
       const params = new URLSearchParams();
       if (filterSeverity) params.set("severity", filterSeverity);
       if (filterStatus) params.set("status", filterStatus);
-      return fetch(`/api/mus/runs/${selectedRun}/findings?${params}`).then(r => r.json());
+      return safeFetch(`/api/mus/runs/${selectedRun}/findings?${params}`);
     },
     enabled: !!selectedRun,
   });
@@ -265,6 +272,7 @@ function FindingsTab() {
       return res.json();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/mus/findings"] }),
+    onError: (err: Error) => toast.error(err.message || "Failed to update finding"),
   });
 
   const createSuppression = useMutation({
@@ -282,6 +290,7 @@ function FindingsTab() {
       return res.json();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/mus/findings"] }),
+    onError: (err: Error) => toast.error(err.message || "Failed to create suppression"),
   });
 
   return (
@@ -385,12 +394,12 @@ function ProposalsTab() {
 
   const { data: proposals = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/mus/proposals"],
-    queryFn: () => fetch("/api/mus/proposals").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/proposals"),
   });
 
   const { data: recommendations = [], isLoading: recsLoading } = useQuery<any[]>({
     queryKey: ["/api/mus/recommendations"],
-    queryFn: () => fetch("/api/mus/recommendations").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/recommendations"),
   });
 
   const createChangeSet = useMutation({
@@ -404,6 +413,7 @@ function ProposalsTab() {
       return res.json();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/mus"] }),
+    onError: (err: Error) => toast.error(err.message || "Failed to create changeset"),
   });
 
   function togglePatch(ppId: string, patchId: string) {
@@ -557,12 +567,12 @@ function ApprovalsTab() {
 
   const { data: approvals = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/approvals"],
-    queryFn: () => fetch("/api/mus/approvals").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/approvals"),
   });
 
   const { data: changesets = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/changesets"],
-    queryFn: () => fetch("/api/mus/changesets").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/changesets"),
   });
 
   const createApproval = useMutation({
@@ -585,7 +595,9 @@ function ApprovalsTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/mus"] });
       setTargetId("");
       setReason("");
+      toast.success("Approval granted");
     },
+    onError: (err: Error) => toast.error(err.message || "Failed to create approval"),
   });
 
   return (
@@ -677,12 +689,12 @@ function SchedulesTab() {
 
   const { data: schedules = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/mus/schedules"],
-    queryFn: () => fetch("/api/mus/schedules").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/schedules"),
   });
 
   const { data: taskSchedules = [], isLoading: taskLoading } = useQuery<any[]>({
     queryKey: ["/api/mus/task-schedules"],
-    queryFn: () => fetch("/api/mus/task-schedules").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/task-schedules"),
   });
 
   const toggleSchedule = useMutation({
@@ -695,7 +707,8 @@ function SchedulesTab() {
       if (!res.ok) throw new Error("Failed to toggle schedule");
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/mus/schedules"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/mus/schedules"] }); toast.success("Schedule updated"); },
+    onError: (err: Error) => toast.error(err.message || "Failed to toggle schedule"),
   });
 
   const toggleTaskSchedule = useMutation({
@@ -708,7 +721,8 @@ function SchedulesTab() {
       if (!res.ok) throw new Error("Failed to toggle task schedule");
       return res.json();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/mus/task-schedules"] }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/mus/task-schedules"] }); toast.success("Task schedule updated"); },
+    onError: (err: Error) => toast.error(err.message || "Failed to toggle task schedule"),
   });
 
   if (isLoading || taskLoading) return <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--muted-foreground))]" /></div>;
@@ -801,12 +815,12 @@ function SchedulesTab() {
 function RegistriesTab() {
   const { data: registries = [] } = useQuery<any[]>({
     queryKey: ["/api/maintenance/registries"],
-    queryFn: () => fetch("/api/maintenance/registries").then(r => r.json()),
+    queryFn: () => safeFetch("/api/maintenance/registries"),
   });
 
   const { data: policies = [] } = useQuery<any[]>({
     queryKey: ["/api/maintenance/policies"],
-    queryFn: () => fetch("/api/maintenance/policies").then(r => r.json()),
+    queryFn: () => safeFetch("/api/maintenance/policies"),
   });
 
   const [expandedReg, setExpandedReg] = useState<string | null>(null);
@@ -911,12 +925,12 @@ function TasksTab() {
 
   const { data: tasks = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/tasks"],
-    queryFn: () => fetch("/api/mus/tasks").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/tasks"),
   });
 
   const { data: agents = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/agents"],
-    queryFn: () => fetch("/api/mus/agents").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/agents"),
   });
 
   const createAndStart = useMutation({
@@ -940,7 +954,9 @@ function TasksTab() {
     onSuccess: (data) => {
       setTaskRunResult(data);
       queryClient.invalidateQueries({ queryKey: ["/api/mus"] });
+      toast.success("Task run started");
     },
+    onError: (err: Error) => toast.error(err.message || "Failed to start task run"),
   });
 
   function toggleTask(taskId: string) {
@@ -1092,12 +1108,12 @@ function TasksTab() {
 function TaskRunsTab() {
   const { data: taskRuns = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/mus/task-runs"],
-    queryFn: () => fetch("/api/mus/task-runs").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/task-runs"),
   });
 
   const { data: tasks = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/tasks"],
-    queryFn: () => fetch("/api/mus/tasks").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/tasks"),
   });
 
   const [expandedRun, setExpandedRun] = useState<string | null>(null);
@@ -1262,8 +1278,10 @@ function ConvertToChangeSetButton({ recommendationId, onSuccess }: { recommendat
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/mus"] });
+      toast.success("Converted to changeset");
       onSuccess?.(data);
     },
+    onError: (err: Error) => toast.error(err.message || "Failed to convert recommendation"),
   });
 
   return (
@@ -1289,17 +1307,17 @@ function ConvertToChangeSetButton({ recommendationId, onSuccess }: { recommendat
 function InsightsTab() {
   const { data: insights = [], isLoading: insightsLoading } = useQuery<any[]>({
     queryKey: ["/api/mus/insights"],
-    queryFn: () => fetch("/api/mus/insights").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/insights"),
   });
 
   const { data: bottlenecks = [], isLoading: bnLoading } = useQuery<any[]>({
     queryKey: ["/api/mus/bottlenecks"],
-    queryFn: () => fetch("/api/mus/bottlenecks").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/bottlenecks"),
   });
 
   const { data: recommendations = [], isLoading: recsLoading } = useQuery<any[]>({
     queryKey: ["/api/mus/recommendations"],
-    queryFn: () => fetch("/api/mus/recommendations").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/recommendations"),
   });
 
   const isLoading = insightsLoading || bnLoading || recsLoading;
@@ -1433,12 +1451,12 @@ export default function MaintenancePage() {
 
   const { data: status, isLoading: statusLoading } = useQuery<any>({
     queryKey: ["/api/mus/status"],
-    queryFn: () => fetch("/api/mus/status").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/status"),
   });
 
   const { data: runs = [] } = useQuery<any[]>({
     queryKey: ["/api/mus/runs"],
-    queryFn: () => fetch("/api/mus/runs").then(r => r.json()),
+    queryFn: () => safeFetch("/api/mus/runs"),
   });
 
   const { data: allFindings = [] } = useQuery<any[]>({

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../lib/queryClient";
 import { Loader2, FileJson, BookOpen, Database, ChevronDown, ChevronRight, Shield, AlertTriangle, CheckCircle } from "lucide-react";
@@ -197,12 +197,20 @@ function DocumentsTab() {
   const groups = overview?.groups ?? {};
   const sortedGroupKeys = Object.keys(groups).sort();
 
+  const docsByFilename = useMemo(() => {
+    const map = new Map<string, DocEntry>();
+    for (const d of docs) {
+      map.set(d.filename, d);
+    }
+    return map;
+  }, [docs]);
+
   return (
     <div className="space-y-6">
       {sortedGroupKeys.map((groupKey) => {
         const label = GATE_GROUP_LABELS[groupKey] ?? groupKey;
         const filenames = groups[groupKey];
-        const groupDocs = filenames.map((fn) => docs.find((d) => d.filename === fn)).filter(Boolean) as DocEntry[];
+        const groupDocs = filenames.map((fn) => docsByFilename.get(fn)).filter(Boolean) as DocEntry[];
 
         return (
           <div key={groupKey}>

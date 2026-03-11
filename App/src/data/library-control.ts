@@ -243,61 +243,6 @@ export function computeLibraryControlScore(input: {
   );
 }
 
-export function inferControlState(input: {
-  authorityStatus: AuthorityStatus;
-  risk: RiskLevel;
-  blocked: boolean;
-  coveragePercent: number;
-  freshnessPercent: number;
-  integrityPercent: number;
-}): ControlState {
-  if (input.blocked) return "blocked";
-
-  if (
-    (input.authorityStatus === "missing" || input.authorityStatus === "disputed") &&
-    (input.risk === "high" || input.risk === "critical")
-  ) {
-    return "unsafe";
-  }
-
-  const avg = Math.round(
-    (input.coveragePercent + input.freshnessPercent + input.integrityPercent) / 3
-  );
-
-  if (avg >= 85 && input.authorityStatus === "authoritative") return "governed";
-  if (avg >= 70) return "review-required";
-  if (avg >= 50) return "degraded";
-  return "recovery";
-}
-
-export function isStale(freshnessPercent: number) {
-  return freshnessPercent < 60;
-}
-
-export const LIBRARY_REGISTRY: Array<{
-  id: string;
-  name: string;
-  shortName: string;
-  route: string;
-}> = [
-  { id: "ops", name: "Ops", shortName: "OPS", route: "/ops" },
-  { id: "knowledge", name: "Knowledge", shortName: "KNO", route: "/knowledge-library" },
-  { id: "templates", name: "Templates", shortName: "TPL", route: "/templates-library" },
-  { id: "gates", name: "Gates", shortName: "GAT", route: "/gates" },
-  { id: "maintenance", name: "Maintenance", shortName: "MNT", route: "/maintenance" },
-  { id: "policy", name: "Policy", shortName: "POL", route: "/policy" },
-  { id: "telemetry", name: "Telemetry", shortName: "TEL", route: "/telemetry-library" },
-  { id: "kit", name: "Kit", shortName: "KIT", route: "/kit-library" },
-  { id: "standards", name: "Standards", shortName: "STD", route: "/standards" },
-  { id: "verification", name: "Verification", shortName: "VER", route: "/verification-library" },
-  { id: "planning", name: "Planning", shortName: "PLN", route: "/planning-library" },
-  { id: "orchestration", name: "Orchestration", shortName: "ORC", route: "/orchestration" },
-  { id: "intake", name: "Intake", shortName: "INT", route: "/intake-library" },
-  { id: "canonical", name: "Canonical", shortName: "CAN", route: "/canonical" },
-  { id: "audit", name: "Audit", shortName: "AUD", route: "/audit-library" },
-  { id: "system", name: "System", shortName: "SYS", route: "/system" },
-];
-
 export const LIBRARIES: LibraryControlRecord[] = [
   {
     id: "ops",

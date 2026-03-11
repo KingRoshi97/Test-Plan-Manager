@@ -302,7 +302,10 @@ export default function IntakeWizard() {
         acceptance_criteria: data.final.acceptance_criteria || undefined,
       };
 
-      const preset = PRESET_MAP[data.routing.type_preset] || "WEB_APP_BASIC";
+      const preset = PRESET_MAP[data.routing.type_preset] ?? "WEB_APP_BASIC";
+      if (!PRESET_MAP[data.routing.type_preset]) {
+        toast.warning(`Unknown type preset "${data.routing.type_preset}" — using default WEB_APP_BASIC`);
+      }
 
       const assembly = await apiRequest("/api/assemblies", {
         method: "POST",
