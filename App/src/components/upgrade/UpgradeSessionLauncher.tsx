@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Loader2, Rocket } from "lucide-react";
 import { GlassPanel } from "../ui/glass-panel";
 import { UpgradeModeBadge, RevisionStatusChip } from "./shared";
-import type { UpgradeRevisionSummary, UpgradeModeOption, StartUpgradeSessionInput, UpgradeSessionSummary } from "../../../../shared/upgrade-types";
+import type { UpgradeRevisionSummary, UpgradeModeOption, StartUpgradeSessionInput, UpgradeSessionSummary, UpgradeModeId } from "../../../../shared/upgrade-types";
 
 interface UpgradeSessionLauncherProps {
   revisions: UpgradeRevisionSummary[];
@@ -20,7 +20,7 @@ export function UpgradeSessionLauncher({
 }: UpgradeSessionLauncherProps) {
   const activeRevisions = revisions.filter(r => r.status === "active" || r.status === "approved");
   const [sourceRevisionId, setSourceRevisionId] = useState(defaultSourceRevisionId || activeRevisions[0]?.id || "");
-  const [modeId, setModeId] = useState(modeOptions[0]?.id || "");
+  const [modeId, setModeId] = useState<UpgradeModeId>(modeOptions[0]?.id || "" as UpgradeModeId);
   const [objective, setObjective] = useState("");
   const [scope, setScope] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -33,7 +33,7 @@ export function UpgradeSessionLauncher({
     if (!canSubmit) return;
     onStartSession({
       sourceRevisionId,
-      modeId: modeId as any,
+      modeId,
       objective: objective.trim(),
       scope: scope.trim() || null,
       instructions: instructions.trim() || null,
@@ -74,7 +74,7 @@ export function UpgradeSessionLauncher({
             </label>
             <select
               value={modeId}
-              onChange={(e) => setModeId(e.target.value)}
+              onChange={(e) => setModeId(e.target.value as UpgradeModeId)}
               className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:border-violet-500/50"
             >
               {modeOptions.map(m => (

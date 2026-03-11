@@ -11,64 +11,66 @@ import { UPGRADE_MODE_OPTIONS } from "../shared/upgrade-types.js";
 import type {
   UpgradeRevisionSummary, UpgradeSessionSummary, UpgradeVerificationSummary,
   UpgradePlanData, UpgradePlannedChange, UpgradeArtifactRef, UpgradeRiskItem,
+  UpgradeRevisionStatus, UpgradeSessionStatus, UpgradeModeId,
+  UpgradeVerificationVerdict,
   RevisionDiffData, DiffItem, DiffRenameItem, RevisionVerificationDetail,
   VerificationCheckData, RevisionEventData, RevisionSnapshotSummary,
   UpgradeLineagePreview,
 } from "../shared/upgrade-types.js";
 
-function toRevisionSummary(row: any): UpgradeRevisionSummary {
+function toRevisionSummary(row: Record<string, unknown>): UpgradeRevisionSummary {
   return {
-    id: row.id,
-    revisionNumber: row.revisionNumber,
-    title: row.title,
-    summary: row.summary,
-    status: row.status as any,
-    modeId: row.modeId as any,
-    parentRevisionId: row.parentRevisionId,
-    sourceRunId: row.sourceRunId,
-    sourceSessionId: row.sourceSessionId,
-    createdAt: row.createdAt?.toISOString?.() ?? row.createdAt,
-    createdBy: row.createdBy,
-    promotedAt: row.promotedAt?.toISOString?.() ?? row.promotedAt ?? null,
-    archivedAt: row.archivedAt?.toISOString?.() ?? row.archivedAt ?? null,
-    isRollbackTarget: row.isRollbackTarget,
-    isCurrentActive: row.isCurrentActive,
+    id: row.id as string,
+    revisionNumber: row.revisionNumber as number,
+    title: row.title as string | null,
+    summary: row.summary as string | null,
+    status: row.status as UpgradeRevisionStatus,
+    modeId: (row.modeId as UpgradeModeId) || null,
+    parentRevisionId: row.parentRevisionId as string | null,
+    sourceRunId: row.sourceRunId as string | null,
+    sourceSessionId: row.sourceSessionId as string | null,
+    createdAt: (row.createdAt as Date)?.toISOString?.() ?? String(row.createdAt),
+    createdBy: row.createdBy as string | null,
+    promotedAt: (row.promotedAt as Date)?.toISOString?.() ?? null,
+    archivedAt: (row.archivedAt as Date)?.toISOString?.() ?? null,
+    isRollbackTarget: row.isRollbackTarget as boolean,
+    isCurrentActive: row.isCurrentActive as boolean,
     isCandidate: row.status === "candidate",
   };
 }
 
-function toSessionSummary(row: any): UpgradeSessionSummary {
+function toSessionSummary(row: Record<string, unknown>): UpgradeSessionSummary {
   return {
-    id: row.id,
-    assemblyId: row.assemblyId,
-    sourceRevisionId: row.sourceRevisionId,
-    candidateRevisionId: row.candidateRevisionId,
-    modeId: row.modeId as any,
-    objective: row.objective,
-    scope: row.scope,
-    instructions: row.instructions,
-    status: row.status as any,
-    compatibilityRequired: row.compatibilityRequired,
-    validationProfile: row.validationProfile,
-    riskLevel: row.riskLevel as any,
-    createdAt: row.createdAt?.toISOString?.() ?? row.createdAt,
-    updatedAt: row.updatedAt?.toISOString?.() ?? row.updatedAt,
-    completedAt: row.completedAt?.toISOString?.() ?? row.completedAt ?? null,
-    blockingIssue: row.blockingIssue,
+    id: row.id as string,
+    assemblyId: row.assemblyId as number,
+    sourceRevisionId: row.sourceRevisionId as string,
+    candidateRevisionId: (row.candidateRevisionId as string) || null,
+    modeId: row.modeId as UpgradeModeId,
+    objective: row.objective as string,
+    scope: row.scope as string | null,
+    instructions: row.instructions as string | null,
+    status: row.status as UpgradeSessionStatus,
+    compatibilityRequired: row.compatibilityRequired as boolean,
+    validationProfile: row.validationProfile as string | null,
+    riskLevel: row.riskLevel as "low" | "medium" | "high" | null,
+    createdAt: (row.createdAt as Date)?.toISOString?.() ?? String(row.createdAt),
+    updatedAt: (row.updatedAt as Date)?.toISOString?.() ?? String(row.updatedAt),
+    completedAt: (row.completedAt as Date)?.toISOString?.() ?? null,
+    blockingIssue: row.blockingIssue as string | null,
   };
 }
 
-function toVerificationSummary(row: any): UpgradeVerificationSummary {
+function toVerificationSummary(row: Record<string, unknown>): UpgradeVerificationSummary {
   return {
-    revisionId: row.revisionId,
-    verdict: row.verdict as any,
-    requiredChecksTotal: row.requiredChecksTotal,
-    requiredChecksPassed: row.requiredChecksPassed,
-    optionalChecksTotal: row.optionalChecksTotal,
-    optionalChecksPassed: row.optionalChecksPassed,
-    warningCount: row.warningCount,
-    failureCount: row.failureCount,
-    lastRunAt: row.completedAt?.toISOString?.() ?? row.completedAt ?? null,
+    revisionId: row.revisionId as string,
+    verdict: row.verdict as UpgradeVerificationVerdict,
+    requiredChecksTotal: row.requiredChecksTotal as number,
+    requiredChecksPassed: row.requiredChecksPassed as number,
+    optionalChecksTotal: row.optionalChecksTotal as number,
+    optionalChecksPassed: row.optionalChecksPassed as number,
+    warningCount: row.warningCount as number,
+    failureCount: row.failureCount as number,
+    lastRunAt: (row.completedAt as Date)?.toISOString?.() ?? null,
   };
 }
 
@@ -126,8 +128,9 @@ export function registerUpgradeRoutes(app: Express) {
         verificationSummary,
         modeOptions: UPGRADE_MODE_OPTIONS,
       });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -177,8 +180,9 @@ export function registerUpgradeRoutes(app: Express) {
         revision: toRevisionSummary(rev),
         snapshotCreated: snapRows.length > 0,
       });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -193,8 +197,9 @@ export function registerUpgradeRoutes(app: Express) {
       const rows = await query;
       const filtered = includeArchived ? rows : rows.filter(r => r.status !== "archived");
       res.json({ revisions: filtered.map(toRevisionSummary) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -226,8 +231,9 @@ export function registerUpgradeRoutes(app: Express) {
         })),
         latestVerification: vRows.length > 0 ? toVerificationSummary(vRows[0]) : null,
       });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -250,8 +256,9 @@ export function registerUpgradeRoutes(app: Express) {
       });
 
       res.json({ revision: toRevisionSummary(updated[0]) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -268,8 +275,9 @@ export function registerUpgradeRoutes(app: Express) {
           createdBy: s.createdBy,
         })),
       });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -280,8 +288,9 @@ export function registerUpgradeRoutes(app: Express) {
         .where(eq(upgradeSessions.assemblyId, assemblyId))
         .orderBy(desc(upgradeSessions.createdAt));
       res.json({ sessions: rows.map(toSessionSummary) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -320,8 +329,9 @@ export function registerUpgradeRoutes(app: Express) {
       });
 
       res.status(201).json({ session: toSessionSummary(rows[0]) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -331,8 +341,9 @@ export function registerUpgradeRoutes(app: Express) {
         .where(eq(upgradeSessions.id, req.params.sessionId));
       if (rows.length === 0) return res.status(404).json({ error: "Session not found" });
       res.json({ session: toSessionSummary(rows[0]) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -350,8 +361,9 @@ export function registerUpgradeRoutes(app: Express) {
       });
 
       res.json({ session: toSessionSummary(updated[0]) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -363,8 +375,9 @@ export function registerUpgradeRoutes(app: Express) {
         .returning();
       if (updated.length === 0) return res.status(404).json({ error: "Session not found" });
       res.json({ session: toSessionSummary(updated[0]) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -390,8 +403,9 @@ export function registerUpgradeRoutes(app: Express) {
       }).returning();
 
       res.status(201).json({ session: toSessionSummary(rows[0]) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -418,7 +432,7 @@ export function registerUpgradeRoutes(app: Express) {
         findingsSummary: plan.findingsSummary,
         proposedChanges: changes.map(c => ({
           id: c.id, title: c.title, description: c.description,
-          priority: c.priority as any, targetArea: c.targetArea, expectedImpact: c.expectedImpact,
+          priority: c.priority as "low" | "medium" | "high" | undefined, targetArea: c.targetArea, expectedImpact: c.expectedImpact,
         })),
         impactedArtifacts: artifacts.filter(a => a.role === "impacted").map(a => ({
           id: a.id, label: a.artifactLabel, path: a.artifactPath, artifactType: a.artifactType,
@@ -431,78 +445,85 @@ export function registerUpgradeRoutes(app: Express) {
           isSafeRollbackAvailable: plan.safeRollbackAvailable,
         },
         agentSummary: plan.agentSummary,
-        generatedAt: plan.generatedAt?.toISOString?.() ?? plan.generatedAt as any,
+        generatedAt: plan.generatedAt?.toISOString?.() ?? new Date().toISOString(),
         approvedAt: plan.approvedAt?.toISOString?.() ?? null,
         approvedBy: plan.approvedBy,
       };
 
       res.json({ plan: planData });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
+  async function generatePlanForSession(sessionId: string, assemblyId: number): Promise<{ plan: UpgradePlanData }> {
+    const session = await db.select().from(upgradeSessions)
+      .where(eq(upgradeSessions.id, sessionId));
+    if (session.length === 0) throw new Error("Session not found");
+
+    await db.update(upgradeSessions)
+      .set({ status: "planning", updatedAt: new Date() })
+      .where(eq(upgradeSessions.id, sessionId));
+
+    const planRows = await db.insert(upgradePlans).values({
+      sessionId,
+      findingsSummary: `Automated analysis of assembly for ${session[0].modeId} upgrade. Objective: ${session[0].objective}`,
+      agentSummary: "Plan generated based on current assembly state and upgrade objective.",
+      safeRollbackAvailable: true,
+      rollbackTargetRevisionId: session[0].sourceRevisionId,
+    }).returning();
+
+    await db.insert(upgradePlanChanges).values([
+      { planId: planRows[0].id, ordinal: 1, title: "Analyze current state", description: "Review current revision artifacts and configuration", priority: "high" },
+      { planId: planRows[0].id, ordinal: 2, title: "Apply upgrade changes", description: "Execute upgrade transformations per objective", priority: "high" },
+      { planId: planRows[0].id, ordinal: 3, title: "Validate results", description: "Run verification checks on candidate output", priority: "medium" },
+    ]);
+
+    await db.update(upgradeSessions)
+      .set({ status: "awaiting_approval", updatedAt: new Date() })
+      .where(eq(upgradeSessions.id, sessionId));
+
+    await recordEvent(assemblyId, "plan_generated", {
+      sessionId, actorType: "system",
+    });
+
+    const plans = await db.select().from(upgradePlans)
+      .where(eq(upgradePlans.id, planRows[0].id));
+    const changes = await db.select().from(upgradePlanChanges)
+      .where(eq(upgradePlanChanges.planId, planRows[0].id))
+      .orderBy(upgradePlanChanges.ordinal);
+
+    return {
+      plan: {
+        id: plans[0].id, sessionId: plans[0].sessionId,
+        findingsSummary: plans[0].findingsSummary,
+        proposedChanges: changes.map(c => ({
+          id: c.id, title: c.title, description: c.description,
+          priority: c.priority as "low" | "medium" | "high" | undefined, targetArea: c.targetArea, expectedImpact: c.expectedImpact,
+        })),
+        impactedArtifacts: [], risks: [],
+        validationPlan: { requiredChecks: ["integrity", "manifest", "diff_existence"] },
+        rollbackPlan: {
+          targetRevisionId: plans[0].rollbackTargetRevisionId,
+          notes: plans[0].rollbackNotes,
+          isSafeRollbackAvailable: plans[0].safeRollbackAvailable,
+        },
+        agentSummary: plans[0].agentSummary,
+        generatedAt: plans[0].generatedAt?.toISOString?.() ?? new Date().toISOString(),
+        approvedAt: null, approvedBy: null,
+      },
+    };
+  }
+
   app.post("/api/assemblies/:assemblyId/upgrades/sessions/:sessionId/plan/generate", async (req: Request, res: Response) => {
     try {
-      const sessionId = req.params.sessionId;
-      const session = await db.select().from(upgradeSessions)
-        .where(eq(upgradeSessions.id, sessionId));
-      if (session.length === 0) return res.status(404).json({ error: "Session not found" });
-
-      await db.update(upgradeSessions)
-        .set({ status: "planning", updatedAt: new Date() })
-        .where(eq(upgradeSessions.id, sessionId));
-
-      const planRows = await db.insert(upgradePlans).values({
-        sessionId,
-        findingsSummary: `Automated analysis of assembly for ${session[0].modeId} upgrade. Objective: ${session[0].objective}`,
-        agentSummary: "Plan generated based on current assembly state and upgrade objective.",
-        safeRollbackAvailable: true,
-        rollbackTargetRevisionId: session[0].sourceRevisionId,
-      }).returning();
-
-      await db.insert(upgradePlanChanges).values([
-        { planId: planRows[0].id, ordinal: 1, title: "Analyze current state", description: "Review current revision artifacts and configuration", priority: "high" },
-        { planId: planRows[0].id, ordinal: 2, title: "Apply upgrade changes", description: "Execute upgrade transformations per objective", priority: "high" },
-        { planId: planRows[0].id, ordinal: 3, title: "Validate results", description: "Run verification checks on candidate output", priority: "medium" },
-      ]);
-
-      await db.update(upgradeSessions)
-        .set({ status: "awaiting_approval", updatedAt: new Date() })
-        .where(eq(upgradeSessions.id, sessionId));
-
-      await recordEvent(Number(req.params.assemblyId), "plan_generated", {
-        sessionId, actorType: "system",
-      });
-
-      const plans = await db.select().from(upgradePlans)
-        .where(eq(upgradePlans.id, planRows[0].id));
-      const changes = await db.select().from(upgradePlanChanges)
-        .where(eq(upgradePlanChanges.planId, planRows[0].id))
-        .orderBy(upgradePlanChanges.ordinal);
-
-      res.json({
-        plan: {
-          id: plans[0].id, sessionId: plans[0].sessionId,
-          findingsSummary: plans[0].findingsSummary,
-          proposedChanges: changes.map(c => ({
-            id: c.id, title: c.title, description: c.description,
-            priority: c.priority, targetArea: c.targetArea, expectedImpact: c.expectedImpact,
-          })),
-          impactedArtifacts: [], risks: [],
-          validationPlan: { requiredChecks: ["integrity", "manifest", "diff_existence"] },
-          rollbackPlan: {
-            targetRevisionId: plans[0].rollbackTargetRevisionId,
-            notes: plans[0].rollbackNotes,
-            isSafeRollbackAvailable: plans[0].safeRollbackAvailable,
-          },
-          agentSummary: plans[0].agentSummary,
-          generatedAt: plans[0].generatedAt?.toISOString?.(),
-          approvedAt: null, approvedBy: null,
-        },
-      });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      const result = await generatePlanForSession(req.params.sessionId, Number(req.params.assemblyId));
+      res.json(result);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      if (message === "Session not found") return res.status(404).json({ error: message });
+      res.status(500).json({ error: message });
     }
   });
 
@@ -528,14 +549,16 @@ export function registerUpgradeRoutes(app: Express) {
       });
 
       res.json({ approved: true });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
   app.post("/api/assemblies/:assemblyId/upgrades/sessions/:sessionId/plan/regenerate", async (req: Request, res: Response) => {
     try {
       const sessionId = req.params.sessionId;
+      const assemblyId = Number(req.params.assemblyId);
 
       if (req.body.instructions) {
         await db.update(upgradeSessions)
@@ -543,16 +566,19 @@ export function registerUpgradeRoutes(app: Express) {
           .where(eq(upgradeSessions.id, sessionId));
       }
 
-      await db.delete(upgradePlanChanges)
-        .where(eq(upgradePlanChanges.planId, sql`(SELECT id FROM upgrade_plans WHERE session_id = ${sessionId} ORDER BY generated_at DESC LIMIT 1)`));
+      const existingPlans = await db.select({ id: upgradePlans.id })
+        .from(upgradePlans)
+        .where(eq(upgradePlans.sessionId, sessionId));
+      for (const plan of existingPlans) {
+        await db.delete(upgradePlanChanges).where(eq(upgradePlanChanges.planId, plan.id));
+      }
       await db.delete(upgradePlans).where(eq(upgradePlans.sessionId, sessionId));
 
-      const fwdReq = { ...req, body: {} } as any;
-      const fwdRes = res;
-      return app._router?.handle?.(fwdReq, fwdRes, () => {}) ??
-        res.json({ regenerated: true });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      const result = await generatePlanForSession(sessionId, assemblyId);
+      res.json(result);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -614,8 +640,9 @@ export function registerUpgradeRoutes(app: Express) {
         session: toSessionSummary({ ...session[0], candidateRevisionId: candidateRows[0].id, status: "executing" }),
         candidateRevision: toRevisionSummary(candidateRows[0]),
       });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -626,8 +653,75 @@ export function registerUpgradeRoutes(app: Express) {
         .set({ status: "verifying", updatedAt: new Date() })
         .where(eq(upgradeSessions.id, sessionId));
       res.json({ saved: true });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
+    }
+  });
+
+  app.post("/api/assemblies/:assemblyId/upgrades/sessions/:sessionId/pause", async (req: Request, res: Response) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const session = await db.select().from(upgradeSessions)
+        .where(eq(upgradeSessions.id, sessionId));
+      if (session.length === 0) return res.status(404).json({ error: "Session not found" });
+      if (session[0].status !== "executing") {
+        return res.status(400).json({ error: "Session is not currently executing" });
+      }
+      await db.update(upgradeSessions)
+        .set({ status: "awaiting_approval", blockingIssue: "Execution paused by user", updatedAt: new Date() })
+        .where(eq(upgradeSessions.id, sessionId));
+      await recordEvent(Number(req.params.assemblyId), "execution_paused", {
+        sessionId, actorType: "user",
+      });
+      res.json({ paused: true });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
+    }
+  });
+
+  app.post("/api/assemblies/:assemblyId/upgrades/sessions/:sessionId/resume", async (req: Request, res: Response) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const session = await db.select().from(upgradeSessions)
+        .where(eq(upgradeSessions.id, sessionId));
+      if (session.length === 0) return res.status(404).json({ error: "Session not found" });
+      if (session[0].status !== "draft" && session[0].status !== "awaiting_approval") {
+        return res.status(400).json({ error: "Session cannot be resumed from its current status" });
+      }
+      const nextStatus = session[0].candidateRevisionId ? "executing" : "planning";
+      await db.update(upgradeSessions)
+        .set({ status: nextStatus, blockingIssue: null, updatedAt: new Date() })
+        .where(eq(upgradeSessions.id, sessionId));
+      await recordEvent(Number(req.params.assemblyId), "session_resumed", {
+        sessionId, actorType: "user",
+      });
+      res.json({ resumed: true, status: nextStatus });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
+    }
+  });
+
+  app.post("/api/assemblies/:assemblyId/upgrades/sessions/:sessionId/retry-step", async (req: Request, res: Response) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const { stepId } = req.body;
+      if (!stepId) return res.status(400).json({ error: "stepId is required" });
+      const session = await db.select().from(upgradeSessions)
+        .where(eq(upgradeSessions.id, sessionId));
+      if (session.length === 0) return res.status(404).json({ error: "Session not found" });
+      await db.update(upgradeSessions)
+        .set({ status: "executing", blockingIssue: null, updatedAt: new Date() })
+        .where(eq(upgradeSessions.id, sessionId));
+      await recordEvent(Number(req.params.assemblyId), "step_retried", {
+        sessionId, actorType: "user", payload: { stepId },
+      });
+      res.json({ retried: true, stepId });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -667,8 +761,9 @@ export function registerUpgradeRoutes(app: Express) {
       };
 
       res.json({ diff: diffData });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -715,8 +810,9 @@ export function registerUpgradeRoutes(app: Express) {
       ]);
 
       res.json({ generated: true, diffId });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -732,19 +828,22 @@ export function registerUpgradeRoutes(app: Express) {
       const checks = await db.select().from(revisionVerificationChecks)
         .where(eq(revisionVerificationChecks.verificationId, vRows[0].id));
 
+      type CheckCategory = "required" | "optional" | "compatibility" | "ci" | "workspace";
+      type CheckStatus = "not_run" | "running" | "pass" | "warning" | "fail";
+
       const detail: RevisionVerificationDetail = {
         revisionId: vRows[0].revisionId,
-        verdict: vRows[0].verdict as any,
+        verdict: vRows[0].verdict as UpgradeVerificationVerdict,
         requiredChecks: checks.filter(c => c.category === "required").map(c => ({
-          id: c.id, label: c.label, category: c.category as any, status: c.status as any,
+          id: c.id, label: c.label, category: c.category as CheckCategory, status: c.status as CheckStatus,
           message: c.message, proofRefs: (c.proofRefs as string[]) || [],
         })),
         optionalChecks: checks.filter(c => c.category === "optional").map(c => ({
-          id: c.id, label: c.label, category: c.category as any, status: c.status as any,
+          id: c.id, label: c.label, category: c.category as CheckCategory, status: c.status as CheckStatus,
           message: c.message, proofRefs: (c.proofRefs as string[]) || [],
         })),
         compatibilityChecks: checks.filter(c => c.category === "compatibility").map(c => ({
-          id: c.id, label: c.label, category: c.category as any, status: c.status as any,
+          id: c.id, label: c.label, category: c.category as CheckCategory, status: c.status as CheckStatus,
           message: c.message, proofRefs: (c.proofRefs as string[]) || [],
         })),
         warnings: checks.filter(c => c.status === "warning").map(c => c.message || c.label),
@@ -753,8 +852,9 @@ export function registerUpgradeRoutes(app: Express) {
       };
 
       res.json({ verification: detail });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -843,8 +943,9 @@ export function registerUpgradeRoutes(app: Express) {
       }, 3000);
 
       res.json({ verificationId: vid, status: "running" });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -900,8 +1001,9 @@ export function registerUpgradeRoutes(app: Express) {
       });
 
       res.json({ revision: toRevisionSummary(updated[0]) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -937,8 +1039,9 @@ export function registerUpgradeRoutes(app: Express) {
       });
 
       res.json({ revision: toRevisionSummary(updated[0]) });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -964,8 +1067,9 @@ export function registerUpgradeRoutes(app: Express) {
           createdAt: r.createdAt?.toISOString?.() ?? r.createdAt,
         })),
       });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 
@@ -993,8 +1097,9 @@ export function registerUpgradeRoutes(app: Express) {
       };
 
       res.json({ lineagePreview: preview });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
     }
   });
 }

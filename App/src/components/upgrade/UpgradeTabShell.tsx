@@ -25,6 +25,11 @@ import type {
 } from "../../../../shared/upgrade-types";
 import { UPGRADE_MODE_OPTIONS } from "../../../../shared/upgrade-types";
 
+function getErrorMessage(err: unknown): string | undefined {
+  if (err && typeof err === "object" && "message" in err) return (err as { message: string }).message;
+  return undefined;
+}
+
 interface UpgradeTabShellProps {
   assemblyId: number;
 }
@@ -109,35 +114,35 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
   const baselineMutation = useMutation({
     mutationFn: () => apiRequest(`${base}/upgrade/baseline`, { method: "POST" }),
     onSuccess: () => { toast.success("Baseline revision created"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to create baseline"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to create baseline"),
   });
 
   const startSessionMutation = useMutation({
     mutationFn: (input: StartUpgradeSessionInput) =>
       apiRequest(`${base}/upgrades/sessions`, { method: "POST", body: JSON.stringify(input), headers: { "Content-Type": "application/json" } }),
     onSuccess: () => { toast.success("Upgrade session started"); setShowLauncher(false); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to start session"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to start session"),
   });
 
   const generatePlanMutation = useMutation({
     mutationFn: (sessionId: string) =>
       apiRequest(`${base}/upgrades/sessions/${sessionId}/plan/generate`, { method: "POST" }),
     onSuccess: () => { toast.success("Plan generated"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to generate plan"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to generate plan"),
   });
 
   const approvePlanMutation = useMutation({
     mutationFn: (sessionId: string) =>
       apiRequest(`${base}/upgrades/sessions/${sessionId}/plan/approve`, { method: "POST" }),
     onSuccess: () => { toast.success("Plan approved"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to approve plan"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to approve plan"),
   });
 
   const executeMutation = useMutation({
     mutationFn: (sessionId: string) =>
       apiRequest(`${base}/upgrades/sessions/${sessionId}/execute`, { method: "POST" }),
     onSuccess: () => { toast.success("Execution started"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to start execution"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to start execution"),
   });
 
   const generateDiffMutation = useMutation({
@@ -150,7 +155,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
       });
     },
     onSuccess: () => { toast.success("Diff generated"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to generate diff"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to generate diff"),
   });
 
   const runVerificationMutation = useMutation({
@@ -159,7 +164,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
       return apiRequest(`${base}/upgrades/verifications/${candidateRevision.id}/run`, { method: "POST" });
     },
     onSuccess: () => { toast.success("Verification started"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to run verification"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to run verification"),
   });
 
   const promoteMutation = useMutation({
@@ -170,7 +175,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
         headers: { "Content-Type": "application/json" },
       }),
     onSuccess: () => { toast.success("Revision promoted successfully"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to promote"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to promote"),
   });
 
   const rollbackMutation = useMutation({
@@ -181,21 +186,46 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
         headers: { "Content-Type": "application/json" },
       }),
     onSuccess: () => { toast.success("Rollback executed"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to rollback"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to rollback"),
+  });
+
+  const pauseMutation = useMutation({
+    mutationFn: (sessionId: string) =>
+      apiRequest(`${base}/upgrades/sessions/${sessionId}/pause`, { method: "POST" }),
+    onSuccess: () => { toast.success("Execution paused"); invalidateAll(); },
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to pause"),
+  });
+
+  const saveCandidateMutation = useMutation({
+    mutationFn: (sessionId: string) =>
+      apiRequest(`${base}/upgrades/sessions/${sessionId}/save-candidate`, { method: "POST" }),
+    onSuccess: () => { toast.success("Candidate saved"); invalidateAll(); },
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to save candidate"),
+  });
+
+  const retryStepMutation = useMutation({
+    mutationFn: ({ sessionId, stepId }: { sessionId: string; stepId: string }) =>
+      apiRequest(`${base}/upgrades/sessions/${sessionId}/retry-step`, {
+        method: "POST",
+        body: JSON.stringify({ stepId }),
+        headers: { "Content-Type": "application/json" },
+      }),
+    onSuccess: () => { toast.success("Step retried"); invalidateAll(); },
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to retry step"),
   });
 
   const cancelSessionMutation = useMutation({
     mutationFn: (sessionId: string) =>
       apiRequest(`${base}/upgrades/sessions/${sessionId}/cancel`, { method: "POST" }),
     onSuccess: () => { toast.success("Session cancelled"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to cancel session"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to cancel session"),
   });
 
   const archiveSessionMutation = useMutation({
     mutationFn: (sessionId: string) =>
       apiRequest(`${base}/upgrades/sessions/${sessionId}/archive`, { method: "POST" }),
     onSuccess: () => { toast.success("Session archived"); invalidateAll(); },
-    onError: (e: any) => toast.error(e?.message || "Failed to archive session"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to archive session"),
   });
 
   if (bootLoading) {
@@ -227,7 +257,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
             Create Baseline Revision
           </button>
           {baselineMutation.error && (
-            <div className="text-sm text-red-400">{(baselineMutation.error as any)?.message || "Failed"}</div>
+            <div className="text-sm text-red-400">{getErrorMessage(baselineMutation.error) || "Failed"}</div>
           )}
         </div>
       </GlassPanel>
@@ -296,7 +326,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
           modeOptions={UPGRADE_MODE_OPTIONS}
           defaultSourceRevisionId={launcherSourceRevisionId}
           isSubmitting={startSessionMutation.isPending}
-          submitError={(startSessionMutation.error as any)?.message}
+          submitError={getErrorMessage(startSessionMutation.error)}
           onStartSession={(input) => startSessionMutation.mutate(input)}
         />
       )}
@@ -326,7 +356,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
                 plan={planData}
                 isGenerating={generatePlanMutation.isPending}
                 isApproving={approvePlanMutation.isPending}
-                error={(generatePlanMutation.error as any)?.message || (approvePlanMutation.error as any)?.message}
+                error={getErrorMessage(generatePlanMutation.error) || getErrorMessage(approvePlanMutation.error)}
                 onGeneratePlan={(id) => generatePlanMutation.mutate(id)}
                 onApprovePlan={(id) => approvePlanMutation.mutate(id)}
                 onRegeneratePlan={(id) => generatePlanMutation.mutate(id)}
@@ -340,12 +370,12 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
                 candidateRevision={candidateRevision}
                 executionSteps={[]}
                 changedArtifacts={[]}
-                isExecuting={executeMutation.isPending}
-                error={(executeMutation.error as any)?.message}
+                isExecuting={activeSession?.status === "executing" || executeMutation.isPending}
+                error={getErrorMessage(executeMutation.error) || getErrorMessage(pauseMutation.error)}
                 onStartExecution={(id) => executeMutation.mutate(id)}
-                onPauseExecution={() => {}}
-                onRetryStep={() => {}}
-                onSaveCandidate={() => {}}
+                onPauseExecution={(id) => pauseMutation.mutate(id)}
+                onRetryStep={(sessionId, stepId) => retryStepMutation.mutate({ sessionId, stepId })}
+                onSaveCandidate={(id) => saveCandidateMutation.mutate(id)}
               />
             )}
 
@@ -355,7 +385,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
                 candidateRevision={candidateRevision}
                 diff={diffData}
                 isLoading={generateDiffMutation.isPending}
-                error={(generateDiffMutation.error as any)?.message}
+                error={getErrorMessage(generateDiffMutation.error)}
                 onGenerateDiff={() => generateDiffMutation.mutate()}
                 onRefreshDiff={() => invalidateAll()}
               />
@@ -365,7 +395,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
               <UpgradeVerificationPanel
                 verification={verificationDetail}
                 isRunning={runVerificationMutation.isPending}
-                error={(runVerificationMutation.error as any)?.message}
+                error={getErrorMessage(runVerificationMutation.error)}
                 onRunVerification={() => runVerificationMutation.mutate()}
                 onRefreshVerification={() => invalidateAll()}
               />
@@ -382,7 +412,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
                 rollbackTarget={rollbackTarget}
                 isPromoting={promoteMutation.isPending}
                 isRollingBack={rollbackMutation.isPending}
-                error={(promoteMutation.error as any)?.message || (rollbackMutation.error as any)?.message}
+                error={getErrorMessage(promoteMutation.error) || getErrorMessage(rollbackMutation.error)}
                 onPromote={(notes) => promoteMutation.mutate(notes)}
                 onRollback={(targetRevisionId, reason) => rollbackMutation.mutate({ targetRevisionId, reason })}
               />
