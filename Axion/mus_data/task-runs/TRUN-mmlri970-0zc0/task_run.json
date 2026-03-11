@@ -1,0 +1,39 @@
+{
+  "run_id": "TRUN-mmlri970-0zc0",
+  "task_ids": [
+    "TASK-PERF-01"
+  ],
+  "assigned_agents": [
+    "AGT-PERF-01"
+  ],
+  "trigger": "manual",
+  "scope": {
+    "asset_classes": [
+      "pipeline",
+      "builds",
+      "stages"
+    ]
+  },
+  "budgets": {
+    "token_cap": 50000,
+    "time_cap_ms": 120000,
+    "max_findings": 50,
+    "max_proposals": 10,
+    "max_assets_touched": 20
+  },
+  "status": "completed",
+  "created_at": "2026-03-11T08:13:32.556Z",
+  "outputs_refs": {
+    "findings_count": 0,
+    "insights_count": 1,
+    "bottlenecks_count": 0,
+    "recommendations_count": 0,
+    "has_proof": false
+  },
+  "started_at": "2026-03-11T08:13:36.536Z",
+  "telemetry_summary": {
+    "total_time_ms": 1,
+    "total_tokens": 0
+  },
+  "completed_at": "2026-03-11T08:13:36.537Z"
+}

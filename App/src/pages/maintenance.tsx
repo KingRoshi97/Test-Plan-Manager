@@ -3,7 +3,8 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   Loader2, Wrench, Shield, Search, Zap, Calendar, FileText, Settings, Play,
   AlertTriangle, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Eye,
-  Lock, XCircle, Filter, Package, Stamp, BarChart3, Activity
+  Lock, XCircle, Filter, Package, Stamp, BarChart3, Activity, ListChecks,
+  Lightbulb, Bot, Target, Clock
 } from "lucide-react";
 import { GlassPanel } from "../components/ui/glass-panel";
 import { StatusChip } from "../components/ui/status-chip";
@@ -859,6 +860,467 @@ function RegistriesTab() {
   );
 }
 
+function intentVariant(intent: string) {
+  switch (intent) {
+    case "monitor": return "processing" as const;
+    case "troubleshoot": return "warning" as const;
+    case "optimize": return "success" as const;
+    case "audit": return "neutral" as const;
+    default: return "neutral" as const;
+  }
+}
+
+function TasksTab() {
+  const queryClient = useQueryClient();
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState("");
+  const [tokenCap, setTokenCap] = useState(50000);
+  const [timeCap, setTimeCap] = useState(120000);
+  const [maxFindings, setMaxFindings] = useState(50);
+  const [taskRunResult, setTaskRunResult] = useState<any>(null);
+
+  const { data: tasks = [] } = useQuery<any[]>({
+    queryKey: ["/api/mus/tasks"],
+    queryFn: () => fetch("/api/mus/tasks").then(r => r.json()),
+  });
+
+  const { data: agents = [] } = useQuery<any[]>({
+    queryKey: ["/api/mus/agents"],
+    queryFn: () => fetch("/api/mus/agents").then(r => r.json()),
+  });
+
+  const createAndStart = useMutation({
+    mutationFn: async () => {
+      const createRes = await fetch("/api/mus/task-runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          task_ids: selectedTasks,
+          agent_ids: selectedAgent ? [selectedAgent] : undefined,
+          budgets: { token_cap: tokenCap, time_cap_ms: timeCap, max_findings: maxFindings },
+        }),
+      });
+      if (!createRes.ok) { const err = await createRes.json(); throw new Error(err.error); }
+      const run = await createRes.json();
+
+      const startRes = await fetch(`/api/mus/task-runs/${run.run_id}/start`, { method: "POST" });
+      if (!startRes.ok) { const err = await startRes.json(); throw new Error(err.error); }
+      return startRes.json();
+    },
+    onSuccess: (data) => {
+      setTaskRunResult(data);
+      queryClient.invalidateQueries({ queryKey: ["/api/mus"] });
+    },
+  });
+
+  function toggleTask(taskId: string) {
+    setSelectedTasks(prev =>
+      prev.includes(taskId) ? prev.filter(t => t !== taskId) : [...prev, taskId]
+    );
+  }
+
+  const selectedTaskDefs = tasks.filter((t: any) => selectedTasks.includes(t.task_id));
+  const autoAgent = selectedTaskDefs.length > 0 ? selectedTaskDefs[0].default_agent_id : null;
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <GlassPanel solid glow="cyan" className="p-4 space-y-4">
+        <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Task Catalog</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {tasks.map((task: any) => {
+            const isSelected = selectedTasks.includes(task.task_id);
+            const agent = agents.find((a: any) => a.agent_id === task.default_agent_id);
+            return (
+              <div
+                key={task.task_id}
+                onClick={() => toggleTask(task.task_id)}
+                className={`cursor-pointer rounded-lg border p-3 transition-all ${
+                  isSelected
+                    ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.08)]"
+                    : "border-[hsl(var(--glass-border))] hover:border-[hsl(var(--primary)/0.5)] hover:bg-[hsl(var(--accent)/0.3)]"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
+                    <span className="text-sm font-medium text-[hsl(var(--card-foreground))]">{task.name}</span>
+                  </div>
+                  <StatusChip variant={intentVariant(task.intent)} label={task.intent} />
+                </div>
+                <div className="flex items-center gap-3 text-xs text-[hsl(var(--muted-foreground))]">
+                  <span className="font-mono-tech">{task.task_id}</span>
+                  {agent && (
+                    <span className="flex items-center gap-1">
+                      <Bot className="w-3 h-3" /> {agent.name}
+                    </span>
+                  )}
+                  {task.schedule_allowed && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> Schedulable
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-1 mt-2">
+                  {(task.outputs_enabled ?? []).map((o: string) => (
+                    <span key={o} className="px-1.5 py-0.5 rounded text-[10px] bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))]">{o}</span>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </GlassPanel>
+
+      {selectedTasks.length > 0 && (
+        <GlassPanel solid glow="violet" className="p-4 space-y-4">
+          <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Run Configuration</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-system-label mb-1">Selected Tasks</label>
+              <div className="flex flex-wrap gap-1">
+                {selectedTasks.map(id => {
+                  const t = tasks.find((t: any) => t.task_id === id);
+                  return (
+                    <span key={id} className="px-2 py-0.5 rounded text-xs bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] font-mono-tech">
+                      {t?.name ?? id}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
+              <label className="block text-system-label mb-1">Agent</label>
+              <select
+                value={selectedAgent || autoAgent || ""}
+                onChange={(e) => setSelectedAgent(e.target.value)}
+                className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-3 py-1.5 text-sm text-[hsl(var(--foreground))]"
+              >
+                <option value="">Auto-assign by capability</option>
+                {agents.filter((a: any) => a.status === "enabled").map((a: any) => (
+                  <option key={a.agent_id} value={a.agent_id}>{a.name} ({a.agent_id})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-system-label mb-2">Budgets</label>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-1">Token Cap</label>
+                <input type="number" value={tokenCap} onChange={(e) => setTokenCap(Number(e.target.value))} className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-2 py-1 text-sm text-[hsl(var(--foreground))] font-mono-tech" />
+              </div>
+              <div>
+                <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-1">Time Cap (ms)</label>
+                <input type="number" value={timeCap} onChange={(e) => setTimeCap(Number(e.target.value))} className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-2 py-1 text-sm text-[hsl(var(--foreground))] font-mono-tech" />
+              </div>
+              <div>
+                <label className="block text-xs text-[hsl(var(--muted-foreground))] mb-1">Max Findings</label>
+                <input type="number" value={maxFindings} onChange={(e) => setMaxFindings(Number(e.target.value))} className="w-full rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-2 py-1 text-sm text-[hsl(var(--foreground))] font-mono-tech" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button onClick={() => createAndStart.mutate()} disabled={createAndStart.isPending || selectedTasks.length === 0} className="flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 disabled:opacity-50 transition-opacity">
+              {createAndStart.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              Run Now
+            </button>
+          </div>
+
+          {createAndStart.error && (
+            <div className="text-sm text-[hsl(var(--status-failure))] bg-[hsl(var(--status-failure)/0.1)] rounded p-2">{(createAndStart.error as Error).message}</div>
+          )}
+        </GlassPanel>
+      )}
+
+      {taskRunResult && (
+        <GlassPanel solid glow="green" className="p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-[hsl(var(--status-success))]" />
+            <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Task Run Results</h3>
+          </div>
+          <div className="grid grid-cols-5 gap-3 text-xs">
+            <div><span className="text-[hsl(var(--muted-foreground))]">Run ID:</span> <span className="font-mono-tech text-[hsl(var(--foreground))]">{taskRunResult.taskRun?.run_id}</span></div>
+            <div><span className="text-[hsl(var(--muted-foreground))]">Status:</span> <StatusChip variant={runStatusVariant(taskRunResult.taskRun?.status)} label={taskRunResult.taskRun?.status} /></div>
+            <div><span className="text-[hsl(var(--muted-foreground))]">Findings:</span> <span className="font-mono-tech text-[hsl(var(--foreground))]">{taskRunResult.findings_count}</span></div>
+            <div><span className="text-[hsl(var(--muted-foreground))]">Insights:</span> <span className="font-mono-tech text-[hsl(var(--foreground))]">{taskRunResult.insights_count}</span></div>
+            <div><span className="text-[hsl(var(--muted-foreground))]">Bottlenecks:</span> <span className="font-mono-tech text-[hsl(var(--foreground))]">{taskRunResult.bottlenecks_count}</span></div>
+          </div>
+          {taskRunResult.recommendations_count > 0 && (
+            <div className="text-xs text-[hsl(var(--muted-foreground))]">{taskRunResult.recommendations_count} recommendation(s) — view in Insights tab</div>
+          )}
+        </GlassPanel>
+      )}
+    </div>
+  );
+}
+
+function TaskRunsTab() {
+  const { data: taskRuns = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/mus/task-runs"],
+    queryFn: () => fetch("/api/mus/task-runs").then(r => r.json()),
+  });
+
+  const { data: tasks = [] } = useQuery<any[]>({
+    queryKey: ["/api/mus/tasks"],
+    queryFn: () => fetch("/api/mus/tasks").then(r => r.json()),
+  });
+
+  const [expandedRun, setExpandedRun] = useState<string | null>(null);
+  const [outputs, setOutputs] = useState<any>(null);
+
+  const loadOutputs = async (runId: string) => {
+    if (expandedRun === runId) { setExpandedRun(null); return; }
+    setExpandedRun(runId);
+    const res = await fetch(`/api/mus/task-runs/${runId}/outputs`);
+    if (res.ok) setOutputs(await res.json());
+  };
+
+  if (isLoading) return <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--muted-foreground))]" /></div>;
+
+  if (taskRuns.length === 0) {
+    return (
+      <GlassPanel solid className="text-center py-12 animate-fade-in">
+        <ListChecks className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--muted-foreground))] opacity-50" />
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">No task runs yet</p>
+        <p className="text-xs mt-1 text-[hsl(var(--muted-foreground))]">Go to Tasks tab to run your first task</p>
+      </GlassPanel>
+    );
+  }
+
+  return (
+    <div className="space-y-3 animate-fade-in">
+      {taskRuns.map((run: any) => {
+        const taskNames = (run.task_ids ?? []).map((id: string) => {
+          const t = tasks.find((t: any) => t.task_id === id);
+          return t?.name ?? id;
+        });
+        return (
+          <GlassPanel key={run.run_id} solid hover className="overflow-hidden">
+            <div
+              className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[hsl(var(--accent)/0.3)] transition-colors"
+              onClick={() => loadOutputs(run.run_id)}
+            >
+              <div className="flex items-center gap-3">
+                <ListChecks className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
+                <span className="font-mono-tech text-sm text-[hsl(var(--foreground))]">{run.run_id}</span>
+                <StatusChip variant={runStatusVariant(run.status)} label={run.status} />
+                <span className="text-xs text-[hsl(var(--muted-foreground))]">{taskNames.join(", ")}</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">
+                <span>{run.outputs_refs?.findings_count ?? 0}F</span>
+                <span>{run.outputs_refs?.insights_count ?? 0}I</span>
+                <span>{run.outputs_refs?.bottlenecks_count ?? 0}B</span>
+                <span>{run.outputs_refs?.recommendations_count ?? 0}R</span>
+                {run.telemetry_summary && <span>{run.telemetry_summary.total_time_ms}ms</span>}
+                {expandedRun === run.run_id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </div>
+            </div>
+
+            {expandedRun === run.run_id && outputs && (
+              <div className="border-t border-[hsl(var(--glass-border))] px-4 py-3 space-y-3 animate-fade-in">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div><span className="text-[hsl(var(--muted-foreground))]">Agents:</span> <span className="font-mono-tech">{(run.assigned_agents ?? []).join(", ")}</span></div>
+                  <div><span className="text-[hsl(var(--muted-foreground))]">Trigger:</span> <span className="font-mono-tech">{run.trigger}</span></div>
+                  {run.completed_at && <div><span className="text-[hsl(var(--muted-foreground))]">Completed:</span> <span className="font-mono-tech">{new Date(run.completed_at).toLocaleString()}</span></div>}
+                </div>
+
+                {outputs.insights?.length > 0 && (
+                  <div>
+                    <h5 className="text-system-label mb-2">Insights</h5>
+                    {outputs.insights.map((ins: any) => (
+                      <div key={ins.insight_id} className="glass-panel rounded p-3 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Lightbulb className="w-3.5 h-3.5 text-[hsl(var(--status-warning))]" />
+                          <StatusChip variant={intentVariant(ins.category)} label={ins.category} />
+                          <span className="text-xs text-[hsl(var(--muted-foreground))]">confidence: {ins.confidence}%</span>
+                        </div>
+                        <p className="text-xs text-[hsl(var(--foreground))]">{ins.narrative}</p>
+                        {ins.suggested_next_actions?.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {ins.suggested_next_actions.map((a: string, i: number) => (
+                              <span key={i} className="px-1.5 py-0.5 rounded text-[10px] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">{a}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {outputs.bottlenecks?.length > 0 && (
+                  <div>
+                    <h5 className="text-system-label mb-2">Bottlenecks</h5>
+                    {outputs.bottlenecks.map((bn: any) => (
+                      <div key={bn.report_id} className="glass-panel rounded p-3 mb-2">
+                        <div className="text-xs mb-2">
+                          <span className="text-[hsl(var(--muted-foreground))]">Total: </span>
+                          <span className="font-mono-tech text-[hsl(var(--foreground))]">{Math.round(bn.total_time_ms / 1000)}s / {bn.total_tokens} tokens</span>
+                        </div>
+                        {bn.hotspots?.map((h: any, i: number) => (
+                          <div key={i} className="flex items-center gap-2 text-xs py-1 border-b border-[hsl(var(--glass-border))] last:border-0">
+                            <div className="w-24 font-mono-tech text-[hsl(var(--foreground))]">{h.location}</div>
+                            <div className="flex-1 h-2 rounded-full bg-[hsl(var(--muted)/0.3)] overflow-hidden">
+                              <div className="h-full rounded-full bg-[hsl(var(--status-failure))]" style={{ width: `${Math.min(h.percentage_of_total, 100)}%` }} />
+                            </div>
+                            <div className="w-12 text-right font-mono-tech text-[hsl(var(--muted-foreground))]">{h.percentage_of_total}%</div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {outputs.recommendations?.length > 0 && (
+                  <div>
+                    <h5 className="text-system-label mb-2">Recommendations</h5>
+                    {outputs.recommendations.map((rec: any) => (
+                      <div key={rec.recommendation_id} className="glass-panel rounded p-3 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <StatusChip variant={severityVariant(rec.priority)} label={rec.priority} />
+                          <span className="text-xs font-medium text-[hsl(var(--foreground))]">{rec.title}</span>
+                        </div>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">{rec.description}</p>
+                        <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">Impact: {rec.estimated_impact}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {outputs.findings?.length > 0 && (
+                  <div>
+                    <h5 className="text-system-label mb-2">Findings ({outputs.findings.length})</h5>
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {outputs.findings.slice(0, 20).map((f: any) => (
+                        <div key={f.finding_id} className="flex items-center gap-2 text-xs py-1">
+                          <StatusChip variant={severityVariant(f.severity)} label={f.severity} />
+                          <span className="text-[hsl(var(--foreground))] truncate">{f.title}</span>
+                          <span className="font-mono-tech text-[hsl(var(--muted-foreground))] ml-auto">{f.file_path}</span>
+                        </div>
+                      ))}
+                      {outputs.findings.length > 20 && (
+                        <div className="text-xs text-[hsl(var(--muted-foreground))] text-center py-1">...and {outputs.findings.length - 20} more</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </GlassPanel>
+        );
+      })}
+    </div>
+  );
+}
+
+function InsightsTab() {
+  const { data: insights = [], isLoading: insightsLoading } = useQuery<any[]>({
+    queryKey: ["/api/mus/insights"],
+    queryFn: () => fetch("/api/mus/insights").then(r => r.json()),
+  });
+
+  const { data: bottlenecks = [], isLoading: bnLoading } = useQuery<any[]>({
+    queryKey: ["/api/mus/bottlenecks"],
+    queryFn: () => fetch("/api/mus/bottlenecks").then(r => r.json()),
+  });
+
+  const isLoading = insightsLoading || bnLoading;
+
+  if (isLoading) return <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--muted-foreground))]" /></div>;
+
+  if (insights.length === 0 && bottlenecks.length === 0) {
+    return (
+      <GlassPanel solid className="text-center py-12 animate-fade-in">
+        <Lightbulb className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--muted-foreground))] opacity-50" />
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">No insights yet</p>
+        <p className="text-xs mt-1 text-[hsl(var(--muted-foreground))]">Run tasks from the Tasks tab to generate insights and bottleneck reports</p>
+      </GlassPanel>
+    );
+  }
+
+  const bottleneckInsights = insights.filter((i: any) => i.category === "bottleneck");
+  const qualityInsights = insights.filter((i: any) => i.category === "quality");
+  const reliabilityInsights = insights.filter((i: any) => i.category === "reliability");
+  const costInsights = insights.filter((i: any) => i.category === "cost");
+  const generalInsights = insights.filter((i: any) => i.category === "general");
+
+  function InsightSection({ title, items, icon: Icon, accentClass }: { title: string; items: any[]; icon: any; accentClass: string }) {
+    if (items.length === 0) return null;
+    return (
+      <GlassPanel solid className="p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Icon className={`w-4 h-4 ${accentClass}`} />
+          <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">{title}</h3>
+          <span className="text-xs text-[hsl(var(--muted-foreground))]">({items.length})</span>
+        </div>
+        <div className="space-y-3">
+          {items.map((ins: any) => (
+            <div key={ins.insight_id} className="glass-panel rounded p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs text-[hsl(var(--muted-foreground))]">confidence: {ins.confidence}%</span>
+                <span className="font-mono-tech text-[10px] text-[hsl(var(--muted-foreground))]">{ins.task_id}</span>
+              </div>
+              <p className="text-xs text-[hsl(var(--foreground))]">{ins.narrative}</p>
+              {ins.suggested_next_actions?.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {ins.suggested_next_actions.map((a: string, i: number) => (
+                    <span key={i} className="px-1.5 py-0.5 rounded text-[10px] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">{a}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </GlassPanel>
+    );
+  }
+
+  return (
+    <div className="space-y-4 animate-fade-in">
+      {bottlenecks.length > 0 && (
+        <GlassPanel solid glow="red" className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Zap className="w-4 h-4 text-[hsl(var(--status-failure))]" />
+            <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Top Bottlenecks</h3>
+          </div>
+          {bottlenecks.map((bn: any) => (
+            <div key={bn.report_id} className="glass-panel rounded p-3 mb-3 last:mb-0">
+              <div className="flex items-center justify-between mb-2 text-xs">
+                <span className="font-mono-tech text-[hsl(var(--muted-foreground))]">{bn.task_id}</span>
+                <span className="text-[hsl(var(--foreground))]">Total: {Math.round(bn.total_time_ms / 1000)}s / {bn.total_tokens} tokens</span>
+              </div>
+              {bn.hotspots?.map((h: any, i: number) => (
+                <div key={i} className="flex items-center gap-2 text-xs py-1.5 border-b border-[hsl(var(--glass-border))] last:border-0">
+                  <div className="w-28 font-mono-tech text-[hsl(var(--foreground))]">{h.location}</div>
+                  <div className="flex-1 h-2.5 rounded-full bg-[hsl(var(--muted)/0.3)] overflow-hidden">
+                    <div className="h-full rounded-full bg-[hsl(var(--status-failure))]" style={{ width: `${Math.min(h.percentage_of_total, 100)}%` }} />
+                  </div>
+                  <div className="w-14 text-right font-mono-tech text-[hsl(var(--muted-foreground))]">{h.percentage_of_total}%</div>
+                  <div className="w-20 text-right font-mono-tech text-[hsl(var(--muted-foreground))]">{h.time_ms}ms</div>
+                </div>
+              ))}
+              {bn.hypotheses?.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {bn.hypotheses.map((h: string, i: number) => (
+                    <p key={i} className="text-[10px] text-[hsl(var(--muted-foreground))] italic">{h}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </GlassPanel>
+      )}
+
+      <InsightSection title="Performance Insights" items={bottleneckInsights} icon={Zap} accentClass="text-[hsl(var(--status-failure))]" />
+      <InsightSection title="Quality Opportunities" items={qualityInsights} icon={Eye} accentClass="text-[hsl(var(--status-intelligence))]" />
+      <InsightSection title="Reliability" items={reliabilityInsights} icon={Shield} accentClass="text-[hsl(var(--status-success))]" />
+      <InsightSection title="Cost Analysis" items={costInsights} icon={BarChart3} accentClass="text-[hsl(var(--status-warning))]" />
+      <InsightSection title="General" items={generalInsights} icon={Lightbulb} accentClass="text-[hsl(var(--muted-foreground))]" />
+    </div>
+  );
+}
+
 export default function MaintenancePage() {
   const [tab, setTab] = useState("overview");
 
@@ -896,12 +1358,14 @@ export default function MaintenancePage() {
 
   const tabs = [
     { id: "overview", label: "Overview", icon: BarChart3 },
-    { id: "run", label: "Run", icon: Play },
+    { id: "tasks", label: "Tasks", icon: Target },
+    { id: "task-runs", label: "Task Runs", icon: ListChecks },
     { id: "findings", label: "Findings", icon: AlertTriangle },
+    { id: "insights", label: "Insights", icon: Lightbulb },
     { id: "proposals", label: "Proposals", icon: Package },
     { id: "approvals", label: "Approvals", icon: Stamp },
     { id: "schedules", label: "Schedules", icon: Calendar },
-    { id: "registries", label: "Registries & Policies", icon: FileText },
+    { id: "registries", label: "Registries", icon: FileText },
   ];
 
   return (
@@ -912,9 +1376,9 @@ export default function MaintenancePage() {
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <Wrench className="w-5 h-5 text-[hsl(var(--status-warning))]" />
-              <h1 className="text-xl font-bold text-[hsl(var(--foreground))] tracking-tight">Maintenance & Updating System</h1>
+              <h1 className="text-xl font-bold text-[hsl(var(--foreground))] tracking-tight">Ops Console</h1>
             </div>
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">MUS Governance — Proposal-first, consent-gated maintenance</p>
+            <p className="text-sm text-[hsl(var(--muted-foreground))]">Agent Tasking & Internal Ops — Task-first, consent-gated governance</p>
           </div>
           <div className="flex items-center gap-3">
             <StatusChip variant="processing" label={`${status?.total_runs ?? 0} Runs`} size="md" />
@@ -941,8 +1405,10 @@ export default function MaintenancePage() {
       </div>
 
       {tab === "overview" && <OverviewTab status={status} runs={runs} findings={allFindings} />}
-      {tab === "run" && <RunTab modes={modes} />}
+      {tab === "tasks" && <TasksTab />}
+      {tab === "task-runs" && <TaskRunsTab />}
       {tab === "findings" && <FindingsTab />}
+      {tab === "insights" && <InsightsTab />}
       {tab === "proposals" && <ProposalsTab />}
       {tab === "approvals" && <ApprovalsTab />}
       {tab === "schedules" && <SchedulesTab />}

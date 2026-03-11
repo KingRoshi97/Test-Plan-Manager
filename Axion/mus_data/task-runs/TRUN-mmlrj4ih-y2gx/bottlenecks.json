@@ -1,0 +1,120 @@
+[
+  {
+    "report_id": "BNR-mmlrj94k-yk5b",
+    "run_id": "TRUN-mmlrj4ih-y2gx",
+    "task_id": "TASK-PERF-01",
+    "hotspots": [
+      {
+        "location": "S7_RENDER_DOCS",
+        "stage": "S7_RENDER_DOCS",
+        "time_ms": 805299,
+        "token_count": 0,
+        "percentage_of_total": 95.5,
+        "hypothesis": "S7_RENDER_DOCS averages 13m 25s (96% of pipeline). This is the document rendering stage with LLM calls — primary bottleneck. Optimization paths: batch fewer templates, cache rendered docs, reduce prompt sizes, or parallelize rendering."
+      }
+    ],
+    "stage_breakdown": {
+      "S7_RENDER_DOCS": {
+        "time_ms": 805299,
+        "avg_ms": 805299,
+        "min_ms": 50,
+        "max_ms": 1728950,
+        "percentage": 95.5,
+        "variance_pct": 214.7
+      },
+      "S3_BUILD_CANONICAL": {
+        "time_ms": 18998,
+        "avg_ms": 18998,
+        "min_ms": 7414,
+        "max_ms": 33491,
+        "percentage": 2.3,
+        "variance_pct": 137.3
+      },
+      "S8_BUILD_PLAN": {
+        "time_ms": 18622,
+        "avg_ms": 18622,
+        "min_ms": 7441,
+        "max_ms": 42518,
+        "percentage": 2.2,
+        "variance_pct": 188.4
+      },
+      "S10_PACKAGE": {
+        "time_ms": 161,
+        "avg_ms": 161,
+        "min_ms": 31,
+        "max_ms": 408,
+        "percentage": 0,
+        "variance_pct": 233.6
+      },
+      "S6_SELECT_TEMPLATES": {
+        "time_ms": 23,
+        "avg_ms": 23,
+        "min_ms": 18,
+        "max_ms": 27,
+        "percentage": 0,
+        "variance_pct": 38.8
+      },
+      "S9_VERIFY_PROOF": {
+        "time_ms": 15,
+        "avg_ms": 15,
+        "min_ms": 3,
+        "max_ms": 116,
+        "percentage": 0,
+        "variance_pct": 733.8
+      },
+      "S5_RESOLVE_STANDARDS": {
+        "time_ms": 14,
+        "avg_ms": 14,
+        "min_ms": 11,
+        "max_ms": 16,
+        "percentage": 0,
+        "variance_pct": 37
+      },
+      "S4_VALIDATE_CANONICAL": {
+        "time_ms": 7,
+        "avg_ms": 7,
+        "min_ms": 5,
+        "max_ms": 11,
+        "percentage": 0,
+        "variance_pct": 88.2
+      },
+      "S1_INGEST_NORMALIZE": {
+        "time_ms": 6,
+        "avg_ms": 6,
+        "min_ms": 4,
+        "max_ms": 9,
+        "percentage": 0,
+        "variance_pct": 78.1
+      },
+      "S2_VALIDATE_INTAKE": {
+        "time_ms": 2,
+        "avg_ms": 2,
+        "min_ms": 2,
+        "max_ms": 3,
+        "percentage": 0,
+        "variance_pct": 47.6
+      }
+    },
+    "total_time_ms": 843148,
+    "total_tokens": 0,
+    "hypotheses": [
+      "Primary bottleneck: S7_RENDER_DOCS at 95.5% of average pipeline time (13m 25s)",
+      "Average pipeline time (14m 3s) exceeds 5 minutes — significant optimization potential",
+      "Pipeline averaging 14m 3s — parallel stage execution and aggressive caching strongly recommended",
+      "High-variance stages detected: S7_RENDER_DOCS, S3_BUILD_CANONICAL, S8_BUILD_PLAN — runtime varies significantly across runs, suggesting non-deterministic factors (LLM response time, external calls)"
+    ],
+    "evidence_refs": [
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000017/stage_reports",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000021/stage_reports",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000024/stage_reports",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000027/stage_reports",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000031/stage_reports",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000032/stage_reports",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000033/stage_reports",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000035/stage_reports",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000036/stage_reports",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000037/stage_reports"
+    ],
+    "created_at": "2026-03-11T08:14:19.124Z"
+  }
+]

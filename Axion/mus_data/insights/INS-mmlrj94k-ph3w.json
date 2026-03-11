@@ -1,0 +1,26 @@
+{
+  "insight_id": "INS-mmlrj94k-ph3w",
+  "run_id": "TRUN-mmlrj4ih-y2gx",
+  "task_id": "TASK-PERF-01",
+  "category": "bottleneck",
+  "narrative": "Pipeline performance analysis across 10 completed run(s) (of 25 total). Average pipeline time: 14m 3s. Primary bottleneck: S7_RENDER_DOCS at 95.5% (avg 13m 25s). Average templates rendered: 242. Performance trend: worsening (+28% slower in recent runs).",
+  "evidence_refs": [
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000017/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000021/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000024/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000027/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000031/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000032/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000033/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000035/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000036/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000037/stage_reports"
+  ],
+  "confidence": 90,
+  "suggested_next_actions": [
+    "Investigate S7_RENDER_DOCS optimization",
+    "Consider stage-level caching for LLM-heavy stages",
+    "Run TASK-COST-01 for token waste analysis"
+  ],
+  "created_at": "2026-03-11T08:14:19.124Z"
+}

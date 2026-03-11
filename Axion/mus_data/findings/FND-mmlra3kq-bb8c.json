@@ -1,0 +1,15 @@
+{
+  "finding_id": "FND-mmlra3kq-bb8c",
+  "run_id": "TRUN-mmlra0y4-4ox4",
+  "check_id": "reg.status_valid",
+  "detector_pack_id": "DP-REG-01",
+  "severity": "medium",
+  "status": "open",
+  "title": "Invalid status \"enabled\" for SCH-NIGHTLY-REG-INTEGRITY",
+  "description": "Status must be one of: active, deprecated, draft, retired",
+  "file_path": "registries/REG-SCHEDULES.json",
+  "json_pointer": "/items/0/status",
+  "evidence_refs": [],
+  "created_at": "2026-03-11T08:07:12.026Z",
+  "updated_at": "2026-03-11T08:07:12.026Z"
+}

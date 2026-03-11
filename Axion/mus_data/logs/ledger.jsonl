@@ -11,3 +11,16 @@
 {"timestamp":"2026-03-07T14:32:37.703Z","event":"run_created","actor":"operator","details":{"run_id":"RUN-20260307-8486","mode_id":"MM-04","trigger":"manual"}}
 {"timestamp":"2026-03-07T14:32:37.772Z","event":"run_started","actor":"operator","details":{"run_id":"RUN-20260307-8486","mode_id":"MM-04"}}
 {"timestamp":"2026-03-07T14:32:37.774Z","event":"run_completed","actor":"operator","details":{"run_id":"RUN-20260307-8486","status":"completed","findings_count":0,"proposals_count":0}}
+{"timestamp":"2026-03-11T08:07:08.583Z","event":"task_run_created","actor":"operator","details":{"run_id":"TRUN-mmlra0x2-hnjd","task_ids":["TASK-OPS-01"],"agents":["AGT-OPS-01"]}}
+{"timestamp":"2026-03-11T08:07:08.620Z","event":"task_run_created","actor":"operator","details":{"run_id":"TRUN-mmlra0y4-4ox4","task_ids":["TASK-OPS-01"],"agents":["AGT-OPS-01"]}}
+{"timestamp":"2026-03-11T08:07:12.024Z","event":"task_run_started","actor":"operator","details":{"run_id":"TRUN-mmlra0y4-4ox4","task_ids":["TASK-OPS-01"]}}
+{"timestamp":"2026-03-11T08:07:12.029Z","event":"task_run_completed","actor":"operator","details":{"run_id":"TRUN-mmlra0y4-4ox4","status":"completed","findings":29,"insights":1,"bottlenecks":0,"recommendations":1,"elapsed_ms":5}}
+{"timestamp":"2026-03-11T08:13:32.556Z","event":"task_run_created","actor":"operator","details":{"run_id":"TRUN-mmlri970-0zc0","task_ids":["TASK-PERF-01"],"agents":["AGT-PERF-01"]}}
+{"timestamp":"2026-03-11T08:13:36.536Z","event":"task_run_started","actor":"operator","details":{"run_id":"TRUN-mmlri970-0zc0","task_ids":["TASK-PERF-01"]}}
+{"timestamp":"2026-03-11T08:13:36.537Z","event":"task_run_completed","actor":"operator","details":{"run_id":"TRUN-mmlri970-0zc0","status":"completed","findings":0,"insights":1,"bottlenecks":0,"recommendations":0,"elapsed_ms":1}}
+{"timestamp":"2026-03-11T08:14:13.146Z","event":"task_run_created","actor":"operator","details":{"run_id":"TRUN-mmlrj4ih-y2gx","task_ids":["TASK-PERF-01"],"agents":["AGT-PERF-01"]}}
+{"timestamp":"2026-03-11T08:14:18.340Z","event":"task_run_started","actor":"operator","details":{"run_id":"TRUN-mmlrj4ih-y2gx","task_ids":["TASK-PERF-01"]}}
+{"timestamp":"2026-03-11T08:14:19.125Z","event":"task_run_completed","actor":"operator","details":{"run_id":"TRUN-mmlrj4ih-y2gx","status":"completed","findings":1,"insights":2,"bottlenecks":1,"recommendations":1,"elapsed_ms":785}}
+{"timestamp":"2026-03-11T08:18:47.747Z","event":"task_run_created","actor":"operator","details":{"run_id":"TRUN-mmlrp0ea-r8wx","task_ids":["TASK-PERF-01"],"agents":["AGT-PERF-01"]}}
+{"timestamp":"2026-03-11T08:18:53.855Z","event":"task_run_started","actor":"operator","details":{"run_id":"TRUN-mmlrp0ea-r8wx","task_ids":["TASK-PERF-01"]}}
+{"timestamp":"2026-03-11T08:18:53.875Z","event":"task_run_completed","actor":"operator","details":{"run_id":"TRUN-mmlrp0ea-r8wx","status":"completed","findings":1,"insights":2,"bottlenecks":1,"recommendations":1,"elapsed_ms":20}}

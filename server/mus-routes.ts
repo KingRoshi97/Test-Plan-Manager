@@ -1,7 +1,7 @@
 import { type Express, type Request, type Response } from "express";
 import path from "path";
 import fs from "fs";
-import { validateRegistries, executeRun, loadMusPolicy, getRegistryVersions } from "../Axion/src/core/mus/engine.js";
+import { validateRegistries, executeRun, loadMusPolicy, getRegistryVersions, listAgents, listTasks, createTaskRun, startTaskRun } from "../Axion/src/core/mus/engine.js";
 import { MusStore } from "../Axion/src/core/mus/store.js";
 import { initLedger, appendLedger } from "../Axion/src/core/mus/ledger.js";
 import type { MusRun, MusBudgets, MusScope, MusChangeSet, MusApprovalEvent, MusSuppressionRule, MusScheduleEntry } from "../Axion/src/core/mus/types.js";
@@ -527,6 +527,124 @@ export function registerMusRoutes(app: Express): void {
 
       appendLedger("schedule_toggled", { schedule_id: req.params.id, enabled });
       res.json({ ...schedule, enabled, proposal_only: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/mus/agents", (_req: Request, res: Response) => {
+    try {
+      res.json(listAgents(MUS_LIB_DIR));
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/mus/tasks", (_req: Request, res: Response) => {
+    try {
+      res.json(listTasks(MUS_LIB_DIR));
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/mus/task-runs", (req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const { task_ids, agent_ids, scope, budgets, trigger = "manual" } = req.body;
+
+      if (!task_ids || !Array.isArray(task_ids) || task_ids.length === 0) {
+        return res.status(400).json({ error: "task_ids must be a non-empty array" });
+      }
+
+      const allTasks = listTasks(MUS_LIB_DIR);
+      const unknownTasks = task_ids.filter((id: string) => !allTasks.some(t => t.task_id === id));
+      if (unknownTasks.length > 0) {
+        return res.status(400).json({ error: `Unknown task(s): ${unknownTasks.join(", ")}` });
+      }
+
+      const taskRun = createTaskRun(MUS_LIB_DIR, store, { task_ids, agent_ids, scope, budgets, trigger });
+      res.json(taskRun);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/mus/task-runs/:runId/start", (req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const taskRun = store.getTaskRun(req.params.runId);
+      if (!taskRun) return res.status(404).json({ error: `Task run ${req.params.runId} not found` });
+      if (taskRun.status !== "created") {
+        return res.status(400).json({ error: `Task run is in state '${taskRun.status}', expected 'created'` });
+      }
+
+      const result = startTaskRun(MUS_LIB_DIR, store, taskRun);
+      res.json({
+        taskRun: result.taskRun,
+        findings_count: result.findings.length,
+        insights_count: result.insights.length,
+        bottlenecks_count: result.bottlenecks.length,
+        recommendations_count: result.recommendations.length,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/mus/task-runs", (_req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const runs = store.listTaskRuns().sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      res.json(runs);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/mus/task-runs/:runId", (req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const taskRun = store.getTaskRun(req.params.runId);
+      if (!taskRun) return res.status(404).json({ error: `Task run ${req.params.runId} not found` });
+      res.json(taskRun);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/mus/task-runs/:runId/outputs", (req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const taskRun = store.getTaskRun(req.params.runId);
+      if (!taskRun) return res.status(404).json({ error: `Task run ${req.params.runId} not found` });
+
+      res.json({
+        findings: store.getTaskRunFindings(req.params.runId),
+        insights: store.getRunInsights(req.params.runId),
+        bottlenecks: store.getRunBottlenecks(req.params.runId),
+        recommendations: store.getRunRecommendations(req.params.runId),
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/mus/insights", (_req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const insights = store.listInsights().sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      res.json(insights);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/mus/bottlenecks", (_req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const reports = store.listBottlenecks().sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      res.json(reports);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

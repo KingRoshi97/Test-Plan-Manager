@@ -1,0 +1,13 @@
+{
+  "insight_id": "INS-mmlric9l-2h2z",
+  "run_id": "TRUN-mmlri970-0zc0",
+  "task_id": "TASK-PERF-01",
+  "category": "bottleneck",
+  "narrative": "No pipeline runs directory found at .axion/runs/. Run the Axion pipeline at least once to generate performance telemetry.",
+  "evidence_refs": [],
+  "confidence": 50,
+  "suggested_next_actions": [
+    "Execute a pipeline run to generate stage timing data"
+  ],
+  "created_at": "2026-03-11T08:13:36.537Z"
+}

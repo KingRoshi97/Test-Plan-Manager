@@ -1,0 +1,149 @@
+{
+  "registry_id": "REG-TASKS",
+  "schema_version": "1.0.0",
+  "registry_version": "0.1.0",
+  "description": "Task catalog — defines available maintenance tasks, their intent, required capabilities, and output types",
+  "items": [
+    {
+      "task_id": "TASK-PERF-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Pipeline Bottleneck Finder",
+      "intent": "monitor",
+      "required_capabilities": ["perf_probe", "pipeline_telemetry"],
+      "default_agent_id": "AGT-PERF-01",
+      "inputs_schema": {
+        "scope": {
+          "asset_classes": ["pipeline", "builds", "stages"]
+        },
+        "budgets": {
+          "token_cap": 50000,
+          "time_cap_ms": 120000,
+          "max_findings": 20
+        }
+      },
+      "outputs_enabled": ["insights", "bottlenecks", "recommendations", "findings"],
+      "schedule_allowed": true
+    },
+    {
+      "task_id": "TASK-QUAL-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Detail Depth Opportunities",
+      "intent": "audit",
+      "required_capabilities": ["quality_audit", "depth_analysis"],
+      "default_agent_id": "AGT-QUAL-01",
+      "inputs_schema": {
+        "scope": {
+          "asset_classes": ["templates", "knowledge_library", "artifacts"]
+        },
+        "budgets": {
+          "token_cap": 80000,
+          "time_cap_ms": 180000,
+          "max_findings": 30
+        }
+      },
+      "outputs_enabled": ["insights", "recommendations", "findings"],
+      "schedule_allowed": false
+    },
+    {
+      "task_id": "TASK-QUAL-02",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Template Determinism + Quality Audit",
+      "intent": "audit",
+      "required_capabilities": ["template_lint", "determinism_check"],
+      "default_agent_id": "AGT-QUAL-01",
+      "inputs_schema": {
+        "scope": {
+          "asset_classes": ["templates"]
+        },
+        "budgets": {
+          "token_cap": 60000,
+          "time_cap_ms": 120000,
+          "max_findings": 25
+        }
+      },
+      "outputs_enabled": ["insights", "findings", "recommendations"],
+      "schedule_allowed": false
+    },
+    {
+      "task_id": "TASK-OPS-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Internal Monitor",
+      "intent": "monitor",
+      "required_capabilities": ["drift_scan", "integrity_check"],
+      "default_agent_id": "AGT-OPS-01",
+      "inputs_schema": {
+        "scope": {
+          "asset_classes": ["registries", "templates", "knowledge_library"]
+        },
+        "budgets": {
+          "token_cap": 30000,
+          "time_cap_ms": 60000,
+          "max_findings": 50
+        }
+      },
+      "outputs_enabled": ["insights", "findings", "proofs"],
+      "schedule_allowed": true
+    },
+    {
+      "task_id": "TASK-COST-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Token/Compute Waste Hotspots",
+      "intent": "optimize",
+      "required_capabilities": ["token_analysis", "compute_profiling"],
+      "default_agent_id": "AGT-COST-01",
+      "inputs_schema": {
+        "scope": {
+          "asset_classes": ["pipeline", "builds", "stages", "system"]
+        },
+        "budgets": {
+          "token_cap": 40000,
+          "time_cap_ms": 90000,
+          "max_findings": 15
+        }
+      },
+      "outputs_enabled": ["insights", "bottlenecks", "recommendations"],
+      "schedule_allowed": true
+    },
+    {
+      "task_id": "TASK-SYS-01",
+      "version": "0.1.0",
+      "status": "active",
+      "name": "Internal Integrity / Drift Scan",
+      "intent": "troubleshoot",
+      "required_capabilities": ["drift_scan", "integrity_check", "regression_watch"],
+      "default_agent_id": "AGT-OPS-01",
+      "inputs_schema": {
+        "scope": {
+          "asset_classes": ["registries", "system"]
+        },
+        "budgets": {
+          "token_cap": 30000,
+          "time_cap_ms": 60000,
+          "max_findings": 40
+        }
+      },
+      "outputs_enabled": ["insights", "findings", "recommendations", "proofs"],
+      "schedule_allowed": false
+    }
+  ],
+  "active_map": {
+    "TASK-PERF-01": "0.1.0",
+    "TASK-QUAL-01": "0.1.0",
+    "TASK-QUAL-02": "0.1.0",
+    "TASK-OPS-01": "0.1.0",
+    "TASK-COST-01": "0.1.0",
+    "TASK-SYS-01": "0.1.0"
+  },
+  "invariants": [
+    "task_id must be unique",
+    "default_agent_id must reference a valid agent in REG-AGENTS",
+    "required_capabilities must be non-empty",
+    "outputs_enabled must contain at least one output type"
+  ],
+  "updated_at": "2026-03-11T00:00:00Z"
+}

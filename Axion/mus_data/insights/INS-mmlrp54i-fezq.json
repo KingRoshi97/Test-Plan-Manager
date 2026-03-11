@@ -1,0 +1,26 @@
+{
+  "insight_id": "INS-mmlrp54i-fezq",
+  "run_id": "TRUN-mmlrp0ea-r8wx",
+  "task_id": "TASK-PERF-01",
+  "category": "reliability",
+  "narrative": "Pipeline runtime variability is high: fastest run 17.6s, slowest 29m 29s (101x difference). This suggests non-deterministic factors — likely LLM response time variance or external API latency.",
+  "evidence_refs": [
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000017/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000021/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000024/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000027/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000031/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000032/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000033/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000035/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000036/stage_reports",
+    "/home/runner/workspace/Axion/.axion/runs/RUN-000037/stage_reports"
+  ],
+  "confidence": 85,
+  "suggested_next_actions": [
+    "Implement response caching for deterministic sections",
+    "Add timeout guards for LLM calls",
+    "Consider retry-with-fallback for slow stages"
+  ],
+  "created_at": "2026-03-11T08:18:53.874Z"
+}

@@ -1,0 +1,72 @@
+{
+  "registry_id": "REG-AGENTS",
+  "schema_version": "1.0.0",
+  "registry_version": "0.1.0",
+  "description": "Agent registry — defines available agents and their capabilities for task execution",
+  "items": [
+    {
+      "agent_id": "AGT-PERF-01",
+      "version": "0.1.0",
+      "status": "enabled",
+      "name": "Performance Analyzer",
+      "capabilities": ["perf_probe", "pipeline_telemetry", "stage_timing", "cache_analysis"],
+      "allowed_scopes": ["pipeline", "builds", "stages"],
+      "budgets": {
+        "token_cap": 50000,
+        "time_cap_ms": 120000
+      },
+      "run_policy": "scheduled_allowed"
+    },
+    {
+      "agent_id": "AGT-QUAL-01",
+      "version": "0.1.0",
+      "status": "enabled",
+      "name": "Quality Auditor",
+      "capabilities": ["quality_audit", "template_lint", "depth_analysis", "determinism_check"],
+      "allowed_scopes": ["templates", "knowledge_library", "artifacts"],
+      "budgets": {
+        "token_cap": 80000,
+        "time_cap_ms": 180000
+      },
+      "run_policy": "manual_only"
+    },
+    {
+      "agent_id": "AGT-OPS-01",
+      "version": "0.1.0",
+      "status": "enabled",
+      "name": "Ops Monitor",
+      "capabilities": ["drift_scan", "integrity_check", "regression_watch", "health_check"],
+      "allowed_scopes": ["registries", "templates", "knowledge_library", "system"],
+      "budgets": {
+        "token_cap": 30000,
+        "time_cap_ms": 60000
+      },
+      "run_policy": "scheduled_allowed"
+    },
+    {
+      "agent_id": "AGT-COST-01",
+      "version": "0.1.0",
+      "status": "enabled",
+      "name": "Cost Analyzer",
+      "capabilities": ["token_analysis", "compute_profiling", "waste_detection"],
+      "allowed_scopes": ["pipeline", "builds", "stages", "system"],
+      "budgets": {
+        "token_cap": 40000,
+        "time_cap_ms": 90000
+      },
+      "run_policy": "scheduled_allowed"
+    }
+  ],
+  "active_map": {
+    "AGT-PERF-01": "0.1.0",
+    "AGT-QUAL-01": "0.1.0",
+    "AGT-OPS-01": "0.1.0",
+    "AGT-COST-01": "0.1.0"
+  },
+  "invariants": [
+    "agent_id must be unique",
+    "capabilities must be non-empty",
+    "budgets must have token_cap and time_cap_ms"
+  ],
+  "updated_at": "2026-03-11T00:00:00Z"
+}

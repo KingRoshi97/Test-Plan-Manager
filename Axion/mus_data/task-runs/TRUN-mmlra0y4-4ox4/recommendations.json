@@ -1,0 +1,16 @@
+[
+  {
+    "recommendation_id": "REC-mmlra3kr-4wbb",
+    "run_id": "TRUN-mmlra0y4-4ox4",
+    "task_id": "TASK-OPS-01",
+    "title": "Fix Critical Registry Issues",
+    "description": "23 high/critical findings detected. Run drift detection (TASK-SYS-01) to generate automated fix proposals.",
+    "priority": "high",
+    "estimated_impact": "Resolve 23 registry integrity issues",
+    "suggested_task_ids": [
+      "TASK-SYS-01"
+    ],
+    "convertible_to_changeset": false,
+    "created_at": "2026-03-11T08:07:12.027Z"
+  }
+]

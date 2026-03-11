@@ -3,6 +3,7 @@ import * as path from "path";
 import type {
   MusRun, MusFinding, MusProposalPack, MusBlastRadius,
   MusChangeSet, MusApprovalEvent, MusSuppressionRule, MusProofBundle,
+  TaskRun, Insight, BottleneckReport, Recommendation,
 } from "./types.js";
 
 export class MusStore {
@@ -10,7 +11,7 @@ export class MusStore {
 
   constructor(dataRoot: string) {
     this.dataRoot = dataRoot;
-    for (const sub of ["runs", "findings", "proposals", "changesets", "approvals", "suppressions", "logs"]) {
+    for (const sub of ["runs", "findings", "proposals", "changesets", "approvals", "suppressions", "logs", "task-runs", "insights", "bottlenecks", "recommendations"]) {
       const dir = path.join(dataRoot, sub);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     }
@@ -161,5 +162,98 @@ export class MusStore {
       .filter(f => f.endsWith(".json"))
       .map(f => this.readJson<MusSuppressionRule>(path.join(dir, f)))
       .filter(Boolean) as MusSuppressionRule[];
+  }
+
+  saveTaskRun(taskRun: TaskRun): void {
+    const runDir = path.join(this.dataRoot, "task-runs", taskRun.run_id);
+    this.writeJson(path.join(runDir, "task_run.json"), taskRun);
+  }
+
+  getTaskRun(runId: string): TaskRun | null {
+    return this.readJson(path.join(this.dataRoot, "task-runs", runId, "task_run.json"));
+  }
+
+  listTaskRuns(): TaskRun[] {
+    const dir = path.join(this.dataRoot, "task-runs");
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter(d => d.startsWith("TRUN-"))
+      .map(d => this.readJson<TaskRun>(path.join(dir, d, "task_run.json")))
+      .filter(Boolean) as TaskRun[];
+  }
+
+  saveInsights(runId: string, insights: Insight[]): void {
+    const runDir = path.join(this.dataRoot, "task-runs", runId);
+    this.writeJson(path.join(runDir, "insights.json"), insights);
+    for (const i of insights) {
+      this.writeJson(path.join(this.dataRoot, "insights", `${i.insight_id}.json`), i);
+    }
+  }
+
+  getRunInsights(runId: string): Insight[] {
+    return this.readJson(path.join(this.dataRoot, "task-runs", runId, "insights.json")) ?? [];
+  }
+
+  listInsights(): Insight[] {
+    const dir = path.join(this.dataRoot, "insights");
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter(f => f.endsWith(".json"))
+      .map(f => this.readJson<Insight>(path.join(dir, f)))
+      .filter(Boolean) as Insight[];
+  }
+
+  saveBottlenecks(runId: string, reports: BottleneckReport[]): void {
+    const runDir = path.join(this.dataRoot, "task-runs", runId);
+    this.writeJson(path.join(runDir, "bottlenecks.json"), reports);
+    for (const r of reports) {
+      this.writeJson(path.join(this.dataRoot, "bottlenecks", `${r.report_id}.json`), r);
+    }
+  }
+
+  getRunBottlenecks(runId: string): BottleneckReport[] {
+    return this.readJson(path.join(this.dataRoot, "task-runs", runId, "bottlenecks.json")) ?? [];
+  }
+
+  listBottlenecks(): BottleneckReport[] {
+    const dir = path.join(this.dataRoot, "bottlenecks");
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter(f => f.endsWith(".json"))
+      .map(f => this.readJson<BottleneckReport>(path.join(dir, f)))
+      .filter(Boolean) as BottleneckReport[];
+  }
+
+  saveRecommendations(runId: string, recs: Recommendation[]): void {
+    const runDir = path.join(this.dataRoot, "task-runs", runId);
+    this.writeJson(path.join(runDir, "recommendations.json"), recs);
+    for (const r of recs) {
+      this.writeJson(path.join(this.dataRoot, "recommendations", `${r.recommendation_id}.json`), r);
+    }
+  }
+
+  getRunRecommendations(runId: string): Recommendation[] {
+    return this.readJson(path.join(this.dataRoot, "task-runs", runId, "recommendations.json")) ?? [];
+  }
+
+  listRecommendations(): Recommendation[] {
+    const dir = path.join(this.dataRoot, "recommendations");
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter(f => f.endsWith(".json"))
+      .map(f => this.readJson<Recommendation>(path.join(dir, f)))
+      .filter(Boolean) as Recommendation[];
+  }
+
+  saveTaskRunFindings(runId: string, findings: MusFinding[]): void {
+    const runDir = path.join(this.dataRoot, "task-runs", runId);
+    this.writeJson(path.join(runDir, "findings.json"), findings);
+    for (const f of findings) {
+      this.writeJson(path.join(this.dataRoot, "findings", `${f.finding_id}.json`), f);
+    }
+  }
+
+  getTaskRunFindings(runId: string): MusFinding[] {
+    return this.readJson(path.join(this.dataRoot, "task-runs", runId, "findings.json")) ?? [];
   }
 }

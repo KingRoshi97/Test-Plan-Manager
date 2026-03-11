@@ -1204,9 +1204,9 @@ Data flow: `registry JSON → loader.ts → RunController / CLI / pipeline-runne
 Full MUS implementation: CLI + backend API + frontend UI. Replaces the old unit-based maintenance lifecycle with a proposal-first, consent-gated model.
 
 **Core Engine** (`Axion/src/core/mus/`):
-- `types.ts` — TypeScript interfaces: MusRun, MusFinding, MusProposalPack, MusPatch, MusBlastRadius, MusChangeSet, MusApprovalEvent, MusSuppressionRule, MusProofBundle, MusScheduleEntry, RegistryEnvelope, LedgerEntry
-- `engine.ts` — `validateRegistries(root)` validates all REG-*.json (structure, duplicates, active_map, cross-registry refs); `executeRun()` orchestrates DP-REG-01 (orphan refs, duplicates, status checks) and DP-DRIFT-01 (slug inconsistencies, reference mismatches, missing fields + proposals); budget enforcement stops at caps with COMPLETED_WITH_LIMITS; proof bundle generation; blast radius calculation
-- `store.ts` — File-based `MusStore` class for runs/findings/proposals/changesets/approvals/suppressions under `mus_data/`
+- `types.ts` — TypeScript interfaces: MusRun, MusFinding, MusProposalPack, MusPatch, MusBlastRadius, MusChangeSet, MusApprovalEvent, MusSuppressionRule, MusProofBundle, MusScheduleEntry, RegistryEnvelope, LedgerEntry; **MUS v2 types**: AgentDefinition, TaskDefinition, TaskRun, Insight, BottleneckReport, Recommendation
+- `engine.ts` — v1: `validateRegistries(root)`, `executeRun()` (DP-REG-01, DP-DRIFT-01); **v2**: `listAgents(root)`, `listTasks(root)`, `createTaskRun()`, `startTaskRun()` with task executors for TASK-OPS-01 (ops monitor), TASK-PERF-01 (pipeline bottleneck finder — reads real pipeline stage timing from `.axion/runs/`), TASK-QUAL-01 (depth analysis), TASK-QUAL-02 (template audit), TASK-COST-01 (cost analysis), TASK-SYS-01 (integrity/drift)
+- `store.ts` — File-based `MusStore` class for runs/findings/proposals/changesets/approvals/suppressions under `mus_data/`; **v2**: task-run persistence under `mus_data/task-runs/TRUN-*/`, `saveInsights()`, `saveBottlenecks()`, `saveRecommendations()`, `getInsights()`, `getBottlenecks()`, `getRecommendations()`
 - `ledger.ts` — Append-only JSONL audit ledger at `mus_data/logs/ledger.jsonl`
 
 **Safety Constraints** (hard-enforced):
@@ -1224,41 +1224,27 @@ Full MUS implementation: CLI + backend API + frontend UI. Replaces the old unit-
 - Default root: `./axion_mus_creation/` or `./Axion/libraries/maintenance/`
 - Usage docs: `Axion/MUS_USAGE.md`
 
-**API Endpoints** (`server/mus-routes.ts`, registered via `registerMusRoutes()` in `routes.ts`):
-- `GET /api/mus/status` — MUS_ROOT, registry versions, consent/lock flags, last validation, last run
-- `POST /api/mus/validate` — validate registries, saves last_validation.json
-- `POST /api/mus/runs` — create run (mode_id MM-01/MM-04, trigger, scope, budgets)
-- `POST /api/mus/runs/:runId/start` — execute the run
-- `GET /api/mus/runs` / `GET /api/mus/runs/:runId` — list/get runs
-- `GET /api/mus/runs/:runId/findings` — findings with suppression filtering + query params (status, severity)
-- `PATCH /api/mus/findings/:findingId` — update status (open/acknowledged/resolved)
-- `POST /api/mus/suppressions` / `GET /api/mus/suppressions` — create/list suppression rules
-- `GET /api/mus/proposals` / `GET /api/mus/proposals/:id` — list/get proposal packs
-- `GET /api/mus/runs/:runId/proposals` / `GET /api/mus/runs/:runId/blast-radius` / `GET /api/mus/runs/:runId/proof` — run-specific data
-- `POST /api/mus/changesets` / `GET /api/mus/changesets` / `GET /api/mus/changesets/:id` — create/list/get changesets
-- `POST /api/mus/changesets/:id/apply` — 501 after gate validation (v1)
-- `POST /api/mus/releases/:id/publish` — 501 after gate validation + scheduled hard block (v1)
-- `POST /api/mus/approvals` / `GET /api/mus/approvals` — create/list approval events
-- `GET /api/mus/schedules` / `PATCH /api/mus/schedules/:id` — list/toggle schedules (override file, not mutate registry)
-- Old `/api/maintenance/` read-only endpoints kept for backward compatibility (modes, gates, detectors, patches, schedules, policies, schemas, registries)
+**Registries** (`Axion/libraries/maintenance/registries/`):
+- `REG-AGENTS.json` — 4 agents: AGT-PERF-01 (Performance Analyzer), AGT-QUAL-01 (Quality Auditor), AGT-OPS-01 (Ops Monitor), AGT-COST-01 (Cost Analyzer)
+- `REG-TASKS.json` — 6 tasks: TASK-PERF-01 (Pipeline Bottleneck Finder), TASK-QUAL-01 (Detail Depth), TASK-QUAL-02 (Template Audit), TASK-OPS-01 (Internal Monitor), TASK-COST-01 (Token/Compute Waste), TASK-SYS-01 (Integrity/Drift)
 
-**Frontend** (`App/src/pages/maintenance.tsx`):
-- 7 tabs: Overview, Run, Findings, Proposals, Approvals, Schedules, Registries & Policies
-- Overview: MetricCards (runs, findings, registries, policy), consent/safety gates banner, last validation/run, recent runs list
-- Run: Mode selector (MM-01/MM-04), trigger, scope checkboxes, budget inputs, Validate Registries button, Run Now button with results display
-- Findings: Run selector, severity/status filters, table with acknowledge/suppress/resolve actions
-- Proposals: Expandable proposal packs with risk/confidence/impact, patch list with checkboxes, Create ChangeSet button (partial acceptance)
-- Approvals: Apply/Publish approval form, approval events table, automation actor + scheduled trigger hard blocks
-- Schedules: Toggle switches, proposal-only banner
-- Registries & Policies: Expandable read-only JSON viewers
+**API Endpoints** (`server/mus-routes.ts`, registered via `registerMusRoutes()` in `routes.ts`):
+- v1 mode-based: `GET /api/mus/status`, `POST /api/mus/validate`, `POST /api/mus/runs` (mode_id), `POST /api/mus/runs/:runId/start`, `GET /api/mus/runs`, findings/proposals/changesets/approvals/schedules CRUD
+- **v2 task-based**: `GET /api/mus/agents`, `GET /api/mus/tasks`, `POST /api/mus/task-runs`, `POST /api/mus/task-runs/:runId/start`, `GET /api/mus/task-runs`, `GET /api/mus/task-runs/:runId`, `GET /api/mus/task-runs/:runId/outputs`, `GET /api/mus/insights`, `GET /api/mus/bottlenecks`
+- Old `/api/maintenance/` read-only endpoints kept for backward compatibility
+
+**Frontend** (`App/src/pages/maintenance.tsx`) — "Ops Console":
+- 9 tabs: Overview, Tasks, Task Runs, Findings, Insights, Proposals, Approvals, Schedules, Registries
+- **Tasks**: Task catalog (6 tasks with intent badges, agent assignment, output types), Run Configuration panel (agent override, budget controls), Run Now button with inline results
+- **Task Runs**: Expandable run cards with output counts (F/I/B/R), inline detail view with insights, bottlenecks, recommendations, findings
+- **Insights**: Categorized panels (bottleneck, quality, reliability, cost, general) with confidence scores and suggested actions; bottleneck reports with hotspot bars
+- Overview/Findings/Proposals/Approvals/Schedules/Registries: unchanged from v1
 
 **Data Storage Layout** (`Axion/mus_data/` or `Axion/libraries/mus_data/`):
-- `runs/RUN-YYYYMMDD-XXXX/` — run.json, findings.json, proposal_packs.json, blast_radius.json, proof_bundle.json
-- `findings/FND-*.json` — individual finding files
-- `proposals/PP-*.json` — individual proposal packs
-- `changesets/CS-*.json` — changeset files
-- `approvals/APR-*.json` — approval event files
-- `suppressions/SUP-*.json` — suppression rule files
+- v1: `runs/RUN-YYYYMMDD-XXXX/` — run.json, findings.json, proposal_packs.json, blast_radius.json, proof_bundle.json
+- **v2**: `task-runs/TRUN-*/` — task_run.json, insights.json, bottlenecks.json, recommendations.json, findings.json
+- `insights/INS-*.json`, `bottlenecks/BNR-*.json`, `recommendations/REC-*.json` — individual output files
+- `findings/FND-*.json`, `proposals/PP-*.json`, `changesets/CS-*.json`, `approvals/APR-*.json`, `suppressions/SUP-*.json`
 - `logs/ledger.jsonl` — append-only audit ledger
 
 ### AVCS — Axion Verification & Certification Suite
@@ -1375,7 +1361,11 @@ Post-remediation: `build_manifest.json` updated with remediation summary, `repo_
 - Run: `RUN-[A-Z0-9]{6,}` (pipeline) / `RUN-YYYYMMDD-XXXX` (MUS)
 - IO Contract: `[A-Z0-9_-]+`
 - Rerun request: `RERUN-[A-Z0-9]{6,}`
+- MUS Task Run: `TRUN-{base36ts}-{rand}`
 - MUS Finding: `FND-*`
+- MUS Insight: `INS-*`
+- MUS Bottleneck Report: `BNR-*`
+- MUS Recommendation: `REC-*`
 - MUS Proposal Pack: `PP-*`
 - MUS ChangeSet: `CS-*`
 - MUS Approval: `APR-*`
