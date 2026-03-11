@@ -28,7 +28,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 
 **Grouped Sidebar** (`App/src/components/app-sidebar.tsx`):
 - AXION branding header with gradient AX logo
-- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts, Certification), Intelligence (Features, Doc Inventory, Knowledge Library with 15 sub-items), System (Health, Logs, Maintenance), Output (Export)
+- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts, Certification), Intelligence (Features, Doc Inventory, Knowledge Library with 15 sub-items), System (Analytics Engine, Health, Logs, Maintenance), Output (Export)
 - Knowledge Library label is a clickable nav link → `/knowledge` (Upgrade Matrix Dashboard); chevron toggle separately expands/collapses sub-library list
 - Knowledge Library sub-group auto-expands when any library route is active
 - Live badge counts (active runs count with cyan badge)
@@ -1381,3 +1381,67 @@ Post-remediation: `build_manifest.json` updated with remediation summary, `repo_
 - AVCS Certification Run: `CR-XXXXXX`
 - AVCS Finding: `CF-XXXXXX`
 - AVCS Evidence: `CE-XXXXXX`
+- AAE Event ID: `AAE-EVT-{uuid}`
+- AAE Snapshot ID: `AAE-SNAP-{uuid}`
+
+### Axion Analytics Engine (AAE) — Phase 1
+
+AAE is the single source of truth for all platform metrics, cards, counters, and dashboards. No page computes platform truth locally if AAE can serve it.
+
+**Architecture**: Shared TypeScript contracts → PostgreSQL tables → Server engine → REST API → React frontend.
+
+**Shared Contracts** (`shared/analytics/`):
+- `event-envelope.ts` — `AnalyticsEventEnvelope` type (canonical event format)
+- `metric-registry.ts` — `MetricDefinition` type (metric metadata)
+- `snapshot-store.ts` — `MetricSnapshot`, `TrendPoint` types (stored metric values)
+- `card-registry.ts` — `CardDefinition`, `AnalyticsCardResponse` types (UI card payloads)
+- `api-types.ts` — `AnalyticsApiResponse<T>`, `AnalyticsCommonQuery`, `AnalyticsDimensions`, `BatchCardReadRequest` types (API contracts)
+- `index.ts` — barrel export
+
+**Database Tables** (in `shared/schema.ts`):
+- `analytics_events` — accepted event envelopes (event_id PK, event_type, domain_id, source_system, payload JSONB, dimensions JSONB, dedupe_key, indexes on domain_id/event_type/occurred_at)
+- `analytics_snapshots` — latest metric values (snapshot_id PK, metric_key, window, dimensions_hash, value JSONB, computed_at, freshness_sla_ms, stale flag, unique index on metric_key+window+dimensions_hash)
+- `analytics_trends` — bucketed trend history (point_id PK, metric_key, bucket_start/end, granularity, value JSONB, unique index on metric_key+bucket_start+granularity+dimensions_hash)
+
+**Server Engine** (`server/analytics/`):
+- `analytics-ingest.ts` — event ingestion: validate envelope, stamp accepted_at, dedupe by event_id, store to analytics_events
+- `analytics-registry.ts` — 15 Tier A metric definitions + 14 card definitions (static registries)
+- `analytics-snapshots.ts` — snapshot store: compute metric values from pipelineRuns/assemblies tables + events, upsert to analytics_snapshots, freshness/staleness tracking
+- `analytics-aggregator.ts` — aggregation logic: count/sum/avg/rate/latest, dimension normalization, window resolution (live/24h/7d/30d)
+- `analytics-service.ts` — main facade: getCard(), getCards(), getMetric(), getMetricTrend(), getEngineHealth()
+- `analytics-routes.ts` — Express routes registered via `registerAnalyticsRoutes(app)`
+- `analytics-seed.ts` — startup seeder: scans existing pipelineRuns/assemblies and backfills snapshots
+
+**API Routes** (all return `AnalyticsApiResponse<T>` envelope):
+- `GET /api/analytics/cards/:cardId` — single card payload (query: window, dimensions)
+- `POST /api/analytics/cards` — batch card fetch (body: {cards: [{card_id, window?, dimensions?}]})
+- `GET /api/analytics/metrics/:metricKey` — current metric snapshot
+- `GET /api/analytics/metrics/:metricKey/trend` — trend history (query: start, end, granularity)
+- `GET /api/analytics/registry/metrics` — list registered metrics
+- `GET /api/analytics/registry/cards` — list registered cards
+- `POST /api/analytics/ingest` — accept single event envelope
+- `POST /api/analytics/ingest/batch` — accept batch of events
+- `GET /api/analytics/health` — engine health/stats
+
+**Tier A Metrics (15)**: runs.active.count.live, runs.success.rate.24h, stages.failures.count.24h, stages.duration.avg.24h, gates.failed.count.24h, artifacts.generated.count.24h, maintenance.executions.count.24h, system.health.score.live, agents.active.count.live, verification.pass.rate.24h, cost.tokens.total.24h, runs.started.count.24h, runs.completed.count.24h, runs.blocked.count.live, system.alerts.active.count.live
+
+**Cards (14)**: active-runs, run-success-rate, gate-failures, system-health, runs-started, runs-completed, failed-runs, avg-run-duration, stage-failures, avg-stage-duration, active-agents, verification-rate, token-cost, maintenance-executions
+
+**Frontend Components** (`App/src/components/analytics/`):
+- `AnalyticsCardRenderer.tsx` — dispatches card payload to correct visualization (stat/status) based on value_shape
+- `AnalyticsStatCard.tsx` — stat card with title, value, delta, freshness badge, stale/confidence indicators
+- `AnalyticsStatusCard.tsx` — status card with status icon/label
+- `AnalyticsGrid.tsx` — responsive grid layout for card collections
+- `AnalyticsToolbar.tsx` — window selector (Live/24h/7d/30d), refresh button
+- `AnalyticsLoadingState.tsx`, `AnalyticsEmptyState.tsx`, `AnalyticsErrorState.tsx` — shared state components
+- `AnalyticsStaleBanner.tsx` — stale data warning banner
+
+**Analytics Engine Page** (`App/src/pages/analytics-engine.tsx`):
+- Route: `/analytics` — sidebar under System group
+- Hero strip: engine title, health status (operational badge), stats (metrics/cards/events counts), window selector, refresh
+- Platform Overview section: 4 hero cards (Active Runs, Run Success Rate, Gate Failures, System Health)
+- Run Lifecycle section: Runs Started, Runs Completed, Failed Runs, Avg Run Duration
+- Stage Execution section: Stage Failures, Avg Stage Duration
+- Operations section: Active Agents, Verification Rate, Token Cost, Maintenance Executions
+- All cards fetched individually via GET /api/analytics/cards/:cardId with window param
+- Window selector controls all cards; honest states (loading/stale/empty/error)

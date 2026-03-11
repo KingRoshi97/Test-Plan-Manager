@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Activity,
   Download,
+  BarChart3,
   Hammer,
   ChevronDown,
   Library,
@@ -245,6 +246,7 @@ export function AppSidebar() {
   const system: NavGroup = {
     title: "System",
     items: [
+      { href: "/analytics", label: "Analytics Engine", icon: BarChart3 },
       { href: "/health", label: "Health", icon: Heart },
       { href: "/logs", label: "Logs", icon: ScrollText },
       { href: "/maintenance", label: "Maintenance", icon: Settings },

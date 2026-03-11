@@ -1,0 +1,43 @@
+export type MetricSnapshot = {
+  snapshot_id: string;
+  metric_key: string;
+  metric_version: string;
+  formula_version: string;
+  window: string;
+  dimensions: Record<string, string | number | boolean | null>;
+  dimensions_hash: string;
+  value: number | string | boolean | null;
+  value_type: string;
+  unit: string;
+  status: "ok" | "warn" | "fail" | "unknown";
+  confidence: "high" | "medium" | "low";
+  computed_at: string;
+  source_data_through?: string;
+  freshness_sla_ms: number;
+  stale: boolean;
+  evidence_refs?: string[];
+  lineage_ref?: string;
+};
+
+export type TrendPoint = {
+  point_id: string;
+  metric_key: string;
+  metric_version: string;
+  formula_version: string;
+  bucket_start: string;
+  bucket_end: string;
+  bucket_granularity: string;
+  dimensions: Record<string, string | number | boolean | null>;
+  dimensions_hash: string;
+  value: number | string | boolean | null;
+  value_type: string;
+  unit: string;
+  confidence: "high" | "medium" | "low";
+  quality_flags?: string[];
+  backfilled?: boolean;
+  corrected?: boolean;
+  computed_at: string;
+  source_data_through?: string;
+  evidence_refs?: string[];
+  lineage_ref?: string;
+};

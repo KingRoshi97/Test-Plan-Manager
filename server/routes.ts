@@ -6,6 +6,7 @@ import { generateAutofillSuggestions } from "./openai.js";
 import { getStageOrder, getStageGates, getGatesRequired, getStageNames } from "../Axion/src/core/orchestration/loader.js";
 import { registerMusRoutes } from "./mus-routes.js";
 import { registerAVCSRoutes } from "./avcs-routes.js";
+import { registerAnalyticsRoutes } from "./analytics/analytics-routes.js";
 import fs from "fs";
 import path from "path";
 import archiver from "archiver";
@@ -4377,4 +4378,5 @@ export function registerRoutes(app: Express) {
 
   registerMusRoutes(app);
   registerAVCSRoutes(app);
+  registerAnalyticsRoutes(app);
 }

@@ -3,15 +3,20 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes.js";
+import { seedFromExistingData } from "./analytics/analytics-seed.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: false }));
 
 registerRoutes(app);
+
+seedFromExistingData().catch((err) => {
+  console.error("[AAE] Seed failed:", err instanceof Error ? err.message : err);
+});
 
 const distPath = path.resolve(__dirname, "..", "App", "dist");
 if (fs.existsSync(distPath)) {

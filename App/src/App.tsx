@@ -29,6 +29,7 @@ import KnowledgeLibraryPage from "./pages/knowledge-library";
 import MaintenancePage from "./pages/maintenance";
 import KnowledgeDashboardPage from "./pages/knowledge-dashboard";
 import CertificationPage from "./pages/certification";
+import AnalyticsEnginePage from "./pages/analytics-engine";
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="/ops" component={OpsLibraryPage} />
         <Route path="/knowledge-library" component={KnowledgeLibraryPage} />
         <Route path="/maintenance" component={MaintenancePage} />
+        <Route path="/analytics" component={AnalyticsEnginePage} />
         <Route path="/intake-library" component={IntakeLibraryPage} />
         <Route path="/docs" component={DocInventoryPage} />
         <Route path="/certification/:certRunId" component={CertificationPage} />
