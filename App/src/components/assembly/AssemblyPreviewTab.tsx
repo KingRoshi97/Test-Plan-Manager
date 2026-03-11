@@ -267,6 +267,16 @@ export function AssemblyPreviewTab({ assemblyId, runId, pipelineStatus }: Assemb
     );
   }
 
+  if (status === "ready" && !data?.previewUrl) {
+    return (
+      <PreviewStateCard
+        variant="none"
+        title="No Preview Available"
+        description={data?.error || "Build completed but no previewable files were found in the output."}
+      />
+    );
+  }
+
   if (frameState === "error") {
     return (
       <>

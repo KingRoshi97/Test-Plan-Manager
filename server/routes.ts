@@ -4597,7 +4597,7 @@ export function registerRoutes(app: Express) {
         }
 
         return res.json({
-          status: "ready",
+          status: "none",
           runId,
           buildStatus,
           previewUrl: null,
@@ -4697,16 +4697,17 @@ export function registerRoutes(app: Express) {
       }
 
       if (stat.isDirectory()) {
-        const indexFallback = path.join(fullPath, "index.html");
-        if (fs.existsSync(indexFallback) && !fs.lstatSync(indexFallback).isSymbolicLink()) {
-          return res.sendFile(indexFallback, (err) => {
+        const indexRel = path.join(rel, "index.html");
+        const indexFull = path.join(fullPath, "index.html");
+        if (fs.existsSync(indexFull) && !fs.lstatSync(indexFull).isSymbolicLink()) {
+          return res.sendFile(indexRel, { root: repoDir }, (err) => {
             if (err && !res.headersSent) res.status(404).json({ error: "File not found" });
           });
         }
         return res.status(404).json({ error: "File not found" });
       }
 
-      return res.sendFile(fullPath, (err) => {
+      return res.sendFile(rel, { root: repoDir }, (err) => {
         if (err && !res.headersSent) res.status(404).json({ error: "File not found" });
       });
     } catch (err: any) {
