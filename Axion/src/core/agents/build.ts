@@ -44,24 +44,75 @@ const scopeLimitGuardrail: AgentGuardrail = {
   },
 };
 
+const SECRET_PATTERNS: Array<{ name: string; pattern: RegExp }> = [
+  { name: "AWS Access Key", pattern: /AKIA[0-9A-Z]{16}/ },
+  { name: "API Key (sk-)", pattern: /sk-[A-Za-z0-9]{20,}/ },
+  { name: "API Key (pk-)", pattern: /pk-[A-Za-z0-9]{20,}/ },
+  { name: "Hardcoded password", pattern: /password\s*=\s*['"][^'"]+['"]/ },
+  { name: "Private key header", pattern: /BEGIN[A-Z\s]*PRIVATE KEY/ },
+  { name: "Bearer token", pattern: /Bearer\s+[A-Za-z0-9._\-]{20,}/ },
+  { name: "Hardcoded token", pattern: /token\s*[:=]\s*['"][A-Za-z0-9._\-]{20,}['"]/ },
+];
+
+export function scanForSecrets(content: string): { found: boolean; matches: string[] } {
+  const matches: string[] = [];
+  for (const { name, pattern } of SECRET_PATTERNS) {
+    if (pattern.test(content)) {
+      matches.push(name);
+    }
+  }
+  return { found: matches.length > 0, matches };
+}
+
 const noSecretsPIIGuardrail: AgentGuardrail = {
   guardrail_id: "BA-G03",
   description: "BA cannot include secrets/PII in logs/results",
-  check: (_ctx: AgentContext): GuardrailResult => ({
-    passed: true,
-    guardrail_id: "BA-G03",
-    message: "Secrets/PII filter active",
-  }),
+  check: (ctx: AgentContext): GuardrailResult => {
+    const allContent = ctx.targets.join("\n");
+    const result = scanForSecrets(allContent);
+    return {
+      passed: !result.found,
+      guardrail_id: "BA-G03",
+      message: result.found
+        ? `Secrets/PII detected in context: ${result.matches.join(", ")}`
+        : "No secrets/PII detected in context",
+    };
+  },
 };
+
+export function validateScopeEnforcement(
+  targetPaths: string[],
+  declaredUnitFiles: string[],
+): { passed: boolean; outOfScope: string[] } {
+  if (declaredUnitFiles.length === 0) {
+    return { passed: true, outOfScope: [] };
+  }
+  const outOfScope: string[] = [];
+  for (const target of targetPaths) {
+    const inScope = declaredUnitFiles.some(
+      (declared) => target === declared || target.startsWith(declared + "/"),
+    );
+    if (!inScope) {
+      outOfScope.push(target);
+    }
+  }
+  return { passed: outOfScope.length === 0, outOfScope };
+}
 
 const oneTargetPerUnitGuardrail: AgentGuardrail = {
   guardrail_id: "BA-G04",
-  description: "BA must enforce 1-target-per-unit constraint",
-  check: (_ctx: AgentContext): GuardrailResult => ({
-    passed: true,
-    guardrail_id: "BA-G04",
-    message: "1-target-per-unit enforcement active",
-  }),
+  description: "BA must enforce scope — all targets within declared unit file list",
+  check: (ctx: AgentContext): GuardrailResult => {
+    const declaredFiles = ctx.upstream_artifact_refs ?? [];
+    const result = validateScopeEnforcement(ctx.targets, declaredFiles);
+    return {
+      passed: result.passed,
+      guardrail_id: "BA-G04",
+      message: result.passed
+        ? `All ${ctx.targets.length} target(s) within declared unit scope`
+        : `Scope violation: ${result.outOfScope.length} target(s) outside unit scope: ${result.outOfScope.join(", ")}`,
+    };
+  },
 };
 
 export class BuildAgent extends BaseAgent {

@@ -4,7 +4,7 @@ import { apiRequest } from "../lib/queryClient";
 import {
   Play, Download, Loader2, CheckCircle, XCircle, AlertTriangle,
   Package, FileCode, ChevronRight, RefreshCw, Clock, Zap,
-  ShieldCheck, Eye, ArrowRight, ChevronDown, Wrench, History
+  ShieldCheck, Eye, ArrowRight, ChevronDown, Wrench, History, Undo2
 } from "lucide-react";
 
 interface BuildableRun {
@@ -444,6 +444,17 @@ function AVCSSection({ assemblyId, runId }: { assemblyId: number; runId: string 
     },
   });
 
+  const rollbackMutation = useMutation({
+    mutationFn: async (certRunId: string) => {
+      return apiRequest(`/api/avcs/runs/${certRunId}/rollback`, { method: "POST" });
+    },
+    onSuccess: () => {
+      setRemediationStatus("idle");
+      setRemediationResult(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId, "build"] });
+    },
+  });
+
   const activeRun = avcsRuns.find(r => r.id === activeRunId);
   const previousRuns = avcsRuns.filter(r => r.id !== activeRunId);
   const showRemediate = report && ["FAIL", "CONDITIONAL_PASS", "PASS_WITH_WARNINGS"].includes(report.verdict);
@@ -662,22 +673,36 @@ function AVCSSection({ assemblyId, runId }: { assemblyId: number; runId: string 
                     {remediationResult.errors.slice(0, 3).map((e, i) => <div key={i}>⚠ {e}</div>)}
                   </div>
                 )}
-                <button
-                  onClick={() => {
-                    setRemediationStatus("idle");
-                    setRemediationResult(null);
-                    createRunMutation.mutate();
-                  }}
-                  disabled={createRunMutation.isPending}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                >
-                  {createRunMutation.isPending ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <RefreshCw className="w-3.5 h-3.5" />
-                  )}
-                  Re-certify
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setRemediationStatus("idle");
+                      setRemediationResult(null);
+                      createRunMutation.mutate();
+                    }}
+                    disabled={createRunMutation.isPending}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  >
+                    {createRunMutation.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    )}
+                    Re-certify
+                  </button>
+                  <button
+                    onClick={() => activeRun && rollbackMutation.mutate(activeRun.id)}
+                    disabled={rollbackMutation.isPending}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-300 text-xs font-medium hover:bg-red-900/20 disabled:opacity-50 transition-colors"
+                  >
+                    {rollbackMutation.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Undo2 className="w-3.5 h-3.5" />
+                    )}
+                    Rollback
+                  </button>
+                </div>
               </div>
             )}
 

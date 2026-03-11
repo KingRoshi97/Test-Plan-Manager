@@ -1314,7 +1314,33 @@ Post-build quality gate system. Lifecycle position: Build Mode produces → AVCS
 - FAIL: score < 60 OR critical finding OR blocker
 - BLOCKED: run incomplete or no build to evaluate
 
-**Remediation Flow (BA-Driven Fix)**: Report → RemediationManifest → Build Agent (BA) targeted fix. `remediateFromReport()` in runner.ts instantiates a `BuildAgent` ("BA-REMEDIATION-001") and enforces guardrails (BA-G01 through BA-G04) before proceeding. `fixUnitsFromFindings()` in generator.ts scans the live `repo/` directory to build a complete file inventory, then passes it to `fixFileFromFindings()` so the LLM knows exactly which files exist — critical for fixing broken import paths. The LLM receives: file content, AVCS findings, nearby files, all project directories, and (for repos ≤500 files) the full file list. Each fixed file gets before/after hashes recorded as implementation refs and proof refs. BA produces `ResultArtifact` per unit. Post-remediation: `build_manifest.json` is updated with remediation summary (files fixed/failed/unchanged, certRunId, repackaged flag), `repo_manifest.json` is regenerated with fresh file inventory, and `project_repo.zip` is repackaged via `repackageExportZip()` (bypasses `isExportEligible()` verification check since remediation runs on already-verified builds; includes verification_report.json). Three fallback paths ensure remediation works regardless of build infrastructure: (1) `computeRemediationManifest` falls back to build_plan.json slices when GSE build_unit_inventory.json is missing. (2) `fixUnitsFromFindings` constructs synthetic fix units from fileRemediationContext when no GSE build units match. (3) `remediateFromReport` creates empty GSE plan when strategy file is missing. Remediation status tracked in-memory map in `avcs-routes.ts` (keyed by certRunId), polled by frontend every 3s via `GET /api/avcs/runs/:certRunId/remediation-status`. Frontend shows real progress counts (fixed/failed/unchanged) and handles failure states. BUILD_TRANSITIONS: passed → building and exported → building allowed for remediation.
+**Remediation Flow (BA-Driven Fix)**: Report → RemediationManifest → Build Agent (BA) targeted fix. `remediateFromReport()` in runner.ts instantiates a `BuildAgent` ("BA-REMEDIATION-001") and enforces guardrails (BA-G01 through BA-G04) before proceeding.
+
+**Patch-Based Remediation**: `fixFileFromFindings()` uses a two-phase approach: (1) Primary: asks LLM for a JSON patch object (`{ "patches": [{ startLine, endLine, replacement }] }`) — only the specific lines that need fixing are replaced, all other lines stay byte-for-byte identical. File content sent with line numbers for precise targeting. `applyPatches()` validates non-overlapping patches, applies bottom-up to preserve line numbers. (2) Fallback: if patch parsing/application fails, falls back to full-file rewrite with strict instructions to minimize changes. Each fix records its method (`"patch"` or `"fallback_full_rewrite"`) and diff stats (lines added/removed/unchanged).
+
+**Preservation Gates** (5 gates, all must pass before writing to disk):
+- PG-SIZE: Fixed file must be 25%–400% of original size
+- PG-DIFF-RATIO: No more than 40% of lines can change (surgical, not a rewrite)
+- PG-STRUCTURE: No more than 50% of structural declarations (export/function/class/const/interface/type/enum) can disappear
+- PG-PREAMBLE: Reject if output starts with LLM preamble (markdown fences, "Here is the fixed file", etc.)
+- PG-ENCODING: Reject if output contains null bytes (binary corruption)
+If any gate fails, the file is NOT written — original is preserved, status is `"failed"` with gate violation details. All gate results recorded per-file in `FixFileResult.preservationGates`.
+
+**Pre-Write Backup**: Before overwriting any file, `fixUnitsFromFindings()` creates a timestamped backup at `build/remediation_backups/<timestamp>/` preserving relative paths. `rollbackRemediation(runId)` in runner.ts restores all files from the latest backup, re-exports the zip, and clears the remediation block from build_manifest.json.
+
+**Rollback API**: `POST /api/avcs/runs/:certRunId/rollback` — restores pre-remediation state (files + zip + manifest). Blocked if remediation is currently running (409). Frontend "Rollback" button appears after remediation completes.
+
+**BA Guardrails** (all active):
+- BA-G01: Registry access blocked (executor_type must be external_build)
+- BA-G02: Scope limited to declared targets
+- BA-G03: Secrets/PII filter — scans targets for AWS keys, API keys, passwords, private key headers, Bearer tokens, hardcoded tokens via regex
+- BA-G04: Scope enforcement — validates all target paths exist within declared unit file list
+
+**Concurrent Lock**: Only one remediation can run per build runId at a time (409 Conflict if duplicate attempted).
+
+**File Inventory Context**: `fixUnitsFromFindings()` scans the live `repo/` directory to build a complete file inventory, passed to LLM for accurate import path fixing. Nearby files + directory listing always included; full file list included for repos ≤500 files.
+
+Post-remediation: `build_manifest.json` updated with remediation summary, `repo_manifest.json` regenerated, `project_repo.zip` repackaged via `repackageExportZip()`. Remediation status tracked in-memory map in `avcs-routes.ts`, polled by frontend every 3s. BUILD_TRANSITIONS: passed → building and exported → building allowed for remediation.
 
 **Data Storage** (`Axion/avcs_data/`): runs/, findings/, evidence/, reports/ — flat JSON files.
 
@@ -1329,6 +1355,8 @@ Post-build quality gate system. Lifecycle position: Build Mode produces → AVCS
 - `GET /api/avcs/runs/:certRunId/coverage` — get coverage matrix
 - `PATCH /api/avcs/findings/:findingId` — update finding status (open/acknowledged/resolved/suppressed)
 - `POST /api/avcs/runs/:certRunId/remediate` — trigger targeted remediation rebuild
+- `GET /api/avcs/runs/:certRunId/remediation-status` — poll remediation progress
+- `POST /api/avcs/runs/:certRunId/rollback` — rollback remediation to pre-fix state
 - `GET /api/avcs/status` — global AVCS status
 - `GET /api/avcs/catalog` — test catalog (optional ?domain=, ?mvpOnly=true)
 - `GET /api/avcs/catalog/:testId` — single test definition

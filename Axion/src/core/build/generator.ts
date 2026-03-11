@@ -705,6 +705,9 @@ export interface FixFileResult {
   afterHash: string;
   findingsAddressed: string[];
   error?: string;
+  preservationGates?: Array<{ gate_id: string; passed: boolean; message: string }>;
+  fixMethod?: "patch" | "fallback_full_rewrite";
+  diffStats?: { linesAdded: number; linesRemoved: number; linesUnchanged: number };
 }
 
 export interface FixUnitResult {
@@ -724,34 +727,41 @@ function computeSimpleHash(content: string): string {
   return Math.abs(hash).toString(16).padStart(8, "0");
 }
 
-async function fixFileFromFindings(
-  existingContent: string,
-  filePath: string,
-  findings: RemediationFileContext[],
-  model: string = "gpt-4o",
-  repoFileList?: string[],
-): Promise<string | null> {
-  const findingsBlock = findings.map((f, i) =>
-    `  ${i + 1}. [${f.severity.toUpperCase()}] ${f.findingTitle}\n     Description: ${f.findingDescription}\n     Fix guidance: ${f.remediationGuidance}`
-  ).join("\n\n");
+interface RemediationPatch {
+  startLine: number;
+  endLine: number;
+  replacement: string;
+}
 
-  let fileInventoryBlock = "";
-  if (repoFileList && repoFileList.length > 0) {
-    const dirOfFile = path.dirname(filePath);
-    const nearbyFiles = repoFileList.filter(f => {
-      const fDir = path.dirname(f);
-      return fDir === dirOfFile || fDir.startsWith(dirOfFile + "/") || dirOfFile.startsWith(fDir + "/") || fDir.split("/").slice(0, 2).join("/") === dirOfFile.split("/").slice(0, 2).join("/");
-    });
-    const otherDirs = new Set(repoFileList.map(f => path.dirname(f)));
-    const relevantFiles = nearbyFiles.length > 200 ? nearbyFiles.slice(0, 200) : nearbyFiles;
+interface FixResult {
+  content: string;
+  method: "patch" | "fallback_full_rewrite";
+  patchCount?: number;
+  diffStats: { linesAdded: number; linesRemoved: number; linesUnchanged: number };
+}
 
-    const fullListCap = 500;
-    const showFullList = repoFileList.length <= fullListCap;
+interface PreservationGateResult {
+  gate_id: string;
+  passed: boolean;
+  message: string;
+}
 
-    fileInventoryBlock = `
+function buildFileInventoryBlock(filePath: string, repoFileList?: string[]): string {
+  if (!repoFileList || repoFileList.length === 0) return "";
+  const dirOfFile = path.dirname(filePath);
+  const nearbyFiles = repoFileList.filter(f => {
+    const fDir = path.dirname(f);
+    return fDir === dirOfFile || fDir.startsWith(dirOfFile + "/") || dirOfFile.startsWith(fDir + "/") || fDir.split("/").slice(0, 2).join("/") === dirOfFile.split("/").slice(0, 2).join("/");
+  });
+  const otherDirs = new Set(repoFileList.map(f => path.dirname(f)));
+  const relevantFiles = nearbyFiles.length > 200 ? nearbyFiles.slice(0, 200) : nearbyFiles;
+  const fullListCap = 500;
+  const showFullList = repoFileList.length <= fullListCap;
+
+  return `
 
 PROJECT FILE INVENTORY (${repoFileList.length} total files):
-The following files exist in this project. When fixing imports or references, ONLY use paths that match files in this list. Do NOT invent or guess file names.
+When fixing imports or references, ONLY use paths that match files in this list. Do NOT invent or guess file names.
 
 Files near ${filePath}:
 ${relevantFiles.map(f => "  " + f).join("\n")}
@@ -759,26 +769,228 @@ ${relevantFiles.map(f => "  " + f).join("\n")}
 All project directories:
 ${[...otherDirs].sort().map(d => "  " + d + "/").join("\n")}
 ${showFullList ? `\nFull file list:\n${repoFileList.map(f => "  " + f).join("\n")}` : ""}`;
+}
+
+function parsePatches(raw: string): RemediationPatch[] | null {
+  let cleaned = raw.trim();
+  const jsonMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) cleaned = jsonMatch[1].trim();
+  const braceStart = cleaned.indexOf("{");
+  const braceEnd = cleaned.lastIndexOf("}");
+  if (braceStart === -1 || braceEnd === -1) return null;
+  cleaned = cleaned.slice(braceStart, braceEnd + 1);
+
+  try {
+    const parsed = JSON.parse(cleaned);
+    const patches: RemediationPatch[] = parsed.patches;
+    if (!Array.isArray(patches)) return null;
+    for (const p of patches) {
+      if (typeof p.startLine !== "number" || typeof p.endLine !== "number" || typeof p.replacement !== "string") return null;
+      if (p.startLine < 1 || p.endLine < p.startLine) return null;
+    }
+    return patches;
+  } catch {
+    return null;
+  }
+}
+
+function applyPatches(originalLines: string[], patches: RemediationPatch[]): { content: string; valid: boolean; error?: string } {
+  if (patches.length === 0) return { content: originalLines.join("\n"), valid: true };
+
+  const sorted = [...patches].sort((a, b) => b.startLine - a.startLine);
+  for (let i = 0; i < sorted.length - 1; i++) {
+    if (sorted[i].startLine <= sorted[i + 1].endLine) {
+      return { content: "", valid: false, error: `Overlapping patches at lines ${sorted[i + 1].startLine}-${sorted[i + 1].endLine} and ${sorted[i].startLine}-${sorted[i].endLine}` };
+    }
   }
 
-  const systemPrompt = `You are a senior software engineer performing targeted code remediation. You will receive an existing source file, a list of specific issues found by automated certification analysis (AVCS), and the complete project file inventory. Your job is to fix ONLY the identified issues while preserving all existing functionality, architecture, and coding patterns.
+  const lines = [...originalLines];
+  for (const patch of sorted) {
+    const startIdx = patch.startLine - 1;
+    const endIdx = patch.endLine - 1;
+    if (startIdx >= lines.length) {
+      return { content: "", valid: false, error: `Patch startLine ${patch.startLine} exceeds file length ${lines.length}` };
+    }
+    const clampedEnd = Math.min(endIdx, lines.length - 1);
+    const replacementLines = patch.replacement === "" ? [] : patch.replacement.split("\n");
+    lines.splice(startIdx, clampedEnd - startIdx + 1, ...replacementLines);
+  }
 
-CRITICAL RULES:
-- Output ONLY the complete fixed file content — no explanations, no markdown fences, no comments about changes
-- Fix every listed finding
-- Do NOT add new features, refactor unrelated code, or change the file's purpose
-- Preserve all imports, exports, types, and function signatures unless a finding specifically requires changing them
-- Preserve code style, formatting conventions, and naming patterns
-- If a finding asks to remove something (e.g., hardcoded secrets, eval), replace it with the correct pattern (e.g., environment variable, safe alternative)
-- The output must be a complete, valid, drop-in replacement for the original file
+  return { content: lines.join("\n"), valid: true };
+}
+
+function computeDiffStats(originalLines: string[], fixedLines: string[]): { linesAdded: number; linesRemoved: number; linesUnchanged: number } {
+  let linesUnchanged = 0;
+  const minLen = Math.min(originalLines.length, fixedLines.length);
+  for (let i = 0; i < minLen; i++) {
+    if (originalLines[i] === fixedLines[i]) linesUnchanged++;
+  }
+  const linesRemoved = Math.max(0, originalLines.length - fixedLines.length);
+  const linesAdded = Math.max(0, fixedLines.length - originalLines.length);
+  return { linesAdded, linesRemoved, linesUnchanged };
+}
+
+function runPreservationGates(originalContent: string, fixedContent: string): PreservationGateResult[] {
+  const gates: PreservationGateResult[] = [];
+  const origLen = originalContent.length;
+  const fixLen = fixedContent.length;
+
+  if (origLen > 0) {
+    const sizeRatio = fixLen / origLen;
+    gates.push({
+      gate_id: "PG-SIZE",
+      passed: sizeRatio >= 0.25 && sizeRatio <= 4.0,
+      message: sizeRatio < 0.25 ? `File shrunk to ${(sizeRatio * 100).toFixed(1)}% of original (min 25%)` :
+               sizeRatio > 4.0 ? `File grew to ${(sizeRatio * 100).toFixed(1)}% of original (max 400%)` :
+               `Size ratio ${(sizeRatio * 100).toFixed(1)}% within bounds`,
+    });
+  }
+
+  const origLines = originalContent.split("\n");
+  const fixLines = fixedContent.split("\n");
+  let changedLines = 0;
+  const maxLen = Math.max(origLines.length, fixLines.length);
+  for (let i = 0; i < maxLen; i++) {
+    if ((origLines[i] ?? "") !== (fixLines[i] ?? "")) changedLines++;
+  }
+  const diffRatio = maxLen > 0 ? changedLines / maxLen : 0;
+  gates.push({
+    gate_id: "PG-DIFF-RATIO",
+    passed: diffRatio <= 0.40,
+    message: diffRatio > 0.40 ? `${(diffRatio * 100).toFixed(1)}% of lines changed (max 40%) — fix is too broad` :
+             `${(diffRatio * 100).toFixed(1)}% of lines changed — within surgical threshold`,
+  });
+
+  const structureKeywords = ["export ", "export default", "function ", "class ", "const ", "interface ", "type ", "enum "];
+  const origStructCount = structureKeywords.reduce((sum, kw) => sum + (originalContent.split(kw).length - 1), 0);
+  const fixStructCount = structureKeywords.reduce((sum, kw) => sum + (fixedContent.split(kw).length - 1), 0);
+  if (origStructCount > 0) {
+    const structRatio = fixStructCount / origStructCount;
+    gates.push({
+      gate_id: "PG-STRUCTURE",
+      passed: structRatio >= 0.5,
+      message: structRatio < 0.5 ? `Lost ${((1 - structRatio) * 100).toFixed(0)}% of structural declarations (exports/functions/classes)` :
+               `Structural declarations preserved (${fixStructCount}/${origStructCount})`,
+    });
+  }
+
+  const preamblePatterns = [/^```/, /^Here is/, /^Here's/, /^The fixed/, /^Below is/, /^I've fixed/, /^I have fixed/];
+  const firstLine = fixedContent.trimStart().split("\n")[0] || "";
+  const hasPreamble = preamblePatterns.some(p => p.test(firstLine));
+  gates.push({
+    gate_id: "PG-PREAMBLE",
+    passed: !hasPreamble,
+    message: hasPreamble ? `Output starts with LLM preamble: "${firstLine.slice(0, 60)}..."` :
+             "No LLM preamble detected",
+  });
+
+  const hasNullBytes = fixedContent.includes("\0");
+  gates.push({
+    gate_id: "PG-ENCODING",
+    passed: !hasNullBytes,
+    message: hasNullBytes ? "Fixed content contains null bytes — possible binary corruption" :
+             "Encoding check passed",
+  });
+
+  return gates;
+}
+
+async function fixFileFromFindings(
+  existingContent: string,
+  filePath: string,
+  findings: RemediationFileContext[],
+  model: string = "gpt-4o",
+  repoFileList?: string[],
+): Promise<FixResult | null> {
+  const findingsBlock = findings.map((f, i) =>
+    `  ${i + 1}. [${f.severity.toUpperCase()}] ${f.findingTitle}\n     Description: ${f.findingDescription}\n     Fix guidance: ${f.remediationGuidance}`
+  ).join("\n\n");
+
+  const fileInventoryBlock = buildFileInventoryBlock(filePath, repoFileList);
+  const originalLines = existingContent.split("\n");
+  const numberedContent = originalLines.map((line, i) => `${String(i + 1).padStart(5)}| ${line}`).join("\n");
+
+  const systemPrompt = `You are a senior software engineer performing SURGICAL code remediation. You will receive a source file with line numbers, a list of specific AVCS certification findings, and the project file inventory.
+
+YOUR TASK: Return a JSON patch object that fixes ONLY the identified issues. Every line not explicitly patched stays EXACTLY as-is — byte-for-byte identical.
+
+OUTPUT FORMAT — return ONLY this JSON, no markdown fences, no explanations:
+{
+  "patches": [
+    { "startLine": 12, "endLine": 14, "replacement": "const x = sanitize(input);\\nconst y = validate(x);" },
+    { "startLine": 47, "endLine": 47, "replacement": "import { helper } from './utils/helper';" }
+  ]
+}
+
+PATCH RULES:
+- startLine and endLine are 1-based inclusive line numbers from the original file
+- replacement is the new code that replaces lines startLine through endLine (use \\n for newlines within the replacement)
+- Patches MUST NOT overlap
+- If a finding requires adding new lines, replace the nearest relevant line and include the additions in the replacement
+- If a finding requires removing lines, set replacement to "" (empty string)
+- If no changes are needed, return { "patches": [] }
+- MINIMIZE the number of lines touched — only patch the exact lines that need to change
+- Do NOT reformat, restyle, or reorganize code outside the patch regions
 
 IMPORT PATH RULES:
-- When fixing import paths, you MUST reference files that exist in the PROJECT FILE INVENTORY provided
-- Do NOT guess or invent file paths — only use paths from the inventory
-- Use correct relative path resolution from the current file's directory
-- Do NOT add comments like "// Fixed import path" — just write the correct import`;
+- When fixing import paths, ONLY use paths from the PROJECT FILE INVENTORY
+- Do NOT guess or invent file paths`;
 
   const userPrompt = `FILE: ${filePath}
+
+FINDINGS TO FIX:
+${findingsBlock}
+${fileInventoryBlock}
+
+FILE CONTENT (with line numbers):
+${numberedContent}
+
+Return the JSON patch object:`;
+
+  const maxTokens = Math.min(Math.max(findings.length * 500, 2048), 8192);
+  const result = await generateCode(
+    [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    maxTokens,
+    "REMEDIATION_PATCH",
+    model,
+  );
+
+  if (!result) return null;
+
+  const patches = parsePatches(result);
+  if (patches && patches.length >= 0) {
+    if (patches.length === 0) {
+      return {
+        content: existingContent,
+        method: "patch",
+        patchCount: 0,
+        diffStats: { linesAdded: 0, linesRemoved: 0, linesUnchanged: originalLines.length },
+      };
+    }
+
+    const applied = applyPatches(originalLines, patches);
+    if (applied.valid) {
+      const fixedLines = applied.content.split("\n");
+      return {
+        content: applied.content,
+        method: "patch",
+        patchCount: patches.length,
+        diffStats: computeDiffStats(originalLines, fixedLines),
+      };
+    }
+    console.log(`    [BA-FIX] Patch application failed: ${applied.error} — falling back to full rewrite`);
+  } else {
+    console.log(`    [BA-FIX] Patch parse failed — falling back to full rewrite`);
+  }
+
+  const fallbackSystemPrompt = `You are a senior software engineer performing targeted code remediation. Fix ONLY the identified issues. Preserve ALL existing code exactly as-is for lines that don't need changes.
+
+CRITICAL: Output ONLY the complete fixed file content — no explanations, no markdown fences, no comments about changes. The output must be a drop-in replacement. Do NOT reformat, restyle, or change any line that isn't directly related to a finding.`;
+
+  const fallbackUserPrompt = `FILE: ${filePath}
 
 FINDINGS TO FIX:
 ${findingsBlock}
@@ -789,19 +1001,27 @@ ${existingContent}
 
 Output the complete fixed file:`;
 
-  const maxTokens = Math.min(Math.max(existingContent.split("\n").length * 20, 4096), 16384);
-  const result = await generateCode(
+  const fallbackMaxTokens = Math.min(Math.max(originalLines.length * 20, 4096), 16384);
+  const fallbackResult = await generateCode(
     [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
+      { role: "system", content: fallbackSystemPrompt },
+      { role: "user", content: fallbackUserPrompt },
     ],
-    maxTokens,
-    "REMEDIATION_FIX",
+    fallbackMaxTokens,
+    "REMEDIATION_FIX_FALLBACK",
     model,
   );
 
-  if (!result) return null;
-  return extractCodeBlock(result);
+  if (!fallbackResult) return null;
+  const extracted = extractCodeBlock(fallbackResult);
+  if (!extracted) return null;
+
+  const fixedLines = extracted.split("\n");
+  return {
+    content: extracted,
+    method: "fallback_full_rewrite",
+    diffStats: computeDiffStats(originalLines, fixedLines),
+  };
 }
 
 export async function fixUnitsFromFindings(
@@ -811,10 +1031,15 @@ export async function fixUnitsFromFindings(
   unitIds: string[],
   fileRemediationContext: Map<string, RemediationFileContext[]>,
   onProgress?: ProgressCallback,
-): Promise<{ success: boolean; filesFixed: number; filesUnchanged: number; filesFailed: number; errors: string[]; unitResults: FixUnitResult[] }> {
+): Promise<{ success: boolean; filesFixed: number; filesUnchanged: number; filesFailed: number; errors: string[]; unitResults: FixUnitResult[]; backupDir?: string }> {
   const unitIdSet = new Set(unitIds);
   const strategyMap = new Map<string, GenerationStrategy>();
   for (const s of gsePlan.strategies) strategyMap.set(s.build_unit_id, s);
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const backupDir = path.join(buildDir, "remediation_backups", timestamp);
+  fs.mkdirSync(backupDir, { recursive: true });
+  console.log(`  [BA-REMEDIATION] Backup directory created: ${backupDir}`);
 
   const fileIdToPath = new Map<string, string>();
   const blueprintPath = path.join(buildDir, "repo_blueprint.json");
@@ -971,9 +1196,9 @@ export async function fixUnitsFromFindings(
       console.log(`    [BA-FIX] Fixing ${filePath} (${findings.length} findings, ${existingContent.split("\n").length} lines)`);
 
       try {
-        const fixedContent = await fixFileFromFindings(existingContent, filePath, findings, modelName, repoFileList);
+        const fixResult = await fixFileFromFindings(existingContent, filePath, findings, modelName, repoFileList);
 
-        if (!fixedContent) {
+        if (!fixResult) {
           unitResult.files.push({
             filePath,
             status: "failed",
@@ -988,10 +1213,53 @@ export async function fixUnitsFromFindings(
           continue;
         }
 
-        const afterHash = computeSimpleHash(fixedContent);
+        const gates = runPreservationGates(existingContent, fixResult.content);
+        const failedGates = gates.filter(g => !g.passed);
+        if (failedGates.length > 0) {
+          const gateMsg = failedGates.map(g => `[${g.gate_id}] ${g.message}`).join("; ");
+          console.log(`    [BA-FIX] BLOCKED by preservation gates for ${filePath}: ${gateMsg}`);
+          unitResult.files.push({
+            filePath,
+            status: "failed",
+            beforeHash,
+            afterHash: beforeHash,
+            findingsAddressed: findings.map(f => f.findingTitle),
+            error: `Preservation gate violation: ${gateMsg}`,
+            preservationGates: gates,
+          });
+          filesFailed++;
+          errors.push(`Preservation gate blocked fix for ${filePath}: ${gateMsg}`);
+          unitResult.success = false;
+          continue;
+        }
+
+        console.log(`    [BA-FIX] Preservation gates passed (${gates.length} checks) for ${filePath} [method: ${fixResult.method}${fixResult.patchCount != null ? `, ${fixResult.patchCount} patches` : ""}]`);
+
+        const afterHash = computeSimpleHash(fixResult.content);
+
+        try {
+          const backupFilePath = path.join(backupDir, filePath);
+          fs.mkdirSync(path.dirname(backupFilePath), { recursive: true });
+          fs.copyFileSync(fullPath, backupFilePath);
+        } catch (backupErr: any) {
+          console.log(`    [BA-FIX] BLOCKED: Could not backup ${filePath}: ${backupErr.message} — skipping write to preserve rollback safety`);
+          unitResult.files.push({
+            filePath,
+            status: "failed",
+            beforeHash,
+            afterHash: beforeHash,
+            findingsAddressed: findings.map(f => f.findingTitle),
+            error: `Backup failed — write blocked for rollback safety: ${backupErr.message}`,
+            preservationGates: gates,
+          });
+          filesFailed++;
+          errors.push(`Backup failed for ${filePath} — write blocked`);
+          unitResult.success = false;
+          continue;
+        }
 
         fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-        fs.writeFileSync(fullPath, fixedContent, "utf-8");
+        fs.writeFileSync(fullPath, fixResult.content, "utf-8");
 
         unitResult.files.push({
           filePath,
@@ -999,11 +1267,14 @@ export async function fixUnitsFromFindings(
           beforeHash,
           afterHash,
           findingsAddressed: findings.map(f => f.findingTitle),
+          preservationGates: gates,
+          fixMethod: fixResult.method,
+          diffStats: fixResult.diffStats,
         });
 
         if (afterHash !== beforeHash) {
           filesFixed++;
-          console.log(`    [BA-FIX] Fixed ${filePath} (hash ${beforeHash} → ${afterHash})`);
+          console.log(`    [BA-FIX] Fixed ${filePath} (hash ${beforeHash} → ${afterHash}, ${fixResult.diffStats.linesAdded} added, ${fixResult.diffStats.linesRemoved} removed, ${fixResult.diffStats.linesUnchanged} unchanged)`);
         } else {
           filesUnchanged++;
           console.log(`    [BA-FIX] ${filePath} unchanged after fix attempt`);
@@ -1036,7 +1307,7 @@ export async function fixUnitsFromFindings(
   }
 
   console.log(`  [BA-REMEDIATION] Complete: ${filesFixed} fixed, ${filesUnchanged} unchanged, ${filesFailed} failed`);
-  return { success: filesFailed === 0, filesFixed, filesUnchanged, filesFailed, errors, unitResults };
+  return { success: filesFailed === 0, filesFixed, filesUnchanged, filesFailed, errors, unitResults, backupDir };
 }
 
 async function generateFile(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget, model?: string): Promise<string | null> {

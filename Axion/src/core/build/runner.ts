@@ -544,6 +544,15 @@ export interface RemediationResult {
     filesUnchanged: string[];
     filesFailed: string[];
     resultArtifacts: ResultArtifact[];
+    fileDetails: Array<{
+      filePath: string;
+      status: string;
+      fixMethod?: string;
+      diffStats?: { linesAdded: number; linesRemoved: number; linesUnchanged: number };
+      preservationGates?: Array<{ gate_id: string; passed: boolean; message: string }>;
+      error?: string;
+    }>;
+    backupDir?: string;
   };
 }
 
@@ -572,6 +581,7 @@ export async function remediateFromReport(
       filesUnchanged: [],
       filesFailed: [],
       resultArtifacts: [],
+      fileDetails: [],
     },
   };
 
@@ -721,6 +731,7 @@ export async function remediateFromReport(
     result.filesFailed = fixResult.filesFailed;
     result.errors.push(...fixResult.errors);
     result.success = fixResult.filesFailed === 0 && fixResult.filesFixed > 0;
+    if (fixResult.backupDir) result.remediationLog.backupDir = fixResult.backupDir;
 
     for (const ur of fixResult.unitResults) {
       const implRefs: Array<{ type: "path" | "diff" | "commit"; value: string }> = [];
@@ -740,6 +751,15 @@ export async function remediateFromReport(
         } else {
           result.remediationLog.filesFailed.push(fileResult.filePath);
         }
+
+        result.remediationLog.fileDetails.push({
+          filePath: fileResult.filePath,
+          status: fileResult.status,
+          fixMethod: fileResult.fixMethod,
+          diffStats: fileResult.diffStats,
+          preservationGates: fileResult.preservationGates,
+          error: fileResult.error,
+        });
       }
 
       if (implRefs.length > 0 && proofRefs.length > 0) {
@@ -824,6 +844,95 @@ export async function remediateFromReport(
 
   console.log(`  [BA-REMEDIATION] Complete: ${result.filesRegenerated} fixed, ${result.filesFailed} failed, ${result.remediationLog.filesUnchanged.length} unchanged`);
   return result;
+}
+
+export async function rollbackRemediation(runId: string): Promise<{ success: boolean; filesRestored: number; error?: string }> {
+  const runDir = path.join(AXION_RUNS_DIR, runId);
+  const buildDir = path.join(runDir, "build");
+  const repoDir = path.join(buildDir, "repo");
+  const backupsRoot = path.join(buildDir, "remediation_backups");
+
+  if (!fs.existsSync(backupsRoot)) {
+    return { success: false, filesRestored: 0, error: "No remediation backups found" };
+  }
+
+  let backupDirs: string[];
+  try {
+    backupDirs = fs.readdirSync(backupsRoot)
+      .filter((d: string) => fs.statSync(path.join(backupsRoot, d)).isDirectory())
+      .sort();
+  } catch {
+    return { success: false, filesRestored: 0, error: "Could not read remediation_backups directory" };
+  }
+
+  if (backupDirs.length === 0) {
+    return { success: false, filesRestored: 0, error: "No backup directories found" };
+  }
+
+  const latestBackup = path.join(backupsRoot, backupDirs[backupDirs.length - 1]);
+  console.log(`  [ROLLBACK] Using latest backup: ${latestBackup}`);
+
+  let filesRestored = 0;
+
+  function restoreFiles(dir: string, base: string): void {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relPath = base ? path.join(base, entry.name) : entry.name;
+      if (entry.isDirectory()) {
+        restoreFiles(fullPath, relPath);
+      } else if (entry.isFile()) {
+        const targetPath = path.join(repoDir, relPath);
+        try {
+          fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+          fs.copyFileSync(fullPath, targetPath);
+          filesRestored++;
+          console.log(`  [ROLLBACK] Restored ${relPath}`);
+        } catch (err: any) {
+          console.log(`  [ROLLBACK] Warning: Could not restore ${relPath}: ${err.message}`);
+        }
+      }
+    }
+  }
+
+  try {
+    restoreFiles(latestBackup, "");
+  } catch (err: any) {
+    return { success: false, filesRestored, error: `Restore failed: ${err.message}` };
+  }
+
+  console.log(`  [ROLLBACK] Restored ${filesRestored} files from backup`);
+
+  const zipPath = path.join(buildDir, "project_repo.zip");
+  const buildManifestPath = path.join(buildDir, "build_manifest.json");
+  const repoManifestPath = path.join(buildDir, "repo_manifest.json");
+  const verificationReportPath = path.join(buildDir, "verification_report.json");
+
+  try {
+    console.log(`  [ROLLBACK] Repackaging export zip...`);
+    const repackResult = await repackageExportZip(repoDir, zipPath, buildManifestPath, repoManifestPath, verificationReportPath);
+    if (repackResult.success) {
+      console.log(`  [ROLLBACK] Export zip repackaged: ${repackResult.sizeBytes} bytes`);
+    } else {
+      console.log(`  [ROLLBACK] Warning: Zip repackaging failed: ${repackResult.error}`);
+    }
+  } catch (err: any) {
+    console.log(`  [ROLLBACK] Warning: Zip repackaging error: ${err.message}`);
+  }
+
+  try {
+    if (fs.existsSync(buildManifestPath)) {
+      const manifest = JSON.parse(fs.readFileSync(buildManifestPath, "utf-8"));
+      manifest.remediation = null;
+      fs.writeFileSync(buildManifestPath, JSON.stringify(manifest, null, 2), "utf-8");
+      console.log(`  [ROLLBACK] Cleared remediation block from build_manifest.json`);
+    }
+  } catch (err: any) {
+    console.log(`  [ROLLBACK] Warning: Could not update build_manifest.json: ${err.message}`);
+  }
+
+  console.log(`  [ROLLBACK] Rollback complete: ${filesRestored} files restored`);
+  return { success: true, filesRestored };
 }
 
 function refreshRepoManifest(repoDir: string, buildDir: string): any {

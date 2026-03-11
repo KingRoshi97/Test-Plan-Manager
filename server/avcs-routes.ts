@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { AVCSStore } from "../Axion/src/core/avcs/store.js";
 import { planRun, executeRun, getAVCSStatus } from "../Axion/src/core/avcs/engine.js";
-import { remediateFromReport } from "../Axion/src/core/build/runner.js";
+import { remediateFromReport, rollbackRemediation } from "../Axion/src/core/build/runner.js";
 import type { CertificationRunType, AVCSTestDomain } from "../Axion/src/core/avcs/types.js";
 import { TEST_CATALOG, getTestById, getTestsByDomain, getMVPTests } from "../Axion/src/core/avcs/test-catalog.js";
 import { TOOL_REGISTRY } from "../Axion/src/core/avcs/tool-registry.js";
@@ -16,6 +16,7 @@ const AXION_RUNS = path.join(AXION_ROOT, ".axion", "runs");
 
 interface RemediationTracker {
   status: "running" | "complete" | "failed";
+  runId: string;
   startedAt: string;
   completedAt?: string;
   filesFixed: number;
@@ -223,9 +224,17 @@ export function registerAVCSRoutes(app: Express): void {
         return res.status(404).json({ error: "Report not found for this run" });
       }
 
+      const buildRunId = run.run_id;
+      for (const [, tracker] of remediationStatus) {
+        if (tracker.status === "running" && tracker.runId === buildRunId) {
+          return res.status(409).json({ error: "Remediation already in progress for this build" });
+        }
+      }
+
       const certRunId = run.id;
       remediationStatus.set(certRunId, {
         status: "running",
+        runId: buildRunId,
         startedAt: new Date().toISOString(),
         filesFixed: 0,
         filesFailed: 0,
@@ -276,6 +285,38 @@ export function registerAVCSRoutes(app: Express): void {
         filesUnchanged: tracker.filesUnchanged,
         errors: tracker.errors,
       });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/avcs/runs/:certRunId/rollback", async (req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const run = store.getRun(req.params.certRunId);
+      if (!run) {
+        return res.status(404).json({ error: "Certification run not found" });
+      }
+
+      for (const [, t] of remediationStatus) {
+        if (t.status === "running" && t.runId === run.run_id) {
+          return res.status(409).json({ error: "Cannot rollback while remediation is in progress for this build" });
+        }
+      }
+
+      console.log(`[AVCS] Rolling back remediation for cert run ${run.id}, build run ${run.run_id}`);
+      const result = await rollbackRemediation(run.run_id);
+
+      if (result.success) {
+        if (tracker) {
+          tracker.status = "rolled_back" as any;
+          tracker.completedAt = new Date().toISOString();
+        }
+        console.log(`[AVCS] Rollback complete: ${result.filesRestored} files restored`);
+        res.json({ status: "rolled_back", filesRestored: result.filesRestored });
+      } else {
+        res.status(500).json({ error: result.error || "Rollback failed" });
+      }
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
