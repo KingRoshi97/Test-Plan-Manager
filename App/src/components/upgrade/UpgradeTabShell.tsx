@@ -131,6 +131,13 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
     onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to generate plan"),
   });
 
+  const regeneratePlanMutation = useMutation({
+    mutationFn: (sessionId: string) =>
+      apiRequest(`${base}/upgrades/sessions/${sessionId}/plan/regenerate`, { method: "POST" }),
+    onSuccess: () => { toast.success("Plan regenerated"); invalidateAll(); },
+    onError: (e: unknown) => toast.error(getErrorMessage(e) || "Failed to regenerate plan"),
+  });
+
   const approvePlanMutation = useMutation({
     mutationFn: (sessionId: string) =>
       apiRequest(`${base}/upgrades/sessions/${sessionId}/plan/approve`, { method: "POST" }),
@@ -359,7 +366,7 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
                 error={getErrorMessage(generatePlanMutation.error) || getErrorMessage(approvePlanMutation.error)}
                 onGeneratePlan={(id) => generatePlanMutation.mutate(id)}
                 onApprovePlan={(id) => approvePlanMutation.mutate(id)}
-                onRegeneratePlan={(id) => generatePlanMutation.mutate(id)}
+                onRegeneratePlan={(id) => regeneratePlanMutation.mutate(id)}
                 onCancelSession={(id) => cancelSessionMutation.mutate(id)}
               />
             )}

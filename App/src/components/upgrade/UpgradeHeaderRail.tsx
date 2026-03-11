@@ -33,7 +33,7 @@ export function UpgradeHeaderRail({
       <div className={`p-4 border-l-2 ${borderColor}`}>
         <div className="flex flex-wrap items-start gap-6">
           <div className="flex-1 min-w-0">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               <div>
                 <div className="text-[10px] font-medium uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">Active Revision</div>
                 {activeRevision ? (
@@ -43,6 +43,21 @@ export function UpgradeHeaderRail({
                   </div>
                 ) : (
                   <div className="text-xs text-[hsl(var(--muted-foreground))]">No baseline</div>
+                )}
+              </div>
+
+              <div>
+                <div className="text-[10px] font-medium uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">Source</div>
+                {sourceRevision ? (
+                  <div className="space-y-1">
+                    <div className={`text-sm font-semibold ${sourceRevision.id === activeRevision?.id ? "text-[hsl(var(--foreground))]" : "text-amber-400"}`}>
+                      Rev #{sourceRevision.revisionNumber}
+                      {sourceRevision.id === activeRevision?.id && <span className="text-[10px] text-[hsl(var(--muted-foreground))] ml-1">(active)</span>}
+                    </div>
+                    <RevisionStatusChip status={sourceRevision.status} />
+                  </div>
+                ) : (
+                  <div className="text-xs text-[hsl(var(--muted-foreground))]">—</div>
                 )}
               </div>
 
