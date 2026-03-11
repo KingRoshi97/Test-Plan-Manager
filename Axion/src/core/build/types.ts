@@ -185,6 +185,7 @@ export interface VerificationReport {
     warnings: number;
   };
   exportEligible: boolean;
+  fidelity?: BuildFidelityReport;
 }
 
 export interface VerificationCategory {
@@ -422,6 +423,23 @@ export interface BlueprintSubsystem {
   layer: string;
 }
 
+export type BuildProfile = "lean" | "standard" | "enterprise";
+
+export type ArtifactJustification =
+  | "functional"
+  | "structural"
+  | "verification"
+  | "operational"
+  | "support_dependency";
+
+export interface BuildProfileConfig {
+  profile: BuildProfile;
+  verification_depth: "minimal" | "standard" | "thorough";
+  ops_tier: "none" | "basic" | "full";
+  contract_tier: "none" | "internal" | "explicit";
+  persistence_tier: "none" | "basic" | "managed";
+}
+
 export interface BlueprintFileEntry {
   file_id: string;
   path: string;
@@ -433,6 +451,8 @@ export interface BlueprintFileEntry {
   source_refs: string[];
   trace_refs: string[];
   description: string;
+  required_reason?: string;
+  justification?: ArtifactJustification;
 }
 
 export interface DirectoryLayout {
@@ -484,6 +504,7 @@ export interface RepoBlueprint {
   expected_file_count: number;
   file_count_breakdown: FileCountBreakdown;
   traceability_map: RequirementTraceEntry[];
+  build_profile?: BuildProfileConfig;
   created_at: string;
   updated_at: string;
   status: "active" | "superseded";
@@ -493,4 +514,100 @@ export interface BlueprintGateResult {
   passed: boolean;
   conditions: Array<{ condition_id: string; description: string; passed: boolean; detail?: string }>;
   blockers: string[];
+}
+
+export type BuildUnitType =
+  | "entity_unit"
+  | "endpoint_unit"
+  | "screen_unit"
+  | "shared_unit"
+  | "infra_unit"
+  | "verification_unit";
+
+export type ComplexityClass = "C0" | "C1" | "C2" | "C3" | "C4";
+
+export type GenerationMode = "deterministic" | "template" | "cheap_model" | "full_model";
+
+export type ModelTier = "none" | "mini" | "full";
+
+export interface BuildUnit {
+  id: string;
+  unit_type: BuildUnitType;
+  name: string;
+  file_ids: string[];
+  dependency_unit_ids: string[];
+  source_refs: string[];
+  context_capsule?: ContextCapsule;
+}
+
+export interface ContextCapsule {
+  unit_id: string;
+  entity_slice?: { name: string; fields: string[]; relationships: string[] };
+  endpoint_slice?: { path: string; method: string; request_schema?: string; response_schema?: string };
+  auth_slice?: { auth_required: boolean; roles?: string[]; permissions?: string[] };
+  fields_summary?: string;
+  requirements_summary?: string;
+  estimated_tokens: number;
+}
+
+export interface ComplexityProfile {
+  build_unit_id: string;
+  complexity_class: ComplexityClass;
+  score: number;
+  scoring_factors: Record<string, number>;
+  rationale: string;
+}
+
+export interface GenerationStrategy {
+  build_unit_id: string;
+  generation_mode: GenerationMode;
+  model_tier: ModelTier;
+  rationale: string;
+}
+
+export interface WavePlan {
+  waves: WaveEntry[];
+}
+
+export interface WaveEntry {
+  wave_id: string;
+  order: number;
+  unit_ids: string[];
+  parallelizable: boolean;
+}
+
+export interface CostForecast {
+  total_estimated_tokens: number;
+  estimated_cost_usd: number;
+  by_mode: Record<GenerationMode, { file_count: number; estimated_tokens: number; estimated_cost_usd: number }>;
+  expensive_units: string[];
+}
+
+export interface GenerationStrategyPlan {
+  build_units: BuildUnit[];
+  complexity_profiles: ComplexityProfile[];
+  strategies: GenerationStrategy[];
+  wave_plan: WavePlan;
+  cost_forecast: CostForecast;
+}
+
+export interface UnitGenerationResult {
+  unit_id: string;
+  files_produced: Array<{ path: string; content: string }>;
+  tokens_used: number;
+  model_used: string;
+  success: boolean;
+  structural_violations: string[];
+}
+
+export interface BuildFidelityReport {
+  planned_files: number;
+  generated_files: number;
+  verified_files: number;
+  failed_files: number;
+  fidelity_pct: number;
+  llm_file_count: number;
+  llm_usage_pct: number;
+  deterministic_pct: number;
+  structural_violations: number;
 }

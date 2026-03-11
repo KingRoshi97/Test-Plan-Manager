@@ -1,7 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
 import { recordUsage } from "../usage/tracker.js";
-import type { BuildPlan, BuildSlice, BuildFileTarget, StackProfile } from "./types.js";
+import type {
+  BuildPlan, BuildSlice, BuildFileTarget, StackProfile,
+  GenerationStrategyPlan, BuildUnit, GenerationStrategy, ContextCapsule,
+  UnitGenerationResult, BlueprintFileEntry,
+} from "./types.js";
 import type { WorkspacePaths } from "./workspace.js";
 import { writeRepoFile, ensureRepoSubdir } from "./workspace.js";
 
@@ -27,12 +31,12 @@ async function getClient(): Promise<any | null> {
   }
 }
 
-async function generateCode(messages: OpenAIMessage[], maxTokens = 4096, stage = "BUILD"): Promise<string | null> {
+async function generateCode(messages: OpenAIMessage[], maxTokens = 4096, stage = "BUILD", model = "gpt-4o"): Promise<string | null> {
   const client = await getClient();
   if (!client) return null;
   try {
     const response = await client.chat.completions.create({
-      model: "gpt-4o",
+      model,
       messages,
       max_completion_tokens: maxTokens,
     });
@@ -40,14 +44,14 @@ async function generateCode(messages: OpenAIMessage[], maxTokens = 4096, stage =
     if (usage) {
       recordUsage({
         stage,
-        model: "gpt-4o",
+        model,
         promptTokens: usage.prompt_tokens ?? 0,
         completionTokens: usage.completion_tokens ?? 0,
       });
     }
     return response.choices[0]?.message?.content ?? null;
   } catch (err: any) {
-    console.log(`  [BUILD] AI call failed: ${err.message ?? err}`);
+    console.log(`  [BUILD] AI call failed (${model}): ${err.message ?? err}`);
     return null;
   }
 }
@@ -214,13 +218,304 @@ export interface GeneratorProgress {
 
 export type ProgressCallback = (progress: GeneratorProgress) => void;
 
+function buildFrozenSystemPrompt(ctx: KitContext): string {
+  const lang = ctx.stackProfile.language === "typescript" ? "TypeScript" : "JavaScript";
+  const framework = ctx.stackProfile.framework;
+
+  const availablePackages = [
+    "react", "react-dom", "react-router-dom",
+    "zod", "@tanstack/react-query", "clsx",
+    "axios", "lucide-react", "date-fns", "react-hook-form",
+  ];
+  if (ctx.stackProfile.cssFramework?.includes("tailwind")) availablePackages.push("tailwindcss");
+
+  const overview = extractProjectOverview(ctx);
+  let projectIdentity = `Project: ${ctx.projectName}`;
+  if (overview) projectIdentity += `\nOverview: ${overview}`;
+
+  return `You are a code generator for the Axion Build System. You generate production-quality ${lang} code for a ${framework} application.
+
+${projectIdentity}
+
+CRITICAL RULES:
+- Generate ONLY raw file content. No markdown fences. No explanations.
+- Stack: ${framework}, ${lang}, ${ctx.stackProfile.runtime}
+- Use provided API contracts, data models, and specs as source of truth
+- Do NOT invent features, routes, or entities not in the spec
+- ONLY import from AVAILABLE PACKAGES below
+- All page/component files use default exports
+- Use clean, idiomatic code with proper error handling
+- BrowserRouter is in src/main.tsx. Do NOT import or use BrowserRouter in any component.
+- Missing info placeholder: "// TODO: [AXION] Requires spec clarification"
+
+AVAILABLE PACKAGES: ${availablePackages.join(", ")}
+
+AUTH: AuthProvider & useAuthContext from src/lib/auth/AuthContext, ProtectedRoute from src/lib/auth/ProtectedRoute
+VALIDATION: zod for schemas (import { z } from "zod")`;
+}
+
+function parseMultiFileOutput(raw: string): Array<{ path: string; content: string }> | null {
+  const filePattern = /===FILE:\s*(.+?)===\s*\n([\s\S]*?)(?=\n===FILE:|$)/g;
+  const results: Array<{ path: string; content: string }> = [];
+  let match;
+  while ((match = filePattern.exec(raw)) !== null) {
+    const filePath = match[1].trim();
+    let content = match[2].trim();
+    content = extractCodeBlock(content) || content;
+    if (filePath && content) {
+      results.push({ path: filePath, content });
+    }
+  }
+  return results.length > 0 ? results : null;
+}
+
+function resolveModelForStrategy(strategy: GenerationStrategy): string {
+  if (strategy.generation_mode === "deterministic" || strategy.generation_mode === "template") {
+    return "none";
+  }
+  if (strategy.model_tier === "mini") return "gpt-4o-mini";
+  if (strategy.model_tier === "full") return "gpt-4o";
+  return "gpt-4o";
+}
+
+async function generateUnit(
+  unit: BuildUnit,
+  strategy: GenerationStrategy,
+  capsule: ContextCapsule | undefined,
+  frozenSystemPrompt: string,
+  ctx: KitContext,
+  plan: BuildPlan,
+  fileInventory: BlueprintFileEntry[],
+  paths: WorkspacePaths,
+): Promise<UnitGenerationResult> {
+  const inventoryPaths = new Set(fileInventory.map(f => f.path));
+  const fileMap = new Map<string, BlueprintFileEntry>();
+  for (const f of fileInventory) fileMap.set(f.file_id, f);
+
+  const unitFiles = unit.file_ids
+    .map(id => fileMap.get(id))
+    .filter(Boolean) as BlueprintFileEntry[];
+
+  const result: UnitGenerationResult = {
+    unit_id: unit.id,
+    files_produced: [],
+    tokens_used: 0,
+    model_used: "none",
+    success: true,
+    structural_violations: [],
+  };
+
+  if (strategy.generation_mode === "deterministic" || strategy.generation_mode === "template") {
+    for (const entry of unitFiles) {
+      const buildFileTarget: BuildFileTarget = {
+        relativePath: entry.path,
+        role: entry.role,
+        sourceRef: entry.source_refs[0],
+        generationMethod: "deterministic",
+        status: "pending",
+      };
+      const dummySlice: BuildSlice = {
+        sliceId: unit.id,
+        name: unit.name,
+        order: 0,
+        requiresAI: false,
+        files: [],
+        status: "in_progress",
+      };
+      const content = generateDeterministic(ctx, dummySlice, buildFileTarget);
+      if (content !== null) {
+        if (!inventoryPaths.has(entry.path)) {
+          result.structural_violations.push(`Rejected path not in inventory: ${entry.path}`);
+        } else {
+          result.files_produced.push({ path: entry.path, content });
+        }
+      }
+    }
+    result.model_used = "none";
+    return result;
+  }
+
+  const modelName = resolveModelForStrategy(strategy);
+  result.model_used = modelName;
+
+  const fileTargets = unitFiles.map(f => `- ${f.path} (role: ${f.role})`).join("\n");
+
+  let capsuleContext = "";
+  if (capsule) {
+    if (capsule.entity_slice) {
+      capsuleContext += `\nEntity: ${capsule.entity_slice.name}\nFields: ${capsule.entity_slice.fields.join(", ")}\nRelationships: ${capsule.entity_slice.relationships.join(", ")}`;
+    }
+    if (capsule.endpoint_slice) {
+      capsuleContext += `\nEndpoint: ${capsule.endpoint_slice.method} ${capsule.endpoint_slice.path}`;
+    }
+    if (capsule.auth_slice) {
+      capsuleContext += `\nAuth required: ${capsule.auth_slice.auth_required}`;
+      if (capsule.auth_slice.roles) capsuleContext += ` Roles: ${capsule.auth_slice.roles.join(", ")}`;
+    }
+    if (capsule.requirements_summary) {
+      capsuleContext += `\n${capsule.requirements_summary}`;
+    }
+    if (capsule.fields_summary) {
+      capsuleContext += `\n${capsule.fields_summary}`;
+    }
+  }
+
+  const designDirective = buildDesignDirective(ctx);
+
+  const userPrompt = `Generate the following files for unit "${unit.name}" (${unit.unit_type}):
+
+${fileTargets}
+
+CONTEXT:${capsuleContext}
+${designDirective}
+
+Features: ${ctx.features.map(f => `${f.feature_id}: ${f.name}`).join(", ")}
+Roles: ${ctx.roles.map(r => `${r.role_id}: ${r.name}`).join(", ")}
+
+OUTPUT FORMAT: For each file, output exactly:
+===FILE: <path>===
+<file content>
+
+Generate all ${unitFiles.length} files. Each file must be complete, production-quality code.`;
+
+  const maxTokens = Math.min(unitFiles.length * 4096, 16384);
+  console.log(`    [BUILD-UNIT] Calling ${modelName} for unit ${unit.name} (${unitFiles.length} files, maxTokens=${maxTokens})...`);
+
+  const rawResult = await generateCode(
+    [
+      { role: "system", content: frozenSystemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    maxTokens,
+    `BUILD_UNIT_${unit.id}`,
+    modelName,
+  );
+
+  if (!rawResult) {
+    console.log(`    [BUILD-UNIT] LLM returned empty for unit ${unit.name}, falling back to file-by-file`);
+    return await generateUnitFileByFile(unit, unitFiles, ctx, plan, paths, inventoryPaths, modelName, result);
+  }
+
+  const parsed = parseMultiFileOutput(rawResult);
+
+  if (!parsed || parsed.length === 0) {
+    console.log(`    [BUILD-UNIT] Multi-file parsing failed for unit ${unit.name}, falling back to file-by-file`);
+    return await generateUnitFileByFile(unit, unitFiles, ctx, plan, paths, inventoryPaths, modelName, result);
+  }
+
+  console.log(`    [BUILD-UNIT] Parsed ${parsed.length}/${unitFiles.length} files from unit response`);
+
+  const producedPaths = new Set<string>();
+  for (const produced of parsed) {
+    if (!inventoryPaths.has(produced.path)) {
+      result.structural_violations.push(`Rejected invented path: ${produced.path}`);
+      console.log(`    [BUILD-UNIT] STRUCTURAL VIOLATION: ${produced.path} not in inventory`);
+      continue;
+    }
+    producedPaths.add(produced.path);
+    result.files_produced.push(produced);
+  }
+
+  const missingFiles = unitFiles.filter(f => !producedPaths.has(f.path));
+  if (missingFiles.length > 0) {
+    console.log(`    [BUILD-UNIT] ${missingFiles.length} files missing from unit response, generating individually`);
+    for (const missing of missingFiles) {
+      const buildFileTarget: BuildFileTarget = {
+        relativePath: missing.path,
+        role: missing.role,
+        sourceRef: missing.source_refs[0],
+        generationMethod: missing.generation_method,
+        status: "pending",
+      };
+      const dummySlice: BuildSlice = {
+        sliceId: unit.id,
+        name: unit.name,
+        order: 0,
+        requiresAI: true,
+        files: [],
+        status: "in_progress",
+      };
+      try {
+        const content = await generateFile(ctx, dummySlice, buildFileTarget, modelName);
+        if (content !== null) {
+          result.files_produced.push({ path: missing.path, content });
+        }
+      } catch {
+        result.success = false;
+      }
+    }
+  }
+
+  return result;
+}
+
+async function generateUnitFileByFile(
+  unit: BuildUnit,
+  unitFiles: BlueprintFileEntry[],
+  ctx: KitContext,
+  _plan: BuildPlan,
+  _paths: WorkspacePaths,
+  inventoryPaths: Set<string>,
+  modelName: string,
+  result: UnitGenerationResult,
+): Promise<UnitGenerationResult> {
+  result.model_used = modelName;
+  for (const entry of unitFiles) {
+    const buildFileTarget: BuildFileTarget = {
+      relativePath: entry.path,
+      role: entry.role,
+      sourceRef: entry.source_refs[0],
+      generationMethod: entry.generation_method,
+      status: "pending",
+    };
+    const dummySlice: BuildSlice = {
+      sliceId: unit.id,
+      name: unit.name,
+      order: 0,
+      requiresAI: entry.generation_method === "ai_assisted",
+      files: [],
+      status: "in_progress",
+    };
+    try {
+      const content = await generateFile(ctx, dummySlice, buildFileTarget, modelName);
+      if (content !== null) {
+        if (!inventoryPaths.has(entry.path)) {
+          result.structural_violations.push(`Rejected path not in inventory: ${entry.path}`);
+        } else {
+          result.files_produced.push({ path: entry.path, content });
+        }
+      } else {
+        result.success = false;
+      }
+    } catch {
+      result.success = false;
+    }
+  }
+  return result;
+}
+
 export async function generateRepo(
   runDir: string,
   plan: BuildPlan,
   paths: WorkspacePaths,
   onProgress?: ProgressCallback,
-): Promise<{ success: boolean; filesGenerated: number; filesFailed: number; errors: string[] }> {
+  strategyPlan?: GenerationStrategyPlan,
+): Promise<{ success: boolean; filesGenerated: number; filesFailed: number; errors: string[]; unitResults?: UnitGenerationResult[] }> {
   const ctx = loadKitContext(runDir, plan);
+
+  if (strategyPlan) {
+    return generateRepoUnitCentric(runDir, plan, paths, ctx, strategyPlan, onProgress);
+  }
+
+  return generateRepoFileCentric(plan, paths, ctx, onProgress);
+}
+
+async function generateRepoFileCentric(
+  plan: BuildPlan,
+  paths: WorkspacePaths,
+  ctx: KitContext,
+  onProgress?: ProgressCallback,
+): Promise<{ success: boolean; filesGenerated: number; filesFailed: number; errors: string[] }> {
   let filesGenerated = 0;
   let filesFailed = 0;
   const errors: string[] = [];
@@ -280,11 +575,127 @@ export async function generateRepo(
   return { success: filesFailed === 0, filesGenerated, filesFailed, errors };
 }
 
-async function generateFile(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget): Promise<string | null> {
+async function generateRepoUnitCentric(
+  runDir: string,
+  plan: BuildPlan,
+  paths: WorkspacePaths,
+  ctx: KitContext,
+  gsePlan: GenerationStrategyPlan,
+  onProgress?: ProgressCallback,
+): Promise<{ success: boolean; filesGenerated: number; filesFailed: number; errors: string[]; unitResults: UnitGenerationResult[] }> {
+  const frozenSystemPrompt = buildFrozenSystemPrompt(ctx);
+  console.log(`  [BUILD-UNIT] Frozen system prompt built (${frozenSystemPrompt.length} chars)`);
+
+  const fileInventory: BlueprintFileEntry[] = [];
+  const blueprintPath = path.join(runDir, "build", "repo_blueprint.json");
+  try {
+    const bp = JSON.parse(fs.readFileSync(blueprintPath, "utf-8"));
+    fileInventory.push(...(bp.file_inventory ?? []));
+  } catch {
+    for (const slice of plan.slices) {
+      for (const f of slice.files) {
+        fileInventory.push({
+          file_id: f.relativePath,
+          path: f.relativePath,
+          role: f.role,
+          layer: "frontend",
+          module_ref: "",
+          subsystem_ref: "",
+          generation_method: f.generationMethod,
+          source_refs: f.sourceRef ? [f.sourceRef] : [],
+          trace_refs: f.traceRef ? [f.traceRef] : [],
+          description: "",
+        });
+      }
+    }
+  }
+
+  const strategyMap = new Map<string, GenerationStrategy>();
+  for (const s of gsePlan.strategies) strategyMap.set(s.build_unit_id, s);
+
+  let filesGenerated = 0;
+  let filesFailed = 0;
+  const errors: string[] = [];
+  const unitResults: UnitGenerationResult[] = [];
+  let totalProcessed = 0;
+
+  for (const wave of gsePlan.wave_plan.waves) {
+    console.log(`  [BUILD-UNIT] Wave ${wave.wave_id} (${wave.unit_ids.length} units)`);
+
+    for (const unitId of wave.unit_ids) {
+      const unit = gsePlan.build_units.find(u => u.id === unitId);
+      if (!unit) continue;
+
+      const strategy = strategyMap.get(unitId);
+      if (!strategy) continue;
+
+      console.log(`  [BUILD-UNIT] Unit: ${unit.name} (${unit.unit_type}, ${strategy.generation_mode}, ${unit.file_ids.length} files)`);
+
+      const unitResult = await generateUnit(
+        unit,
+        strategy,
+        unit.context_capsule,
+        frozenSystemPrompt,
+        ctx,
+        plan,
+        fileInventory,
+        paths,
+      );
+
+      unitResults.push(unitResult);
+
+      for (const produced of unitResult.files_produced) {
+        try {
+          writeRepoFile(paths, produced.path, produced.content);
+          filesGenerated++;
+          totalProcessed++;
+
+          const sliceFile = plan.slices.flatMap(s => s.files).find(f => f.relativePath === produced.path);
+          if (sliceFile) {
+            sliceFile.status = "generated";
+            sliceFile.sizeBytes = Buffer.byteLength(produced.content, "utf-8");
+          }
+
+          onProgress?.({
+            sliceId: unit.id,
+            sliceName: unit.name,
+            fileIndex: totalProcessed,
+            totalFiles: plan.totalFiles,
+            filePath: produced.path,
+            status: "generated",
+          });
+        } catch (err: any) {
+          filesFailed++;
+          errors.push(`Error writing ${produced.path}: ${err.message}`);
+        }
+      }
+
+      const expectedCount = unit.file_ids.length;
+      const producedCount = unitResult.files_produced.length;
+      if (producedCount < expectedCount) {
+        const missing = expectedCount - producedCount;
+        filesFailed += missing;
+        errors.push(`Unit ${unit.name}: ${missing} files not produced`);
+      }
+
+      if (unitResult.structural_violations.length > 0) {
+        console.log(`  [BUILD-UNIT] ${unitResult.structural_violations.length} structural violations in ${unit.name}`);
+        for (const v of unitResult.structural_violations) {
+          errors.push(`STRUCTURAL: ${v}`);
+        }
+      }
+    }
+  }
+
+  console.log(`  [BUILD-UNIT] Unit-centric generation complete: ${filesGenerated} generated, ${filesFailed} failed`);
+  return { success: filesFailed === 0, filesGenerated, filesFailed, errors, unitResults };
+}
+
+async function generateFile(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget, model?: string): Promise<string | null> {
   if (file.generationMethod === "deterministic") {
     return generateDeterministic(ctx, slice, file);
   }
-  return generateWithAI(ctx, slice, file);
+  return generateWithAI(ctx, slice, file, model);
 }
 
 function generateDeterministic(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget): string | null {
@@ -357,6 +768,19 @@ function generateDeterministic(ctx: KitContext, slice: BuildSlice, file: BuildFi
     return genTypesFromSpec({ projectName: "", features: [], roles: [], workflows: [], stackProfile: { framework: "", language: "typescript", runtime: "node", packageManager: "npm" } } as any, file);
   }
 
+  if (role === "db_schema_entity") return genDbSchemaEntity(ctx, file);
+  if (role === "request_dto") return genRequestDto(ctx, file);
+  if (role === "response_dto") return genResponseDto(ctx, file);
+  if (role === "shared_contract") return genSharedContract(ctx, file);
+  if (role === "test_fixture") return genTestFixture(ctx, file);
+  if (role === "db_seed_entity") return genDbSeedEntity(ctx, file);
+  if (role === "form_schema") return genFormSchema(ctx, file);
+  if (role === "ci_config") return genCIConfig();
+  if (role === "deploy_config") return genDeployConfig();
+  if (role === "docker_config") return genDockerConfig(ctx);
+  if (role === "test_utility") return genTestUtility(ctx, file);
+  if (role === "loading_skeleton") return genLoadingSkeleton(ctx, file);
+
   return `// ${file.relativePath}\n// Generated by Axion Build Mode\n// Role: ${role}\n// Source: ${file.sourceRef ?? "none"}\n`;
 }
 
@@ -371,14 +795,16 @@ const COMPLEX_ROLES = new Set([
   "route_handler", "service_module", "middleware_handler",
   "entity_repository", "acceptance_test", "integration_test",
   "event_handler", "feature_card", "e2e_test", "feature_store",
+  "entity_validator", "entity_mapper", "auth_policy",
+  "contract_test", "test_mock", "api_binding", "audit_hook",
 ]);
 
-async function generateWithAI(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget): Promise<string | null> {
+async function generateWithAI(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget, model?: string): Promise<string | null> {
   const systemPrompt = buildSystemPrompt(ctx, slice, file);
   const userPrompt = buildUserPrompt(ctx, slice, file);
   const maxTokens = COMPLEX_ROLES.has(file.role) ? 8192 : 6144;
 
-  console.log(`    [BUILD-AI] Calling LLM for ${file.relativePath} (role=${file.role}, maxTokens=${maxTokens})...`);
+  console.log(`    [BUILD-AI] Calling LLM for ${file.relativePath} (role=${file.role}, maxTokens=${maxTokens}${model ? `, model=${model}` : ""})...`);
   const result = await generateCode(
     [
       { role: "system", content: systemPrompt },
@@ -386,6 +812,7 @@ async function generateWithAI(ctx: KitContext, slice: BuildSlice, file: BuildFil
     ],
     maxTokens,
     `BUILD_${slice.sliceId}`,
+    model,
   );
 
   if (!result) {
@@ -961,6 +1388,97 @@ function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarg
     parts.push(findRelevantDocs(ctx.designDocs, featureTerms.length > 0 ? featureTerms : ["card", "component", "design"], 3000));
     parts.push("\nGenerate a React card component for displaying a summary of this entity. Include key fields, status indicator, and action buttons.");
     parts.push("Use Tailwind CSS for styling. Export as default component with typed props interface.");
+  } else if (role === "entity_validator") {
+    if (feat) {
+      parts.push(`\n--- TARGET FEATURE ---`);
+      parts.push(`Feature: ${feat.name} (${feat.feature_id})`);
+      parts.push(`Description: ${feat.description}`);
+    }
+    parts.push("\n--- DATA MODELS ---");
+    parts.push(findRelevantDocs(ctx.dataDocs, featureTerms.length > 0 ? featureTerms : ["data", "schema", "model", "entity", "validation"], 5000));
+    parts.push("\n--- REQUIREMENTS ---");
+    parts.push(findRelevantDocs(ctx.requirementsDocs, featureTerms.length > 0 ? featureTerms : ["validation", "rule", "constraint", "business"], 3000));
+    parts.push("\nGenerate an entity validator module with comprehensive validation rules.");
+    parts.push("Export validate functions that check business rules, field constraints, cross-field validations, and state transitions.");
+    parts.push("Return typed validation results with field-level error messages. Use Zod schemas where applicable.");
+    parts.push("import { z } from 'zod';");
+  } else if (role === "entity_mapper") {
+    if (feat) {
+      parts.push(`\n--- TARGET FEATURE ---`);
+      parts.push(`Feature: ${feat.name} (${feat.feature_id})`);
+      parts.push(`Description: ${feat.description}`);
+    }
+    parts.push("\n--- DATA MODELS ---");
+    parts.push(findRelevantDocs(ctx.dataDocs, featureTerms.length > 0 ? featureTerms : ["data", "entity", "model", "schema", "DTO"], 4000));
+    parts.push("\n--- ARCHITECTURE ---");
+    parts.push(findRelevantDocs(ctx.archDocs, featureTerms.length > 0 ? featureTerms : ["mapper", "transform", "DTO", "layer"], 3000));
+    parts.push("\nGenerate a mapper module that converts between domain entities and DTOs/API responses.");
+    parts.push("Export typed mapping functions: toResponse, fromRequest, toListResponse.");
+    parts.push("Handle null/undefined fields, date formatting, and nested object mapping.");
+  } else if (role === "auth_policy") {
+    parts.push("\n--- SECURITY & AUTH ---");
+    parts.push(findRelevantDocs(ctx.securityDocs, ["auth", "authorization", "permission", "role", "policy", "RBAC", "access control"], 5000));
+    parts.push("\n--- ROLES & PERMISSIONS ---");
+    parts.push(`Roles: ${ctx.roles.map(r => `${r.role_id}: ${r.name}${r.description ? " — " + r.description : ""}`).join("\n  ")}`);
+    parts.push("\n--- REQUIREMENTS ---");
+    parts.push(findRelevantDocs(ctx.requirementsDocs, featureTerms.length > 0 ? featureTerms : ["permission", "access", "authorization"], 2000));
+    if (feat) {
+      parts.push(`\nGenerate authorization policy for the ${feat.name} feature.`);
+    }
+    parts.push("\nGenerate an authorization policy module that enforces role-based access control.");
+    parts.push("Export middleware functions and policy check helpers: canAccess, requireRole, requirePermission.");
+    parts.push("Include resource-level authorization (owner checks) and role hierarchy support.");
+    parts.push("Use Express middleware signature (req, res, next) with proper typing.");
+  } else if (role === "contract_test") {
+    parts.push("\n--- API CONTRACTS ---");
+    parts.push(findRelevantDocs(ctx.apiDocs, featureTerms.length > 0 ? featureTerms : ["API", "endpoint", "contract", "schema"], 5000));
+    parts.push("\n--- QUALITY ---");
+    parts.push(findRelevantDocs(ctx.qualityDocs, ["test", "contract", "API", "schema", "validation"], 3000));
+    if (feat) {
+      parts.push(`\nWrite API contract tests for the ${feat.name} feature.`);
+    }
+    parts.push("\nGenerate contract tests using vitest that verify API request/response shapes match their defined schemas.");
+    parts.push("Test that all endpoints return correct status codes, content types, and response body structures.");
+    parts.push("Validate error responses, pagination format, and auth error shapes. Use describe/it blocks with clear names.");
+  } else if (role === "test_mock") {
+    parts.push("\n--- API CONTRACTS ---");
+    parts.push(findRelevantDocs(ctx.apiDocs, featureTerms.length > 0 ? featureTerms : ["API", "endpoint", "client"], 4000));
+    parts.push("\n--- ARCHITECTURE ---");
+    parts.push(findRelevantDocs(ctx.archDocs, featureTerms.length > 0 ? featureTerms : ["service", "repository", "dependency"], 3000));
+    if (feat) {
+      parts.push(`\nGenerate mock implementations for the ${feat.name} feature's dependencies.`);
+    }
+    parts.push("\nGenerate typed mock implementations for testing. Export mock factories and spy-enabled mocks.");
+    parts.push("Create mock API client, mock repository, and mock service stubs with configurable return values.");
+    parts.push("Use vitest's vi.fn() for spy capabilities. Export createMock* factory functions.");
+  } else if (role === "api_binding") {
+    if (feat) {
+      parts.push(`\n--- TARGET FEATURE ---`);
+      parts.push(`Feature: ${feat.name} (${feat.feature_id})`);
+      parts.push(`Description: ${feat.description}`);
+    }
+    parts.push("\n--- API CONTRACTS ---");
+    parts.push(findRelevantDocs(ctx.apiDocs, featureTerms.length > 0 ? featureTerms : ["API", "endpoint", "route", "REST"], 5000));
+    parts.push("\n--- ARCHITECTURE ---");
+    parts.push(findRelevantDocs(ctx.archDocs, featureTerms.length > 0 ? featureTerms : ["API", "client", "binding", "fetch"], 3000));
+    parts.push("\nGenerate a typed API binding/client module for this feature.");
+    parts.push("Export async functions for each API operation: getAll, getById, create, update, delete.");
+    parts.push("Use the shared API client from src/lib/api/client. Include proper TypeScript types for requests and responses.");
+    parts.push("Handle errors consistently, return typed results, and support pagination parameters.");
+  } else if (role === "audit_hook") {
+    parts.push("\n--- SECURITY ---");
+    parts.push(findRelevantDocs(ctx.securityDocs, ["audit", "logging", "compliance", "tracking", "IAM"], 4000));
+    parts.push("\n--- GOVERNANCE ---");
+    parts.push(findRelevantDocs(ctx.governanceDocs, ["audit", "compliance", "governance", "trail"], 3000));
+    parts.push("\n--- ARCHITECTURE ---");
+    parts.push(findRelevantDocs(ctx.archDocs, ["middleware", "hook", "event", "logging"], 2000));
+    if (feat) {
+      parts.push(`\nGenerate audit logging hook/middleware for the ${feat.name} feature.`);
+    }
+    parts.push("\nGenerate an audit logging module that captures and records security-relevant actions.");
+    parts.push("Export Express middleware and utility functions: auditMiddleware, logAuditEvent, createAuditTrail.");
+    parts.push("Record: action type, actor (user id/role), resource, timestamp, IP address, changes (before/after).");
+    parts.push("Support structured JSON logging format suitable for compliance review.");
   } else if (role === "page") {
     parts.push("\n--- DESIGN ---");
     parts.push(findRelevantDocs(ctx.designDocs, ["home", "landing", "overview", "navigation"], 3000));
@@ -979,6 +1497,329 @@ function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarg
   }
 
   return parts.join("\n");
+}
+
+function resolveEntityFromRef(ctx: KitContext, sourceRef?: string): { name: string; fields: string[]; relationships: string[] } {
+  const ref = sourceRef ?? "";
+  const feat = ctx.features.find(f => ref.includes(f.feature_id)) ?? ctx.features[0];
+  const entityName = feat ? feat.name.replace(/[^a-zA-Z0-9]/g, "") : path.basename(ref).replace(/[^a-zA-Z0-9]/g, "") || "Entity";
+  return { name: entityName, fields: ["id", "createdAt", "updatedAt"], relationships: [] };
+}
+
+function toSnakeCase(str: string): string {
+  return str.replace(/([A-Z])/g, "_$1").toLowerCase().replace(/^_/, "");
+}
+
+function toCamelCase(str: string): string {
+  return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+function genDbSchemaEntity(ctx: KitContext, file: BuildFileTarget): string {
+  const entity = resolveEntityFromRef(ctx, file.sourceRef);
+  const tableName = toSnakeCase(entity.name) + "s";
+  const varName = toCamelCase(entity.name) + "s";
+  return `import { pgTable, serial, varchar, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+
+export const ${varName} = pgTable("${tableName}", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 50 }).notNull().default("active"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type ${entity.name} = typeof ${varName}.$inferSelect;
+export type New${entity.name} = typeof ${varName}.$inferInsert;
+`;
+}
+
+function genRequestDto(_ctx: KitContext, file: BuildFileTarget): string {
+  const entity = resolveEntityFromRef(_ctx, file.sourceRef);
+  return `export interface Create${entity.name}Request {
+  name: string;
+  description?: string;
+  status?: string;
+}
+
+export interface Update${entity.name}Request {
+  name?: string;
+  description?: string;
+  status?: string;
+}
+
+export interface Get${entity.name}Request {
+  id: string;
+}
+
+export interface List${entity.name}Request {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  search?: string;
+  status?: string;
+}
+`;
+}
+
+function genResponseDto(_ctx: KitContext, file: BuildFileTarget): string {
+  const entity = resolveEntityFromRef(_ctx, file.sourceRef);
+  return `export interface ${entity.name}Response {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ${entity.name}ListResponse {
+  items: ${entity.name}Response[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface ${entity.name}ErrorResponse {
+  error: string;
+  message: string;
+  statusCode: number;
+}
+`;
+}
+
+function genSharedContract(_ctx: KitContext, file: BuildFileTarget): string {
+  const entity = resolveEntityFromRef(_ctx, file.sourceRef);
+  const baseName = toCamelCase(entity.name);
+  return `export type { ${entity.name} } from "../models/${baseName}";
+
+export interface ${entity.name}Contract {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ${entity.name}CreatePayload = Omit<${entity.name}Contract, "id" | "createdAt" | "updatedAt">;
+export type ${entity.name}UpdatePayload = Partial<${entity.name}CreatePayload>;
+`;
+}
+
+function genTestFixture(_ctx: KitContext, file: BuildFileTarget): string {
+  const entity = resolveEntityFromRef(_ctx, file.sourceRef);
+  const varName = toCamelCase(entity.name);
+  return `export function create${entity.name}Fixture(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    id: overrides.id ?? "test-${varName}-1",
+    name: overrides.name ?? "Test ${entity.name}",
+    description: overrides.description ?? "Test ${entity.name} description",
+    status: overrides.status ?? "active",
+    createdAt: overrides.createdAt ?? new Date().toISOString(),
+    updatedAt: overrides.updatedAt ?? new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+export function create${entity.name}FixtureList(count: number = 3): Record<string, unknown>[] {
+  return Array.from({ length: count }, (_, i) =>
+    create${entity.name}Fixture({
+      id: \`test-${varName}-\${i + 1}\`,
+      name: \`Test ${entity.name} \${i + 1}\`,
+    })
+  );
+}
+`;
+}
+
+function genDbSeedEntity(_ctx: KitContext, file: BuildFileTarget): string {
+  const entity = resolveEntityFromRef(_ctx, file.sourceRef);
+  const varName = toCamelCase(entity.name);
+  return `export async function seed${entity.name}s(db: any): Promise<void> {
+  const ${varName}Seeds = [
+    {
+      name: "Sample ${entity.name} 1",
+      description: "Auto-generated seed data for ${entity.name}",
+      status: "active",
+    },
+    {
+      name: "Sample ${entity.name} 2",
+      description: "Auto-generated seed data for ${entity.name}",
+      status: "active",
+    },
+    {
+      name: "Sample ${entity.name} 3",
+      description: "Auto-generated seed data for ${entity.name}",
+      status: "draft",
+    },
+  ];
+
+  for (const seed of ${varName}Seeds) {
+    await db.insert(seed);
+  }
+
+  console.log(\`[SEED] Inserted \${${varName}Seeds.length} ${entity.name} records\`);
+}
+`;
+}
+
+function genFormSchema(_ctx: KitContext, file: BuildFileTarget): string {
+  const entity = resolveEntityFromRef(_ctx, file.sourceRef);
+  return `import { z } from "zod";
+
+export const create${entity.name}Schema = z.object({
+  name: z.string().min(1, "Name is required").max(255, "Name must be 255 characters or less"),
+  description: z.string().max(2000, "Description must be 2000 characters or less").optional(),
+  status: z.enum(["active", "draft", "archived"]).default("active"),
+});
+
+export const update${entity.name}Schema = create${entity.name}Schema.partial();
+
+export type Create${entity.name}FormData = z.infer<typeof create${entity.name}Schema>;
+export type Update${entity.name}FormData = z.infer<typeof update${entity.name}Schema>;
+`;
+}
+
+function genDeployConfig(): string {
+  return `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  labels:
+    app: app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+        - name: app
+          image: app:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+spec:
+  selector:
+    app: app
+  ports:
+    - port: 80
+      targetPort: 3000
+  type: ClusterIP
+`;
+}
+
+function genDockerConfig(ctx: KitContext): string {
+  const pm = ctx.stackProfile.packageManager || "npm";
+  const installCmd = pm === "yarn" ? "yarn install --frozen-lockfile" : pm === "pnpm" ? "pnpm install --frozen-lockfile" : "npm ci";
+  const buildCmd = pm === "yarn" ? "yarn build" : pm === "pnpm" ? "pnpm build" : "npm run build";
+  return `FROM node:20-alpine AS base
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
+RUN ${installCmd}
+
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN ${buildCmd}
+
+FROM base AS runner
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 appuser
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+USER appuser
+EXPOSE 3000
+CMD ["node", "dist/index.js"]
+`;
+}
+
+function genTestUtility(_ctx: KitContext, file: BuildFileTarget): string {
+  return `export function createMockRequest(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    params: {},
+    query: {},
+    body: {},
+    headers: { "content-type": "application/json" },
+    ...overrides,
+  };
+}
+
+export function createMockResponse(): Record<string, unknown> {
+  const res: Record<string, unknown> = {};
+  const json = (data: unknown) => { res._json = data; return res; };
+  const status = (code: number) => { res._status = code; return res; };
+  const send = (data: unknown) => { res._sent = data; return res; };
+  res.json = json;
+  res.status = status;
+  res.send = send;
+  return res;
+}
+
+export async function waitFor(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function generateTestId(prefix: string = "test"): string {
+  return \`\${prefix}-\${Date.now()}-\${Math.random().toString(36).slice(2, 8)}\`;
+}
+`;
+}
+
+function genLoadingSkeleton(_ctx: KitContext, file: BuildFileTarget): string {
+  const componentName = path.basename(file.relativePath, ".tsx")
+    .replace(/Skeleton$/, "")
+    .replace(/([A-Z])/g, " $1")
+    .trim();
+
+  return `interface LoadingSkeletonProps {
+  rows?: number;
+  className?: string;
+}
+
+export default function ${path.basename(file.relativePath, ".tsx")}({ rows = 3, className = "" }: LoadingSkeletonProps) {
+  return (
+    <div className={\`animate-pulse space-y-4 \${className}\`}>
+      <div className="h-6 w-1/3 rounded bg-gray-200" />
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="space-y-2">
+          <div className="h-4 w-full rounded bg-gray-200" />
+          <div className="h-4 w-5/6 rounded bg-gray-200" />
+        </div>
+      ))}
+      <div className="flex gap-2">
+        <div className="h-8 w-20 rounded bg-gray-200" />
+        <div className="h-8 w-20 rounded bg-gray-200" />
+      </div>
+    </div>
+  );
+}
+`;
 }
 
 function genPackageJson(ctx: KitContext): string {

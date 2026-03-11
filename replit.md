@@ -119,36 +119,74 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 ### Build Mode (BM-00 through BM-18)
 Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip.
 
-**Flow**: Agent Kit → Eligibility → **Kit Extraction (KEX)** → **Repo Blueprint (RBP)** → Plan → Workspace → Generate (slices) → Manifests → Verify → Export → Finalize
+**Flow**: Agent Kit → Eligibility → **Kit Extraction (KEX)** → **Repo Blueprint (RBP)** → Plan → **GSE (Generation Strategy Engine)** → Workspace → Generate (unit-centric) → Manifests → Verify (fidelity) → Export → Finalize
 
-**Build Pipeline (KEX → RBP → Plan → Generate)**:
-The build system now includes two mandatory pre-planning stages that solve the under-extraction problem (309 kit files → only 134 repo files). These stages prove the kit was deeply consumed and derive file targets from structured inventories rather than feature-name heuristics.
+**Core Design Principles**:
+- **Minimum Sufficient Artifact Set**: The build system produces the smallest artifact set that fully satisfies all required functional, structural, verification, and operational obligations implied by the Agent Kit and selected build profile. No file without a coverage justification.
+- **Structure First, Code Second**: All repo structure (directories, files, modules) is decided by the blueprint before generation. The model only fills predefined targets — it cannot invent new files. `file_inventory` is the single source of structural truth.
+- **Unit-Centric Generation**: Generation operates on coherent architectural units (entity clusters, endpoint families, screen bundles) that expand into multiple artifacts from one model call, rather than generating individual files independently.
+- **Token-Aware Architecture**: The model only reads the smallest possible slice of the specification (context capsule) necessary for the build unit being generated. Instruction freezing: system prompt loaded once per session, not per call.
 
-- **B1: Kit Extraction (KEX)** — `extractor.ts`: Reads all 11 required kit layers (brief, canonical, work_breakdown, acceptance, architecture, implementation, data, api, security, design, ops). Records actual files consumed per layer. Derives `DerivedBuildInputs` (app identity, domain model with entities/relationships/state machines, subsystems, feature map, interfaces with routes/endpoints/events, data schemas, security model with RBAC, verification expectations). Produces `RepoInventory` with expected directories/modules/files and estimated file count. Generates `RequirementTraceEntry[]` mapping requirements → modules → files. Writes `kit_extraction.json` to `runs/<RUN_ID>/build/`. Gate: `checkExtractionGate()` validates all required layers extracted, inventory derived, trace map generated, file count above threshold.
-  - **Derive function paths**: All derive functions use correct kit slot paths matching SOURCE_LAYERS: `03_architecture`, `08_data`, `09_api_contracts`, `05_security`, `06_quality`. Entity extraction from data files uses `#{1,2}` headings only, filtered by a SECTION_WORDS exclusion set to avoid treating section headings as entities.
-- **B2: Repo Blueprint (RBP)** — `blueprint.ts`: Converts extraction into a fully specified repo design. Produces `RepoBlueprint` with: system identity, domain model, subsystems with modules/responsibilities/dependencies, module map (module_id, layer, purpose, inputs, outputs, dependencies), directory layout (exact folder structure), **file inventory** (every expected file with role, layer, source trace — the key artifact that drives generation), interface contracts, data model, security model, feature map, verification targets. File count derivation broken down by layer (frontend/backend/shared/data/test/config/docs). Traceability map: requirement → module → file. Writes `repo_blueprint.json` to `runs/<RUN_ID>/build/`. Gate: `checkBlueprintGate()` validates blueprint completeness (file_inventory populated, modules defined, directory_layout defined, trace_map defined, expected_file_count above threshold).
-  - **Build-unit patterns (GSE-02)**: Blueprint uses entity cluster, endpoint family, and screen bundle patterns:
-    - **Entity clusters** (per entity): `entity_model` + `entity_repository` + `service_module` + `entity_type` + model/repo/service tests
-    - **Endpoint families** (per feature): `route_handler` (controller) + `api_route` + controller test + E2E test
-    - **Workflow handlers** (per workflow from canonical spec): `event_handler` workflow files
-    - **Server infrastructure**: `entry_point`, `app_entry`, `config_env`, `db_connection`, `barrel_export`, `utility` (errors, logger)
-    - **Frontend context providers** (per feature): `feature_store` context files
-    - **Loosened feature heuristics**: Non-auth features always get Form + List + Detail components; Card remains keyword-driven
-  - **New add functions**: `addRepositoryFiles()`, `addServiceFiles()`, `addControllerFiles()`, `addWorkflowFiles()`, `addServerInfraFiles()`, `addContextFiles()`
-- **B3: Blueprint-Driven Planning** — When a `RepoBlueprint` is provided, `planner.ts` derives ALL file targets from `blueprint.file_inventory` instead of static `buildScaffoldFiles()`/`buildApiRouteFiles()`/etc. functions. Files are grouped by layer into BuildSlices, with `sourceRef` and `traceRef` from blueprint traceability. Old static derivation remains as fallback when no blueprint is provided.
+**Build Pipeline (KEX → RBP → Plan → GSE → Generate)**:
+
+- **B1: Kit Extraction (KEX)** — `extractor.ts`: Reads all 11 required kit layers. Derives `DerivedBuildInputs` (app identity, domain model with entities/relationships/state machines, subsystems, feature map, interfaces with routes/endpoints/events, data schemas, security model with RBAC, verification expectations). Produces `RepoInventory`. Generates `RequirementTraceEntry[]`. Writes `kit_extraction.json`. Gate: `checkExtractionGate()`.
+  - **Derive function paths**: SOURCE_LAYERS: `03_architecture`, `08_data`, `09_api_contracts`, `05_security`, `06_quality`. Entity extraction uses `#{1,2}` headings filtered by SECTION_WORDS exclusion set.
+
+- **B2: Repo Blueprint (RBP)** — `blueprint.ts`: Converts extraction into a fully specified repo design with **build profile derivation** and **sufficiency gating**.
+  - **Build Profile Derivation** (`deriveBuildProfile()`): Analyzes kit signals to classify project scope:
+    - **lean**: < 4 features, no RBAC, no workflows, simple CRUD → minimal verification, no ops, no contracts
+    - **standard**: 4-12 features, basic auth, some workflows → standard verification, basic ops, internal contracts
+    - **enterprise**: 12+ features OR (RBAC 3+ roles AND 4+ workflows) OR 15+ acceptance criteria → thorough verification, full ops, explicit contracts, managed persistence
+  - **BuildProfileConfig**: `{ profile, verification_depth, ops_tier, contract_tier, persistence_tier }`
+  - **Sufficiency Gate** (`shouldCreateArtifact()`): Every artifact family passes a policy test before entering `file_inventory`. Each file gets `required_reason` and `justification` (functional/structural/verification/operational/support_dependency). Four gates per candidate file: functional, structural, verification, operational.
+  - **Conditional Artifact Families** (only created when warranted):
+    - **Entity cluster** (4-12 files per entity): model + type (always), repository + schema (if persistence), validator + mapper (if enterprise), contract (if contracts != none), fixture + integration_test (if thorough), migration + seed (if managed persistence), service (if business logic)
+    - **Endpoint family** (2-8 files per feature): route + controller (always), DTOs (if explicit contracts), auth_policy (if auth), contract_test + mock (if thorough), audit_hook (if full ops)
+    - **Screen bundle** (2-10 files per feature): page + component (always), form/list/detail (if heuristic), hook + context (if data), form_schema (if form + contracts), api_binding + skeleton (if contracts != none), e2e_test (if thorough)
+    - **Infrastructure**: entry_point/app_entry/config (always), CI (if ops != none), Docker/deploy/telemetry/audit (if full ops), utility libs (if not lean)
+    - **Docs**: README (always), ARCHITECTURE/DEPLOYMENT/TESTING (if full ops)
+  - Writes `repo_blueprint.json` with `build_profile` field. Gate: `checkBlueprintGate()`.
+
+- **B3: Blueprint-Driven Planning** — `planner.ts` derives ALL file targets from `blueprint.file_inventory`. Files grouped by layer into BuildSlices. Legacy fallback when no blueprint provided.
+
+- **B4: Generation Strategy Engine (GSE)** — `gse.ts`: Classifies all planned files into build units, scores complexity, routes generation, and computes wave plans.
+  - **`deriveBuildUnits()`**: Groups file_inventory into coherent units by source_ref/path patterns. Unit types: entity_unit, endpoint_unit, screen_unit, shared_unit, infra_unit, verification_unit. Every file belongs to exactly one unit (no orphans).
+  - **`scoreComplexity()`**: 8-dimension weighted scoring → C0/C1/C2/C3/C4:
+    - C0 (0-10): barrel exports, simple configs → deterministic
+    - C1 (11-25): schemas, DTOs, fixtures, seeds, skeletons → deterministic
+    - C2 (26-45): validators, mappers, simple services, standard components → gpt-4o-mini
+    - C3 (46-70): route handlers, auth policies, business services, stateful UI → gpt-4o-mini or gpt-4o
+    - C4 (71-100): security middleware, complex orchestration → gpt-4o
+    - Factors: base_role_weight, dependency_count, security_sensitivity, state_complexity, business_rule_density, integration_depth, acceptance_linkage, cross_cutting_concern
+  - **`routeGenerationStrategy()`**: C0/C1→deterministic, C2→cheap_model (gpt-4o-mini), C3→cheap/full based on security flags, C4→full_model (gpt-4o). Computes `CostForecast`.
+  - **`computeWavePlan()`**: 5 dependency-ordered waves: foundations → entities → endpoints → screens → verification
+  - **`assembleContextCapsule()`**: Builds targeted context slice per unit (~150-400 tokens). Entity unit: fields, relationships, requirements. Endpoint unit: spec, entity schema, auth policy. Screen unit: feature description, deliverables, design specs. Never sends full kit.
+  - **Artifacts**: `runs/<RUN_ID>/build/generation_strategy/` — build_unit_inventory.json, complexity_profile.json, generation_strategy_plan.json, wave_plan.json, cost_report.json
+
+- **B5: Unit-Centric Generation** — `generator.ts`: Refactored for unit-centric generation with instruction freezing.
+  - **Instruction Freezing**: `buildFrozenSystemPrompt()` builds compact system instructions once per session (~400-600 tokens). No full file manifest re-sent per call.
+  - **`generateUnit()`**: For deterministic units: calls `generateDeterministic()` per file. For model units: builds combined prompt with context capsule + file targets → one model call → parses multi-file output (`===FILE: path===` format). Fallback to file-by-file on parse failure.
+  - **Model Routing**: `generateCode()` accepts `model` parameter. C2→gpt-4o-mini, C3→gpt-4o-mini (retry with gpt-4o), C4→gpt-4o. Default (no GSE)→gpt-4o (backward compatible).
+  - **Structural Integrity Safeguard**: After generation, validates all produced file paths exist in file_inventory. Rejects invented paths. Logs structural violations.
+  - **Generator role handlers**: Deterministic: db_schema_entity, request_dto, response_dto, shared_contract, test_fixture, db_seed_entity, form_schema, ci_config, deploy_config, docker_config, test_utility, loading_skeleton, migration_file. AI-assisted: entity_validator, entity_mapper, auth_policy, contract_test, test_mock, api_binding, audit_hook.
+
+- **B6: Generation Fidelity Metrics** — `verifier.ts`: `BuildFidelityReport` tracks planned_files, generated_files, verified_files, failed_files, fidelity_pct (verified/planned × 100), llm_file_count, llm_usage_pct, deterministic_pct, structural_violations. Build summary logged after verification.
 
 **Build Pipeline Metrics** (RUN-000036, 309-file kit with 8 features / 4 roles / 5 workflows / 22 work units / 22 acceptance criteria):
 - Legacy fallback: 134 files
-- Blueprint pipeline: 701 files (423% improvement) — frontend 111, backend 197, shared 90, data 62, test 229, config 10, docs 2
+- Blueprint pipeline (enterprise profile): 1,180 files (780% improvement) — frontend 127, backend 344, shared 148, data 236, test 306, config 14, docs 5
+- Justification breakdown: functional 182, operational 123, structural 92, verification 74, support_dependency 8
 - Extraction: 11/11 layers, 58 entities, 82 endpoints, 6 subsystems
-- Generation: 543 AI-assisted + 158 deterministic across 6 slices
+- GSE: 37 build units, 5 waves, ~728K estimated tokens, ~$0.30 estimated cost
+- Generation: 691 AI-assisted + 489 deterministic across 6 slices
 
 **Build States (BM-08)**: `not_requested → requested → approved → building → verifying → passed → exported`; `failed` reachable from any active state
 
 **Modules** (`Axion/src/core/build/`):
-- `types.ts` — Build states, transitions, failure classes (includes `extraction` and `blueprint`), manifest/plan/verification interfaces, plus KEX/RBP types: `KitExtraction`, `RepoBlueprint`, `BlueprintModule`, `BlueprintSubsystem`, `BlueprintFileEntry`, `DirectoryLayout`, `DerivedBuildInputs`, `ExtractionGateResult`, `BlueprintGateResult`, `FileCountBreakdown`, and supporting interfaces
-- `extractor.ts` — Kit Extraction engine (KEX): `extractKit()`, `checkExtractionGate()`. SOURCE_LAYERS maps to actual kit slot numbering: `03_architecture`, `04_implementation`, `08_data`, `09_api_contracts`, `05_security`, `02_design`, `07_ops`. Secondary scans: `01_requirements`, `06_quality`, `10_release`, `11_governance`, `12_analytics`
-- `blueprint.ts` — Repo Blueprint builder (RBP): `buildRepoBlueprint()`, `checkBlueprintGate()`
+- `types.ts` — Build states, transitions, failure classes, manifest/plan/verification interfaces, KEX/RBP types, plus: `BuildProfile`, `BuildProfileConfig`, `ArtifactJustification`, `BlueprintFileEntry` (with `required_reason`/`justification`), GSE types (`BuildUnit`, `ComplexityProfile`, `GenerationStrategy`, `WavePlan`, `GenerationStrategyPlan`, `CostForecast`, `ContextCapsule`, `UnitGenerationResult`, `BuildFidelityReport`)
+- `extractor.ts` — Kit Extraction engine (KEX): `extractKit()`, `checkExtractionGate()`
+- `blueprint.ts` — Repo Blueprint builder (RBP): `buildRepoBlueprint()`, `checkBlueprintGate()`, `deriveBuildProfile()`, `shouldCreateArtifact()`. 13 gated add functions for conditional artifact families.
+- `gse.ts` — Generation Strategy Engine: `deriveBuildUnits()`, `scoreComplexity()`, `routeGenerationStrategy()`, `computeWavePlan()`, `assembleContextCapsule()`, `runGSE()`
 - `eligibility.ts` — BM-09 entry condition checker (kit exists, 8 gates passed, canonical spec, work breakdown, rendered docs, no critical blockers)
 - `planner.ts` — Derives build plan from blueprint (preferred) or kit directly (fallback): stack profile, repo shape, ordered build slices. Blueprint-driven mode: `createBlueprintDrivenPlan()` maps `file_inventory` entries to slices by layer. Legacy mode: 8 ordered build slices (scaffold → types_contracts → data_layer → api_routes → components → integration → tests → config) with per-feature sub-components, auth infrastructure, shared services, UI primitives
 - `workspace.ts` — Creates/manages `Axion/.axion/runs/RUN-XXXXXX/build/` with repo/, manifests, verification report, zip
@@ -175,6 +213,7 @@ The build system now includes two mandatory pre-planning stages that solve the u
 - `kit_extraction.json` — KEX proof artifact: source layer results, derived build inputs, repo inventory, requirement trace map, extraction gate result
 - `repo_blueprint.json` — RBP design artifact: module map, directory layout, file inventory, interface contracts, data model, security model, traceability map, file count breakdown
 - `build_plan.json` — Ordered slices, file targets (derived from blueprint), generation instructions
+- `generation_strategy/` — GSE artifacts: build_unit_inventory.json, complexity_profile.json, generation_strategy_plan.json, wave_plan.json, cost_report.json
 - `repo/` — Generated project repository
 - `build_manifest.json` — Build identity, input provenance, lifecycle transitions, timestamps, status, output refs (includes kitExtractionPath, repoBlueprintPath)
 - `repo_manifest.json` — Repo structure summary, file inventory with roles, dependency summary, build commands

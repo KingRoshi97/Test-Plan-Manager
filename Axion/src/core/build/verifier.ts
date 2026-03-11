@@ -9,6 +9,8 @@ import type {
   VerificationReport,
   VerificationCategory,
   VerificationCheck,
+  BuildFidelityReport,
+  GenerationStrategyPlan,
 } from "./types.js";
 import type { WorkspacePaths } from "./workspace.js";
 import {
@@ -31,7 +33,12 @@ const PLACEHOLDER_PATTERNS = [
 
 const SYNTAX_CHECKABLE_EXTENSIONS = new Set([".json"]);
 
-export async function verifyBuild(paths: WorkspacePaths, buildId: string, runId: string): Promise<VerificationReport> {
+export async function verifyBuild(
+  paths: WorkspacePaths,
+  buildId: string,
+  runId: string,
+  gsePlan?: GenerationStrategyPlan,
+): Promise<VerificationReport> {
   const plan = readBuildPlan(paths);
   const buildManifest = readBuildManifest(paths);
   const repoManifest = readRepoManifest(paths);
@@ -55,6 +62,8 @@ export async function verifyBuild(paths: WorkspacePaths, buildId: string, runId:
   const overallResult = failed > 0 ? "fail" : "pass";
   const exportEligible = overallResult === "pass";
 
+  const fidelity = computeFidelityReport(plan, repoFiles, categories, gsePlan);
+
   const report: VerificationReport = {
     buildId,
     runId,
@@ -68,11 +77,96 @@ export async function verifyBuild(paths: WorkspacePaths, buildId: string, runId:
       warnings,
     },
     exportEligible,
+    fidelity,
   };
 
   writeVerificationReport(paths, report);
 
   return report;
+}
+
+function computeFidelityReport(
+  plan: BuildPlan | null,
+  repoFiles: { relativePath: string; sizeBytes: number }[],
+  categories: VerificationCategory[],
+  gsePlan?: GenerationStrategyPlan,
+): BuildFidelityReport {
+  const plannedFiles = plan?.totalFiles ?? 0;
+  const generatedFiles = repoFiles.length;
+
+  let verifiedFiles = 0;
+  let failedFiles = 0;
+  const checkedPaths = new Set<string>();
+
+  for (const cat of categories) {
+    for (const check of cat.checks) {
+      const pathMatch = check.checkId.match(/^(?:rop|fi)-(?:empty-|syntax-|nonempty-)?(.+)$/);
+      if (pathMatch && pathMatch[1]) {
+        const filePath = pathMatch[1];
+        if (checkedPaths.has(filePath)) continue;
+        checkedPaths.add(filePath);
+        if (check.result === "fail") {
+          failedFiles++;
+        } else if (check.result === "pass") {
+          verifiedFiles++;
+        }
+      }
+    }
+  }
+
+  if (verifiedFiles === 0 && failedFiles === 0 && generatedFiles > 0) {
+    verifiedFiles = generatedFiles;
+  }
+
+  const fidelityPct = plannedFiles > 0
+    ? Math.round((verifiedFiles / plannedFiles) * 1000) / 10
+    : 0;
+
+  let llmFileCount = 0;
+  let deterministicCount = 0;
+  let structuralViolations = 0;
+
+  if (gsePlan) {
+    for (const strategy of gsePlan.strategies) {
+      const unit = gsePlan.build_units.find(u => u.id === strategy.build_unit_id);
+      const fileCount = unit?.file_ids.length ?? 0;
+      if (strategy.generation_mode === "deterministic" || strategy.generation_mode === "template") {
+        deterministicCount += fileCount;
+      } else {
+        llmFileCount += fileCount;
+      }
+    }
+
+    for (const unit of gsePlan.build_units) {
+      if ('structural_violations' in unit) {
+        structuralViolations += (unit as any).structural_violations?.length ?? 0;
+      }
+    }
+  } else if (plan) {
+    for (const slice of plan.slices) {
+      for (const file of slice.files) {
+        if (file.generationMethod === "deterministic") {
+          deterministicCount++;
+        } else {
+          llmFileCount++;
+        }
+      }
+    }
+  }
+
+  const totalForPct = deterministicCount + llmFileCount || generatedFiles || 1;
+
+  return {
+    planned_files: plannedFiles,
+    generated_files: generatedFiles,
+    verified_files: verifiedFiles,
+    failed_files: failedFiles,
+    fidelity_pct: fidelityPct,
+    llm_file_count: llmFileCount,
+    llm_usage_pct: Math.round((llmFileCount / totalForPct) * 1000) / 10,
+    deterministic_pct: Math.round((deterministicCount / totalForPct) * 1000) / 10,
+    structural_violations: structuralViolations,
+  };
 }
 
 function checkRequiredOutputPresence(

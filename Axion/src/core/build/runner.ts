@@ -11,6 +11,8 @@ import type {
   VerificationReport,
   KitExtraction,
   RepoBlueprint,
+  GenerationStrategyPlan,
+  BuildFidelityReport,
 } from "./types.js";
 import { generateBuildId, isValidTransition } from "./types.js";
 import { checkBuildEligibility } from "./eligibility.js";
@@ -23,6 +25,7 @@ import {
   type WorkspacePaths,
 } from "./workspace.js";
 import { generateRepo } from "./generator.js";
+import { runGSE } from "./gse.js";
 import { verifyBuild } from "./verifier.js";
 import {
   createBuildManifest,
@@ -206,6 +209,32 @@ export async function runBuild(
     };
 
     console.log(`  [BUILD] Plan ready: ${plan.totalSlices} slices, ${plan.totalFiles} files`);
+
+    let gsePlan: GenerationStrategyPlan | undefined;
+    if (blueprint) {
+      try {
+        console.log("  [BUILD] Running Generation Strategy Engine (GSE)...");
+        gsePlan = await runGSE(blueprint, plan, runDir);
+
+        const unitTypeCounts: Record<string, number> = {};
+        for (const u of gsePlan.build_units) {
+          unitTypeCounts[u.unit_type] = (unitTypeCounts[u.unit_type] ?? 0) + 1;
+        }
+        const classCounts: Record<string, number> = { C0: 0, C1: 0, C2: 0, C3: 0, C4: 0 };
+        for (const p of gsePlan.complexity_profiles) classCounts[p.complexity_class]++;
+
+        console.log(`  [BUILD] GSE Summary:`);
+        console.log(`  [BUILD]   Total units: ${gsePlan.build_units.length}`);
+        console.log(`  [BUILD]   Units by type: ${Object.entries(unitTypeCounts).map(([k, v]) => `${k}=${v}`).join(", ")}`);
+        console.log(`  [BUILD]   Complexity: ${Object.entries(classCounts).map(([k, v]) => `${k}=${v}`).join(", ")}`);
+        console.log(`  [BUILD]   Waves: ${gsePlan.wave_plan.waves.length}`);
+        console.log(`  [BUILD]   Estimated cost: $${gsePlan.cost_forecast.estimated_cost_usd} (~${gsePlan.cost_forecast.total_estimated_tokens.toLocaleString()} tokens)`);
+      } catch (err: any) {
+        console.log(`  [BUILD] GSE error: ${err.message} — continuing without strategy plan`);
+        gsePlan = undefined;
+      }
+    }
+
     manifest = recordLifecycleTransition(manifest, "building", "generation", "Starting repo generation");
     emitProgress("building", { totalSlices: plan.totalSlices, totalFiles: plan.totalFiles });
 
@@ -244,7 +273,7 @@ export async function runBuild(
           totalFiles: plan.totalFiles,
         });
       }
-    });
+    }, gsePlan);
 
     result.filesGenerated = genResult.filesGenerated;
 
@@ -293,7 +322,7 @@ export async function runBuild(
     console.log("  [BUILD] Running verification...");
     let verification: VerificationReport;
     try {
-      verification = await verifyBuild(paths, buildId, runId);
+      verification = await verifyBuild(paths, buildId, runId, gsePlan);
       result.verification = verification;
       manifest = updateOutputRefs(manifest, { verificationReportPath: paths.verificationReport });
     } catch (err: any) {
@@ -330,6 +359,10 @@ export async function runBuild(
     });
 
     console.log("  [BUILD] Verification passed!");
+
+    if (verification.fidelity) {
+      logBuildSummary(verification.fidelity, blueprint, gsePlan, usage);
+    }
 
     if (outputMode === "build_and_export") {
       console.log("  [BUILD] Creating export zip...");
@@ -419,4 +452,73 @@ function extractCommands(paths: WorkspacePaths): { install?: string; dev?: strin
   } catch {
     return {};
   }
+}
+
+function logBuildSummary(
+  fidelity: BuildFidelityReport,
+  blueprint: RepoBlueprint | null,
+  gsePlan?: GenerationStrategyPlan,
+  usage?: { total_tokens: number; total_cost_usd: number } | null,
+): void {
+  const profileLabel = blueprint?.build_profile?.profile ?? "unknown";
+  const planned = fidelity.planned_files.toLocaleString();
+  const generated = fidelity.generated_files.toLocaleString();
+  const verified = fidelity.verified_files.toLocaleString();
+  const failed = fidelity.failed_files.toLocaleString();
+  const fidelityPct = fidelity.fidelity_pct.toFixed(1);
+  const deterministicPct = fidelity.deterministic_pct.toFixed(1);
+  const deterministicCount = Math.round(fidelity.deterministic_pct * fidelity.generated_files / 100);
+  const llmPct = fidelity.llm_usage_pct.toFixed(1);
+  const llmCount = fidelity.llm_file_count;
+
+  let miniCount = 0;
+  let miniPct = "0.0";
+  let fullCount = 0;
+  let fullPct = "0.0";
+
+  if (gsePlan) {
+    for (const strategy of gsePlan.strategies) {
+      const unit = gsePlan.build_units.find(u => u.id === strategy.build_unit_id);
+      const fc = unit?.file_ids.length ?? 0;
+      if (strategy.generation_mode === "cheap_model") {
+        miniCount += fc;
+      } else if (strategy.generation_mode === "full_model") {
+        fullCount += fc;
+      }
+    }
+    const total = fidelity.generated_files || 1;
+    miniPct = ((miniCount / total) * 100).toFixed(1);
+    fullPct = ((fullCount / total) * 100).toFixed(1);
+  }
+
+  const tokenStr = usage?.total_tokens
+    ? `~${Math.round(usage.total_tokens / 1000)}K tokens`
+    : "N/A";
+  const costStr = usage?.total_cost_usd
+    ? `~$${usage.total_cost_usd.toFixed(2)}`
+    : gsePlan?.cost_forecast
+      ? `~$${gsePlan.cost_forecast.estimated_cost_usd.toFixed(2)} (est.)`
+      : "N/A";
+
+  console.log("");
+  console.log("  \u2550\u2550\u2550 BUILD SUMMARY \u2550\u2550\u2550");
+  console.log(`  Profile:             ${profileLabel}`);
+  console.log(`  Planned files:       ${planned}`);
+  console.log(`  Generated files:     ${generated}`);
+  console.log(`  Verified files:      ${verified}`);
+  console.log(`  Failed files:        ${failed}`);
+  console.log(`  Generation Fidelity: ${fidelityPct}%`);
+  console.log(`  Deterministic:       ${deterministicPct}%  (${deterministicCount} files)`);
+  if (gsePlan) {
+    console.log(`  LLM (mini):          ${miniPct}%  (${miniCount} files)`);
+    console.log(`  LLM (full):          ${fullPct}%  (${fullCount} files)`);
+  } else {
+    console.log(`  LLM:                 ${llmPct}%  (${llmCount} files)`);
+  }
+  console.log(`  Est. Token Cost:     ${tokenStr}`);
+  console.log(`  Est. Build Cost:     ${costStr}`);
+  if (fidelity.structural_violations > 0) {
+    console.log(`  Structural Violations: ${fidelity.structural_violations}`);
+  }
+  console.log("");
 }

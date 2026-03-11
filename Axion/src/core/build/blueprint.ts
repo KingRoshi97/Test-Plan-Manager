@@ -18,6 +18,9 @@ import {
   SecurityModel,
   FeatureMapEntry,
   DataSchemas,
+  BuildProfile,
+  BuildProfileConfig,
+  ArtifactJustification,
 } from "./types.js";
 
 export async function buildRepoBlueprint(
@@ -27,13 +30,16 @@ export async function buildRepoBlueprint(
   const inputs = extraction.derived_inputs;
   const implications = extraction.derived_build_implications;
 
+  const profileConfig = deriveBuildProfile(inputs);
+  console.log(`  [BLUEPRINT] Build profile derived: ${profileConfig.profile} (verification=${profileConfig.verification_depth}, ops=${profileConfig.ops_tier}, contracts=${profileConfig.contract_tier}, persistence=${profileConfig.persistence_tier})`);
+
   const systemIdentity: AppIdentity = { ...inputs.app_identity };
   const domainModel: DomainModel = { ...inputs.domain_model };
 
   const subsystems = buildSubsystems(inputs, implications);
   const moduleMap = buildModuleMap(inputs, subsystems, implications);
   const directoryLayout = buildDirectoryLayout(moduleMap, implications);
-  const fileInventory = buildFileInventory(inputs, moduleMap, subsystems, implications);
+  const fileInventory = buildFileInventory(inputs, moduleMap, subsystems, implications, profileConfig);
   const interfaceContracts: InterfaceContracts = { ...inputs.interfaces };
   const dataModel = buildDataModel(inputs);
   const securityModel: SecurityModel = { ...inputs.security };
@@ -64,6 +70,7 @@ export async function buildRepoBlueprint(
     expected_file_count: fileCountBreakdown.total,
     file_count_breakdown: fileCountBreakdown,
     traceability_map: traceabilityMap,
+    build_profile: profileConfig,
     created_at: now,
     updated_at: now,
     status: "active",
@@ -494,15 +501,196 @@ function buildDirectoryLayout(
   };
 }
 
+export function deriveBuildProfile(
+  inputs: KitExtraction["derived_inputs"]
+): BuildProfileConfig {
+  const featureCount = inputs.feature_map.length;
+  const rbacRoleCount = inputs.security.rbac_rules.length;
+  const hasAuth = inputs.security.auth_model !== "" && inputs.security.auth_model !== "none";
+  const workflowCount = inputs.domain_model.state_machines.length;
+  const entityCount = inputs.domain_model.entities.length;
+  const acceptanceCriteriaCount = inputs.verification.acceptance_criteria.length;
+  const eventCount = inputs.interfaces.events.length;
+  const hasPersistence = inputs.data.storage_types.length > 0;
+
+  let profile: BuildProfile = "standard";
+
+  if (
+    featureCount >= 12 ||
+    (rbacRoleCount >= 3 && workflowCount >= 4) ||
+    acceptanceCriteriaCount > 15 ||
+    (entityCount >= 20 && eventCount >= 5)
+  ) {
+    profile = "enterprise";
+  } else if (
+    featureCount < 4 &&
+    rbacRoleCount <= 1 &&
+    workflowCount === 0 &&
+    !hasAuth
+  ) {
+    profile = "lean";
+  }
+
+  const verificationDepth: BuildProfileConfig["verification_depth"] =
+    profile === "lean" ? "minimal" : profile === "standard" ? "standard" : "thorough";
+  const opsTier: BuildProfileConfig["ops_tier"] =
+    profile === "lean" ? "none" : profile === "standard" ? "basic" : "full";
+  const contractTier: BuildProfileConfig["contract_tier"] =
+    profile === "lean" ? "none" : profile === "standard" ? "internal" : "explicit";
+  const persistenceTier: BuildProfileConfig["persistence_tier"] =
+    !hasPersistence ? "none" : profile === "enterprise" ? "managed" : "basic";
+
+  return {
+    profile,
+    verification_depth: verificationDepth,
+    ops_tier: opsTier,
+    contract_tier: contractTier,
+    persistence_tier: persistenceTier,
+  };
+}
+
+interface SufficiencyResult {
+  create: boolean;
+  reason: ArtifactJustification;
+  rationale: string;
+}
+
+export function shouldCreateArtifact(
+  objectType: "entity" | "endpoint" | "screen" | "infra" | "docs",
+  artifactRole: string,
+  profile: BuildProfileConfig,
+  inputs: KitExtraction["derived_inputs"]
+): SufficiencyResult {
+  const no = (r: string): SufficiencyResult => ({ create: false, reason: "functional", rationale: r });
+  const yes = (reason: ArtifactJustification, rationale: string): SufficiencyResult => ({ create: true, reason, rationale });
+  const hasPersistence = inputs.data.storage_types.length > 0;
+  const hasAuth = inputs.security.auth_model !== "" && inputs.security.auth_model !== "none";
+
+  if (objectType === "entity") {
+    switch (artifactRole) {
+      case "model":
+      case "entity_type":
+        return yes("functional", "Core entity representation");
+      case "repository":
+      case "db_schema_entity":
+        return hasPersistence ? yes("functional", "Persistence layer required") : no("No persistence configured");
+      case "service_module":
+        return yes("functional", "Business logic layer");
+      case "migration_file":
+      case "db_seed_entity":
+        return profile.persistence_tier === "managed" ? yes("operational", "Managed persistence requires migrations/seeds") : no("Persistence tier does not require migrations");
+      case "shared_contract":
+        return profile.contract_tier !== "none" ? yes("structural", "Cross-layer contract sharing") : no("Contract tier disabled");
+      case "unit_test":
+        return profile.verification_depth !== "minimal" ? yes("verification", "Verification depth requires unit tests") : no("Minimal verification skips unit tests");
+      case "test_fixture":
+      case "integration_test":
+        return profile.verification_depth === "thorough" ? yes("verification", "Thorough verification requires fixtures/integration tests") : no("Verification depth insufficient");
+      case "entity_validator":
+      case "entity_mapper":
+        return profile.profile === "enterprise" ? yes("functional", "Enterprise profile requires validators/mappers") : no("Profile does not require validators/mappers");
+      default:
+        return yes("functional", "Default entity artifact");
+    }
+  }
+
+  if (objectType === "endpoint") {
+    switch (artifactRole) {
+      case "route_handler":
+      case "controller":
+        return yes("functional", "Core endpoint implementation");
+      case "request_dto":
+      case "response_dto":
+        return profile.contract_tier === "explicit" ? yes("structural", "Explicit contracts require DTOs") : no("Contract tier does not require DTOs");
+      case "auth_policy":
+        return hasAuth ? yes("functional", "Auth-protected endpoint requires policy") : no("No auth configured");
+      case "integration_test":
+        return profile.verification_depth !== "minimal" ? yes("verification", "Endpoint integration test") : no("Minimal verification skips integration tests");
+      case "contract_test":
+      case "test_mock":
+        return profile.verification_depth === "thorough" ? yes("verification", "Thorough verification requires contract tests/mocks") : no("Verification depth insufficient");
+      case "audit_hook":
+        return profile.ops_tier === "full" ? yes("operational", "Full ops tier requires audit hooks") : no("Ops tier does not require audit hooks");
+      default:
+        return yes("functional", "Default endpoint artifact");
+    }
+  }
+
+  if (objectType === "screen") {
+    switch (artifactRole) {
+      case "feature_page":
+      case "feature_component":
+        return yes("functional", "Core UI implementation");
+      case "feature_form":
+      case "form_schema":
+        return yes("functional", "Form-bearing feature");
+      case "feature_list":
+      case "feature_detail":
+        return yes("functional", "List/detail UI pattern");
+      case "feature_hook":
+      case "context_provider":
+        return yes("structural", "State management for feature");
+      case "unit_test":
+        return profile.verification_depth !== "minimal" ? yes("verification", "UI unit test") : no("Minimal verification skips UI tests");
+      case "e2e_test":
+        return profile.verification_depth === "thorough" ? yes("verification", "Thorough verification requires e2e tests") : no("Verification depth insufficient");
+      case "api_binding":
+        return profile.contract_tier !== "none" ? yes("structural", "Feature API client binding") : no("Contract tier disabled");
+      case "loading_skeleton":
+        return profile.profile !== "lean" ? yes("structural", "Loading state component") : no("Lean profile skips loading skeletons");
+      default:
+        return yes("functional", "Default screen artifact");
+    }
+  }
+
+  if (objectType === "infra") {
+    switch (artifactRole) {
+      case "entry_point":
+      case "app_entry":
+      case "config":
+      case "error_handler":
+      case "logger":
+      case "db_connection":
+      case "middleware":
+        return yes("structural", "Core infrastructure");
+      case "ci_config":
+        return profile.ops_tier !== "none" ? yes("operational", "CI configuration") : no("Ops tier disabled");
+      case "docker_config":
+      case "deploy_config":
+        return profile.ops_tier === "full" ? yes("operational", "Full ops deployment config") : no("Ops tier insufficient");
+      case "utility":
+        return profile.profile !== "lean" ? yes("support_dependency", "Utility support module") : no("Lean profile skips optional utilities");
+      default:
+        return yes("structural", "Default infrastructure artifact");
+    }
+  }
+
+  if (objectType === "docs") {
+    switch (artifactRole) {
+      case "readme":
+        return yes("structural", "Project documentation");
+      case "documentation":
+        return profile.ops_tier === "full" ? yes("operational", "Full ops documentation") : no("Ops tier does not require extended docs");
+      default:
+        return yes("structural", "Default documentation");
+    }
+  }
+
+  return yes("functional", "Unclassified artifact");
+}
+
 function buildFileInventory(
   inputs: KitExtraction["derived_inputs"],
   modules: BlueprintModule[],
   subsystems: BlueprintSubsystem[],
-  implications: KitExtraction["derived_build_implications"]
+  implications: KitExtraction["derived_build_implications"],
+  profileConfig?: BuildProfileConfig
 ): BlueprintFileEntry[] {
   const files: BlueprintFileEntry[] = [];
   let fileIdx = 0;
   const nextId = () => `file-${(++fileIdx).toString().padStart(4, "0")}`;
+
+  const pc = profileConfig ?? deriveBuildProfile(inputs);
 
   addConfigFiles(files, nextId);
   addEntryFiles(files, nextId);
@@ -531,6 +719,20 @@ function buildFileInventory(
   addEndpointDerivedFiles(files, nextId, inputs);
   addTestFiles(files, nextId, inputs);
   addDocFiles(files, nextId);
+
+  addEntitySchemaFiles(files, nextId, inputs, pc);
+  addEntityValidatorFiles(files, nextId, inputs, pc);
+  addEntityMapperFiles(files, nextId, inputs, pc);
+  addSharedContractFiles(files, nextId, inputs, pc);
+  addFixtureFiles(files, nextId, inputs, pc);
+  addSeedFiles(files, nextId, inputs, pc);
+  addMigrationFiles(files, nextId, inputs, pc);
+  addDtoFiles(files, nextId, inputs, pc);
+  addPolicyFiles(files, nextId, inputs, pc);
+  addContractTestFiles(files, nextId, inputs, pc);
+  addMockFiles(files, nextId, inputs, pc);
+  addOpsFiles(files, nextId, pc, inputs);
+  addApiBindingFiles(files, nextId, inputs, pc);
 
   return dedupeFileInventory(files);
 }
@@ -2001,6 +2203,434 @@ function classifyFeature(lower: string): string {
   if (lower.includes("analytics") || lower.includes("report") || lower.includes("metrics")) return "analytics";
   if (lower.includes("profile") || lower.includes("account")) return "profile";
   return "feature";
+}
+
+function gatedPush(
+  files: BlueprintFileEntry[],
+  nextId: () => string,
+  objectType: "entity" | "endpoint" | "screen" | "infra" | "docs",
+  artifactRole: string,
+  profile: BuildProfileConfig,
+  inputs: KitExtraction["derived_inputs"],
+  entry: Omit<BlueprintFileEntry, "file_id" | "required_reason" | "justification">
+): boolean {
+  const result = shouldCreateArtifact(objectType, artifactRole, profile, inputs);
+  if (!result.create) return false;
+  files.push({ ...entry, file_id: nextId(), required_reason: result.rationale, justification: result.reason });
+  return true;
+}
+
+function addEntitySchemaFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "_");
+    gatedPush(files, nextId, "entity", "db_schema_entity", pc, inputs, {
+      path: `src/server/schemas/${slug}.schema.ts`,
+      role: "db_schema_entity",
+      layer: "data",
+      module_ref: "mod-data",
+      subsystem_ref: "sub-data",
+      generation_method: "deterministic",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Database schema definition for ${entity.name}`,
+    });
+  }
+}
+
+function addEntityValidatorFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "_");
+    gatedPush(files, nextId, "entity", "entity_validator", pc, inputs, {
+      path: `src/server/validators/${slug}.validator.ts`,
+      role: "entity_validator",
+      layer: "backend",
+      module_ref: "mod-backend",
+      subsystem_ref: "sub-backend",
+      generation_method: "ai_assisted",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Input validation for ${entity.name}`,
+    });
+  }
+}
+
+function addEntityMapperFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "_");
+    gatedPush(files, nextId, "entity", "entity_mapper", pc, inputs, {
+      path: `src/server/mappers/${slug}.mapper.ts`,
+      role: "entity_mapper",
+      layer: "backend",
+      module_ref: "mod-backend",
+      subsystem_ref: "sub-backend",
+      generation_method: "ai_assisted",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `DTO-entity mapper for ${entity.name}`,
+    });
+  }
+}
+
+function addSharedContractFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "_");
+    gatedPush(files, nextId, "entity", "shared_contract", pc, inputs, {
+      path: `src/shared/contracts/${slug}.contract.ts`,
+      role: "shared_contract",
+      layer: "shared",
+      module_ref: "mod-shared",
+      subsystem_ref: "sub-shared",
+      generation_method: "deterministic",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Shared request/response contract for ${entity.name}`,
+    });
+  }
+}
+
+function addFixtureFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "_");
+    gatedPush(files, nextId, "entity", "test_fixture", pc, inputs, {
+      path: `tests/fixtures/${slug}.fixture.ts`,
+      role: "test_fixture",
+      layer: "test",
+      module_ref: "mod-test",
+      subsystem_ref: "sub-test",
+      generation_method: "deterministic",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Test data factory for ${entity.name}`,
+    });
+  }
+}
+
+function addSeedFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "_");
+    gatedPush(files, nextId, "entity", "db_seed_entity", pc, inputs, {
+      path: `src/server/seeds/${slug}.seed.ts`,
+      role: "db_seed_entity",
+      layer: "data",
+      module_ref: "mod-data",
+      subsystem_ref: "sub-data",
+      generation_method: "deterministic",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Seed data for ${entity.name}`,
+    });
+  }
+}
+
+function addMigrationFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const entity of inputs.domain_model.entities) {
+    const slug = entity.name.toLowerCase().replace(/\s+/g, "_");
+    gatedPush(files, nextId, "entity", "migration_file", pc, inputs, {
+      path: `src/server/migrations/${slug}.migration.ts`,
+      role: "migration_file",
+      layer: "data",
+      module_ref: "mod-data",
+      subsystem_ref: "sub-data",
+      generation_method: "deterministic",
+      source_refs: [entity.source_ref],
+      trace_refs: [],
+      description: `Schema migration for ${entity.name}`,
+    });
+  }
+}
+
+function addDtoFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const feat of inputs.feature_map) {
+    const slug = feat.name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    gatedPush(files, nextId, "endpoint", "request_dto", pc, inputs, {
+      path: `src/server/dto/${slug}.request.ts`,
+      role: "request_dto",
+      layer: "backend",
+      module_ref: "mod-backend",
+      subsystem_ref: "sub-backend",
+      generation_method: "deterministic",
+      source_refs: feat.scope_refs,
+      trace_refs: [],
+      description: `Request DTO for ${feat.name}`,
+    });
+    gatedPush(files, nextId, "endpoint", "response_dto", pc, inputs, {
+      path: `src/server/dto/${slug}.response.ts`,
+      role: "response_dto",
+      layer: "backend",
+      module_ref: "mod-backend",
+      subsystem_ref: "sub-backend",
+      generation_method: "deterministic",
+      source_refs: feat.scope_refs,
+      trace_refs: [],
+      description: `Response DTO for ${feat.name}`,
+    });
+  }
+  if (inputs.feature_map.length > 0) {
+    const result = shouldCreateArtifact("endpoint", "request_dto", pc, inputs);
+    if (result.create) {
+      files.push({
+        file_id: nextId(),
+        path: "src/server/dto/index.ts",
+        role: "barrel_export",
+        layer: "backend",
+        module_ref: "mod-backend",
+        subsystem_ref: "sub-backend",
+        generation_method: "deterministic",
+        source_refs: [],
+        trace_refs: [],
+        description: "DTO barrel export",
+        required_reason: "Barrel export for DTOs",
+        justification: "structural",
+      });
+    }
+  }
+}
+
+function addPolicyFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const feat of inputs.feature_map) {
+    const slug = feat.name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    gatedPush(files, nextId, "endpoint", "auth_policy", pc, inputs, {
+      path: `src/server/policies/${slug}.policy.ts`,
+      role: "auth_policy",
+      layer: "backend",
+      module_ref: "mod-auth",
+      subsystem_ref: "sub-backend",
+      generation_method: "ai_assisted",
+      source_refs: feat.scope_refs,
+      trace_refs: [],
+      description: `Authorization policy for ${feat.name}`,
+    });
+  }
+  if (inputs.feature_map.length > 0) {
+    const result = shouldCreateArtifact("endpoint", "auth_policy", pc, inputs);
+    if (result.create) {
+      files.push({
+        file_id: nextId(),
+        path: "src/server/policies/index.ts",
+        role: "barrel_export",
+        layer: "backend",
+        module_ref: "mod-auth",
+        subsystem_ref: "sub-backend",
+        generation_method: "deterministic",
+        source_refs: [],
+        trace_refs: [],
+        description: "Policies barrel export",
+        required_reason: "Barrel export for policies",
+        justification: "structural",
+      });
+    }
+  }
+}
+
+function addContractTestFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const feat of inputs.feature_map) {
+    const slug = feat.name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    gatedPush(files, nextId, "endpoint", "contract_test", pc, inputs, {
+      path: `tests/contract/${slug}.contract.test.ts`,
+      role: "contract_test",
+      layer: "test",
+      module_ref: "mod-test",
+      subsystem_ref: "sub-test",
+      generation_method: "ai_assisted",
+      source_refs: feat.scope_refs,
+      trace_refs: [],
+      description: `API contract test for ${feat.name}`,
+    });
+  }
+}
+
+function addMockFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const feat of inputs.feature_map) {
+    const slug = feat.name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    gatedPush(files, nextId, "endpoint", "test_mock", pc, inputs, {
+      path: `tests/mocks/${slug}.mock.ts`,
+      role: "test_mock",
+      layer: "test",
+      module_ref: "mod-test",
+      subsystem_ref: "sub-test",
+      generation_method: "ai_assisted",
+      source_refs: feat.scope_refs,
+      trace_refs: [],
+      description: `Mock client for ${feat.name}`,
+    });
+  }
+}
+
+function addOpsFiles(files: BlueprintFileEntry[], nextId: () => string, pc: BuildProfileConfig, inputs: KitExtraction["derived_inputs"]) {
+  const ciResult = shouldCreateArtifact("infra", "ci_config", pc, inputs);
+  if (ciResult.create) {
+    files.push({
+      file_id: nextId(),
+      path: ".github/workflows/ci.yml",
+      role: "ci_config",
+      layer: "config",
+      module_ref: "mod-config",
+      subsystem_ref: "sub-config",
+      generation_method: "deterministic",
+      source_refs: [],
+      trace_refs: [],
+      description: "CI pipeline configuration",
+      required_reason: ciResult.rationale,
+      justification: ciResult.reason,
+    });
+  }
+
+  const dockerResult = shouldCreateArtifact("infra", "docker_config", pc, inputs);
+  if (dockerResult.create) {
+    files.push({
+      file_id: nextId(),
+      path: "Dockerfile",
+      role: "docker_config",
+      layer: "config",
+      module_ref: "mod-config",
+      subsystem_ref: "sub-config",
+      generation_method: "deterministic",
+      source_refs: [],
+      trace_refs: [],
+      description: "Docker container configuration",
+      required_reason: dockerResult.rationale,
+      justification: dockerResult.reason,
+    });
+    files.push({
+      file_id: nextId(),
+      path: "docker-compose.yml",
+      role: "docker_config",
+      layer: "config",
+      module_ref: "mod-config",
+      subsystem_ref: "sub-config",
+      generation_method: "deterministic",
+      source_refs: [],
+      trace_refs: [],
+      description: "Docker Compose configuration",
+      required_reason: dockerResult.rationale,
+      justification: dockerResult.reason,
+    });
+  }
+
+  const deployResult = shouldCreateArtifact("infra", "deploy_config", pc, inputs);
+  if (deployResult.create) {
+    files.push({
+      file_id: nextId(),
+      path: ".github/workflows/deploy.yml",
+      role: "deploy_config",
+      layer: "config",
+      module_ref: "mod-config",
+      subsystem_ref: "sub-config",
+      generation_method: "deterministic",
+      source_refs: [],
+      trace_refs: [],
+      description: "Deployment pipeline configuration",
+      required_reason: deployResult.rationale,
+      justification: deployResult.reason,
+    });
+  }
+
+  if (pc.profile !== "lean") {
+    const utilFiles = [
+      { path: "src/server/lib/telemetry.ts", desc: "Telemetry/observability" },
+      { path: "src/server/lib/cache.ts", desc: "Cache utilities" },
+      { path: "src/server/lib/audit.ts", desc: "Audit logging" },
+      { path: "src/server/lib/pagination.ts", desc: "Pagination helpers" },
+      { path: "src/server/lib/response.ts", desc: "Standard response formatter" },
+    ];
+    const utilResult = shouldCreateArtifact("infra", "utility", pc, inputs);
+    if (utilResult.create) {
+      for (const u of utilFiles) {
+        files.push({
+          file_id: nextId(),
+          path: u.path,
+          role: "utility",
+          layer: "backend",
+          module_ref: "mod-backend",
+          subsystem_ref: "sub-backend",
+          generation_method: "deterministic",
+          source_refs: [],
+          trace_refs: [],
+          description: u.desc,
+          required_reason: utilResult.rationale,
+          justification: utilResult.reason,
+        });
+      }
+    }
+  }
+
+  const docsResult = shouldCreateArtifact("docs", "documentation", pc, inputs);
+  if (docsResult.create) {
+    const docFiles = [
+      { path: "docs/ARCHITECTURE.md", desc: "Architecture documentation" },
+      { path: "docs/DEPLOYMENT.md", desc: "Deployment guide" },
+      { path: "docs/TESTING.md", desc: "Testing guide" },
+    ];
+    for (const d of docFiles) {
+      files.push({
+        file_id: nextId(),
+        path: d.path,
+        role: "documentation",
+        layer: "docs",
+        module_ref: "mod-docs",
+        subsystem_ref: "sub-docs",
+        generation_method: "deterministic",
+        source_refs: [],
+        trace_refs: [],
+        description: d.desc,
+        required_reason: docsResult.rationale,
+        justification: docsResult.reason,
+      });
+    }
+  }
+
+  const testHelperResult = shouldCreateArtifact("infra", "utility", pc, inputs);
+  if (testHelperResult.create) {
+    const testHelpers = [
+      { path: "tests/helpers/index.ts", desc: "Test helper barrel export" },
+      { path: "tests/helpers/db.ts", desc: "Test database setup/teardown" },
+      { path: "tests/helpers/auth.ts", desc: "Test authentication helpers" },
+    ];
+    for (const h of testHelpers) {
+      files.push({
+        file_id: nextId(),
+        path: h.path,
+        role: "test_utility",
+        layer: "test",
+        module_ref: "mod-test",
+        subsystem_ref: "sub-test",
+        generation_method: "deterministic",
+        source_refs: [],
+        trace_refs: [],
+        description: h.desc,
+        required_reason: testHelperResult.rationale,
+        justification: testHelperResult.reason,
+      });
+    }
+  }
+}
+
+function addApiBindingFiles(files: BlueprintFileEntry[], nextId: () => string, inputs: KitExtraction["derived_inputs"], pc: BuildProfileConfig) {
+  for (const feat of inputs.feature_map) {
+    const slug = feat.name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    gatedPush(files, nextId, "screen", "api_binding", pc, inputs, {
+      path: `src/api/${slug}.api.ts`,
+      role: "api_binding",
+      layer: "frontend",
+      module_ref: "mod-ui",
+      subsystem_ref: "sub-frontend",
+      generation_method: "ai_assisted",
+      source_refs: feat.scope_refs,
+      trace_refs: [],
+      description: `API client binding for ${feat.name}`,
+    });
+    gatedPush(files, nextId, "screen", "loading_skeleton", pc, inputs, {
+      path: `src/components/features/${slug}/${slug}Skeleton.tsx`,
+      role: "loading_skeleton",
+      layer: "frontend",
+      module_ref: "mod-ui",
+      subsystem_ref: "sub-frontend",
+      generation_method: "deterministic",
+      source_refs: feat.scope_refs,
+      trace_refs: [],
+      description: `Loading skeleton for ${feat.name}`,
+    });
+  }
 }
 
 function dedupeFileInventory(files: BlueprintFileEntry[]): BlueprintFileEntry[] {
