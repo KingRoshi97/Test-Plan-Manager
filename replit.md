@@ -28,25 +28,20 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 
 **Grouped Sidebar** (`App/src/components/app-sidebar.tsx`):
 - AXION branding header with gradient AX logo
-- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts, Certification), Intelligence (Features, Doc Inventory, Knowledge Library with 15 sub-items), System (Analytics Engine, Health, Logs, Maintenance), Output (Export)
-- Knowledge Library label is a clickable nav link → `/knowledge` (Upgrade Matrix Dashboard); chevron toggle separately expands/collapses sub-library list
-- Knowledge Library sub-group auto-expands when any library route is active
+- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts, Certification), Intelligence (Features, Doc Inventory, Library Control with 15 sub-items), System (Analytics Engine, Health, Logs, Maintenance), Output (Export)
+- Library Control label is a clickable nav link → `/library-control` (Library Control Center); chevron toggle separately expands/collapses sub-library list
+- Library Control sub-group auto-expands when any library route is active; `/knowledge` also routes to Library Control Center
 - Live badge counts (active runs count with cyan badge)
 - Active item uses left-border glow via .nav-item-active
 
-**Knowledge Library Upgrade Matrix Dashboard** (`App/src/pages/knowledge-dashboard.tsx`):
-- Route: `/knowledge` — accessed by clicking "Knowledge Library" in sidebar
-- Hero section with overall progress bar (artifact completion %)
-- 6 MetricCards: Libraries, Avg Score, Critical count, Phase 1/2/3 counts
-- 3-phase timeline showing progress per phase with library chips
-- All Libraries table: sortable by phase/order, showing score bar (current→target), phase badge, priority chip, maturity tier, artifact completion, status dropdown
-- Library names link to existing library detail pages
-- Phase detail panels (expandable): target outcomes, expected results, per-library artifact checklists with checkboxes
-- Fastest Lift section: top 5 highest-ROI libraries with rationale
-- Hard Blockers section: 4 cross-library blockers to solve early
-- Cross-Phase Rules section: 5 governance rules (ALG-1 through ALG-5)
-- Data: `App/src/data/upgrade-matrix.ts` — full structured dataset from PDF (16 libraries, 3 phases, artifacts, scores, blockers, tiers)
-- Progress persistence: `App/src/hooks/use-upgrade-progress.ts` — localStorage-backed hook for artifact checkmarks and library status overrides
+**Library Control Center** (`App/src/pages/library-control.tsx`):
+- Routes: `/library-control` (primary), `/knowledge` (legacy redirect) — accessed by clicking "Library Control" in sidebar
+- Governance-first control surface for all 16 Axion libraries (ops, knowledge, templates, gates, maintenance, policy, telemetry, kit, standards, verification, planning, orchestration, intake, canonical, audit, system)
+- 12 sections: Hero Header (control score, governed count, active risks, blocked deps), Estate Status Cards (8 MetricCards with click-to-filter), Control Actions Strip (8 action buttons), Library Health Overview (6 health bands), Library Estate Table (sortable/filterable table with row selection), Selected Library Detail Panel (7 sub-sections), Highest Leverage Fixes (ranked fix cards), Blockers and Risks (two-column), Library Governance Rules (stacked rule cards), Maintenance Modes (9 mode cards), Dependency and Authority Map (link cards), Recent Library Activity (timeline)
+- Data: `App/src/data/library-control.ts` — types, helper functions (computeLibraryControlScore, inferControlState, isStale), 16 library records with governance data (authority status, coverage, freshness, integrity, dependency pressure, risk, control state), library details, control actions, health bands, leverage fixes, blockers, risks, governance rules, maintenance modes, dependency links, activity events
+- Hook: `App/src/hooks/use-library-control.ts` — filters (query, authority/control/risk filters, stale/blocked/missing-auth/drift toggles, sort), library selection with detail lookup, filter presets (critical-only, unsafe, blocked, stale, drift, missing-authority), updateFilters for bulk filter changes
+- Components: `App/src/components/library-control/` — health-overview.tsx, library-estate-table.tsx, library-detail-panel.tsx, maintenance-modes.tsx
+- Old Knowledge Dashboard preserved at `App/src/pages/knowledge-dashboard.tsx` but no longer routed as main page
 
 **Premium UI Components** (`App/src/components/ui/`):
 - `glass-panel.tsx` — GlassPanel container with configurable glow color (cyan/green/amber/red/violet/none), solid or blur variants

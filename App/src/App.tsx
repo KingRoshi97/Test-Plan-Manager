@@ -30,13 +30,15 @@ import MaintenancePage from "./pages/maintenance";
 import KnowledgeDashboardPage from "./pages/knowledge-dashboard";
 import CertificationPage from "./pages/certification";
 import AnalyticsEnginePage from "./pages/analytics-engine";
+import LibraryControlCenterPage from "./pages/library-control";
 
 export default function App() {
   return (
     <AppShell>
       <Switch>
         <Route path="/" component={DashboardPage} />
-        <Route path="/knowledge" component={KnowledgeDashboardPage} />
+        <Route path="/library-control" component={LibraryControlCenterPage} />
+        <Route path="/knowledge" component={LibraryControlCenterPage} />
         <Route path="/runs" component={RunsPage} />
         <Route path="/new" component={NewAssemblyPage} />
         <Route path="/assembly/:id" component={AssemblyPage} />

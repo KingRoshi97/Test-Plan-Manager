@@ -116,7 +116,7 @@ function KnowledgeSubgroup() {
     { href: "/intake-library", label: "Intake", icon: Library },
   ];
 
-  const dashboardActive = location === "/knowledge";
+  const dashboardActive = location === "/library-control" || location === "/knowledge";
   const anySubActive = libraryLinks.some(({ href }) => location.startsWith(href));
   const anyActive = dashboardActive || anySubActive;
   const [open, setOpen] = useState(anyActive);
@@ -137,11 +137,11 @@ function KnowledgeSubgroup() {
         }`}
       >
         <button
-          onClick={() => setLocation("/knowledge")}
+          onClick={() => setLocation("/library-control")}
           className="flex items-center gap-2.5 flex-1 text-left min-w-0"
         >
           <BookOpen className="w-4 h-4 shrink-0" />
-          <span className="truncate flex-1">Knowledge Library</span>
+          <span className="truncate flex-1">Library Control</span>
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
