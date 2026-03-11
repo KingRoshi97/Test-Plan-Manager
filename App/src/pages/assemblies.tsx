@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, Fragment } from "react";
+import { useState, useMemo, useRef, Fragment, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -21,6 +21,12 @@ import {
   ChevronDown,
   ChevronRight,
   FolderTree,
+  PanelRightOpen,
+  X,
+  Play,
+  Bookmark,
+  Zap,
+  Eye,
 } from "lucide-react";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
 import { GlassPanel } from "../components/ui/glass-panel";
@@ -29,6 +35,7 @@ import { usePipelineStatus, getStallLevel, formatStallTime } from "../hooks/use-
 import type { Assembly } from "../../../shared/schema";
 
 type FilterStatus = "all" | "running" | "completed" | "failed" | "queued";
+type UsageFilter = "all" | "live" | "warm" | "idle" | "dormant" | "no_telemetry";
 
 const filterChips: { key: FilterStatus; label: string; icon: typeof Activity }[] = [
   { key: "all", label: "All", icon: Activity },
@@ -66,6 +73,82 @@ const usageColors: Record<string, string> = {
   idle: "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]",
   dormant: "text-[hsl(var(--muted-foreground)/0.6)] bg-[hsl(var(--muted)/0.3)]",
 };
+
+const usageFilterOptions: { value: UsageFilter; label: string }[] = [
+  { value: "all", label: "All Usage" },
+  { value: "live", label: "Live" },
+  { value: "warm", label: "Warm" },
+  { value: "idle", label: "Idle" },
+  { value: "dormant", label: "Dormant" },
+  { value: "no_telemetry", label: "No Telemetry" },
+];
+
+interface SavedView {
+  key: string;
+  label: string;
+  icon: typeof Activity;
+  apply: (setters: ViewSetters) => void;
+}
+
+interface ViewSetters {
+  setActiveFilter: (v: FilterStatus) => void;
+  setLifecycleFilter: (v: LifecycleFilter) => void;
+  setFamilyFilter: (v: string) => void;
+  setOwnerFilter: (v: string) => void;
+  setUsageFilter: (v: UsageFilter) => void;
+  setGroupByFamily: (v: boolean) => void;
+}
+
+const savedViews: SavedView[] = [
+  {
+    key: "all",
+    label: "All Assemblies",
+    icon: Boxes,
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+  },
+  {
+    key: "running",
+    label: "Running",
+    icon: Radio,
+    apply: (s) => { s.setActiveFilter("running"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+  },
+  {
+    key: "failed",
+    label: "Failed",
+    icon: XCircle,
+    apply: (s) => { s.setActiveFilter("failed"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+  },
+  {
+    key: "in_use",
+    label: "In Use",
+    icon: CheckCircle2,
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("in_use"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+  },
+  {
+    key: "unowned",
+    label: "Unowned",
+    icon: Users,
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("unowned"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+  },
+  {
+    key: "no_family",
+    label: "No Family",
+    icon: FolderTree,
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("unassigned"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+  },
+  {
+    key: "deprecated_candidates",
+    label: "Deprecated Candidates",
+    icon: AlertTriangle,
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("deprecated"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+  },
+  {
+    key: "at_risk_families",
+    label: "At Risk Families",
+    icon: Zap,
+    apply: (s) => { s.setActiveFilter("failed"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(true); },
+  },
+];
 
 function formatDuration(ms: number | null | undefined) {
   if (!ms) return "\u2014";
@@ -344,6 +427,208 @@ function FamilyGroupHeader({
   );
 }
 
+function QuickDetailDrawer({
+  assembly,
+  onClose,
+  onNavigate,
+  onDelete,
+  onRunPipeline,
+  isDeleting,
+  isRunning,
+}: {
+  assembly: Assembly | null;
+  onClose: () => void;
+  onNavigate: (id: number) => void;
+  onDelete: (id: number) => void;
+  onRunPipeline: (id: number) => void;
+  isDeleting?: boolean;
+  isRunning?: boolean;
+}) {
+  useEffect(() => {
+    if (!assembly) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [assembly, onClose]);
+
+  if (!assembly) return null;
+
+  const ext = assembly as any;
+
+  return (
+    <div className="fixed inset-0 z-40" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/30" />
+      <div
+        className="absolute right-0 top-0 bottom-0 w-[380px] max-w-[90vw] glass-panel-solid border-l border-[hsl(var(--border))] shadow-2xl overflow-y-auto animate-slide-in-right"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-[hsl(var(--border))] flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <PanelRightOpen className="w-4 h-4 text-[hsl(var(--primary))] shrink-0" />
+            <span className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">{assembly.projectName}</span>
+          </div>
+          <button onClick={onClose} className="p-1 rounded hover:bg-[hsl(var(--accent))] transition-colors shrink-0">
+            <X className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-5">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <StatusChip variant={getStatusVariant(assembly.status)} label={assembly.status} pulse={assembly.status === "running"} />
+              {assembly.runId && (
+                <span className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded">
+                  {assembly.runId}
+                </span>
+              )}
+            </div>
+            {assembly.idea && (
+              <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed">{assembly.idea}</p>
+            )}
+          </div>
+
+          <DrawerSection label="Family">
+            {ext.familyName ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[hsl(var(--foreground))]">{ext.familyName}</span>
+                {ext.familyType && (
+                  <span className="text-[10px] text-[hsl(var(--muted-foreground))] capitalize bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded">
+                    {ext.familyType.replace(/_/g, " ")}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)] italic">No family assigned</span>
+            )}
+          </DrawerSection>
+
+          <DrawerSection label="Lifecycle">
+            {ext.lifecycleState ? (
+              <StatusChip
+                variant={(lifecycleVariant[ext.lifecycleState] || "neutral") as any}
+                label={lifecycleLabels[ext.lifecycleState] || ext.lifecycleState}
+              />
+            ) : (
+              <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
+            )}
+          </DrawerSection>
+
+          <DrawerSection label="Usage">
+            <div className="flex items-center gap-3">
+              {ext.usageState ? (
+                <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${usageColors[ext.usageState] || "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]"}`}>
+                  {ext.usageState}
+                </span>
+              ) : (
+                <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">No telemetry</span>
+              )}
+              {ext.lastActivityAt && (
+                <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                  Last active {formatDate(ext.lastActivityAt)}
+                </span>
+              )}
+            </div>
+          </DrawerSection>
+
+          <DrawerSection label="Owner">
+            {ext.ownerName ? (
+              <div>
+                <span className="text-xs text-[hsl(var(--foreground))]">{ext.ownerName}</span>
+                {ext.teamName && (
+                  <span className="text-[10px] text-[hsl(var(--muted-foreground))] ml-2">{ext.teamName}</span>
+                )}
+              </div>
+            ) : (
+              <span className="text-[11px] text-[hsl(var(--muted-foreground)/0.5)] italic">Unowned</span>
+            )}
+          </DrawerSection>
+
+          <DrawerSection label="Pipeline">
+            <div className="py-1">
+              <StageRail stages={parseStagesFromAssembly(ext.latestStages)} />
+            </div>
+            {assembly.currentStep && (
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1 block">
+                Current: {assembly.currentStep}
+              </span>
+            )}
+          </DrawerSection>
+
+          <DrawerSection label="Activity">
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-[10px] text-system-label block mb-0.5">Created</span>
+                <span className="text-[hsl(var(--muted-foreground))]">{formatDate(assembly.createdAt)}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-system-label block mb-0.5">Updated</span>
+                <span className="text-[hsl(var(--muted-foreground))]">{formatDate(assembly.updatedAt)}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-system-label block mb-0.5">Total Runs</span>
+                <span className="text-[hsl(var(--muted-foreground))] font-mono-tech">{assembly.totalRuns ?? 0}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-system-label block mb-0.5">Total Duration</span>
+                <span className="text-[hsl(var(--muted-foreground))] font-mono-tech">{formatDuration(assembly.totalDurationMs)}</span>
+              </div>
+            </div>
+          </DrawerSection>
+
+          {assembly.preset && (
+            <DrawerSection label="Preset">
+              <span className="text-[11px] font-mono-tech text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded inline-block">
+                {assembly.preset}
+              </span>
+            </DrawerSection>
+          )}
+
+          <div className="pt-2 border-t border-[hsl(var(--border))] space-y-2">
+            <button
+              onClick={() => onNavigate(assembly.id)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-xs"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Open Workbench
+            </button>
+            {assembly.status !== "running" && (
+              <button
+                onClick={() => onRunPipeline(assembly.id)}
+                disabled={isRunning}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] transition font-medium text-xs disabled:opacity-50"
+              >
+                {isRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+                {isRunning ? "Starting..." : "Run Pipeline"}
+              </button>
+            )}
+            <button
+              onClick={() => {
+                if (confirm("Delete this assembly?")) onDelete(assembly.id);
+              }}
+              disabled={isDeleting}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-[hsl(var(--status-failure))] hover:bg-[hsl(var(--status-failure)/0.1)] transition font-medium text-xs disabled:opacity-50"
+            >
+              {isDeleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+              {isDeleting ? "Deleting..." : "Delete Assembly"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DrawerSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <span className="text-[10px] text-system-label uppercase tracking-wider block mb-1.5">{label}</span>
+      {children}
+    </div>
+  );
+}
+
 export default function AssembliesPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -351,8 +636,11 @@ export default function AssembliesPage() {
   const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>("all");
   const [familyFilter, setFamilyFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
+  const [usageFilter, setUsageFilter] = useState<UsageFilter>("all");
   const [groupByFamily, setGroupByFamily] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [activeView, setActiveView] = useState("all");
+  const [drawerAssemblyId, setDrawerAssemblyId] = useState<number | null>(null);
 
   const { data: assemblies = [], isLoading } = useQuery<Assembly[]>({
     queryKey: ["/api/assemblies"],
@@ -368,10 +656,24 @@ export default function AssembliesPage() {
       apiRequest(`/api/assemblies/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       toast.success("Assembly deleted");
+      setDrawerAssemblyId(null);
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to delete assembly");
+    },
+  });
+
+  const runPipelineMutation = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest(`/api/assemblies/${id}/run`, { method: "POST" }),
+    onSuccess: () => {
+      toast.success("Pipeline started");
+      setDrawerAssemblyId(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to start pipeline");
     },
   });
 
@@ -409,8 +711,13 @@ export default function AssembliesPage() {
     } else if (ownerFilter !== "all") {
       result = result.filter((a) => (a as any).ownerName === ownerFilter);
     }
+    if (usageFilter === "no_telemetry") {
+      result = result.filter((a) => !(a as any).usageState);
+    } else if (usageFilter !== "all") {
+      result = result.filter((a) => (a as any).usageState === usageFilter);
+    }
     return result;
-  }, [assemblies, activeFilter, lifecycleFilter, familyFilter, ownerFilter]);
+  }, [assemblies, activeFilter, lifecycleFilter, familyFilter, ownerFilter, usageFilter]);
 
   const familyGroups = useMemo(() => buildFamilyGroups(filtered), [filtered]);
 
@@ -432,28 +739,55 @@ export default function AssembliesPage() {
     return { inUse, unowned, families: familySet.size, familiesAtRisk };
   }, [assemblies]);
 
+  const drawerAssembly = useMemo(() => {
+    if (drawerAssemblyId === null) return null;
+    return assemblies.find((a) => a.id === drawerAssemblyId) || null;
+  }, [assemblies, drawerAssemblyId]);
+
+  const viewSetters: ViewSetters = useMemo(() => ({
+    setActiveFilter,
+    setLifecycleFilter,
+    setFamilyFilter,
+    setOwnerFilter,
+    setUsageFilter,
+    setGroupByFamily,
+  }), []);
+
+  const applyView = useCallback((view: SavedView) => {
+    setActiveView(view.key);
+    view.apply(viewSetters);
+  }, [viewSetters]);
+
   function handleCardClick(filter: FilterStatus | string) {
     if (filter === "in_use") {
       setActiveFilter("all");
       setLifecycleFilter("in_use");
       setFamilyFilter("all");
       setOwnerFilter("all");
+      setUsageFilter("all");
+      setActiveView("");
     } else if (filter === "unowned") {
       setActiveFilter("all");
       setLifecycleFilter("all");
       setFamilyFilter("all");
       setOwnerFilter("unowned");
+      setUsageFilter("all");
+      setActiveView("");
     } else if (filter === "families") {
       setGroupByFamily(true);
       setActiveFilter("all");
       setLifecycleFilter("all");
       setFamilyFilter("all");
       setOwnerFilter("all");
+      setUsageFilter("all");
+      setActiveView("");
     } else {
       setActiveFilter(filter as FilterStatus);
       setLifecycleFilter("all");
       setFamilyFilter("all");
       setOwnerFilter("all");
+      setUsageFilter("all");
+      setActiveView("");
     }
   }
 
@@ -590,6 +924,13 @@ export default function AssembliesPage() {
         <td className="px-4 py-3 text-right">
           <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
             <button
+              onClick={() => setDrawerAssemblyId(a.id)}
+              className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
+              title="Quick Detail"
+            >
+              <Eye className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+            </button>
+            <button
               onClick={() => setLocation(`/assembly/${a.id}`)}
               className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
               title="Open Assembly"
@@ -613,6 +954,7 @@ export default function AssembliesPage() {
   }
 
   const TABLE_COL_COUNT = 11;
+  const allFiltersDefault = activeFilter === "all" && lifecycleFilter === "all" && familyFilter === "all" && ownerFilter === "all" && usageFilter === "all";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -632,13 +974,31 @@ export default function AssembliesPage() {
         </button>
       </div>
 
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mb-1">
+        <Bookmark className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] shrink-0 mr-0.5" />
+        {savedViews.map((view) => (
+          <button
+            key={view.key}
+            onClick={() => applyView(view)}
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium whitespace-nowrap transition-all duration-150 shrink-0 ${
+              activeView === view.key
+                ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
+                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)] border border-transparent"
+            }`}
+          >
+            <view.icon className="w-3 h-3" />
+            {view.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex items-center gap-2 flex-wrap">
         {filterChips.map((chip) => {
           const isActive = activeFilter === chip.key;
           return (
             <button
               key={chip.key}
-              onClick={() => setActiveFilter(chip.key)}
+              onClick={() => { setActiveFilter(chip.key); setActiveView(""); }}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
                 isActive
                   ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
@@ -664,12 +1024,12 @@ export default function AssembliesPage() {
       <div className="flex items-center gap-2 flex-wrap">
         <FilterDropdown
           value={lifecycleFilter}
-          onChange={(v) => setLifecycleFilter(v as LifecycleFilter)}
+          onChange={(v) => { setLifecycleFilter(v as LifecycleFilter); setActiveView(""); }}
           options={lifecycleOptions.map((o) => ({ value: o, label: lifecycleLabels[o] }))}
         />
         <FilterDropdown
           value={familyFilter}
-          onChange={setFamilyFilter}
+          onChange={(v) => { setFamilyFilter(v); setActiveView(""); }}
           options={[
             { value: "all", label: "All Families" },
             { value: "unassigned", label: "Unassigned" },
@@ -678,16 +1038,21 @@ export default function AssembliesPage() {
         />
         <FilterDropdown
           value={ownerFilter}
-          onChange={setOwnerFilter}
+          onChange={(v) => { setOwnerFilter(v); setActiveView(""); }}
           options={[
             { value: "all", label: "All Owners" },
             { value: "unowned", label: "Unowned" },
             ...ownerNames.map((n) => ({ value: n, label: n })),
           ]}
         />
+        <FilterDropdown
+          value={usageFilter}
+          onChange={(v) => { setUsageFilter(v as UsageFilter); setActiveView(""); }}
+          options={usageFilterOptions}
+        />
         <div className="ml-auto">
           <button
-            onClick={() => setGroupByFamily(!groupByFamily)}
+            onClick={() => { setGroupByFamily(!groupByFamily); setActiveView(""); }}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
               groupByFamily
                 ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
@@ -747,16 +1112,16 @@ export default function AssembliesPage() {
             <Rocket className="w-7 h-7 text-[hsl(var(--muted-foreground))]" />
           </div>
           <p className="text-sm font-medium text-[hsl(var(--foreground))] mb-1">
-            {activeFilter === "all" && lifecycleFilter === "all" && familyFilter === "all" && ownerFilter === "all"
+            {allFiltersDefault
               ? "No assemblies yet"
               : "No matching assemblies"}
           </p>
           <p className="text-xs text-[hsl(var(--muted-foreground))] mb-4">
-            {activeFilter === "all" && lifecycleFilter === "all" && familyFilter === "all" && ownerFilter === "all"
+            {allFiltersDefault
               ? "Create your first assembly to get started."
               : "Try changing the filters or create a new assembly."}
           </p>
-          {activeFilter === "all" && lifecycleFilter === "all" && familyFilter === "all" && ownerFilter === "all" && (
+          {allFiltersDefault && (
             <button
               onClick={() => setLocation("/new")}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-sm"
@@ -807,6 +1172,16 @@ export default function AssembliesPage() {
           </table>
         </div>
       )}
+
+      <QuickDetailDrawer
+        assembly={drawerAssembly}
+        onClose={() => setDrawerAssemblyId(null)}
+        onNavigate={(id) => setLocation(`/assembly/${id}`)}
+        onDelete={(id) => deleteMutation.mutate(id)}
+        onRunPipeline={(id) => runPipelineMutation.mutate(id)}
+        isDeleting={deleteMutation.isPending}
+        isRunning={runPipelineMutation.isPending}
+      />
     </div>
   );
 }

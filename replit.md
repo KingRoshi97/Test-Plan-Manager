@@ -60,17 +60,19 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 **Assemblies Page** (`App/src/pages/assemblies.tsx`): Full fleet management page at `/assemblies` (redirect from `/runs`). Features:
 - Header: "Assemblies" title, "Track, organize, and operate all assemblies across the system" subtitle, "New Assembly" CTA
 - Primary filter chips: All/Running/Completed/Failed/Queued with live counts
-- Secondary filter dropdowns: All Lifecycle (draft/active/in_use/degraded/deprecated/archived), All Families (dynamic + Unassigned), All Owners (dynamic + Unowned)
+- Secondary filter dropdowns: All Lifecycle (draft/active/in_use/degraded/deprecated/archived), All Families (dynamic + Unassigned), All Owners (dynamic + Unowned), All Usage (live/warm/idle/dormant/no telemetry)
+- **Saved Views**: Horizontal pill strip with bookmark icon below header. 8 built-in preset views: All Assemblies, Running, Failed, In Use, Unowned, No Family, Deprecated Candidates, At Risk Families. Clicking a view applies its filter+group preset and highlights the active view. Manual filter changes clear active view highlight
 - Overview cards strip: Total/Running/Failed/In Use/Unowned/Families — clickable to set filters
   - Families card: shows distinct family count + "X at risk" subtitle (families with failed assemblies); clicking activates group-by-family mode; highlighted ring when group mode is active
-- Table columns: Assembly (name + idea + preset tag), Status (StatusChip + stall warnings), Family (familyName + familyType), Lifecycle (StatusChip-style badge), Usage (color-coded badge: live/warm/idle/dormant), Owner (ownerName + teamName), Pipeline (StageRail), Elapsed, Duration, Updated, Actions
+- Table columns: Assembly (name + idea + preset tag), Status (StatusChip + stall warnings), Family (familyName + familyType), Lifecycle (StatusChip-style badge), Usage (color-coded badge: live/warm/idle/dormant), Owner (ownerName + teamName), Pipeline (StageRail), Elapsed, Duration, Updated, Actions (Eye inspect + Open + Delete)
 - Responsive hiding: Family/Lifecycle on md+, Usage/Owner on lg+, Elapsed/Duration/Updated on xl+
+- **Quick Detail Drawer**: Right-side sliding panel (380px, glass-panel-solid) opens via Eye icon in Actions column without navigating away. Shows assembly name/status/runId, idea, Family section, Lifecycle badge, Usage state + lastActivityAt, Owner/team, Pipeline StageRail + currentStep, Activity grid (created/updated/totalRuns/totalDuration), preset. Actions: Open Workbench, Run Pipeline, Delete. Closes via X button, Escape key, or clicking backdrop. Row click still navigates to /assembly/:id
 - **Group by Family mode**: Toggle button (FolderTree icon) in filter bar; when active, table rows are clustered under collapsible FamilyGroupHeader rows
   - `buildFamilyGroups()`: groups filtered assemblies by familyName, sorts alphabetically with "Unassigned" last, members sorted by updatedAt desc
   - `FamilyGroupHeader`: collapsible row spanning all columns — shows family name, type badge, member count, status rollup icons (running/completed/failed counts), dominant lifecycle StatusChip
   - `FamilyTooltip`: hover tooltip on family group headers showing family name/type, total assemblies, status breakdown, lifecycle distribution, owner list, latest activity date
   - Collapse state tracked via `collapsedGroups` Set; clicking header toggles expand/collapse
-  - All existing filters (status, lifecycle, family, owner) apply in grouped mode
+  - All existing filters (status, lifecycle, family, owner, usage) apply in grouped mode
 - New assembly data model fields: familyId, familyName, familyType, lifecycleState (default "draft"), ownerName, teamName, usageState, lastActivityAt
 - PATCH /api/assemblies/:id accepts new metadata fields (familyId, familyName, familyType, lifecycleState, ownerName, teamName, usageState); lastActivityAt is server-managed
 
