@@ -764,7 +764,8 @@ export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: B
     },
   });
 
-  const state = buildStatus?.state ?? "not_requested";
+  const rawState = buildStatus?.state ?? "not_requested";
+  const state = rawState === "ready" ? "not_requested" : rawState;
   const isActive = ["requested", "approved", "building", "verifying"].includes(state);
   const isDone = ["passed", "exported"].includes(state);
   const isFailed = state === "failed";
