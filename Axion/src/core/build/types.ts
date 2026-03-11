@@ -30,8 +30,8 @@ export const BUILD_TRANSITIONS: Record<BuildState, BuildState[]> = {
   building: ["verifying", "failed"],
   verifying: ["passed", "failed"],
   failed: ["requested"],
-  passed: ["exported"],
-  exported: [],
+  passed: ["exported", "building"],
+  exported: ["building"],
 };
 
 export interface BuildRequest {

@@ -691,6 +691,133 @@ async function generateRepoUnitCentric(
   return { success: filesFailed === 0, filesGenerated, filesFailed, errors, unitResults };
 }
 
+export interface RemediationFileContext {
+  findingTitle: string;
+  findingDescription: string;
+  remediationGuidance: string;
+  severity: string;
+}
+
+export async function generateUnitsForRemediation(
+  runDir: string,
+  plan: BuildPlan,
+  paths: WorkspacePaths,
+  gsePlan: GenerationStrategyPlan,
+  unitIds: string[],
+  fileRemediationContext: Map<string, RemediationFileContext[]>,
+  onProgress?: ProgressCallback,
+): Promise<{ success: boolean; filesGenerated: number; filesFailed: number; errors: string[]; unitResults: UnitGenerationResult[] }> {
+  const ctx = loadKitContext(runDir, plan);
+  const frozenSystemPrompt = buildFrozenSystemPrompt(ctx);
+
+  const remediationSystemAddendum = `\n\nREMEDIATION MODE: You are regenerating files flagged by AVCS certification. For each file, fix the identified issues while preserving existing functionality and architecture. The remediation context for each file will be provided in the user prompt.`;
+  const augmentedSystemPrompt = frozenSystemPrompt + remediationSystemAddendum;
+
+  const fileInventory: BlueprintFileEntry[] = [];
+  const blueprintPath = path.join(runDir, "build", "repo_blueprint.json");
+  try {
+    const bp = JSON.parse(fs.readFileSync(blueprintPath, "utf-8"));
+    fileInventory.push(...(bp.file_inventory ?? []));
+  } catch {
+    for (const slice of plan.slices) {
+      for (const f of slice.files) {
+        fileInventory.push({
+          file_id: f.relativePath,
+          path: f.relativePath,
+          role: f.role,
+          layer: "frontend",
+          module_ref: "",
+          subsystem_ref: "",
+          generation_method: f.generationMethod,
+          source_refs: f.sourceRef ? [f.sourceRef] : [],
+          trace_refs: f.traceRef ? [f.traceRef] : [],
+          description: "",
+        });
+      }
+    }
+  }
+
+  const unitIdSet = new Set(unitIds);
+  const strategyMap = new Map<string, GenerationStrategy>();
+  for (const s of gsePlan.strategies) strategyMap.set(s.build_unit_id, s);
+
+  let filesGenerated = 0;
+  let filesFailed = 0;
+  const errors: string[] = [];
+  const unitResults: UnitGenerationResult[] = [];
+  let totalProcessed = 0;
+
+  const unitsToProcess = gsePlan.build_units.filter(u => unitIdSet.has(u.id));
+  console.log(`  [REMEDIATION] Processing ${unitsToProcess.length} units for remediation`);
+
+  for (const unit of unitsToProcess) {
+    const strategy = strategyMap.get(unit.id);
+    if (!strategy) {
+      errors.push(`No strategy found for unit ${unit.id}`);
+      continue;
+    }
+
+    const fileMap = new Map<string, BlueprintFileEntry>();
+    for (const f of fileInventory) fileMap.set(f.file_id, f);
+    const unitFiles = unit.file_ids.map(id => fileMap.get(id)).filter(Boolean) as BlueprintFileEntry[];
+
+    let remediationPromptSection = "";
+    for (const uf of unitFiles) {
+      const contexts = fileRemediationContext.get(uf.path);
+      if (contexts && contexts.length > 0) {
+        remediationPromptSection += `\nFILE: ${uf.path}\n  FINDINGS TO FIX:\n`;
+        for (const c of contexts) {
+          remediationPromptSection += `    - [${c.severity.toUpperCase()}] ${c.findingTitle}: ${c.findingDescription}\n      Guidance: ${c.remediationGuidance}\n`;
+        }
+      }
+    }
+
+    console.log(`  [REMEDIATION] Unit: ${unit.name} (${unitFiles.length} files)`);
+
+    const unitResult = await generateUnit(
+      unit,
+      strategy,
+      unit.context_capsule,
+      augmentedSystemPrompt + (remediationPromptSection ? `\n\nREMEDIATION TARGETS:${remediationPromptSection}` : ""),
+      ctx,
+      plan,
+      fileInventory,
+      paths,
+    );
+
+    unitResults.push(unitResult);
+
+    for (const produced of unitResult.files_produced) {
+      try {
+        writeRepoFile(paths, produced.path, produced.content);
+        filesGenerated++;
+        totalProcessed++;
+        onProgress?.({
+          sliceId: unit.id,
+          sliceName: unit.name,
+          fileIndex: totalProcessed,
+          totalFiles: unitsToProcess.reduce((sum, u) => sum + u.file_ids.length, 0),
+          filePath: produced.path,
+          status: "generated",
+        });
+      } catch (err: any) {
+        filesFailed++;
+        errors.push(`Error writing ${produced.path}: ${err.message}`);
+      }
+    }
+
+    const expectedCount = unit.file_ids.length;
+    const producedCount = unitResult.files_produced.length;
+    if (producedCount < expectedCount) {
+      filesFailed += expectedCount - producedCount;
+      errors.push(`Unit ${unit.name}: ${expectedCount - producedCount} files not produced`);
+    }
+  }
+
+  console.log(`  [REMEDIATION] Complete: ${filesGenerated} generated, ${filesFailed} failed`);
+  return { success: filesFailed === 0, filesGenerated, filesFailed, errors, unitResults };
+}
+
 async function generateFile(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget, model?: string): Promise<string | null> {
   if (file.generationMethod === "deterministic") {
     return generateDeterministic(ctx, slice, file);

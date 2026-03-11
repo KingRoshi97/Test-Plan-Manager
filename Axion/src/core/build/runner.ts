@@ -24,7 +24,7 @@ import {
   getWorkspaceStatus,
   type WorkspacePaths,
 } from "./workspace.js";
-import { generateRepo } from "./generator.js";
+import { generateRepo, generateUnitsForRemediation, type RemediationFileContext } from "./generator.js";
 import { runGSE } from "./gse.js";
 import { verifyBuild } from "./verifier.js";
 import {
@@ -521,4 +521,181 @@ function logBuildSummary(
     console.log(`  Structural Violations: ${fidelity.structural_violations}`);
   }
   console.log("");
+}
+
+export interface RemediationResult {
+  success: boolean;
+  filesRegenerated: number;
+  filesFailed: number;
+  errors: string[];
+  remediationLog: {
+    certRunId: string;
+    startedAt: string;
+    completedAt: string;
+    findings: Array<{ id: string; title: string; severity: string }>;
+    unitsRemediated: string[];
+    filesRegenerated: string[];
+    filesFailed: string[];
+  };
+}
+
+export async function remediateFromReport(
+  runId: string,
+  certReportPath: string,
+  onProgress?: BuildProgressCallback,
+): Promise<RemediationResult> {
+  const runDir = path.join(AXION_RUNS_DIR, runId);
+  const startedAt = new Date().toISOString();
+
+  const result: RemediationResult = {
+    success: false,
+    filesRegenerated: 0,
+    filesFailed: 0,
+    errors: [],
+    remediationLog: {
+      certRunId: "",
+      startedAt,
+      completedAt: "",
+      findings: [],
+      unitsRemediated: [],
+      filesRegenerated: [],
+      filesFailed: [],
+    },
+  };
+
+  let report: any;
+  try {
+    report = JSON.parse(fs.readFileSync(certReportPath, "utf-8"));
+  } catch (err: any) {
+    result.errors.push(`Failed to read certification report: ${err.message}`);
+    return result;
+  }
+
+  result.remediationLog.certRunId = report.run_id || "";
+
+  const manifest = report.remediation_manifest;
+  if (!manifest || !manifest.affected_unit_ids || manifest.affected_unit_ids.length === 0) {
+    result.errors.push("No remediation manifest or no affected units found in report");
+    return result;
+  }
+
+  const buildDir = path.join(runDir, "build");
+  const planPath = path.join(buildDir, "build_plan.json");
+  const gsePath = path.join(buildDir, "generation_strategy", "generation_strategy.json");
+
+  let plan: BuildPlan;
+  let gsePlan: GenerationStrategyPlan;
+  try {
+    plan = JSON.parse(fs.readFileSync(planPath, "utf-8"));
+  } catch (err: any) {
+    result.errors.push(`Failed to read build plan: ${err.message}`);
+    return result;
+  }
+  try {
+    gsePlan = JSON.parse(fs.readFileSync(gsePath, "utf-8"));
+  } catch (err: any) {
+    result.errors.push(`Failed to read GSE strategy: ${err.message}`);
+    return result;
+  }
+
+  const repoDir = path.join(buildDir, "repo");
+  const paths: WorkspacePaths = {
+    root: buildDir,
+    repo: repoDir,
+    buildManifest: path.join(buildDir, "manifests", "build_manifest.json"),
+    repoManifest: path.join(buildDir, "manifests", "repo_manifest.json"),
+    verificationReport: path.join(buildDir, "manifests", "verification_report.json"),
+    buildPlan: path.join(buildDir, "build_plan.json"),
+    fileIndex: path.join(buildDir, "manifests", "file_index.json"),
+    exportZip: path.join(buildDir, "project_repo.zip"),
+  };
+
+  const fileRemediationContext = new Map<string, RemediationFileContext[]>();
+  const findings = report.findings || [];
+  const openFindings = findings.filter((f: any) => f.status === "open" || f.status === "acknowledged");
+
+  for (const finding of openFindings) {
+    result.remediationLog.findings.push({
+      id: finding.id,
+      title: finding.title,
+      severity: finding.severity,
+    });
+
+    const affectedFiles: string[] = finding.affected_files || [];
+    for (const filePath of affectedFiles) {
+      const existing = fileRemediationContext.get(filePath) || [];
+      existing.push({
+        findingTitle: finding.title,
+        findingDescription: finding.description || "",
+        remediationGuidance: finding.remediation || "Fix the identified issue",
+        severity: finding.severity,
+      });
+      fileRemediationContext.set(filePath, existing);
+    }
+  }
+
+  const unitIds: string[] = manifest.affected_unit_ids;
+  result.remediationLog.unitsRemediated = unitIds;
+
+  console.log(`  [REMEDIATION] Starting remediation for ${unitIds.length} units, driven by ${openFindings.length} findings`);
+
+  onProgress?.({
+    buildId: "REMEDIATION",
+    state: "building",
+    currentSlice: "Remediation",
+    slicesCompleted: 0,
+    totalSlices: unitIds.length,
+    filesGenerated: 0,
+    totalFiles: manifest.total_files || 0,
+    startedAt,
+    updatedAt: new Date().toISOString(),
+  });
+
+  try {
+    const genResult = await generateUnitsForRemediation(
+      runDir,
+      plan,
+      paths,
+      gsePlan,
+      unitIds,
+      fileRemediationContext,
+      (progress) => {
+        onProgress?.({
+          buildId: "REMEDIATION",
+          state: "building",
+          currentSlice: `Remediation: ${progress.sliceName}`,
+          slicesCompleted: 0,
+          totalSlices: unitIds.length,
+          filesGenerated: progress.fileIndex,
+          totalFiles: manifest.total_files || 0,
+          startedAt,
+          updatedAt: new Date().toISOString(),
+        });
+      },
+    );
+
+    result.filesRegenerated = genResult.filesGenerated;
+    result.filesFailed = genResult.filesFailed;
+    result.errors.push(...genResult.errors);
+    result.success = genResult.success;
+
+    for (const ur of genResult.unitResults) {
+      for (const fp of ur.files_produced) {
+        result.remediationLog.filesRegenerated.push(fp.path);
+      }
+    }
+  } catch (err: any) {
+    result.errors.push(`Remediation generation failed: ${err.message}`);
+  }
+
+  result.remediationLog.completedAt = new Date().toISOString();
+
+  const logPath = path.join(buildDir, "remediation_log.json");
+  try {
+    fs.writeFileSync(logPath, JSON.stringify(result.remediationLog, null, 2), "utf-8");
+    console.log(`  [REMEDIATION] Log written to ${logPath}`);
+  } catch {}
+
+  console.log(`  [REMEDIATION] Complete: ${result.filesRegenerated} files regenerated, ${result.filesFailed} failed`);
+  return result;
 }

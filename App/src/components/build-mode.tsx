@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../lib/queryClient";
 import {
   Play, Download, Loader2, CheckCircle, XCircle, AlertTriangle,
-  Package, FileCode, ChevronRight, RefreshCw, Clock, Zap
+  Package, FileCode, ChevronRight, RefreshCw, Clock, Zap,
+  ShieldCheck, Eye, ArrowRight, ChevronDown, Wrench
 } from "lucide-react";
 
 interface BuildTabProps {
@@ -242,6 +243,470 @@ function FailureDisplay({ manifest }: { manifest: any }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+interface AVCSRun {
+  id: string;
+  assembly_id: number;
+  run_id: string;
+  run_type: string;
+  status: string;
+  domains_evaluated: string[];
+  started_at?: string;
+  completed_at?: string;
+  verdict?: string;
+  score?: number;
+  created_at: string;
+}
+
+interface AVCSReport {
+  verdict: string;
+  overall_score: number;
+  domains: Array<{
+    domain: string;
+    status: string;
+    score: number;
+    findings_count: number;
+    checks: Array<{ check_id: string; description: string; result: string }>;
+  }>;
+  findings_summary: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    info: number;
+    total: number;
+  };
+  remediation_manifest: {
+    total_files: number;
+    affected_unit_ids: string[];
+    affected_findings: Array<{
+      finding_id: string;
+      title: string;
+      severity: string;
+      affected_files: string[];
+    }>;
+  };
+  hard_stop_failures: string[];
+}
+
+const VERDICT_STYLES: Record<string, { bg: string; text: string; glow?: string }> = {
+  PASS: { bg: "bg-green-900/30", text: "text-green-300", glow: "shadow-green-500/20" },
+  PASS_WITH_WARNINGS: { bg: "bg-amber-900/30", text: "text-amber-300", glow: "shadow-amber-500/20" },
+  CONDITIONAL_PASS: { bg: "bg-orange-900/30", text: "text-orange-300", glow: "shadow-orange-500/20" },
+  FAIL: { bg: "bg-red-900/30", text: "text-red-300", glow: "shadow-red-500/20" },
+  BLOCKED: { bg: "bg-gray-800", text: "text-gray-300" },
+};
+
+const DOMAIN_STATUS_STYLES: Record<string, string> = {
+  pass: "bg-green-900/30 text-green-300",
+  fail: "bg-red-900/30 text-red-300",
+  warn: "bg-amber-900/30 text-amber-300",
+  skip: "bg-gray-800 text-gray-300",
+  blocked: "bg-gray-800 text-gray-300",
+};
+
+const RUN_TYPE_OPTIONS = [
+  { value: "smoke", label: "Smoke", desc: "Quick integrity + functional checks" },
+  { value: "functional", label: "Functional", desc: "Full functional verification" },
+  { value: "security", label: "Security", desc: "Security scanning" },
+  { value: "performance", label: "Performance", desc: "Performance analysis" },
+  { value: "full_certification", label: "Full Certification", desc: "All 4 domains" },
+];
+
+function VerdictBadge({ verdict, large }: { verdict: string; large?: boolean }) {
+  const style = VERDICT_STYLES[verdict] || VERDICT_STYLES.BLOCKED;
+  const sizeClass = large
+    ? `px-4 py-2 text-sm font-bold ${style.glow ? `shadow-lg ${style.glow}` : ""}`
+    : "px-2.5 py-1 text-xs font-medium";
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full ${style.bg} ${style.text} ${sizeClass}`}>
+      <ShieldCheck className={large ? "w-4 h-4" : "w-3 h-3"} />
+      {verdict.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+function AVCSSection({ assemblyId, runId }: { assemblyId: number; runId: string }) {
+  const queryClient = useQueryClient();
+  const [selectedRunType, setSelectedRunType] = useState("full_certification");
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [showPrevious, setShowPrevious] = useState(false);
+  const [remediationStatus, setRemediationStatus] = useState<"idle" | "running" | "complete">("idle");
+
+  const { data: avcsRuns = [], isLoading: runsLoading } = useQuery<AVCSRun[]>({
+    queryKey: ["/api/avcs/runs", assemblyId],
+    queryFn: () => apiRequest(`/api/avcs/runs?assemblyId=${assemblyId}`),
+    refetchInterval: (query) => {
+      const runs = query.state.data as AVCSRun[] | undefined;
+      if (!runs) return false;
+      const hasActive = runs.some(r => r.status === "planned" || r.status === "running");
+      return hasActive ? 2000 : false;
+    },
+  });
+
+  const latestRun = avcsRuns[0];
+  const activeRunId = selectedRunId || latestRun?.id;
+
+  const { data: report } = useQuery<AVCSReport>({
+    queryKey: ["/api/avcs/runs", activeRunId, "report"],
+    queryFn: () => apiRequest(`/api/avcs/runs/${activeRunId}/report`),
+    enabled: !!activeRunId && avcsRuns.some(r => r.id === activeRunId && r.status === "completed"),
+  });
+
+  const createRunMutation = useMutation({
+    mutationFn: async () => {
+      const created = await apiRequest("/api/avcs/runs", {
+        method: "POST",
+        body: JSON.stringify({ assemblyId, runId, runType: selectedRunType }),
+      });
+      await apiRequest(`/api/avcs/runs/${created.id}/start`, { method: "POST" });
+      return created;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/avcs/runs", assemblyId] });
+    },
+  });
+
+  const remediateMutation = useMutation({
+    mutationFn: async (certRunId: string) => {
+      setRemediationStatus("running");
+      return apiRequest(`/api/avcs/runs/${certRunId}/remediate`, { method: "POST" });
+    },
+    onSuccess: () => {
+      setTimeout(() => {
+        setRemediationStatus("complete");
+        queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId, "build"] });
+      }, 3000);
+    },
+    onError: () => {
+      setRemediationStatus("idle");
+    },
+  });
+
+  const activeRun = avcsRuns.find(r => r.id === activeRunId);
+  const previousRuns = avcsRuns.filter(r => r.id !== activeRunId);
+  const showRemediate = report && ["FAIL", "CONDITIONAL_PASS", "PASS_WITH_WARNINGS"].includes(report.verdict);
+
+  if (runsLoading) {
+    return (
+      <div className="p-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-[hsl(var(--muted-foreground))]" />
+          <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Certification</span>
+          <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--muted-foreground))]" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-blue-400" />
+          <span className="text-sm font-semibold text-[hsl(var(--foreground))]">AVCS Certification</span>
+        </div>
+        {activeRun?.verdict && <VerdictBadge verdict={activeRun.verdict} />}
+      </div>
+
+      {avcsRuns.length === 0 && (
+        <div className="space-y-3">
+          <p className="text-xs text-[hsl(var(--muted-foreground))]">
+            No certification runs yet. Run AVCS to verify build quality, security, and performance.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {RUN_TYPE_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setSelectedRunType(opt.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                  selectedRunType === opt.value
+                    ? "border-blue-500 bg-blue-900/20 text-blue-300"
+                    : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:border-blue-500/30"
+                }`}
+                title={opt.desc}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => createRunMutation.mutate()}
+            disabled={createRunMutation.isPending}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {createRunMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="w-4 h-4" />
+            )}
+            Certify This Build
+          </button>
+          {createRunMutation.isError && (
+            <p className="text-xs text-red-500">
+              Failed to start certification: {(createRunMutation.error as Error)?.message}
+            </p>
+          )}
+        </div>
+      )}
+
+      {activeRun && (activeRun.status === "planned" || activeRun.status === "running") && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+            <span className="text-sm font-medium text-blue-300">
+              Certification {activeRun.status === "planned" ? "starting" : "in progress"}...
+            </span>
+            <span className="text-xs text-[hsl(var(--muted-foreground))]">
+              ({activeRun.run_type.replace(/_/g, " ")})
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {activeRun.domains_evaluated.map(domain => {
+              const domainLabel = domain.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              return (
+                <div key={domain} className="flex items-center gap-2 p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
+                  <Loader2 className="w-3 h-3 animate-spin text-blue-400" />
+                  <span className="text-xs font-medium">{domainLabel}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {activeRun?.status === "completed" && report && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <VerdictBadge verdict={report.verdict} large />
+            <div className="text-center px-3 py-1 rounded-lg bg-[hsl(var(--muted))]">
+              <p className="text-lg font-bold text-[hsl(var(--foreground))]">{report.overall_score}</p>
+              <p className="text-[10px] text-[hsl(var(--muted-foreground))]">Score</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {report.domains.map(d => {
+              const domainLabel = d.domain.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              const statusStyle = DOMAIN_STATUS_STYLES[d.status] || DOMAIN_STATUS_STYLES.skip;
+              return (
+                <div key={d.domain} className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))] space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium">{domainLabel}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${statusStyle}`}>
+                      {d.status}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        d.score >= 80 ? "bg-green-500" : d.score >= 60 ? "bg-amber-500" : "bg-red-500"
+                      }`}
+                      style={{ width: `${d.score}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-[hsl(var(--muted-foreground))]">
+                    <span>{d.score}/100</span>
+                    <span>{d.findings_count} findings</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {report.findings_summary.total > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {report.findings_summary.critical > 0 && (
+                <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-red-900/40 text-red-300">
+                  {report.findings_summary.critical} Critical
+                </span>
+              )}
+              {report.findings_summary.high > 0 && (
+                <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-orange-900/40 text-orange-300">
+                  {report.findings_summary.high} High
+                </span>
+              )}
+              {report.findings_summary.medium > 0 && (
+                <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-amber-900/40 text-amber-300">
+                  {report.findings_summary.medium} Medium
+                </span>
+              )}
+              {report.findings_summary.low > 0 && (
+                <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-900/40 text-blue-300">
+                  {report.findings_summary.low} Low
+                </span>
+              )}
+              {report.findings_summary.info > 0 && (
+                <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-gray-800 text-gray-300">
+                  {report.findings_summary.info} Info
+                </span>
+              )}
+            </div>
+          )}
+
+          {report.hard_stop_failures.length > 0 && (
+            <div className="p-3 rounded-lg border border-red-500/30 bg-red-900/10 space-y-1">
+              <span className="text-xs font-bold text-red-400">Hard-Stop Failures</span>
+              {report.hard_stop_failures.map((f, i) => (
+                <p key={i} className="text-xs text-red-300">{f}</p>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <a
+              href={`/certification/${activeRun.id}`}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs font-medium hover:bg-[hsl(var(--muted))] transition-colors"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              View Full Report
+              <ArrowRight className="w-3 h-3" />
+            </a>
+
+            {showRemediate && remediationStatus === "idle" && (
+              <button
+                onClick={() => remediateMutation.mutate(activeRun.id)}
+                disabled={remediateMutation.isPending}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 disabled:opacity-50 transition-colors shadow-lg shadow-amber-500/20"
+              >
+                {remediateMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Wrench className="w-4 h-4" />
+                )}
+                Remediate from Report
+                <span className="text-xs opacity-80">
+                  ({report.remediation_manifest.total_files} files, {report.remediation_manifest.affected_unit_ids.length} units, {report.remediation_manifest.affected_findings.length} findings)
+                </span>
+              </button>
+            )}
+
+            {remediationStatus === "running" && (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-900/20 border border-amber-500/30 text-amber-300 text-sm">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="font-medium">Remediation in progress...</span>
+              </div>
+            )}
+
+            {remediationStatus === "complete" && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-900/20 border border-green-500/30 text-green-300 text-sm">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="font-medium">
+                    Remediation complete — {report.remediation_manifest.total_files} files updated. Run certification again to verify.
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setRemediationStatus("idle");
+                    createRunMutation.mutate();
+                  }}
+                  disabled={createRunMutation.isPending}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {createRunMutation.isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  )}
+                  Re-certify
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-[hsl(var(--border))]">
+            <div className="flex flex-wrap gap-2">
+              {RUN_TYPE_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setSelectedRunType(opt.value)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-medium border transition-all ${
+                    selectedRunType === opt.value
+                      ? "border-blue-500 bg-blue-900/20 text-blue-300"
+                      : "border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:border-blue-500/30"
+                  }`}
+                  title={opt.desc}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => createRunMutation.mutate()}
+              disabled={createRunMutation.isPending}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs font-medium hover:bg-[hsl(var(--muted))] disabled:opacity-50 transition-colors"
+            >
+              {createRunMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <ShieldCheck className="w-3.5 h-3.5" />
+              )}
+              New Certification Run
+            </button>
+          </div>
+        </div>
+      )}
+
+      {activeRun?.status === "failed" && (
+        <div className="p-3 rounded-lg border border-red-500/30 bg-red-900/10 space-y-2">
+          <div className="flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-red-400" />
+            <span className="text-sm font-medium text-red-300">Certification run failed</span>
+          </div>
+          <button
+            onClick={() => createRunMutation.mutate()}
+            disabled={createRunMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs font-medium hover:bg-[hsl(var(--muted))] transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Retry Certification
+          </button>
+        </div>
+      )}
+
+      {previousRuns.length > 0 && (
+        <div className="pt-2 border-t border-[hsl(var(--border))]">
+          <button
+            onClick={() => setShowPrevious(!showPrevious)}
+            className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+          >
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showPrevious ? "rotate-180" : ""}`} />
+            Previous Runs ({previousRuns.length})
+          </button>
+          {showPrevious && (
+            <div className="mt-2 space-y-1">
+              {previousRuns.map(run => (
+                <button
+                  key={run.id}
+                  onClick={() => setSelectedRunId(run.id)}
+                  className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors ${
+                    selectedRunId === run.id
+                      ? "bg-[hsl(var(--muted))] border border-[hsl(var(--primary)/0.3)]"
+                      : "hover:bg-[hsl(var(--muted))]"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[hsl(var(--muted-foreground))]">{run.id}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--muted))] text-[10px]">
+                      {run.run_type.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {run.verdict && <VerdictBadge verdict={run.verdict} />}
+                    {run.score != null && (
+                      <span className="text-[hsl(var(--muted-foreground))]">{run.score}</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -497,6 +962,10 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
             </button>
           </div>
         </div>
+      )}
+
+      {isDone && (
+        <AVCSSection assemblyId={assemblyId} runId={runId!} />
       )}
 
       {finalTokenUsage && (isDone || isFailed) && (

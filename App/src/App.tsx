@@ -28,6 +28,7 @@ import OpsLibraryPage from "./pages/ops-library";
 import KnowledgeLibraryPage from "./pages/knowledge-library";
 import MaintenancePage from "./pages/maintenance";
 import KnowledgeDashboardPage from "./pages/knowledge-dashboard";
+import CertificationPage from "./pages/certification";
 
 export default function App() {
   return (
@@ -60,6 +61,8 @@ export default function App() {
         <Route path="/maintenance" component={MaintenancePage} />
         <Route path="/intake-library" component={IntakeLibraryPage} />
         <Route path="/docs" component={DocInventoryPage} />
+        <Route path="/certification/:certRunId" component={CertificationPage} />
+        <Route path="/certification" component={CertificationPage} />
         <Route path="/export" component={ExportPage} />
         <Route>
           <div className="flex items-center justify-center h-full">

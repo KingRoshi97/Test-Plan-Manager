@@ -228,6 +228,7 @@ export function AppSidebar() {
         badgeVariant: "cyan",
       },
       { href: "/files", label: "Artifacts", icon: FolderOpen },
+      { href: "/certification", label: "Certification", icon: ShieldCheck },
     ],
     defaultOpen: true,
   };
