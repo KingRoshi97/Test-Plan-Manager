@@ -28,7 +28,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 
 **Grouped Sidebar** (`App/src/components/app-sidebar.tsx`):
 - AXION branding header with gradient AX logo
-- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts, Certification), Intelligence (Features, Doc Inventory, Library Control with 15 sub-items), System (Analytics Engine, Health, Logs, Maintenance), Output (Export)
+- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts, Certification), Intelligence (Capabilities, Doc Inventory, Library Control with 15 sub-items), System (Analytics Engine, Health, Logs, Maintenance), Output (Export)
 - Library Control label is a clickable nav link → `/library-control` (Library Control Center); chevron toggle separately expands/collapses sub-library list
 - Library Control sub-group auto-expands when any library route is active; `/knowledge` also routes to Library Control Center
 - Live badge counts (active runs count with cyan badge)
@@ -278,11 +278,21 @@ The normalizer, spec builder, and kit builder have been enhanced so the Builder 
 ### CAN-03 Unknown Format
 `Axion/src/core/templates/filler.ts` — When the IA genuinely can't resolve content, generates CAN-03 compliant unknowns with unk_ prefix IDs, unknown_type, severity, blocking, summary, detail, impact, what_is_needed_to_resolve. Rendered in TMP-02 Section 11 format. `fill_unknowns_audit.json` written when unknowns exist. UNKNOWNs are the fallback — AI synthesis fills content whenever possible.
 
-### Feature Registry UI
-- `GET /api/features` — Returns all 17 feature pack registries from `Axion/features/FEAT-*/00_registry.json`
-- `GET /api/features/:id` — Returns registry + all 8 spec file contents + reverse dependencies
-- `/features` page — Feature Registry Dashboard grouped by category (infrastructure, core-logic, interface, security) with status badges, module counts, dependency counts
-- `/features/:id` page — Feature detail inspector with tabbed spec viewer (Contract, Errors, Security, Gates & Proofs, Tests, Observability, Docs, API), source modules list, dependency/reverse-dependency links, gate badges
+### Capability Control Center (formerly Feature Registry)
+- **Route**: `/features` (nav label: "Capabilities")
+- **Page**: `App/src/pages/capabilities.tsx` — top-level orchestration page; `App/src/pages/features.tsx` is a thin re-export alias
+- **Detail**: `/features/:id` — Feature detail inspector with tabbed spec viewer (Contract, Errors, Security, Gates & Proofs, Tests, Observability, Docs, API), source modules list, dependency/reverse-dependency links, gate badges
+- **API**: `GET /api/features` (17 registries), `GET /api/features/:id` (registry + specs + reverse deps)
+- **Types**: `App/src/types/capabilities.ts` — Feature, CapabilityRecord, CapabilityStats, CapabilityFilterState, CapabilityPageModel, ImplementationStatus, RiskLevel, ReadinessLabel, DependencyHealth, GateHealth, ModuleHealth, AttentionFlag, CapabilityWarningCode, CapabilityTabId, CapabilitySortMode
+- **Lib (derivation helpers)**: `App/src/lib/capabilities/` — deriveImplementationStatus.ts, deriveReadinessScore.ts, collectAttentionFlags.ts, deriveCapabilityRecord.ts, buildCapabilityPageModel.ts
+- **Hooks**: `App/src/hooks/capabilities/useCapabilitiesPage.ts` (orchestration: fetch, tab/filter/sort state, model), `useCapabilitiesPageModel.ts` (wraps buildCapabilityPageModel in useMemo)
+- **Components**: `App/src/components/capabilities/` — CapabilitiesPageHeader, CapabilityStatStrip, CapabilityStatCard, CapabilityControlBar, CapabilityTabs, CapabilityCard, CapabilityCardCompact, CapabilityBoard, CapabilityBadge, MetricChip, WarningPill, AttentionPanel, CoverageCalloutRow, CapabilitiesEmptyState
+- **Tab Panels**: `App/src/components/capabilities/panels/` — OverviewPanel, ReadinessPanel, DependenciesPanel, GatesPanel, ModulesPanel, RiskPanel
+- **Two-layer status model**: Registry status (active/draft/error/deprecated) + Implementation status (implemented/partial/stubbed/spec_only/blocked/unverified) — derived client-side from src_modules, gates, dependencies
+- **Readiness scoring**: 0–100 heuristic (ready/near_ready/partial/fragile/blocked) based on registry status, modules, gates, unresolved deps
+- **Risk levels**: low/moderate/high/critical — derived from reverse dep count, missing modules/gates, error state, unresolved deps
+- **6 tabs**: Overview (attention panel + coverage callouts + card board), Readiness (implementation status lanes), Dependencies (dep health + chains), Gates (coverage + warnings), Modules (linkage + warnings), Risk (blast radius + fragility)
+- **Filters**: search (ID/title/description/modules/deps/gates), category, registry status, implementation status, risk level, sort (7 modes), quick toggles (blocked/incomplete/unverified/missing gates/missing modules/high impact)
 - Health page shows Feature Packs summary card with total/active counts and category breakdown
 
 ### OpenAI Autofill Integration

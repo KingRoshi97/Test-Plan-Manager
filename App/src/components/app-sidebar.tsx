@@ -237,7 +237,7 @@ export function AppSidebar() {
   const intelligence: NavGroup = {
     title: "Intelligence",
     items: [
-      { href: "/features", label: "Features", icon: Blocks },
+      { href: "/features", label: "Capabilities", icon: Blocks },
       { href: "/docs", label: "Doc Inventory", icon: FileSearch },
     ],
     defaultOpen: true,

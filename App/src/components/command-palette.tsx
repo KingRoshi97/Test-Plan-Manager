@@ -138,7 +138,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     Maintenance
                   </CommandItem>
                   <CommandItem icon={Blocks} onSelect={() => navigate("/features")}>
-                    Features
+                    Capabilities
                   </CommandItem>
                   <CommandItem icon={FileSearch} onSelect={() => navigate("/docs")}>
                     Doc Inventory
