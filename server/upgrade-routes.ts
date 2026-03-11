@@ -374,6 +374,11 @@ export function registerUpgradeRoutes(app: Express) {
         .where(eq(upgradeSessions.id, req.params.sessionId))
         .returning();
       if (updated.length === 0) return res.status(404).json({ error: "Session not found" });
+
+      await recordEvent(Number(req.params.assemblyId), "session_archived", {
+        sessionId: req.params.sessionId, actorType: "user",
+      });
+
       res.json({ session: toSessionSummary(updated[0]) });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -401,6 +406,10 @@ export function registerUpgradeRoutes(app: Express) {
         validationProfile: src.validationProfile,
         createdBy: "user",
       }).returning();
+
+      await recordEvent(Number(req.params.assemblyId), "session_cloned", {
+        sessionId: rows[0].id, originalSessionId: req.params.sessionId, actorType: "user",
+      });
 
       res.status(201).json({ session: toSessionSummary(rows[0]) });
     } catch (err: unknown) {
@@ -722,6 +731,11 @@ export function registerUpgradeRoutes(app: Express) {
       await db.update(upgradeSessions)
         .set({ status: "verifying", updatedAt: new Date() })
         .where(eq(upgradeSessions.id, sessionId));
+
+      await recordEvent(Number(req.params.assemblyId), "candidate_saved", {
+        sessionId, actorType: "user",
+      });
+
       res.json({ saved: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
