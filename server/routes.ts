@@ -4699,12 +4699,16 @@ export function registerRoutes(app: Express) {
       if (stat.isDirectory()) {
         const indexFallback = path.join(fullPath, "index.html");
         if (fs.existsSync(indexFallback) && !fs.lstatSync(indexFallback).isSymbolicLink()) {
-          return res.sendFile(indexFallback);
+          return res.sendFile(indexFallback, (err) => {
+            if (err && !res.headersSent) res.status(404).json({ error: "File not found" });
+          });
         }
         return res.status(404).json({ error: "File not found" });
       }
 
-      return res.sendFile(fullPath);
+      return res.sendFile(fullPath, (err) => {
+        if (err && !res.headersSent) res.status(404).json({ error: "File not found" });
+      });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
