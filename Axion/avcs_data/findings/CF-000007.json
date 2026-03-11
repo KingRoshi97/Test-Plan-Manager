@@ -1,0 +1,20 @@
+{
+  "id": "CF-000007",
+  "cert_run_id": "CR-000002",
+  "domain": "security",
+  "severity": "medium",
+  "impact": "warning",
+  "title": "Missing CORS configuration",
+  "description": "No CORS setup found in server files which may cause cross-origin request issues",
+  "affected_surface": "cors",
+  "affected_files": [
+    "src/lib/api/client.ts",
+    "src/lib/api/endpoints.ts",
+    "src/lib/api/interceptors.ts"
+  ],
+  "probable_cause": "Server code does not configure CORS headers",
+  "evidence_refs": [],
+  "remediation": "Add CORS middleware with appropriate origin whitelist configuration",
+  "status": "open",
+  "created_at": "2026-03-11T03:44:23.810Z"
+}

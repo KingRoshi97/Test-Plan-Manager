@@ -1,0 +1,679 @@
+{
+  "id": "RPT-CR-000002",
+  "cert_run_id": "CR-000002",
+  "assembly_id": 10,
+  "run_id": "RUN-000032",
+  "verdict": "FAIL",
+  "domains": [
+    {
+      "domain": "build_integrity",
+      "status": "fail",
+      "checks": [
+        {
+          "check_id": "bi-001",
+          "description": "package.json exists and is valid JSON",
+          "result": "pass"
+        },
+        {
+          "check_id": "bi-002",
+          "description": "tsconfig.json exists",
+          "result": "pass"
+        },
+        {
+          "check_id": "bi-003-vite_config_ts",
+          "description": "Config file present: vite.config.ts",
+          "result": "pass"
+        },
+        {
+          "check_id": "bi-003-tailwind_config_ts",
+          "description": "Config file present: tailwind.config.ts",
+          "result": "pass"
+        },
+        {
+          "check_id": "bi-003-postcss_config_js",
+          "description": "Config file present: postcss.config.js",
+          "result": "pass"
+        },
+        {
+          "check_id": "bi-003-index_html",
+          "description": "Config file present: index.html",
+          "result": "warn",
+          "detail": "index.html not found",
+          "affected_files": [
+            "index.html"
+          ]
+        },
+        {
+          "check_id": "bi-004",
+          "description": "Environment template present (.env.example)",
+          "result": "pass"
+        },
+        {
+          "check_id": "bi-005-frontend_entry",
+          "description": "Entry point exists: Frontend entry",
+          "result": "pass",
+          "detail": "Found: src/main.tsx"
+        },
+        {
+          "check_id": "bi-005-server_entry",
+          "description": "Entry point exists: Server entry",
+          "result": "fail",
+          "detail": "None of src/server/index.ts, server/index.ts, src/server.ts found",
+          "affected_files": [
+            "src/server/index.ts",
+            "server/index.ts",
+            "src/server.ts"
+          ]
+        },
+        {
+          "check_id": "bi-006",
+          "description": "Critical directories from build plan exist",
+          "result": "pass"
+        }
+      ],
+      "findings_count": 2,
+      "coverage_state": "failed",
+      "score": 85,
+      "evidence_refs": []
+    },
+    {
+      "domain": "functional",
+      "status": "fail",
+      "checks": [
+        {
+          "check_id": "fn-001",
+          "description": "All planned files exist on disk",
+          "result": "pass",
+          "detail": "All planned files present"
+        },
+        {
+          "check_id": "fn-002",
+          "description": "No zero-byte generated files",
+          "result": "pass"
+        },
+        {
+          "check_id": "fn-003",
+          "description": "Placeholder/TODO density within acceptable limits",
+          "result": "warn",
+          "detail": "0 files with >10 TODOs, 8 with >3 TODOs",
+          "affected_files": [
+            "src/components/features/CollaborativeFeatures/CollaborativeFeaturesDetail.tsx",
+            "src/components/features/CollaborativeFeatures/index.tsx",
+            "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/ContentManagementSystem(CMS)forHistoricalRecordsList.tsx",
+            "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx",
+            "src/components/features/Role-BasedAccessControls(RBAC)/Role-BasedAccessControls(RBAC)Detail.tsx",
+            "src/components/features/User-GeneratedCollectionsandAnnotations/index.tsx",
+            "src/hooks/use-collaborative-features.ts",
+            "src/lib/store/index.ts"
+          ]
+        },
+        {
+          "check_id": "fn-004",
+          "description": "Import resolution (no broken local imports)",
+          "result": "fail",
+          "detail": "30 files with unresolvable imports",
+          "affected_files": [
+            "src/components/features/AdvancedSearchFunctionalitywithFilters/index.tsx",
+            "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx",
+            "src/components/features/DataExportandReporting/index.tsx",
+            "src/components/layout/Sidebar.tsx",
+            "src/hooks/use-advanced-search-functionality-with-filters.ts",
+            "src/hooks/use-user-authentication-and-authorization.ts",
+            "src/hooks/use-user-generated-collections-and-annotations.ts",
+            "src/pages/Dashboard.tsx",
+            "src/pages/ForgotPassword.tsx",
+            "src/pages/Login.tsx",
+            "src/server/middleware/auth.ts",
+            "src/server/middleware/content-upload-and-approval.ts",
+            "src/server/middleware/search-and-save-personal-collections.ts",
+            "src/server/middleware/user-registration-and-login.ts",
+            "src/server/routes/advanced-search-functionality-with-filters.ts",
+            "src/server/routes/collaborative-features.ts",
+            "src/server/routes/content-management-system-(cms)-for-historical-records.ts",
+            "src/server/routes/responsive-design.ts",
+            "src/server/routes/role-based-access-controls-(rbac).ts",
+            "src/server/routes/user-authentication-and-authorization.ts"
+          ]
+        },
+        {
+          "check_id": "fn-005",
+          "description": "Route/endpoint files have substantive content",
+          "result": "pass"
+        }
+      ],
+      "findings_count": 2,
+      "coverage_state": "failed",
+      "score": 70,
+      "evidence_refs": []
+    },
+    {
+      "domain": "security",
+      "status": "warn",
+      "checks": [
+        {
+          "check_id": "sec-001",
+          "description": "No hardcoded secrets or API keys",
+          "result": "pass"
+        },
+        {
+          "check_id": "sec-002",
+          "description": "No eval(), Function(), or dangerous dynamic code",
+          "result": "pass"
+        },
+        {
+          "check_id": "sec-003",
+          "description": "Auth guard/middleware present (RBAC in blueprint)",
+          "result": "skip",
+          "detail": "RBAC not specified in blueprint"
+        },
+        {
+          "check_id": "sec-004",
+          "description": "CORS configuration present",
+          "result": "warn",
+          "detail": "No CORS configuration found in server files",
+          "affected_files": [
+            "src/lib/api/client.ts",
+            "src/lib/api/endpoints.ts",
+            "src/lib/api/interceptors.ts"
+          ]
+        },
+        {
+          "check_id": "sec-005",
+          "description": "Input validation in route handlers",
+          "result": "pass"
+        },
+        {
+          "check_id": "sec-006",
+          "description": "No console.log of sensitive data patterns",
+          "result": "pass"
+        },
+        {
+          "check_id": "sec-007",
+          "description": ".env not committed (check .gitignore)",
+          "result": "pass"
+        }
+      ],
+      "findings_count": 1,
+      "coverage_state": "partially_covered",
+      "score": 92,
+      "evidence_refs": []
+    },
+    {
+      "domain": "performance",
+      "status": "warn",
+      "checks": [
+        {
+          "check_id": "perf-001",
+          "description": "Lazy loading patterns for routes",
+          "result": "warn",
+          "detail": "No lazy loading or dynamic imports found for route components",
+          "affected_files": [
+            "src/pages/AdvancedSearchFunctionalitywithFilters.tsx",
+            "src/pages/CollaborativeFeatures.tsx",
+            "src/pages/Dashboard.tsx",
+            "src/pages/ForgotPassword.tsx",
+            "src/pages/Home.tsx"
+          ]
+        },
+        {
+          "check_id": "perf-002",
+          "description": "No barrel re-exports with >20 exports",
+          "result": "pass"
+        },
+        {
+          "check_id": "perf-003",
+          "description": "Individual file size within budget (warn >500, high >1000 lines)",
+          "result": "pass"
+        },
+        {
+          "check_id": "perf-004",
+          "description": "File count vs plan (drift detection)",
+          "result": "pass",
+          "detail": "Planned: 135, Actual: 135 (0% drift)"
+        },
+        {
+          "check_id": "perf-005",
+          "description": "No synchronous file I/O in server files",
+          "result": "pass"
+        }
+      ],
+      "findings_count": 1,
+      "coverage_state": "partially_covered",
+      "score": 90,
+      "evidence_refs": []
+    }
+  ],
+  "findings_summary": {
+    "critical": 1,
+    "high": 1,
+    "medium": 3,
+    "low": 1,
+    "info": 0,
+    "total": 6
+  },
+  "findings": [
+    {
+      "id": "CF-000005",
+      "cert_run_id": "CR-000002",
+      "domain": "build_integrity",
+      "severity": "medium",
+      "impact": "warning",
+      "title": "Missing config file: index.html",
+      "description": "Required configuration file index.html not found in build output",
+      "affected_surface": "project_config",
+      "affected_files": [
+        "index.html"
+      ],
+      "probable_cause": "Build process did not generate this config file",
+      "evidence_refs": [],
+      "remediation": "Generate index.html with appropriate project configuration",
+      "status": "open",
+      "created_at": "2026-03-11T03:44:23.783Z"
+    },
+    {
+      "id": "CF-000005",
+      "cert_run_id": "CR-000002",
+      "domain": "build_integrity",
+      "severity": "critical",
+      "impact": "release_blocker",
+      "title": "Missing entry point: Server entry",
+      "description": "No entry point found. Checked: src/server/index.ts, server/index.ts, src/server.ts",
+      "affected_surface": "entry_points",
+      "affected_files": [
+        "src/server/index.ts",
+        "server/index.ts",
+        "src/server.ts"
+      ],
+      "probable_cause": "Build process did not generate the application entry point",
+      "evidence_refs": [],
+      "remediation": "Create the server entry file (e.g., src/server/index.ts)",
+      "status": "open",
+      "created_at": "2026-03-11T03:44:23.783Z"
+    },
+    {
+      "id": "CF-000006",
+      "cert_run_id": "CR-000002",
+      "domain": "functional",
+      "severity": "medium",
+      "impact": "warning",
+      "title": "8 files have elevated TODOs (>3 each)",
+      "description": "Files with moderate placeholder density: src/components/features/CollaborativeFeatures/CollaborativeFeaturesDetail.tsx, src/components/features/CollaborativeFeatures/index.tsx, src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/ContentManagementSystem(CMS)forHistoricalRecordsList.tsx, src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx, src/components/features/Role-BasedAccessControls(RBAC)/Role-BasedAccessControls(RBAC)Detail.tsx",
+      "affected_surface": "code_completeness",
+      "affected_files": [
+        "src/components/features/CollaborativeFeatures/CollaborativeFeaturesDetail.tsx",
+        "src/components/features/CollaborativeFeatures/index.tsx",
+        "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/ContentManagementSystem(CMS)forHistoricalRecordsList.tsx",
+        "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx",
+        "src/components/features/Role-BasedAccessControls(RBAC)/Role-BasedAccessControls(RBAC)Detail.tsx",
+        "src/components/features/User-GeneratedCollectionsandAnnotations/index.tsx",
+        "src/hooks/use-collaborative-features.ts",
+        "src/lib/store/index.ts"
+      ],
+      "probable_cause": "Generated code contains several TODO/FIXME markers",
+      "evidence_refs": [],
+      "remediation": "Review and resolve TODO markers before deployment",
+      "status": "open",
+      "created_at": "2026-03-11T03:44:23.793Z"
+    },
+    {
+      "id": "CF-000006",
+      "cert_run_id": "CR-000002",
+      "domain": "functional",
+      "severity": "high",
+      "impact": "conditional_blocker",
+      "title": "30 files have broken import paths",
+      "description": "Files importing non-existent local modules: src/components/features/AdvancedSearchFunctionalitywithFilters/index.tsx, src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx, src/components/features/DataExportandReporting/index.tsx, src/components/layout/Sidebar.tsx, src/hooks/use-advanced-search-functionality-with-filters.ts",
+      "affected_surface": "import_resolution",
+      "affected_files": [
+        "src/components/features/AdvancedSearchFunctionalitywithFilters/index.tsx",
+        "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx",
+        "src/components/features/DataExportandReporting/index.tsx",
+        "src/components/layout/Sidebar.tsx",
+        "src/hooks/use-advanced-search-functionality-with-filters.ts",
+        "src/hooks/use-user-authentication-and-authorization.ts",
+        "src/hooks/use-user-generated-collections-and-annotations.ts",
+        "src/pages/Dashboard.tsx",
+        "src/pages/ForgotPassword.tsx",
+        "src/pages/Login.tsx",
+        "src/server/middleware/auth.ts",
+        "src/server/middleware/content-upload-and-approval.ts",
+        "src/server/middleware/search-and-save-personal-collections.ts",
+        "src/server/middleware/user-registration-and-login.ts",
+        "src/server/routes/advanced-search-functionality-with-filters.ts",
+        "src/server/routes/collaborative-features.ts",
+        "src/server/routes/content-management-system-(cms)-for-historical-records.ts",
+        "src/server/routes/responsive-design.ts",
+        "src/server/routes/role-based-access-controls-(rbac).ts",
+        "src/server/routes/user-authentication-and-authorization.ts",
+        "tests/integration/advanced-search-functionality-with-filters.integration.test.ts",
+        "tests/integration/collaborative-features.integration.test.ts",
+        "tests/integration/data-export-and-reporting.integration.test.ts",
+        "tests/integration/responsive-design.integration.test.ts",
+        "tests/integration/user-generated-collections-and-annotations.integration.test.ts",
+        "tests/unit/advanced-search-functionality-with-filters.test.ts",
+        "tests/unit/collaborative-features.test.ts",
+        "tests/unit/data-export-and-reporting.test.ts",
+        "tests/unit/role-based-access-controls-(rbac).test.ts",
+        "tests/unit/user-generated-collections-and-annotations.test.ts"
+      ],
+      "probable_cause": "Generated files reference modules that were not created or have incorrect paths",
+      "evidence_refs": [],
+      "remediation": "Fix import paths to reference existing modules or generate the missing modules",
+      "status": "open",
+      "created_at": "2026-03-11T03:44:23.798Z"
+    },
+    {
+      "id": "CF-000007",
+      "cert_run_id": "CR-000002",
+      "domain": "security",
+      "severity": "medium",
+      "impact": "warning",
+      "title": "Missing CORS configuration",
+      "description": "No CORS setup found in server files which may cause cross-origin request issues",
+      "affected_surface": "cors",
+      "affected_files": [
+        "src/lib/api/client.ts",
+        "src/lib/api/endpoints.ts",
+        "src/lib/api/interceptors.ts"
+      ],
+      "probable_cause": "Server code does not configure CORS headers",
+      "evidence_refs": [],
+      "remediation": "Add CORS middleware with appropriate origin whitelist configuration",
+      "status": "open",
+      "created_at": "2026-03-11T03:44:23.810Z"
+    },
+    {
+      "id": "CF-000008",
+      "cert_run_id": "CR-000002",
+      "domain": "performance",
+      "severity": "low",
+      "impact": "observation",
+      "title": "No lazy loading for route components",
+      "description": "Route components are not using React.lazy or dynamic imports for code splitting",
+      "affected_surface": "code_splitting",
+      "affected_files": [
+        "src/pages/AdvancedSearchFunctionalitywithFilters.tsx",
+        "src/pages/CollaborativeFeatures.tsx",
+        "src/pages/Dashboard.tsx",
+        "src/pages/ForgotPassword.tsx",
+        "src/pages/Home.tsx"
+      ],
+      "probable_cause": "All route components are eagerly loaded which increases initial bundle size",
+      "evidence_refs": [],
+      "remediation": "Use React.lazy() and dynamic import() for route-level code splitting",
+      "status": "open",
+      "created_at": "2026-03-11T03:44:23.816Z"
+    }
+  ],
+  "coverage_summary": [
+    {
+      "surface_type": "domain",
+      "surface_id": "build_integrity",
+      "surface_name": "build integrity",
+      "state": "failed",
+      "domain": "build_integrity"
+    },
+    {
+      "surface_type": "domain",
+      "surface_id": "functional",
+      "surface_name": "functional",
+      "state": "failed",
+      "domain": "functional"
+    },
+    {
+      "surface_type": "domain",
+      "surface_id": "security",
+      "surface_name": "security",
+      "state": "partially_covered",
+      "domain": "security"
+    },
+    {
+      "surface_type": "domain",
+      "surface_id": "performance",
+      "surface_name": "performance",
+      "state": "partially_covered",
+      "domain": "performance"
+    }
+  ],
+  "score_breakdown": [
+    {
+      "domain": "build_integrity",
+      "weight": 0.25,
+      "raw_score": 85,
+      "weighted_score": 21.25
+    },
+    {
+      "domain": "functional",
+      "weight": 0.3,
+      "raw_score": 70,
+      "weighted_score": 21
+    },
+    {
+      "domain": "security",
+      "weight": 0.25,
+      "raw_score": 92,
+      "weighted_score": 23
+    },
+    {
+      "domain": "performance",
+      "weight": 0.2,
+      "raw_score": 90,
+      "weighted_score": 18
+    }
+  ],
+  "overall_score": 83.25,
+  "hard_stop_failures": [
+    "Critical finding: Missing entry point: Server entry"
+  ],
+  "evidence_manifest": [
+    "CE-000005",
+    "CE-000006",
+    "CE-000007",
+    "CE-000008"
+  ],
+  "remediation_manifest": {
+    "affected_findings": [
+      {
+        "finding_id": "CF-000005",
+        "title": "Missing config file: index.html",
+        "severity": "medium",
+        "affected_files": [
+          "index.html"
+        ],
+        "remediation": "Generate index.html with appropriate project configuration"
+      },
+      {
+        "finding_id": "CF-000005",
+        "title": "Missing entry point: Server entry",
+        "severity": "critical",
+        "affected_files": [
+          "src/server/index.ts",
+          "server/index.ts",
+          "src/server.ts"
+        ],
+        "remediation": "Create the server entry file (e.g., src/server/index.ts)"
+      },
+      {
+        "finding_id": "CF-000006",
+        "title": "8 files have elevated TODOs (>3 each)",
+        "severity": "medium",
+        "affected_files": [
+          "src/components/features/CollaborativeFeatures/CollaborativeFeaturesDetail.tsx",
+          "src/components/features/CollaborativeFeatures/index.tsx",
+          "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/ContentManagementSystem(CMS)forHistoricalRecordsList.tsx",
+          "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx",
+          "src/components/features/Role-BasedAccessControls(RBAC)/Role-BasedAccessControls(RBAC)Detail.tsx",
+          "src/components/features/User-GeneratedCollectionsandAnnotations/index.tsx",
+          "src/hooks/use-collaborative-features.ts",
+          "src/lib/store/index.ts"
+        ],
+        "remediation": "Review and resolve TODO markers before deployment"
+      },
+      {
+        "finding_id": "CF-000006",
+        "title": "30 files have broken import paths",
+        "severity": "high",
+        "affected_files": [
+          "src/components/features/AdvancedSearchFunctionalitywithFilters/index.tsx",
+          "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx",
+          "src/components/features/DataExportandReporting/index.tsx",
+          "src/components/layout/Sidebar.tsx",
+          "src/hooks/use-advanced-search-functionality-with-filters.ts",
+          "src/hooks/use-user-authentication-and-authorization.ts",
+          "src/hooks/use-user-generated-collections-and-annotations.ts",
+          "src/pages/Dashboard.tsx",
+          "src/pages/ForgotPassword.tsx",
+          "src/pages/Login.tsx",
+          "src/server/middleware/auth.ts",
+          "src/server/middleware/content-upload-and-approval.ts",
+          "src/server/middleware/search-and-save-personal-collections.ts",
+          "src/server/middleware/user-registration-and-login.ts",
+          "src/server/routes/advanced-search-functionality-with-filters.ts",
+          "src/server/routes/collaborative-features.ts",
+          "src/server/routes/content-management-system-(cms)-for-historical-records.ts",
+          "src/server/routes/responsive-design.ts",
+          "src/server/routes/role-based-access-controls-(rbac).ts",
+          "src/server/routes/user-authentication-and-authorization.ts",
+          "tests/integration/advanced-search-functionality-with-filters.integration.test.ts",
+          "tests/integration/collaborative-features.integration.test.ts",
+          "tests/integration/data-export-and-reporting.integration.test.ts",
+          "tests/integration/responsive-design.integration.test.ts",
+          "tests/integration/user-generated-collections-and-annotations.integration.test.ts",
+          "tests/unit/advanced-search-functionality-with-filters.test.ts",
+          "tests/unit/collaborative-features.test.ts",
+          "tests/unit/data-export-and-reporting.test.ts",
+          "tests/unit/role-based-access-controls-(rbac).test.ts",
+          "tests/unit/user-generated-collections-and-annotations.test.ts"
+        ],
+        "remediation": "Fix import paths to reference existing modules or generate the missing modules"
+      },
+      {
+        "finding_id": "CF-000007",
+        "title": "Missing CORS configuration",
+        "severity": "medium",
+        "affected_files": [
+          "src/lib/api/client.ts",
+          "src/lib/api/endpoints.ts",
+          "src/lib/api/interceptors.ts"
+        ],
+        "remediation": "Add CORS middleware with appropriate origin whitelist configuration"
+      },
+      {
+        "finding_id": "CF-000008",
+        "title": "No lazy loading for route components",
+        "severity": "low",
+        "affected_files": [
+          "src/pages/AdvancedSearchFunctionalitywithFilters.tsx",
+          "src/pages/CollaborativeFeatures.tsx",
+          "src/pages/Dashboard.tsx",
+          "src/pages/ForgotPassword.tsx",
+          "src/pages/Home.tsx"
+        ],
+        "remediation": "Use React.lazy() and dynamic import() for route-level code splitting"
+      }
+    ],
+    "directly_affected_files": [
+      "index.html",
+      "src/server/index.ts",
+      "server/index.ts",
+      "src/server.ts",
+      "src/components/features/CollaborativeFeatures/CollaborativeFeaturesDetail.tsx",
+      "src/components/features/CollaborativeFeatures/index.tsx",
+      "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/ContentManagementSystem(CMS)forHistoricalRecordsList.tsx",
+      "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx",
+      "src/components/features/Role-BasedAccessControls(RBAC)/Role-BasedAccessControls(RBAC)Detail.tsx",
+      "src/components/features/User-GeneratedCollectionsandAnnotations/index.tsx",
+      "src/hooks/use-collaborative-features.ts",
+      "src/lib/store/index.ts",
+      "src/components/features/AdvancedSearchFunctionalitywithFilters/index.tsx",
+      "src/components/features/DataExportandReporting/index.tsx",
+      "src/components/layout/Sidebar.tsx",
+      "src/hooks/use-advanced-search-functionality-with-filters.ts",
+      "src/hooks/use-user-authentication-and-authorization.ts",
+      "src/hooks/use-user-generated-collections-and-annotations.ts",
+      "src/pages/Dashboard.tsx",
+      "src/pages/ForgotPassword.tsx",
+      "src/pages/Login.tsx",
+      "src/server/middleware/auth.ts",
+      "src/server/middleware/content-upload-and-approval.ts",
+      "src/server/middleware/search-and-save-personal-collections.ts",
+      "src/server/middleware/user-registration-and-login.ts",
+      "src/server/routes/advanced-search-functionality-with-filters.ts",
+      "src/server/routes/collaborative-features.ts",
+      "src/server/routes/content-management-system-(cms)-for-historical-records.ts",
+      "src/server/routes/responsive-design.ts",
+      "src/server/routes/role-based-access-controls-(rbac).ts",
+      "src/server/routes/user-authentication-and-authorization.ts",
+      "tests/integration/advanced-search-functionality-with-filters.integration.test.ts",
+      "tests/integration/collaborative-features.integration.test.ts",
+      "tests/integration/data-export-and-reporting.integration.test.ts",
+      "tests/integration/responsive-design.integration.test.ts",
+      "tests/integration/user-generated-collections-and-annotations.integration.test.ts",
+      "tests/unit/advanced-search-functionality-with-filters.test.ts",
+      "tests/unit/collaborative-features.test.ts",
+      "tests/unit/data-export-and-reporting.test.ts",
+      "tests/unit/role-based-access-controls-(rbac).test.ts",
+      "tests/unit/user-generated-collections-and-annotations.test.ts",
+      "src/lib/api/client.ts",
+      "src/lib/api/endpoints.ts",
+      "src/lib/api/interceptors.ts",
+      "src/pages/AdvancedSearchFunctionalitywithFilters.tsx",
+      "src/pages/CollaborativeFeatures.tsx",
+      "src/pages/Home.tsx"
+    ],
+    "affected_unit_ids": [],
+    "all_files_to_regenerate": [
+      "index.html",
+      "src/server/index.ts",
+      "server/index.ts",
+      "src/server.ts",
+      "src/components/features/CollaborativeFeatures/CollaborativeFeaturesDetail.tsx",
+      "src/components/features/CollaborativeFeatures/index.tsx",
+      "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/ContentManagementSystem(CMS)forHistoricalRecordsList.tsx",
+      "src/components/features/ContentManagementSystem(CMS)forHistoricalRecords/index.tsx",
+      "src/components/features/Role-BasedAccessControls(RBAC)/Role-BasedAccessControls(RBAC)Detail.tsx",
+      "src/components/features/User-GeneratedCollectionsandAnnotations/index.tsx",
+      "src/hooks/use-collaborative-features.ts",
+      "src/lib/store/index.ts",
+      "src/components/features/AdvancedSearchFunctionalitywithFilters/index.tsx",
+      "src/components/features/DataExportandReporting/index.tsx",
+      "src/components/layout/Sidebar.tsx",
+      "src/hooks/use-advanced-search-functionality-with-filters.ts",
+      "src/hooks/use-user-authentication-and-authorization.ts",
+      "src/hooks/use-user-generated-collections-and-annotations.ts",
+      "src/pages/Dashboard.tsx",
+      "src/pages/ForgotPassword.tsx",
+      "src/pages/Login.tsx",
+      "src/server/middleware/auth.ts",
+      "src/server/middleware/content-upload-and-approval.ts",
+      "src/server/middleware/search-and-save-personal-collections.ts",
+      "src/server/middleware/user-registration-and-login.ts",
+      "src/server/routes/advanced-search-functionality-with-filters.ts",
+      "src/server/routes/collaborative-features.ts",
+      "src/server/routes/content-management-system-(cms)-for-historical-records.ts",
+      "src/server/routes/responsive-design.ts",
+      "src/server/routes/role-based-access-controls-(rbac).ts",
+      "src/server/routes/user-authentication-and-authorization.ts",
+      "tests/integration/advanced-search-functionality-with-filters.integration.test.ts",
+      "tests/integration/collaborative-features.integration.test.ts",
+      "tests/integration/data-export-and-reporting.integration.test.ts",
+      "tests/integration/responsive-design.integration.test.ts",
+      "tests/integration/user-generated-collections-and-annotations.integration.test.ts",
+      "tests/unit/advanced-search-functionality-with-filters.test.ts",
+      "tests/unit/collaborative-features.test.ts",
+      "tests/unit/data-export-and-reporting.test.ts",
+      "tests/unit/role-based-access-controls-(rbac).test.ts",
+      "tests/unit/user-generated-collections-and-annotations.test.ts",
+      "src/lib/api/client.ts",
+      "src/lib/api/endpoints.ts",
+      "src/lib/api/interceptors.ts",
+      "src/pages/AdvancedSearchFunctionalitywithFilters.tsx",
+      "src/pages/CollaborativeFeatures.tsx",
+      "src/pages/Home.tsx"
+    ],
+    "dependency_files": [],
+    "total_files": 47,
+    "estimated_scope_pct": 35
+  },
+  "created_at": "2026-03-11T03:44:23.822Z"
+}
