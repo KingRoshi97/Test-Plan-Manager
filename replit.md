@@ -62,8 +62,15 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - Primary filter chips: All/Running/Completed/Failed/Queued with live counts
 - Secondary filter dropdowns: All Lifecycle (draft/active/in_use/degraded/deprecated/archived), All Families (dynamic + Unassigned), All Owners (dynamic + Unowned)
 - Overview cards strip: Total/Running/Failed/In Use/Unowned/Families — clickable to set filters
+  - Families card: shows distinct family count + "X at risk" subtitle (families with failed assemblies); clicking activates group-by-family mode; highlighted ring when group mode is active
 - Table columns: Assembly (name + idea + preset tag), Status (StatusChip + stall warnings), Family (familyName + familyType), Lifecycle (StatusChip-style badge), Usage (color-coded badge: live/warm/idle/dormant), Owner (ownerName + teamName), Pipeline (StageRail), Elapsed, Duration, Updated, Actions
 - Responsive hiding: Family/Lifecycle on md+, Usage/Owner on lg+, Elapsed/Duration/Updated on xl+
+- **Group by Family mode**: Toggle button (FolderTree icon) in filter bar; when active, table rows are clustered under collapsible FamilyGroupHeader rows
+  - `buildFamilyGroups()`: groups filtered assemblies by familyName, sorts alphabetically with "Unassigned" last, members sorted by updatedAt desc
+  - `FamilyGroupHeader`: collapsible row spanning all columns — shows family name, type badge, member count, status rollup icons (running/completed/failed counts), dominant lifecycle StatusChip
+  - `FamilyTooltip`: hover tooltip on family group headers showing family name/type, total assemblies, status breakdown, lifecycle distribution, owner list, latest activity date
+  - Collapse state tracked via `collapsedGroups` Set; clicking header toggles expand/collapse
+  - All existing filters (status, lifecycle, family, owner) apply in grouped mode
 - New assembly data model fields: familyId, familyName, familyType, lifecycleState (default "draft"), ownerName, teamName, usageState, lastActivityAt
 - PATCH /api/assemblies/:id accepts new metadata fields (familyId, familyName, familyType, lifecycleState, ownerName, teamName, usageState); lastActivityAt is server-managed
 

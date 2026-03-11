@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, Fragment } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ import {
   Users,
   Layers,
   ChevronDown,
+  ChevronRight,
+  FolderTree,
 } from "lucide-react";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
 import { GlassPanel } from "../components/ui/glass-panel";
@@ -109,6 +111,239 @@ function FilterDropdown({
   );
 }
 
+interface FamilyGroup {
+  groupKey: string;
+  name: string;
+  type: string | null;
+  members: Assembly[];
+  running: number;
+  completed: number;
+  failed: number;
+  queued: number;
+  dominantLifecycle: string | null;
+  owners: string[];
+  latestUpdate: string | Date | null;
+}
+
+function buildFamilyGroups(assemblies: Assembly[]): FamilyGroup[] {
+  const groupMap = new Map<string, Assembly[]>();
+
+  assemblies.forEach((a) => {
+    const key = (a as any).familyName || "__unassigned__";
+    if (!groupMap.has(key)) groupMap.set(key, []);
+    groupMap.get(key)!.push(a);
+  });
+
+  const groups: FamilyGroup[] = [];
+
+  groupMap.forEach((members, key) => {
+    const sorted = [...members].sort((a, b) =>
+      new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+
+    const lifecycleCounts: Record<string, number> = {};
+    const ownerSet = new Set<string>();
+
+    sorted.forEach((a) => {
+      const lc = (a as any).lifecycleState;
+      if (lc) lifecycleCounts[lc] = (lifecycleCounts[lc] || 0) + 1;
+      const owner = (a as any).ownerName;
+      if (owner) ownerSet.add(owner);
+    });
+
+    let dominantLifecycle: string | null = null;
+    let maxCount = 0;
+    for (const [lc, count] of Object.entries(lifecycleCounts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        dominantLifecycle = lc;
+      }
+    }
+
+    groups.push({
+      groupKey: key,
+      name: key === "__unassigned__" ? "Unassigned" : key,
+      type: key === "__unassigned__" ? null : (sorted[0] as any).familyType || null,
+      members: sorted,
+      running: sorted.filter((a) => a.status === "running").length,
+      completed: sorted.filter((a) => a.status === "completed").length,
+      failed: sorted.filter((a) => a.status === "failed").length,
+      queued: sorted.filter((a) => a.status === "queued").length,
+      dominantLifecycle,
+      owners: Array.from(ownerSet),
+      latestUpdate: sorted[0]?.updatedAt || null,
+    });
+  });
+
+  groups.sort((a, b) => {
+    if (a.groupKey === "__unassigned__") return 1;
+    if (b.groupKey === "__unassigned__") return -1;
+    return a.name.localeCompare(b.name);
+  });
+
+  return groups;
+}
+
+function FamilyTooltip({ group, visible, position }: { group: FamilyGroup; visible: boolean; position: { x: number; y: number } }) {
+  if (!visible) return null;
+
+  const lifecycleDist: Record<string, number> = {};
+  group.members.forEach((a) => {
+    const lc = (a as any).lifecycleState || "unknown";
+    lifecycleDist[lc] = (lifecycleDist[lc] || 0) + 1;
+  });
+
+  const flipBelow = position.y < 200;
+  const clampedX = Math.max(16, Math.min(position.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - 340));
+
+  return (
+    <div
+      className="fixed z-50 pointer-events-none"
+      style={{
+        left: clampedX,
+        top: flipBelow ? position.y + 40 : position.y - 8,
+        transform: flipBelow ? "none" : "translateY(-100%)",
+      }}
+    >
+      <div className="glass-panel-solid rounded-lg border border-[hsl(var(--border))] shadow-xl p-3 min-w-[240px] max-w-[320px]">
+        <div className="flex items-center gap-2 mb-2">
+          <FolderTree className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
+          <span className="text-xs font-semibold text-[hsl(var(--foreground))]">{group.name}</span>
+          {group.type && (
+            <span className="text-[10px] text-[hsl(var(--muted-foreground))] capitalize bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded">
+              {group.type.replace(/_/g, " ")}
+            </span>
+          )}
+        </div>
+
+        <div className="text-[11px] text-[hsl(var(--muted-foreground))] mb-2">
+          {group.members.length} assembl{group.members.length === 1 ? "y" : "ies"}
+        </div>
+
+        <div className="space-y-1.5">
+          <div>
+            <span className="text-[10px] text-system-label uppercase tracking-wider">Status</span>
+            <div className="flex gap-2 mt-0.5 flex-wrap">
+              {group.running > 0 && <span className="text-[10px] text-[hsl(var(--status-processing))]">{group.running} running</span>}
+              {group.completed > 0 && <span className="text-[10px] text-[hsl(var(--status-success))]">{group.completed} completed</span>}
+              {group.failed > 0 && <span className="text-[10px] text-[hsl(var(--status-failure))]">{group.failed} failed</span>}
+              {group.queued > 0 && <span className="text-[10px] text-[hsl(var(--muted-foreground))]">{group.queued} queued</span>}
+            </div>
+          </div>
+
+          <div>
+            <span className="text-[10px] text-system-label uppercase tracking-wider">Lifecycle</span>
+            <div className="flex gap-2 mt-0.5 flex-wrap">
+              {Object.entries(lifecycleDist).map(([lc, count]) => (
+                <span key={lc} className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                  {count} {lifecycleLabels[lc] || lc}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {group.owners.length > 0 && (
+            <div>
+              <span className="text-[10px] text-system-label uppercase tracking-wider">Owners</span>
+              <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-0.5">
+                {group.owners.join(", ")}
+              </div>
+            </div>
+          )}
+
+          <div className="text-[10px] text-[hsl(var(--muted-foreground))]">
+            Last activity: {formatDate(group.latestUpdate)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FamilyGroupHeader({
+  group,
+  isExpanded,
+  onToggle,
+  colSpan,
+}: {
+  group: FamilyGroup;
+  isExpanded: boolean;
+  onToggle: () => void;
+  colSpan: number;
+}) {
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const rowRef = useRef<HTMLTableRowElement>(null);
+
+  function handleMouseEnter(e: React.MouseEvent) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setTooltipPos({ x: rect.left + 60, y: rect.top });
+    setTooltipVisible(true);
+  }
+
+  return (
+    <>
+      <FamilyTooltip group={group} visible={tooltipVisible} position={tooltipPos} />
+      <tr
+        ref={rowRef}
+        onClick={onToggle}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={() => setTooltipVisible(false)}
+        className="bg-[hsl(var(--muted)/0.3)] hover:bg-[hsl(var(--muted)/0.5)] cursor-pointer transition-colors border-t border-[hsl(var(--border)/0.5)]"
+      >
+        <td colSpan={colSpan} className="px-4 py-2">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              {isExpanded ? (
+                <ChevronDown className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              ) : (
+                <ChevronRight className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              )}
+              <FolderTree className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
+              <span className="text-xs font-semibold text-[hsl(var(--foreground))]">
+                {group.name}
+              </span>
+              {group.type && (
+                <span className="text-[10px] text-[hsl(var(--muted-foreground))] capitalize bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded">
+                  {group.type.replace(/_/g, " ")}
+                </span>
+              )}
+            </div>
+
+            <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
+              {group.members.length} assembl{group.members.length === 1 ? "y" : "ies"}
+            </span>
+
+            <div className="flex items-center gap-2 ml-auto">
+              {group.running > 0 && (
+                <span className="inline-flex items-center gap-1 text-[10px] text-[hsl(var(--status-processing))]">
+                  <Radio className="w-2.5 h-2.5" /> {group.running}
+                </span>
+              )}
+              {group.completed > 0 && (
+                <span className="inline-flex items-center gap-1 text-[10px] text-[hsl(var(--status-success))]">
+                  <CheckCircle2 className="w-2.5 h-2.5" /> {group.completed}
+                </span>
+              )}
+              {group.failed > 0 && (
+                <span className="inline-flex items-center gap-1 text-[10px] text-[hsl(var(--status-failure))]">
+                  <XCircle className="w-2.5 h-2.5" /> {group.failed}
+                </span>
+              )}
+              {group.dominantLifecycle && (
+                <StatusChip
+                  variant={(lifecycleVariant[group.dominantLifecycle] || "neutral") as any}
+                  label={lifecycleLabels[group.dominantLifecycle] || group.dominantLifecycle}
+                />
+              )}
+            </div>
+          </div>
+        </td>
+      </tr>
+    </>
+  );
+}
+
 export default function AssembliesPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -116,6 +351,8 @@ export default function AssembliesPage() {
   const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>("all");
   const [familyFilter, setFamilyFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
+  const [groupByFamily, setGroupByFamily] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const { data: assemblies = [], isLoading } = useQuery<Assembly[]>({
     queryKey: ["/api/assemblies"],
@@ -175,6 +412,8 @@ export default function AssembliesPage() {
     return result;
   }, [assemblies, activeFilter, lifecycleFilter, familyFilter, ownerFilter]);
 
+  const familyGroups = useMemo(() => buildFamilyGroups(filtered), [filtered]);
+
   const counts: Record<FilterStatus, number> = {
     all: assemblies.length,
     running: assemblies.filter((a) => a.status === "running").length,
@@ -187,7 +426,10 @@ export default function AssembliesPage() {
     const inUse = assemblies.filter((a) => (a as any).lifecycleState === "in_use").length;
     const unowned = assemblies.filter((a) => !(a as any).ownerName).length;
     const familySet = new Set(assemblies.map((a) => (a as any).familyName).filter(Boolean));
-    return { inUse, unowned, families: familySet.size };
+    const familiesAtRisk = Array.from(familySet).filter((name) => {
+      return assemblies.some((a) => (a as any).familyName === name && a.status === "failed");
+    }).length;
+    return { inUse, unowned, families: familySet.size, familiesAtRisk };
   }, [assemblies]);
 
   function handleCardClick(filter: FilterStatus | string) {
@@ -202,7 +444,11 @@ export default function AssembliesPage() {
       setFamilyFilter("all");
       setOwnerFilter("unowned");
     } else if (filter === "families") {
-      return;
+      setGroupByFamily(true);
+      setActiveFilter("all");
+      setLifecycleFilter("all");
+      setFamilyFilter("all");
+      setOwnerFilter("all");
     } else {
       setActiveFilter(filter as FilterStatus);
       setLifecycleFilter("all");
@@ -210,6 +456,163 @@ export default function AssembliesPage() {
       setOwnerFilter("all");
     }
   }
+
+  function toggleGroup(name: string) {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  function renderAssemblyRow(a: Assembly) {
+    const ext = a as any;
+    const statusEntry = a.status === "running"
+      ? pipelineStatus?.activeRuns?.find((s) => s.assemblyId === a.id)
+      : undefined;
+    const stallLevel = statusEntry ? getStallLevel(statusEntry.stalledMs) : "none";
+
+    return (
+      <tr
+        key={a.id}
+        className="border-t border-[hsl(var(--border)/0.5)] hover:bg-[hsl(var(--accent)/0.5)] cursor-pointer transition-colors"
+        onClick={() => setLocation(`/assembly/${a.id}`)}
+      >
+        <td className="px-4 py-3">
+          <div className="font-medium text-[hsl(var(--foreground))] text-[13px]">
+            {a.projectName}
+          </div>
+          {a.idea && (
+            <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[200px] mt-0.5">
+              {a.idea}
+            </div>
+          )}
+          {a.preset && (
+            <span className="inline-block text-[10px] font-mono-tech text-[hsl(var(--muted-foreground)/0.7)] bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded mt-0.5">
+              {a.preset}
+            </span>
+          )}
+        </td>
+        <td className="px-4 py-3">
+          <div className="flex flex-col gap-1">
+            <StatusChip
+              variant={stallLevel === "critical" ? "failure" : stallLevel === "warning" ? "warning" : getStatusVariant(a.status)}
+              label={stallLevel === "critical" ? "Stalled" : stallLevel === "warning" ? "Slow" : a.status}
+              pulse={a.status === "running"}
+            />
+            {stallLevel !== "none" && statusEntry && (
+              <span className={`text-[10px] flex items-center gap-1 ${
+                stallLevel === "critical" ? "text-[hsl(var(--status-failure))]" : "text-[hsl(var(--status-warning))]"
+              }`}>
+                <AlertTriangle className="w-2.5 h-2.5" />
+                {stallLevel === "critical" ? "Stalled" : "Possibly stalled"}
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="px-4 py-3 hidden md:table-cell">
+          {ext.familyName ? (
+            <div>
+              <span className="text-xs text-[hsl(var(--foreground))]">{ext.familyName}</span>
+              {ext.familyType && (
+                <span className="block text-[10px] text-[hsl(var(--muted-foreground))] capitalize">{ext.familyType.replace(/_/g, " ")}</span>
+              )}
+            </div>
+          ) : (
+            <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
+          )}
+        </td>
+        <td className="px-4 py-3 hidden md:table-cell">
+          {ext.lifecycleState ? (
+            <StatusChip
+              variant={(lifecycleVariant[ext.lifecycleState] || "neutral") as any}
+              label={lifecycleLabels[ext.lifecycleState] || ext.lifecycleState}
+            />
+          ) : (
+            <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
+          )}
+        </td>
+        <td className="px-4 py-3 hidden lg:table-cell">
+          {ext.usageState ? (
+            <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${usageColors[ext.usageState] || "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]"}`}>
+              {ext.usageState}
+            </span>
+          ) : (
+            <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
+          )}
+        </td>
+        <td className="px-4 py-3 hidden lg:table-cell">
+          {ext.ownerName ? (
+            <div>
+              <span className="text-xs text-[hsl(var(--foreground))]">{ext.ownerName}</span>
+              {ext.teamName && (
+                <span className="block text-[10px] text-[hsl(var(--muted-foreground))]">{ext.teamName}</span>
+              )}
+            </div>
+          ) : (
+            <span className="text-[11px] text-[hsl(var(--muted-foreground)/0.5)] italic">Unowned</span>
+          )}
+        </td>
+        <td className="px-4 py-3 hidden md:table-cell">
+          <StageRail stages={parseStagesFromAssembly((a as any).latestStages)} />
+        </td>
+        <td className="px-4 py-3 hidden xl:table-cell">
+          {statusEntry ? (
+            <div className="flex flex-col">
+              <span className="text-xs font-mono-tech text-[hsl(var(--status-processing))]">
+                {formatStallTime(statusEntry.elapsedMs)}
+              </span>
+              {statusEntry.stalledMs > 0 && (
+                <span className={`text-[10px] font-mono-tech ${
+                  stallLevel === "critical" ? "text-[hsl(var(--status-failure))]" : stallLevel === "warning" ? "text-[hsl(var(--status-warning))]" : "text-[hsl(var(--muted-foreground))]"
+                }`}>
+                  {formatStallTime(statusEntry.stalledMs)} idle
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech">
+              {"\u2014"}
+            </span>
+          )}
+        </td>
+        <td className="px-4 py-3 hidden xl:table-cell">
+          <span className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech">
+            {formatDuration(a.totalDurationMs)}
+          </span>
+        </td>
+        <td className="px-4 py-3 hidden xl:table-cell">
+          <span className="text-xs text-[hsl(var(--muted-foreground))]">
+            {formatDate(a.updatedAt)}
+          </span>
+        </td>
+        <td className="px-4 py-3 text-right">
+          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setLocation(`/assembly/${a.id}`)}
+              className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
+              title="Open Assembly"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+            </button>
+            <button
+              onClick={() => {
+                if (confirm("Delete this assembly?")) deleteMutation.mutate(a.id);
+              }}
+              disabled={deleteMutation.isPending}
+              className="p-1.5 rounded hover:bg-[hsl(var(--status-failure)/0.15)] transition-colors disabled:opacity-50"
+              title="Delete"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
+            </button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
+  const TABLE_COL_COUNT = 11;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -282,23 +685,43 @@ export default function AssembliesPage() {
             ...ownerNames.map((n) => ({ value: n, label: n })),
           ]}
         />
+        <div className="ml-auto">
+          <button
+            onClick={() => setGroupByFamily(!groupByFamily)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
+              groupByFamily
+                ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
+                : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.2)] hover:text-[hsl(var(--foreground))]"
+            }`}
+          >
+            <FolderTree className="w-3 h-3" />
+            Group by Family
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {[
-          { label: "Total", value: counts.all, icon: Boxes, filter: "all" as const, accent: "" },
-          { label: "Running", value: counts.running, icon: Radio, filter: "running" as const, accent: counts.running > 0 ? "text-[hsl(var(--status-processing))]" : "" },
-          { label: "Failed", value: counts.failed, icon: XCircle, filter: "failed" as const, accent: counts.failed > 0 ? "text-[hsl(var(--status-failure))]" : "" },
-          { label: "In Use", value: overviewCards.inUse, icon: CheckCircle2, filter: "in_use", accent: overviewCards.inUse > 0 ? "text-[hsl(var(--status-success))]" : "" },
-          { label: "Unowned", value: overviewCards.unowned, icon: Users, filter: "unowned", accent: overviewCards.unowned > 0 ? "text-[hsl(var(--status-warning))]" : "" },
-          { label: "Families", value: overviewCards.families, icon: Layers, filter: "families", accent: "" },
+          { label: "Total", value: counts.all, icon: Boxes, filter: "all" as const, accent: "", subtitle: "" },
+          { label: "Running", value: counts.running, icon: Radio, filter: "running" as const, accent: counts.running > 0 ? "text-[hsl(var(--status-processing))]" : "", subtitle: "" },
+          { label: "Failed", value: counts.failed, icon: XCircle, filter: "failed" as const, accent: counts.failed > 0 ? "text-[hsl(var(--status-failure))]" : "", subtitle: "" },
+          { label: "In Use", value: overviewCards.inUse, icon: CheckCircle2, filter: "in_use", accent: overviewCards.inUse > 0 ? "text-[hsl(var(--status-success))]" : "", subtitle: "" },
+          { label: "Unowned", value: overviewCards.unowned, icon: Users, filter: "unowned", accent: overviewCards.unowned > 0 ? "text-[hsl(var(--status-warning))]" : "", subtitle: "" },
+          {
+            label: "Families",
+            value: overviewCards.families,
+            icon: Layers,
+            filter: "families",
+            accent: overviewCards.familiesAtRisk > 0 ? "text-[hsl(var(--status-failure))]" : "",
+            subtitle: overviewCards.familiesAtRisk > 0 ? `${overviewCards.familiesAtRisk} at risk` : "",
+          },
         ].map((card) => (
           <GlassPanel
             key={card.label}
             solid
             hover
             onClick={() => handleCardClick(card.filter)}
-            className="p-3 cursor-pointer group"
+            className={`p-3 cursor-pointer group ${card.filter === "families" && groupByFamily ? "ring-1 ring-[hsl(var(--primary)/0.4)]" : ""}`}
           >
             <div className="flex items-center gap-1.5 mb-1">
               <card.icon className={`w-3.5 h-3.5 ${card.accent || "text-[hsl(var(--muted-foreground))]"} group-hover:text-[hsl(var(--primary))] transition-colors`} />
@@ -307,6 +730,9 @@ export default function AssembliesPage() {
             <div className={`text-lg font-bold tabular-nums ${card.accent || "text-[hsl(var(--foreground))]"}`}>
               {card.value}
             </div>
+            {card.subtitle && (
+              <div className="text-[10px] text-[hsl(var(--status-failure))] mt-0.5">{card.subtitle}</div>
+            )}
           </GlassPanel>
         ))}
       </div>
@@ -359,151 +785,24 @@ export default function AssembliesPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((a) => {
-                const ext = a as any;
-                const statusEntry = a.status === "running"
-                  ? pipelineStatus?.activeRuns?.find((s) => s.assemblyId === a.id)
-                  : undefined;
-                const stallLevel = statusEntry ? getStallLevel(statusEntry.stalledMs) : "none";
-
-                return (
-                  <tr
-                    key={a.id}
-                    className="border-t border-[hsl(var(--border)/0.5)] hover:bg-[hsl(var(--accent)/0.5)] cursor-pointer transition-colors"
-                    onClick={() => setLocation(`/assembly/${a.id}`)}
-                  >
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-[hsl(var(--foreground))] text-[13px]">
-                        {a.projectName}
-                      </div>
-                      {a.idea && (
-                        <div className="text-[11px] text-[hsl(var(--muted-foreground))] truncate max-w-[200px] mt-0.5">
-                          {a.idea}
-                        </div>
-                      )}
-                      {a.preset && (
-                        <span className="inline-block text-[10px] font-mono-tech text-[hsl(var(--muted-foreground)/0.7)] bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded mt-0.5">
-                          {a.preset}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col gap-1">
-                        <StatusChip
-                          variant={stallLevel === "critical" ? "failure" : stallLevel === "warning" ? "warning" : getStatusVariant(a.status)}
-                          label={stallLevel === "critical" ? "Stalled" : stallLevel === "warning" ? "Slow" : a.status}
-                          pulse={a.status === "running"}
-                        />
-                        {stallLevel !== "none" && statusEntry && (
-                          <span className={`text-[10px] flex items-center gap-1 ${
-                            stallLevel === "critical" ? "text-[hsl(var(--status-failure))]" : "text-[hsl(var(--status-warning))]"
-                          }`}>
-                            <AlertTriangle className="w-2.5 h-2.5" />
-                            {stallLevel === "critical" ? "Stalled" : "Possibly stalled"}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      {ext.familyName ? (
-                        <div>
-                          <span className="text-xs text-[hsl(var(--foreground))]">{ext.familyName}</span>
-                          {ext.familyType && (
-                            <span className="block text-[10px] text-[hsl(var(--muted-foreground))] capitalize">{ext.familyType.replace(/_/g, " ")}</span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      {ext.lifecycleState ? (
-                        <StatusChip
-                          variant={(lifecycleVariant[ext.lifecycleState] || "neutral") as any}
-                          label={lifecycleLabels[ext.lifecycleState] || ext.lifecycleState}
-                        />
-                      ) : (
-                        <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      {ext.usageState ? (
-                        <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${usageColors[ext.usageState] || "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]"}`}>
-                          {ext.usageState}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      {ext.ownerName ? (
-                        <div>
-                          <span className="text-xs text-[hsl(var(--foreground))]">{ext.ownerName}</span>
-                          {ext.teamName && (
-                            <span className="block text-[10px] text-[hsl(var(--muted-foreground))]">{ext.teamName}</span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-[11px] text-[hsl(var(--muted-foreground)/0.5)] italic">Unowned</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <StageRail stages={parseStagesFromAssembly((a as any).latestStages)} />
-                    </td>
-                    <td className="px-4 py-3 hidden xl:table-cell">
-                      {statusEntry ? (
-                        <div className="flex flex-col">
-                          <span className="text-xs font-mono-tech text-[hsl(var(--status-processing))]">
-                            {formatStallTime(statusEntry.elapsedMs)}
-                          </span>
-                          {statusEntry.stalledMs > 0 && (
-                            <span className={`text-[10px] font-mono-tech ${
-                              stallLevel === "critical" ? "text-[hsl(var(--status-failure))]" : stallLevel === "warning" ? "text-[hsl(var(--status-warning))]" : "text-[hsl(var(--muted-foreground))]"
-                            }`}>
-                              {formatStallTime(statusEntry.stalledMs)} idle
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech">
-                          {"\u2014"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 hidden xl:table-cell">
-                      <span className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech">
-                        {formatDuration(a.totalDurationMs)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 hidden xl:table-cell">
-                      <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                        {formatDate(a.updatedAt)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => setLocation(`/assembly/${a.id}`)}
-                          className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
-                          title="Open Assembly"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm("Delete this assembly?")) deleteMutation.mutate(a.id);
-                          }}
-                          disabled={deleteMutation.isPending}
-                          className="p-1.5 rounded hover:bg-[hsl(var(--status-failure)/0.15)] transition-colors disabled:opacity-50"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {groupByFamily ? (
+                familyGroups.map((group) => {
+                  const isExpanded = !collapsedGroups.has(group.groupKey);
+                  return (
+                    <Fragment key={`group-${group.groupKey}`}>
+                      <FamilyGroupHeader
+                        group={group}
+                        isExpanded={isExpanded}
+                        onToggle={() => toggleGroup(group.groupKey)}
+                        colSpan={TABLE_COL_COUNT}
+                      />
+                      {isExpanded && group.members.map((a) => renderAssemblyRow(a))}
+                    </Fragment>
+                  );
+                })
+              ) : (
+                filtered.map((a) => renderAssemblyRow(a))
+              )}
             </tbody>
           </table>
         </div>
