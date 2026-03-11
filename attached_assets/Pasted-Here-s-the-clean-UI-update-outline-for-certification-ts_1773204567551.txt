@@ -1,0 +1,446 @@
+Here’s the clean UI update outline for certification.tsx.
+
+What the current page already does
+
+It already has the right first-generation structure:
+
+Overview
+
+Run Detail
+
+Release Gate
+
+History 
+
+certification
+
+Inside Run Detail, it already loads:
+
+run data
+
+report
+
+findings
+
+evidence
+
+coverage
+
+So this is not a rewrite-from-zero. It is an upgrade.
+
+certification.tsx Update Outline
+1. Expand domain support
+
+Right now the page only recognizes:
+
+build_integrity
+
+functional
+
+security
+
+performance 
+
+certification
+
+Update it to support the full AVCS domain set:
+
+build_integrity
+
+functional_correctness
+
+security_posture
+
+performance_stability
+
+deployment_readiness
+
+ui_quality
+
+ux_workflow
+
+accessibility
+
+enterprise_readiness
+
+Files/areas to update
+
+domainLabel()
+
+domain icon/color helpers
+
+findings domain filter options
+
+overview “Domains Covered” card
+
+2. Align coverage states with AVCS
+
+The current UI expects:
+
+covered
+
+partially_covered
+
+failed
+
+not_tested
+
+blocked 
+
+certification
+
+Update it to align with the AVCS model:
+
+covered
+
+covered_failed
+
+partial
+
+blocked
+
+not_tested
+
+Files/areas to update
+
+coverageColor()
+
+any coverage badge labels
+
+coverage table/grid rendering
+
+coverage summary calculations
+
+3. Upgrade the Overview tab
+
+The current Overview tab is useful, but still too static in places, especially the hardcoded Domains Covered: 4. 
+
+certification
+
+Update it to show
+
+total runs
+
+latest verdict
+
+latest score
+
+average score
+
+open blocker count
+
+warning count
+
+domain count from actual AVCS config
+
+latest run type
+
+latest completed timestamp
+
+Add
+
+certification level display later
+
+tool-backed run status later
+
+freshness indicator for latest certification
+
+4. Split Run Detail into stronger sub-sections
+
+Right now Run Detail contains almost everything:
+
+domain results
+
+findings
+
+evidence
+
+coverage
+
+That is fine for early MVP, but it will get crowded fast once tool integrations are active.
+
+Keep Run Detail as the parent view
+
+But divide it visually into these sections:
+
+Run Summary
+
+Domain Results
+
+Findings
+
+Evidence
+
+Coverage
+
+Verdict Summary
+
+Add inside Run Detail
+
+test-level results area
+
+tool execution results area
+
+evidence grouping by domain or tool
+
+clearer blocker/warning grouping
+
+5. Strengthen the Release Gate tab
+
+The current Release Gate is basically a “latest verdict summary” screen.
+
+It should become the real AVCS gate console.
+
+Update it to show
+
+verdict
+
+blocker count
+
+warning count
+
+coverage sufficiency
+
+evidence completeness
+
+required domain completion
+
+policy/gate checks
+
+readiness summary
+
+remediation focus
+
+override-required state later
+
+Add later
+
+freshness checks
+
+pre-deployment gate status
+
+certification level
+
+policy reason summary
+
+6. Improve findings handling
+
+The current Run Detail already supports findings filters for severity and domain. 
+
+certification
+
+Update findings UI to support
+
+full domain list
+
+blocker / warning / observation grouping
+
+clearer status chips
+
+remediation visibility
+
+evidence count per finding
+
+tool source later
+
+Best layout change
+
+Turn findings into a stronger triage board section:
+
+left: filters + list
+
+right: selected finding details
+
+7. Improve evidence handling
+
+The page already queries run evidence.
+
+Update evidence UI to support
+
+grouped by domain
+
+grouped by tool
+
+grouped by type
+
+summary evidence vs raw evidence
+
+easy open/preview behavior
+
+clearer labels for:
+
+log
+
+screenshot
+
+JSON
+
+report
+
+trace
+
+summary
+
+Future-ready addition
+
+Show source provenance:
+
+Playwright
+
+Lighthouse
+
+Trivy
+
+ZAP
+
+k6
+
+axe-core
+
+internal AVCS check
+
+8. Prepare the page for test-level execution
+
+The current page is run/domain-oriented. That was right for the first version.
+
+But your newer AVCS design now includes:
+
+test catalog
+
+test plan
+
+tool mapping
+
+tool adapters
+
+result normalization
+
+So this page needs a place for test-level visibility.
+
+Add a new section in Run Detail
+
+Test Execution
+
+test ID
+
+test name
+
+tool used
+
+status
+
+duration
+
+linked findings
+
+linked evidence
+
+This is a major upgrade and will make the certification page feel much more real.
+
+9. Add tool-awareness to the UI
+
+Once external tools are integrated, the page should show which tool produced which signal.
+
+Add later
+
+tool badges
+
+tool source labels
+
+tool version/provenance in evidence or metadata
+
+grouped results by tool lane:
+
+Functional
+
+Security
+
+Performance
+
+Accessibility
+
+Visual/UI
+
+This will matter a lot once AVCS starts orchestrating those tools.
+
+10. Recommended tab structure after update
+
+Current tabs are fine as a base, but the improved version should move toward:
+
+Overview
+
+Runs
+
+Release Gate
+
+History
+
+And inside Run Detail:
+
+Summary
+
+Domains
+
+Tests
+
+Findings
+
+Evidence
+
+Coverage
+
+That keeps the top-level navigation cleaner while still exposing full drill-down.
+
+11. Immediate update priorities
+
+The best order for updating certification.tsx is:
+
+Priority 1
+
+full domain support
+
+fix coverage state mapping
+
+remove hardcoded domain count
+
+improve findings domain filter
+
+Priority 2
+
+strengthen Release Gate content
+
+improve Run Detail section structure
+
+prepare evidence display for tool-backed runs
+
+Priority 3
+
+add test-level execution view
+
+add tool-awareness
+
+add certification level display
+
+split into more modular components if needed
+
+12. Best summary
+
+This file should evolve from:
+
+basic certification dashboard
+
+into:
+
+full AVCS operator console
+
+The update should focus on:
+
+full domain support
+
+proper coverage state alignment
+
+stronger release gating
+
+richer findings/evidence presentation
+
+future-ready support for tool-backed tests
