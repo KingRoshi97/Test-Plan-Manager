@@ -224,7 +224,7 @@ Internal Build Mode takes an approved Agent Kit from a completed pipeline run an
 
 ### Agent Types
 - **IA (Internal Agent)** — `Axion/src/core/agents/internal.ts`: Produces AXION outputs under ICP governance (intake, canonical build, standards, template selection, planning, kit preparation).
-- **BA (Build Agent)** — `Axion/src/core/agents/build.ts`: Executes Agent Kit under KCP governance (1-target-per-unit, RESULT artifacts, verification, reruns).
+- **BA (Build Agent)** — `Axion/src/core/agents/build.ts`: Executes Agent Kit under KCP governance (1-target-per-unit, RESULT artifacts, verification, reruns). Code generation in `generator.ts` uses **Anthropic Claude** (`claude-sonnet-4-6` for full tier, `claude-haiku-4-5` for mini tier) via `@anthropic-ai/sdk` with Replit AI Integrations (`AI_INTEGRATIONS_ANTHROPIC_API_KEY` / `AI_INTEGRATIONS_ANTHROPIC_BASE_URL`). Spec/WB enrichment (`openai-bridge.ts`) and doc synthesis (`filler.ts`) remain on GPT-4o.
 - **MA (Maintenance Agent)** — `Axion/src/core/agents/maintenance.ts`: Performs repo maintenance under MCP governance (dependency upgrades, migrations, test hardening, CI, rollback).
 
 ### Kit Slot & Pack Infrastructure (KIT-01/TMP-06 Compliant)

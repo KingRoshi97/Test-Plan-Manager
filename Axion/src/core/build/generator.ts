@@ -9,7 +9,7 @@ import type {
 import type { WorkspacePaths } from "./workspace.js";
 import { writeRepoFile, ensureRepoSubdir } from "./workspace.js";
 
-interface OpenAIMessage {
+interface AIMessage {
   role: "system" | "user" | "assistant";
   content: string;
 }
@@ -18,40 +18,47 @@ let _client: any = null;
 
 async function getClient(): Promise<any | null> {
   if (_client) return _client;
-  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY;
-  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
+  const baseURL = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
   if (!apiKey) return null;
   try {
-    const mod = await import("openai");
-    const OpenAI = mod.default ?? mod;
-    _client = new OpenAI({ apiKey, baseURL });
+    const mod = await import("@anthropic-ai/sdk");
+    const Anthropic = mod.default ?? mod;
+    _client = new Anthropic({ apiKey, baseURL });
     return _client;
   } catch {
     return null;
   }
 }
 
-async function generateCode(messages: OpenAIMessage[], maxTokens = 4096, stage = "BUILD", model = "gpt-4o"): Promise<string | null> {
+async function generateCode(messages: AIMessage[], maxTokens = 8192, stage = "BUILD", model = "claude-sonnet-4-6"): Promise<string | null> {
   const client = await getClient();
   if (!client) return null;
   try {
-    const response = await client.chat.completions.create({
+    const systemMsg = messages.find(m => m.role === "system");
+    const nonSystemMsgs = messages.filter(m => m.role !== "system").map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+    const response = await client.messages.create({
       model,
-      messages,
-      max_completion_tokens: maxTokens,
+      max_tokens: maxTokens,
+      ...(systemMsg ? { system: systemMsg.content } : {}),
+      messages: nonSystemMsgs,
     });
-    const usage = (response as any).usage;
+    const usage = response.usage;
     if (usage) {
       recordUsage({
         stage,
         model,
-        promptTokens: usage.prompt_tokens ?? 0,
-        completionTokens: usage.completion_tokens ?? 0,
+        promptTokens: usage.input_tokens ?? 0,
+        completionTokens: usage.output_tokens ?? 0,
       });
     }
-    return response.choices[0]?.message?.content ?? null;
+    const textParts = response.content
+      .filter((block: any) => block.type === "text")
+      .map((block: any) => block.text);
+    return textParts.length > 0 ? textParts.join("") : null;
   } catch (err: any) {
-    console.log(`  [BUILD] AI call failed (${model}): ${err.message ?? err}`);
+    console.log(`  [BUILD] Claude call failed (${model}): ${err.message ?? err}`);
     return null;
   }
 }
@@ -250,7 +257,7 @@ CRITICAL RULES:
 
 AVAILABLE PACKAGES: ${availablePackages.join(", ")}
 
-AUTH: AuthProvider & useAuthContext from src/lib/auth/AuthContext, ProtectedRoute from src/lib/auth/ProtectedRoute
+AUTH: AuthProvider & useAuthContext from src/lib/auth, ProtectedRoute from src/lib/auth/ProtectedRoute
 VALIDATION: zod for schemas (import { z } from "zod")`;
 }
 
@@ -273,9 +280,9 @@ function resolveModelForStrategy(strategy: GenerationStrategy): string {
   if (strategy.generation_mode === "deterministic" || strategy.generation_mode === "template") {
     return "none";
   }
-  if (strategy.model_tier === "mini") return "gpt-4o-mini";
-  if (strategy.model_tier === "full") return "gpt-4o";
-  return "gpt-4o";
+  if (strategy.model_tier === "mini") return "claude-haiku-4-5";
+  if (strategy.model_tier === "full") return "claude-sonnet-4-6";
+  return "claude-sonnet-4-6";
 }
 
 async function generateUnit(
@@ -899,7 +906,7 @@ async function fixFileFromFindings(
   existingContent: string,
   filePath: string,
   findings: RemediationFileContext[],
-  model: string = "gpt-4o",
+  model: string = "claude-sonnet-4-6",
   repoFileList?: string[],
 ): Promise<FixResult | null> {
   const findingsBlock = findings.map((f, i) =>
@@ -1129,8 +1136,8 @@ export async function fixUnitsFromFindings(
   for (const unit of unitsToProcess) {
     const strategy = strategyMap.get(unit.id);
     const modelName = strategy
-      ? (strategy.model_tier === "mini" ? "gpt-4o-mini" : "gpt-4o")
-      : "gpt-4o";
+      ? (strategy.model_tier === "mini" ? "claude-haiku-4-5" : "claude-sonnet-4-6")
+      : "claude-sonnet-4-6";
 
     const unitResult: FixUnitResult = {
       unitId: unit.id,
@@ -1460,7 +1467,7 @@ function buildFileManifest(ctx: KitContext, slice: BuildSlice): string {
     "src/lib/api/client.ts (api_client)",
     "src/lib/api/endpoints.ts (api_endpoints)",
     "src/lib/api/interceptors.ts (api_interceptor)",
-    "src/lib/auth/AuthContext.tsx (auth_context)",
+    "src/lib/auth/context.tsx (auth_context)",
     "src/lib/auth/ProtectedRoute.tsx (route_guard)",
     "src/lib/auth/useAuth.ts (auth_hook)",
     "src/lib/validators/index.ts (validation)",
@@ -1647,7 +1654,7 @@ AVAILABLE UI COMPONENTS (import from these paths):
 ${uiComponents.map(c => `- ${c}`).join("\n")}
 
 AUTH INFRASTRUCTURE (when applicable):
-- AuthProvider & useAuthContext from src/lib/auth/AuthContext
+- AuthProvider & useAuthContext from src/lib/auth
 - ProtectedRoute from src/lib/auth/ProtectedRoute
 - useAuth hook from src/lib/auth/useAuth
 
@@ -1900,7 +1907,7 @@ function buildUserPrompt(ctx: KitContext, slice: BuildSlice, file: BuildFileTarg
     parts.push("\n--- ROLES ---");
     parts.push(`Roles: ${ctx.roles.map(r => `${r.role_id}: ${r.name}`).join(", ")}`);
     parts.push("\nGenerate a useAuth React hook that wraps AuthContext. Provides: user, login, logout, register, isAuthenticated, isLoading, hasRole(role).");
-    parts.push("Import from src/lib/auth/AuthContext and src/lib/api/client.");
+    parts.push("Import from src/lib/auth and src/lib/api/client.");
   } else if (role === "auth_layout") {
     parts.push("\n--- DESIGN ---");
     parts.push(findRelevantDocs(ctx.designDocs, ["auth", "login", "form", "layout"], 3000));

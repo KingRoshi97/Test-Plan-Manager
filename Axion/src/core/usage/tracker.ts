@@ -2,6 +2,9 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   "gpt-4o": { input: 2.50 / 1_000_000, output: 10.00 / 1_000_000 },
   "gpt-4o-mini": { input: 0.15 / 1_000_000, output: 0.60 / 1_000_000 },
   "gpt-4-turbo": { input: 10.00 / 1_000_000, output: 30.00 / 1_000_000 },
+  "claude-sonnet-4-6": { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },
+  "claude-haiku-4-5": { input: 0.80 / 1_000_000, output: 4.00 / 1_000_000 },
+  "claude-opus-4-6": { input: 15.00 / 1_000_000, output: 75.00 / 1_000_000 },
 };
 
 export interface UsageEntry {
