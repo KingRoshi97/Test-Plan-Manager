@@ -677,6 +677,7 @@ export function listTasks(root: string): TaskDefinition[] {
     inputs_schema: (item.inputs_schema ?? {}) as TaskDefinition["inputs_schema"],
     outputs_enabled: (item.outputs_enabled ?? ["findings"]) as TaskDefinition["outputs_enabled"],
     schedule_allowed: (item.schedule_allowed ?? false) as boolean,
+    runbook: (item.runbook ?? undefined) as string[] | undefined,
   }));
 }
 
@@ -1292,51 +1293,164 @@ function executeQualDepthTask(
 ): TaskExecutionResult {
   const insights: Insight[] = [];
   const recommendations: Recommendation[] = [];
+  const findings: MusFinding[] = [];
 
-  const templatesDir = path.join(root, "registries");
-  const tplReg = readJson<RegistryEnvelope>(path.join(templatesDir, "REG-TEMPLATES.json"));
-  const templateCount = tplReg?.items?.length ?? 0;
+  const axionRoot = path.resolve(root, "..", "..");
+  const pipelineRunsDir = path.join(axionRoot, ".axion", "runs");
 
-  const klDir = path.join(root, "registries");
-  const klReg = readJson<RegistryEnvelope>(path.join(klDir, "REG-KIDS.json"));
-  const kidCount = klReg?.items?.length ?? 0;
+  const latestRun = findLatestCompletedRun(pipelineRunsDir);
+  if (!latestRun) {
+    insights.push({
+      insight_id: store.generateId("INS"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      category: "quality",
+      narrative: "No completed pipeline runs found. Run the pipeline at least once to generate rendered documents for depth analysis.",
+      evidence_refs: [],
+      confidence: 50,
+      suggested_next_actions: ["Execute a pipeline run to generate rendered documents"],
+      created_at: new Date().toISOString(),
+    });
+    return { findings, insights, bottlenecks: [], recommendations };
+  }
+
+  const renderedDocsDir = path.join(pipelineRunsDir, latestRun, "templates", "rendered_docs");
+  const renderReportPath = path.join(pipelineRunsDir, latestRun, "templates", "render_report.json");
+  const renderReport = readJson<any>(renderReportPath);
+
+  if (!fs.existsSync(renderedDocsDir)) {
+    insights.push({
+      insight_id: store.generateId("INS"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      category: "quality",
+      narrative: `Run ${latestRun} found but no rendered_docs directory exists. Template rendering may have been skipped.`,
+      evidence_refs: [path.join(pipelineRunsDir, latestRun)],
+      confidence: 60,
+      suggested_next_actions: ["Check pipeline logs for rendering errors", "Re-run the pipeline"],
+      created_at: new Date().toISOString(),
+    });
+    return { findings, insights, bottlenecks: [], recommendations };
+  }
+
+  const docFiles = fs.readdirSync(renderedDocsDir).filter((f: string) => f.endsWith(".md"));
+  interface DocAnalysis { file: string; words: number; lines: number; headings: number; sections: number; avgWordsPerSection: number; depth_score: number }
+  const analyses: DocAnalysis[] = [];
+
+  for (const file of docFiles) {
+    try {
+      const content = fs.readFileSync(path.join(renderedDocsDir, file), "utf-8");
+      const lines = content.split("\n");
+      const words = content.split(/\s+/).filter(w => w.length > 0).length;
+      const headings = lines.filter(l => /^#{1,6}\s/.test(l)).length;
+      const sections = Math.max(headings, 1);
+      const avgWordsPerSection = Math.round(words / sections);
+      const depth_score = Math.min(100, Math.round(
+        (Math.min(words, 2000) / 2000) * 40 +
+        (Math.min(headings, 15) / 15) * 30 +
+        (Math.min(avgWordsPerSection, 150) / 150) * 30
+      ));
+      analyses.push({ file, words, lines: lines.length, headings, sections, avgWordsPerSection, depth_score });
+    } catch { continue; }
+  }
+
+  if (analyses.length === 0) {
+    insights.push({
+      insight_id: store.generateId("INS"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      category: "quality",
+      narrative: "No readable markdown documents found in the rendered docs directory.",
+      evidence_refs: [renderedDocsDir],
+      confidence: 60,
+      suggested_next_actions: ["Check rendered document format"],
+      created_at: new Date().toISOString(),
+    });
+    return { findings, insights, bottlenecks: [], recommendations };
+  }
+
+  analyses.sort((a, b) => a.depth_score - b.depth_score);
+  const avgDepth = Math.round(analyses.reduce((s, a) => s + a.depth_score, 0) / analyses.length);
+  const lowDepthDocs = analyses.filter(a => a.depth_score < 40);
+  const mediumDepthDocs = analyses.filter(a => a.depth_score >= 40 && a.depth_score < 70);
+  const highDepthDocs = analyses.filter(a => a.depth_score >= 70);
+
+  const unresolvedCount = renderReport?.unresolved_placeholders_count ?? 0;
+  const totalTemplates = renderReport?.templates_rendered ?? analyses.length;
 
   insights.push({
     insight_id: store.generateId("INS"),
     run_id: taskRun.run_id,
     task_id: taskDef.task_id,
     category: "quality",
-    narrative: `Detail depth analysis: ${templateCount} templates and ${kidCount} knowledge items found. ${
-      templateCount === 0 && kidCount === 0
-        ? "No templates or knowledge items available for depth analysis."
-        : `Coverage analysis available. Templates and knowledge items can be evaluated for section completeness, placeholder usage, and citation density.`
-    }`,
-    evidence_refs: [],
-    confidence: 70,
-    suggested_next_actions: [
-      "Review templates for required section coverage",
-      "Check knowledge items for citation completeness",
-      "Run TASK-QUAL-02 for template determinism audit",
-    ],
+    narrative: `Detail depth analysis of ${analyses.length} rendered documents from ${latestRun}. Average depth score: ${avgDepth}/100. Distribution: ${highDepthDocs.length} high (≥70), ${mediumDepthDocs.length} medium (40-69), ${lowDepthDocs.length} low (<40). ${
+      unresolvedCount > 0 ? `${unresolvedCount} unresolved placeholders detected.` : "All placeholders resolved."
+    } Average ${Math.round(analyses.reduce((s, a) => s + a.words, 0) / analyses.length)} words per document.`,
+    evidence_refs: [renderedDocsDir, renderReportPath],
+    confidence: 85,
+    suggested_next_actions: lowDepthDocs.length > 0
+      ? [`Improve depth in ${lowDepthDocs.length} low-scoring documents`, "Add more section headings and detailed content", "Run TASK-QUAL-02 for template quality audit"]
+      : ["Document depth is generally good", "Schedule periodic depth monitoring"],
     created_at: new Date().toISOString(),
   });
 
-  if (templateCount > 0) {
+  const fakeMusRun: MusRun = {
+    run_id: taskRun.run_id, mode_id: taskDef.task_id, trigger: taskRun.trigger,
+    scope: taskRun.scope, budgets: taskRun.budgets, status: "running", created_at: taskRun.created_at,
+  };
+
+  for (const doc of lowDepthDocs.slice(0, taskRun.budgets.max_findings)) {
+    findings.push(makeFinding(fakeMusRun, "qual.low_depth", taskDef.task_id,
+      doc.depth_score < 20 ? "high" : "medium",
+      `Low depth in ${doc.file} (score: ${doc.depth_score}/100)`,
+      `${doc.file}: ${doc.words} words, ${doc.headings} headings, avg ${doc.avgWordsPerSection} words/section. Consider adding more detailed content and section structure.`,
+      path.join(renderedDocsDir, doc.file), "/", store));
+  }
+
+  if (lowDepthDocs.length > 0) {
+    const topTargets = lowDepthDocs.slice(0, 5).map(d => d.file).join(", ");
     recommendations.push({
       recommendation_id: store.generateId("REC"),
       run_id: taskRun.run_id,
       task_id: taskDef.task_id,
-      title: "Evaluate Template Section Completeness",
-      description: `${templateCount} templates detected. Evaluate each for required section coverage and placeholder compliance to identify depth improvement opportunities.`,
-      priority: "medium",
-      estimated_impact: "Improve document generation completeness and quality",
+      title: `Improve Depth in ${lowDepthDocs.length} Documents`,
+      description: `${lowDepthDocs.length} documents scored below 40/100 for content depth. Top targets: ${topTargets}. These documents have sparse content, few headings, or short sections.`,
+      priority: lowDepthDocs.length > 20 ? "high" : "medium",
+      estimated_impact: `Raise average depth score from ${avgDepth} to ${Math.min(100, avgDepth + Math.round(lowDepthDocs.length * 2))}`,
       suggested_task_ids: ["TASK-QUAL-02"],
+      convertible_to_changeset: true,
+      created_at: new Date().toISOString(),
+    });
+  }
+
+  if (avgDepth >= 70 && lowDepthDocs.length === 0) {
+    recommendations.push({
+      recommendation_id: store.generateId("REC"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      title: "Document Depth is Strong",
+      description: `All ${analyses.length} documents score ≥40/100 with average ${avgDepth}/100. Focus on maintaining quality through periodic audits.`,
+      priority: "low",
+      estimated_impact: "Maintain current quality level",
       convertible_to_changeset: false,
       created_at: new Date().toISOString(),
     });
   }
 
-  return { findings: [], insights, bottlenecks: [], recommendations };
+  return { findings, insights, bottlenecks: [], recommendations };
+}
+
+function findLatestCompletedRun(pipelineRunsDir: string): string | null {
+  if (!fs.existsSync(pipelineRunsDir)) return null;
+  const dirs = fs.readdirSync(pipelineRunsDir)
+    .filter(d => d.startsWith("RUN-") && fs.existsSync(path.join(pipelineRunsDir, d, "run_manifest.json")))
+    .sort()
+    .reverse();
+  for (const dir of dirs) {
+    const manifest = readJson<any>(path.join(pipelineRunsDir, dir, "run_manifest.json"));
+    if (manifest?.status === "completed") return dir;
+  }
+  return null;
 }
 
 function executeQualTemplateTask(
@@ -1365,20 +1479,52 @@ function executeQualTemplateTask(
     return { findings, insights, bottlenecks: [], recommendations };
   }
 
-  let missingVersion = 0;
-  let missingStatus = 0;
   const fakeMusRun: MusRun = {
     run_id: taskRun.run_id, mode_id: "TASK-QUAL-02", trigger: taskRun.trigger,
     scope: taskRun.scope, budgets: taskRun.budgets, status: "running", created_at: taskRun.created_at,
   };
 
+  let missingVersion = 0;
+  let missingStatus = 0;
+  let namingViolations = 0;
+
+  const axionRoot = path.resolve(root, "..", "..");
+  const pipelineRunsDir = path.join(axionRoot, ".axion", "runs");
+  const latestRun = findLatestCompletedRun(pipelineRunsDir);
+
+  let envelopes: any[] = [];
+  let renderReport: any = null;
+  if (latestRun) {
+    const envPath = path.join(pipelineRunsDir, latestRun, "templates", "render_envelopes.json");
+    const rrPath = path.join(pipelineRunsDir, latestRun, "templates", "render_report.json");
+    const envData = readJson<any>(envPath);
+    envelopes = envData?.envelopes ?? [];
+    renderReport = readJson<any>(rrPath);
+  }
+
+  const envelopeMap = new Map<string, any>();
+  for (const env of envelopes) {
+    if (env.template_id) envelopeMap.set(env.template_id, env);
+  }
+
+  const renderFileMap = new Map<string, any>();
+  if (renderReport?.files) {
+    for (const f of renderReport.files) {
+      if (f.template_id) renderFileMap.set(f.template_id, f);
+    }
+  }
+
+  let unresolvedPlaceholderTemplates = 0;
+  const hashCounts = new Map<string, string[]>();
+
   for (let i = 0; i < tplReg.items.length && findings.length < taskRun.budgets.max_findings; i++) {
     const tpl = tplReg.items[i];
     const tplId = (tpl.template_id ?? tpl.id ?? `item-${i}`) as string;
+
     if (!tpl.version) {
       missingVersion++;
       findings.push(makeFinding(fakeMusRun, "tpl.missing_version", taskDef.task_id, "medium",
-        `Template ${tplId} missing version`, `Template is missing a version field, reducing traceability`,
+        `Template ${tplId} missing version`, `Template is missing a version field, reducing traceability and determinism`,
         "registries/REG-TEMPLATES.json", `/items/${i}/version`, store));
     }
     if (!tpl.status) {
@@ -1387,23 +1533,99 @@ function executeQualTemplateTask(
         `Template ${tplId} missing status`, `Template has no status field`,
         "registries/REG-TEMPLATES.json", `/items/${i}/status`, store));
     }
+
+    if (!/^[A-Z0-9]+-\d+$/.test(tplId)) {
+      namingViolations++;
+      if (findings.length < taskRun.budgets.max_findings) {
+        findings.push(makeFinding(fakeMusRun, "tpl.naming_violation", taskDef.task_id, "low",
+          `Template ${tplId} naming non-standard`, `Template ID "${tplId}" does not match expected pattern [PREFIX]-[NUMBER]`,
+          "registries/REG-TEMPLATES.json", `/items/${i}`, store));
+      }
+    }
+
+    const envelope = envelopeMap.get(tplId);
+    if (envelope) {
+      if (envelope.placeholders_unresolved > 0) {
+        unresolvedPlaceholderTemplates++;
+        if (findings.length < taskRun.budgets.max_findings) {
+          findings.push(makeFinding(fakeMusRun, "tpl.unresolved_placeholders", taskDef.task_id, "high",
+            `Template ${tplId} has ${envelope.placeholders_unresolved} unresolved placeholders`,
+            `${envelope.placeholders_unresolved} of ${envelope.placeholders_total} placeholders unresolved. Fields: ${(envelope.unresolved_fields ?? []).join(", ")}`,
+            envelope.output_path ?? "render_envelopes.json", "/", store));
+        }
+      }
+      if (envelope.content_hash) {
+        const existing = hashCounts.get(envelope.content_hash) ?? [];
+        existing.push(tplId);
+        hashCounts.set(envelope.content_hash, existing);
+      }
+    }
   }
+
+  const duplicateHashes = Array.from(hashCounts.entries()).filter(([_, ids]) => ids.length > 1);
+
+  if (duplicateHashes.length > 0 && findings.length < taskRun.budgets.max_findings) {
+    for (const [hash, ids] of duplicateHashes.slice(0, 5)) {
+      findings.push(makeFinding(fakeMusRun, "tpl.duplicate_content", taskDef.task_id, "medium",
+        `${ids.length} templates share identical content (hash ${hash.slice(0, 8)})`,
+        `Templates ${ids.join(", ")} produced identical output. This may indicate template duplication or overly generic templates.`,
+        "render_envelopes.json", "/", store));
+    }
+  }
+
+  const totalChecked = tplReg.items.length;
+  const qualityScore = Math.round(100 - (
+    (missingVersion / totalChecked) * 20 +
+    (missingStatus / totalChecked) * 10 +
+    (namingViolations / totalChecked) * 10 +
+    (unresolvedPlaceholderTemplates / totalChecked) * 40 +
+    (duplicateHashes.length / Math.max(totalChecked, 1)) * 20
+  ));
 
   insights.push({
     insight_id: store.generateId("INS"),
     run_id: taskRun.run_id,
     task_id: taskDef.task_id,
     category: "quality",
-    narrative: `Template quality audit: ${tplReg.items.length} templates checked. ${missingVersion} missing version fields, ${missingStatus} missing status fields. ${
-      findings.length === 0 ? "All templates pass basic quality checks." : `${findings.length} issues found that may affect template determinism and traceability.`
+    narrative: `Template quality audit of ${totalChecked} templates (quality score: ${qualityScore}/100). ${missingVersion} missing version, ${missingStatus} missing status, ${namingViolations} naming violations. ${
+      latestRun ? `Cross-referenced with ${envelopes.length} render envelopes from ${latestRun}: ${unresolvedPlaceholderTemplates} templates with unresolved placeholders, ${duplicateHashes.length} duplicate content hashes.` : "No pipeline run available for render envelope cross-reference."
     }`,
     evidence_refs: findings.slice(0, 5).map(f => f.finding_id),
-    confidence: 85,
+    confidence: latestRun ? 90 : 75,
     suggested_next_actions: findings.length > 0
-      ? ["Add missing version/status fields to templates", "Run TASK-OPS-01 for broader health check"]
-      : ["Templates are in good shape", "Schedule periodic quality audits"],
+      ? ["Fix unresolved placeholders in high-priority templates", "Add missing version/status fields", "Review duplicate-content templates for consolidation"]
+      : ["Templates pass quality checks", "Schedule periodic quality audits"],
     created_at: new Date().toISOString(),
   });
+
+  if (unresolvedPlaceholderTemplates > 0) {
+    recommendations.push({
+      recommendation_id: store.generateId("REC"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      title: `Fix Unresolved Placeholders in ${unresolvedPlaceholderTemplates} Templates`,
+      description: `${unresolvedPlaceholderTemplates} templates have unresolved placeholders after rendering. This indicates missing knowledge items or incorrect placeholder references.`,
+      priority: "high",
+      estimated_impact: `Improve placeholder resolution rate from ${Math.round(((totalChecked - unresolvedPlaceholderTemplates) / totalChecked) * 100)}% to 100%`,
+      suggested_task_ids: ["TASK-QUAL-01"],
+      convertible_to_changeset: true,
+      created_at: new Date().toISOString(),
+    });
+  }
+
+  if (duplicateHashes.length > 0) {
+    recommendations.push({
+      recommendation_id: store.generateId("REC"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      title: `Consolidate ${duplicateHashes.length} Duplicate Template Groups`,
+      description: `${duplicateHashes.length} groups of templates produce identical rendered output. Consider merging or parameterizing these to reduce maintenance overhead.`,
+      priority: "medium",
+      estimated_impact: "Reduce template count and maintenance complexity",
+      convertible_to_changeset: true,
+      created_at: new Date().toISOString(),
+    });
+  }
 
   return { findings, insights, bottlenecks: [], recommendations };
 }
@@ -1418,64 +1640,170 @@ function executeCostTask(
   const bottlenecks: BottleneckReport[] = [];
   const recommendations: Recommendation[] = [];
 
-  const buildDir = path.resolve(root, "..", "build");
-  const manifestPath = path.join(buildDir, "manifest.json");
-  const manifest = readJson<Record<string, unknown>>(manifestPath);
+  const axionRoot = path.resolve(root, "..", "..");
+  const pipelineRunsDir = path.join(axionRoot, ".axion", "runs");
 
-  let stageData: Record<string, { tokens: number; time_ms: number }> = {};
-  let totalTokens = 0;
-  let totalTime = 0;
-
-  if (manifest && typeof manifest === "object") {
-    const stages = (manifest as any).stages as Record<string, any> | undefined;
-    if (stages) {
-      for (const [stageId, info] of Object.entries(stages)) {
-        if (info && typeof info === "object") {
-          const tokens = info.tokens_used ?? 0;
-          const time = info.elapsed_ms ?? info.duration_ms ?? 0;
-          stageData[stageId] = { tokens, time_ms: time };
-          totalTokens += tokens;
-          totalTime += time;
-        }
-      }
-    }
-  }
-
-  if (totalTokens === 0 && totalTime === 0) {
+  if (!fs.existsSync(pipelineRunsDir)) {
     insights.push({
       insight_id: store.generateId("INS"),
       run_id: taskRun.run_id,
       task_id: taskDef.task_id,
       category: "cost",
-      narrative: "No token/compute usage data found. Pipeline telemetry must be available to analyze cost hotspots.",
+      narrative: "No pipeline runs directory found. Run the pipeline at least once to generate cost analysis data.",
       evidence_refs: [],
       confidence: 50,
-      suggested_next_actions: ["Run the pipeline to generate telemetry data", "Ensure stages record token usage"],
+      suggested_next_actions: ["Execute a pipeline run to generate telemetry data"],
       created_at: new Date().toISOString(),
     });
     return { findings: [], insights, bottlenecks, recommendations };
   }
 
-  const hotspots: Array<{ location: string; stage: string; time_ms: number; token_count: number; percentage_of_total: number; hypothesis: string }> = [];
-  const stageBreakdown: Record<string, { time_ms: number; tokens: number; percentage: number }> = {};
+  const runDirs = fs.readdirSync(pipelineRunsDir)
+    .filter(d => d.startsWith("RUN-") && fs.existsSync(path.join(pipelineRunsDir, d, "run_manifest.json")))
+    .sort().reverse().slice(0, 10);
 
-  const sorted = Object.entries(stageData).sort((a, b) => b[1].tokens - a[1].tokens);
-  for (const [stageId, data] of sorted) {
-    const pct = totalTokens > 0 ? (data.tokens / totalTokens) * 100 : 0;
-    stageBreakdown[stageId] = { time_ms: data.time_ms, tokens: data.tokens, percentage: Math.round(pct * 10) / 10 };
+  if (runDirs.length === 0) {
+    insights.push({
+      insight_id: store.generateId("INS"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      category: "cost",
+      narrative: "No completed pipeline runs found for cost analysis.",
+      evidence_refs: [],
+      confidence: 50,
+      suggested_next_actions: ["Run the pipeline to generate telemetry data"],
+      created_at: new Date().toISOString(),
+    });
+    return { findings: [], insights, bottlenecks, recommendations };
+  }
+
+  interface RunCostData {
+    run_id: string;
+    total_time_ms: number;
+    stage_times: Record<string, number>;
+    templates_rendered: number;
+    render_time_ms: number;
+    content_hashes: Set<string>;
+  }
+
+  const runCosts: RunCostData[] = [];
+
+  for (const runDir of runDirs) {
+    const runPath = path.join(pipelineRunsDir, runDir);
+    const manifest = readJson<any>(path.join(runPath, "run_manifest.json"));
+    if (manifest?.status !== "completed") continue;
+
+    const stageTimes: Record<string, number> = {};
+    let totalRunTime = 0;
+    const stageReportsDir = path.join(runPath, "stage_reports");
+    if (fs.existsSync(stageReportsDir)) {
+      for (const sf of fs.readdirSync(stageReportsDir).filter(f => f.endsWith(".json"))) {
+        try {
+          const report = readJson<any>(path.join(stageReportsDir, sf));
+          if (report?.started_at && report?.finished_at) {
+            const elapsed = new Date(report.finished_at).getTime() - new Date(report.started_at).getTime();
+            const stageName = sf.replace(".json", "");
+            stageTimes[stageName] = elapsed;
+            totalRunTime += elapsed;
+          }
+        } catch { continue; }
+      }
+    }
+
+    let templatesRendered = 0;
+    let renderTime = stageTimes["S7_RENDER_DOCS"] ?? 0;
+    const hashes = new Set<string>();
+    const renderReport = readJson<any>(path.join(runPath, "templates", "render_report.json"));
+    if (renderReport) templatesRendered = renderReport.templates_rendered ?? 0;
+    const envData = readJson<any>(path.join(runPath, "templates", "render_envelopes.json"));
+    if (envData?.envelopes) {
+      for (const env of envData.envelopes) {
+        if (env.content_hash) hashes.add(env.content_hash);
+      }
+    }
+
+    runCosts.push({
+      run_id: runDir,
+      total_time_ms: totalRunTime,
+      stage_times: stageTimes,
+      templates_rendered: templatesRendered,
+      render_time_ms: renderTime,
+      content_hashes: hashes,
+    });
+  }
+
+  if (runCosts.length === 0) {
+    insights.push({
+      insight_id: store.generateId("INS"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      category: "cost",
+      narrative: "Pipeline runs found but none have usable stage timing data.",
+      evidence_refs: [pipelineRunsDir],
+      confidence: 50,
+      suggested_next_actions: ["Check pipeline configuration for timing instrumentation"],
+      created_at: new Date().toISOString(),
+    });
+    return { findings: [], insights, bottlenecks, recommendations };
+  }
+
+  const totalRunCount = runCosts.length;
+  const avgTotalTime = Math.round(runCosts.reduce((s, r) => s + r.total_time_ms, 0) / totalRunCount);
+
+  const allStages = new Set<string>();
+  for (const rc of runCosts) for (const s of Object.keys(rc.stage_times)) allStages.add(s);
+
+  const stageCostBreakdown: Record<string, { avg_ms: number; percentage: number; total_across_runs: number }> = {};
+  const hotspots: Array<{ location: string; stage: string; time_ms: number; token_count: number; percentage_of_total: number; hypothesis: string }> = [];
+  const stageBreakdown: Record<string, { time_ms: number; tokens: number; percentage: number; avg_ms?: number; min_ms?: number; max_ms?: number; variance_pct?: number }> = {};
+
+  for (const stage of allStages) {
+    const times = runCosts.map(r => r.stage_times[stage] ?? 0).filter(t => t > 0);
+    if (times.length === 0) continue;
+    const avg = Math.round(times.reduce((s, t) => s + t, 0) / times.length);
+    const totalAcrossRuns = times.reduce((s, t) => s + t, 0);
+    const pct = avgTotalTime > 0 ? (avg / avgTotalTime) * 100 : 0;
+    const min = Math.min(...times);
+    const max = Math.max(...times);
+    const variance = avg > 0 ? Math.round(((max - min) / avg) * 100) : 0;
+
+    stageCostBreakdown[stage] = { avg_ms: avg, percentage: Math.round(pct * 10) / 10, total_across_runs: totalAcrossRuns };
+    stageBreakdown[stage] = { time_ms: avg, tokens: 0, percentage: Math.round(pct * 10) / 10, avg_ms: avg, min_ms: min, max_ms: max, variance_pct: variance };
+
     if (pct >= 10) {
+      const costPerRun = Math.round(avg / 1000);
+      const totalCostSec = Math.round(totalAcrossRuns / 1000);
       hotspots.push({
-        location: `Stage ${stageId}`,
-        stage: stageId,
-        time_ms: data.time_ms,
-        token_count: data.tokens,
+        location: stage,
+        stage,
+        time_ms: avg,
+        token_count: 0,
         percentage_of_total: Math.round(pct * 10) / 10,
-        hypothesis: `Stage ${stageId} uses ${Math.round(pct)}% of total tokens (${data.tokens}). ${
-          data.tokens > 20000 ? "Consider prompt compression or caching." : "Token usage is moderate."
+        hypothesis: `${stage} averages ${costPerRun}s per run (${Math.round(pct)}% of pipeline). Total compute across ${totalRunCount} runs: ${totalCostSec}s. ${
+          variance > 50 ? `High variance (${variance}%) suggests optimization opportunity.` : "Consistent execution time."
         }`,
       });
     }
   }
+
+  hotspots.sort((a, b) => b.percentage_of_total - a.percentage_of_total);
+
+  let cacheableRuns = 0;
+  if (runCosts.length >= 2) {
+    for (let i = 1; i < runCosts.length; i++) {
+      const prev = runCosts[i - 1].content_hashes;
+      const curr = runCosts[i].content_hashes;
+      if (prev.size > 0 && curr.size > 0) {
+        let overlap = 0;
+        for (const h of curr) if (prev.has(h)) overlap++;
+        if (overlap / Math.max(curr.size, 1) > 0.8) cacheableRuns++;
+      }
+    }
+  }
+
+  const avgTemplates = runCosts.length > 0 ? Math.round(runCosts.reduce((s, r) => s + r.templates_rendered, 0) / runCosts.length) : 0;
+  const avgRenderTime = runCosts.length > 0 ? Math.round(runCosts.reduce((s, r) => s + r.render_time_ms, 0) / runCosts.length) : 0;
+  const perTemplateCostMs = avgTemplates > 0 ? Math.round(avgRenderTime / avgTemplates) : 0;
 
   bottlenecks.push({
     report_id: store.generateId("BNR"),
@@ -1483,10 +1811,15 @@ function executeCostTask(
     task_id: taskDef.task_id,
     hotspots,
     stage_breakdown: stageBreakdown,
-    total_time_ms: totalTime,
-    total_tokens: totalTokens,
-    hypotheses: hotspots.map(h => h.hypothesis),
-    evidence_refs: [manifestPath],
+    total_time_ms: avgTotalTime * totalRunCount,
+    total_tokens: 0,
+    hypotheses: [
+      `Analyzed ${totalRunCount} pipeline runs. Average run time: ${Math.round(avgTotalTime / 1000)}s.`,
+      ...hotspots.slice(0, 3).map(h => h.hypothesis),
+      cacheableRuns > 0 ? `${cacheableRuns} of ${totalRunCount - 1} consecutive run pairs had >80% content hash overlap — caching could save significant rerender cost.` : "",
+      perTemplateCostMs > 0 ? `Average per-template render cost: ${perTemplateCostMs}ms (${avgTemplates} templates).` : "",
+    ].filter(Boolean),
+    evidence_refs: runDirs.map(d => path.join(pipelineRunsDir, d)),
     created_at: new Date().toISOString(),
   });
 
@@ -1495,26 +1828,46 @@ function executeCostTask(
     run_id: taskRun.run_id,
     task_id: taskDef.task_id,
     category: "cost",
-    narrative: `Cost analysis: ${totalTokens} tokens used across ${Object.keys(stageData).length} stages (${Math.round(totalTime / 1000)}s total time). ${
-      hotspots.length > 0 ? `Top cost center: ${hotspots[0].location} at ${hotspots[0].percentage_of_total}% of token budget.` : "Token usage is evenly distributed."
+    narrative: `Cost analysis across ${totalRunCount} pipeline runs. Average run: ${Math.round(avgTotalTime / 1000)}s. Total compute: ${Math.round((avgTotalTime * totalRunCount) / 1000)}s across all runs. ${
+      hotspots.length > 0 ? `Top cost center: ${hotspots[0].location} at ${hotspots[0].percentage_of_total}% of pipeline time.` : "Cost is evenly distributed."
+    } ${avgTemplates > 0 ? `Per-template render cost: ${perTemplateCostMs}ms (${avgTemplates} templates avg).` : ""} ${
+      cacheableRuns > 0 ? `Cache opportunity: ${cacheableRuns} run pairs had >80% identical output.` : "No significant cache opportunities detected."
     }`,
-    evidence_refs: [manifestPath],
-    confidence: 75,
-    suggested_next_actions: hotspots.length > 0
-      ? [`Optimize token usage in ${hotspots[0].location}`, "Review prompt sizes for top-consuming stages"]
-      : ["Token usage is well-distributed", "Monitor for drift with scheduled TASK-COST-01"],
+    evidence_refs: [pipelineRunsDir],
+    confidence: 85,
+    suggested_next_actions: [
+      ...(hotspots.length > 0 ? [`Optimize ${hotspots[0].location} (${hotspots[0].percentage_of_total}% of cost)`] : []),
+      ...(cacheableRuns > 0 ? ["Implement content caching between runs to avoid redundant rendering"] : []),
+      ...(perTemplateCostMs > 100 ? [`Investigate per-template cost of ${perTemplateCostMs}ms`] : []),
+      "Schedule periodic cost monitoring with TASK-COST-01",
+    ],
     created_at: new Date().toISOString(),
   });
 
-  if (hotspots.length > 0 && hotspots[0].percentage_of_total > 30) {
+  if (cacheableRuns > 0) {
     recommendations.push({
       recommendation_id: store.generateId("REC"),
       run_id: taskRun.run_id,
       task_id: taskDef.task_id,
-      title: `Reduce Token Usage in ${hotspots[0].location}`,
-      description: `${hotspots[0].location} consumes ${hotspots[0].percentage_of_total}% of total tokens. Consider prompt compression, caching, or splitting into smaller requests.`,
-      priority: hotspots[0].percentage_of_total > 50 ? "high" : "medium",
-      estimated_impact: `Reduce token spend by up to ${Math.round(hotspots[0].percentage_of_total * 0.25)}%`,
+      title: "Implement Content Caching Between Pipeline Runs",
+      description: `${cacheableRuns} of ${totalRunCount - 1} consecutive run pairs produced >80% identical rendered output. A content-addressable cache would skip re-rendering unchanged templates, saving an estimated ${Math.round(avgRenderTime * cacheableRuns * 0.8 / 1000)}s of compute.`,
+      priority: cacheableRuns > 3 ? "high" : "medium",
+      estimated_impact: `Save ~${Math.round(avgRenderTime * 0.8 / 1000)}s per cached run`,
+      convertible_to_changeset: false,
+      created_at: new Date().toISOString(),
+    });
+  }
+
+  if (hotspots.length > 0 && hotspots[0].percentage_of_total > 50) {
+    recommendations.push({
+      recommendation_id: store.generateId("REC"),
+      run_id: taskRun.run_id,
+      task_id: taskDef.task_id,
+      title: `Reduce Cost in ${hotspots[0].location}`,
+      description: `${hotspots[0].location} consumes ${hotspots[0].percentage_of_total}% of total pipeline time. This is the single largest cost driver. Consider parallelization, incremental processing, or stage splitting.`,
+      priority: "high",
+      estimated_impact: `Reduce pipeline cost by up to ${Math.round(hotspots[0].percentage_of_total * 0.3)}%`,
+      suggested_task_ids: ["TASK-PERF-01"],
       convertible_to_changeset: false,
       created_at: new Date().toISOString(),
     });

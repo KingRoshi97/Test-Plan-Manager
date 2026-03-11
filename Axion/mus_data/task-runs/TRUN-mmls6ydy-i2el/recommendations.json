@@ -1,0 +1,16 @@
+[
+  {
+    "recommendation_id": "REC-mmls6yj6-sxl1",
+    "run_id": "TRUN-mmls6ydy-i2el",
+    "task_id": "TASK-QUAL-01",
+    "title": "Improve Depth in 52 Documents",
+    "description": "52 documents scored below 40/100 for content depth. Top targets: RISK-02.md, DGL-04.md, PRD-03.md, DATA-03.md, WFO-01.md. These documents have sparse content, few headings, or short sections.",
+    "priority": "high",
+    "estimated_impact": "Raise average depth score from 53 to 100",
+    "suggested_task_ids": [
+      "TASK-QUAL-02"
+    ],
+    "convertible_to_changeset": true,
+    "created_at": "2026-03-11T08:32:45.138Z"
+  }
+]

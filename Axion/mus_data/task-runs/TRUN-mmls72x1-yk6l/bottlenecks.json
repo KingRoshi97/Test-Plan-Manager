@@ -1,0 +1,129 @@
+[
+  {
+    "report_id": "BNR-mmls730y-p7ia",
+    "run_id": "TRUN-mmls72x1-yk6l",
+    "task_id": "TASK-COST-01",
+    "hotspots": [
+      {
+        "location": "S7_RENDER_DOCS",
+        "stage": "S7_RENDER_DOCS",
+        "time_ms": 978193,
+        "token_count": 0,
+        "percentage_of_total": 95.5,
+        "hypothesis": "S7_RENDER_DOCS averages 978s per run (95% of pipeline). Total compute across 6 runs: 5869s. High variance (85%) suggests optimization opportunity."
+      }
+    ],
+    "stage_breakdown": {
+      "S10_PACKAGE": {
+        "time_ms": 246,
+        "tokens": 0,
+        "percentage": 0,
+        "avg_ms": 246,
+        "min_ms": 69,
+        "max_ms": 408,
+        "variance_pct": 138
+      },
+      "S1_INGEST_NORMALIZE": {
+        "time_ms": 7,
+        "tokens": 0,
+        "percentage": 0,
+        "avg_ms": 7,
+        "min_ms": 6,
+        "max_ms": 9,
+        "variance_pct": 43
+      },
+      "S2_VALIDATE_INTAKE": {
+        "time_ms": 2,
+        "tokens": 0,
+        "percentage": 0,
+        "avg_ms": 2,
+        "min_ms": 2,
+        "max_ms": 3,
+        "variance_pct": 50
+      },
+      "S3_BUILD_CANONICAL": {
+        "time_ms": 23087,
+        "tokens": 0,
+        "percentage": 2.3,
+        "avg_ms": 23087,
+        "min_ms": 7414,
+        "max_ms": 33491,
+        "variance_pct": 113
+      },
+      "S4_VALIDATE_CANONICAL": {
+        "time_ms": 8,
+        "tokens": 0,
+        "percentage": 0,
+        "avg_ms": 8,
+        "min_ms": 5,
+        "max_ms": 11,
+        "variance_pct": 75
+      },
+      "S5_RESOLVE_STANDARDS": {
+        "time_ms": 13,
+        "tokens": 0,
+        "percentage": 0,
+        "avg_ms": 13,
+        "min_ms": 11,
+        "max_ms": 16,
+        "variance_pct": 38
+      },
+      "S6_SELECT_TEMPLATES": {
+        "time_ms": 25,
+        "tokens": 0,
+        "percentage": 0,
+        "avg_ms": 25,
+        "min_ms": 20,
+        "max_ms": 27,
+        "variance_pct": 28
+      },
+      "S7_RENDER_DOCS": {
+        "time_ms": 978193,
+        "tokens": 0,
+        "percentage": 95.5,
+        "avg_ms": 978193,
+        "min_ms": 566201,
+        "max_ms": 1399101,
+        "variance_pct": 85
+      },
+      "S8_BUILD_PLAN": {
+        "time_ms": 22937,
+        "tokens": 0,
+        "percentage": 2.2,
+        "avg_ms": 22937,
+        "min_ms": 12537,
+        "max_ms": 42518,
+        "variance_pct": 131
+      },
+      "S9_VERIFY_PROOF": {
+        "time_ms": 24,
+        "tokens": 0,
+        "percentage": 0,
+        "avg_ms": 24,
+        "min_ms": 3,
+        "max_ms": 116,
+        "variance_pct": 471
+      }
+    },
+    "total_time_ms": 6147246,
+    "total_tokens": 0,
+    "hypotheses": [
+      "Analyzed 6 pipeline runs. Average run time: 1025s.",
+      "S7_RENDER_DOCS averages 978s per run (95% of pipeline). Total compute across 6 runs: 5869s. High variance (85%) suggests optimization opportunity.",
+      "Average per-template render cost: 3145ms (311 templates)."
+    ],
+    "evidence_refs": [
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000037",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000036",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000035",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000034",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000033",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000032",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000031",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000030",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000029",
+      "/home/runner/workspace/Axion/.axion/runs/RUN-000028"
+    ],
+    "created_at": "2026-03-11T08:32:50.962Z"
+  }
+]

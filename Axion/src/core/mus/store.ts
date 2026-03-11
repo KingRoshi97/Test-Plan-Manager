@@ -245,6 +245,10 @@ export class MusStore {
       .filter(Boolean) as Recommendation[];
   }
 
+  getRecommendation(id: string): Recommendation | null {
+    return this.readJson(path.join(this.dataRoot, "recommendations", `${id}.json`));
+  }
+
   saveTaskRunFindings(runId: string, findings: MusFinding[]): void {
     const runDir = path.join(this.dataRoot, "task-runs", runId);
     this.writeJson(path.join(runDir, "findings.json"), findings);

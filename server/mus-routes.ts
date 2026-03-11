@@ -532,6 +532,58 @@ export function registerMusRoutes(app: Express): void {
     }
   });
 
+  app.get("/api/mus/task-schedules", (_req: Request, res: Response) => {
+    try {
+      const tasks = listTasks(MUS_LIB_DIR);
+      const schedulableTasks = tasks.filter((t: any) => t.schedule_allowed);
+      const overridesPath = path.join(MUS_DATA_DIR, "task_schedule_overrides.json");
+      let overrides: Record<string, { enabled: boolean; rrule?: string }> = {};
+      if (fs.existsSync(overridesPath)) {
+        try { overrides = JSON.parse(fs.readFileSync(overridesPath, "utf-8")); } catch {}
+      }
+      const result = schedulableTasks.map((t: any) => ({
+        task_id: t.task_id,
+        name: t.name,
+        intent: t.intent,
+        enabled: overrides[t.task_id]?.enabled ?? false,
+        rrule: overrides[t.task_id]?.rrule ?? "FREQ=WEEKLY;BYDAY=SU;BYHOUR=3",
+        proposal_only: true,
+      }));
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.patch("/api/mus/task-schedules/:taskId", (req: Request, res: Response) => {
+    try {
+      const { enabled, rrule } = req.body;
+      const taskId = req.params.taskId;
+      const tasks = listTasks(MUS_LIB_DIR);
+      const task = tasks.find((t: any) => t.task_id === taskId);
+      if (!task) return res.status(404).json({ error: `Task ${taskId} not found` });
+      if (!task.schedule_allowed) return res.status(400).json({ error: `Task ${taskId} does not allow scheduling` });
+
+      const overridesPath = path.join(MUS_DATA_DIR, "task_schedule_overrides.json");
+      let overrides: Record<string, { enabled: boolean; rrule?: string }> = {};
+      if (fs.existsSync(overridesPath)) {
+        try { overrides = JSON.parse(fs.readFileSync(overridesPath, "utf-8")); } catch {}
+      }
+
+      const current = overrides[taskId] ?? { enabled: false, rrule: "FREQ=WEEKLY;BYDAY=SU;BYHOUR=3" };
+      if (typeof enabled === "boolean") current.enabled = enabled;
+      if (typeof rrule === "string") current.rrule = rrule;
+      overrides[taskId] = current;
+
+      fs.writeFileSync(overridesPath, JSON.stringify(overrides, null, 2));
+      appendLedger("task_schedule_toggled", { task_id: taskId, enabled: current.enabled, rrule: current.rrule });
+
+      res.json({ task_id: taskId, name: task.name, intent: task.intent, ...current, proposal_only: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.get("/api/mus/agents", (_req: Request, res: Response) => {
     try {
       res.json(listAgents(MUS_LIB_DIR));
@@ -627,6 +679,57 @@ export function registerMusRoutes(app: Express): void {
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/mus/recommendations", (_req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const recs = store.listRecommendations().sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      res.json(recs);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/mus/recommendations/:id/convert", (req: Request, res: Response) => {
+    try {
+      const store = ensureStore();
+      const rec = store.getRecommendation(req.params.id);
+      if (!rec) return res.status(404).json({ error: `Recommendation ${req.params.id} not found` });
+      if (rec.convertible_to_changeset === false) return res.status(400).json({ error: `Recommendation ${req.params.id} is not convertible to a changeset` });
+
+      const patchId = store.generateId("PATCH");
+      const patch: any = {
+        patch_id: patchId,
+        patch_type_id: "recommendation-conversion",
+        target_file: rec.suggested_task_ids?.length ? rec.suggested_task_ids.join(", ") : "manual-review",
+        description: rec.description,
+        current_value: undefined,
+        proposed_value: rec.title,
+        diff_summary: `${rec.title}: ${rec.description} (Impact: ${rec.estimated_impact})`,
+      };
+
+      const cs: MusChangeSet = {
+        changeset_id: store.generateId("CS"),
+        source_proposal_pack_id: `REC:${rec.recommendation_id}`,
+        selected_patch_ids: [patchId],
+        patches: [patch],
+        summary: `ChangeSet from recommendation: ${rec.title} [${rec.priority}] — ${rec.estimated_impact}`,
+        status: "draft",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      store.saveChangeSet(cs);
+      appendLedger("changeset_created_from_recommendation", {
+        changeset_id: cs.changeset_id,
+        recommendation_id: rec.recommendation_id,
+        priority: rec.priority,
+      });
+      res.json(cs);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
     }
   });
 

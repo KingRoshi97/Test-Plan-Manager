@@ -1,0 +1,15 @@
+{
+  "finding_id": "FND-mmls6s71-zoke",
+  "run_id": "TRUN-mmls6rx6-plki",
+  "check_id": "qual.low_depth",
+  "detector_pack_id": "TASK-QUAL-01",
+  "severity": "medium",
+  "status": "open",
+  "title": "Low depth in DATA-03.md (score: 20/100)",
+  "description": "DATA-03.md: 136 words, 2 headings, avg 68 words/section. Consider adding more detailed content and section structure.",
+  "file_path": "/home/runner/workspace/Axion/.axion/runs/RUN-000037/templates/rendered_docs/DATA-03.md",
+  "json_pointer": "/",
+  "evidence_refs": [],
+  "created_at": "2026-03-11T08:32:36.925Z",
+  "updated_at": "2026-03-11T08:32:36.925Z"
+}

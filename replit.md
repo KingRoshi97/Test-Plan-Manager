@@ -1226,25 +1226,29 @@ Full MUS implementation: CLI + backend API + frontend UI. Replaces the old unit-
 
 **Registries** (`Axion/libraries/maintenance/registries/`):
 - `REG-AGENTS.json` — 4 agents: AGT-PERF-01 (Performance Analyzer), AGT-QUAL-01 (Quality Auditor), AGT-OPS-01 (Ops Monitor), AGT-COST-01 (Cost Analyzer)
-- `REG-TASKS.json` — 6 tasks: TASK-PERF-01 (Pipeline Bottleneck Finder), TASK-QUAL-01 (Detail Depth), TASK-QUAL-02 (Template Audit), TASK-OPS-01 (Internal Monitor), TASK-COST-01 (Token/Compute Waste), TASK-SYS-01 (Integrity/Drift)
+- `REG-TASKS.json` — 6 tasks with runbook steps: TASK-PERF-01 (Pipeline Bottleneck Finder, 9 steps), TASK-QUAL-01 (Detail Depth, 6 steps), TASK-QUAL-02 (Template Audit, 6 steps), TASK-OPS-01 (Internal Monitor, 5 steps), TASK-COST-01 (Token/Compute Waste, 7 steps), TASK-SYS-01 (Integrity/Drift, 6 steps)
 
 **API Endpoints** (`server/mus-routes.ts`, registered via `registerMusRoutes()` in `routes.ts`):
 - v1 mode-based: `GET /api/mus/status`, `POST /api/mus/validate`, `POST /api/mus/runs` (mode_id), `POST /api/mus/runs/:runId/start`, `GET /api/mus/runs`, findings/proposals/changesets/approvals/schedules CRUD
-- **v2 task-based**: `GET /api/mus/agents`, `GET /api/mus/tasks`, `POST /api/mus/task-runs`, `POST /api/mus/task-runs/:runId/start`, `GET /api/mus/task-runs`, `GET /api/mus/task-runs/:runId`, `GET /api/mus/task-runs/:runId/outputs`, `GET /api/mus/insights`, `GET /api/mus/bottlenecks`
+- **v2 task-based**: `GET /api/mus/agents`, `GET /api/mus/tasks` (includes runbook), `POST /api/mus/task-runs`, `POST /api/mus/task-runs/:runId/start`, `GET /api/mus/task-runs`, `GET /api/mus/task-runs/:runId`, `GET /api/mus/task-runs/:runId/outputs`, `GET /api/mus/insights`, `GET /api/mus/bottlenecks`, `GET /api/mus/recommendations`, `POST /api/mus/recommendations/:id/convert` (enforces convertible_to_changeset), `GET /api/mus/task-schedules`, `PATCH /api/mus/task-schedules/:taskId`
 - Old `/api/maintenance/` read-only endpoints kept for backward compatibility
 
 **Frontend** (`App/src/pages/maintenance.tsx`) — "Ops Console":
 - 9 tabs: Overview, Tasks, Task Runs, Findings, Insights, Proposals, Approvals, Schedules, Registries
-- **Tasks**: Task catalog (6 tasks with intent badges, agent assignment, output types), Run Configuration panel (agent override, budget controls), Run Now button with inline results
-- **Task Runs**: Expandable run cards with output counts (F/I/B/R), inline detail view with insights, bottlenecks, recommendations, findings
-- **Insights**: Categorized panels (bottleneck, quality, reliability, cost, general) with confidence scores and suggested actions; bottleneck reports with hotspot bars
-- Overview/Findings/Proposals/Approvals/Schedules/Registries: unchanged from v1
+- **Overview**: v1 metrics (Total Runs, Open Findings, Registries, Policy Loaded) + v2 metrics (Task Runs, Insights), Top Bottleneck highlight panel, Latest Insights summary (top 3)
+- **Tasks**: Task catalog (6 tasks with intent badges, agent assignment, output types, collapsible runbook steps), Run Configuration panel (agent override, budget controls), Run Now button with inline results
+- **Task Runs**: Expandable run cards with output counts (F/I/B/R), inline detail view with insights, bottlenecks, recommendations (with Convert to ChangeSet button), findings
+- **Insights**: Categorized panels (bottleneck, quality, reliability, cost, general) with confidence scores and suggested actions; bottleneck reports with hotspot bars; Recommendations section with Convert to ChangeSet
+- **Proposals**: Recommendations section (convertible recs with convert buttons) alongside proposal packs
+- **Schedules**: Mode schedules (from REG-SCHEDULES) + Task schedules (schedulable tasks with enable/disable toggles, RRULE display, proposal-only constraint)
+- Findings/Approvals/Registries: unchanged from v1
 
 **Data Storage Layout** (`Axion/mus_data/` or `Axion/libraries/mus_data/`):
 - v1: `runs/RUN-YYYYMMDD-XXXX/` — run.json, findings.json, proposal_packs.json, blast_radius.json, proof_bundle.json
 - **v2**: `task-runs/TRUN-*/` — task_run.json, insights.json, bottlenecks.json, recommendations.json, findings.json
 - `insights/INS-*.json`, `bottlenecks/BNR-*.json`, `recommendations/REC-*.json` — individual output files
 - `findings/FND-*.json`, `proposals/PP-*.json`, `changesets/CS-*.json`, `approvals/APR-*.json`, `suppressions/SUP-*.json`
+- `task_schedule_overrides.json` — task schedule enabled/disabled + rrule overrides
 - `logs/ledger.jsonl` — append-only audit ledger
 
 ### AVCS — Axion Verification & Certification Suite

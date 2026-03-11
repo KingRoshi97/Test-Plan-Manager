@@ -4,7 +4,7 @@ import {
   Loader2, Wrench, Shield, Search, Zap, Calendar, FileText, Settings, Play,
   AlertTriangle, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Eye,
   Lock, XCircle, Filter, Package, Stamp, BarChart3, Activity, ListChecks,
-  Lightbulb, Bot, Target, Clock
+  Lightbulb, Bot, Target, Clock, ArrowRightCircle
 } from "lucide-react";
 import { GlassPanel } from "../components/ui/glass-panel";
 import { StatusChip } from "../components/ui/status-chip";
@@ -43,19 +43,39 @@ function findingStatusVariant(status: string) {
 }
 
 function OverviewTab({ status, runs, findings }: { status: any; runs: any[]; findings: any[] }) {
+  const { data: taskRuns = [] } = useQuery<any[]>({
+    queryKey: ["/api/mus/task-runs"],
+    queryFn: () => fetch("/api/mus/task-runs").then(r => r.json()),
+  });
+
+  const { data: insights = [] } = useQuery<any[]>({
+    queryKey: ["/api/mus/insights"],
+    queryFn: () => fetch("/api/mus/insights").then(r => r.json()),
+  });
+
+  const { data: bottlenecks = [] } = useQuery<any[]>({
+    queryKey: ["/api/mus/bottlenecks"],
+    queryFn: () => fetch("/api/mus/bottlenecks").then(r => r.json()),
+  });
+
   const openFindings = findings.filter((f: any) => f.status === "open").length;
   const cards = [
     { label: "Total Runs", value: status?.total_runs ?? 0, icon: Activity, accent: "cyan" as const },
     { label: "Open Findings", value: openFindings, icon: AlertTriangle, accent: "red" as const },
-    { label: "Registries", value: Object.keys(status?.registry_versions ?? {}).length, icon: FileText, accent: "violet" as const },
-    { label: "Policy Loaded", value: status?.policy_loaded ? 1 : 0, icon: Shield, accent: "green" as const },
+    { label: "Task Runs", value: taskRuns.length, icon: ListChecks, accent: "violet" as const },
+    { label: "Insights", value: insights.length, icon: Lightbulb, accent: "green" as const },
+    { label: "Registries", value: Object.keys(status?.registry_versions ?? {}).length, icon: FileText, accent: "default" as const },
+    { label: "Policy Loaded", value: status?.policy_loaded ? 1 : 0, icon: Shield, accent: "default" as const },
   ];
   const lastRun = status?.last_run;
   const lastValidation = status?.last_validation;
 
+  const topBottleneck = bottlenecks.length > 0 ? bottlenecks[0] : null;
+  const latestInsights = insights.slice(0, 3);
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {cards.map((c) => (
           <MetricCard key={c.label} icon={c.icon} label={c.label} value={c.value} accent={c.accent} />
         ))}
@@ -88,6 +108,70 @@ function OverviewTab({ status, runs, findings }: { status: any; runs: any[]; fin
         </GlassPanel>
       )}
 
+      {topBottleneck && (
+        <GlassPanel solid glow="red" className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Zap className="w-4 h-4 text-[hsl(var(--status-failure))]" />
+            <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Top Bottleneck</h3>
+            <span className="font-mono-tech text-xs text-[hsl(var(--muted-foreground))]">{topBottleneck.task_id}</span>
+          </div>
+          <div className="text-xs mb-2">
+            <span className="text-[hsl(var(--muted-foreground))]">Total: </span>
+            <span className="font-mono-tech text-[hsl(var(--foreground))]">{Math.round(topBottleneck.total_time_ms / 1000)}s / {topBottleneck.total_tokens} tokens</span>
+          </div>
+          {topBottleneck.hotspots?.slice(0, 3).map((h: any, i: number) => (
+            <div key={i} className="flex items-center gap-2 text-xs py-1 border-b border-[hsl(var(--glass-border))] last:border-0">
+              <div className="w-24 font-mono-tech text-[hsl(var(--foreground))]">{h.location}</div>
+              <div className="flex-1 h-2 rounded-full bg-[hsl(var(--muted)/0.3)] overflow-hidden">
+                <div className="h-full rounded-full bg-[hsl(var(--status-failure))]" style={{ width: `${Math.min(h.percentage_of_total, 100)}%` }} />
+              </div>
+              <div className="w-12 text-right font-mono-tech text-[hsl(var(--muted-foreground))]">{h.percentage_of_total}%</div>
+            </div>
+          ))}
+          {topBottleneck.hypotheses?.length > 0 && (
+            <p className="text-[10px] text-[hsl(var(--muted-foreground))] italic mt-2">{topBottleneck.hypotheses[0]}</p>
+          )}
+        </GlassPanel>
+      )}
+
+      {latestInsights.length > 0 && (
+        <GlassPanel solid glow="green" className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Lightbulb className="w-4 h-4 text-[hsl(var(--status-success))]" />
+            <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Latest Insights</h3>
+            {insights.length > 3 && (
+              <span className="text-xs text-[hsl(var(--muted-foreground))]">({insights.length} total)</span>
+            )}
+          </div>
+          <div className="space-y-3">
+            {latestInsights.map((ins: any) => (
+              <div key={ins.insight_id} className="glass-panel rounded p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <StatusChip variant={
+                    ins.category === "bottleneck" ? "failure" as const :
+                    ins.category === "quality" ? "intelligence" as const :
+                    ins.category === "cost" ? "warning" as const :
+                    ins.category === "reliability" ? "success" as const :
+                    "neutral" as const
+                  } label={ins.category} />
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">confidence: {ins.confidence}%</span>
+                  <span className="font-mono-tech text-[10px] text-[hsl(var(--muted-foreground))] ml-auto">{ins.task_id}</span>
+                </div>
+                <p className="text-xs text-[hsl(var(--foreground))] line-clamp-2">{ins.narrative}</p>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
+      {latestInsights.length === 0 && taskRuns.length === 0 && (
+        <GlassPanel solid className="p-4 text-center">
+          <Bot className="w-6 h-6 mx-auto mb-2 text-[hsl(var(--muted-foreground))] opacity-50" />
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">No task runs or insights yet</p>
+          <p className="text-xs mt-1 text-[hsl(var(--muted-foreground))]">Run tasks from the Tasks tab to generate insights and bottleneck analysis</p>
+        </GlassPanel>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GlassPanel solid glow="cyan" className="p-4">
           <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-3">Last Validation</h3>
@@ -106,7 +190,7 @@ function OverviewTab({ status, runs, findings }: { status: any; runs: any[]; fin
           )}
         </GlassPanel>
 
-        <GlassPanel solid glow="green" className="p-4">
+        <GlassPanel solid glow="cyan" className="p-4">
           <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-3">Last Run</h3>
           {lastRun ? (
             <div className="space-y-2 text-xs">
@@ -473,6 +557,11 @@ function ProposalsTab() {
     queryFn: () => fetch("/api/mus/proposals").then(r => r.json()),
   });
 
+  const { data: recommendations = [], isLoading: recsLoading } = useQuery<any[]>({
+    queryKey: ["/api/mus/recommendations"],
+    queryFn: () => fetch("/api/mus/recommendations").then(r => r.json()),
+  });
+
   const createChangeSet = useMutation({
     mutationFn: async ({ proposalPackId, patchIds }: { proposalPackId: string; patchIds: string[] }) => {
       const res = await fetch("/api/mus/changesets", {
@@ -497,20 +586,48 @@ function ProposalsTab() {
     });
   }
 
-  if (isLoading) return <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--muted-foreground))]" /></div>;
+  if (isLoading || recsLoading) return <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--muted-foreground))]" /></div>;
 
-  if (proposals.length === 0) {
+  if (proposals.length === 0 && recommendations.length === 0) {
     return (
       <GlassPanel solid className="text-center py-12 animate-fade-in">
         <Package className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--muted-foreground))] opacity-50" />
-        <p className="text-sm text-[hsl(var(--muted-foreground))]">No proposal packs yet</p>
-        <p className="text-xs mt-1 text-[hsl(var(--muted-foreground))]">Run a drift detection (MM-04) to generate proposals</p>
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">No proposal packs or recommendations yet</p>
+        <p className="text-xs mt-1 text-[hsl(var(--muted-foreground))]">Run a drift detection (MM-04) or task to generate proposals</p>
       </GlassPanel>
     );
   }
 
+  const convertibleRecs = recommendations.filter((r: any) => r.convertible_to_changeset);
+
   return (
     <div className="space-y-3 animate-fade-in">
+      {convertibleRecs.length > 0 && (
+        <GlassPanel solid glow="violet" className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
+            <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Recommendations</h3>
+            <span className="text-xs text-[hsl(var(--muted-foreground))]">({convertibleRecs.length} convertible)</span>
+          </div>
+          <div className="space-y-2">
+            {convertibleRecs.map((rec: any) => (
+              <div key={rec.recommendation_id} className="glass-panel rounded p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <StatusChip variant={severityVariant(rec.priority)} label={rec.priority} />
+                    <span className="text-xs font-medium text-[hsl(var(--foreground))]">{rec.title}</span>
+                    <span className="font-mono-tech text-[10px] text-[hsl(var(--muted-foreground))]">{rec.task_id}</span>
+                  </div>
+                  <ConvertToChangeSetButton recommendationId={rec.recommendation_id} />
+                </div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{rec.description}</p>
+                <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">Impact: {rec.estimated_impact}</div>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
       {proposals.map((pp: any) => {
         const selected = selectedPatches[pp.proposal_pack_id] ?? new Set();
         return (
@@ -732,6 +849,11 @@ function SchedulesTab() {
     queryFn: () => fetch("/api/mus/schedules").then(r => r.json()),
   });
 
+  const { data: taskSchedules = [], isLoading: taskLoading } = useQuery<any[]>({
+    queryKey: ["/api/mus/task-schedules"],
+    queryFn: () => fetch("/api/mus/task-schedules").then(r => r.json()),
+  });
+
   const toggleSchedule = useMutation({
     mutationFn: async ({ scheduleId, enabled }: { scheduleId: string; enabled: boolean }) => {
       const res = await fetch(`/api/mus/schedules/${scheduleId}`, {
@@ -745,7 +867,20 @@ function SchedulesTab() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/mus/schedules"] }),
   });
 
-  if (isLoading) return <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--muted-foreground))]" /></div>;
+  const toggleTaskSchedule = useMutation({
+    mutationFn: async ({ taskId, enabled }: { taskId: string; enabled: boolean }) => {
+      const res = await fetch(`/api/mus/task-schedules/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) throw new Error("Failed to toggle task schedule");
+      return res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/mus/task-schedules"] }),
+  });
+
+  if (isLoading || taskLoading) return <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--muted-foreground))]" /></div>;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -756,36 +891,77 @@ function SchedulesTab() {
         </div>
       </GlassPanel>
 
-      <div className="space-y-3">
-        {schedules.map((s: any) => (
-          <GlassPanel key={s.schedule_id} solid className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-[hsl(var(--status-warning))]" />
-                <span className="font-mono-tech text-sm font-medium text-[hsl(var(--card-foreground))]">{s.schedule_id}</span>
-                {s.proposal_only && <StatusChip variant="neutral" label="proposal-only" />}
+      <div>
+        <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3 flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-[hsl(var(--status-warning))]" />
+          Mode Schedules
+        </h3>
+        <div className="space-y-3">
+          {schedules.map((s: any) => (
+            <GlassPanel key={s.schedule_id} solid className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[hsl(var(--status-warning))]" />
+                  <span className="font-mono-tech text-sm font-medium text-[hsl(var(--card-foreground))]">{s.schedule_id}</span>
+                  {s.proposal_only && <StatusChip variant="neutral" label="proposal-only" />}
+                </div>
+                <button
+                  onClick={() => toggleSchedule.mutate({ scheduleId: s.schedule_id, enabled: !s.enabled })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${s.enabled ? "bg-[hsl(var(--status-success))]" : "bg-[hsl(var(--muted))]"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${s.enabled ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
               </div>
-              <button
-                onClick={() => toggleSchedule.mutate({ scheduleId: s.schedule_id, enabled: !s.enabled })}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${s.enabled ? "bg-[hsl(var(--status-success))]" : "bg-[hsl(var(--muted))]"}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${s.enabled ? "translate-x-6" : "translate-x-1"}`} />
-              </button>
-            </div>
-            <div className="space-y-1 text-xs text-[hsl(var(--muted-foreground))]">
-              {s.rrule && <div>RRULE: <span className="font-mono-tech">{s.rrule}</span></div>}
-              {s.allowed_modes && <div>Modes: {s.allowed_modes.join(", ")}</div>}
-              {s.allowed_detector_packs && <div>Detectors: {s.allowed_detector_packs.join(", ")}</div>}
-              {s.allowed_scopes?.asset_classes && <div>Scopes: {s.allowed_scopes.asset_classes.join(", ")}</div>}
-            </div>
-          </GlassPanel>
-        ))}
-        {schedules.length === 0 && (
-          <GlassPanel solid className="text-center py-12">
-            <Calendar className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--muted-foreground))] opacity-50" />
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">No schedules configured</p>
-          </GlassPanel>
-        )}
+              <div className="space-y-1 text-xs text-[hsl(var(--muted-foreground))]">
+                {s.rrule && <div>RRULE: <span className="font-mono-tech">{s.rrule}</span></div>}
+                {s.allowed_modes && <div>Modes: {s.allowed_modes.join(", ")}</div>}
+                {s.allowed_detector_packs && <div>Detectors: {s.allowed_detector_packs.join(", ")}</div>}
+                {s.allowed_scopes?.asset_classes && <div>Scopes: {s.allowed_scopes.asset_classes.join(", ")}</div>}
+              </div>
+            </GlassPanel>
+          ))}
+          {schedules.length === 0 && (
+            <GlassPanel solid className="text-center py-8">
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">No mode schedules configured</p>
+            </GlassPanel>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3 flex items-center gap-2">
+          <Target className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
+          Task Schedules
+        </h3>
+        <div className="space-y-3">
+          {taskSchedules.map((ts: any) => (
+            <GlassPanel key={ts.task_id} solid className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
+                  <span className="text-sm font-medium text-[hsl(var(--card-foreground))]">{ts.name}</span>
+                  <span className="font-mono-tech text-xs text-[hsl(var(--muted-foreground))]">{ts.task_id}</span>
+                  <StatusChip variant={intentVariant(ts.intent)} label={ts.intent} />
+                  <StatusChip variant="neutral" label="proposal-only" />
+                </div>
+                <button
+                  onClick={() => toggleTaskSchedule.mutate({ taskId: ts.task_id, enabled: !ts.enabled })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${ts.enabled ? "bg-[hsl(var(--status-success))]" : "bg-[hsl(var(--muted))]"}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${ts.enabled ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+              <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                RRULE: <span className="font-mono-tech">{ts.rrule}</span>
+              </div>
+            </GlassPanel>
+          ))}
+          {taskSchedules.length === 0 && (
+            <GlassPanel solid className="text-center py-8">
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">No schedulable tasks found</p>
+            </GlassPanel>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -868,6 +1044,29 @@ function intentVariant(intent: string) {
     case "audit": return "neutral" as const;
     default: return "neutral" as const;
   }
+}
+
+function RunbookSteps({ steps }: { steps: string[] }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="mt-2">
+      <button
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+        className="flex items-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--card-foreground))] transition-colors"
+      >
+        <ListChecks className="w-3 h-3" />
+        <span>Runbook ({steps.length} steps)</span>
+        {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+      </button>
+      {expanded && (
+        <ol className="mt-1.5 ml-4 space-y-0.5 list-decimal list-outside">
+          {steps.map((step, i) => (
+            <li key={i} className="text-[10px] text-[hsl(var(--muted-foreground))] leading-tight pl-1">{step}</li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
 }
 
 function TasksTab() {
@@ -965,6 +1164,9 @@ function TasksTab() {
                     <span key={o} className="px-1.5 py-0.5 rounded text-[10px] bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))]">{o}</span>
                   ))}
                 </div>
+                {task.runbook && task.runbook.length > 0 && (
+                  <RunbookSteps steps={task.runbook} />
+                )}
               </div>
             );
           })}
@@ -1177,9 +1379,14 @@ function TaskRunsTab() {
                     <h5 className="text-system-label mb-2">Recommendations</h5>
                     {outputs.recommendations.map((rec: any) => (
                       <div key={rec.recommendation_id} className="glass-panel rounded p-3 mb-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <StatusChip variant={severityVariant(rec.priority)} label={rec.priority} />
-                          <span className="text-xs font-medium text-[hsl(var(--foreground))]">{rec.title}</span>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <StatusChip variant={severityVariant(rec.priority)} label={rec.priority} />
+                            <span className="text-xs font-medium text-[hsl(var(--foreground))]">{rec.title}</span>
+                          </div>
+                          {rec.convertible_to_changeset && (
+                            <ConvertToChangeSetButton recommendationId={rec.recommendation_id} />
+                          )}
                         </div>
                         <p className="text-xs text-[hsl(var(--muted-foreground))]">{rec.description}</p>
                         <div className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">Impact: {rec.estimated_impact}</div>
@@ -1214,6 +1421,40 @@ function TaskRunsTab() {
   );
 }
 
+function ConvertToChangeSetButton({ recommendationId, onSuccess }: { recommendationId: string; onSuccess?: (cs: any) => void }) {
+  const queryClient = useQueryClient();
+  const convertMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/mus/recommendations/${recommendationId}/convert`, { method: "POST" });
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error); }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/mus"] });
+      onSuccess?.(data);
+    },
+  });
+
+  return (
+    <div className="inline-flex flex-col items-start">
+      <button
+        onClick={(e) => { e.stopPropagation(); convertMutation.mutate(); }}
+        disabled={convertMutation.isPending || convertMutation.isSuccess}
+        className="flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.25)] disabled:opacity-50 transition-colors"
+      >
+        {convertMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRightCircle className="w-3 h-3" />}
+        {convertMutation.isSuccess ? "Converted" : "Convert to ChangeSet"}
+      </button>
+      {convertMutation.isSuccess && convertMutation.data && (
+        <span className="text-[10px] text-[hsl(var(--status-success))] mt-0.5">{convertMutation.data.changeset_id}</span>
+      )}
+      {convertMutation.error && (
+        <span className="text-[10px] text-[hsl(var(--status-failure))] mt-0.5">{(convertMutation.error as Error).message}</span>
+      )}
+    </div>
+  );
+}
+
 function InsightsTab() {
   const { data: insights = [], isLoading: insightsLoading } = useQuery<any[]>({
     queryKey: ["/api/mus/insights"],
@@ -1225,11 +1466,16 @@ function InsightsTab() {
     queryFn: () => fetch("/api/mus/bottlenecks").then(r => r.json()),
   });
 
-  const isLoading = insightsLoading || bnLoading;
+  const { data: recommendations = [], isLoading: recsLoading } = useQuery<any[]>({
+    queryKey: ["/api/mus/recommendations"],
+    queryFn: () => fetch("/api/mus/recommendations").then(r => r.json()),
+  });
+
+  const isLoading = insightsLoading || bnLoading || recsLoading;
 
   if (isLoading) return <div className="flex items-center justify-center h-32"><Loader2 className="w-5 h-5 animate-spin text-[hsl(var(--muted-foreground))]" /></div>;
 
-  if (insights.length === 0 && bottlenecks.length === 0) {
+  if (insights.length === 0 && bottlenecks.length === 0 && recommendations.length === 0) {
     return (
       <GlassPanel solid className="text-center py-12 animate-fade-in">
         <Lightbulb className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--muted-foreground))] opacity-50" />
@@ -1278,6 +1524,36 @@ function InsightsTab() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      {recommendations.length > 0 && (
+        <GlassPanel solid glow="violet" className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Target className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
+            <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Recommendations</h3>
+            <span className="text-xs text-[hsl(var(--muted-foreground))]">({recommendations.length})</span>
+          </div>
+          <div className="space-y-3">
+            {recommendations.map((rec: any) => (
+              <div key={rec.recommendation_id} className="glass-panel rounded p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2">
+                    <StatusChip variant={severityVariant(rec.priority)} label={rec.priority} />
+                    <span className="text-xs font-medium text-[hsl(var(--foreground))]">{rec.title}</span>
+                  </div>
+                  {rec.convertible_to_changeset && (
+                    <ConvertToChangeSetButton recommendationId={rec.recommendation_id} />
+                  )}
+                </div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">{rec.description}</p>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[10px] text-[hsl(var(--muted-foreground))]">Impact: {rec.estimated_impact}</span>
+                  <span className="font-mono-tech text-[10px] text-[hsl(var(--muted-foreground))]">{rec.task_id}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
       {bottlenecks.length > 0 && (
         <GlassPanel solid glow="red" className="p-4">
           <div className="flex items-center gap-2 mb-3">

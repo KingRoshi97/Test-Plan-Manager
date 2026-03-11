@@ -1,0 +1,19 @@
+[
+  {
+    "insight_id": "INS-mmls730y-vc8m",
+    "run_id": "TRUN-mmls72x1-yk6l",
+    "task_id": "TASK-COST-01",
+    "category": "cost",
+    "narrative": "Cost analysis across 6 pipeline runs. Average run: 1025s. Total compute: 6147s across all runs. Top cost center: S7_RENDER_DOCS at 95.5% of pipeline time. Per-template render cost: 3145ms (311 templates avg). No significant cache opportunities detected.",
+    "evidence_refs": [
+      "/home/runner/workspace/Axion/.axion/runs"
+    ],
+    "confidence": 85,
+    "suggested_next_actions": [
+      "Optimize S7_RENDER_DOCS (95.5% of cost)",
+      "Investigate per-template cost of 3145ms",
+      "Schedule periodic cost monitoring with TASK-COST-01"
+    ],
+    "created_at": "2026-03-11T08:32:50.962Z"
+  }
+]

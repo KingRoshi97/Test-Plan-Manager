@@ -23,7 +23,18 @@
         }
       },
       "outputs_enabled": ["insights", "bottlenecks", "recommendations", "findings"],
-      "schedule_allowed": true
+      "schedule_allowed": true,
+      "runbook": [
+        "Scan .axion/runs/ for completed pipeline runs",
+        "Parse stage reports for started_at / finished_at timestamps",
+        "Aggregate timing across most recent 10 runs",
+        "Rank stages by average elapsed time percentage",
+        "Identify top 5 hotspots exceeding 3% of total time",
+        "Compute variance to detect non-deterministic stages",
+        "Detect performance trend (improving/worsening/stable)",
+        "Generate hypotheses for each bottleneck",
+        "Emit bottleneck report, insights, findings, and recommendations"
+      ]
     },
     {
       "task_id": "TASK-QUAL-01",
@@ -44,7 +55,15 @@
         }
       },
       "outputs_enabled": ["insights", "recommendations", "findings"],
-      "schedule_allowed": false
+      "schedule_allowed": false,
+      "runbook": [
+        "Load rendered docs from latest pipeline run",
+        "For each document measure word count, section count, heading density",
+        "Check placeholder resolution rate from render_report.json",
+        "Identify documents with low depth (short sections, sparse content)",
+        "Rank documents by depth improvement potential",
+        "Emit insights with specific file references and recommendations"
+      ]
     },
     {
       "task_id": "TASK-QUAL-02",
@@ -65,7 +84,15 @@
         }
       },
       "outputs_enabled": ["insights", "findings", "recommendations"],
-      "schedule_allowed": false
+      "schedule_allowed": false,
+      "runbook": [
+        "Load REG-TEMPLATES registry",
+        "Check each template for version, status, and naming compliance",
+        "Cross-reference with latest render report for unresolved placeholders",
+        "Check content hash consistency across render envelopes",
+        "Emit findings for templates with quality issues",
+        "Generate quality insight summary and recommendations"
+      ]
     },
     {
       "task_id": "TASK-OPS-01",
@@ -86,7 +113,14 @@
         }
       },
       "outputs_enabled": ["insights", "findings", "proofs"],
-      "schedule_allowed": true
+      "schedule_allowed": true,
+      "runbook": [
+        "Run DP-REG-01 registry integrity checks",
+        "Validate all REG-*.json for structure, duplicates, cross-references",
+        "Count findings by severity level",
+        "Generate system health insight with confidence score",
+        "Recommend follow-up tasks based on findings"
+      ]
     },
     {
       "task_id": "TASK-COST-01",
@@ -107,7 +141,16 @@
         }
       },
       "outputs_enabled": ["insights", "bottlenecks", "recommendations"],
-      "schedule_allowed": true
+      "schedule_allowed": true,
+      "runbook": [
+        "Scan pipeline runs for stage timing data",
+        "Identify rerun frequency per assembly",
+        "Compute per-stage cost proportional to time",
+        "Compare content hashes across runs to find cache opportunities",
+        "Calculate per-template render cost from timing and template counts",
+        "Emit cost-focused bottleneck report with waste hotspots",
+        "Generate cost reduction recommendations"
+      ]
     },
     {
       "task_id": "TASK-SYS-01",
@@ -128,7 +171,15 @@
         }
       },
       "outputs_enabled": ["insights", "findings", "recommendations", "proofs"],
-      "schedule_allowed": false
+      "schedule_allowed": false,
+      "runbook": [
+        "Run DP-DRIFT-01 drift detection on all registries",
+        "Check for orphaned files and missing cross-references",
+        "Detect slug inconsistencies and reference mismatches",
+        "Compare current registry state against last validated state",
+        "Emit integrity findings with severity ranking",
+        "Generate drift pattern insights and fix recommendations"
+      ]
     }
   ],
   "active_map": {

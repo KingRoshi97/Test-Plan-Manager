@@ -196,6 +196,7 @@ export interface TaskDefinition {
   };
   outputs_enabled: Array<"insights" | "bottlenecks" | "recommendations" | "findings" | "proofs">;
   schedule_allowed: boolean;
+  runbook?: string[];
 }
 
 export interface TaskRun {

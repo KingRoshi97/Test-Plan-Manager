@@ -1,0 +1,40 @@
+{
+  "run_id": "TRUN-mmls6txe-ys85",
+  "task_ids": [
+    "TASK-COST-01"
+  ],
+  "assigned_agents": [
+    "AGT-COST-01"
+  ],
+  "trigger": "manual",
+  "scope": {
+    "asset_classes": [
+      "pipeline",
+      "builds",
+      "stages",
+      "system"
+    ]
+  },
+  "budgets": {
+    "token_cap": 50000,
+    "time_cap_ms": 120000,
+    "max_findings": 15,
+    "max_proposals": 10,
+    "max_assets_touched": 20
+  },
+  "status": "completed",
+  "created_at": "2026-03-11T08:32:39.170Z",
+  "outputs_refs": {
+    "findings_count": 0,
+    "insights_count": 1,
+    "bottlenecks_count": 1,
+    "recommendations_count": 1,
+    "has_proof": false
+  },
+  "started_at": "2026-03-11T08:32:39.287Z",
+  "telemetry_summary": {
+    "total_time_ms": 20,
+    "total_tokens": 0
+  },
+  "completed_at": "2026-03-11T08:32:39.307Z"
+}
