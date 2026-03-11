@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { sha256 } from "../../utils/hash.js";
 import { isoNow } from "../../utils/time.js";
 import { writeJson, readJson } from "../../utils/fs.js";
+import type { PinScope, PinClass } from "./model.js";
 
 export interface PinEntry {
   pin_id: string;
@@ -12,6 +13,8 @@ export interface PinEntry {
   pinned_by: string;
   reason?: string;
   hash: string;
+  scope: PinScope;
+  pin_class: PinClass;
 }
 
 export interface Pinset {
@@ -46,6 +49,8 @@ export function pinArtifact(
   artifactPath: string,
   pinnedBy: string,
   reason?: string,
+  scope: PinScope = "run",
+  pinClass: PinClass = "standard",
 ): PinEntry {
   if (!existsSync(artifactPath)) {
     throw new Error(`Cannot pin artifact: file not found at ${artifactPath}`);
@@ -70,6 +75,8 @@ export function pinArtifact(
     pinned_at: isoNow(),
     pinned_by: pinnedBy,
     hash,
+    scope,
+    pin_class: pinClass,
   };
 
   if (reason) {
@@ -82,7 +89,7 @@ export function pinArtifact(
   return entry;
 }
 
-export function unpinArtifact(runId: string, pinId: string): void {
+export function unpinArtifact(runId: string, pinId: string, actor?: string): void {
   const pinset = loadPinset(runId);
 
   const idx = pinset.pins.findIndex((p) => p.pin_id === pinId);
@@ -90,12 +97,39 @@ export function unpinArtifact(runId: string, pinId: string): void {
     throw new Error(`Pin not found: ${pinId} in run ${runId}`);
   }
 
+  const pin = pinset.pins[idx];
+
+  if (pin.pin_class === "immutable") {
+    throw new Error(
+      `Cannot unpin immutable pin ${pinId}: immutable pins require approval-gated removal. Actor: ${actor ?? "unknown"}`,
+    );
+  }
+
   pinset.pins.splice(idx, 1);
   savePinset(pinset);
 }
 
-export function listPins(runId: string): PinEntry[] {
+export function forceUnpinImmutable(runId: string, pinId: string, actor: string, approvalRef: string): void {
   const pinset = loadPinset(runId);
+
+  const idx = pinset.pins.findIndex((p) => p.pin_id === pinId);
+  if (idx === -1) {
+    throw new Error(`Pin not found: ${pinId} in run ${runId}`);
+  }
+
+  if (!approvalRef) {
+    throw new Error("Approval reference required to force-unpin immutable pin");
+  }
+
+  pinset.pins.splice(idx, 1);
+  savePinset(pinset);
+}
+
+export function listPins(runId: string, scopeFilter?: PinScope): PinEntry[] {
+  const pinset = loadPinset(runId);
+  if (scopeFilter) {
+    return pinset.pins.filter((p) => p.scope === scopeFilter);
+  }
   return pinset.pins;
 }
 

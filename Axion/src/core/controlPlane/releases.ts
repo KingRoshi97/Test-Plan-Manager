@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { ensureDir, writeJson, readJson } from "../../utils/fs.js";
 import { isoNow } from "../../utils/time.js";
 import { sha256 } from "../../utils/hash.js";
+import { loadPolicies, evaluateAllPolicies } from "./policies.js";
 
 export type ReleaseStatus = "draft" | "staged" | "published" | "revoked";
 
@@ -17,6 +18,7 @@ export interface Release {
   signatures: Array<{ signer: string; signature: string; signed_at: string }>;
   notes?: string;
   revocation_reason?: string;
+  authorized_signers?: string[];
 }
 
 const VALID_TRANSITIONS: Record<ReleaseStatus, ReleaseStatus[]> = {
@@ -71,6 +73,7 @@ export function createRelease(
   basePath: string = ".axion",
   artifacts: Array<{ artifact_id: string; path: string; hash: string }> = [],
   notes?: string,
+  authorizedSigners?: string[],
 ): Release {
   const now = isoNow();
   const release: Release = {
@@ -83,6 +86,7 @@ export function createRelease(
     artifacts,
     signatures: [],
     notes,
+    authorized_signers: authorizedSigners,
   };
   saveRelease(basePath, release);
   return release;
@@ -98,6 +102,14 @@ export function signRelease(
     throw new Error(`Release ${releaseId} not found`);
   }
   assertTransition(release.status, "staged");
+
+  if (release.authorized_signers && release.authorized_signers.length > 0) {
+    if (!release.authorized_signers.includes(signer)) {
+      throw new Error(
+        `Signer '${signer}' is not authorized. Authorized signers: ${release.authorized_signers.join(", ")}`,
+      );
+    }
+  }
 
   const signedAt = isoNow();
   const payload = JSON.stringify({
@@ -116,9 +128,15 @@ export function signRelease(
   return release;
 }
 
+export interface PublishPolicyCheck {
+  passed: boolean;
+  violations: string[];
+}
+
 export function publishRelease(
   releaseId: string,
   basePath: string = ".axion",
+  policyCheck?: PublishPolicyCheck,
 ): Release {
   const release = loadRelease(basePath, releaseId);
   if (!release) {
@@ -130,11 +148,60 @@ export function publishRelease(
     throw new Error(`Release ${releaseId} must be signed before publishing`);
   }
 
+  const effectivePolicyCheck = policyCheck ?? performDefaultPolicyCheck(release, basePath);
+
+  if (!effectivePolicyCheck.passed) {
+    throw new Error(
+      `Release ${releaseId} publish blocked by policy: ${effectivePolicyCheck.violations.join("; ")}`,
+    );
+  }
+
   release.status = "published";
   release.updated_at = isoNow();
 
   saveRelease(basePath, release);
   return release;
+}
+
+function performDefaultPolicyCheck(release: Release, basePath: string): PublishPolicyCheck {
+  const violations: string[] = [];
+
+  if (release.artifacts.length === 0) {
+    violations.push("Release has no artifacts");
+  }
+
+  for (const artifact of release.artifacts) {
+    if (!artifact.hash || artifact.hash === "unknown") {
+      violations.push(`Artifact ${artifact.artifact_id} has no valid hash`);
+    }
+  }
+
+  if (release.signatures.length === 0) {
+    violations.push("Release has no signatures");
+  }
+
+  const policyRegistryPath = join(basePath, "policy_registry.json");
+  if (existsSync(policyRegistryPath)) {
+    const policies = loadPolicies(policyRegistryPath);
+    const policyContext = {
+      run_id: release.run_id,
+      release_id: release.release_id,
+      artifact_count: release.artifacts.length,
+      signature_count: release.signatures.length,
+    };
+    const results = evaluateAllPolicies(policies, policyContext);
+    for (const result of results) {
+      if (!result.passed) {
+        for (const v of result.violations) {
+          if (v.action === "deny") {
+            violations.push(`Policy ${result.policy_id}: ${v.message}`);
+          }
+        }
+      }
+    }
+  }
+
+  return { passed: violations.length === 0, violations };
 }
 
 export function revokeRelease(

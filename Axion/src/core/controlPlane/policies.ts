@@ -1,6 +1,11 @@
 import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { readJson } from "../../utils/fs.js";
+import { readJson, writeJson, ensureDir } from "../../utils/fs.js";
+import { isoNow } from "../../utils/time.js";
+import { sha256 } from "../../utils/hash.js";
+import type { PolicySnapshotRecord, PolicyEvaluationResult } from "./model.js";
+
+export type { PolicyEvaluationResult };
 
 export interface Policy {
   policy_id: string;
@@ -10,6 +15,7 @@ export interface Policy {
   rules: PolicyRule[];
   applies_to: string[];
   enforcement: "strict" | "advisory";
+  target_stages?: string[];
 }
 
 export interface PolicyRule {
@@ -17,17 +23,9 @@ export interface PolicyRule {
   condition: string;
   action: "allow" | "deny" | "warn";
   message: string;
-}
-
-export interface PolicyEvaluationResult {
-  policy_id: string;
-  passed: boolean;
-  violations: Array<{
-    rule_id: string;
-    action: "deny" | "warn";
-    message: string;
-    context: Record<string, unknown>;
-  }>;
+  operator?: "eq" | "neq" | "gt" | "gte" | "lt" | "lte" | "in" | "not_in" | "contains" | "matches";
+  field?: string;
+  value?: unknown;
 }
 
 export interface RiskClass {
@@ -58,10 +56,14 @@ interface PolicyRegistryFile {
       condition?: string;
       action?: string;
       message?: string;
+      operator?: string;
+      field?: string;
+      value?: unknown;
     }>;
     applies_to?: string[];
     enforcement?: "strict" | "advisory";
     name?: string;
+    target_stages?: string[];
   }>;
 }
 
@@ -106,9 +108,13 @@ export function loadPolicies(registryPath: string): Policy[] {
           condition: r.condition ?? "true",
           action: (r.action as PolicyRule["action"]) ?? "allow",
           message: r.message ?? "",
+          operator: r.operator as PolicyRule["operator"],
+          field: r.field,
+          value: r.value,
         })),
         applies_to: entry.applies_to ?? ["*"],
         enforcement: entry.enforcement ?? "strict",
+        target_stages: entry.target_stages,
       });
     }
   }
@@ -180,6 +186,50 @@ export function loadPolicies(registryPath: string): Policy[] {
   return policies;
 }
 
+function resolveFieldValue(field: string, context: PolicyContext): unknown {
+  const parts = field.split(".");
+  let current: unknown = context;
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
+}
+
+function evaluateRichCondition(rule: PolicyRule, context: PolicyContext): boolean {
+  if (!rule.operator || !rule.field) {
+    return false;
+  }
+
+  const fieldValue = resolveFieldValue(rule.field, context);
+  const ruleValue = rule.value;
+
+  switch (rule.operator) {
+    case "eq":
+      return fieldValue === ruleValue;
+    case "neq":
+      return fieldValue !== ruleValue;
+    case "gt":
+      return typeof fieldValue === "number" && typeof ruleValue === "number" && fieldValue > ruleValue;
+    case "gte":
+      return typeof fieldValue === "number" && typeof ruleValue === "number" && fieldValue >= ruleValue;
+    case "lt":
+      return typeof fieldValue === "number" && typeof ruleValue === "number" && fieldValue < ruleValue;
+    case "lte":
+      return typeof fieldValue === "number" && typeof ruleValue === "number" && fieldValue <= ruleValue;
+    case "in":
+      return Array.isArray(ruleValue) && ruleValue.includes(fieldValue);
+    case "not_in":
+      return Array.isArray(ruleValue) && !ruleValue.includes(fieldValue);
+    case "contains":
+      return Array.isArray(fieldValue) && fieldValue.includes(ruleValue);
+    case "matches":
+      return typeof fieldValue === "string" && typeof ruleValue === "string" && new RegExp(ruleValue).test(fieldValue);
+    default:
+      return false;
+  }
+}
+
 function matchesCondition(condition: string, context: PolicyContext): boolean {
   if (condition === "true") return true;
 
@@ -222,6 +272,12 @@ function matchesCondition(condition: string, context: PolicyContext): boolean {
 }
 
 function policyAppliesToContext(policy: Policy, context: PolicyContext): boolean {
+  if (policy.target_stages && policy.target_stages.length > 0) {
+    if (context.stage_id && !policy.target_stages.includes(context.stage_id)) {
+      return false;
+    }
+  }
+
   for (const scope of policy.applies_to) {
     if (scope === "*") return true;
     if (scope === "overrides" && context.overrides !== undefined) return true;
@@ -239,13 +295,22 @@ export function evaluatePolicy(policy: Policy, context: unknown): PolicyEvaluati
   const violations: PolicyEvaluationResult["violations"] = [];
 
   if (!policyAppliesToContext(policy, ctx)) {
-    return { policy_id: policy.policy_id, passed: true, violations: [] };
+    return { policy_id: policy.policy_id, passed: true, violations: [], stage_id: ctx.stage_id };
   }
+
+  const requiredEvidence: string[] = [];
 
   for (const rule of policy.rules) {
     if (rule.action === "allow") continue;
 
-    const triggered = matchesCondition(rule.condition, ctx);
+    let triggered = false;
+
+    if (rule.operator && rule.field) {
+      triggered = evaluateRichCondition(rule, ctx);
+    } else {
+      triggered = matchesCondition(rule.condition, ctx);
+    }
+
     if (triggered) {
       violations.push({
         rule_id: rule.rule_id,
@@ -255,17 +320,68 @@ export function evaluatePolicy(policy: Policy, context: unknown): PolicyEvaluati
           condition: rule.condition,
           risk_class: ctx.risk_class,
           stage_id: ctx.stage_id,
+          operator: rule.operator,
+          field: rule.field,
         },
       });
+    }
+
+    if (rule.condition.startsWith("evidence.includes(")) {
+      const match = rule.condition.match(/evidence\.includes\("([^"]+)"\)/);
+      if (match) requiredEvidence.push(match[1]);
     }
   }
 
   const hasDeny = violations.some((v) => v.action === "deny");
   const passed = policy.enforcement === "strict" ? !hasDeny : true;
 
-  return { policy_id: policy.policy_id, passed, violations };
+  const evidence = ctx.evidence ?? [];
+  const evidenceSatisfied = requiredEvidence.length === 0 || requiredEvidence.every((e) => evidence.includes(e));
+
+  return {
+    policy_id: policy.policy_id,
+    passed,
+    violations,
+    stage_id: ctx.stage_id,
+    evidence_satisfied: evidenceSatisfied,
+  };
 }
 
 export function evaluateAllPolicies(policies: Policy[], context: unknown): PolicyEvaluationResult[] {
   return policies.map((p) => evaluatePolicy(p, context));
+}
+
+export function evaluatePoliciesForStage(policies: Policy[], stageId: string, context: unknown): PolicyEvaluationResult[] {
+  const ctx = { ...(context as PolicyContext), stage_id: stageId };
+  return policies
+    .filter((p) => {
+      if (!p.target_stages || p.target_stages.length === 0) return true;
+      return p.target_stages.includes(stageId);
+    })
+    .map((p) => evaluatePolicy(p, ctx));
+}
+
+export function capturePolicySnapshot(
+  policies: Policy[],
+  runId: string,
+  basePath: string = ".axion",
+): PolicySnapshotRecord {
+  const snapshot: PolicySnapshotRecord = {
+    snapshot_id: `SNAP-${sha256(runId + isoNow()).slice(0, 12)}`,
+    run_id: runId,
+    captured_at: isoNow(),
+    policies: policies.map((p) => ({
+      policy_id: p.policy_id,
+      version: p.version,
+      enforcement: p.enforcement,
+      rule_count: p.rules.length,
+    })),
+  };
+
+  const snapshotDir = join(basePath, "runs", runId);
+  ensureDir(snapshotDir);
+  const snapshotPath = join(snapshotDir, "policy_snapshot.json");
+  writeJson(snapshotPath, snapshot);
+
+  return snapshot;
 }

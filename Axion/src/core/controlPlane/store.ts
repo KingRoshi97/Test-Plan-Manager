@@ -12,6 +12,36 @@ export interface RunStore {
   listRuns(): Promise<ICPRun[]>;
 }
 
+const REQUIRED_MANIFEST_FIELDS: (keyof RunManifest)[] = [
+  "run_id",
+  "status",
+  "created_at",
+  "updated_at",
+  "pipeline",
+  "profile",
+  "stage_order",
+  "stages",
+];
+
+function validateManifest(manifest: RunManifest): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  for (const field of REQUIRED_MANIFEST_FIELDS) {
+    if (manifest[field] === undefined || manifest[field] === null) {
+      errors.push(`Missing required field: ${field}`);
+    }
+  }
+  if (manifest.run_id && typeof manifest.run_id !== "string") {
+    errors.push("run_id must be a string");
+  }
+  if (manifest.stages && !Array.isArray(manifest.stages)) {
+    errors.push("stages must be an array");
+  }
+  if (manifest.stage_order && !Array.isArray(manifest.stage_order)) {
+    errors.push("stage_order must be an array");
+  }
+  return { valid: errors.length === 0, errors };
+}
+
 export class JSONRunStore implements RunStore {
   constructor(private basePath: string) {}
 
@@ -27,6 +57,10 @@ export class JSONRunStore implements RunStore {
     const dir = this.runDir(run.run_id);
     ensureDir(dir);
     const manifest = icpRunToManifest(run);
+    const validation = validateManifest(manifest);
+    if (!validation.valid) {
+      throw new Error(`Manifest validation failed on create: ${validation.errors.join("; ")}`);
+    }
     writeJson(this.manifestPath(run.run_id), manifest);
   }
 
@@ -44,8 +78,25 @@ export class JSONRunStore implements RunStore {
     if (!existing) {
       throw new Error(`Run ${runId} not found`);
     }
-    const merged: ICPRun = { ...existing, ...updates, updated_at: new Date().toISOString() };
+
+    if (updates.version !== undefined && updates.version !== existing.version) {
+      throw new Error(
+        `Optimistic lock conflict for run ${runId}: expected version ${updates.version}, found ${existing.version}. Another update may have occurred concurrently.`,
+      );
+    }
+
+    const merged: ICPRun = {
+      ...existing,
+      ...updates,
+      updated_at: new Date().toISOString(),
+      version: existing.version + 1,
+    };
+
     const manifest = icpRunToManifest(merged);
+    const validation = validateManifest(manifest);
+    if (!validation.valid) {
+      throw new Error(`Manifest validation failed on update: ${validation.errors.join("; ")}`);
+    }
     writeJson(this.manifestPath(runId), manifest);
   }
 

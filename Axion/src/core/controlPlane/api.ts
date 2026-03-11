@@ -3,6 +3,8 @@ import { existsSync } from "node:fs";
 import type { ICPRun, ICPStageRun, ICPRunStatus, ICPStageStatus, StageId } from "./model.js";
 import type { RunStore } from "./store.js";
 import { AuditLogger } from "./audit.js";
+import { StateMachineGovernor } from "./stateMachine.js";
+import { loadPolicies, capturePolicySnapshot } from "./policies.js";
 import { STAGE_ORDER, STAGE_GATES, GATES_REQUIRED } from "../../types/run.js";
 import { isoNow } from "../../utils/time.js";
 import { readJson, writeJson, ensureDir } from "../../utils/fs.js";
@@ -13,21 +15,16 @@ function padRunId(n: number): string {
   return `RUN-${String(n).padStart(6, "0")}`;
 }
 
-const VALID_RUN_TRANSITIONS: Record<ICPRunStatus, ICPRunStatus[]> = {
-  queued: ["running", "failed"],
-  running: ["gated", "failed", "released"],
-  gated: ["running", "failed"],
-  failed: ["archived"],
-  released: ["archived"],
-  archived: [],
-};
-
 export class RunController {
+  private governor: StateMachineGovernor;
+
   constructor(
     private store: RunStore,
     private audit?: AuditLogger,
     private baseDir: string = ".",
-  ) {}
+  ) {
+    this.governor = new StateMachineGovernor();
+  }
 
   async createRun(config: Record<string, unknown>): Promise<ICPRun> {
     const counterPath = join(this.baseDir, ".axion", "run_counter.json");
@@ -105,6 +102,7 @@ export class RunController {
       icp_status: "queued",
       created_at: now,
       updated_at: now,
+      version: 1,
       pipeline: {
         pipeline_id: orchPipeline?.pipeline_id ?? (config.pipeline_id as string ?? "axion_default"),
         pipeline_version: orchPipeline?.version ?? (config.pipeline_version as string ?? "0.2.0"),
@@ -125,6 +123,16 @@ export class RunController {
       quota_set: config.quota_set as string ?? "QUOTA-BASE01",
       pipeline_ref: pipelineRef,
     };
+
+    const policyRegistryPath = join(this.baseDir, ".axion", "policy_registry.json");
+    if (existsSync(policyRegistryPath)) {
+      const policies = loadPolicies(policyRegistryPath);
+      if (policies.length > 0) {
+        const snapshot = capturePolicySnapshot(policies, runId, join(this.baseDir, ".axion"));
+        run.policy_snapshot_ref = `policy_snapshot.json`;
+        this.audit?.append("policy.snapshot", runId, { snapshot_id: snapshot.snapshot_id, policy_count: policies.length });
+      }
+    }
 
     await this.store.createRun(run);
 
@@ -173,6 +181,7 @@ export class RunController {
       throw new Error(`Stage ${stageId} not found in run ${runId}`);
     }
 
+    this.governor.assertStageTransition(stage.icp_status, "in_progress");
     stage.icp_status = "in_progress";
     run.updated_at = isoNow();
     await this.store.updateRun(runId, run);
@@ -203,7 +212,9 @@ export class RunController {
       skip: "skip",
     };
 
-    stage.icp_status = statusMap[result];
+    const targetStatus = statusMap[result];
+    this.governor.assertStageTransition(stage.icp_status, targetStatus);
+    stage.icp_status = targetStatus;
     if (reportRef) {
       stage.stage_report_ref = reportRef;
     }
@@ -272,11 +283,88 @@ export class RunController {
       throw new Error(`Policy hook KIT_EXPORT denied release: ${exportDecision.reason}`);
     }
 
-    this.transitionRun(run, "released");
+    this.transitionRun(run, "completed");
     run.updated_at = isoNow();
     await this.store.updateRun(runId, run);
 
-    this.audit?.append("run.released", runId, { system_profile: run.system_profile });
+    this.audit?.append("run.completed", runId, { system_profile: run.system_profile });
+  }
+
+  async pauseRun(runId: string, actor: string = "system", reason?: string): Promise<void> {
+    const run = await this.store.getRun(runId);
+    if (!run) {
+      throw new Error(`Run ${runId} not found`);
+    }
+
+    if (!this.governor.canPause(run.icp_status)) {
+      throw new Error(`Cannot pause run ${runId}: current status is ${run.icp_status}`);
+    }
+
+    this.transitionRun(run, "paused");
+    run.updated_at = isoNow();
+    await this.store.updateRun(runId, run);
+
+    this.audit?.append("run.paused", runId, { actor, reason: reason ?? "manual pause" }, actor);
+  }
+
+  async resumeRun(runId: string, actor: string = "system", reason?: string): Promise<void> {
+    const run = await this.store.getRun(runId);
+    if (!run) {
+      throw new Error(`Run ${runId} not found`);
+    }
+
+    if (!this.governor.canResume(run.icp_status)) {
+      throw new Error(`Cannot resume run ${runId}: current status is ${run.icp_status}`);
+    }
+
+    this.transitionRun(run, "running");
+    run.updated_at = isoNow();
+    await this.store.updateRun(runId, run);
+
+    this.audit?.append("run.resumed", runId, { actor, reason: reason ?? "manual resume" }, actor);
+  }
+
+  async cancelRun(runId: string, actor: string = "system", reason?: string): Promise<void> {
+    const run = await this.store.getRun(runId);
+    if (!run) {
+      throw new Error(`Run ${runId} not found`);
+    }
+
+    if (!this.governor.canCancel(run.icp_status)) {
+      throw new Error(`Cannot cancel run ${runId}: current status is ${run.icp_status}`);
+    }
+
+    this.transitionRun(run, "cancelled");
+    run.updated_at = isoNow();
+    await this.store.updateRun(runId, run);
+
+    this.audit?.append("run.cancelled", runId, { actor, reason: reason ?? "manual cancellation" }, actor);
+  }
+
+  async retryRun(runId: string, actor: string = "system", reason?: string): Promise<void> {
+    const run = await this.store.getRun(runId);
+    if (!run) {
+      throw new Error(`Run ${runId} not found`);
+    }
+
+    if (!this.governor.canRetry(run.icp_status)) {
+      throw new Error(`Cannot retry run ${runId}: current status is ${run.icp_status}`);
+    }
+
+    this.transitionRun(run, "queued");
+
+    for (const stage of run.stages) {
+      if (stage.icp_status === "fail") {
+        stage.icp_status = "not_started";
+        stage.stage_report_ref = null;
+      }
+    }
+
+    run.errors = [];
+    run.updated_at = isoNow();
+    await this.store.updateRun(runId, run);
+
+    this.audit?.append("run.retried", runId, { actor, reason: reason ?? "manual retry" }, actor);
   }
 
   async getRunStatus(runId: string): Promise<ICPRun | null> {
@@ -284,12 +372,7 @@ export class RunController {
   }
 
   private transitionRun(run: ICPRun, target: ICPRunStatus): void {
-    const allowed = VALID_RUN_TRANSITIONS[run.icp_status];
-    if (!allowed.includes(target)) {
-      throw new Error(
-        `Invalid run transition: ${run.icp_status} → ${target}`,
-      );
-    }
+    this.governor.assertRunTransition(run.icp_status, target);
     run.icp_status = target;
   }
 }

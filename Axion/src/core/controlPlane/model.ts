@@ -10,11 +10,14 @@ import type {
 import type { ArtifactRef } from "../../types/artifacts.js";
 
 export type ICPRunStatus =
+  | "created"
   | "queued"
   | "running"
+  | "paused"
   | "gated"
   | "failed"
-  | "released"
+  | "completed"
+  | "cancelled"
   | "archived";
 
 export type ICPStageStatus =
@@ -25,11 +28,14 @@ export type ICPStageStatus =
   | "skip";
 
 export const ICP_TO_MANIFEST_RUN_STATUS: Record<ICPRunStatus, ManifestRunStatus> = {
+  created: "created",
   queued: "created",
   running: "running",
+  paused: "paused",
   gated: "paused",
   failed: "failed",
-  released: "completed",
+  completed: "completed",
+  cancelled: "cancelled",
   archived: "completed",
 };
 
@@ -52,6 +58,7 @@ export interface ICPRun {
   icp_status: ICPRunStatus;
   created_at: string;
   updated_at: string;
+  version: number;
   pipeline: {
     pipeline_id: string;
     pipeline_version: string;
@@ -77,6 +84,57 @@ export interface ICPRun {
   };
 }
 
+export type AuditActionCategory = "lifecycle" | "governance" | "evidence";
+
+export interface AuditEntry {
+  timestamp: string;
+  action: string;
+  category: AuditActionCategory;
+  run_id: string;
+  actor: string;
+  details: Record<string, unknown>;
+  prev_hash: string;
+  hash: string;
+}
+
+export type PinScope = "run" | "global";
+export type PinClass = "standard" | "immutable";
+
+export interface PinRecord {
+  pin_id: string;
+  artifact_id: string;
+  artifact_path: string;
+  pinned_at: string;
+  pinned_by: string;
+  reason?: string;
+  hash: string;
+  scope: PinScope;
+  pin_class: PinClass;
+}
+
+export interface ReleasePublishRequest {
+  release_id: string;
+  signer: string;
+  policy_check_required: boolean;
+  authorized_signers?: string[];
+}
+
+export interface PolicySnapshotRecord {
+  snapshot_id: string;
+  run_id: string;
+  captured_at: string;
+  policies: Array<{
+    policy_id: string;
+    version: string;
+    enforcement: string;
+    rule_count: number;
+  }>;
+}
+
+export const RUN_STATUS_TERMINAL: ICPRunStatus[] = ["completed", "cancelled", "archived"];
+export const RUN_STATUS_ACTIVE: ICPRunStatus[] = ["queued", "running", "paused", "gated"];
+export const STAGE_STATUS_TERMINAL: ICPStageStatus[] = ["pass", "fail", "skip"];
+
 export function icpRunToManifest(icp: ICPRun): RunManifest {
   const manifest: RunManifest = {
     run_id: icp.run_id,
@@ -101,9 +159,12 @@ export function icpRunToManifest(icp: ICPRun): RunManifest {
     policy_snapshot_ref: icp.policy_snapshot_ref,
     config: icp.config,
   };
-  if (icp.system_profile) (manifest.config as Record<string, unknown>).__system_profile = icp.system_profile;
-  if (icp.quota_set) (manifest.config as Record<string, unknown>).__quota_set = icp.quota_set;
-  if (icp.pipeline_ref) (manifest.config as Record<string, unknown>).__pipeline_ref = icp.pipeline_ref;
+  const cfgMeta = manifest.config as Record<string, unknown>;
+  if (icp.system_profile) cfgMeta.__system_profile = icp.system_profile;
+  if (icp.quota_set) cfgMeta.__quota_set = icp.quota_set;
+  if (icp.pipeline_ref) cfgMeta.__pipeline_ref = icp.pipeline_ref;
+  if (icp.version !== undefined) cfgMeta.__version = icp.version;
+  cfgMeta.__icp_status = icp.icp_status;
   return manifest;
 }
 
@@ -113,8 +174,8 @@ export function manifestToICPRun(manifest: RunManifest): ICPRun {
     running: "running",
     paused: "gated",
     failed: "failed",
-    completed: "released",
-    cancelled: "failed",
+    completed: "completed",
+    cancelled: "cancelled",
   };
 
   const reverseStageStatus: Record<StageStatus, ICPStageStatus> = {
@@ -126,11 +187,14 @@ export function manifestToICPRun(manifest: RunManifest): ICPRun {
   };
 
   const cfg = manifest.config as Record<string, unknown>;
+  const storedIcpStatus = cfg.__icp_status as ICPRunStatus | undefined;
+  const resolvedStatus = storedIcpStatus ?? reverseRunStatus[manifest.status];
   return {
     run_id: manifest.run_id,
-    icp_status: reverseRunStatus[manifest.status],
+    icp_status: resolvedStatus,
     created_at: manifest.created_at,
     updated_at: manifest.updated_at,
+    version: (cfg.__version as number) ?? 1,
     pipeline: manifest.pipeline,
     profile: manifest.profile,
     stage_order: manifest.stage_order,
@@ -155,6 +219,34 @@ export function manifestToICPRun(manifest: RunManifest): ICPRun {
 }
 
 export type { RunManifest, ManifestStageRun, StageId, StageStatus, ManifestRunStatus, GateReportRef, RunError, ArtifactRef };
+
+export interface RunTransitionRequest {
+  run_id: string;
+  current_status: ICPRunStatus;
+  proposed_status: ICPRunStatus;
+  actor?: string;
+  reason?: string;
+}
+
+export interface TransitionValidationResult {
+  valid: boolean;
+  from: ICPRunStatus | ICPStageStatus;
+  to: ICPRunStatus | ICPStageStatus;
+  rejection_reason?: string;
+}
+
+export interface PolicyEvaluationResult {
+  policy_id: string;
+  passed: boolean;
+  violations: Array<{
+    rule_id: string;
+    action: "deny" | "warn";
+    message: string;
+    context: Record<string, unknown>;
+  }>;
+  stage_id?: string;
+  evidence_satisfied?: boolean;
+}
 
 export interface ProofRef {
   proof_id: string;
