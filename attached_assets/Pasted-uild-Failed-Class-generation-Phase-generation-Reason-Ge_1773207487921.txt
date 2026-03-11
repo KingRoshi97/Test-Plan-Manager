@@ -1,0 +1,47 @@
+uild Failed
+Class: generation
+
+Phase: generation
+
+Reason: Generation had failures: Unit Shared Types & Contracts: 45 files not produced; Unit Infrastructure & Config: 59 files not produced; Unit Additional Infrastructure: 133 files not produced; Unit Real-time collaboration with version control: 12 files not produced; Unit AI-powered content suggestions: 12 files not produced; Unit Advanced search and tagging system: 12 files not produced; Unit Integration with third-party platforms: 12 files not produced; Unit Customizable templates for documents: 12 files not produced; Unit User activity tracking and analytics: 12 files not produced; Unit Offline mode for document editing: 12 files not produced; Unit Document export options: 12 files not produced; Unit User: 12 files not produced; Unit Contributor: 12 files not produced; Unit Administrator: 12 files not produced; Unit Viewer: 12 files not produced; Unit Moderator: 12 files not produced; Unit 1) Entity Index (required): 12 files not produced; Unit 1) Constraints Catalog (canonical): 12 files not produced; Unit 1) Migration Philosophy (required): 36 files not produced; Unit 1) Seed Sets (canonical): 12 files not produced; Unit DATA-06 — Validation Schemas: 36 files not produced; Unit 1) Transaction Policy (required): 72 files not produced; Unit 1) Ownership Registry (canonical): 12 files not produced; Unit Scope & Boundaries: 72 files not produced; Unit Transformation Rules (canonical): 12 files not produced; Unit DGL-05 — Auditability Requirements: 12 files not produced; Unit Data Catalog Entries (canonical): 12 files not produced; Unit 1) States (required): 12 files not produced; Unit 2) Retention Matrix (canonical): 12 files not produced; Unit 1) Deletion Types (required): 36 files not produced; Unit 1) Principles (required): 12 files not produced; Unit 1) Definitions (required): 36 files not produced; Unit 2) Monitoring Signals (canonical): 12 files not produced; Unit 2) Quarantine Model (required): 12 files not produced; Unit Schema Version: 108 files not produced; Unit Real-time collaboration with version control API: 40 files not produced; Unit Real-time collaboration with version control UI: 16 files not produced; Unit Verification & Tests: 174 files not produced
+
+Blocked conditions:
+Unit Shared Types & Contracts: 45 files not produced
+Unit Infrastructure & Config: 59 files not produced
+Unit Additional Infrastructure: 133 files not produced
+Unit Real-time collaboration with version control: 12 files not produced
+Unit AI-powered content suggestions: 12 files not produced
+Unit Advanced search and tagging system: 12 files not produced
+Unit Integration with third-party platforms: 12 files not produced
+Unit Customizable templates for documents: 12 files not produced
+Unit User activity tracking and analytics: 12 files not produced
+Unit Offline mode for document editing: 12 files not produced
+Unit Document export options: 12 files not produced
+Unit User: 12 files not produced
+Unit Contributor: 12 files not produced
+Unit Administrator: 12 files not produced
+Unit Viewer: 12 files not produced
+Unit Moderator: 12 files not produced
+Unit 1) Entity Index (required): 12 files not produced
+Unit 1) Constraints Catalog (canonical): 12 files not produced
+Unit 1) Migration Philosophy (required): 36 files not produced
+Unit 1) Seed Sets (canonical): 12 files not produced
+Unit DATA-06 — Validation Schemas: 36 files not produced
+Unit 1) Transaction Policy (required): 72 files not produced
+Unit 1) Ownership Registry (canonical): 12 files not produced
+Unit Scope & Boundaries: 72 files not produced
+Unit Transformation Rules (canonical): 12 files not produced
+Unit DGL-05 — Auditability Requirements: 12 files not produced
+Unit Data Catalog Entries (canonical): 12 files not produced
+Unit 1) States (required): 12 files not produced
+Unit 2) Retention Matrix (canonical): 12 files not produced
+Unit 1) Deletion Types (required): 36 files not produced
+Unit 1) Principles (required): 12 files not produced
+Unit 1) Definitions (required): 36 files not produced
+Unit 2) Monitoring Signals (canonical): 12 files not produced
+Unit 2) Quarantine Model (required): 12 files not produced
+Unit Schema Version: 108 files not produced
+Unit Real-time collaboration with version control API: 40 files not produced
+Unit Real-time collaboration with version control UI: 16 files not produced
+Unit Verification & Tests: 174 files not produced
+Retry Build
