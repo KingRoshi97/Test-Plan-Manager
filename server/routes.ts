@@ -191,10 +191,23 @@ export function registerRoutes(app: Express) {
     const id = Number(req.params.id);
     const assembly = await storage.getAssembly(id);
     if (!assembly) return res.status(404).json({ error: "Not found" });
-    if (!assembly.runId) return res.status(404).json({ error: "No completed run" });
 
-    const kitDir = path.join(AXION_RUNS, assembly.runId, "kit", "bundle", "agent_kit");
-    const altKitDir = path.join(AXION_RUNS, assembly.runId, "kit");
+    const requestedRunId = req.query.runId as string | undefined;
+    const runId = requestedRunId || assembly.runId;
+    if (!runId) return res.status(404).json({ error: "No completed run" });
+
+    if (requestedRunId) {
+      const pipelineRun = await storage.getPipelineRunByRunId(runId);
+      if (!pipelineRun || pipelineRun.assemblyId !== id) {
+        return res.status(403).json({ error: "Run does not belong to this assembly" });
+      }
+    }
+
+    const safeRunDir = safePath(runId);
+    if (!safeRunDir) return res.status(400).json({ error: "Invalid run ID" });
+
+    const kitDir = path.join(safeRunDir, "kit", "bundle", "agent_kit");
+    const altKitDir = path.join(safeRunDir, "kit");
     const targetDir = fs.existsSync(kitDir) ? kitDir : fs.existsSync(altKitDir) ? altKitDir : null;
     if (!targetDir) return res.status(404).json({ error: "Kit not found" });
 
@@ -295,6 +308,10 @@ export function registerRoutes(app: Express) {
         hasKit: boolean;
         hasBuild: boolean;
         buildStatus: string | null;
+        kitVersion: string | null;
+        systemVersion: string | null;
+        kitFileCount: number | null;
+        sha: string | null;
       }> = [];
 
       for (const run of pipelineRunsList) {
@@ -305,13 +322,48 @@ export function registerRoutes(app: Express) {
         if (!hasKit) continue;
 
         const buildDir = path.join(runDir, "build");
-        let hasBuild = false;
+        const buildZipPath = path.join(buildDir, "project_repo.zip");
+        const hasBuild = fs.existsSync(buildZipPath);
         let buildStatus: string | null = null;
-        if (fs.existsSync(path.join(buildDir, "build_manifest.json"))) {
-          hasBuild = true;
+        if (hasBuild && fs.existsSync(path.join(buildDir, "build_manifest.json"))) {
           try {
             const manifest = JSON.parse(fs.readFileSync(path.join(buildDir, "build_manifest.json"), "utf-8"));
             buildStatus = manifest.status || null;
+          } catch {}
+        }
+
+        let kitVersion: string | null = null;
+        let systemVersion: string | null = null;
+        let kitFileCount: number | null = null;
+        let sha: string | null = null;
+
+        const manifestPath = path.join(kitDir, "bundle", "agent_kit", "kit_manifest.json");
+        const altManifestPath = path.join(kitDir, "kit_manifest.json");
+        const mPath = fs.existsSync(manifestPath) ? manifestPath : fs.existsSync(altManifestPath) ? altManifestPath : null;
+        if (mPath) {
+          try {
+            const km = JSON.parse(fs.readFileSync(mPath, "utf-8"));
+            kitVersion = km.version || km.kit_version || null;
+            kitFileCount = km.file_count ?? (km.files ? km.files.length : null);
+          } catch {}
+        }
+
+        const stampPath = path.join(kitDir, "bundle", "agent_kit", "version_stamp.json");
+        const altStampPath = path.join(kitDir, "version_stamp.json");
+        const sPath = fs.existsSync(stampPath) ? stampPath : fs.existsSync(altStampPath) ? altStampPath : null;
+        if (sPath) {
+          try {
+            const vs = JSON.parse(fs.readFileSync(sPath, "utf-8"));
+            systemVersion = vs.system_version || vs.axion_version || null;
+            sha = vs.sha || vs.integrity || vs.git_sha || null;
+          } catch {}
+        }
+
+        if (!kitFileCount) {
+          try {
+            const kitRoot = fs.existsSync(path.join(kitDir, "bundle", "agent_kit")) ? path.join(kitDir, "bundle", "agent_kit") : kitDir;
+            const entries = fs.readdirSync(kitRoot);
+            kitFileCount = entries.filter(e => !fs.statSync(path.join(kitRoot, e)).isDirectory()).length;
           } catch {}
         }
 
@@ -323,6 +375,10 @@ export function registerRoutes(app: Express) {
           hasKit,
           hasBuild,
           buildStatus,
+          kitVersion,
+          systemVersion,
+          kitFileCount,
+          sha,
         });
       }
 
