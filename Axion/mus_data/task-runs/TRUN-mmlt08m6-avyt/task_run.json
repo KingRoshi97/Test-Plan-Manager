@@ -1,0 +1,37 @@
+{
+  "run_id": "TRUN-mmlt08m6-avyt",
+  "task_ids": [
+    "TASK-QUAL-02"
+  ],
+  "assigned_agents": [
+    "AGT-QUAL-01"
+  ],
+  "trigger": "manual",
+  "scope": {
+    "asset_classes": [
+      "templates"
+    ]
+  },
+  "budgets": {
+    "token_cap": 50000,
+    "time_cap_ms": 120000,
+    "max_findings": 50,
+    "max_proposals": 10,
+    "max_assets_touched": 20
+  },
+  "status": "completed",
+  "created_at": "2026-03-11T08:55:31.230Z",
+  "outputs_refs": {
+    "findings_count": 0,
+    "insights_count": 1,
+    "bottlenecks_count": 0,
+    "recommendations_count": 0,
+    "has_proof": false
+  },
+  "started_at": "2026-03-11T08:55:31.293Z",
+  "telemetry_summary": {
+    "total_time_ms": 2,
+    "total_tokens": 0
+  },
+  "completed_at": "2026-03-11T08:55:31.295Z"
+}

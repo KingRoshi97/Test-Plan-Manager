@@ -1,0 +1,39 @@
+{
+  "run_id": "TRUN-mmlszy6s-wyji",
+  "task_ids": [
+    "TASK-OPS-01"
+  ],
+  "assigned_agents": [
+    "AGT-OPS-01"
+  ],
+  "trigger": "manual",
+  "scope": {
+    "asset_classes": [
+      "registries",
+      "templates",
+      "knowledge_library"
+    ]
+  },
+  "budgets": {
+    "token_cap": 50000,
+    "time_cap_ms": 120000,
+    "max_findings": 50,
+    "max_proposals": 10,
+    "max_assets_touched": 20
+  },
+  "status": "completed",
+  "created_at": "2026-03-11T08:55:17.716Z",
+  "outputs_refs": {
+    "findings_count": 23,
+    "insights_count": 1,
+    "bottlenecks_count": 0,
+    "recommendations_count": 1,
+    "has_proof": false
+  },
+  "started_at": "2026-03-11T08:55:17.789Z",
+  "telemetry_summary": {
+    "total_time_ms": 5,
+    "total_tokens": 0
+  },
+  "completed_at": "2026-03-11T08:55:17.794Z"
+}

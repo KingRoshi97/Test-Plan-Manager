@@ -39,3 +39,9 @@
 {"timestamp":"2026-03-11T08:32:53.059Z","event":"task_run_created","actor":"operator","details":{"run_id":"TRUN-mmls74n7-7eut","task_ids":["TASK-QUAL-02"],"agents":["AGT-QUAL-01"]}}
 {"timestamp":"2026-03-11T08:32:53.195Z","event":"task_run_started","actor":"operator","details":{"run_id":"TRUN-mmls74n7-7eut","task_ids":["TASK-QUAL-02"]}}
 {"timestamp":"2026-03-11T08:32:53.196Z","event":"task_run_completed","actor":"operator","details":{"run_id":"TRUN-mmls74n7-7eut","status":"completed","findings":0,"insights":1,"bottlenecks":0,"recommendations":0,"elapsed_ms":1}}
+{"timestamp":"2026-03-11T08:55:17.717Z","event":"task_run_created","actor":"operator","details":{"run_id":"TRUN-mmlszy6s-wyji","task_ids":["TASK-OPS-01"],"agents":["AGT-OPS-01"]}}
+{"timestamp":"2026-03-11T08:55:17.789Z","event":"task_run_started","actor":"operator","details":{"run_id":"TRUN-mmlszy6s-wyji","task_ids":["TASK-OPS-01"]}}
+{"timestamp":"2026-03-11T08:55:17.794Z","event":"task_run_completed","actor":"operator","details":{"run_id":"TRUN-mmlszy6s-wyji","status":"completed","findings":23,"insights":1,"bottlenecks":0,"recommendations":1,"elapsed_ms":5}}
+{"timestamp":"2026-03-11T08:55:31.231Z","event":"task_run_created","actor":"operator","details":{"run_id":"TRUN-mmlt08m6-avyt","task_ids":["TASK-QUAL-02"],"agents":["AGT-QUAL-01"]}}
+{"timestamp":"2026-03-11T08:55:31.294Z","event":"task_run_started","actor":"operator","details":{"run_id":"TRUN-mmlt08m6-avyt","task_ids":["TASK-QUAL-02"]}}
+{"timestamp":"2026-03-11T08:55:31.295Z","event":"task_run_completed","actor":"operator","details":{"run_id":"TRUN-mmlt08m6-avyt","status":"completed","findings":0,"insights":1,"bottlenecks":0,"recommendations":0,"elapsed_ms":2}}

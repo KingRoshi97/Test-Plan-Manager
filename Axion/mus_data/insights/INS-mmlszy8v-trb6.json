@@ -1,0 +1,20 @@
+{
+  "insight_id": "INS-mmlszy8v-trb6",
+  "run_id": "TRUN-mmlszy6s-wyji",
+  "task_id": "TASK-OPS-01",
+  "category": "reliability",
+  "narrative": "Found 23 issue(s) across registries, including 23 high/critical severity. Immediate attention recommended for critical findings.",
+  "evidence_refs": [
+    "FND-mmlszy8v-anei",
+    "FND-mmlszy8v-vpvp",
+    "FND-mmlszy8v-86yb",
+    "FND-mmlszy8v-706m",
+    "FND-mmlszy8v-n7b1"
+  ],
+  "confidence": 85,
+  "suggested_next_actions": [
+    "Review and fix critical findings immediately",
+    "Run TASK-SYS-01 (Drift Scan) to check for reference inconsistencies"
+  ],
+  "created_at": "2026-03-11T08:55:17.791Z"
+}
