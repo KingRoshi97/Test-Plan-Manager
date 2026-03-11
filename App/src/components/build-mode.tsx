@@ -484,7 +484,7 @@ function AVCSSection({ assemblyId, runId }: { assemblyId: number; runId: string 
       {avcsRuns.length === 0 && (
         <div className="space-y-3">
           <p className="text-xs text-[hsl(var(--muted-foreground))]">
-            No certification runs yet. Run AVCS to verify build quality, security, and performance.
+            No certification history yet. Run AVCS to verify build quality, security, and performance.
           </p>
           <div className="flex flex-wrap gap-2">
             {RUN_TYPE_OPTIONS.map(opt => (
@@ -884,7 +884,7 @@ export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: B
       <div className="text-center py-12 text-[hsl(var(--muted-foreground))]">
         <Package className="w-8 h-8 mx-auto mb-3 opacity-50" />
         <p className="text-sm">
-          No completed pipeline runs with kits available. Complete a pipeline run to enable Build Mode.
+          No completed pipeline history with kits available. Complete a pipeline execution to enable Build Mode.
         </p>
       </div>
     );

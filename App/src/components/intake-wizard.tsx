@@ -311,6 +311,10 @@ export default function IntakeWizard() {
           idea: data.project.problem_statement,
           preset,
           intakePayload,
+          familyName: data.routing.family_name || undefined,
+          familyType: data.routing.family_type || undefined,
+          ownerName: data.routing.owner_name || undefined,
+          teamName: data.routing.team_name || undefined,
         }),
       });
 
@@ -373,8 +377,8 @@ export default function IntakeWizard() {
               <Rocket className="w-5 h-5 text-[hsl(var(--status-processing))]" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">New Run</h1>
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">Configure and launch a new pipeline run</p>
+              <h1 className="text-xl font-semibold text-[hsl(var(--foreground))]">New Assembly</h1>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">Configure and launch a new assembly</p>
             </div>
           </div>
           <span className="font-mono-tech text-xs text-[hsl(var(--muted-foreground))] bg-[hsl(var(--secondary))] px-2.5 py-1 rounded">

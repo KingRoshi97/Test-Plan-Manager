@@ -219,6 +219,61 @@ export default function PageRouting({ data, onChange }: PageProps) {
         </div>
       </fieldset>
 
+      <fieldset className="space-y-3">
+        <legend className="text-system-label">Assembly Metadata</legend>
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">
+          Optional organizational fields for tracking and grouping assemblies.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Family Name</label>
+            <input
+              type="text"
+              value={r.family_name}
+              onChange={(e) => set("family_name", e.target.value)}
+              placeholder="e.g. Payments Platform"
+              className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground)/0.5)] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--glow-cyan)/0.4)] transition"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Family Type</label>
+            <select
+              value={r.family_type}
+              onChange={(e) => set("family_type", e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-sm text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--glow-cyan)/0.4)] transition"
+            >
+              <option value="">Select type...</option>
+              <option value="product">Product</option>
+              <option value="client">Client</option>
+              <option value="internal_system">Internal System</option>
+              <option value="service_cluster">Service Cluster</option>
+              <option value="environment">Environment</option>
+              <option value="workspace_group">Workspace Group</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Owner Name</label>
+            <input
+              type="text"
+              value={r.owner_name}
+              onChange={(e) => set("owner_name", e.target.value)}
+              placeholder="e.g. Jane Smith"
+              className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground)/0.5)] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--glow-cyan)/0.4)] transition"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Team Name</label>
+            <input
+              type="text"
+              value={r.team_name}
+              onChange={(e) => set("team_name", e.target.value)}
+              placeholder="e.g. Platform Engineering"
+              className="w-full px-3 py-2 rounded-lg bg-[hsl(var(--secondary))] border border-[hsl(var(--border))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground)/0.5)] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--glow-cyan)/0.4)] transition"
+            />
+          </div>
+        </div>
+      </fieldset>
+
       <fieldset className="space-y-2">
         <GlassPanel
           glow={r.autofill ? "violet" : "none"}

@@ -99,7 +99,7 @@ function RunLogTab() {
             </button>
           ))}
         </div>
-        <span className="ml-auto text-xs text-[hsl(var(--muted-foreground))]">{sorted.length} runs</span>
+        <span className="ml-auto text-xs text-[hsl(var(--muted-foreground))]">{sorted.length} entries</span>
       </div>
 
       {isLoading ? (
@@ -109,7 +109,7 @@ function RunLogTab() {
       ) : sorted.length === 0 ? (
         <GlassPanel solid className="flex flex-col items-center justify-center py-16">
           <ScrollText className="w-10 h-10 text-[hsl(var(--muted-foreground))] opacity-40 mb-3" />
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">No runs found</p>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">No entries found</p>
         </GlassPanel>
       ) : (
         <GlassPanel solid className="overflow-hidden">
@@ -281,7 +281,7 @@ export default function LogsPage() {
   const [tab, setTab] = useState<"runs" | "audit">("runs");
 
   const tabs = [
-    { id: "runs" as const, label: "Run Log", icon: Play },
+    { id: "runs" as const, label: "Assembly Log", icon: Play },
     { id: "audit" as const, label: "Audit Trail", icon: Lock },
   ];
 
@@ -289,7 +289,7 @@ export default function LogsPage() {
     <div className="space-y-5 animate-fade-in">
       <div>
         <h1 className="text-xl font-bold text-[hsl(var(--foreground))] tracking-tight">Operations Log</h1>
-        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Pipeline runs and system audit trail</p>
+        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Pipeline activity and system audit trail</p>
       </div>
 
       <div className="flex gap-1 border-b border-[hsl(var(--border))]">

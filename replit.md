@@ -50,12 +50,12 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - `stage-rail.tsx` — StageRail horizontal 10-stage pipeline indicator with per-stage tooltips, parseStagesFromAssembly() helper
 
 **Command Center** (`App/src/pages/dashboard.tsx`): Premium mission control dashboard with 4 rows:
-- Hero strip: GlassPanel with "AXION Mission Control" title, live StatusChip (LIVE/ATTENTION/ALL CLEAR), environment label, stage/gate summary, "Latest Workbench" + "New Run" action buttons
-- Row 1: 6 executive MetricCards (Active Runs, Failed, Completed Today, Gates, Artifacts Ready, System Health) — all with live data, subtitles, click navigation
-- Row 2: 3-column live operations area — Active Operations (running assembly cards with StageRail), Activity Timeline (8 recent events with status icons), Alerts panel (failed runs with error messages, badge count)
-- Row 3: 6 Command Modules (Start New Run, Resume Run, Latest Workbench, Review Failures, Artifact Explorer, Maintenance)
-- Row 4: Recent Output strip (horizontal scroll of completed run cards with preset, duration, verification status, StageRail)
-- Fetches `/api/health` for system stats, `/api/assemblies` with 5s polling; no All Runs table (moved to /runs page)
+- Hero strip: GlassPanel with "AXION Mission Control" title, live StatusChip (LIVE/ATTENTION/ALL CLEAR), environment label, stage/gate summary, "Latest Workbench" + "New Assembly" action buttons
+- Row 1: 6 executive MetricCards (Active Assemblies, Failed, Completed Today, Gates, Artifacts Ready, System Health) — all with live data, subtitles, click navigation
+- Row 2: 3-column live operations area — Active Operations (running assembly cards with StageRail), Activity Timeline (8 recent events with status icons), Alerts panel (failed assemblies with error messages, badge count)
+- Row 3: 6 Command Modules (Start New Assembly, Resume Assembly, Latest Workbench, Review Failures, Artifact Explorer, Maintenance)
+- Row 4: Recent Output strip (horizontal scroll of completed assembly cards with preset, duration, verification status, StageRail)
+- Fetches `/api/health` for system stats, `/api/assemblies` with 5s polling
 
 **Assemblies Page** (`App/src/pages/assemblies.tsx`): Full fleet management page at `/assemblies` (redirect from `/runs`). Features:
 - Header: "Assemblies" title, "Track, organize, and operate all assemblies across the system" subtitle, "New Assembly" CTA
@@ -71,7 +71,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - Hero header in GlassPanel with project name, StatusChip, run ID badge, duration, action buttons (Run/Stop/Kit)
 - Horizontal pipeline strip with S1–S10 rectangular stage nodes, color-coded by status, gate result indicators, clickable to open inspector
 - Inspector panel: 320px right-side sticky panel with StageDetailCard (timing, artifacts, notes, gate summary) and GateInspector (checks, evidence, issues, completeness). Selection model: click stage/gate toggles inspector, X closes it. Error states for failed fetches
-- Overview tab: contextual status banners (running/failed/completed) in glow GlassPanels, 4 MetricCards (Status/Passed/Failed/Duration), Project Details + Pipeline Status panels, token usage display
+- Overview tab: contextual status banners (running/failed/completed) in glow GlassPanels, 4 MetricCards (Status/Passed/Failed/Duration), Project Details + Pipeline Status panels, Assembly Metadata panel (inline-editable Family/Lifecycle/Usage/Owner fields via PATCH), token usage display
 - Pipeline tab: vertical stage cards with glow borders per status, gate result badges, premium run history table
 - Intake tab: section sidebar with nav-item-active pattern, dark-themed form editors, save/re-run actions
 - Artifacts tab: breadcrumb file browser with dark styling, GlassPanel file list + preview pane
@@ -104,7 +104,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 
 **Phase 7 — New Run Premium Intake** (Complete):
 - `App/src/components/intake-wizard.tsx` — Premium shell: GlassPanel hero header with Rocket icon + "Step X of Y" badge, numbered progress rail with connecting lines (green completed/cyan current/muted future), glass-wrapped form area, cyan Next button with "Enter ↵" hint, green Submit button, violet AI autofill banners, red glow error banners
-- `App/src/components/intake/page-routing.tsx` — GlassPanel selection cards with icons and cyan glow selected state, card grid replacing dropdown for Project Category, violet glow AI autofill toggle with custom switch
+- `App/src/components/intake/page-routing.tsx` — GlassPanel selection cards with icons and cyan glow selected state, card grid replacing dropdown for Project Category, violet glow AI autofill toggle with custom switch, Assembly Metadata fieldset (Family Name, Family Type dropdown, Owner Name, Team Name — all optional, passed to POST /api/assemblies on submit)
 - `App/src/components/intake/page-project.tsx` — Dark glass-themed inputs with cyan focus glow, premium file upload drop zone, glass-styled link manager, mono-tech fonts
 - All 9 remaining form pages (`page-intent/design/functional/data/auth/integrations/nfr/category/final.tsx`) — Consistent `text-system-label` labels, glass-themed inputs with cyan focus glow, premium chip/tag selection, custom toggle switches with glow, green glow "Start Pipeline" toggle on final page
 
@@ -112,7 +112,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - `App/src/components/command-palette.tsx` — Full command palette (Cmd+K / Ctrl+K): search input with cmdk, Navigation/Actions/Recent Assemblies categories, dark glass aesthetic, cyan selection highlight, Escape to close
 - `App/src/components/layout/AppShell.tsx` — Global keyboard shortcut listener (Cmd+K), `<Toaster />` from sonner with dark theme
 - `App/src/components/layout/Topbar.tsx` — Search button wired to open command palette via `onSearchClick` prop
-- Toast notifications: success/error toasts on assembly create, pipeline start/kill, assembly delete (intake-wizard.tsx, assembly.tsx, runs.tsx)
+- Toast notifications: success/error toasts on assembly create, pipeline start/kill, assembly delete (intake-wizard.tsx, assembly.tsx, assemblies.tsx)
 - `GET /api/stats` endpoint — Server-side aggregated analytics: totalRuns, completedRuns, failedRuns, successRate, avgDurationMs, totalTokensUsed, runsToday/completedToday/failedToday, longestRun, recentFailureRate
 - Dashboard metric cards enhanced: "Failed" shows failure rate %, "Completed Today" shows avg duration, "System Health" shows token usage
 - Alert cards: "Retry" button (re-runs pipeline) and "Dismiss" button (client-side filter)

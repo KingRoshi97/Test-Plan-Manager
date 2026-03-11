@@ -171,7 +171,7 @@ export default function HealthPage() {
               </span>
               <span className="flex items-center gap-1.5">
                 <Package className="w-3.5 h-3.5" />
-                {data?.totalRuns ?? 0} total runs
+                {data?.totalRuns ?? 0} total assemblies
               </span>
               <span className="flex items-center gap-1.5">
                 <ScrollText className="w-3.5 h-3.5" />
@@ -188,7 +188,7 @@ export default function HealthPage() {
         <MetricCard icon={Shield} label="GATES" value={data?.pipeline.gates ?? 0} accent="amber" subtitle="Enforcement gates" />
         <MetricCard icon={BookOpen} label="KNOWLEDGE" value={data?.knowledge.kids ?? 0} accent="violet" subtitle="KIDs loaded" />
         <MetricCard icon={FileText} label="TEMPLATES" value={data?.templates ?? 0} accent="cyan" subtitle="Available" />
-        <MetricCard icon={Database} label="TOTAL RUNS" value={data?.totalRuns ?? 0} accent="green" subtitle="Pipeline executions" />
+        <MetricCard icon={Database} label="TOTAL ASSEMBLIES" value={data?.totalRuns ?? 0} accent="green" subtitle="Pipeline executions" />
         <MetricCard icon={Hash} label="AUDIT LOG" value={data?.auditEntries ?? 0} accent="default" subtitle="Integrity chain" />
       </div>
 
@@ -206,7 +206,7 @@ export default function HealthPage() {
 
       {data?.recentRuns && data.recentRuns.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-[hsl(var(--foreground))] text-system-label mb-3">RECENT RUNS</h2>
+          <h2 className="text-sm font-semibold text-[hsl(var(--foreground))] text-system-label mb-3">RECENT ASSEMBLIES</h2>
           <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-1">
             {data.recentRuns.map((run) => (
               <button

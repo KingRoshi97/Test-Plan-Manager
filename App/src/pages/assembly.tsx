@@ -8,7 +8,7 @@ import {
   Clock, Loader2, FileText, Folder, Download, Save, RotateCcw,
   Settings, Layers, Eye, FolderArchive, PenLine, Square, AlertTriangle, Hammer,
   Radio, Hash, Timer, Gauge, Activity, Zap, Shield, ChevronDown, ChevronUp, Skull,
-  ArrowUpCircle, Monitor
+  ArrowUpCircle, Monitor, Edit3, Check, Users, Tag, LifeBuoy, Power
 } from "lucide-react";
 import { BuildTab } from "../components/build-mode";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
@@ -198,6 +198,176 @@ function WorkbenchPipelineStrip({ stages, stageOrder, stageGates, stageNames, se
   );
 }
 
+const LIFECYCLE_OPTIONS = ["draft", "active", "in_use", "degraded", "deprecated", "archived"];
+const USAGE_OPTIONS = ["live", "warm", "idle", "dormant"];
+const FAMILY_TYPE_OPTIONS = ["product", "client", "internal_system", "service_cluster", "environment", "workspace_group"];
+
+function AssemblyMetadataPanel({ assembly }: { assembly: any }) {
+  const queryClient = useQueryClient();
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
+
+  const patchMutation = useMutation({
+    mutationFn: (update: Record<string, any>) =>
+      apiRequest(`/api/assemblies/${assembly.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(update),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", String(assembly.id)] });
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+      toast.success("Metadata updated");
+      setEditingField(null);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to update metadata");
+    },
+  });
+
+  const isRunning = assembly.status === "running";
+
+  function startEdit(field: string, currentValue: string) {
+    if (isRunning) return;
+    setEditingField(field);
+    setEditValue(currentValue || "");
+  }
+
+  function saveEdit(field: string) {
+    patchMutation.mutate({ [field]: editValue || null });
+  }
+
+  function cancelEdit() {
+    setEditingField(null);
+    setEditValue("");
+  }
+
+  function renderEditable(field: string, value: string | null, options?: string[]) {
+    if (editingField === field) {
+      return (
+        <div className="flex items-center gap-1.5">
+          {options ? (
+            <select
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              className="text-xs bg-[hsl(var(--background))] border border-[hsl(var(--primary)/0.4)] rounded px-2 py-1 text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+              autoFocus
+            >
+              <option value="">--</option>
+              {options.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveEdit(field);
+                if (e.key === "Escape") cancelEdit();
+              }}
+              className="text-xs bg-[hsl(var(--background))] border border-[hsl(var(--primary)/0.4)] rounded px-2 py-1 text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] w-full max-w-[160px]"
+              autoFocus
+            />
+          )}
+          <button
+            onClick={() => saveEdit(field)}
+            disabled={patchMutation.isPending}
+            className="p-0.5 rounded hover:bg-[hsl(var(--status-success)/0.2)] text-[hsl(var(--status-success))] transition-colors"
+          >
+            {patchMutation.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+          </button>
+          <button
+            onClick={cancelEdit}
+            className="p-0.5 rounded hover:bg-[hsl(var(--status-failure)/0.2)] text-[hsl(var(--muted-foreground))] transition-colors"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-1.5 group">
+        <span className="text-xs text-[hsl(var(--foreground))]">{value || "—"}</span>
+        {!isRunning && (
+          <button
+            onClick={() => startEdit(field, value || "")}
+            className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] transition-all"
+          >
+            <Edit3 className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <GlassPanel solid className="p-4">
+      <h3 className="text-system-label mb-3">Assembly Metadata</h3>
+      <div className="space-y-2.5">
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <Tag className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-[hsl(var(--muted-foreground))] text-xs">Family</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {renderEditable("familyName", assembly.familyName)}
+            {editingField !== "familyType" && editingField !== "familyName" && assembly.familyType && (
+              <span className="text-[10px] font-mono-tech px-1.5 py-0.5 rounded bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">{assembly.familyType}</span>
+            )}
+            {editingField !== "familyName" && renderEditable("familyType", assembly.familyType, FAMILY_TYPE_OPTIONS)}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <LifeBuoy className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-[hsl(var(--muted-foreground))] text-xs">Lifecycle</span>
+          </div>
+          {renderEditable("lifecycleState", assembly.lifecycleState, LIFECYCLE_OPTIONS)}
+        </div>
+
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <Power className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-[hsl(var(--muted-foreground))] text-xs">Usage</span>
+          </div>
+          {renderEditable("usageState", assembly.usageState, USAGE_OPTIONS)}
+        </div>
+
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <Users className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-[hsl(var(--muted-foreground))] text-xs">Owner</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {renderEditable("ownerName", assembly.ownerName)}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <Users className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-[hsl(var(--muted-foreground))] text-xs">Team</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {renderEditable("teamName", assembly.teamName)}
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-[hsl(var(--muted-foreground))] text-xs">Last Activity</span>
+          </div>
+          <span className="text-xs text-[hsl(var(--foreground))]">{formatDate(assembly.lastActivityAt)}</span>
+        </div>
+      </div>
+    </GlassPanel>
+  );
+}
+
 function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunning, isKilling, stageOrder, stageNames }: {
   assembly: any; latestStages: any; latestRun: any; onRun: () => void; onKill: () => void;
   isRunning: boolean; isKilling: boolean; stageOrder: string[]; stageNames: Record<string, string>;
@@ -238,11 +408,11 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
               )}
               <div>
                 <div className={`text-sm font-semibold ${stallLevel === "critical" ? "text-[hsl(var(--status-failure))]" : "text-[hsl(var(--status-warning))]"}`}>
-                  {stallLevel === "critical" ? "Run Stalled" : "Possibly Stalled"}
+                  {stallLevel === "critical" ? "Assembly Stalled" : "Possibly Stalled"}
                 </div>
                 <div className="text-xs text-[hsl(var(--muted-foreground))]">
                   {stallLevel === "critical"
-                    ? `This run appears stalled on ${statusEntry.currentStage} — it will be automatically killed in ${getAutoKillCountdown(statusEntry.stalledMs, statusEntry.stallTimeoutMs)}s`
+                    ? `This assembly appears stalled on ${statusEntry.currentStage} — it will be automatically killed in ${getAutoKillCountdown(statusEntry.stalledMs, statusEntry.stallTimeoutMs)}s`
                     : `No stage progress for ${formatStallTime(statusEntry.stalledMs)} on ${statusEntry.currentStage}`}
                 </div>
               </div>
@@ -253,7 +423,7 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-[hsl(var(--status-failure))] text-white hover:opacity-90 transition disabled:opacity-50"
             >
               {isKilling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Square className="w-3 h-3" />}
-              Kill Run
+              Kill Assembly
             </button>
           </div>
         </GlassPanel>
@@ -337,7 +507,7 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
         <MetricCard icon={Gauge} label="Status" value={assembly.status} accent={assembly.status === "completed" ? "green" : assembly.status === "failed" ? "red" : assembly.status === "running" ? "cyan" : "default"} />
         <MetricCard icon={CheckCircle} label="Passed" value={passedCount} accent="green" subtitle={`of ${stageOrder.length} stages`} />
         <MetricCard icon={XCircle} label="Failed" value={failedCount} accent={failedCount > 0 ? "red" : "default"} />
-        <MetricCard icon={Timer} label="Duration" value={formatMs(assembly.totalDurationMs)} accent="default" subtitle={`${assembly.totalRuns ?? 0} runs`} />
+        <MetricCard icon={Timer} label="Duration" value={formatMs(assembly.totalDurationMs)} accent="default" subtitle={`${assembly.totalRuns ?? 0} assemblies`} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -388,6 +558,8 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
           </div>
         </GlassPanel>
       </div>
+
+      <AssemblyMetadataPanel assembly={assembly} />
 
       {latestRun?.tokenUsage && latestRun.tokenUsage.total_tokens > 0 && (
         <GlassPanel solid className="p-4">
@@ -645,7 +817,7 @@ function PipelineTab({ stages, runs, assemblyId, stageOrder, stageGates, stageNa
       )}
 
       <div>
-        <h3 className="text-system-label mb-3">Run History</h3>
+        <h3 className="text-system-label mb-3">Pipeline History</h3>
         <GlassPanel solid className="overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -663,7 +835,7 @@ function PipelineTab({ stages, runs, assemblyId, stageOrder, stageGates, stageNa
               {runs.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-[hsl(var(--muted-foreground))] text-xs">
-                    No pipeline runs yet
+                    No pipeline history yet
                   </td>
                 </tr>
               )}
@@ -1051,7 +1223,7 @@ function ConfigTab({ assembly, onDelete, isDeleting }: { assembly: any; onDelete
       <GlassPanel glow="red" solid className="p-4">
         <h3 className="text-xs font-semibold text-[hsl(var(--status-failure))] mb-2 uppercase tracking-wider">Danger Zone</h3>
         <p className="text-xs text-[hsl(var(--muted-foreground))] mb-3">
-          Permanently delete this assembly and all associated pipeline runs.
+          Permanently delete this assembly and all associated pipeline history.
         </p>
         <button
           onClick={onDelete}

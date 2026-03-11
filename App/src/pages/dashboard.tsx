@@ -216,7 +216,7 @@ export default function DashboardPage() {
               <span className="text-[hsl(var(--border))]">|</span>
               <span>{stageCount} stages · {gateCount} gates</span>
               <span className="text-[hsl(var(--border))]">|</span>
-              <span>{completed} completed · {total} total runs</span>
+              <span>{completed} completed · {total} total assemblies</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ export default function DashboardPage() {
               className="flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-sm"
             >
               <Plus className="w-4 h-4" />
-              New Run
+              New Assembly
             </button>
           </div>
         </div>
@@ -243,7 +243,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <MetricCard
           icon={Radio}
-          label="Active Runs"
+          label="Active Assemblies"
           value={running}
           accent={running > 0 ? "cyan" : "default"}
           subtitle={running > 0 ? `${activeRuns[0]?.currentStep || "processing"}` : queued > 0 ? `${queued} queued` : "idle"}
@@ -384,7 +384,7 @@ export default function DashboardPage() {
                 className="mt-2 text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" />
-                Start a new run
+                Start a new assembly
               </button>
             </GlassPanel>
           )}
@@ -517,16 +517,16 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
             {
-              label: "Start New Run",
+              label: "Start New Assembly",
               icon: Plus,
               desc: "Launch a new assembly",
               href: "/new",
               accent: "primary" as const,
             },
             {
-              label: "Resume Run",
+              label: "Resume Assembly",
               icon: RotateCcw,
-              desc: failedRuns.length > 0 ? `${failedRuns.length} to resume` : "No pending runs",
+              desc: failedRuns.length > 0 ? `${failedRuns.length} to resume` : "No pending assemblies",
               href: failedRuns[0] ? `/assembly/${failedRuns[0].id}` : latestAssembly ? `/assembly/${latestAssembly.id}` : "/new",
               accent: "default" as const,
             },
@@ -540,7 +540,7 @@ export default function DashboardPage() {
             {
               label: "Review Failures",
               icon: AlertTriangle,
-              desc: `${failed} failed run${failed !== 1 ? "s" : ""}`,
+              desc: `${failed} failed assembl${failed !== 1 ? "ies" : "y"}`,
               href: "/assemblies",
               accent: "default" as const,
             },

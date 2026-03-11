@@ -339,7 +339,7 @@ export default function FilesPage() {
                 {a.runId} — {a.projectName}
               </option>
             ))}
-            {runsWithIds.length === 0 && <option value="">No completed runs</option>}
+            {runsWithIds.length === 0 && <option value="">No completed assemblies</option>}
           </select>
           {activeRunId && activeAssembly && (
             <a

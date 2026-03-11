@@ -6,6 +6,10 @@ export interface IntakeData {
     build_target: string;
     audience_context: string;
     autofill: boolean;
+    family_name: string;
+    family_type: string;
+    owner_name: string;
+    team_name: string;
   };
   project: {
     project_name: string;
@@ -100,6 +104,10 @@ export function createEmptyIntakeData(): IntakeData {
       build_target: "",
       audience_context: "",
       autofill: false,
+      family_name: "",
+      family_type: "",
+      owner_name: "",
+      team_name: "",
     },
     project: {
       project_name: "",
