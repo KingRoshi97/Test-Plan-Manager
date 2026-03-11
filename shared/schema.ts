@@ -34,6 +34,17 @@ export const assemblies = pgTable("assemblies", {
   dependencyMeta: jsonb("dependency_meta"),
   riskLevel: varchar("risk_level", { length: 20 }),
   attentionFlags: jsonb("attention_flags"),
+  controlPlane: varchar("control_plane", { length: 100 }),
+  assignedAgents: jsonb("assigned_agents"),
+  deprecationState: varchar("deprecation_state", { length: 20 }).default("none"),
+  deprecationTargetDate: timestamp("deprecation_target_date"),
+  retirementCandidate: boolean("retirement_candidate").default(false),
+  lifecycleUpdatedAt: timestamp("lifecycle_updated_at"),
+  requestsLast24h: integer("requests_last_24h").default(0),
+  activeConsumers: integer("active_consumers").default(0),
+  errorRatePct: real("error_rate_pct").default(0),
+  p95LatencyMs: integer("p95_latency_ms").default(0),
+  ecosystemRole: varchar("ecosystem_role", { length: 30 }),
 });
 
 export const pipelineRuns = pgTable("pipeline_runs", {

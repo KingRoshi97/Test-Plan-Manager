@@ -94,9 +94,11 @@ export function registerRoutes(app: Express) {
     if (!assembly) return res.status(404).json({ error: "Not found" });
     if (assembly.status === "running") return res.status(409).json({ error: "Cannot update while running" });
 
-    const allowedFields = ["projectName", "idea", "preset", "intakePayload", "config", "familyId", "familyName", "familyType", "lifecycleState", "ownerName", "teamName", "usageState", "parentAssemblyId", "dependencyMeta", "riskLevel", "attentionFlags"];
+    const allowedFields = ["projectName", "idea", "preset", "intakePayload", "config", "familyId", "familyName", "familyType", "lifecycleState", "ownerName", "teamName", "usageState", "parentAssemblyId", "dependencyMeta", "riskLevel", "attentionFlags", "controlPlane", "assignedAgents", "deprecationState", "deprecationTargetDate", "retirementCandidate", "requestsLast24h", "activeConsumers", "errorRatePct", "p95LatencyMs", "ecosystemRole"];
     const validRiskLevels = new Set(["low", "medium", "high", "critical", null]);
     const validLifecycles = new Set(["draft", "active", "in_use", "degraded", "deprecated", "archived"]);
+    const validDeprecationStates = new Set(["none", "planned", "announced", "in_progress", "completed", null]);
+    const validEcosystemRoles = new Set(["core", "supporting", "adapter", "integration", "edge", "experimental", null]);
     const update: Record<string, any> = {};
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) update[key] = req.body[key];
@@ -106,6 +108,9 @@ export function registerRoutes(app: Express) {
     }
     if (update.lifecycleState !== undefined && !validLifecycles.has(update.lifecycleState)) {
       return res.status(400).json({ error: "Invalid lifecycleState" });
+    }
+    if (update.lifecycleState !== undefined && update.lifecycleState !== assembly.lifecycleState) {
+      update.lifecycleUpdatedAt = new Date();
     }
     if (update.attentionFlags !== undefined && update.attentionFlags !== null) {
       if (!Array.isArray(update.attentionFlags) || !update.attentionFlags.every((f: any) => typeof f === "string")) {
@@ -117,6 +122,34 @@ export function registerRoutes(app: Express) {
     }
     if (update.dependencyMeta !== undefined && update.dependencyMeta !== null && typeof update.dependencyMeta !== "object") {
       return res.status(400).json({ error: "dependencyMeta must be an object or null" });
+    }
+    if (update.controlPlane !== undefined && update.controlPlane !== null && typeof update.controlPlane !== "string") {
+      return res.status(400).json({ error: "controlPlane must be a string or null" });
+    }
+    if (update.assignedAgents !== undefined && update.assignedAgents !== null) {
+      if (!Array.isArray(update.assignedAgents) || !update.assignedAgents.every((a: any) => a && typeof a === "object" && typeof a.id === "string" && typeof a.name === "string")) {
+        return res.status(400).json({ error: "assignedAgents must be an array of {id, name, role?, status?} objects or null" });
+      }
+    }
+    if (update.deprecationState !== undefined && !validDeprecationStates.has(update.deprecationState)) {
+      return res.status(400).json({ error: "Invalid deprecationState. Must be: none, planned, announced, in_progress, completed, or null" });
+    }
+    if (update.deprecationTargetDate !== undefined && update.deprecationTargetDate !== null) {
+      const d = new Date(update.deprecationTargetDate);
+      if (isNaN(d.getTime())) return res.status(400).json({ error: "deprecationTargetDate must be a valid ISO date string or null" });
+      update.deprecationTargetDate = d;
+    }
+    if (update.retirementCandidate !== undefined && update.retirementCandidate !== null && typeof update.retirementCandidate !== "boolean") {
+      return res.status(400).json({ error: "retirementCandidate must be a boolean or null" });
+    }
+    if (update.ecosystemRole !== undefined && !validEcosystemRoles.has(update.ecosystemRole)) {
+      return res.status(400).json({ error: "Invalid ecosystemRole. Must be: core, supporting, adapter, integration, edge, experimental, or null" });
+    }
+    const numericFields = ["requestsLast24h", "activeConsumers", "errorRatePct", "p95LatencyMs"];
+    for (const nf of numericFields) {
+      if (update[nf] !== undefined && update[nf] !== null && typeof update[nf] !== "number") {
+        return res.status(400).json({ error: `${nf} must be a number or null` });
+      }
     }
     if (Object.keys(update).length === 0) return res.status(400).json({ error: "No valid fields to update" });
 

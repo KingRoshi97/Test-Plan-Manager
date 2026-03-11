@@ -32,6 +32,15 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Link,
+  Bot,
+  Network,
+  Globe,
+  Unplug,
+  TrendingUp,
+  Gauge,
+  CircleDot,
+  Archive,
+  Sunset,
 } from "lucide-react";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
 import { GlassPanel } from "../components/ui/glass-panel";
@@ -42,6 +51,8 @@ import type { Assembly } from "../../../shared/schema";
 type FilterStatus = "all" | "running" | "completed" | "failed" | "queued";
 type UsageFilter = "all" | "live" | "warm" | "idle" | "dormant" | "no_telemetry";
 type RiskFilter = "all" | "low" | "medium" | "high" | "critical" | "flagged";
+type OwnershipFilter = "all" | "assigned" | "partial" | "unowned" | "with_agents" | "without_agents" | "no_control_plane";
+type EcosystemFilter = "all" | "core" | "supporting" | "adapter" | "integration" | "edge" | "experimental" | "high_risk";
 
 const filterChips: { key: FilterStatus; label: string; icon: typeof Activity }[] = [
   { key: "all", label: "All", icon: Activity },
@@ -51,7 +62,7 @@ const filterChips: { key: FilterStatus; label: string; icon: typeof Activity }[]
   { key: "queued", label: "Queued", icon: Clock },
 ];
 
-const lifecycleOptions = ["all", "draft", "active", "in_use", "degraded", "deprecated", "archived"] as const;
+const lifecycleOptions = ["all", "draft", "active", "in_use", "degraded", "deprecated", "archived", "retirement_candidates"] as const;
 type LifecycleFilter = (typeof lifecycleOptions)[number];
 
 const lifecycleLabels: Record<string, string> = {
@@ -62,6 +73,7 @@ const lifecycleLabels: Record<string, string> = {
   degraded: "Degraded",
   deprecated: "Deprecated",
   archived: "Archived",
+  retirement_candidates: "Retirement Candidates",
 };
 
 const lifecycleVariant: Record<string, string> = {
@@ -98,6 +110,27 @@ const riskFilterOptions: { value: RiskFilter; label: string }[] = [
   { value: "flagged", label: "Flagged" },
 ];
 
+const ownershipFilterOptions: { value: OwnershipFilter; label: string }[] = [
+  { value: "all", label: "All Ownership" },
+  { value: "assigned", label: "Fully Assigned" },
+  { value: "partial", label: "Partially Assigned" },
+  { value: "unowned", label: "Unowned" },
+  { value: "with_agents", label: "With Agents" },
+  { value: "without_agents", label: "No Agents" },
+  { value: "no_control_plane", label: "No Control Plane" },
+];
+
+const ecosystemFilterOptions: { value: EcosystemFilter; label: string }[] = [
+  { value: "all", label: "All Ecosystem" },
+  { value: "core", label: "Core" },
+  { value: "supporting", label: "Supporting" },
+  { value: "adapter", label: "Adapter" },
+  { value: "integration", label: "Integration" },
+  { value: "edge", label: "Edge" },
+  { value: "experimental", label: "Experimental" },
+  { value: "high_risk", label: "High Risk" },
+];
+
 const riskColors: Record<string, string> = {
   low: "bg-[hsl(var(--status-success))]",
   medium: "bg-[hsl(var(--status-warning))]",
@@ -112,6 +145,102 @@ const riskLabels: Record<string, string> = {
   critical: "Critical Risk",
 };
 
+const deprecationLabels: Record<string, string> = {
+  none: "None",
+  planned: "Planned",
+  announced: "Announced",
+  in_progress: "In Progress",
+  completed: "Completed",
+};
+
+const deprecationColors: Record<string, string> = {
+  none: "",
+  planned: "text-[hsl(var(--status-warning))]",
+  announced: "text-orange-400",
+  in_progress: "text-[hsl(var(--status-failure))]",
+  completed: "text-[hsl(var(--muted-foreground))]",
+};
+
+const ecosystemRoleLabels: Record<string, string> = {
+  core: "Core",
+  supporting: "Supporting",
+  adapter: "Adapter",
+  integration: "Integration",
+  edge: "Edge",
+  experimental: "Experimental",
+};
+
+const ecosystemRoleColors: Record<string, string> = {
+  core: "text-[hsl(var(--status-processing))] bg-[hsl(var(--status-processing)/0.12)]",
+  supporting: "text-[hsl(var(--status-success))] bg-[hsl(var(--status-success)/0.12)]",
+  adapter: "text-[hsl(var(--status-warning))] bg-[hsl(var(--status-warning)/0.12)]",
+  integration: "text-purple-400 bg-purple-400/10",
+  edge: "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]",
+  experimental: "text-orange-400 bg-orange-400/10",
+};
+
+function getAssignedAgents(ext: any): { id: string; name: string; role?: string; status?: string }[] {
+  if (!ext.assignedAgents || !Array.isArray(ext.assignedAgents)) return [];
+  return ext.assignedAgents;
+}
+
+function getAssignmentHealth(ext: any): "assigned" | "partial" | "unassigned" {
+  const hasOwner = !!ext.ownerName;
+  const hasAgents = getAssignedAgents(ext).length > 0;
+  const hasControlPlane = !!ext.controlPlane;
+  if (hasOwner && hasAgents && hasControlPlane) return "assigned";
+  if (hasOwner || hasAgents || hasControlPlane) return "partial";
+  return "unassigned";
+}
+
+const assignmentHealthColors: Record<string, string> = {
+  assigned: "text-[hsl(var(--status-success))] bg-[hsl(var(--status-success)/0.12)]",
+  partial: "text-[hsl(var(--status-warning))] bg-[hsl(var(--status-warning)/0.12)]",
+  unassigned: "text-[hsl(var(--muted-foreground)/0.6)] bg-[hsl(var(--muted)/0.3)]",
+};
+
+const assignmentHealthLabels: Record<string, string> = {
+  assigned: "Assigned",
+  partial: "Partial",
+  unassigned: "Unassigned",
+};
+
+function getDeprecationState(ext: any): string {
+  return ext.deprecationState || "none";
+}
+
+function isRetirementCandidate(ext: any): boolean {
+  if (ext.retirementCandidate === true) return true;
+  if (ext.lifecycleState === "deprecated" && ext.usageState === "dormant") return true;
+  if (ext.lifecycleState === "archived") return true;
+  return false;
+}
+
+function getUpstreamDeps(ext: any): string[] {
+  const dm = ext.dependencyMeta;
+  if (!dm || typeof dm !== "object") return [];
+  return Array.isArray(dm.upstreamDeps) ? dm.upstreamDeps : [];
+}
+
+function getDownstreamDeps(ext: any): string[] {
+  const dm = ext.dependencyMeta;
+  if (!dm || typeof dm !== "object") return [];
+  return Array.isArray(dm.downstreamDeps) ? dm.downstreamDeps : [];
+}
+
+function getDependencyRisk(ext: any): "low" | "medium" | "high" {
+  const downstream = getDownstreamDeps(ext).length;
+  if (downstream >= 5) return "high";
+  if (downstream >= 2) return "medium";
+  return "low";
+}
+
+const depRiskColors: Record<string, string> = {
+  low: "text-[hsl(var(--status-success))]",
+  medium: "text-[hsl(var(--status-warning))]",
+  high: "text-[hsl(var(--status-failure))]",
+};
+
 interface SavedView {
   key: string;
   label: string;
@@ -123,67 +252,45 @@ interface ViewSetters {
   setActiveFilter: (v: FilterStatus) => void;
   setLifecycleFilter: (v: LifecycleFilter) => void;
   setFamilyFilter: (v: string) => void;
-  setOwnerFilter: (v: string) => void;
+  setOwnershipFilter: (v: OwnershipFilter) => void;
   setUsageFilter: (v: UsageFilter) => void;
   setRiskFilter: (v: RiskFilter) => void;
+  setEcosystemFilter: (v: EcosystemFilter) => void;
   setGroupByFamily: (v: boolean) => void;
 }
 
+function resetFilters(s: ViewSetters) {
+  s.setActiveFilter("all");
+  s.setLifecycleFilter("all");
+  s.setFamilyFilter("all");
+  s.setOwnershipFilter("all");
+  s.setUsageFilter("all");
+  s.setRiskFilter("all");
+  s.setEcosystemFilter("all");
+  s.setGroupByFamily(false);
+}
+
 const savedViews: SavedView[] = [
-  {
-    key: "all",
-    label: "All Assemblies",
-    icon: Boxes,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
-  },
-  {
-    key: "running",
-    label: "Running",
-    icon: Radio,
-    apply: (s) => { s.setActiveFilter("running"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
-  },
-  {
-    key: "failed",
-    label: "Failed",
-    icon: XCircle,
-    apply: (s) => { s.setActiveFilter("failed"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
-  },
-  {
-    key: "in_use",
-    label: "In Use",
-    icon: CheckCircle2,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("in_use"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
-  },
-  {
-    key: "unowned",
-    label: "Unowned",
-    icon: Users,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("unowned"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
-  },
-  {
-    key: "no_family",
-    label: "No Family",
-    icon: FolderTree,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("unassigned"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
-  },
-  {
-    key: "deprecated_candidates",
-    label: "Deprecated Candidates",
-    icon: AlertTriangle,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("deprecated"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
-  },
-  {
-    key: "at_risk_families",
-    label: "At Risk Families",
-    icon: Zap,
-    apply: (s) => { s.setActiveFilter("failed"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(true); },
-  },
-  {
-    key: "high_risk",
-    label: "High Risk",
-    icon: Shield,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("high"); s.setGroupByFamily(false); },
-  },
+  { key: "all", label: "All Assemblies", icon: Boxes, apply: (s) => resetFilters(s) },
+  { key: "running", label: "Running", icon: Radio, apply: (s) => { resetFilters(s); s.setActiveFilter("running"); } },
+  { key: "failed", label: "Failed", icon: XCircle, apply: (s) => { resetFilters(s); s.setActiveFilter("failed"); } },
+  { key: "in_use", label: "In Use", icon: CheckCircle2, apply: (s) => { resetFilters(s); s.setLifecycleFilter("in_use"); } },
+  { key: "unowned", label: "Unowned", icon: Users, apply: (s) => { resetFilters(s); s.setOwnershipFilter("unowned"); } },
+  { key: "no_family", label: "No Family", icon: FolderTree, apply: (s) => { resetFilters(s); s.setFamilyFilter("unassigned"); } },
+  { key: "deprecated_candidates", label: "Deprecated", icon: AlertTriangle, apply: (s) => { resetFilters(s); s.setLifecycleFilter("deprecated"); } },
+  { key: "at_risk_families", label: "At Risk Families", icon: Zap, apply: (s) => { resetFilters(s); s.setActiveFilter("failed"); s.setGroupByFamily(true); } },
+  { key: "high_risk", label: "High Risk", icon: Shield, apply: (s) => { resetFilters(s); s.setRiskFilter("high"); } },
+  { key: "no_control_plane", label: "No Control Plane", icon: Network, apply: (s) => { resetFilters(s); s.setOwnershipFilter("no_control_plane"); } },
+  { key: "agentless", label: "Agentless", icon: Bot, apply: (s) => { resetFilters(s); s.setOwnershipFilter("without_agents"); } },
+  { key: "partial_assignment", label: "Partial Assignment", icon: Users, apply: (s) => { resetFilters(s); s.setOwnershipFilter("partial"); } },
+  { key: "deprecated_view", label: "Deprecated", icon: Sunset, apply: (s) => { resetFilters(s); s.setLifecycleFilter("deprecated"); } },
+  { key: "retirement_candidates", label: "Retirement Candidates", icon: Archive, apply: (s) => { resetFilters(s); s.setLifecycleFilter("retirement_candidates"); } },
+  { key: "archived_view", label: "Archived", icon: Archive, apply: (s) => { resetFilters(s); s.setLifecycleFilter("archived"); } },
+  { key: "degraded_view", label: "Degraded", icon: AlertTriangle, apply: (s) => { resetFilters(s); s.setLifecycleFilter("degraded"); } },
+  { key: "live", label: "Live", icon: Radio, apply: (s) => { resetFilters(s); s.setUsageFilter("live"); } },
+  { key: "idle_view", label: "Idle", icon: Clock, apply: (s) => { resetFilters(s); s.setUsageFilter("idle"); } },
+  { key: "high_dependency_risk", label: "High Dep Risk", icon: Zap, apply: (s) => { resetFilters(s); s.setEcosystemFilter("high_risk"); } },
+  { key: "core_services", label: "Core Services", icon: Globe, apply: (s) => { resetFilters(s); s.setEcosystemFilter("core"); } },
 ];
 
 function formatDuration(ms: number | null | undefined) {
@@ -198,6 +305,7 @@ function formatDate(d: string | Date | null | undefined) {
   const date = new Date(d);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+  if (diffMs < 0) return date.toLocaleDateString();
   if (diffMs < 3600000) return `${Math.floor(diffMs / 60000)}m ago`;
   if (diffMs < 86400000) return `${Math.floor(diffMs / 3600000)}h ago`;
   return date.toLocaleDateString();
@@ -242,6 +350,17 @@ interface FamilyGroup {
   dominantLifecycle: string | null;
   owners: string[];
   latestUpdate: string | Date | null;
+  owned: number;
+  governed: number;
+  withAgents: number;
+  activeLifecycle: number;
+  inUseLifecycle: number;
+  deprecatedLifecycle: number;
+  retirementCandidates: number;
+  liveUsage: number;
+  highDepRisk: number;
+  totalDependents: number;
+  totalConsumers: number;
 }
 
 function buildFamilyGroups(assemblies: Assembly[]): FamilyGroup[] {
@@ -263,11 +382,25 @@ function buildFamilyGroups(assemblies: Assembly[]): FamilyGroup[] {
     const lifecycleCounts: Record<string, number> = {};
     const ownerSet = new Set<string>();
 
+    let owned = 0, governed = 0, withAgents = 0;
+    let activeLC = 0, inUseLC = 0, deprecatedLC = 0, retCandidates = 0;
+    let liveUsage = 0, highDepRisk = 0, totalDependents = 0, totalConsumers = 0;
+
     sorted.forEach((a) => {
-      const lc = (a as any).lifecycleState;
+      const ext = a as any;
+      const lc = ext.lifecycleState;
       if (lc) lifecycleCounts[lc] = (lifecycleCounts[lc] || 0) + 1;
-      const owner = (a as any).ownerName;
-      if (owner) ownerSet.add(owner);
+      if (ext.ownerName) { ownerSet.add(ext.ownerName); owned++; }
+      if (ext.controlPlane) governed++;
+      if (getAssignedAgents(ext).length > 0) withAgents++;
+      if (lc === "active") activeLC++;
+      if (lc === "in_use") inUseLC++;
+      if (lc === "deprecated") deprecatedLC++;
+      if (isRetirementCandidate(ext)) retCandidates++;
+      if (ext.usageState === "live") liveUsage++;
+      if (getDependencyRisk(ext) === "high") highDepRisk++;
+      totalDependents += getDownstreamDeps(ext).length;
+      totalConsumers += (ext.activeConsumers || 0);
     });
 
     let dominantLifecycle: string | null = null;
@@ -291,6 +424,17 @@ function buildFamilyGroups(assemblies: Assembly[]): FamilyGroup[] {
       dominantLifecycle,
       owners: Array.from(ownerSet),
       latestUpdate: sorted[0]?.updatedAt || null,
+      owned,
+      governed,
+      withAgents,
+      activeLifecycle: activeLC,
+      inUseLifecycle: inUseLC,
+      deprecatedLifecycle: deprecatedLC,
+      retirementCandidates: retCandidates,
+      liveUsage,
+      highDepRisk,
+      totalDependents,
+      totalConsumers,
     });
   });
 
@@ -400,6 +544,8 @@ function FamilyGroupHeader({
     setTooltipVisible(true);
   }
 
+  const total = group.members.length;
+
   return (
     <>
       <FamilyTooltip group={group} visible={tooltipVisible} position={tooltipPos} />
@@ -430,10 +576,10 @@ function FamilyGroupHeader({
             </div>
 
             <span className="text-[11px] text-[hsl(var(--muted-foreground))]">
-              {group.members.length} assembl{group.members.length === 1 ? "y" : "ies"}
+              {total} assembl{total === 1 ? "y" : "ies"}
             </span>
 
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 ml-auto flex-wrap">
               {group.running > 0 && (
                 <span className="inline-flex items-center gap-1 text-[10px] text-[hsl(var(--status-processing))]">
                   <Radio className="w-2.5 h-2.5" /> {group.running}
@@ -454,6 +600,41 @@ function FamilyGroupHeader({
                   variant={(lifecycleVariant[group.dominantLifecycle] || "neutral") as any}
                   label={lifecycleLabels[group.dominantLifecycle] || group.dominantLifecycle}
                 />
+              )}
+
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] hidden md:inline-flex items-center gap-0.5">
+                <Users className="w-2.5 h-2.5" /> {group.owned}/{total}
+              </span>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] hidden md:inline-flex items-center gap-0.5">
+                <Network className="w-2.5 h-2.5" /> {group.governed}/{total}
+              </span>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] hidden md:inline-flex items-center gap-0.5">
+                <Bot className="w-2.5 h-2.5" /> {group.withAgents}/{total}
+              </span>
+
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] hidden lg:inline-flex items-center gap-0.5">
+                <Activity className="w-2.5 h-2.5" /> {group.activeLifecycle + group.inUseLifecycle} active
+              </span>
+              {group.deprecatedLifecycle > 0 && (
+                <span className="text-[10px] text-[hsl(var(--status-failure))] hidden lg:inline-flex items-center gap-0.5">
+                  <Sunset className="w-2.5 h-2.5" /> {group.deprecatedLifecycle} deprecated
+                </span>
+              )}
+              {group.retirementCandidates > 0 && (
+                <span className="text-[10px] text-[hsl(var(--status-warning))] hidden lg:inline-flex items-center gap-0.5">
+                  <Archive className="w-2.5 h-2.5" /> {group.retirementCandidates} retire
+                </span>
+              )}
+
+              {group.liveUsage > 0 && (
+                <span className="text-[10px] text-[hsl(var(--status-success))] hidden xl:inline-flex items-center gap-0.5">
+                  <TrendingUp className="w-2.5 h-2.5" /> {group.liveUsage} live
+                </span>
+              )}
+              {group.highDepRisk > 0 && (
+                <span className="text-[10px] text-[hsl(var(--status-failure))] hidden xl:inline-flex items-center gap-0.5">
+                  <Zap className="w-2.5 h-2.5" /> {group.highDepRisk} high-risk
+                </span>
               )}
             </div>
           </div>
@@ -733,6 +914,13 @@ function QuickDetailDrawer({
   if (!assembly) return null;
 
   const ext = assembly as any;
+  const agents = getAssignedAgents(ext);
+  const health = getAssignmentHealth(ext);
+  const depState = getDeprecationState(ext);
+  const isRetCandidate = isRetirementCandidate(ext);
+  const upstream = getUpstreamDeps(ext);
+  const downstream = getDownstreamDeps(ext);
+  const depRisk = getDependencyRisk(ext);
 
   return (
     <div className="fixed inset-0 z-40" onClick={onClose}>
@@ -781,45 +969,178 @@ function QuickDetailDrawer({
             )}
           </DrawerSection>
 
-          <DrawerSection label="Lifecycle">
-            {ext.lifecycleState ? (
-              <StatusChip
-                variant={(lifecycleVariant[ext.lifecycleState] || "neutral") as any}
-                label={lifecycleLabels[ext.lifecycleState] || ext.lifecycleState}
-              />
-            ) : (
-              <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
-            )}
-          </DrawerSection>
-
-          <DrawerSection label="Usage">
-            <div className="flex items-center gap-3">
-              {ext.usageState ? (
-                <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${usageColors[ext.usageState] || "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]"}`}>
-                  {ext.usageState}
+          <DrawerSection label="Responsibility">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${assignmentHealthColors[health]}`}>
+                  {assignmentHealthLabels[health]}
                 </span>
-              ) : (
-                <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">No telemetry</span>
-              )}
-              {ext.lastActivityAt && (
-                <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
-                  Last active {formatDate(ext.lastActivityAt)}
-                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">Owner</span>
+                  {ext.ownerName ? (
+                    <span className="text-[hsl(var(--foreground))]">{ext.ownerName}</span>
+                  ) : (
+                    <span className="text-[hsl(var(--status-warning))] text-[11px]">Needs owner</span>
+                  )}
+                </div>
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">Team</span>
+                  <span className="text-[hsl(var(--muted-foreground))]">{ext.teamName || "\u2014"}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">Control Plane</span>
+                  {ext.controlPlane ? (
+                    <span className="text-[hsl(var(--foreground))] font-mono-tech text-[11px]">{ext.controlPlane}</span>
+                  ) : (
+                    <span className="text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
+                  )}
+                </div>
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">Agents</span>
+                  <span className="text-[hsl(var(--muted-foreground))]">{agents.length} assigned</span>
+                </div>
+              </div>
+              {agents.length > 0 && (
+                <div>
+                  <span className="text-[10px] text-system-label block mb-1">Assigned Agents</span>
+                  <div className="space-y-1">
+                    {agents.map((agent) => (
+                      <div key={agent.id} className="flex items-center gap-2 text-[11px]">
+                        <Bot className="w-3 h-3 text-[hsl(var(--primary))]" />
+                        <span className="text-[hsl(var(--foreground))]">{agent.name}</span>
+                        {agent.role && (
+                          <span className="text-[10px] text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)] px-1 py-0.5 rounded">{agent.role}</span>
+                        )}
+                        {agent.status && (
+                          <span className={`text-[10px] ${agent.status === "active" ? "text-[hsl(var(--status-success))]" : "text-[hsl(var(--muted-foreground))]"}`}>
+                            {agent.status}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </DrawerSection>
 
-          <DrawerSection label="Owner">
-            {ext.ownerName ? (
-              <div>
-                <span className="text-xs text-[hsl(var(--foreground))]">{ext.ownerName}</span>
-                {ext.teamName && (
-                  <span className="text-[10px] text-[hsl(var(--muted-foreground))] ml-2">{ext.teamName}</span>
+          <DrawerSection label="Lifecycle">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                {ext.lifecycleState ? (
+                  <StatusChip
+                    variant={(lifecycleVariant[ext.lifecycleState] || "neutral") as any}
+                    label={lifecycleLabels[ext.lifecycleState] || ext.lifecycleState}
+                  />
+                ) : (
+                  <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
+                )}
+                {isRetCandidate && (
+                  <span className="text-[10px] text-[hsl(var(--status-warning))] bg-[hsl(var(--status-warning)/0.12)] px-1.5 py-0.5 rounded font-medium">
+                    Retirement Candidate
+                  </span>
                 )}
               </div>
-            ) : (
-              <span className="text-[11px] text-[hsl(var(--muted-foreground)/0.5)] italic">Unowned</span>
-            )}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">Deprecation</span>
+                  <span className={`${deprecationColors[depState] || "text-[hsl(var(--muted-foreground))]"}`}>
+                    {deprecationLabels[depState] || depState}
+                  </span>
+                </div>
+                {ext.deprecationTargetDate && (
+                  <div>
+                    <span className="text-[10px] text-system-label block mb-0.5">Target Date</span>
+                    <span className="text-[hsl(var(--muted-foreground))]">{formatDate(ext.deprecationTargetDate)}</span>
+                  </div>
+                )}
+                {ext.lifecycleUpdatedAt && (
+                  <div>
+                    <span className="text-[10px] text-system-label block mb-0.5">Lifecycle Updated</span>
+                    <span className="text-[hsl(var(--muted-foreground))]">{formatDate(ext.lifecycleUpdatedAt)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </DrawerSection>
+
+          <DrawerSection label="Usage & Ecosystem">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                {ext.usageState ? (
+                  <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${usageColors[ext.usageState] || "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]"}`}>
+                    {ext.usageState}
+                  </span>
+                ) : (
+                  <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">No telemetry</span>
+                )}
+                {ext.ecosystemRole && (
+                  <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${ecosystemRoleColors[ext.ecosystemRole] || "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]"}`}>
+                    {ecosystemRoleLabels[ext.ecosystemRole] || ext.ecosystemRole}
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">Requests / 24h</span>
+                  <span className="text-[hsl(var(--foreground))] font-mono-tech">
+                    {ext.requestsLast24h ? ext.requestsLast24h.toLocaleString() : "0"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">Active Consumers</span>
+                  <span className="text-[hsl(var(--foreground))] font-mono-tech">{ext.activeConsumers || 0}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">Error Rate</span>
+                  <span className={`font-mono-tech ${(ext.errorRatePct || 0) > 5 ? "text-[hsl(var(--status-failure))]" : "text-[hsl(var(--muted-foreground))]"}`}>
+                    {(ext.errorRatePct || 0).toFixed(1)}%
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">P95 Latency</span>
+                  <span className="text-[hsl(var(--muted-foreground))] font-mono-tech">
+                    {ext.p95LatencyMs ? `${ext.p95LatencyMs}ms` : "\u2014"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-system-label block mb-0.5">Dependency Risk</span>
+                  <span className={`font-medium ${depRiskColors[depRisk]}`}>{depRisk}</span>
+                </div>
+                {ext.lastActivityAt && (
+                  <div>
+                    <span className="text-[10px] text-system-label block mb-0.5">Last Active</span>
+                    <span className="text-[hsl(var(--muted-foreground))]">{formatDate(ext.lastActivityAt)}</span>
+                  </div>
+                )}
+              </div>
+              {(upstream.length > 0 || downstream.length > 0) && (
+                <div className="space-y-1.5 pt-1">
+                  {upstream.length > 0 && (
+                    <div>
+                      <span className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-0.5">Upstream ({upstream.length})</span>
+                      <div className="flex flex-wrap gap-1">
+                        {upstream.map((d) => (
+                          <span key={d} className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded">{d}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {downstream.length > 0 && (
+                    <div>
+                      <span className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-0.5">Downstream ({downstream.length})</span>
+                      <div className="flex flex-wrap gap-1">
+                        {downstream.map((d) => (
+                          <span key={d} className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded">{d}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </DrawerSection>
 
           <DrawerSection label="Pipeline">
@@ -934,9 +1255,10 @@ export default function AssembliesPage() {
   const [activeFilter, setActiveFilter] = useState<FilterStatus>("all");
   const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>("all");
   const [familyFilter, setFamilyFilter] = useState("all");
-  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>("all");
   const [usageFilter, setUsageFilter] = useState<UsageFilter>("all");
   const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
+  const [ecosystemFilter, setEcosystemFilter] = useState<EcosystemFilter>("all");
   const [groupByFamily, setGroupByFamily] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [activeView, setActiveView] = useState("all");
@@ -997,20 +1319,14 @@ export default function AssembliesPage() {
     return Array.from(names).sort();
   }, [assemblies]);
 
-  const ownerNames = useMemo(() => {
-    const names = new Set<string>();
-    assemblies.forEach((a) => {
-      if ((a as any).ownerName) names.add((a as any).ownerName);
-    });
-    return Array.from(names).sort();
-  }, [assemblies]);
-
   const filtered = useMemo(() => {
     let result = assemblies;
     if (activeFilter !== "all") {
       result = result.filter((a) => a.status === activeFilter);
     }
-    if (lifecycleFilter !== "all") {
+    if (lifecycleFilter === "retirement_candidates") {
+      result = result.filter((a) => isRetirementCandidate(a as any));
+    } else if (lifecycleFilter !== "all") {
       result = result.filter((a) => (a as any).lifecycleState === lifecycleFilter);
     }
     if (familyFilter === "unassigned") {
@@ -1018,10 +1334,20 @@ export default function AssembliesPage() {
     } else if (familyFilter !== "all") {
       result = result.filter((a) => (a as any).familyName === familyFilter);
     }
-    if (ownerFilter === "unowned") {
-      result = result.filter((a) => !(a as any).ownerName);
-    } else if (ownerFilter !== "all") {
-      result = result.filter((a) => (a as any).ownerName === ownerFilter);
+    if (ownershipFilter !== "all") {
+      result = result.filter((a) => {
+        const ext = a as any;
+        const health = getAssignmentHealth(ext);
+        switch (ownershipFilter) {
+          case "assigned": return health === "assigned";
+          case "partial": return health === "partial";
+          case "unowned": return !ext.ownerName;
+          case "with_agents": return getAssignedAgents(ext).length > 0;
+          case "without_agents": return getAssignedAgents(ext).length === 0;
+          case "no_control_plane": return !ext.controlPlane;
+          default: return true;
+        }
+      });
     }
     if (usageFilter === "no_telemetry") {
       result = result.filter((a) => !(a as any).usageState);
@@ -1036,8 +1362,13 @@ export default function AssembliesPage() {
     } else if (riskFilter !== "all") {
       result = result.filter((a) => (a as any).riskLevel === riskFilter);
     }
+    if (ecosystemFilter === "high_risk") {
+      result = result.filter((a) => getDependencyRisk(a as any) === "high");
+    } else if (ecosystemFilter !== "all") {
+      result = result.filter((a) => (a as any).ecosystemRole === ecosystemFilter);
+    }
     return result;
-  }, [assemblies, activeFilter, lifecycleFilter, familyFilter, ownerFilter, usageFilter, riskFilter]);
+  }, [assemblies, activeFilter, lifecycleFilter, familyFilter, ownershipFilter, usageFilter, riskFilter, ecosystemFilter]);
 
   const familyGroups = useMemo(() => buildFamilyGroups(filtered), [filtered]);
 
@@ -1051,12 +1382,37 @@ export default function AssembliesPage() {
 
   const overviewCards = useMemo(() => {
     const inUse = assemblies.filter((a) => (a as any).lifecycleState === "in_use").length;
+    const owned = assemblies.filter((a) => !!(a as any).ownerName).length;
     const unowned = assemblies.filter((a) => !(a as any).ownerName).length;
+    const withAgents = assemblies.filter((a) => getAssignedAgents(a as any).length > 0).length;
+    const missingControlPlane = assemblies.filter((a) => !(a as any).controlPlane).length;
     const familySet = new Set(assemblies.map((a) => (a as any).familyName).filter(Boolean));
     const familiesAtRisk = Array.from(familySet).filter((name) => {
       return assemblies.some((a) => (a as any).familyName === name && a.status === "failed");
     }).length;
-    return { inUse, unowned, families: familySet.size, familiesAtRisk };
+
+    const activeLC = assemblies.filter((a) => (a as any).lifecycleState === "active").length;
+    const deprecated = assemblies.filter((a) => (a as any).lifecycleState === "deprecated").length;
+    const retCandidates = assemblies.filter((a) => isRetirementCandidate(a as any)).length;
+    const archived = assemblies.filter((a) => (a as any).lifecycleState === "archived").length;
+    const degraded = assemblies.filter((a) => (a as any).lifecycleState === "degraded").length;
+
+    const liveUsage = assemblies.filter((a) => (a as any).usageState === "live").length;
+    const idleUsage = assemblies.filter((a) => (a as any).usageState === "idle" || (a as any).usageState === "dormant").length;
+    const highDepRisk = assemblies.filter((a) => getDependencyRisk(a as any) === "high").length;
+    const orphaned = assemblies.filter((a) => {
+      const ext = a as any;
+      return getUpstreamDeps(ext).length === 0 && getDownstreamDeps(ext).length === 0 && !ext.parentAssemblyId;
+    }).length;
+    const coreServices = assemblies.filter((a) => (a as any).ecosystemRole === "core").length;
+    const totalConsumers = assemblies.reduce((sum, a) => sum + ((a as any).activeConsumers || 0), 0);
+
+    return {
+      inUse, owned, unowned, withAgents, missingControlPlane,
+      families: familySet.size, familiesAtRisk,
+      activeLC, deprecated, retCandidates, archived, degraded,
+      liveUsage, idleUsage, highDepRisk, orphaned, coreServices, totalConsumers,
+    };
   }, [assemblies]);
 
   const drawerAssembly = useMemo(() => {
@@ -1068,9 +1424,10 @@ export default function AssembliesPage() {
     setActiveFilter,
     setLifecycleFilter,
     setFamilyFilter,
-    setOwnerFilter,
+    setOwnershipFilter,
     setUsageFilter,
     setRiskFilter,
+    setEcosystemFilter,
     setGroupByFamily,
   }), []);
 
@@ -1079,40 +1436,39 @@ export default function AssembliesPage() {
     view.apply(viewSetters);
   }, [viewSetters]);
 
-  function handleCardClick(filter: FilterStatus | string) {
-    if (filter === "in_use") {
-      setActiveFilter("all");
-      setLifecycleFilter("in_use");
-      setFamilyFilter("all");
-      setOwnerFilter("all");
-      setUsageFilter("all");
-      setRiskFilter("all");
-      setActiveView("");
-    } else if (filter === "unowned") {
-      setActiveFilter("all");
-      setLifecycleFilter("all");
-      setFamilyFilter("all");
-      setOwnerFilter("unowned");
-      setUsageFilter("all");
-      setRiskFilter("all");
-      setActiveView("");
-    } else if (filter === "families") {
-      setGroupByFamily(true);
-      setActiveFilter("all");
-      setLifecycleFilter("all");
-      setFamilyFilter("all");
-      setOwnerFilter("all");
-      setUsageFilter("all");
-      setRiskFilter("all");
-      setActiveView("");
-    } else {
-      setActiveFilter(filter as FilterStatus);
-      setLifecycleFilter("all");
-      setFamilyFilter("all");
-      setOwnerFilter("all");
-      setUsageFilter("all");
-      setRiskFilter("all");
-      setActiveView("");
+  function handleCardClick(filter: string) {
+    setActiveView("");
+    setActiveFilter("all");
+    setLifecycleFilter("all");
+    setFamilyFilter("all");
+    setOwnershipFilter("all");
+    setUsageFilter("all");
+    setRiskFilter("all");
+    setEcosystemFilter("all");
+    setGroupByFamily(false);
+
+    switch (filter) {
+      case "in_use": setLifecycleFilter("in_use"); break;
+      case "owned": setOwnershipFilter("assigned"); break;
+      case "unowned": setOwnershipFilter("unowned"); break;
+      case "with_agents": setOwnershipFilter("with_agents"); break;
+      case "missing_control_plane": setOwnershipFilter("no_control_plane"); break;
+      case "families": setGroupByFamily(true); break;
+      case "active_lifecycle": setLifecycleFilter("in_use"); break;
+      case "deprecated": setLifecycleFilter("deprecated"); break;
+      case "retirement_candidates": setLifecycleFilter("retirement_candidates"); break;
+      case "archived": setLifecycleFilter("archived"); break;
+      case "degraded": setLifecycleFilter("degraded"); break;
+      case "live_usage": setUsageFilter("live"); break;
+      case "idle_usage": setUsageFilter("dormant"); break;
+      case "high_dep_risk": setEcosystemFilter("high_risk"); break;
+      case "orphaned": setEcosystemFilter("all"); break;
+      case "core_services": setEcosystemFilter("core"); break;
+      default:
+        if (["running", "completed", "failed", "queued"].includes(filter)) {
+          setActiveFilter(filter as FilterStatus);
+        }
+        break;
     }
   }
 
@@ -1131,6 +1487,13 @@ export default function AssembliesPage() {
       ? pipelineStatus?.activeRuns?.find((s) => s.assemblyId === a.id)
       : undefined;
     const stallLevel = statusEntry ? getStallLevel(statusEntry.stalledMs) : "none";
+    const agents = getAssignedAgents(ext);
+    const health = getAssignmentHealth(ext);
+    const depState = getDeprecationState(ext);
+    const isRetCandidate = isRetirementCandidate(ext);
+    const depRisk = getDependencyRisk(ext);
+    const upstream = getUpstreamDeps(ext);
+    const downstream = getDownstreamDeps(ext);
 
     return (
       <tr
@@ -1150,11 +1513,26 @@ export default function AssembliesPage() {
               {a.idea}
             </div>
           )}
-          {a.preset && (
-            <span className="inline-block text-[10px] font-mono-tech text-[hsl(var(--muted-foreground)/0.7)] bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded mt-0.5">
-              {a.preset}
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            {a.preset && (
+              <span className="inline-block text-[10px] font-mono-tech text-[hsl(var(--muted-foreground)/0.7)] bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded">
+                {a.preset}
+              </span>
+            )}
+            <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${assignmentHealthColors[health]}`}>
+              {assignmentHealthLabels[health]}
             </span>
-          )}
+            {isRetCandidate && (
+              <span className="text-[10px] text-[hsl(var(--status-warning))] bg-[hsl(var(--status-warning)/0.12)] px-1.5 py-0.5 rounded font-medium">
+                Retire
+              </span>
+            )}
+            {depState !== "none" && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${deprecationColors[depState]} bg-[hsl(var(--muted)/0.3)]`}>
+                Dep: {deprecationLabels[depState]}
+              </span>
+            )}
+          </div>
         </td>
         <td className="px-4 py-3">
           <div className="flex flex-col gap-1">
@@ -1186,35 +1564,70 @@ export default function AssembliesPage() {
           )}
         </td>
         <td className="px-4 py-3 hidden md:table-cell">
-          {ext.lifecycleState ? (
-            <StatusChip
-              variant={(lifecycleVariant[ext.lifecycleState] || "neutral") as any}
-              label={lifecycleLabels[ext.lifecycleState] || ext.lifecycleState}
-            />
-          ) : (
-            <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
-          )}
+          <div className="flex flex-col gap-0.5">
+            {ext.lifecycleState ? (
+              <StatusChip
+                variant={(lifecycleVariant[ext.lifecycleState] || "neutral") as any}
+                label={lifecycleLabels[ext.lifecycleState] || ext.lifecycleState}
+              />
+            ) : (
+              <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
+            )}
+            {depState !== "none" && (
+              <span className={`text-[10px] ${deprecationColors[depState]}`}>
+                {deprecationLabels[depState]}
+              </span>
+            )}
+            {isRetCandidate && (
+              <span className="text-[10px] text-[hsl(var(--status-warning))]">Retirement</span>
+            )}
+          </div>
         </td>
         <td className="px-4 py-3 hidden lg:table-cell">
-          {ext.usageState ? (
-            <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize ${usageColors[ext.usageState] || "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]"}`}>
-              {ext.usageState}
-            </span>
-          ) : (
-            <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
-          )}
+          <div className="flex flex-col gap-0.5">
+            {ext.usageState ? (
+              <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium capitalize w-fit ${usageColors[ext.usageState] || "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]"}`}>
+                {ext.usageState}
+              </span>
+            ) : (
+              <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">No telemetry</span>
+            )}
+            {ext.requestsLast24h > 0 && (
+              <span className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))]">
+                {ext.requestsLast24h.toLocaleString()} req/24h
+              </span>
+            )}
+            {ext.lastActivityAt && (
+              <span className="text-[10px] text-[hsl(var(--muted-foreground)/0.6)]">
+                {formatDate(ext.lastActivityAt)}
+              </span>
+            )}
+          </div>
         </td>
         <td className="px-4 py-3 hidden lg:table-cell">
-          {ext.ownerName ? (
-            <div>
-              <span className="text-xs text-[hsl(var(--foreground))]">{ext.ownerName}</span>
-              {ext.teamName && (
-                <span className="block text-[10px] text-[hsl(var(--muted-foreground))]">{ext.teamName}</span>
-              )}
-            </div>
-          ) : (
-            <span className="text-[11px] text-[hsl(var(--muted-foreground)/0.5)] italic">Unowned</span>
-          )}
+          <div className="flex flex-col gap-0.5">
+            {ext.ownerName ? (
+              <>
+                <span className="text-xs text-[hsl(var(--foreground))]">{ext.ownerName}</span>
+                {ext.teamName && (
+                  <span className="text-[10px] text-[hsl(var(--muted-foreground))]">
+                    {ext.teamName}
+                    {ext.controlPlane && <> &middot; <span className="font-mono-tech">{ext.controlPlane}</span></>}
+                  </span>
+                )}
+                {!ext.teamName && ext.controlPlane && (
+                  <span className="text-[10px] text-[hsl(var(--muted-foreground))] font-mono-tech">{ext.controlPlane}</span>
+                )}
+              </>
+            ) : (
+              <span className="text-[11px] text-[hsl(var(--status-warning))] bg-[hsl(var(--status-warning)/0.12)] px-1.5 py-0.5 rounded w-fit">Needs owner</span>
+            )}
+            {agents.length > 0 && (
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] flex items-center gap-0.5">
+                <Bot className="w-2.5 h-2.5" /> {agents.length} agent{agents.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
         </td>
         <td className="px-4 py-3 hidden md:table-cell">
           <StageRail stages={parseStagesFromAssembly((a as any).latestStages)} />
@@ -1245,6 +1658,25 @@ export default function AssembliesPage() {
           </span>
         </td>
         <td className="px-4 py-3 hidden xl:table-cell">
+          {ext.ecosystemRole ? (
+            <div className="flex flex-col gap-0.5">
+              <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium capitalize w-fit ${ecosystemRoleColors[ext.ecosystemRole] || "text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)]"}`}>
+                {ecosystemRoleLabels[ext.ecosystemRole] || ext.ecosystemRole}
+              </span>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                {upstream.length > 0 && <span>{upstream.length} up</span>}
+                {upstream.length > 0 && downstream.length > 0 && <span>&middot;</span>}
+                {downstream.length > 0 && <span>{downstream.length} down</span>}
+              </span>
+              <span className={`text-[10px] font-medium ${depRiskColors[depRisk]}`}>
+                {depRisk} dep risk
+              </span>
+            </div>
+          ) : (
+            <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)]">{"\u2014"}</span>
+          )}
+        </td>
+        <td className="px-4 py-3 hidden xl:table-cell">
           <span className="text-xs text-[hsl(var(--muted-foreground))]">
             {formatDate(a.updatedAt)}
           </span>
@@ -1265,8 +1697,8 @@ export default function AssembliesPage() {
     );
   }
 
-  const TABLE_COL_COUNT = 11;
-  const allFiltersDefault = activeFilter === "all" && lifecycleFilter === "all" && familyFilter === "all" && ownerFilter === "all" && usageFilter === "all" && riskFilter === "all";
+  const TABLE_COL_COUNT = 12;
+  const allFiltersDefault = activeFilter === "all" && lifecycleFilter === "all" && familyFilter === "all" && ownershipFilter === "all" && usageFilter === "all" && riskFilter === "all" && ecosystemFilter === "all";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -1349,13 +1781,9 @@ export default function AssembliesPage() {
           ]}
         />
         <FilterDropdown
-          value={ownerFilter}
-          onChange={(v) => { setOwnerFilter(v); setActiveView(""); }}
-          options={[
-            { value: "all", label: "All Owners" },
-            { value: "unowned", label: "Unowned" },
-            ...ownerNames.map((n) => ({ value: n, label: n })),
-          ]}
+          value={ownershipFilter}
+          onChange={(v) => { setOwnershipFilter(v as OwnershipFilter); setActiveView(""); }}
+          options={ownershipFilterOptions}
         />
         <FilterDropdown
           value={usageFilter}
@@ -1366,6 +1794,11 @@ export default function AssembliesPage() {
           value={riskFilter}
           onChange={(v) => { setRiskFilter(v as RiskFilter); setActiveView(""); }}
           options={riskFilterOptions}
+        />
+        <FilterDropdown
+          value={ecosystemFilter}
+          onChange={(v) => { setEcosystemFilter(v as EcosystemFilter); setActiveView(""); }}
+          options={ecosystemFilterOptions}
         />
         <div className="ml-auto">
           <button
@@ -1382,28 +1815,33 @@ export default function AssembliesPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
         {[
-          { label: "Total", value: counts.all, icon: Boxes, filter: "all" as const, accent: "", subtitle: "" },
-          { label: "Running", value: counts.running, icon: Radio, filter: "running" as const, accent: counts.running > 0 ? "text-[hsl(var(--status-processing))]" : "", subtitle: "" },
-          { label: "Failed", value: counts.failed, icon: XCircle, filter: "failed" as const, accent: counts.failed > 0 ? "text-[hsl(var(--status-failure))]" : "", subtitle: "" },
-          { label: "In Use", value: overviewCards.inUse, icon: CheckCircle2, filter: "in_use", accent: overviewCards.inUse > 0 ? "text-[hsl(var(--status-success))]" : "", subtitle: "" },
-          { label: "Unowned", value: overviewCards.unowned, icon: Users, filter: "unowned", accent: overviewCards.unowned > 0 ? "text-[hsl(var(--status-warning))]" : "", subtitle: "" },
-          {
-            label: "Families",
-            value: overviewCards.families,
-            icon: Layers,
-            filter: "families",
-            accent: overviewCards.familiesAtRisk > 0 ? "text-[hsl(var(--status-failure))]" : "",
-            subtitle: overviewCards.familiesAtRisk > 0 ? `${overviewCards.familiesAtRisk} at risk` : "",
-          },
+          { label: "Total", value: counts.all, icon: Boxes, filter: "all", accent: "" },
+          { label: "Running", value: counts.running, icon: Radio, filter: "running", accent: counts.running > 0 ? "text-[hsl(var(--status-processing))]" : "" },
+          { label: "Failed", value: counts.failed, icon: XCircle, filter: "failed", accent: counts.failed > 0 ? "text-[hsl(var(--status-failure))]" : "" },
+          { label: "In Use", value: overviewCards.inUse, icon: CheckCircle2, filter: "in_use", accent: overviewCards.inUse > 0 ? "text-[hsl(var(--status-success))]" : "" },
+          { label: "Fully Assigned", value: assemblies.filter((a) => getAssignmentHealth(a as any) === "assigned").length, icon: Users, filter: "owned", accent: "" },
+          { label: "Unowned", value: overviewCards.unowned, icon: Users, filter: "unowned", accent: overviewCards.unowned > 0 ? "text-[hsl(var(--status-warning))]" : "" },
+          { label: "With Agents", value: overviewCards.withAgents, icon: Bot, filter: "with_agents", accent: "" },
+          { label: "No Ctrl Plane", value: overviewCards.missingControlPlane, icon: Network, filter: "missing_control_plane", accent: overviewCards.missingControlPlane > 0 ? "text-[hsl(var(--status-warning))]" : "" },
+          { label: "Active LC", value: overviewCards.inUse, icon: Activity, filter: "active_lifecycle", accent: "" },
+          { label: "Deprecated", value: overviewCards.deprecated, icon: Sunset, filter: "deprecated", accent: overviewCards.deprecated > 0 ? "text-[hsl(var(--status-failure))]" : "" },
+          { label: "Retire Cand.", value: overviewCards.retCandidates, icon: Archive, filter: "retirement_candidates", accent: overviewCards.retCandidates > 0 ? "text-[hsl(var(--status-warning))]" : "" },
+          { label: "Degraded", value: overviewCards.degraded, icon: AlertTriangle, filter: "degraded", accent: overviewCards.degraded > 0 ? "text-[hsl(var(--status-warning))]" : "" },
+          { label: "Live Usage", value: overviewCards.liveUsage, icon: TrendingUp, filter: "live_usage", accent: overviewCards.liveUsage > 0 ? "text-[hsl(var(--status-success))]" : "" },
+          { label: "Idle/Dormant", value: overviewCards.idleUsage, icon: Clock, filter: "idle_usage", accent: "" },
+          { label: "High Dep Risk", value: overviewCards.highDepRisk, icon: Zap, filter: "high_dep_risk", accent: overviewCards.highDepRisk > 0 ? "text-[hsl(var(--status-failure))]" : "" },
+          { label: "Orphaned", value: overviewCards.orphaned, icon: Unplug, filter: "orphaned", accent: overviewCards.orphaned > 0 ? "text-[hsl(var(--muted-foreground))]" : "" },
+          { label: "Core Services", value: overviewCards.coreServices, icon: Globe, filter: "core_services", accent: overviewCards.coreServices > 0 ? "text-[hsl(var(--status-processing))]" : "" },
+          { label: "Consumers", value: overviewCards.totalConsumers, icon: Gauge, filter: "all", accent: "" },
         ].map((card) => (
           <GlassPanel
             key={card.label}
             solid
             hover
             onClick={() => handleCardClick(card.filter)}
-            className={`p-3 cursor-pointer group ${card.filter === "families" && groupByFamily ? "ring-1 ring-[hsl(var(--primary)/0.4)]" : ""}`}
+            className="p-3 cursor-pointer group"
           >
             <div className="flex items-center gap-1.5 mb-1">
               <card.icon className={`w-3.5 h-3.5 ${card.accent || "text-[hsl(var(--muted-foreground))]"} group-hover:text-[hsl(var(--primary))] transition-colors`} />
@@ -1412,9 +1850,6 @@ export default function AssembliesPage() {
             <div className={`text-lg font-bold tabular-nums ${card.accent || "text-[hsl(var(--foreground))]"}`}>
               {card.value}
             </div>
-            {card.subtitle && (
-              <div className="text-[10px] text-[hsl(var(--status-failure))] mt-0.5">{card.subtitle}</div>
-            )}
           </GlassPanel>
         ))}
       </div>
@@ -1462,6 +1897,7 @@ export default function AssembliesPage() {
                 <th className="text-left px-4 py-2.5 text-system-label hidden md:table-cell">Pipeline</th>
                 <th className="text-left px-4 py-2.5 text-system-label hidden xl:table-cell">Elapsed</th>
                 <th className="text-left px-4 py-2.5 text-system-label hidden xl:table-cell">Duration</th>
+                <th className="text-left px-4 py-2.5 text-system-label hidden xl:table-cell">Ecosystem</th>
                 <th className="text-left px-4 py-2.5 text-system-label hidden xl:table-cell">Updated</th>
                 <th className="text-right px-4 py-2.5 text-system-label">Actions</th>
               </tr>
