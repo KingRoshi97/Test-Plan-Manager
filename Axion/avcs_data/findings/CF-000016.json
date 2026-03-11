@@ -1,0 +1,22 @@
+{
+  "id": "CF-000016",
+  "cert_run_id": "CR-000004",
+  "domain": "performance",
+  "severity": "low",
+  "impact": "observation",
+  "title": "No lazy loading for route components",
+  "description": "Route components are not using React.lazy or dynamic imports for code splitting",
+  "affected_surface": "code_splitting",
+  "affected_files": [
+    "src/pages/AdvancedSearchFunctionalitywithFilters.tsx",
+    "src/pages/CollaborativeFeatures.tsx",
+    "src/pages/Dashboard.tsx",
+    "src/pages/ForgotPassword.tsx",
+    "src/pages/Home.tsx"
+  ],
+  "probable_cause": "All route components are eagerly loaded which increases initial bundle size",
+  "evidence_refs": [],
+  "remediation": "Use React.lazy() and dynamic import() for route-level code splitting",
+  "status": "open",
+  "created_at": "2026-03-11T03:59:36.728Z"
+}

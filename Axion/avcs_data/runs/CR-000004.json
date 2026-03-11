@@ -1,0 +1,20 @@
+{
+  "id": "CR-000004",
+  "assembly_id": 10,
+  "run_id": "RUN-000032",
+  "run_type": "full_certification",
+  "status": "completed",
+  "domains_evaluated": [
+    "build_integrity",
+    "functional",
+    "security",
+    "performance"
+  ],
+  "target_build": "/home/runner/workspace/Axion/.axion/runs/RUN-000032/build",
+  "evidence_path": "/home/runner/workspace/Axion/.axion/runs/RUN-000032/build/avcs_evidence",
+  "created_at": "2026-03-11T03:59:36.589Z",
+  "started_at": "2026-03-11T03:59:36.658Z",
+  "completed_at": "2026-03-11T03:59:36.734Z",
+  "verdict": "FAIL",
+  "score": 83.25
+}

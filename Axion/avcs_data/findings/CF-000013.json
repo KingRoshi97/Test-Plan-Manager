@@ -1,0 +1,20 @@
+{
+  "id": "CF-000013",
+  "cert_run_id": "CR-000004",
+  "domain": "build_integrity",
+  "severity": "critical",
+  "impact": "release_blocker",
+  "title": "Missing entry point: Server entry",
+  "description": "No entry point found. Checked: src/server/index.ts, server/index.ts, src/server.ts",
+  "affected_surface": "entry_points",
+  "affected_files": [
+    "src/server/index.ts",
+    "server/index.ts",
+    "src/server.ts"
+  ],
+  "probable_cause": "Build process did not generate the application entry point",
+  "evidence_refs": [],
+  "remediation": "Create the server entry file (e.g., src/server/index.ts)",
+  "status": "open",
+  "created_at": "2026-03-11T03:59:36.661Z"
+}

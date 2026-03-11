@@ -1,0 +1,9 @@
+{
+  "id": "CE-000014",
+  "cert_run_id": "CR-000004",
+  "domain": "functional",
+  "type": "summary",
+  "title": "functional evaluation summary",
+  "content": "{\"status\":\"fail\",\"score\":70,\"checks_total\":5,\"checks_passed\":3,\"checks_failed\":1,\"findings\":2}",
+  "created_at": "2026-03-11T03:59:36.711Z"
+}
