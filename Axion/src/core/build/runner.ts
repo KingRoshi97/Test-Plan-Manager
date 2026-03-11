@@ -145,7 +145,22 @@ export async function runBuild(
       return result;
     }
 
-    console.log("  [BUILD] Eligibility passed. Extracting kit...");
+    console.log("  [BUILD] Eligibility passed. Initializing workspace...");
+
+    try {
+      const wsResult = initWorkspace(AXION_BASE, runId);
+      paths = wsResult.paths;
+    } catch (err: any) {
+      const reason = `Workspace init failed: ${err.message}`;
+      manifest = recordFailure(manifest, "workspace", "workspace", reason);
+      result.errors.push(reason);
+      result.state = "failed";
+      writeBuildManifestSafe(runDir, manifest);
+      emitProgress("failed", { error: reason, failureClass: "workspace" });
+      return result;
+    }
+
+    console.log("  [BUILD] Extracting kit...");
 
     let extraction: KitExtraction | null = null;
     let blueprint: RepoBlueprint | null = null;
@@ -239,19 +254,6 @@ export async function runBuild(
 
     manifest = recordLifecycleTransition(manifest, "building", "generation", "Starting repo generation");
     emitProgress("building", { totalSlices: plan.totalSlices, totalFiles: plan.totalFiles });
-
-    try {
-      const wsResult = initWorkspace(AXION_BASE, runId);
-      paths = wsResult.paths;
-    } catch (err: any) {
-      const reason = `Workspace init failed: ${err.message}`;
-      manifest = recordFailure(manifest, "workspace", "workspace", reason);
-      result.errors.push(reason);
-      result.state = "failed";
-      writeBuildManifestSafe(runDir, manifest);
-      emitProgress("failed", { error: reason, failureClass: "workspace" });
-      return result;
-    }
 
     manifest = updateOutputRefs(manifest, {
       repoPath: paths.repo,

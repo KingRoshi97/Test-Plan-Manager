@@ -194,7 +194,7 @@ Internal Build Mode takes an approved Agent Kit from a completed pipeline run an
 - `verifier.ts` — BM-13 verification: output presence, structure correctness, placeholder scan, manifest completeness, file integrity, output consistency
 - `manifest.ts` — BM-15 audit records: build_manifest.json, repo_manifest.json, file_index.json with lifecycle transitions
 - `packager.ts` — BM-14 export: creates project_repo.zip with repo contents + manifests (uses archiver, max compression)
-- `runner.ts` — BM-06 orchestrator: full lifecycle from request through eligibility → plan → generate → verify → export with state machine enforcement and failure handling
+- `runner.ts` — BM-06 orchestrator: full lifecycle from request through eligibility → workspace init → extract → blueprint → plan → GSE → generate → verify → export with state machine enforcement and failure handling. IMPORTANT: initWorkspace() must run BEFORE extractKit()/buildRepoBlueprint() since it wipes the build/ directory via rmSync
 
 **CLI**: `tsx src/cli/axion.ts build --run RUN-XXXXXX --mode build_and_export` (modes: kit_only, build_repo, build_and_export)
 
