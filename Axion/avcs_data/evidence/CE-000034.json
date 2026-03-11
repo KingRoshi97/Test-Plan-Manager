@@ -1,0 +1,9 @@
+{
+  "id": "CE-000034",
+  "cert_run_id": "CR-000008",
+  "domain": "security",
+  "type": "summary",
+  "title": "security evaluation summary",
+  "content": "{\"status\":\"pass\",\"score\":100,\"checks_total\":7,\"checks_passed\":6,\"checks_failed\":0,\"findings\":0}",
+  "created_at": "2026-03-11T07:03:10.607Z"
+}

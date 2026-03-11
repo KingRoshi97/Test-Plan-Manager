@@ -42,7 +42,7 @@ import {
   writeFileIndex,
   writeAllManifests,
 } from "./manifest.js";
-import { createExportZip, isExportEligible } from "./packager.js";
+import { createExportZip, isExportEligible, repackageExportZip } from "./packager.js";
 import { getRunUsage, setActiveRun } from "../usage/tracker.js";
 
 const AXION_BASE = fs.existsSync(path.resolve("Axion", ".axion"))
@@ -757,6 +757,65 @@ export async function remediateFromReport(
 
   result.remediationLog.completedAt = new Date().toISOString();
 
+  if (result.filesRegenerated > 0) {
+    const buildManifestPath = path.join(buildDir, "build_manifest.json");
+    const repoManifestPath = path.join(buildDir, "repo_manifest.json");
+    const zipPath = path.join(buildDir, "project_repo.zip");
+
+    let existingManifest: any = null;
+    try {
+      existingManifest = JSON.parse(fs.readFileSync(buildManifestPath, "utf-8"));
+    } catch {}
+
+    try {
+      const repoManifestData = refreshRepoManifest(repoDir, buildDir);
+      fs.writeFileSync(repoManifestPath, JSON.stringify(repoManifestData, null, 2), "utf-8");
+      console.log(`  [BA-REMEDIATION] Regenerated repo_manifest.json with refreshed file inventory`);
+    } catch (err: any) {
+      console.log(`  [BA-REMEDIATION] Warning: Could not regenerate repo_manifest.json: ${err.message}`);
+    }
+
+    if (existingManifest) {
+      existingManifest.remediation = {
+        remediated_at: result.remediationLog.completedAt,
+        filesFixed: result.filesRegenerated,
+        filesFailed: result.filesFailed,
+        filesUnchanged: result.remediationLog.filesUnchanged.length,
+        certRunId: result.remediationLog.certRunId,
+        repackaged: true,
+      };
+      try {
+        fs.writeFileSync(buildManifestPath, JSON.stringify(existingManifest, null, 2), "utf-8");
+        console.log(`  [BA-REMEDIATION] Updated build_manifest.json with remediation summary`);
+      } catch (err: any) {
+        console.log(`  [BA-REMEDIATION] Warning: Could not update build_manifest.json: ${err.message}`);
+      }
+    }
+
+    try {
+      console.log(`  [BA-REMEDIATION] Repackaging export zip...`);
+      const verificationReportPath = path.join(buildDir, "verification_report.json");
+      const repackResult = await repackageExportZip(repoDir, zipPath, buildManifestPath, repoManifestPath, verificationReportPath);
+      if (repackResult.success) {
+        console.log(`  [BA-REMEDIATION] Export zip repackaged: ${repackResult.sizeBytes} bytes, ${repackResult.fileCount} files`);
+      } else {
+        console.log(`  [BA-REMEDIATION] Warning: Zip repackaging failed: ${repackResult.error}`);
+        result.errors.push(`Zip repackaging failed: ${repackResult.error}`);
+        if (existingManifest && existingManifest.remediation) {
+          existingManifest.remediation.repackaged = false;
+          try { fs.writeFileSync(buildManifestPath, JSON.stringify(existingManifest, null, 2), "utf-8"); } catch {}
+        }
+      }
+    } catch (err: any) {
+      console.log(`  [BA-REMEDIATION] Warning: Zip repackaging error: ${err.message}`);
+      result.errors.push(`Zip repackaging error: ${err.message}`);
+      if (existingManifest && existingManifest.remediation) {
+        existingManifest.remediation.repackaged = false;
+        try { fs.writeFileSync(buildManifestPath, JSON.stringify(existingManifest, null, 2), "utf-8"); } catch {}
+      }
+    }
+  }
+
   const logPath = path.join(buildDir, "remediation_log.json");
   try {
     fs.writeFileSync(logPath, JSON.stringify(result.remediationLog, null, 2), "utf-8");
@@ -765,4 +824,51 @@ export async function remediateFromReport(
 
   console.log(`  [BA-REMEDIATION] Complete: ${result.filesRegenerated} fixed, ${result.filesFailed} failed, ${result.remediationLog.filesUnchanged.length} unchanged`);
   return result;
+}
+
+function refreshRepoManifest(repoDir: string, buildDir: string): any {
+  const files: Array<{ path: string; sizeBytes: number }> = [];
+  const directories: string[] = [];
+
+  function walk(dir: string, base: string): void {
+    if (!fs.existsSync(dir)) return;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relPath = base ? path.join(base, entry.name) : entry.name;
+      if (entry.isDirectory()) {
+        directories.push(relPath);
+        walk(fullPath, relPath);
+      } else if (entry.isFile()) {
+        const stat = fs.statSync(fullPath);
+        files.push({ path: relPath, sizeBytes: stat.size });
+      }
+    }
+  }
+
+  walk(repoDir, "");
+
+  const totalSizeBytes = files.reduce((sum, f) => sum + f.sizeBytes, 0);
+
+  let existingRepoManifest: any = {};
+  const repoManifestPath = path.join(buildDir, "repo_manifest.json");
+  try {
+    existingRepoManifest = JSON.parse(fs.readFileSync(repoManifestPath, "utf-8"));
+  } catch {}
+
+  return {
+    ...existingRepoManifest,
+    structure: {
+      directories,
+      totalFiles: files.length,
+      totalSizeBytes,
+    },
+    fileInventory: files.map((f) => ({
+      path: f.path,
+      role: existingRepoManifest?.fileInventory?.find?.((e: any) => e.path === f.path)?.role ?? "unknown",
+      sizeBytes: f.sizeBytes,
+      generationMethod: existingRepoManifest?.fileInventory?.find?.((e: any) => e.path === f.path)?.generationMethod ?? "ai_assisted",
+    })),
+    generatedAt: new Date().toISOString(),
+  };
 }

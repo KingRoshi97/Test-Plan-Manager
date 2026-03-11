@@ -345,7 +345,9 @@ function AVCSSection({ assemblyId, runId }: { assemblyId: number; runId: string 
   const [selectedRunType, setSelectedRunType] = useState("full_certification");
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [showPrevious, setShowPrevious] = useState(false);
-  const [remediationStatus, setRemediationStatus] = useState<"idle" | "running" | "complete">("idle");
+  const [remediationStatus, setRemediationStatus] = useState<"idle" | "running" | "complete" | "failed">("idle");
+  const [remediationResult, setRemediationResult] = useState<{ filesFixed: number; filesFailed: number; filesUnchanged: number; errors: string[] } | null>(null);
+  const remediationPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: avcsRuns = [], isLoading: runsLoading } = useQuery<AVCSRun[]>({
     queryKey: ["/api/avcs/runs", assemblyId],
@@ -381,19 +383,64 @@ function AVCSSection({ assemblyId, runId }: { assemblyId: number; runId: string 
     },
   });
 
+  useEffect(() => {
+    return () => {
+      if (remediationPollRef.current) clearInterval(remediationPollRef.current);
+    };
+  }, []);
+
+  const startRemediationPolling = (certRunId: string) => {
+    if (remediationPollRef.current) clearInterval(remediationPollRef.current);
+    let consecutiveErrors = 0;
+    remediationPollRef.current = setInterval(async () => {
+      try {
+        const status = await apiRequest(`/api/avcs/runs/${certRunId}/remediation-status`);
+        consecutiveErrors = 0;
+        if (status.status === "complete") {
+          if (remediationPollRef.current) clearInterval(remediationPollRef.current);
+          remediationPollRef.current = null;
+          setRemediationResult({
+            filesFixed: status.filesFixed || 0,
+            filesFailed: status.filesFailed || 0,
+            filesUnchanged: status.filesUnchanged || 0,
+            errors: status.errors || [],
+          });
+          setRemediationStatus("complete");
+          queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId, "build"] });
+        } else if (status.status === "failed") {
+          if (remediationPollRef.current) clearInterval(remediationPollRef.current);
+          remediationPollRef.current = null;
+          setRemediationResult({
+            filesFixed: status.filesFixed || 0,
+            filesFailed: status.filesFailed || 0,
+            filesUnchanged: status.filesUnchanged || 0,
+            errors: status.errors || ["Remediation failed"],
+          });
+          setRemediationStatus("failed");
+        }
+      } catch {
+        consecutiveErrors++;
+        if (consecutiveErrors >= 10) {
+          if (remediationPollRef.current) clearInterval(remediationPollRef.current);
+          remediationPollRef.current = null;
+          setRemediationResult({ filesFixed: 0, filesFailed: 0, filesUnchanged: 0, errors: ["Lost connection to remediation status"] });
+          setRemediationStatus("failed");
+        }
+      }
+    }, 3000);
+  };
+
   const remediateMutation = useMutation({
     mutationFn: async (certRunId: string) => {
       setRemediationStatus("running");
-      return apiRequest(`/api/avcs/runs/${certRunId}/remediate`, { method: "POST" });
-    },
-    onSuccess: () => {
-      setTimeout(() => {
-        setRemediationStatus("complete");
-        queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId, "build"] });
-      }, 3000);
+      setRemediationResult(null);
+      const res = await apiRequest(`/api/avcs/runs/${certRunId}/remediate`, { method: "POST" });
+      startRemediationPolling(certRunId);
+      return res;
     },
     onError: () => {
       setRemediationStatus("idle");
+      if (remediationPollRef.current) clearInterval(remediationPollRef.current);
     },
   });
 
@@ -602,17 +649,23 @@ function AVCSSection({ assemblyId, runId }: { assemblyId: number; runId: string 
               </div>
             )}
 
-            {remediationStatus === "complete" && (
+            {remediationStatus === "complete" && remediationResult && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-900/20 border border-green-500/30 text-green-300 text-sm">
                   <CheckCircle className="w-4 h-4" />
                   <span className="font-medium">
-                    Remediation complete — {report.remediation_manifest.total_files} files updated. Run certification again to verify.
+                    Remediation complete — {remediationResult.filesFixed} fixed, {remediationResult.filesFailed} failed, {remediationResult.filesUnchanged} unchanged. Run certification again to verify.
                   </span>
                 </div>
+                {remediationResult.errors.length > 0 && (
+                  <div className="text-xs text-amber-400 px-4">
+                    {remediationResult.errors.slice(0, 3).map((e, i) => <div key={i}>⚠ {e}</div>)}
+                  </div>
+                )}
                 <button
                   onClick={() => {
                     setRemediationStatus("idle");
+                    setRemediationResult(null);
                     createRunMutation.mutate();
                   }}
                   disabled={createRunMutation.isPending}
@@ -624,6 +677,26 @@ function AVCSSection({ assemblyId, runId }: { assemblyId: number; runId: string 
                     <RefreshCw className="w-3.5 h-3.5" />
                   )}
                   Re-certify
+                </button>
+              </div>
+            )}
+
+            {remediationStatus === "failed" && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-900/20 border border-red-500/30 text-red-300 text-sm">
+                  <XCircle className="w-4 h-4" />
+                  <span className="font-medium">Remediation failed</span>
+                </div>
+                {remediationResult?.errors && remediationResult.errors.length > 0 && (
+                  <div className="text-xs text-red-400 px-4">
+                    {remediationResult.errors.slice(0, 3).map((e, i) => <div key={i}>{e}</div>)}
+                  </div>
+                )}
+                <button
+                  onClick={() => setRemediationStatus("idle")}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs font-medium hover:bg-[hsl(var(--muted))] transition-colors"
+                >
+                  Try Again
                 </button>
               </div>
             )}

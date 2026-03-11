@@ -133,6 +133,14 @@ export interface BuildManifest {
     blockedConditions?: string[];
     partialOutputs?: string[];
   };
+  remediation?: {
+    remediated_at: string;
+    filesFixed: number;
+    filesFailed: number;
+    filesUnchanged: number;
+    certRunId: string;
+    repackaged: boolean;
+  };
 }
 
 export interface BuildLifecycleEvent {

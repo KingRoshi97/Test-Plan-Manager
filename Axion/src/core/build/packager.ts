@@ -39,6 +39,80 @@ export function isExportEligible(paths: WorkspacePaths): { eligible: boolean; re
   return { eligible: true };
 }
 
+export async function repackageExportZip(repoDir: string, zipPath: string, buildManifestPath?: string, repoManifestPath?: string, verificationReportPath?: string): Promise<PackagerResult> {
+  const exportedAt = isoNow();
+
+  if (!existsSync(repoDir)) {
+    return {
+      success: false,
+      zipPath,
+      sizeBytes: 0,
+      fileCount: 0,
+      exportedAt,
+      error: "Repo directory not found for repackaging",
+    };
+  }
+
+  return new Promise<PackagerResult>((resolve) => {
+    const output = createWriteStream(zipPath);
+    const archive = archiver("zip", { zlib: { level: 9 } });
+
+    let fileCount = 0;
+
+    output.on("close", () => {
+      const stat = statSync(zipPath);
+      resolve({
+        success: true,
+        zipPath,
+        sizeBytes: stat.size,
+        fileCount,
+        exportedAt,
+      });
+    });
+
+    archive.on("error", (err: Error) => {
+      resolve({
+        success: false,
+        zipPath,
+        sizeBytes: 0,
+        fileCount,
+        exportedAt,
+        error: err.message,
+      });
+    });
+
+    archive.pipe(output);
+
+    archive.directory(repoDir, "project");
+
+    const metaFiles: { diskPath: string; archiveName: string }[] = [];
+    if (buildManifestPath) {
+      metaFiles.push({ diskPath: buildManifestPath, archiveName: "build_manifest.json" });
+    }
+    if (repoManifestPath) {
+      metaFiles.push({ diskPath: repoManifestPath, archiveName: "repo_manifest.json" });
+    }
+    if (verificationReportPath) {
+      metaFiles.push({ diskPath: verificationReportPath, archiveName: "verification_report.json" });
+    }
+
+    for (const meta of metaFiles) {
+      if (existsSync(meta.diskPath)) {
+        archive.file(meta.diskPath, { name: meta.archiveName });
+        fileCount++;
+      }
+    }
+
+    const readmePath = join(repoDir, "README.md");
+    if (existsSync(readmePath)) {
+      archive.file(readmePath, { name: "README.md" });
+      fileCount++;
+    }
+
+    archive.finalize();
+  });
+}
+
 export async function createExportZip(paths: WorkspacePaths): Promise<PackagerResult> {
   const exportedAt = isoNow();
 

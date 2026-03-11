@@ -1,0 +1,18 @@
+{
+  "id": "CF-000020",
+  "cert_run_id": "CR-000005",
+  "domain": "deployment_readiness",
+  "severity": "medium",
+  "impact": "warning",
+  "title": "27 undocumented environment variables",
+  "description": "Environment variables used in code but not in contract: REACT_APP_API_BASE_URL, DATABASE_URI, DATABASE_NAME, APP_NAME, DATABASE_URL, DB_POOL_SIZE, JWT_SECRET, TOKEN_EXPIRY, REDIS_URL, CACHE_DURATION, GOOGLE_DRIVE_CLIENT_ID, GOOGLE_DRIVE_CLIENT_SECRET, DROPBOX_CLIENT_ID, DROPBOX_CLIENT_SECRET, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, MAX_COLLABORATORS, VERSION_HISTORY_DAYS, MAX_DOCUMENT_SIZE, OFFLINE_SUPPORT, ANALYTICS_RETENTION_MONTHS, REPORT_INTERVAL, GDPR_COMPLIANCE, SOC2_COMPLIANCE, LOG_LEVEL, LOG_FILE, ALLOWED_ORIGINS",
+  "affected_surface": "env_contract",
+  "affected_files": [
+    ".env.example"
+  ],
+  "probable_cause": "Code references environment variables not listed in the contract file",
+  "evidence_refs": [],
+  "remediation": "Add missing variables to the environment contract file",
+  "status": "open",
+  "created_at": "2026-03-11T06:36:49.910Z"
+}

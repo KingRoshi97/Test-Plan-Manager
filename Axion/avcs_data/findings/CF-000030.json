@@ -1,0 +1,18 @@
+{
+  "id": "CF-000030",
+  "cert_run_id": "CR-000009",
+  "domain": "performance",
+  "severity": "medium",
+  "impact": "warning",
+  "title": "1 barrel files with excessive re-exports",
+  "description": "Index files with >20 re-exports that may cause bundle bloat: src/lib/validators/index.ts",
+  "affected_surface": "bundle_size",
+  "affected_files": [
+    "src/lib/validators/index.ts"
+  ],
+  "probable_cause": "Barrel exports import and re-export many modules which can prevent tree-shaking",
+  "evidence_refs": [],
+  "remediation": "Use direct imports instead of barrel re-exports, or split into smaller barrel files",
+  "status": "open",
+  "created_at": "2026-03-11T07:03:44.476Z"
+}

@@ -729,26 +729,60 @@ async function fixFileFromFindings(
   filePath: string,
   findings: RemediationFileContext[],
   model: string = "gpt-4o",
+  repoFileList?: string[],
 ): Promise<string | null> {
   const findingsBlock = findings.map((f, i) =>
     `  ${i + 1}. [${f.severity.toUpperCase()}] ${f.findingTitle}\n     Description: ${f.findingDescription}\n     Fix guidance: ${f.remediationGuidance}`
   ).join("\n\n");
 
-  const systemPrompt = `You are a senior software engineer performing targeted code remediation. You will receive an existing source file and a list of specific issues found by automated certification analysis (AVCS). Your job is to fix ONLY the identified issues while preserving all existing functionality, architecture, and coding patterns.
+  let fileInventoryBlock = "";
+  if (repoFileList && repoFileList.length > 0) {
+    const dirOfFile = path.dirname(filePath);
+    const nearbyFiles = repoFileList.filter(f => {
+      const fDir = path.dirname(f);
+      return fDir === dirOfFile || fDir.startsWith(dirOfFile + "/") || dirOfFile.startsWith(fDir + "/") || fDir.split("/").slice(0, 2).join("/") === dirOfFile.split("/").slice(0, 2).join("/");
+    });
+    const otherDirs = new Set(repoFileList.map(f => path.dirname(f)));
+    const relevantFiles = nearbyFiles.length > 200 ? nearbyFiles.slice(0, 200) : nearbyFiles;
 
-RULES:
+    const fullListCap = 500;
+    const showFullList = repoFileList.length <= fullListCap;
+
+    fileInventoryBlock = `
+
+PROJECT FILE INVENTORY (${repoFileList.length} total files):
+The following files exist in this project. When fixing imports or references, ONLY use paths that match files in this list. Do NOT invent or guess file names.
+
+Files near ${filePath}:
+${relevantFiles.map(f => "  " + f).join("\n")}
+
+All project directories:
+${[...otherDirs].sort().map(d => "  " + d + "/").join("\n")}
+${showFullList ? `\nFull file list:\n${repoFileList.map(f => "  " + f).join("\n")}` : ""}`;
+  }
+
+  const systemPrompt = `You are a senior software engineer performing targeted code remediation. You will receive an existing source file, a list of specific issues found by automated certification analysis (AVCS), and the complete project file inventory. Your job is to fix ONLY the identified issues while preserving all existing functionality, architecture, and coding patterns.
+
+CRITICAL RULES:
 - Output ONLY the complete fixed file content — no explanations, no markdown fences, no comments about changes
 - Fix every listed finding
 - Do NOT add new features, refactor unrelated code, or change the file's purpose
 - Preserve all imports, exports, types, and function signatures unless a finding specifically requires changing them
 - Preserve code style, formatting conventions, and naming patterns
 - If a finding asks to remove something (e.g., hardcoded secrets, eval), replace it with the correct pattern (e.g., environment variable, safe alternative)
-- The output must be a complete, valid, drop-in replacement for the original file`;
+- The output must be a complete, valid, drop-in replacement for the original file
+
+IMPORT PATH RULES:
+- When fixing import paths, you MUST reference files that exist in the PROJECT FILE INVENTORY provided
+- Do NOT guess or invent file paths — only use paths from the inventory
+- Use correct relative path resolution from the current file's directory
+- Do NOT add comments like "// Fixed import path" — just write the correct import`;
 
   const userPrompt = `FILE: ${filePath}
 
 FINDINGS TO FIX:
 ${findingsBlock}
+${fileInventoryBlock}
 
 EXISTING FILE CONTENT:
 ${existingContent}
@@ -800,6 +834,24 @@ export async function fixUnitsFromFindings(
   }
 
   const resolvedRepoDir = path.resolve(repoDir);
+
+  const repoFileList: string[] = [];
+  function walkRepo(dir: string, base: string): void {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        const relPath = base ? `${base}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) {
+          walkRepo(fullPath, relPath);
+        } else if (entry.isFile()) {
+          repoFileList.push(relPath);
+        }
+      }
+    } catch {}
+  }
+  walkRepo(resolvedRepoDir, "");
+  console.log(`  [BA-REMEDIATION] Built repo file inventory: ${repoFileList.length} files`);
 
   let filesFixed = 0;
   let filesUnchanged = 0;
@@ -919,7 +971,7 @@ export async function fixUnitsFromFindings(
       console.log(`    [BA-FIX] Fixing ${filePath} (${findings.length} findings, ${existingContent.split("\n").length} lines)`);
 
       try {
-        const fixedContent = await fixFileFromFindings(existingContent, filePath, findings, modelName);
+        const fixedContent = await fixFileFromFindings(existingContent, filePath, findings, modelName, repoFileList);
 
         if (!fixedContent) {
           unitResult.files.push({

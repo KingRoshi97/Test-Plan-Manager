@@ -1,0 +1,22 @@
+{
+  "id": "CF-000018",
+  "cert_run_id": "CR-000005",
+  "domain": "security",
+  "severity": "medium",
+  "impact": "warning",
+  "title": "No input validation in route handlers",
+  "description": "Route handler files don't appear to use input validation (zod/joi/yup)",
+  "affected_surface": "input_validation",
+  "affected_files": [
+    "src/server/controllers/advanced-search-and-tagging-system.controller.ts",
+    "src/server/controllers/ai-powered-content-suggestions.controller.ts",
+    "src/server/controllers/customizable-templates-for-documents.controller.ts",
+    "src/server/controllers/document-export-options.controller.ts",
+    "src/server/controllers/index.ts"
+  ],
+  "probable_cause": "Generated route handlers accept input without validation",
+  "evidence_refs": [],
+  "remediation": "Add input validation using zod, joi, or yup for all route handler inputs",
+  "status": "open",
+  "created_at": "2026-03-11T06:36:49.840Z"
+}

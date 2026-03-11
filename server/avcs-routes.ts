@@ -14,6 +14,18 @@ const AXION_ROOT = path.resolve(process.cwd(), "Axion");
 const AVCS_DATA_DIR = path.join(AXION_ROOT, "avcs_data");
 const AXION_RUNS = path.join(AXION_ROOT, ".axion", "runs");
 
+interface RemediationTracker {
+  status: "running" | "complete" | "failed";
+  startedAt: string;
+  completedAt?: string;
+  filesFixed: number;
+  filesFailed: number;
+  filesUnchanged: number;
+  errors: string[];
+}
+
+const remediationStatus = new Map<string, RemediationTracker>();
+
 function ensureStore(): AVCSStore {
   return new AVCSStore(AVCS_DATA_DIR);
 }
@@ -211,12 +223,58 @@ export function registerAVCSRoutes(app: Express): void {
         return res.status(404).json({ error: "Report not found for this run" });
       }
 
-      res.json({ status: "remediation_started", certRunId: run.id, runId: run.run_id });
+      const certRunId = run.id;
+      remediationStatus.set(certRunId, {
+        status: "running",
+        startedAt: new Date().toISOString(),
+        filesFixed: 0,
+        filesFailed: 0,
+        filesUnchanged: 0,
+        errors: [],
+      });
+
+      res.json({ status: "remediation_started", certRunId, runId: run.run_id });
 
       remediateFromReport(run.run_id, reportPath).then(result => {
-        console.log(`[AVCS] Remediation complete for ${run.id}: ${result.filesRegenerated} files regenerated`);
+        const tracker = remediationStatus.get(certRunId)!;
+        tracker.completedAt = new Date().toISOString();
+        tracker.filesFixed = result.remediationLog.filesFixed.length;
+        tracker.filesFailed = result.remediationLog.filesFailed.length;
+        tracker.filesUnchanged = result.remediationLog.filesUnchanged.length;
+        tracker.errors = result.errors;
+        const hasCriticalFailure = !result.success || (result.filesRegenerated === 0 && result.filesFailed > 0);
+        tracker.status = hasCriticalFailure ? "failed" : "complete";
+        console.log(`[AVCS] Remediation ${tracker.status} for ${certRunId}: ${result.filesRegenerated} fixed, ${result.filesFailed} failed`);
       }).catch(err => {
-        console.error(`[AVCS] Remediation failed for ${run.id}:`, err.message);
+        const tracker = remediationStatus.get(certRunId);
+        if (tracker) {
+          tracker.status = "failed";
+          tracker.completedAt = new Date().toISOString();
+          tracker.errors = [err.message];
+        }
+        console.error(`[AVCS] Remediation failed for ${certRunId}:`, err.message);
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/avcs/runs/:certRunId/remediation-status", (req: Request, res: Response) => {
+    try {
+      const { certRunId } = req.params;
+      const tracker = remediationStatus.get(certRunId);
+      if (!tracker) {
+        return res.status(404).json({ error: "No remediation found for this run" });
+      }
+      res.json({
+        certRunId,
+        status: tracker.status,
+        startedAt: tracker.startedAt,
+        completedAt: tracker.completedAt ?? null,
+        filesFixed: tracker.filesFixed,
+        filesFailed: tracker.filesFailed,
+        filesUnchanged: tracker.filesUnchanged,
+        errors: tracker.errors,
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
