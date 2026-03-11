@@ -655,24 +655,29 @@ export function registerUpgradeRoutes(app: Express) {
 
       const planRows = await db.select().from(upgradePlans)
         .where(eq(upgradePlans.sessionId, sessionId))
-        .orderBy(desc(upgradePlans.version));
+        .orderBy(desc(upgradePlans.generatedAt));
       const plan = planRows.length > 0 ? planRows[0] : null;
-      const planSteps = (plan?.steps as Array<{ id?: string; label?: string; description?: string }>) || [];
+
+      const planChanges = plan
+        ? await db.select().from(upgradePlanChanges)
+            .where(eq(upgradePlanChanges.planId, plan.id))
+            .orderBy(upgradePlanChanges.ordinal)
+        : [];
 
       const sessionStatus = session[0].status;
       const isCompleted = sessionStatus === "verifying" || sessionStatus === "promotion_ready" || sessionStatus === "completed";
       const isExecuting = sessionStatus === "executing";
 
-      const executionSteps = planSteps.map((step, idx) => ({
-        id: step.id || `step-${idx}`,
-        label: step.label || step.description || `Step ${idx + 1}`,
+      const executionSteps = planChanges.map((change, idx) => ({
+        id: change.id,
+        label: change.title,
         status: isCompleted ? "completed" as const
           : isExecuting && idx === 0 ? "running" as const
           : isExecuting && idx > 0 ? "pending" as const
           : "pending" as const,
         startedAt: isCompleted || (isExecuting && idx === 0) ? session[0].createdAt?.toISOString() : null,
         completedAt: isCompleted ? session[0].updatedAt?.toISOString() : null,
-        message: null,
+        message: change.description,
       }));
 
       const changedArtifacts: Array<{
@@ -687,24 +692,19 @@ export function registerUpgradeRoutes(app: Express) {
         const diffs = await db.select().from(revisionDiffs)
           .where(eq(revisionDiffs.candidateRevisionId, session[0].candidateRevisionId));
         if (diffs.length > 0) {
-          const diffData = diffs[0].diffData as Record<string, unknown> | null;
-          if (diffData) {
-            const addItems = (items: unknown[], changeType: "added" | "removed" | "modified") => {
-              if (!Array.isArray(items)) return;
-              items.forEach((item: unknown) => {
-                const d = item as { id?: string; label?: string; path?: string };
-                changedArtifacts.push({
-                  id: d.id || `art-${changedArtifacts.length}`,
-                  label: d.label || d.path || "Unknown",
-                  path: d.path || null,
-                  changeType,
-                  status: isCompleted ? "done" : "processing",
-                });
-              });
-            };
-            addItems(diffData.added as unknown[], "added");
-            addItems(diffData.modified as unknown[], "modified");
-            addItems(diffData.removed as unknown[], "removed");
+          const diffItems = await db.select().from(revisionDiffItems)
+            .where(eq(revisionDiffItems.diffId, diffs[0].id));
+          for (const item of diffItems) {
+            const changeType = (item.changeType === "added" || item.changeType === "removed" || item.changeType === "modified" || item.changeType === "renamed")
+              ? item.changeType
+              : "modified" as const;
+            changedArtifacts.push({
+              id: item.id,
+              label: item.label,
+              path: item.pathFrom || item.pathTo || null,
+              changeType,
+              status: isCompleted ? "done" : "processing",
+            });
           }
         }
       }
