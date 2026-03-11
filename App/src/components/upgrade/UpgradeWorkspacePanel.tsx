@@ -48,11 +48,13 @@ export function UpgradeWorkspacePanel({
           <div className="text-xs text-[hsl(var(--muted-foreground))]">
             {session.status === "awaiting_approval"
               ? "Approve the plan first, then execution will create a candidate."
-              : session.status === "executing"
-                ? "Execution is in progress..."
-                : "Generate and approve a plan to start execution."}
+              : session.status === "approved"
+                ? "Plan approved. Click below to start execution."
+                : session.status === "executing"
+                  ? "Execution is in progress..."
+                  : "Generate and approve a plan to start execution."}
           </div>
-          {(session.status === "executing" || session.status === "awaiting_approval") && (
+          {(session.status === "approved" || session.status === "awaiting_approval") && (
             <button
               onClick={() => onStartExecution(session.id)}
               disabled={session.status === "awaiting_approval"}

@@ -14,6 +14,7 @@ export type UpgradeSessionStatus =
   | "draft"
   | "planning"
   | "awaiting_approval"
+  | "approved"
   | "executing"
   | "verifying"
   | "promotion_ready"

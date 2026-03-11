@@ -28,6 +28,7 @@ const sessionStatusColors: Record<UpgradeSessionStatus, string> = {
   draft: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30",
   planning: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   awaiting_approval: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+  approved: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
   executing: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
   verifying: "bg-violet-500/20 text-violet-400 border-violet-500/30",
   promotion_ready: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
@@ -39,7 +40,7 @@ const sessionStatusColors: Record<UpgradeSessionStatus, string> = {
 
 const sessionStatusLabels: Record<UpgradeSessionStatus, string> = {
   draft: "Draft", planning: "Planning", awaiting_approval: "Awaiting Approval",
-  executing: "Executing", verifying: "Verifying", promotion_ready: "Promotion Ready",
+  approved: "Approved", executing: "Executing", verifying: "Verifying", promotion_ready: "Promotion Ready",
   promoted: "Promoted", failed: "Failed", cancelled: "Cancelled", archived: "Archived",
 };
 

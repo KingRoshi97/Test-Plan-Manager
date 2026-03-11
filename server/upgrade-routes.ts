@@ -541,7 +541,7 @@ export function registerUpgradeRoutes(app: Express) {
         .where(eq(upgradePlans.id, plans[0].id));
 
       await db.update(upgradeSessions)
-        .set({ status: "executing", updatedAt: new Date() })
+        .set({ status: "approved", updatedAt: new Date() })
         .where(eq(upgradeSessions.id, sessionId));
 
       await recordEvent(Number(req.params.assemblyId), "plan_approved", {
