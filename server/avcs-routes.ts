@@ -72,11 +72,9 @@ export function registerAVCSRoutes(app: Express): void {
       res.json({ ...run, status: "running" });
 
       setImmediate(() => {
-        try {
-          executeRun(certRunId);
-        } catch (err: any) {
+        executeRun(certRunId).catch((err: any) => {
           console.error(`[AVCS] Run ${certRunId} failed:`, err.message);
-        }
+        });
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
