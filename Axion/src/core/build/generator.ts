@@ -808,7 +808,44 @@ export async function fixUnitsFromFindings(
   const unitResults: FixUnitResult[] = [];
   let totalProcessed = 0;
 
-  const unitsToProcess = gsePlan.build_units.filter(u => unitIdSet.has(u.id));
+  let unitsToProcess = gsePlan.build_units.filter(u => unitIdSet.has(u.id));
+
+  if (unitsToProcess.length === 0 && fileRemediationContext.size > 0) {
+    console.log(`  [BA-REMEDIATION] No GSE build units matched — constructing synthetic units from affected files`);
+
+    const filesByUnit = new Map<string, string[]>();
+    for (const filePath of fileRemediationContext.keys()) {
+      let assignedUnit: string | null = null;
+      for (const uid of unitIds) {
+        if (!filesByUnit.has(uid)) filesByUnit.set(uid, []);
+      }
+      for (const uid of unitIds) {
+        assignedUnit = uid;
+        break;
+      }
+      if (!assignedUnit) assignedUnit = "remediation-direct-files";
+      const existing = filesByUnit.get(assignedUnit) || [];
+      existing.push(filePath);
+      filesByUnit.set(assignedUnit, existing);
+    }
+
+    for (const [unitId, filePaths] of filesByUnit) {
+      if (filePaths.length === 0) continue;
+      unitsToProcess.push({
+        id: unitId,
+        unit_type: "remediation" as any,
+        name: `Remediation: ${unitId}`,
+        file_ids: filePaths,
+        dependency_unit_ids: [],
+        source_refs: [],
+        context_capsule: undefined as any,
+      });
+      for (const fp of filePaths) {
+        fileIdToPath.set(fp, fp);
+      }
+    }
+  }
+
   const totalFiles = unitsToProcess.reduce((sum, u) => sum + u.file_ids.length, 0);
   console.log(`  [BA-REMEDIATION] Processing ${unitsToProcess.length} units (${totalFiles} files) for targeted fix`);
 

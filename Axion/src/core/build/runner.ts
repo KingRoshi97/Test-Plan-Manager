@@ -584,8 +584,19 @@ export async function remediateFromReport(
   result.remediationLog.certRunId = report.run_id || "";
 
   const manifest = report.remediation_manifest;
-  if (!manifest || !manifest.affected_unit_ids || manifest.affected_unit_ids.length === 0) {
-    result.errors.push("No remediation manifest or no affected units found in report");
+  if (!manifest) {
+    result.errors.push("No remediation manifest found in report");
+    return result;
+  }
+
+  if ((!manifest.affected_unit_ids || manifest.affected_unit_ids.length === 0) &&
+      manifest.directly_affected_files && manifest.directly_affected_files.length > 0) {
+    console.log(`  [BA-REMEDIATION] Manifest has 0 unit IDs but ${manifest.directly_affected_files.length} affected files — synthesizing unit`);
+    manifest.affected_unit_ids = ["remediation-direct-files"];
+  }
+
+  if (!manifest.affected_unit_ids || manifest.affected_unit_ids.length === 0) {
+    result.errors.push("No affected units or files found in remediation manifest");
     return result;
   }
 
@@ -596,9 +607,9 @@ export async function remediateFromReport(
   let gsePlan: GenerationStrategyPlan;
   try {
     gsePlan = JSON.parse(fs.readFileSync(gsePath, "utf-8"));
-  } catch (err: any) {
-    result.errors.push(`Failed to read GSE strategy: ${err.message}`);
-    return result;
+  } catch {
+    console.log(`  [BA-REMEDIATION] No GSE strategy found — using minimal structure for direct file remediation`);
+    gsePlan = { build_units: [], strategies: [] } as any;
   }
 
   let findings = report.findings || [];

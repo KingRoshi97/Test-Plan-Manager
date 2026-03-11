@@ -448,6 +448,32 @@ export function computeRemediationManifest(
     });
   }
 
+  if (affectedUnitIds.size === 0 && directlyAffectedFiles.size > 0) {
+    const buildPlanPath = path.join(buildDir, "build_plan.json");
+    const buildPlan = readJsonFile<any>(buildPlanPath);
+    if (buildPlan?.slices && Array.isArray(buildPlan.slices)) {
+      const fileToSlice = new Map<string, string>();
+      for (const slice of buildPlan.slices) {
+        const sliceId = slice.sliceId || slice.id || `slice-${slice.name || "unknown"}`;
+        for (const f of (slice.files || [])) {
+          fileToSlice.set(f.relativePath, sliceId);
+        }
+      }
+
+      for (const affectedFile of directlyAffectedFiles) {
+        const sliceId = fileToSlice.get(affectedFile);
+        if (sliceId) {
+          affectedUnitIds.add(sliceId);
+        }
+      }
+
+      if (affectedUnitIds.size === 0) {
+        const syntheticId = "remediation-direct-files";
+        affectedUnitIds.add(syntheticId);
+      }
+    }
+  }
+
   const totalPlannedFiles = loadPlanFiles(buildDir).length || 1;
 
   return {
