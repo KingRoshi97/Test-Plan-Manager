@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useCallback, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { GlassPanel } from "../ui/glass-panel";
@@ -15,7 +15,9 @@ type PreviewStatusKind =
   | "preparing"
   | "ready"
   | "failed"
-  | "expired";
+  | "expired"
+  | "uncompiled"
+  | "compiling";
 
 interface AssemblyPreviewStatus {
   status: PreviewStatusKind;
@@ -29,6 +31,8 @@ interface AssemblyPreviewStatus {
   embeddable?: boolean;
   environment?: string | null;
   error?: string | null;
+  compileProgress?: string | null;
+  compileError?: string | null;
 }
 
 interface AssemblyPreviewTabProps {
@@ -41,10 +45,11 @@ export function AssemblyPreviewTab({ assemblyId, runId, pipelineStatus }: Assemb
   const [deviceMode, setDeviceMode] = useState<PreviewDeviceMode>("desktop");
   const [reloadNonce, setReloadNonce] = useState(0);
   const [frameState, setFrameState] = useState<PreviewFrameState>("idle");
+  const queryClient = useQueryClient();
 
   const shouldPoll = (data: AssemblyPreviewStatus | undefined) => {
     if (!data) return false;
-    if (data.status === "building" || data.status === "preparing") return true;
+    if (data.status === "building" || data.status === "preparing" || data.status === "compiling") return true;
     if (pipelineStatus === "running") return true;
     return false;
   };
@@ -59,6 +64,32 @@ export function AssemblyPreviewTab({ assemblyId, runId, pipelineStatus }: Assemb
     refetchInterval: (query) => shouldPoll(query.state.data) ? 2000 : false,
     enabled: !!assemblyId,
   });
+
+  const compileMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/assemblies/${assemblyId}/preview/compile`, { method: "POST" });
+      if (!res.ok) throw new Error(`Failed to start compilation: ${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Compilation started");
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId, "preview"] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to start compilation");
+    },
+  });
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === "axion-compile-preview") {
+        compileMutation.mutate();
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [compileMutation]);
 
   const handleRefreshState = useCallback(() => {
     refetch();
@@ -92,6 +123,10 @@ export function AssemblyPreviewTab({ assemblyId, runId, pipelineStatus }: Assemb
   const handleFrameError = useCallback(() => {
     setFrameState("error");
   }, []);
+
+  const handleCompile = useCallback(() => {
+    compileMutation.mutate();
+  }, [compileMutation]);
 
   if (isLoading) {
     return (
@@ -176,6 +211,84 @@ export function AssemblyPreviewTab({ assemblyId, runId, pipelineStatus }: Assemb
           description="The build is complete. Preparing the preview environment..."
         />
       </>
+    );
+  }
+
+  if (status === "compiling") {
+    return (
+      <>
+        <PreviewToolbar
+          status={status}
+          runId={data?.runId}
+          previewUrl={data?.previewUrl}
+          deviceMode={deviceMode}
+          onSetDeviceMode={setDeviceMode}
+          onRefreshState={handleRefreshState}
+          onReloadFrame={handleReloadFrame}
+          onOpenExternal={handleOpenExternal}
+          onCopyLink={handleCopyLink}
+          busy={isFetching}
+        />
+        <PreviewStateCard
+          variant="compiling"
+          title="Compiling Project"
+          description={data?.compileProgress || "Installing dependencies and building the project..."}
+        />
+      </>
+    );
+  }
+
+  if (status === "uncompiled") {
+    return (
+      <div className="space-y-3">
+        <PreviewToolbar
+          status={status}
+          runId={data?.runId}
+          previewUrl={data?.previewUrl}
+          deviceMode={deviceMode}
+          onSetDeviceMode={setDeviceMode}
+          onRefreshState={handleRefreshState}
+          onReloadFrame={handleReloadFrame}
+          onOpenExternal={handleOpenExternal}
+          onCopyLink={handleCopyLink}
+          busy={isFetching}
+        />
+        {data?.compileError && (
+          <GlassPanel glow="red" solid className="p-4">
+            <p className="text-sm text-[hsl(var(--status-failure))] font-medium mb-1">Previous compilation failed</p>
+            <pre className="text-xs text-[hsl(var(--muted-foreground))] font-mono-tech whitespace-pre-wrap max-h-32 overflow-y-auto">{data.compileError}</pre>
+          </GlassPanel>
+        )}
+        <div className="grid grid-cols-[1fr_280px] gap-3">
+          <GlassPanel solid className="p-0 overflow-hidden">
+            <iframe
+              src={data?.previewUrl || ""}
+              className="w-full min-h-[70vh] border-0"
+              style={{ backgroundColor: "#0c1222" }}
+              onLoad={handleFrameLoad}
+            />
+          </GlassPanel>
+          <div className="space-y-3">
+            <GlassPanel glow="amber" solid className="p-4 text-center">
+              <p className="text-sm text-[hsl(var(--muted-foreground))] mb-3">
+                This project contains uncompiled source code.
+              </p>
+              <button
+                onClick={handleCompile}
+                disabled={compileMutation.isPending}
+                className="px-5 py-2.5 rounded-md bg-gradient-to-r from-cyan-500 to-cyan-400 text-[hsl(var(--primary-foreground))] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {compileMutation.isPending ? "Starting..." : "Compile & Preview"}
+              </button>
+            </GlassPanel>
+            <PreviewMetaPanel
+              assemblyId={assemblyId}
+              data={data ?? null}
+              frameState={frameState}
+            />
+          </div>
+        </div>
+      </div>
     );
   }
 

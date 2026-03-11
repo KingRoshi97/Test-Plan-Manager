@@ -7,6 +7,7 @@ import {
   Timer,
   WifiOff,
   ExternalLink,
+  Hammer,
 } from "lucide-react";
 import { GlassPanel } from "../ui/glass-panel";
 
@@ -17,7 +18,9 @@ type PreviewStateVariant =
   | "failed"
   | "expired"
   | "loadError"
-  | "nonEmbeddable";
+  | "nonEmbeddable"
+  | "uncompiled"
+  | "compiling";
 
 interface PreviewStateCardProps {
   variant: PreviewStateVariant;
@@ -34,6 +37,8 @@ const iconMap: Record<PreviewStateVariant, typeof Monitor> = {
   expired: Timer,
   loadError: WifiOff,
   nonEmbeddable: ExternalLink,
+  uncompiled: Hammer,
+  compiling: Loader2,
 };
 
 const glowMap: Record<PreviewStateVariant, "none" | "cyan" | "amber" | "red" | "violet"> = {
@@ -44,6 +49,8 @@ const glowMap: Record<PreviewStateVariant, "none" | "cyan" | "amber" | "red" | "
   expired: "violet",
   loadError: "red",
   nonEmbeddable: "amber",
+  uncompiled: "amber",
+  compiling: "cyan",
 };
 
 const iconColorMap: Record<PreviewStateVariant, string> = {
@@ -54,13 +61,15 @@ const iconColorMap: Record<PreviewStateVariant, string> = {
   expired: "text-[hsl(var(--status-intelligence))]",
   loadError: "text-[hsl(var(--status-failure))]",
   nonEmbeddable: "text-[hsl(var(--status-warning))]",
+  uncompiled: "text-[hsl(var(--status-warning))]",
+  compiling: "text-[hsl(var(--status-processing))]",
 };
 
 export function PreviewStateCard({ variant, title, description, actions }: PreviewStateCardProps) {
   const Icon = iconMap[variant];
   const glow = glowMap[variant];
   const iconColor = iconColorMap[variant];
-  const isAnimated = variant === "building";
+  const isAnimated = variant === "building" || variant === "compiling";
 
   return (
     <div className="flex items-center justify-center min-h-[50vh]">

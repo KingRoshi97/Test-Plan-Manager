@@ -7,6 +7,8 @@ import { getStageOrder, getStageGates, getGatesRequired, getStageNames } from ".
 import { registerMusRoutes } from "./mus-routes.js";
 import { registerAVCSRoutes } from "./avcs-routes.js";
 import { registerAnalyticsRoutes } from "./analytics/analytics-routes.js";
+import { startCompilation, getCompilationStatus } from "./preview-compiler.js";
+import { generateProjectOverview } from "./preview-overview.js";
 import fs from "fs";
 import path from "path";
 import archiver from "archiver";
@@ -4558,29 +4560,12 @@ export function registerRoutes(app: Express) {
 
       if (buildStatus === "passed" || buildStatus === "exported" || buildStatus === "completed") {
         const repoDir = path.join(buildDir, "repo");
-        const indexPath = path.join(repoDir, "index.html");
+        const distDir = path.join(repoDir, "dist");
 
-        if (fs.existsSync(indexPath)) {
-          const previewUrl = `/api/preview/${runId}/index.html`;
-          return res.json({
-            status: "ready",
-            runId,
-            buildStatus,
-            previewUrl,
-            entryUrl: previewUrl,
-            updatedAt: assembly.updatedAt,
-            generatedAt: now,
-            embeddable: true,
-            environment: manifest.environment || "production",
-            error: null,
-          });
-        }
-
-        if (fs.existsSync(repoDir)) {
-          const files = fs.readdirSync(repoDir);
-          const htmlFile = files.find((f: string) => f.endsWith(".html"));
-          if (htmlFile) {
-            const previewUrl = `/api/preview/${runId}/${htmlFile}`;
+        if (fs.existsSync(distDir)) {
+          const distIndex = path.join(distDir, "index.html");
+          if (fs.existsSync(distIndex)) {
+            const previewUrl = `/api/preview/${runId}/dist/index.html`;
             return res.json({
               status: "ready",
               runId,
@@ -4596,6 +4581,75 @@ export function registerRoutes(app: Express) {
           }
         }
 
+        const compilationStatus = getCompilationStatus(runId);
+        if (compilationStatus.status === "installing" || compilationStatus.status === "compiling") {
+          return res.json({
+            status: "compiling",
+            runId,
+            buildStatus,
+            previewUrl: null,
+            entryUrl: null,
+            updatedAt: assembly.updatedAt,
+            generatedAt: now,
+            embeddable: false,
+            environment: manifest.environment || "production",
+            error: null,
+            compileProgress: compilationStatus.progress,
+          });
+        }
+
+        if (compilationStatus.status === "failed") {
+          return res.json({
+            status: "uncompiled",
+            runId,
+            buildStatus,
+            previewUrl: `/api/preview/${runId}/_overview`,
+            entryUrl: null,
+            updatedAt: assembly.updatedAt,
+            generatedAt: now,
+            embeddable: true,
+            environment: manifest.environment || "production",
+            error: null,
+            compileError: compilationStatus.error,
+          });
+        }
+
+        const indexPath = path.join(repoDir, "index.html");
+        if (fs.existsSync(indexPath)) {
+          const indexContent = fs.readFileSync(indexPath, "utf-8");
+          const hasScriptTag = /<script\b/i.test(indexContent);
+          if (hasScriptTag) {
+            const previewUrl = `/api/preview/${runId}/index.html`;
+            return res.json({
+              status: "ready",
+              runId,
+              buildStatus,
+              previewUrl,
+              entryUrl: previewUrl,
+              updatedAt: assembly.updatedAt,
+              generatedAt: now,
+              embeddable: true,
+              environment: manifest.environment || "production",
+              error: null,
+            });
+          }
+        }
+
+        if (fs.existsSync(repoDir) && fs.existsSync(path.join(repoDir, "package.json"))) {
+          return res.json({
+            status: "uncompiled",
+            runId,
+            buildStatus,
+            previewUrl: `/api/preview/${runId}/_overview`,
+            entryUrl: null,
+            updatedAt: assembly.updatedAt,
+            generatedAt: now,
+            embeddable: true,
+            environment: manifest.environment || "production",
+            error: null,
+          });
+        }
+
         return res.json({
           status: "none",
           runId,
@@ -4606,7 +4660,7 @@ export function registerRoutes(app: Express) {
           generatedAt: now,
           embeddable: false,
           environment: manifest.environment || "production",
-          error: "No previewable HTML files found in build output",
+          error: "No previewable files found in build output",
         });
       }
 
@@ -4666,6 +4720,44 @@ export function registerRoutes(app: Express) {
       }
 
       return res.json({ status: "none", runId, buildStatus, previewUrl: null, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: false, environment: null, error: null });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/assemblies/:id/preview/compile", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+
+      const runId = assembly.runId;
+      if (!runId) return res.status(400).json({ error: "No completed run" });
+
+      const repoDir = path.join(AXION_RUNS, runId, "build", "repo");
+      if (!fs.existsSync(repoDir)) return res.status(400).json({ error: "No build repo found" });
+
+      const status = startCompilation(runId, repoDir);
+      res.json(status);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/preview/:runId/_overview", (req: Request, res: Response) => {
+    try {
+      const runId = String(req.params.runId);
+      if (/[^a-zA-Z0-9_\-]/.test(runId)) {
+        return res.status(400).json({ error: "Invalid run ID" });
+      }
+      const repoDir = path.resolve(AXION_RUNS, runId, "build", "repo");
+      const buildDir = path.resolve(AXION_RUNS, runId, "build");
+      if (!fs.existsSync(repoDir)) {
+        return res.status(404).json({ error: "Repository not found" });
+      }
+      const html = generateProjectOverview(runId, repoDir, buildDir);
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.send(html);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

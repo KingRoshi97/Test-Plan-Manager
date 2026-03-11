@@ -5,7 +5,7 @@ import {
 import { StatusChip, type StatusVariant } from "../ui/status-chip";
 import { GlassPanel } from "../ui/glass-panel";
 
-type PreviewStatusKind = "none" | "building" | "preparing" | "ready" | "failed" | "expired";
+type PreviewStatusKind = "none" | "building" | "preparing" | "ready" | "failed" | "expired" | "uncompiled" | "compiling";
 type PreviewDeviceMode = "desktop" | "tablet" | "mobile";
 
 interface PreviewToolbarProps {
@@ -28,6 +28,8 @@ const statusBadgeMap: Record<PreviewStatusKind, { variant: StatusVariant; label:
   ready: { variant: "success", label: "Ready" },
   failed: { variant: "failure", label: "Failed" },
   expired: { variant: "intelligence", label: "Expired" },
+  uncompiled: { variant: "warning", label: "Uncompiled" },
+  compiling: { variant: "processing", label: "Compiling", pulse: true },
 };
 
 const deviceModes: { mode: PreviewDeviceMode; icon: typeof Monitor; label: string }[] = [
