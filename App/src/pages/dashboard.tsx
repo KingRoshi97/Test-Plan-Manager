@@ -247,7 +247,7 @@ export default function DashboardPage() {
           value={running}
           accent={running > 0 ? "cyan" : "default"}
           subtitle={running > 0 ? `${activeRuns[0]?.currentStep || "processing"}` : queued > 0 ? `${queued} queued` : "idle"}
-          onClick={() => setLocation("/runs")}
+          onClick={() => setLocation("/assemblies")}
         />
         <MetricCard
           icon={XCircle}
@@ -255,7 +255,7 @@ export default function DashboardPage() {
           value={failed}
           accent={failed > 0 ? "red" : "default"}
           subtitle={stats ? `${stats.recentFailureRate}% failure rate` : latestFailed?.error ? latestFailed.error.substring(0, 30) + (latestFailed.error.length > 30 ? "…" : "") : "none"}
-          onClick={() => setLocation("/runs")}
+          onClick={() => setLocation("/assemblies")}
         />
         <MetricCard
           icon={CheckCircle2}
@@ -541,7 +541,7 @@ export default function DashboardPage() {
               label: "Review Failures",
               icon: AlertTriangle,
               desc: `${failed} failed run${failed !== 1 ? "s" : ""}`,
-              href: "/runs",
+              href: "/assemblies",
               accent: "default" as const,
             },
             {
@@ -590,10 +590,10 @@ export default function DashboardPage() {
               <span className="text-sm font-semibold text-[hsl(var(--foreground))]">Recent Output</span>
             </div>
             <button
-              onClick={() => setLocation("/runs")}
+              onClick={() => setLocation("/assemblies")}
               className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline"
             >
-              View All Runs
+              View All Assemblies
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>

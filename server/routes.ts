@@ -94,7 +94,7 @@ export function registerRoutes(app: Express) {
     if (!assembly) return res.status(404).json({ error: "Not found" });
     if (assembly.status === "running") return res.status(409).json({ error: "Cannot update while running" });
 
-    const allowedFields = ["projectName", "idea", "preset", "intakePayload", "config"];
+    const allowedFields = ["projectName", "idea", "preset", "intakePayload", "config", "familyId", "familyName", "familyType", "lifecycleState", "ownerName", "teamName", "usageState"];
     const update: Record<string, any> = {};
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) update[key] = req.body[key];

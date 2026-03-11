@@ -5,7 +5,7 @@ import { apiRequest } from "../lib/queryClient";
 import {
   Crosshair,
   Plus,
-  List,
+  Boxes,
   Wrench,
   FolderOpen,
   Blocks,
@@ -220,11 +220,11 @@ export function AppSidebar() {
     title: "Core Ops",
     items: [
       { href: "/", label: "Command Center", icon: Crosshair },
-      { href: "/new", label: "New Run", icon: Plus },
+      { href: "/new", label: "New Assembly", icon: Plus },
       {
-        href: "/runs",
-        label: "Runs",
-        icon: List,
+        href: "/assemblies",
+        label: "Assemblies",
+        icon: Boxes,
         badge: activeRuns || undefined,
         badgeVariant: "cyan",
       },

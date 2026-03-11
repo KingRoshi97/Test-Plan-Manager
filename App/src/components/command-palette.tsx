@@ -6,7 +6,7 @@ import { apiRequest } from "../lib/queryClient";
 import {
   Crosshair,
   Plus,
-  List,
+  Boxes,
   FolderOpen,
   Heart,
   ScrollText,
@@ -120,10 +120,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     Command Center
                   </CommandItem>
                   <CommandItem icon={Plus} onSelect={() => navigate("/new")}>
-                    New Run
+                    New Assembly
                   </CommandItem>
-                  <CommandItem icon={List} onSelect={() => navigate("/runs")}>
-                    Runs
+                  <CommandItem icon={Boxes} onSelect={() => navigate("/assemblies")}>
+                    Assemblies
                   </CommandItem>
                   <CommandItem icon={FolderOpen} onSelect={() => navigate("/files")}>
                     Artifacts
@@ -155,7 +155,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   className="[&_[cmdk-group-heading]]:text-system-label [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5"
                 >
                   <CommandItem icon={Plus} onSelect={() => navigate("/new")}>
-                    Start New Run
+                    Start New Assembly
                   </CommandItem>
                   {latestAssembly && (
                     <CommandItem icon={Wrench} onSelect={() => navigate(`/assembly/${latestAssembly.id}`)}>
@@ -163,7 +163,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     </CommandItem>
                   )}
                   {failedAssemblies.length > 0 && (
-                    <CommandItem icon={AlertTriangle} onSelect={() => navigate("/runs")}>
+                    <CommandItem icon={AlertTriangle} onSelect={() => navigate("/assemblies")}>
                       Review Failures ({failedAssemblies.length})
                     </CommandItem>
                   )}

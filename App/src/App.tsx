@@ -1,7 +1,7 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { AppShell } from "./components/layout/AppShell";
 import DashboardPage from "./pages/dashboard";
-import RunsPage from "./pages/runs";
+import AssembliesPage from "./pages/assemblies";
 import NewAssemblyPage from "./pages/new-assembly";
 import AssemblyPage from "./pages/assembly";
 import FilesPage from "./pages/files";
@@ -39,7 +39,8 @@ export default function App() {
         <Route path="/" component={DashboardPage} />
         <Route path="/library-control" component={LibraryControlCenterPage} />
         <Route path="/knowledge" component={LibraryControlCenterPage} />
-        <Route path="/runs" component={RunsPage} />
+        <Route path="/assemblies" component={AssembliesPage} />
+        <Route path="/runs"><Redirect to="/assemblies" /></Route>
         <Route path="/new" component={NewAssemblyPage} />
         <Route path="/assembly/:id" component={AssemblyPage} />
         <Route path="/features" component={FeaturesPage} />

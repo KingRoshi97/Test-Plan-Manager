@@ -28,7 +28,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" â€
 
 **Grouped Sidebar** (`App/src/components/app-sidebar.tsx`):
 - AXION branding header with gradient AX logo
-- 4 collapsible groups: Core Ops (Command Center, New Run, Runs, Artifacts, Certification), Intelligence (Capabilities, Doc Inventory, Library Control with 15 sub-items), System (Analytics Engine, Health, Logs, Maintenance), Output (Export)
+- 4 collapsible groups: Core Ops (Command Center, New Assembly, Assemblies, Artifacts, Certification), Intelligence (Capabilities, Doc Inventory, Library Control with 15 sub-items), System (Analytics Engine, Health, Logs, Maintenance), Output (Export)
 - Library Control label is a clickable nav link â†’ `/library-control` (Library Control Center); chevron toggle separately expands/collapses sub-library list
 - Library Control sub-group auto-expands when any library route is active; `/knowledge` also routes to Library Control Center
 - Live badge counts (active runs count with cyan badge)
@@ -57,7 +57,15 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" â€
 - Row 4: Recent Output strip (horizontal scroll of completed run cards with preset, duration, verification status, StageRail)
 - Fetches `/api/health` for system stats, `/api/assemblies` with 5s polling; no All Runs table (moved to /runs page)
 
-**Runs Page** (`App/src/pages/runs.tsx`): Fleet management page at `/runs` with status filter chips (All/Active/Completed/Failed/Queued), premium glass-panel table with StatusChip + StageRail columns, clickable rows navigate to Workbench, delete actions, empty state with filter-aware messaging.
+**Assemblies Page** (`App/src/pages/assemblies.tsx`): Full fleet management page at `/assemblies` (redirect from `/runs`). Features:
+- Header: "Assemblies" title, "Track, organize, and operate all assemblies across the system" subtitle, "New Assembly" CTA
+- Primary filter chips: All/Running/Completed/Failed/Queued with live counts
+- Secondary filter dropdowns: All Lifecycle (draft/active/in_use/degraded/deprecated/archived), All Families (dynamic + Unassigned), All Owners (dynamic + Unowned)
+- Overview cards strip: Total/Running/Failed/In Use/Unowned/Families â€” clickable to set filters
+- Table columns: Assembly (name + idea + preset tag), Status (StatusChip + stall warnings), Family (familyName + familyType), Lifecycle (StatusChip-style badge), Usage (color-coded badge: live/warm/idle/dormant), Owner (ownerName + teamName), Pipeline (StageRail), Elapsed, Duration, Updated, Actions
+- Responsive hiding: Family/Lifecycle on md+, Usage/Owner on lg+, Elapsed/Duration/Updated on xl+
+- New assembly data model fields: familyId, familyName, familyType, lifecycleState (default "draft"), ownerName, teamName, usageState, lastActivityAt
+- PATCH /api/assemblies/:id accepts new metadata fields (familyId, familyName, familyType, lifecycleState, ownerName, teamName, usageState); lastActivityAt is server-managed
 
 **Workbench** (`App/src/pages/assembly.tsx`): Full operational console at `/assembly/:id`:
 - Hero header in GlassPanel with project name, StatusChip, run ID badge, duration, action buttons (Run/Stop/Kit)

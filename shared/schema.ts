@@ -22,6 +22,14 @@ export const assemblies = pgTable("assemblies", {
   totalDurationMs: integer("total_duration_ms").default(0),
   intakePayload: jsonb("intake_payload"),
   buildTokenUsage: jsonb("build_token_usage"),
+  familyId: varchar("family_id", { length: 50 }),
+  familyName: varchar("family_name", { length: 100 }),
+  familyType: varchar("family_type", { length: 50 }),
+  lifecycleState: varchar("lifecycle_state", { length: 20 }).default("draft"),
+  ownerName: varchar("owner_name", { length: 100 }),
+  teamName: varchar("team_name", { length: 100 }),
+  usageState: varchar("usage_state", { length: 20 }),
+  lastActivityAt: timestamp("last_activity_at"),
 });
 
 export const pipelineRuns = pgTable("pipeline_runs", {
