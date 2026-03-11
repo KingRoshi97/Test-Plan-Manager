@@ -91,6 +91,26 @@ export const TOOL_REGISTRY: AVCSToolDefinition[] = [
     domains: ["ACCESSIBILITY"],
     defaultTimeoutSeconds: 60,
   },
+  {
+    id: "pa11y",
+    name: "Pa11y",
+    category: "ACCESSIBILITY",
+    officialSource: "https://github.com/pa11y/pa11y",
+    installMethod: "npm",
+    allowedRunTypes: ["full_certification"],
+    domains: ["ACCESSIBILITY"],
+    defaultTimeoutSeconds: 60,
+  },
+  {
+    id: "dependency-check",
+    name: "OWASP Dependency-Check",
+    category: "SECURITY",
+    officialSource: "https://github.com/jeremylong/DependencyCheck",
+    installMethod: "binary",
+    allowedRunTypes: ["security", "full_certification"],
+    domains: ["SECURITY"],
+    defaultTimeoutSeconds: 300,
+  },
 ];
 
 export function resolveTool(toolId: string): AVCSToolDefinition {

@@ -29,6 +29,8 @@ import {
   DOMAIN_WEIGHTS as weights,
   RUN_TYPE_DOMAINS as runTypeDomains,
 } from "./types.js";
+import { buildTestPlan } from "./test-plan-builder.js";
+import { getAdapterStatus } from "./tool-adapters.js";
 
 const AXION_ROOT = path.resolve(
   fs.existsSync(path.join(process.cwd(), "Axion")) ? path.join(process.cwd(), "Axion") : process.cwd()
@@ -81,7 +83,7 @@ export function planRun(
   return run;
 }
 
-export function executeRun(certRunId: string): CertificationReport | null {
+export async function executeRun(certRunId: string): Promise<CertificationReport | null> {
   const store = getStore();
   const run = store.getRun(certRunId);
   if (!run) {
@@ -192,6 +194,15 @@ export function executeRun(certRunId: string): CertificationReport | null {
     finalVerdict = anyBlocked ? "BLOCKED" : "FAIL";
   }
 
+  let testPlan;
+  let adapterStatusList;
+  try {
+    testPlan = buildTestPlan(run.run_type, { mvpOnly: true });
+    adapterStatusList = await getAdapterStatus();
+  } catch (e) {
+    console.log(`[AVCS] Warning: Could not build test plan or adapter status: ${e}`);
+  }
+
   const report: CertificationReport = {
     id: `RPT-${certRunId}`,
     cert_run_id: certRunId,
@@ -207,6 +218,8 @@ export function executeRun(certRunId: string): CertificationReport | null {
     hard_stop_failures: hardStops,
     evidence_manifest: allEvidence.map(e => e.id),
     remediation_manifest: remediationManifest,
+    test_plan: testPlan,
+    adapter_status: adapterStatusList,
     created_at: new Date().toISOString(),
   };
 

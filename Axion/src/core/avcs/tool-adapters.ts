@@ -6,6 +6,16 @@ import type {
   ToolAvailability,
 } from "./types.js";
 import { TOOL_REGISTRY, resolveTool } from "./tool-registry.js";
+import { SemgrepAdapter } from "./adapters/semgrep-adapter.js";
+import { LighthouseAdapter } from "./adapters/lighthouse-adapter.js";
+import { AxeAdapter } from "./adapters/axe-adapter.js";
+import { PlaywrightAdapter } from "./adapters/playwright-adapter.js";
+import { TrivyAdapter } from "./adapters/trivy-adapter.js";
+import { ZapAdapter } from "./adapters/zap-adapter.js";
+import { K6Adapter } from "./adapters/k6-adapter.js";
+import { BackstopAdapter } from "./adapters/backstop-adapter.js";
+import { PallyAdapter } from "./adapters/pally-adapter.js";
+import { DepCheckAdapter } from "./adapters/depcheck-adapter.js";
 
 class InternalAdapter implements AVCSToolAdapter {
   id = "internal-adapter";
@@ -40,45 +50,23 @@ class InternalAdapter implements AVCSToolAdapter {
   }
 }
 
-class StubAdapter implements AVCSToolAdapter {
-  id: string;
-  toolId: string;
-  private toolName: string;
-
-  constructor(toolId: string) {
-    this.toolId = toolId;
-    this.id = `${toolId}-adapter`;
-    const tool = TOOL_REGISTRY.find(t => t.id === toolId);
-    this.toolName = tool?.name ?? toolId;
-  }
-
-  async isAvailable(): Promise<boolean> {
-    return false;
-  }
-
-  async execute(test: AVCSTestDefinition, context: ToolAdapterContext): Promise<AVCSTestResult> {
-    return {
-      testId: test.id,
-      toolId: this.toolId,
-      status: "not_available",
-      message: `${this.toolName} not installed — using internal fallback`,
-      score: 0,
-      durationMs: 0,
-      evidence: {
-        adapter: this.id,
-        toolId: this.toolId,
-        reason: "stub_adapter",
-        installHint: `Install ${this.toolName} from ${TOOL_REGISTRY.find(t => t.id === this.toolId)?.officialSource ?? "unknown"}`,
-      },
-    };
-  }
-}
-
 const adapterCache = new Map<string, AVCSToolAdapter>();
 
 function createAdapter(toolId: string): AVCSToolAdapter {
-  if (toolId === "internal") return new InternalAdapter();
-  return new StubAdapter(toolId);
+  switch (toolId) {
+    case "internal": return new InternalAdapter();
+    case "semgrep": return new SemgrepAdapter();
+    case "lighthouse": return new LighthouseAdapter();
+    case "axe": return new AxeAdapter();
+    case "playwright": return new PlaywrightAdapter();
+    case "trivy": return new TrivyAdapter();
+    case "zap": return new ZapAdapter();
+    case "k6": return new K6Adapter();
+    case "backstop": return new BackstopAdapter();
+    case "pa11y": return new PallyAdapter();
+    case "dependency-check": return new DepCheckAdapter();
+    default: return new InternalAdapter();
+  }
 }
 
 export function getAdapter(toolId: string): AVCSToolAdapter {

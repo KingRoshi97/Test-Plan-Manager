@@ -7,6 +7,8 @@ import {
   BarChart3, ChevronDown, ChevronRight, Eye, FileText,
   Clock, CheckCircle, XCircle, Loader2, ArrowLeft,
   Filter, Shield, Gauge, Hammer, RefreshCw, List,
+  Monitor, MousePointer, Accessibility, Building2,
+  Rocket, Wrench, Play, Package,
   type LucideIcon,
 } from "lucide-react";
 import { GlassPanel } from "../components/ui/glass-panel";
@@ -41,6 +43,11 @@ function domainIcon(domain: string): LucideIcon {
     case "functional": return Target;
     case "security": return Shield;
     case "performance": return Gauge;
+    case "deployment_readiness": return Rocket;
+    case "ui_quality": return Monitor;
+    case "ux_workflow": return MousePointer;
+    case "accessibility": return Accessibility;
+    case "enterprise_readiness": return Building2;
     default: return Activity;
   }
 }
@@ -51,9 +58,35 @@ function domainLabel(domain: string): string {
     case "functional": return "Functional";
     case "security": return "Security";
     case "performance": return "Performance";
+    case "deployment_readiness": return "Deployment";
+    case "ui_quality": return "UI Quality";
+    case "ux_workflow": return "UX Workflow";
+    case "accessibility": return "Accessibility";
+    case "enterprise_readiness": return "Enterprise";
     default: return domain;
   }
 }
+
+function domainColor(domain: string): string {
+  switch (domain) {
+    case "build_integrity": return "amber";
+    case "functional": return "cyan";
+    case "security": return "red";
+    case "performance": return "green";
+    case "deployment_readiness": return "violet";
+    case "ui_quality": return "cyan";
+    case "ux_workflow": return "green";
+    case "accessibility": return "amber";
+    case "enterprise_readiness": return "violet";
+    default: return "cyan";
+  }
+}
+
+const ALL_DOMAINS = [
+  "build_integrity", "functional", "security", "performance",
+  "deployment_readiness", "ui_quality", "ux_workflow",
+  "accessibility", "enterprise_readiness",
+];
 
 function domainStatusVariant(status: string): StatusVariant {
   switch (status) {
@@ -69,17 +102,79 @@ function domainStatusVariant(status: string): StatusVariant {
 function coverageColor(state: string): string {
   switch (state) {
     case "covered": return "bg-[hsl(var(--status-success)/0.3)] text-[hsl(var(--status-success))]";
+    case "covered_failed": return "bg-[hsl(var(--status-failure)/0.3)] text-[hsl(var(--status-failure))]";
+    case "partial": return "bg-[hsl(var(--status-warning)/0.3)] text-[hsl(var(--status-warning))]";
     case "partially_covered": return "bg-[hsl(var(--status-warning)/0.3)] text-[hsl(var(--status-warning))]";
-    case "failed": return "bg-[hsl(var(--status-failure)/0.3)] text-[hsl(var(--status-failure))]";
-    case "not_tested": return "bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))]";
     case "blocked": return "bg-[hsl(var(--status-failure)/0.15)] text-[hsl(var(--muted-foreground))]";
+    case "not_tested": return "bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))]";
+    case "failed": return "bg-[hsl(var(--status-failure)/0.3)] text-[hsl(var(--status-failure))]";
     default: return "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]";
+  }
+}
+
+function coverageLabel(state: string): string {
+  switch (state) {
+    case "covered": return "Covered";
+    case "covered_failed": return "Failed";
+    case "partial": return "Partial";
+    case "partially_covered": return "Partial";
+    case "blocked": return "Blocked";
+    case "not_tested": return "Not Tested";
+    case "failed": return "Failed";
+    default: return state;
+  }
+}
+
+function evidenceTypeIcon(type: string): LucideIcon {
+  switch (type) {
+    case "log": return FileText;
+    case "metric": return BarChart3;
+    case "finding": return AlertTriangle;
+    case "summary": return List;
+    case "check_result": return CheckCircle;
+    case "screenshot": return Monitor;
+    case "report": return FileText;
+    case "trace": return Activity;
+    default: return FileText;
   }
 }
 
 function formatDate(d?: string): string {
   if (!d) return "-";
   return new Date(d).toLocaleString();
+}
+
+function timeSince(d?: string): string {
+  if (!d) return "N/A";
+  const diff = Date.now() - new Date(d).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function ToolBadge({ toolId }: { toolId: string }) {
+  const toolColors: Record<string, string> = {
+    internal: "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]",
+    semgrep: "bg-green-500/20 text-green-400",
+    lighthouse: "bg-orange-500/20 text-orange-400",
+    playwright: "bg-emerald-500/20 text-emerald-400",
+    trivy: "bg-blue-500/20 text-blue-400",
+    zap: "bg-purple-500/20 text-purple-400",
+    k6: "bg-violet-500/20 text-violet-400",
+    backstop: "bg-pink-500/20 text-pink-400",
+    axe: "bg-cyan-500/20 text-cyan-400",
+    pa11y: "bg-teal-500/20 text-teal-400",
+    "dependency-check": "bg-amber-500/20 text-amber-400",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${toolColors[toolId] || toolColors.internal}`}>
+      <Wrench className="w-2.5 h-2.5" />
+      {toolId}
+    </span>
+  );
 }
 
 function OverviewTab({ onSelectRun }: { onSelectRun: (id: string) => void }) {
@@ -95,22 +190,40 @@ function OverviewTab({ onSelectRun }: { onSelectRun: (id: string) => void }) {
     refetchInterval: 5000,
   });
 
-  const openFindings = runs.reduce((acc: number, r: any) => {
-    if (r.verdict === "FAIL" || r.verdict === "CONDITIONAL_PASS") return acc + 1;
+  const { data: toolStatus } = useQuery<any>({
+    queryKey: ["/api/avcs/tools/status"],
+    queryFn: () => apiRequest("/api/avcs/tools/status"),
+  });
+
+  const completedRuns = runs.filter((r: any) => r.status === "completed");
+  const latestCompleted = completedRuns[0];
+
+  const blockerCount = completedRuns.reduce((acc: number, r: any) => {
+    if (r.verdict === "FAIL" || r.verdict === "BLOCKED") return acc + 1;
     return acc;
   }, 0);
 
-  const avgScore = runs.length > 0
-    ? Math.round(runs.filter((r: any) => r.score != null).reduce((a: number, r: any) => a + (r.score || 0), 0) / Math.max(runs.filter((r: any) => r.score != null).length, 1))
+  const warningCount = completedRuns.reduce((acc: number, r: any) => {
+    if (r.verdict === "PASS_WITH_WARNINGS" || r.verdict === "CONDITIONAL_PASS") return acc + 1;
+    return acc;
+  }, 0);
+
+  const avgScore = completedRuns.length > 0
+    ? Math.round(completedRuns.filter((r: any) => r.score != null).reduce((a: number, r: any) => a + (r.score || 0), 0) / Math.max(completedRuns.filter((r: any) => r.score != null).length, 1))
     : 0;
+
+  const activeDomains = latestCompleted?.domains_evaluated?.length ?? 0;
+  const totalDomains = ALL_DOMAINS.length;
 
   const cards = [
     { label: "Total Runs", value: status?.total_runs ?? 0, icon: Activity, accent: "cyan" as const },
     { label: "Latest Verdict", value: status?.latest_verdict ?? "N/A", icon: ShieldCheck, accent: status?.latest_verdict === "PASS" ? "green" as const : status?.latest_verdict === "FAIL" ? "red" as const : "amber" as const },
-    { label: "Domains Covered", value: 4, icon: Target, accent: "violet" as const },
-    { label: "Runs with Issues", value: openFindings, icon: AlertTriangle, accent: "red" as const },
-    { label: "Average Score", value: avgScore ? `${avgScore}%` : "N/A", icon: BarChart3, accent: "green" as const },
+    { label: "Domains", value: `${activeDomains}/${totalDomains}`, icon: Target, accent: "violet" as const },
+    { label: "Blockers", value: blockerCount, icon: XCircle, accent: blockerCount > 0 ? "red" as const : "green" as const },
+    { label: "Warnings", value: warningCount, icon: AlertTriangle, accent: warningCount > 0 ? "amber" as const : "green" as const },
+    { label: "Avg Score", value: avgScore ? `${avgScore}%` : "N/A", icon: BarChart3, accent: "green" as const },
     { label: "Latest Score", value: status?.latest_score != null ? `${status.latest_score}%` : "N/A", icon: Gauge, accent: "cyan" as const },
+    { label: "Tools Ready", value: toolStatus ? `${toolStatus.summary.available}/${toolStatus.summary.total}` : "...", icon: Wrench, accent: "violet" as const },
   ];
 
   return (
@@ -126,19 +239,56 @@ function OverviewTab({ onSelectRun }: { onSelectRun: (id: string) => void }) {
               <p className="text-xs text-[hsl(var(--muted-foreground))]">Post-build verification, certification & remediation</p>
             </div>
           </div>
-          <StatusChip
-            variant={status?.total_runs > 0 ? "success" : "neutral"}
-            label={status?.total_runs > 0 ? "Operational" : "No Runs"}
-            size="md"
-          />
+          <div className="flex items-center gap-3">
+            {latestCompleted && (
+              <span className="text-xs text-[hsl(var(--muted-foreground))]">
+                Last certified: {timeSince(latestCompleted.completed_at || latestCompleted.created_at)}
+              </span>
+            )}
+            <StatusChip
+              variant={status?.total_runs > 0 ? "success" : "neutral"}
+              label={status?.total_runs > 0 ? "Operational" : "No Runs"}
+              size="md"
+            />
+          </div>
         </div>
       </GlassPanel>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
         {cards.map((c) => (
           <MetricCard key={c.label} icon={c.icon} label={c.label} value={c.value} accent={c.accent} />
         ))}
       </div>
+
+      {latestCompleted && (
+        <GlassPanel solid className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))]">Latest Run Summary</h3>
+            <div className="flex items-center gap-2">
+              <StatusChip variant="processing" label={latestCompleted.run_type} />
+              <StatusChip variant={verdictVariant(latestCompleted.verdict)} label={latestCompleted.verdict || latestCompleted.status} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div>
+              <span className="text-system-label">Run ID</span>
+              <p className="font-mono-tech text-[hsl(var(--foreground))] mt-0.5">{latestCompleted.id}</p>
+            </div>
+            <div>
+              <span className="text-system-label">Assembly</span>
+              <p className="text-[hsl(var(--foreground))] mt-0.5">{latestCompleted.assembly_id}</p>
+            </div>
+            <div>
+              <span className="text-system-label">Score</span>
+              <p className="font-mono-tech text-[hsl(var(--foreground))] mt-0.5">{latestCompleted.score != null ? `${latestCompleted.score}%` : "N/A"}</p>
+            </div>
+            <div>
+              <span className="text-system-label">Completed</span>
+              <p className="text-[hsl(var(--foreground))] mt-0.5">{formatDate(latestCompleted.completed_at || latestCompleted.created_at)}</p>
+            </div>
+          </div>
+        </GlassPanel>
+      )}
 
       <GlassPanel solid className="p-4">
         <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-3">Recent Runs</h3>
@@ -224,7 +374,12 @@ function DomainCard({ domain, expanded, onToggle }: { domain: any; expanded: boo
                 <AlertTriangle className="w-3.5 h-3.5 text-[hsl(var(--status-warning))] mt-0.5 shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <span className="text-[hsl(var(--foreground))]">{check.description}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[hsl(var(--foreground))]">{check.description}</span>
+                  {check.test_id && (
+                    <span className="font-mono-tech text-[10px] px-1 py-0.5 rounded bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))]">{check.test_id}</span>
+                  )}
+                </div>
                 {check.detail && <p className="text-[hsl(var(--muted-foreground))] mt-0.5">{check.detail}</p>}
               </div>
             </div>
@@ -237,6 +392,7 @@ function DomainCard({ domain, expanded, onToggle }: { domain: any; expanded: boo
 
 function FindingRow({ finding, onAcknowledge, onSuppress }: { finding: any; onAcknowledge: () => void; onSuppress: () => void }) {
   const [expanded, setExpanded] = useState(false);
+  const Icon = domainIcon(finding.domain);
 
   return (
     <div className="border-b border-[hsl(var(--glass-border))] last:border-0">
@@ -246,7 +402,10 @@ function FindingRow({ finding, onAcknowledge, onSuppress }: { finding: any; onAc
           <StatusChip variant={severityVariant(finding.severity)} label={finding.severity} />
           <StatusChip variant={finding.impact === "release_blocker" ? "failure" : finding.impact === "conditional_blocker" ? "warning" : "neutral"} label={finding.impact} />
           <span className="text-sm text-[hsl(var(--foreground))] flex-1 truncate">{finding.title}</span>
-          <span className="text-xs text-[hsl(var(--muted-foreground))]">{domainLabel(finding.domain)}</span>
+          <div className="flex items-center gap-1.5">
+            <Icon className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-xs text-[hsl(var(--muted-foreground))]">{domainLabel(finding.domain)}</span>
+          </div>
         </div>
       </button>
       {expanded && (
@@ -273,7 +432,7 @@ function FindingRow({ finding, onAcknowledge, onSuppress }: { finding: any; onAc
 
           {finding.evidence_refs?.length > 0 && (
             <div>
-              <span className="text-system-label text-xs">Evidence</span>
+              <span className="text-system-label text-xs">Evidence ({finding.evidence_refs.length})</span>
               <div className="mt-1 flex flex-wrap gap-1">
                 {finding.evidence_refs.map((ref: string) => (
                   <span key={ref} className="font-mono-tech text-[10px] px-1.5 py-0.5 rounded bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">{ref}</span>
@@ -311,11 +470,99 @@ function FindingRow({ finding, onAcknowledge, onSuppress }: { finding: any; onAc
   );
 }
 
+function TestExecutionView({ certRunId }: { certRunId: string }) {
+  const { data: plan } = useQuery<any>({
+    queryKey: ["/api/avcs/runs", certRunId, "report"],
+    queryFn: () => apiRequest(`/api/avcs/runs/${certRunId}/report`),
+  });
+
+  const testPlan = plan?.test_plan;
+  const adapterStatus = plan?.adapter_status;
+  const domains = plan?.domains || [];
+
+  const allChecks = domains.flatMap((d: any) =>
+    (d.checks || []).map((c: any) => ({ ...c, domain: d.domain }))
+  );
+
+  if (allChecks.length === 0 && !testPlan) {
+    return (
+      <GlassPanel solid className="p-6 text-center">
+        <Play className="w-6 h-6 mx-auto mb-2 text-[hsl(var(--muted-foreground))] opacity-30" />
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">No test execution data available</p>
+      </GlassPanel>
+    );
+  }
+
+  const groupedByDomain = allChecks.reduce((acc: Record<string, any[]>, check: any) => {
+    const d = check.domain || "unknown";
+    if (!acc[d]) acc[d] = [];
+    acc[d].push(check);
+    return acc;
+  }, {});
+
+  return (
+    <div className="space-y-4">
+      {adapterStatus && adapterStatus.length > 0 && (
+        <GlassPanel solid className="p-4">
+          <h4 className="text-xs font-semibold text-[hsl(var(--card-foreground))] mb-2">Tool Status</h4>
+          <div className="flex flex-wrap gap-2">
+            {adapterStatus.map((t: any) => (
+              <div key={t.toolId} className="flex items-center gap-1.5">
+                <ToolBadge toolId={t.toolId} />
+                <StatusChip
+                  variant={t.status === "available" ? "success" : t.status === "error" ? "failure" : "neutral"}
+                  label={t.status}
+                />
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
+      {Object.entries(groupedByDomain).map(([domain, checks]) => {
+        const Icon = domainIcon(domain);
+        return (
+          <GlassPanel key={domain} solid className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Icon className="w-4 h-4 text-[hsl(var(--foreground))]" />
+              <h4 className="text-xs font-semibold text-[hsl(var(--card-foreground))]">{domainLabel(domain)}</h4>
+              <span className="text-[10px] text-[hsl(var(--muted-foreground))]">{checks.length} checks</span>
+            </div>
+            <div className="space-y-1">
+              {checks.map((check: any, i: number) => (
+                <div key={check.check_id || i} className="flex items-center gap-2 text-xs py-1 px-2 rounded hover:bg-[hsl(var(--accent)/0.3)] transition-colors">
+                  {check.result === "pass" ? (
+                    <CheckCircle className="w-3.5 h-3.5 text-[hsl(var(--status-success))] shrink-0" />
+                  ) : check.result === "fail" ? (
+                    <XCircle className="w-3.5 h-3.5 text-[hsl(var(--status-failure))] shrink-0" />
+                  ) : check.result === "skip" ? (
+                    <ChevronRight className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] shrink-0" />
+                  ) : (
+                    <AlertTriangle className="w-3.5 h-3.5 text-[hsl(var(--status-warning))] shrink-0" />
+                  )}
+                  {check.test_id && (
+                    <span className="font-mono-tech text-[10px] px-1 py-0.5 rounded bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))] shrink-0 w-14 text-center">
+                      {check.test_id}
+                    </span>
+                  )}
+                  <span className="text-[hsl(var(--foreground))] flex-1 truncate">{check.description}</span>
+                  <StatusChip variant={domainStatusVariant(check.result)} label={check.result} />
+                </div>
+              ))}
+            </div>
+          </GlassPanel>
+        );
+      })}
+    </div>
+  );
+}
+
 function RunDetailView({ certRunId, onBack }: { certRunId: string; onBack: () => void }) {
   const queryClient = useQueryClient();
   const [expandedDomain, setExpandedDomain] = useState<string | null>(null);
   const [findingSeverityFilter, setFindingSeverityFilter] = useState("");
   const [findingDomainFilter, setFindingDomainFilter] = useState("");
+  const [detailSection, setDetailSection] = useState<"domains" | "tests" | "findings" | "evidence" | "coverage">("domains");
 
   const { data: run, isLoading: runLoading } = useQuery<any>({
     queryKey: ["/api/avcs/runs", certRunId],
@@ -383,6 +630,25 @@ function RunDetailView({ certRunId, onBack }: { certRunId: string; onBack: () =>
 
   const domains = report?.domains || [];
 
+  const blockerFindings = findings.filter((f: any) => f.impact === "release_blocker");
+  const warningFindings = findings.filter((f: any) => f.impact === "warning" || f.impact === "conditional_blocker");
+  const observationFindings = findings.filter((f: any) => f.impact === "observation" || (!f.impact));
+
+  const evidenceByDomain = evidence.reduce((acc: Record<string, any[]>, e: any) => {
+    const d = e.domain || "unknown";
+    if (!acc[d]) acc[d] = [];
+    acc[d].push(e);
+    return acc;
+  }, {});
+
+  const detailSections = [
+    { id: "domains" as const, label: "Domains", count: domains.length },
+    { id: "tests" as const, label: "Tests", count: domains.reduce((a: number, d: any) => a + (d.checks?.length || 0), 0) },
+    { id: "findings" as const, label: "Findings", count: findings.length },
+    { id: "evidence" as const, label: "Evidence", count: evidence.length },
+    { id: "coverage" as const, label: "Coverage", count: coverage.length },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
       <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors">
@@ -428,9 +694,26 @@ function RunDetailView({ certRunId, onBack }: { certRunId: string; onBack: () =>
         </GlassPanel>
       )}
 
-      {domains.length > 0 && (
+      {run.status === "completed" && (
+        <div className="flex gap-1 border-b border-[hsl(var(--glass-border))]">
+          {detailSections.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setDetailSection(s.id)}
+              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
+                detailSection === s.id
+                  ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))]"
+                  : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+              }`}
+            >
+              {s.label} {s.count > 0 && <span className="ml-1 text-[10px] opacity-70">({s.count})</span>}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {detailSection === "domains" && domains.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3">Domain Results</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {domains.map((d: any) => (
               <DomainCard
@@ -444,7 +727,11 @@ function RunDetailView({ certRunId, onBack }: { certRunId: string; onBack: () =>
         </div>
       )}
 
-      {run.status === "completed" && (
+      {detailSection === "tests" && run.status === "completed" && (
+        <TestExecutionView certRunId={certRunId} />
+      )}
+
+      {detailSection === "findings" && run.status === "completed" && (
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Findings ({findings.length})</h3>
@@ -468,34 +755,113 @@ function RunDetailView({ certRunId, onBack }: { certRunId: string; onBack: () =>
                 className="rounded-md border border-[hsl(var(--glass-border))] bg-[hsl(var(--background))] px-2 py-1 text-xs text-[hsl(var(--foreground))]"
               >
                 <option value="">All Domains</option>
-                <option value="build_integrity">Build Integrity</option>
-                <option value="functional">Functional</option>
-                <option value="security">Security</option>
-                <option value="performance">Performance</option>
+                {ALL_DOMAINS.map((d) => (
+                  <option key={d} value={d}>{domainLabel(d)}</option>
+                ))}
               </select>
             </div>
           </div>
-          <GlassPanel solid className="overflow-hidden">
-            {findings.length === 0 ? (
-              <div className="text-center py-8">
-                <CheckCircle className="w-6 h-6 mx-auto mb-2 text-[hsl(var(--status-success))] opacity-50" />
-                <p className="text-sm text-[hsl(var(--muted-foreground))]">No findings match filters</p>
+
+          {blockerFindings.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <XCircle className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
+                <span className="text-xs font-semibold text-[hsl(var(--status-failure))]">Release Blockers ({blockerFindings.length})</span>
               </div>
-            ) : (
-              findings.map((f: any) => (
-                <FindingRow
-                  key={f.id}
-                  finding={f}
-                  onAcknowledge={() => updateFinding.mutate({ findingId: f.id, status: "acknowledged" })}
-                  onSuppress={() => updateFinding.mutate({ findingId: f.id, status: "suppressed" })}
-                />
-              ))
-            )}
-          </GlassPanel>
+              <GlassPanel solid glow="red" className="overflow-hidden">
+                {blockerFindings.map((f: any) => (
+                  <FindingRow
+                    key={f.id}
+                    finding={f}
+                    onAcknowledge={() => updateFinding.mutate({ findingId: f.id, status: "acknowledged" })}
+                    onSuppress={() => updateFinding.mutate({ findingId: f.id, status: "suppressed" })}
+                  />
+                ))}
+              </GlassPanel>
+            </div>
+          )}
+
+          {warningFindings.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-3.5 h-3.5 text-[hsl(var(--status-warning))]" />
+                <span className="text-xs font-semibold text-[hsl(var(--status-warning))]">Warnings ({warningFindings.length})</span>
+              </div>
+              <GlassPanel solid className="overflow-hidden">
+                {warningFindings.map((f: any) => (
+                  <FindingRow
+                    key={f.id}
+                    finding={f}
+                    onAcknowledge={() => updateFinding.mutate({ findingId: f.id, status: "acknowledged" })}
+                    onSuppress={() => updateFinding.mutate({ findingId: f.id, status: "suppressed" })}
+                  />
+                ))}
+              </GlassPanel>
+            </div>
+          )}
+
+          {observationFindings.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Eye className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">Observations ({observationFindings.length})</span>
+              </div>
+              <GlassPanel solid className="overflow-hidden">
+                {observationFindings.map((f: any) => (
+                  <FindingRow
+                    key={f.id}
+                    finding={f}
+                    onAcknowledge={() => updateFinding.mutate({ findingId: f.id, status: "acknowledged" })}
+                    onSuppress={() => updateFinding.mutate({ findingId: f.id, status: "suppressed" })}
+                  />
+                ))}
+              </GlassPanel>
+            </div>
+          )}
+
+          {findings.length === 0 && (
+            <GlassPanel solid className="text-center py-8">
+              <CheckCircle className="w-6 h-6 mx-auto mb-2 text-[hsl(var(--status-success))] opacity-50" />
+              <p className="text-sm text-[hsl(var(--muted-foreground))]">No findings match filters</p>
+            </GlassPanel>
+          )}
         </div>
       )}
 
-      {coverage.length > 0 && (
+      {detailSection === "evidence" && evidence.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3">Evidence ({evidence.length})</h3>
+          {Object.entries(evidenceByDomain).map(([domain, items]) => {
+            const Icon = domainIcon(domain);
+            return (
+              <div key={domain} className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className="w-3.5 h-3.5 text-[hsl(var(--foreground))]" />
+                  <span className="text-xs font-semibold text-[hsl(var(--card-foreground))]">{domainLabel(domain)}</span>
+                  <span className="text-[10px] text-[hsl(var(--muted-foreground))]">{items.length} items</span>
+                </div>
+                <GlassPanel solid className="p-3 space-y-2">
+                  {items.map((e: any) => {
+                    const TypeIcon = evidenceTypeIcon(e.type);
+                    return (
+                      <details key={e.id} className="border-b border-[hsl(var(--glass-border))] last:border-0 pb-2">
+                        <summary className="cursor-pointer text-xs text-[hsl(var(--foreground))] py-1 hover:text-[hsl(var(--primary))] transition-colors flex items-center gap-2">
+                          <TypeIcon className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+                          <span>{e.title}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-[hsl(var(--muted)/0.5)] text-[hsl(var(--muted-foreground))]">{e.type}</span>
+                        </summary>
+                        <pre className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] p-2 rounded overflow-x-auto whitespace-pre-wrap">{e.content}</pre>
+                      </details>
+                    );
+                  })}
+                </GlassPanel>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {detailSection === "coverage" && coverage.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3">Coverage Matrix</h3>
           <GlassPanel solid className="p-4 overflow-x-auto">
@@ -513,31 +879,21 @@ function RunDetailView({ certRunId, onBack }: { certRunId: string; onBack: () =>
                   <tr key={i} className="border-t border-[hsl(var(--glass-border))]">
                     <td className="px-2 py-1.5 text-[hsl(var(--foreground))]">{c.surface_name}</td>
                     <td className="px-2 py-1.5 text-[hsl(var(--muted-foreground))]">{c.surface_type}</td>
-                    <td className="px-2 py-1.5 text-[hsl(var(--muted-foreground))]">{domainLabel(c.domain)}</td>
                     <td className="px-2 py-1.5">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${coverageColor(c.state)}`}>{c.state}</span>
+                      <div className="flex items-center gap-1">
+                        {(() => { const I = domainIcon(c.domain); return <I className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />; })()}
+                        <span className="text-[hsl(var(--muted-foreground))]">{domainLabel(c.domain)}</span>
+                      </div>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${coverageColor(c.state)}`}>
+                        {coverageLabel(c.state)}
+                      </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </GlassPanel>
-        </div>
-      )}
-
-      {evidence.length > 0 && (
-        <div>
-          <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-3">Evidence ({evidence.length})</h3>
-          <GlassPanel solid className="p-4 space-y-2">
-            {evidence.map((e: any) => (
-              <details key={e.id} className="border-b border-[hsl(var(--glass-border))] last:border-0 pb-2">
-                <summary className="cursor-pointer text-xs text-[hsl(var(--foreground))] py-1 hover:text-[hsl(var(--primary))] transition-colors">
-                  <span className="ml-1">[{e.domain}] {e.title}</span>
-                  <span className="text-[hsl(var(--muted-foreground))] ml-2">({e.type})</span>
-                </summary>
-                <pre className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.3)] p-2 rounded overflow-x-auto whitespace-pre-wrap">{e.content}</pre>
-              </details>
-            ))}
           </GlassPanel>
         </div>
       )}
@@ -551,6 +907,16 @@ function ReleaseGateTab({ onSelectRun }: { onSelectRun: (id: string) => void }) 
   const { data: runs = [] } = useQuery<any[]>({
     queryKey: ["/api/avcs/runs"],
     queryFn: () => apiRequest("/api/avcs/runs"),
+  });
+
+  const { data: findings = [] } = useQuery<any[]>({
+    queryKey: ["/api/avcs/latest-findings"],
+    queryFn: async () => {
+      const latestCompleted = runs.find((r: any) => r.status === "completed");
+      if (!latestCompleted) return [];
+      return apiRequest(`/api/avcs/runs/${latestCompleted.id}/findings`);
+    },
+    enabled: runs.length > 0,
   });
 
   const latestCompleted = runs.find((r: any) => r.status === "completed");
@@ -582,6 +948,17 @@ function ReleaseGateTab({ onSelectRun }: { onSelectRun: (id: string) => void }) 
   const needsRemediation = report.verdict === "FAIL" || report.verdict === "CONDITIONAL_PASS" || report.verdict === "PASS_WITH_WARNINGS";
   const manifest = report.remediation_manifest;
 
+  const blockerCount = findings.filter((f: any) => f.impact === "release_blocker").length;
+  const warningCount = findings.filter((f: any) => f.impact === "warning" || f.impact === "conditional_blocker").length;
+
+  const domainsEvaluated = report.domains?.length ?? 0;
+  const domainsPassed = (report.domains || []).filter((d: any) => d.status === "pass").length;
+  const evidenceCount = report.evidence_manifest?.length ?? 0;
+
+  const coverageEntries = report.coverage_summary || [];
+  const coveredCount = coverageEntries.filter((c: any) => c.state === "covered").length;
+  const totalSurfaces = coverageEntries.length;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-center">
@@ -596,6 +973,39 @@ function ReleaseGateTab({ onSelectRun }: { onSelectRun: (id: string) => void }) 
           <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Overall Score</div>
         </GlassPanel>
       </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <MetricCard icon={XCircle} label="Blockers" value={blockerCount} accent={blockerCount > 0 ? "red" : "green"} />
+        <MetricCard icon={AlertTriangle} label="Warnings" value={warningCount} accent={warningCount > 0 ? "amber" : "green"} />
+        <MetricCard icon={Target} label="Domains" value={`${domainsPassed}/${domainsEvaluated}`} accent={domainsPassed === domainsEvaluated ? "green" : "amber"} />
+        <MetricCard icon={FileText} label="Evidence" value={evidenceCount} accent="cyan" />
+      </div>
+
+      <GlassPanel solid className="p-4">
+        <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-3">Gate Checks</h3>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs">
+            {blockerCount === 0 ? <CheckCircle className="w-3.5 h-3.5 text-[hsl(var(--status-success))]" /> : <XCircle className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />}
+            <span className="text-[hsl(var(--foreground))]">No release blockers</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            {report.overall_score >= 80 ? <CheckCircle className="w-3.5 h-3.5 text-[hsl(var(--status-success))]" /> : <XCircle className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />}
+            <span className="text-[hsl(var(--foreground))]">Overall score {">"}= 80% (actual: {report.overall_score}%)</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            {domainsPassed === domainsEvaluated ? <CheckCircle className="w-3.5 h-3.5 text-[hsl(var(--status-success))]" /> : <AlertTriangle className="w-3.5 h-3.5 text-[hsl(var(--status-warning))]" />}
+            <span className="text-[hsl(var(--foreground))]">All required domains passed ({domainsPassed}/{domainsEvaluated})</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            {totalSurfaces > 0 && coveredCount / totalSurfaces >= 0.8 ? <CheckCircle className="w-3.5 h-3.5 text-[hsl(var(--status-success))]" /> : <AlertTriangle className="w-3.5 h-3.5 text-[hsl(var(--status-warning))]" />}
+            <span className="text-[hsl(var(--foreground))]">Coverage sufficiency ({coveredCount}/{totalSurfaces} surfaces covered)</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            {evidenceCount > 0 ? <CheckCircle className="w-3.5 h-3.5 text-[hsl(var(--status-success))]" /> : <AlertTriangle className="w-3.5 h-3.5 text-[hsl(var(--status-warning))]" />}
+            <span className="text-[hsl(var(--foreground))]">Evidence completeness ({evidenceCount} artifacts)</span>
+          </div>
+        </div>
+      </GlassPanel>
 
       {report.hard_stop_failures?.length > 0 && (
         <GlassPanel solid glow="red" className="p-4">
@@ -628,34 +1038,32 @@ function ReleaseGateTab({ onSelectRun }: { onSelectRun: (id: string) => void }) 
         <GlassPanel solid className="p-4">
           <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-3">Score Breakdown by Domain</h3>
           <div className="space-y-3">
-            {report.score_breakdown.map((sb: any) => (
-              <div key={sb.domain} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-[hsl(var(--foreground))]">{domainLabel(sb.domain)}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[hsl(var(--muted-foreground))]">weight: {Math.round(sb.weight * 100)}%</span>
-                    <span className="font-mono-tech text-[hsl(var(--foreground))]">{sb.raw_score}%</span>
+            {report.score_breakdown.map((sb: any) => {
+              const Icon = domainIcon(sb.domain);
+              return (
+                <div key={sb.domain} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <Icon className="w-3 h-3 text-[hsl(var(--foreground))]" />
+                      <span className="text-[hsl(var(--foreground))]">{domainLabel(sb.domain)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[hsl(var(--muted-foreground))]">weight: {Math.round(sb.weight * 100)}%</span>
+                      <span className="font-mono-tech text-[hsl(var(--foreground))]">{sb.raw_score}%</span>
+                    </div>
+                  </div>
+                  <div className="h-2 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${sb.raw_score >= 80 ? "bg-[hsl(var(--status-success))]" : sb.raw_score >= 60 ? "bg-[hsl(var(--status-warning))]" : "bg-[hsl(var(--status-failure))]"}`}
+                      style={{ width: `${Math.min(sb.raw_score, 100)}%` }}
+                    />
                   </div>
                 </div>
-                <div className="h-2 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${sb.raw_score >= 80 ? "bg-[hsl(var(--status-success))]" : sb.raw_score >= 60 ? "bg-[hsl(var(--status-warning))]" : "bg-[hsl(var(--status-failure))]"}`}
-                    style={{ width: `${Math.min(sb.raw_score, 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </GlassPanel>
       )}
-
-      <GlassPanel solid className="p-4">
-        <h3 className="text-sm font-semibold text-[hsl(var(--card-foreground))] mb-2">Evidence Completeness</h3>
-        <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-          <FileText className="w-3.5 h-3.5" />
-          <span>{report.evidence_manifest?.length ?? 0} evidence artifacts collected</span>
-        </div>
-      </GlassPanel>
 
       {needsRemediation && manifest && (
         <GlassPanel solid glow="amber" className="p-5">
@@ -676,6 +1084,21 @@ function ReleaseGateTab({ onSelectRun }: { onSelectRun: (id: string) => void }) 
               <div className="text-xs text-[hsl(var(--muted-foreground))]">Findings to address</div>
             </div>
           </div>
+
+          {manifest.affected_findings?.length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-xs font-semibold text-[hsl(var(--card-foreground))] mb-2">Priority Fixes</h4>
+              <div className="space-y-1">
+                {manifest.affected_findings.slice(0, 5).map((f: any) => (
+                  <div key={f.finding_id} className="flex items-center gap-2 text-xs">
+                    <StatusChip variant={severityVariant(f.severity)} label={f.severity} />
+                    <span className="text-[hsl(var(--foreground))] truncate">{f.title}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3">
             <button
               onClick={() => remediate.mutate(latestCompleted.id)}
