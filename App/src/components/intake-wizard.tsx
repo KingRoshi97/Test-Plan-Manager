@@ -80,6 +80,7 @@ const PAGE_ID_TO_SECTION: Record<number, string> = {
   4: "functional",
   5: "data",
   6: "auth",
+  7: "integrations",
   8: "nfr",
   9: "category_specific",
 };
@@ -92,6 +93,8 @@ export default function IntakeWizard() {
   const [autofillLoading, setAutofillLoading] = useState(false);
   const [autofilledSections, setAutofilledSections] = useState<Set<string>>(new Set());
   const autofillTriggered = useRef(false);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestedSections, setSuggestedSections] = useState<Set<string>>(new Set());
 
   const visiblePages = useMemo(() => {
     const always = ALL_PAGES.filter((p) => p.id <= 4 || p.id >= 8);
@@ -139,6 +142,39 @@ export default function IntakeWizard() {
       setAutofillLoading(false);
     }
   }, [data.routing, data.project, autofilledSections]);
+
+  const requestSuggestions = useCallback(async () => {
+    if (!currentPageDef) return;
+    const sectionName = PAGE_ID_TO_SECTION[currentPageDef.id];
+    if (!sectionName) return;
+    setSuggestionsLoading(true);
+    try {
+      const resp = await fetch("/api/autofill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          routing: data.routing,
+          project: data.project,
+          targetSection: sectionName,
+        }),
+      });
+      if (resp.ok) {
+        const result = await resp.json();
+        if (result.suggestions && Object.keys(result.suggestions).length > 0) {
+          setData((prev) => ({
+            ...prev,
+            [sectionName]: { ...prev[sectionName as keyof IntakeData], ...result.suggestions },
+          }));
+          setSuggestedSections((prev) => new Set(prev).add(sectionName));
+          setAutofilledSections((prev) => new Set(prev).add(sectionName));
+        }
+      }
+    } catch {
+      toast.error("Failed to fetch suggestions");
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  }, [currentPageDef, data.routing, data.project]);
 
   const goNext = () => {
     if (!currentPageDef) return;
@@ -396,16 +432,39 @@ export default function IntakeWizard() {
       </div>
 
       <GlassPanel glow="none" className="p-6">
+        {currentPageDef && PAGE_ID_TO_SECTION[currentPageDef.id] && (
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              {autofilledSections.has(PAGE_ID_TO_SECTION[currentPageDef.id] || "") && (
+                <GlassPanel glow="violet" className="flex items-center gap-2 px-3 py-2">
+                  <Sparkles className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
+                  <span className="text-sm text-[hsl(var(--status-intelligence))]">AI-drafted — review and edit as needed</span>
+                </GlassPanel>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={requestSuggestions}
+              disabled={suggestionsLoading}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-[hsl(var(--status-intelligence)/0.1)] text-[hsl(var(--status-intelligence))] border border-[hsl(var(--status-intelligence)/0.25)] hover:bg-[hsl(var(--status-intelligence)/0.18)] hover:border-[hsl(var(--status-intelligence)/0.45)] hover:shadow-[0_0_12px_hsl(var(--glow-violet)/0.15)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {suggestionsLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              {suggestionsLoading
+                ? "Generating..."
+                : suggestedSections.has(PAGE_ID_TO_SECTION[currentPageDef.id] || "")
+                  ? "Re-suggest"
+                  : "Suggestions"}
+            </button>
+          </div>
+        )}
         {autofillLoading && (
           <GlassPanel glow="violet" className="flex items-center gap-2 mb-4 px-3 py-2.5">
             <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--status-intelligence))]" />
             <span className="text-sm text-[hsl(var(--status-intelligence))]">AI is drafting suggestions...</span>
-          </GlassPanel>
-        )}
-        {currentPageDef && autofilledSections.has(PAGE_ID_TO_SECTION[currentPageDef.id] || "") && (
-          <GlassPanel glow="violet" className="flex items-center gap-2 mb-4 px-3 py-2.5">
-            <Sparkles className="w-4 h-4 text-[hsl(var(--status-intelligence))]" />
-            <span className="text-sm text-[hsl(var(--status-intelligence))]">AI-drafted — review and edit as needed</span>
           </GlassPanel>
         )}
         {renderPage()}

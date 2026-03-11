@@ -297,8 +297,11 @@ The normalizer, spec builder, and kit builder have been enhanced so the Builder 
 
 ### OpenAI Autofill Integration
 - `server/openai.ts` — OpenAI client using Replit AI Integrations (AI_INTEGRATIONS_OPENAI_BASE_URL + AI_INTEGRATIONS_OPENAI_API_KEY), model: `gpt-4o`
-- `POST /api/autofill` — returns structured suggestions for intake sections based on routing + project info
-- Opt-in toggle on Page 0 (routing); "AI-drafted" badge on auto-filled fields; all values editable
+- `POST /api/autofill` — returns structured suggestions for intake sections based on routing + project info + attached file contents
+- **Attachment-aware**: `readAttachmentContents()` reads text-based attached files (.txt, .md, .csv, .json, .xml, .rtf) from `uploads/` and includes their content in the AI prompt; binary files (.pdf, .zip, .doc, .docx, .xlsx, .xls) noted but skipped; per-file limit 4000 chars, total limit 12000 chars; filename validated against upload pattern (16 hex + ext) with path traversal protection
+- **Two AI features** (independent): (1) Auto-prefill — opt-in toggle on Page 0 (routing), triggers automatically on page navigation; (2) Suggestions button — manual button at top of form pages 2-9 (Intent through Category), always available regardless of autofill toggle, shows "Re-suggest" if already used
+- "AI-drafted" badge on auto-filled/suggested fields; all values editable
+- Supported sections: intent, design, functional, data, auth, integrations, nfr, category_specific (each with section-specific prompts + knowledge domain mapping)
 
 ### Pipeline OpenAI Integration (IA Agent)
 - `Axion/src/core/agents/openai-bridge.ts` — OpenAI bridge for pipeline stages, wraps OpenAI client for use within Axion CLI

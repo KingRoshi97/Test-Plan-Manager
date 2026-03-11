@@ -4132,11 +4132,15 @@ export function registerRoutes(app: Express) {
 
       const axionBaseDir = path.join(process.cwd(), "Axion");
 
+      const projectData = (project || {}) as Record<string, unknown>;
+      const attachments = (projectData.attachments as Array<{ id: string; filename: string; originalName: string }>) || [];
+
       const suggestions = await generateAutofillSuggestions(
         routing as Record<string, string>,
-        (project || {}) as Record<string, unknown>,
+        projectData,
         targetSection as string,
         axionBaseDir,
+        attachments,
       );
 
       res.json({ suggestions, section: targetSection });

@@ -1,6 +1,73 @@
 import OpenAI from "openai";
 import { join } from "node:path";
+import { readFileSync, existsSync } from "node:fs";
+import { resolve, extname } from "node:path";
 import { resolveKnowledge, summarizeKnowledgeForPrompt } from "../Axion/src/core/knowledge/resolver.js";
+
+const TEXT_READABLE_EXTENSIONS = new Set([".txt", ".md", ".csv", ".json", ".xml", ".rtf"]);
+const BINARY_EXTENSIONS = new Set([".pdf", ".zip", ".doc", ".docx", ".xlsx", ".xls"]);
+const PER_FILE_CHAR_LIMIT = 4000;
+const TOTAL_CHAR_LIMIT = 12000;
+
+interface AttachmentInfo {
+  id: string;
+  filename: string;
+  originalName: string;
+}
+
+function readAttachmentContents(attachments: AttachmentInfo[]): string {
+  if (!attachments || attachments.length === 0) return "";
+
+  const uploadsDir = resolve(process.cwd(), "uploads");
+  const sections: string[] = [];
+  let totalChars = 0;
+
+  for (const att of attachments) {
+    if (totalChars >= TOTAL_CHAR_LIMIT) break;
+
+    if (!/^[a-f0-9]{16}\.[a-z0-9]+$/i.test(att.filename)) {
+      sections.push(`[${att.originalName}]: (invalid filename — skipped)`);
+      continue;
+    }
+    const ext = extname(att.filename).toLowerCase();
+    const filePath = resolve(uploadsDir, att.filename);
+    if (!filePath.startsWith(uploadsDir + "/")) {
+      sections.push(`[${att.originalName}]: (invalid file path — skipped)`);
+      continue;
+    }
+
+    if (BINARY_EXTENSIONS.has(ext)) {
+      sections.push(`[${att.originalName}]: (binary file — attached but not readable as text)`);
+      continue;
+    }
+
+    if (!TEXT_READABLE_EXTENSIONS.has(ext)) {
+      sections.push(`[${att.originalName}]: (unsupported file type — skipped)`);
+      continue;
+    }
+
+    if (!existsSync(filePath)) {
+      sections.push(`[${att.originalName}]: (file not found on disk)`);
+      continue;
+    }
+
+    try {
+      let content = readFileSync(filePath, "utf-8");
+      const remaining = TOTAL_CHAR_LIMIT - totalChars;
+      const limit = Math.min(PER_FILE_CHAR_LIMIT, remaining);
+      if (content.length > limit) {
+        content = content.slice(0, limit) + "\n... (truncated)";
+      }
+      totalChars += content.length;
+      sections.push(`[${att.originalName}]:\n${content}`);
+    } catch {
+      sections.push(`[${att.originalName}]: (failed to read file)`);
+    }
+  }
+
+  if (sections.length === 0) return "";
+  return "\n\nAttached Files:\n" + sections.join("\n\n");
+}
 
 export function getOpenAIClient(): OpenAI {
   return new OpenAI({
@@ -54,6 +121,10 @@ Return JSON with these fields.`,
 - compliance: Applicable compliance standards (as an array)
 Return JSON with these fields.`,
 
+  integrations: `Based on the project context, suggest:
+- services: 2-4 third-party integrations (as an array of objects with "name", "purpose", "direction" (inbound/outbound/bidirectional), "triggers", and "secrets" fields)
+Return JSON with these fields.`,
+
   category_specific: `Based on the project context, suggest:
 - screens: Key screens/pages (as an array of strings)
 - navigation_summary: Navigation structure summary
@@ -71,6 +142,7 @@ const SECTION_KNOWLEDGE_DOMAINS: Record<string, string[]> = {
   data: ["databases", "storage_fundamentals", "caching", "search_retrieval"],
   auth: ["security_fundamentals", "identity_access_management"],
   nfr: ["observability_sre", "compliance_governance", "cloud_fundamentals"],
+  integrations: ["apis_integrations", "architecture_design"],
   category_specific: ["ci_cd_devops", "release_management", "observability_sre"],
 };
 
@@ -79,6 +151,7 @@ export async function generateAutofillSuggestions(
   project: Record<string, unknown>,
   targetSection: string,
   axionBaseDir?: string,
+  attachments?: AttachmentInfo[],
 ): Promise<Record<string, unknown>> {
   const sectionPrompt = SECTION_PROMPTS[targetSection];
   if (!sectionPrompt) {
@@ -118,6 +191,8 @@ export async function generateAutofillSuggestions(
 
 ${knowledgeSection ? `You have access to the following knowledge from the AXION Knowledge Library. Use these patterns, checklists, and concepts to guide your suggestions and maintain consistency. Do not copy them verbatim — adapt them to the specific project context.\n\n${knowledgeSection}\n` : ""}Always return valid JSON. Only return the JSON object, no markdown or explanation.`;
 
+  const attachmentContents = readAttachmentContents(attachments || (project.attachments as AttachmentInfo[] | undefined) || []);
+
   const userMessage = `Project Context:
 - Category: ${routing.category || "not specified"}
 - Type: ${routing.type_preset || "not specified"}
@@ -126,7 +201,7 @@ ${knowledgeSection ? `You have access to the following knowledge from the AXION 
 - Skill Level: ${routing.skill_level || "not specified"}
 - Project Name: ${(project.project_name as string) || "not specified"}
 - Problem Statement: ${(project.problem_statement as string) || "not specified"}
-- Overview: ${(project.overview as string) || "not specified"}
+- Overview: ${(project.overview as string) || "not specified"}${attachmentContents}
 
 ${sectionPrompt}`;
 
