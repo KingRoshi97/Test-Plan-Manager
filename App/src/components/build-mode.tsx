@@ -4,13 +4,24 @@ import { apiRequest } from "../lib/queryClient";
 import {
   Play, Download, Loader2, CheckCircle, XCircle, AlertTriangle,
   Package, FileCode, ChevronRight, RefreshCw, Clock, Zap,
-  ShieldCheck, Eye, ArrowRight, ChevronDown, Wrench
+  ShieldCheck, Eye, ArrowRight, ChevronDown, Wrench, History
 } from "lucide-react";
+
+interface BuildableRun {
+  runId: string;
+  status: string;
+  completedAt: string | null;
+  startedAt: string;
+  hasKit: boolean;
+  hasBuild: boolean;
+  buildStatus: string | null;
+}
 
 interface BuildTabProps {
   assemblyId: number;
   runId: string | null;
   pipelineStatus: string;
+  buildableRuns?: BuildableRun[];
 }
 
 type BuildState = "not_requested" | "requested" | "approved" | "building" | "verifying" | "failed" | "passed" | "exported";
@@ -711,16 +722,28 @@ function AVCSSection({ assemblyId, runId }: { assemblyId: number; runId: string 
   );
 }
 
-export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
+export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: BuildTabProps) {
   const queryClient = useQueryClient();
   const [selectedMode, setSelectedMode] = useState<"build_repo" | "build_and_export">("build_and_export");
 
-  const canBuild = pipelineStatus === "completed" && !!runId;
+  const runs = buildableRuns ?? [];
+  const defaultRunId = runs.length > 0 ? runs[0].runId : runId;
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(defaultRunId);
+
+  useEffect(() => {
+    if (!selectedRunId && runs.length > 0) {
+      setSelectedRunId(runs[0].runId);
+    }
+  }, [runs, selectedRunId]);
+
+  const runsLoading = buildableRuns === undefined;
+  const canBuild = runs.length > 0;
+  const activeRunId = selectedRunId || runId;
 
   const { data: buildStatus, isLoading } = useQuery<BuildStatus>({
-    queryKey: ["/api/assemblies", assemblyId, "build"],
-    queryFn: () => apiRequest(`/api/assemblies/${assemblyId}/build`),
-    enabled: canBuild,
+    queryKey: ["/api/assemblies", assemblyId, "build", activeRunId],
+    queryFn: () => apiRequest(`/api/assemblies/${assemblyId}/build${activeRunId ? `?runId=${activeRunId}` : ""}`),
+    enabled: canBuild && !!activeRunId,
     refetchInterval: (query) => {
       const d = query.state.data as BuildStatus | undefined;
       if (!d) return false;
@@ -733,11 +756,11 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
     mutationFn: () =>
       apiRequest(`/api/assemblies/${assemblyId}/build`, {
         method: "POST",
-        body: JSON.stringify({ mode: selectedMode }),
+        body: JSON.stringify({ mode: selectedMode, runId: activeRunId }),
         headers: { "Content-Type": "application/json" },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId, "build"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId, "build", activeRunId] });
     },
   });
 
@@ -749,14 +772,20 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
   const liveTokenUsage = isActive ? buildStatus?.progress?.tokenUsage : null;
   const finalTokenUsage = buildStatus?.manifest?.tokenUsage;
 
+  if (runsLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-[hsl(var(--muted-foreground))]" />
+      </div>
+    );
+  }
+
   if (!canBuild) {
     return (
       <div className="text-center py-12 text-[hsl(var(--muted-foreground))]">
         <Package className="w-8 h-8 mx-auto mb-3 opacity-50" />
         <p className="text-sm">
-          {!runId
-            ? "No pipeline run yet. Complete a pipeline run to enable Build Mode."
-            : "Pipeline must complete successfully before building."}
+          No completed pipeline runs with kits available. Complete a pipeline run to enable Build Mode.
         </p>
       </div>
     );
@@ -781,6 +810,51 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
           <span className="text-xs font-mono text-[hsl(var(--muted-foreground))]">{buildStatus.buildId}</span>
         )}
       </div>
+
+      {runs.length > 1 && (
+        <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))]">
+          <div className="flex items-center gap-2 mb-2">
+            <History className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+            <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">Select Pipeline Run</span>
+          </div>
+          <div className="grid gap-2">
+            {runs.map((run) => {
+              const isSelected = run.runId === activeRunId;
+              const date = run.completedAt ? new Date(run.completedAt) : new Date(run.startedAt);
+              const dateStr = date.toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+              const buildLabel = run.buildStatus
+                ? STATE_CONFIG[run.buildStatus]?.label || run.buildStatus
+                : "No build";
+              return (
+                <button
+                  key={run.runId}
+                  onClick={() => setSelectedRunId(run.runId)}
+                  disabled={isActive}
+                  className={`flex items-center justify-between px-3 py-2 rounded-md text-left text-xs transition-all ${
+                    isSelected
+                      ? "border border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.08)]"
+                      : "border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] disabled:opacity-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-medium text-[hsl(var(--foreground))]">{run.runId}</span>
+                    <span className="text-[hsl(var(--muted-foreground))]">{dateStr}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                    run.buildStatus === "passed" || run.buildStatus === "exported"
+                      ? "bg-green-900/30 text-green-300"
+                      : run.buildStatus === "failed"
+                      ? "bg-red-900/30 text-red-300"
+                      : "bg-gray-800 text-gray-400"
+                  }`}>
+                    {buildLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {state === "not_requested" && (
         <div className="p-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] space-y-4">
@@ -926,7 +1000,7 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
 
           {state === "exported" && buildStatus?.hasExportZip && (
             <a
-              href={`/api/assemblies/${assemblyId}/build/download`}
+              href={`/api/assemblies/${assemblyId}/build/download${activeRunId ? `?runId=${activeRunId}` : ""}`}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 transition-opacity"
             >
               <Download className="w-4 h-4" />
@@ -964,8 +1038,8 @@ export function BuildTab({ assemblyId, runId, pipelineStatus }: BuildTabProps) {
         </div>
       )}
 
-      {isDone && (
-        <AVCSSection assemblyId={assemblyId} runId={runId!} />
+      {isDone && activeRunId && (
+        <AVCSSection assemblyId={assemblyId} runId={activeRunId} />
       )}
 
       {finalTokenUsage && (isDone || isFailed) && (

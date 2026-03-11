@@ -1404,7 +1404,7 @@ export default function AssemblyPage() {
           )}
 
           {activeTab === "build" && (
-            <BuildTab assemblyId={Number(id)} runId={assembly.runId} pipelineStatus={assembly.status} />
+            <BuildTabWithRuns assemblyId={Number(id)} runId={assembly.runId} pipelineStatus={assembly.status} />
           )}
 
           {activeTab === "config" && (
@@ -1437,5 +1437,21 @@ export default function AssemblyPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function BuildTabWithRuns({ assemblyId, runId, pipelineStatus }: { assemblyId: number; runId: string | null; pipelineStatus: string }) {
+  const { data } = useQuery<{ runs: Array<{ runId: string; status: string; completedAt: string | null; startedAt: string; hasKit: boolean; hasBuild: boolean; buildStatus: string | null }> }>({
+    queryKey: ["/api/assemblies", assemblyId, "runs", "buildable"],
+    queryFn: () => apiRequest(`/api/assemblies/${assemblyId}/runs/buildable`),
+  });
+
+  return (
+    <BuildTab
+      assemblyId={assemblyId}
+      runId={runId}
+      pipelineStatus={pipelineStatus}
+      buildableRuns={data?.runs}
+    />
   );
 }

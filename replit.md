@@ -73,7 +73,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - Intake tab: section sidebar with nav-item-active pattern, dark-themed form editors, save/re-run actions
 - Artifacts tab: breadcrumb file browser with dark styling, GlassPanel file list + preview pane
 - Config tab: assembly config display, JSON viewer, red-glow danger zone
-- Build tab: imported BuildTab component with dark-themed state badges
+- Build tab: imported BuildTab component with dark-themed state badges, run selector for building from any completed pipeline run (not just the latest)
 
 **Dark Theme Harmonization**: All pages swept for light-mode remnants — health.tsx, features.tsx, feature-detail.tsx, export.tsx, logs.tsx, maintenance.tsx, pipeline-progress.tsx, intake-wizard.tsx, build-mode.tsx, intake form pages, orchestration-library.tsx, system-library.tsx all updated to use dark-appropriate color references.
 
@@ -117,7 +117,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 **Remaining phases**: Phase 9 (further Command Center refinements if needed), Phase 10 (Knowledge consolidation), Phase 11 (Export second pass), Phase 12 (Polish — density toggle, keyboard shortcuts).
 
 ### Build Mode (BM-00 through BM-18)
-Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip.
+Internal Build Mode takes an approved Agent Kit from a completed pipeline run and generates a full project repository, verifies it, and optionally exports it as a downloadable zip. The build tab supports building from any previously completed pipeline run via a run selector (not just the latest run). Backend endpoints (`POST /api/assemblies/:id/build`, `GET /api/assemblies/:id/build`, `GET /api/assemblies/:id/build/download`) accept optional `runId` parameter and enforce run ownership (run must belong to the assembly) and path safety via `safePath()`. `GET /api/assemblies/:id/runs/buildable` returns all completed runs with kits available for building.
 
 **Flow**: Agent Kit → Eligibility → **Kit Extraction (KEX)** → **Repo Blueprint (RBP)** → Plan → **GSE (Generation Strategy Engine)** → Workspace → Generate (unit-centric) → Manifests → Verify (fidelity) → Export → Finalize
 

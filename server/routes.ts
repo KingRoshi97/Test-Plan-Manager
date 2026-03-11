@@ -195,6 +195,58 @@ export function registerRoutes(app: Express) {
     res.json(runs);
   });
 
+  app.get("/api/assemblies/:id/runs/buildable", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+
+      const pipelineRunsList = await storage.getPipelineRuns(id);
+      const buildableRuns: Array<{
+        runId: string;
+        status: string;
+        completedAt: string | null;
+        startedAt: string;
+        hasKit: boolean;
+        hasBuild: boolean;
+        buildStatus: string | null;
+      }> = [];
+
+      for (const run of pipelineRunsList) {
+        if (!run.runId || run.status !== "completed") continue;
+        const runDir = path.join(AXION_RUNS, run.runId);
+        const kitDir = path.join(runDir, "kit");
+        const hasKit = fs.existsSync(kitDir);
+        if (!hasKit) continue;
+
+        const buildDir = path.join(runDir, "build");
+        let hasBuild = false;
+        let buildStatus: string | null = null;
+        if (fs.existsSync(path.join(buildDir, "build_manifest.json"))) {
+          hasBuild = true;
+          try {
+            const manifest = JSON.parse(fs.readFileSync(path.join(buildDir, "build_manifest.json"), "utf-8"));
+            buildStatus = manifest.status || null;
+          } catch {}
+        }
+
+        buildableRuns.push({
+          runId: run.runId,
+          status: run.status,
+          completedAt: run.completedAt?.toISOString() ?? null,
+          startedAt: run.startedAt.toISOString(),
+          hasKit,
+          hasBuild,
+          buildStatus,
+        });
+      }
+
+      res.json({ runs: buildableRuns });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.get("/api/assemblies/:id/runs/:runId", async (req: Request, res: Response) => {
     const run = await storage.getPipelineRunByRunId(req.params.runId);
     if (!run || run.assemblyId !== Number(req.params.id)) return res.status(404).json({ error: "Not found" });
@@ -4036,7 +4088,6 @@ export function registerRoutes(app: Express) {
       const id = Number(req.params.id);
       const assembly = await storage.getAssembly(id);
       if (!assembly) return res.status(404).json({ error: "Not found" });
-      if (!assembly.runId) return res.status(400).json({ error: "No completed run for this assembly" });
 
       if (runningBuilds.has(id)) {
         return res.status(409).json({ error: "Build already in progress for this assembly" });
@@ -4047,9 +4098,18 @@ export function registerRoutes(app: Express) {
         return res.status(400).json({ error: "mode must be 'build_repo' or 'build_and_export'" });
       }
 
-      const runId = assembly.runId;
-      const runDir = path.join(AXION_RUNS, runId);
-      if (!fs.existsSync(runDir)) {
+      const runId = req.body?.runId || assembly.runId;
+      if (!runId) return res.status(400).json({ error: "No run specified and no completed run for this assembly" });
+
+      if (req.body?.runId) {
+        const pipelineRun = await storage.getPipelineRunByRunId(runId);
+        if (!pipelineRun || pipelineRun.assemblyId !== id) {
+          return res.status(403).json({ error: "Run does not belong to this assembly" });
+        }
+      }
+
+      const runDir = safePath(runId);
+      if (!runDir || !fs.existsSync(runDir)) {
         return res.status(400).json({ error: `Run directory not found: ${runId}` });
       }
 
@@ -4175,13 +4235,24 @@ export function registerRoutes(app: Express) {
       const id = Number(req.params.id);
       const assembly = await storage.getAssembly(id);
       if (!assembly) return res.status(404).json({ error: "Not found" });
-      if (!assembly.runId) return res.status(404).json({ error: "No completed run" });
 
-      const runId = assembly.runId;
-      const buildDir = path.join(AXION_RUNS, runId, "build");
+      const requestedRunId = req.query.runId as string | undefined;
+      const runId = requestedRunId || assembly.runId;
+      if (!runId) return res.status(404).json({ error: "No completed run" });
+
+      if (requestedRunId) {
+        const pipelineRun = await storage.getPipelineRunByRunId(runId);
+        if (!pipelineRun || pipelineRun.assemblyId !== id) {
+          return res.status(403).json({ error: "Run does not belong to this assembly" });
+        }
+      }
+
+      const safeRunDir = safePath(runId);
+      if (!safeRunDir) return res.status(400).json({ error: "Invalid run ID" });
+      const buildDir = path.join(safeRunDir, "build");
 
       const runningEntry = runningBuilds.get(id);
-      if (runningEntry) {
+      if (runningEntry && runningEntry.runId === runId) {
         const bs = runningEntry.buildState;
         const result: any = {
           state: bs.state,
@@ -4266,10 +4337,21 @@ export function registerRoutes(app: Express) {
       const id = Number(req.params.id);
       const assembly = await storage.getAssembly(id);
       if (!assembly) return res.status(404).json({ error: "Not found" });
-      if (!assembly.runId) return res.status(404).json({ error: "No completed run" });
 
-      const runId = assembly.runId;
-      const zipPath = path.join(AXION_RUNS, runId, "build", "project_repo.zip");
+      const requestedRunId = req.query.runId as string | undefined;
+      const runId = requestedRunId || assembly.runId;
+      if (!runId) return res.status(404).json({ error: "No completed run" });
+
+      if (requestedRunId) {
+        const pipelineRun = await storage.getPipelineRunByRunId(runId);
+        if (!pipelineRun || pipelineRun.assemblyId !== id) {
+          return res.status(403).json({ error: "Run does not belong to this assembly" });
+        }
+      }
+
+      const safeRunDir = safePath(runId);
+      if (!safeRunDir) return res.status(400).json({ error: "Invalid run ID" });
+      const zipPath = path.join(safeRunDir, "build", "project_repo.zip");
 
       if (!fs.existsSync(zipPath)) {
         return res.status(404).json({ error: "Export zip not found. Build with mode 'build_and_export' first." });
