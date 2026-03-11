@@ -1,0 +1,241 @@
+Your write-up is mostly correct and shows you’re thinking about the right optimization layer for Axion. I’ll refine a few points so you can design the system correctly for large builds (5–10K files) without exploding token cost.
+
+First: One Key Correction
+
+You wrote:
+
+There is no way to send large text without it being tokenized.
+
+That is true for text sent directly to the model, but modern systems avoid this by not sending the text at all until needed.
+
+So the real rule becomes:
+
+The model only charges tokens for text that enters the context window.
+
+That means your system’s job is to control what enters the context window.
+
+This is exactly where structured systems like Axion become much cheaper than normal AI workflows.
+
+The Real Cost Driver in AI Systems
+
+The biggest cost in large AI workflows is not generation.
+
+It is:
+
+Context re-sending.
+
+Example:
+
+Bad architecture:
+
+Spec: 12,000 tokens
+Docs: 8,000 tokens
+Previous code: 5,000 tokens
+
+Each generation call = 25,000 input tokens
+
+If you generate 300 files, that becomes:
+
+25,000 × 300 = 7,500,000 tokens
+
+Which becomes extremely expensive.
+
+The Architecture Axion Should Use
+
+Axion should never resend the entire Agent Kit to the model.
+
+Instead it should work like this:
+
+Agent Kit
+   ↓
+Projection
+   ↓
+Inventories
+   ↓
+Build Units
+   ↓
+Targeted Context Assembly
+   ↓
+Model Call
+
+The model only receives context relevant to that one build unit.
+
+Example
+Build unit: UserEntity
+
+The model does NOT receive the full kit.
+
+It receives something like:
+
+ENTITY: User
+
+Fields:
+- id
+- email
+- password_hash
+- role
+
+Requirements:
+- secure password storage
+- email uniqueness
+
+Artifacts needed:
+- model
+- repository
+- validation
+
+That might be 150–400 tokens.
+
+Instead of 10,000+ tokens.
+
+Token-Aware Build Architecture
+
+For large builds, Axion should enforce four rules.
+
+1. Never Send the Full Kit
+
+The kit should be broken into indexed inventories:
+
+entity_inventory
+endpoint_inventory
+ui_inventory
+workflow_inventory
+policy_inventory
+integration_inventory
+
+Then each build unit only receives its inventory slice.
+
+2. Context Assembly per Build Unit
+
+Before generation, the system assembles minimal context.
+
+Example:
+
+build_unit: endpoint_create_user
+
+Context assembled:
+
+endpoint spec
+related entity schema
+auth policy
+required contracts
+
+Nothing else.
+
+3. Template First, Model Last
+
+This is where huge savings come from.
+
+Your system should prioritize:
+
+deterministic → template → model
+
+Example distribution for large builds:
+
+deterministic: 30–40%
+template:      40–50%
+model:         10–30%
+
+This massively reduces token spend.
+
+4. Model Output Should Be Minimal
+
+The model should only generate code, never explanations.
+
+Bad output:
+
+Here is the implementation of the user repository...
+
+Good output:
+
+FILE: src/repositories/user.repository.ts
+CODE:
+export class UserRepository {...}
+
+This alone can reduce output tokens by 30–50%.
+
+What This Means for 5–10K File Builds
+
+Let’s estimate.
+
+If Axion generates 7,000 files.
+
+Distribution:
+
+deterministic: 2,000
+template:      3,000
+model:         2,000
+
+Only the model files cost tokens.
+
+Token Estimate
+
+Average context:
+
+input: 500 tokens
+output: 250 tokens
+
+Per model file:
+
+750 tokens
+
+For 2,000 files:
+
+1,500,000 tokens
+
+That is very manageable.
+
+Without token-aware architecture it could easily become:
+
+10–20 million tokens
+
+Which is the difference between:
+
+$10–20
+vs
+$200–500
+
+per build.
+
+The Real Efficiency Trick
+
+The most important rule for Axion should be:
+
+Never let the model see more context than the build unit actually needs.
+
+Everything else should be:
+
+indexed
+retrievable
+or referenced
+What Serious AI Systems Do
+
+The best systems combine:
+
+structured inventories
+targeted retrieval
+template expansion
+minimal model context
+
+Which is exactly the direction you’ve been building.
+
+The Hidden Advantage of Axion
+
+Because Axion already has:
+
+Agent Kit
+Projection
+Inventories
+Build Units
+
+It is naturally suited for token-efficient execution.
+
+This is something normal LLM workflows cannot do.
+
+The Final Rule
+
+If you want one design principle to guide the entire system, use this:
+
+The model should only read the smallest possible slice of the specification necessary to generate the artifact being built.
+
+Everything else stays outside the context window.

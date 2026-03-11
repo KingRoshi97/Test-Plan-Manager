@@ -1,0 +1,167 @@
+The Metric That Actually Matters
+Generation Fidelity
+Generation Fidelity = Correct Artifacts / Planned Artifacts
+
+Where:
+
+Planned Artifacts = files in the file_inventory
+
+Correct Artifacts = files that:
+
+compile
+
+pass type checks
+
+match expected file class
+
+satisfy contracts/templates
+
+pass verification tests
+
+Why This Metric Matters
+
+Imagine two builds:
+
+Build A
+files generated: 1200
+compiles: yes
+tests pass: yes
+
+Fidelity:
+
+~95%
+Build B
+files generated: 1200
+compiles: partially
+tests failing: many
+contracts mismatched
+
+Fidelity:
+
+~55%
+
+Both builds produced 1200 files, but only one is usable.
+
+That’s why file count is a misleading success signal.
+
+What You Should Track
+
+For every build run, record:
+
+Metric	Meaning
+Planned files	file inventory size
+Generated files	files written
+Verified files	passed verification
+Failed files	verification failures
+Retry count	how many retries executed
+Repair count	how many patch repairs
+
+From that you compute:
+
+Fidelity = verified_files / planned_files
+Healthy Targets
+
+For a system like Axion:
+
+Stage	Expected Fidelity
+Early prototype	50–65%
+Stable system	70–85%
+Mature system	90–95%
+
+Anything above 90% means the build system is extremely reliable.
+
+Why This Is the Real Signal
+
+Axion is essentially a software compiler:
+
+Agent Kit → Repo
+
+Compilers are judged by:
+
+correctness
+
+not by how much code they emit.
+
+What Your Current Numbers Suggest
+
+Your output:
+
+701 files
+
+That tells us:
+
+projection is working
+
+templates are expanding
+
+build units are being executed
+
+But the next thing you should measure is:
+
+verification success rate
+
+For example:
+
+701 planned
+612 verified
+89 failed
+
+Fidelity:
+
+87%
+
+That would actually be excellent for an early autonomous builder.
+
+One More Metric Worth Tracking
+LLM Efficiency
+LLM files / total files
+
+Goal over time:
+
+≤ 30%
+
+Meaning most code comes from:
+
+deterministic generation
+
+templates
+
+That keeps build cost low.
+
+The Real Dashboard For Axion
+
+Eventually each build should produce something like:
+
+Build Summary
+-------------
+Planned files:      701
+Generated files:    701
+Verified files:     648
+Failed files:       53
+Retries:            41
+Repairs:            19
+
+Generation Fidelity: 92.4%
+LLM Usage:           24%
+Build Time:          3m 12s
+Cost:                $4.83
+
+That’s the kind of telemetry that tells you whether Axion is actually working.
+
+The Big Picture
+
+Right now you’ve proven the system can:
+
+expand kits into hundreds of files
+
+generate backend structure
+
+generate endpoints
+
+generate tests
+
+The next phase is making sure:
+
+the generated system actually works
+
+That’s where fidelity metrics become the most valuable signal.

@@ -1,0 +1,323 @@
+Exactly. Then the build system needs a sufficiency rule, not a max-expansion rule.
+
+The goal is not:
+
+generate as many files as possible
+
+imitate enterprise scale by default
+
+expand every object into every possible artifact family
+
+The goal is:
+
+generate only the files that are justified by the Agent Kit, the selected quality tier, and the build standard.
+
+The principle Axion should use
+Build only what is warranted
+
+Every file should have a reason to exist.
+
+A file is warranted only if at least one of these is true:
+
+it implements a required system object
+
+it is required to support another required file
+
+it is required by the selected verification tier
+
+it is required by the selected operational standard
+
+it is required by a template family that the kit explicitly triggered
+
+If none of those are true, the file should not exist.
+
+The control mechanism you want
+1. Artifact families must be conditional
+
+Do not make fan-out unconditional.
+
+Instead of:
+
+every entity gets 12 files
+
+every endpoint gets 10 files
+
+every screen gets 8 files
+
+do this:
+
+Entity artifact family
+
+Required:
+
+model
+
+repository or equivalent persistence layer
+
+shared contract only if cross-layer sharing is needed
+
+unit test only if verification tier requires it
+
+Optional:
+
+migration only if persistence is real
+
+seed only if seed policy enabled
+
+mapper only if transformation boundary exists
+
+fixture only if tests requiring fixtures exist
+
+Endpoint artifact family
+
+Required:
+
+route
+
+handler
+
+request/response contract only if API boundary requires explicit contracts
+
+integration test only if verification tier requires it
+
+Optional:
+
+auth policy only if endpoint requires auth
+
+rate limit middleware only if policy requires it
+
+telemetry hook only if ops tier requires it
+
+UI artifact family
+
+Required:
+
+page/screen
+
+necessary local component(s)
+
+hook only if state logic exists
+
+UI test only if verification tier requires it
+
+Optional:
+
+form schema only if form exists
+
+state adapter only if data coordination is non-trivial
+
+e2e test only if e2e tier enabled
+
+That is how you avoid bloat.
+
+2. Introduce build profiles
+
+You need explicit profiles so the same kit does not always explode into the same artifact count.
+
+For example:
+
+Lean
+
+Generate only:
+
+core implementation
+
+minimum viable support files
+
+minimum required tests
+
+Standard
+
+Generate:
+
+core implementation
+
+normal shared contracts
+
+normal test coverage
+
+normal support/config files
+
+Enterprise
+
+Generate:
+
+full implementation
+
+richer verification
+
+audit/compliance hooks
+
+telemetry/ops surfaces
+
+admin/reporting/internal support layers where justified
+
+This prevents small projects from inheriting enterprise-weight scaffolding.
+
+3. Make file creation policy-driven
+
+Before a file target enters file_inventory, it should pass a policy test like:
+
+shouldCreateArtifact(object, artifact_family, build_profile, standards)
+
+Return true only if justified.
+
+Example logic:
+
+create migration? only if durable persistence exists
+
+create integration test? only if verification profile includes integration coverage
+
+create audit log hook? only if domain is auditable or standards require it
+
+create admin page? only if admin surface exists in kit
+
+create background worker? only if workflow or async processing requires it
+
+This should happen before generation, not after.
+
+The real anti-bloat rule
+No file without a coverage justification
+
+Each planned file should map back to one or more of:
+
+entity
+
+endpoint
+
+screen
+
+workflow
+
+integration
+
+policy
+
+verification obligation
+
+ops obligation
+
+So every file in file_inventory should be traceable.
+
+If a file cannot be traced to one of those, it is probably bloat.
+
+Practical gating model
+
+For each candidate file, ask:
+
+Functional gate
+
+Does this file implement required behavior?
+
+Structural gate
+
+Is this file necessary for architecture coherence?
+
+Verification gate
+
+Is this file required by the chosen testing/verification depth?
+
+Operational gate
+
+Is this file required by the selected ops/compliance tier?
+
+If all answers are no, drop it.
+
+What this means in practice
+
+A small CRUD app should not get:
+
+audit subsystem
+
+event bus scaffolding
+
+realtime gateway
+
+advanced policy layer
+
+load tests
+
+admin analytics dashboards
+
+background workers
+
+compliance documentation stubs
+
+unless the kit actually implies them.
+
+A simple app may be fully sufficient with:
+
+entities
+
+endpoints
+
+screens
+
+core tests
+
+configs
+
+minimal support files
+
+Maybe 300–900 files, not 5K.
+
+A large enterprise system may justify 5–10K because the obligations are real.
+
+Best system rule to adopt
+“Minimum Sufficient Artifact Set”
+
+Define sufficiency like this:
+
+The build system should produce the smallest artifact set that fully satisfies all required functional, structural, verification, and operational obligations implied by the Agent Kit and selected build profile.
+
+That sentence is the anti-bloat backbone of the whole build system.
+
+Concrete implementation guidance
+
+To enforce this, Axion should do these three things:
+
+A. Add required_reason to planned file targets
+
+Each file_inventory item should include something like:
+
+functional_requirement
+
+verification_requirement
+
+ops_requirement
+
+template_family_requirement
+
+support_dependency
+
+That lets you audit why a file exists.
+
+B. Add build_profile to projection
+
+So projection knows whether to emit:
+
+lean
+
+standard
+
+enterprise
+
+artifact families.
+
+C. Add “optional family suppression”
+
+Artifact families should be suppressible when not needed:
+
+no migrations if no DB
+
+no fixtures if no tests using fixtures
+
+no auth policy if no auth
+
+no contract files if internal-only simple boundary does not require them
+
+Clean answer
+
+Yes — that should be the rule.
+
+The internal build system should avoid bloat by generating only the minimum sufficient artifact set for the project. That means file creation must be conditional on actual system obligations from the Agent Kit, the selected build profile, and required standards. Files should enter file_inventory only when they have a clear justification in function, structure, verification, or operations. If a file cannot be traced to one of those needs, it should not be created.

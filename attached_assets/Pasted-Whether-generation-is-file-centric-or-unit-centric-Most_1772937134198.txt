@@ -1,0 +1,242 @@
+Whether generation is file-centric or unit-centric
+
+Most AI code generators are file-centric.
+Systems that scale are unit-centric.
+
+File-Centric Architecture (what most systems do)
+
+The system thinks in terms of files.
+
+Example:
+
+generate user.model.ts
+generate user.repository.ts
+generate user.route.ts
+generate user.page.ts
+
+Each generation call produces one file.
+
+Problems with this approach:
+
+Massive number of model calls
+
+Repeated context
+
+Token cost explodes
+
+Coordination between files becomes fragile
+
+Hard to ensure consistency
+
+Scaling example:
+
+10,000 files = 10,000 generation calls
+
+Even small token costs become huge.
+
+Unit-Centric Architecture (what scales)
+
+Instead of generating individual files, the system generates coherent bundles of files from one context.
+
+Example unit:
+
+ENTITY_CLUSTER: User
+
+One generation call produces:
+
+user.model.ts
+user.repository.ts
+user.validation.ts
+user.contract.ts
+user.test.ts
+
+Now:
+
+1 generation call = 5 files
+
+Or even:
+
+ENDPOINT_FAMILY: create_user
+
+create_user.route.ts
+create_user.handler.ts
+create_user.request.ts
+create_user.response.ts
+create_user.integration.test.ts
+Why This Changes Everything
+
+Example comparison.
+
+File-Centric
+5,000 files
+5,000 model calls
+
+Even with small prompts:
+
+600 tokens per call
+
+Total:
+
+3,000,000 tokens
+Unit-Centric
+
+Suppose average unit produces 8 files.
+
+5,000 files / 8 = 625 model calls
+
+Now:
+
+625 × 600 tokens = 375,000 tokens
+
+Almost 10× cheaper.
+
+The Second Benefit: Consistency
+
+When a model generates multiple related files at once, it understands the relationship between them.
+
+Example:
+
+Generating repository + model together means:
+
+same field names
+
+same types
+
+fewer integration errors
+
+This dramatically reduces retries and repairs.
+
+How Axion Is Already Close
+
+Your architecture already has the right foundation:
+
+Agent Kit
+↓
+Projection
+↓
+Inventories
+↓
+Build Units
+↓
+Generation
+
+The key is that Build Units must be the true generation primitive.
+
+Not files.
+
+Ideal Unit Types
+
+A scalable system typically has units like:
+
+Entity Cluster
+
+Produces:
+
+model
+repository
+validation
+shared contract
+unit test
+Endpoint Family
+
+Produces:
+
+route
+handler
+request DTO
+response DTO
+integration test
+UI Surface
+
+Produces:
+
+page
+components
+hooks
+state adapters
+UI tests
+Workflow Bundle
+
+Produces:
+
+workflow controller
+job worker
+event handler
+tests
+Integration Adapter
+
+Produces:
+
+client
+adapter
+error handling
+tests
+
+Each unit may generate 5–20 files.
+
+What This Means for Scaling
+
+If average unit size is:
+
+10 files
+
+Then a 10,000 file build requires only:
+
+1,000 generation units
+
+Which is completely manageable.
+
+The Golden Rule for Axion
+
+The model should generate systems, not files.
+
+Files are simply the artifacts that fall out of system-level units.
+
+The Hidden Advantage
+
+Unit-centric generation also enables:
+
+Wave execution
+Wave 1: entities
+Wave 2: endpoints
+Wave 3: UI
+Wave 4: tests
+Parallel generation
+
+Multiple units can run simultaneously.
+
+Retry targeting
+
+If one unit fails, you retry the unit, not dozens of files.
+
+Why Most Systems Fail Here
+
+Typical AI dev tools are built like this:
+
+prompt → file
+prompt → file
+prompt → file
+
+They are file factories.
+
+Axion is closer to being a software compiler.
+
+Compilers operate on structures, not files.
+
+If You Follow This Rule
+
+Axion can realistically scale to:
+
+10K–20K file systems
+
+without token costs exploding.
+
+Because the real work happens at the unit level, not the file level.
+
+The Single Design Principle
+
+If you want one sentence to guide the whole internal build system:
+
+Generation should operate on coherent architectural units that expand into multiple artifacts, rather than generating individual files independently.
+
+That is what makes large autonomous build systems viable.

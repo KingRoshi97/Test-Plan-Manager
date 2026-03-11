@@ -1,0 +1,245 @@
+Instruction Freezing (a.k.a. Static System Prompts)
+
+Most AI systems waste enormous tokens by resending the same instructions to the model for every generation call.
+
+Example of the bad pattern:
+
+SYSTEM:
+You are a senior TypeScript backend engineer.
+Follow clean architecture principles.
+Generate code only.
+Use dependency injection.
+Use repository patterns.
+Use validation schemas.
+Use strong typing.
+Follow project standards.
+...
+
+USER:
+Generate the UserRepository.
+
+Those instructions might be 600–1500 tokens.
+
+If you generate 2,000 files, that means:
+
+1,000 tokens × 2,000 calls = 2,000,000 tokens
+
+Just for instructions.
+
+What Instruction Freezing Does
+
+Instead of resending instructions every call, you freeze them in the runtime environment.
+
+The model effectively runs with a persistent instruction layer.
+
+Your calls become much smaller.
+
+Instead of:
+SYSTEM: 900 tokens of instructions
+USER: 300 tokens context
+
+You send:
+
+USER: 300 tokens context
+
+Now the model call is 70–80% smaller.
+
+How Serious Systems Implement This
+
+There are three common methods.
+
+1. System Prompt Preloading
+
+You load the instructions once per session.
+
+Then all generation calls reuse it.
+
+Example runtime flow:
+
+Session Start
+↓
+Load Axion Build Instructions
+↓
+Generate 1,000 artifacts
+
+The instructions are not resent each time.
+
+2. Model Personas
+
+Instead of sending instructions like:
+
+You are a TypeScript backend engineer...
+
+You define a model role once.
+
+Example:
+
+MODEL ROLE: axion_backend_generator_v1
+
+Now calls become:
+
+ROLE: axion_backend_generator_v1
+TASK: generate repository for User entity
+CONTEXT: entity schema
+
+Extremely compact.
+
+3. Tool-Based Generation
+
+Instead of asking the model to write code in text form, you use structured tools.
+
+Example:
+
+generate_repository({
+  entity: "User",
+  fields: [...]
+})
+
+The model decides parameters, not full code.
+
+The tool expands it into code.
+
+This reduces output tokens massively.
+
+Why This Matters for Axion
+
+Let’s estimate.
+
+Assume a 5,000 file build.
+
+Typical generation distribution:
+
+deterministic: 1,500
+template:      2,000
+model:         1,500
+
+If each model call wastes 800 instruction tokens, that becomes:
+
+800 × 1,500 = 1,200,000 tokens
+
+Just for instructions.
+
+Instruction freezing removes most of that.
+
+Axion Should Use This Structure
+
+Your generation calls should look like this:
+
+BUILD_UNIT: entity_user_repository
+
+INPUT:
+entity_schema
+repository_rules
+related_contracts
+
+OUTPUT:
+code
+
+No explanations.
+
+No instructions repeated.
+
+No verbose prompts.
+
+What the Model Should Never See
+
+The model should not see:
+
+full documentation
+
+full architecture specs
+
+previous build history
+
+entire project repo
+
+giant instruction blocks
+
+verbose prompts
+
+All of that should live outside the context window.
+
+The Ideal Axion Generation Call
+
+A good call might be 150–400 tokens total.
+
+Example:
+
+UNIT: endpoint_create_user
+
+ENTITY_FIELDS:
+id
+email
+password_hash
+role
+
+AUTH_REQUIRED: true
+
+ARTIFACT: route_handler
+
+OUTPUT_FORMAT: code_only
+
+That is enough for a competent model.
+
+Why This Is Powerful
+
+If each call becomes:
+
+350 tokens input
+200 tokens output
+
+Then a 1,500 model file build becomes:
+
+~825,000 tokens
+
+Instead of:
+
+3–5 million tokens
+
+Huge difference.
+
+The Real Design Rule
+
+For Axion, the model should behave like:
+
+a specialized compiler worker
+
+not like a chatbot.
+
+That means:
+
+minimal instructions
+
+structured input
+
+code-only output
+
+no conversation
+
+One More Trick That Makes Large Builds Possible
+
+Large build systems often add something called Context Capsules.
+
+Instead of sending raw context like:
+
+entity schema
+endpoint spec
+auth policy
+validation rules
+
+You compress them into structured capsules:
+
+ENTITY_CAPSULE: user_v3
+ENDPOINT_CAPSULE: create_user_v2
+AUTH_CAPSULE: standard_jwt_policy
+
+The model learns these formats once.
+
+Then calls become extremely tiny.
+
+If Axion Uses These Three Techniques
+Instruction freezing
+Context capsules
+Template-first generation
+
+You can realistically generate 5–10K file systems without runaway token costs.

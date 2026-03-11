@@ -1,0 +1,201 @@
+Missing a Single Source of Structural Truth
+
+Many systems let the model invent structure during generation.
+
+Example workflow (bad):
+
+Prompt → Generate user model
+Prompt → Generate user repository
+Prompt → Generate endpoint
+Prompt → Generate UI page
+
+Each step asks the model to re-infer the system.
+
+That causes:
+
+duplicated types
+
+slightly different field names
+
+mismatched APIs
+
+extra unnecessary files
+
+inconsistent folder layouts
+
+growing prompt size
+
+The model is constantly guessing structure instead of following it.
+
+The Correct Pattern
+
+A scalable system always creates structure first, code second.
+
+That means Axion must lock structure before any generation happens.
+
+The pipeline should look like this:
+
+Agent Kit
+   ↓
+Projection
+   ↓
+Inventories
+   ↓
+Repo Blueprint
+   ↓
+File Inventory
+   ↓
+Build Units
+   ↓
+Code Generation
+
+The model is not deciding the repo structure.
+
+It is filling predefined targets.
+
+What the Blueprint Should Contain
+
+The blueprint should already define:
+
+directories
+
+file targets
+
+module boundaries
+
+artifact families
+
+dependency ordering
+
+Example blueprint fragment:
+
+backend/
+  entities/
+    user/
+      user.model.ts
+      user.repository.ts
+      user.validation.ts
+  endpoints/
+    user/
+      create_user.route.ts
+      create_user.handler.ts
+      create_user.request.ts
+      create_user.response.ts
+frontend/
+  pages/
+    users/
+      users.page.tsx
+      users.hook.ts
+tests/
+  user/
+      user.repository.test.ts
+
+Generation does not invent these files.
+
+It only fills them.
+
+Why This Prevents Bloat
+
+When structure is locked:
+
+no duplicate modules
+
+no random folders
+
+no unnecessary artifacts
+
+consistent naming
+
+predictable file count
+
+Without this, the model will often create things like:
+
+userService.ts
+user.service.ts
+user_handler.ts
+user-handler.ts
+
+Which leads to messy repos.
+
+The Key Rule
+
+The model should never decide what files exist.
+
+Only the projection + blueprint layers decide that.
+
+The model’s job is simply:
+
+fill this file with correct code
+Why This Is Critical for Large Builds
+
+In a 5–10K file build, even small structural drift multiplies.
+
+Example:
+
+If the model accidentally creates 2 extra files per subsystem, and you have 50 subsystems, that’s already:
+
+100 unnecessary files
+
+And they propagate into tests, imports, and dependencies.
+
+That’s how repos get bloated.
+
+The Axion Advantage
+
+Your system already has the right components:
+
+Agent Kit
+
+Projection
+
+Inventories
+
+File Inventory
+
+Build Units
+
+That means Axion can enforce this rule.
+
+As long as generation cannot create new files outside the file inventory, bloat stays under control.
+
+The Clean Mental Model
+
+Think of Axion like a compiler.
+
+Spec (Agent Kit)
+↓
+Intermediate Representation (Inventories)
+↓
+Build Plan (File Inventory)
+↓
+Compilation (Generation)
+↓
+Executable (Repo)
+
+Compilers never let code generation invent new source files.
+
+They compile the structure they already know.
+
+One Simple Safeguard
+
+Add a rule inside the build system:
+
+No generated file may exist unless it appears in file_inventory.
+
+If generation tries to produce a new file path:
+
+reject it
+
+mark generation as invalid
+
+rerun with stricter prompt
+
+This single rule eliminates most AI repo bloat.
+
+The Core Principle
+
+If you remember only one thing for Axion:
+
+Structure must be deterministic and decided before generation begins.
+
+Generation should only produce content, not structure.
