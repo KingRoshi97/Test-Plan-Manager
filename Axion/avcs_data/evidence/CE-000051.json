@@ -1,0 +1,9 @@
+{
+  "id": "CE-000051",
+  "cert_run_id": "CR-000011",
+  "domain": "deployment_readiness",
+  "type": "summary",
+  "title": "deployment_readiness evaluation summary",
+  "content": "{\"status\":\"warn\",\"score\":83,\"checks_total\":3,\"checks_passed\":2,\"checks_failed\":0,\"findings\":0}",
+  "created_at": "2026-03-11T07:25:14.088Z"
+}
