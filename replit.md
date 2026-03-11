@@ -57,36 +57,20 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - Row 4: Recent Output strip (horizontal scroll of completed assembly cards with preset, duration, verification status, StageRail)
 - Fetches `/api/health` for system stats, `/api/assemblies` with 5s polling
 
-**Assemblies Page** (`App/src/pages/assemblies.tsx`): Full fleet management page at `/assemblies` (redirect from `/runs`). Features:
-- Header: "Assemblies" title, "Track, organize, and operate all assemblies across the system" subtitle, "New Assembly" CTA
-- Primary filter chips: All/Running/Completed/Failed/Queued with live counts
-- Secondary filter dropdowns: All Lifecycle (draft/active/in_use/degraded/deprecated/archived/retirement_candidates), All Families (dynamic + Unassigned), All Ownership (all/assigned/partial/unowned/with_agents/without_agents/no_control_plane), All Usage (live/warm/idle/dormant/no telemetry), All Risk (low/medium/high/critical/flagged), All Ecosystem (core/supporting/adapter/integration/edge/experimental/high_risk)
-- **Saved Views**: Horizontal pill strip with bookmark icon below header. 20 built-in preset views: All Assemblies, Running, Failed, In Use, Unowned, No Family, Deprecated, At Risk Families, High Risk, No Control Plane, Agentless, Partial Assignment, Deprecated (lifecycle), Retirement Candidates, Archived, Degraded, Live, Idle, High Dep Risk, Core Services
-- Overview cards grid (3 rows × 6 cols): 18 clickable cards covering status, ownership, lifecycle, usage, and ecosystem metrics
-  - Row 1: Total, Running, Failed, In Use, Fully Assigned, Unowned
-  - Row 2: With Agents, No Ctrl Plane, Active LC, Deprecated, Retire Cand., Degraded
-  - Row 3: Live Usage, Idle/Dormant, High Dep Risk, Orphaned, Core Services, Consumers
-- Table columns: Assembly (name + idea + preset tag + risk dot + assignment health badge + deprecation pill + retirement badge), Status (StatusChip + stall warnings), Family (familyName + familyType), Lifecycle (StatusChip + deprecation overlay + retirement hint), Usage (state badge + requests/24h + last activity), Owner (ownerName + teamName + controlPlane tag + agent count + "Needs owner" warning badge), Pipeline (StageRail), Elapsed, Duration, Ecosystem (role badge + upstream/downstream counts + dependency risk), Updated, Actions (kebab ⋯ menu)
-- **Risk indicators**: Compact colored dot next to assembly name (green/yellow/orange/red for low/medium/high/critical). Only shown when riskLevel is set
-- Responsive hiding: Family/Lifecycle on md+, Usage/Owner on lg+, Elapsed/Duration/Ecosystem/Updated on xl+
-- **Inline Row Action Menu**: Kebab (⋯) dropdown replaces individual action buttons. Menu items: Quick Detail, Open Workbench, Set Lifecycle (submenu: draft/active/in_use/degraded/deprecated/archived), Set Risk (submenu: low/medium/high/critical/clear), Delete. Lifecycle/risk changes fire PATCH and invalidate query cache. Menu auto-closes on click outside
-- **Quick Detail Drawer**: Right-side sliding panel (380px, glass-panel-solid) with sections:
-  - Status + runId, idea
-  - Family section (familyName/familyType)
-  - **Responsibility section (Pass 7)**: assignment health badge (Assigned/Partial/Unassigned), owner/team/controlPlane/agents grid, assigned agents list with names/roles/statuses
-  - **Lifecycle section (Pass 8)**: lifecycle StatusChip + retirement candidate badge, deprecation state + target date + lifecycle updated timestamp
-  - **Usage & Ecosystem section (Pass 9)**: usage state + ecosystem role badges, requests/24h + active consumers + error rate + P95 latency + dependency risk grid, upstream/downstream dependency tag lists
-  - Pipeline StageRail + currentStep
-  - Activity grid (created/updated/totalRuns/totalDuration)
-  - Risk Level (colored dot + label + attention flags)
-  - Relationships section (parent/children + upstream/downstream deps + shared resources)
-  - Actions: Open Workbench, Run Pipeline, Delete
-- **Group by Family mode**: Toggle button (FolderTree icon) in filter bar; when active, table rows clustered under collapsible FamilyGroupHeader rows
-  - `buildFamilyGroups()`: groups filtered assemblies by familyName, computes extended rollups
-  - `FamilyGroupHeader`: shows family name, type badge, member count, status rollups, dominant lifecycle, **responsibility rollup** (owned/governed/withAgents X/Y), **lifecycle rollup** (active/deprecated/retirement counts), **ecosystem rollup** (live/high-risk/total-dependents)
-  - `FamilyTooltip`: hover tooltip with family stats
-  - All filters apply in grouped mode
-- **Helper functions**: getAssignedAgents, getAssignmentHealth, getDeprecationState, isRetirementCandidate (heuristic: explicit flag OR deprecated+dormant OR archived), getUpstreamDeps, getDownstreamDeps, getDependencyRisk
+**Assemblies Page** (Pass 10 cleanup complete): Full fleet management page at `/assemblies` (redirect from `/runs`). Architecture:
+- **Orchestrator**: `App/src/pages/assemblies.tsx` (~340 lines) — state management, data fetching, filter logic
+- **Helpers/Types**: `App/src/lib/assembly-helpers.ts` — `AssemblyWithMeta` type (extends Assembly with latestStages), all helper functions (getAssignedAgents, getAssignmentHealth, getDeprecationState, isRetirementCandidate, getUpstreamDeps, getDownstreamDeps, getDependencyRisk, getAttentionFlags, buildFamilyGroups, formatDate, formatDuration), filter types, constants, label/color maps, saved view definitions, context-aware empty state messages
+- **Subcomponents** (`App/src/components/assemblies/`):
+  - `AssembliesFilterBar.tsx` — Saved views strip + primary status chips + secondary filter dropdowns + group-by-family toggle
+  - `AssembliesOverviewCards.tsx` — 18 clickable metric cards in 3×6 grid
+  - `AssembliesTable.tsx` — Table with flat/grouped rendering, RowActionMenu (kebab), FamilyGroupHeader integration
+  - `FamilyGroupHeader.tsx` — Collapsible family row headers with rollups + FamilyTooltip hover
+  - `QuickDetailDrawer.tsx` — Right-side detail drawer (380px) with all sections + RelationshipsSection
+- **Type safety**: Zero `as any` casts — all assembly fields accessed via properly typed Assembly interface from drizzle schema
+- **Empty states**: Context-aware messages per saved view/filter (e.g., "No deprecated assemblies", "No retirement candidates", "No assemblies with high dependency risk")
+- **Language**: No "Runs" or run-centric wording on page surface; uses "Pipeline Executions" for historical count
+- **Responsive breakpoints**: mobile: Assembly/Status/Actions; md: +Family/Pipeline; lg: +Lifecycle/Usage/Updated; xl: +Owner/Ecosystem/Elapsed/Duration
+- Features preserved: Primary filter chips, secondary dropdowns, 20 saved views, overview cards, inline row action menu, quick detail drawer, group by family mode
 - Assembly data model fields: familyId, familyName, familyType, lifecycleState (default "draft"), ownerName, teamName, usageState, lastActivityAt, parentAssemblyId (integer FK), dependencyMeta (jsonb), riskLevel, attentionFlags, **controlPlane** (varchar), **assignedAgents** (jsonb array of {id, name, role?, status?}), **deprecationState** (varchar: none/planned/announced/in_progress/completed), **deprecationTargetDate** (timestamp), **retirementCandidate** (boolean), **lifecycleUpdatedAt** (timestamp, server-managed), **requestsLast24h** (integer), **activeConsumers** (integer), **errorRatePct** (real), **p95LatencyMs** (integer), **ecosystemRole** (varchar: core/supporting/adapter/integration/edge/experimental)
 - PATCH /api/assemblies/:id accepts all above fields (except lifecycleUpdatedAt which is server-managed on lifecycle changes); validates controlPlane as string, assignedAgents as array of {id, name} objects, deprecationState enum, deprecationTargetDate as ISO date, retirementCandidate as boolean, ecosystemRole enum, numeric telemetry fields
 - GET /api/assemblies/:id/relationships returns: parent (id/projectName/status), children, upstreamDeps, downstreamDeps, sharedRegistries, sharedApis

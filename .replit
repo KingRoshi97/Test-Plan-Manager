@@ -46,3 +46,7 @@ externalPort = 5173
 
 [userenv.shared]
 AXION_IA_CONCURRENCY = "10"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000
