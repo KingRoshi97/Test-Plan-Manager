@@ -94,15 +94,63 @@ export function registerRoutes(app: Express) {
     if (!assembly) return res.status(404).json({ error: "Not found" });
     if (assembly.status === "running") return res.status(409).json({ error: "Cannot update while running" });
 
-    const allowedFields = ["projectName", "idea", "preset", "intakePayload", "config", "familyId", "familyName", "familyType", "lifecycleState", "ownerName", "teamName", "usageState"];
+    const allowedFields = ["projectName", "idea", "preset", "intakePayload", "config", "familyId", "familyName", "familyType", "lifecycleState", "ownerName", "teamName", "usageState", "parentAssemblyId", "dependencyMeta", "riskLevel", "attentionFlags"];
+    const validRiskLevels = new Set(["low", "medium", "high", "critical", null]);
+    const validLifecycles = new Set(["draft", "active", "in_use", "degraded", "deprecated", "archived"]);
     const update: Record<string, any> = {};
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) update[key] = req.body[key];
+    }
+    if (update.riskLevel !== undefined && !validRiskLevels.has(update.riskLevel)) {
+      return res.status(400).json({ error: "Invalid riskLevel. Must be: low, medium, high, critical, or null" });
+    }
+    if (update.lifecycleState !== undefined && !validLifecycles.has(update.lifecycleState)) {
+      return res.status(400).json({ error: "Invalid lifecycleState" });
+    }
+    if (update.attentionFlags !== undefined && update.attentionFlags !== null) {
+      if (!Array.isArray(update.attentionFlags) || !update.attentionFlags.every((f: any) => typeof f === "string")) {
+        return res.status(400).json({ error: "attentionFlags must be an array of strings or null" });
+      }
+    }
+    if (update.parentAssemblyId !== undefined && update.parentAssemblyId !== null && typeof update.parentAssemblyId !== "number") {
+      return res.status(400).json({ error: "parentAssemblyId must be a number or null" });
+    }
+    if (update.dependencyMeta !== undefined && update.dependencyMeta !== null && typeof update.dependencyMeta !== "object") {
+      return res.status(400).json({ error: "dependencyMeta must be an object or null" });
     }
     if (Object.keys(update).length === 0) return res.status(400).json({ error: "No valid fields to update" });
 
     const updated = await storage.updateAssembly(id, update);
     res.json(updated);
+  });
+
+  app.get("/api/assemblies/:id/relationships", async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const assembly = await storage.getAssembly(id);
+    if (!assembly) return res.status(404).json({ error: "Not found" });
+
+    let parent: { id: number; projectName: string; status: string } | null = null;
+    if (assembly.parentAssemblyId) {
+      const p = await storage.getAssembly(assembly.parentAssemblyId);
+      if (p) parent = { id: p.id, projectName: p.projectName, status: p.status };
+    }
+
+    const allAssemblies = await storage.getAssemblies();
+    const children = allAssemblies
+      .filter((a) => a.parentAssemblyId === id)
+      .map((a) => ({ id: a.id, projectName: a.projectName, status: a.status }));
+
+    const depMeta = (assembly.dependencyMeta || {}) as Record<string, any>;
+    const safeArray = (v: any) => Array.isArray(v) ? v : [];
+
+    res.json({
+      parent,
+      children,
+      upstreamDeps: safeArray(depMeta.upstreamDeps),
+      downstreamDeps: safeArray(depMeta.downstreamDeps),
+      sharedRegistries: safeArray(depMeta.sharedRegistries),
+      sharedApis: safeArray(depMeta.sharedApis),
+    });
   });
 
   app.get("/api/assemblies/:id/kit", async (req: Request, res: Response) => {

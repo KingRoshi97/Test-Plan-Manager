@@ -30,6 +30,10 @@ export const assemblies = pgTable("assemblies", {
   teamName: varchar("team_name", { length: 100 }),
   usageState: varchar("usage_state", { length: 20 }),
   lastActivityAt: timestamp("last_activity_at"),
+  parentAssemblyId: integer("parent_assembly_id"),
+  dependencyMeta: jsonb("dependency_meta"),
+  riskLevel: varchar("risk_level", { length: 20 }),
+  attentionFlags: jsonb("attention_flags"),
 });
 
 export const pipelineRuns = pgTable("pipeline_runs", {

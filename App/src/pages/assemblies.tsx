@@ -27,6 +27,11 @@ import {
   Bookmark,
   Zap,
   Eye,
+  MoreVertical,
+  Shield,
+  ArrowUpRight,
+  ArrowDownRight,
+  Link,
 } from "lucide-react";
 import { StatusChip, getStatusVariant } from "../components/ui/status-chip";
 import { GlassPanel } from "../components/ui/glass-panel";
@@ -36,6 +41,7 @@ import type { Assembly } from "../../../shared/schema";
 
 type FilterStatus = "all" | "running" | "completed" | "failed" | "queued";
 type UsageFilter = "all" | "live" | "warm" | "idle" | "dormant" | "no_telemetry";
+type RiskFilter = "all" | "low" | "medium" | "high" | "critical" | "flagged";
 
 const filterChips: { key: FilterStatus; label: string; icon: typeof Activity }[] = [
   { key: "all", label: "All", icon: Activity },
@@ -83,6 +89,29 @@ const usageFilterOptions: { value: UsageFilter; label: string }[] = [
   { value: "no_telemetry", label: "No Telemetry" },
 ];
 
+const riskFilterOptions: { value: RiskFilter; label: string }[] = [
+  { value: "all", label: "All Risk" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "critical", label: "Critical" },
+  { value: "flagged", label: "Flagged" },
+];
+
+const riskColors: Record<string, string> = {
+  low: "bg-[hsl(var(--status-success))]",
+  medium: "bg-[hsl(var(--status-warning))]",
+  high: "bg-orange-500",
+  critical: "bg-[hsl(var(--status-failure))]",
+};
+
+const riskLabels: Record<string, string> = {
+  low: "Low Risk",
+  medium: "Medium Risk",
+  high: "High Risk",
+  critical: "Critical Risk",
+};
+
 interface SavedView {
   key: string;
   label: string;
@@ -96,6 +125,7 @@ interface ViewSetters {
   setFamilyFilter: (v: string) => void;
   setOwnerFilter: (v: string) => void;
   setUsageFilter: (v: UsageFilter) => void;
+  setRiskFilter: (v: RiskFilter) => void;
   setGroupByFamily: (v: boolean) => void;
 }
 
@@ -104,49 +134,55 @@ const savedViews: SavedView[] = [
     key: "all",
     label: "All Assemblies",
     icon: Boxes,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
   },
   {
     key: "running",
     label: "Running",
     icon: Radio,
-    apply: (s) => { s.setActiveFilter("running"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+    apply: (s) => { s.setActiveFilter("running"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
   },
   {
     key: "failed",
     label: "Failed",
     icon: XCircle,
-    apply: (s) => { s.setActiveFilter("failed"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+    apply: (s) => { s.setActiveFilter("failed"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
   },
   {
     key: "in_use",
     label: "In Use",
     icon: CheckCircle2,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("in_use"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("in_use"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
   },
   {
     key: "unowned",
     label: "Unowned",
     icon: Users,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("unowned"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("unowned"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
   },
   {
     key: "no_family",
     label: "No Family",
     icon: FolderTree,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("unassigned"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("unassigned"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
   },
   {
     key: "deprecated_candidates",
     label: "Deprecated Candidates",
     icon: AlertTriangle,
-    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("deprecated"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(false); },
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("deprecated"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(false); },
   },
   {
     key: "at_risk_families",
     label: "At Risk Families",
     icon: Zap,
-    apply: (s) => { s.setActiveFilter("failed"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setGroupByFamily(true); },
+    apply: (s) => { s.setActiveFilter("failed"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("all"); s.setGroupByFamily(true); },
+  },
+  {
+    key: "high_risk",
+    label: "High Risk",
+    icon: Shield,
+    apply: (s) => { s.setActiveFilter("all"); s.setLifecycleFilter("all"); s.setFamilyFilter("all"); s.setOwnerFilter("all"); s.setUsageFilter("all"); s.setRiskFilter("high"); s.setGroupByFamily(false); },
   },
 ];
 
@@ -427,12 +463,252 @@ function FamilyGroupHeader({
   );
 }
 
+function RowActionMenu({
+  assembly,
+  onQuickDetail,
+  onNavigate,
+  onDelete,
+  onPatch,
+  isDeleting,
+}: {
+  assembly: Assembly;
+  onQuickDetail: () => void;
+  onNavigate: () => void;
+  onDelete: () => void;
+  onPatch: (data: Record<string, any>) => void;
+  isDeleting?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [subMenu, setSubMenu] = useState<"lifecycle" | "risk" | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSubMenu(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  const ext = assembly as any;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => { setOpen(!open); setSubMenu(null); }}
+        className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
+        title="Actions"
+      >
+        <MoreVertical className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-50 w-48 glass-panel-solid border border-[hsl(var(--border))] rounded-lg shadow-xl py-1 text-xs">
+          <button
+            onClick={() => { onQuickDetail(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-[hsl(var(--accent)/0.5)] transition-colors text-left"
+          >
+            <Eye className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+            Quick Detail
+          </button>
+          <button
+            onClick={() => { onNavigate(); setOpen(false); }}
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-[hsl(var(--accent)/0.5)] transition-colors text-left"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+            Open Workbench
+          </button>
+          <div className="border-t border-[hsl(var(--border)/0.5)] my-1" />
+          <button
+            onClick={() => setSubMenu(subMenu === "lifecycle" ? null : "lifecycle")}
+            className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-[hsl(var(--accent)/0.5)] transition-colors text-left"
+          >
+            <span className="flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              Set Lifecycle
+            </span>
+            <ChevronRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+          </button>
+          {subMenu === "lifecycle" && (
+            <div className="ml-2 mr-1 mb-1 border-l border-[hsl(var(--border)/0.3)] pl-2">
+              {(["draft", "active", "in_use", "degraded", "deprecated", "archived"] as const).map((lc) => (
+                <button
+                  key={lc}
+                  onClick={() => { onPatch({ lifecycleState: lc }); setOpen(false); setSubMenu(null); }}
+                  className={`w-full flex items-center gap-2 px-2 py-1 rounded hover:bg-[hsl(var(--accent)/0.5)] transition-colors text-left ${ext.lifecycleState === lc ? "text-[hsl(var(--primary))]" : ""}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${lifecycleVariant[lc] === "success" ? "bg-[hsl(var(--status-success))]" : lifecycleVariant[lc] === "processing" ? "bg-[hsl(var(--status-processing))]" : lifecycleVariant[lc] === "warning" ? "bg-[hsl(var(--status-warning))]" : lifecycleVariant[lc] === "failure" ? "bg-[hsl(var(--status-failure))]" : "bg-[hsl(var(--muted-foreground))]"}`} />
+                  {lifecycleLabels[lc]}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setSubMenu(subMenu === "risk" ? null : "risk")}
+            className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-[hsl(var(--accent)/0.5)] transition-colors text-left"
+          >
+            <span className="flex items-center gap-2">
+              <Shield className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+              Set Risk
+            </span>
+            <ChevronRight className="w-3 h-3 text-[hsl(var(--muted-foreground))]" />
+          </button>
+          {subMenu === "risk" && (
+            <div className="ml-2 mr-1 mb-1 border-l border-[hsl(var(--border)/0.3)] pl-2">
+              {(["low", "medium", "high", "critical"] as const).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => { onPatch({ riskLevel: r }); setOpen(false); setSubMenu(null); }}
+                  className={`w-full flex items-center gap-2 px-2 py-1 rounded hover:bg-[hsl(var(--accent)/0.5)] transition-colors text-left capitalize ${ext.riskLevel === r ? "text-[hsl(var(--primary))]" : ""}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${riskColors[r]}`} />
+                  {r}
+                </button>
+              ))}
+              <button
+                onClick={() => { onPatch({ riskLevel: null }); setOpen(false); setSubMenu(null); }}
+                className="w-full flex items-center gap-2 px-2 py-1 rounded hover:bg-[hsl(var(--accent)/0.5)] transition-colors text-left text-[hsl(var(--muted-foreground))]"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--muted-foreground)/0.3)]" />
+                Clear
+              </button>
+            </div>
+          )}
+          <div className="border-t border-[hsl(var(--border)/0.5)] my-1" />
+          <button
+            onClick={() => {
+              if (confirm("Delete this assembly?")) { onDelete(); setOpen(false); }
+            }}
+            disabled={isDeleting}
+            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-[hsl(var(--status-failure)/0.1)] transition-colors text-left text-[hsl(var(--status-failure))] disabled:opacity-50"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Delete Assembly
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RelationshipsSection({ assemblyId, onSwap }: { assemblyId: number; onSwap: (id: number) => void }) {
+  const { data, isLoading } = useQuery<{
+    parent: { id: number; projectName: string; status: string } | null;
+    children: { id: number; projectName: string; status: string }[];
+    upstreamDeps: string[];
+    downstreamDeps: string[];
+    sharedRegistries: string[];
+    sharedApis: string[];
+  }>({
+    queryKey: [`/api/assemblies/${assemblyId}/relationships`],
+    queryFn: () => apiRequest(`/api/assemblies/${assemblyId}/relationships`),
+    enabled: !!assemblyId,
+  });
+
+  if (isLoading) return (
+    <DrawerSection label="Relationships">
+      <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+        <Loader2 className="w-3 h-3 animate-spin" /> Loading...
+      </div>
+    </DrawerSection>
+  );
+
+  if (!data) return null;
+
+  const hasRelationships = data.parent || data.children.length > 0 || data.upstreamDeps.length > 0 || data.downstreamDeps.length > 0 || data.sharedRegistries.length > 0 || data.sharedApis.length > 0;
+
+  if (!hasRelationships) return (
+    <DrawerSection label="Relationships">
+      <span className="text-xs text-[hsl(var(--muted-foreground)/0.5)] italic">No relationships</span>
+    </DrawerSection>
+  );
+
+  return (
+    <DrawerSection label="Relationships">
+      <div className="space-y-2">
+        {data.parent && (
+          <div>
+            <span className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-0.5">Parent</span>
+            <button
+              onClick={() => onSwap(data.parent!.id)}
+              className="flex items-center gap-1.5 text-xs text-[hsl(var(--primary))] hover:underline"
+            >
+              <ArrowUpRight className="w-3 h-3" />
+              {data.parent.projectName}
+              <StatusChip variant={getStatusVariant(data.parent.status)} label={data.parent.status} />
+            </button>
+          </div>
+        )}
+        {data.children.length > 0 && (
+          <div>
+            <span className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-0.5">Children ({data.children.length})</span>
+            <div className="space-y-1">
+              {data.children.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => onSwap(c.id)}
+                  className="flex items-center gap-1.5 text-xs text-[hsl(var(--primary))] hover:underline"
+                >
+                  <ArrowDownRight className="w-3 h-3" />
+                  {c.projectName}
+                  <StatusChip variant={getStatusVariant(c.status)} label={c.status} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {data.upstreamDeps.length > 0 && (
+          <div>
+            <span className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-0.5">Upstream Dependencies</span>
+            <div className="flex flex-wrap gap-1">
+              {data.upstreamDeps.map((d) => (
+                <span key={d} className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded">{d}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        {data.downstreamDeps.length > 0 && (
+          <div>
+            <span className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-0.5">Downstream Dependents</span>
+            <div className="flex flex-wrap gap-1">
+              {data.downstreamDeps.map((d) => (
+                <span key={d} className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)] px-1.5 py-0.5 rounded">{d}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        {(data.sharedApis.length > 0 || data.sharedRegistries.length > 0) && (
+          <div>
+            <span className="text-[10px] text-[hsl(var(--muted-foreground))] block mb-0.5">Shared Resources</span>
+            <div className="flex flex-wrap gap-1">
+              {data.sharedApis.map((a) => (
+                <span key={a} className="text-[10px] font-mono-tech text-[hsl(var(--status-processing))] bg-[hsl(var(--status-processing)/0.1)] px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                  <Link className="w-2.5 h-2.5" />{a}
+                </span>
+              ))}
+              {data.sharedRegistries.map((r) => (
+                <span key={r} className="text-[10px] font-mono-tech text-[hsl(var(--status-success))] bg-[hsl(var(--status-success)/0.1)] px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                  <Boxes className="w-2.5 h-2.5" />{r}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </DrawerSection>
+  );
+}
+
 function QuickDetailDrawer({
   assembly,
   onClose,
   onNavigate,
   onDelete,
   onRunPipeline,
+  onSwapAssembly,
   isDeleting,
   isRunning,
 }: {
@@ -441,6 +717,7 @@ function QuickDetailDrawer({
   onNavigate: (id: number) => void;
   onDelete: (id: number) => void;
   onRunPipeline: (id: number) => void;
+  onSwapAssembly: (id: number) => void;
   isDeleting?: boolean;
   isRunning?: boolean;
 }) {
@@ -577,6 +854,28 @@ function QuickDetailDrawer({
             </div>
           </DrawerSection>
 
+          {(ext.riskLevel || (ext.attentionFlags && Array.isArray(ext.attentionFlags) && ext.attentionFlags.length > 0)) && (
+            <DrawerSection label="Risk Level">
+              {ext.riskLevel && (
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${riskColors[ext.riskLevel] || "bg-[hsl(var(--muted-foreground))]"}`} />
+                  <span className="text-xs text-[hsl(var(--foreground))] capitalize">{riskLabels[ext.riskLevel] || ext.riskLevel}</span>
+                </div>
+              )}
+              {ext.attentionFlags && Array.isArray(ext.attentionFlags) && ext.attentionFlags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {ext.attentionFlags.map((flag: string) => (
+                    <span key={flag} className="text-[10px] font-mono-tech text-[hsl(var(--status-warning))] bg-[hsl(var(--status-warning)/0.1)] px-1.5 py-0.5 rounded">
+                      {flag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </DrawerSection>
+          )}
+
+          <RelationshipsSection assemblyId={assembly.id} onSwap={onSwapAssembly} />
+
           {assembly.preset && (
             <DrawerSection label="Preset">
               <span className="text-[11px] font-mono-tech text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted)/0.5)] px-2 py-1 rounded inline-block">
@@ -637,6 +936,7 @@ export default function AssembliesPage() {
   const [familyFilter, setFamilyFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
   const [usageFilter, setUsageFilter] = useState<UsageFilter>("all");
+  const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
   const [groupByFamily, setGroupByFamily] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [activeView, setActiveView] = useState("all");
@@ -674,6 +974,18 @@ export default function AssembliesPage() {
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to start pipeline");
+    },
+  });
+
+  const patchMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Record<string, any> }) =>
+      apiRequest(`/api/assemblies/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    onSuccess: () => {
+      toast.success("Assembly updated");
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to update assembly");
     },
   });
 
@@ -716,8 +1028,16 @@ export default function AssembliesPage() {
     } else if (usageFilter !== "all") {
       result = result.filter((a) => (a as any).usageState === usageFilter);
     }
+    if (riskFilter === "flagged") {
+      result = result.filter((a) => {
+        const flags = (a as any).attentionFlags;
+        return flags && Array.isArray(flags) && flags.length > 0;
+      });
+    } else if (riskFilter !== "all") {
+      result = result.filter((a) => (a as any).riskLevel === riskFilter);
+    }
     return result;
-  }, [assemblies, activeFilter, lifecycleFilter, familyFilter, ownerFilter, usageFilter]);
+  }, [assemblies, activeFilter, lifecycleFilter, familyFilter, ownerFilter, usageFilter, riskFilter]);
 
   const familyGroups = useMemo(() => buildFamilyGroups(filtered), [filtered]);
 
@@ -750,6 +1070,7 @@ export default function AssembliesPage() {
     setFamilyFilter,
     setOwnerFilter,
     setUsageFilter,
+    setRiskFilter,
     setGroupByFamily,
   }), []);
 
@@ -765,6 +1086,7 @@ export default function AssembliesPage() {
       setFamilyFilter("all");
       setOwnerFilter("all");
       setUsageFilter("all");
+      setRiskFilter("all");
       setActiveView("");
     } else if (filter === "unowned") {
       setActiveFilter("all");
@@ -772,6 +1094,7 @@ export default function AssembliesPage() {
       setFamilyFilter("all");
       setOwnerFilter("unowned");
       setUsageFilter("all");
+      setRiskFilter("all");
       setActiveView("");
     } else if (filter === "families") {
       setGroupByFamily(true);
@@ -780,6 +1103,7 @@ export default function AssembliesPage() {
       setFamilyFilter("all");
       setOwnerFilter("all");
       setUsageFilter("all");
+      setRiskFilter("all");
       setActiveView("");
     } else {
       setActiveFilter(filter as FilterStatus);
@@ -787,6 +1111,7 @@ export default function AssembliesPage() {
       setFamilyFilter("all");
       setOwnerFilter("all");
       setUsageFilter("all");
+      setRiskFilter("all");
       setActiveView("");
     }
   }
@@ -814,7 +1139,10 @@ export default function AssembliesPage() {
         onClick={() => setLocation(`/assembly/${a.id}`)}
       >
         <td className="px-4 py-3">
-          <div className="font-medium text-[hsl(var(--foreground))] text-[13px]">
+          <div className="font-medium text-[hsl(var(--foreground))] text-[13px] flex items-center gap-1.5">
+            {ext.riskLevel && (
+              <span className={`w-2 h-2 rounded-full shrink-0 ${riskColors[ext.riskLevel] || ""}`} title={riskLabels[ext.riskLevel] || ext.riskLevel} />
+            )}
             {a.projectName}
           </div>
           {a.idea && (
@@ -922,31 +1250,15 @@ export default function AssembliesPage() {
           </span>
         </td>
         <td className="px-4 py-3 text-right">
-          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => setDrawerAssemblyId(a.id)}
-              className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
-              title="Quick Detail"
-            >
-              <Eye className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-            </button>
-            <button
-              onClick={() => setLocation(`/assembly/${a.id}`)}
-              className="p-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors"
-              title="Open Assembly"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-            </button>
-            <button
-              onClick={() => {
-                if (confirm("Delete this assembly?")) deleteMutation.mutate(a.id);
-              }}
-              disabled={deleteMutation.isPending}
-              className="p-1.5 rounded hover:bg-[hsl(var(--status-failure)/0.15)] transition-colors disabled:opacity-50"
-              title="Delete"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
-            </button>
+          <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
+            <RowActionMenu
+              assembly={a}
+              onQuickDetail={() => setDrawerAssemblyId(a.id)}
+              onNavigate={() => setLocation(`/assembly/${a.id}`)}
+              onDelete={() => deleteMutation.mutate(a.id)}
+              onPatch={(data) => patchMutation.mutate({ id: a.id, data })}
+              isDeleting={deleteMutation.isPending}
+            />
           </div>
         </td>
       </tr>
@@ -954,7 +1266,7 @@ export default function AssembliesPage() {
   }
 
   const TABLE_COL_COUNT = 11;
-  const allFiltersDefault = activeFilter === "all" && lifecycleFilter === "all" && familyFilter === "all" && ownerFilter === "all" && usageFilter === "all";
+  const allFiltersDefault = activeFilter === "all" && lifecycleFilter === "all" && familyFilter === "all" && ownerFilter === "all" && usageFilter === "all" && riskFilter === "all";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -1049,6 +1361,11 @@ export default function AssembliesPage() {
           value={usageFilter}
           onChange={(v) => { setUsageFilter(v as UsageFilter); setActiveView(""); }}
           options={usageFilterOptions}
+        />
+        <FilterDropdown
+          value={riskFilter}
+          onChange={(v) => { setRiskFilter(v as RiskFilter); setActiveView(""); }}
+          options={riskFilterOptions}
         />
         <div className="ml-auto">
           <button
@@ -1179,6 +1496,7 @@ export default function AssembliesPage() {
         onNavigate={(id) => setLocation(`/assembly/${id}`)}
         onDelete={(id) => deleteMutation.mutate(id)}
         onRunPipeline={(id) => runPipelineMutation.mutate(id)}
+        onSwapAssembly={(id) => setDrawerAssemblyId(id)}
         isDeleting={deleteMutation.isPending}
         isRunning={runPipelineMutation.isPending}
       />
