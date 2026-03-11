@@ -698,124 +698,256 @@ export interface RemediationFileContext {
   severity: string;
 }
 
-export async function generateUnitsForRemediation(
-  runDir: string,
-  plan: BuildPlan,
-  paths: WorkspacePaths,
+export interface FixFileResult {
+  filePath: string;
+  status: "fixed" | "unchanged" | "failed";
+  beforeHash: string;
+  afterHash: string;
+  findingsAddressed: string[];
+  error?: string;
+}
+
+export interface FixUnitResult {
+  unitId: string;
+  unitName: string;
+  files: FixFileResult[];
+  success: boolean;
+}
+
+function computeSimpleHash(content: string): string {
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const ch = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + ch;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(16).padStart(8, "0");
+}
+
+async function fixFileFromFindings(
+  existingContent: string,
+  filePath: string,
+  findings: RemediationFileContext[],
+  model: string = "gpt-4o",
+): Promise<string | null> {
+  const findingsBlock = findings.map((f, i) =>
+    `  ${i + 1}. [${f.severity.toUpperCase()}] ${f.findingTitle}\n     Description: ${f.findingDescription}\n     Fix guidance: ${f.remediationGuidance}`
+  ).join("\n\n");
+
+  const systemPrompt = `You are a senior software engineer performing targeted code remediation. You will receive an existing source file and a list of specific issues found by automated certification analysis (AVCS). Your job is to fix ONLY the identified issues while preserving all existing functionality, architecture, and coding patterns.
+
+RULES:
+- Output ONLY the complete fixed file content — no explanations, no markdown fences, no comments about changes
+- Fix every listed finding
+- Do NOT add new features, refactor unrelated code, or change the file's purpose
+- Preserve all imports, exports, types, and function signatures unless a finding specifically requires changing them
+- Preserve code style, formatting conventions, and naming patterns
+- If a finding asks to remove something (e.g., hardcoded secrets, eval), replace it with the correct pattern (e.g., environment variable, safe alternative)
+- The output must be a complete, valid, drop-in replacement for the original file`;
+
+  const userPrompt = `FILE: ${filePath}
+
+FINDINGS TO FIX:
+${findingsBlock}
+
+EXISTING FILE CONTENT:
+${existingContent}
+
+Output the complete fixed file:`;
+
+  const maxTokens = Math.min(Math.max(existingContent.split("\n").length * 20, 4096), 16384);
+  const result = await generateCode(
+    [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    maxTokens,
+    "REMEDIATION_FIX",
+    model,
+  );
+
+  if (!result) return null;
+  return extractCodeBlock(result);
+}
+
+export async function fixUnitsFromFindings(
+  repoDir: string,
+  buildDir: string,
   gsePlan: GenerationStrategyPlan,
   unitIds: string[],
   fileRemediationContext: Map<string, RemediationFileContext[]>,
   onProgress?: ProgressCallback,
-): Promise<{ success: boolean; filesGenerated: number; filesFailed: number; errors: string[]; unitResults: UnitGenerationResult[] }> {
-  const ctx = loadKitContext(runDir, plan);
-  const frozenSystemPrompt = buildFrozenSystemPrompt(ctx);
-
-  const remediationSystemAddendum = `\n\nREMEDIATION MODE: You are regenerating files flagged by AVCS certification. For each file, fix the identified issues while preserving existing functionality and architecture. The remediation context for each file will be provided in the user prompt.`;
-  const augmentedSystemPrompt = frozenSystemPrompt + remediationSystemAddendum;
-
-  const fileInventory: BlueprintFileEntry[] = [];
-  const blueprintPath = path.join(runDir, "build", "repo_blueprint.json");
-  try {
-    const bp = JSON.parse(fs.readFileSync(blueprintPath, "utf-8"));
-    fileInventory.push(...(bp.file_inventory ?? []));
-  } catch {
-    for (const slice of plan.slices) {
-      for (const f of slice.files) {
-        fileInventory.push({
-          file_id: f.relativePath,
-          path: f.relativePath,
-          role: f.role,
-          layer: "frontend",
-          module_ref: "",
-          subsystem_ref: "",
-          generation_method: f.generationMethod,
-          source_refs: f.sourceRef ? [f.sourceRef] : [],
-          trace_refs: f.traceRef ? [f.traceRef] : [],
-          description: "",
-        });
-      }
-    }
-  }
-
+): Promise<{ success: boolean; filesFixed: number; filesUnchanged: number; filesFailed: number; errors: string[]; unitResults: FixUnitResult[] }> {
   const unitIdSet = new Set(unitIds);
   const strategyMap = new Map<string, GenerationStrategy>();
   for (const s of gsePlan.strategies) strategyMap.set(s.build_unit_id, s);
 
-  let filesGenerated = 0;
+  const fileIdToPath = new Map<string, string>();
+  const blueprintPath = path.join(buildDir, "repo_blueprint.json");
+  try {
+    const bp = JSON.parse(fs.readFileSync(blueprintPath, "utf-8"));
+    for (const entry of (bp.file_inventory ?? [])) {
+      fileIdToPath.set(entry.file_id, entry.path);
+    }
+    console.log(`  [BA-REMEDIATION] Loaded blueprint: ${fileIdToPath.size} file_id → path mappings`);
+  } catch {
+    console.log(`  [BA-REMEDIATION] Warning: Could not load blueprint, falling back to file_id as path`);
+    for (const unit of gsePlan.build_units) {
+      for (const fid of unit.file_ids) {
+        fileIdToPath.set(fid, fid);
+      }
+    }
+  }
+
+  const resolvedRepoDir = path.resolve(repoDir);
+
+  let filesFixed = 0;
+  let filesUnchanged = 0;
   let filesFailed = 0;
   const errors: string[] = [];
-  const unitResults: UnitGenerationResult[] = [];
+  const unitResults: FixUnitResult[] = [];
   let totalProcessed = 0;
 
   const unitsToProcess = gsePlan.build_units.filter(u => unitIdSet.has(u.id));
-  console.log(`  [REMEDIATION] Processing ${unitsToProcess.length} units for remediation`);
+  const totalFiles = unitsToProcess.reduce((sum, u) => sum + u.file_ids.length, 0);
+  console.log(`  [BA-REMEDIATION] Processing ${unitsToProcess.length} units (${totalFiles} files) for targeted fix`);
 
   for (const unit of unitsToProcess) {
     const strategy = strategyMap.get(unit.id);
-    if (!strategy) {
-      errors.push(`No strategy found for unit ${unit.id}`);
-      continue;
-    }
+    const modelName = strategy
+      ? (strategy.model_tier === "mini" ? "gpt-4o-mini" : "gpt-4o")
+      : "gpt-4o";
 
-    const fileMap = new Map<string, BlueprintFileEntry>();
-    for (const f of fileInventory) fileMap.set(f.file_id, f);
-    const unitFiles = unit.file_ids.map(id => fileMap.get(id)).filter(Boolean) as BlueprintFileEntry[];
+    const unitResult: FixUnitResult = {
+      unitId: unit.id,
+      unitName: unit.name,
+      files: [],
+      success: true,
+    };
 
-    let remediationPromptSection = "";
-    for (const uf of unitFiles) {
-      const contexts = fileRemediationContext.get(uf.path);
-      if (contexts && contexts.length > 0) {
-        remediationPromptSection += `\nFILE: ${uf.path}\n  FINDINGS TO FIX:\n`;
-        for (const c of contexts) {
-          remediationPromptSection += `    - [${c.severity.toUpperCase()}] ${c.findingTitle}: ${c.findingDescription}\n      Guidance: ${c.remediationGuidance}\n`;
-        }
+    console.log(`  [BA-REMEDIATION] Unit: ${unit.name} (${unit.file_ids.length} files)`);
+
+    for (const fileId of unit.file_ids) {
+      const filePath = fileIdToPath.get(fileId) || fileId;
+      const fullPath = path.resolve(repoDir, filePath);
+      totalProcessed++;
+
+      if (!fullPath.startsWith(resolvedRepoDir + path.sep) && fullPath !== resolvedRepoDir) {
+        unitResult.files.push({
+          filePath,
+          status: "failed",
+          beforeHash: "",
+          afterHash: "",
+          findingsAddressed: [],
+          error: "Path traversal rejected — target escapes repo directory",
+        });
+        filesFailed++;
+        errors.push(`Path traversal blocked for ${filePath}`);
+        unitResult.success = false;
+        continue;
       }
-    }
 
-    console.log(`  [REMEDIATION] Unit: ${unit.name} (${unitFiles.length} files)`);
+      const findings = fileRemediationContext.get(filePath);
+      if (!findings || findings.length === 0) {
+        unitResult.files.push({
+          filePath,
+          status: "unchanged",
+          beforeHash: "",
+          afterHash: "",
+          findingsAddressed: [],
+        });
+        filesUnchanged++;
+        continue;
+      }
 
-    const unitResult = await generateUnit(
-      unit,
-      strategy,
-      unit.context_capsule,
-      augmentedSystemPrompt + (remediationPromptSection ? `\n\nREMEDIATION TARGETS:${remediationPromptSection}` : ""),
-      ctx,
-      plan,
-      fileInventory,
-      paths,
-    );
-
-    unitResults.push(unitResult);
-
-    for (const produced of unitResult.files_produced) {
+      let existingContent: string;
       try {
-        writeRepoFile(paths, produced.path, produced.content);
-        filesGenerated++;
-        totalProcessed++;
+        existingContent = fs.readFileSync(fullPath, "utf-8");
+      } catch {
+        unitResult.files.push({
+          filePath,
+          status: "failed",
+          beforeHash: "",
+          afterHash: "",
+          findingsAddressed: findings.map(f => f.findingTitle),
+          error: "File not found on disk — cannot fix nonexistent file",
+        });
+        filesFailed++;
+        errors.push(`Cannot read ${filePath} for fixing — file not found`);
+        unitResult.success = false;
+        continue;
+      }
+
+      const beforeHash = computeSimpleHash(existingContent);
+      console.log(`    [BA-FIX] Fixing ${filePath} (${findings.length} findings, ${existingContent.split("\n").length} lines)`);
+
+      try {
+        const fixedContent = await fixFileFromFindings(existingContent, filePath, findings, modelName);
+
+        if (!fixedContent) {
+          unitResult.files.push({
+            filePath,
+            status: "failed",
+            beforeHash,
+            afterHash: beforeHash,
+            findingsAddressed: findings.map(f => f.findingTitle),
+            error: "LLM returned empty result",
+          });
+          filesFailed++;
+          errors.push(`Fix failed for ${filePath}: LLM returned empty`);
+          unitResult.success = false;
+          continue;
+        }
+
+        const afterHash = computeSimpleHash(fixedContent);
+
+        fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+        fs.writeFileSync(fullPath, fixedContent, "utf-8");
+
+        unitResult.files.push({
+          filePath,
+          status: afterHash !== beforeHash ? "fixed" : "unchanged",
+          beforeHash,
+          afterHash,
+          findingsAddressed: findings.map(f => f.findingTitle),
+        });
+
+        if (afterHash !== beforeHash) {
+          filesFixed++;
+          console.log(`    [BA-FIX] Fixed ${filePath} (hash ${beforeHash} → ${afterHash})`);
+        } else {
+          filesUnchanged++;
+          console.log(`    [BA-FIX] ${filePath} unchanged after fix attempt`);
+        }
+
         onProgress?.({
           sliceId: unit.id,
           sliceName: unit.name,
           fileIndex: totalProcessed,
-          totalFiles: unitsToProcess.reduce((sum, u) => sum + u.file_ids.length, 0),
-          filePath: produced.path,
+          totalFiles,
+          filePath,
           status: "generated",
         });
       } catch (err: any) {
+        unitResult.files.push({
+          filePath,
+          status: "failed",
+          beforeHash,
+          afterHash: beforeHash,
+          findingsAddressed: findings.map(f => f.findingTitle),
+          error: err.message,
+        });
         filesFailed++;
-        errors.push(`Error writing ${produced.path}: ${err.message}`);
+        errors.push(`Fix error for ${filePath}: ${err.message}`);
+        unitResult.success = false;
       }
     }
 
-    const expectedCount = unit.file_ids.length;
-    const producedCount = unitResult.files_produced.length;
-    if (producedCount < expectedCount) {
-      filesFailed += expectedCount - producedCount;
-      errors.push(`Unit ${unit.name}: ${expectedCount - producedCount} files not produced`);
-    }
+    unitResults.push(unitResult);
   }
 
-  console.log(`  [REMEDIATION] Complete: ${filesGenerated} generated, ${filesFailed} failed`);
-  return { success: filesFailed === 0, filesGenerated, filesFailed, errors, unitResults };
+  console.log(`  [BA-REMEDIATION] Complete: ${filesFixed} fixed, ${filesUnchanged} unchanged, ${filesFailed} failed`);
+  return { success: filesFailed === 0, filesFixed, filesUnchanged, filesFailed, errors, unitResults };
 }
 
 async function generateFile(ctx: KitContext, slice: BuildSlice, file: BuildFileTarget, model?: string): Promise<string | null> {

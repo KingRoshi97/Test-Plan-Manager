@@ -1286,7 +1286,7 @@ Post-build quality gate system. Lifecycle position: Build Mode produces → AVCS
 - FAIL: score < 60 OR critical finding OR blocker
 - BLOCKED: run incomplete or no build to evaluate
 
-**Remediation Flow**: Report → RemediationManifest → targeted rebuild. Uses GSE build_unit_inventory.json to map affected_files → build units → expand to all unit files + dependency units. `remediateFromReport()` in runner.ts regenerates only affected units with remediation context injected into prompts. BUILD_TRANSITIONS: passed → building and exported → building allowed for remediation.
+**Remediation Flow (BA-Driven Fix)**: Report → RemediationManifest → Build Agent (BA) targeted fix. `remediateFromReport()` in runner.ts instantiates a `BuildAgent` ("BA-REMEDIATION-001") and enforces guardrails (BA-G01 through BA-G04) before proceeding. `fixUnitsFromFindings()` in generator.ts reads each flagged file's existing content from the repo directory, sends it to the LLM alongside specific AVCS findings (title, description, severity, remediation guidance) with a targeted fix prompt — the LLM fixes only the identified issues while preserving existing functionality and architecture. Each fixed file gets before/after hashes recorded as implementation refs and proof refs. BA produces `ResultArtifact` per unit. Findings fallback: if report.findings is empty, loads from AVCSStore. Remediation log includes BA agent ID, guardrail results, per-unit results, timing. BUILD_TRANSITIONS: passed → building and exported → building allowed for remediation.
 
 **Data Storage** (`Axion/avcs_data/`): runs/, findings/, evidence/, reports/ — flat JSON files.
 

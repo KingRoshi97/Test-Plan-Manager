@@ -24,7 +24,9 @@ import {
   getWorkspaceStatus,
   type WorkspacePaths,
 } from "./workspace.js";
-import { generateRepo, generateUnitsForRemediation, type RemediationFileContext } from "./generator.js";
+import { generateRepo, fixUnitsFromFindings, type RemediationFileContext, type FixUnitResult } from "./generator.js";
+import { BuildAgent, type ResultArtifact } from "../agents/build.js";
+import { AVCSStore } from "../avcs/store.js";
 import { runGSE } from "./gse.js";
 import { verifyBuild } from "./verifier.js";
 import {
@@ -530,12 +532,16 @@ export interface RemediationResult {
   errors: string[];
   remediationLog: {
     certRunId: string;
+    baAgentId: string;
+    guardrailResults: Array<{ guardrail_id: string; passed: boolean; message: string }>;
     startedAt: string;
     completedAt: string;
     findings: Array<{ id: string; title: string; severity: string }>;
     unitsRemediated: string[];
-    filesRegenerated: string[];
+    filesFixed: string[];
+    filesUnchanged: string[];
     filesFailed: string[];
+    resultArtifacts: ResultArtifact[];
   };
 }
 
@@ -554,12 +560,16 @@ export async function remediateFromReport(
     errors: [],
     remediationLog: {
       certRunId: "",
+      baAgentId: "",
+      guardrailResults: [],
       startedAt,
       completedAt: "",
       findings: [],
       unitsRemediated: [],
-      filesRegenerated: [],
+      filesFixed: [],
+      filesUnchanged: [],
       filesFailed: [],
+      resultArtifacts: [],
     },
   };
 
@@ -580,17 +590,10 @@ export async function remediateFromReport(
   }
 
   const buildDir = path.join(runDir, "build");
-  const planPath = path.join(buildDir, "build_plan.json");
   const gsePath = path.join(buildDir, "generation_strategy", "generation_strategy.json");
+  const repoDir = path.join(buildDir, "repo");
 
-  let plan: BuildPlan;
   let gsePlan: GenerationStrategyPlan;
-  try {
-    plan = JSON.parse(fs.readFileSync(planPath, "utf-8"));
-  } catch (err: any) {
-    result.errors.push(`Failed to read build plan: ${err.message}`);
-    return result;
-  }
   try {
     gsePlan = JSON.parse(fs.readFileSync(gsePath, "utf-8"));
   } catch (err: any) {
@@ -598,21 +601,22 @@ export async function remediateFromReport(
     return result;
   }
 
-  const repoDir = path.join(buildDir, "repo");
-  const paths: WorkspacePaths = {
-    root: buildDir,
-    repo: repoDir,
-    buildManifest: path.join(buildDir, "manifests", "build_manifest.json"),
-    repoManifest: path.join(buildDir, "manifests", "repo_manifest.json"),
-    verificationReport: path.join(buildDir, "manifests", "verification_report.json"),
-    buildPlan: path.join(buildDir, "build_plan.json"),
-    fileIndex: path.join(buildDir, "manifests", "file_index.json"),
-    exportZip: path.join(buildDir, "project_repo.zip"),
-  };
+  let findings = report.findings || [];
+  if (findings.length === 0) {
+    try {
+      const avcsStore = new AVCSStore(path.join(process.cwd(), "Axion", "avcs_data"));
+      const certRunId = report.cert_run_id || report.run_id || "";
+      findings = avcsStore.getFindings(certRunId);
+      console.log(`  [BA-REMEDIATION] Loaded ${findings.length} findings from AVCS store (report had none)`);
+    } catch {
+      console.log(`  [BA-REMEDIATION] Warning: Could not load findings from AVCS store`);
+    }
+  }
+
+  const openFindings = findings.filter((f: any) => f.status === "open" || f.status === "acknowledged");
 
   const fileRemediationContext = new Map<string, RemediationFileContext[]>();
-  const findings = report.findings || [];
-  const openFindings = findings.filter((f: any) => f.status === "open" || f.status === "acknowledged");
+  const allAffectedFiles = new Set<string>();
 
   for (const finding of openFindings) {
     result.remediationLog.findings.push({
@@ -623,6 +627,7 @@ export async function remediateFromReport(
 
     const affectedFiles: string[] = finding.affected_files || [];
     for (const filePath of affectedFiles) {
+      allAffectedFiles.add(filePath);
       const existing = fileRemediationContext.get(filePath) || [];
       existing.push({
         findingTitle: finding.title,
@@ -637,12 +642,38 @@ export async function remediateFromReport(
   const unitIds: string[] = manifest.affected_unit_ids;
   result.remediationLog.unitsRemediated = unitIds;
 
-  console.log(`  [REMEDIATION] Starting remediation for ${unitIds.length} units, driven by ${openFindings.length} findings`);
+  const ba = new BuildAgent("BA-REMEDIATION-001");
+  result.remediationLog.baAgentId = "BA-REMEDIATION-001";
+
+  const baContext = {
+    run_id: `remediation-${runId}`,
+    mode_id: "remediation",
+    risk_class: "standard" as const,
+    executor_type: "external_build" as const,
+    targets: Array.from(allAffectedFiles),
+  };
+
+  const guardrailResults = ba.checkGuardrails(baContext);
+  result.remediationLog.guardrailResults = guardrailResults.map(g => ({
+    guardrail_id: g.guardrail_id,
+    passed: g.passed,
+    message: g.message,
+  }));
+
+  const violations = guardrailResults.filter(g => !g.passed);
+  if (violations.length > 0) {
+    const msg = violations.map(v => `[${v.guardrail_id}] ${v.message}`).join("; ");
+    result.errors.push(`BA guardrail violations — remediation blocked: ${msg}`);
+    console.log(`  [BA-REMEDIATION] Blocked by guardrails: ${msg}`);
+    return result;
+  }
+
+  console.log(`  [BA-REMEDIATION] Guardrails passed (${guardrailResults.length} checks). Starting targeted fix for ${unitIds.length} units, driven by ${openFindings.length} findings across ${allAffectedFiles.size} files`);
 
   onProgress?.({
     buildId: "REMEDIATION",
     state: "building",
-    currentSlice: "Remediation",
+    currentSlice: "BA Remediation",
     slicesCompleted: 0,
     totalSlices: unitIds.length,
     filesGenerated: 0,
@@ -652,10 +683,9 @@ export async function remediateFromReport(
   });
 
   try {
-    const genResult = await generateUnitsForRemediation(
-      runDir,
-      plan,
-      paths,
+    const fixResult = await fixUnitsFromFindings(
+      repoDir,
+      buildDir,
       gsePlan,
       unitIds,
       fileRemediationContext,
@@ -663,7 +693,7 @@ export async function remediateFromReport(
         onProgress?.({
           buildId: "REMEDIATION",
           state: "building",
-          currentSlice: `Remediation: ${progress.sliceName}`,
+          currentSlice: `BA Fix: ${progress.sliceName}`,
           slicesCompleted: 0,
           totalSlices: unitIds.length,
           filesGenerated: progress.fileIndex,
@@ -674,18 +704,42 @@ export async function remediateFromReport(
       },
     );
 
-    result.filesRegenerated = genResult.filesGenerated;
-    result.filesFailed = genResult.filesFailed;
-    result.errors.push(...genResult.errors);
-    result.success = genResult.success;
+    result.filesRegenerated = fixResult.filesFixed;
+    result.filesFailed = fixResult.filesFailed;
+    result.errors.push(...fixResult.errors);
+    result.success = fixResult.filesFailed === 0 && fixResult.filesFixed > 0;
 
-    for (const ur of genResult.unitResults) {
-      for (const fp of ur.files_produced) {
-        result.remediationLog.filesRegenerated.push(fp.path);
+    for (const ur of fixResult.unitResults) {
+      const implRefs: Array<{ type: "path" | "diff" | "commit"; value: string }> = [];
+      const proofRefs: Array<{ type: "verification_log" | "build_output" | "screenshot" | "hash"; value: string; hash?: string }> = [];
+
+      for (const fileResult of ur.files) {
+        if (fileResult.status === "fixed") {
+          result.remediationLog.filesFixed.push(fileResult.filePath);
+          implRefs.push({ type: "path", value: fileResult.filePath });
+          proofRefs.push({
+            type: "hash",
+            value: `${fileResult.beforeHash} → ${fileResult.afterHash}`,
+            hash: fileResult.afterHash,
+          });
+        } else if (fileResult.status === "unchanged") {
+          result.remediationLog.filesUnchanged.push(fileResult.filePath);
+        } else {
+          result.remediationLog.filesFailed.push(fileResult.filePath);
+        }
+      }
+
+      if (implRefs.length > 0 && proofRefs.length > 0) {
+        try {
+          const artifact = ba.buildResultArtifact(ur.unitId, implRefs, proofRefs);
+          result.remediationLog.resultArtifacts.push(artifact);
+        } catch (err: any) {
+          console.log(`  [BA-REMEDIATION] Could not build result artifact for unit ${ur.unitId}: ${err.message}`);
+        }
       }
     }
   } catch (err: any) {
-    result.errors.push(`Remediation generation failed: ${err.message}`);
+    result.errors.push(`BA remediation failed: ${err.message}`);
   }
 
   result.remediationLog.completedAt = new Date().toISOString();
@@ -693,9 +747,9 @@ export async function remediateFromReport(
   const logPath = path.join(buildDir, "remediation_log.json");
   try {
     fs.writeFileSync(logPath, JSON.stringify(result.remediationLog, null, 2), "utf-8");
-    console.log(`  [REMEDIATION] Log written to ${logPath}`);
+    console.log(`  [BA-REMEDIATION] Log written to ${logPath}`);
   } catch {}
 
-  console.log(`  [REMEDIATION] Complete: ${result.filesRegenerated} files regenerated, ${result.filesFailed} failed`);
+  console.log(`  [BA-REMEDIATION] Complete: ${result.filesRegenerated} fixed, ${result.filesFailed} failed, ${result.remediationLog.filesUnchanged.length} unchanged`);
   return result;
 }
