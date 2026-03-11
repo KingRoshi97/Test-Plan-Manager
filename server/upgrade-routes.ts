@@ -646,6 +646,76 @@ export function registerUpgradeRoutes(app: Express) {
     }
   });
 
+  app.get("/api/assemblies/:assemblyId/upgrades/sessions/:sessionId/execution", async (req: Request, res: Response) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const session = await db.select().from(upgradeSessions)
+        .where(eq(upgradeSessions.id, sessionId));
+      if (session.length === 0) return res.status(404).json({ error: "Session not found" });
+
+      const planRows = await db.select().from(upgradePlans)
+        .where(eq(upgradePlans.sessionId, sessionId))
+        .orderBy(desc(upgradePlans.version));
+      const plan = planRows.length > 0 ? planRows[0] : null;
+      const planSteps = (plan?.steps as Array<{ id?: string; label?: string; description?: string }>) || [];
+
+      const sessionStatus = session[0].status;
+      const isCompleted = sessionStatus === "verifying" || sessionStatus === "promotion_ready" || sessionStatus === "completed";
+      const isExecuting = sessionStatus === "executing";
+
+      const executionSteps = planSteps.map((step, idx) => ({
+        id: step.id || `step-${idx}`,
+        label: step.label || step.description || `Step ${idx + 1}`,
+        status: isCompleted ? "completed" as const
+          : isExecuting && idx === 0 ? "running" as const
+          : isExecuting && idx > 0 ? "pending" as const
+          : "pending" as const,
+        startedAt: isCompleted || (isExecuting && idx === 0) ? session[0].createdAt?.toISOString() : null,
+        completedAt: isCompleted ? session[0].updatedAt?.toISOString() : null,
+        message: null,
+      }));
+
+      const changedArtifacts: Array<{
+        id: string;
+        label: string;
+        path: string | null;
+        changeType: "added" | "removed" | "modified" | "renamed";
+        status: "pending" | "processing" | "done" | "failed";
+      }> = [];
+
+      if (session[0].candidateRevisionId) {
+        const diffs = await db.select().from(revisionDiffs)
+          .where(eq(revisionDiffs.candidateRevisionId, session[0].candidateRevisionId));
+        if (diffs.length > 0) {
+          const diffData = diffs[0].diffData as Record<string, unknown> | null;
+          if (diffData) {
+            const addItems = (items: unknown[], changeType: "added" | "removed" | "modified") => {
+              if (!Array.isArray(items)) return;
+              items.forEach((item: unknown) => {
+                const d = item as { id?: string; label?: string; path?: string };
+                changedArtifacts.push({
+                  id: d.id || `art-${changedArtifacts.length}`,
+                  label: d.label || d.path || "Unknown",
+                  path: d.path || null,
+                  changeType,
+                  status: isCompleted ? "done" : "processing",
+                });
+              });
+            };
+            addItems(diffData.added as unknown[], "added");
+            addItems(diffData.modified as unknown[], "modified");
+            addItems(diffData.removed as unknown[], "removed");
+          }
+        }
+      }
+
+      res.json({ executionSteps, changedArtifacts });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(500).json({ error: message });
+    }
+  });
+
   app.post("/api/assemblies/:assemblyId/upgrades/sessions/:sessionId/save-candidate", async (req: Request, res: Response) => {
     try {
       const sessionId = req.params.sessionId;

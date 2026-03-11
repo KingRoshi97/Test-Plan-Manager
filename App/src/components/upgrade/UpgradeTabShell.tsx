@@ -21,7 +21,7 @@ import type {
   UpgradeInternalTabId, UpgradeRevisionSummary, UpgradeSessionSummary,
   UpgradePlanData, RevisionDiffData, RevisionVerificationDetail,
   UpgradeVerificationSummary, UpgradeLineagePreview,
-  StartUpgradeSessionInput,
+  StartUpgradeSessionInput, UpgradeExecutionStep, CandidateArtifactChange,
 } from "../../../../shared/upgrade-types";
 import { UPGRADE_MODE_OPTIONS } from "../../../../shared/upgrade-types";
 
@@ -77,6 +77,16 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
     enabled: !!activeSession,
   });
   const planData = planWrapper?.plan ?? null;
+
+  const { data: executionData } = useQuery<{
+    executionSteps: UpgradeExecutionStep[];
+    changedArtifacts: CandidateArtifactChange[];
+  }>({
+    queryKey: [base, "upgrade", "execution", activeSession?.id],
+    queryFn: () => apiRequest(`${base}/upgrades/sessions/${activeSession!.id}/execution`),
+    enabled: !!activeSession && (activeSession.status === "executing" || activeSession.status === "verifying" || activeSession.status === "promotion_ready" || activeSession.status === "completed"),
+    refetchInterval: activeSession?.status === "executing" ? 3000 : false,
+  });
 
   const { data: diffWrapper } = useQuery<{ diff: RevisionDiffData | null }>({
     queryKey: [base, "upgrade", "diff", sourceRevision?.id, candidateRevision?.id],
@@ -392,8 +402,8 @@ export function UpgradeTabShell({ assemblyId }: UpgradeTabShellProps) {
               <UpgradeWorkspacePanel
                 session={activeSession!}
                 candidateRevision={candidateRevision}
-                executionSteps={[]}
-                changedArtifacts={[]}
+                executionSteps={executionData?.executionSteps ?? []}
+                changedArtifacts={executionData?.changedArtifacts ?? []}
                 isExecuting={activeSession?.status === "executing" || executeMutation.isPending}
                 error={getErrorMessage(executeMutation.error) || getErrorMessage(pauseMutation.error)}
                 onStartExecution={(id) => executeMutation.mutate(id)}

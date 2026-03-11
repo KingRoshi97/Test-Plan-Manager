@@ -183,12 +183,26 @@ export function RevisionComparePanel({
               <RenameSection items={diff.renamed} />
             </>
           )}
-          {viewMode === "config" && (
-            <DiffSection title="Config Changes" items={diff.configChanges || []} color="text-blue-400" icon="⚙" />
-          )}
-          {viewMode === "structural" && (
-            <DiffSection title="Structural Changes" items={diff.structuralChanges || []} color="text-violet-400" icon="◆" />
-          )}
+          {viewMode === "config" && (() => {
+            const configItems = diff.configChanges?.length
+              ? diff.configChanges
+              : [...diff.added, ...diff.modified, ...diff.removed].filter(
+                  i => i.category === "config" || i.category === "configuration" || i.path?.includes("config")
+                );
+            return configItems.length > 0
+              ? <DiffSection title="Config Changes" items={configItems} color="text-blue-400" icon="⚙" />
+              : <div className="text-sm text-[hsl(var(--muted-foreground))] text-center py-4">No configuration changes detected</div>;
+          })()}
+          {viewMode === "structural" && (() => {
+            const structItems = diff.structuralChanges?.length
+              ? diff.structuralChanges
+              : [...diff.added, ...diff.modified, ...diff.removed].filter(
+                  i => i.category === "structural" || i.category === "structure" || i.category === "schema" || i.category === "layout"
+                );
+            return structItems.length > 0
+              ? <DiffSection title="Structural Changes" items={structItems} color="text-violet-400" icon="◆" />
+              : <div className="text-sm text-[hsl(var(--muted-foreground))] text-center py-4">No structural changes detected</div>;
+          })()}
           {viewMode === "semantic" && diff.semanticSummary && (
             <div className="space-y-3">
               {diff.semanticSummary.improvements.length > 0 && (
