@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, integer, jsonb, varchar, boolean, uniqueIndex, index, real } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, jsonb, varchar, boolean, uniqueIndex, index, real, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -187,3 +187,206 @@ export const analyticsTrends = pgTable("analytics_trends", {
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type AnalyticsSnapshot = typeof analyticsSnapshots.$inferSelect;
 export type AnalyticsTrend = typeof analyticsTrends.$inferSelect;
+
+export const assemblyRevisions = pgTable("assembly_revisions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  assemblyId: integer("assembly_id").notNull(),
+  revisionNumber: integer("revision_number").notNull(),
+  parentRevisionId: uuid("parent_revision_id"),
+  sourceRunId: varchar("source_run_id", { length: 255 }),
+  sourceSessionId: uuid("source_session_id"),
+  modeId: varchar("mode_id", { length: 20 }),
+  status: varchar("status", { length: 30 }).notNull().default("candidate"),
+  title: text("title"),
+  summary: text("summary"),
+  manifestPath: text("manifest_path"),
+  kitPath: text("kit_path"),
+  artifactTreeHash: varchar("artifact_tree_hash", { length: 128 }),
+  createdBy: varchar("created_by", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  promotedAt: timestamp("promoted_at"),
+  archivedAt: timestamp("archived_at"),
+  isCurrentActive: boolean("is_current_active").notNull().default(false),
+  isRollbackTarget: boolean("is_rollback_target").notNull().default(false),
+}, (table) => [
+  uniqueIndex("idx_ar_assembly_revision").on(table.assemblyId, table.revisionNumber),
+  index("idx_ar_assembly_active").on(table.assemblyId, table.isCurrentActive),
+  index("idx_ar_parent").on(table.parentRevisionId),
+]);
+
+export const upgradeSessions = pgTable("upgrade_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  assemblyId: integer("assembly_id").notNull(),
+  sourceRevisionId: uuid("source_revision_id").notNull(),
+  candidateRevisionId: uuid("candidate_revision_id"),
+  modeId: varchar("mode_id", { length: 20 }).notNull(),
+  status: varchar("status", { length: 30 }).notNull().default("draft"),
+  objective: text("objective").notNull(),
+  scope: text("scope"),
+  instructions: text("instructions"),
+  notes: text("notes"),
+  compatibilityRequired: boolean("compatibility_required").notNull().default(false),
+  validationProfile: varchar("validation_profile", { length: 100 }),
+  riskLevel: varchar("risk_level", { length: 20 }),
+  blockingIssue: text("blocking_issue"),
+  createdBy: varchar("created_by", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+}, (table) => [
+  index("idx_us_assembly_status").on(table.assemblyId, table.status),
+  index("idx_us_source_revision").on(table.sourceRevisionId),
+]);
+
+export const upgradePlans = pgTable("upgrade_plans", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: uuid("session_id").notNull(),
+  findingsSummary: text("findings_summary").notNull(),
+  agentSummary: text("agent_summary"),
+  rollbackTargetRevisionId: uuid("rollback_target_revision_id"),
+  rollbackNotes: text("rollback_notes"),
+  safeRollbackAvailable: boolean("safe_rollback_available").notNull().default(false),
+  approvedAt: timestamp("approved_at"),
+  approvedBy: varchar("approved_by", { length: 100 }),
+  generatedAt: timestamp("generated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_up_session").on(table.sessionId),
+]);
+
+export const upgradePlanChanges = pgTable("upgrade_plan_changes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  planId: uuid("plan_id").notNull(),
+  ordinal: integer("ordinal").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  priority: varchar("priority", { length: 20 }),
+  targetArea: text("target_area"),
+  expectedImpact: text("expected_impact"),
+}, (table) => [
+  uniqueIndex("idx_upc_plan_ordinal").on(table.planId, table.ordinal),
+]);
+
+export const upgradeSessionArtifacts = pgTable("upgrade_session_artifacts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: uuid("session_id").notNull(),
+  artifactKey: varchar("artifact_key", { length: 255 }).notNull(),
+  artifactLabel: varchar("artifact_label", { length: 255 }).notNull(),
+  artifactType: varchar("artifact_type", { length: 50 }),
+  artifactPath: text("artifact_path"),
+  role: varchar("role", { length: 30 }).notNull(),
+  changeStatus: varchar("change_status", { length: 20 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_usa_session").on(table.sessionId),
+]);
+
+export const revisionDiffs = pgTable("revision_diffs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: uuid("session_id"),
+  sourceRevisionId: uuid("source_revision_id").notNull(),
+  candidateRevisionId: uuid("candidate_revision_id").notNull(),
+  addedCount: integer("added_count").notNull().default(0),
+  removedCount: integer("removed_count").notNull().default(0),
+  modifiedCount: integer("modified_count").notNull().default(0),
+  renamedCount: integer("renamed_count").notNull().default(0),
+  warningCount: integer("warning_count").notNull().default(0),
+  regressionCount: integer("regression_count").notNull().default(0),
+  semanticImprovements: jsonb("semantic_improvements"),
+  semanticRegressions: jsonb("semantic_regressions"),
+  unresolvedIssues: jsonb("unresolved_issues"),
+  introducedAssumptions: jsonb("introduced_assumptions"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("idx_rd_source_candidate").on(table.sourceRevisionId, table.candidateRevisionId),
+]);
+
+export const revisionDiffItems = pgTable("revision_diff_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  diffId: uuid("diff_id").notNull(),
+  changeType: varchar("change_type", { length: 20 }).notNull(),
+  category: varchar("category", { length: 30 }),
+  label: text("label").notNull(),
+  pathFrom: text("path_from"),
+  pathTo: text("path_to"),
+  detail: text("detail"),
+  severity: varchar("severity", { length: 20 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_rdi_diff").on(table.diffId),
+]);
+
+export const revisionVerifications = pgTable("revision_verifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  revisionId: uuid("revision_id").notNull(),
+  verdict: varchar("verdict", { length: 30 }).notNull().default("not_run"),
+  requiredChecksTotal: integer("required_checks_total").notNull().default(0),
+  requiredChecksPassed: integer("required_checks_passed").notNull().default(0),
+  optionalChecksTotal: integer("optional_checks_total").notNull().default(0),
+  optionalChecksPassed: integer("optional_checks_passed").notNull().default(0),
+  warningCount: integer("warning_count").notNull().default(0),
+  failureCount: integer("failure_count").notNull().default(0),
+  proofRefs: jsonb("proof_refs"),
+  notes: text("notes"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_rv_revision").on(table.revisionId),
+]);
+
+export const revisionVerificationChecks = pgTable("revision_verification_checks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  verificationId: uuid("verification_id").notNull(),
+  checkKey: varchar("check_key", { length: 100 }).notNull(),
+  label: text("label").notNull(),
+  category: varchar("category", { length: 30 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("not_run"),
+  message: text("message"),
+  proofRefs: jsonb("proof_refs"),
+  ordinal: integer("ordinal"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("idx_rvc_verification_key").on(table.verificationId, table.checkKey),
+]);
+
+export const revisionEvents = pgTable("revision_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  assemblyId: integer("assembly_id").notNull(),
+  revisionId: uuid("revision_id"),
+  sessionId: uuid("session_id"),
+  eventType: varchar("event_type", { length: 50 }).notNull(),
+  actorType: varchar("actor_type", { length: 20 }).notNull(),
+  actorLabel: varchar("actor_label", { length: 100 }),
+  payloadJson: jsonb("payload_json"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_re_assembly").on(table.assemblyId),
+  index("idx_re_revision").on(table.revisionId),
+]);
+
+export const revisionSnapshots = pgTable("revision_snapshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  revisionId: uuid("revision_id").notNull(),
+  snapshotType: varchar("snapshot_type", { length: 30 }).notNull(),
+  manifestPath: text("manifest_path"),
+  kitArchivePath: text("kit_archive_path"),
+  artifactTreeHash: varchar("artifact_tree_hash", { length: 128 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdBy: varchar("created_by", { length: 100 }),
+}, (table) => [
+  index("idx_rs_revision").on(table.revisionId),
+]);
+
+export type AssemblyRevision = typeof assemblyRevisions.$inferSelect;
+export type UpgradeSession = typeof upgradeSessions.$inferSelect;
+export type UpgradePlan = typeof upgradePlans.$inferSelect;
+export type UpgradePlanChange = typeof upgradePlanChanges.$inferSelect;
+export type UpgradeSessionArtifact = typeof upgradeSessionArtifacts.$inferSelect;
+export type RevisionDiff = typeof revisionDiffs.$inferSelect;
+export type RevisionDiffItem = typeof revisionDiffItems.$inferSelect;
+export type RevisionVerification = typeof revisionVerifications.$inferSelect;
+export type RevisionVerificationCheck = typeof revisionVerificationChecks.$inferSelect;
+export type RevisionEvent = typeof revisionEvents.$inferSelect;
+export type RevisionSnapshot = typeof revisionSnapshots.$inferSelect;

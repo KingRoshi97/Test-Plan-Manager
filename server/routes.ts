@@ -7,6 +7,7 @@ import { getStageOrder, getStageGates, getGatesRequired, getStageNames } from ".
 import { registerMusRoutes } from "./mus-routes.js";
 import { registerAVCSRoutes } from "./avcs-routes.js";
 import { registerAnalyticsRoutes } from "./analytics/analytics-routes.js";
+import { registerUpgradeRoutes } from "./upgrade-routes.js";
 import { startCompilation, getCompilationStatus } from "./preview-compiler.js";
 import { generateProjectOverview } from "./preview-overview.js";
 import fs from "fs";
@@ -4891,4 +4892,5 @@ export function registerRoutes(app: Express) {
   registerMusRoutes(app);
   registerAVCSRoutes(app);
   registerAnalyticsRoutes(app);
+  registerUpgradeRoutes(app);
 }

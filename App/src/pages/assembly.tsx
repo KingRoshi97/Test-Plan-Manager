@@ -19,6 +19,7 @@ import { GateInspector } from "../components/workbench/GateInspector";
 import { CodeViewer } from "../components/ui/code-viewer";
 import { usePipelineStatus, getStallLevel, formatStallTime, getAutoKillCountdown } from "../hooks/use-pipeline-status";
 import { AssemblyPreviewTab } from "../components/assembly/AssemblyPreviewTab";
+import { UpgradeTabShell } from "../components/upgrade/UpgradeTabShell";
 
 const FALLBACK_STAGE_ORDER = [
   "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
@@ -1584,25 +1585,7 @@ export default function AssemblyPage() {
           )}
 
           {activeTab === "upgrade" && (
-            <GlassPanel solid>
-              <div className="p-8 space-y-4">
-                <div className="flex items-center gap-3">
-                  <ArrowUpCircle className="w-6 h-6 text-violet-400" />
-                  <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">Upgrade</h2>
-                  <span className="px-2 py-0.5 rounded-full bg-violet-900/30 border border-violet-500/30 text-violet-300 text-[10px] font-medium uppercase tracking-wider">Coming Soon</span>
-                </div>
-                <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-lg">
-                  Upgrade analysis and transformation tools for this assembly. Compare versions, plan migrations, and execute upgrades with full traceability.
-                </p>
-                <div className="grid grid-cols-3 gap-3 pt-4">
-                  {["Version Analysis", "Migration Plan", "Upgrade Execution"].map(label => (
-                    <div key={label} className="p-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--muted))]/30 text-center">
-                      <div className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </GlassPanel>
+            <UpgradeTabShell assemblyId={Number(id)} />
           )}
 
           {activeTab === "preview" && (
