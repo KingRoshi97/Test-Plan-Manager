@@ -1,15 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import type {
-  BAQRepoInventory,
-  BAQBuildQualityReport,
-  BuildQualityGateId,
-} from "./types.js";
-import type { ExtendedBuildQualityReport } from "./qualityReport.js";
-
-const REQUIRED_GATE_IDS: BuildQualityGateId[] = [
-  "G-BQ-01", "G-BQ-02", "G-BQ-03", "G-BQ-04", "G-BQ-05", "G-BQ-06", "G-BQ-07",
-];
 
 export interface ManifestTargetMismatch {
   file_path: string;
@@ -41,18 +31,15 @@ export interface GateEvidenceLink {
   blockers: string[];
 }
 
-const PACKAGE_CRITICAL_ARTIFACTS = [
-  { name: "kit_extraction", file: "kit_extraction.json", required: true },
-  { name: "derived_build_inputs", file: "derived_build_inputs.json", required: true },
-  { name: "repo_inventory", file: "repo_inventory.json", required: true },
-  { name: "requirement_trace_map", file: "requirement_trace_map.json", required: true },
-  { name: "sufficiency_evaluation", file: "sufficiency_evaluation.json", required: true },
-  { name: "build_quality_report", file: "build_quality_report.json", required: true },
+const KIT_CONTRACT_ARTIFACTS = [
+  { name: "kit_manifest", file: "kit/kit_manifest.json", required: true },
   { name: "packaging_manifest", file: "kit/packaging_manifest.json", required: true },
+  { name: "version_stamp", file: "kit/version_stamp.json", required: false },
+  { name: "kit_validation_report", file: "kit/kit_validation_report.json", required: true },
 ];
 
-function checkPackageCriticalArtifacts(runDir: string): PackagingPreflightCheck[] {
-  return PACKAGE_CRITICAL_ARTIFACTS.map(artifact => {
+function checkKitContractArtifacts(runDir: string): PackagingPreflightCheck[] {
+  return KIT_CONTRACT_ARTIFACTS.map(artifact => {
     const filePath = path.join(runDir, artifact.file);
     return {
       artifact_name: artifact.name,
@@ -63,26 +50,6 @@ function checkPackageCriticalArtifacts(runDir: string): PackagingPreflightCheck[
   });
 }
 
-function loadQualityReport(runDir: string): ExtendedBuildQualityReport | null {
-  const reportPath = path.join(runDir, "build_quality_report.json");
-  if (!fs.existsSync(reportPath)) return null;
-  try {
-    return JSON.parse(fs.readFileSync(reportPath, "utf-8"));
-  } catch {
-    return null;
-  }
-}
-
-function loadInventory(runDir: string): BAQRepoInventory | null {
-  const inventoryPath = path.join(runDir, "repo_inventory.json");
-  if (!fs.existsSync(inventoryPath)) return null;
-  try {
-    return JSON.parse(fs.readFileSync(inventoryPath, "utf-8"));
-  } catch {
-    return null;
-  }
-}
-
 function collectBundleFiles(dir: string, base: string, result: Set<string>): void {
   if (!fs.existsSync(dir)) return;
   for (const name of fs.readdirSync(dir)) {
@@ -91,14 +58,13 @@ function collectBundleFiles(dir: string, base: string, result: Set<string>): voi
     if (fs.statSync(full).isDirectory()) {
       collectBundleFiles(full, rel, result);
     } else {
-      result.add(rel);
+      result.add(rel.replace(/\\/g, "/"));
     }
   }
 }
 
 function reconcileManifestTargets(
   runDir: string,
-  inventory: BAQRepoInventory | null,
   kitBundleDir: string,
 ): ManifestTargetMismatch[] {
   const mismatches: ManifestTargetMismatch[] = [];
@@ -126,16 +92,13 @@ function reconcileManifestTargets(
   }
 
   const packagingManifestPath = path.join(runDir, "kit", "packaging_manifest.json");
-  let manifestFileSet: Set<string> | null = null;
 
   if (fs.existsSync(packagingManifestPath)) {
     try {
       const pm = JSON.parse(fs.readFileSync(packagingManifestPath, "utf-8"));
       const manifestFiles: Array<{ path: string }> = Array.isArray(pm.files) ? pm.files : [];
-      manifestFileSet = new Set<string>();
       for (const mf of manifestFiles) {
         const normalizedPath = mf.path.replace(/^agent_kit\//, "").replace(/\\/g, "/");
-        manifestFileSet.add(normalizedPath);
         if (!bundleFiles.has(normalizedPath)) {
           mismatches.push({
             file_path: mf.path,
@@ -155,56 +118,7 @@ function reconcileManifestTargets(
     }
   }
 
-  if (inventory) {
-    const files = Array.isArray(inventory.files) ? inventory.files : [];
-
-    for (const file of files) {
-      if (!file.required) continue;
-      const normalizedFilePath = file.path.replace(/\\/g, "/");
-
-      if (manifestFileSet && !manifestFileSet.has(normalizedFilePath)) {
-        let inManifest = false;
-        for (const mf of manifestFileSet) {
-          if (mf.endsWith("/" + normalizedFilePath) || normalizedFilePath.endsWith("/" + mf)) {
-            inManifest = true;
-            break;
-          }
-        }
-        if (!inManifest) continue;
-      }
-
-      const foundExact = bundleFiles.has(normalizedFilePath);
-      let foundInSubdir = false;
-      if (!foundExact) {
-        for (const bf of bundleFiles) {
-          if (bf.endsWith("/" + normalizedFilePath) || bf === normalizedFilePath) {
-            foundInSubdir = true;
-            break;
-          }
-        }
-      }
-
-      if (!foundExact && !foundInSubdir) {
-        mismatches.push({
-          file_path: file.path,
-          expected: true,
-          actual_exists: false,
-          reason: `Required inventory target missing from kit bundle: ${file.path}`,
-        });
-      }
-    }
-  }
-
   return mismatches;
-}
-
-function extractGateEvidence(report: ExtendedBuildQualityReport): GateEvidenceLink[] {
-  return report.gates.map(gate => ({
-    gate_id: gate.gate_id,
-    gate_name: gate.gate_name,
-    status: gate.status,
-    blockers: gate.blockers,
-  }));
 }
 
 export function runPackagingPreflight(
@@ -213,52 +127,29 @@ export function runPackagingPreflight(
 ): PackagingPreflightDecision {
   const blockReasons: string[] = [];
 
-  const artifactChecks = checkPackageCriticalArtifacts(runDir);
+  const artifactChecks = checkKitContractArtifacts(runDir);
   const missingArtifacts = artifactChecks.filter(c => c.required && !c.exists);
   if (missingArtifacts.length > 0) {
     const names = missingArtifacts.map(a => a.artifact_name);
-    blockReasons.push(`Missing package-critical artifacts: ${names.join(", ")}`);
+    blockReasons.push(`Missing kit contract artifacts: ${names.join(", ")}`);
   }
 
-  const qualityReport = loadQualityReport(runDir);
-  let gateEvidence: GateEvidenceLink[] = [];
-
-  if (!qualityReport) {
-    blockReasons.push("Build quality report not found — cannot verify gate state");
-  } else {
-    gateEvidence = extractGateEvidence(qualityReport);
-
-    const reportGateIds = new Set(qualityReport.gates.map(g => g.gate_id));
-    const missingGates = REQUIRED_GATE_IDS.filter(id => !reportGateIds.has(id));
-    if (missingGates.length > 0) {
-      blockReasons.push(`Required hard gate(s) missing from report: ${missingGates.join(", ")}`);
-    }
-
-    const nonPassGates = qualityReport.gates.filter(g => g.status !== "pass");
-    if (nonPassGates.length > 0) {
-      const nonPassIds = nonPassGates.map(g => `${g.gate_id} (${g.gate_name}: ${g.status})`);
-      blockReasons.push(`Hard gate(s) not passed: ${nonPassIds.join(", ")}`);
-    }
-
-    if (qualityReport.decision === "blocked" || qualityReport.decision === "failed") {
-      blockReasons.push(`Build quality decision is "${qualityReport.decision}"`);
-    }
-
-    if ("packaging_eligibility" in qualityReport && !qualityReport.packaging_eligibility.eligible) {
-      blockReasons.push("Packaging eligibility check failed in quality report");
+  const validationReportPath = path.join(runDir, "kit", "kit_validation_report.json");
+  if (fs.existsSync(validationReportPath)) {
+    try {
+      const report = JSON.parse(fs.readFileSync(validationReportPath, "utf-8"));
+      if (report.valid !== true) {
+        const errorCount = typeof report.error_count === "number" ? report.error_count : 0;
+        blockReasons.push(`Kit validation report has ${errorCount} error(s) — kit structure does not satisfy contract`);
+      }
+    } catch {
+      blockReasons.push("kit_validation_report.json exists but could not be parsed");
     }
   }
 
-  const inventory = loadInventory(runDir);
-  const manifestMismatches = reconcileManifestTargets(runDir, inventory, kitBundleDir);
+  const manifestMismatches = reconcileManifestTargets(runDir, kitBundleDir);
   if (manifestMismatches.length > 0) {
-    const qualityReportCoversReconciliation = qualityReport
-      && qualityReport.gates.some(g => g.gate_id === "G-BQ-05" && g.status === "pass");
-    if (qualityReportCoversReconciliation) {
-      console.log(`  [BAQ-PREFLIGHT] ${manifestMismatches.length} manifest target mismatch(es) detected but G-BQ-05 passed — treating as non-blocking`);
-    } else {
-      blockReasons.push(`Manifest target mismatches: ${manifestMismatches.length} file(s) missing from kit bundle`);
-    }
+    blockReasons.push(`Manifest target mismatches: ${manifestMismatches.length} file(s) missing from kit bundle`);
   }
 
   const proofPath = path.join(runDir, "proof", "proof_ledger.jsonl");
@@ -266,15 +157,10 @@ export function runPackagingPreflight(
     blockReasons.push("Proof ledger missing — no verification proof available");
   }
 
-  const tracePath = path.join(runDir, "requirement_trace_map.json");
-  if (!fs.existsSync(tracePath)) {
-    blockReasons.push("Requirement trace map missing — traceability not established");
-  }
-
   return {
     allowed: blockReasons.length === 0,
     block_reasons: blockReasons,
-    gate_evidence: gateEvidence,
+    gate_evidence: [],
     manifest_mismatches: manifestMismatches,
     artifact_checks: artifactChecks,
     evaluated_at: new Date().toISOString(),

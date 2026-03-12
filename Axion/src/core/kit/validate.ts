@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import type { KitManifest } from "./schemas.js";
 
@@ -8,6 +8,15 @@ export interface KitValidationResult {
   errorCount: number;
 }
 
+const REQUIRED_ROOT_FILES = [
+  "00_START_HERE.md",
+  "00_KIT_MANIFEST.md",
+  "00_KIT_INDEX.md",
+  "00_VERSIONS.md",
+  "00_RUN_RULES.md",
+  "00_PROOF_LOG.md",
+];
+
 const REQUIRED_CORE_ARTIFACTS = [
   "01_normalized_input_record.json",
   "02_resolved_standards_snapshot.json",
@@ -15,6 +24,12 @@ const REQUIRED_CORE_ARTIFACTS = [
   "04_work_breakdown.json",
   "05_acceptance_map.json",
   "06_state_snapshot.json",
+];
+
+const REQUIRED_APP_PACK_FILES = [
+  "00_pack_meta.md",
+  "00_pack_index.md",
+  "00_gate_checklist.md",
 ];
 
 function resolveKitRoot(manifest: KitManifest): string | null {
@@ -65,9 +80,11 @@ export function validateKitOnDisk(kitRootDir: string, manifest: KitManifest): Ki
 
   const agentKitDir = join(kitRootDir, "bundle", "agent_kit");
 
-  const startHerePath = join(agentKitDir, "00_START_HERE.md");
-  if (!existsSync(startHerePath)) {
-    errors.push("Missing required file: 00_START_HERE.md");
+  for (const rootFile of REQUIRED_ROOT_FILES) {
+    const filePath = join(agentKitDir, rootFile);
+    if (!existsSync(filePath)) {
+      errors.push(`Missing required root file: ${rootFile}`);
+    }
   }
 
   const coreDir = join(agentKitDir, "01_core_artifacts");
@@ -88,6 +105,26 @@ export function validateKitOnDisk(kitRootDir: string, manifest: KitManifest): Ki
       } catch {
         errors.push(`Invalid JSON in core artifact: 01_core_artifacts/${artifact}`);
       }
+    }
+  }
+
+  const appPackDir = join(agentKitDir, "10_app");
+  if (!existsSync(appPackDir)) {
+    errors.push("Missing required directory: 10_app/ (app pack root per KIT-01)");
+  } else {
+    for (const packFile of REQUIRED_APP_PACK_FILES) {
+      const filePath = join(appPackDir, packFile);
+      if (!existsSync(filePath)) {
+        errors.push(`Missing required app pack file: 10_app/${packFile}`);
+      }
+    }
+  }
+
+  const versionStampPath = join(kitRootDir, "version_stamp.json");
+  if (!existsSync(versionStampPath)) {
+    const altPath = join(agentKitDir, "00_VERSIONS.md");
+    if (!existsSync(altPath)) {
+      errors.push("Missing version stamp: neither kit/version_stamp.json nor agent_kit/00_VERSIONS.md found");
     }
   }
 
@@ -121,7 +158,6 @@ export function validateKitOnDisk(kitRootDir: string, manifest: KitManifest): Ki
         }
       }
     } catch {
-      // already caught by JSON validation above
     }
   }
 

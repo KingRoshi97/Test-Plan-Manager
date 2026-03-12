@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { writeJson, readJson } from "../../utils/fs.js";
 import { isoNow } from "../../utils/time.js";
 import { sha256 } from "../../utils/hash.js";
@@ -11,25 +11,6 @@ import { buildRealKit } from "../../core/kit/build.js";
 import { validateKitOnDisk } from "../../core/kit/validate.js";
 import { packageKit } from "../../core/kit/packager.js";
 import { BuildQualityHookRunner, createHookContext } from "../../core/baq/hooks.js";
-import {
-  runBAQExtraction,
-  buildDerivedInputs,
-  buildRepoInventory,
-  buildRequirementTraceMap,
-  evaluateSufficiency,
-  evaluateAllGates,
-  buildQualityReport,
-  writeQualityReport,
-} from "../../core/baq/index.js";
-import type {
-  BAQKitExtraction,
-  BAQDerivedBuildInputs,
-  BAQRepoInventory,
-  BAQRequirementTraceMap,
-  BAQSufficiencyEvaluation,
-  ReconciliationResult,
-  VerificationSignals,
-} from "../../core/baq/index.js";
 import { buildWorkBreakdown } from "../../core/planning/workBreakdown.js";
 import { buildAcceptanceMap } from "../../core/planning/acceptanceMap.js";
 import { calculateCoverage } from "../../core/planning/coverage.js";
@@ -112,135 +93,6 @@ export const STAGE_IO: Record<string, { consumed: string[]; produced: string[] }
     produced: ["kit/kit_manifest.json", "kit/entrypoint.json", "kit/version_stamp.json", "kit/packaging_manifest.json", "kit/bundle/*"],
   },
 };
-
-function collectKitBundleFiles(dir: string, base: string, result: Set<string>): void {
-  if (!existsSync(dir)) return;
-  for (const name of readdirSync(dir)) {
-    const full = join(dir, name);
-    const rel = base ? join(base, name) : name;
-    if (statSync(full).isDirectory()) {
-      collectKitBundleFiles(full, rel, result);
-    } else {
-      result.add(rel.replace(/\\/g, "/"));
-    }
-  }
-}
-
-function synthesizeReconciliation(
-  runDir: string,
-  _inventory: BAQRepoInventory | null,
-): ReconciliationResult {
-  const kitBundleDir = join(runDir, "kit", "bundle", "agent_kit");
-  const bundleFiles = new Set<string>();
-  collectKitBundleFiles(kitBundleDir, "", bundleFiles);
-
-  const totalGenerated = bundleFiles.size;
-
-  return {
-    total_planned: totalGenerated,
-    total_generated: totalGenerated,
-    total_missing: 0,
-    total_unplanned: 0,
-    coverage_percent: 100,
-    missing_files: [],
-    missing_required_files: [],
-    missing_optional_files: [],
-    unplanned_files: [],
-    violations: [],
-    placeholder_violations: [],
-    inventory_variance: {
-      expected_files: totalGenerated,
-      produced_files: totalGenerated,
-      missing_files: 0,
-      unplanned_files: 0,
-      required_missing: 0,
-      optional_missing: 0,
-      placeholder_count: 0,
-      placeholder_in_required: 0,
-      trace_linked_generated: 0,
-      trace_linked_total: 0,
-    },
-    passed: true,
-    evaluated_at: new Date().toISOString(),
-  };
-}
-
-function synthesizeVerificationSignals(runDir: string): VerificationSignals {
-  const verificationReportPath = join(runDir, "verification", "verification_run_result.json");
-  if (existsSync(verificationReportPath)) {
-    try {
-      const report = JSON.parse(readFileSync(verificationReportPath, "utf-8"));
-      const allPassed = report.all_passed === true;
-      const proofCount = typeof report.proof_count === "number" ? report.proof_count : 0;
-      return {
-        verification_passed: allPassed,
-        files_verified: proofCount,
-        files_failed: allPassed ? 0 : 1,
-        structural_violations: 0,
-        fidelity_percent: allPassed ? 100 : 0,
-      };
-    } catch {
-    }
-  }
-
-  const completionReportPath = join(runDir, "verification", "completion_report.json");
-  if (existsSync(completionReportPath)) {
-    try {
-      const report = JSON.parse(readFileSync(completionReportPath, "utf-8"));
-      const passed = report.verdict === "complete" || report.all_passed === true;
-      return {
-        verification_passed: passed,
-        files_verified: typeof report.proof_count === "number" ? report.proof_count : 1,
-        files_failed: passed ? 0 : 1,
-        structural_violations: 0,
-        fidelity_percent: passed ? 100 : 0,
-      };
-    } catch {
-    }
-  }
-
-  console.log(`  S10: [BAQ] WARNING — no verification artifacts found, using conservative defaults`);
-  return {
-    verification_passed: false,
-    files_verified: 0,
-    files_failed: 0,
-    structural_violations: 0,
-    fidelity_percent: 0,
-  };
-}
-
-function synthesizePackagingSignals(runDir: string): { export_attempted: boolean; export_success: boolean; file_count: number; zip_size_bytes: number } {
-  const kitBundleDir = join(runDir, "kit", "bundle", "agent_kit");
-  if (!existsSync(kitBundleDir)) {
-    return { export_attempted: false, export_success: false, file_count: 0, zip_size_bytes: 0 };
-  }
-
-  let fileCount = 0;
-  let totalBytes = 0;
-
-  function walk(dir: string): void {
-    if (!existsSync(dir)) return;
-    for (const name of readdirSync(dir)) {
-      const full = join(dir, name);
-      const stat = statSync(full);
-      if (stat.isDirectory()) {
-        walk(full);
-      } else {
-        fileCount++;
-        totalBytes += stat.size;
-      }
-    }
-  }
-
-  walk(kitBundleDir);
-
-  return {
-    export_attempted: true,
-    export_success: fileCount > 0,
-    file_count: fileCount,
-    zip_size_bytes: totalBytes,
-  };
-}
 
 export async function executeStageWork(baseDir: string, runDir: string, runId: string, stageId: StageId, generatedAt: string): Promise<void> {
   if (stageId === "S1_INGEST_NORMALIZE") {
@@ -490,85 +342,6 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
   } else if (stageId === "S10_PACKAGE") {
     const kitResult = buildRealKit(runDir, runId, generatedAt, baseDir);
     console.log(`  S10: Built kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
-
-    {
-      console.log(`  S10: Generating BAQ artifacts...`);
-      const buildId = `BUILD-${runId}`;
-
-      let extraction: BAQKitExtraction | null = null;
-      let derivedInputs: BAQDerivedBuildInputs | null = null;
-      let inventory: BAQRepoInventory | null = null;
-      let traceMap: BAQRequirementTraceMap | null = null;
-      let sufficiency: BAQSufficiencyEvaluation | null = null;
-
-      try {
-        extraction = runBAQExtraction(runDir);
-        writeJson(join(runDir, "kit_extraction.json"), extraction);
-        console.log(`  S10: [BAQ] kit_extraction.json written`);
-
-        derivedInputs = buildDerivedInputs(extraction, runDir);
-        writeJson(join(runDir, "derived_build_inputs.json"), derivedInputs);
-        console.log(`  S10: [BAQ] derived_build_inputs.json written`);
-
-        inventory = buildRepoInventory(derivedInputs, runDir);
-        writeJson(join(runDir, "repo_inventory.json"), inventory);
-        console.log(`  S10: [BAQ] repo_inventory.json written (${inventory.summary.total_files} planned files)`);
-
-        traceMap = buildRequirementTraceMap(derivedInputs, inventory);
-        writeJson(join(runDir, "requirement_trace_map.json"), traceMap);
-        console.log(`  S10: [BAQ] requirement_trace_map.json written (coverage=${traceMap.summary.coverage_percent}%)`);
-
-        sufficiency = evaluateSufficiency(derivedInputs, inventory, traceMap);
-        writeJson(join(runDir, "sufficiency_evaluation.json"), sufficiency);
-        console.log(`  S10: [BAQ] sufficiency_evaluation.json written (status=${sufficiency.status}, score=${sufficiency.overall_score})`);
-
-        const reconciliation = synthesizeReconciliation(runDir, inventory);
-        console.log(`  S10: [BAQ] Reconciliation: ${reconciliation.total_generated}/${reconciliation.total_planned} files (${reconciliation.coverage_percent}%), missing=${reconciliation.total_missing}, unplanned=${reconciliation.total_unplanned}`);
-
-        const verificationSignals = synthesizeVerificationSignals(runDir);
-        console.log(`  S10: [BAQ] Verification signals: passed=${verificationSignals.verification_passed}, verified=${verificationSignals.files_verified}, fidelity=${verificationSignals.fidelity_percent}%`);
-
-        const packagingSignals = synthesizePackagingSignals(runDir);
-        console.log(`  S10: [BAQ] Packaging signals: attempted=${packagingSignals.export_attempted}, success=${packagingSignals.export_success}, files=${packagingSignals.file_count}, size=${packagingSignals.zip_size_bytes}`);
-
-        const gateEvaluation = evaluateAllGates({
-          extraction,
-          derivedInputs,
-          inventory,
-          traceMap,
-          sufficiency,
-          reconciliation,
-          verificationSignals,
-          packagingSignals,
-        });
-
-        const failedGates = gateEvaluation.gates.filter(g => g.status === "fail");
-        if (failedGates.length > 0) {
-          console.log(`  S10: [BAQ] Gate failures: ${failedGates.map(g => g.gate_id).join(", ")}`);
-        }
-
-        const qualityReport = buildQualityReport({
-          runId,
-          buildId,
-          extraction,
-          derivedInputs,
-          inventory,
-          traceMap,
-          sufficiency,
-          gateEvaluation,
-          reconciliation,
-          verificationSignals,
-          buildStatus: "packaging_complete",
-        });
-        writeQualityReport(runDir, qualityReport);
-        console.log(`  S10: [BAQ] build_quality_report.json written (score=${qualityReport.overall_quality_score}%, decision=${qualityReport.decision})`);
-
-        console.log(`  S10: BAQ artifacts ready`);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.log(`  S10: WARNING — BAQ artifact generation failed: ${msg}`);
-      }
-    }
 
     const baqHookRunner = new BuildQualityHookRunner();
     baqHookRunner.markUpstreamCompleted("beforePackaging");

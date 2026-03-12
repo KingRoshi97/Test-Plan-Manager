@@ -34,6 +34,8 @@ The internal Build Mode generates a full project repository from an approved Age
 ### Build Agent Quality (BAQ) Enforcement Layer
 A BAQ enforcement layer (`Axion/src/core/baq/`) implements a specification for build quality. This layer includes modules for schema definitions, runtime validation, kit extraction, derived input normalization, repository inventory planning, traceability mapping, and sufficiency evaluation across five dimensions (feature coverage, structural completeness, API coverage, domain coverage, obligation coverage). It integrates hooks into the build process to enforce quality gates and generate detailed build quality and failure reports. All BAQ artifacts are written to the run directory. BAQ validation and gate failures halt the build process.
 
+**Important**: BAQ runs only in the Build Agent runner (`Axion/src/core/build/runner.ts`), NOT in S10 packaging. S10 enforces kit contract validation (GATE-08 / G8_PACKAGE_INTEGRITY) via `validateKitOnDisk` in `Axion/src/core/kit/validate.ts`, which checks KIT-01 folder structure, KIT-02 manifest integrity, and KIT-04 version stamps. The packaging preflight in `Axion/src/core/baq/packagingEnforcement.ts` checks kit contract artifacts (not BAQ artifacts) and manifest-vs-bundle reconciliation.
+
 ### Pipeline Stall Detection
 An automatic watchdog in `server/pipeline-runner.ts` detects stalled pipeline runs. It tracks activity, warns after 5 minutes of inactivity, and kills runs with more than 10 minutes of inactivity. Heartbeat logging in rendering stages helps prevent false positives. A UI component displays stall warnings and provides "Kill Run" buttons.
 
