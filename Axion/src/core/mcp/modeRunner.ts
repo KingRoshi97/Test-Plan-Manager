@@ -61,8 +61,8 @@ export class ModeRunner {
   }
 
   private resolveMode(modeId: string): MaintenanceMode | undefined {
-    const modes = getMaintenanceModes();
-    return modes.find((m) => m.mode_id === modeId);
+    const modes = getMaintenanceModes(process.cwd());
+    return modes.find((m) => m.mode_id === modeId) as MaintenanceMode | undefined;
   }
 
   private enforceModeBudgets(run: MaintenanceRun): { allowed: boolean; reason?: string } {
@@ -87,7 +87,7 @@ export class ModeRunner {
     const mode = this.resolveMode(run.mode_id);
     const requiredGates = mode?.required_gates ?? [];
     if (requiredGates.length > 0) {
-      const allGates = getGates();
+      const allGates = getGates(process.cwd());
       for (const gateId of requiredGates) {
         const gate = allGates.find((g) => g.gate_rule_id === gateId);
         if (gate && gate.status !== "active") {

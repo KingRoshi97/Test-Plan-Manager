@@ -460,7 +460,7 @@ function deriveVerificationObligations(
       obligation_id: `VEROBL-${String(counter++).padStart(3, "0")}`,
       description: String(item.title ?? item.statement ?? ""),
       category: String(item.category ?? "functional"),
-      feature_ref: String(item.scope_refs?.[0] ?? item.unit_ref ?? ""),
+      feature_ref: String((item.scope_refs as string[] | undefined)?.[0] ?? item.unit_ref ?? ""),
       criteria: Array.isArray(item.criteria) ? item.criteria as string[] : [String(item.statement ?? "")],
       gating: String(item.gating ?? "soft_gate"),
     });

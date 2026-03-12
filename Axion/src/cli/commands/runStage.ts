@@ -23,6 +23,13 @@ import {
   writeFailureReport,
   FailureCollector,
 } from "../../core/baq/index.js";
+import type {
+  BAQKitExtraction,
+  BAQDerivedBuildInputs,
+  BAQRepoInventory,
+  BAQRequirementTraceMap,
+  BAQSufficiencyEvaluation,
+} from "../../core/baq/index.js";
 import { buildWorkBreakdown } from "../../core/planning/workBreakdown.js";
 import { buildAcceptanceMap } from "../../core/planning/acceptanceMap.js";
 import { calculateCoverage } from "../../core/planning/coverage.js";
@@ -370,11 +377,11 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
       const buildId = `BUILD-${runId}`;
       const failureCollector = new FailureCollector();
 
-      let extraction = null;
-      let derivedInputs = null;
-      let inventory = null;
-      let traceMap = null;
-      let sufficiency = null;
+      let extraction: BAQKitExtraction | null = null;
+      let derivedInputs: BAQDerivedBuildInputs | null = null;
+      let inventory: BAQRepoInventory | null = null;
+      let traceMap: BAQRequirementTraceMap | null = null;
+      let sufficiency: BAQSufficiencyEvaluation | null = null;
 
       try {
         if (!existsSync(join(runDir, "kit_extraction.json"))) {
@@ -382,7 +389,7 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
           writeJson(join(runDir, "kit_extraction.json"), extraction);
           console.log(`  S10: [BAQ] kit_extraction.json written`);
         } else {
-          extraction = readJson(join(runDir, "kit_extraction.json"));
+          extraction = readJson<BAQKitExtraction>(join(runDir, "kit_extraction.json"));
         }
 
         if (!existsSync(join(runDir, "derived_build_inputs.json"))) {
@@ -390,7 +397,7 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
           writeJson(join(runDir, "derived_build_inputs.json"), derivedInputs);
           console.log(`  S10: [BAQ] derived_build_inputs.json written`);
         } else {
-          derivedInputs = readJson(join(runDir, "derived_build_inputs.json"));
+          derivedInputs = readJson<BAQDerivedBuildInputs>(join(runDir, "derived_build_inputs.json"));
         }
 
         if (!existsSync(join(runDir, "repo_inventory.json"))) {
@@ -398,7 +405,7 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
           writeJson(join(runDir, "repo_inventory.json"), inventory);
           console.log(`  S10: [BAQ] repo_inventory.json written`);
         } else {
-          inventory = readJson(join(runDir, "repo_inventory.json"));
+          inventory = readJson<BAQRepoInventory>(join(runDir, "repo_inventory.json"));
         }
 
         if (!existsSync(join(runDir, "requirement_trace_map.json"))) {
@@ -406,7 +413,7 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
           writeJson(join(runDir, "requirement_trace_map.json"), traceMap);
           console.log(`  S10: [BAQ] requirement_trace_map.json written`);
         } else {
-          traceMap = readJson(join(runDir, "requirement_trace_map.json"));
+          traceMap = readJson<BAQRequirementTraceMap>(join(runDir, "requirement_trace_map.json"));
         }
 
         if (!existsSync(join(runDir, "sufficiency_evaluation.json"))) {
@@ -414,7 +421,7 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
           writeJson(join(runDir, "sufficiency_evaluation.json"), sufficiency);
           console.log(`  S10: [BAQ] sufficiency_evaluation.json written`);
         } else {
-          sufficiency = readJson(join(runDir, "sufficiency_evaluation.json"));
+          sufficiency = readJson<BAQSufficiencyEvaluation>(join(runDir, "sufficiency_evaluation.json"));
         }
 
         if (!existsSync(join(runDir, "build_quality_report.json"))) {
@@ -439,7 +446,7 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
             gateEvaluation,
             reconciliation: null,
             verificationSignals: null,
-            buildStatus: "completed",
+            buildStatus: "packaging_complete",
           });
           writeQualityReport(runDir, qualityReport);
           console.log(`  S10: [BAQ] build_quality_report.json written (score=${qualityReport.overall_quality_score}%, decision=${qualityReport.decision})`);

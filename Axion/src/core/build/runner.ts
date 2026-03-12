@@ -1413,9 +1413,11 @@ export async function remediateFromReport(
   const baContext = {
     run_id: `remediation-${runId}`,
     mode_id: "remediation",
-    risk_class: "standard" as const,
+    risk_class: "production" as const,
     executor_type: "external_build" as const,
     targets: Array.from(allAffectedFiles),
+    source_of_truth_refs: {} as Record<string, string>,
+    upstream_artifact_refs: [] as string[],
   };
 
   const guardrailResults = ba.checkGuardrails(baContext);

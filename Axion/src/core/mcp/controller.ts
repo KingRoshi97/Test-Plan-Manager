@@ -70,8 +70,8 @@ export class MaintenanceController {
 
   private resolveMode(modeId: string): MaintenanceMode | undefined {
     this.ensureMusLoaded();
-    const modes = getMaintenanceModes();
-    return modes.find((m) => m.mode_id === modeId);
+    const modes = getMaintenanceModes(process.cwd());
+    return modes.find((m) => m.mode_id === modeId) as MaintenanceMode | undefined;
   }
 
   private validateModeConstraints(intent: MaintenanceIntent, phase: "plan" | "apply" | "publish" = "plan"): string[] {

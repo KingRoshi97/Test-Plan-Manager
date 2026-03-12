@@ -1262,31 +1262,31 @@ async function executePerfTask(
       findings.push({
         finding_id: store.generateId("FND"),
         run_id: taskRun.run_id,
-        mode_id: taskDef.task_id,
-        detector_id: "PERF-STAGE-TIME",
+        check_id: taskDef.task_id,
+        detector_pack_id: "PERF-STAGE-TIME",
         title: `${s.stage_id} dominates pipeline time (${Math.round(pct)}%)`,
         description: `${s.stage_id} averages ${formatDuration(s.avg_ms)} per run, consuming ${Math.round(pct)}% of total pipeline time. This is the primary optimization target.`,
         severity: "high",
         file_path: path.join(pipelineRunsDir, recentRuns[recentRuns.length - 1].run_id, "stage_reports"),
         json_pointer: `/${s.stage_id}`,
-        auto_fixable: false,
         status: "open",
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
     } else if (pct > 15) {
       findings.push({
         finding_id: store.generateId("FND"),
         run_id: taskRun.run_id,
-        mode_id: taskDef.task_id,
-        detector_id: "PERF-STAGE-TIME",
+        check_id: taskDef.task_id,
+        detector_pack_id: "PERF-STAGE-TIME",
         title: `${s.stage_id} is a secondary time consumer (${Math.round(pct)}%)`,
         description: `${s.stage_id} averages ${formatDuration(s.avg_ms)} per run (${Math.round(pct)}% of pipeline time).`,
         severity: "medium",
         file_path: path.join(pipelineRunsDir, recentRuns[recentRuns.length - 1].run_id, "stage_reports"),
         json_pointer: `/${s.stage_id}`,
-        auto_fixable: false,
         status: "open",
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
     }
   }

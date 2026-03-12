@@ -86,8 +86,8 @@ const ROLE_BASE_WEIGHTS: Record<string, number> = {
   error_page: 25,
   ui_component: 35,
   page: 30,
-  styles: 5,
-  theme: 5,
+  styles: 8,
+  theme: 10,
 
   app_entry: 30,
   entry_point: 35,
@@ -114,9 +114,6 @@ const ROLE_BASE_WEIGHTS: Record<string, number> = {
 
   route_index: 8,
   model_index: 8,
-  page: 30,
-  styles: 8,
-  theme: 10,
 };
 
 export function deriveBuildUnits(blueprint: RepoBlueprint): BuildUnit[] {

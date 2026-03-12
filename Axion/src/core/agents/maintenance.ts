@@ -211,22 +211,22 @@ export interface RollbackValidationResult {
 
 export function getMusPolicyGuardrails(): { applyRequiresConsent: boolean; publishRequiresConsent: boolean; tokenCap: number; maxProposals: number } {
   try {
-    const policy = getMusPolicy();
+    const policy = getMusPolicy(process.cwd());
     if (!policy) return { applyRequiresConsent: true, publishRequiresConsent: true, tokenCap: 50000, maxProposals: 5 };
     return {
-      applyRequiresConsent: policy.consent?.apply_required ?? true,
-      publishRequiresConsent: policy.consent?.publish_required ?? true,
-      tokenCap: policy.budgets_default?.token_cap ?? 50000,
-      maxProposals: policy.proposal_rules?.max_proposal_packs_per_run ?? 5,
+      applyRequiresConsent: (policy as any).consent?.apply_required ?? true,
+      publishRequiresConsent: (policy as any).consent?.publish_required ?? true,
+      tokenCap: (policy as any).budgets_default?.token_cap ?? 50000,
+      maxProposals: (policy as any).proposal_rules?.max_proposal_packs_per_run ?? 5,
     };
   } catch {
     return { applyRequiresConsent: true, publishRequiresConsent: true, tokenCap: 50000, maxProposals: 5 };
-  }
+}
 }
 
 export function getActiveModeIds(): string[] {
   try {
-    const modes = getMaintenanceModes();
+    const modes = getMaintenanceModes(process.cwd());
     return modes.filter((m) => m.status === "active").map((m) => m.mode_id);
   } catch {
     return [];
