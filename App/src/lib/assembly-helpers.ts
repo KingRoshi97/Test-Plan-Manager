@@ -59,12 +59,7 @@ export function getDependencyRisk(a: Assembly): DependencyRiskLevel {
   return "low";
 }
 
-export function formatDuration(ms: number | null | undefined) {
-  if (!ms) return "\u2014";
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-  return `${(ms / 60000).toFixed(1)}m`;
-}
+export { formatDuration } from "./utils";
 
 export function formatDate(d: string | Date | null | undefined) {
   if (!d) return "\u2014";

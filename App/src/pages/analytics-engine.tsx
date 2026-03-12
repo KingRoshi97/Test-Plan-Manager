@@ -165,7 +165,7 @@ export default function AnalyticsEnginePage() {
         </div>
       </div>
 
-      {error && <AnalyticsErrorState message={error} />}
+      {error && <AnalyticsErrorState message={error} onRetry={fetchCards} onBack={() => navigate("/")} />}
 
       <div>
         <div className="flex items-center gap-2 mb-3">

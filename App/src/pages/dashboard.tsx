@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest } from "../lib/queryClient";
+import { formatDuration } from "../lib/utils";
 import {
   Plus,
   Loader2,
@@ -39,13 +40,6 @@ import { GlassPanel } from "../components/ui/glass-panel";
 import { StageRail, parseStagesFromAssembly } from "../components/ui/stage-rail";
 import { usePipelineStatus, getStallLevel, formatStallTime, getAutoKillCountdown } from "../hooks/use-pipeline-status";
 import type { Assembly } from "../../../shared/schema";
-
-function formatDuration(ms: number | null | undefined) {
-  if (!ms) return "—";
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-  return `${(ms / 60000).toFixed(1)}m`;
-}
 
 function formatRelativeTime(d: string | Date | null | undefined) {
   if (!d) return "—";
@@ -399,9 +393,9 @@ export default function DashboardPage() {
             {recentEvents.length > 0 ? (
               <div className="space-y-0">
                 {recentEvents.map((event, idx) => (
-                  <div
+                  <button
                     key={event.id}
-                    className="flex items-start gap-3 py-2 cursor-pointer hover:bg-[hsl(var(--accent)/0.3)] rounded px-1.5 -mx-1.5 transition-colors"
+                    className="flex items-start gap-3 py-2 cursor-pointer hover:bg-[hsl(var(--accent)/0.3)] rounded px-1.5 -mx-1.5 transition-colors w-full text-left"
                     onClick={() => setLocation(`/assembly/${event.id}`)}
                   >
                     <div className="flex flex-col items-center mt-0.5">
@@ -424,7 +418,7 @@ export default function DashboardPage() {
                         {event.totalDurationMs ? ` · ${formatDuration(event.totalDurationMs)}` : ""}
                       </span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             ) : (
@@ -456,12 +450,12 @@ export default function DashboardPage() {
                       className="p-2.5 rounded-md bg-[hsl(var(--status-failure)/0.05)] border border-[hsl(var(--status-failure)/0.15)] transition-colors"
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span
-                          className="text-xs font-medium text-[hsl(var(--foreground))] truncate cursor-pointer hover:underline"
+                        <button
+                          className="text-xs font-medium text-[hsl(var(--foreground))] truncate cursor-pointer hover:underline text-left"
                           onClick={() => setLocation(`/assembly/${run.id}`)}
                         >
                           {run.projectName}
-                        </span>
+                        </button>
                         <XCircle className="w-3 h-3 text-[hsl(var(--status-failure))] shrink-0" />
                       </div>
                       <p className="text-[11px] text-[hsl(var(--muted-foreground))] line-clamp-2">

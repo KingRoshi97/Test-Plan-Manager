@@ -155,7 +155,7 @@ function RowActionMenu({
           <div className="border-t border-[hsl(var(--border)/0.5)] my-1" />
           <button
             onClick={() => {
-              if (confirm("Delete this assembly?")) { onDelete(); setOpen(false); }
+              onDelete(); setOpen(false);
             }}
             disabled={isDeleting}
             className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-[hsl(var(--status-failure)/0.1)] transition-colors text-left text-[hsl(var(--status-failure))] disabled:opacity-50"

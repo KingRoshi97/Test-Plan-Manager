@@ -206,7 +206,7 @@ export function QuickDetailDrawer({
     <div className="fixed inset-0 z-40" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30" />
       <div
-        className="absolute right-0 top-0 bottom-0 w-[380px] max-w-[90vw] glass-panel-solid border-l border-[hsl(var(--border))] shadow-2xl overflow-y-auto animate-slide-in-right"
+        className="absolute right-0 top-0 bottom-0 w-[380px] max-w-[90vw] glass-panel-solid border-l border-[hsl(var(--border))] shadow-2xl overflow-y-auto animate-slide-in-panel"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-[hsl(var(--border))] flex items-center justify-between">
@@ -505,7 +505,7 @@ export function QuickDetailDrawer({
             )}
             <button
               onClick={() => {
-                if (confirm("Delete this assembly?")) onDelete(assembly.id);
+                onDelete(assembly.id);
               }}
               disabled={isDeleting}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-[hsl(var(--status-failure))] hover:bg-[hsl(var(--status-failure)/0.1)] transition font-medium text-xs disabled:opacity-50"

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { apiRequest } from "../lib/queryClient";
+import { useConfirm } from "../components/ui/confirm-dialog";
 import { Plus, Loader2, Rocket } from "lucide-react";
 import { GlassPanel } from "../components/ui/glass-panel";
 import { usePipelineStatus } from "../hooks/use-pipeline-status";
@@ -32,6 +33,7 @@ import { QuickDetailDrawer } from "../components/assemblies/QuickDetailDrawer";
 export default function AssembliesPage() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const confirmDialog = useConfirm();
   const [activeFilter, setActiveFilter] = useState<FilterStatus>("all");
   const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>("all");
   const [familyFilter, setFamilyFilter] = useState("all");
@@ -314,7 +316,9 @@ export default function AssembliesPage() {
           onToggleGroup={toggleGroup}
           onRowClick={(id) => setLocation(`/assembly/${id}`)}
           onQuickDetail={(id) => setDrawerAssemblyId(id)}
-          onDelete={(id) => deleteMutation.mutate(id)}
+          onDelete={async (id) => {
+            if (await confirmDialog({ title: "Delete this assembly?", description: "This action cannot be undone. All data and artifacts will be permanently removed.", confirmLabel: "Delete", variant: "danger" })) deleteMutation.mutate(id);
+          }}
           onPatch={(id, data) => patchMutation.mutate({ id, data })}
           isDeleting={deleteMutation.isPending}
         />
@@ -324,7 +328,9 @@ export default function AssembliesPage() {
         assembly={drawerAssembly}
         onClose={() => setDrawerAssemblyId(null)}
         onNavigate={(id) => setLocation(`/assembly/${id}`)}
-        onDelete={(id) => deleteMutation.mutate(id)}
+        onDelete={async (id) => {
+          if (await confirmDialog({ title: "Delete this assembly?", description: "This action cannot be undone. All data and artifacts will be permanently removed.", confirmLabel: "Delete", variant: "danger" })) deleteMutation.mutate(id);
+        }}
         onRunPipeline={(id) => runPipelineMutation.mutate(id)}
         onSwapAssembly={(id) => setDrawerAssemblyId(id)}
         isDeleting={deleteMutation.isPending}

@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { toast } from "sonner";
 import { apiRequest } from "../lib/queryClient";
+import { formatMs, formatDate } from "../lib/utils";
+import { useConfirm } from "../components/ui/confirm-dialog";
 import {
   ChevronRight, Play, Trash2, ArrowLeft, CheckCircle, XCircle, X,
   Clock, Loader2, FileText, Folder, Download, Save, RotateCcw,
@@ -66,19 +68,7 @@ function usePipelineConfig() {
   };
 }
 
-function formatMs(ms: number | null | undefined) {
-  if (!ms) return "—";
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-  return `${(ms / 60000).toFixed(1)}m`;
-}
-
-function formatDate(d: string | null | undefined) {
-  if (!d) return "—";
-  return new Date(d).toLocaleString();
-}
-
-function formatDuration(start: string, end?: string | null) {
+function formatDurationRange(start: string, end?: string | null) {
   if (!start) return "—";
   const s = new Date(start).getTime();
   const e = end ? new Date(end).getTime() : Date.now();
@@ -736,7 +726,7 @@ function PipelineTab({ stages, runs, assemblyId, stageOrder, stageGates, stageNa
                       <div className="flex items-center gap-2">
                         {stageData?.startedAt && stageData?.completedAt && (
                           <span className="text-[10px] font-mono-tech text-[hsl(var(--muted-foreground))]">
-                            {formatDuration(stageData.startedAt, stageData.completedAt)}
+                            {formatDurationRange(stageData.startedAt, stageData.completedAt)}
                           </span>
                         )}
                         {gate && (
@@ -851,7 +841,7 @@ function PipelineTab({ stages, runs, assemblyId, stageOrder, stageGates, stageNa
                     <StatusChip variant={getStatusVariant(run.status)} label={run.status} size="sm" pulse={run.status === "running"} />
                   </td>
                   <td className="px-4 py-2.5 hidden md:table-cell text-xs text-[hsl(var(--muted-foreground))]">{formatDate(run.startedAt)}</td>
-                  <td className="px-4 py-2.5 hidden md:table-cell text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">{formatDuration(run.startedAt, run.completedAt)}</td>
+                  <td className="px-4 py-2.5 hidden md:table-cell text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">{formatDurationRange(run.startedAt, run.completedAt)}</td>
                   <td className="px-4 py-2.5 hidden lg:table-cell text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">{run.tokenUsage ? (run.tokenUsage.total_tokens ?? 0).toLocaleString() : "—"}</td>
                   <td className="px-4 py-2.5 hidden lg:table-cell text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">{run.tokenUsage ? `$${(run.tokenUsage.total_cost_usd ?? 0).toFixed(4)}` : "—"}</td>
                   <td className="px-4 py-2.5 hidden lg:table-cell text-xs font-mono-tech text-[hsl(var(--muted-foreground))]">{run.currentStage || "—"}</td>
@@ -1279,7 +1269,7 @@ function WorkbenchInspector({ assemblyId, selectedStage, selectedGate, stageName
     : "";
 
   return (
-    <div className="animate-slide-in h-full flex flex-col">
+    <div className="animate-slide-in-panel h-full flex flex-col">
       <div className="flex items-center justify-between p-3 border-b border-[hsl(var(--border))]">
         <div className="flex items-center gap-2">
           {inspectorMode === "gate" ? (
@@ -1354,6 +1344,7 @@ export default function AssemblyPage() {
   const [, params] = useRoute("/assembly/:id");
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const id = params?.id;
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
@@ -1437,8 +1428,24 @@ export default function AssemblyPage() {
         <button onClick={() => navigate("/")} className="flex items-center gap-2 text-xs hover:text-[hsl(var(--primary))] text-[hsl(var(--muted-foreground))] transition-colors">
           <ArrowLeft className="w-3.5 h-3.5" /> Back to Command Center
         </button>
-        <GlassPanel solid className="p-12 text-center">
+        <GlassPanel solid className="p-12 text-center space-y-3">
           <p className="text-[hsl(var(--status-failure))]">Assembly not found</p>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/assemblies", id] })}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.2)] transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Retry
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))] transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to Dashboard
+            </button>
+          </div>
         </GlassPanel>
       </div>
     );
@@ -1476,8 +1483,8 @@ export default function AssemblyPage() {
           <div className="flex items-center gap-2">
             {assembly.status === "running" ? (
               <button
-                onClick={() => {
-                  if (confirm("Stop this pipeline?")) killMutation.mutate();
+                onClick={async () => {
+                  if (await confirm({ title: "Stop this pipeline?", description: "The current run will be terminated.", confirmLabel: "Stop", variant: "danger" })) killMutation.mutate();
                 }}
                 disabled={killMutation.isPending}
                 className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium bg-[hsl(var(--status-failure))] text-white hover:opacity-90 transition disabled:opacity-50"
@@ -1554,8 +1561,8 @@ export default function AssemblyPage() {
               latestStages={latestStages}
               latestRun={latestRun}
               onRun={() => runMutation.mutate()}
-              onKill={() => {
-                if (confirm("Stop this pipeline?")) killMutation.mutate();
+              onKill={async () => {
+                if (await confirm({ title: "Stop this pipeline?", description: "The current run will be terminated.", confirmLabel: "Stop", variant: "danger" })) killMutation.mutate();
               }}
               isRunning={runMutation.isPending}
               isKilling={killMutation.isPending}
@@ -1607,8 +1614,8 @@ export default function AssemblyPage() {
           {activeTab === "config" && (
             <ConfigTab
               assembly={assembly}
-              onDelete={() => {
-                if (confirm("Delete this assembly?")) deleteMutation.mutate();
+              onDelete={async () => {
+                if (await confirm({ title: "Delete this assembly?", description: "This action cannot be undone. All data and artifacts will be permanently removed.", confirmLabel: "Delete", variant: "danger" })) deleteMutation.mutate();
               }}
               isDeleting={deleteMutation.isPending}
             />

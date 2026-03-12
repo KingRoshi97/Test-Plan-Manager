@@ -14,6 +14,7 @@ import {
 import { GlassPanel } from "../components/ui/glass-panel";
 import { StatusChip, type StatusVariant } from "../components/ui/status-chip";
 import { MetricCard } from "../components/ui/metric-card";
+import { formatDate as sharedFormatDate } from "../lib/utils";
 
 function verdictVariant(verdict?: string): StatusVariant {
   switch (verdict) {
@@ -141,7 +142,7 @@ function evidenceTypeIcon(type: string): LucideIcon {
 
 function formatDate(d?: string): string {
   if (!d) return "-";
-  return new Date(d).toLocaleString();
+  return sharedFormatDate(d);
 }
 
 function timeSince(d?: string): string {

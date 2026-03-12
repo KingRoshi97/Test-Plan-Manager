@@ -62,6 +62,36 @@ function validatePage(pageId: number, data: IntakeData): string | null {
       if (!data.project.problem_statement.trim()) return "Project description is required.";
       return null;
     }
+    case 3: {
+      const d = data.design;
+      if (!d.visual_preset) return "Please select a visual preset.";
+      return null;
+    }
+    case 4: {
+      const f = data.functional;
+      if (f.must_have_features.filter(Boolean).length === 0) return "At least one feature is required.";
+      return null;
+    }
+    case 5: {
+      if (data.data.manages_data && data.data.entities.filter((e) => e.name).length === 0)
+        return "At least one data entity is required when data management is enabled.";
+      return null;
+    }
+    case 6: {
+      if (data.auth.requires_auth && data.auth.methods.length === 0)
+        return "At least one authentication method is required.";
+      return null;
+    }
+    case 7: {
+      if (data.integrations.has_integrations && data.integrations.services.filter((s) => s.name).length === 0)
+        return "At least one integration service is required.";
+      return null;
+    }
+    case 8: {
+      const n = data.nfr;
+      if (!n.expected_users) return "Expected number of users is required.";
+      return null;
+    }
     case 10: {
       const f = data.final;
       if (!f.confirmed_priorities || !f.confirmed_binding || !f.confirmed_ready) {
