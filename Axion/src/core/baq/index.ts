@@ -30,11 +30,17 @@ export type {
   BAQBuildQualityReport,
   BAQFailureEntry,
   BAQGenerationFailureReport,
+  BAQSufficiencyEvaluation,
+  BAQSufficiencyDimension,
+  BAQSufficiencyGap,
   BAQHookName,
 } from "./types.js";
 
 export { runBAQExtraction, checkBAQExtractionGate } from "./extraction.js";
 export { buildDerivedInputs, checkBAQDerivedInputsGate } from "./derivedInputs.js";
+export { buildRepoInventory, checkBAQInventoryGate } from "./repoInventory.js";
+export { buildRequirementTraceMap, checkBAQTraceabilityGate } from "./traceability.js";
+export { evaluateSufficiency, checkBAQSufficiencyGate } from "./sufficiency.js";
 export {
   validateKitExtraction,
   validateDerivedBuildInputs,
@@ -42,6 +48,7 @@ export {
   validateGenerationFailureReport,
   validateRepoInventory,
   validateRequirementTraceMap,
+  validateSufficiencyEvaluation,
 } from "./validators.js";
 export type { ValidationResult, ValidationError } from "./validators.js";
 export {

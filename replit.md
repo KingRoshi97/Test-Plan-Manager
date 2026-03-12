@@ -12,19 +12,22 @@ Do not make changes to the folder `Axion/libraries/knowledge/PILLARS/`.
 Do not make changes to the file `Axion/src/cli/axion.ts`.
 
 ### Build Agent Quality (BAQ) Enforcement Layer
-New `Axion/src/core/baq/` module implements BAQ-SPEC-01 enforcement spine. Currently Pass 1–2 (Schemas, Types & Extraction Foundation) is complete:
+`Axion/src/core/baq/` module implements BAQ-SPEC-01 enforcement spine. Pass 1–5 (Schemas through Sufficiency) complete:
 
 **Module structure** (`Axion/src/core/baq/`):
-- `types.ts` — All 6 BAQ schema interfaces (`BAQKitExtraction`, `BAQDerivedBuildInputs`, `BAQRepoInventory`, `BAQRequirementTraceMap`, `BAQBuildQualityReport`, `BAQGenerationFailureReport`), shared enums (`BAQRunStatus`, `BAQSeverity`, `BAQSectionStatus`, `BAQApplicabilityStatus`, `BuildQualityGateId`, `GenerationFailureClass`), 15 hook names
-- `validators.ts` — Runtime validation for all 6 schemas with structural checks (required fields, enum validity, type checks) and semantic validation (coverage math consistency, count reconciliation, referential integrity)
-- `extraction.ts` — Section presence scanner with 20-section registry, status classifier (consumed/deferred/not_applicable/invalid/missing), critical obligation collector from canonical spec, extraction warning surface. Emits `baq_kit_extraction.json`
-- `derivedInputs.ts` — Normalizes extracted authority into subsystem map, feature map, domain model, storage model, API surface, auth model, UI surface map, verification/ops obligations, assumptions, risks. Emits `baq_derived_build_inputs.json`
-- `hooks.ts` — `BuildQualityHookRunner` with 15 hook slots, upstream artifact rule enforcement, deterministic evidence rule, `BuildQualityHookContext` and `BuildQualityHookResult` types
+- `types.ts` — All BAQ schema interfaces (`BAQKitExtraction`, `BAQDerivedBuildInputs`, `BAQRepoInventory`, `BAQRequirementTraceMap`, `BAQBuildQualityReport`, `BAQGenerationFailureReport`, `BAQSufficiencyEvaluation`, `BAQSufficiencyDimension`, `BAQSufficiencyGap`), shared enums, 15 hook names
+- `validators.ts` — Runtime validation for all 7 schemas (extraction, derived inputs, repo inventory, trace map, build quality report, failure report, sufficiency evaluation) with structural checks and semantic validation (count reconciliation, score bounds, referential integrity)
+- `extraction.ts` — Section presence scanner with 20-section registry, status classifier, critical obligation collector. Emits `{runDir}/kit_extraction.json`
+- `derivedInputs.ts` — Normalizes extracted authority into subsystem map, feature map, domain model, storage model, API surface, auth model, UI surface map, verification/ops obligations, assumptions, risks. Emits `{runDir}/derived_build_inputs.json`
+- `repoInventory.ts` — Plans directories, modules, and files from derived inputs. Generates file inventory with roles, layers, generation methods, source refs, trace refs, and justifications. Emits `{runDir}/repo_inventory.json`
+- `traceability.ts` — Maps features, verification obligations, domain entities, and API endpoints to planned files. Computes coverage status (fully/partially/not covered) per trace. Emits `{runDir}/requirement_trace_map.json`
+- `sufficiency.ts` — Evaluates 5 dimensions (feature coverage, structural completeness, API coverage, domain coverage, obligation coverage) with gap analysis. Emits `{runDir}/sufficiency_evaluation.json`
+- `hooks.ts` — `BuildQualityHookRunner` with 15 hook slots, upstream artifact rule enforcement, deterministic evidence rule
 - `index.ts` — Barrel export for all types, functions, and classes
 
-**Integration**: BAQ hooks wired into `Axion/src/core/build/runner.ts` — runs `onBuildAuthorityLoaded` → `onKitExtractionStart` → `onKitExtractionComplete` → `onDerivedInputsBuild` before legacy extraction. BAQ artifacts written to `{runDir}/kit_extraction.json` and `{runDir}/derived_build_inputs.json` (in run dir, separate from legacy `build/kit_extraction.json`). **Hard blocking**: BAQ validation failures, gate failures (G-BQ-01, G-BQ-02), and blocking hook failures all throw errors that halt the build. Critical obligations from extraction are consumed and normalized into verification/ops obligations in derived inputs.
+**Integration**: BAQ hooks wired into `Axion/src/core/build/runner.ts` — runs `onBuildAuthorityLoaded` → `onKitExtractionStart` → `onKitExtractionComplete` → `onDerivedInputsBuild` → `onRepoInventoryPlan` → `onRequirementTraceBuild` → `onSufficiencyEvaluation` before legacy extraction. All BAQ artifacts written to `{runDir}/` (in run dir, separate from legacy `build/` subdir). **Hard blocking**: BAQ validation failures, gate failures, and blocking hook failures all throw errors that halt the build.
 
-**BAQ Gates**: G-BQ-01 (Extraction Completeness) and G-BQ-02 (Derived Inputs Completeness) implemented. Remaining gates G-BQ-03 through G-BQ-07 will be added in Tasks #15–#17.
+**BAQ Gates**: G-BQ-01 (Extraction Completeness), G-BQ-02 (Derived Inputs Completeness), and G-BQ-03 (Inventory + Traceability + Sufficiency) implemented. Remaining gates G-BQ-04 through G-BQ-07 will be added in Tasks #16–#17.
 
 ### Pipeline Stall Detection
 Automatic watchdog in `server/pipeline-runner.ts` detects stalled pipeline runs:

@@ -395,3 +395,85 @@ export function validateRequirementTraceMap(data: unknown): ValidationResult {
 
   return { valid: errors.filter(e => e.severity === "error").length === 0, errors, warnings };
 }
+
+export function validateSufficiencyEvaluation(data: unknown): ValidationResult {
+  const errors: ValidationError[] = [];
+  const warnings: string[] = [];
+  const obj = data as Record<string, unknown>;
+
+  if (!obj || typeof obj !== "object") {
+    return { valid: false, errors: [{ field: "root", message: "Data must be an object", severity: "error" }], warnings };
+  }
+
+  requireString(obj, "schema_version", errors);
+  requireString(obj, "evaluation_id", errors);
+  requireString(obj, "run_id", errors);
+  requireString(obj, "inventory_ref", errors);
+  requireString(obj, "trace_map_ref", errors);
+  requireEnum(obj, "status", ["sufficient", "marginal", "insufficient"] as const, errors);
+  requireArray(obj, "dimensions", errors);
+  requireArray(obj, "gaps", errors);
+  requireString(obj, "created_at", errors);
+  requireString(obj, "updated_at", errors);
+
+  if (typeof obj.overall_score === "number") {
+    const score = obj.overall_score as number;
+    if (score < 0 || score > 100) {
+      errors.push({ field: "overall_score", message: `overall_score must be 0-100, got ${score}`, severity: "error" });
+    }
+  } else {
+    errors.push({ field: "overall_score", message: "overall_score is required and must be a number", severity: "error" });
+  }
+
+  if (Array.isArray(obj.dimensions)) {
+    for (let i = 0; i < (obj.dimensions as unknown[]).length; i++) {
+      const dim = (obj.dimensions as Record<string, unknown>[])[i];
+      if (!dim || typeof dim !== "object") continue;
+      requireString(dim, "dimension_id", errors);
+      requireString(dim, "name", errors);
+      if (typeof dim.score === "number") {
+        const s = dim.score as number;
+        if (s < 0 || s > 100) {
+          errors.push({ field: `dimensions[${i}].score`, message: `Score must be 0-100, got ${s}`, severity: "error" });
+        }
+      }
+    }
+  }
+
+  if (Array.isArray(obj.gaps)) {
+    for (let i = 0; i < (obj.gaps as unknown[]).length; i++) {
+      const gap = (obj.gaps as Record<string, unknown>[])[i];
+      if (!gap || typeof gap !== "object") continue;
+      requireString(gap, "gap_id", errors);
+      requireEnum(gap, "severity", ["critical", "warning", "info"] as const, errors);
+    }
+  }
+
+  const summary = obj.summary as Record<string, unknown> | undefined;
+  if (summary && typeof summary === "object") {
+    if (Array.isArray(obj.dimensions)) {
+      const dims = obj.dimensions as unknown[];
+      if (typeof summary.total_dimensions === "number" && summary.total_dimensions !== dims.length) {
+        errors.push({ field: "summary.total_dimensions", message: `total_dimensions=${summary.total_dimensions} but actual dimensions.length=${dims.length}`, severity: "error" });
+      }
+      const passingDims = (obj.dimensions as Record<string, unknown>[]).filter(d => d.passed === true).length;
+      if (typeof summary.passing_dimensions === "number" && summary.passing_dimensions !== passingDims) {
+        warnings.push(`passing_dimensions=${summary.passing_dimensions} but actual=${passingDims}`);
+      }
+    }
+    if (Array.isArray(obj.gaps)) {
+      const gapArr = obj.gaps as Record<string, unknown>[];
+      if (typeof summary.total_gaps === "number" && summary.total_gaps !== gapArr.length) {
+        errors.push({ field: "summary.total_gaps", message: `total_gaps=${summary.total_gaps} but actual gaps.length=${gapArr.length}`, severity: "error" });
+      }
+      const criticalGaps = gapArr.filter(g => g.severity === "critical").length;
+      if (typeof summary.critical_gaps === "number" && summary.critical_gaps !== criticalGaps) {
+        warnings.push(`critical_gaps=${summary.critical_gaps} but actual=${criticalGaps}`);
+      }
+    }
+  } else {
+    errors.push({ field: "summary", message: "Summary object is required", severity: "error" });
+  }
+
+  return { valid: errors.filter(e => e.severity === "error").length === 0, errors, warnings };
+}

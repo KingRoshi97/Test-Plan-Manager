@@ -371,6 +371,45 @@ export interface BAQGenerationFailureReport {
   updated_at: string;
 }
 
+export interface BAQSufficiencyDimension {
+  dimension_id: string;
+  name: string;
+  score: number;
+  threshold: number;
+  passed: boolean;
+  detail: string;
+}
+
+export interface BAQSufficiencyGap {
+  gap_id: string;
+  dimension_ref: string;
+  severity: "critical" | "warning" | "info";
+  description: string;
+  affected_refs: string[];
+  recommendation: string;
+}
+
+export interface BAQSufficiencyEvaluation {
+  schema_version: "1.0.0";
+  evaluation_id: string;
+  run_id: string;
+  inventory_ref: string;
+  trace_map_ref: string;
+  overall_score: number;
+  status: "sufficient" | "marginal" | "insufficient";
+  dimensions: BAQSufficiencyDimension[];
+  gaps: BAQSufficiencyGap[];
+  summary: {
+    total_dimensions: number;
+    passing_dimensions: number;
+    total_gaps: number;
+    critical_gaps: number;
+    overall_score: number;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
 export type BAQHookName =
   | "onBuildAuthorityLoaded"
   | "onKitExtractionStart"

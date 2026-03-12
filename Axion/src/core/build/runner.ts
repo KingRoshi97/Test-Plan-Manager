@@ -49,14 +49,26 @@ import {
   checkBAQExtractionGate,
   buildDerivedInputs,
   checkBAQDerivedInputsGate,
+  buildRepoInventory,
+  checkBAQInventoryGate,
+  buildRequirementTraceMap,
+  checkBAQTraceabilityGate,
+  evaluateSufficiency,
+  checkBAQSufficiencyGate,
   validateKitExtraction,
   validateDerivedBuildInputs,
+  validateRepoInventory,
+  validateRequirementTraceMap,
+  validateSufficiencyEvaluation,
   BuildQualityHookRunner,
   createHookContext,
 } from "../baq/index.js";
 import type {
   BAQKitExtraction,
   BAQDerivedBuildInputs,
+  BAQRepoInventory,
+  BAQRequirementTraceMap,
+  BAQSufficiencyEvaluation,
 } from "../baq/index.js";
 
 const AXION_BASE = fs.existsSync(path.resolve("Axion", ".axion"))
@@ -182,6 +194,9 @@ export async function runBuild(
     const baqHookRunner = new BuildQualityHookRunner();
     let baqExtraction: BAQKitExtraction | null = null;
     let baqDerivedInputs: BAQDerivedBuildInputs | null = null;
+    let baqInventory: BAQRepoInventory | null = null;
+    let baqTraceMap: BAQRequirementTraceMap | null = null;
+    let baqSufficiency: BAQSufficiencyEvaluation | null = null;
 
     baqHookRunner.register("onBuildAuthorityLoaded", (ctx) => ({
       hook_name: "onBuildAuthorityLoaded",
@@ -274,6 +289,114 @@ export async function runBuild(
       };
     });
 
+    baqHookRunner.register("onRepoInventoryPlan", (ctx) => {
+      const inv = ctx.inventory;
+      if (!inv) {
+        return {
+          hook_name: "onRepoInventoryPlan",
+          success: false,
+          blocking: true,
+          evidence: [],
+          warnings: [],
+          errors: ["BAQ repo inventory artifact is null"],
+          timestamp: new Date().toISOString(),
+        };
+      }
+      const gate = checkBAQInventoryGate(inv);
+      return {
+        hook_name: "onRepoInventoryPlan",
+        success: gate.passed,
+        blocking: !gate.passed,
+        evidence: [{
+          evidence_id: "inventory-gate",
+          type: "gate_result",
+          path: path.join(runDir, "repo_inventory.json"),
+          detail: {
+            gate_id: gate.gate_id,
+            passed: gate.passed,
+            blockers: gate.blockers,
+            total_files: inv.summary.total_files,
+            total_modules: inv.summary.total_modules,
+          },
+        }],
+        warnings: gate.blockers.length > 0 ? gate.blockers : [],
+        errors: gate.passed ? [] : gate.blockers,
+        timestamp: new Date().toISOString(),
+      };
+    });
+
+    baqHookRunner.register("onRequirementTraceBuild", (ctx) => {
+      const tm = ctx.trace_map;
+      if (!tm) {
+        return {
+          hook_name: "onRequirementTraceBuild",
+          success: false,
+          blocking: true,
+          evidence: [],
+          warnings: [],
+          errors: ["BAQ requirement trace map artifact is null"],
+          timestamp: new Date().toISOString(),
+        };
+      }
+      const gate = checkBAQTraceabilityGate(tm);
+      return {
+        hook_name: "onRequirementTraceBuild",
+        success: gate.passed,
+        blocking: !gate.passed,
+        evidence: [{
+          evidence_id: "traceability-gate",
+          type: "gate_result",
+          path: path.join(runDir, "requirement_trace_map.json"),
+          detail: {
+            gate_id: gate.gate_id,
+            passed: gate.passed,
+            blockers: gate.blockers,
+            coverage_percent: tm.summary.coverage_percent,
+            total_requirements: tm.summary.total_requirements,
+          },
+        }],
+        warnings: gate.blockers.length > 0 ? gate.blockers : [],
+        errors: gate.passed ? [] : gate.blockers,
+        timestamp: new Date().toISOString(),
+      };
+    });
+
+    baqHookRunner.register("onSufficiencyEvaluation", (ctx) => {
+      if (!baqSufficiency) {
+        return {
+          hook_name: "onSufficiencyEvaluation",
+          success: false,
+          blocking: true,
+          evidence: [],
+          warnings: [],
+          errors: ["BAQ sufficiency evaluation artifact is null"],
+          timestamp: new Date().toISOString(),
+        };
+      }
+      const gate = checkBAQSufficiencyGate(baqSufficiency);
+      return {
+        hook_name: "onSufficiencyEvaluation",
+        success: gate.passed,
+        blocking: !gate.passed,
+        evidence: [{
+          evidence_id: "sufficiency-gate",
+          type: "gate_result",
+          path: path.join(runDir, "sufficiency_evaluation.json"),
+          detail: {
+            gate_id: gate.gate_id,
+            passed: gate.passed,
+            blockers: gate.blockers,
+            overall_score: baqSufficiency.overall_score,
+            status: baqSufficiency.status,
+            critical_gaps: baqSufficiency.summary.critical_gaps,
+          },
+        }],
+        warnings: gate.blockers.length > 0 ? gate.blockers : [],
+        errors: gate.passed ? [] : gate.blockers,
+        timestamp: new Date().toISOString(),
+      };
+    });
+
     const authorityCtx = createHookContext("onBuildAuthorityLoaded", runId, buildId);
     await baqHookRunner.run("onBuildAuthorityLoaded", authorityCtx);
 
@@ -345,6 +468,119 @@ export async function runBuild(
       const gateBlockers = derivedGate.blockers.join("; ");
       console.log(`  [BAQ] BLOCKED — Derived inputs gate G-BQ-02 failed: ${gateBlockers}`);
       throw new Error(`BAQ gate G-BQ-02 blocked: ${gateBlockers}`);
+    }
+
+    console.log("  [BAQ] Building repo inventory...");
+    baqInventory = buildRepoInventory(baqDerivedInputs, runDir);
+    const inventoryValidation = validateRepoInventory(baqInventory);
+    if (!inventoryValidation.valid) {
+      const validationErrors = inventoryValidation.errors.filter(e => e.severity === "error").map(e => e.message).join("; ");
+      console.log(`  [BAQ] BLOCKED — Repo inventory validation failed: ${validationErrors}`);
+      throw new Error(`BAQ repo inventory validation failed: ${validationErrors}`);
+    }
+
+    fs.writeFileSync(
+      path.join(runDir, "repo_inventory.json"),
+      JSON.stringify(baqInventory, null, 2),
+      "utf-8",
+    );
+
+    const inventoryCtx = createHookContext("onRepoInventoryPlan", runId, buildId, {
+      extraction: baqExtraction,
+      derived_inputs: baqDerivedInputs,
+      inventory: baqInventory,
+    });
+    const inventoryHookResult = await baqHookRunner.run("onRepoInventoryPlan", inventoryCtx);
+
+    if (inventoryHookResult && !inventoryHookResult.success && inventoryHookResult.blocking) {
+      const hookErrors = inventoryHookResult.errors.join("; ");
+      console.log(`  [BAQ] BLOCKED — hook onRepoInventoryPlan failed: ${hookErrors}`);
+      throw new Error(`BAQ inventory hook blocked: ${hookErrors}`);
+    }
+
+    const inventoryGate = checkBAQInventoryGate(baqInventory);
+    console.log(`  [BAQ] Repo inventory: ${baqInventory.summary.total_files} files, ${baqInventory.summary.total_modules} modules, ${baqInventory.summary.total_directories} dirs, gate=${inventoryGate.passed ? "PASS" : "FAIL"}`);
+
+    if (!inventoryGate.passed) {
+      const gateBlockers = inventoryGate.blockers.join("; ");
+      console.log(`  [BAQ] BLOCKED — Inventory gate G-BQ-03 failed: ${gateBlockers}`);
+      throw new Error(`BAQ gate G-BQ-03 blocked: ${gateBlockers}`);
+    }
+
+    console.log("  [BAQ] Building requirement trace map...");
+    baqTraceMap = buildRequirementTraceMap(baqDerivedInputs, baqInventory);
+    const traceValidation = validateRequirementTraceMap(baqTraceMap);
+    if (!traceValidation.valid) {
+      const validationErrors = traceValidation.errors.filter(e => e.severity === "error").map(e => e.message).join("; ");
+      console.log(`  [BAQ] BLOCKED — Trace map validation failed: ${validationErrors}`);
+      throw new Error(`BAQ trace map validation failed: ${validationErrors}`);
+    }
+
+    fs.writeFileSync(
+      path.join(runDir, "requirement_trace_map.json"),
+      JSON.stringify(baqTraceMap, null, 2),
+      "utf-8",
+    );
+
+    const traceCtx = createHookContext("onRequirementTraceBuild", runId, buildId, {
+      extraction: baqExtraction,
+      derived_inputs: baqDerivedInputs,
+      inventory: baqInventory,
+      trace_map: baqTraceMap,
+    });
+    const traceHookResult = await baqHookRunner.run("onRequirementTraceBuild", traceCtx);
+
+    if (traceHookResult && !traceHookResult.success && traceHookResult.blocking) {
+      const hookErrors = traceHookResult.errors.join("; ");
+      console.log(`  [BAQ] BLOCKED — hook onRequirementTraceBuild failed: ${hookErrors}`);
+      throw new Error(`BAQ traceability hook blocked: ${hookErrors}`);
+    }
+
+    const traceGate = checkBAQTraceabilityGate(baqTraceMap);
+    console.log(`  [BAQ] Traceability: ${baqTraceMap.summary.fully_covered} fully / ${baqTraceMap.summary.partially_covered} partial / ${baqTraceMap.summary.not_covered} uncovered, coverage=${baqTraceMap.summary.coverage_percent}%, gate=${traceGate.passed ? "PASS" : "FAIL"}`);
+
+    if (!traceGate.passed) {
+      const gateBlockers = traceGate.blockers.join("; ");
+      console.log(`  [BAQ] BLOCKED — Traceability gate G-BQ-03 failed: ${gateBlockers}`);
+      throw new Error(`BAQ gate G-BQ-03 traceability blocked: ${gateBlockers}`);
+    }
+
+    console.log("  [BAQ] Evaluating sufficiency...");
+    baqSufficiency = evaluateSufficiency(baqDerivedInputs, baqInventory, baqTraceMap);
+    const sufficiencyValidation = validateSufficiencyEvaluation(baqSufficiency);
+    if (!sufficiencyValidation.valid) {
+      const validationErrors = sufficiencyValidation.errors.filter(e => e.severity === "error").map(e => e.message).join("; ");
+      console.log(`  [BAQ] BLOCKED — Sufficiency evaluation validation failed: ${validationErrors}`);
+      throw new Error(`BAQ sufficiency evaluation validation failed: ${validationErrors}`);
+    }
+
+    fs.writeFileSync(
+      path.join(runDir, "sufficiency_evaluation.json"),
+      JSON.stringify(baqSufficiency, null, 2),
+      "utf-8",
+    );
+
+    const sufficiencyCtx = createHookContext("onSufficiencyEvaluation", runId, buildId, {
+      extraction: baqExtraction,
+      derived_inputs: baqDerivedInputs,
+      inventory: baqInventory,
+      trace_map: baqTraceMap,
+    });
+    const sufficiencyHookResult = await baqHookRunner.run("onSufficiencyEvaluation", sufficiencyCtx);
+
+    if (sufficiencyHookResult && !sufficiencyHookResult.success && sufficiencyHookResult.blocking) {
+      const hookErrors = sufficiencyHookResult.errors.join("; ");
+      console.log(`  [BAQ] BLOCKED — hook onSufficiencyEvaluation failed: ${hookErrors}`);
+      throw new Error(`BAQ sufficiency hook blocked: ${hookErrors}`);
+    }
+
+    const sufficiencyGate = checkBAQSufficiencyGate(baqSufficiency);
+    console.log(`  [BAQ] Sufficiency: score=${baqSufficiency.overall_score}%, status=${baqSufficiency.status}, ${baqSufficiency.summary.passing_dimensions}/${baqSufficiency.summary.total_dimensions} dimensions passing, ${baqSufficiency.summary.critical_gaps} critical gaps, gate=${sufficiencyGate.passed ? "PASS" : "FAIL"}`);
+
+    if (!sufficiencyGate.passed) {
+      const gateBlockers = sufficiencyGate.blockers.join("; ");
+      console.log(`  [BAQ] BLOCKED — Sufficiency gate G-BQ-03 failed: ${gateBlockers}`);
+      throw new Error(`BAQ gate G-BQ-03 sufficiency blocked: ${gateBlockers}`);
     }
 
     try {
