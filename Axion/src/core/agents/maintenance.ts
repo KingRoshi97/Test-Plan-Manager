@@ -213,11 +213,14 @@ export function getMusPolicyGuardrails(): { applyRequiresConsent: boolean; publi
   try {
     const policy = getMusPolicy(process.cwd());
     if (!policy) return { applyRequiresConsent: true, publishRequiresConsent: true, tokenCap: 50000, maxProposals: 5 };
+    const consent = policy["consent"] as Record<string, unknown> | undefined;
+    const budgets = policy["budgets_default"] as Record<string, unknown> | undefined;
+    const proposalRules = policy["proposal_rules"] as Record<string, unknown> | undefined;
     return {
-      applyRequiresConsent: (policy as any).consent?.apply_required ?? true,
-      publishRequiresConsent: (policy as any).consent?.publish_required ?? true,
-      tokenCap: (policy as any).budgets_default?.token_cap ?? 50000,
-      maxProposals: (policy as any).proposal_rules?.max_proposal_packs_per_run ?? 5,
+      applyRequiresConsent: (consent?.["apply_required"] as boolean | undefined) ?? true,
+      publishRequiresConsent: (consent?.["publish_required"] as boolean | undefined) ?? true,
+      tokenCap: (budgets?.["token_cap"] as number | undefined) ?? 50000,
+      maxProposals: (proposalRules?.["max_proposal_packs_per_run"] as number | undefined) ?? 5,
     };
   } catch {
     return { applyRequiresConsent: true, publishRequiresConsent: true, tokenCap: 50000, maxProposals: 5 };
