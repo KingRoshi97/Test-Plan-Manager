@@ -16,6 +16,9 @@ import type { VerificationSignals } from "./gates.js";
 
 export interface CoverageMetrics {
   requirement_coverage_percent: number;
+  extraction_coverage_percent: number;
+  acceptance_coverage_percent: number;
+  proof_coverage_percent: number;
   fully_covered_count: number;
   partially_covered_count: number;
   not_covered_count: number;
@@ -32,6 +35,8 @@ export interface InventoryMetrics {
   placeholder_count: number;
   placeholder_in_required: number;
   trace_linked_coverage_percent: number;
+  inventory_variance_percent: number;
+  inventory_variance_delta: number;
 }
 
 export interface QualitySignals {
@@ -102,10 +107,29 @@ function computeOverallQualityScore(input: QualityReportInput): number {
   return Math.min(score, MAX_SCORE);
 }
 
-function buildCoverageMetrics(traceMap: BAQRequirementTraceMap | null): CoverageMetrics {
+function buildCoverageMetrics(input: QualityReportInput): CoverageMetrics {
+  const traceMap = input.traceMap;
+
+  let extractionCoveragePct = 0;
+  let acceptanceCoveragePct = 0;
+  if (input.extraction) {
+    const s = input.extraction.summary;
+    extractionCoveragePct = s.required_sections_total > 0
+      ? Math.round((s.required_sections_present / s.required_sections_total) * 100)
+      : 100;
+    acceptanceCoveragePct = s.critical_obligations_total > 0
+      ? Math.round((s.critical_obligations_fulfilled / s.critical_obligations_total) * 100)
+      : 100;
+  }
+
+  const proofCoveragePct = input.verificationSignals?.fidelity_percent ?? 0;
+
   if (!traceMap) {
     return {
       requirement_coverage_percent: 0,
+      extraction_coverage_percent: extractionCoveragePct,
+      acceptance_coverage_percent: acceptanceCoveragePct,
+      proof_coverage_percent: proofCoveragePct,
       fully_covered_count: 0,
       partially_covered_count: 0,
       not_covered_count: 0,
@@ -114,6 +138,9 @@ function buildCoverageMetrics(traceMap: BAQRequirementTraceMap | null): Coverage
   }
   return {
     requirement_coverage_percent: traceMap.summary.coverage_percent,
+    extraction_coverage_percent: extractionCoveragePct,
+    acceptance_coverage_percent: acceptanceCoveragePct,
+    proof_coverage_percent: proofCoveragePct,
     fully_covered_count: traceMap.summary.fully_covered,
     partially_covered_count: traceMap.summary.partially_covered,
     not_covered_count: traceMap.summary.not_covered,
@@ -133,12 +160,18 @@ function buildInventoryMetrics(reconciliation: ReconciliationResult | null): Inv
       placeholder_count: 0,
       placeholder_in_required: 0,
       trace_linked_coverage_percent: 0,
+      inventory_variance_percent: 0,
+      inventory_variance_delta: 0,
     };
   }
   const v = reconciliation.inventory_variance;
   const traceCoveragePct = v.trace_linked_total > 0
     ? Math.round((v.trace_linked_generated / v.trace_linked_total) * 100)
     : 100;
+  const varianceDelta = v.produced_files - v.expected_files;
+  const variancePct = v.expected_files > 0
+    ? Math.round(Math.abs(varianceDelta) / v.expected_files * 10000) / 100
+    : 0;
   return {
     planned_files: reconciliation.total_planned,
     generated_files: reconciliation.total_generated,
@@ -149,6 +182,8 @@ function buildInventoryMetrics(reconciliation: ReconciliationResult | null): Inv
     placeholder_count: v.placeholder_count,
     placeholder_in_required: v.placeholder_in_required,
     trace_linked_coverage_percent: traceCoveragePct,
+    inventory_variance_percent: variancePct,
+    inventory_variance_delta: varianceDelta,
   };
 }
 
@@ -293,7 +328,7 @@ export function buildQualityReport(input: QualityReportInput): ExtendedBuildQual
     },
     decision,
     decision_reasons: reasons,
-    coverage_metrics: buildCoverageMetrics(input.traceMap),
+    coverage_metrics: buildCoverageMetrics(input),
     inventory_metrics: buildInventoryMetrics(input.reconciliation),
     quality_signals: buildQualitySignals(input),
     packaging_eligibility: buildPackagingEligibility(input.gateEvaluation),
