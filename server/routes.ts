@@ -4334,6 +4334,8 @@ export function registerRoutes(app: Express) {
             filesGenerated: bs.filesGenerated,
             totalFiles: bs.totalFiles,
             tokenUsage: bs.tokenUsage,
+            startedAt: bs.startedAt,
+            updatedAt: bs.updatedAt,
           },
           errors: bs.error ? [bs.error] : [],
         };

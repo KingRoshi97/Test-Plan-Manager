@@ -45,6 +45,8 @@ interface BuildStatus {
     filesGenerated: number;
     totalFiles: number;
     tokenUsage?: TokenUsageData;
+    startedAt?: string;
+    updatedAt?: string;
   };
   manifest?: any;
   verification?: any;
@@ -83,6 +85,40 @@ function LiveBadge() {
       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
       LIVE
     </span>
+  );
+}
+
+function ElapsedTimer({ startedAt }: { startedAt: string }) {
+  const [elapsed, setElapsed] = useState("");
+
+  useEffect(() => {
+    const start = new Date(startedAt).getTime();
+    if (isNaN(start)) return;
+
+    const tick = () => {
+      const diff = Math.max(0, Math.floor((Date.now() - start) / 1000));
+      const h = Math.floor(diff / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      const s = diff % 60;
+      if (h > 0) {
+        setElapsed(`${h}h ${m.toString().padStart(2, "0")}m ${s.toString().padStart(2, "0")}s`);
+      } else if (m > 0) {
+        setElapsed(`${m}m ${s.toString().padStart(2, "0")}s`);
+      } else {
+        setElapsed(`${s}s`);
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [startedAt]);
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]">
+      <Clock className="w-3.5 h-3.5" />
+      <span>{elapsed}</span>
+    </div>
   );
 }
 
@@ -837,6 +873,7 @@ export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: B
   const runsLoading = buildableRuns === undefined;
   const canBuild = runs.length > 0;
   const activeRunId = selectedRunId || runId;
+  const selectedRun = runs.find(r => r.runId === activeRunId);
 
   const { data: buildStatus, isLoading } = useQuery<BuildStatus>({
     queryKey: ["/api/assemblies", assemblyId, "build", activeRunId],
@@ -1023,15 +1060,20 @@ export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: B
 
       {isActive && buildStatus?.progress && (
         <div className="p-6 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--primary))]" />
-            <span className="text-sm font-medium">
-              {state === "building" && buildStatus.progress.currentSlice
-                ? `Building: ${buildStatus.progress.currentSlice}`
-                : state === "verifying"
-                ? "Running verification..."
-                : "Processing..."}
-            </span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-[hsl(var(--primary))]" />
+              <span className="text-sm font-medium">
+                {state === "building" && buildStatus.progress.currentSlice
+                  ? `Building: ${buildStatus.progress.currentSlice}`
+                  : state === "verifying"
+                  ? "Running verification..."
+                  : "Processing..."}
+              </span>
+            </div>
+            {(buildStatus.progress.startedAt || selectedRun?.startedAt) && (
+              <ElapsedTimer startedAt={(buildStatus.progress.startedAt || selectedRun?.startedAt)!} />
+            )}
           </div>
 
           <ProgressBar
