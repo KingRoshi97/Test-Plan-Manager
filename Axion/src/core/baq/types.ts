@@ -367,7 +367,7 @@ export interface BAQBuildQualityReport {
     failed: number;
     skipped: number;
   };
-  decision: "allow_build" | "block_build" | "allow_with_warnings";
+  decision: "approved" | "approved_with_warnings" | "blocked" | "failed";
   decision_reasons: string[];
   created_at: string;
   updated_at: string;

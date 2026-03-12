@@ -79,6 +79,7 @@ export type {
   TrackedFile,
   FileTracker,
   ReconciliationResult,
+  InventoryVariance,
   AlignmentSummary,
 } from "./generationAlignment.js";
 
@@ -103,12 +104,26 @@ export {
   buildQualityReport,
   writeQualityReport,
 } from "./qualityReport.js";
-export type { QualityReportInput } from "./qualityReport.js";
+export type {
+  QualityReportInput,
+  CoverageMetrics,
+  InventoryMetrics,
+  QualitySignals,
+  PackagingEligibility,
+  ExtendedBuildQualityReport,
+} from "./qualityReport.js";
 
 export {
   createFailureEntry,
+  createExtendedFailureEntry,
   buildFailureReport,
   writeFailureReport,
   FailureCollector,
 } from "./failureReport.js";
-export type { FailureInput } from "./failureReport.js";
+export type {
+  RetryClassification,
+  FailureInput,
+  ExtendedFailureEntry,
+  RetryRecommendation,
+  ExtendedFailureReport,
+} from "./failureReport.js";

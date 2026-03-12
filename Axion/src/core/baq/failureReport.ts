@@ -7,6 +7,12 @@ import type {
   GenerationFailureClass,
 } from "./types.js";
 
+export type RetryClassification =
+  | "safe_retry"
+  | "repair_then_retry"
+  | "manual_review_required"
+  | "do_not_retry";
+
 export interface FailureInput {
   failureClass: GenerationFailureClass;
   severity: BAQSeverity;
@@ -18,7 +24,8 @@ export interface FailureInput {
   expectedArtifacts?: string[];
   producedArtifacts?: string[];
   missingArtifacts?: string[];
-  retryEligible?: boolean;
+  retryClassification?: RetryClassification;
+  upstreamBlockers?: string[];
   repairHints?: string[];
 }
 
@@ -43,7 +50,8 @@ export interface ExtendedFailureEntry extends BAQFailureEntry {
   expected_artifacts: string[];
   produced_artifacts: string[];
   missing_artifacts: string[];
-  retry_eligible: boolean;
+  retry_classification: RetryClassification;
+  upstream_blockers: string[];
   repair_hints: string[];
 }
 
@@ -55,7 +63,8 @@ export function createExtendedFailureEntry(input: FailureInput): ExtendedFailure
     expected_artifacts: input.expectedArtifacts ?? [],
     produced_artifacts: input.producedArtifacts ?? [],
     missing_artifacts: input.missingArtifacts ?? [],
-    retry_eligible: input.retryEligible ?? false,
+    retry_classification: input.retryClassification ?? "manual_review_required",
+    upstream_blockers: input.upstreamBlockers ?? [],
     repair_hints: input.repairHints ?? [],
   };
 }
@@ -122,12 +131,21 @@ function buildSummaryCounts(
   };
 }
 
+export interface RetryRecommendation {
+  classification: RetryClassification;
+  safe_retry_count: number;
+  repair_then_retry_count: number;
+  manual_review_count: number;
+  do_not_retry_count: number;
+}
+
 export interface ExtendedFailureReport extends BAQGenerationFailureReport {
   failing_units: string[];
   expected_artifacts: string[];
   produced_artifacts: string[];
   missing_artifacts: string[];
-  retry_eligible: boolean;
+  upstream_blockers: string[];
+  retry_recommendation: RetryRecommendation;
   repair_hints: string[];
 }
 
@@ -143,19 +161,34 @@ export function buildFailureReport(
   const expectedArtifacts = new Set<string>();
   const producedArtifacts = new Set<string>();
   const missingArtifacts = new Set<string>();
+  const upstreamBlockers = new Set<string>();
   const repairHints: string[] = [];
-  let anyRetryEligible = false;
+  let safeRetryCount = 0;
+  let repairThenRetryCount = 0;
+  let manualReviewCount = 0;
+  let doNotRetryCount = 0;
 
   for (const ext of extendedEntries) {
     if (ext.failing_unit) failingUnits.add(ext.failing_unit);
     for (const a of ext.expected_artifacts) expectedArtifacts.add(a);
     for (const a of ext.produced_artifacts) producedArtifacts.add(a);
     for (const a of ext.missing_artifacts) missingArtifacts.add(a);
-    if (ext.retry_eligible) anyRetryEligible = true;
+    for (const b of ext.upstream_blockers) upstreamBlockers.add(b);
+    switch (ext.retry_classification) {
+      case "safe_retry": safeRetryCount++; break;
+      case "repair_then_retry": repairThenRetryCount++; break;
+      case "manual_review_required": manualReviewCount++; break;
+      case "do_not_retry": doNotRetryCount++; break;
+    }
     for (const h of ext.repair_hints) {
       if (!repairHints.includes(h)) repairHints.push(h);
     }
   }
+
+  let overallClassification: RetryClassification = "safe_retry";
+  if (doNotRetryCount > 0) overallClassification = "do_not_retry";
+  else if (manualReviewCount > 0) overallClassification = "manual_review_required";
+  else if (repairThenRetryCount > 0) overallClassification = "repair_then_retry";
 
   return {
     schema_version: "1.0.0",
@@ -168,7 +201,14 @@ export function buildFailureReport(
     expected_artifacts: Array.from(expectedArtifacts),
     produced_artifacts: Array.from(producedArtifacts),
     missing_artifacts: Array.from(missingArtifacts),
-    retry_eligible: anyRetryEligible,
+    upstream_blockers: Array.from(upstreamBlockers),
+    retry_recommendation: {
+      classification: overallClassification,
+      safe_retry_count: safeRetryCount,
+      repair_then_retry_count: repairThenRetryCount,
+      manual_review_count: manualReviewCount,
+      do_not_retry_count: doNotRetryCount,
+    },
     repair_hints: repairHints,
     created_at: now,
     updated_at: now,
@@ -204,7 +244,8 @@ export class FailureCollector {
       expectedArtifacts?: string[];
       producedArtifacts?: string[];
       missingArtifacts?: string[];
-      retryEligible?: boolean;
+      retryClassification?: RetryClassification;
+      upstreamBlockers?: string[];
       repairHints?: string[];
     } = {},
   ): void {

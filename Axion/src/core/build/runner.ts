@@ -179,6 +179,7 @@ export async function runBuild(
   let baqVerificationSignals: VerificationSignals | null = null;
   let baqPackagingSignals: PackagingSignals | null = null;
   const baqFailureCollector = new FailureCollector();
+  const baqHookRunner = new BuildQualityHookRunner();
 
   try {
     manifest = recordLifecycleTransition(manifest, "approved", "eligibility", "Checking eligibility");
@@ -216,8 +217,6 @@ export async function runBuild(
 
     let extraction: KitExtraction | null = null;
     let blueprint: RepoBlueprint | null = null;
-
-    const baqHookRunner = new BuildQualityHookRunner();
 
     baqHookRunner.register("onBuildAuthorityLoaded", (ctx) => ({
       hook_name: "onBuildAuthorityLoaded",
@@ -702,13 +701,15 @@ export async function runBuild(
         failingUnit: "preflight_check",
         expectedArtifacts: ["kit_extraction.json", "derived_build_inputs.json", "repo_inventory.json", "requirement_trace_map.json", "sufficiency_evaluation.json"],
         missingArtifacts: baqPreflight.missing.map(n => `${n}.json`),
+        retryClassification: "repair_then_retry" as const,
+        upstreamBlockers: baqPreflight.missing,
         repairHints: ["Re-run upstream pipeline stages to produce missing artifacts"],
       });
       manifest = recordFailure(manifest, "preflight", "preflight", reason, [reason]);
       result.state = "failed";
       writeBuildManifest(paths.buildManifest, manifest);
       emitProgress("failed", { error: reason, failureClass: "preflight" });
-      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed");
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
       return result;
     }
     console.log("  [BAQ] Preflight passed — all upstream artifacts present and valid");
@@ -772,7 +773,7 @@ export async function runBuild(
             "warning",
             {
               failingUnit: progress.filePath,
-              retryEligible: true,
+              retryClassification: "safe_retry" as const,
               repairHints: ["Re-run generation for this file"],
             },
           );
@@ -806,7 +807,7 @@ export async function runBuild(
       if (genResult.filesGenerated === 0 || genResult.filesFailed > genResult.filesGenerated) {
         baqFailureCollector.addFromError("generation", "generation_failure", reason, "critical", {
           failingUnit: "generation_pipeline",
-          retryEligible: true,
+          retryClassification: "repair_then_retry" as const,
           repairHints: ["Check generation configuration", "Review upstream artifact quality"],
         });
         manifest = recordFailure(manifest, "generation", "generation", reason, genResult.errors);
@@ -814,7 +815,7 @@ export async function runBuild(
         writeBuildManifest(paths.buildManifest, manifest);
         emitProgress("failed", { error: reason, failureClass: "generation" });
 
-        emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed");
+        emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
         return result;
       }
     }
@@ -884,7 +885,7 @@ export async function runBuild(
       writeBuildManifest(paths.buildManifest, manifest);
       emitProgress("failed", { error: reason, failureClass: "verification" });
 
-      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed");
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
       return result;
     }
 
@@ -918,7 +919,7 @@ export async function runBuild(
       writeBuildManifest(paths.buildManifest, manifest);
       emitProgress("failed", { error: reason, failureClass: "verification" });
 
-      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, null, baqFailureCollector, "failed");
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, null, baqFailureCollector, "failed", baqHookRunner);
       return result;
     }
 
@@ -949,7 +950,7 @@ export async function runBuild(
         writeBuildManifest(paths.buildManifest, manifest);
         emitProgress("failed", { error: reason, failureClass: "packaging" });
 
-        emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, { export_attempted: true, export_success: false, file_count: 0, zip_size_bytes: 0 }, baqFailureCollector, "failed");
+        emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, { export_attempted: true, export_success: false, file_count: 0, zip_size_bytes: 0 }, baqFailureCollector, "failed", baqHookRunner);
         return result;
       }
 
@@ -983,7 +984,7 @@ export async function runBuild(
       result.state = "passed";
     }
 
-    emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, baqPackagingSignals, baqFailureCollector, result.state === "exported" ? "packaging_complete" : "verification_complete");
+    emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, baqPackagingSignals, baqFailureCollector, result.state === "exported" ? "packaging_complete" : "verification_complete", baqHookRunner);
 
     result.success = true;
     result.manifest = manifest;
@@ -1005,7 +1006,7 @@ export async function runBuild(
     emitProgress("failed", { error: reason });
 
     try {
-      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, baqPackagingSignals, baqFailureCollector, "failed");
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, baqPackagingSignals, baqFailureCollector, "failed", baqHookRunner);
     } catch {}
 
     return result;
@@ -1026,6 +1027,7 @@ function emitBAQFinalReports(
   packagingSignals: PackagingSignals | null,
   failureCollector: FailureCollector,
   buildStatus: BAQRunStatus,
+  hookRunner?: BuildQualityHookRunner,
 ): void {
   try {
     const gateEvaluation = evaluateAllGates({
@@ -1056,13 +1058,50 @@ function emitBAQFinalReports(
     const qualityReportPath = writeQualityReport(runDir, qualityReport);
     console.log(`  [BAQ] Quality report written: ${qualityReportPath} (score=${qualityReport.overall_quality_score}%, decision=${qualityReport.decision}, gates=${gateEvaluation.passed_count}/${gateEvaluation.total} passed)`);
 
+    let failureReport = null;
     if (failureCollector.count() > 0) {
-      const failureReport = failureCollector.finalize(runId, buildId);
+      failureReport = failureCollector.finalize(runId, buildId);
       const failureReportPath = writeFailureReport(runDir, failureReport);
       console.log(`  [BAQ] Failure report written: ${failureReportPath} (${failureReport.summary.total_failures} failures, ${failureReport.summary.blocking_count} blocking)`);
     }
-  } catch (err: any) {
-    console.log(`  [BAQ] Failed to emit final reports: ${err.message}`);
+
+    if (hookRunner) {
+      const finalizeCtx = createHookContext("onBuildQualityFinalize", runId, buildId, {
+        extraction,
+        derived_inputs: derivedInputs,
+        inventory,
+        trace_map: traceMap,
+        quality_report: qualityReport,
+        failure_report: failureReport,
+        metadata: {
+          decision: qualityReport.decision,
+          quality_score: qualityReport.overall_quality_score,
+          gates_passed: gateEvaluation.passed_count,
+          gates_total: gateEvaluation.total,
+          build_status: buildStatus,
+        },
+      });
+      hookRunner.run("onBuildQualityFinalize", finalizeCtx).catch(() => {});
+
+      if (buildStatus === "failed" && failureCollector.count() > 0) {
+        const genFailCtx = createHookContext("onGenerationFailure", runId, buildId, {
+          extraction,
+          derived_inputs: derivedInputs,
+          inventory,
+          trace_map: traceMap,
+          failure_report: failureReport,
+          metadata: {
+            build_status: buildStatus,
+            failure_count: failureCollector.count(),
+            has_blocking: failureCollector.hasBlockingFailures(),
+          },
+        });
+        hookRunner.run("onGenerationFailure", genFailCtx).catch(() => {});
+      }
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.log(`  [BAQ] Failed to emit final reports: ${message}`);
   }
 }
 

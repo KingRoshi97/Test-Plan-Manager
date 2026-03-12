@@ -36,12 +36,18 @@ export interface InventoryMetrics {
 
 export interface QualitySignals {
   extraction_result: string | null;
+  extraction_completeness_percent: number | null;
   derivation_completeness: number | null;
   sufficiency_score: number | null;
   sufficiency_status: string | null;
   verification_fidelity_percent: number | null;
   verification_passed: boolean | null;
   structural_violations: number | null;
+  placeholder_ratio: number | null;
+  inferred_ratio: number | null;
+  warning_count: number;
+  blocking_count: number;
+  inventory_variance_percent: number | null;
 }
 
 export interface PackagingEligibility {
@@ -147,14 +153,55 @@ function buildInventoryMetrics(reconciliation: ReconciliationResult | null): Inv
 }
 
 function buildQualitySignals(input: QualityReportInput): QualitySignals {
+  let extractionCompleteness: number | null = null;
+  if (input.extraction) {
+    const { required_sections_present, required_sections_total } = input.extraction.summary;
+    extractionCompleteness = required_sections_total > 0
+      ? Math.round((required_sections_present / required_sections_total) * 100)
+      : 100;
+  }
+
+  let placeholderRatio: number | null = null;
+  let inferredRatio: number | null = null;
+  let inventoryVariancePct: number | null = null;
+  if (input.reconciliation) {
+    const v = input.reconciliation.inventory_variance;
+    placeholderRatio = v.produced_files > 0
+      ? Math.round((v.placeholder_count / v.produced_files) * 10000) / 100
+      : 0;
+    inferredRatio = v.produced_files > 0
+      ? Math.round((v.unplanned_files / v.produced_files) * 10000) / 100
+      : 0;
+    inventoryVariancePct = v.expected_files > 0
+      ? Math.round(Math.abs(v.produced_files - v.expected_files) / v.expected_files * 10000) / 100
+      : 0;
+  }
+
+  let warningCount = 0;
+  let blockingCount = 0;
+  for (const gate of input.gateEvaluation.gates) {
+    for (const c of gate.conditions) {
+      if (!c.passed) {
+        if (c.severity === "warning" || c.severity === "info") warningCount++;
+        if (c.severity === "error" || c.severity === "critical") blockingCount++;
+      }
+    }
+  }
+
   return {
     extraction_result: input.extraction?.extraction_result ?? null,
+    extraction_completeness_percent: extractionCompleteness,
     derivation_completeness: input.derivedInputs?.summary.derivation_completeness ?? null,
     sufficiency_score: input.sufficiency?.overall_score ?? null,
     sufficiency_status: input.sufficiency?.status ?? null,
     verification_fidelity_percent: input.verificationSignals?.fidelity_percent ?? null,
     verification_passed: input.verificationSignals?.verification_passed ?? null,
     structural_violations: input.verificationSignals?.structural_violations ?? null,
+    placeholder_ratio: placeholderRatio,
+    inferred_ratio: inferredRatio,
+    warning_count: warningCount,
+    blocking_count: blockingCount,
+    inventory_variance_percent: inventoryVariancePct,
   };
 }
 
@@ -180,8 +227,15 @@ function buildPackagingEligibility(gateEval: FullGateEvaluation): PackagingEligi
 function deriveDecision(
   gateEval: FullGateEvaluation,
   qualityScore: number,
+  buildStatus: BAQRunStatus,
 ): { decision: BAQBuildQualityReport["decision"]; reasons: string[] } {
   const reasons: string[] = [];
+
+  if (buildStatus === "failed") {
+    reasons.push("Build terminated with failure status");
+    return { decision: "failed", reasons };
+  }
+
   const CRITICAL_GATES = new Set(["G-BQ-01", "G-BQ-02", "G-BQ-03"]);
 
   const criticalFailures = gateEval.gates.filter(
@@ -195,23 +249,23 @@ function deriveDecision(
     const failedIds = criticalFailures.map(g => `${g.gate_id} (${g.gate_name})`);
     reasons.push(`Critical pre-generation gate(s) failed: ${failedIds.join(", ")}`);
     reasons.push("Build blocked — critical gates are hard requirements");
-    return { decision: "block_build", reasons };
+    return { decision: "blocked", reasons };
   }
 
   if (nonCriticalFailures.length > 0) {
     const failedIds = nonCriticalFailures.map(g => `${g.gate_id} (${g.gate_name})`);
     reasons.push(`Non-critical gate(s) failed: ${failedIds.join(", ")}`);
-    reasons.push(`Quality score ${qualityScore}% — allowing with warnings`);
-    return { decision: "allow_with_warnings", reasons };
+    reasons.push(`Quality score ${qualityScore}%`);
+    return { decision: "approved_with_warnings", reasons };
   }
 
   if (qualityScore >= 70) {
     reasons.push(`All gates passed, quality score ${qualityScore}%`);
-    return { decision: "allow_build", reasons };
+    return { decision: "approved", reasons };
   }
 
-  reasons.push(`All gates passed but quality score ${qualityScore}% below 70% — allowing with warnings`);
-  return { decision: "allow_with_warnings", reasons };
+  reasons.push(`All gates passed but quality score ${qualityScore}% below 70%`);
+  return { decision: "approved_with_warnings", reasons };
 }
 
 export interface ExtendedBuildQualityReport extends BAQBuildQualityReport {
@@ -223,7 +277,7 @@ export interface ExtendedBuildQualityReport extends BAQBuildQualityReport {
 
 export function buildQualityReport(input: QualityReportInput): ExtendedBuildQualityReport {
   const qualityScore = computeOverallQualityScore(input);
-  const { decision, reasons } = deriveDecision(input.gateEvaluation, qualityScore);
+  const { decision, reasons } = deriveDecision(input.gateEvaluation, qualityScore, input.buildStatus);
   const now = new Date().toISOString();
 
   return {
