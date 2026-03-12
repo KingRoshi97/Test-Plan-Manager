@@ -61,7 +61,7 @@ The web app has been redesigned from a flat dev admin panel to "AXION Lab OS" �
 - **Orchestrator**: `App/src/pages/assemblies.tsx` (~340 lines) — state management, data fetching, filter logic
 - **Helpers/Types**: `App/src/lib/assembly-helpers.ts` — `AssemblyWithMeta` type (extends Assembly with latestStages), all helper functions (getAssignedAgents, getAssignmentHealth, getDeprecationState, isRetirementCandidate, getUpstreamDeps, getDownstreamDeps, getDependencyRisk, getAttentionFlags, buildFamilyGroups, formatDate, formatDuration), filter types, constants, label/color maps, saved view definitions, context-aware empty state messages
 - **Subcomponents** (`App/src/components/assemblies/`):
-  - `AssembliesFilterBar.tsx` — Compact single-row control bar: saved-view dropdown (replaces 19-chip strip), primary status chips, collapsible "Filters" button (hides 6 secondary dropdowns behind a toggle with active-filter count badge), group-by-family toggle, clear-filters button
+  - `AssembliesFilterBar.tsx` — Compact single-row control bar: saved-view dropdown (replaces 19-chip strip), primary status chips, collapsible "Filters" button (hides 6 secondary dropdowns + group-by-family toggle behind a toggle with active-filter count badge), clear-filters button
   - `AssembliesOverviewCards.tsx` — Compact summary strip (4 inline primary stats: Total/Running/Failed/Completed) with expandable "More stats" panel (15 detail cards in grid)
   - `AssembliesTable.tsx` — Table with flat/grouped rendering, RowActionMenu (kebab), FamilyGroupHeader integration
   - `FamilyGroupHeader.tsx` — Collapsible family row headers with rollups + FamilyTooltip hover

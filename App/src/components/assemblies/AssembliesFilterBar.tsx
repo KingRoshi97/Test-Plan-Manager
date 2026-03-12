@@ -222,6 +222,7 @@ export function AssembliesFilterBar({
     usageFilter !== "all" ? 1 : 0,
     riskFilter !== "all" ? 1 : 0,
     ecosystemFilter !== "all" ? 1 : 0,
+    groupByFamily ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
   function clearSecondaryFilters() {
@@ -231,6 +232,7 @@ export function AssembliesFilterBar({
     onUsageFilterChange("all");
     onRiskFilterChange("all");
     onEcosystemFilterChange("all");
+    onGroupByFamilyChange(false);
     onClearActiveView();
   }
 
@@ -297,20 +299,6 @@ export function AssembliesFilterBar({
             Clear
           </button>
         )}
-
-        <div className="ml-auto">
-          <button
-            onClick={() => { onGroupByFamilyChange(!groupByFamily); onClearActiveView(); }}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 ${
-              groupByFamily
-                ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
-                : "text-[hsl(var(--muted-foreground))] border border-transparent hover:border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]"
-            }`}
-          >
-            <FolderTree className="w-3 h-3" />
-            Group
-          </button>
-        </div>
       </div>
 
       {filtersOpen && (
@@ -349,6 +337,18 @@ export function AssembliesFilterBar({
             onChange={(v) => { onEcosystemFilterChange(v as EcosystemFilter); onClearActiveView(); }}
             options={ecosystemFilterOptions}
           />
+          <div className="w-px h-5 bg-[hsl(var(--border)/0.5)]" />
+          <button
+            onClick={() => { onGroupByFamilyChange(!groupByFamily); onClearActiveView(); }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
+              groupByFamily
+                ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
+                : "text-[hsl(var(--muted-foreground))] border border-transparent hover:border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]"
+            }`}
+          >
+            <FolderTree className="w-3 h-3" />
+            Group by Family
+          </button>
         </div>
       )}
     </div>
