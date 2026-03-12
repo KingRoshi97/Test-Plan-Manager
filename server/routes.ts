@@ -4899,12 +4899,17 @@ export function registerRoutes(app: Express) {
       const allowed: Record<string, string> = {
         extraction: "kit_extraction.json",
         derivedInputs: "derived_build_inputs.json",
+        "derived-inputs": "derived_build_inputs.json",
         inventory: "repo_inventory.json",
         traceMap: "requirement_trace_map.json",
+        "trace-map": "requirement_trace_map.json",
         qualityReport: "build_quality_report.json",
+        "quality-report": "build_quality_report.json",
         failureReport: "generation_failure_report.json",
+        "failure-report": "generation_failure_report.json",
         sufficiency: "sufficiency_evaluation.json",
         packagingDecision: "kit/packaging_decision.json",
+        "packaging-decision": "kit/packaging_decision.json",
       };
 
       const filename = allowed[req.params.artifact];
