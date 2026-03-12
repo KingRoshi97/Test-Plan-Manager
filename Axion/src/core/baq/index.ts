@@ -65,3 +65,50 @@ export type {
   HookEvidence,
   HookHandler,
 } from "./hooks.js";
+
+export {
+  runPreflightCheck,
+  createFileTracker,
+  trackGeneratedFile,
+  reconcileGeneration,
+  buildAlignmentSummary,
+} from "./generationAlignment.js";
+export type {
+  PreflightArtifactCheck,
+  PreflightResult,
+  TrackedFile,
+  FileTracker,
+  ReconciliationResult,
+  AlignmentSummary,
+} from "./generationAlignment.js";
+
+export {
+  evaluateGateBQ01,
+  evaluateGateBQ02,
+  evaluateGateBQ03,
+  evaluateGateBQ04,
+  evaluateGateBQ05,
+  evaluateGateBQ06,
+  evaluateGateBQ07,
+  evaluateAllGates,
+} from "./gates.js";
+export type {
+  BAQGateCondition,
+  VerificationSignals,
+  PackagingSignals,
+  FullGateEvaluation,
+} from "./gates.js";
+
+export {
+  buildQualityReport,
+  writeQualityReport,
+} from "./qualityReport.js";
+export type { QualityReportInput } from "./qualityReport.js";
+
+export {
+  createFailureEntry,
+  buildFailureReport,
+  writeFailureReport,
+  FailureCollector,
+} from "./failureReport.js";
+export type { FailureInput } from "./failureReport.js";

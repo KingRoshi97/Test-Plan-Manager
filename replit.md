@@ -25,9 +25,14 @@ Do not make changes to the file `Axion/src/cli/axion.ts`.
 - `hooks.ts` — `BuildQualityHookRunner` with 15 hook slots, upstream artifact rule enforcement, deterministic evidence rule
 - `index.ts` — Barrel export for all types, functions, and classes
 
-**Integration**: BAQ hooks wired into `Axion/src/core/build/runner.ts` — runs `onBuildAuthorityLoaded` → `onKitExtractionStart` → `onKitExtractionComplete` → `onDerivedInputsBuild` → `onRepoInventoryPlan` → `onRequirementTraceBuild` → `onSufficiencyEvaluation` before legacy extraction. All BAQ artifacts written to `{runDir}/` (in run dir, separate from legacy `build/` subdir). **Hard blocking**: BAQ validation failures, gate failures, and blocking hook failures all throw errors that halt the build.
+**Integration**: BAQ hooks wired into `Axion/src/core/build/runner.ts` — runs `onBuildAuthorityLoaded` → `onKitExtractionStart` → `onKitExtractionComplete` → `onDerivedInputsBuild` → `onRepoInventoryPlan` → `onRequirementTraceBuild` → `onSufficiencyEvaluation` → `beforeGenerationStart` (preflight + file tracker) → `onFileGenerated` (per-file tracking) → `onGenerationComplete` (reconciliation) → `onVerificationReconcile` → finalization (quality report + failure report). All BAQ artifacts written to `{runDir}/` (in run dir, separate from legacy `build/` subdir). **Hard blocking**: BAQ validation failures, gate failures, and blocking hook failures all throw errors that halt the build. Quality report always emitted (even on failure). Failure report emitted when any failures collected.
 
-**BAQ Gates**: G-BQ-01 (Extraction Completeness), G-BQ-02 (Derived Inputs Completeness), and G-BQ-03 (Inventory + Traceability + Sufficiency) implemented. Remaining gates G-BQ-04 through G-BQ-07 will be added in Tasks #16–#17.
+- `generationAlignment.ts` — Preflight validator (checks 5 upstream artifacts present/valid), file tracker (records generated files against inventory), post-generation reconciler (compares generated vs planned files, flags missing required files and unplanned files)
+- `gates.ts` — All 7 BAQ gates as pure functions: G-BQ-01 (Extraction Integrity), G-BQ-02 (Derived Inputs Completeness), G-BQ-03 (Inventory & Traceability Integrity), G-BQ-04 (Requirement Coverage), G-BQ-05 (Output Sufficiency), G-BQ-06 (Verification Integrity), G-BQ-07 (Packaging Integrity). `evaluateAllGates()` runs all 7 in sequence.
+- `qualityReport.ts` — Build quality report emitter. Computes weighted quality score from extraction/derivation/traceability/sufficiency/reconciliation/verification. Derives allow/block/warn decision. Emits `{runDir}/build_quality_report.json`
+- `failureReport.ts` — Failure report emitter with `FailureCollector` class for accumulating failures across all build phases. Emits `{runDir}/generation_failure_report.json`
+
+**BAQ Gates**: All 7 gates G-BQ-01 through G-BQ-07 implemented as pure functions in `gates.ts`. Gates are evaluated at build finalization via `evaluateAllGates()` and recorded in the quality report.
 
 ### Pipeline Stall Detection
 Automatic watchdog in `server/pipeline-runner.ts` detects stalled pipeline runs:
