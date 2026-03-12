@@ -4809,7 +4809,7 @@ export function registerRoutes(app: Express) {
     try {
       if (!fs.existsSync(AXION_RUNS)) return res.json({ runs: [] });
       const entries = await fsp.readdir(AXION_RUNS);
-      const runs: Array<{ runId: string; hasBAQ: boolean; artifacts: string[] }> = [];
+      const runs: Array<{ runId: string; hasBAQ: boolean; artifacts: string[]; assemblyId: number | null; assemblyName: string | null }> = [];
       for (const entry of entries) {
         if (!entry.startsWith("RUN-")) continue;
         const runDir = path.join(AXION_RUNS, entry);
@@ -4828,7 +4828,17 @@ export function registerRoutes(app: Express) {
         for (const f of baqFiles) {
           if (await fileExists(path.join(runDir, f))) found.push(f);
         }
-        runs.push({ runId: entry, hasBAQ: found.length > 0, artifacts: found });
+        let assemblyId: number | null = null;
+        let assemblyName: string | null = null;
+        try {
+          const pipelineRun = await storage.getPipelineRunByRunId(entry);
+          if (pipelineRun) {
+            assemblyId = pipelineRun.assemblyId;
+            const assembly = await storage.getAssembly(pipelineRun.assemblyId);
+            if (assembly) assemblyName = assembly.projectName;
+          }
+        } catch {}
+        runs.push({ runId: entry, hasBAQ: found.length > 0, artifacts: found, assemblyId, assemblyName });
       }
       runs.sort((a, b) => b.runId.localeCompare(a.runId));
       res.json({ runs });

@@ -642,6 +642,86 @@ export function selectFailureRepairHints(a: BAQArtifacts): FailureRepairHint[] {
     }));
 }
 
+export interface MissingFileImpact {
+  fileId: string;
+  path: string;
+  reason: string;
+  linkedRequirements: Array<{ requirementId: string; description: string; coverageStatus: string }>;
+  linkedAcceptanceItems: Array<{ acceptanceId: string; description: string; fulfilled: boolean }>;
+  gateImpact: Array<{ gateId: string; gateName: string; status: string }>;
+  packagingImpact: string[];
+}
+
+export function selectMissingFileImpacts(a: BAQArtifacts): MissingFileImpact[] {
+  const missingFiles = selectMissingRequiredFiles(a);
+  if (missingFiles.length === 0) return [];
+
+  return missingFiles.map((f) => {
+    const linkedRequirements: MissingFileImpact["linkedRequirements"] = [];
+    const linkedAcceptanceItems: MissingFileImpact["linkedAcceptanceItems"] = [];
+    const gateImpact: MissingFileImpact["gateImpact"] = [];
+    const packagingImpact: string[] = [];
+
+    if (a.traceMap) {
+      for (const trace of a.traceMap.traces) {
+        const fileMatch = trace.file_refs.some((ref) => f.path.includes(ref) || ref.includes(f.path));
+        if (fileMatch || f.traceRefs.some((tr) => tr === trace.requirement_id)) {
+          linkedRequirements.push({
+            requirementId: trace.requirement_id,
+            description: trace.requirement_description,
+            coverageStatus: trace.coverage_status,
+          });
+          for (const wu of trace.work_units) {
+            for (const ai of wu.acceptance_items) {
+              linkedAcceptanceItems.push({
+                acceptanceId: ai.acceptance_id,
+                description: ai.description,
+                fulfilled: ai.fulfilled,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    if (a.qualityReport && linkedRequirements.length > 0) {
+      const linkedReqIds = new Set(linkedRequirements.map((r) => r.requirementId));
+      for (const gate of a.qualityReport.gates) {
+        if (gate.status === "fail") {
+          const blockerLinked = gate.blockers.some((b) => linkedReqIds.has(b) || b.includes(f.path));
+          const conditionLinked = gate.conditions.some((c) =>
+            c.evidence_refs.some((ref) => linkedReqIds.has(ref) || ref.includes(f.path) || f.path.includes(ref))
+          );
+          if (blockerLinked || conditionLinked) {
+            gateImpact.push({ gateId: gate.gate_id, gateName: gate.gate_name, status: gate.status });
+          }
+        }
+      }
+    }
+
+    if (a.packagingDecision) {
+      for (const mismatch of a.packagingDecision.inventory_mismatches) {
+        if (mismatch.file_path === f.path) {
+          packagingImpact.push(mismatch.reason);
+        }
+      }
+      if (!a.packagingDecision.allowed) {
+        packagingImpact.push("Packaging blocked");
+      }
+    }
+
+    return {
+      fileId: f.fileId,
+      path: f.path,
+      reason: f.reason,
+      linkedRequirements,
+      linkedAcceptanceItems,
+      gateImpact,
+      packagingImpact,
+    };
+  });
+}
+
 export function selectUpstreamBlockers(a: BAQArtifacts): Array<{ source: string; description: string; impact: string }> {
   const blockers: Array<{ source: string; description: string; impact: string }> = [];
   if (a.packagingDecision) {

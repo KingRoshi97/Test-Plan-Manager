@@ -40,6 +40,7 @@ import {
   selectInventoryByCategory,
   selectFailureRepairHints,
   selectUpstreamBlockers,
+  selectMissingFileImpacts,
   getDataAvailability,
 } from "../lib/baq-selectors";
 
@@ -746,6 +747,7 @@ function TraceabilityTab({ artifacts, onNavigate }: { artifacts: BAQArtifacts; o
 function GenerationDeltaTab({ artifacts, onNavigate }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void }) {
   const integrity = selectOutputIntegrityMetrics(artifacts);
   const missingFiles = selectMissingRequiredFiles(artifacts);
+  const missingFileImpacts = selectMissingFileImpacts(artifacts);
   const unplannedFiles = selectUnplannedGeneratedFiles(artifacts);
   const coverage = selectCoverageMetrics(artifacts);
 
@@ -782,17 +784,81 @@ function GenerationDeltaTab({ artifacts, onNavigate }: { artifacts: BAQArtifacts
         </div>
       </GlassPanel>
 
-      {missingFiles.length > 0 && (
+      {missingFileImpacts.length > 0 && (
         <GlassPanel solid className="p-4" glow="red">
-          <div className="text-system-label mb-3">Missing Required Files ({missingFiles.length})</div>
-          <DataTable
-            headers={["Path", "Reason", "Linked Traces"]}
-            rows={missingFiles.map((f) => [
-              <span className="font-mono text-xs">{f.path}</span>,
-              <span className="text-sm">{f.reason}</span>,
-              <span className="text-xs text-[hsl(var(--muted-foreground))]">{f.traceRefs.join(", ") || "—"}</span>,
-            ])}
-          />
+          <div className="text-system-label mb-3">Missing Required Files — Impact Analysis ({missingFileImpacts.length})</div>
+          {missingFileImpacts.map((impact) => (
+            <ExpandableRow
+              key={impact.fileId}
+              defaultOpen={missingFileImpacts.length <= 3}
+              title={
+                <div className="flex items-center gap-3">
+                  <XCircle className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
+                  <span className="font-mono text-xs">{impact.path}</span>
+                  <span className="text-xs text-[hsl(var(--muted-foreground))]">{impact.reason}</span>
+                </div>
+              }
+            >
+              <div className="space-y-3 text-sm">
+                {impact.linkedRequirements.length > 0 && (
+                  <div>
+                    <div className="text-xs text-system-label mb-1 flex items-center gap-1">
+                      <Target className="w-3 h-3" /> Linked Requirements ({impact.linkedRequirements.length})
+                    </div>
+                    {impact.linkedRequirements.map((req) => (
+                      <div key={req.requirementId} className="flex items-center gap-2 text-xs ml-4 mb-0.5">
+                        <StatusChip variant={req.coverageStatus === "fully_covered" ? "success" : req.coverageStatus === "partially_covered" ? "warning" : "failure"} label={req.coverageStatus.replace(/_/g, " ")} />
+                        <span className="font-mono">{req.requirementId}</span>
+                        <span className="text-[hsl(var(--muted-foreground))]">{req.description}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {impact.linkedAcceptanceItems.length > 0 && (
+                  <div>
+                    <div className="text-xs text-system-label mb-1 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Acceptance Items ({impact.linkedAcceptanceItems.length})
+                    </div>
+                    {impact.linkedAcceptanceItems.map((ai) => (
+                      <div key={ai.acceptanceId} className="flex items-center gap-2 text-xs ml-4 mb-0.5">
+                        {ai.fulfilled ? <CheckCircle2 className="w-3 h-3 text-[hsl(var(--status-success))]" /> : <XCircle className="w-3 h-3 text-[hsl(var(--status-failure))]" />}
+                        <span>{ai.description}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {impact.gateImpact.length > 0 && (
+                  <div>
+                    <div className="text-xs text-system-label mb-1 flex items-center gap-1">
+                      <Shield className="w-3 h-3" /> Gate Impact
+                    </div>
+                    {impact.gateImpact.map((g) => (
+                      <div key={g.gateId} className="flex items-center gap-2 text-xs ml-4 mb-0.5">
+                        <StatusChip variant="failure" label="FAIL" />
+                        <span className="font-mono">{g.gateId}</span>
+                        <span>{g.gateName}</span>
+                      </div>
+                    ))}
+                    <CrossLink label="View gate details" tabId="gates" onClick={onNavigate} />
+                  </div>
+                )}
+                {impact.packagingImpact.length > 0 && (
+                  <div>
+                    <div className="text-xs text-system-label mb-1 flex items-center gap-1">
+                      <Package className="w-3 h-3" /> Packaging Impact
+                    </div>
+                    {impact.packagingImpact.map((p, i) => (
+                      <div key={i} className="text-xs text-[hsl(var(--status-failure))] ml-4 mb-0.5">{p}</div>
+                    ))}
+                    <CrossLink label="View packaging" tabId="packaging" onClick={onNavigate} />
+                  </div>
+                )}
+                {impact.linkedRequirements.length === 0 && impact.gateImpact.length === 0 && (
+                  <div className="text-xs text-[hsl(var(--muted-foreground))]">No linked requirements or gate impacts found for this file.</div>
+                )}
+              </div>
+            </ExpandableRow>
+          ))}
         </GlassPanel>
       )}
 
@@ -1298,8 +1364,14 @@ export default function BuildQualityPage() {
     refetchInterval: 15000,
   });
 
-  const runs: Array<{ runId: string; hasBAQ: boolean; artifacts: string[] }> = runsData?.runs ?? [];
-  const effectiveRunId = selectedRunId ?? (runs.length > 0 ? runs[0].runId : null);
+  const [assemblyFilter, setAssemblyFilter] = useState<string>("all");
+
+  const runs: Array<{ runId: string; hasBAQ: boolean; artifacts: string[]; assemblyId: number | null; assemblyName: string | null }> = runsData?.runs ?? [];
+
+  const assemblyNames = Array.from(new Set(runs.filter((r) => r.assemblyName).map((r) => r.assemblyName!)));
+
+  const filteredRuns = assemblyFilter === "all" ? runs : runs.filter((r) => r.assemblyName === assemblyFilter);
+  const effectiveRunId = selectedRunId ?? (filteredRuns.length > 0 ? filteredRuns[0].runId : null);
 
   const { data: baqData, isLoading: baqLoading, isError: baqError, error: baqErrorObj } = useQuery({
     queryKey: ["/api/baq/runs", effectiveRunId],
@@ -1359,16 +1431,31 @@ export default function BuildQualityPage() {
               <h1 className="text-lg font-semibold">Build Quality</h1>
             </div>
             <div className="flex items-center gap-3">
+              {assemblyNames.length > 0 && (
+                <div className="relative">
+                  <select
+                    value={assemblyFilter}
+                    onChange={(e) => { setAssemblyFilter(e.target.value); setSelectedRunId(null); }}
+                    className="appearance-none bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] text-sm px-3 py-1.5 pr-8 rounded-md border border-[hsl(var(--border))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                  >
+                    <option value="all">All Assemblies</option>
+                    {assemblyNames.map((name) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] pointer-events-none" />
+                </div>
+              )}
               <div className="relative">
                 <select
                   value={effectiveRunId ?? ""}
                   onChange={(e) => setSelectedRunId(e.target.value || null)}
                   className="appearance-none bg-[hsl(var(--muted))] text-[hsl(var(--foreground))] text-sm px-3 py-1.5 pr-8 rounded-md border border-[hsl(var(--border))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                 >
-                  {runs.length === 0 && <option value="">No runs available</option>}
-                  {runs.map((r) => (
+                  {filteredRuns.length === 0 && <option value="">No runs available</option>}
+                  {filteredRuns.map((r) => (
                     <option key={r.runId} value={r.runId}>
-                      {r.runId} {r.hasBAQ ? "" : "(no BAQ data)"}
+                      {r.runId} {r.assemblyName ? `(${r.assemblyName})` : ""} {r.hasBAQ ? "" : "(no BAQ)"}
                     </option>
                   ))}
                 </select>
