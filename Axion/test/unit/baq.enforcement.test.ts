@@ -1537,4 +1537,59 @@ describe("BAQ Packager-Level Preflight Enforcement", () => {
     expect(decision.allowed).toBe(false);
     expect(decision.block_reasons.some(r => r.includes("gate"))).toBe(true);
   });
+
+  it("blocks when required inventory file exists at wrong path in bundle", () => {
+    const tmpDir = makeTmpDir();
+    const bundleDir = path.join(tmpDir, "kit", "bundle", "agent_kit");
+    fs.mkdirSync(path.join(bundleDir, "docs"), { recursive: true });
+    fs.writeFileSync(path.join(bundleDir, "docs", "auth.ts"), "wrong location");
+
+    const inv: BAQRepoInventory = makeInventory(0);
+    inv.files = [
+      {
+        file_id: "FILE-AUTH",
+        path: "src/api/auth.ts",
+        template_ref: "TPL-AUTH",
+        slot: "04_implementation",
+        generation_method: "deterministic",
+        required: true,
+        trace_refs: ["REQ-1"],
+        estimated_byte_count: 500,
+        content_hash: null,
+      },
+    ];
+    inv.summary.total_files = 1;
+    inv.summary.required_files = 1;
+
+    fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), JSON.stringify(inv));
+
+    const gateEval = allPassingGateEval();
+    const report = buildQualityReport({
+      runId: "RUN-TEST",
+      buildId: "BUILD-001",
+      extraction: makeExtraction(),
+      derivedInputs: makeDerivedInputs(),
+      inventory: inv,
+      traceMap: makeTraceMap(),
+      sufficiency: makeSufficiency(),
+      gateEvaluation: gateEval,
+      reconciliation: makeReconciliation(),
+      verificationSignals: makeVerificationSignals(),
+      buildStatus: "verification_complete",
+    });
+    const criticals = ["kit_extraction.json", "derived_build_inputs.json",
+      "requirement_trace_map.json", "sufficiency_evaluation.json"];
+    for (const name of criticals) {
+      fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
+    }
+    writeQualityReport(tmpDir, report);
+
+    fs.mkdirSync(path.join(tmpDir, "proof"), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, "proof", "proof_ledger.jsonl"), "");
+
+    const decision = runPackagingPreflight(tmpDir, bundleDir);
+    expect(decision.allowed).toBe(false);
+    expect(decision.manifest_mismatches.some(m => m.file_path === "src/api/auth.ts")).toBe(true);
+    fs.rmSync(tmpDir, { recursive: true });
+  });
 });

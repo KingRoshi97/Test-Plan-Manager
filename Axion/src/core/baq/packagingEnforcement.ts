@@ -126,15 +126,22 @@ function reconcileManifestTargets(
 
   if (inventory) {
     const files = Array.isArray(inventory.files) ? inventory.files : [];
-    const bundleBasenames = new Set<string>();
-    for (const bf of bundleFiles) {
-      bundleBasenames.add(path.basename(bf));
-    }
 
     for (const file of files) {
       if (!file.required) continue;
-      const basename = path.basename(file.path);
-      if (!bundleBasenames.has(basename)) {
+      const normalizedFilePath = file.path.replace(/\\/g, "/");
+      const foundExact = bundleFiles.has(normalizedFilePath);
+      let foundInSubdir = false;
+      if (!foundExact) {
+        for (const bf of bundleFiles) {
+          if (bf.endsWith("/" + normalizedFilePath) || bf === normalizedFilePath) {
+            foundInSubdir = true;
+            break;
+          }
+        }
+      }
+
+      if (!foundExact && !foundInSubdir) {
         mismatches.push({
           file_path: file.path,
           expected: true,
