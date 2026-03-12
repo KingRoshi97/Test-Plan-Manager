@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "description": "Allowed placeholder roots and derived functions for template filling.",
+  "roots": ["spec", "standards", "work", "acceptance", "meta"],
+  "flags": ["OPTIONAL", "UNKNOWN_ALLOWED"],
+  "syntax": {
+    "direct": "{{ path.to.value }}",
+    "array_join": "{{ path.to.array[] }}",
+    "derived": "{{ derive:name(arg1,arg2) }}",
+    "optional": "{{ spec.rules.definition_of_done|OPTIONAL }}",
+    "unknown_allowed": "{{ spec.unknowns|UNKNOWN_ALLOWED }}"
+  },
+  "derived_functions": [
+    { "name": "now", "args": [], "returns": "iso_datetime" },
+    { "name": "spec_id", "args": [], "returns": "string" },
+    { "name": "submission_id", "args": [], "returns": "string" }
+  ],
+  "notes": [
+    "This matches your current filler implementation in src/core/templates/filler.ts.",
+    "If you add derive functions, update both this catalog and the derive() switch."
+  ]
+}

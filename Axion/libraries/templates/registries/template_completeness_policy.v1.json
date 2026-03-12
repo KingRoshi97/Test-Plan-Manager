@@ -1,0 +1,9 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "template_completeness_policy.v1",
+    "thresholds": {
+      "PROTOTYPE": { "required_placeholders_min_pct": 80, "allow_tbd": true },
+        "PROD": { "required_placeholders_min_pct": 95, "allow_tbd": false },
+        "COMPLIANCE": { "required_placeholders_min_pct": 100, "allow_tbd": false }
+    }
+}

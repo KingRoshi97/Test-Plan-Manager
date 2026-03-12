@@ -1,0 +1,14 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "template_category_order.v1",
+    "order": [
+      "PRODUCT_DEFINITION",
+      "SYSTEM_ARCHITECTURE",
+      "APPLICATION_BUILD",
+      "DATA_AND_INFORMATION",
+      "EXPERIENCE_DESIGN",
+      "INTEGRATIONS_AND_EXTERNAL",
+      "SECURITY_PRIVACY_COMPLIANCE",
+      "OPERATIONS_AND_RELIABILITY"
+    ]
+}

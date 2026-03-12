@@ -1,0 +1,192 @@
+{
+    "schema_version": "1.0.0",
+    "registry_id": "template_registry.v1",
+    "governed_schema": "template_unit.v1",
+    "updated_at": "2025-01-01T00:00:00Z",
+    "templates": [
+      {
+        "template_id": "TMP-01",
+        "unit_id": "TMP-PRD-01",
+        "title": "Product Definition Template",
+        "version": "1.0.0",
+        "status": "active",
+        "owner": "axion/templates",
+        "authority_tier": "A1",
+        "path": "Axion/libraries/templates/TMP-01.template_index.v1.json",
+        "template_domain": "PRODUCT_DEFINITION",
+        "category": "PRODUCT_DEFINITION",
+        "subcategory": "Problem/Goals",
+        "required_inputs": ["CANONICAL_SPEC", "STANDARDS_SNAPSHOT"],
+        "tags": ["product", "scope"],
+        "domains": ["project"],
+        "applicability": {
+          "project_types": ["web", "api", "mobile"],
+          "stages": ["intake", "planning"],
+          "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"]
+        },
+        "backcompat_tier": "stable",
+        "maturity": "active"
+      },
+      {
+        "template_id": "TMP-02",
+        "unit_id": "TMP-ARCH-01",
+        "title": "System Architecture Template",
+        "version": "1.0.0",
+        "status": "active",
+        "owner": "axion/templates",
+        "authority_tier": "A1",
+        "path": "Axion/libraries/templates/SYSTEM_ARCHITECTURE/",
+        "template_domain": "SYSTEM_ARCHITECTURE",
+        "category": "SYSTEM_ARCHITECTURE",
+        "subcategory": "Architecture Overview",
+        "required_inputs": ["CANONICAL_SPEC", "STANDARDS_SNAPSHOT"],
+        "tags": ["architecture", "system-design"],
+        "domains": ["engineering"],
+        "applicability": {
+          "project_types": ["web", "api", "mobile", "desktop"],
+          "stages": ["planning", "build"],
+          "risk_classes": ["PROD", "COMPLIANCE"]
+        },
+        "backcompat_tier": "stable",
+        "maturity": "active"
+      },
+      {
+        "template_id": "TMP-03",
+        "unit_id": "TMP-DATA-01",
+        "title": "Data and Information Template",
+        "version": "1.0.0",
+        "status": "active",
+        "owner": "axion/templates",
+        "authority_tier": "A2",
+        "path": "Axion/libraries/templates/DATA_AND_INFORMATION/",
+        "template_domain": "DATA_AND_INFORMATION",
+        "category": "DATA_AND_INFORMATION",
+        "subcategory": "Data Models",
+        "required_inputs": ["CANONICAL_SPEC"],
+        "tags": ["data", "models", "storage"],
+        "domains": ["engineering"],
+        "applicability": {
+          "project_types": ["web", "api", "mobile"],
+          "stages": ["planning", "build"],
+          "risk_classes": ["PROD", "COMPLIANCE"]
+        },
+        "backcompat_tier": "stable",
+        "maturity": "active"
+      },
+      {
+        "template_id": "TMP-04",
+        "unit_id": "TMP-SEC-01",
+        "title": "Security Privacy Compliance Template",
+        "version": "1.0.0",
+        "status": "active",
+        "owner": "axion/templates",
+        "authority_tier": "A0",
+        "path": "Axion/libraries/templates/SECURITY_PRIVACY_COMPLIANCE/",
+        "template_domain": "SECURITY_PRIVACY_COMPLIANCE",
+        "category": "SECURITY_PRIVACY_COMPLIANCE",
+        "subcategory": "Security Controls",
+        "required_inputs": ["CANONICAL_SPEC", "STANDARDS_SNAPSHOT"],
+        "tags": ["security", "compliance", "privacy"],
+        "domains": ["security"],
+        "applicability": {
+          "project_types": ["web", "api", "mobile", "desktop"],
+          "stages": ["planning", "build", "verification"],
+          "risk_classes": ["COMPLIANCE"]
+        },
+        "backcompat_tier": "stable",
+        "maturity": "active"
+      },
+      {
+        "template_id": "TMP-05",
+        "unit_id": "TMP-OPS-01",
+        "title": "Operations and Reliability Template",
+        "version": "1.0.0",
+        "status": "active",
+        "owner": "axion/templates",
+        "authority_tier": "A2",
+        "path": "Axion/libraries/templates/OPERATIONS_AND_RELIABILITY/",
+        "template_domain": "OPERATIONS_AND_RELIABILITY",
+        "category": "OPERATIONS_AND_RELIABILITY",
+        "subcategory": "Operational Readiness",
+        "required_inputs": ["CANONICAL_SPEC"],
+        "tags": ["ops", "reliability", "monitoring"],
+        "domains": ["operations"],
+        "applicability": {
+          "project_types": ["web", "api"],
+          "stages": ["build", "verification"],
+          "risk_classes": ["PROD", "COMPLIANCE"]
+        },
+        "backcompat_tier": "evolving",
+        "maturity": "active"
+      },
+      {
+        "template_id": "TMP-06",
+        "unit_id": "TMP-UX-01",
+        "title": "Experience Design Template",
+        "version": "1.0.0",
+        "status": "active",
+        "owner": "axion/templates",
+        "authority_tier": "A2",
+        "path": "Axion/libraries/templates/EXPERIENCE_DESIGN/",
+        "template_domain": "EXPERIENCE_DESIGN",
+        "category": "EXPERIENCE_DESIGN",
+        "subcategory": "UX Patterns",
+        "required_inputs": ["CANONICAL_SPEC"],
+        "tags": ["ux", "design", "accessibility"],
+        "domains": ["design"],
+        "applicability": {
+          "project_types": ["web", "mobile", "desktop"],
+          "stages": ["planning", "build"],
+          "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"]
+        },
+        "backcompat_tier": "evolving",
+        "maturity": "active"
+      },
+      {
+        "template_id": "TMP-07",
+        "unit_id": "TMP-INT-01",
+        "title": "Integrations and External Template",
+        "version": "1.0.0",
+        "status": "active",
+        "owner": "axion/templates",
+        "authority_tier": "A2",
+        "path": "Axion/libraries/templates/INTEGRATIONS_AND_EXTERNAL/",
+        "template_domain": "INTEGRATIONS_AND_EXTERNAL",
+        "category": "INTEGRATIONS_AND_EXTERNAL",
+        "subcategory": "API Integrations",
+        "required_inputs": ["CANONICAL_SPEC", "STANDARDS_SNAPSHOT"],
+        "tags": ["integrations", "api", "external"],
+        "domains": ["engineering"],
+        "applicability": {
+          "project_types": ["web", "api", "mobile"],
+          "stages": ["planning", "build"],
+          "risk_classes": ["PROD", "COMPLIANCE"]
+        },
+        "backcompat_tier": "evolving",
+        "maturity": "active"
+      },
+      {
+        "template_id": "TMP-08",
+        "unit_id": "TMP-BUILD-01",
+        "title": "Application Build Template",
+        "version": "1.0.0",
+        "status": "active",
+        "owner": "axion/templates",
+        "authority_tier": "A1",
+        "path": "Axion/libraries/templates/APPLICATION_BUILD/",
+        "template_domain": "APPLICATION_BUILD",
+        "category": "APPLICATION_BUILD",
+        "subcategory": "Build Specification",
+        "required_inputs": ["CANONICAL_SPEC", "STANDARDS_SNAPSHOT"],
+        "tags": ["build", "implementation", "coding"],
+        "domains": ["engineering"],
+        "applicability": {
+          "project_types": ["web", "api", "mobile", "desktop"],
+          "stages": ["build"],
+          "risk_classes": ["PROTOTYPE", "PROD", "COMPLIANCE"]
+        },
+        "backcompat_tier": "stable",
+        "maturity": "active"
+      }
+    ]
+}
