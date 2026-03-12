@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Boxes,
   Radio,
@@ -16,6 +17,8 @@ import {
   Unplug,
   Globe,
   Gauge,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { GlassPanel } from "../ui/glass-panel";
 import type { Assembly } from "../../../../shared/schema";
@@ -37,6 +40,8 @@ interface AssembliesOverviewCardsProps {
 }
 
 export function AssembliesOverviewCards({ assemblies, counts, onCardClick }: AssembliesOverviewCardsProps) {
+  const [expanded, setExpanded] = useState(false);
+
   const overviewCards = useMemo(() => {
     const inUse = assemblies.filter((a) => a.lifecycleState === "in_use").length;
     const unowned = assemblies.filter((a) => !a.ownerName).length;
@@ -63,10 +68,14 @@ export function AssembliesOverviewCards({ assemblies, counts, onCardClick }: Ass
     };
   }, [assemblies]);
 
-  const cards = [
-    { label: "Total", value: counts.all, icon: Boxes, filter: "all", accent: "" },
-    { label: "Running", value: counts.running, icon: Radio, filter: "running", accent: counts.running > 0 ? "text-[hsl(var(--status-processing))]" : "" },
-    { label: "Failed", value: counts.failed, icon: XCircle, filter: "failed", accent: counts.failed > 0 ? "text-[hsl(var(--status-failure))]" : "" },
+  const primaryStats = [
+    { label: "Total", value: counts.all, filter: "all", accent: "" },
+    { label: "Running", value: counts.running, filter: "running", accent: counts.running > 0 ? "text-[hsl(var(--status-processing))]" : "" },
+    { label: "Failed", value: counts.failed, filter: "failed", accent: counts.failed > 0 ? "text-[hsl(var(--status-failure))]" : "" },
+    { label: "Completed", value: counts.completed, filter: "completed", accent: counts.completed > 0 ? "text-[hsl(var(--status-success))]" : "" },
+  ];
+
+  const detailCards = [
     { label: "In Use", value: overviewCards.inUse, icon: CheckCircle2, filter: "in_use", accent: overviewCards.inUse > 0 ? "text-[hsl(var(--status-success))]" : "" },
     { label: "Fully Assigned", value: assemblies.filter((a) => getAssignmentHealth(a) === "assigned").length, icon: Users, filter: "owned", accent: "" },
     { label: "Unowned", value: overviewCards.unowned, icon: Users, filter: "unowned", accent: overviewCards.unowned > 0 ? "text-[hsl(var(--status-warning))]" : "" },
@@ -85,24 +94,55 @@ export function AssembliesOverviewCards({ assemblies, counts, onCardClick }: Ass
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-      {cards.map((card) => (
-        <GlassPanel
-          key={card.label}
-          solid
-          hover
-          onClick={() => onCardClick(card.filter)}
-          className="p-3 cursor-pointer group"
+    <div className="space-y-2">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {primaryStats.map((stat) => (
+            <button
+              key={stat.label}
+              onClick={() => onCardClick(stat.filter)}
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+            >
+              <span className={`text-base font-bold tabular-nums ${stat.accent || "text-[hsl(var(--foreground))]"}`}>
+                {stat.value}
+              </span>
+              <span className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">
+                {stat.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="inline-flex items-center gap-1 text-[11px] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors ml-auto"
         >
-          <div className="flex items-center gap-1.5 mb-1">
-            <card.icon className={`w-3.5 h-3.5 ${card.accent || "text-[hsl(var(--muted-foreground))]"} group-hover:text-[hsl(var(--primary))] transition-colors`} />
-            <span className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium">{card.label}</span>
-          </div>
-          <div className={`text-lg font-bold tabular-nums ${card.accent || "text-[hsl(var(--foreground))]"}`}>
-            {card.value}
-          </div>
-        </GlassPanel>
-      ))}
+          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+          {expanded ? "Hide stats" : "More stats"}
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-1.5 animate-fade-in">
+          {detailCards.map((card) => (
+            <GlassPanel
+              key={card.label}
+              solid
+              hover
+              onClick={() => onCardClick(card.filter)}
+              className="px-2.5 py-2 cursor-pointer group"
+            >
+              <div className="flex items-center gap-1.5">
+                <card.icon className={`w-3 h-3 shrink-0 ${card.accent || "text-[hsl(var(--muted-foreground))]"} group-hover:text-[hsl(var(--primary))] transition-colors`} />
+                <span className="text-[11px] text-[hsl(var(--muted-foreground))] font-medium truncate">{card.label}</span>
+                <span className={`text-sm font-bold tabular-nums ml-auto ${card.accent || "text-[hsl(var(--foreground))]"}`}>
+                  {card.value}
+                </span>
+              </div>
+            </GlassPanel>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

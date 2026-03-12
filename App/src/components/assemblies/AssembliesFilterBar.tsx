@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import {
   Activity,
   Radio,
@@ -15,8 +16,10 @@ import {
   Globe,
   Sunset,
   Archive,
-  Bookmark,
   ChevronDown,
+  SlidersHorizontal,
+  X,
+  Layers,
 } from "lucide-react";
 import {
   type FilterStatus,
@@ -36,11 +39,6 @@ import {
   filterChips,
   resetFilters,
 } from "../../lib/assembly-helpers";
-
-const iconMap = {
-  Activity, Radio, CheckCircle2, XCircle, Clock, Boxes, Users, FolderTree,
-  AlertTriangle, Zap, Shield, Bot, Network, Globe, Sunset, Archive,
-};
 
 const chipIcons: Record<string, typeof Activity> = {
   all: Activity,
@@ -109,6 +107,65 @@ function FilterDropdown({
   );
 }
 
+function SavedViewDropdown({
+  activeView,
+  onViewChange,
+}: {
+  activeView: string;
+  onViewChange: (view: SavedView) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const activeLabel = savedViews.find((v) => v.key === activeView)?.label || "All Assemblies";
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
+          activeView && activeView !== "all"
+            ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
+            : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.2)] hover:text-[hsl(var(--foreground))]"
+        }`}
+      >
+        <Layers className="w-3 h-3" />
+        {activeLabel}
+        <ChevronDown className="w-3 h-3" />
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 w-56 max-h-72 overflow-y-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xl py-1 scrollbar-thin">
+          {savedViews.map((view) => {
+            const Icon = savedViewIcons[view.key] || Activity;
+            return (
+              <button
+                key={view.key}
+                onClick={() => { onViewChange(view); setOpen(false); }}
+                className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-colors ${
+                  activeView === view.key
+                    ? "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
+                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)]"
+                }`}
+              >
+                <Icon className="w-3 h-3 shrink-0" />
+                {view.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface AssembliesFilterBarProps {
   activeFilter: FilterStatus;
   lifecycleFilter: LifecycleFilter;
@@ -156,30 +213,34 @@ export function AssembliesFilterBar({
   onViewChange,
   onClearActiveView,
 }: AssembliesFilterBarProps) {
-  return (
-    <>
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mb-1">
-        <Bookmark className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))] shrink-0 mr-0.5" />
-        {savedViews.map((view) => {
-          const Icon = savedViewIcons[view.key] || Activity;
-          return (
-            <button
-              key={view.key}
-              onClick={() => onViewChange(view)}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium whitespace-nowrap transition-all duration-150 shrink-0 ${
-                activeView === view.key
-                  ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
-                  : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.5)] border border-transparent"
-              }`}
-            >
-              <Icon className="w-3 h-3" />
-              {view.label}
-            </button>
-          );
-        })}
-      </div>
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const activeSecondaryCount = [
+    lifecycleFilter !== "all" ? 1 : 0,
+    familyFilter !== "all" ? 1 : 0,
+    ownershipFilter !== "all" ? 1 : 0,
+    usageFilter !== "all" ? 1 : 0,
+    riskFilter !== "all" ? 1 : 0,
+    ecosystemFilter !== "all" ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
+
+  function clearSecondaryFilters() {
+    onLifecycleFilterChange("all");
+    onFamilyFilterChange("all");
+    onOwnershipFilterChange("all");
+    onUsageFilterChange("all");
+    onRiskFilterChange("all");
+    onEcosystemFilterChange("all");
+    onClearActiveView();
+  }
+
+  return (
+    <div className="space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
+        <SavedViewDropdown activeView={activeView} onViewChange={onViewChange} />
+
+        <div className="w-px h-5 bg-[hsl(var(--border))]" />
+
         {filterChips.map((chip) => {
           const isActive = activeFilter === chip.key;
           const ChipIcon = chipIcons[chip.key] || Activity;
@@ -187,19 +248,19 @@ export function AssembliesFilterBar({
             <button
               key={chip.key}
               onClick={() => { onActiveFilterChange(chip.key); onClearActiveView(); }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 ${
                 isActive
                   ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
-                  : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.2)] hover:text-[hsl(var(--foreground))]"
+                  : "text-[hsl(var(--muted-foreground))] border border-transparent hover:border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]"
               }`}
             >
               <ChipIcon className="w-3 h-3" />
               {chip.label}
               <span
-                className={`ml-0.5 tabular-nums ${
+                className={`tabular-nums ${
                   isActive
                     ? "text-[hsl(var(--primary))]"
-                    : "text-[hsl(var(--muted-foreground)/0.7)]"
+                    : "text-[hsl(var(--muted-foreground)/0.6)]"
                 }`}
               >
                 {counts[chip.key]}
@@ -207,57 +268,89 @@ export function AssembliesFilterBar({
             </button>
           );
         })}
-      </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <FilterDropdown
-          value={lifecycleFilter}
-          onChange={(v) => { onLifecycleFilterChange(v as LifecycleFilter); onClearActiveView(); }}
-          options={lifecycleOptions.map((o) => ({ value: o, label: lifecycleLabels[o] }))}
-        />
-        <FilterDropdown
-          value={familyFilter}
-          onChange={(v) => { onFamilyFilterChange(v); onClearActiveView(); }}
-          options={[
-            { value: "all", label: "All Families" },
-            { value: "unassigned", label: "Unassigned" },
-            ...familyNames.map((n) => ({ value: n, label: n })),
-          ]}
-        />
-        <FilterDropdown
-          value={ownershipFilter}
-          onChange={(v) => { onOwnershipFilterChange(v as OwnershipFilter); onClearActiveView(); }}
-          options={ownershipFilterOptions}
-        />
-        <FilterDropdown
-          value={usageFilter}
-          onChange={(v) => { onUsageFilterChange(v as UsageFilter); onClearActiveView(); }}
-          options={usageFilterOptions}
-        />
-        <FilterDropdown
-          value={riskFilter}
-          onChange={(v) => { onRiskFilterChange(v as RiskFilter); onClearActiveView(); }}
-          options={riskFilterOptions}
-        />
-        <FilterDropdown
-          value={ecosystemFilter}
-          onChange={(v) => { onEcosystemFilterChange(v as EcosystemFilter); onClearActiveView(); }}
-          options={ecosystemFilterOptions}
-        />
+        <div className="w-px h-5 bg-[hsl(var(--border))]" />
+
+        <button
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 ${
+            filtersOpen || activeSecondaryCount > 0
+              ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
+              : "text-[hsl(var(--muted-foreground))] border border-transparent hover:border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]"
+          }`}
+        >
+          <SlidersHorizontal className="w-3 h-3" />
+          Filters
+          {activeSecondaryCount > 0 && (
+            <span className="flex items-center justify-center w-4 h-4 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-[10px] font-bold">
+              {activeSecondaryCount}
+            </span>
+          )}
+        </button>
+
+        {activeSecondaryCount > 0 && (
+          <button
+            onClick={clearSecondaryFilters}
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+          >
+            <X className="w-3 h-3" />
+            Clear
+          </button>
+        )}
+
         <div className="ml-auto">
           <button
             onClick={() => { onGroupByFamilyChange(!groupByFamily); onClearActiveView(); }}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 ${
               groupByFamily
                 ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]"
-                : "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.2)] hover:text-[hsl(var(--foreground))]"
+                : "text-[hsl(var(--muted-foreground))] border border-transparent hover:border-[hsl(var(--border))] hover:text-[hsl(var(--foreground))]"
             }`}
           >
             <FolderTree className="w-3 h-3" />
-            Group by Family
+            Group
           </button>
         </div>
       </div>
-    </>
+
+      {filtersOpen && (
+        <div className="flex items-center gap-2 flex-wrap px-1 py-2 rounded-lg bg-[hsl(var(--muted)/0.3)] border border-[hsl(var(--border)/0.5)] animate-fade-in">
+          <FilterDropdown
+            value={lifecycleFilter}
+            onChange={(v) => { onLifecycleFilterChange(v as LifecycleFilter); onClearActiveView(); }}
+            options={lifecycleOptions.map((o) => ({ value: o, label: lifecycleLabels[o] }))}
+          />
+          <FilterDropdown
+            value={familyFilter}
+            onChange={(v) => { onFamilyFilterChange(v); onClearActiveView(); }}
+            options={[
+              { value: "all", label: "All Families" },
+              { value: "unassigned", label: "Unassigned" },
+              ...familyNames.map((n) => ({ value: n, label: n })),
+            ]}
+          />
+          <FilterDropdown
+            value={ownershipFilter}
+            onChange={(v) => { onOwnershipFilterChange(v as OwnershipFilter); onClearActiveView(); }}
+            options={ownershipFilterOptions}
+          />
+          <FilterDropdown
+            value={usageFilter}
+            onChange={(v) => { onUsageFilterChange(v as UsageFilter); onClearActiveView(); }}
+            options={usageFilterOptions}
+          />
+          <FilterDropdown
+            value={riskFilter}
+            onChange={(v) => { onRiskFilterChange(v as RiskFilter); onClearActiveView(); }}
+            options={riskFilterOptions}
+          />
+          <FilterDropdown
+            value={ecosystemFilter}
+            onChange={(v) => { onEcosystemFilterChange(v as EcosystemFilter); onClearActiveView(); }}
+            options={ecosystemFilterOptions}
+          />
+        </div>
+      )}
+    </div>
   );
 }

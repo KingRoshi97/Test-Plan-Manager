@@ -232,19 +232,19 @@ export default function AssembliesPage() {
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-3 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">Assemblies</h1>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            Track, organize, and operate all assemblies across the system
+          <h1 className="text-lg font-bold text-[hsl(var(--foreground))]">Assemblies</h1>
+          <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
+            Track, organize, and operate all assemblies
           </p>
         </div>
         <button
           onClick={() => setLocation("/new")}
-          className="flex items-center gap-2 px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-sm"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition font-medium text-xs"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           New Assembly
         </button>
       </div>
