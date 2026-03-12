@@ -1052,3 +1052,301 @@ export function evaluateDeploymentReadiness(ctx: EvaluatorContext): EvaluatorOut
 
   return { result: computeDomainResult("deployment_readiness", checks, findings.length), findings };
 }
+
+export function evaluateUI(ctx: EvaluatorContext): EvaluatorOutput {
+  const checks: DomainCheck[] = [];
+  const findings: CertificationFinding[] = [];
+  const repoDir = path.join(ctx.buildDir, "repo");
+  const targetDir = fs.existsSync(repoDir) ? repoDir : ctx.buildDir;
+  const allFiles = listFilesRecursive(targetDir);
+  const uiFiles = allFiles.filter(f =>
+    f.endsWith(".tsx") || f.endsWith(".jsx") || f.endsWith(".css") || f.endsWith(".scss")
+  );
+  const componentFiles = uiFiles.filter(f => f.endsWith(".tsx") || f.endsWith(".jsx"));
+
+  const hasStyleSystem = allFiles.some(f =>
+    f.includes("tailwind") || f.includes("globals.css") || f.includes("theme") || f.includes("styles")
+  );
+  checks.push({
+    check_id: "UI-01-style-system",
+    test_id: "UI-01",
+    description: "Style system present (CSS/Tailwind/theme)",
+    result: hasStyleSystem ? "pass" : "warn",
+    detail: hasStyleSystem ? undefined : "No style system (tailwind config, globals.css, or theme) detected",
+  });
+  if (!hasStyleSystem) {
+    findings.push(makeFinding(ctx, "ui", "medium", "warning",
+      "No style system detected",
+      "No tailwind config, globals.css, or theme directory found — UI consistency may be compromised",
+      "style_system", [],
+      "Build did not include a centralized style system",
+      "Add a CSS framework (e.g., Tailwind) or global stylesheet for consistent UI"));
+  }
+
+  const layoutFiles = componentFiles.filter(f =>
+    f.includes("layout") || f.includes("Layout") || f.includes("shell") || f.includes("Shell")
+  );
+  checks.push({
+    check_id: "UI-01-layout",
+    test_id: "UI-01",
+    description: "Layout/shell component exists",
+    result: layoutFiles.length > 0 ? "pass" : "warn",
+    detail: layoutFiles.length > 0 ? `Found: ${layoutFiles.slice(0, 3).join(", ")}` : "No layout or shell component found",
+    affected_files: layoutFiles.length === 0 ? ["src/components/Layout.tsx"] : undefined,
+  });
+
+  const responsivePatterns = /(?:@media|useMediaQuery|breakpoint|responsive|sm:|md:|lg:|xl:)/;
+  let responsiveCount = 0;
+  for (const f of uiFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && responsivePatterns.test(content)) responsiveCount++;
+  }
+  const responsiveRatio = uiFiles.length > 0 ? responsiveCount / uiFiles.length : 0;
+  checks.push({
+    check_id: "UI-02-responsive",
+    test_id: "UI-02",
+    description: "Responsive patterns present in UI files",
+    result: uiFiles.length === 0 ? "skip" : responsiveRatio > 0.1 ? "pass" : responsiveRatio > 0 ? "warn" : "fail",
+    detail: uiFiles.length > 0 ? `${responsiveCount}/${uiFiles.length} UI files use responsive patterns (${Math.round(responsiveRatio * 100)}%)` : undefined,
+  });
+  if (responsiveRatio === 0 && uiFiles.length > 0) {
+    findings.push(makeFinding(ctx, "ui", "medium", "warning",
+      "No responsive design patterns detected",
+      "No @media queries, breakpoint utilities, or responsive class patterns found in UI files",
+      "responsive_design", uiFiles.slice(0, 5),
+      "Generated UI code does not include responsive layout patterns",
+      "Add responsive breakpoints using media queries or utility classes (sm:/md:/lg:)"));
+  }
+
+  return { result: computeDomainResult("ui", checks, findings.length), findings };
+}
+
+export function evaluateUX(ctx: EvaluatorContext): EvaluatorOutput {
+  const checks: DomainCheck[] = [];
+  const findings: CertificationFinding[] = [];
+  const repoDir = path.join(ctx.buildDir, "repo");
+  const targetDir = fs.existsSync(repoDir) ? repoDir : ctx.buildDir;
+  const allFiles = listFilesRecursive(targetDir);
+  const componentFiles = allFiles.filter(f => f.endsWith(".tsx") || f.endsWith(".jsx"));
+
+  const loadingStatePattern = /(?:loading|isLoading|Spinner|Skeleton|Loading|CircularProgress)/;
+  const filesWithLoading: string[] = [];
+  for (const f of componentFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && loadingStatePattern.test(content)) filesWithLoading.push(f);
+  }
+  checks.push({
+    check_id: "UX-01-loading",
+    test_id: "UX-01",
+    description: "Loading states present in components",
+    result: componentFiles.length === 0 ? "skip" : filesWithLoading.length > 0 ? "pass" : "warn",
+    detail: filesWithLoading.length > 0 ? `${filesWithLoading.length} components handle loading states` : "No loading state patterns found",
+  });
+
+  const errorBoundaryPattern = /(?:ErrorBoundary|error[Bb]oundary|onError|isError|ErrorFallback|catch\s*\()/;
+  const filesWithErrorHandling: string[] = [];
+  for (const f of componentFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && errorBoundaryPattern.test(content)) filesWithErrorHandling.push(f);
+  }
+  checks.push({
+    check_id: "UX-02-error-recovery",
+    test_id: "UX-02",
+    description: "Error recovery patterns in components",
+    result: componentFiles.length === 0 ? "skip" : filesWithErrorHandling.length > 0 ? "pass" : "warn",
+    detail: filesWithErrorHandling.length > 0 ? `${filesWithErrorHandling.length} components have error handling` : "No error boundary or error handling patterns found",
+  });
+  if (filesWithErrorHandling.length === 0 && componentFiles.length > 0) {
+    findings.push(makeFinding(ctx, "ux", "medium", "warning",
+      "No error recovery patterns detected",
+      "No ErrorBoundary, error fallback, or error handling patterns found in components",
+      "error_recovery", componentFiles.slice(0, 5),
+      "Generated components do not include error recovery paths",
+      "Add ErrorBoundary components and error state handling for user-facing flows"));
+  }
+
+  const emptyStatePattern = /(?:empty|no[- ]?results|no[- ]?data|no[- ]?items|EmptyState|placeholder)/i;
+  const filesWithEmptyState: string[] = [];
+  for (const f of componentFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && emptyStatePattern.test(content)) filesWithEmptyState.push(f);
+  }
+  checks.push({
+    check_id: "UX-03-empty-state",
+    test_id: "UX-03",
+    description: "Empty state handling in list/data components",
+    result: componentFiles.length === 0 ? "skip" : filesWithEmptyState.length > 0 ? "pass" : "warn",
+    detail: filesWithEmptyState.length > 0 ? `${filesWithEmptyState.length} components handle empty states` : "No empty state patterns found",
+  });
+
+  return { result: computeDomainResult("ux", checks, findings.length), findings };
+}
+
+export function evaluateAccessibility(ctx: EvaluatorContext): EvaluatorOutput {
+  const checks: DomainCheck[] = [];
+  const findings: CertificationFinding[] = [];
+  const repoDir = path.join(ctx.buildDir, "repo");
+  const targetDir = fs.existsSync(repoDir) ? repoDir : ctx.buildDir;
+  const allFiles = listFilesRecursive(targetDir);
+  const componentFiles = allFiles.filter(f => f.endsWith(".tsx") || f.endsWith(".jsx"));
+
+  const ariaPattern = /(?:aria-|role=|tabIndex|onKeyDown|onKeyPress|onKeyUp)/;
+  const filesWithAria: string[] = [];
+  for (const f of componentFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && ariaPattern.test(content)) filesWithAria.push(f);
+  }
+  const ariaRatio = componentFiles.length > 0 ? filesWithAria.length / componentFiles.length : 0;
+  checks.push({
+    check_id: "ACC-01-keyboard",
+    test_id: "ACC-01",
+    description: "Keyboard navigation support (aria/role/tabIndex/key handlers)",
+    result: componentFiles.length === 0 ? "skip" : ariaRatio > 0.1 ? "pass" : filesWithAria.length > 0 ? "warn" : "fail",
+    detail: `${filesWithAria.length}/${componentFiles.length} components use aria/keyboard attributes (${Math.round(ariaRatio * 100)}%)`,
+    affected_files: filesWithAria.length === 0 ? componentFiles.slice(0, 5) : undefined,
+  });
+  if (filesWithAria.length === 0 && componentFiles.length > 0) {
+    findings.push(makeFinding(ctx, "accessibility", "high", "conditional_blocker",
+      "No keyboard navigation support detected",
+      "No aria attributes, role attributes, tabIndex, or keyboard event handlers found in any components",
+      "keyboard_nav", componentFiles.slice(0, 10),
+      "Generated components lack keyboard navigation support",
+      "Add aria-label, role, tabIndex, and keyboard event handlers to interactive elements"));
+  }
+
+  const focusPattern = /(?:focus-visible|:focus|outline|focus-ring|FocusTrap)/;
+  let focusCount = 0;
+  for (const f of componentFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && focusPattern.test(content)) focusCount++;
+  }
+  const cssFiles = allFiles.filter(f => f.endsWith(".css") || f.endsWith(".scss"));
+  for (const f of cssFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && focusPattern.test(content)) focusCount++;
+  }
+  checks.push({
+    check_id: "ACC-02-focus",
+    test_id: "ACC-02",
+    description: "Focus visibility styles present",
+    result: componentFiles.length === 0 ? "skip" : focusCount > 0 ? "pass" : "warn",
+    detail: focusCount > 0 ? `${focusCount} files include focus visibility styles` : "No focus-visible or outline styles detected",
+  });
+
+  const labelPattern = /(?:htmlFor=|<label|aria-label=|aria-labelledby=|aria-describedby=)/;
+  const formFiles = componentFiles.filter(f => {
+    const content = readFileContent(path.join(targetDir, f));
+    return content ? /<(?:input|select|textarea|Input|Select|Textarea)/i.test(content) : false;
+  });
+  const labeledFormFiles = formFiles.filter(f => {
+    const content = readFileContent(path.join(targetDir, f));
+    return content ? labelPattern.test(content) : false;
+  });
+  checks.push({
+    check_id: "ACC-03-labels",
+    test_id: "ACC-03",
+    description: "Form controls have accessible labels",
+    result: formFiles.length === 0 ? "skip" : labeledFormFiles.length === formFiles.length ? "pass" : labeledFormFiles.length > 0 ? "warn" : "fail",
+    detail: formFiles.length > 0 ? `${labeledFormFiles.length}/${formFiles.length} form files have accessible labels` : "No form controls found",
+    affected_files: formFiles.length > labeledFormFiles.length ? formFiles.filter(f => !labeledFormFiles.includes(f)).slice(0, 10) : undefined,
+  });
+  if (formFiles.length > 0 && labeledFormFiles.length < formFiles.length) {
+    const unlabeledCount = formFiles.length - labeledFormFiles.length;
+    findings.push(makeFinding(ctx, "accessibility",
+      unlabeledCount > formFiles.length / 2 ? "high" : "medium",
+      unlabeledCount > formFiles.length / 2 ? "conditional_blocker" : "warning",
+      `${unlabeledCount} form files missing accessible labels`,
+      `Form controls without htmlFor, aria-label, or aria-labelledby in ${unlabeledCount} files`,
+      "accessible_labels", formFiles.filter(f => !labeledFormFiles.includes(f)),
+      "Generated form components lack accessible labels for screen readers",
+      "Add htmlFor, aria-label, or aria-labelledby to all form controls"));
+  }
+
+  const contrastPattern = /(?:contrast|a11y|wcag|color.*theme|dark.*mode|theme.*color)/i;
+  const hasContrastAwareness = allFiles.some(f => {
+    const content = readFileContent(path.join(targetDir, f));
+    return content ? contrastPattern.test(content) : false;
+  });
+  checks.push({
+    check_id: "ACC-04-contrast",
+    test_id: "ACC-04",
+    description: "Color contrast awareness (theme/contrast/a11y references)",
+    result: componentFiles.length === 0 ? "skip" : hasContrastAwareness ? "pass" : "warn",
+    detail: hasContrastAwareness ? "Color contrast or accessibility-aware theming detected" : "No contrast or a11y-aware theming patterns found",
+  });
+
+  return { result: computeDomainResult("accessibility", checks, findings.length), findings };
+}
+
+export function evaluateEnterprise(ctx: EvaluatorContext): EvaluatorOutput {
+  const checks: DomainCheck[] = [];
+  const findings: CertificationFinding[] = [];
+  const repoDir = path.join(ctx.buildDir, "repo");
+  const targetDir = fs.existsSync(repoDir) ? repoDir : ctx.buildDir;
+  const allFiles = listFilesRecursive(targetDir);
+  const sourceFiles = allFiles.filter(f =>
+    f.endsWith(".ts") || f.endsWith(".tsx") || f.endsWith(".js") || f.endsWith(".jsx")
+  );
+
+  const auditPattern = /(?:audit[Ll]og|auditTrail|createAuditEntry|logAction|actionLog|activity[Ll]og)/;
+  const filesWithAudit: string[] = [];
+  for (const f of sourceFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && auditPattern.test(content)) filesWithAudit.push(f);
+  }
+  checks.push({
+    check_id: "ENT-01-audit",
+    test_id: "ENT-01",
+    description: "Audit trail implementation present",
+    result: filesWithAudit.length > 0 ? "pass" : "warn",
+    detail: filesWithAudit.length > 0 ? `Audit logging found in: ${filesWithAudit.slice(0, 3).join(", ")}` : "No audit trail implementation detected",
+    affected_files: filesWithAudit.length === 0 ? ["src/services/audit.ts"] : undefined,
+  });
+
+  const structuredLogPattern = /(?:winston|pino|bunyan|structuredLog|logger\.|log\.info|log\.error|log\.warn|createLogger)/;
+  const filesWithStructuredLogging: string[] = [];
+  for (const f of sourceFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && structuredLogPattern.test(content)) filesWithStructuredLogging.push(f);
+  }
+  const consoleLogCount = sourceFiles.reduce((sum, f) => {
+    const content = readFileContent(path.join(targetDir, f));
+    return sum + (content ? (content.match(/console\.(log|warn|error)/g) || []).length : 0);
+  }, 0);
+  checks.push({
+    check_id: "ENT-02-logging",
+    test_id: "ENT-02",
+    description: "Structured logging (vs raw console.log)",
+    result: filesWithStructuredLogging.length > 0 ? "pass" : consoleLogCount > 20 ? "fail" : "warn",
+    detail: filesWithStructuredLogging.length > 0
+      ? `Structured logging in ${filesWithStructuredLogging.length} files`
+      : `No structured logger; ${consoleLogCount} raw console.log calls found`,
+  });
+  if (filesWithStructuredLogging.length === 0 && consoleLogCount > 20) {
+    findings.push(makeFinding(ctx, "enterprise", "medium", "warning",
+      `${consoleLogCount} unstructured console.log calls, no structured logger`,
+      "Application uses raw console.log instead of a structured logging library (winston/pino/bunyan)",
+      "structured_logging", sourceFiles.filter(f => {
+        const c = readFileContent(path.join(targetDir, f));
+        return c ? /console\.(log|warn|error)/.test(c) : false;
+      }).slice(0, 10),
+      "Generated code uses unstructured console output instead of a proper logging framework",
+      "Add a structured logger (e.g., pino or winston) and replace console.log calls"));
+  }
+
+  const observabilityPattern = /(?:healthCheck|metrics|prometheus|opentelemetry|otel|tracing|Histogram|Counter|Gauge)/;
+  const filesWithObservability: string[] = [];
+  for (const f of sourceFiles) {
+    const content = readFileContent(path.join(targetDir, f));
+    if (content && observabilityPattern.test(content)) filesWithObservability.push(f);
+  }
+  checks.push({
+    check_id: "ENT-03-observability",
+    test_id: "ENT-03",
+    description: "Observability signals (metrics/tracing/health)",
+    result: filesWithObservability.length > 0 ? "pass" : "warn",
+    detail: filesWithObservability.length > 0 ? `Observability patterns in: ${filesWithObservability.slice(0, 3).join(", ")}` : "No metrics, tracing, or observability patterns detected",
+  });
+
+  return { result: computeDomainResult("enterprise", checks, findings.length), findings };
+}

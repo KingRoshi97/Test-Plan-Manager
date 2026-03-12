@@ -1108,19 +1108,17 @@ export async function fixUnitsFromFindings(
     console.log(`  [BA-REMEDIATION] No GSE build units matched — constructing synthetic units from affected files`);
 
     const filesByUnit = new Map<string, string[]>();
+    for (const uid of unitIds) {
+      filesByUnit.set(uid, []);
+    }
+    const unitIdList = unitIds.length > 0 ? unitIds : ["remediation-direct-files"];
+    let roundRobinIdx = 0;
     for (const filePath of fileRemediationContext.keys()) {
-      let assignedUnit: string | null = null;
-      for (const uid of unitIds) {
-        if (!filesByUnit.has(uid)) filesByUnit.set(uid, []);
-      }
-      for (const uid of unitIds) {
-        assignedUnit = uid;
-        break;
-      }
-      if (!assignedUnit) assignedUnit = "remediation-direct-files";
+      const assignedUnit = unitIdList[roundRobinIdx % unitIdList.length];
       const existing = filesByUnit.get(assignedUnit) || [];
       existing.push(filePath);
       filesByUnit.set(assignedUnit, existing);
+      roundRobinIdx++;
     }
 
     for (const [unitId, filePaths] of filesByUnit) {

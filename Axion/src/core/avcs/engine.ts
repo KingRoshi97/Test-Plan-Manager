@@ -7,6 +7,10 @@ import {
   evaluateSecurity,
   evaluatePerformance,
   evaluateDeploymentReadiness,
+  evaluateUI,
+  evaluateUX,
+  evaluateAccessibility,
+  evaluateEnterprise,
 } from "./evaluators.js";
 import type { EvaluatorContext } from "./evaluators.js";
 import type {
@@ -121,7 +125,7 @@ export async function executeRun(certRunId: string): Promise<CertificationReport
 
     const ctx: EvaluatorContext = {
       certRunId,
-      buildDir: repoDir,
+      buildDir,
       planFiles,
       blueprintFeatures,
       findingIdGenerator: () => store.generateFindingId(),
@@ -248,6 +252,10 @@ function getEvaluator(domain: CertificationDomain) {
     case "security": return evaluateSecurity;
     case "performance": return evaluatePerformance;
     case "deployment_readiness": return evaluateDeploymentReadiness;
+    case "ui": return evaluateUI;
+    case "ux": return evaluateUX;
+    case "accessibility": return evaluateAccessibility;
+    case "enterprise": return evaluateEnterprise;
     default: return null;
   }
 }
@@ -334,7 +342,7 @@ function computeCoverage(
     });
   }
 
-  const allDomains: CertificationDomain[] = ["build_integrity", "functional", "security", "performance", "deployment_readiness"];
+  const allDomains: CertificationDomain[] = ["build_integrity", "functional", "security", "performance", "deployment_readiness", "ui", "ux", "accessibility", "enterprise"];
   for (const d of allDomains) {
     if (!domainResults.find(dr => dr.domain === d)) {
       entries.push({

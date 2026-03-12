@@ -1337,7 +1337,7 @@ export async function remediateFromReport(
     return result;
   }
 
-  result.remediationLog.certRunId = report.run_id || "";
+  result.remediationLog.certRunId = report.cert_run_id || report.run_id || "";
 
   const manifest = report.remediation_manifest;
   if (!manifest) {

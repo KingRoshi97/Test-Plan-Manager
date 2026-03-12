@@ -308,6 +308,7 @@ export function registerAVCSRoutes(app: Express): void {
       const result = await rollbackRemediation(run.run_id);
 
       if (result.success) {
+        const tracker = remediationStatus.get(run.id);
         if (tracker) {
           tracker.status = "rolled_back" as any;
           tracker.completedAt = new Date().toISOString();

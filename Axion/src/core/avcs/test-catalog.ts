@@ -1,4 +1,4 @@
-import type { AVCSTestDefinition, AVCSTestDomain } from "./types.js";
+import type { AVCSTestDefinition, AVCSTestDomain, CertificationRunType } from "./types.js";
 
 export const TEST_CATALOG: AVCSTestDefinition[] = [
   {
@@ -438,4 +438,3 @@ export function getTestsByTool(toolId: string): AVCSTestDefinition[] {
   return TEST_CATALOG.filter(t => t.primaryTools.includes(toolId));
 }
 
-import type { CertificationRunType } from "./types.js";

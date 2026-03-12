@@ -97,3 +97,9 @@ Axion uses a modular library architecture with dedicated folders for `intake`, `
 -   **Axe-core/cli**: For accessibility testing in the AVCS suite.
 -   **Trivy**: For vulnerability scanning in the AVCS suite.
 -   **Playwright, k6, ZAP, BackstopJS, pa11y, dependency-check**: Adapter implementations for these tools exist within the AVCS suite.
+
+### AVCS (Axion Verification & Certification System)
+The AVCS subsystem (`Axion/src/core/avcs/`) provides automated verification of BA build outputs. It covers **9 certification domains**: build_integrity, functional, security, performance, deployment_readiness, ui, ux, accessibility, enterprise. Each domain has its own evaluator function in `evaluators.ts`. The engine (`engine.ts`) orchestrates domain evaluation, scoring (weighted by `DOMAIN_WEIGHTS`), and verdict computation. A test catalog (`test-catalog.ts`) defines 32 tests across the 9 domains with MVP/Later phase tags. The tool registry (`tool-registry.ts`) and adapter system (`tool-adapters.ts`, `adapters/`) provide external tool integration (Lighthouse, Semgrep, Trivy, etc.). Run data is persisted as JSON files via `store.ts` in `Axion/avcs_data/`. API routes are in `server/avcs-routes.ts`.
+
+### AVCS Remediation System
+The remediation pipeline (`runner.ts:remediateFromReport` → `generator.ts:fixUnitsFromFindings`) takes a certification report's remediation manifest and performs targeted AI-driven code fixes. It uses a two-pass strategy: (1) surgical JSON line-range patches, (2) fallback full-file rewrite. Five preservation gates (PG-SIZE, PG-DIFF-RATIO, PG-STRUCTURE, PG-PREAMBLE, PG-ENCODING) prevent destructive fixes. All files are backed up before write for rollback support. Remediation logs, build manifest updates, and zip repackaging are handled post-fix.

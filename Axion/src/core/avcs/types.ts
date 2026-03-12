@@ -11,7 +11,11 @@ export type CertificationDomain =
   | "functional"
   | "security"
   | "performance"
-  | "deployment_readiness";
+  | "deployment_readiness"
+  | "ui"
+  | "ux"
+  | "accessibility"
+  | "enterprise";
 
 export type CertificationVerdict =
   | "PASS"
@@ -259,11 +263,15 @@ export interface AVCSStatus {
 }
 
 export const DOMAIN_WEIGHTS: Record<CertificationDomain, number> = {
-  build_integrity: 0.20,
-  functional: 0.25,
-  security: 0.20,
-  performance: 0.15,
-  deployment_readiness: 0.20,
+  build_integrity: 0.15,
+  functional: 0.20,
+  security: 0.15,
+  performance: 0.10,
+  deployment_readiness: 0.15,
+  ui: 0.08,
+  ux: 0.07,
+  accessibility: 0.05,
+  enterprise: 0.05,
 };
 
 export const RUN_TYPE_DOMAINS: Record<CertificationRunType, CertificationDomain[]> = {
@@ -271,6 +279,6 @@ export const RUN_TYPE_DOMAINS: Record<CertificationRunType, CertificationDomain[
   functional: ["build_integrity", "functional"],
   security: ["build_integrity", "security"],
   performance: ["build_integrity", "performance"],
-  full_certification: ["build_integrity", "functional", "security", "performance", "deployment_readiness"],
-  pre_deployment: ["build_integrity", "functional", "security", "performance", "deployment_readiness"],
+  full_certification: ["build_integrity", "functional", "security", "performance", "deployment_readiness", "ui", "ux", "accessibility", "enterprise"],
+  pre_deployment: ["build_integrity", "functional", "security", "performance", "deployment_readiness", "enterprise"],
 };
