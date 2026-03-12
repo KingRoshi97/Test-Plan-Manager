@@ -157,10 +157,13 @@ export function selectOutputIntegrityMetrics(a: BAQArtifacts): OutputIntegrityMe
 
   const requiredFiles = inv.files.filter((f) => f.required).length;
   const tracedFiles = inv.files.filter((f) => f.trace_refs && f.trace_refs.length > 0).length;
-  const summaryRequiredCount = (inv.summary as Record<string, unknown>).required_files;
-  const missingRequired = typeof summaryRequiredCount === "number"
-    ? Math.max(0, summaryRequiredCount - requiredFiles)
-    : 0;
+  const presentRequired = inv.files.filter((f) => f.required && f.generation_method !== "missing").length;
+  let missingRequired = Math.max(0, requiredFiles - presentRequired);
+  if (missingRequired === 0 && a.packagingDecision) {
+    missingRequired = a.packagingDecision.inventory_mismatches.filter(
+      (m) => m.reason?.toLowerCase().includes("missing") || m.reason?.toLowerCase().includes("not found")
+    ).length;
+  }
   const unplannedFiles = inv.summary.total_files - tracedFiles;
   return {
     totalFiles: inv.summary.total_files,
@@ -810,26 +813,30 @@ export function selectNextBestFix(a: BAQArtifacts): NextBestFix | null {
   if (blockers.length === 0) return null;
 
   const first = blockers[0];
+  const repairHints = selectFailureRepairHints(a);
+  const matchedHint = repairHints.find((h) => first.description.includes(h.failureId) || h.failureId.includes(first.id));
   if (first.category === "gate") {
+    const gateDetail = a.qualityReport?.gates.find((g) => g.gate_id === first.id);
     return {
-      action: "Fix gate failure",
+      action: matchedHint?.hint ?? `Resolve gate ${first.id}`,
       target: first.description,
-      impact: "Unblocks packaging pipeline",
-      effort: "medium",
+      impact: gateDetail?.blockers?.[0] ?? `Gate ${first.id} blocks packaging`,
+      effort: first.severity === "critical" ? "high" : "medium",
     };
   }
   if (first.category === "packaging") {
+    const blockReason = a.packagingDecision?.block_reasons?.[0];
     return {
-      action: "Resolve packaging blocker",
+      action: matchedHint?.hint ?? `Resolve packaging issue`,
       target: first.description,
-      impact: "Enables kit packaging",
-      effort: "medium",
+      impact: blockReason ?? `Packaging blocked`,
+      effort: first.severity === "critical" ? "high" : "medium",
     };
   }
   return {
-    action: "Fix failure",
+    action: matchedHint?.hint ?? `Fix ${first.category} issue`,
     target: first.description,
-    impact: "Reduces failure count",
-    effort: "medium",
+    impact: `Reduces ${first.category} failure count by 1`,
+    effort: first.severity === "critical" ? "high" : "low",
   };
 }
