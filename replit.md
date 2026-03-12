@@ -6,6 +6,21 @@ Axion is a document-generation and compliance-enforcement system with a full-sta
 ## Current State
 Full Mechanics pipeline + web application layer with three formal control planes (ICP/KCP/MCP), three agent types (IA/BA/MA), and OpenAI autofill integration. Pipeline: 10 stages, 8 enforced gates (G1–G8), registry-driven engines for all stages, deterministic library loader with pinned versions, proof ledger with evidence policy. Web app: Express API + React dashboard + PostgreSQL database. All stages produce real registry-driven artifacts, all 8 gates pass. Output quality enforcement: 200+ keyword HEADING_DOMAIN_MAP for knowledge bridge, kit bloat elimination (empty slots skipped), deep template completeness gate (18 placeholder patterns), sharpened AI prompts (vague language banned, concrete details required), kit validation on disk, kit packager with SHA-256 manifests.
 
+### Build Agent Quality (BAQ) Enforcement Layer
+New `Axion/src/core/baq/` module implements BAQ-SPEC-01 enforcement spine. Currently Pass 1–2 (Schemas, Types & Extraction Foundation) is complete:
+
+**Module structure** (`Axion/src/core/baq/`):
+- `types.ts` — All 6 BAQ schema interfaces (`BAQKitExtraction`, `BAQDerivedBuildInputs`, `BAQRepoInventory`, `BAQRequirementTraceMap`, `BAQBuildQualityReport`, `BAQGenerationFailureReport`), shared enums (`BAQRunStatus`, `BAQSeverity`, `BAQSectionStatus`, `BAQApplicabilityStatus`, `BuildQualityGateId`, `GenerationFailureClass`), 15 hook names
+- `validators.ts` — Runtime validation for all 6 schemas with structural checks (required fields, enum validity, type checks) and semantic validation (coverage math consistency, count reconciliation, referential integrity)
+- `extraction.ts` — Section presence scanner with 20-section registry, status classifier (consumed/deferred/not_applicable/invalid/missing), critical obligation collector from canonical spec, extraction warning surface. Emits `baq_kit_extraction.json`
+- `derivedInputs.ts` — Normalizes extracted authority into subsystem map, feature map, domain model, storage model, API surface, auth model, UI surface map, verification/ops obligations, assumptions, risks. Emits `baq_derived_build_inputs.json`
+- `hooks.ts` — `BuildQualityHookRunner` with 15 hook slots, upstream artifact rule enforcement, deterministic evidence rule, `BuildQualityHookContext` and `BuildQualityHookResult` types
+- `index.ts` — Barrel export for all types, functions, and classes
+
+**Integration**: BAQ hooks wired into `Axion/src/core/build/runner.ts` — runs `onBuildAuthorityLoaded` → `onKitExtractionStart` → `onKitExtractionComplete` → `onDerivedInputsBuild` before legacy extraction. BAQ artifacts written to `{runDir}/build/baq_kit_extraction.json` and `{runDir}/build/baq_derived_build_inputs.json`. Non-blocking: BAQ gate failures log warnings but fall through to legacy extraction.
+
+**BAQ Gates**: G-BQ-01 (Extraction Completeness) and G-BQ-02 (Derived Inputs Completeness) implemented. Remaining gates G-BQ-03 through G-BQ-07 will be added in Tasks #15–#17.
+
 ### Pipeline Stall Detection
 Automatic watchdog in `server/pipeline-runner.ts` detects stalled pipeline runs:
 - Tracks `lastActivityAt` per running process, updated on every stdout stage-progress line

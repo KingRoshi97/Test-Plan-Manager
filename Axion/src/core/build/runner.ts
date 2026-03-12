@@ -44,6 +44,20 @@ import {
 } from "./manifest.js";
 import { createExportZip, isExportEligible, repackageExportZip } from "./packager.js";
 import { getRunUsage, setActiveRun } from "../usage/tracker.js";
+import {
+  runBAQExtraction,
+  checkBAQExtractionGate,
+  buildDerivedInputs,
+  checkBAQDerivedInputsGate,
+  validateKitExtraction,
+  validateDerivedBuildInputs,
+  BuildQualityHookRunner,
+  createHookContext,
+} from "../baq/index.js";
+import type {
+  BAQKitExtraction,
+  BAQDerivedBuildInputs,
+} from "../baq/index.js";
 
 const AXION_BASE = fs.existsSync(path.resolve("Axion", ".axion"))
   ? path.resolve("Axion")
@@ -164,6 +178,164 @@ export async function runBuild(
 
     let extraction: KitExtraction | null = null;
     let blueprint: RepoBlueprint | null = null;
+
+    const baqHookRunner = new BuildQualityHookRunner();
+    let baqExtraction: BAQKitExtraction | null = null;
+    let baqDerivedInputs: BAQDerivedBuildInputs | null = null;
+
+    baqHookRunner.register("onBuildAuthorityLoaded", (ctx) => ({
+      hook_name: "onBuildAuthorityLoaded",
+      success: true,
+      blocking: false,
+      evidence: [{ evidence_id: "auth-loaded", type: "build_authority", path: runDir, detail: { run_id: runId, build_id: buildId } }],
+      warnings: [],
+      errors: [],
+      timestamp: new Date().toISOString(),
+    }));
+
+    baqHookRunner.register("onKitExtractionStart", (ctx) => ({
+      hook_name: "onKitExtractionStart",
+      success: true,
+      blocking: false,
+      evidence: [{ evidence_id: "extraction-start", type: "extraction_lifecycle", path: runDir, detail: { phase: "start" } }],
+      warnings: [],
+      errors: [],
+      timestamp: new Date().toISOString(),
+    }));
+
+    baqHookRunner.register("onKitExtractionComplete", (ctx) => {
+      const ext = ctx.extraction;
+      if (!ext) {
+        return {
+          hook_name: "onKitExtractionComplete",
+          success: false,
+          blocking: true,
+          evidence: [],
+          warnings: [],
+          errors: ["BAQ extraction artifact is null"],
+          timestamp: new Date().toISOString(),
+        };
+      }
+      const gate = checkBAQExtractionGate(ext);
+      return {
+        hook_name: "onKitExtractionComplete",
+        success: gate.passed,
+        blocking: !gate.passed,
+        evidence: [{
+          evidence_id: "extraction-gate",
+          type: "gate_result",
+          path: path.join(runDir, "build", "baq_kit_extraction.json"),
+          detail: {
+            gate_id: gate.gate_id,
+            passed: gate.passed,
+            blockers: gate.blockers,
+            consumed: ext.summary.consumed_count,
+            total: ext.summary.total_sections,
+          },
+        }],
+        warnings: gate.blockers.length > 0 ? gate.blockers : [],
+        errors: gate.passed ? [] : gate.blockers,
+        timestamp: new Date().toISOString(),
+      };
+    });
+
+    baqHookRunner.register("onDerivedInputsBuild", (ctx) => {
+      const derived = ctx.derived_inputs;
+      if (!derived) {
+        return {
+          hook_name: "onDerivedInputsBuild",
+          success: false,
+          blocking: true,
+          evidence: [],
+          warnings: [],
+          errors: ["BAQ derived inputs artifact is null"],
+          timestamp: new Date().toISOString(),
+        };
+      }
+      const gate = checkBAQDerivedInputsGate(derived);
+      return {
+        hook_name: "onDerivedInputsBuild",
+        success: gate.passed,
+        blocking: !gate.passed,
+        evidence: [{
+          evidence_id: "derived-inputs-gate",
+          type: "gate_result",
+          path: path.join(runDir, "build", "baq_derived_build_inputs.json"),
+          detail: {
+            gate_id: gate.gate_id,
+            passed: gate.passed,
+            blockers: gate.blockers,
+            completeness: derived.summary.derivation_completeness,
+          },
+        }],
+        warnings: gate.blockers.length > 0 ? gate.blockers : [],
+        errors: gate.passed ? [] : gate.blockers,
+        timestamp: new Date().toISOString(),
+      };
+    });
+
+    const authorityCtx = createHookContext("onBuildAuthorityLoaded", runId, buildId);
+    await baqHookRunner.run("onBuildAuthorityLoaded", authorityCtx);
+
+    try {
+      const extractionStartCtx = createHookContext("onKitExtractionStart", runId, buildId);
+      await baqHookRunner.run("onKitExtractionStart", extractionStartCtx);
+
+      baqExtraction = runBAQExtraction(runDir);
+      const baqValidation = validateKitExtraction(baqExtraction);
+      if (!baqValidation.valid) {
+        console.log(`  [BAQ] Extraction validation warnings: ${baqValidation.errors.map(e => e.message).join("; ")}`);
+      }
+
+      const buildDir = path.join(runDir, "build");
+      if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(buildDir, "baq_kit_extraction.json"),
+        JSON.stringify(baqExtraction, null, 2),
+        "utf-8",
+      );
+
+      const extractionCompleteCtx = createHookContext("onKitExtractionComplete", runId, buildId, { extraction: baqExtraction });
+      const extractionHookResult = await baqHookRunner.run("onKitExtractionComplete", extractionCompleteCtx);
+
+      if (extractionHookResult && !extractionHookResult.success && extractionHookResult.blocking) {
+        console.log(`  [BAQ] Hook onKitExtractionComplete blocked: ${extractionHookResult.warnings.join("; ")} — continuing with legacy extraction`);
+      }
+
+      const baqGate = checkBAQExtractionGate(baqExtraction);
+      console.log(`  [BAQ] Extraction: ${baqExtraction.summary.consumed_count}/${baqExtraction.summary.total_sections} sections consumed, result=${baqExtraction.extraction_result}, gate=${baqGate.passed ? "PASS" : "FAIL"}`);
+
+      if (!baqGate.passed) {
+        console.log(`  [BAQ] Extraction gate G-BQ-01 blocked: ${baqGate.blockers.join("; ")} — continuing with legacy extraction`);
+      } else {
+        baqDerivedInputs = buildDerivedInputs(baqExtraction, runDir);
+        const derivedValidation = validateDerivedBuildInputs(baqDerivedInputs);
+        if (!derivedValidation.valid) {
+          console.log(`  [BAQ] Derived inputs validation warnings: ${derivedValidation.errors.map(e => e.message).join("; ")}`);
+        }
+
+        fs.writeFileSync(
+          path.join(buildDir, "baq_derived_build_inputs.json"),
+          JSON.stringify(baqDerivedInputs, null, 2),
+          "utf-8",
+        );
+
+        const derivedCtx = createHookContext("onDerivedInputsBuild", runId, buildId, {
+          extraction: baqExtraction,
+          derived_inputs: baqDerivedInputs,
+        });
+        const derivedHookResult = await baqHookRunner.run("onDerivedInputsBuild", derivedCtx);
+
+        if (derivedHookResult && !derivedHookResult.success && derivedHookResult.blocking) {
+          console.log(`  [BAQ] Hook onDerivedInputsBuild blocked: ${derivedHookResult.warnings.join("; ")}`);
+        }
+
+        const derivedGate = checkBAQDerivedInputsGate(baqDerivedInputs);
+        console.log(`  [BAQ] Derived inputs: ${baqDerivedInputs.summary.feature_count} features, ${baqDerivedInputs.summary.subsystem_count} subsystems, ${baqDerivedInputs.summary.entity_count} entities, completeness=${baqDerivedInputs.summary.derivation_completeness}%, gate=${derivedGate.passed ? "PASS" : "FAIL"}`);
+      }
+    } catch (err: any) {
+      console.log(`  [BAQ] BAQ extraction/derivation error: ${err.message} — continuing with legacy extraction`);
+    }
 
     try {
       extraction = await extractKit(runDir);

@@ -1,0 +1,56 @@
+export type {
+  BAQRunStatus,
+  BAQSeverity,
+  BAQSectionStatus,
+  BAQApplicabilityStatus,
+  BuildQualityGateId,
+  GenerationFailureClass,
+  BAQSectionEntry,
+  BAQCriticalObligation,
+  BAQExtractionWarning,
+  BAQKitExtraction,
+  BAQSubsystemEntry,
+  BAQFeatureEntry,
+  BAQDomainEntity,
+  BAQDomainModel,
+  BAQStorageModel,
+  BAQAPISurface,
+  BAQAuthModel,
+  BAQUISurfaceEntry,
+  BAQVerificationObligation,
+  BAQOpsObligation,
+  BAQAssumption,
+  BAQRisk,
+  BAQDerivedBuildInputs,
+  BAQRepoFileEntry,
+  BAQRepoInventory,
+  BAQTraceEntry,
+  BAQRequirementTraceMap,
+  BAQGateResult,
+  BAQBuildQualityReport,
+  BAQFailureEntry,
+  BAQGenerationFailureReport,
+  BAQHookName,
+} from "./types.js";
+
+export { runBAQExtraction, checkBAQExtractionGate } from "./extraction.js";
+export { buildDerivedInputs, checkBAQDerivedInputsGate } from "./derivedInputs.js";
+export {
+  validateKitExtraction,
+  validateDerivedBuildInputs,
+  validateBuildQualityReport,
+  validateGenerationFailureReport,
+  validateRepoInventory,
+  validateRequirementTraceMap,
+} from "./validators.js";
+export type { ValidationResult, ValidationError } from "./validators.js";
+export {
+  BuildQualityHookRunner,
+  createHookContext,
+} from "./hooks.js";
+export type {
+  BuildQualityHookContext,
+  BuildQualityHookResult,
+  HookEvidence,
+  HookHandler,
+} from "./hooks.js";
