@@ -1,0 +1,212 @@
+[
+  {
+    "template_id": "MBAT-01",
+    "title": "Background Work Rules (limits, schedules)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-02",
+    "title": "Network Usage Policy (batching, retries, metered)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-03",
+    "title": "Battery Budget & Constraints (targets)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-04",
+    "title": "Perf Profiling Plan (mobile tooling)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-01",
+    "title": "Capabilities Inventory (camera/gps/files/push)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-02",
+    "title": "Permissions UX Rules (prompts, denial handling)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-03",
+    "title": "Capability Security Rules (least privilege)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-04",
+    "title": "Capability Failure Handling (fallbacks)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-05",
+    "title": "Telemetry for Capabilities (errors, latency)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-01",
+    "title": "Link Scheme & Domains (app links, universal links)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-02",
+    "title": "Routing Rules (link → screen/action mapping)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-03",
+    "title": "Auth Gating & Safety (signed links, validation)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-04",
+    "title": "Fallback Behavior (not installed, unknown routes)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-01",
+    "title": "Navigation Map (stacks/tabs/modals)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-02",
+    "title": "Screen Implementation Spec (per screen binding)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-03",
+    "title": "Native Integration Map (bridges, permissions)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-04",
+    "title": "App Lifecycle + State (foreground/background)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-05",
+    "title": "Release & Signing (stores, builds)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-01",
+    "title": "Notification Types Catalog (by notif_id)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-02",
+    "title": "Payload Contract (fields, routing, localization keys)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-03",
+    "title": "Permission & Opt-In Rules (platform specific)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-04",
+    "title": "Delivery/Retry Rules (quiet hours, collapse keys)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-05",
+    "title": "Deep Link Routing (notif tap behavior)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-06",
+    "title": "Abuse/Spam Controls for Notifications",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-01",
+    "title": "Offline Scope (what works offline)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-02",
+    "title": "Sync Model (queues, conflict resolution)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-03",
+    "title": "Local Storage Schema (entities cached locally)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-04",
+    "title": "Reconciliation Rules (merge, LWW, prompts)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-05",
+    "title": "Sync Observability (stuck queues, retries, metrics)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-01",
+    "title": "Build Artifact Types (debug/beta/prod)",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-02",
+    "title": "Signing Keys & Rotation Policy",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-03",
+    "title": "Store Submission Checklist (iOS/Android)",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-04",
+    "title": "Versioning Rules (build numbers, semver mapping)",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-05",
+    "title": "Release Channel Policy (internal/beta/GA)",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-06",
+    "title": "Release Readiness & Go/No-Go Gate",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  }
+]

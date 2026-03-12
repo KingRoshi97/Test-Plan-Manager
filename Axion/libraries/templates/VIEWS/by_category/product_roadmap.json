@@ -1,0 +1,30 @@
+[
+  {
+    "template_id": "RSC-01",
+    "title": "Release Roadmap (milestones)",
+    "type": "Product / Roadmap",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "RSC-02",
+    "title": "Scope Boundaries (in/out +",
+    "type": "Product / Roadmap",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "RSC-03",
+    "title": "Prioritization Framework",
+    "type": "Product / Roadmap",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "RSC-04",
+    "title": "Change Control Policy (how",
+    "type": "Product / Roadmap",
+    "status": "active",
+    "feature_pack": "product_extended"
+  }
+]

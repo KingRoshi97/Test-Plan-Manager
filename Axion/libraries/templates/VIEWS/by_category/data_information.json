@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "DGL-02",
+    "title": "DGL-02",
+    "type": "Data & Information",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DQV-03",
+    "title": "DQV-03",
+    "type": "Data & Information",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DQV-06",
+    "title": "DQV-06",
+    "type": "Data & Information",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "RPT-02",
+    "title": "RPT-02",
+    "type": "Data & Information",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "RPT-04",
+    "title": "RPT-04",
+    "type": "Data & Information",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "SRCH-02",
+    "title": "SRCH-02",
+    "type": "Data & Information",
+    "status": "active",
+    "feature_pack": "search"
+  }
+]

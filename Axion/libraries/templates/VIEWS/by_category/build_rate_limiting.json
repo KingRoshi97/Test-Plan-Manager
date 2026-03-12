@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "RLIM-01",
+    "title": "Rate Limit Policy (global rules, scopes)",
+    "type": "Build / Rate Limiting",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "RLIM-02",
+    "title": "Rate Limit Catalog (limits by surface/endpoint)",
+    "type": "Build / Rate Limiting",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "RLIM-03",
+    "title": "Abuse Signals & Detection Rules",
+    "type": "Build / Rate Limiting",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "RLIM-04",
+    "title": "Enforcement Actions Matrix (throttle/ban/captcha)",
+    "type": "Build / Rate Limiting",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "RLIM-05",
+    "title": "Exemptions & Allowlist Policy",
+    "type": "Build / Rate Limiting",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "RLIM-06",
+    "title": "Rate Limit Observability (alerts, dashboards)",
+    "type": "Build / Rate Limiting",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  }
+]

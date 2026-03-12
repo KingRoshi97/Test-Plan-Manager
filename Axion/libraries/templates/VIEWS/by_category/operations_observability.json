@@ -1,0 +1,65 @@
+[
+  {
+    "template_id": "OBS-01",
+    "title": "Observability Overview (scope, principles, toolchain)",
+    "type": "Operations / Observability",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "OBS-02",
+    "title": "Telemetry Schema Standard (common fields, correlation IDs)",
+    "type": "Operations / Observability",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "OBS-03",
+    "title": "Metrics Catalog (by metric_id)",
+    "type": "Operations / Observability",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "OBS-05",
+    "title": "Log Event Catalog (by log_event_id)",
+    "type": "Operations / Observability",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "OBS-06",
+    "title": "Redaction & Privacy Rules for Telemetry (PII/secret handling)",
+    "type": "Operations / Observability",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "OBS-07",
+    "title": "Dashboards Inventory (by dashboard_id)",
+    "type": "Operations / Observability",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "OBS-08",
+    "title": "Alert Routing & Ownership (teams, oncall, escalation)",
+    "type": "Operations / Observability",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "OBS-09",
+    "title": "Sampling & Cardinality Policy (limits, hashing, budgets)",
+    "type": "Operations / Observability",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "OBS-10",
+    "title": "Observability Gates (required signals per surface)",
+    "type": "Operations / Observability",
+    "status": "active",
+    "feature_pack": "ops_core"
+  }
+]

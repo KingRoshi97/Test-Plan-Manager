@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "artifact_id": "TEMPLATE_BUNDLE_EXPORT",
+  "title": "Template Bundle Export Schema",
+  "description": "Schema for exporting a curated template bundle for external consumption",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "exported_at",
+    "templates"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "bundle_id": {
+      "type": "string"
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "templates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "template_id",
+          "version",
+          "content_hash"
+        ],
+        "properties": {
+          "template_id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "content_hash": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

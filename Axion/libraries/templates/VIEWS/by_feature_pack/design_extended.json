@@ -1,0 +1,182 @@
+[
+  {
+    "template_id": "CDX-01",
+    "title": "Content Style Guide (tone,",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-02",
+    "title": "UI Copy Inventory (labels,",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-03",
+    "title": "Empty States & Onboarding",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-04",
+    "title": "Error/Warning/Success",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-05",
+    "title": "Notification Copy Templates",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-01",
+    "title": "Token Spec (color, type,",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-02",
+    "title": "Component Variants Spec",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-03",
+    "title": "Layout Grid & Spacing Rules",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-04",
+    "title": "Iconography & Illustration",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-05",
+    "title": "Theming Rules (light/dark,",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-01",
+    "title": "Navigation Map",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-02",
+    "title": "Route & Deep Link Spec (route",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-03",
+    "title": "Information Architecture Tree",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-04",
+    "title": "Search/Filter/Sort UX (if",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-05",
+    "title": "Access-Gated Navigation Rules",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-01",
+    "title": "Interaction Patterns Catalog",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-02",
+    "title": "Motion Rules",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-03",
+    "title": "Transition Map (screen",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-04",
+    "title": "Micro-interactions Spec",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-05",
+    "title": "Accessibility-Safe Motion Rules",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-01",
+    "title": "Breakpoint Definitions (sizes +",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-02",
+    "title": "Layout Adaptation Rules (per",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-03",
+    "title": "Responsive Component",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-04",
+    "title": "Touch Target & Density Rules",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-05",
+    "title": "Responsive Media Rules",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-01",
+    "title": "Asset Inventory (logos, icons,",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-02",
+    "title": "Export Spec (formats, sizes,",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-03",
+    "title": "Brand Usage Rules (do/don’t,",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-04",
+    "title": "Asset Delivery Checklist",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-05",
+    "title": "Accessibility for Visual Assets",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  }
+]

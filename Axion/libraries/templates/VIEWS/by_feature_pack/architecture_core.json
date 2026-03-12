@@ -1,0 +1,98 @@
+[
+  {
+    "template_id": "ARC-01",
+    "title": "System Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-02",
+    "title": "Core Contracts Overview (APIs,",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-03",
+    "title": "Key Workflow Data Flows",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-04",
+    "title": "Authentication Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-05",
+    "title": "Realtime Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-06",
+    "title": "Error Model + Reason Codes",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-07",
+    "title": "Integration Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-08",
+    "title": "Deployment Topology",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-09",
+    "title": "Cross-Cutting Concerns",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-10",
+    "title": "Architecture Constraints &",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-01",
+    "title": "External Interface Inventory",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-02",
+    "title": "Contract Spec (per interface:",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-03",
+    "title": "Webhook Contract Spec",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-04",
+    "title": "Data Mapping Contract (field",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-05",
+    "title": "Integration Failure Modes &",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-06",
+    "title": "Vendor/Third-Party Trust Model",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  }
+]

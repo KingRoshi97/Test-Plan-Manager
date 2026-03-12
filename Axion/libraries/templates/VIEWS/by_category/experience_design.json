@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "A11YD-01",
+    "title": "A11YD-01",
+    "type": "Experience Design",
+    "status": "active",
+    "feature_pack": "accessibility"
+  },
+  {
+    "template_id": "A11YD-02",
+    "title": "A11YD-02",
+    "type": "Experience Design",
+    "status": "active",
+    "feature_pack": "accessibility"
+  },
+  {
+    "template_id": "A11YD-03",
+    "title": "A11YD-03",
+    "type": "Experience Design",
+    "status": "active",
+    "feature_pack": "accessibility"
+  },
+  {
+    "template_id": "A11YD-04",
+    "title": "A11YD-04",
+    "type": "Experience Design",
+    "status": "active",
+    "feature_pack": "accessibility"
+  },
+  {
+    "template_id": "A11YD-05",
+    "title": "A11YD-05",
+    "type": "Experience Design",
+    "status": "active",
+    "feature_pack": "accessibility"
+  }
+]

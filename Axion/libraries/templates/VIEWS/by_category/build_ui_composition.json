@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "UICP-01",
+    "title": "Page Composition Patterns (shells, sections)",
+    "type": "Build / UI Composition",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "UICP-02",
+    "title": "Component Composition Rules (props, slots, variants)",
+    "type": "Build / UI Composition",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "UICP-03",
+    "title": "Responsive Layout Patterns (breakpoints usage)",
+    "type": "Build / UI Composition",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "UICP-04",
+    "title": "Content Hierarchy Rules (typography, spacing)",
+    "type": "Build / UI Composition",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "UICP-05",
+    "title": "Interaction Patterns (modals, drawers, toasts)",
+    "type": "Build / UI Composition",
+    "status": "active",
+    "feature_pack": "frontend"
+  }
+]

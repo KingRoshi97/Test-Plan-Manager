@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "PBP-01",
+    "title": "Performance Budgets Overview (web/mobile/api)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "PBP-02",
+    "title": "Budget Registry (by budget_id)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "PBP-03",
+    "title": "Web Budgets (Core Web Vitals)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "PBP-04",
+    "title": "API Budgets (latency/error budgets per endpoint class)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "PBP-05",
+    "title": "Profiling Plan (what to measure, tools)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "PBP-06",
+    "title": "Perf CI Gates (bundle size, CWV, API p95)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "PBP-07",
+    "title": "Budget Reporting (dashboards, trends)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "PBP-08",
+    "title": "Budget Exceptions & Waivers (temporary overrides)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "PBP-09",
+    "title": "Bundle Size & Asset Budgets (web/mobile)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "PBP-10",
+    "title": "Budget Change Control (who can change thresholds)",
+    "type": "Build / Playbook Patterns",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  }
+]

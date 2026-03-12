@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "FMS-01",
+    "title": "Storage Provider Inventory (by provider_id/bucket_id)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-02",
+    "title": "Upload/Download Integration Spec (signed URLs, auth, limits)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-03",
+    "title": "Media Processing Integration (transcode/resize/scan vendors)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-04",
+    "title": "CDN & Delivery Rules (cache headers, variants)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-05",
+    "title": "Retention & Lifecycle Rules (TTL, archival, deletion)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-06",
+    "title": "Security & Compliance (PII, malware scanning, encryption)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-07",
+    "title": "Access Control Model (ACLs, signed access, tenancy)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-08",
+    "title": "Metadata & Indexing (search, tags, EXIF policy)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-09",
+    "title": "Migration & Backfill Plan (moving buckets, rehash)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-10",
+    "title": "Observability & Cost Controls (storage growth, egress)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  }
+]

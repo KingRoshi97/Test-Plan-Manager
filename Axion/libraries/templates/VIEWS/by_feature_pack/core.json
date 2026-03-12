@@ -1,0 +1,80 @@
+[
+  {
+    "template_id": "DMG-01",
+    "title": "Domain Glossary (canonical",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-02",
+    "title": "Concept Model (entities +",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-03",
+    "title": "Invariants & Definitions",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-04",
+    "title": "Event Vocabulary (canonical",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-01",
+    "title": "Product Overview",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-02",
+    "title": "Goals, Non-Goals, Success",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-03",
+    "title": "Personas & Roles",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-04",
+    "title": "Feature Catalog (by ID) +",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-05",
+    "title": "User Stories / JTBD Map",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-06",
+    "title": "Non-Functional Requirements",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-07",
+    "title": "Constraints & Assumptions",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-08",
+    "title": "Open Questions Log",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-09",
+    "title": "Acceptance Criteria Catalog (by",
+    "type": "Product / Requirements",
+    "status": "active"
+  }
+]

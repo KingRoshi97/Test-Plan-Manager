@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "SIGN-01",
+    "title": "Build Artifact Types (debug/beta/prod)",
+    "type": "Build / Release & Signing",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "SIGN-02",
+    "title": "Signing Keys & Rotation Policy",
+    "type": "Build / Release & Signing",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "SIGN-03",
+    "title": "Store Submission Checklist (iOS/Android)",
+    "type": "Build / Release & Signing",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "SIGN-04",
+    "title": "Versioning Rules (build numbers, semver mapping)",
+    "type": "Build / Release & Signing",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "SIGN-05",
+    "title": "Release Channel Policy (internal/beta/GA)",
+    "type": "Build / Release & Signing",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "SIGN-06",
+    "title": "Release Readiness & Go/No-Go Gate",
+    "type": "Build / Release & Signing",
+    "status": "active",
+    "feature_pack": "mobile"
+  }
+]

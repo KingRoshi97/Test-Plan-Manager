@@ -1,0 +1,32 @@
+[
+  {
+    "template_id": "CPR-01",
+    "title": "Performance Budget (web + mobile targets)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-02",
+    "title": "Rendering Strategy (SSR/CSR, list virtualization)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-03",
+    "title": "Asset Loading Strategy (code split, lazy load)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-04",
+    "title": "Profiling Plan (what to measure, tools)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-05",
+    "title": "Perf Regression Gates (thresholds, CI checks)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  }
+]

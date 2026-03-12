@@ -1,0 +1,50 @@
+[
+  {
+    "template_id": "DES-01",
+    "title": "UX Flows (happy paths + edge",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-02",
+    "title": "Screen Inventory (by",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-03",
+    "title": "Screen Spec (per screen:",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-04",
+    "title": "UI Component Inventory",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-05",
+    "title": "UI State Model",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-06",
+    "title": "Form & Validation UX Rules",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-07",
+    "title": "Error Handling UX (toasts,",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-08",
+    "title": "Acceptance Hooks (screen/flow",
+    "type": "Design / UX",
+    "status": "active"
+  }
+]

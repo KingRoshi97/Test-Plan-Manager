@@ -1,0 +1,22 @@
+{
+  "bundle_id": "BUNDLE-STD-INTERNAL_AGENT",
+  "title": "INTERNAL AGENT",
+  "description": "Standards bundle for internal agent execution",
+  "selection_policy": {
+    "mode": "deterministic",
+    "always_include": [
+      "CORE"
+    ]
+  },
+  "packs": [
+    "CORE"
+  ],
+  "by_run_profile": [],
+  "by_risk_class": [],
+  "by_executor": [
+    "internal_agent"
+  ],
+  "created_at": "2026-03-01",
+  "updated_at": "2026-03-11",
+  "owner": "axion-system"
+}

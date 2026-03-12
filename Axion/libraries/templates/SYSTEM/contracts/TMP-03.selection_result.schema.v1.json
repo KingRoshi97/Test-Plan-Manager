@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://SYSTEM/contracts/TMP-03.selection_result.schema.v1.json",
+  "title": "TMP-03 — Template Selection Result Schema (v1)",
+  "type": "object",
+  "required": [
+    "version",
+    "run_id",
+    "spec_id",
+    "selected_at",
+    "inputs",
+    "selected_templates"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "selected_at": { "type": "string" },
+    "inputs": {
+      "type": "object",
+      "required": ["routing_snapshot", "standards_snapshot_id"],
+      "properties": {
+        "routing_snapshot": { "type": "object" },
+        "standards_snapshot_id": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "selected_templates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "template_id",
+          "path",
+          "type",
+          "priority",
+          "reason"
+        ],
+        "properties": {
+          "template_id": { "type": "string" },
+          "path": { "type": "string" },
+          "type": { "type": "string" },
+          "priority": { "type": "number" },
+          "reason": { "type": "string" },
+          "applies_when": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

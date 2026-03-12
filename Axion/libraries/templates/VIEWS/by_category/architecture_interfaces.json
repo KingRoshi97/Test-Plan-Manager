@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "SIC-01",
+    "title": "External Interface Inventory",
+    "type": "Architecture / Interfaces",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "SIC-02",
+    "title": "Contract Spec (per interface:",
+    "type": "Architecture / Interfaces",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "SIC-03",
+    "title": "Webhook Contract Spec",
+    "type": "Architecture / Interfaces",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "SIC-04",
+    "title": "Data Mapping Contract (field",
+    "type": "Architecture / Interfaces",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "SIC-05",
+    "title": "Integration Failure Modes &",
+    "type": "Architecture / Interfaces",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "SIC-06",
+    "title": "Vendor/Third-Party Trust Model",
+    "type": "Architecture / Interfaces",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  }
+]

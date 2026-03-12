@@ -1,0 +1,38 @@
+[
+  {
+    "template_id": "SMD-01",
+    "title": "State Architecture (global vs local, stores)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-02",
+    "title": "Query/Cache Strategy (client cache rules, invalidation)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-03",
+    "title": "Mutation Patterns (optimistic updates, rollback)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-04",
+    "title": "Realtime Subscription Patterns (WS hooks, reconciliation)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-05",
+    "title": "Offline State Handling (queueing, retry)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-06",
+    "title": "Observability for Client Data Layer (logs/metrics)",
+    "type": "Build / State Management",
+    "status": "active"
+  }
+]

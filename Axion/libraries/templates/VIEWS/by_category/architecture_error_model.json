@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "ERR-01",
+    "title": "Error Taxonomy (classes,",
+    "type": "Architecture / Error Model",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "ERR-02",
+    "title": "Reason Codes Registry (rc_*",
+    "type": "Architecture / Error Model",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "ERR-03",
+    "title": "API Error Contract (shape,",
+    "type": "Architecture / Error Model",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "ERR-04",
+    "title": "UX Error Mapping Rules",
+    "type": "Architecture / Error Model",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "ERR-05",
+    "title": "Retryability & Idempotency",
+    "type": "Architecture / Error Model",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "ERR-06",
+    "title": "Observability Requirements for",
+    "type": "Architecture / Error Model",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  }
+]

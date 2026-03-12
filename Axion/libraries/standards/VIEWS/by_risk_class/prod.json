@@ -1,0 +1,27 @@
+[
+  {
+    "unit_id": "STDU-API_DESIGN",
+    "title": "API Design Standard",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-AUTH_BASELINE",
+    "title": "Authentication Baseline Standard",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-DATA_INTEGRITY",
+    "title": "Data Integrity Standard",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-OBSERVABILITY",
+    "title": "Observability Standard",
+    "status": "draft"
+  },
+  {
+    "unit_id": "STDU-SECURITY_BASELINE",
+    "title": "Security Baseline Standard",
+    "status": "active"
+  }
+]

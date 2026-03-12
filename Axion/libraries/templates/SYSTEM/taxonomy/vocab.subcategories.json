@@ -1,0 +1,95 @@
+{
+  "Application Build": [
+    "API",
+    "Admin Tools",
+    "Background Jobs",
+    "Client Error Recovery",
+    "Deep Links",
+    "Events",
+    "Feature Flags",
+    "File Processing",
+    "Forms",
+    "Frontend",
+    "Mobile",
+    "Mobile Capabilities",
+    "Mobile Performance",
+    "Offline Support",
+    "Pagination & Filtering",
+    "Playbook Patterns",
+    "Push Notifications",
+    "Rate Limiting",
+    "Release & Signing",
+    "Routing",
+    "State Management",
+    "UI Composition"
+  ],
+  "System Architecture": [
+    "API Governance",
+    "Authorization",
+    "Deployment",
+    "Error Model",
+    "Interfaces",
+    "Realtime",
+    "System",
+    "Workflow"
+  ],
+  "Product Definition": [
+    "Business Requirements",
+    "Domain Model",
+    "Product Requirements",
+    "Risk",
+    "Resource Planning",
+    "Service Maturity",
+    "Stakeholder",
+    "User Requirements"
+  ],
+  "Experience Design": [
+    "Accessibility",
+    "Content",
+    "Core Design",
+    "Design System",
+    "Information Architecture",
+    "Interaction",
+    "Responsive Layout",
+    "Visual Assets",
+    "Youth Design"
+  ],
+  "Data & Information": [
+    "Architecture",
+    "Caching",
+    "Governance",
+    "Lifecycle",
+    "Quality",
+    "Reporting",
+    "Search"
+  ],
+  "Integrations & External Services": [
+    "CRM/ERP",
+    "File Management",
+    "Integration Patterns",
+    "Notifications",
+    "Payments",
+    "SSO/Auth",
+    "Webhooks & Callbacks"
+  ],
+  "Operations & Reliability": [
+    "Alerting",
+    "Analytics",
+    "Cost Optimization",
+    "Load Testing",
+    "Long-term Support",
+    "Observability",
+    "Performance",
+    "SLO/SLA"
+  ],
+  "Security, Privacy & Compliance": [
+    "Audit",
+    "Compliance",
+    "Crypto/Privacy",
+    "IAM",
+    "Privacy",
+    "Security",
+    "Secrets/Key Mgmt",
+    "Threat Modeling"
+  ]
+}

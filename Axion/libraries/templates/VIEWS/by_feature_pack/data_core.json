@@ -1,0 +1,50 @@
+[
+  {
+    "template_id": "DATA-01",
+    "title": "Entity Definitions (canonical",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-02",
+    "title": "Relationship Map (ERD text",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-03",
+    "title": "Persistence Rules (indexes,",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-04",
+    "title": "Migration Plan (schema",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-05",
+    "title": "Seed Data Spec",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-06",
+    "title": "Validation Schemas",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-07",
+    "title": "Derived/Read Models Spec",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-08",
+    "title": "Data Access Patterns",
+    "type": "Data / Architecture",
+    "status": "active"
+  }
+]

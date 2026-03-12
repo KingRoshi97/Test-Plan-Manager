@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "A11YD-01",
+    "title": "A11YD-01",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-02",
+    "title": "A11YD-02",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-03",
+    "title": "A11YD-03",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-04",
+    "title": "A11YD-04",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-05",
+    "title": "A11YD-05",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-01",
+    "title": "Accessibility Requirements",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-02",
+    "title": "Keyboard/Focus Order Spec",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-03",
+    "title": "Screen Reader & Labels Spec",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-04",
+    "title": "Color Contrast & Visual",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-05",
+    "title": "Accessible Error Messaging",
+    "type": "Design / Accessibility",
+    "status": "active"
+  }
+]

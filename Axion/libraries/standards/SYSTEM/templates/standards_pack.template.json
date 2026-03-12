@@ -1,0 +1,9 @@
+{
+  "pack_id": "{PACK_NAME}",
+  "pack_version": "1.0.0",
+  "category": "{STD-CAT-NN}",
+  "applies_when": {},
+  "priority": 100,
+  "fixed_rules": [],
+  "configurable_rules": []
+}

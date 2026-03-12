@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "SKM-01",
+    "title": "Secrets Inventory (by secret_id)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-02",
+    "title": "Storage & Access Policy (vaults, env scoping, least privilege)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-03",
+    "title": "Rotation Policy (schedules, triggers, overlap windows)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-04",
+    "title": "Key Types & Usage (signing, encryption, API keys, TLS)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-05",
+    "title": "KMS/HSM Strategy (providers, boundaries, responsibilities)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-06",
+    "title": "Certificate Management (issuance, renewal, revocation)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-07",
+    "title": "Secret Distribution (runtime fetch, sidecars, CI rules)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-08",
+    "title": "Compromise Response (detect, rotate, revoke, audit)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-09",
+    "title": "Logging & Redaction Rules (no secrets in logs)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-10",
+    "title": "Observability & Alerts (access spikes, failures, drift)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  }
+]

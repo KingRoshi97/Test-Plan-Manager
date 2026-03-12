@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "ROUTE-01",
+    "title": "Route Contract (paths, params, types)",
+    "type": "Build / Routing",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "ROUTE-02",
+    "title": "Navigation Map (flows, entry points)",
+    "type": "Build / Routing",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "ROUTE-03",
+    "title": "Deep Link Map (URLs → screens/actions)",
+    "type": "Build / Routing",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "ROUTE-04",
+    "title": "Guard Rules (auth gating, role gating)",
+    "type": "Build / Routing",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "ROUTE-05",
+    "title": "Back/History Rules (expected behavior)",
+    "type": "Build / Routing",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "ROUTE-06",
+    "title": "Link Validation & Unknown Handling (fallback routes)",
+    "type": "Build / Routing",
+    "status": "active",
+    "feature_pack": "frontend"
+  }
+]

@@ -1,0 +1,302 @@
+[
+  {
+    "template_id": "ANL-01",
+    "title": "Analytics Overview (goals, constraints)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-02",
+    "title": "Event Taxonomy (by event_name)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-03",
+    "title": "Event Schema Spec (payload rules, versioning)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-04",
+    "title": "Identity/Attribution Model (anon/user/tenant)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-05",
+    "title": "Consent & Opt-Out Enforcement (ties to PRIV-04)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-06",
+    "title": "Data Quality Rules (completeness, duplication)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-07",
+    "title": "Funnels & KPIs Definition (by kpi_id)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-08",
+    "title": "Experimentation Support (flags/assignments)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-09",
+    "title": "Retention & Deletion for Analytics (ties to PRIV-05)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-10",
+    "title": "Analytics Access Controls (who can query/export)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-01",
+    "title": "Cost Model Overview (dimensions, owners)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-02",
+    "title": "Cost Drivers Catalog (compute, storage, egress)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-03",
+    "title": "Forecast Model (monthly/annual)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-04",
+    "title": "Budget & Alerts (thresholds, routing)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-05",
+    "title": "Unit Economics (cost per user/action)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-06",
+    "title": "Optimization Backlog (ranked opportunities)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-07",
+    "title": "Showback/Chargeback Policy (by team/tenant)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-08",
+    "title": "Cost Attribution Tags Standard (required tags)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-09",
+    "title": "Cost Reporting (dashboards, cadence)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-10",
+    "title": "Incident Cost Review (post-incident spend)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-01",
+    "title": "Load Testing Overview (goals, scope)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-02",
+    "title": "Workload Models (traffic shapes, personas)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-03",
+    "title": "Test Scenarios Catalog (by scenario_id)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-04",
+    "title": "Data & Environment Setup (fixtures, isolation)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-05",
+    "title": "Tooling & Harness (runner, metrics capture)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-06",
+    "title": "Pass/Fail Criteria (SLO ties)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-07",
+    "title": "Capacity Findings Report (results template)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-08",
+    "title": "Bottleneck Analysis Template (what failed)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-09",
+    "title": "Chaos/Failure Injection Plan (optional)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-10",
+    "title": "Re-run Cadence & Change Triggers",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-01",
+    "title": "Performance Overview (targets, constraints)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-02",
+    "title": "Critical Path Inventory (user journeys)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-03",
+    "title": "Latency Budgets (per surface)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-04",
+    "title": "Throughput Targets (RPS, concurrency)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-05",
+    "title": "Scaling Strategy (horizontal/vertical/caching)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-06",
+    "title": "Database Performance Policy (indexes, query limits)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-07",
+    "title": "Cache Strategy (tiers, invalidation)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-08",
+    "title": "Queue/Async Performance (jobs, backpressure)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-09",
+    "title": "Performance Regression Gates (thresholds, CI checks)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-10",
+    "title": "Performance Runbooks (triage playbooks)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-01",
+    "title": "SLO/SLI Overview (definitions, scope)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-02",
+    "title": "Service SLO Catalog (by service_id)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-03",
+    "title": "Endpoint SLO Catalog (by endpoint_id)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-04",
+    "title": "Error Budget Policy (burn rates, actions)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-05",
+    "title": "SLA Commitments (external, contracts)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-06",
+    "title": "Measurement Rules (windows, aggregation)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-07",
+    "title": "Alerting on Burn (ties to ALRT)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-08",
+    "title": "Review Cadence & Ownership (monthly reviews)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-09",
+    "title": "Exceptions & Adjustments (temporary changes)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-10",
+    "title": "Reporting (dashboards, exec summaries)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "TMA-01",
+    "title": "Threat Model Scope & Method (assets, actors, STRIDE)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "TMA-02",
+    "title": "Abuse Case Catalog (by abuse_id)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "TMA-03",
+    "title": "Attack Surface Inventory (endpoints, clients, integrations)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "TMA-04",
+    "title": "Risk Register (threats, likelihood, impact, mitigations)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "TMA-05",
+    "title": "Mitigation Mapping (threat → control → owner)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "TMA-06",
+    "title": "Rate Limit & Bot Defense Strategy (captcha, device signals)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "TMA-07",
+    "title": "Content/Message Abuse Controls (spam, harassment, scams)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "TMA-08",
+    "title": "Fraud/Payment Abuse Controls (ties to PAY-08)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "TMA-09",
+    "title": "Security Validation (tests, drills, red team-lite)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "TMA-10",
+    "title": "TMA Runbooks (triage, containment actions)",
+    "type": "Security / Threat Modeling",
+    "status": "active",
+    "feature_pack": "compliance"
+  }
+]

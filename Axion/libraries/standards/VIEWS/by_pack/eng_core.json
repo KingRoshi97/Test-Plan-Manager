@@ -1,0 +1,42 @@
+[
+  {
+    "unit_id": "STDU-ENG-001",
+    "title": "TypeScript Required",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-ENG-002",
+    "title": "Source Directory Structure",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-ENG-003",
+    "title": "No Default Exports",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-ENG-004",
+    "title": "Error Handling Discipline",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-ENG-005",
+    "title": "Dependency Allowlist Enforcement",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-ENG-006",
+    "title": "Naming Convention",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-ENG-007",
+    "title": "Max File Length",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-ENG-008",
+    "title": "Import Order",
+    "status": "active"
+  }
+]

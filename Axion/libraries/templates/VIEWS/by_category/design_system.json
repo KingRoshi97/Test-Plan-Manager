@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "DSYS-01",
+    "title": "Token Spec (color, type,",
+    "type": "Design / System",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "DSYS-02",
+    "title": "Component Variants Spec",
+    "type": "Design / System",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "DSYS-03",
+    "title": "Layout Grid & Spacing Rules",
+    "type": "Design / System",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "DSYS-04",
+    "title": "Iconography & Illustration",
+    "type": "Design / System",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "DSYS-05",
+    "title": "Theming Rules (light/dark,",
+    "type": "Design / System",
+    "status": "active",
+    "feature_pack": "design_extended"
+  }
+]

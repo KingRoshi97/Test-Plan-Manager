@@ -1,0 +1,3200 @@
+[
+  {
+    "template_id": "A11YD-01",
+    "title": "A11YD-01",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-02",
+    "title": "A11YD-02",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-03",
+    "title": "A11YD-03",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-04",
+    "title": "A11YD-04",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-05",
+    "title": "A11YD-05",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-01",
+    "title": "Admin Capabilities Matrix",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-02",
+    "title": "Moderation/Support Tools Spec (queues, actions)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-03",
+    "title": "Audit Trail Spec (actions + retention)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-04",
+    "title": "Data Repair Procedures (safe backfills)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-05",
+    "title": "Privileged API Surface Catalog (endpoints + authz)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-06",
+    "title": "Admin Observability & Safeguards (rate limits, alerts)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-01",
+    "title": "Alerting Overview (principles, severity model)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-02",
+    "title": "Alert Catalog (by alert_id)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-03",
+    "title": "Alert Rule Spec (condition, threshold, window)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-04",
+    "title": "Oncall & Escalation Policy (rota, paging)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-05",
+    "title": "Noise Reduction Rules (dedupe, suppression)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-06",
+    "title": "Incident Triggers (alert → IRP runbook)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-07",
+    "title": "Customer Impact Rules (status page, comms)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-08",
+    "title": "Alert Testing & Drills (synthetics, fire drills)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-09",
+    "title": "Alert Dashboards (what to watch)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-01",
+    "title": "Analytics Overview (goals, constraints)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-02",
+    "title": "Event Taxonomy (by event_name)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-03",
+    "title": "Event Schema Spec (payload rules, versioning)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-04",
+    "title": "Identity/Attribution Model (anon/user/tenant)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-05",
+    "title": "Consent & Opt-Out Enforcement (ties to PRIV-04)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-06",
+    "title": "Data Quality Rules (completeness, duplication)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-07",
+    "title": "Funnels & KPIs Definition (by kpi_id)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-08",
+    "title": "Experimentation Support (flags/assignments)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-09",
+    "title": "Retention & Deletion for Analytics (ties to PRIV-05)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-10",
+    "title": "Analytics Access Controls (who can query/export)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "API-01",
+    "title": "Endpoint Catalog",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-02",
+    "title": "Endpoint Spec (per endpoint:",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-03",
+    "title": "Error & Status Code Policy",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-04",
+    "title": "AuthZ Rules (RBAC/ABAC checks)",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-05",
+    "title": "Rate Limit & Abuse Controls",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-06",
+    "title": "Background Jobs Spec (API-triggered + system jobs)",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-07",
+    "title": "WebSocket API Spec",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-01",
+    "title": "API Standards (naming,",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-02",
+    "title": "Versioning Policy (v1/v2 rules,",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-03",
+    "title": "Deprecation & Sunset Policy",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-04",
+    "title": "Review Gate Checklist (what",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-05",
+    "title": "Compatibility Test",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-06",
+    "title": "Schema Evolution Rules",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-01",
+    "title": "System Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-02",
+    "title": "Core Contracts Overview (APIs,",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-03",
+    "title": "Key Workflow Data Flows",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-04",
+    "title": "Authentication Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-05",
+    "title": "Realtime Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-06",
+    "title": "Error Model + Reason Codes",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-07",
+    "title": "Integration Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-08",
+    "title": "Deployment Topology",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-09",
+    "title": "Cross-Cutting Concerns",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-10",
+    "title": "Architecture Constraints &",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-01",
+    "title": "Audit Event Catalog (by event_type)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-02",
+    "title": "Audit Schema (required fields, correlation IDs)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-03",
+    "title": "Capture Rules (what must be logged, where)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-04",
+    "title": "Tamper Evidence & Integrity (append-only, hashing)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-05",
+    "title": "Retention & Access Controls (who can view, how long)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-06",
+    "title": "Investigation Workflow (queries, exports, chain-of-custody)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-07",
+    "title": "Admin/Privileged Actions Audit (special handling)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-08",
+    "title": "Redaction & PII Handling (safe storage of audit data)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-09",
+    "title": "Alerts & Anomaly Detection (suspicious patterns)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "AUDIT-10",
+    "title": "Forensics Runbooks (incident support procedures)",
+    "type": "Security / Audit",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-01",
+    "title": "Business Rules Catalog (by ID)",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-02",
+    "title": "Eligibility & Entitlement Rules",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-03",
+    "title": "Pricing/Permission Policy",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-04",
+    "title": "Exceptions & Edge-Case Policy",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-01",
+    "title": "Caching Strategy (what to",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-02",
+    "title": "Invalidation Rules (events,",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-03",
+    "title": "Consistency Model",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-04",
+    "title": "Read/Write Split Rules (read",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-05",
+    "title": "Rate/Cost Controls for",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-06",
+    "title": "Cache Failure Behavior",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-01",
+    "title": "Content Style Guide (tone,",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-02",
+    "title": "UI Copy Inventory (labels,",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-03",
+    "title": "Empty States & Onboarding",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-04",
+    "title": "Error/Warning/Success",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-05",
+    "title": "Notification Copy Templates",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-01",
+    "title": "Error Boundary Strategy (global vs local)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-02",
+    "title": "Retry & Recovery Patterns (per error class)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-03",
+    "title": "Offline/Error Mode UX (degraded experiences)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-04",
+    "title": "Session Expiry Handling (re-auth prompts, restore state)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-05",
+    "title": "Client Logging & Crash Reporting (fields, redaction)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-01",
+    "title": "Compliance Scope (frameworks, in/out scope)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-02",
+    "title": "Control Matrix (control_id → requirement → evidence)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-03",
+    "title": "Vendor Risk Management (third-party reviews, DPAs)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-04",
+    "title": "Policy & Training Requirements (who must do what)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-05",
+    "title": "Data Processing Agreements & Records (RoPA, DPA pointers)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-06",
+    "title": "Regulatory Requirements (CAN-SPAM, PCI, SOC2, HIPAA, etc.)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-07",
+    "title": "Risk Assessments (periodic, triggers, owners)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-08",
+    "title": "Exception Management (waivers, expiries, reviews)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-09",
+    "title": "Evidence Collection Plan (artifacts, cadence, storage)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-10",
+    "title": "Compliance Reporting & Audits (internal/external audits)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-01",
+    "title": "Cost Model Overview (dimensions, owners)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-02",
+    "title": "Cost Drivers Catalog (compute, storage, egress)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-03",
+    "title": "Forecast Model (monthly/annual)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-04",
+    "title": "Budget & Alerts (thresholds, routing)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-05",
+    "title": "Unit Economics (cost per user/action)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-06",
+    "title": "Optimization Backlog (ranked opportunities)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-07",
+    "title": "Showback/Chargeback Policy (by team/tenant)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-08",
+    "title": "Cost Attribution Tags Standard (required tags)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-09",
+    "title": "Cost Reporting (dashboards, cadence)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "COST-10",
+    "title": "Incident Cost Review (post-incident spend)",
+    "type": "Operations / Cost Management",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-01",
+    "title": "Performance Budget (web + mobile targets)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-02",
+    "title": "Rendering Strategy (SSR/CSR, list virtualization)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-03",
+    "title": "Asset Loading Strategy (code split, lazy load)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-04",
+    "title": "Profiling Plan (what to measure, tools)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-05",
+    "title": "Perf Regression Gates (thresholds, CI checks)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-01",
+    "title": "System Inventory (by system_id)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-02",
+    "title": "Object/Entity Mapping Catalog (objects ↔ entities, keys)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-03",
+    "title": "Sync Direction Rules (push/pull/bidirectional)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-04",
+    "title": "Sync Scheduling & Triggers (cron/event-driven, env enablement)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-05",
+    "title": "Conflict Resolution Rules (source of truth, LWW, prompts)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-06",
+    "title": "Rate Limits & Quotas (per vendor, backoff)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-07",
+    "title": "Data Quality & Validation (required fields, dedupe)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-08",
+    "title": "Error Handling & Reconciliation (replay, backfill)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-09",
+    "title": "Security & Compliance (PII, least privilege, audit)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-10",
+    "title": "Observability & Runbooks (dashboards, alerts, operator steps)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-01",
+    "title": "Entity Definitions (canonical",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-02",
+    "title": "Relationship Map (ERD text",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-03",
+    "title": "Persistence Rules (indexes,",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-04",
+    "title": "Migration Plan (schema",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-05",
+    "title": "Seed Data Spec",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-06",
+    "title": "Validation Schemas",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-07",
+    "title": "Derived/Read Models Spec",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-08",
+    "title": "Data Access Patterns",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-01",
+    "title": "UX Flows (happy paths + edge",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-02",
+    "title": "Screen Inventory (by",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-03",
+    "title": "Screen Spec (per screen:",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-04",
+    "title": "UI Component Inventory",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-05",
+    "title": "UI State Model",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-06",
+    "title": "Form & Validation UX Rules",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-07",
+    "title": "Error Handling UX (toasts,",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-08",
+    "title": "Acceptance Hooks (screen/flow",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-01",
+    "title": "Data Ownership Map (owner",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-02",
+    "title": "DGL-02",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-03",
+    "title": "Transformation Rules Catalog",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-04",
+    "title": "Access Controls for Data (who",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-05",
+    "title": "Auditability Requirements",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-06",
+    "title": "Data Catalog / Dictionary",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-01",
+    "title": "Data Lifecycle States",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-02",
+    "title": "Retention Policy Matrix (by data",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-03",
+    "title": "Deletion & Erasure Procedures",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-04",
+    "title": "Legal Holds & Exceptions",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-05",
+    "title": "Archival & Cold Storage",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-06",
+    "title": "Data Minimization Rules",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-01",
+    "title": "Domain Glossary (canonical",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-02",
+    "title": "Concept Model (entities +",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-03",
+    "title": "Invariants & Definitions",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-04",
+    "title": "Event Vocabulary (canonical",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-01",
+    "title": "Validation Policy (schema vs",
+    "type": "Data / Quality",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-02",
+    "title": "Data Quality Checks Catalog",
+    "type": "Data / Quality",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-03",
+    "title": "DQV-03",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-04",
+    "title": "Consistency & Integrity",
+    "type": "Data / Quality",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-05",
+    "title": "Bad Data Handling (quarantine,",
+    "type": "Data / Quality",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-06",
+    "title": "DQV-06",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-01",
+    "title": "Token Spec (color, type,",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-02",
+    "title": "Component Variants Spec",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-03",
+    "title": "Layout Grid & Spacing Rules",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-04",
+    "title": "Iconography & Illustration",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-05",
+    "title": "Theming Rules (light/dark,",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-01",
+    "title": "Error Taxonomy (classes,",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-02",
+    "title": "Reason Codes Registry (rc_*",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-03",
+    "title": "API Error Contract (shape,",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-04",
+    "title": "UX Error Mapping Rules",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-05",
+    "title": "Retryability & Idempotency",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-06",
+    "title": "Observability Requirements for",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-01",
+    "title": "Event Catalog (by event_id)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-02",
+    "title": "Event Schema Spec (payload, versioning, pii rules)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-03",
+    "title": "Producer/Consumer Map (who emits/consumes, contracts)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-04",
+    "title": "Delivery Semantics (ordering, retries, dedupe)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-05",
+    "title": "Webhook Producer Spec (outbound webhooks)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-06",
+    "title": "Webhook Consumer Spec (inbound webhooks)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-07",
+    "title": "Event Failure Handling (DLQ, replay, backfill)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-08",
+    "title": "Event Observability (lag, success rate, tracing)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-01",
+    "title": "Route Map + Layout Spec",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-02",
+    "title": "Component Implementation Spec",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-03",
+    "title": "UI State Model (loading/empty/error/success)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-04",
+    "title": "Data Binding Rules (what calls what, when)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-05",
+    "title": "Accessibility Implementation Notes (a11y enforcement)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-06",
+    "title": "Theming/Tokens Integration (DSYS binding)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-07",
+    "title": "Error Handling UX Implementation (surface rules)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FFCFG-01",
+    "title": "Feature Flag Registry (by flag_id)",
+    "type": "Build / Feature Flags",
+    "status": "active"
+  },
+  {
+    "template_id": "FFCFG-02",
+    "title": "Flag Behavior Spec (default, targeting, kill-switch)",
+    "type": "Build / Feature Flags",
+    "status": "active"
+  },
+  {
+    "template_id": "FFCFG-03",
+    "title": "Rollout Plan (phased, canary, % ramp)",
+    "type": "Build / Feature Flags",
+    "status": "active"
+  },
+  {
+    "template_id": "FFCFG-04",
+    "title": "Config Matrix (env vars/settings by env)",
+    "type": "Build / Feature Flags",
+    "status": "active"
+  },
+  {
+    "template_id": "FFCFG-05",
+    "title": "Safe Degradation Rules (flag off behavior)",
+    "type": "Build / Feature Flags",
+    "status": "active"
+  },
+  {
+    "template_id": "FFCFG-06",
+    "title": "Audit & Change Control (who can flip, logging)",
+    "type": "Build / Feature Flags",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-01",
+    "title": "Storage Provider Inventory (by provider_id/bucket_id)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-02",
+    "title": "Upload/Download Integration Spec (signed URLs, auth, limits)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-03",
+    "title": "Media Processing Integration (transcode/resize/scan vendors)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-04",
+    "title": "CDN & Delivery Rules (cache headers, variants)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-05",
+    "title": "Retention & Lifecycle Rules (TTL, archival, deletion)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-06",
+    "title": "Security & Compliance (PII, malware scanning, encryption)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-07",
+    "title": "Access Control Model (ACLs, signed access, tenancy)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-08",
+    "title": "Metadata & Indexing (search, tags, EXIF policy)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-09",
+    "title": "Migration & Backfill Plan (moving buckets, rehash)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-10",
+    "title": "Observability & Cost Controls (storage growth, egress)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-01",
+    "title": "Forms Inventory (by form_id/screen_id)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-02",
+    "title": "Field Spec (per field: type, rules, copy)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-03",
+    "title": "Validation UX Rules (inline, focus, announce)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-04",
+    "title": "Schema Mapping (forms ↔ DATA-06/DQV-03)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-05",
+    "title": "Submission & Error Recovery Patterns",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-06",
+    "title": "Anti-Abuse for Forms (spam, throttles, bot defense)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-01",
+    "title": "Upload Contract (types, limits, auth, scanning)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-02",
+    "title": "Storage Strategy (buckets, paths, access modes)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-03",
+    "title": "Processing Pipeline Stages (transcode/resize/parse)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-04",
+    "title": "Async Processing & Status Model (jobs, retries, DLQ)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-05",
+    "title": "CDN/Delivery Rules (cache headers, variants)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-06",
+    "title": "Security & Compliance for Files (PII, retention, malware)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-07",
+    "title": "Media Observability (latency, failure rates, QoS)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-01",
+    "title": "Role & Permission Model (roles, permissions, inheritance)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-02",
+    "title": "AuthN Methods (passwordless, SSO, MFA binding)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-03",
+    "title": "Session Management Policy (expiry, rotation, device binding)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-04",
+    "title": "Authorization Enforcement Points (where checks happen)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-05",
+    "title": "Service-to-Service Auth (mTLS/JWT, identity)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-06",
+    "title": "Admin & Privileged Access Policy (break-glass, step-up)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-07",
+    "title": "Account Lifecycle (provision, deprovision, recovery)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-08",
+    "title": "API Key Policy (creation, scoping, rotation, revocation)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-09",
+    "title": "Access Reviews (periodic review, attestations)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAM-10",
+    "title": "Access Observability (auth logs, auth failures, metrics)",
+    "type": "Security / Identity & Access",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-01",
+    "title": "Navigation Map",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-02",
+    "title": "Route & Deep Link Spec (route",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-03",
+    "title": "Information Architecture Tree",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-04",
+    "title": "Search/Filter/Sort UX (if",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-05",
+    "title": "Access-Gated Navigation Rules",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-01",
+    "title": "Interaction Patterns Catalog",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-02",
+    "title": "Motion Rules",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-03",
+    "title": "Transition Map (screen",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-04",
+    "title": "Micro-interactions Spec",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-05",
+    "title": "Accessibility-Safe Motion Rules",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-01",
+    "title": "Integration Inventory (by integration_id)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-02",
+    "title": "Integration Spec (per integration: purpose, data flow, auth)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-03",
+    "title": "Connectivity & Network Policy (timeouts, retries, allowlists)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-04",
+    "title": "Secrets & Credential Handling (storage, rotation, access)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-05",
+    "title": "Data Mapping & Transformation Rules (field maps, normalization)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-06",
+    "title": "Error Handling & Recovery (retries, fallbacks, operator actions)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-07",
+    "title": "Observability (logs/metrics/traces, dashboards, alerts)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-08",
+    "title": "Security & Compliance (PII, retention, vendor risk)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-09",
+    "title": "Sandbox/Test Environment Strategy (stubs, mocks, fixtures)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-10",
+    "title": "Versioning & Change Management (breaking changes, deprecation)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "JBS-01",
+    "title": "Jobs Inventory (by job_id)",
+    "type": "Build / Background Jobs",
+    "status": "active"
+  },
+  {
+    "template_id": "JBS-03",
+    "title": "Scheduling Rules",
+    "type": "Build / Background Jobs",
+    "status": "active"
+  },
+  {
+    "template_id": "JBS-05",
+    "title": "Idempotency & Concurrency for",
+    "type": "Build / Background Jobs",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-01",
+    "title": "Load Testing Overview (goals, scope)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-02",
+    "title": "Workload Models (traffic shapes, personas)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-03",
+    "title": "Test Scenarios Catalog (by scenario_id)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-04",
+    "title": "Data & Environment Setup (fixtures, isolation)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-05",
+    "title": "Tooling & Harness (runner, metrics capture)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-06",
+    "title": "Pass/Fail Criteria (SLO ties)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-07",
+    "title": "Capacity Findings Report (results template)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-08",
+    "title": "Bottleneck Analysis Template (what failed)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-09",
+    "title": "Chaos/Failure Injection Plan (optional)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-10",
+    "title": "Re-run Cadence & Change Triggers",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-01",
+    "title": "Logging Standard (levels, structure, fields)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-02",
+    "title": "Tracing Standard (trace/span IDs, propagation)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-03",
+    "title": "Error Logging Standard (error shapes, stack rules)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-04",
+    "title": "PII/Secret Redaction Standard (denylist, masking)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-05",
+    "title": "Log Routing & Storage (sinks, retention classes)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-06",
+    "title": "Client Logging Standard (mobile/web constraints)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-07",
+    "title": "Audit vs App Logs Boundary (what goes where)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-08",
+    "title": "Log Volume Controls (sampling, rate limits)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-09",
+    "title": "Logging Verification (tests, scanners)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-10",
+    "title": "Logging Runbooks (common issues)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-01",
+    "title": "Background Work Rules (limits, schedules)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-02",
+    "title": "Network Usage Policy (batching, retries, metered)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-03",
+    "title": "Battery Budget & Constraints (targets)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-04",
+    "title": "Perf Profiling Plan (mobile tooling)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-01",
+    "title": "Capabilities Inventory (camera/gps/files/push)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-02",
+    "title": "Permissions UX Rules (prompts, denial handling)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-03",
+    "title": "Capability Security Rules (least privilege)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-04",
+    "title": "Capability Failure Handling (fallbacks)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDC-05",
+    "title": "Telemetry for Capabilities (errors, latency)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-01",
+    "title": "Link Scheme & Domains (app links, universal links)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-02",
+    "title": "Routing Rules (link → screen/action mapping)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-03",
+    "title": "Auth Gating & Safety (signed links, validation)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-04",
+    "title": "Fallback Behavior (not installed, unknown routes)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-01",
+    "title": "Navigation Map (stacks/tabs/modals)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-02",
+    "title": "Screen Implementation Spec (per screen binding)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-03",
+    "title": "Native Integration Map (bridges, permissions)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-04",
+    "title": "App Lifecycle + State (foreground/background)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-05",
+    "title": "Release & Signing (stores, builds)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-01",
+    "title": "Notification Types Catalog (by notif_id)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-02",
+    "title": "Payload Contract (fields, routing, localization keys)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-03",
+    "title": "Permission & Opt-In Rules (platform specific)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-04",
+    "title": "Delivery/Retry Rules (quiet hours, collapse keys)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-05",
+    "title": "Deep Link Routing (notif tap behavior)",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "MPUSH-06",
+    "title": "Abuse/Spam Controls for Notifications",
+    "type": "Build / Push Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-01",
+    "title": "Channel Inventory (email/sms/push/in-app)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-02",
+    "title": "Provider Inventory (by provider_id)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-03",
+    "title": "Template & Localization Mapping (template_id, variables)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-04",
+    "title": "Send Policy (throttles, quiet hours, batching)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-05",
+    "title": "Deliverability Rules (bounces, spam, suppression lists)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-06",
+    "title": "Preference Center & Opt-Out Rules (global/per-type)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-07",
+    "title": "Security & Compliance (PII, CAN-SPAM, consent)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-08",
+    "title": "Event-to-Notification Mapping (events → messages)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-09",
+    "title": "Failure Handling (retries, fallback channels, DLQ)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "NOTIF-10",
+    "title": "Observability & Support Runbooks (delivery metrics, alerts)",
+    "type": "Integration / Notifications",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-01",
+    "title": "Observability Overview (scope, principles, toolchain)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-02",
+    "title": "Telemetry Schema Standard (common fields, correlation IDs)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-03",
+    "title": "Metrics Catalog (by metric_id)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-05",
+    "title": "Log Event Catalog (by log_event_id)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-06",
+    "title": "Redaction & Privacy Rules for Telemetry (PII/secret handling)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-07",
+    "title": "Dashboards Inventory (by dashboard_id)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-08",
+    "title": "Alert Routing & Ownership (teams, oncall, escalation)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-09",
+    "title": "Sampling & Cardinality Policy (limits, hashing, budgets)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-10",
+    "title": "Observability Gates (required signals per surface)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-01",
+    "title": "Offline Scope (what works offline)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-02",
+    "title": "Sync Model (queues, conflict resolution)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-03",
+    "title": "Local Storage Schema (entities cached locally)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-04",
+    "title": "Reconciliation Rules (merge, LWW, prompts)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-05",
+    "title": "Sync Observability (stuck queues, retries, metrics)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-01",
+    "title": "Provider Inventory (by provider_id)",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-02",
+    "title": "Payment Flow Spec (one-time, recurring, invoices)",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-03",
+    "title": "Pricing & Plan Mapping (plans, tiers, entitlements)",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-04",
+    "title": "Webhook Handling for Payments (events, idempotency, retries)",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-05",
+    "title": "Tax/VAT Rules & Compliance (if applicable)",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-06",
+    "title": "Refunds, Chargebacks & Disputes Policy",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-07",
+    "title": "Ledger & Reconciliation Rules (source of truth, audits)",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-08",
+    "title": "Fraud & Abuse Controls (risk checks, velocity limits)",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-09",
+    "title": "Security & PCI Boundaries (tokenization, SAQ scope)",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PAY-10",
+    "title": "Billing Observability & Support Runbooks (alerts, workflows)",
+    "type": "Integration / Payments",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-01",
+    "title": "Performance Budgets Overview (web/mobile/api)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-02",
+    "title": "Budget Registry (by budget_id)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-03",
+    "title": "Web Budgets (Core Web Vitals)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-04",
+    "title": "API Budgets (latency/error budgets per endpoint class)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-05",
+    "title": "Profiling Plan (what to measure, tools)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-06",
+    "title": "Perf CI Gates (bundle size, CWV, API p95)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-07",
+    "title": "Budget Reporting (dashboards, trends)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-08",
+    "title": "Budget Exceptions & Waivers (temporary overrides)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-09",
+    "title": "Bundle Size & Asset Budgets (web/mobile)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PBP-10",
+    "title": "Budget Change Control (who can change thresholds)",
+    "type": "Build / Playbook Patterns",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-01",
+    "title": "Performance Overview (targets, constraints)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-02",
+    "title": "Critical Path Inventory (user journeys)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-03",
+    "title": "Latency Budgets (per surface)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-04",
+    "title": "Throughput Targets (RPS, concurrency)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-05",
+    "title": "Scaling Strategy (horizontal/vertical/caching)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-06",
+    "title": "Database Performance Policy (indexes, query limits)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-07",
+    "title": "Cache Strategy (tiers, invalidation)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-08",
+    "title": "Queue/Async Performance (jobs, backpressure)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-09",
+    "title": "Performance Regression Gates (thresholds, CI checks)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PERF-10",
+    "title": "Performance Runbooks (triage playbooks)",
+    "type": "Operations / Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-01",
+    "title": "Query Contract (filter/sort operators, syntax)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-02",
+    "title": "Pagination Rules (cursor/offset, stability guarantees)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-03",
+    "title": "Default Ordering & Tie-Break Rules",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-04",
+    "title": "Validation & Error Mapping (bad query → reason codes)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-05",
+    "title": "Performance Constraints (limits, indexed fields policy)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-01",
+    "title": "Permission Model Overview",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-02",
+    "title": "AuthZ Policy Rules",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-03",
+    "title": "Enforcement Points Map",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-04",
+    "title": "Permission Check Patterns",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-05",
+    "title": "Privileged Operations Policy",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-06",
+    "title": "Audit Requirements for AuthZ",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-01",
+    "title": "Product Overview",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-02",
+    "title": "Goals, Non-Goals, Success",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-03",
+    "title": "Personas & Roles",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-04",
+    "title": "Feature Catalog (by ID) +",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-05",
+    "title": "User Stories / JTBD Map",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-06",
+    "title": "Non-Functional Requirements",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-07",
+    "title": "Constraints & Assumptions",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-08",
+    "title": "Open Questions Log",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-09",
+    "title": "Acceptance Criteria Catalog (by",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-01",
+    "title": "Data Inventory (by data_class/entity)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-02",
+    "title": "PII Classification Model (types, sensitivity)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-03",
+    "title": "Data Minimization Rules (collect/store/share)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-04",
+    "title": "Consent Model (capture, storage, enforcement)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-05",
+    "title": "Retention & Deletion Policy (TTL, DSAR, legal hold)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-06",
+    "title": "Data Sharing Map (internal/external recipients)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-07",
+    "title": "Privacy by Design Checklist (gates, reviews)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-08",
+    "title": "Anonymization/Pseudonymization Rules (hashing, tokenization)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-09",
+    "title": "Privacy Incident Handling (breach response, notifications)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-10",
+    "title": "Privacy Metrics & Audits (coverage, violations)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-01",
+    "title": "Assumptions Register",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-02",
+    "title": "Risk Register",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-03",
+    "title": "Dependency Map",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-04",
+    "title": "Contingency Triggers (what",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-01",
+    "title": "Breakpoint Definitions (sizes +",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-02",
+    "title": "Layout Adaptation Rules (per",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-03",
+    "title": "Responsive Component",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-04",
+    "title": "Touch Target & Density Rules",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-05",
+    "title": "Responsive Media Rules",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLIM-01",
+    "title": "Rate Limit Policy (global rules, scopes)",
+    "type": "Build / Rate Limiting",
+    "status": "active"
+  },
+  {
+    "template_id": "RLIM-02",
+    "title": "Rate Limit Catalog (limits by surface/endpoint)",
+    "type": "Build / Rate Limiting",
+    "status": "active"
+  },
+  {
+    "template_id": "RLIM-03",
+    "title": "Abuse Signals & Detection Rules",
+    "type": "Build / Rate Limiting",
+    "status": "active"
+  },
+  {
+    "template_id": "RLIM-04",
+    "title": "Enforcement Actions Matrix (throttle/ban/captcha)",
+    "type": "Build / Rate Limiting",
+    "status": "active"
+  },
+  {
+    "template_id": "RLIM-05",
+    "title": "Exemptions & Allowlist Policy",
+    "type": "Build / Rate Limiting",
+    "status": "active"
+  },
+  {
+    "template_id": "RLIM-06",
+    "title": "Rate Limit Observability (alerts, dashboards)",
+    "type": "Build / Rate Limiting",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-01",
+    "title": "Route Contract (paths, params, types)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-02",
+    "title": "Navigation Map (flows, entry points)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-03",
+    "title": "Deep Link Map (URLs → screens/actions)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-04",
+    "title": "Guard Rules (auth gating, role gating)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-05",
+    "title": "Back/History Rules (expected behavior)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-06",
+    "title": "Link Validation & Unknown Handling (fallback routes)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-01",
+    "title": "Reporting Surfaces Inventory",
+    "type": "Data / Reporting",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-02",
+    "title": "RPT-02",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-03",
+    "title": "Aggregation & Rollup Rules",
+    "type": "Data / Reporting",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-04",
+    "title": "RPT-04",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-05",
+    "title": "Data Access & Permissions for",
+    "type": "Data / Reporting",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-06",
+    "title": "Reporting Data Quality Rules",
+    "type": "Data / Reporting",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-01",
+    "title": "Release Roadmap (milestones)",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-02",
+    "title": "Scope Boundaries (in/out +",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-03",
+    "title": "Prioritization Framework",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-04",
+    "title": "Change Control Policy (how",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-01",
+    "title": "Realtime Use Cases Catalog",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-02",
+    "title": "Protocol & Transport Map",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-03",
+    "title": "Channel/Topic Model (naming,",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-04",
+    "title": "Delivery Semantics (ordering,",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-05",
+    "title": "Presence & State Sync Model",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-06",
+    "title": "Abuse/Rate Control for",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-01",
+    "title": "Service Boundary Map",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-02",
+    "title": "Runtime Topology (services,",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-03",
+    "title": "Environment Topology",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-04",
+    "title": "Scaling Model",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-05",
+    "title": "Resilience Topology",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-06",
+    "title": "Deployment Constraints",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-01",
+    "title": "Security Overview (scope, principles, threat posture)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-02",
+    "title": "Security Architecture (trust boundaries, data flows)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-03",
+    "title": "Security Requirements (baseline controls checklist)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-04",
+    "title": "Vulnerability Management (patching, scans, SLAs)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-05",
+    "title": "Incident Response Plan (detect, contain, recover)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-06",
+    "title": "Security Monitoring (signals, alerts, dashboards)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-07",
+    "title": "Secure SDLC Policy (reviews, CI gates, dependencies)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-08",
+    "title": "Security Exceptions Process (approvals, expiries, audit)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-09",
+    "title": "Security Testing Plan (SAST/DAST/pen test, coverage)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-10",
+    "title": "Security Runbooks (common incidents, operator actions)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-01",
+    "title": "External Interface Inventory",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-02",
+    "title": "Contract Spec (per interface:",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-03",
+    "title": "Webhook Contract Spec",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-04",
+    "title": "Data Mapping Contract (field",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-05",
+    "title": "Integration Failure Modes &",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-06",
+    "title": "Vendor/Third-Party Trust Model",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-01",
+    "title": "Build Artifact Types (debug/beta/prod)",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-02",
+    "title": "Signing Keys & Rotation Policy",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-03",
+    "title": "Store Submission Checklist (iOS/Android)",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-04",
+    "title": "Versioning Rules (build numbers, semver mapping)",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-05",
+    "title": "Release Channel Policy (internal/beta/GA)",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SIGN-06",
+    "title": "Release Readiness & Go/No-Go Gate",
+    "type": "Build / Release & Signing",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-01",
+    "title": "Secrets Inventory (by secret_id)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-02",
+    "title": "Storage & Access Policy (vaults, env scoping, least privilege)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-03",
+    "title": "Rotation Policy (schedules, triggers, overlap windows)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-04",
+    "title": "Key Types & Usage (signing, encryption, API keys, TLS)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-05",
+    "title": "KMS/HSM Strategy (providers, boundaries, responsibilities)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-06",
+    "title": "Certificate Management (issuance, renewal, revocation)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-07",
+    "title": "Secret Distribution (runtime fetch, sidecars, CI rules)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-08",
+    "title": "Compromise Response (detect, rotate, revoke, audit)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-09",
+    "title": "Logging & Redaction Rules (no secrets in logs)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SKM-10",
+    "title": "Observability & Alerts (access spikes, failures, drift)",
+    "type": "Security / Secrets & Keys",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-01",
+    "title": "SLO/SLI Overview (definitions, scope)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-02",
+    "title": "Service SLO Catalog (by service_id)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-03",
+    "title": "Endpoint SLO Catalog (by endpoint_id)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-04",
+    "title": "Error Budget Policy (burn rates, actions)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-05",
+    "title": "SLA Commitments (external, contracts)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-06",
+    "title": "Measurement Rules (windows, aggregation)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-07",
+    "title": "Alerting on Burn (ties to ALRT)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-08",
+    "title": "Review Cadence & Ownership (monthly reviews)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-09",
+    "title": "Exceptions & Adjustments (temporary changes)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-10",
+    "title": "Reporting (dashboards, exec summaries)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-01",
+    "title": "State Architecture (global vs local, stores)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-02",
+    "title": "Query/Cache Strategy (client cache rules, invalidation)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-03",
+    "title": "Mutation Patterns (optimistic updates, rollback)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-04",
+    "title": "Realtime Subscription Patterns (WS hooks, reconciliation)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-05",
+    "title": "Offline State Handling (queueing, retry)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-06",
+    "title": "Observability for Client Data Layer (logs/metrics)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-01",
+    "title": "KPI/OKR Definitions (targets +",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-02",
+    "title": "Analytics Event Spec (event",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-03",
+    "title": "Funnel/Conversion Definitions",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-04",
+    "title": "Experiment Measurement Plan",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-01",
+    "title": "Search Scope & Surfaces",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-02",
+    "title": "SRCH-02",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-03",
+    "title": "Index Update Strategy",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-04",
+    "title": "Search Result Quality Rules",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-05",
+    "title": "Search Abuse Controls",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-06",
+    "title": "Search Observability (metrics,",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-01",
+    "title": "Provider Inventory (by provider_id)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-02",
+    "title": "SSO Flow Spec (OIDC/SAML, redirects, state/nonce)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-03",
+    "title": "Claim Mapping & Role Provisioning (claims → roles/permissions)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-04",
+    "title": "Session & Token Exchange Rules (refresh, expiry, rotation)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-05",
+    "title": "SCIM Provisioning Spec (users/groups lifecycle)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-06",
+    "title": "Account Linking & Identity Merge Rules",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-07",
+    "title": "MFA/Step-Up Auth Rules (when required)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-08",
+    "title": "Failure Handling (lockouts, partial provision, retries)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-09",
+    "title": "Security Controls (PKCE, signature validation, replay defense)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-10",
+    "title": "Audit & Compliance (login events, admin actions, retention)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-01",
+    "title": "Stakeholder Map (roles,",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-02",
+    "title": "Decision Log (what/why/when)",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-03",
+    "title": "RACI / Ownership Matrix",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-04",
+    "title": "Approval Gates (who signs",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-01",
+    "title": "Threat Model Scope & Method (assets, actors, STRIDE)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-02",
+    "title": "Abuse Case Catalog (by abuse_id)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-03",
+    "title": "Attack Surface Inventory (endpoints, clients, integrations)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-04",
+    "title": "Risk Register (threats, likelihood, impact, mitigations)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-05",
+    "title": "Mitigation Mapping (threat → control → owner)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-06",
+    "title": "Rate Limit & Bot Defense Strategy (captcha, device signals)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-07",
+    "title": "Content/Message Abuse Controls (spam, harassment, scams)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-08",
+    "title": "Fraud/Payment Abuse Controls (ties to PAY-08)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-09",
+    "title": "Security Validation (tests, drills, red team-lite)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-10",
+    "title": "TMA Runbooks (triage, containment actions)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-01",
+    "title": "Page Composition Patterns (shells, sections)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-02",
+    "title": "Component Composition Rules (props, slots, variants)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-03",
+    "title": "Responsive Layout Patterns (breakpoints usage)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-04",
+    "title": "Content Hierarchy Rules (typography, spacing)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-05",
+    "title": "Interaction Patterns (modals, drawers, toasts)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-01",
+    "title": "Research Plan (questions,",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-02",
+    "title": "Findings Summary (themes +",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-03",
+    "title": "User Needs & Pain Points",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-04",
+    "title": "Journey Map (current vs target)",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-05",
+    "title": "Validation Plan (what to test,",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-01",
+    "title": "Asset Inventory (logos, icons,",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-02",
+    "title": "Export Spec (formats, sizes,",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-03",
+    "title": "Brand Usage Rules (do/don’t,",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-04",
+    "title": "Asset Delivery Checklist",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-05",
+    "title": "Accessibility for Visual Assets",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-01",
+    "title": "Workflow Catalog",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-02",
+    "title": "Orchestration Patterns (state",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-03",
+    "title": "Idempotency & Concurrency",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-04",
+    "title": "Scheduling & Triggers",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-05",
+    "title": "Failure Handling (DLQ, backoff,",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-06",
+    "title": "Workflow Observability",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-01",
+    "title": "Webhook Event Catalog (by webhook_id/event_id)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-02",
+    "title": "Outbound Webhook Producer Spec (signing, retries, dedupe)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-03",
+    "title": "Inbound Webhook Consumer Spec (verification, idempotency)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-04",
+    "title": "Delivery Semantics (ordering, replay, backoff)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-05",
+    "title": "Security Rules (signatures, secrets rotation, allowlists)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-06",
+    "title": "Endpoint Registration & Management (subscriptions, secrets)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-07",
+    "title": "Error Handling (DLQ, quarantine, manual replay)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-08",
+    "title": "Observability (delivery rate, latency, failures)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-09",
+    "title": "Payload Versioning & Compatibility (schema evolution)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "WHCP-10",
+    "title": "Testing & Sandbox Strategy (test hooks, simulators)",
+    "type": "Integration / Webhooks",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-01",
+    "title": "Accessibility Requirements",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-02",
+    "title": "Keyboard/Focus Order Spec",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-03",
+    "title": "Screen Reader & Labels Spec",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-04",
+    "title": "Color Contrast & Visual",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-05",
+    "title": "Accessible Error Messaging",
+    "type": "Design / Accessibility",
+    "status": "active"
+  }
+]

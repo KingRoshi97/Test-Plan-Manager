@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "SEC-01",
+    "title": "Security Overview (scope, principles, threat posture)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-02",
+    "title": "Security Architecture (trust boundaries, data flows)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-03",
+    "title": "Security Requirements (baseline controls checklist)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-04",
+    "title": "Vulnerability Management (patching, scans, SLAs)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-05",
+    "title": "Incident Response Plan (detect, contain, recover)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-06",
+    "title": "Security Monitoring (signals, alerts, dashboards)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-07",
+    "title": "Secure SDLC Policy (reviews, CI gates, dependencies)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-08",
+    "title": "Security Exceptions Process (approvals, expiries, audit)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-09",
+    "title": "Security Testing Plan (SAST/DAST/pen test, coverage)",
+    "type": "Security / Core",
+    "status": "active"
+  },
+  {
+    "template_id": "SEC-10",
+    "title": "Security Runbooks (common incidents, operator actions)",
+    "type": "Security / Core",
+    "status": "active"
+  }
+]

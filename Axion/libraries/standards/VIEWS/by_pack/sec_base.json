@@ -1,0 +1,12 @@
+[
+  {
+    "unit_id": "STDU-STD-SEC-001",
+    "title": "No secrets in artifacts",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-STD-SEC-101",
+    "title": "Auth required gate",
+    "status": "active"
+  }
+]

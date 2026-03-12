@@ -1,0 +1,170 @@
+[
+  {
+    "template_id": "ALRT-01",
+    "title": "Alerting Overview (principles, severity model)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-02",
+    "title": "Alert Catalog (by alert_id)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-03",
+    "title": "Alert Rule Spec (condition, threshold, window)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-04",
+    "title": "Oncall & Escalation Policy (rota, paging)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-05",
+    "title": "Noise Reduction Rules (dedupe, suppression)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-06",
+    "title": "Incident Triggers (alert → IRP runbook)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-07",
+    "title": "Customer Impact Rules (status page, comms)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-08",
+    "title": "Alert Testing & Drills (synthetics, fire drills)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "ALRT-09",
+    "title": "Alert Dashboards (what to watch)",
+    "type": "Operations / Alerting",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-01",
+    "title": "Logging Standard (levels, structure, fields)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-02",
+    "title": "Tracing Standard (trace/span IDs, propagation)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-03",
+    "title": "Error Logging Standard (error shapes, stack rules)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-04",
+    "title": "PII/Secret Redaction Standard (denylist, masking)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-05",
+    "title": "Log Routing & Storage (sinks, retention classes)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-06",
+    "title": "Client Logging Standard (mobile/web constraints)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-07",
+    "title": "Audit vs App Logs Boundary (what goes where)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-08",
+    "title": "Log Volume Controls (sampling, rate limits)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-09",
+    "title": "Logging Verification (tests, scanners)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "LTS-10",
+    "title": "Logging Runbooks (common issues)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-01",
+    "title": "Observability Overview (scope, principles, toolchain)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-02",
+    "title": "Telemetry Schema Standard (common fields, correlation IDs)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-03",
+    "title": "Metrics Catalog (by metric_id)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-05",
+    "title": "Log Event Catalog (by log_event_id)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-06",
+    "title": "Redaction & Privacy Rules for Telemetry (PII/secret handling)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-07",
+    "title": "Dashboards Inventory (by dashboard_id)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-08",
+    "title": "Alert Routing & Ownership (teams, oncall, escalation)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-09",
+    "title": "Sampling & Cardinality Policy (limits, hashing, budgets)",
+    "type": "Operations / Observability",
+    "status": "active"
+  },
+  {
+    "template_id": "OBS-10",
+    "title": "Observability Gates (required signals per surface)",
+    "type": "Operations / Observability",
+    "status": "active"
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "CACHE-01",
+    "title": "Caching Strategy (what to",
+    "type": "Data / Caching",
+    "status": "active",
+    "feature_pack": "caching"
+  },
+  {
+    "template_id": "CACHE-02",
+    "title": "Invalidation Rules (events,",
+    "type": "Data / Caching",
+    "status": "active",
+    "feature_pack": "caching"
+  },
+  {
+    "template_id": "CACHE-03",
+    "title": "Consistency Model",
+    "type": "Data / Caching",
+    "status": "active",
+    "feature_pack": "caching"
+  },
+  {
+    "template_id": "CACHE-04",
+    "title": "Read/Write Split Rules (read",
+    "type": "Data / Caching",
+    "status": "active",
+    "feature_pack": "caching"
+  },
+  {
+    "template_id": "CACHE-05",
+    "title": "Rate/Cost Controls for",
+    "type": "Data / Caching",
+    "status": "active",
+    "feature_pack": "caching"
+  },
+  {
+    "template_id": "CACHE-06",
+    "title": "Cache Failure Behavior",
+    "type": "Data / Caching",
+    "status": "active",
+    "feature_pack": "caching"
+  }
+]

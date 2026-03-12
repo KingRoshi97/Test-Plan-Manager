@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "DGL-01",
+    "title": "Data Ownership Map (owner",
+    "type": "Data / Governance",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DGL-03",
+    "title": "Transformation Rules Catalog",
+    "type": "Data / Governance",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DGL-04",
+    "title": "Access Controls for Data (who",
+    "type": "Data / Governance",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DGL-05",
+    "title": "Auditability Requirements",
+    "type": "Data / Governance",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DGL-06",
+    "title": "Data Catalog / Dictionary",
+    "type": "Data / Governance",
+    "status": "active",
+    "feature_pack": "data_governance"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "unit_id": "STDU-SEC-001",
+    "title": "No Secrets in Source",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-SEC-002",
+    "title": "Sensitive Data Logging Prohibition",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-SEC-003",
+    "title": "Authentication Required for Mutations",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-SEC-004",
+    "title": "Authorization Check Before Access",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-SEC-005",
+    "title": "Input Validation Required",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-SEC-006",
+    "title": "Session Timeout",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-SEC-007",
+    "title": "Rate Limiting Baseline",
+    "status": "active"
+  }
+]

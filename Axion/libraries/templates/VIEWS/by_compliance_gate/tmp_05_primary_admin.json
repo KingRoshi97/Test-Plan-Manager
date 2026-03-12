@@ -1,0 +1,38 @@
+[
+  {
+    "template_id": "ADMIN-01",
+    "title": "Admin Capabilities Matrix",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-02",
+    "title": "Moderation/Support Tools Spec (queues, actions)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-03",
+    "title": "Audit Trail Spec (actions + retention)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-04",
+    "title": "Data Repair Procedures (safe backfills)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-05",
+    "title": "Privileged API Surface Catalog (endpoints + authz)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  },
+  {
+    "template_id": "ADMIN-06",
+    "title": "Admin Observability & Safeguards (rate limits, alerts)",
+    "type": "Build / Admin Tools",
+    "status": "active"
+  }
+]

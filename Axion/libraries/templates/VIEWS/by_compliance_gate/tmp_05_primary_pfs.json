@@ -1,0 +1,32 @@
+[
+  {
+    "template_id": "PFS-01",
+    "title": "Query Contract (filter/sort operators, syntax)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-02",
+    "title": "Pagination Rules (cursor/offset, stability guarantees)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-03",
+    "title": "Default Ordering & Tie-Break Rules",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-04",
+    "title": "Validation & Error Mapping (bad query → reason codes)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-05",
+    "title": "Performance Constraints (limits, indexed fields policy)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  }
+]

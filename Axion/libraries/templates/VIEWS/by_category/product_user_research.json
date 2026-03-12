@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "URD-01",
+    "title": "Research Plan (questions,",
+    "type": "Product / User Research",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "URD-02",
+    "title": "Findings Summary (themes +",
+    "type": "Product / User Research",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "URD-03",
+    "title": "User Needs & Pain Points",
+    "type": "Product / User Research",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "URD-04",
+    "title": "Journey Map (current vs target)",
+    "type": "Product / User Research",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "URD-05",
+    "title": "Validation Plan (what to test,",
+    "type": "Product / User Research",
+    "status": "active",
+    "feature_pack": "product_extended"
+  }
+]

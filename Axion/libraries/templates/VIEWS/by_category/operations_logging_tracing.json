@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "LTS-01",
+    "title": "Logging Standard (levels, structure, fields)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "LTS-02",
+    "title": "Tracing Standard (trace/span IDs, propagation)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "LTS-03",
+    "title": "Error Logging Standard (error shapes, stack rules)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "LTS-04",
+    "title": "PII/Secret Redaction Standard (denylist, masking)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "LTS-05",
+    "title": "Log Routing & Storage (sinks, retention classes)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "LTS-06",
+    "title": "Client Logging Standard (mobile/web constraints)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "LTS-07",
+    "title": "Audit vs App Logs Boundary (what goes where)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "LTS-08",
+    "title": "Log Volume Controls (sampling, rate limits)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "LTS-09",
+    "title": "Logging Verification (tests, scanners)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "LTS-10",
+    "title": "Logging Runbooks (common issues)",
+    "type": "Operations / Logging & Tracing",
+    "status": "active",
+    "feature_pack": "ops_core"
+  }
+]

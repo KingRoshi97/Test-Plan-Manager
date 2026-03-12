@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "artifact_id": "STANDARDS_BUNDLE_EXPORT",
+  "title": "Standards Bundle Export Schema",
+  "description": "Schema for exporting a curated standards bundle",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "exported_at",
+    "packs",
+    "units"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "bundle_id": {
+      "type": "string"
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "packs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "unit_id",
+          "version"
+        ],
+        "properties": {
+          "unit_id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

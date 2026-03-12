@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "AUDIT-01",
+    "title": "Audit Event Catalog (by event_type)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "AUDIT-02",
+    "title": "Audit Schema (required fields, correlation IDs)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "AUDIT-03",
+    "title": "Capture Rules (what must be logged, where)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "AUDIT-04",
+    "title": "Tamper Evidence & Integrity (append-only, hashing)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "AUDIT-05",
+    "title": "Retention & Access Controls (who can view, how long)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "AUDIT-06",
+    "title": "Investigation Workflow (queries, exports, chain-of-custody)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "AUDIT-07",
+    "title": "Admin/Privileged Actions Audit (special handling)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "AUDIT-08",
+    "title": "Redaction & PII Handling (safe storage of audit data)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "AUDIT-09",
+    "title": "Alerts & Anomaly Detection (suspicious patterns)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "AUDIT-10",
+    "title": "Forensics Runbooks (incident support procedures)",
+    "type": "Security / Audit",
+    "status": "active",
+    "feature_pack": "auth_security"
+  }
+]

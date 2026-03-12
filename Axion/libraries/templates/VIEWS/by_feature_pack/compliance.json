@@ -1,0 +1,212 @@
+[
+  {
+    "template_id": "COMP-01",
+    "title": "Compliance Scope (frameworks, in/out scope)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-02",
+    "title": "Control Matrix (control_id → requirement → evidence)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-03",
+    "title": "Vendor Risk Management (third-party reviews, DPAs)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-04",
+    "title": "Policy & Training Requirements (who must do what)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-05",
+    "title": "Data Processing Agreements & Records (RoPA, DPA pointers)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-06",
+    "title": "Regulatory Requirements (CAN-SPAM, PCI, SOC2, HIPAA, etc.)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-07",
+    "title": "Risk Assessments (periodic, triggers, owners)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-08",
+    "title": "Exception Management (waivers, expiries, reviews)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-09",
+    "title": "Evidence Collection Plan (artifacts, cadence, storage)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "COMP-10",
+    "title": "Compliance Reporting & Audits (internal/external audits)",
+    "type": "Security / Compliance",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-01",
+    "title": "Performance Budget (web + mobile targets)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-02",
+    "title": "Rendering Strategy (SSR/CSR, list virtualization)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-03",
+    "title": "Asset Loading Strategy (code split, lazy load)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-04",
+    "title": "Profiling Plan (what to measure, tools)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "CPR-05",
+    "title": "Perf Regression Gates (thresholds, CI checks)",
+    "type": "Security / Compliance Programs",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-01",
+    "title": "Data Inventory (by data_class/entity)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-02",
+    "title": "PII Classification Model (types, sensitivity)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-03",
+    "title": "Data Minimization Rules (collect/store/share)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-04",
+    "title": "Consent Model (capture, storage, enforcement)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-05",
+    "title": "Retention & Deletion Policy (TTL, DSAR, legal hold)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-06",
+    "title": "Data Sharing Map (internal/external recipients)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-07",
+    "title": "Privacy by Design Checklist (gates, reviews)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-08",
+    "title": "Anonymization/Pseudonymization Rules (hashing, tokenization)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-09",
+    "title": "Privacy Incident Handling (breach response, notifications)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "PRIV-10",
+    "title": "Privacy Metrics & Audits (coverage, violations)",
+    "type": "Security / Privacy",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-01",
+    "title": "Threat Model Scope & Method (assets, actors, STRIDE)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-02",
+    "title": "Abuse Case Catalog (by abuse_id)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-03",
+    "title": "Attack Surface Inventory (endpoints, clients, integrations)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-04",
+    "title": "Risk Register (threats, likelihood, impact, mitigations)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-05",
+    "title": "Mitigation Mapping (threat → control → owner)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-06",
+    "title": "Rate Limit & Bot Defense Strategy (captcha, device signals)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-07",
+    "title": "Content/Message Abuse Controls (spam, harassment, scams)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-08",
+    "title": "Fraud/Payment Abuse Controls (ties to PAY-08)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-09",
+    "title": "Security Validation (tests, drills, red team-lite)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  },
+  {
+    "template_id": "TMA-10",
+    "title": "TMA Runbooks (triage, containment actions)",
+    "type": "Security / Threat Modeling",
+    "status": "active"
+  }
+]

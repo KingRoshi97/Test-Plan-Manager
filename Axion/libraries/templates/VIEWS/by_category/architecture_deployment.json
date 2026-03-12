@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "SBDT-01",
+    "title": "Service Boundary Map",
+    "type": "Architecture / Deployment",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "SBDT-02",
+    "title": "Runtime Topology (services,",
+    "type": "Architecture / Deployment",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "SBDT-03",
+    "title": "Environment Topology",
+    "type": "Architecture / Deployment",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "SBDT-04",
+    "title": "Scaling Model",
+    "type": "Architecture / Deployment",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "SBDT-05",
+    "title": "Resilience Topology",
+    "type": "Architecture / Deployment",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "SBDT-06",
+    "title": "Deployment Constraints",
+    "type": "Architecture / Deployment",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  }
+]

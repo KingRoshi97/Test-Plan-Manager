@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "SLO-01",
+    "title": "SLO/SLI Overview (definitions, scope)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-02",
+    "title": "Service SLO Catalog (by service_id)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-03",
+    "title": "Endpoint SLO Catalog (by endpoint_id)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-04",
+    "title": "Error Budget Policy (burn rates, actions)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-05",
+    "title": "SLA Commitments (external, contracts)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-06",
+    "title": "Measurement Rules (windows, aggregation)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-07",
+    "title": "Alerting on Burn (ties to ALRT)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-08",
+    "title": "Review Cadence & Ownership (monthly reviews)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-09",
+    "title": "Exceptions & Adjustments (temporary changes)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  },
+  {
+    "template_id": "SLO-10",
+    "title": "Reporting (dashboards, exec summaries)",
+    "type": "Operations / SLOs & Reliability",
+    "status": "active"
+  }
+]

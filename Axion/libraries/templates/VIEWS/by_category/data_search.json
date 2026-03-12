@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "SRCH-01",
+    "title": "Search Scope & Surfaces",
+    "type": "Data / Search",
+    "status": "active",
+    "feature_pack": "search"
+  },
+  {
+    "template_id": "SRCH-03",
+    "title": "Index Update Strategy",
+    "type": "Data / Search",
+    "status": "active",
+    "feature_pack": "search"
+  },
+  {
+    "template_id": "SRCH-04",
+    "title": "Search Result Quality Rules",
+    "type": "Data / Search",
+    "status": "active",
+    "feature_pack": "search"
+  },
+  {
+    "template_id": "SRCH-05",
+    "title": "Search Abuse Controls",
+    "type": "Data / Search",
+    "status": "active",
+    "feature_pack": "search"
+  },
+  {
+    "template_id": "SRCH-06",
+    "title": "Search Observability (metrics,",
+    "type": "Data / Search",
+    "status": "active",
+    "feature_pack": "search"
+  }
+]

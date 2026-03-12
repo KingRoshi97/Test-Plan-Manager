@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "CDX-01",
+    "title": "Content Style Guide (tone,",
+    "type": "Design / Content",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "CDX-02",
+    "title": "UI Copy Inventory (labels,",
+    "type": "Design / Content",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "CDX-03",
+    "title": "Empty States & Onboarding",
+    "type": "Design / Content",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "CDX-04",
+    "title": "Error/Warning/Success",
+    "type": "Design / Content",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "CDX-05",
+    "title": "Notification Copy Templates",
+    "type": "Design / Content",
+    "status": "active",
+    "feature_pack": "design_extended"
+  }
+]

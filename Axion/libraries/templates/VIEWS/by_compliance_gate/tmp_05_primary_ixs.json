@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "IXS-01",
+    "title": "Integration Inventory (by integration_id)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-02",
+    "title": "Integration Spec (per integration: purpose, data flow, auth)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-03",
+    "title": "Connectivity & Network Policy (timeouts, retries, allowlists)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-04",
+    "title": "Secrets & Credential Handling (storage, rotation, access)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-05",
+    "title": "Data Mapping & Transformation Rules (field maps, normalization)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-06",
+    "title": "Error Handling & Recovery (retries, fallbacks, operator actions)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-07",
+    "title": "Observability (logs/metrics/traces, dashboards, alerts)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-08",
+    "title": "Security & Compliance (PII, retention, vendor risk)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-09",
+    "title": "Sandbox/Test Environment Strategy (stubs, mocks, fixtures)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  },
+  {
+    "template_id": "IXS-10",
+    "title": "Versioning & Change Management (breaking changes, deprecation)",
+    "type": "Integration / External Systems",
+    "status": "active"
+  }
+]

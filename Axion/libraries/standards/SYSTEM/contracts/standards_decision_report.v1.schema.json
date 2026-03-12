@@ -1,0 +1,151 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "axion://SYSTEM/contracts/standards_decision_report.v1",
+  "title": "Standards Decision Report",
+  "description": "Schema for a standards resolution decision report in the Axion standards library.",
+  "type": "object",
+  "required": [
+    "report_id",
+    "run_id",
+    "timestamp",
+    "context",
+    "candidate_units",
+    "index_version",
+    "conflicts",
+    "overrides_applied",
+    "verdict",
+    "resolved_units"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier for this decision report."
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The run context that triggered resolution."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of resolution."
+    },
+    "context": {
+      "$ref": "#/definitions/resolution_context",
+      "description": "The evaluation context."
+    },
+    "candidate_units": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "All unit_id values considered during resolution."
+    },
+    "index_version": {
+      "type": "string",
+      "description": "Version of the standards index used."
+    },
+    "conflicts": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/conflict" },
+      "description": "Detected conflicts during resolution."
+    },
+    "overrides_applied": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/override_action" },
+      "description": "Override actions taken to resolve conflicts."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["resolved", "resolved_with_overrides", "unresolved"],
+      "description": "Final resolution verdict."
+    },
+    "resolved_units": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Final set of unit_id values that apply."
+    },
+    "resolved_rules": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/resolved_rule" },
+      "description": "Flattened list of rules from resolved units."
+    },
+    "unresolved_conflicts": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/conflict" },
+      "description": "Conflicts that could not be automatically resolved."
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Non-blocking observations."
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "resolution_context": {
+      "type": "object",
+      "properties": {
+        "profile": { "type": "string" },
+        "risk_class": {
+          "type": "string",
+          "enum": ["PROTOTYPE", "PROD", "COMPLIANCE"]
+        },
+        "stack": { "type": "string" },
+        "domain": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "conflict": {
+      "type": "object",
+      "required": ["unit_ids", "rule_ids", "type", "description"],
+      "properties": {
+        "unit_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 2
+        },
+        "rule_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "type": {
+          "type": "string",
+          "enum": ["contradiction", "overlap", "ambiguity"]
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "override_action": {
+      "type": "object",
+      "required": ["winning_unit", "losing_unit", "reason"],
+      "properties": {
+        "winning_unit": { "type": "string" },
+        "losing_unit": { "type": "string" },
+        "reason": {
+          "type": "string",
+          "enum": ["explicit", "risk_precedence", "specificity", "version_recency", "manual"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "resolved_rule": {
+      "type": "object",
+      "required": ["rule_id", "source_unit_id", "type", "severity", "statement"],
+      "properties": {
+        "rule_id": { "type": "string" },
+        "source_unit_id": { "type": "string" },
+        "type": { "type": "string" },
+        "severity": {
+          "type": "string",
+          "enum": ["must", "should", "must_not"]
+        },
+        "statement": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

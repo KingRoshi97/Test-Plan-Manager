@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "ANL-01",
+    "title": "Analytics Overview (goals, constraints)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-02",
+    "title": "Event Taxonomy (by event_name)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-03",
+    "title": "Event Schema Spec (payload rules, versioning)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-04",
+    "title": "Identity/Attribution Model (anon/user/tenant)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-05",
+    "title": "Consent & Opt-Out Enforcement (ties to PRIV-04)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-06",
+    "title": "Data Quality Rules (completeness, duplication)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-07",
+    "title": "Funnels & KPIs Definition (by kpi_id)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-08",
+    "title": "Experimentation Support (flags/assignments)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-09",
+    "title": "Retention & Deletion for Analytics (ties to PRIV-05)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  },
+  {
+    "template_id": "ANL-10",
+    "title": "Analytics Access Controls (who can query/export)",
+    "type": "Operations / Analytics",
+    "status": "active"
+  }
+]

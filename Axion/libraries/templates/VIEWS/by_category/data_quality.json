@@ -1,0 +1,30 @@
+[
+  {
+    "template_id": "DQV-01",
+    "title": "Validation Policy (schema vs",
+    "type": "Data / Quality",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DQV-02",
+    "title": "Data Quality Checks Catalog",
+    "type": "Data / Quality",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DQV-04",
+    "title": "Consistency & Integrity",
+    "type": "Data / Quality",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DQV-05",
+    "title": "Bad Data Handling (quarantine,",
+    "type": "Data / Quality",
+    "status": "active",
+    "feature_pack": "data_governance"
+  }
+]

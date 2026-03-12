@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "WHCP-01",
+    "title": "Webhook Event Catalog (by webhook_id/event_id)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  },
+  {
+    "template_id": "WHCP-02",
+    "title": "Outbound Webhook Producer Spec (signing, retries, dedupe)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  },
+  {
+    "template_id": "WHCP-03",
+    "title": "Inbound Webhook Consumer Spec (verification, idempotency)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  },
+  {
+    "template_id": "WHCP-04",
+    "title": "Delivery Semantics (ordering, replay, backoff)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  },
+  {
+    "template_id": "WHCP-05",
+    "title": "Security Rules (signatures, secrets rotation, allowlists)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  },
+  {
+    "template_id": "WHCP-06",
+    "title": "Endpoint Registration & Management (subscriptions, secrets)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  },
+  {
+    "template_id": "WHCP-07",
+    "title": "Error Handling (DLQ, quarantine, manual replay)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  },
+  {
+    "template_id": "WHCP-08",
+    "title": "Observability (delivery rate, latency, failures)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  },
+  {
+    "template_id": "WHCP-09",
+    "title": "Payload Versioning & Compatibility (schema evolution)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  },
+  {
+    "template_id": "WHCP-10",
+    "title": "Testing & Sandbox Strategy (test hooks, simulators)",
+    "type": "Integration / Webhooks",
+    "status": "active",
+    "feature_pack": "integrations_webhooks"
+  }
+]

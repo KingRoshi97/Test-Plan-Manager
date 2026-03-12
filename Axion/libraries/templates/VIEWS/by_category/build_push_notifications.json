@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "MPUSH-01",
+    "title": "Notification Types Catalog (by notif_id)",
+    "type": "Build / Push Notifications",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "MPUSH-02",
+    "title": "Payload Contract (fields, routing, localization keys)",
+    "type": "Build / Push Notifications",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "MPUSH-03",
+    "title": "Permission & Opt-In Rules (platform specific)",
+    "type": "Build / Push Notifications",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "MPUSH-04",
+    "title": "Delivery/Retry Rules (quiet hours, collapse keys)",
+    "type": "Build / Push Notifications",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "MPUSH-05",
+    "title": "Deep Link Routing (notif tap behavior)",
+    "type": "Build / Push Notifications",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "MPUSH-06",
+    "title": "Abuse/Spam Controls for Notifications",
+    "type": "Build / Push Notifications",
+    "status": "active",
+    "feature_pack": "mobile"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "SSO-01",
+    "title": "Provider Inventory (by provider_id)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-02",
+    "title": "SSO Flow Spec (OIDC/SAML, redirects, state/nonce)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-03",
+    "title": "Claim Mapping & Role Provisioning (claims → roles/permissions)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-04",
+    "title": "Session & Token Exchange Rules (refresh, expiry, rotation)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-05",
+    "title": "SCIM Provisioning Spec (users/groups lifecycle)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-06",
+    "title": "Account Linking & Identity Merge Rules",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-07",
+    "title": "MFA/Step-Up Auth Rules (when required)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-08",
+    "title": "Failure Handling (lockouts, partial provision, retries)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-09",
+    "title": "Security Controls (PKCE, signature validation, replay defense)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  },
+  {
+    "template_id": "SSO-10",
+    "title": "Audit & Compliance (login events, admin actions, retention)",
+    "type": "Integration / SSO & Identity",
+    "status": "active"
+  }
+]

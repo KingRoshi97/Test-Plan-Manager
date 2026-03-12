@@ -1,0 +1,30 @@
+[
+  {
+    "template_id": "RPT-01",
+    "title": "Reporting Surfaces Inventory",
+    "type": "Data / Reporting",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "RPT-03",
+    "title": "Aggregation & Rollup Rules",
+    "type": "Data / Reporting",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "RPT-05",
+    "title": "Data Access & Permissions for",
+    "type": "Data / Reporting",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "RPT-06",
+    "title": "Reporting Data Quality Rules",
+    "type": "Data / Reporting",
+    "status": "active",
+    "feature_pack": "data_governance"
+  }
+]

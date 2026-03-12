@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "COMP-01",
+    "title": "Compliance Scope (frameworks, in/out scope)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "COMP-02",
+    "title": "Control Matrix (control_id → requirement → evidence)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "COMP-03",
+    "title": "Vendor Risk Management (third-party reviews, DPAs)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "COMP-04",
+    "title": "Policy & Training Requirements (who must do what)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "COMP-05",
+    "title": "Data Processing Agreements & Records (RoPA, DPA pointers)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "COMP-06",
+    "title": "Regulatory Requirements (CAN-SPAM, PCI, SOC2, HIPAA, etc.)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "COMP-07",
+    "title": "Risk Assessments (periodic, triggers, owners)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "COMP-08",
+    "title": "Exception Management (waivers, expiries, reviews)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "COMP-09",
+    "title": "Evidence Collection Plan (artifacts, cadence, storage)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  },
+  {
+    "template_id": "COMP-10",
+    "title": "Compliance Reporting & Audits (internal/external audits)",
+    "type": "Security / Compliance",
+    "status": "active",
+    "feature_pack": "compliance"
+  }
+]

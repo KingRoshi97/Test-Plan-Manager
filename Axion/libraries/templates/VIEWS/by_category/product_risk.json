@@ -1,0 +1,30 @@
+[
+  {
+    "template_id": "RISK-01",
+    "title": "Assumptions Register",
+    "type": "Product / Risk",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "RISK-02",
+    "title": "Risk Register",
+    "type": "Product / Risk",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "RISK-03",
+    "title": "Dependency Map",
+    "type": "Product / Risk",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "RISK-04",
+    "title": "Contingency Triggers (what",
+    "type": "Product / Risk",
+    "status": "active",
+    "feature_pack": "product_extended"
+  }
+]

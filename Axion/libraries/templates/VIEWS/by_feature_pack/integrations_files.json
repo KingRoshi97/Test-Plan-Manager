@@ -1,0 +1,104 @@
+[
+  {
+    "template_id": "FMS-01",
+    "title": "Storage Provider Inventory (by provider_id/bucket_id)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-02",
+    "title": "Upload/Download Integration Spec (signed URLs, auth, limits)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-03",
+    "title": "Media Processing Integration (transcode/resize/scan vendors)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-04",
+    "title": "CDN & Delivery Rules (cache headers, variants)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-05",
+    "title": "Retention & Lifecycle Rules (TTL, archival, deletion)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-06",
+    "title": "Security & Compliance (PII, malware scanning, encryption)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-07",
+    "title": "Access Control Model (ACLs, signed access, tenancy)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-08",
+    "title": "Metadata & Indexing (search, tags, EXIF policy)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-09",
+    "title": "Migration & Backfill Plan (moving buckets, rehash)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FMS-10",
+    "title": "Observability & Cost Controls (storage growth, egress)",
+    "type": "Integration / File & Media Storage",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-01",
+    "title": "Upload Contract (types, limits, auth, scanning)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-02",
+    "title": "Storage Strategy (buckets, paths, access modes)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-03",
+    "title": "Processing Pipeline Stages (transcode/resize/parse)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-04",
+    "title": "Async Processing & Status Model (jobs, retries, DLQ)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-05",
+    "title": "CDN/Delivery Rules (cache headers, variants)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-06",
+    "title": "Security & Compliance for Files (PII, retention, malware)",
+    "type": "Build / File Processing",
+    "status": "active"
+  },
+  {
+    "template_id": "FPMP-07",
+    "title": "Media Observability (latency, failure rates, QoS)",
+    "type": "Build / File Processing",
+    "status": "active"
+  }
+]

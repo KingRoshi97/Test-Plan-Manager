@@ -1,0 +1,20 @@
+[
+  {
+    "template_id": "JBS-01",
+    "title": "Jobs Inventory (by job_id)",
+    "type": "Build / Background Jobs",
+    "status": "active"
+  },
+  {
+    "template_id": "JBS-03",
+    "title": "Scheduling Rules",
+    "type": "Build / Background Jobs",
+    "status": "active"
+  },
+  {
+    "template_id": "JBS-05",
+    "title": "Idempotency & Concurrency for",
+    "type": "Build / Background Jobs",
+    "status": "active"
+  }
+]

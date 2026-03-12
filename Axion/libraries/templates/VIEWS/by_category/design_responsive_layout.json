@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "RLB-01",
+    "title": "Breakpoint Definitions (sizes +",
+    "type": "Design / Responsive Layout",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "RLB-02",
+    "title": "Layout Adaptation Rules (per",
+    "type": "Design / Responsive Layout",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "RLB-03",
+    "title": "Responsive Component",
+    "type": "Design / Responsive Layout",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "RLB-04",
+    "title": "Touch Target & Density Rules",
+    "type": "Design / Responsive Layout",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "RLB-05",
+    "title": "Responsive Media Rules",
+    "type": "Design / Responsive Layout",
+    "status": "active",
+    "feature_pack": "design_extended"
+  }
+]

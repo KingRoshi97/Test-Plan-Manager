@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "FFCFG-01",
+    "title": "Feature Flag Registry (by flag_id)",
+    "type": "Build / Feature Flags",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "FFCFG-02",
+    "title": "Flag Behavior Spec (default, targeting, kill-switch)",
+    "type": "Build / Feature Flags",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "FFCFG-03",
+    "title": "Rollout Plan (phased, canary, % ramp)",
+    "type": "Build / Feature Flags",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "FFCFG-04",
+    "title": "Config Matrix (env vars/settings by env)",
+    "type": "Build / Feature Flags",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "FFCFG-05",
+    "title": "Safe Degradation Rules (flag off behavior)",
+    "type": "Build / Feature Flags",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  },
+  {
+    "template_id": "FFCFG-06",
+    "title": "Audit & Change Control (who can flip, logging)",
+    "type": "Build / Feature Flags",
+    "status": "active",
+    "feature_pack": "build_patterns"
+  }
+]

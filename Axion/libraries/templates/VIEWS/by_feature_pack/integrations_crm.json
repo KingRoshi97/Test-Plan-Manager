@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "CRMERP-01",
+    "title": "System Inventory (by system_id)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-02",
+    "title": "Object/Entity Mapping Catalog (objects ↔ entities, keys)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-03",
+    "title": "Sync Direction Rules (push/pull/bidirectional)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-04",
+    "title": "Sync Scheduling & Triggers (cron/event-driven, env enablement)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-05",
+    "title": "Conflict Resolution Rules (source of truth, LWW, prompts)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-06",
+    "title": "Rate Limits & Quotas (per vendor, backoff)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-07",
+    "title": "Data Quality & Validation (required fields, dedupe)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-08",
+    "title": "Error Handling & Reconciliation (replay, backfill)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-09",
+    "title": "Security & Compliance (PII, least privilege, audit)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  },
+  {
+    "template_id": "CRMERP-10",
+    "title": "Observability & Runbooks (dashboards, alerts, operator steps)",
+    "type": "Integration / CRM & ERP",
+    "status": "active"
+  }
+]

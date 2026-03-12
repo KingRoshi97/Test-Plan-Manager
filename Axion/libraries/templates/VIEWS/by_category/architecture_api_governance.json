@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "APIG-01",
+    "title": "API Standards (naming,",
+    "type": "Architecture / API Governance",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "APIG-02",
+    "title": "Versioning Policy (v1/v2 rules,",
+    "type": "Architecture / API Governance",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "APIG-03",
+    "title": "Deprecation & Sunset Policy",
+    "type": "Architecture / API Governance",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "APIG-04",
+    "title": "Review Gate Checklist (what",
+    "type": "Architecture / API Governance",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "APIG-05",
+    "title": "Compatibility Test",
+    "type": "Architecture / API Governance",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "APIG-06",
+    "title": "Schema Evolution Rules",
+    "type": "Architecture / API Governance",
+    "status": "active",
+    "feature_pack": "api"
+  }
+]

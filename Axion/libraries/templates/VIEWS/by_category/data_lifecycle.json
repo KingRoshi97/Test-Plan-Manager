@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "DLR-01",
+    "title": "Data Lifecycle States",
+    "type": "Data / Lifecycle",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DLR-02",
+    "title": "Retention Policy Matrix (by data",
+    "type": "Data / Lifecycle",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DLR-03",
+    "title": "Deletion & Erasure Procedures",
+    "type": "Data / Lifecycle",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DLR-04",
+    "title": "Legal Holds & Exceptions",
+    "type": "Data / Lifecycle",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DLR-05",
+    "title": "Archival & Cold Storage",
+    "type": "Data / Lifecycle",
+    "status": "active",
+    "feature_pack": "data_governance"
+  },
+  {
+    "template_id": "DLR-06",
+    "title": "Data Minimization Rules",
+    "type": "Data / Lifecycle",
+    "status": "active",
+    "feature_pack": "data_governance"
+  }
+]

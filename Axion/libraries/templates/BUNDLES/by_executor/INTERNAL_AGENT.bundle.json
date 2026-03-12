@@ -1,0 +1,23 @@
+{
+  "bundle_id": "BUNDLE-TPL-INTERNAL_AGENT",
+  "title": "INTERNAL AGENT",
+  "description": "Template bundle for internal agent execution",
+  "selection_policy": {
+    "mode": "deterministic",
+    "executor_filter": "internal_agent"
+  },
+  "feature_packs": [
+    "core",
+    "design_core",
+    "architecture_core",
+    "data_core"
+  ],
+  "by_run_profile": [],
+  "by_risk_class": [],
+  "by_executor": [
+    "internal_agent"
+  ],
+  "created_at": "2026-03-01",
+  "updated_at": "2026-03-11",
+  "owner": "axion-system"
+}

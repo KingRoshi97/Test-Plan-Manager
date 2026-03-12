@@ -1,0 +1,26 @@
+[
+  {
+    "template_id": "MDL-01",
+    "title": "Link Scheme & Domains (app links, universal links)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-02",
+    "title": "Routing Rules (link → screen/action mapping)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-03",
+    "title": "Auth Gating & Safety (signed links, validation)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  },
+  {
+    "template_id": "MDL-04",
+    "title": "Fallback Behavior (not installed, unknown routes)",
+    "type": "Build / Deep Links",
+    "status": "active"
+  }
+]

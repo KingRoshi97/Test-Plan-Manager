@@ -1,0 +1,32 @@
+[
+  {
+    "template_id": "YD-01",
+    "title": "Accessibility Requirements",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-02",
+    "title": "Keyboard/Focus Order Spec",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-03",
+    "title": "Screen Reader & Labels Spec",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-04",
+    "title": "Color Contrast & Visual",
+    "type": "Design / Accessibility",
+    "status": "active"
+  },
+  {
+    "template_id": "YD-05",
+    "title": "Accessible Error Messaging",
+    "type": "Design / Accessibility",
+    "status": "active"
+  }
+]

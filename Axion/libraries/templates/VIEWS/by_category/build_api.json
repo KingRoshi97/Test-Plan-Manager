@@ -1,0 +1,51 @@
+[
+  {
+    "template_id": "API-01",
+    "title": "Endpoint Catalog",
+    "type": "Build / API",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "API-02",
+    "title": "Endpoint Spec (per endpoint:",
+    "type": "Build / API",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "API-03",
+    "title": "Error & Status Code Policy",
+    "type": "Build / API",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "API-04",
+    "title": "AuthZ Rules (RBAC/ABAC checks)",
+    "type": "Build / API",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "API-05",
+    "title": "Rate Limit & Abuse Controls",
+    "type": "Build / API",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "API-06",
+    "title": "Background Jobs Spec (API-triggered + system jobs)",
+    "type": "Build / API",
+    "status": "active",
+    "feature_pack": "api"
+  },
+  {
+    "template_id": "API-07",
+    "title": "WebSocket API Spec",
+    "type": "Build / API",
+    "status": "active",
+    "feature_pack": "api"
+  }
+]

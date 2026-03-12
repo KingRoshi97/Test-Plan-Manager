@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "axion://SYSTEM/contracts/TMP-04.render_envelope.schema.v1.json",
+  "title": "TMP-04 — Render Envelope Schema (v1)",
+  "type": "object",
+  "required": [
+    "version",
+    "run_id",
+    "spec_id",
+    "rendered_at",
+    "template_id",
+    "template_path",
+    "output_path",
+    "status",
+    "hash",
+    "placeholders"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "run_id": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "rendered_at": { "type": "string" },
+    "template_id": { "type": "string" },
+    "template_path": { "type": "string" },
+    "output_path": { "type": "string" },
+    "status": { "enum": ["rendered", "skipped", "failed"] },
+    "hash": { "type": "string" },
+    "placeholders": {
+      "type": "object",
+      "required": ["total", "resolved", "optional_missing", "unknown_allowed", "missing_required"],
+      "properties": {
+        "total": { "type": "integer" },
+        "resolved": { "type": "integer" },
+        "optional_missing": { "type": "integer" },
+        "unknown_allowed": { "type": "integer" },
+        "missing_required": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "missing": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["placeholder", "field_path", "kind"],
+        "properties": {
+          "placeholder": { "type": "string" },
+          "field_path": { "type": "string" },
+          "kind": { "enum": ["required", "optional", "unknown_allowed"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "notes": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

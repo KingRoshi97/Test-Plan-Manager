@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "IAN-01",
+    "title": "Navigation Map",
+    "type": "Design / Information Architecture",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "IAN-02",
+    "title": "Route & Deep Link Spec (route",
+    "type": "Design / Information Architecture",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "IAN-03",
+    "title": "Information Architecture Tree",
+    "type": "Design / Information Architecture",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "IAN-04",
+    "title": "Search/Filter/Sort UX (if",
+    "type": "Design / Information Architecture",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "IAN-05",
+    "title": "Access-Gated Navigation Rules",
+    "type": "Design / Information Architecture",
+    "status": "active",
+    "feature_pack": "design_extended"
+  }
+]

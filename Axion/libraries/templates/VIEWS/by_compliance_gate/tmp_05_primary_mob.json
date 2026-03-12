@@ -1,0 +1,32 @@
+[
+  {
+    "template_id": "MOB-01",
+    "title": "Navigation Map (stacks/tabs/modals)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-02",
+    "title": "Screen Implementation Spec (per screen binding)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-03",
+    "title": "Native Integration Map (bridges, permissions)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-04",
+    "title": "App Lifecycle + State (foreground/background)",
+    "type": "Build / Mobile",
+    "status": "active"
+  },
+  {
+    "template_id": "MOB-05",
+    "title": "Release & Signing (stores, builds)",
+    "type": "Build / Mobile",
+    "status": "active"
+  }
+]

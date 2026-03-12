@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "PMAD-01",
+    "title": "Permission Model Overview",
+    "type": "Architecture / Authorization",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "PMAD-02",
+    "title": "AuthZ Policy Rules",
+    "type": "Architecture / Authorization",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "PMAD-03",
+    "title": "Enforcement Points Map",
+    "type": "Architecture / Authorization",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "PMAD-04",
+    "title": "Permission Check Patterns",
+    "type": "Architecture / Authorization",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "PMAD-05",
+    "title": "Privileged Operations Policy",
+    "type": "Architecture / Authorization",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "PMAD-06",
+    "title": "Audit Requirements for AuthZ",
+    "type": "Architecture / Authorization",
+    "status": "active",
+    "feature_pack": "auth_security"
+  }
+]

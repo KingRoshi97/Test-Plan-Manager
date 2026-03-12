@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "artifact_id": "TEMPLATE_SELECTION",
+  "title": "TEMPLATE_SELECTION Artifact Schema",
+  "description": "Artifact produced by template selection step: selected templates for a run",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "generated_at",
+    "mode",
+    "selected",
+    "skipped"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "deterministic"
+      ]
+    },
+    "selected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "template_id",
+          "version",
+          "feature_pack",
+          "reason"
+        ],
+        "properties": {
+          "template_id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "feature_pack": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "skipped": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "template_id",
+          "reason"
+        ],
+        "properties": {
+          "template_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

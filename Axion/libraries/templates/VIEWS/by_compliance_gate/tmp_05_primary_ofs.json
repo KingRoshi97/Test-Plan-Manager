@@ -1,0 +1,32 @@
+[
+  {
+    "template_id": "OFS-01",
+    "title": "Offline Scope (what works offline)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-02",
+    "title": "Sync Model (queues, conflict resolution)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-03",
+    "title": "Local Storage Schema (entities cached locally)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-04",
+    "title": "Reconciliation Rules (merge, LWW, prompts)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  },
+  {
+    "template_id": "OFS-05",
+    "title": "Sync Observability (stuck queues, retries, metrics)",
+    "type": "Build / Offline Support",
+    "status": "active"
+  }
+]

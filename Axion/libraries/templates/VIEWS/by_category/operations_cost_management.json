@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "COST-01",
+    "title": "Cost Model Overview (dimensions, owners)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  },
+  {
+    "template_id": "COST-02",
+    "title": "Cost Drivers Catalog (compute, storage, egress)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  },
+  {
+    "template_id": "COST-03",
+    "title": "Forecast Model (monthly/annual)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  },
+  {
+    "template_id": "COST-04",
+    "title": "Budget & Alerts (thresholds, routing)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  },
+  {
+    "template_id": "COST-05",
+    "title": "Unit Economics (cost per user/action)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  },
+  {
+    "template_id": "COST-06",
+    "title": "Optimization Backlog (ranked opportunities)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  },
+  {
+    "template_id": "COST-07",
+    "title": "Showback/Chargeback Policy (by team/tenant)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  },
+  {
+    "template_id": "COST-08",
+    "title": "Cost Attribution Tags Standard (required tags)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  },
+  {
+    "template_id": "COST-09",
+    "title": "Cost Reporting (dashboards, cadence)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  },
+  {
+    "template_id": "COST-10",
+    "title": "Incident Cost Review (post-incident spend)",
+    "type": "Operations / Cost Management",
+    "status": "active",
+    "feature_pack": "ops_extended"
+  }
+]

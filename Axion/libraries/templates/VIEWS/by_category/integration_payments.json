@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "PAY-01",
+    "title": "Provider Inventory (by provider_id)",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  },
+  {
+    "template_id": "PAY-02",
+    "title": "Payment Flow Spec (one-time, recurring, invoices)",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  },
+  {
+    "template_id": "PAY-03",
+    "title": "Pricing & Plan Mapping (plans, tiers, entitlements)",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  },
+  {
+    "template_id": "PAY-04",
+    "title": "Webhook Handling for Payments (events, idempotency, retries)",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  },
+  {
+    "template_id": "PAY-05",
+    "title": "Tax/VAT Rules & Compliance (if applicable)",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  },
+  {
+    "template_id": "PAY-06",
+    "title": "Refunds, Chargebacks & Disputes Policy",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  },
+  {
+    "template_id": "PAY-07",
+    "title": "Ledger & Reconciliation Rules (source of truth, audits)",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  },
+  {
+    "template_id": "PAY-08",
+    "title": "Fraud & Abuse Controls (risk checks, velocity limits)",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  },
+  {
+    "template_id": "PAY-09",
+    "title": "Security & PCI Boundaries (tokenization, SAQ scope)",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  },
+  {
+    "template_id": "PAY-10",
+    "title": "Billing Observability & Support Runbooks (alerts, workflows)",
+    "type": "Integration / Payments",
+    "status": "active",
+    "feature_pack": "integrations_payments"
+  }
+]

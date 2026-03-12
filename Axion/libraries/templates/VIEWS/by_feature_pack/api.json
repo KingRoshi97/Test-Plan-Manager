@@ -1,0 +1,110 @@
+[
+  {
+    "template_id": "API-01",
+    "title": "Endpoint Catalog",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-02",
+    "title": "Endpoint Spec (per endpoint:",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-03",
+    "title": "Error & Status Code Policy",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-04",
+    "title": "AuthZ Rules (RBAC/ABAC checks)",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-05",
+    "title": "Rate Limit & Abuse Controls",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-06",
+    "title": "Background Jobs Spec (API-triggered + system jobs)",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "API-07",
+    "title": "WebSocket API Spec",
+    "type": "Build / API",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-01",
+    "title": "API Standards (naming,",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-02",
+    "title": "Versioning Policy (v1/v2 rules,",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-03",
+    "title": "Deprecation & Sunset Policy",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-04",
+    "title": "Review Gate Checklist (what",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-05",
+    "title": "Compatibility Test",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-06",
+    "title": "Schema Evolution Rules",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-01",
+    "title": "Query Contract (filter/sort operators, syntax)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-02",
+    "title": "Pagination Rules (cursor/offset, stability guarantees)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-03",
+    "title": "Default Ordering & Tie-Break Rules",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-04",
+    "title": "Validation & Error Mapping (bad query → reason codes)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  },
+  {
+    "template_id": "PFS-05",
+    "title": "Performance Constraints (limits, indexed fields policy)",
+    "type": "Build / Pagination & Filtering",
+    "status": "active"
+  }
+]

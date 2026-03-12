@@ -1,0 +1,62 @@
+[
+  {
+    "template_id": "LOAD-01",
+    "title": "Load Testing Overview (goals, scope)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-02",
+    "title": "Workload Models (traffic shapes, personas)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-03",
+    "title": "Test Scenarios Catalog (by scenario_id)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-04",
+    "title": "Data & Environment Setup (fixtures, isolation)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-05",
+    "title": "Tooling & Harness (runner, metrics capture)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-06",
+    "title": "Pass/Fail Criteria (SLO ties)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-07",
+    "title": "Capacity Findings Report (results template)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-08",
+    "title": "Bottleneck Analysis Template (what failed)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-09",
+    "title": "Chaos/Failure Injection Plan (optional)",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  },
+  {
+    "template_id": "LOAD-10",
+    "title": "Re-run Cadence & Change Triggers",
+    "type": "Operations / Load Testing",
+    "status": "active"
+  }
+]

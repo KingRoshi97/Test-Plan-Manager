@@ -1,0 +1,28 @@
+{
+  "bundle_id": "BUNDLE-STD-COMPLIANCE",
+  "title": "COMPLIANCE Risk Class",
+  "description": "Standards bundle for compliance risk class",
+  "selection_policy": {
+    "mode": "deterministic",
+    "always_include": [
+      "CORE"
+    ]
+  },
+  "packs": [
+    "CORE",
+    "SEC_BASE",
+    "QA_BASE",
+    "ANALYTICS_CONDITIONAL",
+    "CONTRACTS_CONDITIONAL"
+  ],
+  "by_run_profile": [],
+  "by_risk_class": [
+    "COMPLIANCE"
+  ],
+  "by_executor": [
+    "internal_and_external"
+  ],
+  "created_at": "2026-03-01",
+  "updated_at": "2026-03-11",
+  "owner": "axion-system"
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "template_id": "ALRT-01",
+    "title": "Alerting Overview (principles, severity model)",
+    "type": "Operations / Alerting",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "ALRT-02",
+    "title": "Alert Catalog (by alert_id)",
+    "type": "Operations / Alerting",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "ALRT-03",
+    "title": "Alert Rule Spec (condition, threshold, window)",
+    "type": "Operations / Alerting",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "ALRT-04",
+    "title": "Oncall & Escalation Policy (rota, paging)",
+    "type": "Operations / Alerting",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "ALRT-05",
+    "title": "Noise Reduction Rules (dedupe, suppression)",
+    "type": "Operations / Alerting",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "ALRT-06",
+    "title": "Incident Triggers (alert → IRP runbook)",
+    "type": "Operations / Alerting",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "ALRT-07",
+    "title": "Customer Impact Rules (status page, comms)",
+    "type": "Operations / Alerting",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "ALRT-08",
+    "title": "Alert Testing & Drills (synthetics, fire drills)",
+    "type": "Operations / Alerting",
+    "status": "active",
+    "feature_pack": "ops_core"
+  },
+  {
+    "template_id": "ALRT-09",
+    "title": "Alert Dashboards (what to watch)",
+    "type": "Operations / Alerting",
+    "status": "active",
+    "feature_pack": "ops_core"
+  }
+]

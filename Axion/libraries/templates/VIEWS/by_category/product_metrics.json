@@ -1,0 +1,30 @@
+[
+  {
+    "template_id": "SMIP-01",
+    "title": "KPI/OKR Definitions (targets +",
+    "type": "Product / Metrics",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "SMIP-02",
+    "title": "Analytics Event Spec (event",
+    "type": "Product / Metrics",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "SMIP-03",
+    "title": "Funnel/Conversion Definitions",
+    "type": "Product / Metrics",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "SMIP-04",
+    "title": "Experiment Measurement Plan",
+    "type": "Product / Metrics",
+    "status": "active",
+    "feature_pack": "product_extended"
+  }
+]

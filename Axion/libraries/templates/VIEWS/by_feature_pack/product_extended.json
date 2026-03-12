@@ -1,0 +1,152 @@
+[
+  {
+    "template_id": "BRP-01",
+    "title": "Business Rules Catalog (by ID)",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-02",
+    "title": "Eligibility & Entitlement Rules",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-03",
+    "title": "Pricing/Permission Policy",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-04",
+    "title": "Exceptions & Edge-Case Policy",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-01",
+    "title": "Assumptions Register",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-02",
+    "title": "Risk Register",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-03",
+    "title": "Dependency Map",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-04",
+    "title": "Contingency Triggers (what",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-01",
+    "title": "Release Roadmap (milestones)",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-02",
+    "title": "Scope Boundaries (in/out +",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-03",
+    "title": "Prioritization Framework",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-04",
+    "title": "Change Control Policy (how",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-01",
+    "title": "KPI/OKR Definitions (targets +",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-02",
+    "title": "Analytics Event Spec (event",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-03",
+    "title": "Funnel/Conversion Definitions",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-04",
+    "title": "Experiment Measurement Plan",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-01",
+    "title": "Stakeholder Map (roles,",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-02",
+    "title": "Decision Log (what/why/when)",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-03",
+    "title": "RACI / Ownership Matrix",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-04",
+    "title": "Approval Gates (who signs",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-01",
+    "title": "Research Plan (questions,",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-02",
+    "title": "Findings Summary (themes +",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-03",
+    "title": "User Needs & Pain Points",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-04",
+    "title": "Journey Map (current vs target)",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-05",
+    "title": "Validation Plan (what to test,",
+    "type": "Product / User Research",
+    "status": "active"
+  }
+]

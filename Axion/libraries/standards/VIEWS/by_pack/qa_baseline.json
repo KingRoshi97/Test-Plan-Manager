@@ -1,0 +1,37 @@
+[
+  {
+    "unit_id": "STDU-QA-001",
+    "title": "Build Must Pass",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-QA-002",
+    "title": "Lint Must Pass",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-QA-003",
+    "title": "Unit Tests Required",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-QA-004",
+    "title": "Proof-Based Acceptance",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-QA-005",
+    "title": "Minimum Test Coverage",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-QA-006",
+    "title": "Integration Test Requirement",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-QA-007",
+    "title": "Performance Baseline",
+    "status": "active"
+  }
+]

@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "IXD-01",
+    "title": "Interaction Patterns Catalog",
+    "type": "Design / Interaction",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "IXD-02",
+    "title": "Motion Rules",
+    "type": "Design / Interaction",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "IXD-03",
+    "title": "Transition Map (screen",
+    "type": "Design / Interaction",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "IXD-04",
+    "title": "Micro-interactions Spec",
+    "type": "Design / Interaction",
+    "status": "active",
+    "feature_pack": "design_extended"
+  },
+  {
+    "template_id": "IXD-05",
+    "title": "Accessibility-Safe Motion Rules",
+    "type": "Design / Interaction",
+    "status": "active",
+    "feature_pack": "design_extended"
+  }
+]

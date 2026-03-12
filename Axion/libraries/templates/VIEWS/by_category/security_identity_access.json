@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "IAM-01",
+    "title": "Role & Permission Model (roles, permissions, inheritance)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "IAM-02",
+    "title": "AuthN Methods (passwordless, SSO, MFA binding)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "IAM-03",
+    "title": "Session Management Policy (expiry, rotation, device binding)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "IAM-04",
+    "title": "Authorization Enforcement Points (where checks happen)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "IAM-05",
+    "title": "Service-to-Service Auth (mTLS/JWT, identity)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "IAM-06",
+    "title": "Admin & Privileged Access Policy (break-glass, step-up)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "IAM-07",
+    "title": "Account Lifecycle (provision, deprovision, recovery)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "IAM-08",
+    "title": "API Key Policy (creation, scoping, rotation, revocation)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "IAM-09",
+    "title": "Access Reviews (periodic review, attestations)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  },
+  {
+    "template_id": "IAM-10",
+    "title": "Access Observability (auth logs, auth failures, metrics)",
+    "type": "Security / Identity & Access",
+    "status": "active",
+    "feature_pack": "auth_security"
+  }
+]

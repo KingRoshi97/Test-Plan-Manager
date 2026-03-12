@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": "1.0.0",
+  "artifact_id": "STANDARDS_SELECTION",
+  "title": "STANDARDS_SELECTION Artifact Schema",
+  "description": "Artifact produced by standards resolution step: resolved standards snapshot",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "generated_at",
+    "packs_resolved",
+    "snapshot"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "packs_resolved": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "fixed_rules": {
+          "type": "array"
+        },
+        "configurable_rules": {
+          "type": "array"
+        },
+        "conflicts": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}

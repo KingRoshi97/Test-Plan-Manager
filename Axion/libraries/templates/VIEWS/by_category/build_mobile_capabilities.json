@@ -1,0 +1,37 @@
+[
+  {
+    "template_id": "MDC-01",
+    "title": "Capabilities Inventory (camera/gps/files/push)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "MDC-02",
+    "title": "Permissions UX Rules (prompts, denial handling)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "MDC-03",
+    "title": "Capability Security Rules (least privilege)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "MDC-04",
+    "title": "Capability Failure Handling (fallbacks)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active",
+    "feature_pack": "mobile"
+  },
+  {
+    "template_id": "MDC-05",
+    "title": "Telemetry for Capabilities (errors, latency)",
+    "type": "Build / Mobile Capabilities",
+    "status": "active",
+    "feature_pack": "mobile"
+  }
+]

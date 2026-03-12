@@ -1,0 +1,1064 @@
+[
+  {
+    "template_id": "A11YD-01",
+    "title": "A11YD-01",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-02",
+    "title": "A11YD-02",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-03",
+    "title": "A11YD-03",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-04",
+    "title": "A11YD-04",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "A11YD-05",
+    "title": "A11YD-05",
+    "type": "Experience Design",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-01",
+    "title": "API Standards (naming,",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-02",
+    "title": "Versioning Policy (v1/v2 rules,",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-03",
+    "title": "Deprecation & Sunset Policy",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-04",
+    "title": "Review Gate Checklist (what",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-05",
+    "title": "Compatibility Test",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "APIG-06",
+    "title": "Schema Evolution Rules",
+    "type": "Architecture / API Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-01",
+    "title": "System Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-02",
+    "title": "Core Contracts Overview (APIs,",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-03",
+    "title": "Key Workflow Data Flows",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-04",
+    "title": "Authentication Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-05",
+    "title": "Realtime Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-06",
+    "title": "Error Model + Reason Codes",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-07",
+    "title": "Integration Architecture",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-08",
+    "title": "Deployment Topology",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-09",
+    "title": "Cross-Cutting Concerns",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ARC-10",
+    "title": "Architecture Constraints &",
+    "type": "Architecture / System",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-01",
+    "title": "Business Rules Catalog (by ID)",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-02",
+    "title": "Eligibility & Entitlement Rules",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-03",
+    "title": "Pricing/Permission Policy",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "BRP-04",
+    "title": "Exceptions & Edge-Case Policy",
+    "type": "Product / Business Rules",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-01",
+    "title": "Caching Strategy (what to",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-02",
+    "title": "Invalidation Rules (events,",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-03",
+    "title": "Consistency Model",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-04",
+    "title": "Read/Write Split Rules (read",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-05",
+    "title": "Rate/Cost Controls for",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CACHE-06",
+    "title": "Cache Failure Behavior",
+    "type": "Data / Caching",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-01",
+    "title": "Content Style Guide (tone,",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-02",
+    "title": "UI Copy Inventory (labels,",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-03",
+    "title": "Empty States & Onboarding",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-04",
+    "title": "Error/Warning/Success",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "CDX-05",
+    "title": "Notification Copy Templates",
+    "type": "Design / Content",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-01",
+    "title": "Entity Definitions (canonical",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-02",
+    "title": "Relationship Map (ERD text",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-03",
+    "title": "Persistence Rules (indexes,",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-04",
+    "title": "Migration Plan (schema",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-05",
+    "title": "Seed Data Spec",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-06",
+    "title": "Validation Schemas",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-07",
+    "title": "Derived/Read Models Spec",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DATA-08",
+    "title": "Data Access Patterns",
+    "type": "Data / Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-01",
+    "title": "UX Flows (happy paths + edge",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-02",
+    "title": "Screen Inventory (by",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-03",
+    "title": "Screen Spec (per screen:",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-04",
+    "title": "UI Component Inventory",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-05",
+    "title": "UI State Model",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-06",
+    "title": "Form & Validation UX Rules",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-07",
+    "title": "Error Handling UX (toasts,",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DES-08",
+    "title": "Acceptance Hooks (screen/flow",
+    "type": "Design / UX",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-01",
+    "title": "Data Ownership Map (owner",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-02",
+    "title": "DGL-02",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-03",
+    "title": "Transformation Rules Catalog",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-04",
+    "title": "Access Controls for Data (who",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-05",
+    "title": "Auditability Requirements",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DGL-06",
+    "title": "Data Catalog / Dictionary",
+    "type": "Data / Governance",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-01",
+    "title": "Data Lifecycle States",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-02",
+    "title": "Retention Policy Matrix (by data",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-03",
+    "title": "Deletion & Erasure Procedures",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-04",
+    "title": "Legal Holds & Exceptions",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-05",
+    "title": "Archival & Cold Storage",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DLR-06",
+    "title": "Data Minimization Rules",
+    "type": "Data / Lifecycle",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-01",
+    "title": "Domain Glossary (canonical",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-02",
+    "title": "Concept Model (entities +",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-03",
+    "title": "Invariants & Definitions",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DMG-04",
+    "title": "Event Vocabulary (canonical",
+    "type": "Product / Domain Model",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-01",
+    "title": "Validation Policy (schema vs",
+    "type": "Data / Quality",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-02",
+    "title": "Data Quality Checks Catalog",
+    "type": "Data / Quality",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-03",
+    "title": "DQV-03",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-04",
+    "title": "Consistency & Integrity",
+    "type": "Data / Quality",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-05",
+    "title": "Bad Data Handling (quarantine,",
+    "type": "Data / Quality",
+    "status": "active"
+  },
+  {
+    "template_id": "DQV-06",
+    "title": "DQV-06",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-01",
+    "title": "Token Spec (color, type,",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-02",
+    "title": "Component Variants Spec",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-03",
+    "title": "Layout Grid & Spacing Rules",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-04",
+    "title": "Iconography & Illustration",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "DSYS-05",
+    "title": "Theming Rules (light/dark,",
+    "type": "Design / System",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-01",
+    "title": "Error Taxonomy (classes,",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-02",
+    "title": "Reason Codes Registry (rc_*",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-03",
+    "title": "API Error Contract (shape,",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-04",
+    "title": "UX Error Mapping Rules",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-05",
+    "title": "Retryability & Idempotency",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-06",
+    "title": "Observability Requirements for",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-01",
+    "title": "Navigation Map",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-02",
+    "title": "Route & Deep Link Spec (route",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-03",
+    "title": "Information Architecture Tree",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-04",
+    "title": "Search/Filter/Sort UX (if",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IAN-05",
+    "title": "Access-Gated Navigation Rules",
+    "type": "Design / Information Architecture",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-01",
+    "title": "Interaction Patterns Catalog",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-02",
+    "title": "Motion Rules",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-03",
+    "title": "Transition Map (screen",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-04",
+    "title": "Micro-interactions Spec",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "IXD-05",
+    "title": "Accessibility-Safe Motion Rules",
+    "type": "Design / Interaction",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-01",
+    "title": "Permission Model Overview",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-02",
+    "title": "AuthZ Policy Rules",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-03",
+    "title": "Enforcement Points Map",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-04",
+    "title": "Permission Check Patterns",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-05",
+    "title": "Privileged Operations Policy",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PMAD-06",
+    "title": "Audit Requirements for AuthZ",
+    "type": "Architecture / Authorization",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-01",
+    "title": "Product Overview",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-02",
+    "title": "Goals, Non-Goals, Success",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-03",
+    "title": "Personas & Roles",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-04",
+    "title": "Feature Catalog (by ID) +",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-05",
+    "title": "User Stories / JTBD Map",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-06",
+    "title": "Non-Functional Requirements",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-07",
+    "title": "Constraints & Assumptions",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-08",
+    "title": "Open Questions Log",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "PRD-09",
+    "title": "Acceptance Criteria Catalog (by",
+    "type": "Product / Requirements",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-01",
+    "title": "Assumptions Register",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-02",
+    "title": "Risk Register",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-03",
+    "title": "Dependency Map",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RISK-04",
+    "title": "Contingency Triggers (what",
+    "type": "Product / Risk",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-01",
+    "title": "Breakpoint Definitions (sizes +",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-02",
+    "title": "Layout Adaptation Rules (per",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-03",
+    "title": "Responsive Component",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-04",
+    "title": "Touch Target & Density Rules",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RLB-05",
+    "title": "Responsive Media Rules",
+    "type": "Design / Responsive Layout",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-01",
+    "title": "Reporting Surfaces Inventory",
+    "type": "Data / Reporting",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-02",
+    "title": "RPT-02",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-03",
+    "title": "Aggregation & Rollup Rules",
+    "type": "Data / Reporting",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-04",
+    "title": "RPT-04",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-05",
+    "title": "Data Access & Permissions for",
+    "type": "Data / Reporting",
+    "status": "active"
+  },
+  {
+    "template_id": "RPT-06",
+    "title": "Reporting Data Quality Rules",
+    "type": "Data / Reporting",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-01",
+    "title": "Release Roadmap (milestones)",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-02",
+    "title": "Scope Boundaries (in/out +",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-03",
+    "title": "Prioritization Framework",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RSC-04",
+    "title": "Change Control Policy (how",
+    "type": "Product / Roadmap",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-01",
+    "title": "Realtime Use Cases Catalog",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-02",
+    "title": "Protocol & Transport Map",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-03",
+    "title": "Channel/Topic Model (naming,",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-04",
+    "title": "Delivery Semantics (ordering,",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-05",
+    "title": "Presence & State Sync Model",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-06",
+    "title": "Abuse/Rate Control for",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-01",
+    "title": "Service Boundary Map",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-02",
+    "title": "Runtime Topology (services,",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-03",
+    "title": "Environment Topology",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-04",
+    "title": "Scaling Model",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-05",
+    "title": "Resilience Topology",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-06",
+    "title": "Deployment Constraints",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-01",
+    "title": "External Interface Inventory",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-02",
+    "title": "Contract Spec (per interface:",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-03",
+    "title": "Webhook Contract Spec",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-04",
+    "title": "Data Mapping Contract (field",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-05",
+    "title": "Integration Failure Modes &",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SIC-06",
+    "title": "Vendor/Third-Party Trust Model",
+    "type": "Architecture / Interfaces",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-01",
+    "title": "KPI/OKR Definitions (targets +",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-02",
+    "title": "Analytics Event Spec (event",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-03",
+    "title": "Funnel/Conversion Definitions",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SMIP-04",
+    "title": "Experiment Measurement Plan",
+    "type": "Product / Metrics",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-01",
+    "title": "Search Scope & Surfaces",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-02",
+    "title": "SRCH-02",
+    "type": "Data & Information",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-03",
+    "title": "Index Update Strategy",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-04",
+    "title": "Search Result Quality Rules",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-05",
+    "title": "Search Abuse Controls",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "SRCH-06",
+    "title": "Search Observability (metrics,",
+    "type": "Data / Search",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-01",
+    "title": "Stakeholder Map (roles,",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-02",
+    "title": "Decision Log (what/why/when)",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-03",
+    "title": "RACI / Ownership Matrix",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "STK-04",
+    "title": "Approval Gates (who signs",
+    "type": "Product / Stakeholders",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-01",
+    "title": "Research Plan (questions,",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-02",
+    "title": "Findings Summary (themes +",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-03",
+    "title": "User Needs & Pain Points",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-04",
+    "title": "Journey Map (current vs target)",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "URD-05",
+    "title": "Validation Plan (what to test,",
+    "type": "Product / User Research",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-01",
+    "title": "Asset Inventory (logos, icons,",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-02",
+    "title": "Export Spec (formats, sizes,",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-03",
+    "title": "Brand Usage Rules (do/don’t,",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-04",
+    "title": "Asset Delivery Checklist",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "VAP-05",
+    "title": "Accessibility for Visual Assets",
+    "type": "Design / Visual Assets",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-01",
+    "title": "Workflow Catalog",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-02",
+    "title": "Orchestration Patterns (state",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-03",
+    "title": "Idempotency & Concurrency",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-04",
+    "title": "Scheduling & Triggers",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-05",
+    "title": "Failure Handling (DLQ, backoff,",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-06",
+    "title": "Workflow Observability",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  }
+]

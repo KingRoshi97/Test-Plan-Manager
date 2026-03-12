@@ -1,0 +1,58 @@
+[
+  {
+    "template_id": "EVT-01",
+    "title": "Event Catalog (by event_id)",
+    "type": "Build / Events",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "EVT-02",
+    "title": "Event Schema Spec (payload, versioning, pii rules)",
+    "type": "Build / Events",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "EVT-03",
+    "title": "Producer/Consumer Map (who emits/consumes, contracts)",
+    "type": "Build / Events",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "EVT-04",
+    "title": "Delivery Semantics (ordering, retries, dedupe)",
+    "type": "Build / Events",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "EVT-05",
+    "title": "Webhook Producer Spec (outbound webhooks)",
+    "type": "Build / Events",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "EVT-06",
+    "title": "Webhook Consumer Spec (inbound webhooks)",
+    "type": "Build / Events",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "EVT-07",
+    "title": "Event Failure Handling (DLQ, replay, backfill)",
+    "type": "Build / Events",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "EVT-08",
+    "title": "Event Observability (lag, success rate, tracing)",
+    "type": "Build / Events",
+    "status": "active",
+    "feature_pack": "realtime"
+  }
+]

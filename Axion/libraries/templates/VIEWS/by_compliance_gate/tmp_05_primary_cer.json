@@ -1,0 +1,32 @@
+[
+  {
+    "template_id": "CER-01",
+    "title": "Error Boundary Strategy (global vs local)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-02",
+    "title": "Retry & Recovery Patterns (per error class)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-03",
+    "title": "Offline/Error Mode UX (degraded experiences)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-04",
+    "title": "Session Expiry Handling (re-auth prompts, restore state)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-05",
+    "title": "Client Logging & Crash Reporting (fields, redaction)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  }
+]

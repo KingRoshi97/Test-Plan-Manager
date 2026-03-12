@@ -1,0 +1,51 @@
+[
+  {
+    "template_id": "FE-01",
+    "title": "Route Map + Layout Spec",
+    "type": "Build / Frontend",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "FE-02",
+    "title": "Component Implementation Spec",
+    "type": "Build / Frontend",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "FE-03",
+    "title": "UI State Model (loading/empty/error/success)",
+    "type": "Build / Frontend",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "FE-04",
+    "title": "Data Binding Rules (what calls what, when)",
+    "type": "Build / Frontend",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "FE-05",
+    "title": "Accessibility Implementation Notes (a11y enforcement)",
+    "type": "Build / Frontend",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "FE-06",
+    "title": "Theming/Tokens Integration (DSYS binding)",
+    "type": "Build / Frontend",
+    "status": "active",
+    "feature_pack": "frontend"
+  },
+  {
+    "template_id": "FE-07",
+    "title": "Error Handling UX Implementation (surface rules)",
+    "type": "Build / Frontend",
+    "status": "active",
+    "feature_pack": "frontend"
+  }
+]

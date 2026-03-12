@@ -1,0 +1,87 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "schema_version": "1.0.0",
+    "id": "standards_pack.v1",
+    "type": "object",
+    "required": [
+      "pack_id",
+      "pack_version",
+      "category",
+      "applies_when",
+      "priority",
+      "fixed_rules",
+      "configurable_rules"
+    ],
+    "properties": {
+      "pack_id": { "type": "string", "minLength": 1 },
+      "pack_version": { "type": "string", "minLength": 1 },
+      "category": { "type": "string" },
+      "applies_when": {
+        "type": "object",
+        "description": "Conditions under which this pack applies. Empty object means always applies.",
+        "properties": {
+          "profiles": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "risk_classes": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["PROTOTYPE", "PROD", "COMPLIANCE"] }
+          },
+          "stacks": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "domains": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      },
+      "priority": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Higher values indicate higher priority in resolution order"
+      },
+      "fixed_rules": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/rule" },
+        "description": "Rules that cannot be overridden by lower-priority packs"
+      },
+      "configurable_rules": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/rule" },
+        "description": "Rules with default values that may be overridden by higher-priority packs"
+      }
+    },
+    "$defs": {
+      "rule": {
+        "type": "object",
+        "required": ["rule_id", "name", "description", "rule_type", "value", "fixed", "source_pack"],
+        "properties": {
+          "rule_id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "rule_type": {
+            "type": "string",
+            "enum": ["requirement", "default", "constraint", "guideline", "prohibition"]
+          },
+          "value": {
+            "type": "object",
+            "description": "Rule value payload — structure varies by rule"
+          },
+          "fixed": {
+            "type": "boolean",
+            "description": "If true, this rule cannot be overridden"
+          },
+          "source_pack": {
+            "type": "string",
+            "description": "Pack ID and version that defines this rule (e.g., CORE@1.0.0)"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "NOTIF-01",
+    "title": "Channel Inventory (email/sms/push/in-app)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  },
+  {
+    "template_id": "NOTIF-02",
+    "title": "Provider Inventory (by provider_id)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  },
+  {
+    "template_id": "NOTIF-03",
+    "title": "Template & Localization Mapping (template_id, variables)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  },
+  {
+    "template_id": "NOTIF-04",
+    "title": "Send Policy (throttles, quiet hours, batching)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  },
+  {
+    "template_id": "NOTIF-05",
+    "title": "Deliverability Rules (bounces, spam, suppression lists)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  },
+  {
+    "template_id": "NOTIF-06",
+    "title": "Preference Center & Opt-Out Rules (global/per-type)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  },
+  {
+    "template_id": "NOTIF-07",
+    "title": "Security & Compliance (PII, CAN-SPAM, consent)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  },
+  {
+    "template_id": "NOTIF-08",
+    "title": "Event-to-Notification Mapping (events → messages)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  },
+  {
+    "template_id": "NOTIF-09",
+    "title": "Failure Handling (retries, fallback channels, DLQ)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  },
+  {
+    "template_id": "NOTIF-10",
+    "title": "Observability & Support Runbooks (delivery metrics, alerts)",
+    "type": "Integration / Notifications",
+    "status": "active",
+    "feature_pack": "integrations_notifications"
+  }
+]

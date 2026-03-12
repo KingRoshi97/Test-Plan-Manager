@@ -1,0 +1,38 @@
+[
+  {
+    "template_id": "FORM-01",
+    "title": "Forms Inventory (by form_id/screen_id)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-02",
+    "title": "Field Spec (per field: type, rules, copy)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-03",
+    "title": "Validation UX Rules (inline, focus, announce)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-04",
+    "title": "Schema Mapping (forms ↔ DATA-06/DQV-03)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-05",
+    "title": "Submission & Error Recovery Patterns",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-06",
+    "title": "Anti-Abuse for Forms (spam, throttles, bot defense)",
+    "type": "Build / Forms",
+    "status": "active"
+  }
+]

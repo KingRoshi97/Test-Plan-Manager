@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "RTM-01",
+    "title": "Realtime Use Cases Catalog",
+    "type": "Architecture / Realtime",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "RTM-02",
+    "title": "Protocol & Transport Map",
+    "type": "Architecture / Realtime",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "RTM-03",
+    "title": "Channel/Topic Model (naming,",
+    "type": "Architecture / Realtime",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "RTM-04",
+    "title": "Delivery Semantics (ordering,",
+    "type": "Architecture / Realtime",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "RTM-05",
+    "title": "Presence & State Sync Model",
+    "type": "Architecture / Realtime",
+    "status": "active",
+    "feature_pack": "realtime"
+  },
+  {
+    "template_id": "RTM-06",
+    "title": "Abuse/Rate Control for",
+    "type": "Architecture / Realtime",
+    "status": "active",
+    "feature_pack": "realtime"
+  }
+]

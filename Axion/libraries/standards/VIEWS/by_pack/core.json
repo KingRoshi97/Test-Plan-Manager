@@ -1,0 +1,22 @@
+[
+  {
+    "unit_id": "STDU-STD-ENG-001",
+    "title": "Deterministic stage order",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-STD-ENG-002",
+    "title": "Artifacts must be schema-validatable",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-STD-ENG-003",
+    "title": "Pins are required",
+    "status": "active"
+  },
+  {
+    "unit_id": "STDU-STD-ENG-101",
+    "title": "Default artifact hashing policy",
+    "status": "active"
+  }
+]

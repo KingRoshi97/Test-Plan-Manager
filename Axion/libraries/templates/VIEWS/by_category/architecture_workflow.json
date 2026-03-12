@@ -1,0 +1,44 @@
+[
+  {
+    "template_id": "WFO-01",
+    "title": "Workflow Catalog",
+    "type": "Architecture / Workflow",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "WFO-02",
+    "title": "Orchestration Patterns (state",
+    "type": "Architecture / Workflow",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "WFO-03",
+    "title": "Idempotency & Concurrency",
+    "type": "Architecture / Workflow",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "WFO-04",
+    "title": "Scheduling & Triggers",
+    "type": "Architecture / Workflow",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "WFO-05",
+    "title": "Failure Handling (DLQ, backoff,",
+    "type": "Architecture / Workflow",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  },
+  {
+    "template_id": "WFO-06",
+    "title": "Workflow Observability",
+    "type": "Architecture / Workflow",
+    "status": "active",
+    "feature_pack": "architecture_extended"
+  }
+]

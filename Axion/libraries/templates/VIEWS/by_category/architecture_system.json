@@ -1,0 +1,72 @@
+[
+  {
+    "template_id": "ARC-01",
+    "title": "System Architecture",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "ARC-02",
+    "title": "Core Contracts Overview (APIs,",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "ARC-03",
+    "title": "Key Workflow Data Flows",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "ARC-04",
+    "title": "Authentication Architecture",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "ARC-05",
+    "title": "Realtime Architecture",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "ARC-06",
+    "title": "Error Model + Reason Codes",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "ARC-07",
+    "title": "Integration Architecture",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "ARC-08",
+    "title": "Deployment Topology",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "ARC-09",
+    "title": "Cross-Cutting Concerns",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  },
+  {
+    "template_id": "ARC-10",
+    "title": "Architecture Constraints &",
+    "type": "Architecture / System",
+    "status": "active",
+    "feature_pack": "architecture_core"
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "template_id": "BRP-01",
+    "title": "Business Rules Catalog (by ID)",
+    "type": "Product / Business Rules",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "BRP-02",
+    "title": "Eligibility & Entitlement Rules",
+    "type": "Product / Business Rules",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "BRP-03",
+    "title": "Pricing/Permission Policy",
+    "type": "Product / Business Rules",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "BRP-04",
+    "title": "Exceptions & Edge-Case Policy",
+    "type": "Product / Business Rules",
+    "status": "active",
+    "feature_pack": "product_extended"
+  }
+]

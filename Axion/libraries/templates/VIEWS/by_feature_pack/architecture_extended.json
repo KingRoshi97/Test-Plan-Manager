@@ -1,0 +1,110 @@
+[
+  {
+    "template_id": "ERR-01",
+    "title": "Error Taxonomy (classes,",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-02",
+    "title": "Reason Codes Registry (rc_*",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-03",
+    "title": "API Error Contract (shape,",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-04",
+    "title": "UX Error Mapping Rules",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-05",
+    "title": "Retryability & Idempotency",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "ERR-06",
+    "title": "Observability Requirements for",
+    "type": "Architecture / Error Model",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-01",
+    "title": "Service Boundary Map",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-02",
+    "title": "Runtime Topology (services,",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-03",
+    "title": "Environment Topology",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-04",
+    "title": "Scaling Model",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-05",
+    "title": "Resilience Topology",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "SBDT-06",
+    "title": "Deployment Constraints",
+    "type": "Architecture / Deployment",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-01",
+    "title": "Workflow Catalog",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-02",
+    "title": "Orchestration Patterns (state",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-03",
+    "title": "Idempotency & Concurrency",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-04",
+    "title": "Scheduling & Triggers",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-05",
+    "title": "Failure Handling (DLQ, backoff,",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  },
+  {
+    "template_id": "WFO-06",
+    "title": "Workflow Observability",
+    "type": "Architecture / Workflow",
+    "status": "active"
+  }
+]

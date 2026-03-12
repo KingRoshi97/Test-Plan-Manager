@@ -1,0 +1,212 @@
+[
+  {
+    "template_id": "CER-01",
+    "title": "Error Boundary Strategy (global vs local)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-02",
+    "title": "Retry & Recovery Patterns (per error class)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-03",
+    "title": "Offline/Error Mode UX (degraded experiences)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-04",
+    "title": "Session Expiry Handling (re-auth prompts, restore state)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "CER-05",
+    "title": "Client Logging & Crash Reporting (fields, redaction)",
+    "type": "Build / Client Error Recovery",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-01",
+    "title": "Route Map + Layout Spec",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-02",
+    "title": "Component Implementation Spec",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-03",
+    "title": "UI State Model (loading/empty/error/success)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-04",
+    "title": "Data Binding Rules (what calls what, when)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-05",
+    "title": "Accessibility Implementation Notes (a11y enforcement)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-06",
+    "title": "Theming/Tokens Integration (DSYS binding)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FE-07",
+    "title": "Error Handling UX Implementation (surface rules)",
+    "type": "Build / Frontend",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-01",
+    "title": "Forms Inventory (by form_id/screen_id)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-02",
+    "title": "Field Spec (per field: type, rules, copy)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-03",
+    "title": "Validation UX Rules (inline, focus, announce)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-04",
+    "title": "Schema Mapping (forms ↔ DATA-06/DQV-03)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-05",
+    "title": "Submission & Error Recovery Patterns",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "FORM-06",
+    "title": "Anti-Abuse for Forms (spam, throttles, bot defense)",
+    "type": "Build / Forms",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-01",
+    "title": "Route Contract (paths, params, types)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-02",
+    "title": "Navigation Map (flows, entry points)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-03",
+    "title": "Deep Link Map (URLs → screens/actions)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-04",
+    "title": "Guard Rules (auth gating, role gating)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-05",
+    "title": "Back/History Rules (expected behavior)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "ROUTE-06",
+    "title": "Link Validation & Unknown Handling (fallback routes)",
+    "type": "Build / Routing",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-01",
+    "title": "State Architecture (global vs local, stores)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-02",
+    "title": "Query/Cache Strategy (client cache rules, invalidation)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-03",
+    "title": "Mutation Patterns (optimistic updates, rollback)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-04",
+    "title": "Realtime Subscription Patterns (WS hooks, reconciliation)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-05",
+    "title": "Offline State Handling (queueing, retry)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "SMD-06",
+    "title": "Observability for Client Data Layer (logs/metrics)",
+    "type": "Build / State Management",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-01",
+    "title": "Page Composition Patterns (shells, sections)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-02",
+    "title": "Component Composition Rules (props, slots, variants)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-03",
+    "title": "Responsive Layout Patterns (breakpoints usage)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-04",
+    "title": "Content Hierarchy Rules (typography, spacing)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  },
+  {
+    "template_id": "UICP-05",
+    "title": "Interaction Patterns (modals, drawers, toasts)",
+    "type": "Build / UI Composition",
+    "status": "active"
+  }
+]

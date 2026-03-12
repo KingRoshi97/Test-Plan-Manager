@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "TEMPLATE_SELECTION",
+  "run_id": "{run_id}",
+  "generated_at": "{ISO-8601}",
+  "mode": "deterministic",
+  "inputs": {
+    "canonical_spec_version": "{version}",
+    "standards_snapshot_version": "{version}",
+    "template_registry_version": "{version}"
+  },
+  "selected": [],
+  "skipped": [],
+  "justification": "{selection justification}"
+}

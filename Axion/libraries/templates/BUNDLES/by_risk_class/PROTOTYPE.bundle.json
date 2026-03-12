@@ -1,0 +1,25 @@
+{
+  "bundle_id": "BUNDLE-TPL-PROTOTYPE",
+  "title": "PROTOTYPE Risk Class",
+  "description": "Template bundle for prototype risk class projects",
+  "selection_policy": {
+    "mode": "deterministic",
+    "min_requiredness": "optional"
+  },
+  "feature_packs": [
+    "core",
+    "design_core",
+    "architecture_core",
+    "data_core"
+  ],
+  "by_run_profile": [],
+  "by_risk_class": [
+    "PROTOTYPE"
+  ],
+  "by_executor": [
+    "internal_and_external"
+  ],
+  "created_at": "2026-03-01",
+  "updated_at": "2026-03-11",
+  "owner": "axion-system"
+}

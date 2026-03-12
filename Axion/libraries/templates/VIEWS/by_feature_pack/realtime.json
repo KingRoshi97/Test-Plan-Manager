@@ -1,0 +1,86 @@
+[
+  {
+    "template_id": "EVT-01",
+    "title": "Event Catalog (by event_id)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-02",
+    "title": "Event Schema Spec (payload, versioning, pii rules)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-03",
+    "title": "Producer/Consumer Map (who emits/consumes, contracts)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-04",
+    "title": "Delivery Semantics (ordering, retries, dedupe)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-05",
+    "title": "Webhook Producer Spec (outbound webhooks)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-06",
+    "title": "Webhook Consumer Spec (inbound webhooks)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-07",
+    "title": "Event Failure Handling (DLQ, replay, backfill)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "EVT-08",
+    "title": "Event Observability (lag, success rate, tracing)",
+    "type": "Build / Events",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-01",
+    "title": "Realtime Use Cases Catalog",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-02",
+    "title": "Protocol & Transport Map",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-03",
+    "title": "Channel/Topic Model (naming,",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-04",
+    "title": "Delivery Semantics (ordering,",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-05",
+    "title": "Presence & State Sync Model",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  },
+  {
+    "template_id": "RTM-06",
+    "title": "Abuse/Rate Control for",
+    "type": "Architecture / Realtime",
+    "status": "active"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "template_id": "MBAT-01",
+    "title": "Background Work Rules (limits, schedules)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-02",
+    "title": "Network Usage Policy (batching, retries, metered)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-03",
+    "title": "Battery Budget & Constraints (targets)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  },
+  {
+    "template_id": "MBAT-04",
+    "title": "Perf Profiling Plan (mobile tooling)",
+    "type": "Build / Mobile Performance",
+    "status": "active"
+  }
+]

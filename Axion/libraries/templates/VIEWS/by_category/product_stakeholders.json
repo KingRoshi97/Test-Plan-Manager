@@ -1,0 +1,30 @@
+[
+  {
+    "template_id": "STK-01",
+    "title": "Stakeholder Map (roles,",
+    "type": "Product / Stakeholders",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "STK-02",
+    "title": "Decision Log (what/why/when)",
+    "type": "Product / Stakeholders",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "STK-03",
+    "title": "RACI / Ownership Matrix",
+    "type": "Product / Stakeholders",
+    "status": "active",
+    "feature_pack": "product_extended"
+  },
+  {
+    "template_id": "STK-04",
+    "title": "Approval Gates (who signs",
+    "type": "Product / Stakeholders",
+    "status": "active",
+    "feature_pack": "product_extended"
+  }
+]
