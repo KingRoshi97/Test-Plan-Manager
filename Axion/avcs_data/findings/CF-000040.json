@@ -1,0 +1,20 @@
+{
+  "id": "CF-000040",
+  "cert_run_id": "CR-000013",
+  "domain": "security",
+  "severity": "medium",
+  "impact": "warning",
+  "title": "Sensitive data logging in 3 files",
+  "description": "Files that may log sensitive information: src/server/events/submit-high-score-to-leaderboard-completed.ts, src/server/migrations/keys.migration.ts, src/server/seeds/keys.seed.ts",
+  "affected_surface": "logging",
+  "affected_files": [
+    "src/server/events/submit-high-score-to-leaderboard-completed.ts",
+    "src/server/migrations/keys.migration.ts",
+    "src/server/seeds/keys.seed.ts"
+  ],
+  "probable_cause": "Generated code logs potentially sensitive data (passwords, tokens, keys) to console",
+  "evidence_refs": [],
+  "remediation": "Remove or redact sensitive data from console.log statements",
+  "status": "open",
+  "created_at": "2026-03-12T14:50:06.859Z"
+}
