@@ -11,7 +11,6 @@ import { buildRealKit } from "../../core/kit/build.js";
 import { validateKitOnDisk } from "../../core/kit/validate.js";
 import { packageKit } from "../../core/kit/packager.js";
 import { runPackagingPreflight, writePackagingDecision } from "../../core/baq/packagingEnforcement.js";
-import { BuildQualityHookRunner, createHookContext } from "../../core/baq/hooks.js";
 import { buildWorkBreakdown } from "../../core/planning/workBreakdown.js";
 import { buildAcceptanceMap } from "../../core/planning/acceptanceMap.js";
 import { calculateCoverage } from "../../core/planning/coverage.js";
@@ -341,17 +340,10 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
 
     console.log(`  S9: Verified ${gateReports.length} gates, created ${proofObjects.length} proof objects, pointers: ${pointerReport.resolved}/${pointerReport.total} resolved`);
   } else if (stageId === "S10_PACKAGE") {
-    const baqHookRunner = new BuildQualityHookRunner();
+    const kitResult = buildRealKit(runDir, runId, generatedAt, baseDir);
+    console.log(`  S10: Built kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
+
     const kitBundleDir = join(runDir, "kit", "bundle", "agent_kit");
-
-    const beforePackagingCtx = createHookContext("beforePackaging", runId, `BUILD-${runId}`, {
-      metadata: { stage: "S10_PACKAGE", kit_bundle_dir: kitBundleDir },
-    });
-    const beforePackagingResult = await baqHookRunner.run("beforePackaging", beforePackagingCtx);
-    if (beforePackagingResult.blocking && !beforePackagingResult.success) {
-      console.log(`  S10: beforePackaging hook blocked packaging: ${beforePackagingResult.errors.join(", ")}`);
-    }
-
     const preflightDecision = runPackagingPreflight(runDir, kitBundleDir);
     writePackagingDecision(runDir, preflightDecision);
 
@@ -360,21 +352,8 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
       for (const reason of preflightDecision.block_reasons) {
         console.log(`    - ${reason}`);
       }
-
-      const onDecisionCtx = createHookContext("onPackagingDecision", runId, `BUILD-${runId}`, {
-        metadata: {
-          packaging_allowed: false,
-          block_reasons: preflightDecision.block_reasons,
-          gate_evidence: preflightDecision.gate_evidence,
-        },
-      });
-      await baqHookRunner.run("onPackagingDecision", onDecisionCtx);
-
       throw new Error(`Packaging blocked: ${preflightDecision.block_reasons.join("; ")}`);
     }
-
-    const kitResult = buildRealKit(runDir, runId, generatedAt, baseDir);
-    console.log(`  S10: Built kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
 
     const pmPath = join(runDir, "kit", "packaging_manifest.json");
     if (!existsSync(pmPath)) {
@@ -420,17 +399,6 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
     const packageOutputPath = join(runDir, "kit", "packaged");
     packageKit(runDir, packageOutputPath);
     console.log(`  S10: Kit packaged to ${packageOutputPath}`);
-
-    const onDecisionCtx = createHookContext("onPackagingDecision", runId, `BUILD-${runId}`, {
-      metadata: {
-        packaging_allowed: true,
-        block_reasons: [],
-        kit_file_count: kitResult.fileCount,
-        kit_content_hash: kitResult.contentHash,
-        validation_passed: validationResult.valid,
-      },
-    });
-    await baqHookRunner.run("onPackagingDecision", onDecisionCtx);
   }
 }
 

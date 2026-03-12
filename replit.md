@@ -37,7 +37,7 @@ Do not make changes to the file `Axion/src/cli/axion.ts`.
 
 **BAQ Decision taxonomy**: `approved` (all gates pass, score >= 70%), `approved_with_warnings` (all gates pass, score < 70%), `blocked` (any gate failed), `failed` (build terminated with error).
 
-**BAQ Hooks**: `onFileGenerated` fires per-file during generation loop. `onGenerationFailure` fires per-file on failure AND from all blocking exits. `onBuildQualityFinalize` fires from every terminal path with quality report and failure report. `beforePackaging` fires before S10 packaging. `onPackagingDecision` fires with packaging result (allowed/blocked). Preflight failure hard-blocks generation.
+**BAQ Hooks**: `onFileGenerated` fires per-file during generation loop. `onGenerationFailure` fires per-file on failure AND from all blocking exits. `onBuildQualityFinalize` fires from every terminal path with quality report and failure report. `beforePackaging` and `onPackagingDecision` hook types defined but not yet wired into S10 (packaging enforcement uses direct preflight check after kit build). Preflight failure hard-blocks generation.
 
 **BAQ Retry taxonomy**: `safe_retry` | `repair_then_retry` | `manual_review_required` | `do_not_retry`. Computed per-failure and aggregated in report with counts. Upstream blocker linkage for repair-then-retry scenarios.
 
