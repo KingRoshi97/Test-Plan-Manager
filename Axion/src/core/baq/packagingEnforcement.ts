@@ -125,12 +125,54 @@ function reconcileManifestTargets(
     });
   }
 
+  const packagingManifestPath = path.join(runDir, "kit", "packaging_manifest.json");
+  let manifestFileSet: Set<string> | null = null;
+
+  if (fs.existsSync(packagingManifestPath)) {
+    try {
+      const pm = JSON.parse(fs.readFileSync(packagingManifestPath, "utf-8"));
+      const manifestFiles: Array<{ path: string }> = Array.isArray(pm.files) ? pm.files : [];
+      manifestFileSet = new Set<string>();
+      for (const mf of manifestFiles) {
+        const normalizedPath = mf.path.replace(/^agent_kit\//, "").replace(/\\/g, "/");
+        manifestFileSet.add(normalizedPath);
+        if (!bundleFiles.has(normalizedPath)) {
+          mismatches.push({
+            file_path: mf.path,
+            expected: true,
+            actual_exists: false,
+            reason: `File listed in packaging_manifest.json missing from kit bundle: ${mf.path}`,
+          });
+        }
+      }
+    } catch {
+      mismatches.push({
+        file_path: packagingManifestPath,
+        expected: true,
+        actual_exists: true,
+        reason: "packaging_manifest.json exists but could not be parsed",
+      });
+    }
+  }
+
   if (inventory) {
     const files = Array.isArray(inventory.files) ? inventory.files : [];
 
     for (const file of files) {
       if (!file.required) continue;
       const normalizedFilePath = file.path.replace(/\\/g, "/");
+
+      if (manifestFileSet && !manifestFileSet.has(normalizedFilePath)) {
+        let inManifest = false;
+        for (const mf of manifestFileSet) {
+          if (mf.endsWith("/" + normalizedFilePath) || normalizedFilePath.endsWith("/" + mf)) {
+            inManifest = true;
+            break;
+          }
+        }
+        if (!inManifest) continue;
+      }
+
       const foundExact = bundleFiles.has(normalizedFilePath);
       let foundInSubdir = false;
       if (!foundExact) {
@@ -150,32 +192,6 @@ function reconcileManifestTargets(
           reason: `Required inventory target missing from kit bundle: ${file.path}`,
         });
       }
-    }
-  }
-
-  const packagingManifestPath = path.join(runDir, "kit", "packaging_manifest.json");
-  if (fs.existsSync(packagingManifestPath)) {
-    try {
-      const pm = JSON.parse(fs.readFileSync(packagingManifestPath, "utf-8"));
-      const manifestFiles: Array<{ path: string }> = Array.isArray(pm.files) ? pm.files : [];
-      for (const mf of manifestFiles) {
-        const normalizedPath = mf.path.replace(/^agent_kit\//, "");
-        if (!bundleFiles.has(normalizedPath)) {
-          mismatches.push({
-            file_path: mf.path,
-            expected: true,
-            actual_exists: false,
-            reason: `File listed in packaging_manifest.json missing from kit bundle: ${mf.path}`,
-          });
-        }
-      }
-    } catch {
-      mismatches.push({
-        file_path: packagingManifestPath,
-        expected: true,
-        actual_exists: true,
-        reason: "packaging_manifest.json exists but could not be parsed",
-      });
     }
   }
 

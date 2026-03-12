@@ -259,6 +259,39 @@ function synthesizeVerificationSignals(runDir: string): VerificationSignals {
   };
 }
 
+function synthesizePackagingSignals(runDir: string): { export_attempted: boolean; export_success: boolean; file_count: number; zip_size_bytes: number } {
+  const kitBundleDir = join(runDir, "kit", "bundle", "agent_kit");
+  if (!existsSync(kitBundleDir)) {
+    return { export_attempted: false, export_success: false, file_count: 0, zip_size_bytes: 0 };
+  }
+
+  let fileCount = 0;
+  let totalBytes = 0;
+
+  function walk(dir: string): void {
+    if (!existsSync(dir)) return;
+    for (const name of readdirSync(dir)) {
+      const full = join(dir, name);
+      const stat = statSync(full);
+      if (stat.isDirectory()) {
+        walk(full);
+      } else {
+        fileCount++;
+        totalBytes += stat.size;
+      }
+    }
+  }
+
+  walk(kitBundleDir);
+
+  return {
+    export_attempted: true,
+    export_success: fileCount > 0,
+    file_count: fileCount,
+    zip_size_bytes: totalBytes,
+  };
+}
+
 export async function executeStageWork(baseDir: string, runDir: string, runId: string, stageId: StageId, generatedAt: string): Promise<void> {
   if (stageId === "S1_INGEST_NORMALIZE") {
     const rawSubmissionPath = join(runDir, "intake", "raw_submission.json");
@@ -577,7 +610,8 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
           const verificationSignals = synthesizeVerificationSignals(runDir);
           console.log(`  S10: [BAQ] Verification signals: passed=${verificationSignals.verification_passed}, verified=${verificationSignals.files_verified}, fidelity=${verificationSignals.fidelity_percent}%`);
 
-          const prePackagingSignals = { export_attempted: false, export_success: false, file_count: 0, zip_size_bytes: 0 };
+          const packagingSignals = synthesizePackagingSignals(runDir);
+          console.log(`  S10: [BAQ] Packaging signals: attempted=${packagingSignals.export_attempted}, success=${packagingSignals.export_success}, files=${packagingSignals.file_count}, size=${packagingSignals.zip_size_bytes}`);
 
           const gateEvaluation = evaluateAllGates({
             extraction,
@@ -587,13 +621,12 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
             sufficiency,
             reconciliation,
             verificationSignals,
-            packagingSignals: prePackagingSignals,
+            packagingSignals,
           });
 
-          const prePackagingGates = gateEvaluation.gates.filter(g => g.gate_id !== "G-BQ-07");
-          const failedPrePkg = prePackagingGates.filter(g => g.status === "fail");
-          if (failedPrePkg.length > 0) {
-            console.log(`  S10: [BAQ] Pre-packaging gate failures (excluding G-BQ-07): ${failedPrePkg.map(g => g.gate_id).join(", ")}`);
+          const failedGates = gateEvaluation.gates.filter(g => g.status === "fail");
+          if (failedGates.length > 0) {
+            console.log(`  S10: [BAQ] Gate failures: ${failedGates.map(g => g.gate_id).join(", ")}`);
           }
 
           const qualityReport = buildQualityReport({
