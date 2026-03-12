@@ -691,6 +691,16 @@ async function generateRepoUnitCentric(
           errors.push(`STRUCTURAL: ${v}`);
         }
       }
+
+      for (const slice of plan.slices) {
+        if (slice.status === "completed" || slice.status === "failed") continue;
+        const allDone = slice.files.every(f => f.status === "generated" || f.status === "skipped");
+        if (allDone && slice.files.length > 0) {
+          slice.status = "completed";
+          slice.completedAt = new Date().toISOString();
+          console.log(`  [BUILD-UNIT] Slice completed: ${slice.name}`);
+        }
+      }
     }
   }
 
