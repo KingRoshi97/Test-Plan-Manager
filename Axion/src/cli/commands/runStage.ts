@@ -10,7 +10,19 @@ import type { ArtifactIndexEntry } from "../../types/artifacts.js";
 import { buildRealKit } from "../../core/kit/build.js";
 import { validateKitOnDisk } from "../../core/kit/validate.js";
 import { packageKit } from "../../core/kit/packager.js";
-import { BuildQualityHookRunner } from "../../core/baq/hooks.js";
+import { BuildQualityHookRunner, createHookContext } from "../../core/baq/hooks.js";
+import {
+  runBAQExtraction,
+  buildDerivedInputs,
+  buildRepoInventory,
+  buildRequirementTraceMap,
+  evaluateSufficiency,
+  evaluateAllGates,
+  buildQualityReport,
+  writeQualityReport,
+  writeFailureReport,
+  FailureCollector,
+} from "../../core/baq/index.js";
 import { buildWorkBreakdown } from "../../core/planning/workBreakdown.js";
 import { buildAcceptanceMap } from "../../core/planning/acceptanceMap.js";
 import { calculateCoverage } from "../../core/planning/coverage.js";
@@ -342,6 +354,105 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
   } else if (stageId === "S10_PACKAGE") {
     const kitResult = buildRealKit(runDir, runId, generatedAt, baseDir);
     console.log(`  S10: Built kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
+
+    const baqArtifactFiles = [
+      "kit_extraction.json",
+      "derived_build_inputs.json",
+      "repo_inventory.json",
+      "requirement_trace_map.json",
+      "sufficiency_evaluation.json",
+      "build_quality_report.json",
+    ];
+    const missingBaqArtifacts = baqArtifactFiles.filter(f => !existsSync(join(runDir, f)));
+
+    if (missingBaqArtifacts.length > 0) {
+      console.log(`  S10: Generating ${missingBaqArtifacts.length} missing BAQ artifacts...`);
+      const buildId = `BUILD-${runId}`;
+      const failureCollector = new FailureCollector();
+
+      let extraction = null;
+      let derivedInputs = null;
+      let inventory = null;
+      let traceMap = null;
+      let sufficiency = null;
+
+      try {
+        if (!existsSync(join(runDir, "kit_extraction.json"))) {
+          extraction = runBAQExtraction(runDir);
+          writeJson(join(runDir, "kit_extraction.json"), extraction);
+          console.log(`  S10: [BAQ] kit_extraction.json written`);
+        } else {
+          extraction = readJson(join(runDir, "kit_extraction.json"));
+        }
+
+        if (!existsSync(join(runDir, "derived_build_inputs.json"))) {
+          derivedInputs = buildDerivedInputs(extraction, runDir);
+          writeJson(join(runDir, "derived_build_inputs.json"), derivedInputs);
+          console.log(`  S10: [BAQ] derived_build_inputs.json written`);
+        } else {
+          derivedInputs = readJson(join(runDir, "derived_build_inputs.json"));
+        }
+
+        if (!existsSync(join(runDir, "repo_inventory.json"))) {
+          inventory = buildRepoInventory(derivedInputs, runDir);
+          writeJson(join(runDir, "repo_inventory.json"), inventory);
+          console.log(`  S10: [BAQ] repo_inventory.json written`);
+        } else {
+          inventory = readJson(join(runDir, "repo_inventory.json"));
+        }
+
+        if (!existsSync(join(runDir, "requirement_trace_map.json"))) {
+          traceMap = buildRequirementTraceMap(derivedInputs, inventory);
+          writeJson(join(runDir, "requirement_trace_map.json"), traceMap);
+          console.log(`  S10: [BAQ] requirement_trace_map.json written`);
+        } else {
+          traceMap = readJson(join(runDir, "requirement_trace_map.json"));
+        }
+
+        if (!existsSync(join(runDir, "sufficiency_evaluation.json"))) {
+          sufficiency = evaluateSufficiency(derivedInputs, inventory, traceMap);
+          writeJson(join(runDir, "sufficiency_evaluation.json"), sufficiency);
+          console.log(`  S10: [BAQ] sufficiency_evaluation.json written`);
+        } else {
+          sufficiency = readJson(join(runDir, "sufficiency_evaluation.json"));
+        }
+
+        if (!existsSync(join(runDir, "build_quality_report.json"))) {
+          const gateEvaluation = evaluateAllGates({
+            extraction,
+            derivedInputs,
+            inventory,
+            traceMap,
+            sufficiency,
+            reconciliation: null,
+            verificationSignals: null,
+            packagingSignals: null,
+          });
+          const qualityReport = buildQualityReport({
+            runId,
+            buildId,
+            extraction,
+            derivedInputs,
+            inventory,
+            traceMap,
+            sufficiency,
+            gateEvaluation,
+            reconciliation: null,
+            verificationSignals: null,
+            buildStatus: "completed",
+          });
+          writeQualityReport(runDir, qualityReport);
+          console.log(`  S10: [BAQ] build_quality_report.json written (score=${qualityReport.overall_quality_score}%, decision=${qualityReport.decision})`);
+        }
+
+        console.log(`  S10: BAQ artifacts ready`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.log(`  S10: WARNING — BAQ artifact generation failed: ${msg}`);
+      }
+    } else {
+      console.log(`  S10: All BAQ artifacts present`);
+    }
 
     const baqHookRunner = new BuildQualityHookRunner();
     baqHookRunner.markUpstreamCompleted("beforePackaging");
