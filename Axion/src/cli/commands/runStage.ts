@@ -10,7 +10,6 @@ import type { ArtifactIndexEntry } from "../../types/artifacts.js";
 import { buildRealKit } from "../../core/kit/build.js";
 import { validateKitOnDisk } from "../../core/kit/validate.js";
 import { packageKit } from "../../core/kit/packager.js";
-import { runPackagingPreflight, writePackagingDecision } from "../../core/baq/packagingEnforcement.js";
 import { buildWorkBreakdown } from "../../core/planning/workBreakdown.js";
 import { buildAcceptanceMap } from "../../core/planning/acceptanceMap.js";
 import { calculateCoverage } from "../../core/planning/coverage.js";
@@ -342,18 +341,6 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
   } else if (stageId === "S10_PACKAGE") {
     const kitResult = buildRealKit(runDir, runId, generatedAt, baseDir);
     console.log(`  S10: Built kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
-
-    const kitBundleDir = join(runDir, "kit", "bundle", "agent_kit");
-    const preflightDecision = runPackagingPreflight(runDir, kitBundleDir);
-    writePackagingDecision(runDir, preflightDecision);
-
-    if (!preflightDecision.allowed) {
-      console.log(`  S10: Packaging BLOCKED — ${preflightDecision.block_reasons.length} reason(s):`);
-      for (const reason of preflightDecision.block_reasons) {
-        console.log(`    - ${reason}`);
-      }
-      throw new Error(`Packaging blocked: ${preflightDecision.block_reasons.join("; ")}`);
-    }
 
     const pmPath = join(runDir, "kit", "packaging_manifest.json");
     if (!existsSync(pmPath)) {

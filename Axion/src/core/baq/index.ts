@@ -103,6 +103,7 @@ export type {
 export {
   buildQualityReport,
   writeQualityReport,
+  updateQualityReportWithPackagingDecision,
 } from "./qualityReport.js";
 export type {
   QualityReportInput,
@@ -111,6 +112,7 @@ export type {
   QualitySignals,
   PackagingEligibility,
   ExtendedBuildQualityReport,
+  PackagingDecisionRecord,
 } from "./qualityReport.js";
 
 export {

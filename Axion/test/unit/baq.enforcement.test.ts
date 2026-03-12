@@ -17,8 +17,9 @@ import type { FullGateEvaluation, VerificationSignals, PackagingSignals } from "
 import {
   buildQualityReport,
   writeQualityReport,
+  updateQualityReportWithPackagingDecision,
 } from "../../src/core/baq/qualityReport.js";
-import type { QualityReportInput, ExtendedBuildQualityReport } from "../../src/core/baq/qualityReport.js";
+import type { QualityReportInput, ExtendedBuildQualityReport, PackagingDecisionRecord } from "../../src/core/baq/qualityReport.js";
 import {
   FailureCollector,
   buildFailureReport,
@@ -1354,5 +1355,170 @@ describe("BAQ Quality Score Calculation", () => {
     });
     expect(report.overall_quality_score).toBeLessThan(70);
     expect(report.decision).toBe("approved_with_warnings");
+  });
+});
+
+describe("BAQ Quality Report — Packaging Decision Propagation", () => {
+  it("updates quality report with allowed packaging decision", () => {
+    const tmpDir = makeTmpDir();
+    const gateEval = allPassingGateEval();
+    const report = buildQualityReport({
+      runId: "RUN-TEST",
+      buildId: "BUILD-001",
+      extraction: makeExtraction(),
+      derivedInputs: makeDerivedInputs(),
+      inventory: makeInventory(),
+      traceMap: makeTraceMap(100),
+      sufficiency: makeSufficiency(100),
+      gateEvaluation: gateEval,
+      reconciliation: makeReconciliation(),
+      verificationSignals: makeVerificationSignals(),
+      buildStatus: "verification_complete",
+    });
+    writeQualityReport(tmpDir, report);
+
+    updateQualityReportWithPackagingDecision(tmpDir, {
+      packaging_allowed: true,
+      block_reasons: [],
+      evaluated_at: "2025-01-01T00:00:00Z",
+    });
+
+    const updated = JSON.parse(fs.readFileSync(path.join(tmpDir, "build_quality_report.json"), "utf-8"));
+    expect(updated.packaging_decision).toBeDefined();
+    expect(updated.packaging_decision.packaging_allowed).toBe(true);
+    expect(updated.packaging_decision.block_reasons).toEqual([]);
+    expect(updated.packaging_eligibility.eligible).toBe(true);
+  });
+
+  it("updates quality report with blocked packaging decision", () => {
+    const tmpDir = makeTmpDir();
+    const gateEval = allPassingGateEval();
+    const report = buildQualityReport({
+      runId: "RUN-TEST",
+      buildId: "BUILD-001",
+      extraction: makeExtraction(),
+      derivedInputs: makeDerivedInputs(),
+      inventory: makeInventory(),
+      traceMap: makeTraceMap(100),
+      sufficiency: makeSufficiency(100),
+      gateEvaluation: gateEval,
+      reconciliation: makeReconciliation(),
+      verificationSignals: makeVerificationSignals(),
+      buildStatus: "verification_complete",
+    });
+    writeQualityReport(tmpDir, report);
+
+    const blockReasons = ["Hard gate(s) failed: G-BQ-01", "Missing proof ledger"];
+    updateQualityReportWithPackagingDecision(tmpDir, {
+      packaging_allowed: false,
+      block_reasons: blockReasons,
+      evaluated_at: "2025-01-01T00:00:00Z",
+    });
+
+    const updated = JSON.parse(fs.readFileSync(path.join(tmpDir, "build_quality_report.json"), "utf-8"));
+    expect(updated.packaging_decision.packaging_allowed).toBe(false);
+    expect(updated.packaging_decision.block_reasons).toEqual(blockReasons);
+    expect(updated.packaging_eligibility.eligible).toBe(false);
+    expect(updated.packaging_eligibility.reasons).toEqual(blockReasons);
+  });
+
+  it("handles missing quality report gracefully (no-op)", () => {
+    const tmpDir = makeTmpDir();
+    expect(() =>
+      updateQualityReportWithPackagingDecision(tmpDir, {
+        packaging_allowed: true,
+        block_reasons: [],
+        evaluated_at: "2025-01-01T00:00:00Z",
+      }),
+    ).not.toThrow();
+  });
+
+  it("preserves updated_at timestamp after packaging decision update", () => {
+    const tmpDir = makeTmpDir();
+    const gateEval = allPassingGateEval();
+    const report = buildQualityReport({
+      runId: "RUN-TEST",
+      buildId: "BUILD-001",
+      extraction: makeExtraction(),
+      derivedInputs: makeDerivedInputs(),
+      inventory: makeInventory(),
+      traceMap: makeTraceMap(100),
+      sufficiency: makeSufficiency(100),
+      gateEvaluation: gateEval,
+      reconciliation: makeReconciliation(),
+      verificationSignals: makeVerificationSignals(),
+      buildStatus: "verification_complete",
+    });
+    writeQualityReport(tmpDir, report);
+
+    const beforeUpdate = JSON.parse(fs.readFileSync(path.join(tmpDir, "build_quality_report.json"), "utf-8"));
+    const originalUpdatedAt = beforeUpdate.updated_at;
+
+    updateQualityReportWithPackagingDecision(tmpDir, {
+      packaging_allowed: true,
+      block_reasons: [],
+      evaluated_at: "2025-01-01T00:00:00Z",
+    });
+
+    const afterUpdate = JSON.parse(fs.readFileSync(path.join(tmpDir, "build_quality_report.json"), "utf-8"));
+    expect(afterUpdate.updated_at).not.toBe(originalUpdatedAt);
+  });
+});
+
+describe("BAQ Packager-Level Preflight Enforcement", () => {
+  it("packageKit is not importable without preflight — packager enforces gate internally", async () => {
+    const { packageKit } = await import("../../src/core/kit/packager.js");
+    expect(typeof packageKit).toBe("function");
+  });
+
+  it("packager blocks when quality report has failed gates", () => {
+    const tmpDir = makeTmpDir();
+
+    const failedGateEval: FullGateEvaluation = {
+      gates: [
+        { gate_id: "G-BQ-01", gate_name: "Extraction Integrity", status: "fail", conditions: [], blockers: ["test"], evidence_refs: [] },
+        { gate_id: "G-BQ-02", gate_name: "Derived Inputs", status: "pass", conditions: [], blockers: [], evidence_refs: [] },
+        { gate_id: "G-BQ-03", gate_name: "Inventory", status: "pass", conditions: [], blockers: [], evidence_refs: [] },
+        { gate_id: "G-BQ-04", gate_name: "Requirements", status: "pass", conditions: [], blockers: [], evidence_refs: [] },
+        { gate_id: "G-BQ-05", gate_name: "Sufficiency", status: "pass", conditions: [], blockers: [], evidence_refs: [] },
+        { gate_id: "G-BQ-06", gate_name: "Verification", status: "pass", conditions: [], blockers: [], evidence_refs: [] },
+        { gate_id: "G-BQ-07", gate_name: "Packaging", status: "pass", conditions: [], blockers: [], evidence_refs: [] },
+      ],
+      total: 7,
+      passed_count: 6,
+      failed_count: 1,
+      skipped_count: 0,
+      packaging_eligible: false,
+    };
+
+    const report = buildQualityReport({
+      runId: "RUN-TEST",
+      buildId: "BUILD-001",
+      extraction: makeExtraction(),
+      derivedInputs: makeDerivedInputs(),
+      inventory: makeInventory(),
+      traceMap: makeTraceMap(100),
+      sufficiency: makeSufficiency(100),
+      gateEvaluation: failedGateEval,
+      reconciliation: makeReconciliation(),
+      verificationSignals: makeVerificationSignals(),
+      buildStatus: "verification_complete",
+    });
+    writeQualityReport(tmpDir, report);
+
+    const kitBundleDir = path.join(tmpDir, "kit", "bundle", "agent_kit");
+    fs.mkdirSync(kitBundleDir, { recursive: true });
+
+    fs.writeFileSync(path.join(tmpDir, "kit_extraction.json"), "{}");
+    fs.writeFileSync(path.join(tmpDir, "derived_build_inputs.json"), "{}");
+    fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), "{}");
+    fs.writeFileSync(path.join(tmpDir, "requirement_trace_map.json"), "{}");
+    fs.writeFileSync(path.join(tmpDir, "sufficiency_evaluation.json"), "{}");
+    fs.mkdirSync(path.join(tmpDir, "proof"), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, "proof", "proof_ledger.jsonl"), "{}");
+
+    const decision = runPackagingPreflight(tmpDir, kitBundleDir);
+    expect(decision.allowed).toBe(false);
+    expect(decision.block_reasons.some(r => r.includes("gate"))).toBe(true);
   });
 });

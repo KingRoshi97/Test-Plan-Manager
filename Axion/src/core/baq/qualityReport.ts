@@ -345,3 +345,36 @@ export function writeQualityReport(
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf-8");
   return reportPath;
 }
+
+export interface PackagingDecisionRecord {
+  packaging_allowed: boolean;
+  block_reasons: string[];
+  evaluated_at: string;
+}
+
+export function updateQualityReportWithPackagingDecision(
+  runDir: string,
+  packagingDecision: PackagingDecisionRecord,
+): void {
+  const reportPath = path.join(runDir, "build_quality_report.json");
+  if (!fs.existsSync(reportPath)) return;
+
+  try {
+    const report: ExtendedBuildQualityReport & { packaging_decision?: PackagingDecisionRecord } =
+      JSON.parse(fs.readFileSync(reportPath, "utf-8"));
+
+    report.packaging_decision = packagingDecision;
+    report.packaging_eligibility = {
+      ...report.packaging_eligibility,
+      eligible: packagingDecision.packaging_allowed,
+      reasons: packagingDecision.packaging_allowed
+        ? report.packaging_eligibility.reasons
+        : packagingDecision.block_reasons,
+    };
+    report.updated_at = new Date().toISOString();
+
+    fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf-8");
+  } catch {
+    // quality report not parseable — skip update
+  }
+}

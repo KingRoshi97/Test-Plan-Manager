@@ -4,6 +4,8 @@ import { ensureDir } from "../../utils/fs.js";
 import { sha256 } from "../../utils/hash.js";
 import { writeCanonicalJson, canonicalJsonString } from "../../utils/canonicalJson.js";
 import { isoNow } from "../../utils/time.js";
+import { runPackagingPreflight, writePackagingDecision } from "../baq/packagingEnforcement.js";
+import { updateQualityReportWithPackagingDecision } from "../baq/qualityReport.js";
 
 interface PackagedFile {
   path: string;
@@ -46,6 +48,22 @@ export function packageKit(runDir: string, outputPath: string): void {
   ensureDir(outputPath);
 
   const kitBundleDir = join(runDir, "kit", "bundle", "agent_kit");
+
+  const preflightDecision = runPackagingPreflight(runDir, kitBundleDir);
+  writePackagingDecision(runDir, preflightDecision);
+
+  updateQualityReportWithPackagingDecision(runDir, {
+    packaging_allowed: preflightDecision.allowed,
+    block_reasons: preflightDecision.block_reasons,
+    evaluated_at: preflightDecision.evaluated_at,
+  });
+
+  if (!preflightDecision.allowed) {
+    throw new Error(
+      `Packaging blocked by preflight gate: ${preflightDecision.block_reasons.join("; ")}`,
+    );
+  }
+
   const destAgentKit = join(outputPath, "agent_kit");
 
   if (existsSync(kitBundleDir)) {
