@@ -519,7 +519,7 @@ export function selectTrendSeries(a: BAQArtifacts): TrendPoint[] {
     gatesPassed: a.qualityReport.gate_summary.passed,
     gatesTotal: a.qualityReport.gate_summary.total_gates,
     decision: a.qualityReport.decision,
-    timestamp: a.qualityReport.created_at ?? new Date().toISOString(),
+    timestamp: a.qualityReport.created_at ?? "",
   }];
 }
 
@@ -821,7 +821,7 @@ export function selectNextBestFix(a: BAQArtifacts): NextBestFix | null {
     return {
       action: matchedHint?.resolution ?? `Resolve gate ${first.id}`,
       target: first.description,
-      impact: gateDetail?.blockers?.[0] ?? `Gate ${first.id} blocks packaging`,
+      impact: gateDetail?.blockers?.[0] ?? "",
       effort: first.severity === "critical" ? "high" : "medium",
     };
   }
@@ -830,14 +830,14 @@ export function selectNextBestFix(a: BAQArtifacts): NextBestFix | null {
     return {
       action: matchedHint?.resolution ?? `Resolve packaging issue`,
       target: first.description,
-      impact: blockReason ?? `Packaging blocked`,
+      impact: blockReason ?? "",
       effort: first.severity === "critical" ? "high" : "medium",
     };
   }
   return {
     action: matchedHint?.resolution ?? `Fix ${first.category} issue`,
     target: first.description,
-    impact: `Reduces ${first.category} failure count by 1`,
+    impact: "",
     effort: first.severity === "critical" ? "high" : "low",
   };
 }
