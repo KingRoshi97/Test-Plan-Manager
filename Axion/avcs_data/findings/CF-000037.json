@@ -1,0 +1,18 @@
+{
+  "id": "CF-000037",
+  "cert_run_id": "CR-000012",
+  "domain": "deployment_readiness",
+  "severity": "medium",
+  "impact": "warning",
+  "title": "24 undocumented environment variables",
+  "description": "Environment variables used in code but not in contract: REACT_APP_API_URL, REACT_APP_API_BASE_URL, DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, DB_SSL_CA, DB_POOL_MAX, DB_POOL_MIN, DB_IDLE_TIMEOUT, DB_CONN_TIMEOUT, DB_STATEMENT_TIMEOUT, DB_QUERY_TIMEOUT, CLIENT_ORIGIN, JWT_ISSUER, JWT_AUDIENCE, ADMIN_ORIGIN, DATABASE_URL, API_BASE_URL, LIVE_API, TEST_AUTH_TOKEN, API_URL, VITE_API_URL",
+  "affected_surface": "env_contract",
+  "affected_files": [
+    ".env.example"
+  ],
+  "probable_cause": "Code references environment variables not listed in the contract file",
+  "evidence_refs": [],
+  "remediation": "Add missing variables to the environment contract file",
+  "status": "open",
+  "created_at": "2026-03-12T12:36:21.117Z"
+}
