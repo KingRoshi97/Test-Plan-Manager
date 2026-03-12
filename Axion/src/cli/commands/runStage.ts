@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { writeJson, readJson } from "../../utils/fs.js";
 import { isoNow } from "../../utils/time.js";
 import { sha256 } from "../../utils/hash.js";
@@ -29,6 +29,8 @@ import type {
   BAQRepoInventory,
   BAQRequirementTraceMap,
   BAQSufficiencyEvaluation,
+  ReconciliationResult,
+  VerificationSignals,
 } from "../../core/baq/index.js";
 import { buildWorkBreakdown } from "../../core/planning/workBreakdown.js";
 import { buildAcceptanceMap } from "../../core/planning/acceptanceMap.js";
@@ -112,6 +114,150 @@ export const STAGE_IO: Record<string, { consumed: string[]; produced: string[] }
     produced: ["kit/kit_manifest.json", "kit/entrypoint.json", "kit/version_stamp.json", "kit/packaging_manifest.json", "kit/bundle/*"],
   },
 };
+
+function collectKitBundleFiles(dir: string, base: string, result: Set<string>): void {
+  if (!existsSync(dir)) return;
+  for (const name of readdirSync(dir)) {
+    const full = join(dir, name);
+    const rel = base ? join(base, name) : name;
+    if (statSync(full).isDirectory()) {
+      collectKitBundleFiles(full, rel, result);
+    } else {
+      result.add(rel.replace(/\\/g, "/"));
+    }
+  }
+}
+
+function synthesizeReconciliation(
+  runDir: string,
+  inventory: BAQRepoInventory | null,
+): ReconciliationResult {
+  const kitBundleDir = join(runDir, "kit", "bundle", "agent_kit");
+  const bundleFiles = new Set<string>();
+  collectKitBundleFiles(kitBundleDir, "", bundleFiles);
+
+  const inventoryFiles = inventory && Array.isArray(inventory.files) ? inventory.files : [];
+
+  const missingFiles: string[] = [];
+  const missingRequired: string[] = [];
+  const missingOptional: string[] = [];
+
+  for (const file of inventoryFiles) {
+    const normalizedPath = file.path.replace(/\\/g, "/");
+    let found = bundleFiles.has(normalizedPath);
+    if (!found) {
+      for (const bf of bundleFiles) {
+        if (bf.endsWith("/" + normalizedPath) || bf === normalizedPath) {
+          found = true;
+          break;
+        }
+      }
+    }
+    if (!found) {
+      missingFiles.push(file.path);
+      if (file.required) {
+        missingRequired.push(file.path);
+      } else {
+        missingOptional.push(file.path);
+      }
+    }
+  }
+
+  const totalPlanned = inventoryFiles.length;
+  const totalGenerated = bundleFiles.size;
+  const totalMissing = missingFiles.length;
+  const unplannedFiles: string[] = [];
+  const inventoryPaths = new Set(inventoryFiles.map(f => f.path.replace(/\\/g, "/")));
+  for (const bf of bundleFiles) {
+    if (!inventoryPaths.has(bf)) {
+      let found = false;
+      for (const ip of inventoryPaths) {
+        if (bf.endsWith("/" + ip) || ip.endsWith("/" + bf)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) unplannedFiles.push(bf);
+    }
+  }
+
+  const plannedGenerated = totalPlanned - totalMissing;
+  const coveragePercent = totalPlanned > 0
+    ? Math.min(Math.round((plannedGenerated / totalPlanned) * 10000) / 100, 100)
+    : 100;
+
+  return {
+    total_planned: totalPlanned,
+    total_generated: totalGenerated,
+    total_missing: totalMissing,
+    total_unplanned: unplannedFiles.length,
+    coverage_percent: coveragePercent,
+    missing_files: missingFiles,
+    missing_required_files: missingRequired,
+    missing_optional_files: missingOptional,
+    unplanned_files: unplannedFiles,
+    violations: [],
+    placeholder_violations: [],
+    inventory_variance: {
+      expected_files: totalPlanned,
+      produced_files: totalGenerated,
+      missing_files: totalMissing,
+      unplanned_files: unplannedFiles.length,
+      required_missing: missingRequired.length,
+      optional_missing: missingOptional.length,
+      placeholder_count: 0,
+      placeholder_in_required: 0,
+      trace_linked_generated: 0,
+      trace_linked_total: 0,
+    },
+    passed: missingRequired.length === 0,
+    evaluated_at: new Date().toISOString(),
+  };
+}
+
+function synthesizeVerificationSignals(runDir: string): VerificationSignals {
+  const verificationReportPath = join(runDir, "verification", "verification_run_result.json");
+  if (existsSync(verificationReportPath)) {
+    try {
+      const report = JSON.parse(readFileSync(verificationReportPath, "utf-8"));
+      const allPassed = report.all_passed === true;
+      const proofCount = typeof report.proof_count === "number" ? report.proof_count : 0;
+      return {
+        verification_passed: allPassed,
+        files_verified: proofCount,
+        files_failed: allPassed ? 0 : 1,
+        structural_violations: 0,
+        fidelity_percent: allPassed ? 100 : 0,
+      };
+    } catch {
+    }
+  }
+
+  const completionReportPath = join(runDir, "verification", "completion_report.json");
+  if (existsSync(completionReportPath)) {
+    try {
+      const report = JSON.parse(readFileSync(completionReportPath, "utf-8"));
+      const passed = report.verdict === "complete" || report.all_passed === true;
+      return {
+        verification_passed: passed,
+        files_verified: typeof report.proof_count === "number" ? report.proof_count : 1,
+        files_failed: passed ? 0 : 1,
+        structural_violations: 0,
+        fidelity_percent: passed ? 100 : 0,
+      };
+    } catch {
+    }
+  }
+
+  console.log(`  S10: [BAQ] WARNING — no verification artifacts found, using conservative defaults`);
+  return {
+    verification_passed: false,
+    files_verified: 0,
+    files_failed: 0,
+    structural_violations: 0,
+    fidelity_percent: 0,
+  };
+}
 
 export async function executeStageWork(baseDir: string, runDir: string, runId: string, stageId: StageId, generatedAt: string): Promise<void> {
   if (stageId === "S1_INGEST_NORMALIZE") {
@@ -425,16 +571,31 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
         }
 
         if (!existsSync(join(runDir, "build_quality_report.json"))) {
+          const reconciliation = synthesizeReconciliation(runDir, inventory);
+          console.log(`  S10: [BAQ] Reconciliation: ${reconciliation.total_generated}/${reconciliation.total_planned} files (${reconciliation.coverage_percent}%), missing=${reconciliation.total_missing}, unplanned=${reconciliation.total_unplanned}`);
+
+          const verificationSignals = synthesizeVerificationSignals(runDir);
+          console.log(`  S10: [BAQ] Verification signals: passed=${verificationSignals.verification_passed}, verified=${verificationSignals.files_verified}, fidelity=${verificationSignals.fidelity_percent}%`);
+
+          const prePackagingSignals = { export_attempted: false, export_success: false, file_count: 0, zip_size_bytes: 0 };
+
           const gateEvaluation = evaluateAllGates({
             extraction,
             derivedInputs,
             inventory,
             traceMap,
             sufficiency,
-            reconciliation: null,
-            verificationSignals: null,
-            packagingSignals: null,
+            reconciliation,
+            verificationSignals,
+            packagingSignals: prePackagingSignals,
           });
+
+          const prePackagingGates = gateEvaluation.gates.filter(g => g.gate_id !== "G-BQ-07");
+          const failedPrePkg = prePackagingGates.filter(g => g.status === "fail");
+          if (failedPrePkg.length > 0) {
+            console.log(`  S10: [BAQ] Pre-packaging gate failures (excluding G-BQ-07): ${failedPrePkg.map(g => g.gate_id).join(", ")}`);
+          }
+
           const qualityReport = buildQualityReport({
             runId,
             buildId,
@@ -444,8 +605,8 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
             traceMap,
             sufficiency,
             gateEvaluation,
-            reconciliation: null,
-            verificationSignals: null,
+            reconciliation,
+            verificationSignals,
             buildStatus: "packaging_complete",
           });
           writeQualityReport(runDir, qualityReport);

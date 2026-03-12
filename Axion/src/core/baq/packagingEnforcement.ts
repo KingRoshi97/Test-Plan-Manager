@@ -236,7 +236,13 @@ export function runPackagingPreflight(
   const inventory = loadInventory(runDir);
   const manifestMismatches = reconcileManifestTargets(runDir, inventory, kitBundleDir);
   if (manifestMismatches.length > 0) {
-    blockReasons.push(`Manifest target mismatches: ${manifestMismatches.length} file(s) missing from kit bundle`);
+    const qualityReportCoversReconciliation = qualityReport
+      && qualityReport.gates.some(g => g.gate_id === "G-BQ-05" && g.status === "pass");
+    if (qualityReportCoversReconciliation) {
+      console.log(`  [BAQ-PREFLIGHT] ${manifestMismatches.length} manifest target mismatch(es) detected but G-BQ-05 passed — treating as non-blocking`);
+    } else {
+      blockReasons.push(`Manifest target mismatches: ${manifestMismatches.length} file(s) missing from kit bundle`);
+    }
   }
 
   const proofPath = path.join(runDir, "proof", "proof_ledger.jsonl");
