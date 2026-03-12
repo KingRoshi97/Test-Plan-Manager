@@ -1413,10 +1413,16 @@ export async function remediateFromReport(
     });
   }
 
+  const missingOnDisk = new Set<string>();
   for (const finding of fixFindings) {
     const affectedFiles: string[] = finding.affected_files || [];
     const perFileDetails: Record<string, string> = finding.per_file_details || {};
     for (const filePath of affectedFiles) {
+      const fullPath = path.join(repoDir, filePath);
+      if (!fs.existsSync(fullPath)) {
+        missingOnDisk.add(filePath);
+        continue;
+      }
       allAffectedFiles.add(filePath);
       const existing = fileRemediationContext.get(filePath) || [];
       const fileSpecificDetail = perFileDetails[filePath] || "";
@@ -1428,6 +1434,18 @@ export async function remediateFromReport(
         fileSpecificDetail,
       });
       fileRemediationContext.set(filePath, existing);
+    }
+  }
+
+  if (missingOnDisk.size > 0) {
+    console.log(`  [BA-REMEDIATION] Pre-filtered ${missingOnDisk.size} files not found on disk (need generation, not patching)`);
+    for (const fp of missingOnDisk) {
+      result.remediationLog.fileDetails.push({
+        filePath: fp,
+        status: "skipped",
+        fixMethod: "none",
+        error: "File does not exist on disk — needs generation, not patching",
+      });
     }
   }
 
@@ -1613,7 +1631,9 @@ export async function remediateFromReport(
     console.log(`  [BA-REMEDIATION] Log written to ${logPath}`);
   } catch {}
 
-  console.log(`  [BA-REMEDIATION] Complete: ${result.filesRegenerated} fixed, ${result.filesFailed} failed, ${result.remediationLog.filesUnchanged.length} unchanged`);
+  const skippedCount = result.remediationLog.fileDetails.filter((d: any) => d.status === "skipped").length;
+  const skippedMsg = skippedCount > 0 ? `, ${skippedCount} skipped (not on disk)` : "";
+  console.log(`  [BA-REMEDIATION] Complete: ${result.filesRegenerated} fixed, ${result.remediationLog.filesUnchanged.length} unchanged, ${result.filesFailed} failed${skippedMsg}`);
   return result;
 }
 
