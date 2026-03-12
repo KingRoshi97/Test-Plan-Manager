@@ -403,7 +403,9 @@ export function selectTemplates(
   const indexPath = join(baseDir, "libraries", "templates", "template_index.json");
   const index = readJson<TemplateIndex>(indexPath);
 
-  const packsPath = join(baseDir, "libraries", "templates", "feature_packs.json");
+  const packsPathPrimary = join(baseDir, "libraries", "templates", "SYSTEM", "contracts", "feature_packs.json");
+  const packsPathFallback = join(baseDir, "libraries", "templates", "feature_packs.json");
+  const packsPath = existsSync(packsPathPrimary) ? packsPathPrimary : packsPathFallback;
   let featurePacks: FeaturePack[] = [];
   if (existsSync(packsPath)) {
     const packsFile = readJson<FeaturePacksFile>(packsPath);
