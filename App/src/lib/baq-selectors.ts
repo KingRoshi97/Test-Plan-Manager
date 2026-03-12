@@ -39,10 +39,11 @@ export interface PackagingDecisionData {
 export type DataAvailability = "full" | "partial" | "empty" | "error";
 
 export function getDataAvailability(artifacts: BAQArtifacts): DataAvailability {
-  const vals = Object.values(artifacts);
-  const present = vals.filter((v) => v !== null).length;
+  const coreKeys: (keyof BAQArtifacts)[] = ["extraction", "derivedInputs", "inventory", "traceMap", "qualityReport", "failureReport", "sufficiency"];
+  const coreVals = coreKeys.map((k) => artifacts[k]);
+  const present = coreVals.filter((v) => v !== null).length;
   if (present === 0) return "empty";
-  if (present === vals.length) return "full";
+  if (present === coreVals.length) return "full";
   return "partial";
 }
 
@@ -818,7 +819,7 @@ export function selectNextBestFix(a: BAQArtifacts): NextBestFix | null {
   if (first.category === "gate") {
     const gateDetail = a.qualityReport?.gates.find((g) => g.gate_id === first.id);
     return {
-      action: matchedHint?.hint ?? `Resolve gate ${first.id}`,
+      action: matchedHint?.resolution ?? `Resolve gate ${first.id}`,
       target: first.description,
       impact: gateDetail?.blockers?.[0] ?? `Gate ${first.id} blocks packaging`,
       effort: first.severity === "critical" ? "high" : "medium",
@@ -827,14 +828,14 @@ export function selectNextBestFix(a: BAQArtifacts): NextBestFix | null {
   if (first.category === "packaging") {
     const blockReason = a.packagingDecision?.block_reasons?.[0];
     return {
-      action: matchedHint?.hint ?? `Resolve packaging issue`,
+      action: matchedHint?.resolution ?? `Resolve packaging issue`,
       target: first.description,
       impact: blockReason ?? `Packaging blocked`,
       effort: first.severity === "critical" ? "high" : "medium",
     };
   }
   return {
-    action: matchedHint?.hint ?? `Fix ${first.category} issue`,
+    action: matchedHint?.resolution ?? `Fix ${first.category} issue`,
     target: first.description,
     impact: `Reduces ${first.category} failure count by 1`,
     effort: first.severity === "critical" ? "high" : "low",
