@@ -291,7 +291,7 @@ export async function runBuild(
     const buildDir = path.join(runDir, "build");
     if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir, { recursive: true });
     fs.writeFileSync(
-      path.join(buildDir, "kit_extraction.json"),
+      path.join(buildDir, "baq_kit_extraction.json"),
       JSON.stringify(baqExtraction, null, 2),
       "utf-8",
     );
@@ -323,7 +323,7 @@ export async function runBuild(
     }
 
     fs.writeFileSync(
-      path.join(buildDir, "derived_build_inputs.json"),
+      path.join(buildDir, "baq_derived_build_inputs.json"),
       JSON.stringify(baqDerivedInputs, null, 2),
       "utf-8",
     );
