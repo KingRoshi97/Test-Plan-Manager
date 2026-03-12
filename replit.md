@@ -32,9 +32,13 @@ Do not make changes to the file `Axion/src/cli/axion.ts`.
 - `qualityReport.ts` — Extended build quality report with coverage_metrics (requirement coverage breakdown), inventory_metrics (file generation stats + placeholder/trace-linked counts), quality_signals (all upstream quality indicators), packaging_eligibility (eligible flag + blocking gates). Weighted 100-point scoring. Emits `{runDir}/build_quality_report.json`
 - `failureReport.ts` — Extended failure report with failing_units, expected/produced/missing artifacts, retry_eligible, repair_hints. `FailureCollector` class accumulates structured failures. No `any` casts. Emits `{runDir}/generation_failure_report.json`
 
-**BAQ Gates**: Only G-BQ-01/02/03 are hard-blocking (cause `block_build`); G-BQ-04 through G-BQ-07 failures produce `allow_with_warnings`. Gates evaluated at build finalization via `evaluateAllGates()`.
+**BAQ Gates**: All 7 gates are hard-blocking — any gate failure blocks packaging (decision = `blocked`) and prevents export zip creation. Gates evaluated both at finalization (for reports) and before packaging (for enforcement). `packaging_eligible` requires all gates passed.
 
-**BAQ Hooks**: `onFileGenerated` fires per-file during generation loop (not after). `onGenerationFailure` fires per-file on failure. Preflight failure hard-blocks generation (returns immediately with failure reports).
+**BAQ Decision taxonomy**: `approved` (all gates pass, score >= 70%), `approved_with_warnings` (all gates pass, score < 70%), `blocked` (any gate failed), `failed` (build terminated with error).
+
+**BAQ Hooks**: `onFileGenerated` fires per-file during generation loop. `onGenerationFailure` fires per-file on failure AND from all blocking exits. `onBuildQualityFinalize` fires from every terminal path with quality report and failure report. Preflight failure hard-blocks generation.
+
+**BAQ Retry taxonomy**: `safe_retry` | `repair_then_retry` | `manual_review_required` | `do_not_retry`. Computed per-failure and aggregated in report with counts. Upstream blocker linkage for repair-then-retry scenarios.
 
 ### Pipeline Stall Detection
 Automatic watchdog in `server/pipeline-runner.ts` detects stalled pipeline runs:

@@ -209,9 +209,8 @@ function buildPackagingEligibility(gateEval: FullGateEvaluation): PackagingEligi
   const blockingGates: string[] = [];
   const reasons: string[] = [];
 
-  const criticalGateIds = new Set(["G-BQ-01", "G-BQ-02", "G-BQ-03", "G-BQ-06"]);
   for (const gate of gateEval.gates) {
-    if (gate.status === "fail" && criticalGateIds.has(gate.gate_id)) {
+    if (gate.status === "fail") {
       blockingGates.push(gate.gate_id);
       reasons.push(`${gate.gate_id} (${gate.gate_name}) failed`);
     }
@@ -220,7 +219,7 @@ function buildPackagingEligibility(gateEval: FullGateEvaluation): PackagingEligi
   return {
     eligible: gateEval.packaging_eligible,
     blocking_gates: blockingGates,
-    reasons: reasons.length > 0 ? reasons : ["All critical gates passed"],
+    reasons: reasons.length > 0 ? reasons : ["All gates passed"],
   };
 }
 
@@ -236,27 +235,13 @@ function deriveDecision(
     return { decision: "failed", reasons };
   }
 
-  const CRITICAL_GATES = new Set(["G-BQ-01", "G-BQ-02", "G-BQ-03"]);
+  const failedGates = gateEval.gates.filter(g => g.status === "fail");
 
-  const criticalFailures = gateEval.gates.filter(
-    g => g.status === "fail" && CRITICAL_GATES.has(g.gate_id),
-  );
-  const nonCriticalFailures = gateEval.gates.filter(
-    g => g.status === "fail" && !CRITICAL_GATES.has(g.gate_id),
-  );
-
-  if (criticalFailures.length > 0) {
-    const failedIds = criticalFailures.map(g => `${g.gate_id} (${g.gate_name})`);
-    reasons.push(`Critical pre-generation gate(s) failed: ${failedIds.join(", ")}`);
-    reasons.push("Build blocked — critical gates are hard requirements");
+  if (failedGates.length > 0) {
+    const failedIds = failedGates.map(g => `${g.gate_id} (${g.gate_name})`);
+    reasons.push(`Gate(s) failed: ${failedIds.join(", ")}`);
+    reasons.push("Build blocked — all gate failures block packaging");
     return { decision: "blocked", reasons };
-  }
-
-  if (nonCriticalFailures.length > 0) {
-    const failedIds = nonCriticalFailures.map(g => `${g.gate_id} (${g.gate_name})`);
-    reasons.push(`Non-critical gate(s) failed: ${failedIds.join(", ")}`);
-    reasons.push(`Quality score ${qualityScore}%`);
-    return { decision: "approved_with_warnings", reasons };
   }
 
   if (qualityScore >= 70) {

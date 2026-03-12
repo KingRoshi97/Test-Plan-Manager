@@ -444,11 +444,6 @@ export function evaluateAllGates(params: {
   const failedCount = gates.filter(g => g.status === "fail").length;
   const skippedCount = gates.filter(g => g.status === "skip").length;
 
-  const criticalGateIds = new Set(["G-BQ-01", "G-BQ-02", "G-BQ-03", "G-BQ-06"]);
-  const criticalAllPassed = gates
-    .filter(g => criticalGateIds.has(g.gate_id))
-    .every(g => g.status === "pass");
-
   return {
     gates,
     all_passed: failedCount === 0,
@@ -456,6 +451,6 @@ export function evaluateAllGates(params: {
     passed_count: passedCount,
     failed_count: failedCount,
     skipped_count: skippedCount,
-    packaging_eligible: criticalAllPassed,
+    packaging_eligible: failedCount === 0,
   };
 }

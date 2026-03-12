@@ -938,6 +938,39 @@ export async function runBuild(
     }
 
     if (outputMode === "build_and_export") {
+      const prePackagingGateEval = evaluateAllGates({
+        extraction: baqExtraction,
+        derivedInputs: baqDerivedInputs,
+        inventory: baqInventory,
+        traceMap: baqTraceMap,
+        sufficiency: baqSufficiency,
+        reconciliation: baqReconciliation,
+        verificationSignals: baqVerificationSignals,
+        packagingSignals: null,
+      });
+
+      if (!prePackagingGateEval.all_passed) {
+        const failedGates = prePackagingGateEval.gates
+          .filter(g => g.status === "fail")
+          .map(g => `${g.gate_id} (${g.gate_name})`);
+        const reason = `Packaging blocked — gate(s) failed: ${failedGates.join(", ")}`;
+        console.log(`  [BAQ] ${reason}`);
+        baqFailureCollector.addFromError("packaging", "packaging_failure", reason, "critical", {
+          failingUnit: "gate_enforcement",
+          retryClassification: "repair_then_retry" as const,
+          repairHints: failedGates.map(g => `Fix failing gate: ${g}`),
+        });
+
+        baqPackagingSignals = { export_attempted: false, export_success: false, file_count: 0, zip_size_bytes: 0 };
+        manifest = recordLifecycleTransition(manifest, "passed", "packaging_blocked", reason);
+        result.state = "passed";
+        writeBuildManifest(paths.buildManifest, manifest);
+
+        emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, baqPackagingSignals, baqFailureCollector, "verification_complete", baqHookRunner);
+        return result;
+      }
+
+      console.log("  [BAQ] All gates passed — packaging eligible");
       console.log("  [BUILD] Creating export zip...");
       const exportResult = await createExportZip(paths);
 
