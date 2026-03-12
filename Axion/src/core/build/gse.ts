@@ -423,24 +423,15 @@ export function routeGenerationStrategy(
     } else if (cc === "C2") {
       mode = "cheap_model";
       tier = "mini";
-      rationale = `${cc}: moderate complexity, gpt-4o-mini sufficient`;
+      rationale = `${cc}: moderate complexity, claude-haiku sufficient`;
     } else if (cc === "C3") {
-      const needsFull = files.some(f =>
-        f.role === "auth_policy" || f.role === "audit_hook"
-      ) && hasSecurityModel;
-      if (needsFull) {
-        mode = "full_model";
-        tier = "full";
-        rationale = `${cc}: security-sensitive, requires gpt-4o`;
-      } else {
-        mode = "cheap_model";
-        tier = "mini";
-        rationale = `${cc}: complex but non-security, gpt-4o-mini with retry`;
-      }
+      mode = "full_model";
+      tier = "full";
+      rationale = `${cc}: complex unit, requires claude-sonnet`;
     } else {
       mode = "full_model";
       tier = "full";
-      rationale = `${cc}: high complexity, requires gpt-4o`;
+      rationale = `${cc}: high complexity, requires claude-sonnet`;
     }
 
     modeCounts[mode] += fileCount;
