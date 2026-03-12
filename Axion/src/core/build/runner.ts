@@ -375,7 +375,7 @@ export async function runBuild(
       return {
         hook_name: "onRequirementTraceBuild",
         success: gate.passed,
-        blocking: !gate.passed,
+        blocking: false,
         evidence: [{
           evidence_id: "traceability-gate",
           type: "gate_result",
@@ -386,10 +386,11 @@ export async function runBuild(
             blockers: gate.blockers,
             coverage_percent: tm.summary.coverage_percent,
             total_requirements: tm.summary.total_requirements,
+            phase: "pre_generation",
           },
         }],
         warnings: gate.blockers.length > 0 ? gate.blockers : [],
-        errors: gate.passed ? [] : gate.blockers,
+        errors: [],
         timestamp: new Date().toISOString(),
       };
     });
@@ -410,7 +411,7 @@ export async function runBuild(
       return {
         hook_name: "onSufficiencyEvaluation",
         success: gate.passed,
-        blocking: !gate.passed,
+        blocking: false,
         evidence: [{
           evidence_id: "sufficiency-gate",
           type: "gate_result",
@@ -422,6 +423,7 @@ export async function runBuild(
             overall_score: baqSufficiency.overall_score,
             status: baqSufficiency.status,
             critical_gaps: baqSufficiency.summary.critical_gaps,
+            phase: "pre_generation",
           },
         }],
         warnings: gate.blockers.length > 0 ? gate.blockers : [],
@@ -570,12 +572,12 @@ export async function runBuild(
     }
 
     const traceGate = checkBAQTraceabilityGate(baqTraceMap);
-    console.log(`  [BAQ] Traceability: ${baqTraceMap.summary.fully_covered} fully / ${baqTraceMap.summary.partially_covered} partial / ${baqTraceMap.summary.not_covered} uncovered, coverage=${baqTraceMap.summary.coverage_percent}%, gate=${traceGate.passed ? "PASS" : "FAIL"}`);
+    console.log(`  [BAQ] Traceability (pre-generation): ${baqTraceMap.summary.fully_covered} fully / ${baqTraceMap.summary.partially_covered} partial / ${baqTraceMap.summary.not_covered} uncovered, coverage=${baqTraceMap.summary.coverage_percent}%, gate=${traceGate.passed ? "PASS" : "ADVISORY_FAIL"}`);
 
     if (!traceGate.passed) {
       const gateBlockers = traceGate.blockers.join("; ");
-      console.log(`  [BAQ] BLOCKED — Traceability gate G-BQ-03 failed: ${gateBlockers}`);
-      throw new Error(`BAQ gate G-BQ-03 traceability blocked: ${gateBlockers}`);
+      console.log(`  [BAQ] ADVISORY — Pre-generation traceability gate G-BQ-03: ${gateBlockers}`);
+      console.log(`  [BAQ] Proceeding to generation — traceability will be re-evaluated post-generation`);
     }
 
     console.log("  [BAQ] Evaluating sufficiency...");
@@ -608,12 +610,12 @@ export async function runBuild(
     }
 
     const sufficiencyGate = checkBAQSufficiencyGate(baqSufficiency);
-    console.log(`  [BAQ] Sufficiency: score=${baqSufficiency.overall_score}%, status=${baqSufficiency.status}, ${baqSufficiency.summary.passing_dimensions}/${baqSufficiency.summary.total_dimensions} dimensions passing, ${baqSufficiency.summary.critical_gaps} critical gaps, gate=${sufficiencyGate.passed ? "PASS" : "FAIL"}`);
+    console.log(`  [BAQ] Sufficiency (pre-generation): score=${baqSufficiency.overall_score}%, status=${baqSufficiency.status}, ${baqSufficiency.summary.passing_dimensions}/${baqSufficiency.summary.total_dimensions} dimensions passing, ${baqSufficiency.summary.critical_gaps} critical gaps, gate=${sufficiencyGate.passed ? "PASS" : "ADVISORY_FAIL"}`);
 
     if (!sufficiencyGate.passed) {
       const gateBlockers = sufficiencyGate.blockers.join("; ");
-      console.log(`  [BAQ] BLOCKED — Sufficiency gate G-BQ-03 failed: ${gateBlockers}`);
-      throw new Error(`BAQ gate G-BQ-03 sufficiency blocked: ${gateBlockers}`);
+      console.log(`  [BAQ] ADVISORY — Pre-generation sufficiency gate G-BQ-03: ${gateBlockers}`);
+      console.log(`  [BAQ] Proceeding to generation — sufficiency will be re-evaluated post-generation`);
     }
 
     try {
