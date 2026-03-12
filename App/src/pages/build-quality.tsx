@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../lib/queryClient";
 import {
@@ -7,6 +7,7 @@ import {
   FileText, Package, Layers, GitBranch, List,
   AlertOctagon, Wrench, TrendingUp, Download, Eye,
   Gauge, Boxes, Search, Database, Code, Lock,
+  RefreshCw, ArrowRight, Zap, Info, Copy,
   type LucideIcon,
 } from "lucide-react";
 import { GlassPanel } from "../components/ui/glass-panel";
@@ -26,11 +27,19 @@ import {
   selectTraceCoverageSummary,
   selectRequirementChains,
   selectMissingRequiredFiles,
+  selectUnplannedGeneratedFiles,
   selectGateRows,
   selectFailureSummary,
   selectPackagingReconciliation,
+  selectTrendSeries,
   selectTopBlockers,
   selectNextBestFix,
+  selectTraceGaps,
+  selectSufficiencyDimensions,
+  selectSufficiencyGaps,
+  selectInventoryByCategory,
+  selectFailureRepairHints,
+  selectUpstreamBlockers,
   getDataAvailability,
 } from "../lib/baq-selectors";
 
@@ -134,11 +143,25 @@ function DataTable({ headers, rows }: { headers: string[]; rows: React.ReactNode
   );
 }
 
-function OverviewTab({ artifacts }: { artifacts: BAQArtifacts }) {
+function CrossLink({ label, tabId, onClick }: { label: string; tabId: TabId; onClick: (tab: TabId) => void }) {
+  return (
+    <button
+      onClick={() => onClick(tabId)}
+      className="inline-flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline"
+    >
+      <ArrowRight className="w-3 h-3" />
+      {label}
+    </button>
+  );
+}
+
+function OverviewTab({ artifacts, onNavigate }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void }) {
   const decision = selectFinalBuildDecision(artifacts);
   const coverage = selectCoverageMetrics(artifacts);
   const integrity = selectOutputIntegrityMetrics(artifacts);
   const blockers = selectTopBlockers(artifacts);
+  const dimensions = selectSufficiencyDimensions(artifacts);
+  const gaps = selectSufficiencyGaps(artifacts);
 
   return (
     <div className="space-y-6">
@@ -149,7 +172,7 @@ function OverviewTab({ artifacts }: { artifacts: BAQArtifacts }) {
           <div className="mt-2 text-2xl font-semibold tabular-nums text-[hsl(var(--foreground))]">{decision.qualityScore}<span className="text-sm text-[hsl(var(--muted-foreground))]">/100</span></div>
         </GlassPanel>
         <MetricCard icon={Target} label="Coverage" value={pct(coverage.requirementCoverage)} accent={coverage.requirementCoverage >= 80 ? "green" : "amber"} subtitle="requirement coverage" />
-        <MetricCard icon={Gauge} label="Output Integrity" value={`${integrity.totalFiles}`} accent="cyan" subtitle={`${integrity.requiredFiles} required`} />
+        <MetricCard icon={Gauge} label="Output Integrity" value={`${integrity.generatedFiles}/${integrity.totalFiles}`} accent="cyan" subtitle={`${integrity.missingRequired} missing`} />
         <MetricCard icon={Shield} label="Gates" value={`${decision.gatesPassed}/${decision.gatesTotal}`} accent={decision.gatesFailed > 0 ? "red" : "green"} subtitle={decision.gatesFailed > 0 ? `${decision.gatesFailed} failed` : "all passed"} />
         <MetricCard icon={Package} label="Packaging" value={decision.packagingAllowed ? "Allowed" : "Blocked"} accent={decision.packagingAllowed ? "green" : "red"} />
       </div>
@@ -170,7 +193,10 @@ function OverviewTab({ artifacts }: { artifacts: BAQArtifacts }) {
 
       {blockers.length > 0 && (
         <GlassPanel solid className="p-4">
-          <div className="text-system-label mb-2">Active Blockers</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-system-label">Active Blockers</div>
+            <CrossLink label="View all gates" tabId="gates" onClick={onNavigate} />
+          </div>
           <div className="space-y-2">
             {blockers.map((b) => (
               <div key={b.id} className="flex items-start gap-2 text-sm">
@@ -184,6 +210,55 @@ function OverviewTab({ artifacts }: { artifacts: BAQArtifacts }) {
           </div>
         </GlassPanel>
       )}
+
+      {dimensions.length > 0 && (
+        <GlassPanel solid className="p-4">
+          <div className="text-system-label mb-3">Sufficiency Dimensions</div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {dimensions.map((dim) => (
+              <div key={dim.dimensionId} className={`rounded-md border p-3 ${dim.passed ? "border-[hsl(var(--status-success)/0.3)] bg-[hsl(var(--status-success)/0.05)]" : "border-[hsl(var(--status-failure)/0.3)] bg-[hsl(var(--status-failure)/0.05)]"}`}>
+                <div className="text-xs text-system-label mb-1">{dim.name}</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-lg font-semibold tabular-nums">{dim.score}</div>
+                  <div className="text-xs text-[hsl(var(--muted-foreground))]">/ {dim.threshold} min</div>
+                  {dim.passed ? <CheckCircle2 className="w-4 h-4 text-[hsl(var(--status-success))]" /> : <XCircle className="w-4 h-4 text-[hsl(var(--status-failure))]" />}
+                </div>
+                <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">{dim.detail}</div>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
+      {gaps.length > 0 && (
+        <GlassPanel solid className="p-4">
+          <div className="text-system-label mb-3">Sufficiency Gaps</div>
+          {gaps.map((gap) => (
+            <div key={gap.gapId} className="border-b border-[hsl(var(--border)/0.3)] pb-2 mb-2 last:border-0 last:mb-0">
+              <div className="flex items-center gap-2 text-sm">
+                <StatusChip variant={severityVariant(gap.severity)} label={gap.severity} />
+                <span>{gap.description}</span>
+              </div>
+              {gap.recommendation && (
+                <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1 flex items-start gap-1">
+                  <Wrench className="w-3 h-3 mt-0.5 shrink-0" />
+                  {gap.recommendation}
+                </div>
+              )}
+              {gap.affectedRefs.length > 0 && (
+                <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Affected: {gap.affectedRefs.join(", ")}</div>
+              )}
+            </div>
+          ))}
+        </GlassPanel>
+      )}
+
+      <div className="flex gap-2 flex-wrap">
+        <CrossLink label="View extraction details" tabId="extraction" onClick={onNavigate} />
+        <CrossLink label="View traceability matrix" tabId="traceability" onClick={onNavigate} />
+        <CrossLink label="View failure details" tabId="failures" onClick={onNavigate} />
+        <CrossLink label="View packaging status" tabId="packaging" onClick={onNavigate} />
+      </div>
     </div>
   );
 }
@@ -194,6 +269,10 @@ function ExtractionTab({ artifacts }: { artifacts: BAQArtifacts }) {
   const ext = artifacts.extraction;
 
   if (!ext) return <EmptyArtifact name="Kit Extraction" />;
+
+  const missingSections = rows.filter((r) => r.status === "missing");
+  const deferredSections = rows.filter((r) => r.status === "deferred");
+  const invalidSections = rows.filter((r) => r.status === "invalid" || r.status === "not_applicable");
 
   return (
     <div className="space-y-6">
@@ -207,16 +286,67 @@ function ExtractionTab({ artifacts }: { artifacts: BAQArtifacts }) {
       <GlassPanel solid className="p-4">
         <div className="text-system-label mb-3">Section Coverage</div>
         <DataTable
-          headers={["Section", "Status", "Applicability", "Files", "Notes"]}
+          headers={["Section", "Status", "Applicability", "Files", "Size", "Notes"]}
           rows={rows.map((r) => [
             <span className="font-mono text-xs">{r.sectionLabel}</span>,
             <StatusChip variant={r.status === "consumed" ? "success" : r.status === "missing" ? "failure" : "warning"} label={r.status} />,
             <span className="text-xs">{r.applicability}</span>,
             <span className="tabular-nums">{r.fileCount}</span>,
+            <span className="text-xs tabular-nums">{(r.byteCount / 1024).toFixed(1)} KB</span>,
             <span className="text-xs text-[hsl(var(--muted-foreground))]">{r.notes.join(", ") || "—"}</span>,
           ])}
         />
       </GlassPanel>
+
+      {missingSections.length > 0 && (
+        <GlassPanel solid className="p-4" glow="red">
+          <div className="text-system-label mb-3">Missing Sections ({missingSections.length})</div>
+          <div className="space-y-2">
+            {missingSections.map((s) => (
+              <div key={s.sectionId} className="flex items-center gap-2 text-sm">
+                <XCircle className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />
+                <span className="font-mono text-xs">{s.sectionId}</span>
+                <span>{s.sectionLabel}</span>
+                <span className="text-xs text-[hsl(var(--muted-foreground))]">{s.applicability}</span>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
+      {deferredSections.length > 0 && (
+        <GlassPanel solid className="p-4" glow="amber">
+          <div className="text-system-label mb-3">Deferred Sections ({deferredSections.length})</div>
+          <div className="space-y-2">
+            {deferredSections.map((s) => (
+              <div key={s.sectionId} className="flex items-start gap-2 text-sm">
+                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 text-[hsl(var(--status-warning))]" />
+                <div>
+                  <span className="font-mono text-xs mr-2">{s.sectionId}</span>
+                  <span>{s.sectionLabel}</span>
+                  {s.notes.length > 0 && <div className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">{s.notes.join("; ")}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
+      {invalidSections.length > 0 && (
+        <GlassPanel solid className="p-4" glow="red">
+          <div className="text-system-label mb-3">Invalid / Not Applicable Sections ({invalidSections.length})</div>
+          <div className="space-y-2">
+            {invalidSections.map((s) => (
+              <div key={s.sectionId} className="flex items-center gap-2 text-sm">
+                <Info className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                <span className="font-mono text-xs">{s.sectionId}</span>
+                <span>{s.sectionLabel}</span>
+                <StatusChip variant="neutral" label={s.status} />
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
 
       {obligations.length > 0 && (
         <GlassPanel solid className="p-4">
@@ -238,6 +368,7 @@ function ExtractionTab({ artifacts }: { artifacts: BAQArtifacts }) {
                     {item.fulfilled ? <CheckCircle2 className="w-3.5 h-3.5 text-[hsl(var(--status-success))]" /> : <XCircle className="w-3.5 h-3.5 text-[hsl(var(--status-failure))]" />}
                     <span>{item.description}</span>
                     <StatusChip variant={severityVariant(item.severity)} label={item.severity} />
+                    {item.fulfillmentRef && <span className="text-xs font-mono text-[hsl(var(--muted-foreground))]">{item.fulfillmentRef}</span>}
                   </div>
                 ))}
               </div>
@@ -330,6 +461,32 @@ function DerivedPlanTab({ artifacts }: { artifacts: BAQArtifacts }) {
         </GlassPanel>
       </div>
 
+      {(d.verification_obligations.length > 0 || d.ops_obligations.length > 0) && (
+        <GlassPanel solid className="p-4">
+          <div className="text-system-label mb-3">Obligations</div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-system-label mb-2">Verification ({d.verification_obligations.length})</div>
+              {d.verification_obligations.map((v, i) => (
+                <div key={i} className="text-xs text-[hsl(var(--foreground))] mb-1 flex items-start gap-1">
+                  <Lock className="w-3 h-3 mt-0.5 shrink-0 text-[hsl(var(--muted-foreground))]" />
+                  {typeof v === "string" ? v : (v as any).description ?? JSON.stringify(v)}
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="text-xs text-system-label mb-2">Ops ({d.ops_obligations.length})</div>
+              {d.ops_obligations.map((o, i) => (
+                <div key={i} className="text-xs text-[hsl(var(--foreground))] mb-1 flex items-start gap-1">
+                  <Zap className="w-3 h-3 mt-0.5 shrink-0 text-[hsl(var(--muted-foreground))]" />
+                  {typeof o === "string" ? o : (o as any).description ?? JSON.stringify(o)}
+                </div>
+              ))}
+            </div>
+          </div>
+        </GlassPanel>
+      )}
+
       {d.assumptions.length > 0 && (
         <GlassPanel solid className="p-4">
           <div className="text-system-label mb-3">Assumptions & Risks</div>
@@ -359,6 +516,7 @@ function DerivedPlanTab({ artifacts }: { artifacts: BAQArtifacts }) {
 function InventoryTab({ artifacts }: { artifacts: BAQArtifacts }) {
   const requiredFiles = selectRequiredFileRows(artifacts);
   const allFiles = selectManifestTargetRows(artifacts);
+  const categories = selectInventoryByCategory(artifacts);
   const inv = artifacts.inventory;
 
   if (!inv) return <EmptyArtifact name="Repo Inventory" />;
@@ -401,6 +559,52 @@ function InventoryTab({ artifacts }: { artifacts: BAQArtifacts }) {
         />
       </GlassPanel>
 
+      {categories.optional.length > 0 && (
+        <GlassPanel solid className="p-4">
+          <ExpandableRow title={<span className="text-system-label">Optional Files ({categories.optional.length})</span>}>
+            <DataTable
+              headers={["Path", "Role", "Layer", "Method"]}
+              rows={categories.optional.map((f) => [
+                <span className="font-mono text-xs">{f.path}</span>,
+                <span className="text-xs">{f.role}</span>,
+                <span className="text-xs">{f.layer}</span>,
+                <StatusChip variant="neutral" label={f.generationMethod} />,
+              ])}
+            />
+          </ExpandableRow>
+        </GlassPanel>
+      )}
+
+      {categories.test.length > 0 && (
+        <GlassPanel solid className="p-4">
+          <ExpandableRow title={<span className="text-system-label">Test Files ({categories.test.length})</span>}>
+            <DataTable
+              headers={["Path", "Role", "Traces"]}
+              rows={categories.test.map((f) => [
+                <span className="font-mono text-xs">{f.path}</span>,
+                <span className="text-xs">{f.role}</span>,
+                <span className="text-xs text-[hsl(var(--muted-foreground))]">{f.traceRefs.join(", ") || "—"}</span>,
+              ])}
+            />
+          </ExpandableRow>
+        </GlassPanel>
+      )}
+
+      {categories.config.length > 0 && (
+        <GlassPanel solid className="p-4">
+          <ExpandableRow title={<span className="text-system-label">Config Files ({categories.config.length})</span>}>
+            <DataTable
+              headers={["Path", "Layer", "Method"]}
+              rows={categories.config.map((f) => [
+                <span className="font-mono text-xs">{f.path}</span>,
+                <span className="text-xs">{f.layer}</span>,
+                <StatusChip variant="neutral" label={f.generationMethod} />,
+              ])}
+            />
+          </ExpandableRow>
+        </GlassPanel>
+      )}
+
       {Object.keys(inv.summary.files_by_layer).length > 0 && (
         <GlassPanel solid className="p-4">
           <div className="text-system-label mb-3">Files by Layer</div>
@@ -414,13 +618,43 @@ function InventoryTab({ artifacts }: { artifacts: BAQArtifacts }) {
           </div>
         </GlassPanel>
       )}
+
+      {Object.keys(inv.summary.files_by_generation_method).length > 0 && (
+        <GlassPanel solid className="p-4">
+          <div className="text-system-label mb-3">Files by Generation Method</div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {Object.entries(inv.summary.files_by_generation_method).map(([method, count]) => (
+              <div key={method} className="glass-panel-solid p-3">
+                <div className="text-xs text-system-label mb-1">{method.replace(/_/g, " ")}</div>
+                <div className="text-lg font-semibold tabular-nums">{count as number}</div>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
+      <GlassPanel solid className="p-4">
+        <ExpandableRow title={<span className="text-system-label">All Manifest Targets ({allFiles.length})</span>}>
+          <DataTable
+            headers={["Path", "Role", "Layer", "Module", "Subsystem"]}
+            rows={allFiles.map((f) => [
+              <span className="font-mono text-xs">{f.path}</span>,
+              <span className="text-xs">{f.role}</span>,
+              <span className="text-xs">{f.layer}</span>,
+              <span className="text-xs font-mono">{f.moduleRef}</span>,
+              <span className="text-xs font-mono">{f.subsystemRef}</span>,
+            ])}
+          />
+        </ExpandableRow>
+      </GlassPanel>
     </div>
   );
 }
 
-function TraceabilityTab({ artifacts }: { artifacts: BAQArtifacts }) {
+function TraceabilityTab({ artifacts, onNavigate }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void }) {
   const summary = selectTraceCoverageSummary(artifacts);
   const chains = selectRequirementChains(artifacts);
+  const traceGaps = selectTraceGaps(artifacts);
   const tm = artifacts.traceMap;
 
   if (!tm) return <EmptyArtifact name="Requirement Trace Map" />;
@@ -433,6 +667,30 @@ function TraceabilityTab({ artifacts }: { artifacts: BAQArtifacts }) {
         <MetricCard icon={AlertTriangle} label="Partially" value={summary.partiallyCovered} accent="amber" />
         <MetricCard icon={XCircle} label="Not Covered" value={summary.notCovered} accent="red" />
       </div>
+
+      {traceGaps.length > 0 && (
+        <GlassPanel solid className="p-4" glow="amber">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-system-label">Trace Gaps ({traceGaps.length})</div>
+            <CrossLink label="View failures" tabId="failures" onClick={onNavigate} />
+          </div>
+          <DataTable
+            headers={["Requirement", "Status", "Missing Areas"]}
+            rows={traceGaps.map((g) => [
+              <div>
+                <span className="font-mono text-xs">{g.requirementId}</span>
+                <div className="text-xs text-[hsl(var(--muted-foreground))]">{g.description}</div>
+              </div>,
+              <StatusChip variant={g.coverageStatus === "partially_covered" ? "warning" : "failure"} label={g.coverageStatus.replace(/_/g, " ")} />,
+              <div className="space-y-0.5">
+                {g.missingAreas.map((area, i) => (
+                  <div key={i} className="text-xs text-[hsl(var(--status-failure))]">{area}</div>
+                ))}
+              </div>,
+            ])}
+          />
+        </GlassPanel>
+      )}
 
       {summary.unmappedTotal > 0 && (
         <GlassPanel solid className="p-4" glow={summary.unmappedCritical > 0 ? "red" : "amber"}>
@@ -465,6 +723,7 @@ function TraceabilityTab({ artifacts }: { artifacts: BAQArtifacts }) {
             <div className="space-y-2 text-sm">
               <div><span className="text-system-label">Files:</span> {chain.fileRefs.length > 0 ? chain.fileRefs.map((f) => <span key={f} className="font-mono text-xs mr-2">{f}</span>) : "—"}</div>
               <div><span className="text-system-label">Features:</span> {chain.featureRefs.join(", ") || "—"}</div>
+              <div><span className="text-system-label">Verification:</span> {chain.verificationRefs.length > 0 ? chain.verificationRefs.join(", ") : "—"}</div>
               {chain.workUnits.map((wu) => (
                 <div key={wu.workUnitId} className="pl-3 border-l border-[hsl(var(--border))]">
                   <div className="font-medium text-xs">{wu.description}</div>
@@ -484,22 +743,48 @@ function TraceabilityTab({ artifacts }: { artifacts: BAQArtifacts }) {
   );
 }
 
-function GenerationDeltaTab({ artifacts }: { artifacts: BAQArtifacts }) {
+function GenerationDeltaTab({ artifacts, onNavigate }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void }) {
   const integrity = selectOutputIntegrityMetrics(artifacts);
   const missingFiles = selectMissingRequiredFiles(artifacts);
+  const unplannedFiles = selectUnplannedGeneratedFiles(artifacts);
+  const coverage = selectCoverageMetrics(artifacts);
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <MetricCard icon={Database} label="Total Files" value={integrity.totalFiles} accent="cyan" />
         <MetricCard icon={Target} label="Required" value={integrity.requiredFiles} accent="green" />
-        <MetricCard icon={AlertTriangle} label="Missing Required" value={missingFiles.length} accent={missingFiles.length > 0 ? "red" : "green"} />
-        <MetricCard icon={Search} label="Unplanned" value={integrity.unplannedFiles} accent={integrity.unplannedFiles > 0 ? "amber" : "green"} />
+        <MetricCard icon={CheckCircle2} label="Generated" value={integrity.generatedFiles} accent="green" subtitle="with traces" />
+        <MetricCard icon={AlertTriangle} label="Missing Required" value={integrity.missingRequired} accent={integrity.missingRequired > 0 ? "red" : "green"} />
+        <MetricCard icon={Search} label="Unplanned" value={unplannedFiles.length} accent={unplannedFiles.length > 0 ? "amber" : "green"} />
       </div>
+
+      <GlassPanel solid className="p-4">
+        <div className="text-system-label mb-3">Integrity Summary</div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="glass-panel-solid p-3">
+            <div className="text-xs text-system-label mb-1">Placeholder Ratio</div>
+            <div className={`text-lg font-semibold tabular-nums ${coverage.placeholderRatio > 20 ? "text-[hsl(var(--status-warning))]" : ""}`}>
+              {pct(coverage.placeholderRatio)}
+            </div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))]">AI-assisted files as % of total</div>
+          </div>
+          <div className="glass-panel-solid p-3">
+            <div className="text-xs text-system-label mb-1">Inventory Variance</div>
+            <div className="text-lg font-semibold tabular-nums">{pct(coverage.inventoryVariance)}</div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))]">Non-required as % of total</div>
+          </div>
+          <div className="glass-panel-solid p-3">
+            <div className="text-xs text-system-label mb-1">Trace Coverage</div>
+            <div className="text-lg font-semibold tabular-nums">{integrity.totalFiles > 0 ? pct((integrity.generatedFiles / integrity.totalFiles) * 100) : "N/A"}</div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))]">Files with trace refs</div>
+          </div>
+        </div>
+      </GlassPanel>
 
       {missingFiles.length > 0 && (
         <GlassPanel solid className="p-4" glow="red">
-          <div className="text-system-label mb-3">Missing Required Files</div>
+          <div className="text-system-label mb-3">Missing Required Files ({missingFiles.length})</div>
           <DataTable
             headers={["Path", "Reason", "Linked Traces"]}
             rows={missingFiles.map((f) => [
@@ -511,7 +796,23 @@ function GenerationDeltaTab({ artifacts }: { artifacts: BAQArtifacts }) {
         </GlassPanel>
       )}
 
-      {missingFiles.length === 0 && integrity.totalFiles === 0 && (
+      {unplannedFiles.length > 0 && (
+        <GlassPanel solid className="p-4" glow="amber">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-system-label">Unplanned Files ({unplannedFiles.length})</div>
+            <CrossLink label="View inventory" tabId="inventory" onClick={onNavigate} />
+          </div>
+          <DataTable
+            headers={["Path", "Reason"]}
+            rows={unplannedFiles.map((f) => [
+              <span className="font-mono text-xs">{f.path}</span>,
+              <span className="text-xs text-[hsl(var(--muted-foreground))]">{f.reason}</span>,
+            ])}
+          />
+        </GlassPanel>
+      )}
+
+      {missingFiles.length === 0 && unplannedFiles.length === 0 && integrity.totalFiles === 0 && (
         <GlassPanel solid className="p-6">
           <div className="text-center text-[hsl(var(--muted-foreground))]">
             <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -524,7 +825,7 @@ function GenerationDeltaTab({ artifacts }: { artifacts: BAQArtifacts }) {
   );
 }
 
-function GatesTab({ artifacts }: { artifacts: BAQArtifacts }) {
+function GatesTab({ artifacts, onNavigate }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void }) {
   const gates = selectGateRows(artifacts);
 
   if (gates.length === 0) return <EmptyArtifact name="Gate Evaluation" />;
@@ -576,6 +877,7 @@ function GatesTab({ artifacts }: { artifacts: BAQArtifacts }) {
                       <AlertOctagon className="w-3 h-3" /> {b}
                     </div>
                   ))}
+                  <CrossLink label="View packaging impact" tabId="packaging" onClick={onNavigate} />
                 </div>
               )}
             </div>
@@ -586,8 +888,10 @@ function GatesTab({ artifacts }: { artifacts: BAQArtifacts }) {
   );
 }
 
-function FailuresTab({ artifacts }: { artifacts: BAQArtifacts }) {
+function FailuresTab({ artifacts, onNavigate }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void }) {
   const summary = selectFailureSummary(artifacts);
+  const repairHints = selectFailureRepairHints(artifacts);
+  const upstreamBlockers = selectUpstreamBlockers(artifacts);
 
   if (!artifacts.failureReport) return <EmptyArtifact name="Failure Report" />;
 
@@ -599,6 +903,23 @@ function FailuresTab({ artifacts }: { artifacts: BAQArtifacts }) {
         <MetricCard icon={CheckCircle2} label="Resolved" value={summary.resolvedCount} accent="green" />
         <MetricCard icon={XCircle} label="Unresolved" value={summary.unresolvedCount} accent={summary.unresolvedCount > 0 ? "amber" : "green"} />
       </div>
+
+      {upstreamBlockers.length > 0 && (
+        <GlassPanel solid className="p-4" glow="red">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-system-label">Upstream Blockers ({upstreamBlockers.length})</div>
+            <CrossLink label="View gates" tabId="gates" onClick={onNavigate} />
+          </div>
+          <DataTable
+            headers={["Source", "Description", "Impact"]}
+            rows={upstreamBlockers.map((b) => [
+              <StatusChip variant="failure" label={b.source} />,
+              <span className="text-sm">{b.description}</span>,
+              <span className="text-xs text-[hsl(var(--muted-foreground))]">{b.impact}</span>,
+            ])}
+          />
+        </GlassPanel>
+      )}
 
       {Object.keys(summary.byClass).length > 0 && (
         <GlassPanel solid className="p-4">
@@ -618,14 +939,58 @@ function FailuresTab({ artifacts }: { artifacts: BAQArtifacts }) {
         <GlassPanel solid className="p-4">
           <div className="text-system-label mb-3">Failure Details</div>
           <DataTable
-            headers={["ID", "Class", "Severity", "Phase", "Description", "Resolved"]}
+            headers={["ID", "Class", "Severity", "Phase", "Description", "File", "Resolved"]}
             rows={summary.failures.map((f) => [
               <span className="font-mono text-xs">{f.failure_id}</span>,
               <span className="text-xs">{f.failure_class.replace(/_/g, " ")}</span>,
               <StatusChip variant={severityVariant(f.severity)} label={f.severity} />,
               <span className="text-xs">{f.phase}</span>,
               <span className="text-sm">{f.description}</span>,
+              <span className="font-mono text-xs text-[hsl(var(--muted-foreground))]">{f.file_ref || "—"}</span>,
               f.resolved ? <CheckCircle2 className="w-4 h-4 text-[hsl(var(--status-success))]" /> : <XCircle className="w-4 h-4 text-[hsl(var(--status-failure))]" />,
+            ])}
+          />
+        </GlassPanel>
+      )}
+
+      {repairHints.length > 0 && (
+        <GlassPanel solid className="p-4" glow="cyan">
+          <div className="text-system-label mb-3 flex items-center gap-2">
+            <Wrench className="w-4 h-4" />
+            Repair Hints
+          </div>
+          <div className="space-y-3">
+            {repairHints.map((hint) => (
+              <div key={hint.failureId} className="border-b border-[hsl(var(--border)/0.3)] pb-3 last:border-0 last:pb-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <StatusChip variant={severityVariant(hint.severity)} label={hint.severity} />
+                  <span className="font-mono text-xs">{hint.failureId}</span>
+                  {hint.isBlocking && <span className="text-xs text-[hsl(var(--status-failure))] font-medium">BLOCKING</span>}
+                </div>
+                <div className="text-sm text-[hsl(var(--foreground))]">{hint.description}</div>
+                <div className="text-sm text-[hsl(var(--primary))] mt-1 flex items-start gap-1">
+                  <Wrench className="w-3 h-3 mt-0.5 shrink-0" />
+                  {hint.resolution}
+                </div>
+                {hint.fileRef && (
+                  <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1 font-mono">File: {hint.fileRef}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
+      {artifacts.packagingDecision && artifacts.packagingDecision.missing_artifacts.length > 0 && (
+        <GlassPanel solid className="p-4" glow="red">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-system-label">Missing Artifacts</div>
+            <CrossLink label="View packaging" tabId="packaging" onClick={onNavigate} />
+          </div>
+          <DataTable
+            headers={["Artifact"]}
+            rows={artifacts.packagingDecision.missing_artifacts.map((a) => [
+              <span className="font-mono text-sm text-[hsl(var(--status-failure))]">{a}</span>,
             ])}
           />
         </GlassPanel>
@@ -634,7 +999,7 @@ function FailuresTab({ artifacts }: { artifacts: BAQArtifacts }) {
   );
 }
 
-function PackagingTab({ artifacts }: { artifacts: BAQArtifacts }) {
+function PackagingTab({ artifacts, onNavigate }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void }) {
   const pkg = selectPackagingReconciliation(artifacts);
 
   return (
@@ -667,7 +1032,10 @@ function PackagingTab({ artifacts }: { artifacts: BAQArtifacts }) {
 
       {pkg.gateFailures.length > 0 && (
         <GlassPanel solid className="p-4">
-          <div className="text-system-label mb-3">Gate Failures</div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-system-label">Gate Failures</div>
+            <CrossLink label="View gate details" tabId="gates" onClick={onNavigate} />
+          </div>
           <DataTable
             headers={["Gate"]}
             rows={pkg.gateFailures.map((g) => [<span className="text-sm font-mono">{g}</span>])}
@@ -709,14 +1077,47 @@ function PackagingTab({ artifacts }: { artifacts: BAQArtifacts }) {
   );
 }
 
-function HistoryTab() {
+function HistoryTab({ artifacts, allRuns }: { artifacts: BAQArtifacts; allRuns: Array<{ runId: string; hasBAQ: boolean }> }) {
+  const trend = selectTrendSeries(artifacts);
+  const baqRuns = allRuns.filter((r) => r.hasBAQ);
+
   return (
     <div className="space-y-6">
+      {trend.length > 0 && (
+        <GlassPanel solid className="p-4">
+          <div className="text-system-label mb-3">Current Run Quality</div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {trend.map((t) => (
+              <div key={t.runId} className="glass-panel-solid p-3">
+                <div className="text-xs font-mono text-system-label mb-1">{t.runId}</div>
+                <div className="text-lg font-semibold tabular-nums">{t.qualityScore}</div>
+                <div className="text-xs text-[hsl(var(--muted-foreground))]">{t.gatesPassed}/{t.gatesTotal} gates · {decisionLabel(t.decision)}</div>
+              </div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
+      <GlassPanel solid className="p-4">
+        <div className="text-system-label mb-3">BAQ-Enabled Runs ({baqRuns.length})</div>
+        {baqRuns.length === 0 ? (
+          <div className="text-sm text-[hsl(var(--muted-foreground))]">No runs with BAQ data found.</div>
+        ) : (
+          <DataTable
+            headers={["Run ID", "BAQ Status"]}
+            rows={baqRuns.map((r) => [
+              <span className="font-mono text-xs">{r.runId}</span>,
+              <StatusChip variant="success" label="Available" />,
+            ])}
+          />
+        )}
+      </GlassPanel>
+
       <GlassPanel solid className="p-6">
         <div className="text-center text-[hsl(var(--muted-foreground))]">
           <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <div className="text-sm font-medium">History & Trends</div>
-          <div className="text-xs mt-1">Trend data will populate as more runs complete with BAQ artifacts.</div>
+          <div className="text-sm font-medium">Trend Analysis</div>
+          <div className="text-xs mt-1">Cross-run trend charts will populate as more runs complete with BAQ artifacts.</div>
           <div className="text-xs mt-1">Compare quality scores, gate pass rates, and failure trends across runs.</div>
         </div>
       </GlassPanel>
@@ -736,13 +1137,38 @@ function EmptyArtifact({ name }: { name: string }) {
   );
 }
 
-function UtilityRail({ artifacts }: { artifacts: BAQArtifacts }) {
+function UtilityRail({ artifacts, onNavigate, effectiveRunId }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void; effectiveRunId: string }) {
   const blockers = selectTopBlockers(artifacts);
   const fix = selectNextBestFix(artifacts);
   const missing = selectMissingRequiredFiles(artifacts);
+  const decision = selectFinalBuildDecision(artifacts);
+  const trend = selectTrendSeries(artifacts);
+
+  const handleExport = useCallback((type: string) => {
+    const url = `/api/baq/runs/${effectiveRunId}/artifact/${type}`;
+    window.open(url, "_blank");
+  }, [effectiveRunId]);
 
   return (
     <div className="space-y-4">
+      {decision.qualityScore > 0 && (
+        <GlassPanel solid className="p-4">
+          <div className="text-system-label mb-2 flex items-center gap-2">
+            <Gauge className="w-4 h-4" />
+            Quality Score
+          </div>
+          <div className="text-3xl font-bold tabular-nums text-center text-[hsl(var(--foreground))]">
+            {decision.qualityScore}
+          </div>
+          <div className="text-xs text-center text-[hsl(var(--muted-foreground))]">out of 100</div>
+          {trend.length > 0 && (
+            <div className="mt-2 text-xs text-center text-[hsl(var(--muted-foreground))]">
+              {trend[0].decision === "approved" ? "✓ Approved" : trend[0].decision === "approved_with_warnings" ? "⚠ Warnings" : "✗ " + decisionLabel(trend[0].decision)}
+            </div>
+          )}
+        </GlassPanel>
+      )}
+
       <GlassPanel solid className="p-4">
         <div className="text-system-label mb-3 flex items-center gap-2">
           <AlertOctagon className="w-4 h-4" />
@@ -761,6 +1187,7 @@ function UtilityRail({ artifacts }: { artifacts: BAQArtifacts }) {
                 <div className="text-[hsl(var(--foreground))]">{b.description}</div>
               </div>
             ))}
+            <CrossLink label="View all gates" tabId="gates" onClick={onNavigate} />
           </div>
         )}
       </GlassPanel>
@@ -777,6 +1204,7 @@ function UtilityRail({ artifacts }: { artifacts: BAQArtifacts }) {
             ))}
             {missing.length > 5 && <div className="text-xs text-[hsl(var(--muted-foreground))]">+{missing.length - 5} more</div>}
           </div>
+          <CrossLink label="View gen delta" tabId="delta" onClick={onNavigate} />
         </GlassPanel>
       )}
 
@@ -803,14 +1231,17 @@ function UtilityRail({ artifacts }: { artifacts: BAQArtifacts }) {
           Export
         </div>
         <div className="space-y-2">
-          <button className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
-            Quality Report (JSON)
+          <button onClick={() => handleExport("quality-report")} className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] flex items-center gap-1">
+            <Download className="w-3 h-3" /> Quality Report (JSON)
           </button>
-          <button className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
-            Failure Report (JSON)
+          <button onClick={() => handleExport("failure-report")} className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] flex items-center gap-1">
+            <Download className="w-3 h-3" /> Failure Report (JSON)
           </button>
-          <button className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]">
-            Full Evidence Bundle
+          <button onClick={() => handleExport("trace-map")} className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] flex items-center gap-1">
+            <Download className="w-3 h-3" /> Trace Map (JSON)
+          </button>
+          <button onClick={() => handleExport("sufficiency")} className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] flex items-center gap-1">
+            <Download className="w-3 h-3" /> Sufficiency (JSON)
           </button>
         </div>
       </GlassPanel>
@@ -852,6 +1283,10 @@ export default function BuildQualityPage() {
   const availability = getDataAvailability(artifacts);
   const decision = selectFinalBuildDecision(artifacts);
   const coverage = selectCoverageMetrics(artifacts);
+
+  const handleNavigate = useCallback((tab: TabId) => {
+    setActiveTab(tab);
+  }, []);
 
   if (runsLoading) {
     return (
@@ -903,7 +1338,15 @@ export default function BuildQualityPage() {
               {effectiveRunId && (
                 <>
                   <StatusChip variant={decisionVariant(decision.decision)} label={decisionLabel(decision.decision)} size="md" />
+                  {decision.qualityScore > 0 && (
+                    <span className="text-sm font-semibold tabular-nums text-[hsl(var(--foreground))]">{decision.qualityScore}/100</span>
+                  )}
                   <StatusChip variant={decision.packagingAllowed ? "success" : "failure"} label={decision.packagingAllowed ? "Pkg: Allowed" : "Pkg: Blocked"} />
+                  {decision.gatesFailed > 0 && (
+                    <button onClick={() => setActiveTab("gates")} className="text-xs text-[hsl(var(--status-failure))] hover:underline">
+                      {decision.gatesFailed} gate(s) failed
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -911,27 +1354,27 @@ export default function BuildQualityPage() {
 
           {effectiveRunId && availability !== "empty" && (
             <div className="grid grid-cols-6 gap-3">
-              <div className="glass-panel-solid px-3 py-2 text-center">
+              <div className="glass-panel-solid px-3 py-2 text-center cursor-pointer hover:bg-[hsl(var(--accent)/0.5)]" onClick={() => setActiveTab("extraction")}>
                 <div className="text-[10px] text-system-label">Extraction</div>
                 <div className="text-sm font-semibold tabular-nums">{pct(coverage.extractionCoverage)}</div>
               </div>
-              <div className="glass-panel-solid px-3 py-2 text-center">
+              <div className="glass-panel-solid px-3 py-2 text-center cursor-pointer hover:bg-[hsl(var(--accent)/0.5)]" onClick={() => setActiveTab("traceability")}>
                 <div className="text-[10px] text-system-label">Requirement</div>
                 <div className="text-sm font-semibold tabular-nums">{pct(coverage.requirementCoverage)}</div>
               </div>
-              <div className="glass-panel-solid px-3 py-2 text-center">
+              <div className="glass-panel-solid px-3 py-2 text-center cursor-pointer hover:bg-[hsl(var(--accent)/0.5)]" onClick={() => setActiveTab("traceability")}>
                 <div className="text-[10px] text-system-label">Acceptance</div>
                 <div className="text-sm font-semibold tabular-nums">{pct(coverage.acceptanceCoverage)}</div>
               </div>
-              <div className="glass-panel-solid px-3 py-2 text-center">
+              <div className="glass-panel-solid px-3 py-2 text-center cursor-pointer hover:bg-[hsl(var(--accent)/0.5)]" onClick={() => setActiveTab("overview")}>
                 <div className="text-[10px] text-system-label">Proof</div>
                 <div className="text-sm font-semibold tabular-nums">{pct(coverage.proofCompletion)}</div>
               </div>
-              <div className="glass-panel-solid px-3 py-2 text-center">
+              <div className="glass-panel-solid px-3 py-2 text-center cursor-pointer hover:bg-[hsl(var(--accent)/0.5)]" onClick={() => setActiveTab("inventory")}>
                 <div className="text-[10px] text-system-label">Inv. Variance</div>
                 <div className="text-sm font-semibold tabular-nums">{pct(coverage.inventoryVariance)}</div>
               </div>
-              <div className="glass-panel-solid px-3 py-2 text-center">
+              <div className="glass-panel-solid px-3 py-2 text-center cursor-pointer hover:bg-[hsl(var(--accent)/0.5)]" onClick={() => setActiveTab("delta")}>
                 <div className="text-[10px] text-system-label">Placeholder</div>
                 <div className="text-sm font-semibold tabular-nums">{pct(coverage.placeholderRatio)}</div>
               </div>
@@ -1004,23 +1447,23 @@ export default function BuildQualityPage() {
                   Partial data: some BAQ artifacts are missing for this run. Available: {baqData?.available?.join(", ") ?? "unknown"}
                 </div>
               )}
-              {activeTab === "overview" && <OverviewTab artifacts={artifacts} />}
+              {activeTab === "overview" && <OverviewTab artifacts={artifacts} onNavigate={handleNavigate} />}
               {activeTab === "extraction" && <ExtractionTab artifacts={artifacts} />}
               {activeTab === "derived" && <DerivedPlanTab artifacts={artifacts} />}
               {activeTab === "inventory" && <InventoryTab artifacts={artifacts} />}
-              {activeTab === "traceability" && <TraceabilityTab artifacts={artifacts} />}
-              {activeTab === "delta" && <GenerationDeltaTab artifacts={artifacts} />}
-              {activeTab === "gates" && <GatesTab artifacts={artifacts} />}
-              {activeTab === "failures" && <FailuresTab artifacts={artifacts} />}
-              {activeTab === "packaging" && <PackagingTab artifacts={artifacts} />}
-              {activeTab === "history" && <HistoryTab />}
+              {activeTab === "traceability" && <TraceabilityTab artifacts={artifacts} onNavigate={handleNavigate} />}
+              {activeTab === "delta" && <GenerationDeltaTab artifacts={artifacts} onNavigate={handleNavigate} />}
+              {activeTab === "gates" && <GatesTab artifacts={artifacts} onNavigate={handleNavigate} />}
+              {activeTab === "failures" && <FailuresTab artifacts={artifacts} onNavigate={handleNavigate} />}
+              {activeTab === "packaging" && <PackagingTab artifacts={artifacts} onNavigate={handleNavigate} />}
+              {activeTab === "history" && <HistoryTab artifacts={artifacts} allRuns={runs} />}
             </>
           )}
         </div>
 
         {effectiveRunId && availability !== "empty" && !baqLoading && (
           <div className="w-64 shrink-0 border-l border-[hsl(var(--border))] overflow-y-auto p-4 bg-[hsl(var(--card))]">
-            <UtilityRail artifacts={artifacts} />
+            <UtilityRail artifacts={artifacts} onNavigate={handleNavigate} effectiveRunId={effectiveRunId} />
           </div>
         )}
       </div>

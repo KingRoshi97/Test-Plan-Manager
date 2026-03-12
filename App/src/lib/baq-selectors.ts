@@ -130,7 +130,12 @@ export function selectCoverageMetrics(a: BAQArtifacts): CoverageMetrics {
       })()
     : 0;
 
-  const placeholderRatio = 0;
+  const placeholderRatio = (() => {
+    if (!inv) return 0;
+    const aiFiles = inv.summary.files_by_generation_method?.["ai_assisted"] ?? 0;
+    const total = inv.summary.total_files;
+    return total > 0 ? Math.round((aiFiles / total) * 100) : 0;
+  })();
 
   return { extractionCoverage, requirementCoverage, acceptanceCoverage, proofCompletion, inventoryVariance, placeholderRatio };
 }
@@ -148,12 +153,17 @@ export function selectOutputIntegrityMetrics(a: BAQArtifacts): OutputIntegrityMe
   if (!inv) return { totalFiles: 0, requiredFiles: 0, generatedFiles: 0, missingRequired: 0, unplannedFiles: 0 };
 
   const requiredFiles = inv.files.filter((f) => f.required).length;
+  const tracedFiles = inv.files.filter((f) => f.trace_refs && f.trace_refs.length > 0).length;
+  const missingRequired = inv.summary.required_files
+    ? Math.max(0, inv.summary.required_files - requiredFiles)
+    : 0;
+  const unplannedFiles = inv.summary.total_files - tracedFiles;
   return {
     totalFiles: inv.summary.total_files,
     requiredFiles,
-    generatedFiles: inv.summary.total_files,
-    missingRequired: 0,
-    unplannedFiles: 0,
+    generatedFiles: tracedFiles,
+    missingRequired,
+    unplannedFiles: Math.max(0, unplannedFiles),
   };
 }
 
@@ -385,8 +395,14 @@ export function selectMissingRequiredFiles(a: BAQArtifacts): MissingRequiredFile
   }));
 }
 
-export function selectUnplannedGeneratedFiles(_a: BAQArtifacts): Array<{ path: string; reason: string }> {
-  return [];
+export function selectUnplannedGeneratedFiles(a: BAQArtifacts): Array<{ path: string; reason: string }> {
+  if (!a.inventory) return [];
+  return a.inventory.files
+    .filter((f) => !f.required && (!f.trace_refs || f.trace_refs.length === 0))
+    .map((f) => ({
+      path: f.path,
+      reason: `Not in required manifest and has no trace references (${f.generation_method})`,
+    }));
 }
 
 export interface GateRow {
@@ -487,8 +503,159 @@ export interface TrendPoint {
   timestamp: string;
 }
 
-export function selectTrendSeries(_a: BAQArtifacts): TrendPoint[] {
-  return [];
+export function selectTrendSeries(a: BAQArtifacts): TrendPoint[] {
+  if (!a.qualityReport) return [];
+  return [{
+    runId: a.qualityReport.run_id ?? "current",
+    qualityScore: a.qualityReport.overall_quality_score,
+    gatesPassed: a.qualityReport.gate_summary.passed,
+    gatesTotal: a.qualityReport.gate_summary.total_gates,
+    decision: a.qualityReport.decision,
+    timestamp: a.qualityReport.created_at ?? new Date().toISOString(),
+  }];
+}
+
+export interface TraceGap {
+  requirementId: string;
+  description: string;
+  coverageStatus: string;
+  missingAreas: string[];
+}
+
+export function selectTraceGaps(a: BAQArtifacts): TraceGap[] {
+  if (!a.traceMap) return [];
+  return a.traceMap.traces
+    .filter((t) => t.coverage_status !== "fully_covered")
+    .map((t) => {
+      const missingAreas: string[] = [];
+      if (t.file_refs.length === 0) missingAreas.push("No file references");
+      for (const wu of t.work_units) {
+        for (const ai of wu.acceptance_items) {
+          if (!ai.fulfilled) missingAreas.push(`Unfulfilled: ${ai.description}`);
+        }
+      }
+      return {
+        requirementId: t.requirement_id,
+        description: t.requirement_description,
+        coverageStatus: t.coverage_status,
+        missingAreas,
+      };
+    });
+}
+
+export interface SufficiencyDimension {
+  dimensionId: string;
+  name: string;
+  score: number;
+  threshold: number;
+  passed: boolean;
+  detail: string;
+}
+
+export interface SufficiencyGap {
+  gapId: string;
+  dimensionRef: string;
+  severity: string;
+  description: string;
+  affectedRefs: string[];
+  recommendation: string;
+}
+
+export function selectSufficiencyDimensions(a: BAQArtifacts): SufficiencyDimension[] {
+  if (!a.sufficiency?.dimensions) return [];
+  return a.sufficiency.dimensions.map((d: any) => ({
+    dimensionId: d.dimension_id ?? "",
+    name: d.name ?? d.dimension_name ?? "",
+    score: d.score ?? 0,
+    threshold: d.threshold ?? 0,
+    passed: d.passed ?? false,
+    detail: d.detail ?? "",
+  }));
+}
+
+export function selectSufficiencyGaps(a: BAQArtifacts): SufficiencyGap[] {
+  if (!a.sufficiency?.gaps) return [];
+  return a.sufficiency.gaps.map((g: any) => ({
+    gapId: g.gap_id ?? "",
+    dimensionRef: g.dimension_ref ?? "",
+    severity: g.severity ?? "info",
+    description: g.description ?? "",
+    affectedRefs: g.affected_refs ?? [],
+    recommendation: g.recommendation ?? "",
+  }));
+}
+
+export interface InventoryByCategory {
+  optional: RequiredFileRow[];
+  test: RequiredFileRow[];
+  config: RequiredFileRow[];
+  runtime: RequiredFileRow[];
+  proof: RequiredFileRow[];
+}
+
+export function selectInventoryByCategory(a: BAQArtifacts): InventoryByCategory {
+  if (!a.inventory) return { optional: [], test: [], config: [], runtime: [], proof: [] };
+  const toRow = (f: any): RequiredFileRow => ({
+    fileId: f.file_id,
+    path: f.path,
+    role: f.role,
+    layer: f.layer,
+    required: f.required,
+    generationMethod: f.generation_method,
+    traceRefs: f.trace_refs,
+  });
+  return {
+    optional: a.inventory.files.filter((f) => !f.required).map(toRow),
+    test: a.inventory.files.filter((f) => f.layer === "test").map(toRow),
+    config: a.inventory.files.filter((f) => f.role === "config" || f.layer === "config").map(toRow),
+    runtime: a.inventory.files.filter((f) => f.layer === "runtime" || f.role === "runtime").map(toRow),
+    proof: a.inventory.files.filter((f) => f.role === "proof" || f.role === "verification").map(toRow),
+  };
+}
+
+export interface FailureRepairHint {
+  failureId: string;
+  description: string;
+  resolution: string;
+  fileRef: string;
+  sourceRef: string;
+  severity: string;
+  isBlocking: boolean;
+}
+
+export function selectFailureRepairHints(a: BAQArtifacts): FailureRepairHint[] {
+  if (!a.failureReport) return [];
+  return a.failureReport.failures
+    .filter((f) => !f.resolved && f.resolution)
+    .map((f) => ({
+      failureId: f.failure_id,
+      description: f.description,
+      resolution: f.resolution,
+      fileRef: f.file_ref ?? "",
+      sourceRef: f.source_ref ?? "",
+      severity: f.severity,
+      isBlocking: f.severity === "critical" || f.severity === "error",
+    }));
+}
+
+export function selectUpstreamBlockers(a: BAQArtifacts): Array<{ source: string; description: string; impact: string }> {
+  const blockers: Array<{ source: string; description: string; impact: string }> = [];
+  if (a.packagingDecision) {
+    for (const reason of a.packagingDecision.block_reasons) {
+      blockers.push({ source: "packaging", description: reason, impact: "Blocks kit assembly" });
+    }
+    for (const artifact of a.packagingDecision.missing_artifacts) {
+      blockers.push({ source: "missing_artifact", description: `Missing: ${artifact}`, impact: "Required artifact not generated" });
+    }
+  }
+  if (a.qualityReport) {
+    for (const g of a.qualityReport.gates) {
+      if (g.status === "fail") {
+        blockers.push({ source: `gate:${g.gate_id}`, description: `${g.gate_name} failed`, impact: "Gate enforcement violation" });
+      }
+    }
+  }
+  return blockers;
 }
 
 export interface TopBlocker {
