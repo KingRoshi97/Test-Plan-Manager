@@ -36,6 +36,8 @@ function makeFinding(
   probableCause: string,
   remediation: string,
   evidenceRefs: string[] = [],
+  perFileDetails?: Record<string, string>,
+  findingCategory?: "fix_existing" | "generate_missing" | "structural",
 ): CertificationFinding {
   return {
     id: ctx.findingIdGenerator(),
@@ -47,6 +49,8 @@ function makeFinding(
     description,
     affected_surface: affectedSurface,
     affected_files: affectedFiles,
+    per_file_details: perFileDetails,
+    finding_category: findingCategory || "fix_existing",
     probable_cause: probableCause,
     evidence_refs: evidenceRefs,
     remediation,
@@ -332,7 +336,8 @@ export function evaluateBuildIntegrity(ctx: EvaluatorContext): EvaluatorOutput {
         `Directories expected by build plan are missing: ${missingDirsList.slice(0, 10).join(", ")}`,
         "directory_structure", missingDirsList,
         "Build process did not create all planned directory structures",
-        "Ensure all planned directories are created during the build process"));
+        "Ensure all planned directories are created during the build process",
+        [], undefined, "structural"));
     }
   }
 
@@ -363,13 +368,18 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
       affected_files: missingFiles.length > 0 ? missingFiles.slice(0, 20) : undefined,
     });
     if (missingFiles.length > 0) {
+      const missingPerFile: Record<string, string> = {};
+      for (const mf of missingFiles) {
+        missingPerFile[mf] = `File was specified in the build plan but was never generated. Generate this file from scratch based on the build plan specification and project architecture.`;
+      }
       findings.push(makeFinding(ctx, "functional", severity,
         missingPct > 50 ? "release_blocker" : missingPct > 20 ? "conditional_blocker" : "warning",
         `${missingFiles.length} planned files missing (${missingPct}%)`,
         `The following planned files were not generated: ${missingFiles.slice(0, 10).join(", ")}${missingFiles.length > 10 ? ` and ${missingFiles.length - 10} more` : ""}`,
         "planned_files", missingFiles,
         "Build generation did not produce all files specified in the build plan",
-        "Re-run generation for the missing files or update the build plan"));
+        "Re-run generation for the missing files or update the build plan",
+        [], missingPerFile, "generate_missing"));
     }
   } else {
     checks.push({
@@ -411,15 +421,24 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
 
   const highTodoFiles: string[] = [];
   const moderateTodoFiles: string[] = [];
+  const todoPerFileDetails: Record<string, string> = {};
   for (const f of sourceFiles) {
     const content = readFileContent(path.join(targetDir, f));
     if (!content) continue;
-    const todoMatches = content.match(/TODO|FIXME|HACK|XXX/gi);
-    const todoCount = todoMatches ? todoMatches.length : 0;
-    if (todoCount > 10) {
+    const lines = content.split("\n");
+    const todoLines: string[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const match = lines[i].match(/TODO|FIXME|HACK|XXX/gi);
+      if (match) {
+        todoLines.push(`  Line ${i + 1}: ${lines[i].trim().slice(0, 120)}`);
+      }
+    }
+    if (todoLines.length > 10) {
       highTodoFiles.push(f);
-    } else if (todoCount > 3) {
+      todoPerFileDetails[f] = `${todoLines.length} TODO/FIXME markers found. Replace each with actual implementation:\n${todoLines.slice(0, 15).join("\n")}${todoLines.length > 15 ? `\n  ... and ${todoLines.length - 15} more` : ""}`;
+    } else if (todoLines.length > 3) {
       moderateTodoFiles.push(f);
+      todoPerFileDetails[f] = `${todoLines.length} TODO/FIXME markers found. Replace each with actual implementation:\n${todoLines.join("\n")}`;
     }
   }
   const allTodoFiles = [...highTodoFiles, ...moderateTodoFiles];
@@ -432,28 +451,39 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
     affected_files: allTodoFiles.length > 0 ? allTodoFiles.slice(0, 20) : undefined,
   });
   if (highTodoFiles.length > 0) {
+    const highPerFile: Record<string, string> = {};
+    for (const f of highTodoFiles) highPerFile[f] = todoPerFileDetails[f];
     findings.push(makeFinding(ctx, "functional", "high", "conditional_blocker",
       `${highTodoFiles.length} files have excessive TODOs (>10 each)`,
       `Files with very high placeholder density: ${highTodoFiles.slice(0, 5).join(", ")}`,
       "code_completeness", highTodoFiles,
       "Generated code contains too many TODO/FIXME markers indicating incomplete implementation",
-      "Replace TODO markers with actual implementation code"));
+      "Replace TODO markers with actual implementation code",
+      [], highPerFile));
   }
   if (moderateTodoFiles.length > 0) {
+    const modPerFile: Record<string, string> = {};
+    for (const f of moderateTodoFiles) modPerFile[f] = todoPerFileDetails[f];
     findings.push(makeFinding(ctx, "functional", "medium", "warning",
       `${moderateTodoFiles.length} files have elevated TODOs (>3 each)`,
       `Files with moderate placeholder density: ${moderateTodoFiles.slice(0, 5).join(", ")}`,
       "code_completeness", moderateTodoFiles,
       "Generated code contains several TODO/FIXME markers",
-      "Review and resolve TODO markers before deployment"));
+      "Review and resolve TODO markers before deployment",
+      [], modPerFile));
   }
 
   const brokenImports: string[] = [];
+  const importPerFileDetails: Record<string, string> = {};
   const importPattern = /(?:import\s+.*?\s+from\s+['"]([^'"]+)['"]|require\s*\(\s*['"]([^'"]+)['"]\s*\))/g;
   for (const f of sourceFiles) {
     const content = readFileContent(path.join(targetDir, f));
     if (!content) continue;
+    const lines = content.split("\n");
+    const brokenLines: string[] = [];
     let match;
+    let hasBroken = false;
+    importPattern.lastIndex = 0;
     while ((match = importPattern.exec(content)) !== null) {
       const importPath = match[1] || match[2];
       if (!importPath) continue;
@@ -463,9 +493,14 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
       const extensions = ["", ".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.tsx", "/index.js", "/index.jsx"];
       const found = extensions.some(ext => fileExists(resolved + ext));
       if (!found) {
-        brokenImports.push(f);
-        break;
+        hasBroken = true;
+        const lineIdx = content.slice(0, match.index).split("\n").length;
+        brokenLines.push(`  Line ${lineIdx}: import '${importPath}' — target does not exist`);
       }
+    }
+    if (hasBroken) {
+      brokenImports.push(f);
+      importPerFileDetails[f] = `Broken import paths found:\n${brokenLines.join("\n")}\nFix each import to reference an existing module or remove unused imports.`;
     }
   }
   checks.push({
@@ -484,7 +519,8 @@ export function evaluateFunctional(ctx: EvaluatorContext): EvaluatorOutput {
       `Files importing non-existent local modules: ${brokenImports.slice(0, 5).join(", ")}`,
       "import_resolution", brokenImports,
       "Generated files reference modules that were not created or have incorrect paths",
-      "Fix import paths to reference existing modules or generate the missing modules"));
+      "Fix import paths to reference existing modules or generate the missing modules",
+      [], importPerFileDetails));
   }
 
   const routeFiles = sourceFiles.filter(f =>
@@ -524,12 +560,21 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
   const secretPattern = /['"](?:sk-|pk-|api[_-]?key|password|secret|token|auth)['"]\s*[:=]/i;
   const hardcodedSecretPattern = /(?:apiKey|api_key|password|secret|token)\s*[:=]\s*['"][a-zA-Z0-9_\-]{8,}['"]/i;
   const filesWithSecrets: string[] = [];
+  const secretPerFileDetails: Record<string, string> = {};
   for (const f of sourceFiles) {
     const content = readFileContent(path.join(targetDir, f));
     if (!content) continue;
     if (secretPattern.test(content) || hardcodedSecretPattern.test(content)) {
       if (!f.includes(".example") && !f.includes(".sample") && !f.includes(".test") && !f.includes(".spec")) {
         filesWithSecrets.push(f);
+        const lines = content.split("\n");
+        const secretLines: string[] = [];
+        for (let i = 0; i < lines.length; i++) {
+          if (secretPattern.test(lines[i]) || hardcodedSecretPattern.test(lines[i])) {
+            secretLines.push(`  Line ${i + 1}: ${lines[i].trim().slice(0, 120)}`);
+          }
+        }
+        secretPerFileDetails[f] = `Hardcoded secrets/credentials found — replace with process.env references:\n${secretLines.join("\n")}`;
       }
     }
   }
@@ -547,7 +592,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
       `Potential secrets/API keys found in: ${filesWithSecrets.slice(0, 5).join(", ")}`,
       "secrets", filesWithSecrets,
       "Generated code contains hardcoded credentials instead of environment variable references",
-      "Replace hardcoded secrets with environment variable references (process.env.*)"));
+      "Replace hardcoded secrets with environment variable references (process.env.*)",
+      [], secretPerFileDetails));
   }
 
   const dangerousPatterns = /\b(eval|Function)\s*\(/;
@@ -659,11 +705,20 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
 
   const sensitiveLogPattern = /console\.log\s*\(.*(?:password|secret|token|key|credential|auth)/i;
   const filesWithSensitiveLogs: string[] = [];
+  const sensitiveLogPerFile: Record<string, string> = {};
   for (const f of sourceFiles) {
     const content = readFileContent(path.join(targetDir, f));
     if (!content) continue;
     if (sensitiveLogPattern.test(content)) {
       filesWithSensitiveLogs.push(f);
+      const lines = content.split("\n");
+      const logLines: string[] = [];
+      for (let i = 0; i < lines.length; i++) {
+        if (sensitiveLogPattern.test(lines[i])) {
+          logLines.push(`  Line ${i + 1}: ${lines[i].trim().slice(0, 120)}`);
+        }
+      }
+      sensitiveLogPerFile[f] = `Sensitive data logged to console — remove or redact:\n${logLines.join("\n")}`;
     }
   }
   checks.push({
@@ -680,7 +735,8 @@ export function evaluateSecurity(ctx: EvaluatorContext): EvaluatorOutput {
       `Files that may log sensitive information: ${filesWithSensitiveLogs.slice(0, 5).join(", ")}`,
       "logging", filesWithSensitiveLogs,
       "Generated code logs potentially sensitive data (passwords, tokens, keys) to console",
-      "Remove or redact sensitive data from console.log statements"));
+      "Remove or redact sensitive data from console.log statements",
+      [], sensitiveLogPerFile));
   }
 
   const gitignorePath = path.join(targetDir, ".gitignore");
@@ -746,12 +802,14 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
 
   const indexFiles = sourceFiles.filter(f => path.basename(f) === "index.ts" || path.basename(f) === "index.tsx");
   const barrelReexportFiles: string[] = [];
+  const barrelPerFile: Record<string, string> = {};
   for (const f of indexFiles) {
     const content = readFileContent(path.join(targetDir, f));
     if (!content) continue;
     const exportMatches = content.match(/export\s+/g);
     if (exportMatches && exportMatches.length > 20) {
       barrelReexportFiles.push(f);
+      barrelPerFile[f] = `${exportMatches.length} re-exports found (threshold: 20). Replace barrel re-exports with direct imports at usage sites, or split into domain-specific barrel files.`;
     }
   }
   checks.push({
@@ -768,19 +826,23 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
       `Index files with >20 re-exports that may cause bundle bloat: ${barrelReexportFiles.join(", ")}`,
       "bundle_size", barrelReexportFiles,
       "Barrel exports import and re-export many modules which can prevent tree-shaking",
-      "Use direct imports instead of barrel re-exports, or split into smaller barrel files"));
+      "Use direct imports instead of barrel re-exports, or split into smaller barrel files",
+      [], barrelPerFile));
   }
 
   const oversizedFiles: string[] = [];
   const veryOversizedFiles: string[] = [];
+  const oversizedPerFile: Record<string, string> = {};
   for (const f of sourceFiles) {
     const content = readFileContent(path.join(targetDir, f));
     if (!content) continue;
     const lineCount = content.split("\n").length;
     if (lineCount > 1000) {
       veryOversizedFiles.push(f);
+      oversizedPerFile[f] = `File has ${lineCount} lines (threshold: 1000). Identify logical boundaries and split into focused modules. Look for large switch statements, repeated patterns, or groups of related functions that can become separate files.`;
     } else if (lineCount > 500) {
       oversizedFiles.push(f);
+      oversizedPerFile[f] = `File has ${lineCount} lines (threshold: 500). Consider extracting helper functions, type definitions, or configuration objects into separate files.`;
     }
   }
   checks.push({
@@ -796,20 +858,26 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
       : undefined,
   });
   if (veryOversizedFiles.length > 0) {
+    const veryPerFile: Record<string, string> = {};
+    for (const f of veryOversizedFiles) veryPerFile[f] = oversizedPerFile[f];
     findings.push(makeFinding(ctx, "performance", "high", "conditional_blocker",
       `${veryOversizedFiles.length} files exceed 1000 lines`,
       `Very large files: ${veryOversizedFiles.slice(0, 5).join(", ")}`,
       "file_size", veryOversizedFiles,
       "Generated files are excessively large which impacts maintainability and load times",
-      "Split large files into smaller, focused modules following single responsibility principle"));
+      "Split large files into smaller, focused modules following single responsibility principle",
+      [], veryPerFile));
   }
   if (oversizedFiles.length > 0) {
+    const modPerFile: Record<string, string> = {};
+    for (const f of oversizedFiles) modPerFile[f] = oversizedPerFile[f];
     findings.push(makeFinding(ctx, "performance", "medium", "warning",
       `${oversizedFiles.length} files exceed 500 lines`,
       `Large files: ${oversizedFiles.slice(0, 5).join(", ")}`,
       "file_size", oversizedFiles,
       "Generated files are larger than recommended which may impact maintainability",
-      "Consider splitting files >500 lines into smaller, focused modules"));
+      "Consider splitting files >500 lines into smaller, focused modules",
+      [], modPerFile));
   }
 
   if (ctx.planFiles) {
@@ -846,11 +914,19 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
   );
   const syncIoPattern = /(?:readFileSync|writeFileSync|appendFileSync|mkdirSync|rmdirSync|unlinkSync|existsSync)\s*\(/;
   const filesWithSyncIo: string[] = [];
+  const syncIoPerFile: Record<string, string> = {};
   for (const f of serverSourceFiles) {
     const content = readFileContent(path.join(targetDir, f));
     if (!content) continue;
-    if (syncIoPattern.test(content)) {
+    const syncMatches: string[] = [];
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(/(?:readFileSync|writeFileSync|appendFileSync|mkdirSync|rmdirSync|unlinkSync|existsSync)\s*\(/);
+      if (m) syncMatches.push(`Line ${i + 1}: ${m[0].trim()} — replace with async equivalent`);
+    }
+    if (syncMatches.length > 0) {
       filesWithSyncIo.push(f);
+      syncIoPerFile[f] = syncMatches.join("; ");
     }
   }
   checks.push({
@@ -867,7 +943,8 @@ export function evaluatePerformance(ctx: EvaluatorContext): EvaluatorOutput {
       `Server files using blocking I/O operations: ${filesWithSyncIo.slice(0, 5).join(", ")}`,
       "sync_io", filesWithSyncIo,
       "Synchronous file operations block the event loop and degrade server performance",
-      "Replace synchronous I/O (readFileSync, writeFileSync) with async equivalents (readFile, writeFile)"));
+      "Replace synchronous I/O (readFileSync, writeFileSync) with async equivalents (readFile, writeFile)",
+      [], syncIoPerFile));
   }
 
   return { result: computeDomainResult("performance", checks, findings.length), findings };

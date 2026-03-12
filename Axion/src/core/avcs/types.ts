@@ -159,6 +159,8 @@ export interface CertificationFinding {
   description: string;
   affected_surface: string;
   affected_files: string[];
+  per_file_details?: Record<string, string>;
+  finding_category?: "fix_existing" | "generate_missing" | "structural";
   probable_cause: string;
   evidence_refs: string[];
   remediation: string;
@@ -215,6 +217,9 @@ export interface RemediationManifest {
   dependency_files: string[];
   total_files: number;
   estimated_scope_pct: number;
+  skipped_structural_count?: number;
+  skipped_generate_missing_count?: number;
+  skipped_generate_missing_files?: string[];
 }
 
 export interface CertificationReport {

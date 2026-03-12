@@ -1382,6 +1382,26 @@ export async function remediateFromReport(
 
   const openFindings = findings.filter((f: any) => f.status === "open" || f.status === "acknowledged");
 
+  const structuralFindings = openFindings.filter((f: any) => f.finding_category === "structural");
+  const generateFindings = openFindings.filter((f: any) => f.finding_category === "generate_missing");
+  const fixFindings = openFindings.filter((f: any) => f.finding_category !== "structural" && f.finding_category !== "generate_missing");
+
+  if (structuralFindings.length > 0) {
+    console.log(`  [BA-REMEDIATION] Skipping ${structuralFindings.length} structural findings (directories/config — not file-level fixes)`);
+  }
+  if (generateFindings.length > 0) {
+    const genFileCount = generateFindings.reduce((sum: number, f: any) => sum + (f.affected_files?.length || 0), 0);
+    console.log(`  [BA-REMEDIATION] ${generateFindings.length} findings require file generation (${genFileCount} files) — these need a build re-run, not patching`);
+  }
+
+  if (fixFindings.length === 0) {
+    console.log(`  [BA-REMEDIATION] No fixable findings after category filtering (${structuralFindings.length} structural + ${generateFindings.length} generate-missing skipped). Nothing to patch.`);
+    result.filesRegenerated = 0;
+    result.filesFailed = 0;
+    result.success = true;
+    return result;
+  }
+
   const fileRemediationContext = new Map<string, RemediationFileContext[]>();
   const allAffectedFiles = new Set<string>();
 
@@ -1391,16 +1411,21 @@ export async function remediateFromReport(
       title: finding.title,
       severity: finding.severity,
     });
+  }
 
+  for (const finding of fixFindings) {
     const affectedFiles: string[] = finding.affected_files || [];
+    const perFileDetails: Record<string, string> = finding.per_file_details || {};
     for (const filePath of affectedFiles) {
       allAffectedFiles.add(filePath);
       const existing = fileRemediationContext.get(filePath) || [];
+      const fileSpecificDetail = perFileDetails[filePath] || "";
       existing.push({
         findingTitle: finding.title,
-        findingDescription: finding.description || "",
+        findingDescription: fileSpecificDetail || finding.description || "",
         remediationGuidance: finding.remediation || "Fix the identified issue",
         severity: finding.severity,
+        fileSpecificDetail,
       });
       fileRemediationContext.set(filePath, existing);
     }
@@ -1437,7 +1462,7 @@ export async function remediateFromReport(
     return result;
   }
 
-  console.log(`  [BA-REMEDIATION] Guardrails passed (${guardrailResults.length} checks). Starting targeted fix for ${unitIds.length} units, driven by ${openFindings.length} findings across ${allAffectedFiles.size} files`);
+  console.log(`  [BA-REMEDIATION] Guardrails passed (${guardrailResults.length} checks). Starting targeted fix for ${unitIds.length} units, driven by ${fixFindings.length} fixable findings across ${allAffectedFiles.size} files (${structuralFindings.length} structural + ${generateFindings.length} generate-missing findings skipped)`);
 
   onProgress?.({
     buildId: "REMEDIATION",

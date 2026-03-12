@@ -103,3 +103,12 @@ The AVCS subsystem (`Axion/src/core/avcs/`) provides automated verification of B
 
 ### AVCS Remediation System
 The remediation pipeline (`runner.ts:remediateFromReport` → `generator.ts:fixUnitsFromFindings`) takes a certification report's remediation manifest and performs targeted AI-driven code fixes. It uses a two-pass strategy: (1) surgical JSON line-range patches, (2) fallback full-file rewrite. Five preservation gates (PG-SIZE, PG-DIFF-RATIO, PG-STRUCTURE, PG-PREAMBLE, PG-ENCODING) prevent destructive fixes. All files are backed up before write for rollback support. Remediation logs, build manifest updates, and zip repackaging are handled post-fix.
+
+**Finding Categories**: Each `CertificationFinding` carries a `finding_category` field:
+- `"fix_existing"` (default) — enters the patch pipeline for AI-driven code fixes
+- `"generate_missing"` — files the BA never created; these need a build re-run, not patching (skipped from fix pipeline)
+- `"structural"` — directory structure / config-level issues; skipped from file-level remediation entirely
+
+**Per-File Details**: Findings carry `per_file_details: Record<string, string>` mapping each affected file path to a specific issue description with line numbers. The LLM fix prompt uses `fileSpecificDetail` (from per-file details) when available, falling back to the generic `findingDescription` otherwise. Enriched evaluators: TODOs, broken imports, secrets, sensitive logging, missing files, oversized files, barrel re-exports, sync I/O.
+
+**Remediation Manifest**: `computeRemediationManifest()` in engine.ts filters findings by category, only including `fix_existing` findings in the file-level manifest. It reports `skipped_structural_count`, `skipped_generate_missing_count`, and `skipped_generate_missing_files` for visibility.

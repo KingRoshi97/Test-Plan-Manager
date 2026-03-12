@@ -713,6 +713,7 @@ export interface RemediationFileContext {
   findingDescription: string;
   remediationGuidance: string;
   severity: string;
+  fileSpecificDetail?: string;
 }
 
 export interface FixFileResult {
@@ -919,9 +920,16 @@ async function fixFileFromFindings(
   model: string = "claude-sonnet-4-6",
   repoFileList?: string[],
 ): Promise<FixResult | null> {
-  const findingsBlock = findings.map((f, i) =>
-    `  ${i + 1}. [${f.severity.toUpperCase()}] ${f.findingTitle}\n     Description: ${f.findingDescription}\n     Fix guidance: ${f.remediationGuidance}`
-  ).join("\n\n");
+  const findingsBlock = findings.map((f, i) => {
+    let block = `  ${i + 1}. [${f.severity.toUpperCase()}] ${f.findingTitle}`;
+    if (f.fileSpecificDetail) {
+      block += `\n     FILE-SPECIFIC ISSUE:\n${f.fileSpecificDetail.split("\n").map(l => "       " + l).join("\n")}`;
+    } else {
+      block += `\n     Description: ${f.findingDescription}`;
+    }
+    block += `\n     Fix guidance: ${f.remediationGuidance}`;
+    return block;
+  }).join("\n\n");
 
   const fileInventoryBlock = buildFileInventoryBlock(filePath, repoFileList);
   const originalLines = existingContent.split("\n");

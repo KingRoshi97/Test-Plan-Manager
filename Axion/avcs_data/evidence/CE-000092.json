@@ -1,0 +1,9 @@
+{
+  "id": "CE-000092",
+  "cert_run_id": "CR-000018",
+  "domain": "ui",
+  "type": "summary",
+  "title": "ui evaluation summary",
+  "content": "{\"status\":\"pass\",\"score\":100,\"checks_total\":3,\"checks_passed\":3,\"checks_failed\":0,\"findings\":0}",
+  "created_at": "2026-03-12T15:51:16.096Z"
+}

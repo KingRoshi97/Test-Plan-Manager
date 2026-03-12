@@ -391,10 +391,16 @@ export function computeRemediationManifest(
 ): RemediationManifest {
   const openFindings = findings.filter(f => f.status === "open" || f.status === "acknowledged");
 
+  const fixableFindings = openFindings.filter(f =>
+    f.finding_category !== "structural" && f.finding_category !== "generate_missing"
+  );
+  const generateFindings = openFindings.filter(f => f.finding_category === "generate_missing");
+  const structuralFindings = openFindings.filter(f => f.finding_category === "structural");
+
   const directlyAffectedFiles = new Set<string>();
   const affectedFindingSummaries: RemediationManifest["affected_findings"] = [];
 
-  for (const f of openFindings) {
+  for (const f of fixableFindings) {
     if (f.affected_files && f.affected_files.length > 0) {
       for (const file of f.affected_files) {
         directlyAffectedFiles.add(file);
@@ -499,6 +505,13 @@ export function computeRemediationManifest(
 
   const totalPlannedFiles = loadPlanFiles(buildDir).length || 1;
 
+  const generateMissingFiles = new Set<string>();
+  for (const f of generateFindings) {
+    if (f.affected_files) {
+      for (const file of f.affected_files) generateMissingFiles.add(file);
+    }
+  }
+
   return {
     affected_findings: affectedFindingSummaries,
     directly_affected_files: Array.from(directlyAffectedFiles),
@@ -507,6 +520,9 @@ export function computeRemediationManifest(
     dependency_files: Array.from(dependencyFiles),
     total_files: allFilesToRegenerate.size,
     estimated_scope_pct: Math.round((allFilesToRegenerate.size / totalPlannedFiles) * 100),
+    skipped_structural_count: structuralFindings.length,
+    skipped_generate_missing_count: generateFindings.length,
+    skipped_generate_missing_files: generateMissingFiles.size > 0 ? Array.from(generateMissingFiles) : undefined,
   };
 }
 
