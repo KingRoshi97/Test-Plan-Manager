@@ -224,7 +224,7 @@ export async function runBuild(
         evidence: [{
           evidence_id: "extraction-gate",
           type: "gate_result",
-          path: path.join(runDir, "build", "baq_kit_extraction.json"),
+          path: path.join(runDir, "kit_extraction.json"),
           detail: {
             gate_id: gate.gate_id,
             passed: gate.passed,
@@ -260,7 +260,7 @@ export async function runBuild(
         evidence: [{
           evidence_id: "derived-inputs-gate",
           type: "gate_result",
-          path: path.join(runDir, "build", "baq_derived_build_inputs.json"),
+          path: path.join(runDir, "derived_build_inputs.json"),
           detail: {
             gate_id: gate.gate_id,
             passed: gate.passed,
@@ -288,10 +288,8 @@ export async function runBuild(
       throw new Error(`BAQ extraction validation failed: ${validationErrors}`);
     }
 
-    const buildDir = path.join(runDir, "build");
-    if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir, { recursive: true });
     fs.writeFileSync(
-      path.join(buildDir, "baq_kit_extraction.json"),
+      path.join(runDir, "kit_extraction.json"),
       JSON.stringify(baqExtraction, null, 2),
       "utf-8",
     );
@@ -323,7 +321,7 @@ export async function runBuild(
     }
 
     fs.writeFileSync(
-      path.join(buildDir, "baq_derived_build_inputs.json"),
+      path.join(runDir, "derived_build_inputs.json"),
       JSON.stringify(baqDerivedInputs, null, 2),
       "utf-8",
     );

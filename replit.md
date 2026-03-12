@@ -17,7 +17,7 @@ New `Axion/src/core/baq/` module implements BAQ-SPEC-01 enforcement spine. Curre
 - `hooks.ts` — `BuildQualityHookRunner` with 15 hook slots, upstream artifact rule enforcement, deterministic evidence rule, `BuildQualityHookContext` and `BuildQualityHookResult` types
 - `index.ts` — Barrel export for all types, functions, and classes
 
-**Integration**: BAQ hooks wired into `Axion/src/core/build/runner.ts` — runs `onBuildAuthorityLoaded` → `onKitExtractionStart` → `onKitExtractionComplete` → `onDerivedInputsBuild` before legacy extraction. BAQ artifacts written to `{runDir}/build/baq_kit_extraction.json` and `{runDir}/build/baq_derived_build_inputs.json` (distinct from legacy `kit_extraction.json` to prevent overwrite). **Hard blocking**: BAQ validation failures, gate failures (G-BQ-01, G-BQ-02), and blocking hook failures all throw errors that halt the build — builds cannot proceed past extraction without structurally valid artifacts.
+**Integration**: BAQ hooks wired into `Axion/src/core/build/runner.ts` — runs `onBuildAuthorityLoaded` → `onKitExtractionStart` → `onKitExtractionComplete` → `onDerivedInputsBuild` before legacy extraction. BAQ artifacts written to `{runDir}/kit_extraction.json` and `{runDir}/derived_build_inputs.json` (in run dir, separate from legacy `build/kit_extraction.json`). **Hard blocking**: BAQ validation failures, gate failures (G-BQ-01, G-BQ-02), and blocking hook failures all throw errors that halt the build. Critical obligations from extraction are consumed and normalized into verification/ops obligations in derived inputs.
 
 **BAQ Gates**: G-BQ-01 (Extraction Completeness) and G-BQ-02 (Derived Inputs Completeness) implemented. Remaining gates G-BQ-03 through G-BQ-07 will be added in Tasks #15–#17.
 

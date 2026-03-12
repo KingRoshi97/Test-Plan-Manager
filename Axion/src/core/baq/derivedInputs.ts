@@ -60,6 +60,8 @@ export function buildDerivedInputs(
   const assumptions = deriveAssumptions(spec, normalizedInput);
   const risks = deriveRisks(spec, normalizedInput);
 
+  normalizeCriticalObligations(extraction, verificationObligations, opsObligations);
+
   let completeness = 0;
   const totalChecks = 9;
 
@@ -110,6 +112,47 @@ export function buildDerivedInputs(
     created_at: now,
     updated_at: now,
   };
+}
+
+function normalizeCriticalObligations(
+  extraction: BAQKitExtraction,
+  verificationObligations: BAQVerificationObligation[],
+  opsObligations: BAQOpsObligation[],
+): void {
+  if (!extraction.critical_obligations || extraction.critical_obligations.length === 0) return;
+
+  const existingVerIds = new Set(verificationObligations.map(v => v.obligation_id));
+  const existingOpsIds = new Set(opsObligations.map(o => o.obligation_id));
+
+  for (const obligation of extraction.critical_obligations) {
+    const oblType = obligation.obligation_type;
+
+    if (oblType === "verification" || oblType === "functional" || oblType === "security" || oblType === "structural" || oblType === "data") {
+      const oblId = `VEROBL-CO-${obligation.obligation_id}`;
+      if (!existingVerIds.has(oblId)) {
+        verificationObligations.push({
+          obligation_id: oblId,
+          description: obligation.description,
+          category: oblType === "security" ? "security" : "functional",
+          feature_ref: obligation.source_section ?? "",
+          criteria: [obligation.description],
+          gating: obligation.severity === "critical" ? "hard_gate" : "soft_gate",
+        });
+        existingVerIds.add(oblId);
+      }
+    } else if (oblType === "operational") {
+      const oblId = `OPSOBL-CO-${obligation.obligation_id}`;
+      if (!existingOpsIds.has(oblId)) {
+        opsObligations.push({
+          obligation_id: oblId,
+          description: obligation.description,
+          category: oblType,
+          source_ref: obligation.source_section ?? "",
+        });
+        existingOpsIds.add(oblId);
+      }
+    }
+  }
 }
 
 function findKitRoot(runDir: string): string {
