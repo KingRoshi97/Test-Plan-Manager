@@ -14,6 +14,42 @@ import type { FullGateEvaluation } from "./gates.js";
 import type { ReconciliationResult } from "./generationAlignment.js";
 import type { VerificationSignals } from "./gates.js";
 
+export interface CoverageMetrics {
+  requirement_coverage_percent: number;
+  fully_covered_count: number;
+  partially_covered_count: number;
+  not_covered_count: number;
+  unmapped_critical_count: number;
+}
+
+export interface InventoryMetrics {
+  planned_files: number;
+  generated_files: number;
+  missing_files: number;
+  missing_required_files: number;
+  unplanned_files: number;
+  generation_coverage_percent: number;
+  placeholder_count: number;
+  placeholder_in_required: number;
+  trace_linked_coverage_percent: number;
+}
+
+export interface QualitySignals {
+  extraction_result: string | null;
+  derivation_completeness: number | null;
+  sufficiency_score: number | null;
+  sufficiency_status: string | null;
+  verification_fidelity_percent: number | null;
+  verification_passed: boolean | null;
+  structural_violations: number | null;
+}
+
+export interface PackagingEligibility {
+  eligible: boolean;
+  blocking_gates: string[];
+  reasons: string[];
+}
+
 export interface QualityReportInput {
   runId: string;
   buildId: string;
@@ -60,6 +96,87 @@ function computeOverallQualityScore(input: QualityReportInput): number {
   return Math.min(score, MAX_SCORE);
 }
 
+function buildCoverageMetrics(traceMap: BAQRequirementTraceMap | null): CoverageMetrics {
+  if (!traceMap) {
+    return {
+      requirement_coverage_percent: 0,
+      fully_covered_count: 0,
+      partially_covered_count: 0,
+      not_covered_count: 0,
+      unmapped_critical_count: 0,
+    };
+  }
+  return {
+    requirement_coverage_percent: traceMap.summary.coverage_percent,
+    fully_covered_count: traceMap.summary.fully_covered,
+    partially_covered_count: traceMap.summary.partially_covered,
+    not_covered_count: traceMap.summary.not_covered,
+    unmapped_critical_count: traceMap.summary.unmapped_critical,
+  };
+}
+
+function buildInventoryMetrics(reconciliation: ReconciliationResult | null): InventoryMetrics {
+  if (!reconciliation) {
+    return {
+      planned_files: 0,
+      generated_files: 0,
+      missing_files: 0,
+      missing_required_files: 0,
+      unplanned_files: 0,
+      generation_coverage_percent: 0,
+      placeholder_count: 0,
+      placeholder_in_required: 0,
+      trace_linked_coverage_percent: 0,
+    };
+  }
+  const v = reconciliation.inventory_variance;
+  const traceCoveragePct = v.trace_linked_total > 0
+    ? Math.round((v.trace_linked_generated / v.trace_linked_total) * 100)
+    : 100;
+  return {
+    planned_files: reconciliation.total_planned,
+    generated_files: reconciliation.total_generated,
+    missing_files: reconciliation.total_missing,
+    missing_required_files: reconciliation.missing_required_files.length,
+    unplanned_files: reconciliation.total_unplanned,
+    generation_coverage_percent: reconciliation.coverage_percent,
+    placeholder_count: v.placeholder_count,
+    placeholder_in_required: v.placeholder_in_required,
+    trace_linked_coverage_percent: traceCoveragePct,
+  };
+}
+
+function buildQualitySignals(input: QualityReportInput): QualitySignals {
+  return {
+    extraction_result: input.extraction?.extraction_result ?? null,
+    derivation_completeness: input.derivedInputs?.summary.derivation_completeness ?? null,
+    sufficiency_score: input.sufficiency?.overall_score ?? null,
+    sufficiency_status: input.sufficiency?.status ?? null,
+    verification_fidelity_percent: input.verificationSignals?.fidelity_percent ?? null,
+    verification_passed: input.verificationSignals?.verification_passed ?? null,
+    structural_violations: input.verificationSignals?.structural_violations ?? null,
+  };
+}
+
+function buildPackagingEligibility(gateEval: FullGateEvaluation): PackagingEligibility {
+  const blockingGates: string[] = [];
+  const reasons: string[] = [];
+
+  const criticalGateIds = new Set(["G-BQ-01", "G-BQ-02", "G-BQ-03", "G-BQ-06"]);
+  for (const gate of gateEval.gates) {
+    if (gate.status === "fail" && criticalGateIds.has(gate.gate_id)) {
+      blockingGates.push(gate.gate_id);
+      reasons.push(`${gate.gate_id} (${gate.gate_name}) failed`);
+    }
+  }
+
+  return {
+    eligible: gateEval.packaging_eligible,
+    blocking_gates: blockingGates,
+    reasons: reasons.length > 0 ? reasons : ["All critical gates passed"],
+  };
+}
+
 function deriveDecision(
   gateEval: FullGateEvaluation,
   qualityScore: number,
@@ -97,7 +214,14 @@ function deriveDecision(
   return { decision: "allow_with_warnings", reasons };
 }
 
-export function buildQualityReport(input: QualityReportInput): BAQBuildQualityReport {
+export interface ExtendedBuildQualityReport extends BAQBuildQualityReport {
+  coverage_metrics: CoverageMetrics;
+  inventory_metrics: InventoryMetrics;
+  quality_signals: QualitySignals;
+  packaging_eligibility: PackagingEligibility;
+}
+
+export function buildQualityReport(input: QualityReportInput): ExtendedBuildQualityReport {
   const qualityScore = computeOverallQualityScore(input);
   const { decision, reasons } = deriveDecision(input.gateEvaluation, qualityScore);
   const now = new Date().toISOString();
@@ -130,6 +254,10 @@ export function buildQualityReport(input: QualityReportInput): BAQBuildQualityRe
     },
     decision,
     decision_reasons: reasons,
+    coverage_metrics: buildCoverageMetrics(input.traceMap),
+    inventory_metrics: buildInventoryMetrics(input.reconciliation),
+    quality_signals: buildQualitySignals(input),
+    packaging_eligibility: buildPackagingEligibility(input.gateEvaluation),
     created_at: now,
     updated_at: now,
   };
@@ -137,7 +265,7 @@ export function buildQualityReport(input: QualityReportInput): BAQBuildQualityRe
 
 export function writeQualityReport(
   runDir: string,
-  report: BAQBuildQualityReport,
+  report: ExtendedBuildQualityReport,
 ): string {
   const reportPath = path.join(runDir, "build_quality_report.json");
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf-8");

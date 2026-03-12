@@ -21,6 +21,7 @@ export interface BuildQualityHookContext {
   trace_map: BAQRequirementTraceMap | null;
   quality_report: BAQBuildQualityReport | null;
   failure_report: BAQGenerationFailureReport | null;
+  metadata: Record<string, unknown>;
 }
 
 export interface BuildQualityHookResult {
@@ -196,6 +197,7 @@ export function createHookContext(
     trace_map: null,
     quality_report: null,
     failure_report: null,
+    metadata: {},
     ...overrides,
   };
 }

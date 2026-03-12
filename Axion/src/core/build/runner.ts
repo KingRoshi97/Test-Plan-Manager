@@ -696,11 +696,22 @@ export async function runBuild(
     if (!baqPreflight.passed) {
       const missing = baqPreflight.missing.join(", ");
       const invalid = baqPreflight.invalid.join(", ");
-      console.log(`  [BAQ] Preflight FAILED — missing: [${missing}], invalid: [${invalid}]`);
-      baqFailureCollector.addFromError("preflight", "generation_failure", `Preflight failed: missing=[${missing}] invalid=[${invalid}]`, "critical");
-    } else {
-      console.log("  [BAQ] Preflight passed — all upstream artifacts present and valid");
+      const reason = `Preflight failed: missing=[${missing}] invalid=[${invalid}]`;
+      console.log(`  [BAQ] Preflight FAILED — ${reason}`);
+      baqFailureCollector.addFromError("preflight", "generation_failure", reason, "critical", {
+        failingUnit: "preflight_check",
+        expectedArtifacts: ["kit_extraction.json", "derived_build_inputs.json", "repo_inventory.json", "requirement_trace_map.json", "sufficiency_evaluation.json"],
+        missingArtifacts: baqPreflight.missing.map(n => `${n}.json`),
+        repairHints: ["Re-run upstream pipeline stages to produce missing artifacts"],
+      });
+      manifest = recordFailure(manifest, "preflight", "preflight", reason, [reason]);
+      result.state = "failed";
+      writeBuildManifest(paths.buildManifest, manifest);
+      emitProgress("failed", { error: reason, failureClass: "preflight" });
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed");
+      return result;
     }
+    console.log("  [BAQ] Preflight passed — all upstream artifacts present and valid");
 
     if (baqInventory) {
       baqFileTracker = createFileTracker(baqInventory);
@@ -743,6 +754,14 @@ export async function runBuild(
               const fullPath = path.join(paths.repo, filePath);
               const content = fs.existsSync(fullPath) ? fs.readFileSync(fullPath, "utf-8") : "";
               trackGeneratedFile(baqFileTracker, filePath, content);
+              const perFileCtx = createHookContext("onFileGenerated", runId, buildId, {
+                metadata: {
+                  file_path: filePath,
+                  byte_count: Buffer.byteLength(content, "utf-8"),
+                  planned: baqFileTracker.planned_files.has(filePath),
+                },
+              });
+              baqHookRunner.run("onFileGenerated", perFileCtx).catch(() => {});
             } catch {}
           }
         } else if (progress.status === "failed") {
@@ -751,7 +770,19 @@ export async function runBuild(
             "generation_failure",
             `File generation failed: ${progress.filePath}`,
             "warning",
+            {
+              failingUnit: progress.filePath,
+              retryEligible: true,
+              repairHints: ["Re-run generation for this file"],
+            },
           );
+          const failCtx = createHookContext("onGenerationFailure", runId, buildId, {
+            metadata: {
+              file_path: progress.filePath,
+              error: `File generation failed: ${progress.filePath}`,
+            },
+          });
+          baqHookRunner.run("onGenerationFailure", failCtx).catch(() => {});
         }
         const completed = plan.slices.filter(s => s.status === "completed").length;
         slicesCompleted = completed;
@@ -773,7 +804,11 @@ export async function runBuild(
       result.errors.push(...genResult.errors);
 
       if (genResult.filesGenerated === 0 || genResult.filesFailed > genResult.filesGenerated) {
-        baqFailureCollector.addFromError("generation", "generation_failure", reason, "critical");
+        baqFailureCollector.addFromError("generation", "generation_failure", reason, "critical", {
+          failingUnit: "generation_pipeline",
+          retryEligible: true,
+          repairHints: ["Check generation configuration", "Review upstream artifact quality"],
+        });
         manifest = recordFailure(manifest, "generation", "generation", reason, genResult.errors);
         result.state = "failed";
         writeBuildManifest(paths.buildManifest, manifest);
@@ -807,14 +842,6 @@ export async function runBuild(
       trace_map: baqTraceMap,
     });
     await baqHookRunner.run("onGenerationComplete", genCompleteCtx);
-
-    const fileGenCtx = createHookContext("onFileGenerated", runId, buildId, {
-      extraction: baqExtraction,
-      derived_inputs: baqDerivedInputs,
-      inventory: baqInventory,
-      trace_map: baqTraceMap,
-    });
-    await baqHookRunner.run("onFileGenerated", fileGenCtx);
 
     console.log("  [BUILD] Writing manifests...");
     const deps = extractDependencies(paths);

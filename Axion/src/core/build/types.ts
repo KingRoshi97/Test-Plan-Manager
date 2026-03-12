@@ -21,6 +21,7 @@ export type BuildFailureClass =
   | "generation"
   | "verification"
   | "packaging"
+  | "preflight"
   | "records";
 
 export const BUILD_TRANSITIONS: Record<BuildState, BuildState[]> = {

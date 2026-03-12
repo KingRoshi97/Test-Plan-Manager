@@ -341,6 +341,9 @@ export interface BAQGateResult {
     description: string;
     passed: boolean;
     detail: string;
+    severity: BAQSeverity;
+    message: string;
+    evidence_refs: string[];
   }>;
   blockers: string[];
   evaluated_at: string;

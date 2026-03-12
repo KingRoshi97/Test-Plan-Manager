@@ -86,8 +86,11 @@ export interface TrackedFile {
   path: string;
   planned: boolean;
   generated: boolean;
+  required: boolean;
   generation_method: "deterministic" | "ai_assisted";
   byte_count: number;
+  trace_refs: string[];
+  has_placeholder: boolean;
   generated_at: string | null;
 }
 
@@ -95,6 +98,7 @@ export interface FileTracker {
   planned_files: Map<string, BAQRepoFileEntry>;
   generated_files: Map<string, TrackedFile>;
   violations: string[];
+  placeholder_violations: string[];
 }
 
 export function createFileTracker(inventory: BAQRepoInventory): FileTracker {
@@ -106,7 +110,18 @@ export function createFileTracker(inventory: BAQRepoInventory): FileTracker {
     planned_files: planned,
     generated_files: new Map(),
     violations: [],
+    placeholder_violations: [],
   };
+}
+
+function detectPlaceholder(content: string): boolean {
+  const placeholderPatterns = [
+    /\/\/\s*TODO:\s*\[AXION\]/,
+    /\{\/\*\s*TODO:\s*\[AXION\]/,
+    /placeholder/i,
+    /FIXME:\s*\[AXION\]/,
+  ];
+  return placeholderPatterns.some(p => p.test(content));
 }
 
 export function trackGeneratedFile(
@@ -115,6 +130,7 @@ export function trackGeneratedFile(
   content: string,
 ): void {
   const planned = tracker.planned_files.get(filePath);
+  const hasPlaceholder = detectPlaceholder(content);
 
   if (!planned) {
     tracker.violations.push(`Unplanned file generated: ${filePath}`);
@@ -123,11 +139,18 @@ export function trackGeneratedFile(
       path: filePath,
       planned: false,
       generated: true,
+      required: false,
       generation_method: "ai_assisted",
       byte_count: Buffer.byteLength(content, "utf-8"),
+      trace_refs: [],
+      has_placeholder: hasPlaceholder,
       generated_at: new Date().toISOString(),
     });
     return;
+  }
+
+  if (hasPlaceholder && planned.required) {
+    tracker.placeholder_violations.push(`Required file contains placeholders: ${filePath}`);
   }
 
   tracker.generated_files.set(filePath, {
@@ -135,10 +158,26 @@ export function trackGeneratedFile(
     path: filePath,
     planned: true,
     generated: true,
+    required: planned.required,
     generation_method: planned.generation_method,
     byte_count: Buffer.byteLength(content, "utf-8"),
+    trace_refs: planned.trace_refs,
+    has_placeholder: hasPlaceholder,
     generated_at: new Date().toISOString(),
   });
+}
+
+export interface InventoryVariance {
+  expected_files: number;
+  produced_files: number;
+  missing_files: number;
+  unplanned_files: number;
+  required_missing: number;
+  optional_missing: number;
+  placeholder_count: number;
+  placeholder_in_required: number;
+  trace_linked_generated: number;
+  trace_linked_total: number;
 }
 
 export interface ReconciliationResult {
@@ -149,8 +188,11 @@ export interface ReconciliationResult {
   coverage_percent: number;
   missing_files: string[];
   missing_required_files: string[];
+  missing_optional_files: string[];
   unplanned_files: string[];
   violations: string[];
+  placeholder_violations: string[];
+  inventory_variance: InventoryVariance;
   passed: boolean;
   evaluated_at: string;
 }
@@ -160,25 +202,43 @@ export function reconcileGeneration(tracker: FileTracker): ReconciliationResult 
   const generatedPaths = new Set(tracker.generated_files.keys());
   const missingFiles: string[] = [];
   const missingRequiredFiles: string[] = [];
+  const missingOptionalFiles: string[] = [];
+
+  let traceLinkedTotal = 0;
+  let traceLinkedGenerated = 0;
 
   for (const [filePath, entry] of tracker.planned_files) {
+    const hasTraceRefs = entry.trace_refs.length > 0;
+    if (hasTraceRefs) traceLinkedTotal++;
+
     if (!generatedPaths.has(filePath)) {
       missingFiles.push(filePath);
       if (entry.required) {
         missingRequiredFiles.push(filePath);
+      } else {
+        missingOptionalFiles.push(filePath);
       }
+    } else {
+      if (hasTraceRefs) traceLinkedGenerated++;
     }
   }
 
   const unplannedFiles: string[] = [];
+  let placeholderCount = 0;
+  let placeholderInRequired = 0;
+
   for (const [filePath, tracked] of tracker.generated_files) {
     if (!tracked.planned) {
       unplannedFiles.push(filePath);
     }
+    if (tracked.has_placeholder) {
+      placeholderCount++;
+      if (tracked.required) placeholderInRequired++;
+    }
   }
 
   let plannedGenerated = 0;
-  for (const [filePath, tracked] of tracker.generated_files) {
+  for (const [, tracked] of tracker.generated_files) {
     if (tracked.planned) plannedGenerated++;
   }
   const totalGenerated = tracker.generated_files.size;
@@ -186,7 +246,22 @@ export function reconcileGeneration(tracker: FileTracker): ReconciliationResult 
     ? Math.min(Math.round((plannedGenerated / totalPlanned) * 10000) / 100, 100)
     : 0;
 
-  const passed = missingRequiredFiles.length === 0 && tracker.violations.length === 0;
+  const passed = missingRequiredFiles.length === 0
+    && tracker.violations.length === 0
+    && tracker.placeholder_violations.length === 0;
+
+  const variance: InventoryVariance = {
+    expected_files: totalPlanned,
+    produced_files: totalGenerated,
+    missing_files: missingFiles.length,
+    unplanned_files: unplannedFiles.length,
+    required_missing: missingRequiredFiles.length,
+    optional_missing: missingOptionalFiles.length,
+    placeholder_count: placeholderCount,
+    placeholder_in_required: placeholderInRequired,
+    trace_linked_generated: traceLinkedGenerated,
+    trace_linked_total: traceLinkedTotal,
+  };
 
   return {
     total_planned: totalPlanned,
@@ -196,8 +271,11 @@ export function reconcileGeneration(tracker: FileTracker): ReconciliationResult 
     coverage_percent: coveragePercent,
     missing_files: missingFiles,
     missing_required_files: missingRequiredFiles,
+    missing_optional_files: missingOptionalFiles,
     unplanned_files: unplannedFiles,
     violations: [...tracker.violations],
+    placeholder_violations: [...tracker.placeholder_violations],
+    inventory_variance: variance,
     passed,
     evaluated_at: new Date().toISOString(),
   };
