@@ -271,6 +271,7 @@ export interface BAQRepoInventory {
     files_by_generation_method: Record<string, number>;
   };
   created_at: string;
+  updated_at: string;
 }
 
 export interface BAQTraceEntry {
@@ -298,6 +299,7 @@ export interface BAQRequirementTraceMap {
     coverage_percent: number;
   };
   created_at: string;
+  updated_at: string;
 }
 
 export interface BAQGateResult {
