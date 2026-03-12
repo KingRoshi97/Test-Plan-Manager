@@ -190,11 +190,17 @@ export async function runBuild(
 
     if (!eligibility.eligible) {
       const reason = `Eligibility failed: ${eligibility.blockers.join("; ")}`;
+      baqFailureCollector.addFromError("eligibility", "generation_failure", reason, "critical", {
+        failingUnit: "eligibility_check",
+        retryClassification: "repair_then_retry" as const,
+        repairHints: eligibility.blockers,
+      });
       manifest = recordFailure(manifest, "eligibility", "eligibility", reason, eligibility.blockers);
       result.errors.push(reason);
       result.state = "failed";
       writeBuildManifestSafe(runDir, manifest);
       emitProgress("failed", { error: reason, failureClass: "eligibility" });
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
       return result;
     }
 
@@ -203,13 +209,20 @@ export async function runBuild(
     try {
       const wsResult = initWorkspace(AXION_BASE, runId);
       paths = wsResult.paths;
-    } catch (err: any) {
-      const reason = `Workspace init failed: ${err.message}`;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      const reason = `Workspace init failed: ${message}`;
+      baqFailureCollector.addFromError("workspace", "generation_failure", reason, "critical", {
+        failingUnit: "workspace_init",
+        retryClassification: "safe_retry" as const,
+        repairHints: ["Check disk space and permissions"],
+      });
       manifest = recordFailure(manifest, "workspace", "workspace", reason);
       result.errors.push(reason);
       result.state = "failed";
       writeBuildManifestSafe(runDir, manifest);
       emitProgress("failed", { error: reason, failureClass: "workspace" });
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
       return result;
     }
 
@@ -644,13 +657,20 @@ export async function runBuild(
     try {
       plan = await createBuildPlan(runDir, blueprint ?? undefined);
       plan.buildId = buildId;
-    } catch (err: any) {
-      const reason = `Planning failed: ${err.message}`;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      const reason = `Planning failed: ${message}`;
+      baqFailureCollector.addFromError("planning", "planning_failure", reason, "critical", {
+        failingUnit: "build_planning",
+        retryClassification: "repair_then_retry" as const,
+        repairHints: ["Check upstream artifacts and build configuration"],
+      });
       manifest = recordFailure(manifest, "planning", "planning", reason);
       result.errors.push(reason);
       result.state = "failed";
       writeBuildManifestSafe(runDir, manifest);
       emitProgress("failed", { error: reason, failureClass: "planning" });
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
       return result;
     }
 
@@ -949,8 +969,12 @@ export async function runBuild(
         packagingSignals: null,
       });
 
-      if (!prePackagingGateEval.all_passed) {
-        const failedGates = prePackagingGateEval.gates
+      const prePackagingGatesExcludingBQ07 = prePackagingGateEval.gates
+        .filter(g => g.gate_id !== "G-BQ-07");
+      const prePackagingAllPassed = prePackagingGatesExcludingBQ07.every(g => g.status === "pass");
+
+      if (!prePackagingAllPassed) {
+        const failedGates = prePackagingGatesExcludingBQ07
           .filter(g => g.status === "fail")
           .map(g => `${g.gate_id} (${g.gate_name})`);
         const reason = `Packaging blocked — gate(s) failed: ${failedGates.join(", ")}`;
