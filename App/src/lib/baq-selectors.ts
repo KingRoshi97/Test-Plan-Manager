@@ -2,10 +2,13 @@ import type {
   BAQKitExtraction,
   BAQDerivedBuildInputs,
   BAQRepoInventory,
+  BAQRepoFileEntry,
   BAQRequirementTraceMap,
   BAQBuildQualityReport,
   BAQGenerationFailureReport,
   BAQSufficiencyEvaluation,
+  BAQSufficiencyDimension,
+  BAQSufficiencyGap,
   BAQGateResult,
   BAQFailureEntry,
   BAQSeverity,
@@ -154,8 +157,9 @@ export function selectOutputIntegrityMetrics(a: BAQArtifacts): OutputIntegrityMe
 
   const requiredFiles = inv.files.filter((f) => f.required).length;
   const tracedFiles = inv.files.filter((f) => f.trace_refs && f.trace_refs.length > 0).length;
-  const missingRequired = inv.summary.required_files
-    ? Math.max(0, inv.summary.required_files - requiredFiles)
+  const summaryRequiredCount = (inv.summary as Record<string, unknown>).required_files;
+  const missingRequired = typeof summaryRequiredCount === "number"
+    ? Math.max(0, summaryRequiredCount - requiredFiles)
     : 0;
   const unplannedFiles = inv.summary.total_files - tracedFiles;
   return {
@@ -563,25 +567,25 @@ export interface SufficiencyGap {
 
 export function selectSufficiencyDimensions(a: BAQArtifacts): SufficiencyDimension[] {
   if (!a.sufficiency?.dimensions) return [];
-  return a.sufficiency.dimensions.map((d: any) => ({
-    dimensionId: d.dimension_id ?? "",
-    name: d.name ?? d.dimension_name ?? "",
-    score: d.score ?? 0,
-    threshold: d.threshold ?? 0,
-    passed: d.passed ?? false,
-    detail: d.detail ?? "",
+  return a.sufficiency.dimensions.map((d: BAQSufficiencyDimension) => ({
+    dimensionId: d.dimension_id,
+    name: d.name,
+    score: d.score,
+    threshold: d.threshold,
+    passed: d.passed,
+    detail: d.detail,
   }));
 }
 
 export function selectSufficiencyGaps(a: BAQArtifacts): SufficiencyGap[] {
   if (!a.sufficiency?.gaps) return [];
-  return a.sufficiency.gaps.map((g: any) => ({
-    gapId: g.gap_id ?? "",
-    dimensionRef: g.dimension_ref ?? "",
-    severity: g.severity ?? "info",
-    description: g.description ?? "",
-    affectedRefs: g.affected_refs ?? [],
-    recommendation: g.recommendation ?? "",
+  return a.sufficiency.gaps.map((g: BAQSufficiencyGap) => ({
+    gapId: g.gap_id,
+    dimensionRef: g.dimension_ref,
+    severity: g.severity,
+    description: g.description,
+    affectedRefs: g.affected_refs,
+    recommendation: g.recommendation,
   }));
 }
 
@@ -595,7 +599,7 @@ export interface InventoryByCategory {
 
 export function selectInventoryByCategory(a: BAQArtifacts): InventoryByCategory {
   if (!a.inventory) return { optional: [], test: [], config: [], runtime: [], proof: [] };
-  const toRow = (f: any): RequiredFileRow => ({
+  const toRow = (f: BAQRepoFileEntry): RequiredFileRow => ({
     fileId: f.file_id,
     path: f.path,
     role: f.role,

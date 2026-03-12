@@ -2,12 +2,12 @@ import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../lib/queryClient";
 import {
-  Shield, Activity, AlertTriangle, Target, BarChart3,
+  Shield, Activity, AlertTriangle, Target,
   ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2,
-  FileText, Package, Layers, GitBranch, List,
-  AlertOctagon, Wrench, TrendingUp, Download, Eye,
+  FileText, Package, Layers, GitBranch,
+  AlertOctagon, Wrench, TrendingUp, Download,
   Gauge, Boxes, Search, Database, Code, Lock,
-  RefreshCw, ArrowRight, Zap, Info, Copy,
+  ArrowRight, Zap, Info,
   type LucideIcon,
 } from "lucide-react";
 import { GlassPanel } from "../components/ui/glass-panel";
@@ -470,7 +470,7 @@ function DerivedPlanTab({ artifacts }: { artifacts: BAQArtifacts }) {
               {d.verification_obligations.map((v, i) => (
                 <div key={i} className="text-xs text-[hsl(var(--foreground))] mb-1 flex items-start gap-1">
                   <Lock className="w-3 h-3 mt-0.5 shrink-0 text-[hsl(var(--muted-foreground))]" />
-                  {typeof v === "string" ? v : (v as any).description ?? JSON.stringify(v)}
+                  {v.description}
                 </div>
               ))}
             </div>
@@ -479,7 +479,7 @@ function DerivedPlanTab({ artifacts }: { artifacts: BAQArtifacts }) {
               {d.ops_obligations.map((o, i) => (
                 <div key={i} className="text-xs text-[hsl(var(--foreground))] mb-1 flex items-start gap-1">
                   <Zap className="w-3 h-3 mt-0.5 shrink-0 text-[hsl(var(--muted-foreground))]" />
-                  {typeof o === "string" ? o : (o as any).description ?? JSON.stringify(o)}
+                  {o.description}
                 </div>
               ))}
             </div>
@@ -1137,12 +1137,31 @@ function EmptyArtifact({ name }: { name: string }) {
   );
 }
 
-function UtilityRail({ artifacts, onNavigate, effectiveRunId }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void; effectiveRunId: string }) {
+function UtilityRail({ artifacts, onNavigate, effectiveRunId, allRuns }: { artifacts: BAQArtifacts; onNavigate: (tab: TabId) => void; effectiveRunId: string; allRuns: Array<{ runId: string; hasBAQ: boolean }> }) {
   const blockers = selectTopBlockers(artifacts);
   const fix = selectNextBestFix(artifacts);
   const missing = selectMissingRequiredFiles(artifacts);
   const decision = selectFinalBuildDecision(artifacts);
   const trend = selectTrendSeries(artifacts);
+
+  const baqRuns = allRuns.filter((r) => r.hasBAQ);
+  const currentIdx = baqRuns.findIndex((r) => r.runId === effectiveRunId);
+  const previousRunId = currentIdx > 0 ? baqRuns[currentIdx - 1].runId : null;
+
+  const { data: prevData } = useQuery({
+    queryKey: ["/api/baq/runs", previousRunId, "delta"],
+    queryFn: () => apiRequest(`/api/baq/runs/${previousRunId}`),
+    enabled: !!previousRunId,
+  });
+
+  const prevDecision = prevData?.qualityReport ? {
+    score: prevData.qualityReport.overall_quality_score as number,
+    decision: prevData.qualityReport.decision as string,
+    gatesPassed: (prevData.qualityReport.gate_summary as { passed: number }).passed,
+    gatesTotal: (prevData.qualityReport.gate_summary as { total_gates: number }).total_gates,
+  } : null;
+
+  const qualityDelta = prevDecision ? decision.qualityScore - prevDecision.score : null;
 
   const handleExport = useCallback((type: string) => {
     const url = `/api/baq/runs/${effectiveRunId}/artifact/${type}`;
@@ -1166,6 +1185,26 @@ function UtilityRail({ artifacts, onNavigate, effectiveRunId }: { artifacts: BAQ
               {trend[0].decision === "approved" ? "✓ Approved" : trend[0].decision === "approved_with_warnings" ? "⚠ Warnings" : "✗ " + decisionLabel(trend[0].decision)}
             </div>
           )}
+        </GlassPanel>
+      )}
+
+      {qualityDelta !== null && previousRunId && (
+        <GlassPanel solid className="p-4">
+          <div className="text-system-label mb-2 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Delta vs Previous
+          </div>
+          <div className="text-center">
+            <div className={`text-2xl font-bold tabular-nums ${qualityDelta > 0 ? "text-[hsl(var(--status-success))]" : qualityDelta < 0 ? "text-[hsl(var(--status-failure))]" : "text-[hsl(var(--muted-foreground))]"}`}>
+              {qualityDelta > 0 ? "+" : ""}{qualityDelta}
+            </div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
+              vs {previousRunId} ({prevDecision!.score}/100)
+            </div>
+            <div className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+              Gates: {prevDecision!.gatesPassed}/{prevDecision!.gatesTotal} → {decision.gatesPassed}/{decision.gatesTotal}
+            </div>
+          </div>
         </GlassPanel>
       )}
 
@@ -1347,6 +1386,24 @@ export default function BuildQualityPage() {
                       {decision.gatesFailed} gate(s) failed
                     </button>
                   )}
+                  <div className="h-4 w-px bg-[hsl(var(--border))]" />
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setActiveTab("failures")} className="p-1 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]" title="Failures">
+                      <AlertOctagon className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setActiveTab("traceability")} className="p-1 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]" title="Trace Gaps">
+                      <GitBranch className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setActiveTab("delta")} className="p-1 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]" title="Missing Files">
+                      <Search className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setActiveTab("packaging")} className="p-1 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]" title="Packaging">
+                      <Package className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => window.open(`/api/baq/runs/${effectiveRunId}/artifact/quality-report`, "_blank")} className="p-1 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]" title="Export Quality Report">
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </>
               )}
             </div>
@@ -1463,7 +1520,7 @@ export default function BuildQualityPage() {
 
         {effectiveRunId && availability !== "empty" && !baqLoading && (
           <div className="w-64 shrink-0 border-l border-[hsl(var(--border))] overflow-y-auto p-4 bg-[hsl(var(--card))]">
-            <UtilityRail artifacts={artifacts} onNavigate={handleNavigate} effectiveRunId={effectiveRunId} />
+            <UtilityRail artifacts={artifacts} onNavigate={handleNavigate} effectiveRunId={effectiveRunId} allRuns={runs} />
           </div>
         )}
       </div>
