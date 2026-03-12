@@ -81,19 +81,27 @@ export interface LoadedStandardsRegistry {
   resolverRules: ResolverRules;
 }
 
+function resolveFile(primary: string, fallback: string, label: string): string {
+  if (existsSync(primary)) return primary;
+  if (existsSync(fallback)) return fallback;
+  throw new Error(`${label} not found at ${primary} or ${fallback}`);
+}
+
 export function loadStandardsRegistry(repoRoot: string): LoadedStandardsRegistry {
   const libDir = join(repoRoot, "libraries", "standards");
 
-  const indexPath = join(libDir, "standards_index.json");
-  if (!existsSync(indexPath)) {
-    throw new Error(`Standards index not found: ${indexPath}`);
-  }
+  const indexPath = resolveFile(
+    join(libDir, "SYSTEM", "contracts", "standards_index.json"),
+    join(libDir, "standards_index.json"),
+    "Standards index",
+  );
   const index = readJson<StandardsIndex>(indexPath);
 
-  const rulesPath = join(libDir, "resolver_rules.v1.json");
-  if (!existsSync(rulesPath)) {
-    throw new Error(`Resolver rules not found: ${rulesPath}`);
-  }
+  const rulesPath = resolveFile(
+    join(libDir, "SYSTEM", "contracts", "resolver_rules.v1.json"),
+    join(libDir, "resolver_rules.v1.json"),
+    "Resolver rules",
+  );
   const resolverRules = readJson<ResolverRules>(rulesPath);
 
   const packs: StandardsPack[] = [];

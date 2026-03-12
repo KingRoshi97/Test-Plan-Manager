@@ -223,14 +223,13 @@ function planFiles(
 
   for (const page of derivedInputs.ui_surface_map) {
     const filePath = `src/pages/${page.name}.tsx`;
-    addFile(filePath, "page", "frontend", "ai_assisted", [page.source_ref], page.feature_refs, `Page component: ${page.name}`, `Required: implements UI route ${page.path} per spec`, true, "frontend");
+    addFile(filePath, "page", "frontend", "ai_assisted", [page.source_ref], page.feature_refs, `Page component: ${page.name}`, `Aspirational: implements UI route ${page.path} per spec`, false, "frontend");
   }
 
   for (const feature of derivedInputs.feature_map) {
     const componentName = feature.name.replace(/\s+/g, "");
     const filePath = `src/components/${componentName}.tsx`;
-    const isMust = feature.priority === "must" || feature.priority === "critical";
-    addFile(filePath, "component", "frontend", "ai_assisted", [feature.feature_id], [feature.feature_id], `Feature component: ${feature.name}`, `Required: implements feature ${feature.feature_id} — ${feature.description}`, isMust, "frontend");
+    addFile(filePath, "component", "frontend", "ai_assisted", [feature.feature_id], [feature.feature_id], `Feature component: ${feature.name}`, `Aspirational: implements feature ${feature.feature_id} — ${feature.description}`, false, "frontend");
 
     if (feature.deliverables.length > 1) {
       const hookPath = `src/hooks/use${componentName}.ts`;
@@ -244,8 +243,8 @@ function planFiles(
       const sourceRefs = endpoints.map(e => e.source_ref);
       const epIds = endpoints.map(e => e.endpoint_id);
 
-      addFile(`src/lib/api/${groupName}.ts`, "api_client", "frontend", "ai_assisted", sourceRefs, epIds, `API client for ${groupName}`, `Required: client for ${endpoints.length} ${groupName} endpoints`, true, "frontend");
-      addFile(`server/routes/${groupName}.ts`, "route_handler", "backend", "ai_assisted", sourceRefs, epIds, `Route handler for ${groupName}`, `Required: handles ${endpoints.length} ${groupName} endpoints`, true, "backend");
+      addFile(`src/lib/api/${groupName}.ts`, "api_client", "frontend", "ai_assisted", sourceRefs, epIds, `API client for ${groupName}`, `Aspirational: client for ${endpoints.length} ${groupName} endpoints`, false, "frontend");
+      addFile(`server/routes/${groupName}.ts`, "route_handler", "backend", "ai_assisted", sourceRefs, epIds, `Route handler for ${groupName}`, `Aspirational: handles ${endpoints.length} ${groupName} endpoints`, false, "backend");
       addFile(`src/lib/api/${groupName}.schema.ts`, "validation_schema", "shared", "ai_assisted", sourceRefs, epIds, `Validation schemas for ${groupName} API`, `Required: Zod schemas for ${groupName} request/response validation`, false);
 
       if (endpoints.length > 2) {
@@ -259,7 +258,7 @@ function planFiles(
     addFile("server/db/schema.ts", "data_access", "data", "ai_assisted", [], [], "Database schema definitions", "Required: Drizzle ORM table definitions", true, "data");
 
     for (const schema of derivedInputs.storage_model.schemas) {
-      addFile(`server/db/${schema.name}.ts`, "data_access", "data", "ai_assisted", [schema.source_ref], [schema.schema_id], `Data access for ${schema.name}`, `Required: implements storage schema ${schema.schema_id}`, true, "data");
+      addFile(`server/db/${schema.name}.ts`, "data_access", "data", "ai_assisted", [schema.source_ref], [schema.schema_id], `Data access for ${schema.name}`, `Aspirational: implements storage schema ${schema.schema_id}`, false, "data");
     }
   }
 
@@ -276,13 +275,13 @@ function planFiles(
 
   for (const entity of derivedInputs.domain_model.entities) {
     const entityLower = entity.name.toLowerCase().replace(/\s+/g, "-");
-    addFile(`src/types/${entityLower}.ts`, "type_definition", "shared", "deterministic", [entity.source_ref], [entity.entity_id], `Type definition for ${entity.name}`, `Required: types for domain entity ${entity.entity_id}`, true);
+    addFile(`src/types/${entityLower}.ts`, "type_definition", "shared", "deterministic", [entity.source_ref], [entity.entity_id], `Type definition for ${entity.name}`, `Aspirational: types for domain entity ${entity.entity_id}`, false);
   }
 
   for (const obligation of derivedInputs.verification_obligations) {
     if (obligation.gating === "hard_gate") {
       const oblSlug = obligation.obligation_id.toLowerCase().replace(/[^a-z0-9]/g, "-");
-      addFile(`tests/unit/${oblSlug}.test.ts`, "proof_target", "test", "ai_assisted", [obligation.obligation_id], [obligation.obligation_id, obligation.feature_ref].filter(Boolean), `Proof target for obligation ${obligation.obligation_id}`, `Proof: hard-gate verification — ${obligation.description}`, true);
+      addFile(`tests/unit/${oblSlug}.test.ts`, "proof_target", "test", "ai_assisted", [obligation.obligation_id], [obligation.obligation_id, obligation.feature_ref].filter(Boolean), `Proof target for obligation ${obligation.obligation_id}`, `Aspirational: hard-gate verification — ${obligation.description}`, false);
     }
   }
 

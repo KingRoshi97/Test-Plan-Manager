@@ -80,10 +80,18 @@ const STANDARDS_LIB_REL = "Axion/libraries/standards";
 let cached: StandardsLibrary | null = null;
 let cacheRoot: string | null = null;
 
+function resolveDir(primary: string, fallback: string): string {
+  if (existsSync(primary)) return primary;
+  return fallback;
+}
+
 export function loadStandardsLibrary(repoRoot: string): StandardsLibrary {
   if (cached && cacheRoot === repoRoot) return cached;
 
-  const base = join(repoRoot, STANDARDS_LIB_REL, "registries");
+  const base = resolveDir(
+    join(repoRoot, STANDARDS_LIB_REL, "SYSTEM", "registries"),
+    join(repoRoot, STANDARDS_LIB_REL, "registries"),
+  );
   const standardsIndex = readJsonSafe<StandardsIndexRegistryV1>(join(base, "standards_index.v1.json"));
 
   cached = { standardsIndex };
@@ -128,7 +136,10 @@ export function loadStandardsSchemas(repoRoot: string): Array<{ filename: string
 }
 
 export function loadStandardsRegistries(repoRoot: string): Array<{ filename: string; content: unknown }> {
-  const base = join(repoRoot, STANDARDS_LIB_REL, "registries");
+  const base = resolveDir(
+    join(repoRoot, STANDARDS_LIB_REL, "SYSTEM", "registries"),
+    join(repoRoot, STANDARDS_LIB_REL, "registries"),
+  );
   if (!existsSync(base)) return [];
 
   return readdirSync(base)

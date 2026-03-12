@@ -75,10 +75,18 @@ const TEMPLATES_LIB_REL = "Axion/libraries/templates";
 let cached: TemplatesLibrary | null = null;
 let cacheRoot: string | null = null;
 
+function resolveDir(primary: string, fallback: string): string {
+  if (existsSync(primary)) return primary;
+  return fallback;
+}
+
 export function loadTemplatesLibrary(repoRoot: string): TemplatesLibrary {
   if (cached && cacheRoot === repoRoot) return cached;
 
-  const base = join(repoRoot, TEMPLATES_LIB_REL, "registries");
+  const base = resolveDir(
+    join(repoRoot, TEMPLATES_LIB_REL, "SYSTEM", "registries"),
+    join(repoRoot, TEMPLATES_LIB_REL, "registries"),
+  );
   const templateRegistry = readJsonSafe<TemplateRegistryV1>(join(base, "template_registry.v1.json"));
   const categoryOrder = readJsonSafe<CategoryOrderV1>(join(base, "template_category_order.v1.json"));
   const completenessPolicy = readJsonSafe<CompletenessPolicyV1>(join(base, "template_completeness_policy.v1.json"));
@@ -133,7 +141,10 @@ export function loadTemplatesSchemas(repoRoot: string): Array<{ filename: string
 }
 
 export function loadTemplatesRegistries(repoRoot: string): Array<{ filename: string; content: unknown }> {
-  const base = join(repoRoot, TEMPLATES_LIB_REL, "registries");
+  const base = resolveDir(
+    join(repoRoot, TEMPLATES_LIB_REL, "SYSTEM", "registries"),
+    join(repoRoot, TEMPLATES_LIB_REL, "registries"),
+  );
   if (!existsSync(base)) return [];
 
   return readdirSync(base)

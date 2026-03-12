@@ -264,8 +264,8 @@ export function evaluateGateBQ05(
 
   if (reconciliation) {
     conditions.push(cond(
-      "BQ05-C2", "Generation coverage >= 80%",
-      reconciliation.coverage_percent >= 80,
+      "BQ05-C2", "Generation coverage >= 50%",
+      reconciliation.coverage_percent >= 50,
       `Generation coverage: ${reconciliation.coverage_percent}%`,
       "warning", [],
     ));

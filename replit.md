@@ -36,6 +36,13 @@ A BAQ enforcement layer (`Axion/src/core/baq/`) implements a specification for b
 
 **Important**: BAQ runs only in the Build Agent runner (`Axion/src/core/build/runner.ts`), NOT in S10 packaging. S10 enforces kit contract validation (GATE-08 / G8_PACKAGE_INTEGRITY) via `validateKitOnDisk` in `Axion/src/core/kit/validate.ts`, which checks KIT-01 folder structure, KIT-02 manifest integrity, and KIT-04 version stamps. The packaging preflight in `Axion/src/core/baq/packagingEnforcement.ts` checks kit contract artifacts (not BAQ artifacts) and manifest-vs-bundle reconciliation.
 
+**BAQ Inventory Scoping**: The repo inventory (`repoInventory.ts`) plans files in two tiers: (1) structural/config files marked `required: true` (package.json, tsconfig, server entry, db schema definitions, auth module), and (2) AI-generated feature files marked `required: false` as aspirational guidance (page components, feature components, API client/route files, domain type files, test proof targets). This prevents G-BQ-03/04/05 gate failures when the Build Agent organizes generated code differently than the aspirational plan. G-BQ-05 coverage threshold is 50%.
+
+### Library Path Resolution
+All library loaders use a `resolveFile`/`resolveDir` pattern: try `SYSTEM/contracts/` or `SYSTEM/registries/` first, fall back to old root-level paths. This supports both the reorganized directory structure and legacy layouts:
+-   **Standards**: `registryLoader.ts` resolves `standards_index.json` and `resolver_rules.v1.json` from `SYSTEM/contracts/` with root fallback; `loader.ts` resolves registries dir from `SYSTEM/registries/` with `registries/` fallback
+-   **Templates**: `loader.ts` resolves registries dir from `SYSTEM/registries/` with `registries/` fallback; `feature_packs.json` loaded from `SYSTEM/contracts/` with root fallback
+
 ### Template Library Structure
 Template source files live under `Axion/libraries/templates/CONTENT/ITEMS/<FAMILY>/<ID>.md`. The `template_index.json` (at library root) maps template IDs to their `file_path` relative to `libraries/templates/`. Feature packs at `SYSTEM/contracts/feature_packs.json` control which template packs activate based on assembly characteristics (auth, compliance, integrations, routing, etc.). The selector (`selector.ts`) filters templates by active packs, `applies_when` conditions, and skill level. Token usage for template AI synthesis is tracked via `recordUsage` in `filler.ts`.
 
