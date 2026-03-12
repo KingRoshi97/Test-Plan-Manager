@@ -51,7 +51,7 @@ const upload = multer({
 
 function safePath(userPath: string): string | null {
   const resolved = path.resolve(AXION_RUNS, userPath);
-  if (!resolved.startsWith(AXION_RUNS)) return null;
+  if (!resolved.startsWith(AXION_RUNS + path.sep) && resolved !== AXION_RUNS) return null;
   return resolved;
 }
 
@@ -4800,6 +4800,121 @@ export function registerRoutes(app: Express) {
       return res.sendFile(rel, { root: repoDir }, (err) => {
         if (err && !res.headersSent) res.status(404).json({ error: "File not found" });
       });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/baq/runs", async (_req: Request, res: Response) => {
+    try {
+      if (!fs.existsSync(AXION_RUNS)) return res.json({ runs: [] });
+      const entries = await fsp.readdir(AXION_RUNS);
+      const runs: Array<{ runId: string; hasBAQ: boolean; artifacts: string[] }> = [];
+      for (const entry of entries) {
+        if (!entry.startsWith("RUN-")) continue;
+        const runDir = path.join(AXION_RUNS, entry);
+        const stat = await fsp.stat(runDir).catch(() => null);
+        if (!stat?.isDirectory()) continue;
+        const baqFiles = [
+          "kit_extraction.json",
+          "derived_build_inputs.json",
+          "repo_inventory.json",
+          "requirement_trace_map.json",
+          "build_quality_report.json",
+          "generation_failure_report.json",
+          "sufficiency_evaluation.json",
+        ];
+        const found: string[] = [];
+        for (const f of baqFiles) {
+          if (await fileExists(path.join(runDir, f))) found.push(f);
+        }
+        runs.push({ runId: entry, hasBAQ: found.length > 0, artifacts: found });
+      }
+      runs.sort((a, b) => b.runId.localeCompare(a.runId));
+      res.json({ runs });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/baq/runs/:runId", async (req: Request, res: Response) => {
+    try {
+      const runDir = safePath(req.params.runId);
+      if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
+      if (!await fileExists(runDir)) return res.status(404).json({ error: "Run not found" });
+
+      const artifactMap: Record<string, string> = {
+        extraction: "kit_extraction.json",
+        derivedInputs: "derived_build_inputs.json",
+        inventory: "repo_inventory.json",
+        traceMap: "requirement_trace_map.json",
+        qualityReport: "build_quality_report.json",
+        failureReport: "generation_failure_report.json",
+        sufficiency: "sufficiency_evaluation.json",
+      };
+
+      const result: Record<string, any> = {};
+      const available: string[] = [];
+      const missing: string[] = [];
+
+      for (const [key, filename] of Object.entries(artifactMap)) {
+        const filePath = path.join(runDir, filename);
+        if (await fileExists(filePath)) {
+          try {
+            result[key] = await safeReadJson(filePath);
+            available.push(key);
+          } catch {
+            result[key] = null;
+            missing.push(key);
+          }
+        } else {
+          result[key] = null;
+          missing.push(key);
+        }
+      }
+
+      const pkgDecisionPath = path.join(runDir, "kit", "packaging_decision.json");
+      if (await fileExists(pkgDecisionPath)) {
+        try {
+          result.packagingDecision = await safeReadJson(pkgDecisionPath);
+          available.push("packagingDecision");
+        } catch {
+          result.packagingDecision = null;
+        }
+      } else {
+        result.packagingDecision = null;
+      }
+
+      res.json({ runId: req.params.runId, available, missing, ...result });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/baq/runs/:runId/artifact/:artifact", async (req: Request, res: Response) => {
+    try {
+      const runDir = safePath(req.params.runId);
+      if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
+
+      const allowed: Record<string, string> = {
+        extraction: "kit_extraction.json",
+        derivedInputs: "derived_build_inputs.json",
+        inventory: "repo_inventory.json",
+        traceMap: "requirement_trace_map.json",
+        qualityReport: "build_quality_report.json",
+        failureReport: "generation_failure_report.json",
+        sufficiency: "sufficiency_evaluation.json",
+        packagingDecision: "kit/packaging_decision.json",
+      };
+
+      const filename = allowed[req.params.artifact];
+      if (!filename) return res.status(400).json({ error: "Unknown artifact" });
+
+      const filePath = path.join(runDir, filename);
+      if (!await fileExists(filePath)) return res.status(404).json({ error: "Artifact not found" });
+
+      const data = await safeReadJson(filePath);
+      res.json(data);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

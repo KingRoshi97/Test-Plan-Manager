@@ -31,6 +31,7 @@ import KnowledgeDashboardPage from "./pages/knowledge-dashboard";
 import CertificationPage from "./pages/certification";
 import AnalyticsEnginePage from "./pages/analytics-engine";
 import LibraryControlCenterPage from "./pages/library-control";
+import BuildQualityPage from "./pages/build-quality";
 
 export default function App() {
   return (
@@ -68,6 +69,7 @@ export default function App() {
         <Route path="/docs" component={DocInventoryPage} />
         <Route path="/certification/:certRunId" component={CertificationPage} />
         <Route path="/certification" component={CertificationPage} />
+        <Route path="/build-quality" component={BuildQualityPage} />
         <Route path="/export" component={ExportPage} />
         <Route>
           <div className="flex items-center justify-center h-full">

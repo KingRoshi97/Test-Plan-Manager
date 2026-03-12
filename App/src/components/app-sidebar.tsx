@@ -230,6 +230,7 @@ export function AppSidebar() {
       },
       { href: "/files", label: "Artifacts", icon: FolderOpen },
       { href: "/certification", label: "Certification", icon: ShieldCheck },
+      { href: "/build-quality", label: "Build Quality", icon: Hammer },
     ],
     defaultOpen: true,
   };
