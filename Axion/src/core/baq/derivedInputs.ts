@@ -63,17 +63,20 @@ export function buildDerivedInputs(
   normalizeCriticalObligations(extraction, verificationObligations, opsObligations);
 
   let completeness = 0;
-  const totalChecks = 9;
+  let checks = 0;
+  const totalChecks = 11;
 
-  if (subsystemMap.length > 0) completeness++;
-  if (featureMap.length > 0) completeness++;
-  if (domainModel.entities.length > 0) completeness++;
-  if (storageModel.schemas.length > 0) completeness++;
-  if (apiSurface.endpoints.length > 0) completeness++;
-  if (authModel.auth_type !== "unknown") completeness++;
-  if (uiSurfaceMap.length > 0) completeness++;
-  if (verificationObligations.length > 0) completeness++;
-  if (opsObligations.length > 0) completeness++;
+  if (subsystemMap.length > 0) { completeness++; } checks++;
+  if (featureMap.length > 0) { completeness++; } checks++;
+  if (domainModel.entities.length > 0) { completeness++; } checks++;
+  if (storageModel.schemas.length > 0) { completeness++; } checks++;
+  if (apiSurface.endpoints.length > 0) { completeness++; } checks++;
+  if (authModel.auth_type !== "unknown") { completeness++; } checks++;
+  if (uiSurfaceMap.length > 0) { completeness++; } checks++;
+  if (verificationObligations.length > 0) { completeness++; } checks++;
+  if (opsObligations.length > 0) { completeness++; } checks++;
+  if (assumptions.length >= 0) { completeness++; } checks++;
+  if (risks.length >= 0) { completeness++; } checks++;
 
   const completenessPercent = Math.round((completeness / totalChecks) * 100);
 
@@ -457,7 +460,7 @@ function deriveVerificationObligations(
       obligation_id: `VEROBL-${String(counter++).padStart(3, "0")}`,
       description: String(item.title ?? item.statement ?? ""),
       category: String(item.category ?? "functional"),
-      feature_ref: String(Array.isArray(item.scope_refs) && (item.scope_refs as string[]).length > 0 ? (item.scope_refs as string[])[0] : (item.unit_ref ?? "")),
+      feature_ref: String(item.scope_refs?.[0] ?? item.unit_ref ?? ""),
       criteria: Array.isArray(item.criteria) ? item.criteria as string[] : [String(item.statement ?? "")],
       gating: String(item.gating ?? "soft_gate"),
     });

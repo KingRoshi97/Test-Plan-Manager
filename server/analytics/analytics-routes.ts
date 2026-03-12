@@ -1,6 +1,7 @@
 import { type Express, type Request, type Response } from "express";
 import { getCard, getCards, getMetric, getMetricTrend, listMetrics, listCards, getEngineHealth, refreshAllSnapshots } from "./analytics-service.js";
 import { ingestEvent, ingestBatch } from "./analytics-ingest.js";
+import { getAnalyticsEvents } from "./analytics-events-query.js";
 import type { AnalyticsEventEnvelope } from "../../shared/analytics/event-envelope.js";
 
 export function registerAnalyticsRoutes(app: Express): void {
@@ -50,7 +51,13 @@ export function registerAnalyticsRoutes(app: Express): void {
     try {
       const metricKey = req.params.metricKey;
       const window = req.query.window as string | undefined;
-      const result = await getMetric(metricKey, window);
+      const dimensions: Record<string, string> = {};
+      for (const [key, val] of Object.entries(req.query)) {
+        if (key.startsWith("dim_") && typeof val === "string") {
+          dimensions[key.replace("dim_", "")] = val;
+        }
+      }
+      const result = await getMetric(metricKey, window, Object.keys(dimensions).length > 0 ? dimensions : undefined);
       res.json(result);
     } catch (err) {
       res.status(500).json({
@@ -143,6 +150,31 @@ export function registerAnalyticsRoutes(app: Express): void {
       res.status(500).json({
         ok: false,
         error: { code: "HEALTH_ERROR", message: err instanceof Error ? err.message : "Unknown error" },
+        meta: { request_id: "error", requested_at: new Date().toISOString() },
+      });
+    }
+  });
+
+  app.get("/api/analytics/events", async (req: Request, res: Response) => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 25, 100);
+      const event_type = req.query.event_type as string | undefined;
+      const domain_id = req.query.domain_id as string | undefined;
+      const outcome = req.query.outcome as string | undefined;
+      const start = req.query.start as string | undefined;
+      const end = req.query.end as string | undefined;
+
+      const result = await getAnalyticsEvents({ page, limit, event_type, domain_id, outcome, start, end });
+      res.json({
+        ok: true,
+        data: result,
+        meta: { request_id: "events", requested_at: new Date().toISOString() },
+      });
+    } catch (err) {
+      res.status(500).json({
+        ok: false,
+        error: { code: "EVENTS_ERROR", message: err instanceof Error ? err.message : "Unknown error" },
         meta: { request_id: "error", requested_at: new Date().toISOString() },
       });
     }

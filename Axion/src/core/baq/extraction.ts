@@ -216,38 +216,26 @@ function readJsonSafe(filePath: string): { data: unknown; valid: boolean } {
 function scanDirStats(dirPath: string): { fileCount: number; byteCount: number; contentHash: string } {
   if (!existsSync(dirPath)) return { fileCount: 0, byteCount: 0, contentHash: "" };
   try {
-    const entries = readdirSync(dirPath).filter(f => !f.startsWith("00_") && !f.startsWith("."));
+    const files = readdirSync(dirPath).filter(f => !f.startsWith("00_") && !f.startsWith("."));
     let totalBytes = 0;
-    let actualFileCount = 0;
     const parts: string[] = [];
-    for (const f of entries) {
+    for (const f of files) {
       const fp = join(dirPath, f);
       try {
         const stat = statSync(fp);
         if (stat.isFile()) {
-          actualFileCount++;
           totalBytes += stat.size;
           parts.push(f + ":" + stat.size);
         }
       } catch { /* skip unreadable files */ }
     }
     return {
-      fileCount: actualFileCount,
+      fileCount: files.length,
       byteCount: totalBytes,
       contentHash: parts.length > 0 ? sha256(parts.join("|")) : "",
     };
   } catch {
     return { fileCount: 0, byteCount: 0, contentHash: "" };
-  }
-}
-
-function classifyAbsentStatus(applicability: BAQApplicabilityStatus): BAQSectionStatus {
-  switch (applicability) {
-    case "required": return "missing";
-    case "recommended": return "deferred";
-    case "optional": return "not_applicable";
-    case "not_applicable": return "not_applicable";
-    default: return "not_applicable";
   }
 }
 
@@ -265,7 +253,7 @@ function classifySectionStatus(
         return { status: "invalid", fileCount: 0, byteCount: 0, contentHash: null };
       }
     }
-    return { status: classifyAbsentStatus(def.applicability), fileCount: 0, byteCount: 0, contentHash: null };
+    return { status: def.applicability === "required" ? "missing" : "not_applicable", fileCount: 0, byteCount: 0, contentHash: null };
   }
 
   if (def.section_id === "SEC-DI") {
@@ -278,13 +266,13 @@ function classifySectionStatus(
         return { status: "invalid", fileCount: 0, byteCount: 0, contentHash: null };
       }
     }
-    return { status: classifyAbsentStatus(def.applicability), fileCount: 0, byteCount: 0, contentHash: null };
+    return { status: "not_applicable", fileCount: 0, byteCount: 0, contentHash: null };
   }
 
   if (def.type === "json" && def.core_path) {
     const fullPath = join(kitRoot, def.core_path);
     if (!existsSync(fullPath)) {
-      return { status: classifyAbsentStatus(def.applicability), fileCount: 0, byteCount: 0, contentHash: null };
+      return { status: def.applicability === "required" ? "missing" : "not_applicable", fileCount: 0, byteCount: 0, contentHash: null };
     }
     const { data, valid } = readJsonSafe(fullPath);
     if (!valid) {
@@ -297,7 +285,9 @@ function classifySectionStatus(
   if (def.type === "dir" && def.app_path) {
     const dirPath = join(kitRoot, def.app_path);
     if (!existsSync(dirPath)) {
-      return { status: classifyAbsentStatus(def.applicability), fileCount: 0, byteCount: 0, contentHash: null };
+      if (def.applicability === "required") return { status: "missing", fileCount: 0, byteCount: 0, contentHash: null };
+      if (def.applicability === "recommended") return { status: "deferred", fileCount: 0, byteCount: 0, contentHash: null };
+      return { status: "not_applicable", fileCount: 0, byteCount: 0, contentHash: null };
     }
     const stats = scanDirStats(dirPath);
     if (stats.fileCount === 0) {
