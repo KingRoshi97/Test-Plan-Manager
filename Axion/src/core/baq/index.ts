@@ -114,6 +114,17 @@ export type {
 } from "./qualityReport.js";
 
 export {
+  runPackagingPreflight,
+  writePackagingDecision,
+} from "./packagingEnforcement.js";
+export type {
+  ManifestTargetMismatch,
+  PackagingPreflightCheck,
+  PackagingPreflightDecision,
+  GateEvidenceLink,
+} from "./packagingEnforcement.js";
+
+export {
   createFailureEntry,
   createExtendedFailureEntry,
   buildFailureReport,
