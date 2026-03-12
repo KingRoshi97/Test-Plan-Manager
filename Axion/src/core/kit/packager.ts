@@ -6,11 +6,18 @@ import { writeCanonicalJson, canonicalJsonString } from "../../utils/canonicalJs
 import { isoNow } from "../../utils/time.js";
 import { runPackagingPreflight, writePackagingDecision } from "../baq/packagingEnforcement.js";
 import { updateQualityReportWithPackagingDecision } from "../baq/qualityReport.js";
+import { BuildQualityHookRunner, createHookContext } from "../baq/hooks.js";
 
 interface PackagedFile {
   path: string;
   hash: string;
   bytes: number;
+}
+
+export interface PackageKitOptions {
+  hookRunner?: BuildQualityHookRunner;
+  runId?: string;
+  buildId?: string;
 }
 
 function collectFiles(dir: string, base: string, result: PackagedFile[]): void {
@@ -44,10 +51,26 @@ function copyDirRecursive(srcDir: string, destDir: string): void {
   }
 }
 
-export function packageKit(runDir: string, outputPath: string): void {
+export async function packageKit(
+  runDir: string,
+  outputPath: string,
+  options: PackageKitOptions = {},
+): Promise<void> {
   ensureDir(outputPath);
 
   const kitBundleDir = join(runDir, "kit", "bundle", "agent_kit");
+  const resolvedRunId = options.runId ?? basename(runDir) ?? "unknown";
+  const resolvedBuildId = options.buildId ?? `BUILD-${resolvedRunId}`;
+
+  if (options.hookRunner) {
+    const beforeCtx = createHookContext("beforePackaging", resolvedRunId, resolvedBuildId, {
+      metadata: { stage: "S10_PACKAGE", kit_bundle_dir: kitBundleDir },
+    });
+    const beforeResult = await options.hookRunner.run("beforePackaging", beforeCtx);
+    if (beforeResult.blocking && !beforeResult.success) {
+      throw new Error(`beforePackaging hook blocked: ${beforeResult.errors.join("; ")}`);
+    }
+  }
 
   const preflightDecision = runPackagingPreflight(runDir, kitBundleDir);
   writePackagingDecision(runDir, preflightDecision);
@@ -59,6 +82,17 @@ export function packageKit(runDir: string, outputPath: string): void {
   });
 
   if (!preflightDecision.allowed) {
+    if (options.hookRunner) {
+      const decisionCtx = createHookContext("onPackagingDecision", resolvedRunId, resolvedBuildId, {
+        metadata: {
+          packaging_allowed: false,
+          block_reasons: preflightDecision.block_reasons,
+          gate_evidence: preflightDecision.gate_evidence,
+        },
+      });
+      await options.hookRunner.run("onPackagingDecision", decisionCtx);
+    }
+
     throw new Error(
       `Packaging blocked by preflight gate: ${preflightDecision.block_reasons.join("; ")}`,
     );
@@ -102,4 +136,16 @@ export function packageKit(runDir: string, outputPath: string): void {
   };
 
   writeCanonicalJson(join(outputPath, "manifest.json"), manifest);
+
+  if (options.hookRunner) {
+    const decisionCtx = createHookContext("onPackagingDecision", resolvedRunId, resolvedBuildId, {
+      metadata: {
+        packaging_allowed: true,
+        block_reasons: [],
+        kit_file_count: allFiles.length,
+        kit_content_hash: manifest.content_hash,
+      },
+    });
+    await options.hookRunner.run("onPackagingDecision", decisionCtx);
+  }
 }

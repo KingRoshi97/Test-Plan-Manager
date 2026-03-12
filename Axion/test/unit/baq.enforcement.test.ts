@@ -920,6 +920,7 @@ describe("BAQ Packaging Enforcement", () => {
     const tmpDir = makeTmpDir();
     const bundleDir = path.join(tmpDir, "kit", "bundle", "agent_kit");
     fs.mkdirSync(bundleDir, { recursive: true });
+    fs.writeFileSync(path.join(bundleDir, "00_START_HERE.md"), "# Start");
 
     const gateEval = allPassingGateEval();
     const input: QualityReportInput = {
@@ -972,19 +973,27 @@ describe("BAQ Packaging Enforcement", () => {
     fs.rmSync(tmpDir, { recursive: true });
   });
 
-  it("detects manifest target mismatches", () => {
+  it("detects manifest target mismatches when packaging_manifest lists missing files", () => {
     const tmpDir = makeTmpDir();
     const bundleDir = path.join(tmpDir, "kit", "bundle", "agent_kit");
     fs.mkdirSync(bundleDir, { recursive: true });
+    fs.writeFileSync(path.join(bundleDir, "existing_file.md"), "content");
 
-    const inventory = makeInventory(3);
-    fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), JSON.stringify(inventory));
+    fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), JSON.stringify(makeInventory(0)));
 
     const criticals = ["kit_extraction.json", "derived_build_inputs.json",
       "requirement_trace_map.json", "sufficiency_evaluation.json"];
     for (const name of criticals) {
       fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
     }
+
+    fs.mkdirSync(path.join(tmpDir, "kit"), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, "kit", "packaging_manifest.json"), JSON.stringify({
+      files: [
+        { path: "agent_kit/missing_file_1.md", sha256: "abc" },
+        { path: "agent_kit/missing_file_2.json", sha256: "def" },
+      ],
+    }));
 
     const gateEval = allPassingGateEval();
     const rInput: QualityReportInput = {
@@ -1006,7 +1015,7 @@ describe("BAQ Packaging Enforcement", () => {
     fs.writeFileSync(path.join(tmpDir, "proof", "proof_ledger.jsonl"), "");
 
     const decision = runPackagingPreflight(tmpDir, bundleDir);
-    expect(decision.manifest_mismatches.length).toBeGreaterThan(0);
+    expect(decision.manifest_mismatches.length).toBe(2);
     expect(decision.allowed).toBe(false);
     fs.rmSync(tmpDir, { recursive: true });
   });
@@ -1122,15 +1131,15 @@ describe("BAQ Regression Tests — False-Green Prevention", () => {
     const tmpDir = makeTmpDir();
     const bundleDir = path.join(tmpDir, "kit", "bundle", "agent_kit");
     fs.mkdirSync(bundleDir, { recursive: true });
+    fs.writeFileSync(path.join(bundleDir, "actual_output.md"), "generated content");
 
-    const inv = makeInventory(3);
     const gateEval = allPassingGateEval();
     const report = buildQualityReport({
       runId: "RUN-TEST",
       buildId: "BUILD-001",
       extraction: makeExtraction(),
       derivedInputs: makeDerivedInputs(),
-      inventory: inv,
+      inventory: makeInventory(),
       traceMap: makeTraceMap(),
       sufficiency: makeSufficiency(),
       gateEvaluation: gateEval,
@@ -1144,8 +1153,15 @@ describe("BAQ Regression Tests — False-Green Prevention", () => {
     for (const name of criticals) {
       fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
     }
-    fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), JSON.stringify(inv));
+    fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), JSON.stringify(makeInventory(0)));
     writeQualityReport(tmpDir, report);
+
+    fs.mkdirSync(path.join(tmpDir, "kit"), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, "kit", "packaging_manifest.json"), JSON.stringify({
+      files: [
+        { path: "agent_kit/expected_but_missing.md", sha256: "abc123" },
+      ],
+    }));
 
     fs.mkdirSync(path.join(tmpDir, "proof"), { recursive: true });
     fs.writeFileSync(path.join(tmpDir, "proof", "proof_ledger.jsonl"), "");

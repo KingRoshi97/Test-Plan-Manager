@@ -384,7 +384,7 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
     }
 
     const packageOutputPath = join(runDir, "kit", "packaged");
-    packageKit(runDir, packageOutputPath);
+    await packageKit(runDir, packageOutputPath);
     console.log(`  S10: Kit packaged to ${packageOutputPath}`);
   }
 }

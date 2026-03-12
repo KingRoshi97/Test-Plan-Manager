@@ -78,6 +78,19 @@ function loadInventory(runDir: string): BAQRepoInventory | null {
   }
 }
 
+function collectBundleFiles(dir: string, base: string, result: Set<string>): void {
+  if (!fs.existsSync(dir)) return;
+  for (const name of fs.readdirSync(dir)) {
+    const full = path.join(dir, name);
+    const rel = path.join(base, name);
+    if (fs.statSync(full).isDirectory()) {
+      collectBundleFiles(full, rel, result);
+    } else {
+      result.add(rel);
+    }
+  }
+}
+
 function reconcileManifestTargets(
   runDir: string,
   inventory: BAQRepoInventory | null,
@@ -85,27 +98,50 @@ function reconcileManifestTargets(
 ): ManifestTargetMismatch[] {
   const mismatches: ManifestTargetMismatch[] = [];
 
-  if (!inventory) {
+  if (!fs.existsSync(kitBundleDir)) {
     mismatches.push({
-      file_path: "repo_inventory.json",
+      file_path: kitBundleDir,
       expected: true,
       actual_exists: false,
-      reason: "Repo inventory not available for manifest reconciliation",
+      reason: "Kit bundle directory does not exist — kit may not have been built",
     });
     return mismatches;
   }
 
-  const files = Array.isArray(inventory.files) ? inventory.files : [];
-  for (const file of files) {
-    if (!file.required) continue;
-    const bundlePath = path.join(kitBundleDir, file.path);
-    const exists = fs.existsSync(bundlePath);
-    if (!exists) {
+  const bundleFiles = new Set<string>();
+  collectBundleFiles(kitBundleDir, "", bundleFiles);
+
+  if (bundleFiles.size === 0) {
+    mismatches.push({
+      file_path: kitBundleDir,
+      expected: true,
+      actual_exists: true,
+      reason: "Kit bundle directory is empty — no files were generated",
+    });
+  }
+
+  const packagingManifestPath = path.join(runDir, "kit", "packaging_manifest.json");
+  if (fs.existsSync(packagingManifestPath)) {
+    try {
+      const pm = JSON.parse(fs.readFileSync(packagingManifestPath, "utf-8"));
+      const manifestFiles: Array<{ path: string }> = Array.isArray(pm.files) ? pm.files : [];
+      for (const mf of manifestFiles) {
+        const normalizedPath = mf.path.replace(/^agent_kit\//, "");
+        if (!bundleFiles.has(normalizedPath)) {
+          mismatches.push({
+            file_path: mf.path,
+            expected: true,
+            actual_exists: false,
+            reason: `File listed in packaging_manifest.json missing from kit bundle: ${mf.path}`,
+          });
+        }
+      }
+    } catch {
       mismatches.push({
-        file_path: file.path,
+        file_path: packagingManifestPath,
         expected: true,
-        actual_exists: false,
-        reason: `Required file from inventory missing in kit bundle: ${file.path}`,
+        actual_exists: true,
+        reason: "packaging_manifest.json exists but could not be parsed",
       });
     }
   }
