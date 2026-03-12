@@ -1,0 +1,9 @@
+{
+  "id": "CE-000078",
+  "cert_run_id": "CR-000017",
+  "domain": "build_integrity",
+  "type": "summary",
+  "title": "build_integrity evaluation summary",
+  "content": "{\"status\":\"warn\",\"score\":96,\"checks_total\":12,\"checks_passed\":11,\"checks_failed\":0,\"findings\":1}",
+  "created_at": "2026-03-12T15:38:34.339Z"
+}

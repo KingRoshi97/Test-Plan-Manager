@@ -1,0 +1,21 @@
+{
+  "id": "CF-000052",
+  "cert_run_id": "CR-000015",
+  "domain": "accessibility",
+  "severity": "medium",
+  "impact": "warning",
+  "title": "4 form files missing accessible labels",
+  "description": "Form controls without htmlFor, aria-label, or aria-labelledby in 4 files",
+  "affected_surface": "accessible_labels",
+  "affected_files": [
+    "src/components/features/CustomizableFighterswithUniqueSkinsorAbilities/CustomizableFighterswithUniqueSkinsorAbilitiesList.tsx",
+    "src/components/features/In-gameTutorialsandGuidanceforNewPlayers/In-gameTutorialsandGuidanceforNewPlayersList.tsx",
+    "src/components/ui/FileUpload.tsx",
+    "src/components/ui/SearchInput.tsx"
+  ],
+  "probable_cause": "Generated form components lack accessible labels for screen readers",
+  "evidence_refs": [],
+  "remediation": "Add htmlFor, aria-label, or aria-labelledby to all form controls",
+  "status": "open",
+  "created_at": "2026-03-12T15:37:02.218Z"
+}
