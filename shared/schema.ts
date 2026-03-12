@@ -45,7 +45,10 @@ export const assemblies = pgTable("assemblies", {
   errorRatePct: real("error_rate_pct").default(0),
   p95LatencyMs: integer("p95_latency_ms").default(0),
   ecosystemRole: varchar("ecosystem_role", { length: 30 }),
-});
+}, (table) => [
+  index("idx_asm_status").on(table.status),
+  index("idx_asm_parent_assembly_id").on(table.parentAssemblyId),
+]);
 
 export const pipelineRuns = pgTable("pipeline_runs", {
   id: serial("id").primaryKey(),
@@ -59,7 +62,9 @@ export const pipelineRuns = pgTable("pipeline_runs", {
   currentStage: varchar("current_stage", { length: 100 }),
   error: text("error"),
   tokenUsage: jsonb("token_usage"),
-});
+}, (table) => [
+  index("idx_pr_assembly_id").on(table.assemblyId),
+]);
 
 export const moduleStatuses = pgTable("module_statuses", {
   id: serial("id").primaryKey(),
@@ -68,7 +73,10 @@ export const moduleStatuses = pgTable("module_statuses", {
   stage: varchar("stage", { length: 100 }),
   status: varchar("status", { length: 50 }).notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_ms_assembly_id").on(table.assemblyId),
+  index("idx_ms_status").on(table.status),
+]);
 
 export const reports = pgTable("reports", {
   id: serial("id").primaryKey(),
@@ -77,7 +85,10 @@ export const reports = pgTable("reports", {
   reportType: varchar("report_type", { length: 100 }).notNull(),
   content: jsonb("content"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_rpt_assembly_id").on(table.assemblyId),
+  index("idx_rpt_run_id").on(table.runId),
+]);
 
 export const insertAssemblySchema = createInsertSchema(assemblies).omit({
   id: true,
@@ -236,6 +247,7 @@ export const upgradeSessions = pgTable("upgrade_sessions", {
 }, (table) => [
   index("idx_us_assembly_status").on(table.assemblyId, table.status),
   index("idx_us_source_revision").on(table.sourceRevisionId),
+  index("idx_us_candidate_revision").on(table.candidateRevisionId),
 ]);
 
 export const upgradePlans = pgTable("upgrade_plans", {

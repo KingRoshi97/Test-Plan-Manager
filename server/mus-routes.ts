@@ -1,6 +1,7 @@
 import { type Express, type Request, type Response } from "express";
 import path from "path";
 import fs from "fs";
+import fsp from "fs/promises";
 import { validateRegistries, executeRun, loadMusPolicy, getRegistryVersions, listAgents, listTasks, createTaskRun, startTaskRun } from "../Axion/src/core/mus/engine.js";
 import { MusStore } from "../Axion/src/core/mus/store.js";
 import { initLedger, appendLedger } from "../Axion/src/core/mus/ledger.js";
@@ -15,25 +16,40 @@ function ensureStore(): MusStore {
   return new MusStore(MUS_DATA_DIR);
 }
 
-function readRegistryJson(name: string): any {
+async function readRegistryJson(name: string): Promise<any> {
   const fp = path.join(MUS_LIB_DIR, "registries", `${name}.json`);
-  if (!fs.existsSync(fp)) return { items: [] };
-  return JSON.parse(fs.readFileSync(fp, "utf-8"));
+  try {
+    await fsp.access(fp);
+  } catch {
+    return { items: [] };
+  }
+  try {
+    return JSON.parse(await fsp.readFile(fp, "utf-8"));
+  } catch (err) {
+    console.error(`Failed to parse registry JSON ${name}:`, err);
+    return { items: [] };
+  }
 }
 
-function loadScheduleOverrides(): Record<string, boolean> {
+async function loadScheduleOverrides(): Promise<Record<string, boolean>> {
   const overridePath = path.join(MUS_DATA_DIR, "schedule_overrides.json");
-  if (!fs.existsSync(overridePath)) return {};
-  try { return JSON.parse(fs.readFileSync(overridePath, "utf-8")); } catch { return {}; }
+  try {
+    await fsp.access(overridePath);
+    return JSON.parse(await fsp.readFile(overridePath, "utf-8"));
+  } catch (err: any) {
+    if (err?.code === "ENOENT") return {};
+    console.error("Failed to parse schedule overrides:", err);
+    return {};
+  }
 }
 
-function saveScheduleOverrides(overrides: Record<string, boolean>): void {
-  if (!fs.existsSync(MUS_DATA_DIR)) fs.mkdirSync(MUS_DATA_DIR, { recursive: true });
-  fs.writeFileSync(path.join(MUS_DATA_DIR, "schedule_overrides.json"), JSON.stringify(overrides, null, 2));
+async function saveScheduleOverrides(overrides: Record<string, boolean>): Promise<void> {
+  await fsp.mkdir(MUS_DATA_DIR, { recursive: true });
+  await fsp.writeFile(path.join(MUS_DATA_DIR, "schedule_overrides.json"), JSON.stringify(overrides, null, 2));
 }
 
 export function registerMusRoutes(app: Express): void {
-  app.get("/api/mus/status", (_req: Request, res: Response) => {
+  app.get("/api/mus/status", async (_req: Request, res: Response) => {
     try {
       const versions = getRegistryVersions(MUS_LIB_DIR);
       const policy = loadMusPolicy(MUS_LIB_DIR);
@@ -43,8 +59,10 @@ export function registerMusRoutes(app: Express): void {
 
       const validationPath = path.join(MUS_DATA_DIR, "last_validation.json");
       let lastValidation = null;
-      if (fs.existsSync(validationPath)) {
-        try { lastValidation = JSON.parse(fs.readFileSync(validationPath, "utf-8")); } catch {}
+      try {
+        lastValidation = JSON.parse(await fsp.readFile(validationPath, "utf-8"));
+      } catch (err: any) {
+        if (err?.code !== "ENOENT") console.error("Failed to read last validation:", err);
       }
 
       res.json({
@@ -69,18 +87,18 @@ export function registerMusRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/mus/validate", (_req: Request, res: Response) => {
+  app.post("/api/mus/validate", async (_req: Request, res: Response) => {
     try {
       const result = validateRegistries(MUS_LIB_DIR);
-      if (!fs.existsSync(MUS_DATA_DIR)) fs.mkdirSync(MUS_DATA_DIR, { recursive: true });
-      fs.writeFileSync(path.join(MUS_DATA_DIR, "last_validation.json"), JSON.stringify(result, null, 2));
+      await fsp.mkdir(MUS_DATA_DIR, { recursive: true });
+      await fsp.writeFile(path.join(MUS_DATA_DIR, "last_validation.json"), JSON.stringify(result, null, 2));
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  app.post("/api/mus/runs", (req: Request, res: Response) => {
+  app.post("/api/mus/runs", async (req: Request, res: Response) => {
     try {
       const store = ensureStore();
       const { mode_id, trigger = "manual", scope, budgets: userBudgets } = req.body;
@@ -93,7 +111,7 @@ export function registerMusRoutes(app: Express): void {
         return res.status(400).json({ error: "trigger must be 'manual' or 'scheduled'" });
       }
 
-      const modesReg = readRegistryJson("REG-MAINTENANCE-MODES");
+      const modesReg = await readRegistryJson("REG-MAINTENANCE-MODES");
       const modeItem = modesReg.items?.find((m: any) => m.mode_id === mode_id);
       if (!modeItem) return res.status(404).json({ error: `Mode ${mode_id} not found` });
 
@@ -495,10 +513,10 @@ export function registerMusRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/mus/schedules", (_req: Request, res: Response) => {
+  app.get("/api/mus/schedules", async (_req: Request, res: Response) => {
     try {
-      const schedulesReg = readRegistryJson("REG-SCHEDULES");
-      const overrides = loadScheduleOverrides();
+      const schedulesReg = await readRegistryJson("REG-SCHEDULES");
+      const overrides = await loadScheduleOverrides();
       const schedules = (schedulesReg.items ?? []).map((s: any) => ({
         ...s,
         enabled: overrides[s.schedule_id] ?? (s.status !== "disabled"),
@@ -510,20 +528,20 @@ export function registerMusRoutes(app: Express): void {
     }
   });
 
-  app.patch("/api/mus/schedules/:id", (req: Request, res: Response) => {
+  app.patch("/api/mus/schedules/:id", async (req: Request, res: Response) => {
     try {
       const { enabled } = req.body;
       if (typeof enabled !== "boolean") {
         return res.status(400).json({ error: "enabled must be a boolean" });
       }
 
-      const schedulesReg = readRegistryJson("REG-SCHEDULES");
+      const schedulesReg = await readRegistryJson("REG-SCHEDULES");
       const schedule = schedulesReg.items?.find((s: any) => s.schedule_id === req.params.id);
       if (!schedule) return res.status(404).json({ error: `Schedule ${req.params.id} not found` });
 
-      const overrides = loadScheduleOverrides();
+      const overrides = await loadScheduleOverrides();
       overrides[req.params.id] = enabled;
-      saveScheduleOverrides(overrides);
+      await saveScheduleOverrides(overrides);
 
       appendLedger("schedule_toggled", { schedule_id: req.params.id, enabled });
       res.json({ ...schedule, enabled, proposal_only: true });
@@ -532,14 +550,16 @@ export function registerMusRoutes(app: Express): void {
     }
   });
 
-  app.get("/api/mus/task-schedules", (_req: Request, res: Response) => {
+  app.get("/api/mus/task-schedules", async (_req: Request, res: Response) => {
     try {
       const tasks = listTasks(MUS_LIB_DIR);
       const schedulableTasks = tasks.filter((t: any) => t.schedule_allowed);
       const overridesPath = path.join(MUS_DATA_DIR, "task_schedule_overrides.json");
       let overrides: Record<string, { enabled: boolean; rrule?: string }> = {};
-      if (fs.existsSync(overridesPath)) {
-        try { overrides = JSON.parse(fs.readFileSync(overridesPath, "utf-8")); } catch {}
+      try {
+        overrides = JSON.parse(await fsp.readFile(overridesPath, "utf-8"));
+      } catch (err: any) {
+        if (err?.code !== "ENOENT") console.error("Failed to read task schedule overrides:", err);
       }
       const result = schedulableTasks.map((t: any) => ({
         task_id: t.task_id,
@@ -555,7 +575,7 @@ export function registerMusRoutes(app: Express): void {
     }
   });
 
-  app.patch("/api/mus/task-schedules/:taskId", (req: Request, res: Response) => {
+  app.patch("/api/mus/task-schedules/:taskId", async (req: Request, res: Response) => {
     try {
       const { enabled, rrule } = req.body;
       const taskId = req.params.taskId;
@@ -565,9 +585,12 @@ export function registerMusRoutes(app: Express): void {
       if (!task.schedule_allowed) return res.status(400).json({ error: `Task ${taskId} does not allow scheduling` });
 
       const overridesPath = path.join(MUS_DATA_DIR, "task_schedule_overrides.json");
+      await fsp.mkdir(MUS_DATA_DIR, { recursive: true });
       let overrides: Record<string, { enabled: boolean; rrule?: string }> = {};
-      if (fs.existsSync(overridesPath)) {
-        try { overrides = JSON.parse(fs.readFileSync(overridesPath, "utf-8")); } catch {}
+      try {
+        overrides = JSON.parse(await fsp.readFile(overridesPath, "utf-8"));
+      } catch (err: any) {
+        if (err?.code !== "ENOENT") console.error("Failed to read task schedule overrides:", err);
       }
 
       const current = overrides[taskId] ?? { enabled: false, rrule: "FREQ=WEEKLY;BYDAY=SU;BYHOUR=3" };
@@ -575,7 +598,7 @@ export function registerMusRoutes(app: Express): void {
       if (typeof rrule === "string") current.rrule = rrule;
       overrides[taskId] = current;
 
-      fs.writeFileSync(overridesPath, JSON.stringify(overrides, null, 2));
+      await fsp.writeFile(overridesPath, JSON.stringify(overrides, null, 2));
       appendLedger("task_schedule_toggled", { task_id: taskId, enabled: current.enabled, rrule: current.rrule });
 
       res.json({ task_id: taskId, name: task.name, intent: task.intent, ...current, proposal_only: true });

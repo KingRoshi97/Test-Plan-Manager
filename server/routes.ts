@@ -11,6 +11,7 @@ import { registerUpgradeRoutes } from "./upgrade-routes.js";
 import { startCompilation, getCompilationStatus } from "./preview-compiler.js";
 import { generateProjectOverview } from "./preview-overview.js";
 import fs from "fs";
+import fsp from "fs/promises";
 import path from "path";
 import archiver from "archiver";
 import multer from "multer";
@@ -54,193 +55,238 @@ function safePath(userPath: string): string | null {
   return resolved;
 }
 
+async function fileExists(p: string): Promise<boolean> {
+  try { await fsp.access(p); return true; } catch { return false; }
+}
+
+async function safeReadJson(filePath: string): Promise<any> {
+  const raw = await fsp.readFile(filePath, "utf-8");
+  return JSON.parse(raw);
+}
+
 export function registerRoutes(app: Express) {
   app.get("/api/assemblies", async (_req: Request, res: Response) => {
-    const rows = await storage.getAssemblies();
-    const enriched = await Promise.all(
-      rows.map(async (a) => {
-        if (!a.runId) return a;
-        const run = await storage.getPipelineRunByRunId(a.runId);
-        return { ...a, latestStages: run?.stages || null };
-      })
-    );
-    res.json(enriched);
+    try {
+      const rows = await storage.getAssemblies();
+      const enriched = await Promise.all(
+        rows.map(async (a) => {
+          if (!a.runId) return a;
+          const run = await storage.getPipelineRunByRunId(a.runId);
+          return { ...a, latestStages: run?.stages || null };
+        })
+      );
+      res.json(enriched);
+    } catch (err: any) {
+      console.error("Failed to fetch assemblies:", err);
+      res.status(500).json({ error: "Failed to fetch assemblies" });
+    }
   });
 
   app.get("/api/assemblies/:id", async (req: Request, res: Response) => {
-    const assembly = await storage.getAssembly(Number(req.params.id));
-    if (!assembly) return res.status(404).json({ error: "Not found" });
-    const runs = await storage.getPipelineRuns(assembly.id);
-    res.json({ ...assembly, runs });
+    try {
+      const assembly = await storage.getAssembly(Number(req.params.id));
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+      const runs = await storage.getPipelineRuns(assembly.id);
+      res.json({ ...assembly, runs });
+    } catch (err: any) {
+      console.error("Failed to fetch assembly:", err);
+      res.status(500).json({ error: "Failed to fetch assembly" });
+    }
   });
 
   app.post("/api/assemblies", async (req: Request, res: Response) => {
-    const parsed = insertAssemblySchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.format() });
-    const assembly = await storage.createAssembly(parsed.data);
-    res.status(201).json(assembly);
+    try {
+      const parsed = insertAssemblySchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ error: parsed.error.format() });
+      const assembly = await storage.createAssembly(parsed.data);
+      res.status(201).json(assembly);
+    } catch (err: any) {
+      console.error("Failed to create assembly:", err);
+      res.status(500).json({ error: "Failed to create assembly" });
+    }
   });
 
   app.delete("/api/assemblies/:id", async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const assembly = await storage.getAssembly(id);
-    if (!assembly) return res.status(404).json({ error: "Not found" });
-    await storage.deleteAssembly(id);
-    res.json({ ok: true });
+    try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+      await storage.deleteAssembly(id);
+      res.json({ ok: true });
+    } catch (err: any) {
+      console.error("Failed to delete assembly:", err);
+      res.status(500).json({ error: "Failed to delete assembly" });
+    }
   });
 
   app.patch("/api/assemblies/:id", async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const assembly = await storage.getAssembly(id);
-    if (!assembly) return res.status(404).json({ error: "Not found" });
-    if (assembly.status === "running") return res.status(409).json({ error: "Cannot update while running" });
+    try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+      if (assembly.status === "running") return res.status(409).json({ error: "Cannot update while running" });
 
-    const allowedFields = ["projectName", "idea", "preset", "intakePayload", "config", "familyId", "familyName", "familyType", "lifecycleState", "ownerName", "teamName", "usageState", "parentAssemblyId", "dependencyMeta", "riskLevel", "attentionFlags", "controlPlane", "assignedAgents", "deprecationState", "deprecationTargetDate", "retirementCandidate", "requestsLast24h", "activeConsumers", "errorRatePct", "p95LatencyMs", "ecosystemRole"];
-    const validRiskLevels = new Set(["low", "medium", "high", "critical", null]);
-    const validLifecycles = new Set(["draft", "active", "in_use", "degraded", "deprecated", "archived"]);
-    const validDeprecationStates = new Set(["none", "planned", "announced", "in_progress", "completed", null]);
-    const validEcosystemRoles = new Set(["core", "supporting", "adapter", "integration", "edge", "experimental", null]);
-    const update: Record<string, any> = {};
-    for (const key of allowedFields) {
-      if (req.body[key] !== undefined) update[key] = req.body[key];
-    }
-    if (update.riskLevel !== undefined && !validRiskLevels.has(update.riskLevel)) {
-      return res.status(400).json({ error: "Invalid riskLevel. Must be: low, medium, high, critical, or null" });
-    }
-    if (update.lifecycleState !== undefined && !validLifecycles.has(update.lifecycleState)) {
-      return res.status(400).json({ error: "Invalid lifecycleState" });
-    }
-    if (update.lifecycleState !== undefined && update.lifecycleState !== assembly.lifecycleState) {
-      update.lifecycleUpdatedAt = new Date();
-    }
-    if (update.attentionFlags !== undefined && update.attentionFlags !== null) {
-      if (!Array.isArray(update.attentionFlags) || !update.attentionFlags.every((f: any) => typeof f === "string")) {
-        return res.status(400).json({ error: "attentionFlags must be an array of strings or null" });
+      const allowedFields = ["projectName", "idea", "preset", "intakePayload", "config", "familyId", "familyName", "familyType", "lifecycleState", "ownerName", "teamName", "usageState", "parentAssemblyId", "dependencyMeta", "riskLevel", "attentionFlags", "controlPlane", "assignedAgents", "deprecationState", "deprecationTargetDate", "retirementCandidate", "requestsLast24h", "activeConsumers", "errorRatePct", "p95LatencyMs", "ecosystemRole"];
+      const validRiskLevels = new Set(["low", "medium", "high", "critical", null]);
+      const validLifecycles = new Set(["draft", "active", "in_use", "degraded", "deprecated", "archived"]);
+      const validDeprecationStates = new Set(["none", "planned", "announced", "in_progress", "completed", null]);
+      const validEcosystemRoles = new Set(["core", "supporting", "adapter", "integration", "edge", "experimental", null]);
+      const update: Record<string, any> = {};
+      for (const key of allowedFields) {
+        if (req.body[key] !== undefined) update[key] = req.body[key];
       }
-    }
-    if (update.parentAssemblyId !== undefined && update.parentAssemblyId !== null && typeof update.parentAssemblyId !== "number") {
-      return res.status(400).json({ error: "parentAssemblyId must be a number or null" });
-    }
-    if (update.dependencyMeta !== undefined && update.dependencyMeta !== null && typeof update.dependencyMeta !== "object") {
-      return res.status(400).json({ error: "dependencyMeta must be an object or null" });
-    }
-    if (update.controlPlane !== undefined && update.controlPlane !== null && typeof update.controlPlane !== "string") {
-      return res.status(400).json({ error: "controlPlane must be a string or null" });
-    }
-    if (update.assignedAgents !== undefined && update.assignedAgents !== null) {
-      if (!Array.isArray(update.assignedAgents) || !update.assignedAgents.every((a: any) => a && typeof a === "object" && typeof a.id === "string" && typeof a.name === "string")) {
-        return res.status(400).json({ error: "assignedAgents must be an array of {id, name, role?, status?} objects or null" });
+      if (update.riskLevel !== undefined && !validRiskLevels.has(update.riskLevel)) {
+        return res.status(400).json({ error: "Invalid riskLevel. Must be: low, medium, high, critical, or null" });
       }
-    }
-    if (update.deprecationState !== undefined && !validDeprecationStates.has(update.deprecationState)) {
-      return res.status(400).json({ error: "Invalid deprecationState. Must be: none, planned, announced, in_progress, completed, or null" });
-    }
-    if (update.deprecationTargetDate !== undefined && update.deprecationTargetDate !== null) {
-      const d = new Date(update.deprecationTargetDate);
-      if (isNaN(d.getTime())) return res.status(400).json({ error: "deprecationTargetDate must be a valid ISO date string or null" });
-      update.deprecationTargetDate = d;
-    }
-    if (update.retirementCandidate !== undefined && update.retirementCandidate !== null && typeof update.retirementCandidate !== "boolean") {
-      return res.status(400).json({ error: "retirementCandidate must be a boolean or null" });
-    }
-    if (update.ecosystemRole !== undefined && !validEcosystemRoles.has(update.ecosystemRole)) {
-      return res.status(400).json({ error: "Invalid ecosystemRole. Must be: core, supporting, adapter, integration, edge, experimental, or null" });
-    }
-    const numericFields = ["requestsLast24h", "activeConsumers", "errorRatePct", "p95LatencyMs"];
-    for (const nf of numericFields) {
-      if (update[nf] !== undefined && update[nf] !== null && typeof update[nf] !== "number") {
-        return res.status(400).json({ error: `${nf} must be a number or null` });
+      if (update.lifecycleState !== undefined && !validLifecycles.has(update.lifecycleState)) {
+        return res.status(400).json({ error: "Invalid lifecycleState" });
       }
-    }
-    if (Object.keys(update).length === 0) return res.status(400).json({ error: "No valid fields to update" });
+      if (update.lifecycleState !== undefined && update.lifecycleState !== assembly.lifecycleState) {
+        update.lifecycleUpdatedAt = new Date();
+      }
+      if (update.attentionFlags !== undefined && update.attentionFlags !== null) {
+        if (!Array.isArray(update.attentionFlags) || !update.attentionFlags.every((f: any) => typeof f === "string")) {
+          return res.status(400).json({ error: "attentionFlags must be an array of strings or null" });
+        }
+      }
+      if (update.parentAssemblyId !== undefined && update.parentAssemblyId !== null && typeof update.parentAssemblyId !== "number") {
+        return res.status(400).json({ error: "parentAssemblyId must be a number or null" });
+      }
+      if (update.dependencyMeta !== undefined && update.dependencyMeta !== null && typeof update.dependencyMeta !== "object") {
+        return res.status(400).json({ error: "dependencyMeta must be an object or null" });
+      }
+      if (update.controlPlane !== undefined && update.controlPlane !== null && typeof update.controlPlane !== "string") {
+        return res.status(400).json({ error: "controlPlane must be a string or null" });
+      }
+      if (update.assignedAgents !== undefined && update.assignedAgents !== null) {
+        if (!Array.isArray(update.assignedAgents) || !update.assignedAgents.every((a: any) => a && typeof a === "object" && typeof a.id === "string" && typeof a.name === "string")) {
+          return res.status(400).json({ error: "assignedAgents must be an array of {id, name, role?, status?} objects or null" });
+        }
+      }
+      if (update.deprecationState !== undefined && !validDeprecationStates.has(update.deprecationState)) {
+        return res.status(400).json({ error: "Invalid deprecationState. Must be: none, planned, announced, in_progress, completed, or null" });
+      }
+      if (update.deprecationTargetDate !== undefined && update.deprecationTargetDate !== null) {
+        const d = new Date(update.deprecationTargetDate);
+        if (isNaN(d.getTime())) return res.status(400).json({ error: "deprecationTargetDate must be a valid ISO date string or null" });
+        update.deprecationTargetDate = d;
+      }
+      if (update.retirementCandidate !== undefined && update.retirementCandidate !== null && typeof update.retirementCandidate !== "boolean") {
+        return res.status(400).json({ error: "retirementCandidate must be a boolean or null" });
+      }
+      if (update.ecosystemRole !== undefined && !validEcosystemRoles.has(update.ecosystemRole)) {
+        return res.status(400).json({ error: "Invalid ecosystemRole. Must be: core, supporting, adapter, integration, edge, experimental, or null" });
+      }
+      const numericFields = ["requestsLast24h", "activeConsumers", "errorRatePct", "p95LatencyMs"];
+      for (const nf of numericFields) {
+        if (update[nf] !== undefined && update[nf] !== null && typeof update[nf] !== "number") {
+          return res.status(400).json({ error: `${nf} must be a number or null` });
+        }
+      }
+      if (Object.keys(update).length === 0) return res.status(400).json({ error: "No valid fields to update" });
 
-    const updated = await storage.updateAssembly(id, update);
-    res.json(updated);
+      const updated = await storage.updateAssembly(id, update);
+      res.json(updated);
+    } catch (err: any) {
+      console.error("Failed to update assembly:", err);
+      res.status(500).json({ error: "Failed to update assembly" });
+    }
   });
 
   app.get("/api/assemblies/:id/relationships", async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const assembly = await storage.getAssembly(id);
-    if (!assembly) return res.status(404).json({ error: "Not found" });
+    try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
 
-    let parent: { id: number; projectName: string; status: string } | null = null;
-    if (assembly.parentAssemblyId) {
-      const p = await storage.getAssembly(assembly.parentAssemblyId);
-      if (p) parent = { id: p.id, projectName: p.projectName, status: p.status };
+      let parent: { id: number; projectName: string; status: string } | null = null;
+      if (assembly.parentAssemblyId) {
+        const p = await storage.getAssembly(assembly.parentAssemblyId);
+        if (p) parent = { id: p.id, projectName: p.projectName, status: p.status };
+      }
+
+      const allAssemblies = await storage.getAssemblies();
+      const children = allAssemblies
+        .filter((a) => a.parentAssemblyId === id)
+        .map((a) => ({ id: a.id, projectName: a.projectName, status: a.status }));
+
+      const depMeta = (assembly.dependencyMeta || {}) as Record<string, any>;
+      const safeArray = (v: any) => Array.isArray(v) ? v : [];
+
+      res.json({
+        parent,
+        children,
+        upstreamDeps: safeArray(depMeta.upstreamDeps),
+        downstreamDeps: safeArray(depMeta.downstreamDeps),
+        sharedRegistries: safeArray(depMeta.sharedRegistries),
+        sharedApis: safeArray(depMeta.sharedApis),
+      });
+    } catch (err: any) {
+      console.error("Failed to fetch relationships:", err);
+      res.status(500).json({ error: "Failed to fetch relationships" });
     }
-
-    const allAssemblies = await storage.getAssemblies();
-    const children = allAssemblies
-      .filter((a) => a.parentAssemblyId === id)
-      .map((a) => ({ id: a.id, projectName: a.projectName, status: a.status }));
-
-    const depMeta = (assembly.dependencyMeta || {}) as Record<string, any>;
-    const safeArray = (v: any) => Array.isArray(v) ? v : [];
-
-    res.json({
-      parent,
-      children,
-      upstreamDeps: safeArray(depMeta.upstreamDeps),
-      downstreamDeps: safeArray(depMeta.downstreamDeps),
-      sharedRegistries: safeArray(depMeta.sharedRegistries),
-      sharedApis: safeArray(depMeta.sharedApis),
-    });
   });
 
   app.get("/api/assemblies/:id/kit", async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const assembly = await storage.getAssembly(id);
-    if (!assembly) return res.status(404).json({ error: "Not found" });
+    try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
 
-    const requestedRunId = req.query.runId as string | undefined;
-    const runId = requestedRunId || assembly.runId;
-    if (!runId) return res.status(404).json({ error: "No completed run" });
+      const requestedRunId = req.query.runId as string | undefined;
+      const runId = requestedRunId || assembly.runId;
+      if (!runId) return res.status(404).json({ error: "No completed run" });
 
-    if (requestedRunId) {
-      const pipelineRun = await storage.getPipelineRunByRunId(runId);
-      if (!pipelineRun || pipelineRun.assemblyId !== id) {
-        return res.status(403).json({ error: "Run does not belong to this assembly" });
+      if (requestedRunId) {
+        const pipelineRun = await storage.getPipelineRunByRunId(runId);
+        if (!pipelineRun || pipelineRun.assemblyId !== id) {
+          return res.status(403).json({ error: "Run does not belong to this assembly" });
+        }
       }
+
+      const safeRunDir = safePath(runId);
+      if (!safeRunDir) return res.status(400).json({ error: "Invalid run ID" });
+
+      const kitDir = path.join(safeRunDir, "kit", "bundle", "agent_kit");
+      const altKitDir = path.join(safeRunDir, "kit");
+      const targetDir = await fileExists(kitDir) ? kitDir : await fileExists(altKitDir) ? altKitDir : null;
+      if (!targetDir) return res.status(404).json({ error: "Kit not found" });
+
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", `attachment; filename="${assembly.projectName.replace(/[^a-zA-Z0-9_-]/g, "_")}_kit.zip"`);
+      const archive = archiver("zip", { zlib: { level: 6 } });
+      archive.on("error", () => { if (!res.headersSent) res.status(500).end(); else res.end(); });
+      archive.pipe(res);
+      archive.directory(targetDir, "agent_kit");
+      archive.finalize();
+    } catch (err: any) {
+      console.error("Failed to fetch kit:", err);
+      if (!res.headersSent) res.status(500).json({ error: "Failed to fetch kit" });
     }
-
-    const safeRunDir = safePath(runId);
-    if (!safeRunDir) return res.status(400).json({ error: "Invalid run ID" });
-
-    const kitDir = path.join(safeRunDir, "kit", "bundle", "agent_kit");
-    const altKitDir = path.join(safeRunDir, "kit");
-    const targetDir = fs.existsSync(kitDir) ? kitDir : fs.existsSync(altKitDir) ? altKitDir : null;
-    if (!targetDir) return res.status(404).json({ error: "Kit not found" });
-
-    res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", `attachment; filename="${assembly.projectName.replace(/[^a-zA-Z0-9_-]/g, "_")}_kit.zip"`);
-    const archive = archiver("zip", { zlib: { level: 6 } });
-    archive.on("error", () => { if (!res.headersSent) res.status(500).end(); else res.end(); });
-    archive.pipe(res);
-    archive.directory(targetDir, "agent_kit");
-    archive.finalize();
   });
 
   app.post("/api/assemblies/:id/run", async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const assembly = await storage.getAssembly(id);
-    if (!assembly) return res.status(404).json({ error: "Not found" });
-    if (assembly.status === "running") return res.status(409).json({ error: "Already running" });
-
     try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+      if (assembly.status === "running") return res.status(409).json({ error: "Already running" });
+
       const pipelineRun = await startPipelineRun(assembly);
       res.json(pipelineRun);
     } catch (err: any) {
+      console.error("Failed to start pipeline run:", err);
       res.status(500).json({ error: err.message });
     }
   });
 
   app.post("/api/assemblies/:id/kill", async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const assembly = await storage.getAssembly(id);
-    if (!assembly) return res.status(404).json({ error: "Not found" });
-    if (assembly.status !== "running") return res.status(409).json({ error: "Pipeline is not running" });
-
     try {
+      const id = Number(req.params.id);
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Not found" });
+      if (assembly.status !== "running") return res.status(409).json({ error: "Pipeline is not running" });
+
       const result = await killPipeline(id);
       if (!result.killed) {
         await storage.updateAssembly(id, {
@@ -269,28 +315,39 @@ export function registerRoutes(app: Express) {
         res.json(result);
       }
     } catch (err: any) {
+      console.error("Failed to kill pipeline:", err);
       res.status(500).json({ error: err.message });
     }
   });
 
   app.get("/api/pipeline/status", (_req: Request, res: Response) => {
-    const raw = getPipelineStatus();
-    const activeRuns = raw.map((r) => ({
-      assemblyId: r.assemblyId,
-      runId: r.runId,
-      currentStage: r.currentStage,
-      startTime: new Date(r.startTime).toISOString(),
-      lastActivityAt: new Date(r.lastActivityAt).toISOString(),
-      elapsedMs: r.elapsedMs,
-      stalledMs: r.inactiveMs,
-      stallTimeoutMs: r.stallTimeoutMs,
-    }));
-    res.json({ activeRuns });
+    try {
+      const raw = getPipelineStatus();
+      const activeRuns = raw.map((r) => ({
+        assemblyId: r.assemblyId,
+        runId: r.runId,
+        currentStage: r.currentStage,
+        startTime: new Date(r.startTime).toISOString(),
+        lastActivityAt: new Date(r.lastActivityAt).toISOString(),
+        elapsedMs: r.elapsedMs,
+        stalledMs: r.inactiveMs,
+        stallTimeoutMs: r.stallTimeoutMs,
+      }));
+      res.json({ activeRuns });
+    } catch (err: any) {
+      console.error("Failed to fetch pipeline status:", err);
+      res.status(500).json({ error: "Failed to fetch pipeline status" });
+    }
   });
 
   app.get("/api/assemblies/:id/runs", async (req: Request, res: Response) => {
-    const runs = await storage.getPipelineRuns(Number(req.params.id));
-    res.json(runs);
+    try {
+      const runs = await storage.getPipelineRuns(Number(req.params.id));
+      res.json(runs);
+    } catch (err: any) {
+      console.error("Failed to fetch pipeline runs:", err);
+      res.status(500).json({ error: "Failed to fetch pipeline runs" });
+    }
   });
 
   app.get("/api/assemblies/:id/runs/buildable", async (req: Request, res: Response) => {
@@ -318,18 +375,21 @@ export function registerRoutes(app: Express) {
         if (!run.runId || run.status !== "completed") continue;
         const runDir = path.join(AXION_RUNS, run.runId);
         const kitDir = path.join(runDir, "kit");
-        const hasKit = fs.existsSync(kitDir);
+        const hasKit = await fileExists(kitDir);
         if (!hasKit) continue;
 
         const buildDir = path.join(runDir, "build");
         const buildZipPath = path.join(buildDir, "project_repo.zip");
-        const hasBuild = fs.existsSync(buildZipPath);
+        const hasBuild = await fileExists(buildZipPath);
         let buildStatus: string | null = null;
-        if (hasBuild && fs.existsSync(path.join(buildDir, "build_manifest.json"))) {
+        const buildManifestPath = path.join(buildDir, "build_manifest.json");
+        if (hasBuild && await fileExists(buildManifestPath)) {
           try {
-            const manifest = JSON.parse(fs.readFileSync(path.join(buildDir, "build_manifest.json"), "utf-8"));
+            const manifest = await safeReadJson(buildManifestPath);
             buildStatus = manifest.status || null;
-          } catch {}
+          } catch (parseErr) {
+            console.error(`Failed to parse build manifest at ${buildManifestPath}:`, parseErr);
+          }
         }
 
         let kitVersion: string | null = null;
@@ -389,530 +449,305 @@ export function registerRoutes(app: Express) {
   });
 
   app.get("/api/assemblies/:id/runs/:runId", async (req: Request, res: Response) => {
-    const run = await storage.getPipelineRunByRunId(req.params.runId);
-    if (!run || run.assemblyId !== Number(req.params.id)) return res.status(404).json({ error: "Not found" });
-    res.json(run);
+    try {
+      const run = await storage.getPipelineRunByRunId(req.params.runId);
+      if (!run || run.assemblyId !== Number(req.params.id)) return res.status(404).json({ error: "Not found" });
+      res.json(run);
+    } catch (err: any) {
+      console.error("Failed to fetch pipeline run:", err);
+      res.status(500).json({ error: "Failed to fetch pipeline run" });
+    }
   });
 
   app.get("/api/assemblies/:id/stages/:stageKey", async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const stageKey = req.params.stageKey;
-    const assembly = await storage.getAssembly(id);
-    if (!assembly) return res.status(404).json({ error: "Assembly not found" });
-    if (!assembly.runId) return res.status(404).json({ error: "No run available" });
+    try {
+      const id = Number(req.params.id);
+      const stageKey = req.params.stageKey;
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Assembly not found" });
+      if (!assembly.runId) return res.status(404).json({ error: "No run available" });
 
-    const reportPath = path.join(AXION_RUNS, assembly.runId, "stage_reports", `${stageKey}.json`);
-    if (fs.existsSync(reportPath)) {
-      try {
-        const content = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
-        return res.json(content);
-      } catch (err) {
-        console.error(`Failed to parse stage report at ${reportPath}:`, err);
-        return res.status(500).json({ error: "Malformed stage report file" });
+      const reportPath = path.join(AXION_RUNS, assembly.runId, "stage_reports", `${stageKey}.json`);
+      if (await fileExists(reportPath)) {
+        try {
+          const content = await safeReadJson(reportPath);
+          return res.json(content);
+        } catch (err) {
+          console.error(`Failed to parse stage report at ${reportPath}:`, err);
+          return res.status(500).json({ error: "Malformed stage report file" });
+        }
       }
-    }
 
-    const run = await storage.getPipelineRunByRunId(assembly.runId);
-    if (!run) return res.status(404).json({ error: "Run not found" });
-    const stages = (run.stages || {}) as Record<string, any>;
-    if (stages[stageKey]) {
-      const s = stages[stageKey];
-      return res.json({
-        stage_id: stageKey,
-        run_id: assembly.runId,
-        status: s.status,
-        started_at: s.startedAt || s.started_at || null,
-        finished_at: s.completedAt || s.finished_at || null,
-        consumed: s.consumed || [],
-        produced: s.produced || [],
-        notes: s.notes || [],
-        gate_reports: s.gate_reports || [],
-      });
-    }
+      const run = await storage.getPipelineRunByRunId(assembly.runId);
+      if (!run) return res.status(404).json({ error: "Run not found" });
+      const stages = (run.stages || {}) as Record<string, any>;
+      if (stages[stageKey]) {
+        const s = stages[stageKey];
+        return res.json({
+          stage_id: stageKey,
+          run_id: assembly.runId,
+          status: s.status,
+          started_at: s.startedAt || s.started_at || null,
+          finished_at: s.completedAt || s.finished_at || null,
+          consumed: s.consumed || [],
+          produced: s.produced || [],
+          notes: s.notes || [],
+          gate_reports: s.gate_reports || [],
+        });
+      }
 
-    return res.status(404).json({ error: "Stage not found" });
+      return res.status(404).json({ error: "Stage not found" });
+    } catch (err: any) {
+      console.error("Failed to fetch stage:", err);
+      res.status(500).json({ error: "Failed to fetch stage" });
+    }
   });
 
   app.get("/api/assemblies/:id/gates/:gateId", async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const gateId = req.params.gateId;
-    const assembly = await storage.getAssembly(id);
-    if (!assembly) return res.status(404).json({ error: "Assembly not found" });
-    if (!assembly.runId) return res.status(404).json({ error: "No run available" });
+    try {
+      const id = Number(req.params.id);
+      const gateId = req.params.gateId;
+      const assembly = await storage.getAssembly(id);
+      if (!assembly) return res.status(404).json({ error: "Assembly not found" });
+      if (!assembly.runId) return res.status(404).json({ error: "No run available" });
 
-    const reportPath = path.join(AXION_RUNS, assembly.runId, "gates", `${gateId}.gate_report.json`);
-    if (fs.existsSync(reportPath)) {
-      try {
-        const content = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
-        return res.json(content);
-      } catch (err) {
-        console.error(`Failed to parse gate report at ${reportPath}:`, err);
-        return res.status(500).json({ error: "Malformed gate report file" });
+      const reportPath = path.join(AXION_RUNS, assembly.runId, "gates", `${gateId}.gate_report.json`);
+      if (await fileExists(reportPath)) {
+        try {
+          const content = await safeReadJson(reportPath);
+          return res.json(content);
+        } catch (err) {
+          console.error(`Failed to parse gate report at ${reportPath}:`, err);
+          return res.status(500).json({ error: "Malformed gate report file" });
+        }
       }
-    }
 
-    const rpts = await storage.getReports(id);
-    const gateReport = rpts.find(
-      (r) => r.reportType === "gate_result" && (r.content as any)?.gate === gateId
-    );
-    if (gateReport) {
-      return res.json(gateReport.content);
-    }
+      const rpts = await storage.getReports(id);
+      const gateReport = rpts.find(
+        (r) => r.reportType === "gate_result" && (r.content as any)?.gate === gateId
+      );
+      if (gateReport) {
+        return res.json(gateReport.content);
+      }
 
-    return res.status(404).json({ error: "Gate report not found" });
+      return res.status(404).json({ error: "Gate report not found" });
+    } catch (err: any) {
+      console.error("Failed to fetch gate report:", err);
+      res.status(500).json({ error: "Failed to fetch gate report" });
+    }
   });
 
-  app.get("/api/artifacts/:runId", (req: Request, res: Response) => {
-    const runId = req.params.runId;
-    const runDir = safePath(runId);
-    if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
-    const indexPath = path.join(runDir, "artifact_index.json");
-    if (!fs.existsSync(indexPath)) return res.status(404).json({ error: "Artifact index not found" });
+  app.get("/api/artifacts/:runId", async (req: Request, res: Response) => {
     try {
-      const content = JSON.parse(fs.readFileSync(indexPath, "utf-8"));
+      const runId = req.params.runId;
+      const runDir = safePath(runId);
+      if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
+      const indexPath = path.join(runDir, "artifact_index.json");
+      if (!await fileExists(indexPath)) return res.status(404).json({ error: "Artifact index not found" });
+      const content = await safeReadJson(indexPath);
       return res.json(content);
     } catch (err) {
-      console.error(`Failed to parse artifact index for ${runId}:`, err);
+      console.error(`Failed to read artifact index:`, err);
       return res.status(500).json({ error: "Malformed artifact index" });
     }
   });
 
-  app.get("/api/artifacts/:runId/manifest", (req: Request, res: Response) => {
-    const runId = req.params.runId;
-    const runDir = safePath(runId);
-    if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
-    const manifestPath = path.join(runDir, "run_manifest.json");
-    if (!fs.existsSync(manifestPath)) return res.status(404).json({ error: "Run manifest not found" });
+  app.get("/api/artifacts/:runId/manifest", async (req: Request, res: Response) => {
     try {
-      const content = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+      const runId = req.params.runId;
+      const runDir = safePath(runId);
+      if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
+      const manifestPath = path.join(runDir, "run_manifest.json");
+      if (!await fileExists(manifestPath)) return res.status(404).json({ error: "Run manifest not found" });
+      const content = await safeReadJson(manifestPath);
       return res.json(content);
     } catch (err) {
-      console.error(`Failed to parse run manifest for ${runId}:`, err);
+      console.error(`Failed to read run manifest:`, err);
       return res.status(500).json({ error: "Malformed run manifest" });
     }
   });
 
-  app.get("/api/artifacts/:runId/tree", (req: Request, res: Response) => {
-    const runId = req.params.runId;
-    const runDir = safePath(runId);
-    if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
-    if (!fs.existsSync(runDir)) return res.status(404).json({ error: "Run directory not found" });
-
-    function buildTree(dirPath: string, relativeTo: string): any[] {
-      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-      const result: any[] = [];
-      for (const entry of entries) {
-        const fullPath = path.join(dirPath, entry.name);
-        const relPath = path.relative(AXION_RUNS, fullPath);
-        if (entry.isDirectory()) {
-          result.push({
-            name: entry.name,
-            type: "directory",
-            path: relPath,
-            children: buildTree(fullPath, relativeTo),
-          });
-        } else {
-          const stat = fs.statSync(fullPath);
-          result.push({
-            name: entry.name,
-            type: "file",
-            path: relPath,
-            size: stat.size,
-          });
-        }
-      }
-      result.sort((a, b) => {
-        if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
-        return a.name.localeCompare(b.name);
-      });
-      return result;
-    }
-
+  app.get("/api/artifacts/:runId/tree", async (req: Request, res: Response) => {
     try {
-      const tree = buildTree(runDir, runDir);
+      const runId = req.params.runId;
+      const runDir = safePath(runId);
+      if (!runDir) return res.status(400).json({ error: "Invalid run ID" });
+      if (!await fileExists(runDir)) return res.status(404).json({ error: "Run directory not found" });
+
+      async function buildTree(dirPath: string, relativeTo: string): Promise<any[]> {
+        const entries = await fsp.readdir(dirPath, { withFileTypes: true });
+        const result: any[] = [];
+        for (const entry of entries) {
+          const fullPath = path.join(dirPath, entry.name);
+          const relPath = path.relative(AXION_RUNS, fullPath);
+          if (entry.isDirectory()) {
+            result.push({
+              name: entry.name,
+              type: "directory",
+              path: relPath,
+              children: await buildTree(fullPath, relativeTo),
+            });
+          } else {
+            const stat = await fsp.stat(fullPath);
+            result.push({
+              name: entry.name,
+              type: "file",
+              path: relPath,
+              size: stat.size,
+            });
+          }
+        }
+        result.sort((a, b) => {
+          if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+        return result;
+      }
+
+      const tree = await buildTree(runDir, runDir);
       return res.json(tree);
     } catch (err) {
-      console.error(`Failed to build tree for ${runId}:`, err);
+      console.error(`Failed to build tree:`, err);
       return res.status(500).json({ error: "Failed to build directory tree" });
     }
   });
 
   app.get("/api/reports/:assemblyId", async (req: Request, res: Response) => {
-    const rpts = await storage.getReports(Number(req.params.assemblyId));
-    res.json(rpts);
+    try {
+      const rpts = await storage.getReports(Number(req.params.assemblyId));
+      res.json(rpts);
+    } catch (err: any) {
+      console.error("Failed to fetch reports:", err);
+      res.status(500).json({ error: "Failed to fetch reports" });
+    }
   });
 
-  app.get("/api/files", (req: Request, res: Response) => {
-    const dir = (req.query.dir as string) || "";
-    const base = safePath(dir);
-    if (!base || !fs.existsSync(base)) return res.json([]);
-    const entries = fs.readdirSync(base, { withFileTypes: true }).map((e) => ({
-      name: e.name,
-      type: e.isDirectory() ? "directory" : "file",
-      path: path.join(dir, e.name),
-    }));
-    res.json(entries);
-  });
-
-  app.get("/api/files/{*filePath}", (req: Request, res: Response) => {
-    const rawPath = (req.params as any).filePath;
-    const filePath = Array.isArray(rawPath) ? rawPath.join("/") : String(rawPath || "");
-    const full = safePath(filePath);
-    if (!full) return res.status(403).json({ error: "Forbidden" });
-    if (!fs.existsSync(full)) return res.status(404).json({ error: "File not found" });
-    if (fs.statSync(full).isDirectory()) {
-      const entries = fs.readdirSync(full, { withFileTypes: true }).map((e) => ({
+  app.get("/api/files", async (req: Request, res: Response) => {
+    try {
+      const dir = (req.query.dir as string) || "";
+      const base = safePath(dir);
+      if (!base || !await fileExists(base)) return res.json([]);
+      const entries = await fsp.readdir(base, { withFileTypes: true });
+      res.json(entries.map((e) => ({
         name: e.name,
         type: e.isDirectory() ? "directory" : "file",
-        path: path.join(filePath, e.name),
-      }));
-      return res.json(entries);
+        path: path.join(dir, e.name),
+      })));
+    } catch (err: any) {
+      console.error("Failed to list files:", err);
+      res.status(500).json({ error: "Failed to list files" });
     }
-    const content = fs.readFileSync(full, "utf-8");
-    res.json({ path: filePath, content });
   });
 
-  app.get("/api/health", (_req: Request, res: Response) => {
-    const gateRegistryPath = path.join(AXION_ROOT, "registries", "GATE_REGISTRY.json");
-    const knowledgeIndexPath = path.join(AXION_ROOT, "libraries", "knowledge", "SYSTEM", "registries", "knowledge.index.json");
-    let gateCount = 0;
-    let kidCount = 0;
+  app.get("/api/files/{*filePath}", async (req: Request, res: Response) => {
     try {
-      const gates = JSON.parse(fs.readFileSync(gateRegistryPath, "utf-8"));
-      gateCount = gates.gates?.length || 0;
-    } catch {}
-    try {
-      const kl = JSON.parse(fs.readFileSync(knowledgeIndexPath, "utf-8"));
-      kidCount = Array.isArray(kl) ? kl.length : (kl.total_items || 0);
-    } catch {}
-
-    const runsDir = AXION_RUNS;
-    let recentRuns: string[] = [];
-    if (fs.existsSync(runsDir)) {
-      recentRuns = fs.readdirSync(runsDir).filter((d) => d.startsWith("RUN-")).sort().reverse().slice(0, 5);
+      const rawPath = (req.params as any).filePath;
+      const filePath = Array.isArray(rawPath) ? rawPath.join("/") : String(rawPath || "");
+      const full = safePath(filePath);
+      if (!full) return res.status(403).json({ error: "Forbidden" });
+      if (!await fileExists(full)) return res.status(404).json({ error: "File not found" });
+      const stat = await fsp.stat(full);
+      if (stat.isDirectory()) {
+        const entries = await fsp.readdir(full, { withFileTypes: true });
+        return res.json(entries.map((e) => ({
+          name: e.name,
+          type: e.isDirectory() ? "directory" : "file",
+          path: path.join(filePath, e.name),
+        })));
+      }
+      const content = await fsp.readFile(full, "utf-8");
+      res.json({ path: filePath, content });
+    } catch (err: any) {
+      console.error("Failed to read file:", err);
+      res.status(500).json({ error: "Failed to read file" });
     }
+  });
 
-    let sysDocCount = 0;
-    let sysSchemaCount = 0;
-    let sysRegistryCount = 0;
-    const sysLibDir = path.join(AXION_ROOT, "libraries", "system");
+  app.get("/api/health", async (_req: Request, res: Response) => {
     try {
-      if (fs.existsSync(sysLibDir)) {
-        sysDocCount = fs.readdirSync(sysLibDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+      async function countDir(dir: string, filter: (f: string) => boolean): Promise<number> {
+        if (!(await fileExists(dir))) return 0;
+        return (await fsp.readdir(dir)).filter(filter).length;
       }
-      const schemDir = path.join(sysLibDir, "schemas");
-      if (fs.existsSync(schemDir)) {
-        sysSchemaCount = fs.readdirSync(schemDir).filter((f) => f.endsWith(".json")).length;
+      async function readJson(fp: string, extract: (d: any) => number): Promise<number> {
+        if (!(await fileExists(fp))) return 0;
+        try { return extract(JSON.parse(await fsp.readFile(fp, "utf-8"))); }
+        catch (err) { console.error(`Health check: failed to parse ${fp}:`, err); return 0; }
       }
-      const regDir = path.join(sysLibDir, "registries");
-      if (fs.existsSync(regDir)) {
-        sysRegistryCount = fs.readdirSync(regDir).filter((f) => f.endsWith(".json")).length;
-      }
-    } catch {}
+      const isDoc = (f: string) => f.endsWith(".md") || f.endsWith(".txt");
+      const isJson = (f: string) => f.endsWith(".json");
 
-    let orcDocCount = 0;
-    let orcSchemaCount = 0;
-    let orcRegistryCount = 0;
-    let orcStageCount = 0;
-    const orcLibDir = path.join(AXION_ROOT, "libraries", "orchestration");
-    try {
-      if (fs.existsSync(orcLibDir)) {
-        orcDocCount = fs.readdirSync(orcLibDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt") || (f.endsWith(".json") && f.startsWith("ORC-"))).length;
-      }
-      const orcSchemDir = path.join(orcLibDir, "schemas");
-      if (fs.existsSync(orcSchemDir)) {
-        orcSchemaCount = fs.readdirSync(orcSchemDir).filter((f) => f.endsWith(".json")).length;
-      }
-      const orcRegDir = path.join(orcLibDir, "registries");
-      if (fs.existsSync(orcRegDir)) {
-        orcRegistryCount = fs.readdirSync(orcRegDir).filter((f) => f.endsWith(".json")).length;
-      }
-      const pipelinePath = path.join(orcRegDir, "pipeline_definition.axion.v1.json");
-      if (fs.existsSync(pipelinePath)) {
-        const pd = JSON.parse(fs.readFileSync(pipelinePath, "utf-8"));
-        orcStageCount = pd.stage_order?.length ?? 0;
-      }
-    } catch {}
+      let gateCount = 0, kidCount = 0;
+      try { gateCount = (JSON.parse(await fsp.readFile(path.join(AXION_ROOT, "registries", "GATE_REGISTRY.json"), "utf-8"))).gates?.length || 0; }
+      catch (err) { console.error("Health check: failed to read gate registry:", err); }
+      try { const kl = JSON.parse(await fsp.readFile(path.join(AXION_ROOT, "libraries", "knowledge", "SYSTEM", "registries", "knowledge.index.json"), "utf-8")); kidCount = Array.isArray(kl) ? kl.length : (kl.total_items || 0); }
+      catch (err) { console.error("Health check: failed to read knowledge index:", err); }
 
-    let gatesDocCount = 0;
-    let gatesSchemaCount = 0;
-    let gatesRegistryCount = 0;
-    let gatesDefinitionCount = 0;
-    const gatesLibDir = path.join(AXION_ROOT, "libraries", "gates");
-    try {
-      if (fs.existsSync(gatesLibDir)) {
-        gatesDocCount = fs.readdirSync(gatesLibDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
+      let recentRuns: string[] = [];
+      if (await fileExists(AXION_RUNS)) {
+        recentRuns = (await fsp.readdir(AXION_RUNS)).filter((d) => d.startsWith("RUN-")).sort().reverse().slice(0, 5);
       }
-      const gatesSchemDir = path.join(gatesLibDir, "schemas");
-      if (fs.existsSync(gatesSchemDir)) {
-        gatesSchemaCount = fs.readdirSync(gatesSchemDir).filter((f) => f.endsWith(".json")).length;
-      }
-      const gatesRegDir = path.join(gatesLibDir, "registries");
-      if (fs.existsSync(gatesRegDir)) {
-        gatesRegistryCount = fs.readdirSync(gatesRegDir).filter((f) => f.endsWith(".json")).length;
-      }
-      const gateRegPath = path.join(gatesRegDir, "gate_registry.axion.v1.json");
-      if (fs.existsSync(gateRegPath)) {
-        const gr = JSON.parse(fs.readFileSync(gateRegPath, "utf-8"));
-        gatesDefinitionCount = gr.gates?.length ?? 0;
-      }
-    } catch {}
 
-    let polDocCount = 0;
-    let polSchemaCount = 0;
-    let polRegistryCount = 0;
-    let polRiskClassCount = 0;
-    let polPolicySetCount = 0;
-    const polLibDir = path.join(AXION_ROOT, "libraries", "policy");
-    try {
-      if (fs.existsSync(polLibDir)) {
-        polDocCount = fs.readdirSync(polLibDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-      }
-      const polSchemDir = path.join(polLibDir, "schemas");
-      if (fs.existsSync(polSchemDir)) {
-        polSchemaCount = fs.readdirSync(polSchemDir).filter((f) => f.endsWith(".json")).length;
-      }
-      const polRegDir = path.join(polLibDir, "registries");
-      if (fs.existsSync(polRegDir)) {
-        polRegistryCount = fs.readdirSync(polRegDir).filter((f) => f.endsWith(".json")).length;
-      }
-      const rcPath = path.join(polRegDir, "risk_classes.v1.json");
-      if (fs.existsSync(rcPath)) {
-        const rc = JSON.parse(fs.readFileSync(rcPath, "utf-8"));
-        polRiskClassCount = rc.classes?.length ?? 0;
-      }
-      const psPath = path.join(polRegDir, "policy_sets.v1.json");
-      if (fs.existsSync(psPath)) {
-        const ps = JSON.parse(fs.readFileSync(psPath, "utf-8"));
-        polPolicySetCount = ps.policy_sets?.length ?? 0;
-      }
-    } catch {}
+      const sysLibDir = path.join(AXION_ROOT, "libraries", "system");
+      let sysDocCount = 0, sysSchemaCount = 0, sysRegistryCount = 0;
+      try { sysDocCount = await countDir(sysLibDir, isDoc); sysSchemaCount = await countDir(path.join(sysLibDir, "schemas"), isJson); sysRegistryCount = await countDir(path.join(sysLibDir, "registries"), isJson); }
+      catch (err) { console.error("Health check: failed to read system library:", err); }
 
-    let intDocCount = 0;
-    let intSchemaCount = 0;
-    let intRegistryCount = 0;
-    let intEnumCount = 0;
-    const intLibDir = path.join(AXION_ROOT, "libraries", "intake");
-    try {
-      if (fs.existsSync(intLibDir)) {
-        intDocCount = fs.readdirSync(intLibDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-      }
-      const intSchemDir = path.join(intLibDir, "schemas");
-      if (fs.existsSync(intSchemDir)) {
-        intSchemaCount = fs.readdirSync(intSchemDir).filter((f) => f.endsWith(".json")).length;
-      }
-      const intRegDir = path.join(intLibDir, "registries");
-      if (fs.existsSync(intRegDir)) {
-        intRegistryCount = fs.readdirSync(intRegDir).filter((f) => f.endsWith(".json")).length;
-      }
-      const intEnumPath = path.join(intRegDir, "intake_enums.v1.json");
-      if (fs.existsSync(intEnumPath)) {
-        const en = JSON.parse(fs.readFileSync(intEnumPath, "utf-8"));
-        intEnumCount = en.enums?.length ?? 0;
-      }
-    } catch {}
+      const orcLibDir = path.join(AXION_ROOT, "libraries", "orchestration");
+      let orcDocCount = 0, orcSchemaCount = 0, orcRegistryCount = 0, orcStageCount = 0;
+      try { orcDocCount = await countDir(orcLibDir, (f) => isDoc(f) || (isJson(f) && f.startsWith("ORC-"))); orcSchemaCount = await countDir(path.join(orcLibDir, "schemas"), isJson); const orcRegDir = path.join(orcLibDir, "registries"); orcRegistryCount = await countDir(orcRegDir, isJson); orcStageCount = await readJson(path.join(orcRegDir, "pipeline_definition.axion.v1.json"), (d) => d.stage_order?.length ?? 0); }
+      catch (err) { console.error("Health check: failed to read orchestration library:", err); }
 
-    res.json({
-      status: "ok",
-      pipeline: { stages: 10, gates: gateCount },
-      knowledge: { kids: kidCount },
-      templates: 177,
-      system: { docs: sysDocCount, schemas: sysSchemaCount, registries: sysRegistryCount },
-      orchestration: { docs: orcDocCount, schemas: orcSchemaCount, registries: orcRegistryCount, stages: orcStageCount },
-      gates: { docs: gatesDocCount, schemas: gatesSchemaCount, registries: gatesRegistryCount, definitions: gatesDefinitionCount },
-      policy: { docs: polDocCount, schemas: polSchemaCount, registries: polRegistryCount, riskClasses: polRiskClassCount, policySets: polPolicySetCount },
-      intake: { docs: intDocCount, schemas: intSchemaCount, registries: intRegistryCount, enums: intEnumCount },
-      canonical: (() => {
-        let canDocCount = 0, canSchemaCount = 0, canRegistryCount = 0, canEntityTypes = 0, canRelTypes = 0;
-        try {
-          const canDir = path.join(AXION_ROOT, "libraries", "canonical");
-          if (fs.existsSync(canDir)) canDocCount = fs.readdirSync(canDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-          const canSchDir = path.join(canDir, "schemas");
-          if (fs.existsSync(canSchDir)) canSchemaCount = fs.readdirSync(canSchDir).filter((f) => f.endsWith(".json")).length;
-          const canRegDir = path.join(canDir, "registries");
-          if (fs.existsSync(canRegDir)) canRegistryCount = fs.readdirSync(canRegDir).filter((f) => f.endsWith(".json")).length;
-          const rcPath = path.join(canRegDir, "relationship_constraints.v1.json");
-          if (fs.existsSync(rcPath)) { const rc = JSON.parse(fs.readFileSync(rcPath, "utf-8")); canRelTypes = rc.constraints?.length ?? 0; }
-          const idPath = path.join(canRegDir, "id_rules.v1.json");
-          if (fs.existsSync(idPath)) { const id = JSON.parse(fs.readFileSync(idPath, "utf-8")); canEntityTypes = Object.keys(id.canonical_key_templates ?? {}).length; }
-        } catch {}
-        return { docs: canDocCount, schemas: canSchemaCount, registries: canRegistryCount, entityTypes: canEntityTypes, relationshipTypes: canRelTypes };
-      })(),
-      standards: (() => {
-        let stdDocCount = 0, stdSchemaCount = 0, stdRegistryCount = 0, stdPackCount = 0, stdRuleCount = 0;
-        try {
-          const stdDir = path.join(AXION_ROOT, "libraries", "standards");
-          if (fs.existsSync(stdDir)) stdDocCount = fs.readdirSync(stdDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-          const stdSchDir = path.join(stdDir, "schemas");
-          if (fs.existsSync(stdSchDir)) stdSchemaCount = fs.readdirSync(stdSchDir).filter((f) => f.endsWith(".json")).length;
-          const stdRegDir = path.join(stdDir, "registries");
-          if (fs.existsSync(stdRegDir)) stdRegistryCount = fs.readdirSync(stdRegDir).filter((f) => f.endsWith(".json")).length;
-          const stdPackDir = path.join(stdDir, "packs");
-          if (fs.existsSync(stdPackDir)) {
-            const packFiles = fs.readdirSync(stdPackDir).filter((f) => f.endsWith(".json"));
-            stdPackCount = packFiles.length;
-            for (const pf of packFiles) {
-              try { const pk = JSON.parse(fs.readFileSync(path.join(stdPackDir, pf), "utf-8")); stdRuleCount += pk.rules?.length ?? 0; } catch {}
-            }
-          }
-        } catch {}
-        return { docs: stdDocCount, schemas: stdSchemaCount, registries: stdRegistryCount, packs: stdPackCount, rules: stdRuleCount };
-      })(),
-      templates_library: (() => {
-        let tmpDocCount = 0, tmpSchemaCount = 0, tmpRegistryCount = 0, tmpCategoryCount = 0;
-        try {
-          const tmpDir = path.join(AXION_ROOT, "libraries", "templates");
-          if (fs.existsSync(tmpDir)) tmpDocCount = fs.readdirSync(tmpDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-          const tmpSchDir = path.join(tmpDir, "schemas");
-          if (fs.existsSync(tmpSchDir)) tmpSchemaCount = fs.readdirSync(tmpSchDir).filter((f) => f.endsWith(".json")).length;
-          const tmpRegDir = path.join(tmpDir, "registries");
-          if (fs.existsSync(tmpRegDir)) tmpRegistryCount = fs.readdirSync(tmpRegDir).filter((f) => f.endsWith(".json")).length;
-          const catOrderPath = path.join(tmpRegDir, "template_category_order.v1.json");
-          if (fs.existsSync(catOrderPath)) {
-            const co = JSON.parse(fs.readFileSync(catOrderPath, "utf-8"));
-            tmpCategoryCount = co.order?.length ?? 0;
-          }
-        } catch {}
-        return { docs: tmpDocCount, schemas: tmpSchemaCount, registries: tmpRegistryCount, categories: tmpCategoryCount };
-      })(),
-      planning_library: (() => {
-        let planDocCount = 0, planSchemaCount = 0, planRegistryCount = 0, planCoverageRuleCount = 0;
-        try {
-          const planDir = path.join(AXION_ROOT, "libraries", "planning");
-          if (fs.existsSync(planDir)) planDocCount = fs.readdirSync(planDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-          const planSchDir = path.join(planDir, "schemas");
-          if (fs.existsSync(planSchDir)) planSchemaCount = fs.readdirSync(planSchDir).filter((f) => f.endsWith(".json")).length;
-          const planRegDir = path.join(planDir, "registries");
-          if (fs.existsSync(planRegDir)) planRegistryCount = fs.readdirSync(planRegDir).filter((f) => f.endsWith(".json")).length;
-          const covPath = path.join(planRegDir, "plan_coverage_rules.v1.json");
-          if (fs.existsSync(covPath)) {
-            const cr = JSON.parse(fs.readFileSync(covPath, "utf-8"));
-            planCoverageRuleCount = cr.rules?.length ?? 0;
-          }
-        } catch {}
-        return { docs: planDocCount, schemas: planSchemaCount, registries: planRegistryCount, coverageRules: planCoverageRuleCount };
-      })(),
-      verification_library: (() => {
-        let verDocCount = 0, verSchemaCount = 0, verRegistryCount = 0, verProofTypeCount = 0;
-        try {
-          const verDir = path.join(AXION_ROOT, "libraries", "verification");
-          if (fs.existsSync(verDir)) verDocCount = fs.readdirSync(verDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-          const verSchDir = path.join(verDir, "schemas");
-          if (fs.existsSync(verSchDir)) verSchemaCount = fs.readdirSync(verSchDir).filter((f) => f.endsWith(".json")).length;
-          const verRegDir = path.join(verDir, "registries");
-          if (fs.existsSync(verRegDir)) verRegistryCount = fs.readdirSync(verRegDir).filter((f) => f.endsWith(".json")).length;
-          const ptPath = path.join(verRegDir, "proof_types.v1.json");
-          if (fs.existsSync(ptPath)) {
-            const pt = JSON.parse(fs.readFileSync(ptPath, "utf-8"));
-            verProofTypeCount = pt.types?.length ?? 0;
-          }
-        } catch {}
-        return { docs: verDocCount, schemas: verSchemaCount, registries: verRegistryCount, proofTypes: verProofTypeCount };
-      })(),
-      kit_library: (() => {
-        let kitDocCount = 0, kitSchemaCount = 0, kitRegistryCount = 0, kitGateCount = 0;
-        try {
-          const kitDir = path.join(AXION_ROOT, "libraries", "kit");
-          if (fs.existsSync(kitDir)) kitDocCount = fs.readdirSync(kitDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-          const kitSchDir = path.join(kitDir, "schemas");
-          if (fs.existsSync(kitSchDir)) kitSchemaCount = fs.readdirSync(kitSchDir).filter((f) => f.endsWith(".json")).length;
-          const kitRegDir = path.join(kitDir, "registries");
-          if (fs.existsSync(kitRegDir)) kitRegistryCount = fs.readdirSync(kitRegDir).filter((f) => f.endsWith(".json")).length;
-          const gsPath = path.join(kitDir, "KIT-5_kit_gates.spec.json");
-          if (fs.existsSync(gsPath)) {
-            const gs = JSON.parse(fs.readFileSync(gsPath, "utf-8"));
-            kitGateCount = gs.gates?.length ?? 0;
-          }
-        } catch {}
-        return { docs: kitDocCount, schemas: kitSchemaCount, registries: kitRegistryCount, gates: kitGateCount };
-      })(),
-      telemetry_library: (() => {
-        let telDocCount = 0, telSchemaCount = 0, telRegistryCount = 0, telGateCount = 0, telEventTypeCount = 0;
-        try {
-          const telDir = path.join(AXION_ROOT, "libraries", "telemetry");
-          if (fs.existsSync(telDir)) telDocCount = fs.readdirSync(telDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-          const telSchDir = path.join(telDir, "schemas");
-          if (fs.existsSync(telSchDir)) telSchemaCount = fs.readdirSync(telSchDir).filter((f) => f.endsWith(".json")).length;
-          const telRegDir = path.join(telDir, "registries");
-          if (fs.existsSync(telRegDir)) telRegistryCount = fs.readdirSync(telRegDir).filter((f) => f.endsWith(".json")).length;
-          const gsPath = path.join(telDir, "TEL-5_telemetry_gates.spec.json");
-          if (fs.existsSync(gsPath)) {
-            const gs = JSON.parse(fs.readFileSync(gsPath, "utf-8"));
-            telGateCount = gs.gates?.length ?? 0;
-          }
-          const etPath = path.join(telRegDir, "telemetry_event_types.v1.json");
-          if (fs.existsSync(etPath)) {
-            const et = JSON.parse(fs.readFileSync(etPath, "utf-8"));
-            telEventTypeCount = et.types?.length ?? 0;
-          }
-        } catch {}
-        return { docs: telDocCount, schemas: telSchemaCount, registries: telRegistryCount, gates: telGateCount, eventTypes: telEventTypeCount };
-      })(),
-      audit_library: (() => {
-        let audDocCount = 0, audSchemaCount = 0, audRegistryCount = 0, audGateCount = 0, audActionTypeCount = 0;
-        try {
-          const audDir = path.join(AXION_ROOT, "libraries", "audit");
-          if (fs.existsSync(audDir)) audDocCount = fs.readdirSync(audDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-          const audSchDir = path.join(audDir, "schemas");
-          if (fs.existsSync(audSchDir)) audSchemaCount = fs.readdirSync(audSchDir).filter((f) => f.endsWith(".json")).length;
-          const audRegDir = path.join(audDir, "registries");
-          if (fs.existsSync(audRegDir)) audRegistryCount = fs.readdirSync(audRegDir).filter((f) => f.endsWith(".json")).length;
-          const gsPath = path.join(audDir, "AUD-5_audit_gates.spec.json");
-          if (fs.existsSync(gsPath)) {
-            const gs = JSON.parse(fs.readFileSync(gsPath, "utf-8"));
-            audGateCount = gs.gates?.length ?? 0;
-          }
-          const actionSchemaPath = path.join(audSchDir, "audit_action.v1.schema.json");
-          if (fs.existsSync(actionSchemaPath)) {
-            const as2 = JSON.parse(fs.readFileSync(actionSchemaPath, "utf-8"));
-            audActionTypeCount = as2.properties?.action_type?.enum?.length ?? 0;
-          }
-        } catch {}
-        return { docs: audDocCount, schemas: audSchemaCount, registries: audRegistryCount, gates: audGateCount, actionTypes: audActionTypeCount };
-      })(),
-      maintenance_library: (() => {
-        let musDocCount = 0, musSchemaCount = 0, musRegistryCount = 0, musGateCount = 0, musModeCount = 0;
-        try {
-          const musDir = path.join(AXION_ROOT, "libraries", "maintenance");
-          if (fs.existsSync(musDir)) musDocCount = fs.readdirSync(musDir).filter((f) => f.endsWith(".md") || f.endsWith(".txt")).length;
-          const musContractsDir = path.join(musDir, "contracts");
-          if (fs.existsSync(musContractsDir)) musSchemaCount = fs.readdirSync(musContractsDir).filter((f) => f.endsWith(".json") && f !== "contract.meta.json").length;
-          const musRegDir = path.join(musDir, "registries");
-          if (fs.existsSync(musRegDir)) musRegistryCount = fs.readdirSync(musRegDir).filter((f) => f.endsWith(".json")).length;
-          const gatesPath = path.join(musRegDir, "REG-GATES-MUS.json");
-          if (fs.existsSync(gatesPath)) {
-            const g = JSON.parse(fs.readFileSync(gatesPath, "utf-8"));
-            musGateCount = g.items?.length ?? 0;
-          }
-          const modesPath = path.join(musRegDir, "REG-MAINTENANCE-MODES.json");
-          if (fs.existsSync(modesPath)) {
-            const m = JSON.parse(fs.readFileSync(modesPath, "utf-8"));
-            musModeCount = m.items?.length ?? 0;
-          }
-        } catch {}
-        return { docs: musDocCount, schemas: musSchemaCount, registries: musRegistryCount, gates: musGateCount, modes: musModeCount };
-      })(),
-      recentRuns,
-      engineVersion: (() => {
-        try {
-          const pkg = JSON.parse(fs.readFileSync(path.join(AXION_ROOT, "package.json"), "utf-8"));
-          return pkg.version || "0.0.0";
-        } catch { return "0.0.0"; }
-      })(),
-      totalRuns: (() => {
-        try {
-          const rc = JSON.parse(fs.readFileSync(path.join(AXION_ROOT, ".axion", "run_counter.json"), "utf-8"));
-          return (rc.next ?? 1) - 1;
-        } catch { return 0; }
-      })(),
-      auditEntries: (() => {
-        try {
-          const auditPath = path.join(AXION_ROOT, ".axion", "audit.jsonl");
-          if (!fs.existsSync(auditPath)) return 0;
-          return fs.readFileSync(auditPath, "utf-8").split("\n").filter(Boolean).length;
-        } catch { return 0; }
-      })(),
-    });
+      const gatesLibDir = path.join(AXION_ROOT, "libraries", "gates");
+      let gatesDocCount = 0, gatesSchemaCount = 0, gatesRegistryCount = 0, gatesDefinitionCount = 0;
+      try { gatesDocCount = await countDir(gatesLibDir, isDoc); gatesSchemaCount = await countDir(path.join(gatesLibDir, "schemas"), isJson); const gatesRegDir = path.join(gatesLibDir, "registries"); gatesRegistryCount = await countDir(gatesRegDir, isJson); gatesDefinitionCount = await readJson(path.join(gatesRegDir, "gate_registry.axion.v1.json"), (d) => d.gates?.length ?? 0); }
+      catch (err) { console.error("Health check: failed to read gates library:", err); }
+
+      const polLibDir = path.join(AXION_ROOT, "libraries", "policy");
+      let polDocCount = 0, polSchemaCount = 0, polRegistryCount = 0, polRiskClassCount = 0, polPolicySetCount = 0;
+      try { polDocCount = await countDir(polLibDir, isDoc); polSchemaCount = await countDir(path.join(polLibDir, "schemas"), isJson); const polRegDir = path.join(polLibDir, "registries"); polRegistryCount = await countDir(polRegDir, isJson); polRiskClassCount = await readJson(path.join(polRegDir, "risk_classes.v1.json"), (d) => d.classes?.length ?? 0); polPolicySetCount = await readJson(path.join(polRegDir, "policy_sets.v1.json"), (d) => d.policy_sets?.length ?? 0); }
+      catch (err) { console.error("Health check: failed to read policy library:", err); }
+
+      const intLibDir = path.join(AXION_ROOT, "libraries", "intake");
+      let intDocCount = 0, intSchemaCount = 0, intRegistryCount = 0, intEnumCount = 0;
+      try { intDocCount = await countDir(intLibDir, isDoc); intSchemaCount = await countDir(path.join(intLibDir, "schemas"), isJson); const intRegDir = path.join(intLibDir, "registries"); intRegistryCount = await countDir(intRegDir, isJson); intEnumCount = await readJson(path.join(intRegDir, "intake_enums.v1.json"), (d) => d.enums?.length ?? 0); }
+      catch (err) { console.error("Health check: failed to read intake library:", err); }
+
+      const canonical = await (async () => { let d = 0, s = 0, r = 0, e = 0, rl = 0; try { const dir = path.join(AXION_ROOT, "libraries", "canonical"); d = await countDir(dir, isDoc); s = await countDir(path.join(dir, "schemas"), isJson); const rDir = path.join(dir, "registries"); r = await countDir(rDir, isJson); rl = await readJson(path.join(rDir, "relationship_constraints.v1.json"), (x) => x.constraints?.length ?? 0); e = await readJson(path.join(rDir, "id_rules.v1.json"), (x) => Object.keys(x.canonical_key_templates ?? {}).length); } catch (err) { console.error("Health check: failed to read canonical library:", err); } return { docs: d, schemas: s, registries: r, entityTypes: e, relationshipTypes: rl }; })();
+      const standards = await (async () => { let d = 0, s = 0, r = 0, p = 0, ru = 0; try { const dir = path.join(AXION_ROOT, "libraries", "standards"); d = await countDir(dir, isDoc); s = await countDir(path.join(dir, "schemas"), isJson); r = await countDir(path.join(dir, "registries"), isJson); const pDir = path.join(dir, "packs"); if (await fileExists(pDir)) { const pf = (await fsp.readdir(pDir)).filter(isJson); p = pf.length; for (const f of pf) { try { ru += (JSON.parse(await fsp.readFile(path.join(pDir, f), "utf-8"))).rules?.length ?? 0; } catch (e2) { console.error(`Health check: failed to parse pack ${f}:`, e2); } } } } catch (err) { console.error("Health check: failed to read standards library:", err); } return { docs: d, schemas: s, registries: r, packs: p, rules: ru }; })();
+      const templates_library = await (async () => { let d = 0, s = 0, r = 0, c = 0; try { const dir = path.join(AXION_ROOT, "libraries", "templates"); d = await countDir(dir, isDoc); s = await countDir(path.join(dir, "schemas"), isJson); const rDir = path.join(dir, "registries"); r = await countDir(rDir, isJson); c = await readJson(path.join(rDir, "template_category_order.v1.json"), (x) => x.order?.length ?? 0); } catch (err) { console.error("Health check: failed to read templates library:", err); } return { docs: d, schemas: s, registries: r, categories: c }; })();
+      const planning_library = await (async () => { let d = 0, s = 0, r = 0, c = 0; try { const dir = path.join(AXION_ROOT, "libraries", "planning"); d = await countDir(dir, isDoc); s = await countDir(path.join(dir, "schemas"), isJson); const rDir = path.join(dir, "registries"); r = await countDir(rDir, isJson); c = await readJson(path.join(rDir, "plan_coverage_rules.v1.json"), (x) => x.rules?.length ?? 0); } catch (err) { console.error("Health check: failed to read planning library:", err); } return { docs: d, schemas: s, registries: r, coverageRules: c }; })();
+      const verification_library = await (async () => { let d = 0, s = 0, r = 0, p = 0; try { const dir = path.join(AXION_ROOT, "libraries", "verification"); d = await countDir(dir, isDoc); s = await countDir(path.join(dir, "schemas"), isJson); const rDir = path.join(dir, "registries"); r = await countDir(rDir, isJson); p = await readJson(path.join(rDir, "proof_types.v1.json"), (x) => x.types?.length ?? 0); } catch (err) { console.error("Health check: failed to read verification library:", err); } return { docs: d, schemas: s, registries: r, proofTypes: p }; })();
+      const kit_library = await (async () => { let d = 0, s = 0, r = 0, g = 0; try { const dir = path.join(AXION_ROOT, "libraries", "kit"); d = await countDir(dir, isDoc); s = await countDir(path.join(dir, "schemas"), isJson); r = await countDir(path.join(dir, "registries"), isJson); g = await readJson(path.join(dir, "KIT-5_kit_gates.spec.json"), (x) => x.gates?.length ?? 0); } catch (err) { console.error("Health check: failed to read kit library:", err); } return { docs: d, schemas: s, registries: r, gates: g }; })();
+      const telemetry_library = await (async () => { let d = 0, s = 0, r = 0, g = 0, e = 0; try { const dir = path.join(AXION_ROOT, "libraries", "telemetry"); d = await countDir(dir, isDoc); s = await countDir(path.join(dir, "schemas"), isJson); const rDir = path.join(dir, "registries"); r = await countDir(rDir, isJson); g = await readJson(path.join(dir, "TEL-5_telemetry_gates.spec.json"), (x) => x.gates?.length ?? 0); e = await readJson(path.join(rDir, "telemetry_event_types.v1.json"), (x) => x.types?.length ?? 0); } catch (err) { console.error("Health check: failed to read telemetry library:", err); } return { docs: d, schemas: s, registries: r, gates: g, eventTypes: e }; })();
+      const audit_library = await (async () => { let d = 0, s = 0, r = 0, g = 0, a = 0; try { const dir = path.join(AXION_ROOT, "libraries", "audit"); d = await countDir(dir, isDoc); const sDir = path.join(dir, "schemas"); s = await countDir(sDir, isJson); const rDir = path.join(dir, "registries"); r = await countDir(rDir, isJson); g = await readJson(path.join(dir, "AUD-5_audit_gates.spec.json"), (x) => x.gates?.length ?? 0); a = await readJson(path.join(sDir, "audit_action.v1.schema.json"), (x) => x.properties?.action_type?.enum?.length ?? 0); } catch (err) { console.error("Health check: failed to read audit library:", err); } return { docs: d, schemas: s, registries: r, gates: g, actionTypes: a }; })();
+      const maintenance_library = await (async () => { let d = 0, s = 0, r = 0, g = 0, m = 0; try { const dir = path.join(AXION_ROOT, "libraries", "maintenance"); d = await countDir(dir, isDoc); s = await countDir(path.join(dir, "contracts"), (f) => isJson(f) && f !== "contract.meta.json"); const rDir = path.join(dir, "registries"); r = await countDir(rDir, isJson); g = await readJson(path.join(rDir, "REG-GATES-MUS.json"), (x) => x.items?.length ?? 0); m = await readJson(path.join(rDir, "REG-MAINTENANCE-MODES.json"), (x) => x.items?.length ?? 0); } catch (err) { console.error("Health check: failed to read maintenance library:", err); } return { docs: d, schemas: s, registries: r, gates: g, modes: m }; })();
+
+      let engineVersion = "0.0.0";
+      try { engineVersion = (JSON.parse(await fsp.readFile(path.join(AXION_ROOT, "package.json"), "utf-8"))).version || "0.0.0"; } catch (err) { console.error("Health check: failed to read engine version:", err); }
+      let totalRuns = 0;
+      try { totalRuns = ((JSON.parse(await fsp.readFile(path.join(AXION_ROOT, ".axion", "run_counter.json"), "utf-8"))).next ?? 1) - 1; } catch (err) { console.error("Health check: failed to read run counter:", err); }
+      let auditEntries = 0;
+      try { const ap = path.join(AXION_ROOT, ".axion", "audit.jsonl"); if (await fileExists(ap)) { auditEntries = (await fsp.readFile(ap, "utf-8")).split("\n").filter(Boolean).length; } } catch (err) { console.error("Health check: failed to read audit log:", err); }
+
+      res.json({
+        status: "ok",
+        pipeline: { stages: 10, gates: gateCount },
+        knowledge: { kids: kidCount },
+        templates: 177,
+        system: { docs: sysDocCount, schemas: sysSchemaCount, registries: sysRegistryCount },
+        orchestration: { docs: orcDocCount, schemas: orcSchemaCount, registries: orcRegistryCount, stages: orcStageCount },
+        gates: { docs: gatesDocCount, schemas: gatesSchemaCount, registries: gatesRegistryCount, definitions: gatesDefinitionCount },
+        policy: { docs: polDocCount, schemas: polSchemaCount, registries: polRegistryCount, riskClasses: polRiskClassCount, policySets: polPolicySetCount },
+        intake: { docs: intDocCount, schemas: intSchemaCount, registries: intRegistryCount, enums: intEnumCount },
+        canonical, standards, templates_library, planning_library, verification_library,
+        kit_library, telemetry_library, audit_library, maintenance_library,
+        recentRuns, engineVersion, totalRuns, auditEntries,
+      });
+    } catch (err: any) {
+      console.error("Health check failed:", err);
+      res.status(500).json({ error: "Health check failed" });
+    }
   });
 
   app.get("/api/stats", async (_req: Request, res: Response) => {
@@ -953,50 +788,60 @@ export function registerRoutes(app: Express) {
   });
 
   app.get("/api/config", (_req: Request, res: Response) => {
-    const repoRoot = process.cwd();
-    const stageOrder = getStageOrder(repoRoot);
-    const stageGates = getStageGates(repoRoot);
-    const gatesRequired = getGatesRequired(repoRoot);
-    const stageNames = getStageNames(repoRoot);
+    try {
+      const repoRoot = process.cwd();
+      const stageOrder = getStageOrder(repoRoot);
+      const stageGates = getStageGates(repoRoot);
+      const gatesRequired = getGatesRequired(repoRoot);
+      const stageNames = getStageNames(repoRoot);
 
-    if (stageOrder.length === 0) {
-      return res.json({
-        stageOrder: [
-          "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
-          "S4_VALIDATE_CANONICAL", "S5_RESOLVE_STANDARDS", "S6_SELECT_TEMPLATES",
-          "S7_RENDER_DOCS", "S8_BUILD_PLAN", "S9_VERIFY_PROOF", "S10_PACKAGE",
-        ],
-        stageGates: {
-          S2_VALIDATE_INTAKE: "G1_INTAKE_VALIDITY",
-          S4_VALIDATE_CANONICAL: "G2_CANONICAL_INTEGRITY",
-          S5_RESOLVE_STANDARDS: "G3_STANDARDS_RESOLVED",
-          S6_SELECT_TEMPLATES: "G4_TEMPLATE_SELECTION",
-          S7_RENDER_DOCS: "G5_TEMPLATE_COMPLETENESS",
-          S8_BUILD_PLAN: "G6_PLAN_COVERAGE",
-          S10_PACKAGE: "G8_PACKAGE_INTEGRITY",
-        },
-        source: "fallback",
+      if (stageOrder.length === 0) {
+        return res.json({
+          stageOrder: [
+            "S1_INGEST_NORMALIZE", "S2_VALIDATE_INTAKE", "S3_BUILD_CANONICAL",
+            "S4_VALIDATE_CANONICAL", "S5_RESOLVE_STANDARDS", "S6_SELECT_TEMPLATES",
+            "S7_RENDER_DOCS", "S8_BUILD_PLAN", "S9_VERIFY_PROOF", "S10_PACKAGE",
+          ],
+          stageGates: {
+            S2_VALIDATE_INTAKE: "G1_INTAKE_VALIDITY",
+            S4_VALIDATE_CANONICAL: "G2_CANONICAL_INTEGRITY",
+            S5_RESOLVE_STANDARDS: "G3_STANDARDS_RESOLVED",
+            S6_SELECT_TEMPLATES: "G4_TEMPLATE_SELECTION",
+            S7_RENDER_DOCS: "G5_TEMPLATE_COMPLETENESS",
+            S8_BUILD_PLAN: "G6_PLAN_COVERAGE",
+            S10_PACKAGE: "G8_PACKAGE_INTEGRITY",
+          },
+          source: "fallback",
+        });
+      }
+
+      res.json({
+        stageOrder,
+        stageGates,
+        gatesRequired,
+        stageNames,
+        pipeline_id: "PIPE-AXION",
+        pipeline_version: "1.0.0",
+        source: "orchestration_library",
       });
+    } catch (err: any) {
+      console.error("Failed to fetch config:", err);
+      res.status(500).json({ error: "Failed to fetch config" });
     }
-
-    res.json({
-      stageOrder,
-      stageGates,
-      gatesRequired,
-      stageNames,
-      pipeline_id: "PIPE-AXION",
-      pipeline_version: "1.0.0",
-      source: "orchestration_library",
-    });
   });
 
   app.get("/api/status", async (_req: Request, res: Response) => {
-    const allAssemblies = await storage.getAssemblies();
-    const running = allAssemblies.filter((a) => a.status === "running").length;
-    const completed = allAssemblies.filter((a) => a.status === "completed").length;
-    const failed = allAssemblies.filter((a) => a.status === "failed").length;
-    const queued = allAssemblies.filter((a) => a.status === "queued").length;
-    res.json({ total: allAssemblies.length, running, completed, failed, queued });
+    try {
+      const allAssemblies = await storage.getAssemblies();
+      const running = allAssemblies.filter((a) => a.status === "running").length;
+      const completed = allAssemblies.filter((a) => a.status === "completed").length;
+      const failed = allAssemblies.filter((a) => a.status === "failed").length;
+      const queued = allAssemblies.filter((a) => a.status === "queued").length;
+      res.json({ total: allAssemblies.length, running, completed, failed, queued });
+    } catch (err: any) {
+      console.error("Failed to fetch status:", err);
+      res.status(500).json({ error: "Failed to fetch status" });
+    }
   });
 
   const FEATURES_DIR = path.join(AXION_ROOT, "features");
@@ -1059,7 +904,7 @@ export function registerRoutes(app: Express) {
           if (r.dependencies?.includes(registry.feature_id) && r.feature_id !== registry.feature_id) {
             reverseDeps.push(r.feature_id);
           }
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       res.json({ ...registry, specs: specFiles, reverse_dependencies: reverseDeps });
@@ -1069,50 +914,65 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/uploads", (req: Request, res: Response) => {
-    upload.array("files", 10)(req, res, (err: any) => {
-      if (err) {
-        if (err instanceof multer.MulterError) {
-          if (err.code === "LIMIT_FILE_SIZE") return res.status(413).json({ error: "File too large (max 50MB)" });
-          if (err.code === "LIMIT_FILE_COUNT") return res.status(400).json({ error: "Too many files (max 10)" });
-          return res.status(400).json({ error: err.message });
+    try {
+      upload.array("files", 10)(req, res, (err: any) => {
+        if (err) {
+          if (err instanceof multer.MulterError) {
+            if (err.code === "LIMIT_FILE_SIZE") return res.status(413).json({ error: "File too large (max 50MB)" });
+            if (err.code === "LIMIT_FILE_COUNT") return res.status(400).json({ error: "Too many files (max 10)" });
+            return res.status(400).json({ error: err.message });
+          }
+          return res.status(400).json({ error: err.message || "Upload failed" });
         }
-        return res.status(400).json({ error: err.message || "Upload failed" });
-      }
-      const files = req.files as Express.Multer.File[];
-      if (!files || files.length === 0) return res.status(400).json({ error: "No files provided" });
+        const files = req.files as Express.Multer.File[];
+        if (!files || files.length === 0) return res.status(400).json({ error: "No files provided" });
 
-      const result = files.map((f) => ({
-        id: path.basename(f.filename, path.extname(f.filename)),
-        filename: f.filename,
-        originalName: f.originalname,
-        size: f.size,
-        mimeType: f.mimetype,
-      }));
-      res.json(result);
-    });
+        const result = files.map((f) => ({
+          id: path.basename(f.filename, path.extname(f.filename)),
+          filename: f.filename,
+          originalName: f.originalname,
+          size: f.size,
+          mimeType: f.mimetype,
+        }));
+        res.json(result);
+      });
+    } catch (err: any) {
+      console.error("Failed to handle upload:", err);
+      res.status(500).json({ error: "Failed to handle upload" });
+    }
   });
 
-  app.get("/api/uploads/:id", (req: Request, res: Response) => {
-    const id = req.params.id;
-    if (!/^[a-f0-9]{16}$/.test(id)) return res.status(400).json({ error: "Invalid file ID" });
-    const files = fs.readdirSync(UPLOADS_DIR);
-    const match = files.find((f) => path.basename(f, path.extname(f)) === id);
-    if (!match) return res.status(404).json({ error: "File not found" });
+  app.get("/api/uploads/:id", async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      if (!/^[a-f0-9]{16}$/.test(id)) return res.status(400).json({ error: "Invalid file ID" });
+      const files = await fsp.readdir(UPLOADS_DIR);
+      const match = files.find((f) => path.basename(f, path.extname(f)) === id);
+      if (!match) return res.status(404).json({ error: "File not found" });
 
-    const fullPath = path.join(UPLOADS_DIR, match);
-    res.download(fullPath, match);
+      const fullPath = path.join(UPLOADS_DIR, match);
+      res.download(fullPath, match);
+    } catch (err: any) {
+      console.error("Failed to fetch upload:", err);
+      res.status(500).json({ error: "Failed to fetch upload" });
+    }
   });
 
-  app.delete("/api/uploads/:id", (req: Request, res: Response) => {
-    const id = req.params.id;
-    if (!/^[a-f0-9]{16}$/.test(id)) return res.status(400).json({ error: "Invalid file ID" });
-    const files = fs.readdirSync(UPLOADS_DIR);
-    const match = files.find((f) => path.basename(f, path.extname(f)) === id);
-    if (!match) return res.status(404).json({ error: "File not found" });
+  app.delete("/api/uploads/:id", async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      if (!/^[a-f0-9]{16}$/.test(id)) return res.status(400).json({ error: "Invalid file ID" });
+      const files = await fsp.readdir(UPLOADS_DIR);
+      const match = files.find((f) => path.basename(f, path.extname(f)) === id);
+      if (!match) return res.status(404).json({ error: "File not found" });
 
-    const fullPath = path.join(UPLOADS_DIR, match);
-    fs.unlinkSync(fullPath);
-    res.json({ ok: true });
+      const fullPath = path.join(UPLOADS_DIR, match);
+      await fsp.unlink(fullPath);
+      res.json({ ok: true });
+    } catch (err: any) {
+      console.error("Failed to delete upload:", err);
+      res.status(500).json({ error: "Failed to delete upload" });
+    }
   });
 
   const SYSTEM_LIB_DIR = path.join(AXION_ROOT, "libraries", "system");
@@ -1316,7 +1176,7 @@ export function registerRoutes(app: Express) {
           const pd = JSON.parse(fs.readFileSync(pdPath, "utf-8"));
           stageCount = pd.stage_order?.length ?? 0;
         }
-      } catch {}
+      } catch (err) { console.error(err); }
 
       res.json({
         groups,
@@ -1486,7 +1346,7 @@ export function registerRoutes(app: Express) {
           const gr = JSON.parse(fs.readFileSync(regPath, "utf-8"));
           gateDefinitions = gr.gates?.length ?? 0;
         }
-      } catch {}
+      } catch (err) { console.error(err); }
 
       res.json({
         groups,
@@ -1662,7 +1522,7 @@ export function registerRoutes(app: Express) {
           const ps = JSON.parse(fs.readFileSync(psPath, "utf-8"));
           policySetCount = ps.policy_sets?.length ?? 0;
         }
-      } catch {}
+      } catch (err) { console.error(err); }
 
       res.json({
         groups,
@@ -1844,7 +1704,7 @@ export function registerRoutes(app: Express) {
           const nr = JSON.parse(fs.readFileSync(nrPath, "utf-8"));
           normRuleCount = nr.rules?.length ?? 0;
         }
-      } catch {}
+      } catch (err) { console.error(err); }
 
       res.json({
         groups,
@@ -2012,7 +1872,7 @@ export function registerRoutes(app: Express) {
         try {
           const rc = JSON.parse(fs.readFileSync(rcPath, "utf-8"));
           relationshipTypes = rc.constraints?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const idPath = path.join(registriesDir, "id_rules.v1.json");
@@ -2020,7 +1880,7 @@ export function registerRoutes(app: Express) {
         try {
           const id = JSON.parse(fs.readFileSync(idPath, "utf-8"));
           entityTypes = Object.keys(id.canonical_key_templates ?? {}).length;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const docCount = Object.values(groups).flat().length;
@@ -2186,7 +2046,7 @@ export function registerRoutes(app: Express) {
             try {
               const pk = JSON.parse(fs.readFileSync(path.join(packsDir, f), "utf-8"));
               totalRules += pk.rules?.length ?? 0;
-            } catch {}
+            } catch (err) { console.error(err); }
           }
         }
       }
@@ -2196,7 +2056,7 @@ export function registerRoutes(app: Express) {
         try {
           const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
           gateCount = gs.gates?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const docCount = Object.values(groups).flat().length;
@@ -2397,7 +2257,7 @@ export function registerRoutes(app: Express) {
         try {
           const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
           gateCount = gs.gates?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const catOrderPath = path.join(registriesDir, "template_category_order.v1.json");
@@ -2405,7 +2265,7 @@ export function registerRoutes(app: Express) {
         try {
           const co = JSON.parse(fs.readFileSync(catOrderPath, "utf-8"));
           categoryCount = co.order?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const categories: Array<{ name: string; fileCount: number }> = [];
@@ -2597,7 +2457,7 @@ export function registerRoutes(app: Express) {
         try {
           const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
           gateCount = gs.gates?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const covPath = path.join(registriesDir, "plan_coverage_rules.v1.json");
@@ -2605,7 +2465,7 @@ export function registerRoutes(app: Express) {
         try {
           const cr = JSON.parse(fs.readFileSync(covPath, "utf-8"));
           coverageRuleCount = cr.rules?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const docCount = Object.values(groups).flat().length;
@@ -2768,7 +2628,7 @@ export function registerRoutes(app: Express) {
         try {
           const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
           gateCount = gs.gates?.length ?? gs.sub_gates?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const ptPath = path.join(registriesDir, "proof_types.v1.json");
@@ -2776,7 +2636,7 @@ export function registerRoutes(app: Express) {
         try {
           const pt = JSON.parse(fs.readFileSync(ptPath, "utf-8"));
           proofTypeCount = pt.types?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const docCount = Object.values(groups).flat().length;
@@ -2939,7 +2799,7 @@ export function registerRoutes(app: Express) {
         try {
           const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
           gateCount = gs.gates?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const efPath = path.join(registriesDir, "kit_export_filter.v1.json");
@@ -2947,7 +2807,7 @@ export function registerRoutes(app: Express) {
         try {
           const ef = JSON.parse(fs.readFileSync(efPath, "utf-8"));
           exportRuleCount = ef.rules?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const docCount = Object.values(groups).flat().length;
@@ -3111,7 +2971,7 @@ export function registerRoutes(app: Express) {
         try {
           const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
           gateCount = gs.gates?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const etPath = path.join(registriesDir, "telemetry_event_types.v1.json");
@@ -3119,7 +2979,7 @@ export function registerRoutes(app: Express) {
         try {
           const et = JSON.parse(fs.readFileSync(etPath, "utf-8"));
           eventTypeCount = et.types?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const spPath = path.join(registriesDir, "telemetry_sink_policy.v1.json");
@@ -3127,7 +2987,7 @@ export function registerRoutes(app: Express) {
         try {
           const sp = JSON.parse(fs.readFileSync(spPath, "utf-8"));
           sinkCount = sp.sinks?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const docCount = Object.values(groups).flat().length;
@@ -3291,7 +3151,7 @@ export function registerRoutes(app: Express) {
         try {
           const gs = JSON.parse(fs.readFileSync(gateSpecPath, "utf-8"));
           gateCount = gs.gates?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const actionSchemaPath = path.join(schemasDir, "audit_action.v1.schema.json");
@@ -3299,7 +3159,7 @@ export function registerRoutes(app: Express) {
         try {
           const as2 = JSON.parse(fs.readFileSync(actionSchemaPath, "utf-8"));
           actionTypeCount = as2.properties?.action_type?.enum?.length ?? 0;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const docCount = Object.values(groups).flat().length;
@@ -3465,7 +3325,7 @@ export function registerRoutes(app: Express) {
           const reg = JSON.parse(fs.readFileSync(regPath, "utf-8"));
           unitCount = reg.units?.length ?? 0;
         }
-      } catch {}
+      } catch (err) { console.error(err); }
 
       res.json({
         groups,
@@ -3637,7 +3497,7 @@ export function registerRoutes(app: Express) {
           const idx = JSON.parse(fs.readFileSync(knowledgeIndexPath, "utf-8"));
           unitCount = Array.isArray(idx) ? idx.length : 0;
         }
-      } catch {}
+      } catch (err) { console.error(err); }
 
       res.json({
         groups,
@@ -3856,7 +3716,7 @@ export function registerRoutes(app: Express) {
       const policies: Record<string, unknown>[] = [];
       if (fs.existsSync(policiesDir)) {
         for (const f of fs.readdirSync(policiesDir).filter((f: string) => f.endsWith(".json"))) {
-          try { policies.push(JSON.parse(fs.readFileSync(path.join(policiesDir, f), "utf-8"))); } catch {}
+          try { policies.push(JSON.parse(fs.readFileSync(path.join(policiesDir, f), "utf-8"))); } catch (err) { console.error(err); }
         }
       }
 
@@ -4379,7 +4239,7 @@ export function registerRoutes(app: Express) {
                 if (progress.error) entry.buildState.error = progress.error;
                 if (progress.failureClass) entry.buildState.failureClass = progress.failureClass;
               }
-            } catch {}
+            } catch (err) { console.error(err); }
           }
 
           const tokenMatch = line.match(/^TOKEN_USAGE: (.+)$/);
@@ -4479,15 +4339,15 @@ export function registerRoutes(app: Express) {
         };
         const manifestPath = path.join(buildDir, "build_manifest.json");
         if (fs.existsSync(manifestPath)) {
-          try { result.manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")); } catch {}
+          try { result.manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")); } catch (err) { console.error(err); }
         }
         const verificationPath = path.join(buildDir, "verification_report.json");
         if (fs.existsSync(verificationPath)) {
-          try { result.verification = JSON.parse(fs.readFileSync(verificationPath, "utf-8")); } catch {}
+          try { result.verification = JSON.parse(fs.readFileSync(verificationPath, "utf-8")); } catch (err) { console.error(err); }
         }
         const planPath = path.join(buildDir, "build_plan.json");
         if (fs.existsSync(planPath)) {
-          try { result.plan = JSON.parse(fs.readFileSync(planPath, "utf-8")); } catch {}
+          try { result.plan = JSON.parse(fs.readFileSync(planPath, "utf-8")); } catch (err) { console.error(err); }
         }
         return res.json(result);
       }
@@ -4505,22 +4365,22 @@ export function registerRoutes(app: Express) {
           result.buildId = manifest.buildId;
           result.state = manifest.status;
           result.manifest = manifest;
-        } catch {}
+        } catch (err) { console.error(err); }
       }
 
       const verificationPath = path.join(buildDir, "verification_report.json");
       if (fs.existsSync(verificationPath)) {
-        try { result.verification = JSON.parse(fs.readFileSync(verificationPath, "utf-8")); } catch {}
+        try { result.verification = JSON.parse(fs.readFileSync(verificationPath, "utf-8")); } catch (err) { console.error(err); }
       }
 
       const repoManifestPath = path.join(buildDir, "repo_manifest.json");
       if (fs.existsSync(repoManifestPath)) {
-        try { result.repoManifest = JSON.parse(fs.readFileSync(repoManifestPath, "utf-8")); } catch {}
+        try { result.repoManifest = JSON.parse(fs.readFileSync(repoManifestPath, "utf-8")); } catch (err) { console.error(err); }
       }
 
       const buildPlanPath = path.join(buildDir, "build_plan.json");
       if (fs.existsSync(buildPlanPath)) {
-        try { result.plan = JSON.parse(fs.readFileSync(buildPlanPath, "utf-8")); } catch {}
+        try { result.plan = JSON.parse(fs.readFileSync(buildPlanPath, "utf-8")); } catch (err) { console.error(err); }
       }
 
       const zipPath = path.join(buildDir, "project_repo.zip");
