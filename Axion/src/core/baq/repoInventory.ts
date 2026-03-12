@@ -1,15 +1,21 @@
+import { createHash } from "node:crypto";
 import type {
   BAQDerivedBuildInputs,
   BAQRepoInventory,
   BAQRepoFileEntry,
 } from "./types.js";
 
+function stableId(prefix: string, ...parts: string[]): string {
+  const hash = createHash("sha256").update(parts.join(":")).digest("hex").slice(0, 8);
+  return `${prefix}-${hash}`;
+}
+
 export function buildRepoInventory(
   derivedInputs: BAQDerivedBuildInputs,
   runDir: string,
 ): BAQRepoInventory {
   const now = new Date().toISOString();
-  const inventoryId = `BAQI-${Math.floor(Math.random() * 999999).toString().padStart(6, "0")}`;
+  const inventoryId = stableId("BAQI", derivedInputs.run_id, derivedInputs.derivation_id);
 
   const directories = planDirectories(derivedInputs);
   const modules = planModules(derivedInputs);
@@ -49,10 +55,16 @@ function planDirectories(
   const dirs: BAQRepoInventory["directories"] = [
     { path: "src", purpose: "Source root", layer: "shared", required: true },
     { path: "src/components", purpose: "Shared UI components", layer: "frontend", required: true },
+    { path: "src/components/ui", purpose: "Reusable UI primitives", layer: "frontend", required: true },
     { path: "src/pages", purpose: "Route-level page components", layer: "frontend", required: true },
     { path: "src/lib", purpose: "Shared utilities and helpers", layer: "shared", required: true },
     { path: "src/types", purpose: "Type definitions", layer: "shared", required: true },
+    { path: "src/hooks", purpose: "React hooks", layer: "frontend", required: false },
+    { path: "src/context", purpose: "React context providers", layer: "frontend", required: false },
     { path: "public", purpose: "Static assets", layer: "frontend", required: true },
+    { path: "tests", purpose: "Test files", layer: "test", required: false },
+    { path: "tests/unit", purpose: "Unit test files", layer: "test", required: false },
+    { path: "tests/integration", purpose: "Integration test files", layer: "test", required: false },
   ];
 
   if (derivedInputs.api_surface.endpoints.length > 0) {
@@ -60,6 +72,7 @@ function planDirectories(
       { path: "src/lib/api", purpose: "API client layer", layer: "frontend", required: true },
       { path: "server", purpose: "Server-side code", layer: "backend", required: true },
       { path: "server/routes", purpose: "API route handlers", layer: "backend", required: true },
+      { path: "server/middleware", purpose: "Express middleware", layer: "backend", required: false },
     );
   }
 
@@ -72,13 +85,8 @@ function planDirectories(
   if (derivedInputs.storage_model.schemas.length > 0) {
     dirs.push(
       { path: "server/db", purpose: "Database access layer", layer: "data", required: true },
+      { path: "server/db/migrations", purpose: "Database migrations", layer: "data", required: false },
     );
-  }
-
-  const subsystemLayers = new Set(derivedInputs.subsystem_map.map(s => s.layer));
-  if (subsystemLayers.has("frontend")) {
-    dirs.push({ path: "src/hooks", purpose: "React hooks", layer: "frontend", required: false });
-    dirs.push({ path: "src/context", purpose: "React context providers", layer: "frontend", required: false });
   }
 
   return dirs;
@@ -88,15 +96,29 @@ function planModules(
   derivedInputs: BAQDerivedBuildInputs,
 ): BAQRepoInventory["modules"] {
   const modules: BAQRepoInventory["modules"] = [];
-  let counter = 1;
+  const seen = new Set<string>();
 
-  modules.push({
-    module_id: `MOD-${String(counter++).padStart(3, "0")}`,
-    path: "src",
-    layer: "shared",
-    purpose: "Application entry point and configuration",
-    source_refs: [],
-  });
+  function addModule(path: string, layer: string, purpose: string, sourceRefs: string[]): void {
+    if (seen.has(path)) return;
+    seen.add(path);
+    modules.push({
+      module_id: stableId("MOD", path),
+      path,
+      layer,
+      purpose,
+      source_refs: sourceRefs,
+    });
+  }
+
+  addModule("src", "shared", "Application entry point and configuration", []);
+  addModule("src/pages", "frontend", "Route-level page components", []);
+  addModule("src/components", "frontend", "Shared UI components", []);
+  addModule("src/components/ui", "frontend", "Reusable UI primitives", []);
+  addModule("src/lib", "shared", "Shared utilities and helpers", []);
+  addModule("src/types", "shared", "Type definitions", []);
+  addModule("src/hooks", "frontend", "React hooks", []);
+  addModule("src/context", "frontend", "React context providers", []);
+  addModule("tests", "test", "Test infrastructure", []);
 
   for (const subsystem of derivedInputs.subsystem_map) {
     const modulePath = subsystem.layer === "frontend"
@@ -108,43 +130,21 @@ function planModules(
           : subsystem.layer === "security"
             ? "src/lib/auth"
             : `src/${subsystem.layer}`;
-
-    const existing = modules.find(m => m.path === modulePath);
-    if (!existing) {
-      modules.push({
-        module_id: `MOD-${String(counter++).padStart(3, "0")}`,
-        path: modulePath,
-        layer: subsystem.layer,
-        purpose: subsystem.description,
-        source_refs: subsystem.source_refs,
-      });
-    }
-  }
-
-  if (derivedInputs.ui_surface_map.length > 0) {
-    const existing = modules.find(m => m.path === "src/pages");
-    if (!existing) {
-      modules.push({
-        module_id: `MOD-${String(counter++).padStart(3, "0")}`,
-        path: "src/pages",
-        layer: "frontend",
-        purpose: "Route-level page components",
-        source_refs: [],
-      });
-    }
+    addModule(modulePath, subsystem.layer, subsystem.description, subsystem.source_refs);
   }
 
   if (derivedInputs.api_surface.endpoints.length > 0) {
-    const existing = modules.find(m => m.path === "src/lib/api");
-    if (!existing) {
-      modules.push({
-        module_id: `MOD-${String(counter++).padStart(3, "0")}`,
-        path: "src/lib/api",
-        layer: "frontend",
-        purpose: "API client functions",
-        source_refs: [],
-      });
-    }
+    addModule("src/lib/api", "frontend", "API client functions", []);
+    addModule("server/routes", "backend", "API route handlers", []);
+    addModule("server/middleware", "backend", "Express middleware", []);
+  }
+
+  if (derivedInputs.auth_model.auth_type !== "unknown") {
+    addModule("src/lib/auth", "security", "Authentication module", derivedInputs.auth_model.source_refs);
+  }
+
+  if (derivedInputs.storage_model.schemas.length > 0) {
+    addModule("server/db", "data", "Database access layer", []);
   }
 
   return modules;
@@ -155,13 +155,13 @@ function planFiles(
   modules: BAQRepoInventory["modules"],
 ): BAQRepoFileEntry[] {
   const files: BAQRepoFileEntry[] = [];
-  let counter = 1;
+  const addedPaths = new Set<string>();
 
   function moduleRefForPath(filePath: string): string {
     const match = modules
       .filter(m => filePath.startsWith(m.path + "/") || filePath === m.path)
       .sort((a, b) => b.path.length - a.path.length)[0];
-    return match?.module_id ?? "MOD-001";
+    return match?.module_id ?? stableId("MOD", "src");
   }
 
   function subsystemRefForLayer(layer: string): string {
@@ -169,178 +169,123 @@ function planFiles(
     return sub?.subsystem_id ?? "";
   }
 
-  const configFiles: Array<{ path: string; role: string; layer: BAQRepoFileEntry["layer"]; description: string }> = [
-    { path: "package.json", role: "config", layer: "config", description: "Project package manifest" },
-    { path: "tsconfig.json", role: "config", layer: "config", description: "TypeScript configuration" },
-    { path: "vite.config.ts", role: "config", layer: "config", description: "Vite build configuration" },
-    { path: "tailwind.config.ts", role: "config", layer: "config", description: "Tailwind CSS configuration" },
-    { path: "postcss.config.js", role: "config", layer: "config", description: "PostCSS configuration" },
-    { path: "index.html", role: "entry", layer: "frontend", description: "HTML entry point" },
-    { path: "src/main.tsx", role: "entry", layer: "frontend", description: "React application entry" },
-    { path: "src/App.tsx", role: "layout", layer: "frontend", description: "Root application component with routing" },
-    { path: "src/index.css", role: "style", layer: "frontend", description: "Global CSS styles" },
-  ];
-
-  for (const cf of configFiles) {
+  function addFile(
+    path: string,
+    role: string,
+    layer: BAQRepoFileEntry["layer"],
+    genMethod: BAQRepoFileEntry["generation_method"],
+    sourceRefs: string[],
+    traceRefs: string[],
+    description: string,
+    justification: string,
+    subsystemLayer?: string,
+  ): void {
+    if (addedPaths.has(path)) return;
+    addedPaths.add(path);
     files.push({
-      file_id: `FILE-${String(counter++).padStart(4, "0")}`,
-      path: cf.path,
-      role: cf.role,
-      layer: cf.layer,
-      module_ref: moduleRefForPath(cf.path),
-      subsystem_ref: "",
-      generation_method: "deterministic",
-      source_refs: [],
-      trace_refs: [],
-      description: cf.description,
-      justification: "Required project structure file",
+      file_id: stableId("FILE", derivedInputs.run_id, path),
+      path,
+      role,
+      layer,
+      module_ref: moduleRefForPath(path),
+      subsystem_ref: subsystemLayer ? subsystemRefForLayer(subsystemLayer) : "",
+      generation_method: genMethod,
+      source_refs: sourceRefs,
+      trace_refs: traceRefs,
+      description,
+      justification,
     });
+  }
+
+  addFile("package.json", "manifest", "config", "deterministic", [], [], "Project package manifest", "Required: defines dependencies, scripts, and project metadata");
+  addFile("tsconfig.json", "config", "config", "deterministic", [], [], "TypeScript configuration", "Required: TypeScript compiler configuration");
+  addFile("vite.config.ts", "config", "config", "deterministic", [], [], "Vite build configuration", "Required: development server and build tool configuration");
+  addFile("tailwind.config.ts", "config", "config", "deterministic", [], [], "Tailwind CSS configuration", "Required: CSS framework configuration");
+  addFile("postcss.config.js", "config", "config", "deterministic", [], [], "PostCSS configuration", "Required: CSS post-processing configuration");
+  addFile(".env.example", "config", "config", "deterministic", [], [], "Environment variable template", "Required: documents expected environment variables");
+  addFile("README.md", "docs", "docs", "ai_assisted", [], [], "Project documentation", "Required: project overview, setup, and usage instructions");
+  addFile("index.html", "entry", "frontend", "deterministic", [], [], "HTML entry point", "Required: SPA HTML shell for Vite");
+  addFile("src/main.tsx", "entry", "frontend", "deterministic", [], [], "React application entry", "Required: React DOM render with providers and router");
+  addFile("src/App.tsx", "layout", "frontend", "ai_assisted", [], [], "Root application component with routing", "Required: route definitions and layout shell");
+  addFile("src/index.css", "style", "frontend", "deterministic", [], [], "Global CSS styles", "Required: Tailwind directives and global resets");
+  addFile("src/vite-env.d.ts", "config", "frontend", "deterministic", [], [], "Vite type declarations", "Required: client type references for Vite");
+  addFile("src/lib/utils.ts", "utility", "shared", "deterministic", [], [], "Shared utility functions", "Required: common helpers (cn, formatters, etc.)");
+  addFile("src/types/index.ts", "type_definition", "shared", "ai_assisted", [], [], "Shared type barrel export", "Required: centralized type exports");
+
+  if (derivedInputs.api_surface.endpoints.length > 0) {
+    addFile("server/index.ts", "entry", "backend", "ai_assisted", [], [], "Server entry point", "Required: Express server bootstrap and middleware setup", "backend");
+    addFile("server/routes/index.ts", "route_handler", "backend", "ai_assisted", [], [], "Route registration", "Required: registers all API route modules", "backend");
+    addFile("server/middleware/errorHandler.ts", "middleware", "backend", "ai_assisted", [], [], "Global error handler middleware", "Required: centralized error handling for API responses", "backend");
+    addFile("server/middleware/validation.ts", "middleware", "backend", "ai_assisted", [], [], "Request validation middleware", "Required: validates request bodies and params against schemas", "backend");
   }
 
   for (const page of derivedInputs.ui_surface_map) {
     const filePath = `src/pages/${page.name}.tsx`;
-    files.push({
-      file_id: `FILE-${String(counter++).padStart(4, "0")}`,
-      path: filePath,
-      role: "page",
-      layer: "frontend",
-      module_ref: moduleRefForPath(filePath),
-      subsystem_ref: subsystemRefForLayer("frontend"),
-      generation_method: "ai_assisted",
-      source_refs: [page.source_ref],
-      trace_refs: page.feature_refs,
-      description: `Page component: ${page.name}`,
-      justification: `Implements UI route ${page.path}`,
-    });
+    addFile(filePath, "page", "frontend", "ai_assisted", [page.source_ref], page.feature_refs, `Page component: ${page.name}`, `Required: implements UI route ${page.path} per spec`, "frontend");
   }
 
   for (const feature of derivedInputs.feature_map) {
     const componentName = feature.name.replace(/\s+/g, "");
     const filePath = `src/components/${componentName}.tsx`;
-    const existing = files.find(f => f.path === filePath);
-    if (!existing) {
-      files.push({
-        file_id: `FILE-${String(counter++).padStart(4, "0")}`,
-        path: filePath,
-        role: "component",
-        layer: "frontend",
-        module_ref: moduleRefForPath(filePath),
-        subsystem_ref: subsystemRefForLayer("frontend"),
-        generation_method: "ai_assisted",
-        source_refs: [feature.feature_id],
-        trace_refs: [feature.feature_id],
-        description: `Feature component: ${feature.name}`,
-        justification: `Implements feature ${feature.feature_id}`,
-      });
+    addFile(filePath, "component", "frontend", "ai_assisted", [feature.feature_id], [feature.feature_id], `Feature component: ${feature.name}`, `Required: implements feature ${feature.feature_id} — ${feature.description}`, "frontend");
+
+    if (feature.deliverables.length > 1) {
+      const hookPath = `src/hooks/use${componentName}.ts`;
+      addFile(hookPath, "hook", "frontend", "ai_assisted", [feature.feature_id], [feature.feature_id], `Hook for ${feature.name}`, `Required: encapsulates logic for feature ${feature.feature_id}`, "frontend");
     }
   }
 
   if (derivedInputs.api_surface.endpoints.length > 0) {
     const endpointGroups = groupEndpoints(derivedInputs.api_surface.endpoints);
     for (const [groupName, endpoints] of endpointGroups) {
-      const clientPath = `src/lib/api/${groupName}.ts`;
-      const existing = files.find(f => f.path === clientPath);
-      if (!existing) {
-        files.push({
-          file_id: `FILE-${String(counter++).padStart(4, "0")}`,
-          path: clientPath,
-          role: "api_client",
-          layer: "frontend",
-          module_ref: moduleRefForPath(clientPath),
-          subsystem_ref: subsystemRefForLayer("frontend"),
-          generation_method: "ai_assisted",
-          source_refs: endpoints.map(e => e.source_ref),
-          trace_refs: [],
-          description: `API client for ${groupName}`,
-          justification: `Client for ${endpoints.length} ${groupName} endpoints`,
-        });
-      }
+      const sourceRefs = endpoints.map(e => e.source_ref);
+      const epIds = endpoints.map(e => e.endpoint_id);
 
-      const routePath = `server/routes/${groupName}.ts`;
-      const existingRoute = files.find(f => f.path === routePath);
-      if (!existingRoute) {
-        files.push({
-          file_id: `FILE-${String(counter++).padStart(4, "0")}`,
-          path: routePath,
-          role: "route_handler",
-          layer: "backend",
-          module_ref: moduleRefForPath(routePath),
-          subsystem_ref: subsystemRefForLayer("backend"),
-          generation_method: "ai_assisted",
-          source_refs: endpoints.map(e => e.source_ref),
-          trace_refs: [],
-          description: `Route handler for ${groupName}`,
-          justification: `Handles ${endpoints.length} ${groupName} endpoints`,
-        });
+      addFile(`src/lib/api/${groupName}.ts`, "api_client", "frontend", "ai_assisted", sourceRefs, epIds, `API client for ${groupName}`, `Required: client for ${endpoints.length} ${groupName} endpoints`, "frontend");
+      addFile(`server/routes/${groupName}.ts`, "route_handler", "backend", "ai_assisted", sourceRefs, epIds, `Route handler for ${groupName}`, `Required: handles ${endpoints.length} ${groupName} endpoints`, "backend");
+      addFile(`src/lib/api/${groupName}.schema.ts`, "validation_schema", "shared", "ai_assisted", sourceRefs, epIds, `Validation schemas for ${groupName} API`, `Required: Zod schemas for ${groupName} request/response validation`);
+
+      if (endpoints.length > 2) {
+        addFile(`tests/integration/${groupName}.test.ts`, "test", "test", "ai_assisted", sourceRefs, epIds, `Integration tests for ${groupName} API`, `Proof: verifies ${groupName} endpoint contracts`);
       }
     }
   }
 
   if (derivedInputs.storage_model.schemas.length > 0) {
+    addFile("server/db/index.ts", "data_access", "data", "ai_assisted", [], [], "Database connection and initialization", "Required: database connection pool and setup", "data");
+    addFile("server/db/schema.ts", "data_access", "data", "ai_assisted", [], [], "Database schema definitions", "Required: Drizzle ORM table definitions", "data");
+
     for (const schema of derivedInputs.storage_model.schemas) {
-      const filePath = `server/db/${schema.name}.ts`;
-      const existing = files.find(f => f.path === filePath);
-      if (!existing) {
-        files.push({
-          file_id: `FILE-${String(counter++).padStart(4, "0")}`,
-          path: filePath,
-          role: "data_access",
-          layer: "data",
-          module_ref: moduleRefForPath(filePath),
-          subsystem_ref: subsystemRefForLayer("data"),
-          generation_method: "ai_assisted",
-          source_refs: [schema.source_ref],
-          trace_refs: [],
-          description: `Data access for ${schema.name}`,
-          justification: `Implements storage schema ${schema.schema_id}`,
-        });
-      }
+      addFile(`server/db/${schema.name}.ts`, "data_access", "data", "ai_assisted", [schema.source_ref], [schema.schema_id], `Data access for ${schema.name}`, `Required: implements storage schema ${schema.schema_id}`, "data");
     }
   }
 
   if (derivedInputs.auth_model.auth_type !== "unknown") {
-    const authFiles = [
-      { path: "src/lib/auth/index.ts", role: "auth", description: "Auth provider and context" },
-      { path: "src/lib/auth/ProtectedRoute.tsx", role: "auth", description: "Protected route wrapper" },
-    ];
-    for (const af of authFiles) {
-      const existing = files.find(f => f.path === af.path);
-      if (!existing) {
-        files.push({
-          file_id: `FILE-${String(counter++).padStart(4, "0")}`,
-          path: af.path,
-          role: af.role,
-          layer: "security",
-          module_ref: moduleRefForPath(af.path),
-          subsystem_ref: subsystemRefForLayer("security"),
-          generation_method: "ai_assisted",
-          source_refs: derivedInputs.auth_model.source_refs,
-          trace_refs: [],
-          description: af.description,
-          justification: `Implements ${derivedInputs.auth_model.auth_type} authentication`,
-        });
-      }
+    const authSourceRefs = derivedInputs.auth_model.source_refs;
+    addFile("src/lib/auth/index.ts", "auth", "security", "ai_assisted", authSourceRefs, [], "Auth provider and context", `Required: implements ${derivedInputs.auth_model.auth_type} authentication`, "security");
+    addFile("src/lib/auth/ProtectedRoute.tsx", "auth", "security", "ai_assisted", authSourceRefs, [], "Protected route wrapper", `Required: route guard for ${derivedInputs.auth_model.auth_type} auth`, "security");
+    addFile("src/lib/auth/types.ts", "type_definition", "security", "deterministic", authSourceRefs, [], "Auth type definitions", `Required: session, user, role types for ${derivedInputs.auth_model.auth_type}`, "security");
+
+    if (derivedInputs.auth_model.rbac_rules.length > 0) {
+      addFile("src/lib/auth/rbac.ts", "auth", "security", "ai_assisted", authSourceRefs, [], "RBAC enforcement utilities", `Required: role-based access control for ${derivedInputs.auth_model.rbac_rules.length} roles`, "security");
     }
   }
 
   for (const entity of derivedInputs.domain_model.entities) {
-    const typePath = `src/types/${entity.name.toLowerCase()}.ts`;
-    const existing = files.find(f => f.path === typePath);
-    if (!existing) {
-      files.push({
-        file_id: `FILE-${String(counter++).padStart(4, "0")}`,
-        path: typePath,
-        role: "type_definition",
-        layer: "shared",
-        module_ref: moduleRefForPath(typePath),
-        subsystem_ref: "",
-        generation_method: "deterministic",
-        source_refs: [entity.source_ref],
-        trace_refs: [],
-        description: `Type definition for ${entity.name}`,
-        justification: `Types for domain entity ${entity.entity_id}`,
-      });
+    const entityLower = entity.name.toLowerCase().replace(/\s+/g, "-");
+    addFile(`src/types/${entityLower}.ts`, "type_definition", "shared", "deterministic", [entity.source_ref], [entity.entity_id], `Type definition for ${entity.name}`, `Required: types for domain entity ${entity.entity_id}`);
+  }
+
+  for (const obligation of derivedInputs.verification_obligations) {
+    if (obligation.gating === "hard_gate") {
+      const oblSlug = obligation.obligation_id.toLowerCase().replace(/[^a-z0-9]/g, "-");
+      addFile(`tests/unit/${oblSlug}.test.ts`, "proof_target", "test", "ai_assisted", [obligation.obligation_id], [obligation.obligation_id, obligation.feature_ref].filter(Boolean), `Proof target for obligation ${obligation.obligation_id}`, `Proof: hard-gate verification — ${obligation.description}`);
     }
+  }
+
+  for (const opsObl of derivedInputs.ops_obligations) {
+    const oblSlug = opsObl.obligation_id.toLowerCase().replace(/[^a-z0-9]/g, "-");
+    addFile(`docs/ops/${oblSlug}.md`, "ops_doc", "docs", "ai_assisted", [opsObl.obligation_id], [opsObl.obligation_id], `Ops documentation for ${opsObl.obligation_id}`, `Required: operational documentation — ${opsObl.description}`);
   }
 
   return files;
@@ -383,9 +328,31 @@ export function checkBAQInventoryGate(inventory: BAQRepoInventory): {
     blockers.push(`Inventory contains duplicate file paths: ${[...new Set(dupes)].join(", ")}`);
   }
 
+  const fileIds = inventory.files.map(f => f.file_id);
+  const uniqueIds = new Set(fileIds);
+  if (uniqueIds.size !== fileIds.length) {
+    blockers.push("Inventory contains duplicate file IDs");
+  }
+
   const filesWithoutJustification = inventory.files.filter(f => !f.justification || f.justification.trim() === "");
   if (filesWithoutJustification.length > 0) {
     blockers.push(`${filesWithoutJustification.length} files lack justification`);
+  }
+
+  const hasEntry = inventory.files.some(f => f.role === "entry");
+  if (!hasEntry) {
+    blockers.push("Inventory contains no entry point files");
+  }
+
+  const hasManifest = inventory.files.some(f => f.role === "manifest" || f.role === "config");
+  if (!hasManifest) {
+    blockers.push("Inventory contains no manifest or config files");
+  }
+
+  const moduleIds = new Set(inventory.modules.map(m => m.module_id));
+  const orphanFiles = inventory.files.filter(f => f.module_ref && !moduleIds.has(f.module_ref));
+  if (orphanFiles.length > 0) {
+    blockers.push(`${orphanFiles.length} files reference non-existent modules`);
   }
 
   return {
