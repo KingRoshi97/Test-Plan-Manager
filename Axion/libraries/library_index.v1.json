@@ -13,7 +13,7 @@
 
     { "id": "standards.index", "path": "Axion/libraries/standards/standards_index.json", "version": "1.0.0" },
     { "id": "standards.resolver_rules", "path": "Axion/libraries/standards/resolver_rules.v1.json", "version": "1.0.0" },
-    { "id": "standards.standards_index_registry", "path": "Axion/libraries/standards/registries/standards_index.v1.json", "version": "1.0.0" },
+    { "id": "standards.standards_index_registry", "path": "Axion/libraries/standards/SYSTEM/registries/standards_index.v1.json", "version": "1.0.0" },
 
     { "id": "templates.index", "path": "Axion/libraries/templates/template_index.json", "version": "1.0.0" },
     { "id": "templates.placeholder_catalog", "path": "Axion/libraries/templates/placeholder_catalog.v1.json", "version": "1.0.0" },
@@ -78,7 +78,7 @@
 
     { "id": "kit.kit_registry", "path": "Axion/libraries/kit/registries/kit_registry.v1.json", "version": "1.0.0" },
 
-    { "id": "standards.standards_registry", "path": "Axion/libraries/standards/registries/standards_registry.v1.json", "version": "1.0.0" },
+    { "id": "standards.standards_registry", "path": "Axion/libraries/standards/SYSTEM/registries/standards_registry.v1.json", "version": "1.0.0" },
     { "id": "verification.verification_registry", "path": "Axion/libraries/verification/registries/verification_registry.v1.json", "version": "1.0.0" },
     { "id": "planning.planning_registry", "path": "Axion/libraries/planning/registries/planning_registry.v1.json", "version": "1.0.0" },
     { "id": "orchestration.orchestration_registry", "path": "Axion/libraries/orchestration/registries/orchestration_registry.v1.json", "version": "1.0.0" },

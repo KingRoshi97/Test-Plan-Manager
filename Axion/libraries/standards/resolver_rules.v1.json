@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "description": "Deterministic standards resolver rules: selection, ordering, conflict handling, and overrides.",
+  "selection": {
+    "include_by_default": ["CORE"],
+    "exclude_pack_ids": [],
+    "include_pack_ids": [],
+    "applicability_fields": [
+      "routing.skill_level",
+      "routing.category",
+      "routing.type_preset",
+      "routing.build_target",
+      "constraints.stack_constraints",
+      "constraints.security_constraints",
+      "constraints.quality_constraints"
+    ]
+  },
+  "order": {
+    "strategy": "priority_then_pack_id",
+    "priority_field": "priority",
+    "priority_direction": "desc",
+    "tiebreakers": ["pack_id_asc", "version_asc"]
+  },
+  "conflicts": {
+    "default_strategy": "last_write_wins",
+    "by_rule_namespace": [
+      { "namespace": "security", "strategy": "stricter_wins" },
+      { "namespace": "quality", "strategy": "stricter_wins" },
+      { "namespace": "stack", "strategy": "fixed_over_configurable" }
+    ],
+    "stricter_wins": {
+      "severity_order": ["info", "warn", "fail"],
+      "truthy_order": [false, true]
+    }
+  },
+  "overrides": {
+    "allow_user_overrides": true,
+    "override_sources_order": ["intake", "policy", "operator"],
+    "override_policy": {
+      "fixed_rules_cannot_be_overridden": true,
+      "requires_evidence_for_fail_to_warn": true
+    }
+  },
+  "output": {
+    "snapshot_id_prefix": "STD-SNAP-",
+    "include_provenance": true,
+    "provenance_fields": ["pack_id", "version", "rule_id", "source", "merged_at"]
+  }
+}

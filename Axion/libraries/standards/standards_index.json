@@ -1,0 +1,141 @@
+{
+  "$schema": "standards/index/v1",
+  "standards_library_version": "1.0.0",
+  "description": "Standards Library index — all packs, versions, applicability filters, and categories (STD-01).",
+  "categories": [
+    { "category_id": "STD-CAT-01", "name": "Engineering Standards", "description": "Language, framework, tooling, repo structure, coding conventions, dependency policy." },
+    { "category_id": "STD-CAT-02", "name": "Design Standards", "description": "Typography, layout, component styling, spacing, accessibility baseline, brand application." },
+    { "category_id": "STD-CAT-03", "name": "Security Standards", "description": "Auth/session baseline, authorization enforcement, sensitive data handling, abuse controls." },
+    { "category_id": "STD-CAT-04", "name": "Quality Standards", "description": "Verification checks, coverage expectations, acceptance/proof discipline, performance checks." },
+    { "category_id": "STD-CAT-05", "name": "Operations Standards", "description": "Environment expectations, deployment constraints, secrets/config management, observability, backup/recovery." },
+    { "category_id": "STD-CAT-06", "name": "Interface/Contract Standards", "description": "API error model, versioning/compatibility, event/webhook conventions, contract naming." },
+    { "category_id": "STD-CAT-07", "name": "Analytics/Telemetry Standards", "description": "Event naming, required metadata, metric definitions, privacy constraints for telemetry." }
+  ],
+  "packs": [
+    {
+      "pack_id": "eng_core",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-01",
+      "applies_when": {
+        "routing": {},
+        "gates": {}
+      },
+      "priority": 100,
+      "rule_count": 8,
+      "file_path": "packs/eng_core@1.0.0.json"
+    },
+    {
+      "pack_id": "sec_baseline",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-03",
+      "applies_when": {
+        "routing": {},
+        "gates": {}
+      },
+      "priority": 100,
+      "rule_count": 7,
+      "file_path": "packs/sec_baseline@1.0.0.json"
+    },
+    {
+      "pack_id": "qa_baseline",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-04",
+      "applies_when": {
+        "routing": {},
+        "gates": {}
+      },
+      "priority": 100,
+      "rule_count": 7,
+      "file_path": "packs/qa_baseline@1.0.0.json"
+    },
+    {
+      "pack_id": "CORE",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-01",
+      "applies_when": {},
+      "priority": 1000,
+      "rule_count": 4,
+      "rule_ids": ["STD-ENG-001", "STD-ENG-002", "STD-ENG-003", "STD-ENG-101"],
+      "file_path": "packs/CORE@1.0.0.json"
+    },
+    {
+      "pack_id": "DESIGN_BASE",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-02",
+      "applies_when": {},
+      "priority": 500,
+      "rule_count": 1,
+      "rule_ids": ["STD-DES-101"],
+      "file_path": "packs/DESIGN_BASE@1.0.0.json"
+    },
+    {
+      "pack_id": "SEC_BASE",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-03",
+      "applies_when": {},
+      "priority": 800,
+      "rule_count": 2,
+      "rule_ids": ["STD-SEC-001", "STD-SEC-101"],
+      "file_path": "packs/SEC_BASE@1.0.0.json"
+    },
+    {
+      "pack_id": "QA_BASE",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-04",
+      "applies_when": {},
+      "priority": 700,
+      "rule_count": 1,
+      "rule_ids": ["STD-QA-101"],
+      "file_path": "packs/QA_BASE@1.0.0.json"
+    },
+    {
+      "pack_id": "OPS_CONDITIONAL",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-05",
+      "applies_when": {
+        "gates": { "data_enabled": true }
+      },
+      "priority": 400,
+      "rule_count": 1,
+      "rule_ids": ["STD-OPS-101"],
+      "file_path": "packs/OPS_CONDITIONAL@1.0.0.json"
+    },
+    {
+      "pack_id": "CONTRACTS_CONDITIONAL",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-06",
+      "applies_when": {
+        "gates": { "integrations_enabled": true }
+      },
+      "priority": 450,
+      "rule_count": 1,
+      "rule_ids": ["STD-CON-101"],
+      "file_path": "packs/CONTRACTS_CONDITIONAL@1.0.0.json"
+    },
+    {
+      "pack_id": "ANALYTICS_CONDITIONAL",
+      "pack_version": "1.0.0",
+      "category": "STD-CAT-07",
+      "applies_when": {
+        "routing": { "build_target": "production" }
+      },
+      "priority": 350,
+      "rule_count": 1,
+      "rule_ids": ["STD-ANL-101"],
+      "file_path": "packs/ANALYTICS_CONDITIONAL@1.0.0.json"
+    }
+  ],
+  "rule_id_to_category": {
+    "STD-ENG-001": "STD-CAT-01",
+    "STD-ENG-002": "STD-CAT-01",
+    "STD-ENG-003": "STD-CAT-01",
+    "STD-ENG-101": "STD-CAT-01",
+    "STD-DES-101": "STD-CAT-02",
+    "STD-SEC-001": "STD-CAT-03",
+    "STD-SEC-101": "STD-CAT-03",
+    "STD-QA-101": "STD-CAT-04",
+    "STD-OPS-101": "STD-CAT-05",
+    "STD-CON-101": "STD-CAT-06",
+    "STD-ANL-101": "STD-CAT-07"
+  }
+}
