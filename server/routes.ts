@@ -4866,6 +4866,7 @@ export function registerRoutes(app: Express) {
       const result: Record<string, any> = {};
       const available: string[] = [];
       const missing: string[] = [];
+      const invalid: string[] = [];
 
       for (const [key, filename] of Object.entries(artifactMap)) {
         const filePath = path.join(runDir, filename);
@@ -4875,7 +4876,7 @@ export function registerRoutes(app: Express) {
             available.push(key);
           } catch {
             result[key] = null;
-            missing.push(key);
+            invalid.push(key);
           }
         } else {
           result[key] = null;
@@ -4895,7 +4896,7 @@ export function registerRoutes(app: Express) {
         result.packagingDecision = null;
       }
 
-      res.json({ runId: req.params.runId, available, missing, ...result });
+      res.json({ runId: req.params.runId, available, missing, invalid, ...result });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }

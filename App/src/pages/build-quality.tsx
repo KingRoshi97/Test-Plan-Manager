@@ -1487,6 +1487,9 @@ export default function BuildQualityPage() {
                     <button onClick={() => setActiveTab("packaging")} className="p-1 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]" title="Packaging">
                       <Package className="w-3.5 h-3.5" />
                     </button>
+                    <button onClick={() => window.open(`/api/baq/runs/${effectiveRunId}/artifact/failure-report`, "_blank")} className="p-1 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]" title="Export Failure Report">
+                      <FileText className="w-3.5 h-3.5" />
+                    </button>
                     <button onClick={() => window.open(`/api/baq/runs/${effectiveRunId}/artifact/quality-report`, "_blank")} className="p-1 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]" title="Export Quality Report">
                       <Download className="w-3.5 h-3.5" />
                     </button>
@@ -1589,6 +1592,12 @@ export default function BuildQualityPage() {
                 <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-md bg-[hsl(var(--status-warning)/0.1)] border border-[hsl(var(--status-warning)/0.3)] text-sm text-[hsl(var(--status-warning))]">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
                   Partial data: some BAQ artifacts are missing for this run. Available: {baqData?.available?.join(", ") ?? "unknown"}
+                </div>
+              )}
+              {baqData?.invalid?.length > 0 && (
+                <div className="mb-4 flex items-center gap-2 px-3 py-2 rounded-md bg-[hsl(var(--status-failure)/0.1)] border border-[hsl(var(--status-failure)/0.3)] text-sm text-[hsl(var(--status-failure))]">
+                  <XCircle className="w-4 h-4 shrink-0" />
+                  Invalid artifacts (corrupt or unparseable): {baqData.invalid.join(", ")}
                 </div>
               )}
               {activeTab === "overview" && <OverviewTab artifacts={artifacts} onNavigate={handleNavigate} />}
