@@ -4,26 +4,14 @@ import type {
   BAQRepoInventory,
   BAQRequirementTraceMap,
   BAQTraceEntry,
+  BAQWorkUnit,
+  BAQAcceptanceItem,
+  BAQUnmappedRequirement,
 } from "./types.js";
 
 function stableId(prefix: string, ...parts: string[]): string {
   const hash = createHash("sha256").update(parts.join(":")).digest("hex").slice(0, 8);
   return `${prefix}-${hash}`;
-}
-
-export interface TraceChainLink {
-  source_type: "feature" | "obligation" | "entity" | "endpoint" | "work_unit" | "acceptance_item";
-  source_id: string;
-  target_type: "file" | "module" | "proof_target" | "acceptance_item" | "work_unit";
-  target_id: string;
-}
-
-export interface UnmappedRequirement {
-  requirement_id: string;
-  requirement_type: "feature" | "obligation" | "entity" | "endpoint";
-  description: string;
-  severity: "critical" | "warning" | "info";
-  reason: string;
 }
 
 export function buildRequirementTraceMap(
@@ -34,7 +22,7 @@ export function buildRequirementTraceMap(
   const traceMapId = stableId("BAQT", derivedInputs.run_id, inventory.inventory_id);
 
   const traces: BAQTraceEntry[] = [];
-  const unmapped: UnmappedRequirement[] = [];
+  const unmapped: BAQUnmappedRequirement[] = [];
   const fileIndex = new Map<string, typeof inventory.files[0]>();
   for (const f of inventory.files) fileIndex.set(f.file_id, f);
 
@@ -62,7 +50,7 @@ export function buildRequirementTraceMap(
       .filter(v => v.feature_ref === feature.feature_id)
       .map(v => v.obligation_id);
 
-    const featureProofTargets = proofTargetByTraceRef.get(feature.feature_id) ?? [];
+    const featureProofTargets = [...(proofTargetByTraceRef.get(feature.feature_id) ?? [])];
     for (const vref of verificationRefs) {
       const oblProofs = proofTargetByTraceRef.get(vref) ?? [];
       for (const p of oblProofs) {
@@ -75,6 +63,8 @@ export function buildRequirementTraceMap(
       return f && f.role !== "proof_target" && f.role !== "test";
     });
 
+    const workUnits = buildWorkUnits(feature, implementingFiles, featureProofTargets, derivedInputs, inventory);
+
     const coverageStatus = determineCoverage(implementingFiles.length, feature.deliverables.length, featureProofTargets.length);
 
     traces.push({
@@ -85,6 +75,7 @@ export function buildRequirementTraceMap(
       file_refs: [...new Set([...fileRefs, ...featureProofTargets])],
       module_refs: moduleRefs,
       verification_refs: verificationRefs,
+      work_units: workUnits,
       coverage_status: coverageStatus,
     });
 
@@ -137,6 +128,21 @@ export function buildRequirementTraceMap(
       ? oblProofTargets.length > 0 ? "fully_covered" as const : "partially_covered" as const
       : "not_covered" as const;
 
+    const oblWorkUnit: BAQWorkUnit = {
+      work_unit_id: stableId("WU", derivedInputs.run_id, obligation.obligation_id),
+      description: `Implement and verify: ${obligation.description}`,
+      feature_ref: featureRef || "",
+      file_targets: implementingFiles,
+      acceptance_items: [{
+        acceptance_id: stableId("ACC", derivedInputs.run_id, obligation.obligation_id, "verify"),
+        description: `Verify obligation: ${obligation.description}`,
+        work_unit_ref: stableId("WU", derivedInputs.run_id, obligation.obligation_id),
+        file_targets: implementingFiles,
+        proof_targets: oblProofTargets,
+        fulfilled: oblProofTargets.length > 0 && implementingFiles.length > 0,
+      }],
+    };
+
     traces.push({
       trace_id: stableId("TRACE", derivedInputs.run_id, obligation.obligation_id),
       requirement_id: obligation.obligation_id,
@@ -145,6 +151,7 @@ export function buildRequirementTraceMap(
       file_refs: allFileRefs,
       module_refs: moduleRefs,
       verification_refs: [obligation.obligation_id],
+      work_units: [oblWorkUnit],
       coverage_status: coverageStatus,
     });
 
@@ -172,6 +179,21 @@ export function buildRequirementTraceMap(
     const moduleRefs = resolveModuleRefs(fileRefs, inventory);
     const coverageStatus = fileRefs.length > 0 ? "fully_covered" as const : "not_covered" as const;
 
+    const entityWorkUnit: BAQWorkUnit = {
+      work_unit_id: stableId("WU", derivedInputs.run_id, entity.entity_id),
+      description: `Define type for entity: ${entity.name}`,
+      feature_ref: "",
+      file_targets: fileRefs,
+      acceptance_items: [{
+        acceptance_id: stableId("ACC", derivedInputs.run_id, entity.entity_id, "type"),
+        description: `Type definition file exists for ${entity.name}`,
+        work_unit_ref: stableId("WU", derivedInputs.run_id, entity.entity_id),
+        file_targets: fileRefs,
+        proof_targets: [],
+        fulfilled: fileRefs.length > 0,
+      }],
+    };
+
     traces.push({
       trace_id: stableId("TRACE", derivedInputs.run_id, entity.entity_id),
       requirement_id: entity.entity_id,
@@ -180,6 +202,7 @@ export function buildRequirementTraceMap(
       file_refs: fileRefs,
       module_refs: moduleRefs,
       verification_refs: [],
+      work_units: [entityWorkUnit],
       coverage_status: coverageStatus,
     });
 
@@ -214,6 +237,35 @@ export function buildRequirementTraceMap(
         ? "partially_covered" as const
         : "not_covered" as const;
 
+    const clientFiles = fileRefs.filter(id => { const f = fileIndex.get(id); return f && f.role === "api_client"; });
+    const handlerFiles = fileRefs.filter(id => { const f = fileIndex.get(id); return f && f.role === "route_handler"; });
+    const testFiles = fileRefs.filter(id => { const f = fileIndex.get(id); return f && (f.role === "test" || f.role === "proof_target"); });
+
+    const epWorkUnit: BAQWorkUnit = {
+      work_unit_id: stableId("WU", derivedInputs.run_id, ep.endpoint_id),
+      description: `Implement ${ep.method} ${ep.path}`,
+      feature_ref: "",
+      file_targets: [...clientFiles, ...handlerFiles],
+      acceptance_items: [
+        {
+          acceptance_id: stableId("ACC", derivedInputs.run_id, ep.endpoint_id, "handler"),
+          description: `Route handler exists for ${ep.method} ${ep.path}`,
+          work_unit_ref: stableId("WU", derivedInputs.run_id, ep.endpoint_id),
+          file_targets: handlerFiles,
+          proof_targets: testFiles,
+          fulfilled: hasHandler,
+        },
+        {
+          acceptance_id: stableId("ACC", derivedInputs.run_id, ep.endpoint_id, "client"),
+          description: `API client exists for ${ep.method} ${ep.path}`,
+          work_unit_ref: stableId("WU", derivedInputs.run_id, ep.endpoint_id),
+          file_targets: clientFiles,
+          proof_targets: [],
+          fulfilled: hasClient,
+        },
+      ],
+    };
+
     traces.push({
       trace_id: stableId("TRACE", derivedInputs.run_id, ep.endpoint_id),
       requirement_id: ep.endpoint_id,
@@ -222,6 +274,7 @@ export function buildRequirementTraceMap(
       file_refs: fileRefs,
       module_refs: moduleRefs,
       verification_refs: [],
+      work_units: [epWorkUnit],
       coverage_status: coverageStatus,
     });
 
@@ -244,22 +297,88 @@ export function buildRequirementTraceMap(
     ? Math.round(((fullyCovered + partiallyCovered * 0.5) / total) * 100)
     : 0;
 
+  const unmappedCritical = unmapped.filter(u => u.severity === "critical").length;
+
   return {
     schema_version: "1.0.0",
     trace_map_id: traceMapId,
     run_id: derivedInputs.run_id,
     inventory_ref: inventory.inventory_id,
     traces,
+    unmapped_requirements: unmapped,
     summary: {
       total_requirements: total,
       fully_covered: fullyCovered,
       partially_covered: partiallyCovered,
       not_covered: notCovered,
       coverage_percent: coveragePercent,
+      unmapped_critical: unmappedCritical,
+      unmapped_total: unmapped.length,
     },
     created_at: now,
     updated_at: now,
   };
+}
+
+function buildWorkUnits(
+  feature: BAQDerivedBuildInputs["feature_map"][0],
+  implementingFileIds: string[],
+  proofTargetIds: string[],
+  derivedInputs: BAQDerivedBuildInputs,
+  inventory: BAQRepoInventory,
+): BAQWorkUnit[] {
+  const workUnits: BAQWorkUnit[] = [];
+
+  for (let i = 0; i < feature.deliverables.length; i++) {
+    const deliverable = feature.deliverables[i];
+    const wuId = stableId("WU", derivedInputs.run_id, feature.feature_id, String(i));
+
+    const relatedFiles = implementingFileIds.filter(fid => {
+      const f = inventory.files.find(file => file.file_id === fid);
+      return f && (
+        f.description.toLowerCase().includes(deliverable.toLowerCase()) ||
+        f.trace_refs.includes(feature.feature_id)
+      );
+    });
+    const deliverableFileTargets = relatedFiles.length > 0 ? relatedFiles : implementingFileIds;
+
+    const acceptanceItem: BAQAcceptanceItem = {
+      acceptance_id: stableId("ACC", derivedInputs.run_id, feature.feature_id, String(i)),
+      description: `Deliverable: ${deliverable}`,
+      work_unit_ref: wuId,
+      file_targets: deliverableFileTargets,
+      proof_targets: proofTargetIds,
+      fulfilled: deliverableFileTargets.length > 0,
+    };
+
+    workUnits.push({
+      work_unit_id: wuId,
+      description: `Implement: ${deliverable}`,
+      feature_ref: feature.feature_id,
+      file_targets: deliverableFileTargets,
+      acceptance_items: [acceptanceItem],
+    });
+  }
+
+  if (workUnits.length === 0 && implementingFileIds.length > 0) {
+    const wuId = stableId("WU", derivedInputs.run_id, feature.feature_id, "default");
+    workUnits.push({
+      work_unit_id: wuId,
+      description: `Implement feature: ${feature.name}`,
+      feature_ref: feature.feature_id,
+      file_targets: implementingFileIds,
+      acceptance_items: [{
+        acceptance_id: stableId("ACC", derivedInputs.run_id, feature.feature_id, "default"),
+        description: `Feature ${feature.name} implemented`,
+        work_unit_ref: wuId,
+        file_targets: implementingFileIds,
+        proof_targets: proofTargetIds,
+        fulfilled: implementingFileIds.length > 0,
+      }],
+    });
+  }
+
+  return workUnits;
 }
 
 function resolveModuleRefs(fileIds: string[], inventory: BAQRepoInventory): string[] {
@@ -309,11 +428,36 @@ export function checkBAQTraceabilityGate(traceMap: BAQRequirementTraceMap): {
     );
   }
 
-  const tracesWithNoFiles = traceMap.traces.filter(t => t.file_refs.length === 0);
-  const featureTracesWithNoFiles = tracesWithNoFiles.filter(t =>
-    t.requirement_id.startsWith("FEAT-") || t.requirement_id.startsWith("FT-") || t.feature_refs.length > 0,
+  if (traceMap.summary.unmapped_critical > 0) {
+    const criticalUnmapped = traceMap.unmapped_requirements.filter(u => u.severity === "critical");
+    const criticalDescs = criticalUnmapped.map(u => `${u.requirement_id}: ${u.reason}`).join("; ");
+    blockers.push(
+      `${traceMap.summary.unmapped_critical} critical unmapped requirements: ${criticalDescs}`,
+    );
+  }
+
+  const unfulfilledHardGateAcceptance = traceMap.traces.flatMap(t =>
+    t.work_units.flatMap(wu =>
+      wu.acceptance_items.filter(ai => !ai.fulfilled && ai.proof_targets.length === 0)
+    )
+  ).filter(ai => {
+    const trace = traceMap.traces.find(t =>
+      t.work_units.some(wu => wu.acceptance_items.includes(ai))
+    );
+    return trace && trace.verification_refs.length > 0;
+  });
+
+  if (unfulfilledHardGateAcceptance.length > 0) {
+    blockers.push(
+      `${unfulfilledHardGateAcceptance.length} acceptance items for verification-linked traces have no file targets or proof targets`,
+    );
+  }
+
+  const featureTracesWithNoFiles = traceMap.traces.filter(t =>
+    t.feature_refs.length > 0 && t.file_refs.length === 0,
   );
-  if (featureTracesWithNoFiles.length > 0 && featureTracesWithNoFiles.length === traceMap.traces.filter(t => t.feature_refs.length > 0).length) {
+  const allFeatureTraces = traceMap.traces.filter(t => t.feature_refs.length > 0);
+  if (featureTracesWithNoFiles.length > 0 && featureTracesWithNoFiles.length === allFeatureTraces.length) {
     blockers.push(`All feature traces lack file references — no features are covered`);
   }
 
@@ -327,14 +471,14 @@ export function checkBAQTraceabilityGate(traceMap: BAQRequirementTraceMap): {
 export function getUnmappedRequirements(
   derivedInputs: BAQDerivedBuildInputs,
   traceMap: BAQRequirementTraceMap,
-): UnmappedRequirement[] {
-  const unmapped: UnmappedRequirement[] = [];
+): BAQUnmappedRequirement[] {
+  const additional: BAQUnmappedRequirement[] = [];
   const tracedIds = new Set(traceMap.traces.map(t => t.requirement_id));
 
   for (const feature of derivedInputs.feature_map) {
     if (!tracedIds.has(feature.feature_id)) {
       const isMust = feature.priority === "must" || feature.priority === "critical";
-      unmapped.push({
+      additional.push({
         requirement_id: feature.feature_id,
         requirement_type: "feature",
         description: `Feature "${feature.name}" not in trace map`,
@@ -350,7 +494,7 @@ export function getUnmappedRequirements(
     );
     if (!traced) {
       const isHardGate = obligation.gating === "hard_gate";
-      unmapped.push({
+      additional.push({
         requirement_id: obligation.obligation_id,
         requirement_type: "obligation",
         description: `Obligation "${obligation.description}" not in trace map`,
@@ -360,5 +504,5 @@ export function getUnmappedRequirements(
     }
   }
 
-  return unmapped;
+  return [...traceMap.unmapped_requirements, ...additional];
 }

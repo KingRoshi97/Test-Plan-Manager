@@ -338,16 +338,26 @@ export function validateRepoInventory(data: unknown): ValidationResult {
 
   if (Array.isArray(obj.files)) {
     const paths = new Set<string>();
+    const ids = new Set<string>();
     for (let i = 0; i < (obj.files as unknown[]).length; i++) {
       const f = (obj.files as Record<string, unknown>[])[i];
       if (!f || typeof f !== "object") continue;
       requireString(f, "file_id", errors);
       requireString(f, "path", errors);
+      if (typeof f.required !== "boolean") {
+        errors.push({ field: `files[${i}].required`, message: `File required field must be boolean`, severity: "error" });
+      }
       if (typeof f.path === "string") {
         if (paths.has(f.path)) {
           errors.push({ field: `files[${i}].path`, message: `Duplicate file path: ${f.path}`, severity: "error" });
         }
         paths.add(f.path);
+      }
+      if (typeof f.file_id === "string") {
+        if (ids.has(f.file_id)) {
+          errors.push({ field: `files[${i}].file_id`, message: `Duplicate file ID: ${f.file_id}`, severity: "error" });
+        }
+        ids.add(f.file_id);
       }
     }
   }
@@ -367,6 +377,7 @@ export function validateRequirementTraceMap(data: unknown): ValidationResult {
   requireString(obj, "trace_map_id", errors);
   requireString(obj, "run_id", errors);
   requireArray(obj, "traces", errors);
+  requireArray(obj, "unmapped_requirements", errors);
 
   if (Array.isArray(obj.traces)) {
     for (let i = 0; i < (obj.traces as unknown[]).length; i++) {
@@ -375,6 +386,17 @@ export function validateRequirementTraceMap(data: unknown): ValidationResult {
       requireString(t, "trace_id", errors);
       requireString(t, "requirement_id", errors);
       requireEnum(t, "coverage_status", ["fully_covered", "partially_covered", "not_covered"] as const, errors);
+      requireArray(t, "work_units", errors);
+    }
+  }
+
+  if (Array.isArray(obj.unmapped_requirements)) {
+    for (let i = 0; i < (obj.unmapped_requirements as unknown[]).length; i++) {
+      const u = (obj.unmapped_requirements as Record<string, unknown>[])[i];
+      if (!u || typeof u !== "object") continue;
+      requireString(u, "requirement_id", errors);
+      requireEnum(u, "severity", ["critical", "warning", "info"] as const, errors);
+      requireEnum(u, "requirement_type", ["feature", "obligation", "entity", "endpoint"] as const, errors);
     }
   }
 
@@ -390,6 +412,9 @@ export function validateRequirementTraceMap(data: unknown): ValidationResult {
     const fullyCovered = traces.filter(t => t.coverage_status === "fully_covered").length;
     if (typeof summary.fully_covered === "number" && summary.fully_covered !== fullyCovered) {
       warnings.push(`fully_covered=${summary.fully_covered} but actual=${fullyCovered}`);
+    }
+    if (typeof summary.total_requirements === "number" && summary.total_requirements !== traces.length) {
+      warnings.push(`total_requirements=${summary.total_requirements} but trace count=${traces.length}`);
     }
   }
 

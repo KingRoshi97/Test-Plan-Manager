@@ -157,6 +157,20 @@ export function evaluateSufficiency(
     });
   }
 
+  const placeholderFulfillment = evaluatePlaceholderFulfillment(classifications, inventory, traceMap);
+  const placeholderFulfillDimId = stableId("DIM", derivedInputs.run_id, "placeholder_fulfillment");
+  dimensions.push({
+    dimension_id: placeholderFulfillDimId,
+    name: "Placeholder Fulfillment",
+    score: placeholderFulfillment.score,
+    threshold: 80,
+    passed: placeholderFulfillment.score >= 80,
+    detail: placeholderFulfillment.detail,
+  });
+  for (const gap of placeholderFulfillment.gaps) {
+    gaps.push({ ...gap, gap_id: stableId("GAP", derivedInputs.run_id, "pf", gap.description.slice(0, 30)), dimension_ref: placeholderFulfillDimId });
+  }
+
   const passingDimensions = dimensions.filter(d => d.passed).length;
   const overallScore = dimensions.length > 0
     ? Math.round(dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length)
@@ -248,6 +262,7 @@ function classifyFamily(
   if (file.role === "config" || file.role === "manifest" || file.layer === "config") return "config";
   if (file.role === "docs" || file.role === "ops_doc" || file.layer === "docs") return "docs";
 
+  if (file.required) return "required";
   if (requiredFileIds.has(file.file_id)) return "required";
   if (tracedFileIds.has(file.file_id)) return "required";
 
@@ -690,6 +705,80 @@ export function validateCrossSchemaIntegrity(
   }
 
   return issues;
+}
+
+function evaluatePlaceholderFulfillment(
+  classifications: ArtifactFamilyClassification[],
+  inventory: BAQRepoInventory,
+  traceMap: BAQRequirementTraceMap,
+): DimensionResult {
+  const requiredFiles = inventory.files.filter(f => f.required);
+  if (requiredFiles.length === 0) {
+    return { score: 100, detail: "No required files to check for placeholder fulfillment", gaps: [] };
+  }
+
+  const classMap = new Map(classifications.map(c => [c.file_id, c]));
+
+  const requiredPlaceholders: string[] = [];
+  for (const rf of requiredFiles) {
+    const cls = classMap.get(rf.file_id);
+    if (cls && cls.is_placeholder) {
+      requiredPlaceholders.push(rf.file_id);
+    }
+  }
+
+  const tracesWithOnlyPlaceholders: string[] = [];
+  for (const trace of traceMap.traces) {
+    if (trace.coverage_status === "not_covered") continue;
+    const implementingFileIds = trace.file_refs.filter(fid => {
+      const f = inventory.files.find(file => file.file_id === fid);
+      return f && f.role !== "proof_target" && f.role !== "test";
+    });
+
+    if (implementingFileIds.length === 0) continue;
+
+    const allPlaceholder = implementingFileIds.every(fid => {
+      const cls = classMap.get(fid);
+      return cls && cls.is_placeholder;
+    });
+
+    if (allPlaceholder) {
+      tracesWithOnlyPlaceholders.push(trace.trace_id);
+    }
+  }
+
+  const gaps: DimensionResult["gaps"] = [];
+
+  if (requiredPlaceholders.length > 0) {
+    const ratio = requiredPlaceholders.length / requiredFiles.length;
+    gaps.push({
+      severity: ratio > 0.3 ? "critical" : "warning",
+      description: `${requiredPlaceholders.length}/${requiredFiles.length} required files are placeholders`,
+      affected_refs: requiredPlaceholders,
+      recommendation: "Replace placeholder stubs with real implementations for required files",
+    });
+  }
+
+  if (tracesWithOnlyPlaceholders.length > 0) {
+    gaps.push({
+      severity: "critical",
+      description: `${tracesWithOnlyPlaceholders.length} requirements are fulfilled only by placeholder files`,
+      affected_refs: tracesWithOnlyPlaceholders,
+      recommendation: "Requirements must be fulfilled by real implementations, not placeholder stubs",
+    });
+  }
+
+  const totalChecks = requiredFiles.length;
+  const placeholderCount = requiredPlaceholders.length;
+  const score = totalChecks > 0 ? Math.round(((totalChecks - placeholderCount) / totalChecks) * 100) : 100;
+
+  return {
+    score,
+    detail: placeholderCount === 0
+      ? `All ${totalChecks} required files have real implementations`
+      : `${placeholderCount}/${totalChecks} required files are placeholder-only`,
+    gaps,
+  };
 }
 
 export function checkBAQSufficiencyGate(evaluation: BAQSufficiencyEvaluation): {

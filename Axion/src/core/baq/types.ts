@@ -253,6 +253,7 @@ export interface BAQRepoFileEntry {
   trace_refs: string[];
   description: string;
   justification: string;
+  required: boolean;
 }
 
 export interface BAQRepoInventory {
@@ -274,6 +275,31 @@ export interface BAQRepoInventory {
   updated_at: string;
 }
 
+export interface BAQWorkUnit {
+  work_unit_id: string;
+  description: string;
+  feature_ref: string;
+  file_targets: string[];
+  acceptance_items: BAQAcceptanceItem[];
+}
+
+export interface BAQAcceptanceItem {
+  acceptance_id: string;
+  description: string;
+  work_unit_ref: string;
+  file_targets: string[];
+  proof_targets: string[];
+  fulfilled: boolean;
+}
+
+export interface BAQUnmappedRequirement {
+  requirement_id: string;
+  requirement_type: "feature" | "obligation" | "entity" | "endpoint";
+  description: string;
+  severity: "critical" | "warning" | "info";
+  reason: string;
+}
+
 export interface BAQTraceEntry {
   trace_id: string;
   requirement_id: string;
@@ -282,6 +308,7 @@ export interface BAQTraceEntry {
   file_refs: string[];
   module_refs: string[];
   verification_refs: string[];
+  work_units: BAQWorkUnit[];
   coverage_status: "fully_covered" | "partially_covered" | "not_covered";
 }
 
@@ -291,12 +318,15 @@ export interface BAQRequirementTraceMap {
   run_id: string;
   inventory_ref: string;
   traces: BAQTraceEntry[];
+  unmapped_requirements: BAQUnmappedRequirement[];
   summary: {
     total_requirements: number;
     fully_covered: number;
     partially_covered: number;
     not_covered: number;
     coverage_percent: number;
+    unmapped_critical: number;
+    unmapped_total: number;
   };
   created_at: string;
   updated_at: string;

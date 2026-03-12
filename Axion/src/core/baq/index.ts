@@ -24,6 +24,9 @@ export type {
   BAQDerivedBuildInputs,
   BAQRepoFileEntry,
   BAQRepoInventory,
+  BAQWorkUnit,
+  BAQAcceptanceItem,
+  BAQUnmappedRequirement,
   BAQTraceEntry,
   BAQRequirementTraceMap,
   BAQGateResult,
@@ -40,7 +43,6 @@ export { runBAQExtraction, checkBAQExtractionGate } from "./extraction.js";
 export { buildDerivedInputs, checkBAQDerivedInputsGate } from "./derivedInputs.js";
 export { buildRepoInventory, checkBAQInventoryGate } from "./repoInventory.js";
 export { buildRequirementTraceMap, checkBAQTraceabilityGate, getUnmappedRequirements } from "./traceability.js";
-export type { TraceChainLink, UnmappedRequirement } from "./traceability.js";
 export { evaluateSufficiency, checkBAQSufficiencyGate, classifyArtifactFamilies, validateCrossSchemaIntegrity } from "./sufficiency.js";
 export type { ArtifactFamily, ArtifactFamilyClassification } from "./sufficiency.js";
 export {

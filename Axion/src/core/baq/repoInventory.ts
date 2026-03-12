@@ -178,6 +178,7 @@ function planFiles(
     traceRefs: string[],
     description: string,
     justification: string,
+    isRequired: boolean,
     subsystemLayer?: string,
   ): void {
     if (addedPaths.has(path)) return;
@@ -194,44 +195,46 @@ function planFiles(
       trace_refs: traceRefs,
       description,
       justification,
+      required: isRequired,
     });
   }
 
-  addFile("package.json", "manifest", "config", "deterministic", [], [], "Project package manifest", "Required: defines dependencies, scripts, and project metadata");
-  addFile("tsconfig.json", "config", "config", "deterministic", [], [], "TypeScript configuration", "Required: TypeScript compiler configuration");
-  addFile("vite.config.ts", "config", "config", "deterministic", [], [], "Vite build configuration", "Required: development server and build tool configuration");
-  addFile("tailwind.config.ts", "config", "config", "deterministic", [], [], "Tailwind CSS configuration", "Required: CSS framework configuration");
-  addFile("postcss.config.js", "config", "config", "deterministic", [], [], "PostCSS configuration", "Required: CSS post-processing configuration");
-  addFile(".env.example", "config", "config", "deterministic", [], [], "Environment variable template", "Required: documents expected environment variables");
-  addFile("README.md", "docs", "docs", "ai_assisted", [], [], "Project documentation", "Required: project overview, setup, and usage instructions");
-  addFile("index.html", "entry", "frontend", "deterministic", [], [], "HTML entry point", "Required: SPA HTML shell for Vite");
-  addFile("src/main.tsx", "entry", "frontend", "deterministic", [], [], "React application entry", "Required: React DOM render with providers and router");
-  addFile("src/App.tsx", "layout", "frontend", "ai_assisted", [], [], "Root application component with routing", "Required: route definitions and layout shell");
-  addFile("src/index.css", "style", "frontend", "deterministic", [], [], "Global CSS styles", "Required: Tailwind directives and global resets");
-  addFile("src/vite-env.d.ts", "config", "frontend", "deterministic", [], [], "Vite type declarations", "Required: client type references for Vite");
-  addFile("src/lib/utils.ts", "utility", "shared", "deterministic", [], [], "Shared utility functions", "Required: common helpers (cn, formatters, etc.)");
-  addFile("src/types/index.ts", "type_definition", "shared", "ai_assisted", [], [], "Shared type barrel export", "Required: centralized type exports");
+  addFile("package.json", "manifest", "config", "deterministic", [], [], "Project package manifest", "Required: defines dependencies, scripts, and project metadata", true);
+  addFile("tsconfig.json", "config", "config", "deterministic", [], [], "TypeScript configuration", "Required: TypeScript compiler configuration", true);
+  addFile("vite.config.ts", "config", "config", "deterministic", [], [], "Vite build configuration", "Required: development server and build tool configuration", true);
+  addFile("tailwind.config.ts", "config", "config", "deterministic", [], [], "Tailwind CSS configuration", "Required: CSS framework configuration", false);
+  addFile("postcss.config.js", "config", "config", "deterministic", [], [], "PostCSS configuration", "Required: CSS post-processing configuration", false);
+  addFile(".env.example", "config", "config", "deterministic", [], [], "Environment variable template", "Required: documents expected environment variables", false);
+  addFile("README.md", "docs", "docs", "ai_assisted", [], [], "Project documentation", "Required: project overview, setup, and usage instructions", false);
+  addFile("index.html", "entry", "frontend", "deterministic", [], [], "HTML entry point", "Required: SPA HTML shell for Vite", true);
+  addFile("src/main.tsx", "entry", "frontend", "deterministic", [], [], "React application entry", "Required: React DOM render with providers and router", true);
+  addFile("src/App.tsx", "layout", "frontend", "ai_assisted", [], [], "Root application component with routing", "Required: route definitions and layout shell", true);
+  addFile("src/index.css", "style", "frontend", "deterministic", [], [], "Global CSS styles", "Required: Tailwind directives and global resets", true);
+  addFile("src/vite-env.d.ts", "config", "frontend", "deterministic", [], [], "Vite type declarations", "Required: client type references for Vite", false);
+  addFile("src/lib/utils.ts", "utility", "shared", "deterministic", [], [], "Shared utility functions", "Required: common helpers (cn, formatters, etc.)", false);
+  addFile("src/types/index.ts", "type_definition", "shared", "ai_assisted", [], [], "Shared type barrel export", "Required: centralized type exports", true);
 
   if (derivedInputs.api_surface.endpoints.length > 0) {
-    addFile("server/index.ts", "entry", "backend", "ai_assisted", [], [], "Server entry point", "Required: Express server bootstrap and middleware setup", "backend");
-    addFile("server/routes/index.ts", "route_handler", "backend", "ai_assisted", [], [], "Route registration", "Required: registers all API route modules", "backend");
-    addFile("server/middleware/errorHandler.ts", "middleware", "backend", "ai_assisted", [], [], "Global error handler middleware", "Required: centralized error handling for API responses", "backend");
-    addFile("server/middleware/validation.ts", "middleware", "backend", "ai_assisted", [], [], "Request validation middleware", "Required: validates request bodies and params against schemas", "backend");
+    addFile("server/index.ts", "entry", "backend", "ai_assisted", [], [], "Server entry point", "Required: Express server bootstrap and middleware setup", true, "backend");
+    addFile("server/routes/index.ts", "route_handler", "backend", "ai_assisted", [], [], "Route registration", "Required: registers all API route modules", true, "backend");
+    addFile("server/middleware/errorHandler.ts", "middleware", "backend", "ai_assisted", [], [], "Global error handler middleware", "Required: centralized error handling for API responses", false, "backend");
+    addFile("server/middleware/validation.ts", "middleware", "backend", "ai_assisted", [], [], "Request validation middleware", "Required: validates request bodies and params against schemas", false, "backend");
   }
 
   for (const page of derivedInputs.ui_surface_map) {
     const filePath = `src/pages/${page.name}.tsx`;
-    addFile(filePath, "page", "frontend", "ai_assisted", [page.source_ref], page.feature_refs, `Page component: ${page.name}`, `Required: implements UI route ${page.path} per spec`, "frontend");
+    addFile(filePath, "page", "frontend", "ai_assisted", [page.source_ref], page.feature_refs, `Page component: ${page.name}`, `Required: implements UI route ${page.path} per spec`, true, "frontend");
   }
 
   for (const feature of derivedInputs.feature_map) {
     const componentName = feature.name.replace(/\s+/g, "");
     const filePath = `src/components/${componentName}.tsx`;
-    addFile(filePath, "component", "frontend", "ai_assisted", [feature.feature_id], [feature.feature_id], `Feature component: ${feature.name}`, `Required: implements feature ${feature.feature_id} — ${feature.description}`, "frontend");
+    const isMust = feature.priority === "must" || feature.priority === "critical";
+    addFile(filePath, "component", "frontend", "ai_assisted", [feature.feature_id], [feature.feature_id], `Feature component: ${feature.name}`, `Required: implements feature ${feature.feature_id} — ${feature.description}`, isMust, "frontend");
 
     if (feature.deliverables.length > 1) {
       const hookPath = `src/hooks/use${componentName}.ts`;
-      addFile(hookPath, "hook", "frontend", "ai_assisted", [feature.feature_id], [feature.feature_id], `Hook for ${feature.name}`, `Required: encapsulates logic for feature ${feature.feature_id}`, "frontend");
+      addFile(hookPath, "hook", "frontend", "ai_assisted", [feature.feature_id], [feature.feature_id], `Hook for ${feature.name}`, `Required: encapsulates logic for feature ${feature.feature_id}`, false, "frontend");
     }
   }
 
@@ -241,51 +244,51 @@ function planFiles(
       const sourceRefs = endpoints.map(e => e.source_ref);
       const epIds = endpoints.map(e => e.endpoint_id);
 
-      addFile(`src/lib/api/${groupName}.ts`, "api_client", "frontend", "ai_assisted", sourceRefs, epIds, `API client for ${groupName}`, `Required: client for ${endpoints.length} ${groupName} endpoints`, "frontend");
-      addFile(`server/routes/${groupName}.ts`, "route_handler", "backend", "ai_assisted", sourceRefs, epIds, `Route handler for ${groupName}`, `Required: handles ${endpoints.length} ${groupName} endpoints`, "backend");
-      addFile(`src/lib/api/${groupName}.schema.ts`, "validation_schema", "shared", "ai_assisted", sourceRefs, epIds, `Validation schemas for ${groupName} API`, `Required: Zod schemas for ${groupName} request/response validation`);
+      addFile(`src/lib/api/${groupName}.ts`, "api_client", "frontend", "ai_assisted", sourceRefs, epIds, `API client for ${groupName}`, `Required: client for ${endpoints.length} ${groupName} endpoints`, true, "frontend");
+      addFile(`server/routes/${groupName}.ts`, "route_handler", "backend", "ai_assisted", sourceRefs, epIds, `Route handler for ${groupName}`, `Required: handles ${endpoints.length} ${groupName} endpoints`, true, "backend");
+      addFile(`src/lib/api/${groupName}.schema.ts`, "validation_schema", "shared", "ai_assisted", sourceRefs, epIds, `Validation schemas for ${groupName} API`, `Required: Zod schemas for ${groupName} request/response validation`, false);
 
       if (endpoints.length > 2) {
-        addFile(`tests/integration/${groupName}.test.ts`, "test", "test", "ai_assisted", sourceRefs, epIds, `Integration tests for ${groupName} API`, `Proof: verifies ${groupName} endpoint contracts`);
+        addFile(`tests/integration/${groupName}.test.ts`, "test", "test", "ai_assisted", sourceRefs, epIds, `Integration tests for ${groupName} API`, `Proof: verifies ${groupName} endpoint contracts`, false);
       }
     }
   }
 
   if (derivedInputs.storage_model.schemas.length > 0) {
-    addFile("server/db/index.ts", "data_access", "data", "ai_assisted", [], [], "Database connection and initialization", "Required: database connection pool and setup", "data");
-    addFile("server/db/schema.ts", "data_access", "data", "ai_assisted", [], [], "Database schema definitions", "Required: Drizzle ORM table definitions", "data");
+    addFile("server/db/index.ts", "data_access", "data", "ai_assisted", [], [], "Database connection and initialization", "Required: database connection pool and setup", true, "data");
+    addFile("server/db/schema.ts", "data_access", "data", "ai_assisted", [], [], "Database schema definitions", "Required: Drizzle ORM table definitions", true, "data");
 
     for (const schema of derivedInputs.storage_model.schemas) {
-      addFile(`server/db/${schema.name}.ts`, "data_access", "data", "ai_assisted", [schema.source_ref], [schema.schema_id], `Data access for ${schema.name}`, `Required: implements storage schema ${schema.schema_id}`, "data");
+      addFile(`server/db/${schema.name}.ts`, "data_access", "data", "ai_assisted", [schema.source_ref], [schema.schema_id], `Data access for ${schema.name}`, `Required: implements storage schema ${schema.schema_id}`, true, "data");
     }
   }
 
   if (derivedInputs.auth_model.auth_type !== "unknown") {
     const authSourceRefs = derivedInputs.auth_model.source_refs;
-    addFile("src/lib/auth/index.ts", "auth", "security", "ai_assisted", authSourceRefs, [], "Auth provider and context", `Required: implements ${derivedInputs.auth_model.auth_type} authentication`, "security");
-    addFile("src/lib/auth/ProtectedRoute.tsx", "auth", "security", "ai_assisted", authSourceRefs, [], "Protected route wrapper", `Required: route guard for ${derivedInputs.auth_model.auth_type} auth`, "security");
-    addFile("src/lib/auth/types.ts", "type_definition", "security", "deterministic", authSourceRefs, [], "Auth type definitions", `Required: session, user, role types for ${derivedInputs.auth_model.auth_type}`, "security");
+    addFile("src/lib/auth/index.ts", "auth", "security", "ai_assisted", authSourceRefs, [], "Auth provider and context", `Required: implements ${derivedInputs.auth_model.auth_type} authentication`, true, "security");
+    addFile("src/lib/auth/ProtectedRoute.tsx", "auth", "security", "ai_assisted", authSourceRefs, [], "Protected route wrapper", `Required: route guard for ${derivedInputs.auth_model.auth_type} auth`, true, "security");
+    addFile("src/lib/auth/types.ts", "type_definition", "security", "deterministic", authSourceRefs, [], "Auth type definitions", `Required: session, user, role types for ${derivedInputs.auth_model.auth_type}`, true, "security");
 
     if (derivedInputs.auth_model.rbac_rules.length > 0) {
-      addFile("src/lib/auth/rbac.ts", "auth", "security", "ai_assisted", authSourceRefs, [], "RBAC enforcement utilities", `Required: role-based access control for ${derivedInputs.auth_model.rbac_rules.length} roles`, "security");
+      addFile("src/lib/auth/rbac.ts", "auth", "security", "ai_assisted", authSourceRefs, [], "RBAC enforcement utilities", `Required: role-based access control for ${derivedInputs.auth_model.rbac_rules.length} roles`, true, "security");
     }
   }
 
   for (const entity of derivedInputs.domain_model.entities) {
     const entityLower = entity.name.toLowerCase().replace(/\s+/g, "-");
-    addFile(`src/types/${entityLower}.ts`, "type_definition", "shared", "deterministic", [entity.source_ref], [entity.entity_id], `Type definition for ${entity.name}`, `Required: types for domain entity ${entity.entity_id}`);
+    addFile(`src/types/${entityLower}.ts`, "type_definition", "shared", "deterministic", [entity.source_ref], [entity.entity_id], `Type definition for ${entity.name}`, `Required: types for domain entity ${entity.entity_id}`, true);
   }
 
   for (const obligation of derivedInputs.verification_obligations) {
     if (obligation.gating === "hard_gate") {
       const oblSlug = obligation.obligation_id.toLowerCase().replace(/[^a-z0-9]/g, "-");
-      addFile(`tests/unit/${oblSlug}.test.ts`, "proof_target", "test", "ai_assisted", [obligation.obligation_id], [obligation.obligation_id, obligation.feature_ref].filter(Boolean), `Proof target for obligation ${obligation.obligation_id}`, `Proof: hard-gate verification — ${obligation.description}`);
+      addFile(`tests/unit/${oblSlug}.test.ts`, "proof_target", "test", "ai_assisted", [obligation.obligation_id], [obligation.obligation_id, obligation.feature_ref].filter(Boolean), `Proof target for obligation ${obligation.obligation_id}`, `Proof: hard-gate verification — ${obligation.description}`, true);
     }
   }
 
   for (const opsObl of derivedInputs.ops_obligations) {
     const oblSlug = opsObl.obligation_id.toLowerCase().replace(/[^a-z0-9]/g, "-");
-    addFile(`docs/ops/${oblSlug}.md`, "ops_doc", "docs", "ai_assisted", [opsObl.obligation_id], [opsObl.obligation_id], `Ops documentation for ${opsObl.obligation_id}`, `Required: operational documentation — ${opsObl.description}`);
+    addFile(`docs/ops/${oblSlug}.md`, "ops_doc", "docs", "ai_assisted", [opsObl.obligation_id], [opsObl.obligation_id], `Ops documentation for ${opsObl.obligation_id}`, `Required: operational documentation — ${opsObl.description}`, false);
   }
 
   return files;
@@ -353,6 +356,19 @@ export function checkBAQInventoryGate(inventory: BAQRepoInventory): {
   const orphanFiles = inventory.files.filter(f => f.module_ref && !moduleIds.has(f.module_ref));
   if (orphanFiles.length > 0) {
     blockers.push(`${orphanFiles.length} files reference non-existent modules`);
+  }
+
+  const requiredFiles = inventory.files.filter(f => f.required);
+  if (requiredFiles.length === 0 && inventory.files.length > 0) {
+    blockers.push("Inventory has files but none are marked as required — category-only planning rejected");
+  }
+
+  const vaguePaths = inventory.files.filter(f => {
+    const parts = f.path.split("/");
+    return parts.length <= 1 && !f.path.includes(".");
+  });
+  if (vaguePaths.length > 0) {
+    blockers.push(`${vaguePaths.length} file entries are directory-level only (no file extension) — category-only planning rejected: ${vaguePaths.map(f => f.path).join(", ")}`);
   }
 
   return {
