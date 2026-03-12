@@ -7,6 +7,10 @@ import type {
 } from "./types.js";
 import type { ExtendedBuildQualityReport } from "./qualityReport.js";
 
+const REQUIRED_GATE_IDS: BuildQualityGateId[] = [
+  "G-BQ-01", "G-BQ-02", "G-BQ-03", "G-BQ-04", "G-BQ-05", "G-BQ-06", "G-BQ-07",
+];
+
 export interface ManifestTargetMismatch {
   file_path: string;
   expected: boolean;
@@ -120,6 +124,27 @@ function reconcileManifestTargets(
     });
   }
 
+  if (inventory) {
+    const files = Array.isArray(inventory.files) ? inventory.files : [];
+    const bundleBasenames = new Set<string>();
+    for (const bf of bundleFiles) {
+      bundleBasenames.add(path.basename(bf));
+    }
+
+    for (const file of files) {
+      if (!file.required) continue;
+      const basename = path.basename(file.path);
+      if (!bundleBasenames.has(basename)) {
+        mismatches.push({
+          file_path: file.path,
+          expected: true,
+          actual_exists: false,
+          reason: `Required inventory target missing from kit bundle: ${file.path}`,
+        });
+      }
+    }
+  }
+
   const packagingManifestPath = path.join(runDir, "kit", "packaging_manifest.json");
   if (fs.existsSync(packagingManifestPath)) {
     try {
@@ -179,10 +204,16 @@ export function runPackagingPreflight(
   } else {
     gateEvidence = extractGateEvidence(qualityReport);
 
-    const failedGates = qualityReport.gates.filter(g => g.status === "fail");
-    if (failedGates.length > 0) {
-      const failedIds = failedGates.map(g => `${g.gate_id} (${g.gate_name})`);
-      blockReasons.push(`Hard gate(s) failed: ${failedIds.join(", ")}`);
+    const reportGateIds = new Set(qualityReport.gates.map(g => g.gate_id));
+    const missingGates = REQUIRED_GATE_IDS.filter(id => !reportGateIds.has(id));
+    if (missingGates.length > 0) {
+      blockReasons.push(`Required hard gate(s) missing from report: ${missingGates.join(", ")}`);
+    }
+
+    const nonPassGates = qualityReport.gates.filter(g => g.status !== "pass");
+    if (nonPassGates.length > 0) {
+      const nonPassIds = nonPassGates.map(g => `${g.gate_id} (${g.gate_name}: ${g.status})`);
+      blockReasons.push(`Hard gate(s) not passed: ${nonPassIds.join(", ")}`);
     }
 
     if (qualityReport.decision === "blocked" || qualityReport.decision === "failed") {

@@ -878,7 +878,7 @@ describe("BAQ Packaging Enforcement", () => {
 
     const decision = runPackagingPreflight(tmpDir, bundleDir);
     expect(decision.allowed).toBe(false);
-    expect(decision.block_reasons.some(r => r.includes("Hard gate"))).toBe(true);
+    expect(decision.block_reasons.some(r => r.includes("not passed"))).toBe(true);
     fs.rmSync(tmpDir, { recursive: true });
   });
 
@@ -1258,7 +1258,7 @@ describe("BAQ Regression Tests — False-Green Prevention", () => {
 
     const decision = runPackagingPreflight(tmpDir, bundleDir);
     expect(decision.allowed).toBe(false);
-    expect(decision.block_reasons.some(r => r.includes("Hard gate"))).toBe(true);
+    expect(decision.block_reasons.some(r => r.includes("not passed"))).toBe(true);
     fs.rmSync(tmpDir, { recursive: true });
   });
 });

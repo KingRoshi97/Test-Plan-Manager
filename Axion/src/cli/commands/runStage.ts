@@ -10,6 +10,7 @@ import type { ArtifactIndexEntry } from "../../types/artifacts.js";
 import { buildRealKit } from "../../core/kit/build.js";
 import { validateKitOnDisk } from "../../core/kit/validate.js";
 import { packageKit } from "../../core/kit/packager.js";
+import { BuildQualityHookRunner } from "../../core/baq/hooks.js";
 import { buildWorkBreakdown } from "../../core/planning/workBreakdown.js";
 import { buildAcceptanceMap } from "../../core/planning/acceptanceMap.js";
 import { calculateCoverage } from "../../core/planning/coverage.js";
@@ -342,6 +343,8 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
     const kitResult = buildRealKit(runDir, runId, generatedAt, baseDir);
     console.log(`  S10: Built kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
 
+    const baqHookRunner = new BuildQualityHookRunner();
+
     const pmPath = join(runDir, "kit", "packaging_manifest.json");
     if (!existsSync(pmPath)) {
       console.log(`  S10: WARNING — packaging_manifest.json not found, skipping kit validation`);
@@ -384,7 +387,11 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
     }
 
     const packageOutputPath = join(runDir, "kit", "packaged");
-    await packageKit(runDir, packageOutputPath);
+    await packageKit(runDir, packageOutputPath, {
+      hookRunner: baqHookRunner,
+      runId,
+      buildId: `BUILD-${runId}`,
+    });
     console.log(`  S10: Kit packaged to ${packageOutputPath}`);
   }
 }
