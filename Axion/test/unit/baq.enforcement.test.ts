@@ -51,6 +51,21 @@ function makeTmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), "baq-test-"));
 }
 
+function writeCriticalArtifacts(tmpDir: string): void {
+  const artifacts = [
+    "kit_extraction.json",
+    "derived_build_inputs.json",
+    "repo_inventory.json",
+    "requirement_trace_map.json",
+    "sufficiency_evaluation.json",
+  ];
+  for (const name of artifacts) {
+    fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
+  }
+  fs.mkdirSync(path.join(tmpDir, "kit"), { recursive: true });
+  fs.writeFileSync(path.join(tmpDir, "kit", "packaging_manifest.json"), JSON.stringify({ files: [] }));
+}
+
 function makeExtraction(overrides: Partial<BAQKitExtraction> = {}): BAQKitExtraction {
   return {
     schema_version: "1.0.0",
@@ -864,17 +879,11 @@ describe("BAQ Packaging Enforcement", () => {
     };
     const report = buildQualityReport(input);
 
-    const criticals = ["kit_extraction.json", "derived_build_inputs.json",
-      "repo_inventory.json", "requirement_trace_map.json", "sufficiency_evaluation.json"];
-    for (const name of criticals) {
-      fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
-    }
+    writeCriticalArtifacts(tmpDir);
     writeQualityReport(tmpDir, report);
 
     fs.mkdirSync(path.join(tmpDir, "proof"), { recursive: true });
     fs.writeFileSync(path.join(tmpDir, "proof", "proof_ledger.jsonl"), "");
-    fs.writeFileSync(path.join(tmpDir, "requirement_trace_map.json"),
-      JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
 
     const decision = runPackagingPreflight(tmpDir, bundleDir);
     expect(decision.allowed).toBe(false);
@@ -903,11 +912,7 @@ describe("BAQ Packaging Enforcement", () => {
     };
     const report = buildQualityReport(input);
 
-    const criticals = ["kit_extraction.json", "derived_build_inputs.json",
-      "repo_inventory.json", "requirement_trace_map.json", "sufficiency_evaluation.json"];
-    for (const name of criticals) {
-      fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
-    }
+    writeCriticalArtifacts(tmpDir);
     writeQualityReport(tmpDir, report);
 
     const decision = runPackagingPreflight(tmpDir, bundleDir);
@@ -938,17 +943,11 @@ describe("BAQ Packaging Enforcement", () => {
     };
     const report = buildQualityReport(input);
 
-    const criticals = ["kit_extraction.json", "derived_build_inputs.json",
-      "repo_inventory.json", "requirement_trace_map.json", "sufficiency_evaluation.json"];
-    for (const name of criticals) {
-      fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
-    }
+    writeCriticalArtifacts(tmpDir);
     writeQualityReport(tmpDir, report);
 
     fs.mkdirSync(path.join(tmpDir, "proof"), { recursive: true });
     fs.writeFileSync(path.join(tmpDir, "proof", "proof_ledger.jsonl"), "");
-    fs.writeFileSync(path.join(tmpDir, "requirement_trace_map.json"),
-      JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
 
     const decision = runPackagingPreflight(tmpDir, bundleDir);
     expect(decision.allowed).toBe(true);
@@ -979,15 +978,8 @@ describe("BAQ Packaging Enforcement", () => {
     fs.mkdirSync(bundleDir, { recursive: true });
     fs.writeFileSync(path.join(bundleDir, "existing_file.md"), "content");
 
+    writeCriticalArtifacts(tmpDir);
     fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), JSON.stringify(makeInventory(0)));
-
-    const criticals = ["kit_extraction.json", "derived_build_inputs.json",
-      "requirement_trace_map.json", "sufficiency_evaluation.json"];
-    for (const name of criticals) {
-      fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
-    }
-
-    fs.mkdirSync(path.join(tmpDir, "kit"), { recursive: true });
     fs.writeFileSync(path.join(tmpDir, "kit", "packaging_manifest.json"), JSON.stringify({
       files: [
         { path: "agent_kit/missing_file_1.md", sha256: "abc" },
@@ -1148,15 +1140,10 @@ describe("BAQ Regression Tests — False-Green Prevention", () => {
       buildStatus: "verification_complete",
     });
 
-    const criticals = ["kit_extraction.json", "derived_build_inputs.json",
-      "requirement_trace_map.json", "sufficiency_evaluation.json"];
-    for (const name of criticals) {
-      fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
-    }
+    writeCriticalArtifacts(tmpDir);
     fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), JSON.stringify(makeInventory(0)));
     writeQualityReport(tmpDir, report);
 
-    fs.mkdirSync(path.join(tmpDir, "kit"), { recursive: true });
     fs.writeFileSync(path.join(tmpDir, "kit", "packaging_manifest.json"), JSON.stringify({
       files: [
         { path: "agent_kit/expected_but_missing.md", sha256: "abc123" },
@@ -1246,11 +1233,7 @@ describe("BAQ Regression Tests — False-Green Prevention", () => {
       updated_at: new Date().toISOString(),
     };
 
-    const criticals = ["kit_extraction.json", "derived_build_inputs.json",
-      "repo_inventory.json", "requirement_trace_map.json", "sufficiency_evaluation.json"];
-    for (const name of criticals) {
-      fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
-    }
+    writeCriticalArtifacts(tmpDir);
     writeQualityReport(tmpDir, blockedReport);
 
     fs.mkdirSync(path.join(tmpDir, "proof"), { recursive: true });
@@ -1561,8 +1544,6 @@ describe("BAQ Packager-Level Preflight Enforcement", () => {
     inv.summary.total_files = 1;
     inv.summary.required_files = 1;
 
-    fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), JSON.stringify(inv));
-
     const gateEval = allPassingGateEval();
     const report = buildQualityReport({
       runId: "RUN-TEST",
@@ -1577,11 +1558,8 @@ describe("BAQ Packager-Level Preflight Enforcement", () => {
       verificationSignals: makeVerificationSignals(),
       buildStatus: "verification_complete",
     });
-    const criticals = ["kit_extraction.json", "derived_build_inputs.json",
-      "requirement_trace_map.json", "sufficiency_evaluation.json"];
-    for (const name of criticals) {
-      fs.writeFileSync(path.join(tmpDir, name), JSON.stringify({ schema_version: "1.0.0", run_id: "RUN-TEST" }));
-    }
+    writeCriticalArtifacts(tmpDir);
+    fs.writeFileSync(path.join(tmpDir, "repo_inventory.json"), JSON.stringify(inv));
     writeQualityReport(tmpDir, report);
 
     fs.mkdirSync(path.join(tmpDir, "proof"), { recursive: true });

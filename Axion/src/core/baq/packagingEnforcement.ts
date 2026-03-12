@@ -48,6 +48,7 @@ const PACKAGE_CRITICAL_ARTIFACTS = [
   { name: "requirement_trace_map", file: "requirement_trace_map.json", required: true },
   { name: "sufficiency_evaluation", file: "sufficiency_evaluation.json", required: true },
   { name: "build_quality_report", file: "build_quality_report.json", required: true },
+  { name: "packaging_manifest", file: "kit/packaging_manifest.json", required: true },
 ];
 
 function checkPackageCriticalArtifacts(runDir: string): PackagingPreflightCheck[] {

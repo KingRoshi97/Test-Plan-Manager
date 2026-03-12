@@ -165,6 +165,18 @@ export class BuildQualityHookRunner {
     return this.results.get(name);
   }
 
+  markCompleted(name: BAQHookName): void {
+    this.completedHooks.add(name);
+  }
+
+  markUpstreamCompleted(name: BAQHookName): void {
+    const required = HOOK_UPSTREAM_REQUIREMENTS[name];
+    for (const dep of required) {
+      this.markUpstreamCompleted(dep);
+      this.completedHooks.add(dep);
+    }
+  }
+
   isCompleted(name: BAQHookName): boolean {
     return this.completedHooks.has(name);
   }

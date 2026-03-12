@@ -344,6 +344,7 @@ export async function executeStageWork(baseDir: string, runDir: string, runId: s
     console.log(`  S10: Built kit with ${kitResult.fileCount} files, hash=${kitResult.contentHash.slice(0, 12)}`);
 
     const baqHookRunner = new BuildQualityHookRunner();
+    baqHookRunner.markUpstreamCompleted("beforePackaging");
 
     const pmPath = join(runDir, "kit", "packaging_manifest.json");
     if (!existsSync(pmPath)) {
