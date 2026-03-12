@@ -385,3 +385,14 @@ export type BAQHookName =
   | "onPackagingDecision"
   | "onBuildQualityFinalize"
   | "onGenerationFailure";
+
+export type RunStatus = BAQRunStatus;
+export type Severity = BAQSeverity;
+export type SectionStatus = BAQSectionStatus;
+export type ApplicabilityStatus = BAQApplicabilityStatus;
+export type KitExtraction = BAQKitExtraction;
+export type DerivedBuildInputs = BAQDerivedBuildInputs;
+export type RepoInventory = BAQRepoInventory;
+export type RequirementTraceMap = BAQRequirementTraceMap;
+export type BuildQualityReport = BAQBuildQualityReport;
+export type GenerationFailureReport = BAQGenerationFailureReport;

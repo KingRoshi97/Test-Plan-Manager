@@ -31,6 +31,16 @@ export type {
   BAQFailureEntry,
   BAQGenerationFailureReport,
   BAQHookName,
+  RunStatus,
+  Severity,
+  SectionStatus,
+  ApplicabilityStatus,
+  KitExtraction,
+  DerivedBuildInputs,
+  RepoInventory,
+  RequirementTraceMap,
+  BuildQualityReport,
+  GenerationFailureReport,
 } from "./types.js";
 
 export { runBAQExtraction, checkBAQExtractionGate } from "./extraction.js";

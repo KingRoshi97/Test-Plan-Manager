@@ -17,7 +17,7 @@ New `Axion/src/core/baq/` module implements BAQ-SPEC-01 enforcement spine. Curre
 - `hooks.ts` — `BuildQualityHookRunner` with 15 hook slots, upstream artifact rule enforcement, deterministic evidence rule, `BuildQualityHookContext` and `BuildQualityHookResult` types
 - `index.ts` — Barrel export for all types, functions, and classes
 
-**Integration**: BAQ hooks wired into `Axion/src/core/build/runner.ts` — runs `onBuildAuthorityLoaded` → `onKitExtractionStart` → `onKitExtractionComplete` → `onDerivedInputsBuild` before legacy extraction. BAQ artifacts written to `{runDir}/build/baq_kit_extraction.json` and `{runDir}/build/baq_derived_build_inputs.json`. Non-blocking: BAQ gate failures log warnings but fall through to legacy extraction.
+**Integration**: BAQ hooks wired into `Axion/src/core/build/runner.ts` — runs `onBuildAuthorityLoaded` → `onKitExtractionStart` → `onKitExtractionComplete` → `onDerivedInputsBuild` before legacy extraction. BAQ artifacts written to `{runDir}/build/baq_kit_extraction.json` and `{runDir}/build/baq_derived_build_inputs.json`. **Hard blocking**: BAQ gate failures (G-BQ-01, G-BQ-02) throw errors that halt the build — builds cannot proceed past extraction without valid BAQ artifacts.
 
 **BAQ Gates**: G-BQ-01 (Extraction Completeness) and G-BQ-02 (Derived Inputs Completeness) implemented. Remaining gates G-BQ-03 through G-BQ-07 will be added in Tasks #15–#17.
 

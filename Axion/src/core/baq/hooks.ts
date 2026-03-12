@@ -123,14 +123,13 @@ export class BuildQualityHookRunner {
     if (!hook) {
       const result: BuildQualityHookResult = {
         hook_name: name,
-        success: true,
-        blocking: false,
+        success: false,
+        blocking: true,
         evidence: [],
-        warnings: [`No handler registered for hook ${name}, passing through`],
-        errors: [],
+        warnings: [],
+        errors: [`Non-bypass rule: no handler registered for required hook ${name}`],
         timestamp: new Date().toISOString(),
       };
-      this.completedHooks.add(name);
       this.results.set(name, result);
       return result;
     }
