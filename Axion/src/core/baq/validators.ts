@@ -86,10 +86,13 @@ export function validateKitExtraction(data: unknown): ValidationResult {
     return { valid: false, errors: [{ field: "root", message: "Data must be an object", severity: "error" }], warnings };
   }
 
+  requireString(obj, "schema_version", errors);
   requireString(obj, "extraction_id", errors);
   requireString(obj, "run_id", errors);
   requireString(obj, "kit_ref", errors);
   requireString(obj, "kit_version", errors);
+  requireString(obj, "created_at", errors);
+  requireString(obj, "updated_at", errors);
   requireEnum(obj, "status", VALID_RUN_STATUSES, errors);
   requireArray(obj, "sections", errors);
   requireArray(obj, "critical_obligations", errors);
@@ -103,8 +106,15 @@ export function validateKitExtraction(data: unknown): ValidationResult {
         continue;
       }
       requireString(section, "section_id", errors);
+      requireString(section, "section_label", errors);
       requireEnum(section, "status", VALID_SECTION_STATUSES, errors);
       requireEnum(section, "applicability", VALID_APPLICABILITY, errors);
+      if (section.file_count !== undefined && typeof section.file_count !== "number") {
+        errors.push({ field: `sections[${i}].file_count`, message: "file_count must be a number", severity: "error" });
+      }
+      if (section.byte_count !== undefined && typeof section.byte_count !== "number") {
+        errors.push({ field: `sections[${i}].byte_count`, message: "byte_count must be a number", severity: "error" });
+      }
     }
   }
 
@@ -150,19 +160,19 @@ function validateExtractionSummaryCounts(
     errors.push({ field: "summary.total_sections", message: `total_sections=${summary.total_sections} but actual section count=${total}`, severity: "error" });
   }
   if (typeof summary.consumed_count === "number" && summary.consumed_count !== actualConsumed) {
-    warnings.push(`consumed_count=${summary.consumed_count} but actual=${actualConsumed}`);
+    errors.push({ field: "summary.consumed_count", message: `consumed_count=${summary.consumed_count} but actual=${actualConsumed}`, severity: "error" });
   }
   if (typeof summary.deferred_count === "number" && summary.deferred_count !== actualDeferred) {
-    warnings.push(`deferred_count=${summary.deferred_count} but actual=${actualDeferred}`);
+    errors.push({ field: "summary.deferred_count", message: `deferred_count=${summary.deferred_count} but actual=${actualDeferred}`, severity: "error" });
   }
   if (typeof summary.not_applicable_count === "number" && summary.not_applicable_count !== actualNA) {
-    warnings.push(`not_applicable_count=${summary.not_applicable_count} but actual=${actualNA}`);
+    errors.push({ field: "summary.not_applicable_count", message: `not_applicable_count=${summary.not_applicable_count} but actual=${actualNA}`, severity: "error" });
   }
   if (typeof summary.invalid_count === "number" && summary.invalid_count !== actualInvalid) {
-    warnings.push(`invalid_count=${summary.invalid_count} but actual=${actualInvalid}`);
+    errors.push({ field: "summary.invalid_count", message: `invalid_count=${summary.invalid_count} but actual=${actualInvalid}`, severity: "error" });
   }
   if (typeof summary.missing_count === "number" && summary.missing_count !== actualMissing) {
-    warnings.push(`missing_count=${summary.missing_count} but actual=${actualMissing}`);
+    errors.push({ field: "summary.missing_count", message: `missing_count=${summary.missing_count} but actual=${actualMissing}`, severity: "error" });
   }
 
   const sumOfCounts = actualConsumed + actualDeferred + actualNA + actualInvalid + actualMissing;
@@ -180,9 +190,12 @@ export function validateDerivedBuildInputs(data: unknown): ValidationResult {
     return { valid: false, errors: [{ field: "root", message: "Data must be an object", severity: "error" }], warnings };
   }
 
+  requireString(obj, "schema_version", errors);
   requireString(obj, "derivation_id", errors);
   requireString(obj, "run_id", errors);
   requireString(obj, "extraction_ref", errors);
+  requireString(obj, "created_at", errors);
+  requireString(obj, "updated_at", errors);
   requireEnum(obj, "status", VALID_RUN_STATUSES, errors);
   requireArray(obj, "subsystem_map", errors);
   requireArray(obj, "feature_map", errors);
@@ -226,7 +239,7 @@ function validateDerivedSummaryCounts(
     if (typeof summary[summaryKey] === "number" && Array.isArray(obj[arrayKey])) {
       const actual = (obj[arrayKey] as unknown[]).length;
       if (summary[summaryKey] !== actual) {
-        warnings.push(`${summaryKey}=${summary[summaryKey]} but actual ${arrayKey}.length=${actual}`);
+        errors.push({ field: `summary.${summaryKey}`, message: `${summaryKey}=${summary[summaryKey]} but actual ${arrayKey}.length=${actual}`, severity: "error" });
       }
     }
   }
@@ -248,9 +261,12 @@ export function validateBuildQualityReport(data: unknown): ValidationResult {
     return { valid: false, errors: [{ field: "root", message: "Data must be an object", severity: "error" }], warnings };
   }
 
+  requireString(obj, "schema_version", errors);
   requireString(obj, "report_id", errors);
   requireString(obj, "run_id", errors);
   requireString(obj, "build_id", errors);
+  requireString(obj, "created_at", errors);
+  requireString(obj, "updated_at", errors);
   requireEnum(obj, "status", VALID_RUN_STATUSES, errors);
   requireArray(obj, "gates", errors);
 
@@ -292,8 +308,11 @@ export function validateGenerationFailureReport(data: unknown): ValidationResult
     return { valid: false, errors: [{ field: "root", message: "Data must be an object", severity: "error" }], warnings };
   }
 
+  requireString(obj, "schema_version", errors);
   requireString(obj, "report_id", errors);
   requireString(obj, "run_id", errors);
+  requireString(obj, "created_at", errors);
+  requireString(obj, "updated_at", errors);
   requireArray(obj, "failures", errors);
 
   if (Array.isArray(obj.failures)) {
@@ -330,8 +349,11 @@ export function validateRepoInventory(data: unknown): ValidationResult {
     return { valid: false, errors: [{ field: "root", message: "Data must be an object", severity: "error" }], warnings };
   }
 
+  requireString(obj, "schema_version", errors);
   requireString(obj, "inventory_id", errors);
   requireString(obj, "run_id", errors);
+  requireString(obj, "created_at", errors);
+  requireString(obj, "updated_at", errors);
   requireArray(obj, "directories", errors);
   requireArray(obj, "modules", errors);
   requireArray(obj, "files", errors);
@@ -364,8 +386,11 @@ export function validateRequirementTraceMap(data: unknown): ValidationResult {
     return { valid: false, errors: [{ field: "root", message: "Data must be an object", severity: "error" }], warnings };
   }
 
+  requireString(obj, "schema_version", errors);
   requireString(obj, "trace_map_id", errors);
   requireString(obj, "run_id", errors);
+  requireString(obj, "created_at", errors);
+  requireString(obj, "updated_at", errors);
   requireArray(obj, "traces", errors);
 
   if (Array.isArray(obj.traces)) {

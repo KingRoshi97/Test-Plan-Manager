@@ -283,13 +283,15 @@ export async function runBuild(
     baqExtraction = runBAQExtraction(runDir);
     const baqValidation = validateKitExtraction(baqExtraction);
     if (!baqValidation.valid) {
-      console.log(`  [BAQ] Extraction validation errors: ${baqValidation.errors.map(e => e.message).join("; ")}`);
+      const validationErrors = baqValidation.errors.filter(e => e.severity === "error").map(e => e.message).join("; ");
+      console.log(`  [BAQ] BLOCKED — Extraction validation failed: ${validationErrors}`);
+      throw new Error(`BAQ extraction validation failed: ${validationErrors}`);
     }
 
     const buildDir = path.join(runDir, "build");
     if (!fs.existsSync(buildDir)) fs.mkdirSync(buildDir, { recursive: true });
     fs.writeFileSync(
-      path.join(buildDir, "baq_kit_extraction.json"),
+      path.join(buildDir, "kit_extraction.json"),
       JSON.stringify(baqExtraction, null, 2),
       "utf-8",
     );
@@ -315,11 +317,13 @@ export async function runBuild(
     baqDerivedInputs = buildDerivedInputs(baqExtraction, runDir);
     const derivedValidation = validateDerivedBuildInputs(baqDerivedInputs);
     if (!derivedValidation.valid) {
-      console.log(`  [BAQ] Derived inputs validation errors: ${derivedValidation.errors.map(e => e.message).join("; ")}`);
+      const validationErrors = derivedValidation.errors.filter(e => e.severity === "error").map(e => e.message).join("; ");
+      console.log(`  [BAQ] BLOCKED — Derived inputs validation failed: ${validationErrors}`);
+      throw new Error(`BAQ derived inputs validation failed: ${validationErrors}`);
     }
 
     fs.writeFileSync(
-      path.join(buildDir, "baq_derived_build_inputs.json"),
+      path.join(buildDir, "derived_build_inputs.json"),
       JSON.stringify(baqDerivedInputs, null, 2),
       "utf-8",
     );
