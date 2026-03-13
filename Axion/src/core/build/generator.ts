@@ -1,5 +1,27 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * BUILD AGENT (BA) — Code Generator
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ROLE: The BA executes the Agent Kit (produced by the IA pipeline S1–S10)
+ * to generate working software using Claude. It reads the blueprint,
+ * build plan, and GSE strategy plan, then produces files via deterministic
+ * generators or LLM calls.
+ *
+ * BOUNDARY RULES:
+ * - The BA does NOT perform IA functions: no spec analysis, no standards
+ *   resolution, no template selection or rendering, no document generation.
+ * - The BA does NOT perform BAQ functions: no certification, no quality
+ *   scoring, no gate enforcement. BAQ evaluates BA outputs after the fact.
+ * - The BA ONLY reads IA outputs (blueprint, kit, build plan) and produces
+ *   source code files. It does not modify or interpret the Agent Kit.
+ * - All LLM calls are for code generation only — not for analysis,
+ *   planning, or quality assessment.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
 import * as fs from "fs";
 import * as path from "path";
+import * as crypto from "crypto";
 import { recordUsage } from "../usage/tracker.js";
 import type {
   BuildPlan, BuildSlice, BuildFileTarget, StackProfile,
@@ -8,6 +30,27 @@ import type {
 } from "./types.js";
 import type { WorkspacePaths } from "./workspace.js";
 import { writeRepoFile, ensureRepoSubdir } from "./workspace.js";
+
+const BUILD_CONCURRENCY = parseInt(process.env.BUILD_CONCURRENCY ?? "5", 10);
+
+const QUALITY_DETERMINISTIC_ROLES = new Set([
+  "package_manifest", "ts_config", "build_config", "css_config", "html_entry",
+  "env_template", "git_config", "lint_config", "format_config", "config_env",
+  "entry_point", "styles", "style_entry",
+  "db_schema_entity", "db_schema", "request_dto", "response_dto",
+  "shared_contract", "test_fixture", "db_seed_entity", "db_seed",
+  "form_schema", "loading_skeleton",
+  "types", "shared_types", "api_types", "entity_types", "auth_types",
+  "entity_model",
+  "ci_config", "deploy_config", "docker_config",
+  "test_utility",
+  "directory",
+]);
+
+const TRIVIAL_AI_ROLES = new Set([
+  "barrel_export", "model_index", "route_index", "type_barrel",
+  "enum_types",
+]);
 
 interface AIMessage {
   role: "system" | "user" | "assistant";
@@ -285,6 +328,150 @@ function resolveModelForStrategy(strategy: GenerationStrategy): string {
   return "claude-sonnet-4-6";
 }
 
+const SHARED_INFRA_PATHS = [
+  "src/main.tsx", "src/App.tsx", "src/styles/globals.css",
+  "src/lib/api/client.ts", "src/lib/api/endpoints.ts", "src/lib/api/interceptors.ts",
+  "src/lib/auth/context.tsx", "src/lib/auth/ProtectedRoute.tsx", "src/lib/auth/useAuth.ts",
+  "src/lib/validators/index.ts", "src/lib/store/index.ts", "src/lib/utils/index.ts",
+  "src/components/ui/LoadingSpinner.tsx", "src/components/ui/ErrorBoundary.tsx",
+  "src/components/ui/EmptyState.tsx", "src/components/ui/Pagination.tsx",
+];
+
+function buildScopedManifest(
+  unit: BuildUnit,
+  allUnits: BuildUnit[],
+  fileInventory: BlueprintFileEntry[],
+  ctx: KitContext,
+): string {
+  const relevantFileIds = new Set<string>();
+
+  for (const fid of unit.file_ids) relevantFileIds.add(fid);
+
+  for (const depId of unit.dependency_unit_ids) {
+    const depUnit = allUnits.find(u => u.id === depId);
+    if (depUnit) {
+      for (const fid of depUnit.file_ids) relevantFileIds.add(fid);
+    }
+  }
+
+  const sharedUnit = allUnits.find(u => u.unit_type === "shared_unit");
+  if (sharedUnit && sharedUnit.id !== unit.id) {
+    for (const fid of sharedUnit.file_ids) relevantFileIds.add(fid);
+  }
+
+  const fileMap = new Map<string, BlueprintFileEntry>();
+  for (const f of fileInventory) fileMap.set(f.file_id, f);
+
+  const lines: string[] = [];
+
+  for (const page of ctx.allPages) {
+    lines.push(`- ${page.path} (${page.role}) → default export: ${page.name}`);
+  }
+
+  relevantFileIds.forEach(fid => {
+    const f = fileMap.get(fid);
+    if (f && !lines.some(l => l.includes(f.path))) {
+      lines.push(`- ${f.path} (${f.role})`);
+    }
+  });
+
+  for (const infraPath of SHARED_INFRA_PATHS) {
+    if (!lines.some(l => l.includes(infraPath))) {
+      const entry = fileInventory.find(f => f.path === infraPath);
+      if (entry) {
+        lines.push(`- ${entry.path} (${entry.role})`);
+      } else {
+        lines.push(`- ${infraPath}`);
+      }
+    }
+  }
+
+  return lines.join("\n");
+}
+
+function computeUnitCacheKey(
+  unit: BuildUnit,
+  strategy: GenerationStrategy,
+  capsule: ContextCapsule | undefined,
+  scopedManifest: string,
+  frozenSystemPrompt: string,
+): string {
+  const hash = crypto.createHash("sha256");
+  hash.update(JSON.stringify(unit.file_ids));
+  hash.update(JSON.stringify(strategy));
+  hash.update(JSON.stringify(capsule ?? {}));
+  hash.update(scopedManifest);
+  hash.update(frozenSystemPrompt);
+  return hash.digest("hex").slice(0, 16);
+}
+
+interface UnitCacheEntry {
+  cache_key: string;
+  unit_id: string;
+  files_produced: Array<{ path: string; content: string }>;
+  model_used: string;
+  timestamp: string;
+}
+
+function loadUnitCache(runDir: string): Map<string, UnitCacheEntry> {
+  const cacheDir = path.join(runDir, "build", "unit_cache");
+  const cache = new Map<string, UnitCacheEntry>();
+  if (!fs.existsSync(cacheDir)) return cache;
+
+  try {
+    const indexPath = path.join(cacheDir, "cache_index.json");
+    if (fs.existsSync(indexPath)) {
+      const entries: UnitCacheEntry[] = JSON.parse(fs.readFileSync(indexPath, "utf-8"));
+      for (const entry of entries) {
+        cache.set(entry.cache_key, entry);
+      }
+    }
+  } catch {
+  }
+
+  const parentDir = path.dirname(runDir);
+  if (fs.existsSync(parentDir)) {
+    try {
+      const dirs = fs.readdirSync(parentDir)
+        .filter(d => d.startsWith("RUN-") && d !== path.basename(runDir))
+        .sort()
+        .reverse()
+        .slice(0, 3);
+
+      for (const dir of dirs) {
+        const prevCachePath = path.join(parentDir, dir, "build", "unit_cache", "cache_index.json");
+        if (fs.existsSync(prevCachePath)) {
+          try {
+            const entries: UnitCacheEntry[] = JSON.parse(fs.readFileSync(prevCachePath, "utf-8"));
+            for (const entry of entries) {
+              if (!cache.has(entry.cache_key)) {
+                cache.set(entry.cache_key, entry);
+              }
+            }
+          } catch {
+          }
+        }
+      }
+    } catch {
+    }
+  }
+
+  return cache;
+}
+
+function saveUnitCache(runDir: string, entries: UnitCacheEntry[]): void {
+  const cacheDir = path.join(runDir, "build", "unit_cache");
+  if (!fs.existsSync(cacheDir)) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+  }
+  fs.writeFileSync(path.join(cacheDir, "cache_index.json"), JSON.stringify(entries, null, 2));
+}
+
+function canUseDeterministic(file: BlueprintFileEntry): boolean {
+  if (file.generation_method !== "deterministic") return false;
+  return QUALITY_DETERMINISTIC_ROLES.has(file.role);
+}
+
 async function generateUnit(
   unit: BuildUnit,
   strategy: GenerationStrategy,
@@ -294,6 +481,8 @@ async function generateUnit(
   plan: BuildPlan,
   fileInventory: BlueprintFileEntry[],
   paths: WorkspacePaths,
+  allUnits?: BuildUnit[],
+  scopedManifestOverride?: string,
 ): Promise<UnitGenerationResult> {
   const inventoryPaths = new Set(fileInventory.map(f => f.path));
   const fileMap = new Map<string, BlueprintFileEntry>();
@@ -342,10 +531,87 @@ async function generateUnit(
     return result;
   }
 
+  const deterministicFiles: BlueprintFileEntry[] = [];
+  const aiFiles: BlueprintFileEntry[] = [];
+  const trivialAiFiles: BlueprintFileEntry[] = [];
+
+  for (const entry of unitFiles) {
+    if (canUseDeterministic(entry)) {
+      deterministicFiles.push(entry);
+    } else if (TRIVIAL_AI_ROLES.has(entry.role)) {
+      trivialAiFiles.push(entry);
+    } else {
+      aiFiles.push(entry);
+    }
+  }
+
+  if (deterministicFiles.length > 0) {
+    console.log(`    [BUILD-UNIT] ${deterministicFiles.length} files handled deterministically in ${unit.name}`);
+    for (const entry of deterministicFiles) {
+      const buildFileTarget: BuildFileTarget = {
+        relativePath: entry.path,
+        role: entry.role,
+        sourceRef: entry.source_refs[0],
+        generationMethod: "deterministic",
+        status: "pending",
+      };
+      const dummySlice: BuildSlice = {
+        sliceId: unit.id,
+        name: unit.name,
+        order: 0,
+        requiresAI: false,
+        files: [],
+        status: "in_progress",
+      };
+      const content = generateDeterministic(ctx, dummySlice, buildFileTarget);
+      if (content !== null) {
+        if (!inventoryPaths.has(entry.path)) {
+          result.structural_violations.push(`Rejected path not in inventory: ${entry.path}`);
+        } else {
+          result.files_produced.push({ path: entry.path, content });
+        }
+      }
+    }
+  }
+
+  if (trivialAiFiles.length > 0) {
+    console.log(`    [BUILD-UNIT] ${trivialAiFiles.length} trivial files routed to Haiku in ${unit.name}`);
+    for (const entry of trivialAiFiles) {
+      const buildFileTarget: BuildFileTarget = {
+        relativePath: entry.path,
+        role: entry.role,
+        sourceRef: entry.source_refs[0],
+        generationMethod: entry.generation_method,
+        status: "pending",
+      };
+      const dummySlice: BuildSlice = {
+        sliceId: unit.id,
+        name: unit.name,
+        order: 0,
+        requiresAI: true,
+        files: [],
+        status: "in_progress",
+      };
+      try {
+        const content = await generateFile(ctx, dummySlice, buildFileTarget, "claude-haiku-4-5");
+        if (content !== null) {
+          result.files_produced.push({ path: entry.path, content });
+        }
+      } catch {
+        result.success = false;
+      }
+    }
+  }
+
+  if (aiFiles.length === 0) {
+    result.model_used = deterministicFiles.length > 0 ? "deterministic+haiku" : "none";
+    return result;
+  }
+
   const modelName = resolveModelForStrategy(strategy);
   result.model_used = modelName;
 
-  const fileTargets = unitFiles.map(f => `- ${f.path} (role: ${f.role})`).join("\n");
+  const fileTargets = aiFiles.map(f => `- ${f.path} (role: ${f.role})`).join("\n");
 
   let capsuleContext = "";
   if (capsule) {
@@ -369,12 +635,19 @@ async function generateUnit(
 
   const designDirective = buildDesignDirective(ctx);
 
+  const scopedManifest = scopedManifestOverride ??
+    (allUnits ? buildScopedManifest(unit, allUnits, fileInventory, ctx) : null);
+  const manifestSection = scopedManifest
+    ? `\nFILE MANIFEST (relevant files for imports):\n${scopedManifest}`
+    : "";
+
   const userPrompt = `Generate the following files for unit "${unit.name}" (${unit.unit_type}):
 
 ${fileTargets}
 
 CONTEXT:${capsuleContext}
 ${designDirective}
+${manifestSection}
 
 Features: ${ctx.features.map(f => `${f.feature_id}: ${f.name}`).join(", ")}
 Roles: ${ctx.roles.map(r => `${r.role_id}: ${r.name}`).join(", ")}
@@ -383,10 +656,10 @@ OUTPUT FORMAT: For each file, output exactly:
 ===FILE: <path>===
 <file content>
 
-Generate all ${unitFiles.length} files. Each file must be complete, production-quality code.`;
+Generate all ${aiFiles.length} files. Each file must be complete, production-quality code.`;
 
-  const maxTokens = Math.min(unitFiles.length * 4096, 16384);
-  console.log(`    [BUILD-UNIT] Calling ${modelName} for unit ${unit.name} (${unitFiles.length} files, maxTokens=${maxTokens})...`);
+  const maxTokens = Math.min(aiFiles.length * 4096, 16384);
+  console.log(`    [BUILD-UNIT] Calling ${modelName} for unit ${unit.name} (${aiFiles.length} AI files, ${deterministicFiles.length} deterministic, ${trivialAiFiles.length} trivial, maxTokens=${maxTokens})...`);
 
   const rawResult = await generateCode(
     [
@@ -400,17 +673,17 @@ Generate all ${unitFiles.length} files. Each file must be complete, production-q
 
   if (!rawResult) {
     console.log(`    [BUILD-UNIT] LLM returned empty for unit ${unit.name}, falling back to file-by-file`);
-    return await generateUnitFileByFile(unit, unitFiles, ctx, plan, paths, inventoryPaths, modelName, result);
+    return await generateUnitFileByFile(unit, aiFiles, ctx, plan, paths, inventoryPaths, modelName, result);
   }
 
   const parsed = parseMultiFileOutput(rawResult);
 
   if (!parsed || parsed.length === 0) {
     console.log(`    [BUILD-UNIT] Multi-file parsing failed for unit ${unit.name}, falling back to file-by-file`);
-    return await generateUnitFileByFile(unit, unitFiles, ctx, plan, paths, inventoryPaths, modelName, result);
+    return await generateUnitFileByFile(unit, aiFiles, ctx, plan, paths, inventoryPaths, modelName, result);
   }
 
-  console.log(`    [BUILD-UNIT] Parsed ${parsed.length}/${unitFiles.length} files from unit response`);
+  console.log(`    [BUILD-UNIT] Parsed ${parsed.length}/${aiFiles.length} AI files from unit response`);
 
   const producedPaths = new Set<string>();
   for (const produced of parsed) {
@@ -423,7 +696,7 @@ Generate all ${unitFiles.length} files. Each file must be complete, production-q
     result.files_produced.push(produced);
   }
 
-  const missingFiles = unitFiles.filter(f => !producedPaths.has(f.path));
+  const missingFiles = aiFiles.filter(f => !producedPaths.has(f.path));
   if (missingFiles.length > 0) {
     console.log(`    [BUILD-UNIT] ${missingFiles.length} files missing from unit response, generating individually`);
     for (const missing of missingFiles) {
@@ -592,6 +865,7 @@ async function generateRepoUnitCentric(
 ): Promise<{ success: boolean; filesGenerated: number; filesFailed: number; errors: string[]; unitResults: UnitGenerationResult[] }> {
   const frozenSystemPrompt = buildFrozenSystemPrompt(ctx);
   console.log(`  [BUILD-UNIT] Frozen system prompt built (${frozenSystemPrompt.length} chars)`);
+  console.log(`  [BUILD-UNIT] Parallel concurrency: ${BUILD_CONCURRENCY}`);
 
   const fileInventory: BlueprintFileEntry[] = [];
   const blueprintPath = path.join(runDir, "build", "repo_blueprint.json");
@@ -626,30 +900,94 @@ async function generateRepoUnitCentric(
   const unitResults: UnitGenerationResult[] = [];
   let totalProcessed = 0;
 
-  for (const wave of gsePlan.wave_plan.waves) {
-    console.log(`  [BUILD-UNIT] Wave ${wave.wave_id} (${wave.unit_ids.length} units)`);
+  const unitCache = loadUnitCache(runDir);
+  const newCacheEntries: UnitCacheEntry[] = [];
+  let cacheHits = 0;
 
+  if (unitCache.size > 0) {
+    console.log(`  [BUILD-UNIT] Loaded ${unitCache.size} cache entries from previous runs`);
+  }
+
+  const pLimitMod = await import("p-limit") as any;
+  const pLimit = pLimitMod.default ?? pLimitMod;
+  const limit = pLimit(BUILD_CONCURRENCY);
+
+  for (const wave of gsePlan.wave_plan.waves) {
+    console.log(`  [BUILD-UNIT] Wave ${wave.wave_id} (${wave.unit_ids.length} units, concurrency=${BUILD_CONCURRENCY})`);
+
+    const waveUnits: Array<{ unit: BuildUnit; strategy: GenerationStrategy }> = [];
     for (const unitId of wave.unit_ids) {
       const unit = gsePlan.build_units.find(u => u.id === unitId);
       if (!unit) continue;
-
       const strategy = strategyMap.get(unitId);
       if (!strategy) continue;
+      waveUnits.push({ unit, strategy });
+    }
 
-      console.log(`  [BUILD-UNIT] Unit: ${unit.name} (${unit.unit_type}, ${strategy.generation_mode}, ${unit.file_ids.length} files)`);
+    const wavePromises = waveUnits.map(({ unit, strategy }) =>
+      limit(async () => {
+        const scopedManifest = buildScopedManifest(unit, gsePlan.build_units, fileInventory, ctx);
+        const cacheKey = computeUnitCacheKey(unit, strategy, unit.context_capsule, scopedManifest, frozenSystemPrompt);
 
-      const unitResult = await generateUnit(
-        unit,
-        strategy,
-        unit.context_capsule,
-        frozenSystemPrompt,
-        ctx,
-        plan,
-        fileInventory,
-        paths,
-      );
+        const cached = unitCache.get(cacheKey);
+        if (cached) {
+          console.log(`  [BUILD-UNIT] CACHE HIT: ${unit.name} (key=${cacheKey})`);
+          cacheHits++;
+          return {
+            unit,
+            unitResult: {
+              unit_id: unit.id,
+              files_produced: cached.files_produced,
+              tokens_used: 0,
+              model_used: `cached:${cached.model_used}`,
+              success: true,
+              structural_violations: [],
+            } as UnitGenerationResult,
+            cacheKey,
+            fromCache: true,
+          };
+        }
 
+        console.log(`  [BUILD-UNIT] Unit: ${unit.name} (${unit.unit_type}, ${strategy.generation_mode}, ${unit.file_ids.length} files)`);
+
+        const unitResult = await generateUnit(
+          unit,
+          strategy,
+          unit.context_capsule,
+          frozenSystemPrompt,
+          ctx,
+          plan,
+          fileInventory,
+          paths,
+          gsePlan.build_units,
+          scopedManifest,
+        );
+
+        return { unit, unitResult, cacheKey, fromCache: false };
+      })
+    );
+
+    const waveResults = await Promise.allSettled(wavePromises);
+
+    for (const settled of waveResults) {
+      if (settled.status === "rejected") {
+        filesFailed++;
+        errors.push(`Unit execution failed: ${settled.reason}`);
+        continue;
+      }
+
+      const { unit, unitResult, cacheKey, fromCache } = settled.value;
       unitResults.push(unitResult);
+
+      if (!fromCache && unitResult.success && unitResult.files_produced.length > 0) {
+        newCacheEntries.push({
+          cache_key: cacheKey,
+          unit_id: unit.id,
+          files_produced: unitResult.files_produced,
+          model_used: unitResult.model_used,
+          timestamp: new Date().toISOString(),
+        });
+      }
 
       for (const produced of unitResult.files_produced) {
         try {
@@ -691,20 +1029,25 @@ async function generateRepoUnitCentric(
           errors.push(`STRUCTURAL: ${v}`);
         }
       }
+    }
 
-      for (const slice of plan.slices) {
-        if (slice.status === "completed" || slice.status === "failed") continue;
-        const allDone = slice.files.every(f => f.status === "generated" || f.status === "skipped");
-        if (allDone && slice.files.length > 0) {
-          slice.status = "completed";
-          slice.completedAt = new Date().toISOString();
-          console.log(`  [BUILD-UNIT] Slice completed: ${slice.name}`);
-        }
+    for (const slice of plan.slices) {
+      if (slice.status === "completed" || slice.status === "failed") continue;
+      const allDone = slice.files.every(f => f.status === "generated" || f.status === "skipped");
+      if (allDone && slice.files.length > 0) {
+        slice.status = "completed";
+        slice.completedAt = new Date().toISOString();
+        console.log(`  [BUILD-UNIT] Slice completed: ${slice.name}`);
       }
     }
   }
 
-  console.log(`  [BUILD-UNIT] Unit-centric generation complete: ${filesGenerated} generated, ${filesFailed} failed`);
+  if (newCacheEntries.length > 0) {
+    saveUnitCache(runDir, newCacheEntries);
+    console.log(`  [BUILD-UNIT] Saved ${newCacheEntries.length} cache entries for future builds`);
+  }
+
+  console.log(`  [BUILD-UNIT] Unit-centric generation complete: ${filesGenerated} generated, ${filesFailed} failed, ${cacheHits} cache hits`);
   return { success: filesFailed === 0, filesGenerated, filesFailed, errors, unitResults };
 }
 

@@ -1,3 +1,21 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * BUILD AGENT (BA) — Build Runner
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ROLE: Orchestrates the BA build lifecycle: eligibility checks, kit
+ * extraction, blueprint creation, GSE strategy planning, code generation,
+ * and verification. Also handles AVCS remediation (fixing certification
+ * findings in generated code).
+ *
+ * BOUNDARY RULES:
+ * - Reads IA outputs (kit, stages, gates) but does NOT execute IA stages.
+ * - Invokes BAQ extraction/gates for post-build quality checks but does
+ *   NOT perform certification scoring — that is BAQ's domain.
+ * - The runner coordinates the BA pipeline; it does not make quality
+ *   judgments about the generated code.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
 import * as path from "path";
 import * as fs from "fs";
 import type {

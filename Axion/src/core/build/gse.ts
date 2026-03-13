@@ -1,3 +1,22 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * BUILD AGENT (BA) — Generation Strategy Engine (GSE)
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * ROLE: The GSE is part of the BA. It reads the IA-produced blueprint and
+ * derives build units, complexity profiles, model routing strategies, and
+ * wave plans. It does NOT modify the Agent Kit or perform IA/BAQ functions.
+ *
+ * OUTPUTS: build_units, complexity_profiles, generation_strategy_plan,
+ *          wave_plan, cost_report — all consumed by generator.ts
+ *
+ * MODEL ROUTING:
+ *   C0/C1 → deterministic (no AI)
+ *   C2    → Claude Haiku (claude-haiku-4-5)
+ *   C3    → Claude Sonnet (claude-sonnet-4-6)
+ *   C4    → Claude Sonnet (claude-sonnet-4-6)
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
 import * as fs from "fs";
 import * as path from "path";
 import type {
@@ -469,6 +488,43 @@ export function routeGenerationStrategy(
   return { strategies, costForecast };
 }
 
+const MAX_FILES_PER_UNIT = 30;
+const TARGET_FILES_PER_SUBUNIT = 25;
+
+export function splitOversizedUnits(units: BuildUnit[]): BuildUnit[] {
+  const result: BuildUnit[] = [];
+  let subIdx = 0;
+
+  for (const unit of units) {
+    if (unit.file_ids.length <= MAX_FILES_PER_UNIT) {
+      result.push(unit);
+      continue;
+    }
+
+    const chunks: string[][] = [];
+    for (let i = 0; i < unit.file_ids.length; i += TARGET_FILES_PER_SUBUNIT) {
+      chunks.push(unit.file_ids.slice(i, i + TARGET_FILES_PER_SUBUNIT));
+    }
+
+    console.log(`  [GSE] Splitting ${unit.id} (${unit.file_ids.length} files) into ${chunks.length} sub-units`);
+
+    for (let c = 0; c < chunks.length; c++) {
+      const subId = `${unit.id}-sub${String(c + 1).padStart(2, "0")}`;
+      result.push({
+        id: subId,
+        unit_type: unit.unit_type,
+        name: `${unit.name} (part ${c + 1}/${chunks.length})`,
+        file_ids: chunks[c],
+        dependency_unit_ids: [...unit.dependency_unit_ids],
+        source_refs: unit.source_refs,
+      });
+      subIdx++;
+    }
+  }
+
+  return result;
+}
+
 export function computeWavePlan(units: BuildUnit[]): WavePlan {
   const waveMap: Record<string, string[]> = {
     "wave-1-foundations": [],
@@ -590,9 +646,11 @@ export async function runGSE(
   runDir: string
 ): Promise<GenerationStrategyPlan> {
   console.log("  [GSE] Deriving build units...");
-  const buildUnits = deriveBuildUnits(blueprint);
+  const rawUnits = deriveBuildUnits(blueprint);
+  console.log(`  [GSE] ${rawUnits.length} raw build units, splitting oversized (>${MAX_FILES_PER_UNIT} files)...`);
+  const buildUnits = splitOversizedUnits(rawUnits);
   const totalFiles = buildUnits.reduce((a, u) => a + u.file_ids.length, 0);
-  console.log(`  [GSE] ${buildUnits.length} build units covering ${totalFiles}/${blueprint.file_inventory.length} files`);
+  console.log(`  [GSE] ${buildUnits.length} build units (after split) covering ${totalFiles}/${blueprint.file_inventory.length} files`);
 
   const unitTypeCounts: Record<string, number> = {};
   for (const u of buildUnits) {
