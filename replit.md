@@ -31,6 +31,15 @@ Three agent types interact with the system:
 ### Build Mode System
 The Build Mode generates a full project repository from an approved Agent Kit. It prioritizes a minimum sufficient artifact set, structure-first design, unit-centric generation, and token-aware architecture. The process involves Kit Extraction (KEX), Repo Blueprint (RBP) generation, Blueprint-Driven Planning, and a Generation Strategy Engine (GSE) that classifies files into build units and routes generation to appropriate Claude models (Haiku for simple files, Sonnet for complex/high-quality generation).
 
+### Build System Architecture (Modular)
+The build system core is split into focused modules under `Axion/src/core/build/`:
+-   **generator.ts**: Core orchestration — API client, `generateCode`, `generateUnit`, `generateRepoUnitCentric`, `generateRepo`, caching, config constants. Accepts and propagates `AbortSignal` through the entire call chain.
+-   **deterministic-generators.ts**: ~30 `gen*` functions for deterministic file generation without LLMs (config files, manifests, etc.), plus helpers (`hexToShades`, `toSnakeCase`, `toCamelCase`).
+-   **prompt-builders.ts**: System/user prompt construction, design directives, file manifests, document extraction helpers.
+-   **remediation.ts**: AVCS remediation pipeline — `fixUnitsFromFindings`, patch parsing/application, preservation gates, diff stats.
+-   **runner.ts**: Build orchestration with global timeout (20min), per-phase timeouts (extraction 2min, blueprint 2min, GSE 1min), heartbeat watchdog (30s), and abort signal propagation.
+-   **gse.ts**: Generation Strategy Engine — classifies files into build units and plans wave execution.
+
 ### Build Performance Optimizations
 The BA build system includes:
 -   **Parallel wave execution**: Units run concurrently using `p-limit`.
@@ -39,9 +48,13 @@ The BA build system includes:
 -   **Scoped file manifests**: LLM calls receive context-specific file manifests, not the full repository.
 -   **Auto-split oversized units**: Units with many files are split to manage LLM context.
 -   **Unit-level build cache**: Caches build inputs to skip LLM calls on re-builds.
+-   **Global build timeout**: 20-minute hard limit (`BUILD_GLOBAL_TIMEOUT_MS`) with AbortController propagation through all generation calls.
+-   **Phase timeouts**: Per-phase limits for extraction (2min), blueprint (2min), and GSE (1min) with `PhaseTimer` tracking.
+-   **Heartbeat watchdog**: 30-second interval logging during generation for liveness monitoring.
 -   **API call timeouts**: Each LLM call has a configurable timeout (`BUILD_API_TIMEOUT_MS`, default 90s) to prevent stalled API connections from blocking the entire build.
 -   **Automatic retry with backoff**: Failed/timed-out API calls retry once (`BUILD_API_RETRIES`, default 1) with exponential backoff. Rate-limited (429) and overloaded (529) responses are retried with appropriate delays.
 -   **Per-unit timeout**: Each build unit has a max execution time (`BUILD_UNIT_TIMEOUT_MS`, default 5min) so a single stuck unit cannot block the wave.
+-   **GSE required**: Legacy file-centric generation path removed; GSE strategy plan is mandatory for all builds.
 
 ### Build Agent Quality (BAQ) Enforcement Layer
 A BAQ enforcement layer (`Axion/src/core/baq/`) implements build quality specifications through schema definitions, runtime validation, and sufficiency evaluation across five dimensions. It integrates hooks into the build process to enforce quality gates and generate detailed reports. BAQ validation and gate failures halt the build. BAQ inventory planning uses two tiers: structural/config files marked `required: true` and AI-generated feature files marked `required: false`.

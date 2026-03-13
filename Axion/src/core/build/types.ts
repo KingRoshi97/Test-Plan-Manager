@@ -620,3 +620,81 @@ export interface BuildFidelityReport {
   deterministic_pct: number;
   structural_violations: number;
 }
+
+export interface DocFile {
+  name: string;
+  content: string;
+}
+
+export interface KitContext {
+  projectName: string;
+  specId: string;
+  features: Array<{ feature_id: string; name: string; description: string }>;
+  roles: Array<{ role_id: string; name: string; description: string }>;
+  workflows: Array<{ workflow_id: string; name: string; steps: string[] }>;
+  workBreakdown: Array<{ unit_id: string; title: string; type: string; deliverables: string[]; scope_refs: string[] }>;
+  requirementsDocs: DocFile[];
+  designDocs: DocFile[];
+  archDocs: DocFile[];
+  implDocs: DocFile[];
+  securityDocs: DocFile[];
+  qualityDocs: DocFile[];
+  opsDocs: DocFile[];
+  dataDocs: DocFile[];
+  apiDocs: DocFile[];
+  analyticsDocs: DocFile[];
+  governanceDocs: DocFile[];
+  releaseDocs: DocFile[];
+  allPages: Array<{ path: string; routePath: string; name: string; role: string; sourceRef?: string }>;
+  stackProfile: StackProfile;
+  routing: { type_preset?: string; build_target?: string };
+  buildBrief: string | null;
+  designIdentity: string | null;
+  normalizedDesign: any | null;
+  normalizedIntent: any | null;
+}
+
+export interface GeneratorProgress {
+  sliceId: string;
+  sliceName: string;
+  fileIndex: number;
+  totalFiles: number;
+  filePath: string;
+  status: "generating" | "generated" | "failed" | "skipped";
+}
+
+export type ProgressCallback = (progress: GeneratorProgress) => void;
+
+export type GenerateCodeFn = (messages: AIMessage[], maxTokens?: number, stage?: string, model?: string) => Promise<string | null>;
+
+export interface AIMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+export interface RemediationFileContext {
+  findingTitle: string;
+  findingDescription: string;
+  remediationGuidance: string;
+  severity: string;
+  fileSpecificDetail?: string;
+}
+
+export interface FixFileResult {
+  filePath: string;
+  status: "fixed" | "unchanged" | "failed";
+  beforeHash: string;
+  afterHash: string;
+  findingsAddressed: string[];
+  error?: string;
+  preservationGates?: Array<{ gate_id: string; passed: boolean; message: string }>;
+  fixMethod?: "patch" | "fallback_full_rewrite";
+  diffStats?: { linesAdded: number; linesRemoved: number; linesUnchanged: number };
+}
+
+export interface FixUnitResult {
+  unitId: string;
+  unitName: string;
+  files: FixFileResult[];
+  success: boolean;
+}

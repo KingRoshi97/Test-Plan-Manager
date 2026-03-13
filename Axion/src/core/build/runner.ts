@@ -110,6 +110,75 @@ const AXION_BASE = fs.existsSync(path.resolve("Axion", ".axion"))
   : path.resolve(".");
 const AXION_RUNS_DIR = path.join(AXION_BASE, ".axion", "runs");
 
+function safeParseInt(envVal: string | undefined, fallback: number, min: number): number {
+  if (!envVal) return fallback;
+  const parsed = parseInt(envVal, 10);
+  return Number.isFinite(parsed) && parsed >= min ? parsed : fallback;
+}
+
+const BUILD_GLOBAL_TIMEOUT_MS = safeParseInt(process.env.BUILD_GLOBAL_TIMEOUT_MS, 20 * 60 * 1000, 60000);
+const PHASE_TIMEOUT_EXTRACTION_MS = safeParseInt(process.env.BUILD_PHASE_EXTRACTION_MS, 2 * 60 * 1000, 10000);
+const PHASE_TIMEOUT_BLUEPRINT_MS = safeParseInt(process.env.BUILD_PHASE_BLUEPRINT_MS, 2 * 60 * 1000, 10000);
+const PHASE_TIMEOUT_GSE_MS = safeParseInt(process.env.BUILD_PHASE_GSE_MS, 60 * 1000, 10000);
+const HEARTBEAT_INTERVAL_MS = 30000;
+
+class PhaseTimer {
+  private phases: Array<{ name: string; startMs: number; endMs?: number }> = [];
+  private buildStart: number;
+
+  constructor() {
+    this.buildStart = Date.now();
+  }
+
+  start(name: string): void {
+    this.phases.push({ name, startMs: Date.now() });
+    console.log(`  [BUILD-PHASE] ▶ ${name}`);
+  }
+
+  end(name: string): void {
+    const phase = this.phases.find(p => p.name === name && !p.endMs);
+    if (phase) {
+      phase.endMs = Date.now();
+      const elapsed = ((phase.endMs - phase.startMs) / 1000).toFixed(1);
+      console.log(`  [BUILD-PHASE] ✓ ${name} completed in ${elapsed}s`);
+    }
+  }
+
+  elapsed(): string {
+    return ((Date.now() - this.buildStart) / 1000).toFixed(1);
+  }
+
+  summary(): string {
+    return this.phases
+      .map(p => {
+        const dur = ((p.endMs ?? Date.now()) - p.startMs) / 1000;
+        return `${p.name}: ${dur.toFixed(1)}s`;
+      })
+      .join(", ");
+  }
+}
+
+function withPhaseTimeout<T>(promise: Promise<T>, ms: number, label: string, signal?: AbortSignal): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new Error(`Aborted before start [${label}]`));
+      return;
+    }
+    const timer = setTimeout(() => {
+      reject(new Error(`Phase timed out after ${ms}ms [${label}]`));
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new Error(`Aborted [${label}]`));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    promise.then(
+      (val) => { clearTimeout(timer); signal?.removeEventListener("abort", onAbort); resolve(val); },
+      (err) => { clearTimeout(timer); signal?.removeEventListener("abort", onAbort); reject(err); },
+    );
+  });
+}
+
 export interface BuildResult {
   success: boolean;
   buildId: string;
@@ -173,7 +242,15 @@ export async function runBuild(
     return result;
   }
 
-  console.log(`  [BUILD] Starting build ${buildId} for ${runId} (mode=${outputMode})`);
+  const globalAbort = new AbortController();
+  const globalTimer = setTimeout(() => {
+    console.log(`  [BUILD] GLOBAL TIMEOUT — build exceeded ${BUILD_GLOBAL_TIMEOUT_MS / 1000}s limit`);
+    globalAbort.abort();
+  }, BUILD_GLOBAL_TIMEOUT_MS);
+
+  const phaseTimer = new PhaseTimer();
+
+  console.log(`  [BUILD] Starting build ${buildId} for ${runId} (mode=${outputMode}, globalTimeout=${BUILD_GLOBAL_TIMEOUT_MS / 1000}s)`);
   emitProgress("requested");
 
   let manifest = createBuildManifest(
@@ -216,6 +293,7 @@ export async function runBuild(
       manifest = recordFailure(manifest, "eligibility", "eligibility", reason, eligibility.blockers);
       result.errors.push(reason);
       result.state = "failed";
+      clearTimeout(globalTimer);
       writeBuildManifestSafe(runDir, manifest);
       emitProgress("failed", { error: reason, failureClass: "eligibility" });
       emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
@@ -238,16 +316,18 @@ export async function runBuild(
       manifest = recordFailure(manifest, "workspace", "workspace", reason);
       result.errors.push(reason);
       result.state = "failed";
+      clearTimeout(globalTimer);
       writeBuildManifestSafe(runDir, manifest);
       emitProgress("failed", { error: reason, failureClass: "workspace" });
       emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
       return result;
     }
 
-    console.log("  [BUILD] Extracting kit...");
-
     let extraction: KitExtraction | null = null;
     let blueprint: RepoBlueprint | null = null;
+
+    phaseTimer.start("baq_extraction");
+    console.log("  [BUILD] Extracting kit...");
 
     baqHookRunner.register("onBuildAuthorityLoaded", (ctx) => ({
       hook_name: "onBuildAuthorityLoaded",
@@ -636,8 +716,11 @@ export async function runBuild(
       console.log(`  [BAQ] Proceeding to generation — sufficiency will be re-evaluated post-generation`);
     }
 
+    phaseTimer.end("baq_extraction");
+
+    phaseTimer.start("kit_extraction");
     try {
-      extraction = await extractKit(runDir);
+      extraction = await withPhaseTimeout(extractKit(runDir), PHASE_TIMEOUT_EXTRACTION_MS, "kit_extraction", globalAbort.signal);
       const extractionGate = checkExtractionGate(extraction);
       if (!extractionGate.passed) {
         console.log(`  [BUILD] Kit extraction gate did not pass: ${extractionGate.blockers.join("; ")} — falling back to legacy planning`);
@@ -651,11 +734,13 @@ export async function runBuild(
       console.log(`  [BUILD] Kit extraction error: ${err.message} — falling back to legacy planning`);
       extraction = null;
     }
+    phaseTimer.end("kit_extraction");
 
     if (extraction) {
+      phaseTimer.start("blueprint");
       console.log("  [BUILD] Building repo blueprint...");
       try {
-        blueprint = await buildRepoBlueprint(extraction, runDir);
+        blueprint = await withPhaseTimeout(buildRepoBlueprint(extraction, runDir), PHASE_TIMEOUT_BLUEPRINT_MS, "blueprint", globalAbort.signal);
         const blueprintGate = checkBlueprintGate(blueprint);
         if (!blueprintGate.passed) {
           console.log(`  [BUILD] Blueprint gate did not pass: ${blueprintGate.blockers.join("; ")} — falling back to legacy planning`);
@@ -669,8 +754,10 @@ export async function runBuild(
         console.log(`  [BUILD] Blueprint derivation error: ${err.message} — falling back to legacy planning`);
         blueprint = null;
       }
+      phaseTimer.end("blueprint");
     }
 
+    phaseTimer.start("planning");
     console.log(`  [BUILD] Planning${blueprint ? " from blueprint" : " (legacy mode)"}...`);
 
     let plan: BuildPlan;
@@ -688,6 +775,7 @@ export async function runBuild(
       manifest = recordFailure(manifest, "planning", "planning", reason);
       result.errors.push(reason);
       result.state = "failed";
+      clearTimeout(globalTimer);
       writeBuildManifestSafe(runDir, manifest);
       emitProgress("failed", { error: reason, failureClass: "planning" });
       emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
@@ -703,32 +791,62 @@ export async function runBuild(
       },
     };
 
+    phaseTimer.end("planning");
     console.log(`  [BUILD] Plan ready: ${plan.totalSlices} slices, ${plan.totalFiles} files`);
 
-    let gsePlan: GenerationStrategyPlan | undefined;
-    if (blueprint) {
-      try {
-        console.log("  [BUILD] Running Generation Strategy Engine (GSE)...");
-        gsePlan = await runGSE(blueprint, plan, runDir);
-
-        const unitTypeCounts: Record<string, number> = {};
-        for (const u of gsePlan.build_units) {
-          unitTypeCounts[u.unit_type] = (unitTypeCounts[u.unit_type] ?? 0) + 1;
-        }
-        const classCounts: Record<string, number> = { C0: 0, C1: 0, C2: 0, C3: 0, C4: 0 };
-        for (const p of gsePlan.complexity_profiles) classCounts[p.complexity_class]++;
-
-        console.log(`  [BUILD] GSE Summary:`);
-        console.log(`  [BUILD]   Total units: ${gsePlan.build_units.length}`);
-        console.log(`  [BUILD]   Units by type: ${Object.entries(unitTypeCounts).map(([k, v]) => `${k}=${v}`).join(", ")}`);
-        console.log(`  [BUILD]   Complexity: ${Object.entries(classCounts).map(([k, v]) => `${k}=${v}`).join(", ")}`);
-        console.log(`  [BUILD]   Waves: ${gsePlan.wave_plan.waves.length}`);
-        console.log(`  [BUILD]   Estimated cost: $${gsePlan.cost_forecast.estimated_cost_usd} (~${gsePlan.cost_forecast.total_estimated_tokens.toLocaleString()} tokens)`);
-      } catch (err: any) {
-        console.log(`  [BUILD] GSE error: ${err.message} — continuing without strategy plan`);
-        gsePlan = undefined;
-      }
+    if (!blueprint) {
+      const reason = "Blueprint is required for GSE — cannot generate without blueprint";
+      baqFailureCollector.addFromError("gse", "generation_failure", reason, "critical", {
+        failingUnit: "gse_strategy",
+        retryClassification: "repair_then_retry" as const,
+        repairHints: ["Ensure kit extraction and blueprint succeed before generation"],
+      });
+      manifest = recordFailure(manifest, "generation", "gse", reason);
+      result.errors.push(reason);
+      result.state = "failed";
+      clearTimeout(globalTimer);
+      writeBuildManifestSafe(runDir, manifest);
+      emitProgress("failed", { error: reason, failureClass: "generation" });
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
+      return result;
     }
+
+    phaseTimer.start("gse");
+    let gsePlan: GenerationStrategyPlan;
+    try {
+      console.log("  [BUILD] Running Generation Strategy Engine (GSE)...");
+      gsePlan = await withPhaseTimeout(runGSE(blueprint, plan, runDir), PHASE_TIMEOUT_GSE_MS, "gse", globalAbort.signal);
+
+      const unitTypeCounts: Record<string, number> = {};
+      for (const u of gsePlan.build_units) {
+        unitTypeCounts[u.unit_type] = (unitTypeCounts[u.unit_type] ?? 0) + 1;
+      }
+      const classCounts: Record<string, number> = { C0: 0, C1: 0, C2: 0, C3: 0, C4: 0 };
+      for (const p of gsePlan.complexity_profiles) classCounts[p.complexity_class]++;
+
+      console.log(`  [BUILD] GSE Summary:`);
+      console.log(`  [BUILD]   Total units: ${gsePlan.build_units.length}`);
+      console.log(`  [BUILD]   Units by type: ${Object.entries(unitTypeCounts).map(([k, v]) => `${k}=${v}`).join(", ")}`);
+      console.log(`  [BUILD]   Complexity: ${Object.entries(classCounts).map(([k, v]) => `${k}=${v}`).join(", ")}`);
+      console.log(`  [BUILD]   Waves: ${gsePlan.wave_plan.waves.length}`);
+      console.log(`  [BUILD]   Estimated cost: $${gsePlan.cost_forecast.estimated_cost_usd} (~${gsePlan.cost_forecast.total_estimated_tokens.toLocaleString()} tokens)`);
+    } catch (err: any) {
+      const reason = `GSE failed: ${err.message}`;
+      baqFailureCollector.addFromError("gse", "generation_failure", reason, "critical", {
+        failingUnit: "gse_strategy",
+        retryClassification: "repair_then_retry" as const,
+        repairHints: ["Check blueprint quality", "Review GSE configuration"],
+      });
+      manifest = recordFailure(manifest, "generation", "gse", reason);
+      result.errors.push(reason);
+      result.state = "failed";
+      clearTimeout(globalTimer);
+      writeBuildManifestSafe(runDir, manifest);
+      emitProgress("failed", { error: reason, failureClass: "generation" as BuildFailureClass });
+      emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
+      return result;
+    }
+    phaseTimer.end("gse");
 
     console.log("  [BAQ] Running preflight check...");
     const baqPreflight = runPreflightCheck(runDir);
@@ -747,6 +865,7 @@ export async function runBuild(
       });
       manifest = recordFailure(manifest, "preflight", "preflight", reason, [reason]);
       result.state = "failed";
+      clearTimeout(globalTimer);
       writeBuildManifest(paths.buildManifest, manifest);
       emitProgress("failed", { error: reason, failureClass: "preflight" });
       emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, null, null, baqFailureCollector, "failed", baqHookRunner);
@@ -783,59 +902,78 @@ export async function runBuild(
 
     await writeBuildPlan(runDir, plan);
 
+    phaseTimer.start("generation");
+
+    const heartbeatInterval = setInterval(() => {
+      const elapsed = phaseTimer.elapsed();
+      console.log(`  [BUILD-HEARTBEAT] alive — ${elapsed}s elapsed, ${filesGenCount}/${plan.totalFiles} files generated`);
+    }, HEARTBEAT_INTERVAL_MS);
+
     let slicesCompleted = 0;
     let filesGenCount = 0;
-    const genResult = await generateRepo(runDir, plan, paths, (progress) => {
-      if (progress.status === "generated" || progress.status === "failed") {
-        if (progress.status === "generated") {
-          filesGenCount++;
-          if (baqFileTracker && paths) {
-            try {
-              const filePath = progress.filePath;
-              const fullPath = path.join(paths.repo, filePath);
-              const content = fs.existsSync(fullPath) ? fs.readFileSync(fullPath, "utf-8") : "";
-              trackGeneratedFile(baqFileTracker, filePath, content);
-              const perFileCtx = createHookContext("onFileGenerated", runId, buildId, {
-                metadata: {
-                  file_path: filePath,
-                  byte_count: Buffer.byteLength(content, "utf-8"),
-                  planned: baqFileTracker.planned_files.has(filePath),
-                },
-              });
-              baqHookRunner.run("onFileGenerated", perFileCtx).catch(() => {});
-            } catch {}
+    let genResult: { success: boolean; filesGenerated: number; filesFailed: number; errors: string[]; unitResults?: any[] };
+    try {
+      genResult = await generateRepo(runDir, plan, paths, (progress) => {
+        if (progress.status === "generated" || progress.status === "failed") {
+          if (progress.status === "generated") {
+            filesGenCount++;
+            if (baqFileTracker && paths) {
+              try {
+                const filePath = progress.filePath;
+                const fullPath = path.join(paths.repo, filePath);
+                const content = fs.existsSync(fullPath) ? fs.readFileSync(fullPath, "utf-8") : "";
+                trackGeneratedFile(baqFileTracker, filePath, content);
+                const perFileCtx = createHookContext("onFileGenerated", runId, buildId, {
+                  metadata: {
+                    file_path: filePath,
+                    byte_count: Buffer.byteLength(content, "utf-8"),
+                    planned: baqFileTracker.planned_files.has(filePath),
+                  },
+                });
+                baqHookRunner.run("onFileGenerated", perFileCtx).catch((hookErr: any) => {
+                  console.log(`  [BAQ] onFileGenerated hook error: ${hookErr.message}`);
+                });
+              } catch (trackErr: any) {
+                console.log(`  [BUILD] File tracking error for ${progress.filePath}: ${trackErr.message}`);
+              }
+            }
+          } else if (progress.status === "failed") {
+            baqFailureCollector.addFromError(
+              "generation",
+              "generation_failure",
+              `File generation failed: ${progress.filePath}`,
+              "warning",
+              {
+                failingUnit: progress.filePath,
+                retryClassification: "safe_retry" as const,
+                repairHints: ["Re-run generation for this file"],
+              },
+            );
+            const failCtx = createHookContext("onGenerationFailure", runId, buildId, {
+              metadata: {
+                file_path: progress.filePath,
+                error: `File generation failed: ${progress.filePath}`,
+              },
+            });
+            baqHookRunner.run("onGenerationFailure", failCtx).catch((hookErr: any) => {
+              console.log(`  [BAQ] onGenerationFailure hook error: ${hookErr.message}`);
+            });
           }
-        } else if (progress.status === "failed") {
-          baqFailureCollector.addFromError(
-            "generation",
-            "generation_failure",
-            `File generation failed: ${progress.filePath}`,
-            "warning",
-            {
-              failingUnit: progress.filePath,
-              retryClassification: "safe_retry" as const,
-              repairHints: ["Re-run generation for this file"],
-            },
-          );
-          const failCtx = createHookContext("onGenerationFailure", runId, buildId, {
-            metadata: {
-              file_path: progress.filePath,
-              error: `File generation failed: ${progress.filePath}`,
-            },
+          const completed = plan.slices.filter(s => s.status === "completed").length;
+          slicesCompleted = completed;
+          emitProgress("building", {
+            currentSlice: progress.sliceName,
+            slicesCompleted: completed,
+            totalSlices: plan.totalSlices,
+            filesGenerated: filesGenCount,
+            totalFiles: plan.totalFiles,
           });
-          baqHookRunner.run("onGenerationFailure", failCtx).catch(() => {});
         }
-        const completed = plan.slices.filter(s => s.status === "completed").length;
-        slicesCompleted = completed;
-        emitProgress("building", {
-          currentSlice: progress.sliceName,
-          slicesCompleted: completed,
-          totalSlices: plan.totalSlices,
-          filesGenerated: filesGenCount,
-          totalFiles: plan.totalFiles,
-        });
-      }
-    }, gsePlan);
+      }, gsePlan, globalAbort.signal);
+    } finally {
+      clearInterval(heartbeatInterval);
+      phaseTimer.end("generation");
+    }
 
     result.filesGenerated = genResult.filesGenerated;
 
@@ -852,6 +990,7 @@ export async function runBuild(
         });
         manifest = recordFailure(manifest, "generation", "generation", reason, genResult.errors);
         result.state = "failed";
+        clearTimeout(globalTimer);
         writeBuildManifest(paths.buildManifest, manifest);
         emitProgress("failed", { error: reason, failureClass: "generation" });
 
@@ -922,6 +1061,7 @@ export async function runBuild(
       manifest = recordFailure(manifest, "verification", "verification", reason);
       result.errors.push(reason);
       result.state = "failed";
+      clearTimeout(globalTimer);
       writeBuildManifest(paths.buildManifest, manifest);
       emitProgress("failed", { error: reason, failureClass: "verification" });
 
@@ -956,6 +1096,7 @@ export async function runBuild(
       manifest = recordFailure(manifest, "verification", "verification", reason);
       result.errors.push(reason);
       result.state = "failed";
+      clearTimeout(globalTimer);
       writeBuildManifest(paths.buildManifest, manifest);
       emitProgress("failed", { error: reason, failureClass: "verification" });
 
@@ -1008,6 +1149,7 @@ export async function runBuild(
         baqPackagingSignals = { export_attempted: false, export_success: false, file_count: 0, zip_size_bytes: 0 };
         manifest = recordLifecycleTransition(manifest, "passed", "packaging_blocked", reason);
         result.state = "passed";
+        clearTimeout(globalTimer);
         writeBuildManifest(paths.buildManifest, manifest);
 
         emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, baqPackagingSignals, baqFailureCollector, "verification_complete", baqHookRunner);
@@ -1024,6 +1166,7 @@ export async function runBuild(
         manifest = recordFailure(manifest, "packaging", "export", reason);
         result.errors.push(reason);
         result.state = "failed";
+        clearTimeout(globalTimer);
         writeBuildManifest(paths.buildManifest, manifest);
         emitProgress("failed", { error: reason, failureClass: "packaging" });
 
@@ -1067,10 +1210,16 @@ export async function runBuild(
     result.manifest = manifest;
     writeBuildManifest(paths.buildManifest, manifest);
 
-    console.log(`  [BUILD] Build ${buildId} complete: state=${result.state}`);
+    console.log(`  [BUILD] Build ${buildId} complete: state=${result.state} (${phaseTimer.elapsed()}s total)`);
+    console.log(`  [BUILD-PHASE] Summary: ${phaseTimer.summary()}`);
+    clearTimeout(globalTimer);
     return result;
   } catch (err: any) {
-    const reason = `Unexpected error: ${err.message}`;
+    clearTimeout(globalTimer);
+    const isAbort = globalAbort.signal.aborted;
+    const reason = isAbort
+      ? `Build aborted: global timeout exceeded (${BUILD_GLOBAL_TIMEOUT_MS / 1000}s)`
+      : `Unexpected error: ${err.message}`;
     baqFailureCollector.addFromError("unexpected", "generation_failure", reason, "critical");
     manifest = recordFailure(manifest, "records", "unknown", reason);
     result.errors.push(reason);
@@ -1081,10 +1230,13 @@ export async function runBuild(
       writeBuildManifestSafe(runDir, manifest);
     }
     emitProgress("failed", { error: reason });
+    console.log(`  [BUILD-PHASE] Summary at failure: ${phaseTimer.summary()}`);
 
     try {
       emitBAQFinalReports(runDir, runId, buildId, baqExtraction, baqDerivedInputs, baqInventory, baqTraceMap, baqSufficiency, baqReconciliation, baqVerificationSignals, baqPackagingSignals, baqFailureCollector, "failed", baqHookRunner);
-    } catch {}
+    } catch (reportErr: any) {
+      console.log(`  [BUILD] Failed to emit BAQ final reports: ${reportErr.message}`);
+    }
 
     return result;
   }
