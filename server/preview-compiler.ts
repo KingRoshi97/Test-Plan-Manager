@@ -307,6 +307,7 @@ function patchViteConfig(repoDir: string): void {
         }
         newConfig += `    },\n  },\n`;
       }
+      newConfig += `  base: './',\n`;
       newConfig += `  build: {\n    outDir: 'dist',\n    sourcemap: false,\n    chunkSizeWarningLimit: 2000,\n  },\n`;
       newConfig += `});\n`;
 
@@ -345,7 +346,9 @@ function fixEmptyStubs(repoDir: string): void {
 
     for (const file of allFiles) {
       const content = fs.readFileSync(file, "utf-8");
-      if (content.trim() === "export {};" || content.trim().startsWith("// src/") && content.includes("export {};") && content.split("\n").length <= 5) {
+      const trimmed = content.trim();
+      const isStub = trimmed === "export {};" || (trimmed.startsWith("//") && content.includes("export {};") && content.split("\n").length <= 6);
+      if (isStub) {
         const imports = findImportersOf(file, allFiles, repoDir);
         for (const { importerPath, exportNames } of imports) {
           if (!exportMap.has(file)) exportMap.set(file, new Set());
