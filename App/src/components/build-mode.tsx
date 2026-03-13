@@ -4,7 +4,8 @@ import { apiRequest } from "../lib/queryClient";
 import {
   Play, Download, Loader2, CheckCircle, XCircle, AlertTriangle,
   Package, FileCode, ChevronRight, RefreshCw, Clock, Zap,
-  ShieldCheck, Eye, ArrowRight, ChevronDown, Wrench, History, Undo2
+  ShieldCheck, Eye, ArrowRight, ChevronDown, Wrench, History, Undo2,
+  OctagonX
 } from "lucide-react";
 
 interface BuildableRun {
@@ -899,6 +900,15 @@ export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: B
     },
   });
 
+  const killMutation = useMutation({
+    mutationFn: () =>
+      apiRequest(`/api/assemblies/${assemblyId}/kill`, { method: "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId, "build", activeRunId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });
+    },
+  });
+
   const rawState = buildStatus?.state ?? "not_requested";
   const state = rawState === "ready" ? "not_requested" : rawState;
   const isActive = ["requested", "approved", "building", "verifying"].includes(state);
@@ -1071,9 +1081,27 @@ export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: B
                   : "Processing..."}
               </span>
             </div>
-            {(buildStatus.progress.startedAt || selectedRun?.startedAt) && (
-              <ElapsedTimer startedAt={(buildStatus.progress.startedAt || selectedRun?.startedAt)!} />
-            )}
+            <div className="flex items-center gap-3">
+              {(buildStatus.progress.startedAt || selectedRun?.startedAt) && (
+                <ElapsedTimer startedAt={(buildStatus.progress.startedAt || selectedRun?.startedAt)!} />
+              )}
+              <button
+                onClick={() => {
+                  if (window.confirm("Kill this build? This will stop the pipeline and mark it as failed.")) {
+                    killMutation.mutate();
+                  }
+                }}
+                disabled={killMutation.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600/20 border border-red-500/30 text-red-400 text-xs font-medium hover:bg-red-600/30 hover:text-red-300 disabled:opacity-50 transition-colors"
+              >
+                {killMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <OctagonX className="w-3.5 h-3.5" />
+                )}
+                Kill Build
+              </button>
+            </div>
           </div>
 
           <ProgressBar
