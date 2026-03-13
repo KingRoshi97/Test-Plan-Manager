@@ -39,6 +39,9 @@ The BA build system includes:
 -   **Scoped file manifests**: LLM calls receive context-specific file manifests, not the full repository.
 -   **Auto-split oversized units**: Units with many files are split to manage LLM context.
 -   **Unit-level build cache**: Caches build inputs to skip LLM calls on re-builds.
+-   **API call timeouts**: Each LLM call has a configurable timeout (`BUILD_API_TIMEOUT_MS`, default 90s) to prevent stalled API connections from blocking the entire build.
+-   **Automatic retry with backoff**: Failed/timed-out API calls retry once (`BUILD_API_RETRIES`, default 1) with exponential backoff. Rate-limited (429) and overloaded (529) responses are retried with appropriate delays.
+-   **Per-unit timeout**: Each build unit has a max execution time (`BUILD_UNIT_TIMEOUT_MS`, default 5min) so a single stuck unit cannot block the wave.
 
 ### Build Agent Quality (BAQ) Enforcement Layer
 A BAQ enforcement layer (`Axion/src/core/baq/`) implements build quality specifications through schema definitions, runtime validation, and sufficiency evaluation across five dimensions. It integrates hooks into the build process to enforce quality gates and generate detailed reports. BAQ validation and gate failures halt the build. BAQ inventory planning uses two tiers: structural/config files marked `required: true` and AI-generated feature files marked `required: false`.

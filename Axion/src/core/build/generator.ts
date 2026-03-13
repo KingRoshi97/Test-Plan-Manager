@@ -31,7 +31,16 @@ import type {
 import type { WorkspacePaths } from "./workspace.js";
 import { writeRepoFile, ensureRepoSubdir } from "./workspace.js";
 
-const BUILD_CONCURRENCY = parseInt(process.env.BUILD_CONCURRENCY ?? "5", 10);
+function safeParseInt(envVal: string | undefined, fallback: number, min: number): number {
+  if (!envVal) return fallback;
+  const parsed = parseInt(envVal, 10);
+  return Number.isFinite(parsed) && parsed >= min ? parsed : fallback;
+}
+
+const BUILD_CONCURRENCY = safeParseInt(process.env.BUILD_CONCURRENCY, 5, 1);
+const API_CALL_TIMEOUT_MS = safeParseInt(process.env.BUILD_API_TIMEOUT_MS, 90000, 5000);
+const API_CALL_MAX_RETRIES = safeParseInt(process.env.BUILD_API_RETRIES, 1, 0);
+const UNIT_TIMEOUT_MS = safeParseInt(process.env.BUILD_UNIT_TIMEOUT_MS, 300000, 30000);
 
 const QUALITY_DETERMINISTIC_ROLES = new Set([
   "package_manifest", "ts_config", "build_config", "css_config", "html_entry",
@@ -74,36 +83,87 @@ async function getClient(): Promise<any | null> {
   }
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Timed out after ${ms}ms [${label}]`));
+    }, ms);
+    promise.then(
+      (val) => { clearTimeout(timer); resolve(val); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
 async function generateCode(messages: AIMessage[], maxTokens = 8192, stage = "BUILD", model = "claude-sonnet-4-6"): Promise<string | null> {
   const client = await getClient();
   if (!client) return null;
-  try {
-    const systemMsg = messages.find(m => m.role === "system");
-    const nonSystemMsgs = messages.filter(m => m.role !== "system").map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
 
-    const response = await client.messages.create({
-      model,
-      max_tokens: maxTokens,
-      ...(systemMsg ? { system: systemMsg.content } : {}),
-      messages: nonSystemMsgs,
-    });
-    const usage = response.usage;
-    if (usage) {
-      recordUsage({
-        stage,
-        model,
-        promptTokens: usage.input_tokens ?? 0,
-        completionTokens: usage.output_tokens ?? 0,
-      });
+  const systemMsg = messages.find(m => m.role === "system");
+  const nonSystemMsgs = messages.filter(m => m.role !== "system").map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+  for (let attempt = 0; attempt <= API_CALL_MAX_RETRIES; attempt++) {
+    const abortController = new AbortController();
+    const timer = setTimeout(() => abortController.abort(), API_CALL_TIMEOUT_MS);
+
+    try {
+      if (attempt > 0) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+        console.log(`  [BUILD] Retry ${attempt}/${API_CALL_MAX_RETRIES} for ${stage} (${model}) after ${backoffMs}ms backoff`);
+        await new Promise(r => setTimeout(r, backoffMs));
+      }
+
+      const response: any = await client.messages.create(
+        {
+          model,
+          max_tokens: maxTokens,
+          ...(systemMsg ? { system: systemMsg.content } : {}),
+          messages: nonSystemMsgs,
+        },
+        { signal: abortController.signal },
+      );
+
+      clearTimeout(timer);
+
+      const usage = response.usage;
+      if (usage) {
+        recordUsage({
+          stage,
+          model,
+          promptTokens: usage.input_tokens ?? 0,
+          completionTokens: usage.output_tokens ?? 0,
+        });
+      }
+      const textParts = response.content
+        .filter((block: any) => block.type === "text")
+        .map((block: any) => block.text);
+      return textParts.length > 0 ? textParts.join("") : null;
+    } catch (err: any) {
+      clearTimeout(timer);
+      const isAbort = err.name === "AbortError" || abortController.signal.aborted;
+      const isRateLimit = err.status === 429;
+      const isOverloaded = err.status === 529;
+      const isRetryable = isAbort || isRateLimit || isOverloaded;
+      const reason = isAbort ? `API call timed out after ${API_CALL_TIMEOUT_MS}ms` : (err.message ?? String(err));
+
+      console.log(`  [BUILD] Claude call failed (${model}, attempt ${attempt + 1}/${API_CALL_MAX_RETRIES + 1}): ${reason}${isRetryable ? " [retryable]" : ""}`);
+
+      if (isRateLimit && attempt < API_CALL_MAX_RETRIES) {
+        const retryAfter = safeParseInt(err.headers?.["retry-after"], 15, 1);
+        console.log(`  [BUILD] Rate limited — waiting ${retryAfter}s before retry`);
+        await new Promise(r => setTimeout(r, retryAfter * 1000));
+        continue;
+      }
+
+      if (isRetryable && attempt < API_CALL_MAX_RETRIES) {
+        continue;
+      }
+
+      return null;
     }
-    const textParts = response.content
-      .filter((block: any) => block.type === "text")
-      .map((block: any) => block.text);
-    return textParts.length > 0 ? textParts.join("") : null;
-  } catch (err: any) {
-    console.log(`  [BUILD] Claude call failed (${model}): ${err.message ?? err}`);
-    return null;
   }
+
+  return null;
 }
 
 function extractCodeBlock(text: string): string {
@@ -913,7 +973,8 @@ async function generateRepoUnitCentric(
   const limit = pLimit(BUILD_CONCURRENCY);
 
   for (const wave of gsePlan.wave_plan.waves) {
-    console.log(`  [BUILD-UNIT] Wave ${wave.wave_id} (${wave.unit_ids.length} units, concurrency=${BUILD_CONCURRENCY})`);
+    const waveStart = Date.now();
+    console.log(`  [BUILD-UNIT] Wave ${wave.wave_id} (${wave.unit_ids.length} units, concurrency=${BUILD_CONCURRENCY}, apiTimeout=${API_CALL_TIMEOUT_MS}ms, unitTimeout=${UNIT_TIMEOUT_MS}ms)`);
 
     const waveUnits: Array<{ unit: BuildUnit; strategy: GenerationStrategy }> = [];
     for (const unitId of wave.unit_ids) {
@@ -949,19 +1010,37 @@ async function generateRepoUnitCentric(
         }
 
         console.log(`  [BUILD-UNIT] Unit: ${unit.name} (${unit.unit_type}, ${strategy.generation_mode}, ${unit.file_ids.length} files)`);
+        const unitStart = Date.now();
 
-        const unitResult = await generateUnit(
-          unit,
-          strategy,
-          unit.context_capsule,
-          frozenSystemPrompt,
-          ctx,
-          plan,
-          fileInventory,
-          paths,
-          gsePlan.build_units,
-          scopedManifest,
-        );
+        const unitResult = await withTimeout(
+          generateUnit(
+            unit,
+            strategy,
+            unit.context_capsule,
+            frozenSystemPrompt,
+            ctx,
+            plan,
+            fileInventory,
+            paths,
+            gsePlan.build_units,
+            scopedManifest,
+          ),
+          UNIT_TIMEOUT_MS,
+          `unit:${unit.name}`,
+        ).catch((err: any) => {
+          console.log(`  [BUILD-UNIT] Unit ${unit.name} failed after ${((Date.now() - unitStart) / 1000).toFixed(1)}s: ${err.message}`);
+          return {
+            unit_id: unit.id,
+            files_produced: [],
+            tokens_used: 0,
+            model_used: "failed",
+            success: false,
+            structural_violations: [`Unit timed out or failed: ${err.message}`],
+          } as UnitGenerationResult;
+        });
+
+        const elapsed = ((Date.now() - unitStart) / 1000).toFixed(1);
+        console.log(`  [BUILD-UNIT] Unit ${unit.name} completed in ${elapsed}s (${unitResult.files_produced.length} files)`);
 
         return { unit, unitResult, cacheKey, fromCache: false };
       })
@@ -1030,6 +1109,9 @@ async function generateRepoUnitCentric(
         }
       }
     }
+
+    const waveElapsed = ((Date.now() - waveStart) / 1000).toFixed(1);
+    console.log(`  [BUILD-UNIT] Wave ${wave.wave_id} completed in ${waveElapsed}s (${filesGenerated} total files so far)`);
 
     for (const slice of plan.slices) {
       if (slice.status === "completed" || slice.status === "failed") continue;
