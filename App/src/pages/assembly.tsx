@@ -556,52 +556,79 @@ function OverviewTab({ assembly, latestStages, latestRun, onRun, onKill, isRunni
 
       <AssemblyMetadataPanel assembly={assembly} />
 
-      {latestRun?.tokenUsage && latestRun.tokenUsage.total_tokens > 0 && (
-        <GlassPanel solid className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Zap className="w-4 h-4 text-[hsl(var(--status-warning))]" />
-            <h3 className="text-system-label">Token Usage</h3>
-            {assembly.status === "running" && (
-              <StatusChip variant="processing" label="LIVE" pulse size="sm" />
-            )}
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <div className="rounded-md p-2 text-center bg-[hsl(var(--muted))]">
-              <div className="text-lg font-bold text-[hsl(var(--foreground))]">{(latestRun.tokenUsage.total_tokens ?? 0).toLocaleString()}</div>
-              <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Total Tokens</div>
+      {(() => {
+        const hasTokens = latestRun?.tokenUsage && latestRun.tokenUsage.total_tokens > 0;
+        const isPipelineRunning = assembly.status === "running";
+        const showWaiting = isPipelineRunning && !hasTokens;
+
+        if (!hasTokens && !showWaiting) return null;
+
+        return (
+          <GlassPanel solid className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap className={`w-4 h-4 ${hasTokens ? "text-[hsl(var(--status-warning))]" : "text-[hsl(var(--status-warning)/0.5)]"}`} />
+              <h3 className="text-system-label">Token Usage</h3>
+              {isPipelineRunning && (
+                <StatusChip variant="processing" label="LIVE" pulse size="sm" />
+              )}
             </div>
-            <div className="rounded-md p-2 text-center bg-[hsl(var(--muted))]">
-              <div className="text-lg font-bold text-[hsl(var(--status-processing))]">{(latestRun.tokenUsage.total_prompt_tokens ?? 0).toLocaleString()}</div>
-              <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Input</div>
-            </div>
-            <div className="rounded-md p-2 text-center bg-[hsl(var(--muted))]">
-              <div className="text-lg font-bold text-[hsl(var(--status-intelligence))]">{(latestRun.tokenUsage.total_completion_tokens ?? 0).toLocaleString()}</div>
-              <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Output</div>
-            </div>
-            <div className="rounded-md p-2 text-center bg-[hsl(var(--muted))]">
-              <div className="text-lg font-bold text-[hsl(var(--status-success))]">${(latestRun.tokenUsage.total_cost_usd ?? 0).toFixed(4)}</div>
-              <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Cost</div>
-            </div>
-          </div>
-          {latestRun.tokenUsage.by_stage && Object.keys(latestRun.tokenUsage.by_stage).length > 0 && (
-            <div>
-              <div className="text-[10px] text-[hsl(var(--muted-foreground))] mb-2">By Stage ({latestRun.tokenUsage.api_calls ?? 0} API calls)</div>
-              <div className="space-y-1">
-                {Object.entries(latestRun.tokenUsage.by_stage).map(([stage, data]: [string, any]) => (
-                  <div key={stage} className="flex items-center justify-between text-xs py-1 px-2 rounded bg-[hsl(var(--muted)/0.5)]">
-                    <span className="font-mono-tech text-[hsl(var(--muted-foreground))]">{stage}</span>
-                    <div className="flex items-center gap-3 text-[hsl(var(--muted-foreground))]">
-                      <span>{(data.total_tokens ?? 0).toLocaleString()} tok</span>
-                      <span>${(data.cost_usd ?? 0).toFixed(4)}</span>
-                      <span>{data.calls} call{data.calls !== 1 ? "s" : ""}</span>
+            {hasTokens ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  <div className="rounded-md p-2 text-center bg-[hsl(var(--muted))]">
+                    <div className="text-lg font-bold text-[hsl(var(--foreground))]">{(latestRun.tokenUsage.total_tokens ?? 0).toLocaleString()}</div>
+                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Total Tokens</div>
+                  </div>
+                  <div className="rounded-md p-2 text-center bg-[hsl(var(--muted))]">
+                    <div className="text-lg font-bold text-[hsl(var(--status-processing))]">{(latestRun.tokenUsage.total_prompt_tokens ?? 0).toLocaleString()}</div>
+                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Input</div>
+                  </div>
+                  <div className="rounded-md p-2 text-center bg-[hsl(var(--muted))]">
+                    <div className="text-lg font-bold text-[hsl(var(--status-intelligence))]">{(latestRun.tokenUsage.total_completion_tokens ?? 0).toLocaleString()}</div>
+                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Output</div>
+                  </div>
+                  <div className="rounded-md p-2 text-center bg-[hsl(var(--muted))]">
+                    <div className="text-lg font-bold text-[hsl(var(--status-success))]">${(latestRun.tokenUsage.total_cost_usd ?? 0).toFixed(4)}</div>
+                    <div className="text-[10px] text-[hsl(var(--muted-foreground))]">Cost</div>
+                  </div>
+                </div>
+                {latestRun.tokenUsage.by_stage && Object.keys(latestRun.tokenUsage.by_stage).length > 0 && (
+                  <div>
+                    <div className="text-[10px] text-[hsl(var(--muted-foreground))] mb-2">By Stage ({latestRun.tokenUsage.api_calls ?? 0} API calls)</div>
+                    <div className="space-y-1">
+                      {Object.entries(latestRun.tokenUsage.by_stage).map(([stage, data]: [string, any]) => (
+                        <div key={stage} className="flex items-center justify-between text-xs py-1 px-2 rounded bg-[hsl(var(--muted)/0.5)]">
+                          <span className="font-mono-tech text-[hsl(var(--muted-foreground))]">{stage}</span>
+                          <div className="flex items-center gap-3 text-[hsl(var(--muted-foreground))]">
+                            <span>{(data.total_tokens ?? 0).toLocaleString()} tok</span>
+                            <span>${(data.cost_usd ?? 0).toFixed(4)}</span>
+                            <span>{data.calls} call{data.calls !== 1 ? "s" : ""}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </GlassPanel>
-      )}
+                )}
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  {["Total Tokens", "Input", "Output", "Cost"].map((label) => (
+                    <div key={label} className="rounded-md p-2 text-center bg-[hsl(var(--muted))]">
+                      <div className="text-lg font-bold text-[hsl(var(--muted-foreground))]">—</div>
+                      <div className="text-[10px] text-[hsl(var(--muted-foreground))]">{label}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Waiting for API calls...</span>
+                </div>
+              </>
+            )}
+          </GlassPanel>
+        );
+      })()}
 
       <div className="flex items-center gap-3">
         {assembly.status === "running" ? (

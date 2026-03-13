@@ -1139,8 +1139,32 @@ export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: B
         </div>
       )}
 
-      {liveTokenUsage && (liveTokenUsage.api_calls > 0 || liveTokenUsage.total_tokens > 0) && (
+      {isActive && liveTokenUsage && (liveTokenUsage.api_calls > 0 || liveTokenUsage.total_tokens > 0) && (
         <TokenUsageCard tokenUsage={liveTokenUsage} isLive={true} />
+      )}
+
+      {isActive && (!liveTokenUsage || (liveTokenUsage.api_calls === 0 && liveTokenUsage.total_tokens === 0)) && (
+        <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-amber-500/50" />
+              <h4 className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">Token Usage</h4>
+            </div>
+            <LiveBadge />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {["Total Tokens", "Input Tokens", "Output Tokens", "Estimated Cost"].map((label) => (
+              <div key={label} className="text-center p-2 rounded-lg bg-[hsl(var(--muted))]">
+                <p className="text-lg font-bold text-[hsl(var(--muted-foreground))]">—</p>
+                <p className="text-[10px] text-[hsl(var(--muted-foreground))]">{label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            <span>Waiting for API calls...</span>
+          </div>
+        </div>
       )}
 
       {isFailed && (
