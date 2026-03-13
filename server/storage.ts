@@ -1,6 +1,6 @@
 import { db } from "./db.js";
-import { assemblies, pipelineRuns, moduleStatuses, reports } from "../shared/schema.js";
-import type { Assembly, InsertAssembly, PipelineRun, InsertPipelineRun, Report, InsertReport } from "../shared/schema.js";
+import { assemblies, pipelineRuns, moduleStatuses, reports, assemblyRunPreviews } from "../shared/schema.js";
+import type { Assembly, InsertAssembly, PipelineRun, InsertPipelineRun, Report, InsertReport, AssemblyRunPreview, InsertAssemblyRunPreview } from "../shared/schema.js";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 
 export const storage = {
@@ -77,6 +77,36 @@ export const storage = {
   async createReport(data: InsertReport): Promise<Report> {
     const rows = await db.insert(reports).values(data).returning();
     return rows[0];
+  },
+
+  async getPreview(runId: string): Promise<AssemblyRunPreview | undefined> {
+    const rows = await db.select().from(assemblyRunPreviews).where(eq(assemblyRunPreviews.runId, runId));
+    return rows[0];
+  },
+
+  async getPreviewByAssemblyId(assemblyId: number): Promise<AssemblyRunPreview | undefined> {
+    const rows = await db.select().from(assemblyRunPreviews)
+      .where(eq(assemblyRunPreviews.assemblyId, assemblyId))
+      .orderBy(desc(assemblyRunPreviews.updatedAt))
+      .limit(1);
+    return rows[0];
+  },
+
+  async upsertPreview(data: InsertAssemblyRunPreview): Promise<AssemblyRunPreview> {
+    const existing = await db.select().from(assemblyRunPreviews).where(eq(assemblyRunPreviews.runId, data.runId));
+    if (existing.length > 0) {
+      const rows = await db.update(assemblyRunPreviews)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(assemblyRunPreviews.runId, data.runId))
+        .returning();
+      return rows[0];
+    }
+    const rows = await db.insert(assemblyRunPreviews).values(data).returning();
+    return rows[0];
+  },
+
+  async deletePreview(runId: string): Promise<void> {
+    await db.delete(assemblyRunPreviews).where(eq(assemblyRunPreviews.runId, runId));
   },
 
   async getStats() {

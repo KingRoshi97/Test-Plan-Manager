@@ -391,6 +391,33 @@ export const revisionSnapshots = pgTable("revision_snapshots", {
   index("idx_rs_revision").on(table.revisionId),
 ]);
 
+export const assemblyRunPreviews = pgTable("assembly_run_previews", {
+  id: serial("id").primaryKey(),
+  assemblyId: integer("assembly_id").notNull(),
+  runId: varchar("run_id", { length: 50 }).notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("preparing"),
+  buildStatus: varchar("build_status", { length: 20 }),
+  previewUrl: text("preview_url"),
+  entryUrl: text("entry_url"),
+  environment: varchar("environment", { length: 30 }),
+  embeddable: boolean("embeddable").notNull().default(true),
+  generatedAt: timestamp("generated_at"),
+  expiresAt: timestamp("expires_at"),
+  lastCheckedAt: timestamp("last_checked_at"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  error: text("error"),
+  metaJson: jsonb("meta_json"),
+}, (table) => [
+  index("idx_arp_assembly_id").on(table.assemblyId),
+  uniqueIndex("idx_arp_run_id").on(table.runId),
+  index("idx_arp_assembly_updated").on(table.assemblyId, table.updatedAt),
+  index("idx_arp_status").on(table.status),
+]);
+
+export type AssemblyRunPreview = typeof assemblyRunPreviews.$inferSelect;
+export type InsertAssemblyRunPreview = typeof assemblyRunPreviews.$inferInsert;
+
 export type AssemblyRevision = typeof assemblyRevisions.$inferSelect;
 export type UpgradeSession = typeof upgradeSessions.$inferSelect;
 export type UpgradePlan = typeof upgradePlans.$inferSelect;

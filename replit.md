@@ -58,6 +58,14 @@ The web application features a dark-mode "AXION Lab OS" interface with a 3-zone 
 ### Build Quality Operator Page
 The Build Quality page (`App/src/pages/build-quality.tsx`) allows operators to inspect build outcomes. It reads BAQ runtime artifacts via `/api/baq/runs` endpoints, offering a run selector, status chips, summary metrics, and ten detailed tabs for analysis (Overview, Extraction, Derived Plan, Repo Inventory, Traceability, Gen Delta, Gates, Failures, Packaging, History).
 
+### Assembly Preview System
+The Preview Tab (`AssemblyPreviewTab.tsx`) allows operators to physically assess generated build output in an embedded iframe. Key components:
+-   **Preview Resolver** (`server/preview-resolver.ts`): Centralized service that resolves preview status for any assembly by inspecting build manifests, dist directories, compilation state, and source files. Returns a typed `PreviewResolution` with status (`none`, `building`, `preparing`, `ready`, `failed`, `expired`, `uncompiled`, `compiling`).
+-   **Preview Compiler** (`server/preview-compiler.ts`): Compiles unbuilt React/Vite projects on-demand. Pipeline: `pruneDevDependencies` → `ensureTsconfigNode` → `relaxTsconfig` → `patchViteConfig` (rewrites with `base: './'`) → `fixEmptyStubs` → `removeServerImports` → `npm install && vite build`. Status is tracked in-memory (cleared on restart).
+-   **DB Persistence** (`assembly_run_previews` table): Stores resolved preview state per run ID with status, URLs, embeddability, environment, and error info.
+-   **Static File Serving**: `/api/preview/:runId/{*filePath}` serves compiled assets from `dist/` with SPA fallback (serves `dist/index.html` for unknown `dist/*` paths).
+-   **Frontend Components**: `PreviewViewport` (iframe with device mode switching), `PreviewToolbar` (status badge, device toggles, refresh/reload/external/copy actions), `PreviewMetaPanel` (metadata sidebar), `PreviewStateCard` (status-specific empty states).
+
 ### Web Application Tech Stack
 -   **Backend**: Express 5
 -   **Frontend**: React 19 + Vite 7, TailwindCSS v4
