@@ -88,13 +88,18 @@ async function getClient(): Promise<any | null> {
   if (_client) return _client;
   const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
   const baseURL = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.error("  [BUILD] FATAL: AI_INTEGRATIONS_ANTHROPIC_API_KEY is not set — cannot make API calls");
+    return null;
+  }
   try {
     const mod = await import("@anthropic-ai/sdk");
     const Anthropic = mod.default ?? mod;
     _client = new Anthropic({ apiKey, baseURL });
+    console.log(`  [BUILD] Anthropic client initialized (baseURL=${baseURL ? "custom" : "default"})`);
     return _client;
-  } catch {
+  } catch (err: any) {
+    console.error(`  [BUILD] FATAL: Failed to initialize Anthropic SDK: ${err.message}`);
     return null;
   }
 }
@@ -124,7 +129,10 @@ export async function generateCode(messages: AIMessage[], maxTokens = 8192, stag
   if (signal?.aborted) return null;
 
   const client = await getClient();
-  if (!client) return null;
+  if (!client) {
+    console.error(`  [BUILD] No API client available for ${stage} — returning null`);
+    return null;
+  }
 
   const systemMsg = messages.find(m => m.role === "system");
   const nonSystemMsgs = messages.filter(m => m.role !== "system").map(m => ({ role: m.role as "user" | "assistant", content: m.content }));
@@ -849,6 +857,21 @@ async function generateRepoUnitCentric(
   onProgress?: ProgressCallback,
   signal?: AbortSignal,
 ): Promise<{ success: boolean; filesGenerated: number; filesFailed: number; errors: string[]; unitResults: UnitGenerationResult[] }> {
+  const hasAIUnits = gsePlan.strategies.some(s => s.generation_mode !== "deterministic" && s.generation_mode !== "template");
+  if (hasAIUnits) {
+    const preflightClient = await getClient();
+    if (!preflightClient) {
+      console.error("  [BUILD-UNIT] FATAL: No API client available — aborting generation (AI units require API access)");
+      const aiFileCount = gsePlan.build_units
+        .filter(u => { const s = gsePlan.strategies.find(st => st.build_unit_id === u.id); return s && s.generation_mode !== "deterministic" && s.generation_mode !== "template"; })
+        .reduce((sum, u) => sum + u.file_ids.length, 0);
+      return { success: false, filesGenerated: 0, filesFailed: aiFileCount, errors: ["API client not available — check API key configuration"], unitResults: [] };
+    }
+    console.log("  [BUILD-UNIT] API client preflight check passed");
+  } else {
+    console.log("  [BUILD-UNIT] All units are deterministic/template — skipping API preflight");
+  }
+
   const frozenSystemPrompt = buildFrozenSystemPrompt(ctx);
   console.log(`  [BUILD-UNIT] Frozen system prompt built (${frozenSystemPrompt.length} chars)`);
   console.log(`  [BUILD-UNIT] Parallel concurrency: ${BUILD_CONCURRENCY}`);

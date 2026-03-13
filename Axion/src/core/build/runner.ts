@@ -328,6 +328,7 @@ export async function runBuild(
 
     phaseTimer.start("baq_extraction");
     console.log("  [BUILD] Extracting kit...");
+    emitProgress("approved", { phase: "baq_extraction", phaseDetail: "Running quality extraction" });
 
     baqHookRunner.register("onBuildAuthorityLoaded", (ctx) => ({
       hook_name: "onBuildAuthorityLoaded",
@@ -719,6 +720,7 @@ export async function runBuild(
     phaseTimer.end("baq_extraction");
 
     phaseTimer.start("kit_extraction");
+    emitProgress("approved", { phase: "kit_extraction", phaseDetail: "Extracting build kit" });
     try {
       extraction = await withPhaseTimeout(extractKit(runDir), PHASE_TIMEOUT_EXTRACTION_MS, "kit_extraction", globalAbort.signal);
       const extractionGate = checkExtractionGate(extraction);
@@ -739,6 +741,7 @@ export async function runBuild(
     if (extraction) {
       phaseTimer.start("blueprint");
       console.log("  [BUILD] Building repo blueprint...");
+      emitProgress("approved", { phase: "blueprint", phaseDetail: "Deriving repo blueprint" });
       try {
         blueprint = await withPhaseTimeout(buildRepoBlueprint(extraction, runDir), PHASE_TIMEOUT_BLUEPRINT_MS, "blueprint", globalAbort.signal);
         const blueprintGate = checkBlueprintGate(blueprint);
@@ -759,6 +762,7 @@ export async function runBuild(
 
     phaseTimer.start("planning");
     console.log(`  [BUILD] Planning${blueprint ? " from blueprint" : " (legacy mode)"}...`);
+    emitProgress("approved", { phase: "planning", phaseDetail: blueprint ? "Planning from blueprint" : "Legacy planning" });
 
     let plan: BuildPlan;
     try {
@@ -815,6 +819,7 @@ export async function runBuild(
     let gsePlan: GenerationStrategyPlan;
     try {
       console.log("  [BUILD] Running Generation Strategy Engine (GSE)...");
+      emitProgress("approved", { phase: "gse", phaseDetail: "Computing generation strategy" });
       gsePlan = await withPhaseTimeout(runGSE(blueprint, plan, runDir), PHASE_TIMEOUT_GSE_MS, "gse", globalAbort.signal);
 
       const unitTypeCounts: Record<string, number> = {};
@@ -893,7 +898,7 @@ export async function runBuild(
     }
 
     manifest = recordLifecycleTransition(manifest, "building", "generation", "Starting repo generation");
-    emitProgress("building", { totalSlices: plan.totalSlices, totalFiles: plan.totalFiles });
+    emitProgress("building", { phase: "generating", phaseDetail: "Starting file generation", totalSlices: plan.totalSlices, totalFiles: plan.totalFiles });
 
     manifest = updateOutputRefs(manifest, {
       repoPath: paths.repo,
@@ -962,6 +967,7 @@ export async function runBuild(
           const completed = plan.slices.filter(s => s.status === "completed").length;
           slicesCompleted = completed;
           emitProgress("building", {
+            phase: "generating",
             currentSlice: progress.sliceName,
             slicesCompleted: completed,
             totalSlices: plan.totalSlices,

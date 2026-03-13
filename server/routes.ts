@@ -4195,6 +4195,8 @@ export function registerRoutes(app: Express) {
         filesGenerated: 0,
         totalFiles: 0,
         currentSlice: null,
+        phase: "initializing",
+        phaseDetail: null,
         error: null,
         failureClass: null,
         tokenUsage: null,
@@ -4236,6 +4238,8 @@ export function registerRoutes(app: Express) {
                 entry.buildState.filesGenerated = progress.filesGenerated ?? entry.buildState.filesGenerated;
                 entry.buildState.totalFiles = progress.totalFiles ?? entry.buildState.totalFiles;
                 entry.buildState.currentSlice = progress.currentSlice || entry.buildState.currentSlice;
+                if ("phase" in progress) entry.buildState.phase = progress.phase ?? null;
+                if ("phaseDetail" in progress) entry.buildState.phaseDetail = progress.phaseDetail ?? null;
                 entry.buildState.updatedAt = progress.updatedAt || new Date().toISOString();
                 if (progress.error) entry.buildState.error = progress.error;
                 if (progress.failureClass) entry.buildState.failureClass = progress.failureClass;
@@ -4368,6 +4372,8 @@ export function registerRoutes(app: Express) {
           runId: bs.runId,
           progress: {
             currentSlice: bs.currentSlice,
+            phase: bs.phase || null,
+            phaseDetail: bs.phaseDetail || null,
             slicesCompleted: bs.slicesCompleted,
             totalSlices: bs.totalSlices,
             filesGenerated: bs.filesGenerated,

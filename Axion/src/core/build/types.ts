@@ -224,9 +224,22 @@ export interface EligibilityCondition {
   detail?: string;
 }
 
+export type BuildPhase =
+  | "initializing"
+  | "baq_extraction"
+  | "kit_extraction"
+  | "blueprint"
+  | "planning"
+  | "gse"
+  | "generating"
+  | "verifying"
+  | "packaging";
+
 export interface BuildProgress {
   buildId: string;
   state: BuildState;
+  phase?: BuildPhase;
+  phaseDetail?: string;
   currentSlice?: string;
   slicesCompleted: number;
   totalSlices: number;

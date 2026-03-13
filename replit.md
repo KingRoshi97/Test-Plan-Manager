@@ -37,7 +37,7 @@ The build system core is split into focused modules under `Axion/src/core/build/
 -   **deterministic-generators.ts**: ~30 `gen*` functions for deterministic file generation without LLMs (config files, manifests, etc.), plus helpers (`hexToShades`, `toSnakeCase`, `toCamelCase`).
 -   **prompt-builders.ts**: System/user prompt construction, design directives, file manifests, document extraction helpers.
 -   **remediation.ts**: AVCS remediation pipeline — `fixUnitsFromFindings`, patch parsing/application, preservation gates, diff stats.
--   **runner.ts**: Build orchestration with global timeout (20min), per-phase timeouts (extraction 2min, blueprint 2min, GSE 1min), heartbeat watchdog (30s), and abort signal propagation.
+-   **runner.ts**: Build orchestration with global timeout (20min), per-phase timeouts (extraction 2min, blueprint 2min, GSE 1min), heartbeat watchdog (30s), abort signal propagation, and phase-level progress emissions (BuildPhase tracking through BAQ/extraction/blueprint/planning/GSE/generating phases).
 -   **gse.ts**: Generation Strategy Engine — classifies files into build units and plans wave execution.
 
 ### Build Performance Optimizations
@@ -55,6 +55,8 @@ The BA build system includes:
 -   **Automatic retry with backoff**: Failed/timed-out API calls retry once (`BUILD_API_RETRIES`, default 1) with exponential backoff. Rate-limited (429) and overloaded (529) responses are retried with appropriate delays.
 -   **Per-unit timeout**: Each build unit has a max execution time (`BUILD_UNIT_TIMEOUT_MS`, default 5min) so a single stuck unit cannot block the wave.
 -   **GSE required**: Legacy file-centric generation path removed; GSE strategy plan is mandatory for all builds.
+-   **Phase-level progress**: `BuildProgress` includes `phase` and `phaseDetail` fields. The dashboard displays the current pre-generation phase (BAQ extraction, kit extraction, blueprint, planning, GSE) so the user sees what's happening instead of a frozen progress bar during pre-generation setup.
+-   **API client preflight check**: Before starting generation, the system verifies the Anthropic API client can be initialized. If the API key is missing or the SDK fails to load, the build fails immediately with a clear error instead of silently producing 0 files.
 
 ### Build Agent Quality (BAQ) Enforcement Layer
 A BAQ enforcement layer (`Axion/src/core/baq/`) implements build quality specifications through schema definitions, runtime validation, and sufficiency evaluation across five dimensions. It integrates hooks into the build process to enforce quality gates and generate detailed reports. BAQ validation and gate failures halt the build. BAQ inventory planning uses two tiers: structural/config files marked `required: true` and AI-generated feature files marked `required: false`.

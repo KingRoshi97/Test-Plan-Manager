@@ -41,6 +41,8 @@ interface BuildStatus {
   buildId?: string;
   progress?: {
     currentSlice?: string;
+    phase?: string | null;
+    phaseDetail?: string | null;
     slicesCompleted: number;
     totalSlices: number;
     filesGenerated: number;
@@ -1084,6 +1086,20 @@ export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: B
                   ? `Building: ${buildStatus.progress.currentSlice}`
                   : state === "verifying"
                   ? "Running verification..."
+                  : buildStatus.progress.phaseDetail
+                  ? buildStatus.progress.phaseDetail
+                  : buildStatus.progress.phase === "baq_extraction"
+                  ? "Running quality extraction..."
+                  : buildStatus.progress.phase === "kit_extraction"
+                  ? "Extracting build kit..."
+                  : buildStatus.progress.phase === "blueprint"
+                  ? "Deriving repo blueprint..."
+                  : buildStatus.progress.phase === "planning"
+                  ? "Planning build..."
+                  : buildStatus.progress.phase === "gse"
+                  ? "Computing generation strategy..."
+                  : buildStatus.progress.phase === "generating"
+                  ? "Generating files..."
                   : "Processing..."}
               </span>
             </div>
