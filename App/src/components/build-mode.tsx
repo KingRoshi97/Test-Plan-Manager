@@ -901,8 +901,14 @@ export function BuildTab({ assemblyId, runId, pipelineStatus, buildableRuns }: B
   });
 
   const killMutation = useMutation({
-    mutationFn: () =>
-      apiRequest(`/api/assemblies/${assemblyId}/kill`, { method: "POST" }),
+    mutationFn: async () => {
+      try {
+        const buildRes = await apiRequest(`/api/assemblies/${assemblyId}/build/kill`, { method: "POST" });
+        return buildRes;
+      } catch {
+        return apiRequest(`/api/assemblies/${assemblyId}/kill`, { method: "POST" });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies", assemblyId, "build", activeRunId] });
       queryClient.invalidateQueries({ queryKey: ["/api/assemblies"] });

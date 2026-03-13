@@ -4300,6 +4300,44 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.post("/api/assemblies/:id/build/kill", async (req: Request, res: Response) => {
+    try {
+      const id = Number(req.params.id);
+      const entry = runningBuilds.get(id);
+      if (!entry) {
+        return res.status(404).json({ error: "No running build found for this assembly" });
+      }
+
+      const { child, buildState } = entry;
+      console.log(`[build] Killing build for assembly ${id} (run ${entry.runId})`);
+
+      child.kill("SIGTERM");
+
+      await new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => {
+          try { child.kill("SIGKILL"); } catch (killErr: any) {
+            console.log(`[build] SIGKILL failed: ${killErr.message}`);
+          }
+          resolve();
+        }, 5000);
+
+        child.once("close", () => {
+          clearTimeout(timeout);
+          resolve();
+        });
+      });
+
+      buildState.state = "failed";
+      buildState.error = "Build killed by user";
+      buildState.updatedAt = new Date().toISOString();
+
+      res.json({ killed: true, message: "Build killed successfully" });
+    } catch (err: any) {
+      console.error("Failed to kill build:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.get("/api/assemblies/:id/build", async (req: Request, res: Response) => {
     try {
       const id = Number(req.params.id);
