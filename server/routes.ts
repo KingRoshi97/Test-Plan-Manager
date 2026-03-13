@@ -4793,26 +4793,32 @@ export function registerRoutes(app: Express) {
       const assembly = await storage.getAssembly(id);
       if (!assembly) return res.status(404).json({ error: "Not found" });
 
-      let runId = assembly.runId;
-      if (!runId) return res.status(400).json({ error: "No completed run" });
+      const hasRepoContent = (rid: string) => {
+        const repo = path.join(AXION_RUNS, rid, "build", "repo");
+        if (!fs.existsSync(repo)) return false;
+        try {
+          const entries = fs.readdirSync(repo);
+          return entries.length > 0 && (entries.includes("package.json") || entries.includes("index.html"));
+        } catch { return false; }
+      };
 
-      let repoDir = path.join(AXION_RUNS, runId, "build", "repo");
-      if (!fs.existsSync(repoDir)) {
+      let runId = assembly.runId;
+      if (!runId || !hasRepoContent(runId)) {
         const runs = await storage.getPipelineRuns(id);
         const previousBuild = runs
           .filter((r: any) => r.status === "completed" && r.runId && r.runId !== runId)
           .sort((a: any, b: any) => (b.runId || "").localeCompare(a.runId || ""))
-          .find((r: any) => fs.existsSync(path.join(AXION_RUNS, r.runId, "build", "repo")));
+          .find((r: any) => hasRepoContent(r.runId));
 
         if (previousBuild) {
           runId = previousBuild.runId;
-          repoDir = path.join(AXION_RUNS, runId, "build", "repo");
         } else {
           return res.status(400).json({ error: "No build repo found" });
         }
       }
 
-      const status = startCompilation(runId, repoDir);
+      const repoDir = path.join(AXION_RUNS, runId!, "build", "repo");
+      const status = startCompilation(runId!, repoDir);
       res.json(status);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -4854,29 +4860,39 @@ export function registerRoutes(app: Express) {
         return res.status(403).json({ error: "Forbidden" });
       }
 
-      if (!fs.existsSync(fullPath)) {
-        return res.status(404).json({ error: "File not found" });
+      if (fs.existsSync(fullPath)) {
+        const stat = fs.lstatSync(fullPath);
+        if (stat.isSymbolicLink()) {
+          return res.status(403).json({ error: "Forbidden" });
+        }
+
+        if (stat.isDirectory()) {
+          const indexRel = path.join(rel, "index.html");
+          const indexFull = path.join(fullPath, "index.html");
+          if (fs.existsSync(indexFull) && !fs.lstatSync(indexFull).isSymbolicLink()) {
+            return res.sendFile(indexRel, { root: repoDir }, (err) => {
+              if (err && !res.headersSent) res.status(404).json({ error: "File not found" });
+            });
+          }
+          return res.status(404).json({ error: "File not found" });
+        }
+
+        return res.sendFile(rel, { root: repoDir }, (err) => {
+          if (err && !res.headersSent) res.status(404).json({ error: "File not found" });
+        });
       }
 
-      const stat = fs.lstatSync(fullPath);
-      if (stat.isSymbolicLink()) {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-
-      if (stat.isDirectory()) {
-        const indexRel = path.join(rel, "index.html");
-        const indexFull = path.join(fullPath, "index.html");
-        if (fs.existsSync(indexFull) && !fs.lstatSync(indexFull).isSymbolicLink()) {
-          return res.sendFile(indexRel, { root: repoDir }, (err) => {
+      const isDistPath = filePath.startsWith("dist/");
+      if (isDistPath) {
+        const distIndex = path.resolve(repoDir, "dist", "index.html");
+        if (fs.existsSync(distIndex) && !fs.lstatSync(distIndex).isSymbolicLink()) {
+          return res.sendFile("dist/index.html", { root: repoDir }, (err) => {
             if (err && !res.headersSent) res.status(404).json({ error: "File not found" });
           });
         }
-        return res.status(404).json({ error: "File not found" });
       }
 
-      return res.sendFile(rel, { root: repoDir }, (err) => {
-        if (err && !res.headersSent) res.status(404).json({ error: "File not found" });
-      });
+      return res.status(404).json({ error: "File not found" });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
