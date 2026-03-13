@@ -658,7 +658,7 @@ OUTPUT FORMAT: For each file, output exactly:
 
 Generate all ${aiFiles.length} files. Each file must be complete, production-quality code.`;
 
-  const maxTokens = Math.min(aiFiles.length * 4096, 16384);
+  const maxTokens = Math.min(aiFiles.length * 4096, 64000);
   console.log(`    [BUILD-UNIT] Calling ${modelName} for unit ${unit.name} (${aiFiles.length} AI files, ${deterministicFiles.length} deterministic, ${trivialAiFiles.length} trivial, maxTokens=${maxTokens})...`);
 
   const rawResult = await generateCode(
