@@ -4490,22 +4490,38 @@ export function registerRoutes(app: Express) {
         });
       }
 
-      const buildDir = path.join(AXION_RUNS, runId, "build");
-      const manifestPath = path.join(buildDir, "build_manifest.json");
+      let effectiveRunId = runId;
+      let buildDir = path.join(AXION_RUNS, runId, "build");
+      let manifestPath = path.join(buildDir, "build_manifest.json");
 
       if (!fs.existsSync(manifestPath)) {
-        return res.json({
-          status: "none",
-          runId,
-          buildStatus: null,
-          previewUrl: null,
-          entryUrl: null,
-          updatedAt: assembly.updatedAt,
-          generatedAt: now,
-          embeddable: false,
-          environment: null,
-          error: null,
-        });
+        const runs = await storage.getPipelineRuns(id);
+        const previousBuild = runs
+          .filter((r: any) => r.status === "completed" && r.runId && r.runId !== runId)
+          .sort((a: any, b: any) => (b.runId || "").localeCompare(a.runId || ""))
+          .find((r: any) => {
+            const prevManifest = path.join(AXION_RUNS, r.runId, "build", "build_manifest.json");
+            return fs.existsSync(prevManifest);
+          });
+
+        if (previousBuild) {
+          effectiveRunId = previousBuild.runId;
+          buildDir = path.join(AXION_RUNS, effectiveRunId, "build");
+          manifestPath = path.join(buildDir, "build_manifest.json");
+        } else {
+          return res.json({
+            status: "none",
+            runId,
+            buildStatus: null,
+            previewUrl: null,
+            entryUrl: null,
+            updatedAt: assembly.updatedAt,
+            generatedAt: now,
+            embeddable: false,
+            environment: null,
+            error: null,
+          });
+        }
       }
 
       let manifest: any = {};
@@ -4531,7 +4547,7 @@ export function registerRoutes(app: Express) {
       if (buildStatus === "building" || buildStatus === "requested" || buildStatus === "approved") {
         return res.json({
           status: "building",
-          runId,
+          runId: effectiveRunId,
           buildStatus,
           previewUrl: null,
           entryUrl: null,
@@ -4546,7 +4562,7 @@ export function registerRoutes(app: Express) {
       if (buildStatus === "failed" || buildStatus === "error") {
         return res.json({
           status: "failed",
-          runId,
+          runId: effectiveRunId,
           buildStatus,
           previewUrl: null,
           entryUrl: null,
@@ -4565,10 +4581,10 @@ export function registerRoutes(app: Express) {
         if (fs.existsSync(distDir)) {
           const distIndex = path.join(distDir, "index.html");
           if (fs.existsSync(distIndex)) {
-            const previewUrl = `/api/preview/${runId}/dist/index.html`;
+            const previewUrl = `/api/preview/${effectiveRunId}/dist/index.html`;
             return res.json({
               status: "ready",
-              runId,
+              runId: effectiveRunId,
               buildStatus,
               previewUrl,
               entryUrl: previewUrl,
@@ -4581,11 +4597,11 @@ export function registerRoutes(app: Express) {
           }
         }
 
-        const compilationStatus = getCompilationStatus(runId);
+        const compilationStatus = getCompilationStatus(effectiveRunId);
         if (compilationStatus.status === "installing" || compilationStatus.status === "compiling") {
           return res.json({
             status: "compiling",
-            runId,
+            runId: effectiveRunId,
             buildStatus,
             previewUrl: null,
             entryUrl: null,
@@ -4601,9 +4617,9 @@ export function registerRoutes(app: Express) {
         if (compilationStatus.status === "failed") {
           return res.json({
             status: "uncompiled",
-            runId,
+            runId: effectiveRunId,
             buildStatus,
-            previewUrl: `/api/preview/${runId}/_overview`,
+            previewUrl: `/api/preview/${effectiveRunId}/_overview`,
             entryUrl: null,
             updatedAt: assembly.updatedAt,
             generatedAt: now,
@@ -4617,12 +4633,27 @@ export function registerRoutes(app: Express) {
         const indexPath = path.join(repoDir, "index.html");
         if (fs.existsSync(indexPath)) {
           const indexContent = fs.readFileSync(indexPath, "utf-8");
+          const hasRawSource = /src=["']\/src\/.*\.(tsx|ts|jsx)["']/i.test(indexContent);
+          if (hasRawSource) {
+            return res.json({
+              status: "uncompiled",
+              runId: effectiveRunId,
+              buildStatus,
+              previewUrl: `/api/preview/${effectiveRunId}/_overview`,
+              entryUrl: null,
+              updatedAt: assembly.updatedAt,
+              generatedAt: now,
+              embeddable: true,
+              environment: manifest.environment || "production",
+              error: null,
+            });
+          }
           const hasScriptTag = /<script\b/i.test(indexContent);
           if (hasScriptTag) {
-            const previewUrl = `/api/preview/${runId}/index.html`;
+            const previewUrl = `/api/preview/${effectiveRunId}/index.html`;
             return res.json({
               status: "ready",
-              runId,
+              runId: effectiveRunId,
               buildStatus,
               previewUrl,
               entryUrl: previewUrl,
@@ -4638,9 +4669,9 @@ export function registerRoutes(app: Express) {
         if (fs.existsSync(repoDir) && fs.existsSync(path.join(repoDir, "package.json"))) {
           return res.json({
             status: "uncompiled",
-            runId,
+            runId: effectiveRunId,
             buildStatus,
-            previewUrl: `/api/preview/${runId}/_overview`,
+            previewUrl: `/api/preview/${effectiveRunId}/_overview`,
             entryUrl: null,
             updatedAt: assembly.updatedAt,
             generatedAt: now,
@@ -4652,7 +4683,7 @@ export function registerRoutes(app: Express) {
 
         return res.json({
           status: "none",
-          runId,
+          runId: effectiveRunId,
           buildStatus,
           previewUrl: null,
           entryUrl: null,
@@ -4666,7 +4697,7 @@ export function registerRoutes(app: Express) {
 
       return res.json({
         status: "none",
-        runId,
+        runId: effectiveRunId,
         buildStatus,
         previewUrl: null,
         entryUrl: null,
@@ -4698,28 +4729,59 @@ export function registerRoutes(app: Express) {
         return res.json({ status: "building", runId, buildStatus: "running", previewUrl: null, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: false, environment: null, error: null });
       }
 
-      const buildDir = path.join(AXION_RUNS, runId, "build");
-      const manifestPath = path.join(buildDir, "build_manifest.json");
+      let effectiveRunId = runId;
+      let buildDir = path.join(AXION_RUNS, runId, "build");
+      let manifestPath = path.join(buildDir, "build_manifest.json");
       if (!fs.existsSync(manifestPath)) {
-        return res.json({ status: "none", runId, buildStatus: null, previewUrl: null, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: false, environment: null, error: null });
+        const runs = await storage.getPipelineRuns(id);
+        const previousBuild = runs
+          .filter((r: any) => r.status === "completed" && r.runId && r.runId !== runId)
+          .sort((a: any, b: any) => (b.runId || "").localeCompare(a.runId || ""))
+          .find((r: any) => {
+            const prevManifest = path.join(AXION_RUNS, r.runId, "build", "build_manifest.json");
+            return fs.existsSync(prevManifest);
+          });
+
+        if (previousBuild) {
+          effectiveRunId = previousBuild.runId;
+          buildDir = path.join(AXION_RUNS, effectiveRunId, "build");
+          manifestPath = path.join(buildDir, "build_manifest.json");
+        } else {
+          return res.json({ status: "none", runId, buildStatus: null, previewUrl: null, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: false, environment: null, error: null });
+        }
       }
 
       let manifest: any = {};
       try { manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8")); } catch {
-        return res.json({ status: "failed", runId, buildStatus: "error", previewUrl: null, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: false, environment: null, error: "Failed to parse build manifest" });
+        return res.json({ status: "failed", runId: effectiveRunId, buildStatus: "error", previewUrl: null, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: false, environment: null, error: "Failed to parse build manifest" });
       }
 
       const buildStatus = manifest.status || null;
       if (buildStatus === "passed" || buildStatus === "exported" || buildStatus === "completed") {
         const repoDir = path.join(buildDir, "repo");
+        const distDir = path.join(repoDir, "dist");
+        if (fs.existsSync(distDir) && fs.existsSync(path.join(distDir, "index.html"))) {
+          const previewUrl = `/api/preview/${effectiveRunId}/dist/index.html`;
+          return res.json({ status: "ready", runId: effectiveRunId, buildStatus, previewUrl, entryUrl: previewUrl, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: true, environment: manifest.environment || "production", error: null });
+        }
+
         const indexPath = path.join(repoDir, "index.html");
         if (fs.existsSync(indexPath)) {
-          const previewUrl = `/api/preview/${runId}/index.html`;
-          return res.json({ status: "ready", runId, buildStatus, previewUrl, entryUrl: previewUrl, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: true, environment: manifest.environment || "production", error: null });
+          const indexContent = fs.readFileSync(indexPath, "utf-8");
+          const hasRawSource = /src=["']\/src\/.*\.(tsx|ts|jsx)["']/i.test(indexContent);
+          if (hasRawSource) {
+            return res.json({ status: "uncompiled", runId: effectiveRunId, buildStatus, previewUrl: `/api/preview/${effectiveRunId}/_overview`, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: true, environment: manifest.environment || "production", error: null });
+          }
+          const previewUrl = `/api/preview/${effectiveRunId}/index.html`;
+          return res.json({ status: "ready", runId: effectiveRunId, buildStatus, previewUrl, entryUrl: previewUrl, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: true, environment: manifest.environment || "production", error: null });
+        }
+
+        if (fs.existsSync(repoDir) && fs.existsSync(path.join(repoDir, "package.json"))) {
+          return res.json({ status: "uncompiled", runId: effectiveRunId, buildStatus, previewUrl: `/api/preview/${effectiveRunId}/_overview`, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: true, environment: manifest.environment || "production", error: null });
         }
       }
 
-      return res.json({ status: "none", runId, buildStatus, previewUrl: null, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: false, environment: null, error: null });
+      return res.json({ status: "none", runId: effectiveRunId, buildStatus, previewUrl: null, entryUrl: null, updatedAt: assembly.updatedAt, generatedAt: now, embeddable: false, environment: null, error: null });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -4731,11 +4793,24 @@ export function registerRoutes(app: Express) {
       const assembly = await storage.getAssembly(id);
       if (!assembly) return res.status(404).json({ error: "Not found" });
 
-      const runId = assembly.runId;
+      let runId = assembly.runId;
       if (!runId) return res.status(400).json({ error: "No completed run" });
 
-      const repoDir = path.join(AXION_RUNS, runId, "build", "repo");
-      if (!fs.existsSync(repoDir)) return res.status(400).json({ error: "No build repo found" });
+      let repoDir = path.join(AXION_RUNS, runId, "build", "repo");
+      if (!fs.existsSync(repoDir)) {
+        const runs = await storage.getPipelineRuns(id);
+        const previousBuild = runs
+          .filter((r: any) => r.status === "completed" && r.runId && r.runId !== runId)
+          .sort((a: any, b: any) => (b.runId || "").localeCompare(a.runId || ""))
+          .find((r: any) => fs.existsSync(path.join(AXION_RUNS, r.runId, "build", "repo")));
+
+        if (previousBuild) {
+          runId = previousBuild.runId;
+          repoDir = path.join(AXION_RUNS, runId, "build", "repo");
+        } else {
+          return res.status(400).json({ error: "No build repo found" });
+        }
+      }
 
       const status = startCompilation(runId, repoDir);
       res.json(status);
